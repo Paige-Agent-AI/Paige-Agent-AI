@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
 import { mergeIntoDraft, subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
-import { PaigeReasoningStrip, StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
+import { StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Clock, Paperclip, X, ArrowDown, ArrowRight } from "lucide-react";
+import { Send, Loader2, Clock, Paperclip, X, ArrowDown, ArrowRight, Hand } from "lucide-react";
 import { Link, useInRouterContext } from "react-router-dom";
 import { PaigeResearchCard, type PaigeResearchResult } from "@/components/paige/chat/PaigeResearchCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,12 +44,31 @@ import { useChatDocumentUpload, type AttachedDocument, type AttachedDocKind } fr
 import { DocumentAttachmentChip } from "@/components/chat/DocumentAttachmentChip";
 import { DocumentMessageBubble } from "@/components/chat/DocumentMessageBubble";
 import { MessageAudioButton } from "@/components/chat/MessageAudioButton";
-import { PaigeThinkingIndicator } from "@/components/paige/chat/PaigeThinkingIndicator";
 import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/PaigeArtifactCard";
 import { ExtractionProposalCard, type ExtractionProposal } from "@/components/chat/ExtractionProposalCard";
 import { PaigeCompactingCard, type CompactingSignal } from "@/components/paige/chat/PaigeCompactingCard";
 import { PaigeLiveConversation, type LiveVoiceSink } from "@/components/paige/live/PaigeLiveConversation";
-import { readPaigeStreamWithRaw, settleOpenSteps } from "@/lib/paige-stream";
+import {
+  DECISION_REPLY,
+  TURN_LINE_GATE_MS,
+  decisionCardResult,
+  deriveLiveTurnView,
+  deriveSnapshotView,
+  isDecisionReplyText,
+  outcomeFromRecord,
+  readPaigeStreamWithRaw,
+  readTurnRecord,
+  readTurnTrace,
+  settleOpenSteps,
+  settleTurnRows,
+  upsertTurnRow,
+  type TurnEndCause,
+  type TurnRow,
+  type TurnSnapshot,
+  type TurnView,
+} from "@/lib/paige-stream";
+import { PaigeLiveTurnStatus, PaigeTurnFooter, PaigeTurnStatus } from "@/components/paige/chat/PaigeTurnStatus";
+import type { TurnFrame } from "../../../supabase/functions/_shared/paige-turn/contract";
 import { parseLiveConversationCard, type LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
 import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/components/chat/anchoredTranscriptScroll";
 import {
@@ -127,6 +146,35 @@ type Message = {
    *  applied or declined the proposal is settled server-side, so a rehydrated turn must not
    *  re-offer it (§15 — never re-fire a past action). */
   extractionProposal?: ExtractionProposal;
+  /** C3a — how this answer's turn ended, for its status line: stamped when a live read settles, or
+   *  rebuilt from `bundle_ref.turn_state` + `turn_trace` on reload. Presentation only — never sent. */
+  turnSnapshot?: TurnSnapshot;
+  /** C3a — on a USER turn: this is the approval card's own sentence, sent on the person's behalf.
+   *  Hidden in PRESENTATION only (owner ruling 2026-10-05): it stays in `messages`, in every POST,
+   *  and in the saved thread exactly as before. */
+  decision?: "approved" | "declined";
+  /** C3a — reload: what the next user turn said about this answer's card. Claims nothing about
+   *  whether the action ran — only what the person answered. */
+  confirmReceipt?: { decision: "approved" | "declined"; ts: number | null; result: string | null };
+};
+
+/** C3a — the answer being read right now (or just finished in this session). Keyed by the
+ *  assistant message id it belongs to; cleared at every transcript reset. */
+type LiveTurn = {
+  assistantId: string;
+  startedAt: number;
+  frame: TurnFrame | null;
+  rows: TurnRow[];
+  writing: boolean;
+  gateOpen: boolean;
+  streaming: boolean;
+  endCause: TurnEndCause | null;
+  elapsedMs: number | null;
+  /** The request as the person typed it — "Ask again" puts it back in the composer. */
+  userText: string;
+  /** After Stop, move keyboard focus to the footer. False when Stop came from a Live voice
+   *  interruption: the person is talking, not tabbing, and focus must not be pulled. */
+  stopFocus: boolean;
 };
 
 // crypto.randomUUID is undefined in some insecure-context / older webviews — guard
@@ -371,10 +419,73 @@ const PaigeAIChatInner = ({
   // Presentation-only projection of a real current object. It never persists a card or creates
   // an action path; canonical records and confirmations remain owned by the chat/Spine response.
   const [streamedLiveCard, setStreamedLiveCard] = useState<LiveConversationCard | null>(null);
-  // The streamed reasoning thoughts (paige_step kind:"thought") exposed under "Thought process".
-  const thinkingThoughts = steps
-    .filter((s) => s.kind === "thought")
-    .map((s) => ({ id: s.id, label: s.label }));
+  // C3a — the living status of the answer being read. `liveTurnRef` is the source of truth (the
+  // stream loop, Stop and the six-minute window all write it synchronously); the state copy renders.
+  // Thoughts never enter it: a per-answer trace holds actions only (owner proof 9).
+  const [liveTurn, setLiveTurnState] = useState<LiveTurn | null>(null);
+  const liveTurnRef = useRef<LiveTurn | null>(null);
+  const writeLiveTurn = useCallback((next: LiveTurn | null) => {
+    liveTurnRef.current = next;
+    setLiveTurnState(next);
+  }, []);
+  const updateLiveTurn = useCallback((assistantId: string, fn: (t: LiveTurn) => LiveTurn) => {
+    const current = liveTurnRef.current;
+    if (!current || current.assistantId !== assistantId) return;
+    writeLiveTurn(fn(current));
+  }, [writeLiveTurn]);
+  /** The read ended. Freeze the line and stamp the answer (if it is still on screen) so it keeps the
+   *  same "What PAIGE did" after the next turn starts. A rolled-back answer has no message to stamp. */
+  const settleLiveTurn = useCallback((cause: TurnEndCause, assistantId?: string, opts?: { stopFocus?: boolean }) => {
+    const t = liveTurnRef.current;
+    if (!t || !t.streaming || (assistantId && t.assistantId !== assistantId)) return;
+    const next: LiveTurn = {
+      ...t, streaming: false, endCause: cause, rows: settleTurnRows(t.rows, cause), elapsedMs: Date.now() - t.startedAt,
+      stopFocus: opts?.stopFocus ?? t.stopFocus,
+    };
+    writeLiveTurn(next);
+    setMessages((prev) => prev.some((m) => m.id === next.assistantId)
+      ? prev.map((m) => m.id === next.assistantId ? {
+          ...m,
+          turnSnapshot: {
+            outcome: next.frame ? { state: next.frame.state, mode: next.frame.mode } : null,
+            rows: next.rows,
+            elapsedMs: next.elapsedMs,
+            endCause: cause,
+            source: "live",
+            hasContent: m.content.trim() !== "",
+          },
+        } : m)
+      : prev);
+  }, [writeLiveTurn]);
+  // A decided card is replaced by its record — so the button the person pressed vanished with it and
+  // keyboard focus fell to <body>. After that commit, if nothing else took focus, it lands on the
+  // record that replaced the card ("Skipped · nothing changed", "Approved", and the result when one
+  // was recorded): the person keeps their place and hears what their decision became. Not the
+  // composer — it is disabled while the follow-up request runs, so focus could not land there.
+  // (Solo's Approve is answered by the report card, which focuses itself; it is excluded.)
+  const decisionFocusRef = useRef<string | null>(null);
+  useEffect(() => {
+    const id = decisionFocusRef.current;
+    if (!id) return;
+    decisionFocusRef.current = null;
+    const active = document.activeElement;
+    if (active && active !== document.body) return;
+    document.querySelector<HTMLElement>(`[data-paige-message-id="${id}"] [data-paige-decided-record]`)?.focus({ preventScroll: true });
+  }, [messages]);
+  // Which answers' "What PAIGE did" is open (the Stop footer's "See what finished" opens one).
+  const [turnTraceOpen, setTurnTraceOpen] = useState<Record<string, boolean>>({});
+  // The live approval card scrolled out of view → a quiet hint above the composer (frame a2).
+  const [approvalOffscreen, setApprovalOffscreen] = useState(false);
+  const approvalObserverRef = useRef<IntersectionObserver | null>(null);
+  const observeLiveApproval = useCallback((node: HTMLDivElement | null) => {
+    approvalObserverRef.current?.disconnect();
+    approvalObserverRef.current = null;
+    if (!node) { setApprovalOffscreen(false); return; }
+    if (typeof IntersectionObserver !== "function") return;
+    const io = new IntersectionObserver((entries) => setApprovalOffscreen(!entries[0]?.isIntersecting));
+    io.observe(node);
+    approvalObserverRef.current = io;
+  }, []);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const atLatestRef = useRef(true);
   const hasNewerContentRef = useRef(false);
@@ -633,9 +744,13 @@ const PaigeAIChatInner = ({
     setStreamedLiveCard(null);
   }, []);
 
-  const cancelSoloRequest = useCallback(() => {
+  const cancelSoloRequest = useCallback((opts?: { fromVoice?: boolean }) => {
     if (!soloTenantSafety) return;
     const cancelledTurn = retryTurnRef.current;
+    // C3a — the answer's line says "Stopped by you" and keeps the step that had started, marked as
+    // possibly still finishing. Settled BEFORE the abort, which would otherwise drop that step.
+    // A Live voice interruption stops the read too, but never moves keyboard focus.
+    settleLiveTurn("cancelled", undefined, { stopFocus: !opts?.fromVoice });
     abortActiveRequest();
     // A decision is never rolled back: an approval may already have reached Paige and run, and
     // putting its card back would offer a second Approve for something that may be done. Its
@@ -644,7 +759,7 @@ const PaigeAIChatInner = ({
     if (cancelledTurn?.live || cancelledTurn?.decision) retryTurnRef.current = null;
     setCancelled(true);
     setConnectionIssue(null);
-  }, [abortActiveRequest, soloTenantSafety]);
+  }, [abortActiveRequest, settleLiveTurn, soloTenantSafety]);
 
   const syncTranscriptPosition = useCallback(() => {
     transcriptScrollRef.current?.handleScroll();
@@ -715,6 +830,8 @@ const PaigeAIChatInner = ({
     setMessages([mkMsg({ role: "assistant", content: scopeNotice ?? openingGreeting })]);
     setAttachedDoc(null);
     setSteps([]);
+    writeLiveTurn(null);
+    setTurnTraceOpen({});
     setCancelled(false);
     setConnectionIssue(null);
     retryTurnRef.current = null;
@@ -748,6 +865,7 @@ const PaigeAIChatInner = ({
     scopedUserId,
     setActiveThreadId,
     setAttachedDoc,
+    writeLiveTurn,
   ]);
 
   useEffect(() => {
@@ -841,6 +959,18 @@ const PaigeAIChatInner = ({
         // stored turn has none, omit it and the hover time simply hides (never faked).
         const tid = (t as { id?: string }).id;
         const created = (t as { created_at?: string }).created_at;
+        // C3a — the saved turn state and trace rebuild the same "What PAIGE did" the live turn showed
+        // (labels, status and department; the record keeps no step detail and no duration). An old
+        // row with no record keeps no line, exactly as before.
+        const record = t.role === "assistant" ? readTurnRecord(b.turn_state) : null;
+        const turnSnapshot: TurnSnapshot | undefined = record ? {
+          outcome: outcomeFromRecord(record),
+          rows: readTurnTrace(b.turn_trace),
+          elapsedMs: null,
+          endCause: null,
+          source: "reload",
+          hasContent: t.content.trim() !== "",
+        } : undefined;
         return mkMsg({
           ...(tid ? { id: tid } : {}),
           ...(created ? { ts: Date.parse(created) } : {}),
@@ -865,9 +995,26 @@ const PaigeAIChatInner = ({
               }))
             : undefined,
           artifacts: artifacts?.length ? artifacts : undefined,
+          ...(turnSnapshot ? { turnSnapshot } : {}),
         });
         if (turnResearchRefs?.length) researchRefsAll.push(...turnResearchRefs);
       });
+    // C3a — a decision sentence the approval card sent on the person's behalf is hidden on reload too,
+    // but ONLY when it is anchored: exactly one of the client's own two sentences AND directly after
+    // an answer that carried a card (`bundle_ref.paige_confirm`). The same words typed anywhere else
+    // are the person's own and stay visible. The card's settled line gains a receipt of what they
+    // said — never a claim about what ran.
+    for (let i = 1; i < mapped.length; i += 1) {
+      const m = mapped[i];
+      const prev = mapped[i - 1];
+      if (m.role !== "user" || prev.role !== "assistant" || !prev.confirm?.length) continue;
+      const said = isDecisionReplyText(m.content);
+      if (!said) continue;
+      mapped[i] = { ...m, decision: said };
+      const created = turns.find((t) => (t as { id?: string }).id === m.id) as { created_at?: string } | undefined;
+      const at = created?.created_at ? Date.parse(created.created_at) : NaN;
+      mapped[i - 1] = { ...prev, confirmReceipt: { decision: said, ts: Number.isFinite(at) ? at : null, result: decisionCardResult(m.content) } };
+    }
       // R2b §12 — resolve the research references through the governed get RPC after the
       // transcript paints (history load never blocks on research reads). A resolved run
       // upgrades the card to the full evidence (the SAME payload shape the Research
@@ -997,6 +1144,8 @@ const PaigeAIChatInner = ({
       applyConversationEvent({ type: "thread-loaded", id });
       if (!soloTenantSafety && !isThreadControlled) setActiveThreadId(id);
       setSteps([]);
+      writeLiveTurn(null);
+      setTurnTraceOpen({});
       if (soloTenantSafety) {
         setConnectionIssue(null);
         retryTurnRef.current = null;
@@ -1027,6 +1176,8 @@ const PaigeAIChatInner = ({
     setActiveThreadId(null);
     setMessages([mkMsg({ role: "assistant", content: openingGreeting })]);
     setSteps([]);
+    writeLiveTurn(null);
+    setTurnTraceOpen({});
     setCancelled(false);
     setConnectionIssue(null);
     retryTurnRef.current = null;
@@ -1108,6 +1259,8 @@ const PaigeAIChatInner = ({
       applyConversationEvent({ type: "new-chat-requested" });
       setMessages([mkMsg({ role: "assistant", content: openingGreeting })]);
       setSteps([]);
+      writeLiveTurn(null);
+      setTurnTraceOpen({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abortActiveRequest, controlledThreadId, enableHistory, isThreadControlled]);
@@ -1162,14 +1315,27 @@ const PaigeAIChatInner = ({
       return;
     }
     const newMessages = base;
+    const assistantId = safeUuid();
+    const assistantTs = Date.now();
     if (!claimRequestBusy(requestTicket)) return;
     setCancelled(false);
     setSteps([]); // fresh "watch her work" trace per turn
     setWritingPhase(false); // #11 — back to "Thinking…" until the first token this turn
     setCompacting(null); // #12 — clear any prior turn's compacting card
     setStreamedLiveCard(null);
+    // C3a — this answer's living status. Nothing is drawn for the first 400 ms: a fast answer
+    // should feel instant, not staged. A previous read still open (Approve pressed mid-stream)
+    // settles first, so its answer keeps the line it earned instead of losing it.
+    settleLiveTurn("done");
+    writeLiveTurn({
+      assistantId, startedAt: assistantTs, frame: null, rows: [], writing: false, gateOpen: false,
+      streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true,
+    });
+    const gateId = window.setTimeout(() => updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true })), TURN_LINE_GATE_MS);
     const timeoutId = soloTenantSafety ? window.setTimeout(() => {
       if (!ticketAccepted(requestTicket)) return;
+      // The line stops honestly ("Stopped listening at six minutes"), never "Done".
+      settleLiveTurn("timeout", assistantId);
       abortActiveRequest();
       if (voiceSink) {
         voiceSink.failed();
@@ -1185,8 +1351,6 @@ const PaigeAIChatInner = ({
         setConnectionIssue("timeout");
       }
     }, PAIGE_INTERACTIVE_TURN_BUDGET_MS) : null;
-    const assistantId = safeUuid();
-    const assistantTs = Date.now();
     let liveRequestDispatched = false;
     // THE CARD THAT ANSWERS FOR AN APPROVAL (owner-approved recovery design, 2026-09-26). It is on
     // screen the moment Approve is pressed, saying Running…, and it settles when the server reports
@@ -1275,7 +1439,9 @@ const PaigeAIChatInner = ({
           body: JSON.stringify({
             // An approval turn Paige never got to put words to carries what its card showed, since the
             // server refuses an empty message and that turn stays on screen (approvalOutcome.ts).
-            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.map((m) =>
+            // C3a's display-only fields (an answer's `turnSnapshot` and reloaded `confirmReceipt`, a
+            // decision turn's `decision`) never ride the wire: what is sent is the shape it was before C3.
+            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.map(({ turnSnapshot: _view, confirmReceipt: _receipt, decision: _decided, ...m }) =>
               m.role === "assistant" && m.content.trim() === "" && m.approvalOutcome
                 ? { ...m, content: approvalOutcomeTranscript(m.approvalOutcome) } : m),
             ...(voiceSink ? { liveRuntimeChallenge: voiceSink.challenge } : {}),
@@ -1383,7 +1549,8 @@ const PaigeAIChatInner = ({
       // reader runs with `stopAtDone: false` and this loop breaks on `[DONE]` itself, so once halted
       // a later `[DONE]` is skipped and the turn still waits for the body to close.
       //
-      // The `paige_turn` frame has no branch below and is dropped — no state, nothing rendered.
+      // The `paige_turn` frame (C1) is THE control signal for this answer's status line (C3a). It is
+      // read by name before the raw dispatch below, and it changes nothing else.
       let halted = false;
       for await (const { frame, raw } of readPaigeStreamWithRaw(response.body, { stopAtDone: false, malformed: "drain" })) {
         if (!ticketAccepted(requestTicket)) return;
@@ -1394,6 +1561,11 @@ const PaigeAIChatInner = ({
           break;
         }
         if (frame.type === "malformed") { halted = true; continue; }
+        if (frame.type === "turn") {
+          const turnFrame = frame.turn;
+          updateLiveTurn(assistantId, (t) => ({ ...t, frame: turnFrame }));
+          continue;
+        }
         try {
           // The parsed JSON exactly as JSON.parse returned it, read with the optional chaining the
           // branches below always used. A frame that throws here (JSON `null`, for one) halts the
@@ -1411,6 +1583,8 @@ const PaigeAIChatInner = ({
           // Structured event: a "watch her work" step (#95). Upsert by id, sorted by seq.
           if (parsed.paige_step) {
             setSteps((prev) => upsertStep(prev, parsed.paige_step as PaigeStepFrame));
+            const stepFrame = parsed.paige_step as unknown;
+            updateLiveTurn(assistantId, (t) => ({ ...t, rows: upsertTurnRow(t.rows, stepFrame, Date.now()) }));
             continue;
           }
           const liveCard = parseLiveConversationCard(parsed.paige_live_card);
@@ -1420,7 +1594,11 @@ const PaigeAIChatInner = ({
           }
           // #11 — the server confirmed the transition into the reply. A lightweight signal; the
           // client also derives "writing" from the first content delta below, so this is belt-and-braces.
-          if (parsed.paige_phase === "writing") { setWritingPhase(true); continue; }
+          if (parsed.paige_phase === "writing") {
+            setWritingPhase(true);
+            updateLiveTurn(assistantId, (t) => ({ ...t, writing: true }));
+            continue;
+          }
           // The server refused the focused client — that client does not belong to this
           // workspace. This frame shipped for several releases with NO consumer anywhere in the
           // app (zero hits repo-wide), which the handler's own comment described as "an
@@ -1640,6 +1818,10 @@ const PaigeAIChatInner = ({
       // closed is dropped, so the trace and the strip stop saying she is at work. A superseded
       // request leaves the trace alone: it now belongs to the turn that replaced it.
       if (ticketAccepted(requestTicket)) setSteps(settleOpenSteps);
+      // C3a — however an accepted read ended, the answer's line settles. A rolled-back answer is gone
+      // from the transcript, so nothing is stamped and nothing is drawn for it.
+      if (ticketAccepted(requestTicket)) settleLiveTurn("done", assistantId);
+      window.clearTimeout(gateId);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
       if (businessMissionId && ticketAccepted(requestTicket)) {
         window.dispatchEvent(new CustomEvent("business-mission:refresh", { detail: { missionId: businessMissionId } }));
@@ -1720,11 +1902,15 @@ const PaigeAIChatInner = ({
     setDictationGeneration(dictationGenerationRef.current);
     const rollback = messages;
     let userContent = text || (currentDoc ? `Analyze this document: ${currentDoc.name}` : "");
-    // Solo: the card that asked settles into a record of the answer, in place. `rollback` keeps the
-    // live card, so a decision that never leaves puts it back exactly as it was.
-    const decision = soloTenantSafety
-      ? approvedFingerprints?.length ? "approved" as const : declinedFingerprints?.length ? "declined" as const : undefined
-      : undefined;
+    // The card that asked settles into a record of the answer, in place. `rollback` keeps the live
+    // card, so a decision that never leaves puts it back exactly as it was.
+    //
+    // C3a — NO LONGER SOLO-ONLY. The decision sentence below is now hidden in presentation on every
+    // mount, and on the drawer mount the decided card used to simply vanish — hiding the bubble too
+    // would have erased the only visible trace of the decision. So the drawer card settles into the
+    // same record (§58: an addition there, not a removal). What a decision turn RUNS is unchanged:
+    // `decisionTurn` / `approvalTurn` in streamTurn and the outcome stamp below stay Solo-gated.
+    const decision = approvedFingerprints?.length ? "approved" as const : declinedFingerprints?.length ? "declined" as const : undefined;
     const decided = approvedFingerprints?.length ? approvedFingerprints : declinedFingerprints ?? [];
     // PR 2b — the approved card executes the STORED proposal. A CRM-door confirmation carries
     // its canonical command; the door claims the stored row atomically and executes the decided
@@ -1915,7 +2101,7 @@ const PaigeAIChatInner = ({
           }),
         } : {}),
         confirmDecision: decision && !reproposedAny ? decision : undefined,
-        ...(executedStamp ? { approvalOutcome: executedStamp } : {}),
+        ...(executedStamp && soloTenantSafety ? { approvalOutcome: executedStamp } : {}),
       };
     }) : messages;
     const base = [
@@ -1924,8 +2110,13 @@ const PaigeAIChatInner = ({
         role: "user",
         content: userContent,
         ...(currentDoc ? { documentFileName: currentDoc.name, documentKind: currentDoc.kind } : {}),
+        // C3a — the card's own sentence: kept in `messages`, so the content the server receives, the
+        // model's history and the saved thread are what they were before C3; the `decision` mark is
+        // stripped at the POST and only decides where the transcript is drawn.
+        ...(decision ? { decision } : {}),
       }),
     ];
+    if (askedAt >= 0 && (decision === "declined" || (decision && !soloTenantSafety))) decisionFocusRef.current = messages[askedAt].id;
     setMessages(base);
     if (currentDoc) setAttachedDoc(null);
     // Once the stored proposal has EXECUTED, the rollback snapshot is the post-decision state:
@@ -2184,10 +2375,10 @@ const PaigeAIChatInner = ({
       workingLabel={steps.at(-1)?.label ?? (writingPhase ? "Preparing your response" : null)}
       confirmationFingerprints={displayedConfirmationFingerprints}
       onAnswer={(answer) => void handleSend(answer)}
-      onApprove={(fingerprints) => void handleSend("Approved — run it.", fingerprints)}
-      onDecline={(fingerprints) => void handleSend("Hold off — skip that one.", undefined, fingerprints)}
+      onApprove={(fingerprints) => void handleSend(DECISION_REPLY.approved, fingerprints)}
+      onDecline={(fingerprints) => void handleSend(DECISION_REPLY.declined, undefined, fingerprints)}
       onVoiceTurn={(text, sink) => handleSend(text, undefined, undefined, sink)}
-      onVoiceInterrupt={cancelSoloRequest}
+      onVoiceInterrupt={() => cancelSoloRequest({ fromVoice: true })}
     />
   ) : null;
 
@@ -2212,6 +2403,93 @@ const PaigeAIChatInner = ({
       <X className="h-4 w-4" aria-hidden />
     </Button>
   ) : null;
+
+  // ── C3a — the living status on each PAIGE answer ─────────────────────────────────────────────
+  // The approval card for this answer is live: on screen and undecided. The SAME condition that
+  // draws the decide card below, so the line can never wait on a card that is not there.
+  const confirmCardLive = (message: Message, index: number) =>
+    !!message.confirm?.length && !message.confirmResolved && !message.confirmDecision
+    && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint))));
+  const assistantIsEmpty = (m: Message) =>
+    !m.content.trim() && !m.approvalOutcome && !m.queued?.length && !m.crmResults?.length && !m.research?.length
+    && !m.confirm?.length && !m.artifacts?.length && !m.extractionProposal;
+  const liveInputFor = (lt: LiveTurn, hasContent: boolean, awaitingApproval: boolean) => ({
+    frame: lt.frame, rows: lt.rows, streaming: lt.streaming, writing: lt.writing, gateOpen: lt.gateOpen,
+    startedAt: lt.startedAt, endCause: lt.endCause, elapsedMs: lt.elapsedMs, hasContent, awaitingApproval,
+    personaName: persona.name,
+  });
+  const turnViewFor = (message: Message, index: number): TurnView | null => {
+    if (message.role !== "assistant") return null;
+    const awaitingApproval = confirmCardLive(message, index);
+    if (liveTurn && liveTurn.assistantId === message.id) {
+      return deriveLiveTurnView({ ...liveInputFor(liveTurn, message.content.trim() !== "", awaitingApproval), now: Date.now() });
+    }
+    return message.turnSnapshot ? deriveSnapshotView(message.turnSnapshot, { personaName: persona.name, awaitingApproval }) : null;
+  };
+  // "Ask again" puts the original request back in the composer and never sends it: a request that
+  // already did things (wrote to the CRM, for one) would be repeated if it were re-sent by itself.
+  const askAgainFor = (original: string | undefined) => {
+    if (!original || isDecisionReplyText(original) || !composerScope.writable) return undefined;
+    return () => {
+      setInput((current) => !current.trim() ? original : current.includes(original) ? current : mergeIntoDraft(current, original));
+      requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
+    };
+  };
+  const openTurnTrace = (id: string, open: boolean) => setTurnTraceOpen((m) => ({ ...m, [id]: open }));
+  // Opening "What PAIGE did" is the person's own move: the transcript stops following the bottom
+  // and holds that answer where it is, so the line they pressed stays in view while the list grows
+  // beneath it (the drawer is short; pinned-to-bottom used to push the line out of sight).
+  const holdTurnLine = (line: HTMLElement) => transcriptScrollRef.current?.holdMessageAt(line);
+  const renderTurnLine = (message: Message, index: number, view: TurnView | null) => {
+    if (!view) return null;
+    const common = {
+      idBase: `turn-${message.id}`,
+      open: turnTraceOpen[message.id] ?? false,
+      onOpenChange: (open: boolean) => openTurnTrace(message.id, open),
+      onTraceToggle: holdTurnLine,
+      personaName: persona.name,
+    };
+    if (liveTurn && liveTurn.assistantId === message.id) {
+      const awaiting = confirmCardLive(message, index);
+      // One voice per state. The approval card announces "Needs your OK" itself and the report card
+      // announces its own outcome, so the line stays quiet when either is speaking for the answer.
+      const speaks = !awaiting && !message.approvalOutcome;
+      return <PaigeLiveTurnStatus input={liveInputFor(liveTurn, message.content.trim() !== "", awaiting)} announce={speaks} {...common} />;
+    }
+    return <PaigeTurnStatus view={view} {...common} />;
+  };
+  // After Stop the existing rollback leaves the request in the composer. When it is there, the
+  // footer says so and offers no "Ask again" — that button would do nothing new. When it is not
+  // (a decision turn, which is never rolled back), "Ask again" puts it back.
+  const footerFor = (footer: NonNullable<TurnView["footer"]>, kind: TurnView["kind"], original: string | undefined) => {
+    const inComposer = kind === "stop" && !!original?.trim() && input.includes(original.trim());
+    if (!inComposer) return footer;
+    return {
+      text: `${footer.text} Your question is back in the message box.`,
+      actions: footer.actions.filter((a) => a !== "askAgain"),
+    };
+  };
+  const renderTurnFooter = (message: Message, index: number, view: TurnView | null) => {
+    if (!view?.footer) return null;
+    const live = liveTurn?.assistantId === message.id;
+    const original = live ? liveTurn?.userText : precedingUserText(index);
+    return (
+      <PaigeTurnFooter
+        footer={footerFor(view.footer, view.kind, original)}
+        onAskAgain={askAgainFor(original)}
+        onSee={() => openTurnTrace(message.id, true)}
+        focusOnMount={live && liveTurn?.endCause === "cancelled" && liveTurn.stopFocus}
+        quietAskAgain={view.kind === "stop"}
+        disabled={composerSendBlocked}
+      />
+    );
+  };
+  // Before the response arrives — and after a Stop or the six-minute window took the answer off the
+  // transcript — the live turn has no message to sit in. It is drawn in the same bubble, in place.
+  const orphanTurn = liveTurn && !messages.some((m) => m.id === liveTurn.assistantId)
+    && (liveTurn.streaming || liveTurn.endCause === "cancelled" || liveTurn.endCause === "timeout")
+    ? liveTurn : null;
+  const orphanView = orphanTurn ? deriveLiveTurnView({ ...liveInputFor(orphanTurn, false, false), now: Date.now() }) : null;
 
   // Built once and reused by BOTH the rail and the header — so a caller's header
   // that draws its own "new thread" button (CD's pack does) and a caller's rail
@@ -2328,14 +2606,29 @@ const PaigeAIChatInner = ({
                 cd ? "px-4 py-3.5 space-y-4" : "p-6 space-y-4",
               )}
             >
-            {messages.map((message, index) => (
+            {messages.map((message, index) => {
+              // C3a — the approval card's own sentence is not drawn (owner ruling 2026-10-05: no
+              // visible "Approved — run it." bubble). It stays in `messages`, in every POST and in the
+              // saved thread; only this drawing skips it.
+              if (message.role === "user" && message.decision) return null;
+              const turnView = turnViewFor(message, index);
+              // An answer with nothing to show yet (the first 400 ms) draws no empty bubble.
+              if (message.role === "assistant" && !turnView && assistantIsEmpty(message)) return null;
+              // The answer that follows a decision reads as part of the same piece of work — a closer
+              // gap, nothing more. It keeps its own line and its own steps: the server still runs it
+              // as a new request, and nothing here says otherwise (server-carried resume is C4).
+              const continues = message.role === "assistant" && index > 0
+                && messages[index - 1]?.role === "user" && !!messages[index - 1]?.decision;
+              return (
               <div
                 key={message.id}
                 data-paige-message-id={message.id}
                 data-paige-message-anchor-key={messageScrollAnchorKey(message.role, message.content)}
+                data-paige-continues={continues ? "approval" : undefined}
                 className={cn(
                   "flex min-w-0",
                   message.role === "user" ? "flex-row-reverse" : "w-full flex-row",
+                  continues && "!mt-2",
                 )}
               >
                 <div
@@ -2361,6 +2654,10 @@ const PaigeAIChatInner = ({
                           message.role === "user"
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted/30 border border-border",
+                          // C3a — an answer carrying a status line or an approval card takes the
+                          // column (still capped at 80%), so the line and the card are not squeezed
+                          // into a bubble shrunk to its first sentence.
+                          message.role === "assistant" && (turnView || (!!message.confirm?.length && !message.confirmResolved)) && "w-full",
                         ),
                   )}
                 >
@@ -2368,6 +2665,10 @@ const PaigeAIChatInner = ({
                     const { before, diagram, after } = extractEntityDiagram(message.content);
                     return (
                       <>
+                        {/* C3a — the status line leads the answer: what PAIGE is doing, is waiting
+                            on, or did. Then the approval report, then her words (Q1: one order,
+                            live and on reload, so a saved answer never rearranges itself). */}
+                        {renderTurnLine(message, index, turnView)}
                         {/* The approval this turn ran, answered for first: Running… while it runs,
                             then what became of each action. Paige's words follow it. */}
                         {message.approvalOutcome && (() => {
@@ -2423,7 +2724,8 @@ const PaigeAIChatInner = ({
                             task, the old gate hid cards for the entire multi-round duration.
                             Clicking Approve mid-stream supersedes the model's turn (the
                             approval click aborts the current stream and dispatches directly). */}
-                        {!!message.confirm?.length && !message.confirmResolved && !message.confirmDecision && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint)))) && (
+                        {confirmCardLive(message, index) && (
+                          <div ref={observeLiveApproval} data-paige-live-decide>
                           <PaigeConfirmCard
                             // Summary and fingerprint stay PAIRED. The previous version built two
                             // parallel arrays and `.filter()`ed the fingerprints, so one action
@@ -2438,20 +2740,36 @@ const PaigeAIChatInner = ({
                             // Solo: after "Ask Paige again" the button that was pressed is gone, so
                             // the fresh card takes focus — but only when nothing else holds it.
                             focusOnMount={soloTenantSafety}
-                            onApprove={(fps) => void handleSend("Approved — run it.", fps)}
+                            onApprove={(fps) => void handleSend(DECISION_REPLY.approved, fps)}
                             // Declining CANCELS the stored proposal, rather than only saying so in
                             // prose the model interprets. Without this the row stays live for its
                             // full window, and a later turn could still act on something the
                             // person had already said no to.
-                            onDeny={(fps) => void handleSend("Hold off — skip that one.", undefined, fps)}
+                            onDeny={(fps) => void handleSend(DECISION_REPLY.declined, undefined, fps)}
                           />
+                          </div>
                         )}
                         {/* Solo: decided in this session. The card is now a record of the answer. */}
                         {!!message.confirm?.length && !message.confirmResolved && message.confirmDecision && (
-                          <PaigeConfirmRecord
-                            decision={message.confirmDecision}
-                            count={message.confirm.filter((c) => !!c.fingerprint).length || message.confirm.length}
-                          />
+                          // Focusable (never in the Tab order): it receives focus when the decided
+                          // card's button disappears, so a keyboard user keeps their place.
+                          <div tabIndex={-1} data-paige-decided-record className="w-fit max-w-full rounded-md outline-offset-2">
+                            <PaigeConfirmRecord
+                              decision={message.confirmDecision}
+                              count={message.confirm.filter((c) => !!c.fingerprint).length || message.confirm.length}
+                            />
+                            {/* C3a — the hidden decision sentence carried the client's own verified
+                                result. Where no report card answers for it (the drawer), it is
+                                drawn here, so hiding the bubble never hides whether it ran. */}
+                            {(() => {
+                              const next = messages[index + 1];
+                              const result = !message.approvalOutcome && next?.role === "user" && next.decision
+                                ? decisionCardResult(next.content) : null;
+                              return result ? (
+                                <p className="mt-1.5 text-xs text-muted-foreground" data-paige-card-result>Result: {result}</p>
+                              ) : null;
+                            })()}
+                          </div>
                         )}
                         {/* Reloaded from history: the confirm moment already passed —
                             show it settled, never a live Approve button (§15). */}
@@ -2459,7 +2777,20 @@ const PaigeAIChatInner = ({
                           <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5">
                             <p className="text-xs text-muted-foreground">
                               Earlier, Paige asked you to confirm: {message.confirm.map((c) => c.summary).join("; ")}
+                              {/* C3a — what the person said, from the saved turn after it. Never
+                                  a claim about whether it ran. */}
+                              {message.confirmReceipt && (
+                                <>
+                                  {" · "}You {message.confirmReceipt.decision === "approved" ? "approved" : "skipped"}
+                                  {message.confirmReceipt.ts !== null && <> · {new Date(message.confirmReceipt.ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</>}
+                                </>
+                              )}
                             </p>
+                            {/* The client's own verified result, saved in that turn — the only
+                                statement about whether it ran, and only when one was recorded. */}
+                            {message.confirmReceipt?.result && (
+                              <p className="mt-1 text-xs text-muted-foreground" data-paige-card-result>Result: {message.confirmReceipt.result}</p>
+                            )}
                           </div>
                         )}
                         {/* #29 — inline handoff cards for the deliverables Paige produced this turn. Open
@@ -2496,6 +2827,8 @@ const PaigeAIChatInner = ({
                             />
                           </div>
                         )}
+                        {/* C3a — what is true now, and the one way forward that exists. */}
+                        {renderTurnFooter(message, index, turnView)}
                       </>
                     );
                   })() : (
@@ -2542,26 +2875,45 @@ const PaigeAIChatInner = ({
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             {/* #11/#12 — live thinking timer + conversation-compacting card. It aligns
                 directly with PAIGE's messages; no portrait gutter is reserved. The card
                 renders only when the server streams a compacting frame, so this surface
                 persists threads and can genuinely fold (§13). */}
-            {(isLoading || compacting) && (
-              <div className="flex flex-col gap-2">
-                <PaigeThinkingIndicator
-                  active={isLoading}
-                  writing={writingPhase}
-                  thoughts={soloTenantSafety ? [] : thinkingThoughts}
-                  personaName={persona.name}
-                />
-                <PaigeCompactingCard signal={compacting} personaName={persona.name} />
+            {/* C3a — the live answer before it has a message to sit in (the request is in flight),
+                or after Stop / the six-minute window took it off the transcript. Same bubble, same
+                line; replaces the "Thinking…" pill and the old cancel notice, whose truth now lives
+                in the Stop footer. Thoughts are never drawn (owner proof 9). */}
+            {orphanTurn && orphanView && (
+              <div className="flex w-full min-w-0 flex-row" data-paige-pending-turn>
+                <div className={cd ? "min-w-0 flex-1 text-[13.5px] leading-[1.66]" : cn("group relative max-w-[80%] min-w-0 rounded-lg border border-border bg-muted/30 p-4", orphanView.footer && "w-full")}>
+                  <PaigeLiveTurnStatus
+                    input={liveInputFor(orphanTurn, false, false)}
+                    idBase={`turn-${orphanTurn.assistantId}`}
+                    announce
+                    open={turnTraceOpen[orphanTurn.assistantId] ?? false}
+                    onOpenChange={(open) => openTurnTrace(orphanTurn.assistantId, open)}
+                    onTraceToggle={holdTurnLine}
+                    personaName={persona.name}
+                  />
+                  {orphanView.footer && (
+                    <PaigeTurnFooter
+                      footer={footerFor(orphanView.footer, orphanView.kind, orphanTurn.userText)}
+                      onAskAgain={askAgainFor(orphanTurn.userText)}
+                      onSee={() => openTurnTrace(orphanTurn.assistantId, true)}
+                      focusOnMount={orphanTurn.endCause === "cancelled" && orphanTurn.stopFocus}
+                      quietAskAgain={orphanView.kind === "stop"}
+                      disabled={composerSendBlocked}
+                    />
+                  )}
+                </div>
               </div>
             )}
-            {soloTenantSafety && cancelled && !isLoading && (
-              <div role="status" className="rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-                Response stream cancelled locally. No later chunks will appear here; server-side work cancellation is not confirmed.
+            {compacting && (
+              <div className="flex flex-col gap-2">
+                <PaigeCompactingCard signal={compacting} personaName={persona.name} />
               </div>
             )}
             {soloTenantSafety && !composerScope.writable && !isLoading && composerScope.unavailableReason && (
@@ -2633,11 +2985,8 @@ const PaigeAIChatInner = ({
             </div>
           )}
 
-          {!hideReasoningStrip && !cd && (isLoading || visibleSteps.length > 0) && (
-            <div className="border-t border-border px-4 pt-3">
-              <PaigeReasoningStrip steps={visibleSteps} loading={isLoading} personaName={persona.name} />
-            </div>
-          )}
+          {/* C3a — the pinned "on watch / at work" strip is gone from this chrome (owner ruling,
+              OD1): each answer carries its own living line and its own "What PAIGE did" inline. */}
 
           <div
             className={cn(
@@ -2676,6 +3025,15 @@ const PaigeAIChatInner = ({
                   </button>
                 ))}
               </div>
+            )}
+            {/* C3a — the live approval card has scrolled out of view: say so, quietly. */}
+            {approvalOffscreen && !cd && (
+              // No live region: the line already said "needs your OK" once. Scrolling the card in and
+              // out of view must not say it again.
+              <p className="mb-2 flex items-center gap-1.5 px-1 text-xs text-muted-foreground" data-paige-approval-hint>
+                <Hand className="h-3.5 w-3.5 text-foreground/80" aria-hidden />
+                {persona.name || "PAIGE"} is waiting on your OK above
+              </p>
             )}
             {/* Pending attachment chip — sits above the input, removable (§13). */}
             {attachedDoc && (

@@ -27,7 +27,7 @@
 .tcc-text-button { border-color: transparent; background: transparent; color: var(--pg-muted); }
 .tcc-quiet-button:hover, .tcc-text-button:hover { border-color: var(--pg-line-strong); background: var(--pg-raised); color: var(--pg-ink); }
 .tcc-primary-button:hover { background: var(--pg-gold-core); }
-.tcc-core button:focus-visible, .tcc-core a:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: 3px; }
+.tcc-core button:focus-visible, .tcc-core a:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; } /* indigo, owner ruling 2026-10-05 */
 .tcc-core button:disabled { cursor: wait; opacity: .55; }
 .tcc-core svg { width: 15px; height: 15px; flex: none; }
 

@@ -192,6 +192,10 @@ async function ask(host: HTMLElement, text = "what is happening") {
 const all = (host: HTMLElement, id: string) =>
   Array.from(host.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`)).map((el) => JSON.parse(el.textContent ?? "null"));
 const thinking = (host: HTMLElement) => host.querySelector<HTMLElement>('[data-testid="thinking"]');
+// C3a — the per-answer status line that replaced the "Thinking…" pill and the pinned strip.
+const line = (host: HTMLElement) => Array.from(host.querySelectorAll<HTMLElement>("[data-paige-turn-line]")).at(-1) ?? null;
+const lineText = (host: HTMLElement) => line(host)?.querySelector(".ptl-text")?.textContent ?? null;
+const lineRows = (host: HTMLElement) => Array.from(line(host)?.querySelectorAll<HTMLElement>("[data-paige-turn-step]") ?? []).map((r) => r.dataset.status);
 const buttons = (host: HTMLElement, label: RegExp) =>
   Array.from(host.querySelectorAll<HTMLButtonElement>("button")).filter((b) => label.test(b.textContent ?? ""));
 const reports = (host: HTMLElement) => Array.from(host.querySelectorAll<HTMLElement>('[data-card-mode="report"]'));
@@ -387,7 +391,11 @@ describe("PaigeAIChat stream — a frame carrying more than one key keeps this s
 });
 
 describe("PaigeAIChat stream — the work she shows", () => {
-  it("upserts steps by id in seq order, and says Writing only on the writing phase or the first word", async () => {
+  // C3a (declared change): the "Thinking…/Writing…" pill is gone. A running step's label now leads
+  // the answer's own status line, and "Writing" is said only once the server says the answer is
+  // being written (its terminal frame or its writing phase) — never from the first word alone,
+  // which may be an acknowledgement before more work.
+  it("upserts steps by id in seq order; a running step's label leads the line through the phases", async () => {
     const afterSteps = deferred();
     const afterThinkingPhase = deferred();
     const afterWritingPhase = deferred();
@@ -407,12 +415,34 @@ describe("PaigeAIChat stream — the work she shows", () => {
     await ask(host);
     const last = trace.at(-1)!;
     expect(last.map((s) => [s.id, s.status])).toEqual([["a", "running"], ["b", "done"]]);
-    expect(thinking(host)?.dataset.writing).toBe("false");
+    expect(thinking(host)).toBeNull();
+    expect(lineText(host)).toBe("First step");
     await act(async () => { afterSteps.resolve(); await flush(); });
-    expect(thinking(host)?.dataset.writing).toBe("false");
+    expect(lineText(host)).toBe("First step");
     await act(async () => { afterThinkingPhase.resolve(); await flush(); });
-    expect(thinking(host)?.dataset.writing).toBe("true");
+    expect(lineText(host)).toBe("First step");
     await act(async () => { afterWritingPhase.resolve(); await flush(); });
+    expect(host.textContent).toContain("Answer.");
+  });
+
+  it("says Thinking between steps, and Writing only on the server's writing phase", async () => {
+    const afterThinking = deferred();
+    const afterWriting = deferred();
+    server(body([
+      frame({ paige_step: { ...step("b", 2, "Second step"), status: "done" } }),
+      frame({ paige_phase: "thinking" }),
+      afterThinking.promise,
+      frame({ paige_phase: "writing" }),
+      afterWriting.promise,
+      say("Answer."),
+      DONE,
+    ]));
+    const { host } = await mount();
+    await ask(host);
+    expect(lineText(host)).toBe("Thinking");
+    await act(async () => { afterThinking.resolve(); await flush(); });
+    expect(lineText(host)).toBe("Writing the answer");
+    await act(async () => { afterWriting.resolve(); await flush(); });
     expect(host.textContent).toContain("Answer.");
   });
 
@@ -443,7 +473,9 @@ describe("PaigeAIChat stream — the work she shows", () => {
     expect(host.textContent).not.toContain("Checking the calendar");
   });
 
-  it("a running step never closed is settled when the turn ends — the strip says Done, not at work", async () => {
+  // C3a (declared change): with no terminal frame there is no "Done" — the line settles without a
+  // check and claims nothing about how the turn ended.
+  it("a running step never closed is settled when the turn ends — no check without a FINAL, never at work", async () => {
     server(body([
       frame({ paige_step: step("a", 1, "Read your goals", "done") }),
       frame({ paige_step: step("b", 2, "Checking the calendar") }),
@@ -453,8 +485,11 @@ describe("PaigeAIChat stream — the work she shows", () => {
     const { host, trace } = await mount();
     await ask(host);
     expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["a", "done"]]);
-    expect(host.textContent).toContain("Done");
-    expect(host.textContent).not.toContain("PAIGE at work");
+    expect(line(host)?.dataset.kind).toBe("neutral");
+    expect(line(host)?.querySelector(".ptl-glyph svg")).toBeNull();
+    expect(lineRows(host)).toEqual(["done"]);
+    expect(host.textContent).not.toContain("Checking the calendar");
+    expect(host.querySelector("[data-sweep]")).toBeNull();
     expect(host.querySelector(".animate-spin")).toBeNull();
   });
 
@@ -470,11 +505,15 @@ describe("PaigeAIChat stream — the work she shows", () => {
     const second = await mount();
     await ask(second.host, "save it");
     expect(second.trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["c", "running"]]);
-    expect(second.host.textContent).toContain("PAIGE at work");
+    expect(lineText(second.host)).toBe("Saving the form");
+    expect(line(second.host)?.dataset.kind).toBe("work");
     const cancel = second.host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
     await act(async () => { cancel.click(); await flush(); });
     expect(second.trace.at(-1)).toEqual([]);
-    expect(second.host.textContent).not.toContain("PAIGE at work");
+    // C3a: the line stops, and the step that had started is kept as stopped — it may still finish.
+    expect(lineText(second.host)).toBe("Stopped by you");
+    expect(lineRows(second.host)).toEqual(["stopped"]);
+    expect(second.host.querySelector("[data-sweep]")).toBeNull();
     await act(async () => { hold.resolve(); await flush(); });
   });
 
@@ -500,7 +539,8 @@ describe("PaigeAIChat stream — the work she shows", () => {
 
     await act(async () => { firstHold.resolve(); await flush(); });
     expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["b", "running"]]);
-    expect(host.textContent).toContain("PAIGE at work");
+    expect(lineText(host)).toBe("Checking the calendar");
+    expect(line(host)?.dataset.kind).toBe("work");
     expect(host.textContent).not.toContain("late");
 
     await act(async () => { secondHold.resolve(); await flush(); });
@@ -516,13 +556,26 @@ describe("PaigeAIChat stream — the work she shows", () => {
     expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["a", "done"]]);
   });
 
-  it("flips to Writing on the first word when no phase frame came", async () => {
+  // C3a (declared change): the first word alone is not "Writing" — it may be an acknowledgement
+  // before more work. The terminal frame the server sends before the answer is what says so.
+  it("the first word alone claims nothing; the terminal before the answer says Writing", async () => {
     const hold = deferred();
     server(body([say("Hi"), hold.promise, DONE]));
     const { host } = await mount();
     await ask(host);
-    expect(thinking(host)?.dataset.writing).toBe("true");
+    expect(thinking(host)).toBeNull();
+    expect(lineText(host)).not.toBe("Writing the answer");
     await act(async () => { hold.resolve(); await flush(); });
+
+    const hold2 = deferred();
+    server(body([frame({ paige_turn: { v: 1, event: "completed", state: "FINAL", mode: "answer" } }), say("Hi"), hold2.promise, DONE]));
+    const second = await mount();
+    await ask(second.host);
+    // Inside the 400 ms gate nothing is drawn, even after the terminal: a fast reply stays instant.
+    expect(lineText(second.host)).toBeNull();
+    await act(async () => { await new Promise((r) => setTimeout(r, 450)); });
+    expect(lineText(second.host)).toBe("Writing the answer");
+    await act(async () => { hold2.resolve(); await flush(); });
   });
 
   it("shows the compacting card with the signal the server sent", async () => {

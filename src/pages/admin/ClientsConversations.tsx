@@ -44,6 +44,8 @@ import { ThreadRow } from "./conversations/ThreadRow";
 import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
+// INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, isApprovableDraft } from "./conversations/governedSend";
 // Shared conversation atoms (§18 one home) — the SAME bubble the operator Fleet inbox renders.
 import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBubble";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
@@ -125,6 +127,9 @@ function mergeContext(sel: SelectedView | null, sig?: Signature, snip?: Snippet)
 
 // ── Status pill mapping for a single message ─────────────────────────────────────
 function messageStatusPill(m: MessageRow) {
+  // A send the server stopped before it left (suppressed, do-not-disturb, no consent) is written
+  // 'blocked'. Without a pill it read as an ordinary sent bubble.
+  if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
   if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read")
     return <StatePill state="success">Sent</StatePill>;
@@ -166,8 +171,12 @@ function MessageBubble({
   approving: boolean;
   sendDisabled?: boolean;
 }) {
-  const isDraft = m.status === "draft";
+  // INT-328 — a governed send is written as a 'draft' row before it leaves. It is NOT awaiting
+  // approval (that was given and consumed), so it never gets the Approve & send card.
+  const governed = governedSendView(m);
+  const isDraft = m.status === "draft" && governed === null;
   const body = readableMessageBody(m);
+  const governedOpen = governed === "sending" || governed === "unconfirmed";
 
   // A Paige draft is a distinct, approval-forcing card — never a plain sent bubble (§36). This
   // gold "Approve & send" card IS an act (gold is earned), so it stays a TENANT-SIDE wrapper and
@@ -185,7 +194,7 @@ function MessageBubble({
           </div>
           {m.subject && <p className="mb-1 text-sm font-medium text-foreground">{m.subject}</p>}
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{body || "—"}</p>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button
               variant="gold"
               size="sm"
@@ -219,8 +228,19 @@ function MessageBubble({
       body={body}
       timestamp={m.sent_at ?? m.created_at}
       senderLabel={m.direction === "outbound" ? "You" : partyLabel(m.sender) || "Client"}
-      status={isCall ? voiceStatusPill(m) : messageStatusPill(m)}
-      error={m.status === "failed" ? m.error : null}
+      status={
+        isCall ? voiceStatusPill(m)
+        : governed === "sending" ? <StatePill state="pending">{GOVERNED_SEND_COPY.sending.pill}</StatePill>
+        : governed === "unconfirmed" ? (
+          // Amber deepened toward ink: the plain warning pill measured 3.75:1 in light at 10px
+          // (render-results.json). The same mix the approval card uses for its unconfirmed note.
+          <StatePill state="warning" className="text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]">
+            {GOVERNED_SEND_COPY.unconfirmed.pill}
+          </StatePill>
+        )
+        : messageStatusPill(m)
+      }
+      error={m.status === "failed" && !governedOpen ? m.error : null}
       subject={isCall ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
@@ -248,6 +268,11 @@ function MessageBubble({
         ) : undefined
       }
       footer={
+        governed === "unconfirmed" ? (
+          <p data-governed-send="unconfirmed" className="text-[11px] leading-4 text-foreground">
+            {GOVERNED_SEND_COPY.unconfirmed.line}
+          </p>
+        ) :
         // R-B1/R3: a queued scheduled outbound is findable + cancellable in the thread.
         m.status === "queued" && m.scheduled_for ? (
           <button
@@ -260,6 +285,15 @@ function MessageBubble({
         ) : undefined
       }
     />
+  );
+}
+
+// "Needs attention" counts a draft waiting on the owner; a governed send already approved is not one.
+function needsAttention(thread: DbThread, msgs: MessageRow[], nowMs: number): boolean {
+  return conversationNeedsAttention(
+    thread,
+    msgs.filter((m) => !(m.status === "draft" && governedSendView(m) !== null)),
+    nowMs,
   );
 }
 
@@ -413,7 +447,7 @@ export default function ClientsConversations() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
     const [msgRes, connRes, snipRes, sigRes, tplRes, tidRes] = await Promise.all([
-      sb.from("messages").select(MESSAGE_COLS).order("sent_at", { ascending: false, nullsFirst: true }).limit(500),
+      sb.from("messages").select(`${MESSAGE_COLS}, ${GOVERNED_SEND_COLS}`).order("sent_at", { ascending: false, nullsFirst: true }).limit(500),
       sb.from("channel_connectors").select("id, channel_type, provider, display_name, from_address, from_name, inbound_address, status, active").order("created_at", { ascending: true }),
       sb.from("snippets").select("id, user_id, trigger, name, body, variables"),
       sb.from("signatures").select("id, user_id, name, html, variables, is_default"),
@@ -609,9 +643,9 @@ export default function ClientsConversations() {
     const msgs = messagesByKey.get(t.thread_key) ?? [];
     switch (view) {
       case "attention":
-        return conversationNeedsAttention(t, msgs, nowMs);
+        return needsAttention(t, msgs, nowMs);
       case "drafts":
-        return msgs.some((m) => m.status === "draft" && m.direction === "outbound");
+        return msgs.some(isApprovableDraft);
       case "awaiting-reply":
         return t.last_direction === "outbound" && !!t.last_message_at
           && (nowMs - new Date(t.last_message_at).getTime()) > 3 * 864e5 && !t.archived_at
@@ -639,10 +673,10 @@ export default function ClientsConversations() {
     let n = 0;
     for (const t of dbThreads) {
       const msgs = messagesByKey.get(t.thread_key) ?? [];
-      if (isSolo ? conversationNeedsAttention(t, msgs, nowMs) : (
+      if (isSolo ? needsAttention(t, msgs, nowMs) : (
         !t.archived_at
         && (!t.snoozed_until || new Date(t.snoozed_until).getTime() <= nowMs)
-        && (msgs.some((m) => m.status === "draft" && m.direction === "outbound")
+        && (msgs.some(isApprovableDraft)
           || (t.last_direction === "outbound" && !!t.last_message_at && nowMs - new Date(t.last_message_at).getTime() > 3 * 864e5))
       )) n++;
     }
@@ -748,7 +782,7 @@ export default function ClientsConversations() {
       (preview ? partyLabel(preview.direction === "inbound" ? preview.sender : preview.recipients?.[0]) : "") || "Unknown contact";
     return {
       key: selectedThread.thread_key, dbThread: selectedThread, messages: msgs, channel, name,
-      hasDraft: msgs.some((m) => m.status === "draft"),
+      hasDraft: msgs.some(isApprovableDraft),
       contactId: selectedThread.contact_id, connectorId: preview?.connector_id ?? null, toAddress,
     };
   }, [selectedThread, messagesByKey]);
@@ -1249,7 +1283,7 @@ export default function ClientsConversations() {
       snoozedUntil: t.snoozed_until,
       archivedAt: t.archived_at,
       channel: p?.channel_type ?? "email",
-      hasDraft: p?.status === "draft",
+      hasDraft: !!p && isApprovableDraft(p),
       scheduled: p?.status === "queued" && !!p.scheduled_for,
       raw: t,
     };
@@ -1294,7 +1328,7 @@ export default function ClientsConversations() {
         selected={ctx.selected}
         selectionActive={ctx.selectionActive}
         onToggleSelect={ctx.onToggleSelect}
-        needsAttention={isSolo && conversationNeedsAttention(t.raw, messagesByKey.get(t.key) ?? [], Date.now())}
+        needsAttention={isSolo && needsAttention(t.raw, messagesByKey.get(t.key) ?? [], Date.now())}
       />
     ),
     renderFilters: () => (

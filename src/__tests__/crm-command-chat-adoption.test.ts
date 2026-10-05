@@ -215,7 +215,7 @@ describe("Paige Chat canonical CRM adoption", () => {
   it("adopts the command door approval and truthful result contract", () => {
     expect(chat).toContain('crmBody.outcome === "approval_required"');
     expect(chat).toContain("confirm_fingerprint: crmBody.fingerprint");
-    expect(chat).toContain('.in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES])');
+    expect(chat).toContain('.in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...COMMS_EMAIL_TOOL_NAMES])');
     expect(chat).toContain("Nothing changed yet");
     expect(chat).toContain("external_effect: false");
     expect(chat).toContain("No email or SMS was sent and no call was placed");

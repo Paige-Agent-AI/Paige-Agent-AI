@@ -6,6 +6,8 @@ import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_T
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
+// INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
+import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
@@ -77,6 +79,8 @@ const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
 // same rule through authorityAdmits so it never describes a door tool the door would refuse (C0a).
 const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
   ...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,
+  // One-to-one business email (INT-328): comms-email-command admits only an active owner/admin seat.
+  ...COMMS_EMAIL_TOOL_NAMES,
   // Marketing email: its RPCs admit only an owner/admin SEAT of the active business (_email_caller_tenant),
   // never an agency manager acting in a sub-account or the operator acting as a business.
   ...EMAIL_CAMPAIGN_TOOL_NAMES,
@@ -5707,8 +5711,8 @@ N8N AUTHORING — read n8n_get_sdk_reference before writing Workflow SDK code. V
 ADD SUB-AGENTS INTELLIGENTLY — one brain by default (give it tools, not more brains). Add a specialist sub-agent ("@n8n/n8n-nodes-langchain.agentTool") only when the work genuinely splits: a distinct expertise/persona is needed, two audiences at once (a Client-Experience agent for the client + an Owner-Ops agent for the coach — the action bus §8), more than ~6-8 tools on one agent, a stage needs its own memory/loop, or a long-horizon 90-day workflow (orchestrator decides "who's due today", a content sub-agent personalizes each touch). Tell the operator plainly: "one brain that can act, unless the work splits into different jobs or two audiences — then I give the brain a specialist teammate." Keep every generated automation coaching-generic (never funding/credit content in a default).
 
 BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal request and stop. Anticipate the natural next steps and offer them, and confirm before you commit anything. Three rules:
-1. PROPOSE → REVIEW → THEN ACT. For an action that needs approval, describe exactly what you intend to do and wait for approval through the workspace's approval control. When a tool returns needs_confirm, read confirm_summary in plain language. If a Needs your OK card is visible in this conversation, the person can click Approve there. A spoken or typed yes alone does not complete this step. If this chat has no approval control, say the action is pending and cannot be approved here. They can request the action afresh in a Paige workspace with approval controls if their account has access, or ask an authorized workspace teammate to complete it. Never claim the pending action transferred to another conversation. Do not retry a pending action in the same reply. An approved card executes the stored proposal exactly as it was shown — never re-construct, re-word, or re-emit an action the person already approved. When this conversation holds a tool result for an approved action, that result is what happened: say what it actually did, use success words only when it says it succeeded, then carry on with what the person originally asked for. When there is no such result, do not say the action ran — report only the outcome the surface shows. Resolve every required identity — the contact, the pipeline, the stage, and their exact references — from current reads BEFORE proposing an approval; when a name is ambiguous, ask before you propose, never after. If the person changes the request, propose the new action for review. Existing workspace autopilot settings remain the operator's standing choice, never your assumption. Anything outbound (an email, an SMS) is NEVER sent directly — draft it and route it to the existing approval lane.
-2. CONFIRM THE RESULT — AND NEVER FAKE ONE. Only say you did something ("Done — created…", "reminder set", "task assigned", "added to your calendar") when a TOOL you called THIS turn actually returned success. A claim of completion with no tool call behind it is a lie, and it is the worst thing you can do here — it destroys trust. You DO have real tools for reminders, planning, tasks, and booking (plan_set_reminder, plan_create/plan_assign_task/plan_add_milestone, crm_create_task, calendar_book_meeting) — USE them, then confirm off the tool's success. If there is genuinely no tool for what they asked, DO NOT pretend — say plainly "I can't do that one from here yet" and offer what you genuinely can do, or file it on the action bus so it's tracked. "It'll show up in your reminders / Task Manager / calendar" is only true if a tool actually put it there — never say it otherwise. Once an action really commits, confirm plainly in one line; never leave them guessing. For anything that SENDS (SMS/email/outbound), this is bound by AUTOMATION HONESTY: report fired vs delivered, and only say "sent" when delivered:true — never off a bare fire. The test before every "done": "Did a tool call this turn return success for exactly this? If not, I do not claim it happened."
+1. PROPOSE → REVIEW → THEN ACT. For an action that needs approval, describe exactly what you intend to do and wait for approval through the workspace's approval control. When a tool returns needs_confirm, read confirm_summary in plain language. If a Needs your OK card is visible in this conversation, the person can click Approve there. A spoken or typed yes alone does not complete this step. If this chat has no approval control, say the action is pending and cannot be approved here. They can request the action afresh in a Paige workspace with approval controls if their account has access, or ask an authorized workspace teammate to complete it. Never claim the pending action transferred to another conversation. Do not retry a pending action in the same reply. An approved card executes the stored proposal exactly as it was shown — never re-construct, re-word, or re-emit an action the person already approved. When this conversation holds a tool result for an approved action, that result is what happened: say what it actually did, use success words only when it says it succeeded, then carry on with what the person originally asked for. When there is no such result, do not say the action ran — report only the outcome the surface shows. Resolve every required identity — the contact, the pipeline, the stage, and their exact references — from current reads BEFORE proposing an approval; when a name is ambiguous, ask before you propose, never after. If the person changes the request, propose the new action for review. Existing workspace autopilot settings remain the operator's standing choice, never your assumption. Anything outbound (an email, an SMS) is NEVER sent directly — draft it and route it to the existing approval lane. One business email to ONE existing contact goes through comms_send_email: that tool IS the approval lane — the person sees the exact email on a Needs your OK card and nothing is sent until they approve. Resolve the contact from a current read first; if more than one contact could match the name, ask which one before calling it.
+2. CONFIRM THE RESULT — AND NEVER FAKE ONE. Only say you did something ("Done — created…", "reminder set", "task assigned", "added to your calendar") when a TOOL you called THIS turn actually returned success. A claim of completion with no tool call behind it is a lie, and it is the worst thing you can do here — it destroys trust. You DO have real tools for reminders, planning, tasks, and booking (plan_set_reminder, plan_create/plan_assign_task/plan_add_milestone, crm_create_task, calendar_book_meeting) — USE them, then confirm off the tool's success. If there is genuinely no tool for what they asked, DO NOT pretend — say plainly "I can't do that one from here yet" and offer what you genuinely can do, or file it on the action bus so it's tracked. "It'll show up in your reminders / Task Manager / calendar" is only true if a tool actually put it there — never say it otherwise. Once an action really commits, confirm plainly in one line; never leave them guessing. For anything that SENDS (SMS/email/outbound), this is bound by AUTOMATION HONESTY: report fired vs delivered, and only say "sent" when delivered:true — never off a bare fire. The one exception is a governed email whose result is outcome:provider_accepted with delivery_confirmed:false: the email service accepted it, so say "sent (accepted for delivery)" — never "received" or "delivered", because acceptance is not proof it arrived or was read. The test before every "done": "Did a tool call this turn return success for exactly this? If not, I do not claim it happened."
 3. PROBE, THEN DRIVE. Then surface the obvious next moves as a short, tight menu of questions (not a wall of text).
 
 YOUR OWN WORDS ARE NEVER EVIDENCE — a claim that something happened (created, updated, deleted, archived, restored, sent, enrolled, moved, connected, completed) requires a real result, receipt, or verified readback from a tool call in THIS conversation. Your own words in a PREVIOUS turn are never evidence that the action occurred — if a prior turn claimed something and no tool result or outcome card backs it, treat that claim as unverified and correct course rather than building on it. The test is always: "Is there a machine result in this conversation that proves this happened?" If not, you do not claim it, and you do not treat your earlier claim as proof.
@@ -7277,7 +7281,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "propose_action",
-              description: "Propose a consequential OUTBOUND action for the operator to approve before it goes out — an email, an SMS/text, or a follow-up message to a client. This does NOT send anything: it drafts the message and files it in the operator's approvals queue ('waiting on you'). The operator approves it in their Live desk and only THEN is it sent. Use this whenever the user asks you to email/text/message/follow-up-with a client, or you recommend reaching out. Write the full draft (subject + body for email; body for SMS) in the client's tenant voice. For low-risk internal work (a task, a note, a stage change) use the crm_* tools directly instead — those don't need approval.",
+              description: "Propose a consequential OUTBOUND action for the operator to approve before it goes out — an email, an SMS/text, or a follow-up message to a client. This does NOT send anything: it drafts the message and files it in the operator's approvals queue ('waiting on you'). The operator approves it in their Live desk and only THEN is it sent. Use this whenever the user asks you to email/text/message/follow-up-with a client, or you recommend reaching out. When comms_send_email is offered, use it instead for a single business email to one existing contact — it shows the person the exact email before anything goes out. Write the full draft (subject + body for email; body for SMS) in the client's tenant voice. For low-risk internal work (a task, a note, a stage change) use the crm_* tools directly instead — those don't need approval.",
               parameters: {
                 type: "object",
                 properties: {
@@ -7581,6 +7585,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     toolDefs.push(...CRM_COMMAND_TOOLS as any);
     toolDefs.push(...SALES_INVOICE_TOOLS as any);
     toolDefs.push(...SALES_COLLECTIONS_TOOLS);
+    // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
+    toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Marketing email (E2b): read campaigns and their audience, write drafts, file one for the owner's
     // approval. Governed by the general gate below; PAIGE has no approve or send tool.
     toolDefs.push(...EMAIL_CAMPAIGN_TOOLS as any);
@@ -7828,7 +7834,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const { error: crmCancellationError } = await supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id).eq("tenant_id", personaCtx.tenant_id)
-            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES])
+            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...COMMS_EMAIL_TOOL_NAMES])
             .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
             .not("server_issued_at", "is", null);
           if (crmCancellationError) {
@@ -9204,7 +9210,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const name = tc?.function?.name ?? "";
           if (!describeStepStart(tc, describeStep)) return false;
           if (CRM_COMMAND_TOOL_NAMES.has(name) || GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(name)
-              || SALES_INVOICE_TOOL_NAMES.has(name) || SALES_COLLECTIONS_TOOL_NAMES.has(name)) return false;
+              || SALES_INVOICE_TOOL_NAMES.has(name) || SALES_COLLECTIONS_TOOL_NAMES.has(name)
+              || COMMS_EMAIL_TOOL_NAMES.has(name)) return false;
           // Defense in depth: the early role gate (WORKSPACE ROLE, BEFORE ANY APPROVAL CARD) asks this
           // same predicate with the same resolver and refuses first, so a call that reaches here has
           // already passed it. Asked again so the START can never be wider than that gate.
@@ -9310,6 +9317,36 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }, { caller: supabaseClient, admin: { from: (name: string) => ({
             // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
             select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as SalesInvoiceApprovalQuery,
+          }) } });
+          for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
+          if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
+          continue;
+        }
+
+        // One-to-one business email (INT-328) uses its canonical door, comms-email-command, which
+        // alone resolves the recipient and sender on the server, claims the approval and executes the
+        // STORED call. Same placement as Sales: after scope/seat guards, before the legacy Chat gate
+        // (which must not also gate it — that would be a second approval), and the chat files no
+        // receipt for it (the door's executor records it through record_capability_run).
+        if (COMMS_EMAIL_TOOL_NAMES.has(tc.function.name)) {
+          if (!cancellationsRecorded || !(await revalidateProposalScope())) {
+            toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify({
+              success: false, not_applied: true, error: 'confirmation_context_unavailable',
+              message: 'The workspace or declined approval could not be verified. No email was sent. Reopen the workspace and retry; do not use another tool to bypass this refusal.',
+            }) });
+            continue;
+          }
+          let emailArgs: Record<string, unknown> = {};
+          try { emailArgs = JSON.parse(tc.function.arguments || '{}'); } catch { emailArgs = {}; }
+          const userTurns = messages.filter((message: any) => message?.role === 'user');
+          const result = await dispatchCommsEmailChat({
+            tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
+            args: emailArgs, approved: approvedConfirmations,
+            sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+            turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
+          }, { caller: supabaseClient, admin: { from: (name: string) => ({
+            select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as CommsEmailApprovalQuery,
           }) } });
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
@@ -14922,7 +14959,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         skill_run: "paige_skill_runs",
         subagent_create: "paige_subagent_proposals", subagent_approve_proposal: "paige_subagents",
         comms_draft_email: "paige_subagent_invocations",
-        comms_send_email: "email_send_log", comms_send_bulk_email: "email_send_log",
+        // INT-328: the governed one-to-one send prepares and finalizes exactly one `messages` row.
+        comms_send_email: "messages", comms_send_bulk_email: "email_send_log",
         comms_send_email_choosing_the_sender: "email_send_log",
         comms_upsert_email_template: "email_templates",
         comms_add_email_domain: "tenant_email_domains",
@@ -15141,7 +15179,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // render an Approve/Deny card instead of Paige asking in prose.
       // Carries the FINGERPRINT alongside the summary, because the surface that shows the card has
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
-      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }> = [];
+      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
       const crmResultTrace: Array<Record<string, unknown>> = [];
       // R2b — the inline research card's payload. Captured from the deep_research tool
       // result in the stream scan below; streamed to the client as a paige_research frame
@@ -15695,7 +15733,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ok = parsed?.success !== false;
                   // Capture a pending confirmation so the client renders an approve card.
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
-                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}) });
+                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}), ...(parsed.confirm_preview && typeof parsed.confirm_preview === "object" && !Array.isArray(parsed.confirm_preview) ? { preview: parsed.confirm_preview as Record<string, unknown> } : {}) });
                   }
                   if (tc.function?.name === "deep_research" && parsed && typeof parsed === "object" && Array.isArray(parsed.findings)) {
                     researchTrace.push({

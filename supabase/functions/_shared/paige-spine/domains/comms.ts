@@ -1,4 +1,5 @@
 import type { SpineCapability } from "../contracts.ts";
+import { defineCapability, objectInputSchema, ownerGrantablePermission } from "../../capability-kit/mod.ts";
 
 /**
  * Comms Messages Read — Paige's inbox visibility (#1104, first Stage 3 capability-
@@ -60,3 +61,67 @@ export const COMMS_MESSAGES_READ = {
   sharedPrimitiveChange: "NONE",
   maturity: "PARTIAL",
 } as const satisfies SpineCapability;
+
+/**
+ * INT-328 — Comms Email Send: ONE business email to ONE existing contact, through the tenant's
+ * own email sender, governed end to end. Mirrors the invoice governed send
+ * (sales_invoice.email_send): comms-email-command is the only door; it resolves the recipient
+ * (the contact's primary address) and the sender on the server, raises the canonical approval
+ * card, and its executor prepares one bound `messages` row that send-message claims, sends and
+ * finalizes. Never marketing, never an invoice, agreement, booking link or campaign — those keep
+ * their own capabilities.
+ *
+ * What the outcome means, stated so nobody over-reads it (§13): `provider_accepted` is the email
+ * provider taking the message. It is never delivery, an open or a reply. An unknown provider
+ * result is reconciled under the same operation, never retried as a new one.
+ */
+export const COMMS_EMAIL_SEND = {
+  key: "comms.email_send",
+  domain: "comms",
+  owner: "comms",
+  humanSurface: "/solo/:account/clients/conversations",
+  readiness: "none",
+  action: {
+    classification: "external_effect",
+    executor: "public.prepare_comms_email_send",
+    chatTool: "comms_send_email",
+    riskPolicyKey: "high",
+    approvalAuthority: "chat-canonical",
+    idempotency: "Server-derived tenant + authenticated actor + operation UUID (Chat derives it from the stable turn and command; an approval reuses the stored call). public.prepare_comms_email_send binds exactly one messages row per operation (unique index messages_comms_email_operation) and replays an identical prepare; send-message admits it only through public.claim_comms_email_send and records it through public.finalize_comms_email_send. An unknown provider result is reconciled under the same operation and the provider Idempotency-Key comms-email:<operation>, never retried as a new operation; an identical new request is routed to that reconciliation. Honest residuals: only a Resend operation inside 23 hours is reconciled. Gmail and SMTP have no provider idempotency, so an unknown send there is never auto-reconciled; it blocks only an identical resend (same recipient and content) and no other email. A Gmail or SMTP send that passes the 20 s deadline may still go out after it is recorded unknown. SMTP returns no provider receipt, so an SMTP send can be reported only as unknown, never as accepted. The approved sender is bound by address and provider; from_name and reply_to are read at send time from the connector and are not part of the approval.",
+  },
+  outcome: {
+    kinds: ["provider_accepted", "refused", "failed", "needs_setup", "held", "sender_choice_required", "outcome_unknown"],
+    projector: "public.read_comms_email_send_result",
+    railVisibility: "Provider acceptance only; never delivered, opened or replied.",
+  },
+  chatBinding: "LIVE",
+  mindBinding: "UNAVAILABLE",
+  sharedPrimitiveChange: "NONE",
+  maturity: "PARTIAL",
+} as const satisfies SpineCapability;
+
+/**
+ * The Capability Kit declaration the door binds through decideDeclaredCapability. It validates the
+ * declared risk against the canonical policy (`comms_send_email` is `high` in action-risk.ts); it is
+ * not another dispatcher, permission grant or approval channel.
+ */
+export const COMMS_EMAIL_SEND_CAPABILITY = defineCapability({
+  identity: { id: "comms.email_send", version: 1, domain: "comms", owner: "comms", humanSurface: "/solo/:account/clients/conversations", description: "Send one business email to one existing contact through the workspace's own email sender. Provider acceptance is not delivery." },
+  input: objectInputSchema({
+    properties: {
+      contact_id: { type: "string", format: "uuid" },
+      connector_id: { anyOf: [{ type: "string", format: "uuid" }, { type: "null" }] },
+      subject: { type: "string", minLength: 1, maxLength: 200 },
+      body: { type: "string", minLength: 1, maxLength: 10000 },
+    },
+    required: ["contact_id", "subject", "body"],
+  }),
+  effect: "external_effect",
+  governance: { actionRiskKey: "comms_send_email", risk: "high", approval: "confirm", requiredPermission: ownerGrantablePermission("comms.email_send.execute") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user", revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "not_for_tier", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "public.prepare_comms_email_send", connectionResolver: null },
+  idempotency: { mode: "required", key: "Server actor + tenant + operation UUID + exact recipient address, sender address and content digest. Unknown provider results are reconciled under the same operation, never automatically resent as a new one.", readback: "public.read_comms_email_send_result", replay: "reconcile_then_return" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});

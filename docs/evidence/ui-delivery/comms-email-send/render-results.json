@@ -1,0 +1,902 @@
+{
+  "proofClass": "rendered harness — not an authenticated runtime drive",
+  "pages": {
+    "confirm-email-preview": {
+      "light": {
+        "shots": [
+          "confirm-email-preview-1280-light.png",
+          "an-email-ready-to-approve-light.png",
+          "a-long-email-light.png",
+          "a-long-email-opened-light.png",
+          "no-name-on-file-a-very-long-address-light.png",
+          "not-an-email-unchanged-light.png",
+          "confirm-email-preview-360-light.png",
+          "confirm-email-preview-320-light.png"
+        ],
+        "faces": [
+          "Schibsted Grotesk"
+        ],
+        "contrast": [
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "An email, ready to approve",
+            "text": "To",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "An email, ready to approve",
+            "text": "From",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "An email, ready to approve",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email",
+            "text": "To",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email",
+            "text": "From",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email, opened",
+            "text": "To",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email, opened",
+            "text": "From",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email, opened",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "No name on file, a very long address",
+            "text": "To",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "No name on file, a very long address",
+            "text": "From",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "No name on file, a very long address",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "recipient name",
+            "scene": "An email, ready to approve",
+            "text": "Maya Ortiz",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "recipient name",
+            "scene": "A long email",
+            "text": "Maya Ortiz",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "recipient name",
+            "scene": "A long email, opened",
+            "text": "Maya Ortiz",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "recipient address",
+            "scene": "An email, ready to approve",
+            "text": "maya@ortizlandscaping.example",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "recipient address",
+            "scene": "A long email",
+            "text": "maya@ortizlandscaping.example",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "recipient address",
+            "scene": "A long email, opened",
+            "text": "maya@ortizlandscaping.example",
+            "size": "13px",
+            "ratio": 5.59
+          },
+          {
+            "label": "sender / subject",
+            "scene": "An email, ready to approve",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "sender / subject",
+            "scene": "An email, ready to approve",
+            "text": "Notes from Tuesday's planning call",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email",
+            "text": "Recap and next steps for the spring project",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email, opened",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email, opened",
+            "text": "Recap and next steps for the spring project",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "sender / subject",
+            "scene": "No name on file, a very long address",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "sender / subject",
+            "scene": "No name on file, a very long address",
+            "text": "A quick question about the March statement",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "body",
+            "scene": "An email, ready to approve",
+            "text": "Hi Maya,\n\nThanks for the time on Tuesday. Here i",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "body",
+            "scene": "A long email",
+            "text": "Hi Maya,\n\nThanks again for walking me through th",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "body",
+            "scene": "A long email, opened",
+            "text": "Hi Maya,\n\nThanks again for walking me through th",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "body",
+            "scene": "No name on file, a very long address",
+            "text": "Hello,\n\nCould you confirm which address the Marc",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "show full email",
+            "scene": "A long email",
+            "text": "Show full email",
+            "size": "12.5px",
+            "ratio": 15.34
+          },
+          {
+            "label": "show full email",
+            "scene": "A long email, opened",
+            "text": "Show less",
+            "size": "12.5px",
+            "ratio": 15.34
+          },
+          {
+            "label": "heading",
+            "scene": "An email, ready to approve",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "heading",
+            "scene": "A long email",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "heading",
+            "scene": "A long email, opened",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "heading",
+            "scene": "No name on file, a very long address",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 15.34
+          },
+          {
+            "label": "heading",
+            "scene": "Not an email — unchanged",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 15.34
+          }
+        ],
+        "envelopeAt1280": [
+          {
+            "scene": "An email, ready to approve",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email, opened",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "No name on file, a very long address",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          }
+        ],
+        "clampedHeights": [
+          {
+            "lines": 8,
+            "clipped": true
+          }
+        ],
+        "expandedRegion": [
+          {
+            "maxHeight": "352px",
+            "overflowY": "auto",
+            "scrolls": true
+          }
+        ],
+        "goldInsidePreview": 0,
+        "at360": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        },
+        "envelopeAt360": [
+          {
+            "scene": "An email, ready to approve",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email, opened",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "No name on file, a very long address",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          }
+        ],
+        "at320": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        },
+        "envelopeAt320": [
+          {
+            "scene": "An email, ready to approve",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email, opened",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "No name on file, a very long address",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          }
+        ]
+      },
+      "dark": {
+        "shots": [
+          "confirm-email-preview-1280-dark.png",
+          "an-email-ready-to-approve-dark.png",
+          "a-long-email-dark.png",
+          "a-long-email-opened-dark.png",
+          "no-name-on-file-a-very-long-address-dark.png",
+          "not-an-email-unchanged-dark.png",
+          "confirm-email-preview-360-dark.png",
+          "confirm-email-preview-320-dark.png"
+        ],
+        "faces": [
+          "Schibsted Grotesk"
+        ],
+        "contrast": [
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "An email, ready to approve",
+            "text": "To",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "An email, ready to approve",
+            "text": "From",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "An email, ready to approve",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email",
+            "text": "To",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email",
+            "text": "From",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email, opened",
+            "text": "To",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email, opened",
+            "text": "From",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "A long email, opened",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "No name on file, a very long address",
+            "text": "To",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "No name on file, a very long address",
+            "text": "From",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "label (To/From/Subject)",
+            "scene": "No name on file, a very long address",
+            "text": "Subject",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "recipient name",
+            "scene": "An email, ready to approve",
+            "text": "Maya Ortiz",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "recipient name",
+            "scene": "A long email",
+            "text": "Maya Ortiz",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "recipient name",
+            "scene": "A long email, opened",
+            "text": "Maya Ortiz",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "recipient address",
+            "scene": "An email, ready to approve",
+            "text": "maya@ortizlandscaping.example",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "recipient address",
+            "scene": "A long email",
+            "text": "maya@ortizlandscaping.example",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "recipient address",
+            "scene": "A long email, opened",
+            "text": "maya@ortizlandscaping.example",
+            "size": "13px",
+            "ratio": 7.82
+          },
+          {
+            "label": "sender / subject",
+            "scene": "An email, ready to approve",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "sender / subject",
+            "scene": "An email, ready to approve",
+            "text": "Notes from Tuesday's planning call",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email",
+            "text": "Recap and next steps for the spring project",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email, opened",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "sender / subject",
+            "scene": "A long email, opened",
+            "text": "Recap and next steps for the spring project",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "sender / subject",
+            "scene": "No name on file, a very long address",
+            "text": "jordan@northlightadvisory.example",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "sender / subject",
+            "scene": "No name on file, a very long address",
+            "text": "A quick question about the March statement",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "body",
+            "scene": "An email, ready to approve",
+            "text": "Hi Maya,\n\nThanks for the time on Tuesday. Here i",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "body",
+            "scene": "A long email",
+            "text": "Hi Maya,\n\nThanks again for walking me through th",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "body",
+            "scene": "A long email, opened",
+            "text": "Hi Maya,\n\nThanks again for walking me through th",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "body",
+            "scene": "No name on file, a very long address",
+            "text": "Hello,\n\nCould you confirm which address the Marc",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "show full email",
+            "scene": "A long email",
+            "text": "Show full email",
+            "size": "12.5px",
+            "ratio": 16.71
+          },
+          {
+            "label": "show full email",
+            "scene": "A long email, opened",
+            "text": "Show less",
+            "size": "12.5px",
+            "ratio": 16.71
+          },
+          {
+            "label": "heading",
+            "scene": "An email, ready to approve",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "heading",
+            "scene": "A long email",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "heading",
+            "scene": "A long email, opened",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "heading",
+            "scene": "No name on file, a very long address",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 16.71
+          },
+          {
+            "label": "heading",
+            "scene": "Not an email — unchanged",
+            "text": "Needs your OK",
+            "size": "13px",
+            "ratio": 16.71
+          }
+        ],
+        "envelopeAt1280": [
+          {
+            "scene": "An email, ready to approve",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email, opened",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "No name on file, a very long address",
+            "envelope": 531,
+            "card": 595,
+            "nestedBorderedBoxes": false
+          }
+        ],
+        "clampedHeights": [
+          {
+            "lines": 8,
+            "clipped": true
+          }
+        ],
+        "expandedRegion": [
+          {
+            "maxHeight": "352px",
+            "overflowY": "auto",
+            "scrolls": true
+          }
+        ],
+        "goldInsidePreview": 0,
+        "at360": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        },
+        "envelopeAt360": [
+          {
+            "scene": "An email, ready to approve",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email, opened",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "No name on file, a very long address",
+            "envelope": 262,
+            "card": 288,
+            "nestedBorderedBoxes": false
+          }
+        ],
+        "at320": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        },
+        "envelopeAt320": [
+          {
+            "scene": "An email, ready to approve",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "A long email, opened",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          },
+          {
+            "scene": "No name on file, a very long address",
+            "envelope": 222,
+            "card": 248,
+            "nestedBorderedBoxes": false
+          }
+        ]
+      }
+    },
+    "conversations-governed-send": {
+      "light": {
+        "shots": [
+          "conversations-governed-send-1280-light.png",
+          "a-draft-paige-wrote-unchanged-light.png",
+          "an-approved-email-on-its-way-light.png",
+          "an-email-nobody-could-confirm-light.png",
+          "conversations-governed-send-360-light.png",
+          "conversations-governed-send-320-light.png"
+        ],
+        "faces": [
+          "Schibsted Grotesk"
+        ],
+        "contrast": [
+          {
+            "label": "status pill",
+            "scene": "An approved email on its way",
+            "text": "Sending…",
+            "size": "10px",
+            "ratio": 5.47
+          },
+          {
+            "label": "status pill",
+            "scene": "An email nobody could confirm",
+            "text": "Couldn't confirm",
+            "size": "10px",
+            "ratio": 6.1
+          },
+          {
+            "label": "don't-resend line",
+            "scene": "An email nobody could confirm",
+            "text": "Couldn't confirm this went out — don't resend.",
+            "size": "11px",
+            "ratio": 14.35
+          }
+        ],
+        "controlsByScene": [
+          {
+            "scene": "A draft Paige wrote — unchanged",
+            "buttons": [
+              "Approve & send",
+              "Edit"
+            ],
+            "pills": []
+          },
+          {
+            "scene": "An approved email on its way",
+            "buttons": [],
+            "pills": [
+              "Sending…"
+            ]
+          },
+          {
+            "scene": "An email nobody could confirm",
+            "buttons": [],
+            "pills": [
+              "Couldn't confirm"
+            ]
+          }
+        ],
+        "at360": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        },
+        "at320": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        }
+      },
+      "dark": {
+        "shots": [
+          "conversations-governed-send-1280-dark.png",
+          "a-draft-paige-wrote-unchanged-dark.png",
+          "an-approved-email-on-its-way-dark.png",
+          "an-email-nobody-could-confirm-dark.png",
+          "conversations-governed-send-360-dark.png",
+          "conversations-governed-send-320-dark.png"
+        ],
+        "faces": [
+          "Schibsted Grotesk"
+        ],
+        "contrast": [
+          {
+            "label": "status pill",
+            "scene": "An approved email on its way",
+            "text": "Sending…",
+            "size": "10px",
+            "ratio": 7.7
+          },
+          {
+            "label": "status pill",
+            "scene": "An email nobody could confirm",
+            "text": "Couldn't confirm",
+            "size": "10px",
+            "ratio": 8.96
+          },
+          {
+            "label": "don't-resend line",
+            "scene": "An email nobody could confirm",
+            "text": "Couldn't confirm this went out — don't resend.",
+            "size": "11px",
+            "ratio": 15.96
+          }
+        ],
+        "controlsByScene": [
+          {
+            "scene": "A draft Paige wrote — unchanged",
+            "buttons": [
+              "Approve & send",
+              "Edit"
+            ],
+            "pills": []
+          },
+          {
+            "scene": "An approved email on its way",
+            "buttons": [],
+            "pills": [
+              "Sending…"
+            ]
+          },
+          {
+            "scene": "An email nobody could confirm",
+            "buttons": [],
+            "pills": [
+              "Couldn't confirm"
+            ]
+          }
+        ],
+        "at360": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        },
+        "at320": {
+          "pageScrollsSideways": false,
+          "overflowing": []
+        }
+      }
+    }
+  },
+  "focusRing": {
+    "focusVisible": true,
+    "outline": "solid 2px rgb(101, 90, 150)",
+    "ring": "251 25% 47%"
+  }
+}

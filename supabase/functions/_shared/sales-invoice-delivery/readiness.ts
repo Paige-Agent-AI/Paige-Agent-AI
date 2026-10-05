@@ -1,7 +1,9 @@
+import { emailSenderReadiness, type EmailSenderFacts } from '../comms-email/readiness.ts';
+// The email-sender check has ONE home (_shared/comms-email/readiness.ts); invoice delivery uses it unchanged.
 export type InvoiceDeliveryChannel='email'|'sms'|'imessage';
 export interface ReadinessFacts {
  channel:InvoiceDeliveryChannel; recipient:string|null; tenantMatches:boolean;
- sender?:{tenantMatches:boolean;active:boolean;provider:string;fromAddress:string|null;credentialReferencePresent:boolean;smtpConfigured?:boolean};
+ sender?:EmailSenderFacts;
  resendConfigured:boolean;googleConfigured:boolean;
  sms?:{credentialsPresent:boolean;numberPresent:boolean;a2pApproved:boolean};
  preSend?:{proceed:boolean;outcome:string};
@@ -14,11 +16,8 @@ export function invoiceDeliveryReadiness(f:ReadinessFacts):InvoiceDeliveryReadin
  if(!f.tenantMatches)return result('unavailable','WORKSPACE_CHANGED');
  if(!f.recipient||(f.channel==='email'?!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.recipient):!/^\+[1-9]\d{6,14}$/.test(f.recipient)))return result('needs_setup','INVOICE_RECIPIENT_MISSING');
  if(f.channel==='email') {
-  const s=f.sender;
-  if(!s||!s.tenantMatches||!s.active||!s.fromAddress||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.fromAddress)||!['resend','gmail','smtp'].includes(s.provider))return result('needs_setup','TENANT_EMAIL_SENDER_MISSING');
-  if(s.provider==='resend'&&!f.resendConfigured)return result('needs_setup','EMAIL_PROVIDER_NOT_CONFIGURED');
-  if(s.provider==='gmail'&&(!f.googleConfigured||!s.credentialReferencePresent))return result('needs_setup','EMAIL_RECONNECT_REQUIRED');
-  if(s.provider==='smtp'&&(!s.credentialReferencePresent||!s.smtpConfigured))return result('needs_setup','EMAIL_RECONNECT_REQUIRED');
+  const sender=emailSenderReadiness(f.sender,f);
+  if(sender)return result(sender.state,sender.reason);
  }else {
   if(!f.sms?.credentialsPresent)return result('needs_setup','SMS_ACCOUNT_MISSING');
   if(!f.sms.numberPresent)return result('needs_setup','SMS_NUMBER_MISSING');

@@ -71,6 +71,10 @@ describe("campaign status words", () => {
     expect(campaignState(campaign({ status: "scheduled", scheduled_for: null }))).toMatchObject({ label: "Approved", detail: "Approved, waiting to send." });
     expect(campaignState(campaign({ status: "scheduled", scheduled_for: new Date(Date.now() - 60_000).toISOString() })).label).toBe("Approved");
     expect(campaignState(campaign({ status: "cancelled", sent: 0 })).detail).toBe("Cancelled before sending.");
+    // handed off with no reply: may have arrived, never resent — never "Not sent"
+    expect(campaignState(campaign({ status: "failed", not_confirmed: 3 }))).toMatchObject({ label: "Not confirmed", tone: "is-warn" });
+    expect(campaignState(campaign({ status: "failed", not_confirmed: 3 })).detail).toContain("may have arrived and will not be sent again");
+    expect(campaignState(campaign({ status: "failed", failed: 2 })).label).toBe("Not sent");
     expect(campaignState(campaign({ status: "draft", sent: 2 })).detail).toBe("A new version, not sent yet. Earlier versions reached 2 people.");
   });
 });

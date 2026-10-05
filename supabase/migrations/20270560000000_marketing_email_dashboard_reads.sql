@@ -19,6 +19,11 @@
 -- Periods: the last p_days days (7, 30 or 90) and the p_days before them, for comparison. Daily buckets are
 -- calendar days in p_tz (an IANA zone; anything unknown reads as UTC).
 
+-- The reads below gather a campaign's recipients across all of its versions; E1 indexed recipients by
+-- version, tenant and lease only.
+CREATE INDEX IF NOT EXISTS email_campaign_recipients_campaign_idx
+  ON public.email_campaign_recipients (campaign_id, sent_at);
+
 CREATE OR REPLACE FUNCTION public.read_email_marketing_dashboard(p_days integer DEFAULT 30, p_tz text DEFAULT 'UTC')
 RETURNS jsonb
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$

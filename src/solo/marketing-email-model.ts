@@ -120,7 +120,10 @@ export function campaignState(c: CampaignRow): CampaignState {
     case "sending": return { label: "Sending", tone: "is-review", detail: `${c.sent.toLocaleString()} of ${(c.recipients ?? 0).toLocaleString()} sent so far.` };
     case "completed": return { label: "Sent", tone: "is-live", detail: `Sent to ${people(c.sent)}.` };
     case "partially_completed": return { label: "Partly sent", tone: "is-warn", detail: `Sent to ${people(c.sent)}${unsent(c)}.` };
-    case "failed": return { label: "Not sent", tone: "is-blocked", detail: "No email went out." };
+    // A handoff that never reported back may still have arrived, and is never sent again: never call it "not sent".
+    case "failed": return c.not_confirmed
+      ? { label: "Not confirmed", tone: "is-warn", detail: `${c.not_confirmed.toLocaleString()} handed to the sender with no reply; they may have arrived and will not be sent again.` }
+      : { label: "Not sent", tone: "is-blocked", detail: "No email went out." };
     case "blocked": return { label: "Paused", tone: "is-blocked", detail: blockReason(c.blocked_reason) };
     case "cancelled": return { label: "Cancelled", tone: "", detail: c.sent ? `Stopped after ${people(c.sent)}.` : "Cancelled before sending." };
     default: return { label: c.status, tone: "", detail: "" };

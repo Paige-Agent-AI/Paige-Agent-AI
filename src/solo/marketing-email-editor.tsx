@@ -188,9 +188,17 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
   // Save a moment after typing stops. Each edit bumps the revision; a save that finishes after a newer
   // edit leaves the draft marked unsaved, so the newer edit is saved next and never lost.
   const revision = React.useRef(0);
-  const persist = React.useCallback(async (d: Draft) => {
-    if (!data) return false;
+  // Saves run one at a time, in order: a slow earlier save can never land after a later one, so Review
+  // (which saves, then freezes) always freezes the latest edit.
+  const queue = React.useRef<Promise<unknown>>(Promise.resolve());
+  const persist = React.useCallback((d: Draft) => {
     const rev = revision.current;
+    const run = queue.current.then(() => write(d, rev));
+    queue.current = run.catch(() => undefined);
+    return run;
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
+  const write = async (d: Draft, rev: number) => {
+    if (!data) return false;
     setSave("saving");
     const html = d.source !== null ? markupToHtml(d.source) : d.html;
     const { error } = await rpc("email_campaign_update_draft", {
@@ -202,7 +210,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     if (error) { console.error("[marketing-email] draft save failed", error); setSave("failed"); setNotice({ tone: "bad", text: errorWords(error) }); return false; }
     setSave(rev === revision.current ? "saved" : "dirty");
     return true;
-  }, [data]);
+  };
   React.useEffect(() => {
     if (!draft || !editable || save !== "dirty") return;
     const timer = setTimeout(() => { void persist(draft); }, 800);
@@ -266,7 +274,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
   const anyChosen = draft.sender.mode === "managed" ? data.managed_sender.ok : data.senders.some((x) => x.connector_id === draft.sender.connector_id && x.healthy);
   const tabStop = (chosen: boolean) => (chosen || !anyChosen ? 0 : -1);
   const later = Boolean(v.scheduled_for && Date.parse(v.scheduled_for) > Date.now());
-  const state = { draft: "Draft", pending_approval: "Awaiting approval", scheduled: later ? "Scheduled" : "Approved", sending: "Sending", completed: "Sent", partially_completed: "Partly sent", failed: "Not sent", blocked: "Paused", cancelled: "Cancelled" }[c.status] ?? c.status;
+  const state = { draft: "Draft", pending_approval: "Awaiting approval", scheduled: later ? "Scheduled" : "Approved", sending: "Sending", completed: "Sent", partially_completed: "Partly sent", failed: p.not_confirmed ? "Not confirmed" : "Not sent", blocked: "Paused", cancelled: "Cancelled" }[c.status] ?? c.status;
   const at = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
   return <div className="mk-view mo me me-editor">
@@ -275,7 +283,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
       <div className="me-title">
         {editable ? <label className="me-name-input"><span className="campaigns-sr-only">Campaign name</span><input value={draft.name} maxLength={200} onChange={(e) => change({ name: e.target.value })}/></label> : <h2>{c.name}</h2>}
         <span className="me-kind">{KIND_LABEL[draft.kind] ?? "Campaign"}</span>
-        <span className={`mk-flag ${c.status === "completed" ? "is-live" : c.status === "blocked" || c.status === "failed" ? "is-blocked" : c.status === "partially_completed" ? "is-warn" : c.status === "draft" || c.status === "cancelled" ? "" : "is-review"}`}>{state}</span>
+        <span className={`mk-flag ${c.status === "completed" ? "is-live" : c.status === "blocked" || (c.status === "failed" && !p.not_confirmed) ? "is-blocked" : c.status === "partially_completed" || c.status === "failed" ? "is-warn" : c.status === "draft" || c.status === "cancelled" ? "" : "is-review"}`}>{state}</span>
         {editable && <span className="me-save" aria-live="polite">{save === "saving" ? "Saving…" : save === "dirty" ? "Unsaved changes" : save === "failed" ? "Not saved" : "Saved"}</span>}
       </div>
       <div className="me-editor-acts">
@@ -323,7 +331,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     </section>}
 
     {["completed", "partially_completed", "failed", "cancelled"].includes(c.status) && <section className="campaigns-surface mo-panel me-review">
-      <div className="mo-panel-head"><div><h2>Results</h2><p>{p.tracked ? "Opens and clicks are reported by PAIGE’s sender." : p.sent ? "Your own mail server does not report opens or clicks." : "Nothing was sent."}</p></div>
+      <div className="mo-panel-head"><div><h2>Results</h2><p>{!p.sent && p.not_confirmed ? `No send was confirmed. ${p.not_confirmed.toLocaleString()} ${p.not_confirmed === 1 ? "was" : "were"} handed to the sender with no reply; they may have arrived, and they are never sent again.` : p.tracked ? "Opens and clicks are reported by PAIGE’s sender." : p.sent ? "Your own mail server does not report opens or clicks." : "Nothing was sent."}</p></div>
         <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("again", "email_campaign_new_version", { p_campaign_id: c.id })}>Edit and send again</button></div>
       <dl className="me-results">
         <div><dt>Sent</dt><dd>{p.sent.toLocaleString()}</dd></div>

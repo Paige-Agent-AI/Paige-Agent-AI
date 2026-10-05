@@ -80,6 +80,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
   const [createError, setCreateError] = React.useState<string | null>(null);
   const read = useDashboard(tenantId, days);
 
+
   // The open campaign lives in the address, so a reload or a shared link reopens it.
   const go = React.useCallback((next: typeof view) => {
     setView(next);
@@ -87,6 +88,17 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
     if (next.kind === "campaign") url.searchParams.set("campaign", next.id); else url.searchParams.delete("campaign");
     window.history.replaceState(window.history.state, "", url.toString());
   }, []);
+
+  // Another business: whatever was open belonged to the last one, so go back to the dashboard and drop it
+  // from the address.
+  const shownTenant = React.useRef(tenantId);
+  React.useEffect(() => {
+    if (shownTenant.current === tenantId) return;
+    shownTenant.current = tenantId;
+    setSegment({ open: false, id: null });
+    setCreateError(null);
+    go({ kind: "dashboard" });
+  }, [tenantId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const create = async (key: string, kind: string, name: string, audience?: Record<string, unknown>, segmentId?: string) => {
     setCreating(key); setCreateError(null);
@@ -98,15 +110,27 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
       return;
     }
     if (audience || segmentId) {
+      // Without its audience a draft would address every contact, so it is never opened that way: remove it
+      // and say so. (If even the removal fails, the draft is left unopened for the owner to find and fix.)
       const set = await rpc("email_campaign_update_draft", { p_version_id: row.version_id, p_audience: audience ?? null, p_segment_id: segmentId ?? null });
-      if (set.error) console.error("[marketing-email] starting audience not set", set.error);
+      if (set.error) {
+        console.error("[marketing-email] starting audience not set", set.error);
+        const undo = await rpc("email_campaign_delete", { p_campaign_id: row.campaign_id });
+        if (undo.error) console.error("[marketing-email] incomplete draft not removed", undo.error);
+        setCreating(null);
+        setCreateError(undo.error
+          ? `"${name}" was created but its audience could not be set, so it would reach every contact. Open it from All campaigns and choose who it is for before sending.`
+          : "The campaign's audience could not be set, so nothing was saved. Try again.");
+        read.retry();
+        return;
+      }
     }
     setCreating(null);
     go({ kind: "campaign", id: row.campaign_id });
   };
 
   if (view.kind === "campaign") return <EmailCampaignEditor campaignId={view.id} onBack={() => { go({ kind: "dashboard" }); read.retry(); }} onOpenSettings={onOpenSettings} onOpenConnections={onOpenConnections}/>;
-  if (view.kind === "all") return <EmailCampaignList tenantId={tenantId} onBack={() => go({ kind: "dashboard" })} onOpen={(id) => go({ kind: "campaign", id })}/>;
+  if (view.kind === "all") return <EmailCampaignList key={tenantId ?? "none"} tenantId={tenantId} onBack={() => go({ kind: "dashboard" })} onOpen={(id) => go({ kind: "campaign", id })}/>;
 
   const d = read.data;
   // While another period loads, the figures on screen are still the old period's: label them as such.

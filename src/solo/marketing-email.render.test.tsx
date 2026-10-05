@@ -8,10 +8,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type Call = { fn: string; args: Record<string, unknown> };
 const calls: Call[] = [];
-const answers: Record<string, { data: unknown; error: unknown }> = {};
+type Answer = { data: unknown; error: unknown };
+const answers: Record<string, Answer | ((args: Record<string, unknown>) => Promise<Answer>)> = {};
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    rpc: (fn: string, args: Record<string, unknown> = {}) => { calls.push({ fn, args }); return Promise.resolve(answers[fn] ?? { data: null, error: null }); },
+    rpc: (fn: string, args: Record<string, unknown> = {}) => {
+      calls.push({ fn, args });
+      const a = answers[fn];
+      return typeof a === "function" ? a(args) : Promise.resolve(a ?? { data: null, error: null });
+    },
     from: () => { const c: Record<string, unknown> = {}; for (const m of ["select", "eq", "order", "limit"]) c[m] = () => c; c.then = (r: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(r); return c; },
   },
 }));
@@ -46,7 +51,7 @@ let root: Root;
 const flush = async (n = 8) => { await act(async () => { for (let i = 0; i < n; i++) await Promise.resolve(); }); };
 const text = () => host.textContent ?? "";
 const button = (label: string | RegExp) => Array.from(host.querySelectorAll("button")).find((b) => (typeof label === "string" ? b.textContent?.trim() === label : label.test(b.textContent ?? "")));
-const mount = async () => { act(() => root.render(<MarketingEmail tenantId="t-1" onOpenAudience={() => {}} onOpenConnections={null} onOpenSettings={null}/>)); await flush(); };
+const mount = async (tenantId = "t-1") => { act(() => root.render(<MarketingEmail tenantId={tenantId} onOpenAudience={() => {}} onOpenConnections={null} onOpenSettings={null}/>)); await flush(); };
 const type = async (el: HTMLInputElement | HTMLTextAreaElement, value: string) => {
   const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
   Object.getOwnPropertyDescriptor(proto, "value")!.set!.call(el, value);
@@ -123,6 +128,29 @@ describe("Marketing › Email dashboard", () => {
     expect(document.activeElement).toBe(stops[0]);
     await act(async () => { dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true })); });
     expect(document.activeElement).toBe(stops.at(-1));
+  });
+
+  it("a draft whose audience could not be set is removed, not opened to every contact", async () => {
+    answers.email_campaign_create = { data: { campaign_id: "c-new", version_id: "v-new" }, error: null };
+    answers.email_campaign_update_draft = { data: null, error: { message: "boom" } };
+    await mount();
+    await act(async () => { button(/Re-engagement campaign/)!.click(); });
+    await flush();
+    expect(calls.find((c) => c.fn === "email_campaign_delete")?.args).toEqual({ p_campaign_id: "c-new" });
+    expect(calls.some((c) => c.fn === "read_email_campaign")).toBe(false);
+    expect(window.location.search).toBe("");
+    expect(text()).toContain("The campaign's audience could not be set, so nothing was saved.");
+  });
+
+  it("switching business closes the last business's campaign and clears it from the address", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    await mount("t-1");
+    expect(text()).toContain("Review and send");
+    await mount("t-2");
+    expect(window.location.search).toBe("");
+    expect(text()).not.toContain("Review and send");
+    expect(calls.filter((c) => c.fn === "read_email_marketing_dashboard").length).toBeGreaterThan(0);
   });
 
   it("a refused create says why in plain words and opens nothing", async () => {
@@ -214,6 +242,36 @@ describe("Marketing › Email campaign editor", () => {
     await act(async () => { host.querySelector('[role="radiogroup"]')!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true })); });
     expect(document.activeElement).toBe(radios[0]);
     expect(radios[0].getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("an earlier save still in flight finishes before Review saves and freezes the latest edit", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    let releaseFirst: (a: Answer) => void = () => {};
+    const order: string[] = [];
+    let saves = 0;
+    answers.email_campaign_update_draft = (args) => {
+      saves += 1;
+      const n = saves;
+      order.push(`start ${n}:${String(args.p_subject)}`);
+      if (n === 1) return new Promise<Answer>((resolve) => { releaseFirst = (a) => { order.push(`end 1`); resolve(a); }; });
+      order.push(`end ${n}`);
+      return Promise.resolve({ data: "v-new", error: null });
+    };
+    answers.email_campaign_request_approval = (async () => { order.push("approve"); return { data: {}, error: null }; }) as never;
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await mount();
+    const subject = host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!;
+    await type(subject, "Old");
+    await act(async () => { vi.advanceTimersByTime(900); });
+    await flush();
+    await type(subject, "New");
+    await act(async () => { button("Review and send")!.click(); });
+    await flush();
+    expect(order).toEqual(["start 1:Old"]); // the second save waits for the first
+    await act(async () => { releaseFirst({ data: "v-new", error: null }); });
+    await flush(12);
+    expect(order).toEqual(["start 1:Old", "end 1", "start 2:New", "end 2", "approve"]);
   });
 
   it("a refusal from the database reads in the owner's words", async () => {

@@ -66,8 +66,8 @@ let readCheckReply = { can_read_document: false, document_kind: "other", first_f
  * written for it. Findings are collected and asserted once, in the paige_turn group at the end.
  */
 const { isTurnFrame, readTurnRecord } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
-const { auditTurnStream } = await import("../lib/audit-turn-frames.mjs");
-const turnAudit = { streams: 0, violations: [], withheld: 0, confirms: 0, refused: 0, persisted: 0, traced: 0, thoughtsBesideTrace: 0 };
+const { auditTurnStream, wireAnswerMatchesSaved } = await import("../lib/audit-turn-frames.mjs");
+const turnAudit = { streams: 0, violations: [], withheld: 0, confirms: 0, refused: 0, persisted: 0, traced: 0, thoughtsBesideTrace: 0, answersCompared: 0, answerMismatches: [] };
 function auditTurnFrames(label, responses, rec, narration) {
   const wireThoughts = new Set();
   for (const response of responses) {
@@ -93,6 +93,16 @@ function auditTurnFrames(label, responses, rec, narration) {
       turnAudit.confirms += 1;
       if (t.state !== "WAIT_APPROVAL" || t.event !== "waiting") bad(`a turn that issued a confirm card ended ${t.event}/${t.state}`);
     }
+  }
+  // THE WIRE AND THE TRANSCRIPT CARRY THE SAME ANSWER (§13/§94): on a drive with one answered stream
+  // and one saved assistant turn, what a reader got up to the first [DONE] is exactly what the thread
+  // kept, and no reply text follows that [DONE].
+  const savedAnswers = rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  const answered = responses.filter((r) => r.status === 200);
+  if (savedAnswers.length === 1 && answered.length === 1) {
+    turnAudit.answersCompared += 1;
+    const why = wireAnswerMatchesSaved(answered[0].bodyText || answered[0].partialText || "", savedAnswers[0].args?.p_content);
+    if (why) turnAudit.answerMismatches.push(`${label}: ${why}`);
   }
   for (const call of rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant")) {
     const b = call.args.p_bundle_ref;
@@ -5113,6 +5123,55 @@ console.log("\npaige_turn — every stream says it started and ends once, before
     terminalOf(narrated)?.state === "LIMIT_REACHED" && narrated.bodyText.includes(BLOCKAGE)
       && narrated.bodyText.indexOf('"LIMIT_REACHED"') < narrated.bodyText.indexOf(BLOCKAGE),
     narrated.bodyText.slice(0, 500));
+  // 36.11c The same exhausted turn on a thread: the wire carries EXACTLY the sentence the thread saves.
+  // The sentence used to be emitted beside the last narration round, which the replay then streamed
+  // after it — narration and the provider's [DONE] following the blockage sentence the record kept.
+  const EXHAUSTED = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+  const exhaustedThread = await drive({ stream: true, text: "Add Jacqueline to the intake pipeline", replyText: "Let me look into that for you.",
+    extraBody: { threadId: THREAD }, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY });
+  const exLines = exhaustedThread.bodyText.split("\n").filter((l) => l.startsWith("data: "));
+  const exWire = exLines.filter((l) => l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6))?.choices?.[0]?.delta?.content ?? ""; } catch { return ""; } }).join("");
+  const exDone = exLines.map((l, i) => (l === "data: [DONE]" ? i : -1)).filter((i) => i >= 0);
+  const exSentenceAt = exLines.findIndex((l) => l.includes("I wasn't able to complete that request"));
+  const exSaved = exhaustedThread.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  assert("36.11c an exhausted action turn streams exactly the sentence it saves: no narration after it, one [DONE] after it, LIMIT_REACHED in the record",
+    exWire === EXHAUSTED && !exhaustedThread.bodyText.includes("Let me look into that for you.")
+      && exSaved.length === 1 && exSaved[0].args?.p_content === exWire
+      && exDone.length === 1 && exSentenceAt !== -1 && exDone[0] > exSentenceAt
+      && persistedStates(exhaustedThread)[0]?.state === "LIMIT_REACHED",
+    JSON.stringify({ wire: exWire, done: exDone, sentenceAt: exSentenceAt, saved: exSaved.map((c) => c.args?.p_content), persisted: persistedStates(exhaustedThread) }));
+  // 36.11d …and when the last narration round was CUT OFF (calls 1-4: the first round + three
+  // continuations; the fourth breaks mid-text), the wire and the record still agree on LIMIT_REACHED.
+  // The sentence is the server's own complete answer, so an unfinished round it replaced cannot turn
+  // the record INTERRUPTED under a wire that said LIMIT_REACHED.
+  const exhaustedCut = await drive({ stream: true, text: "Add Jacqueline to the intake pipeline", replyText: "Let me look into that for you.",
+    extraBody: { threadId: THREAD }, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY,
+    breakStreamCalls: { 4: "Let me look" } });
+  assert("36.11d an exhausted turn whose last narration round was cut off is LIMIT_REACHED on the wire AND in the record, and streams only the sentence",
+    terminalOf(exhaustedCut)?.state === "LIMIT_REACHED" && persistedStates(exhaustedCut)[0]?.state === "LIMIT_REACHED"
+      && turnsOf(exhaustedCut).filter((t) => t.event === "completed" || t.event === "waiting").length === 1
+      && exhaustedCut.bodyText.includes(EXHAUSTED.slice(0, 40)) && !exhaustedCut.bodyText.includes("Let me look"),
+    JSON.stringify({ wire: turnsOf(exhaustedCut), persisted: persistedStates(exhaustedCut) }));
+  // 36.11e …and on a PROTECTED turn (the default memory reached the model, so the answer is held for the final
+  // check) the sentence is held and released like any other replay: terminal, then exactly the saved
+  // sentence, then one [DONE].
+  const exhaustedHeld = await drive({ stream: true, text: "Add Jacqueline to the intake pipeline", replyText: "Let me look into that for you.",
+    extraBody: { threadId: THREAD }, rpcOverrides: { ...AS_OWNER } });
+  // Held ⇔ the phase marker (always direct) reaches the wire BEFORE the terminal (released at the final check).
+  const heldTurn = (r) => { const ph = r.bodyText.indexOf('"paige_phase"'); const t = r.bodyText.indexOf('"LIMIT_REACHED"'); return ph !== -1 && t !== -1 && ph < t; };
+  const heldLines = exhaustedHeld.bodyText.split("\n").filter((l) => l.startsWith("data: "));
+  const heldWire = heldLines.filter((l) => l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6))?.choices?.[0]?.delta?.content ?? ""; } catch { return ""; } }).join("");
+  const heldDone = heldLines.map((l, i) => (l === "data: [DONE]" ? i : -1)).filter((i) => i >= 0);
+  const heldSaved = exhaustedHeld.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  assert("36.11e a PROTECTED exhausted turn releases exactly the saved sentence after its LIMIT_REACHED terminal, with one [DONE] last",
+    heldTurn(exhaustedHeld) && !heldTurn(exhaustedThread)
+      && heldWire === EXHAUSTED && heldSaved.length === 1 && heldSaved[0].args?.p_content === heldWire
+      && heldDone.length === 1 && heldDone[0] === heldLines.length - 1
+      && terminalOf(exhaustedHeld)?.state === "LIMIT_REACHED" && persistedStates(exhaustedHeld)[0]?.state === "LIMIT_REACHED"
+      && exhaustedHeld.bodyText.indexOf('"LIMIT_REACHED"') < exhaustedHeld.bodyText.indexOf("I wasn't able to complete that request"),
+    JSON.stringify({ held: heldTurn(exhaustedHeld), controlHeld: heldTurn(exhaustedThread), wire: heldWire, done: heldDone, lines: heldLines.length, saved: heldSaved.map((c) => c.args?.p_content), turns: turnsOf(exhaustedHeld), persisted: persistedStates(exhaustedHeld) }));
   // The same request, but the continuation call itself fails: the narration was already judged
   // unresolved and the retry did not happen, so the turn did not finish — INTERRUPTED, never FINAL.
   const RETRY_NARRATION = "Let me look into that for you.";
@@ -5250,6 +5309,18 @@ console.log("\npaige_turn — every stream says it started and ends once, before
   assert("36.8 every persisted assistant turn carries a turn_state in the contract's shape, and every turn_trace holds work steps, never a thought",
     turnAudit.persisted >= 10 && turnAudit.traced >= 1 && turnAudit.thoughtsBesideTrace >= 1 && turnAudit.violations.length === 0,
     JSON.stringify({ persisted: turnAudit.persisted, traced: turnAudit.traced, thoughtsBesideTrace: turnAudit.thoughtsBesideTrace }));
+  assert("36.8b on every drive that streamed one answer and saved one turn, the answer a reader got up to [DONE] is exactly the saved text, and nothing follows [DONE]",
+    turnAudit.answersCompared >= 100 && turnAudit.answerMismatches.length === 0,
+    JSON.stringify({ compared: turnAudit.answersCompared, mismatches: turnAudit.answerMismatches.slice(0, 6) }));
+  // …and the rule itself bites, on synthetic bodies (the drives above only ever show it agreeing).
+  const sse = (...frames) => frames.map((f) => (f === "[DONE]" ? "data: [DONE]\n\n" : `data: ${JSON.stringify(f)}\n\n`)).join("");
+  const say = (t) => ({ choices: [{ delta: { content: t } }] });
+  assert("36.8c the wire-vs-saved rule flags a differing answer, reply text after [DONE], and agrees on a Studio question's prompt",
+    wireAnswerMatchesSaved(sse(say("A"), "[DONE]"), "A") === null
+      && wireAnswerMatchesSaved(sse(say("A"), say("B"), "[DONE]"), "A") !== null
+      && wireAnswerMatchesSaved(sse(say("A"), "[DONE]", say("B")), "A") === "reply text after the first [DONE]"
+      && wireAnswerMatchesSaved(sse({ paige_choices: { prompt: "Which one?", options: [] } }, "[DONE]"), "Which one?") === null,
+    "");
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

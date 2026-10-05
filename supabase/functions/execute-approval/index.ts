@@ -129,6 +129,22 @@ Deno.serve(async (req) => {
     return json(200, { ok: true, executed: false, scheduled: true, campaign: scheduled, approval_id: approvalId });
   }
 
+  // An email series' approval is the same kind of row and is decided the same way: email_sequence_approve
+  // re-derives the version's hash, requires a person who owns or administers the business, and starts the
+  // series. Its own DB guard refuses any other writer, so this must run before the acknowledge path.
+  const sequenceVersionId = approval.type === "campaign_send"
+    ? String(((approval as any).metadata ?? {}).email_sequence_version_id ?? "")
+    : "";
+  if (sequenceVersionId) {
+    const { data: started, error: approveErr } = await userClient.rpc("email_sequence_approve", { p_version_id: sequenceVersionId });
+    if (approveErr) {
+      await releaseClaim();
+      return json(200, { ok: false, executed: false, error: approveErr.message, approval_id: approvalId });
+    }
+    // Approved and running: the email worker's tick enrols people and sends each email when it is due.
+    return json(200, { ok: true, executed: false, scheduled: true, series: started, approval_id: approvalId });
+  }
+
   // Layer C (C5): an orchestration-sourced approval carries the held act's coordinates. Delegate to the
   // Layer-C approval-executor (the row is already atomically claimed above — that is the single-use guard;
   // the executor's approve RPC is a second idempotency guard on the ledger row). NATIVE acts this slice.

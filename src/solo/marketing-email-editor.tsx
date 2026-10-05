@@ -81,7 +81,7 @@ const words = (key: string) => key.charAt(0).toUpperCase() + key.slice(1).replac
 const stageLabel = (k: string) => STAGE_LABEL[k] ?? words(k);
 const sourceLabel = (k: string) => SOURCE_LABEL[k] ?? words(k);
 
-function ruleSummary(rule: Rule): string {
+export function ruleSummary(rule: Rule): string {
   const parts: string[] = [];
   if (rule.stages?.length) parts.push(rule.stages.map(stageLabel).join(" or "));
   if (rule.sources?.length) parts.push(`from ${rule.sources.map(sourceLabel).join(" or ")}`);

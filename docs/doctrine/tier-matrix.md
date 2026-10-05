@@ -392,7 +392,8 @@ metering as campaigns. Agency accounts have no Marketing area (§60).
 
 | Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
 |---|---|---|---|---|---|---|---|
-| Build, approve, pause, resume, stop, remove someone from an email series | ✗ (no workspace) | ✗ (no Marketing area, §60) | **✓** owner/admin; a member is refused in the database | DB allows owner/admin; the sub-account tree has no Email screen yet | ✗ (client seat is deny-by-default) | ✗ | PARTIAL: LIVE on merge; authenticated drive owed |
+| Build, approve, pause, resume, stop, remove someone from an email series | ✗ (no workspace) | ✗ no screen (no Marketing area, §60); the database allows an agency owner/admin, as it does for E2's editor RPCs (only PAIGE's E2b tools refuse agencies) | **✓** owner/admin; a member is refused in the database | DB allows owner/admin; the sub-account tree has no Email screen yet | ✗ (client seat is deny-by-default) | ✗ | PARTIAL: LIVE on merge; authenticated drive owed |
+| Approve a filed series from the shared approvals queue | — | — | **✓** `execute-approval` routes it to `email_sequence_approve` as the approving person | as Solo | ✗ | ✗ | LIVE on merge |
 | The series' own step campaigns | hidden from every campaign read and the dashboard (RLS `sequence_id IS NULL`); only the series RPCs and the worker touch them | | | | | | LIVE on merge |
 
 ### Marketing email E2b — PAIGE's email tools in chat (branch `claude/gifted-bell-qfezxb`, 2026-10-05)

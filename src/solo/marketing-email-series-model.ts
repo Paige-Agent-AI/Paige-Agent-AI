@@ -129,6 +129,12 @@ export const SERIES_ERROR: Record<string, string> = {
   kind_invalid: "That kind of series does not exist.",
   over_daily_cap: "More people match this right now than your daily limit allows. Narrow who enters, or start it as new contacts only.",
   series_approval_requires_review: "Approve a series from its own page.",
+  not_awaiting_approval: "This series is no longer waiting for approval. Reload to see where it stands.",
+  approval_not_pending: "That approval was already decided. Reload to see where the series stands.",
+  version_frozen: "This version is waiting for approval or has been approved, so it can’t be changed. Choose Make changes first.",
+  not_an_editable_draft: "This series isn’t a draft right now. Choose Edit or Make changes first.",
+  not_in_series: "That person is no longer in this series.",
+  campaign_belongs_to_series: "That email belongs to a series. Change it from the series page.",
 };
 
 /** A series' approval summary, as the card says it. */
@@ -137,5 +143,5 @@ export function startSummary(input: { name: string; emails: number; mode: "new_c
   const head = input.change ? `Update “${input.name}”: ${n}. The people in it carry on with the new emails from where they are.`
     : input.mode === "new_contacts" ? `Start “${input.name}”: ${n} to new contacts as they arrive.`
     : `Start “${input.name}”: ${n} to the ${plural(input.matching ?? 0, "person", "people")} who match today, and anyone who matches later.`;
-  return `${head} From ${input.from}. Up to ${input.cap.toLocaleString()} emails a day across all your email.`;
+  return `${head} From ${input.from}. Up to ${input.cap.toLocaleString()} emails a day across all your marketing email.`;
 }

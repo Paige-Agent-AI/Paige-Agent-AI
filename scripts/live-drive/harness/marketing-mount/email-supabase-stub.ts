@@ -96,7 +96,7 @@ const seriesRows = [
 const md = (s: string) => `<!--paige-src:${btoa(String.fromCharCode(...new TextEncoder().encode(s)))}-->\n<p>${s}</p>`;
 const seriesSteps = [
   { position: 1, delay_minutes: 0, subject: "Welcome to Northfield Advisory", preheader: "Here’s what happens next", body_html: md(body) },
-  { position: 2, delay_minutes: 2880, subject: "How we work with clients", preheader: "Three things our clients count on", body_html: md("Hi again,\n\nEvery engagement starts with a 60-minute working session, a written plan within a week, and a check-in every Friday.") },
+  { position: 2, delay_minutes: 2880, subject: "How we work with clients", preheader: "Three things our clients count on", body_html: md("Hi again,\n\nEvery engagement starts with a 60-minute working session, a written plan within a week, and a check-in every week.") },
   { position: 3, delay_minutes: 7200, subject: "Ready to talk?", preheader: "Book a 20-minute call", body_html: md("If the timing is right, pick a time that suits you.\n\n[[Book a call|https://northfield.example/book]]") },
 ];
 const seriesFor = (id: string) => {

@@ -15,7 +15,7 @@ import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Ic as SharedIcons } from "./_shared";
 import { blockReason } from "./marketing-email-model";
-import { Reach, RuleBuilder, errorWords, roveRadios, useAudiencePreview, type Rule } from "./marketing-email-editor";
+import { Reach, RuleBuilder, errorWords, roveRadios, ruleSummary, useAudiencePreview, type Rule } from "./marketing-email-editor";
 import { markupToHtml, previewDocument, renderCampaignEmail, sourceOf } from "./email-markup";
 import { Frame, type Phase } from "./marketing-planned";
 import { AskPaige } from "./marketing-ui";
@@ -49,6 +49,7 @@ const STARTERS: { kind: SeriesKind; icon: string; title: string; detail: string 
 const when = (iso: string | null) => {
   if (!iso) return null;
   const t = new Date(iso);
+  if (t.getTime() <= Date.now()) return "Due now";
   if (t.getTime() <= Date.now() + 60_000) return "Within a minute";
   const sameDay = t.toDateString() === new Date().toDateString();
   return sameDay ? `Today, ${t.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}` : t.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -268,6 +269,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
   const shownStep = steps.find((x) => x.position === open) ?? steps[0] ?? null;
   const sentEmail = shownStep ? renderCampaignEmail({ bodyHtml: stepHtml(shownStep), preheader: shownStep.preheader, businessName: data.business_name, postalAddress: data.postal_address ?? "" }) : "";
   const goalLabel = GOALS.find((g) => g.key === v.exit_on_goal)?.label.toLowerCase();
+  const audienceWords = v.segment_name ? `the segment “${v.segment_name}”` : ruleSummary(v.audience ?? {});
   const hours = hoursFromJoin(steps);
   const stats = (pos: number) => data.emails.find((e) => e.position === pos);
   const totalSent = data.emails.reduce((t, e) => t + e.sent, 0);
@@ -323,14 +325,14 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
       <div className="mo-panel-head"><div><h2 id="ms-review-h">{changing ? "Ready to update" : "Ready to start"}</h2>
         <p>{startSummary({ name: s.name, emails: v.steps.length, mode: v.entry_mode, matching: v.expected_entrants, from: fromLine, cap: data.sending.daily_cap, change: changing })}</p></div></div>
       <dl className="me-facts">
-        <div><dt>Who enters</dt><dd>{v.entry_mode === "new_contacts" ? "New contacts from now on" : "Anyone who matches, now or later"}</dd></div>
+        <div><dt>Who enters</dt><dd>{v.entry_mode === "new_contacts" ? "New contacts from now on" : "Anyone who matches, now or later"}: {audienceWords}</dd></div>
         <div><dt>Emails</dt><dd>{v.steps.length} {v.steps.length === 1 ? "email" : "emails"} {spanWords(v.steps)}</dd></div>
         <div><dt>From</dt><dd>{fromLine}</dd></div>
-        <div><dt>Daily limit</dt><dd>Up to {data.sending.daily_cap.toLocaleString()} a day across all your email; series emails wait, never dropped</dd></div>
+        <div><dt>Daily limit</dt><dd>Up to {data.sending.daily_cap.toLocaleString()} a day across all your marketing email; series emails wait, never dropped</dd></div>
       </dl>
       <p className="me-hint">Someone leaves when they unsubscribe, bounce or are marked do not contact{v.exit_on_goal !== "none" && goalLabel ? `, or ${goalLabel}` : ""}{v.exit_when_unmatched ? ", or they stop matching" : ""}. Each person goes through this series once and never gets the same email twice. Nothing has been sent.</p>
       <div className="me-review-acts">
-        <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_sequence_approve", { p_version_id: v.id }, changing ? "Updated. People carry on with the new emails from where they are." : v.entry_mode === "new_contacts" ? `Started. “${s.name}” sends by itself from now on. New contacts who match join as they arrive.` : `Started. People who match join within a few minutes; their first email goes out within today’s limit.`)}>{busy === "approve" ? "Approving…" : changing ? "Approve changes" : "Approve and start"}</button>
+        <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_sequence_approve", { p_version_id: v.id }, changing ? "Updated. People carry on with the new emails from where they are." : v.entry_mode === "new_contacts" ? `Started. “${s.name}” sends by itself from now on. New contacts who match join as they arrive.` : `Started. People who match join within a few minutes; their first email goes out ${v.steps[0]?.delay_minutes ? waitWords(v.steps[0].delay_minutes, 0) : "within today’s limit"}.`)}>{busy === "approve" ? "Approving…" : changing ? "Approve changes" : "Approve and start"}</button>
         <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("changes", "email_sequence_edit", { p_sequence_id: s.id }, "Back to draft. The waiting approval is withdrawn; nothing was sent.")}>Make changes</button>
         <button type="button" className="btn btn-s btn-q" disabled={busy !== null} onClick={() => setDeclineOpen((o) => !o)} aria-expanded={declineOpen}>Not now</button>
       </div>
@@ -395,7 +397,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
             {settings.entry_mode === "new_contacts"
               ? <p className="me-reach" aria-live="polite"><span>Starts empty. Contacts added from now on who match join it.</span>{preview.data && <small>Today {preview.data.matched.toLocaleString()} {preview.data.matched === 1 ? "contact matches" : "contacts match"}; they don’t join.</small>}</p>
               : <Reach preview={preview} newsletter={false}/>}
-          </> : <p className="me-reach"><span><b>{v.entry_mode === "new_contacts" ? "New contacts from now on" : "Anyone who matches, now or later"}</b>{v.segment_name ? `, in the segment “${v.segment_name}”` : ""}. {data.entry_preview.eligible.toLocaleString()} can get these emails today.</span></p>}
+          </> : <p className="me-reach"><span><b>{v.entry_mode === "new_contacts" ? "New contacts from now on" : "Anyone who matches, now or later"}</b>: {audienceWords}. {data.entry_preview.eligible.toLocaleString()} can get these emails today.</span></p>}
         </section>
 
         <section className="campaigns-surface mo-panel" aria-labelledby="ms-emails">

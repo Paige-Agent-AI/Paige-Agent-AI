@@ -19,6 +19,7 @@ on:
       - "supabase/functions/_shared/paige-spine/**"
       - "supabase/migrations/**"
       - "supabase/tests/research_tenant_lineage.sql"
+      - "supabase/tests/research_persist_service_grants.sql"
       - "supabase/tests/mcp_gateway_endpoint_revokes_approvals.sql"
       - "supabase/tests/mcp_gateway_durable_endpoint_bound_consent.sql"
       - "supabase/tests/mcp_gateway_url_auth_configured.sql"
@@ -157,6 +158,13 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
+      # INT-309: the research persistence grants — runs on the FRESH-BUILT database, where
+      # every tree migration (including this change's GRANT) is ambiently applied. Later,
+      # the reproduce/reconcile machinery re-derives grant state from production — which
+      # lacks this migration until it deploys — and that interplay is grant-ordering-proof.sh's
+      # own subject; proving the matrix here keeps this proof independent of that ordering.
+      - run: supabase test db supabase/tests/research_persist_service_grants.sql
+        if: ${{ !cancelled() }}
       # Production's grants are reproduced on the schema production actually has, and only then is
       # the change under review applied on top — so its own grants and revokes, dynamic SQL,
       # schema-wide ones and out-of-order migrations included, land exactly as written. Guessing

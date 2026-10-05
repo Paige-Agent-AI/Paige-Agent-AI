@@ -24,7 +24,18 @@ import {
   startSummary, waitWords, type SeriesKind, type SeriesRead, type SeriesRow, type SeriesSender,
 } from "./marketing-email-series-model";
 
-const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
+// The series page's own icons, drawn like the shared set (24px box, 1.6 stroke, round caps).
+const icon = (paths: React.ReactNode) => ({ size = 18 }: { size?: number }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths}</svg>;
+const SERIES_ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
+  edit: icon(<><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></>),
+  pause: icon(<path d="M9 5.5v13M15 5.5v13"/>),
+  play: icon(<path d="M7.5 5.5l11 6.5-11 6.5z"/>),
+  up: icon(<path d="M12 18.5v-13M6.5 11L12 5.5 17.5 11"/>),
+  down: icon(<path d="M12 5.5v13M6.5 13L12 18.5 17.5 13"/>),
+  trash: icon(<path d="M4.5 7h15M10 11v5.5M14 11v5.5M6.5 7l.8 12h9.4l.8-12M9.5 7V4.5h5V7"/>),
+};
+const Ic = { ...(SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>), ...SERIES_ICONS };
 type RpcError = { message?: string; details?: string; code?: string } | null;
 type Rpc = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: RpcError }>;
 const rpc = (supabase as unknown as { rpc: Rpc }).rpc.bind(supabase);

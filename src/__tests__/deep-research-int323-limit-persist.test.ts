@@ -7,7 +7,8 @@
  * then skipped the assistant turn — so no bundle_ref.paige_research reference ever landed and
  * reload lost the card, while the run itself WAS saved (INT-309 proved that half live).
  *
- * The repair: beside the C1 exhausted-branch, a research-aware branch authors the whole
+ * The repair: TWO sites — one beside the C1 exhausted-branch (replayed-round sibling), one
+ * after the ok-but-empty closing stream (the recorded defect path) — author the whole
  * answer from RUNTIME TRUTH (researchLimitFallbackCopy — deterministic from the trace's
  * governed-readback saved verdicts, never a model call), replaces the empty round's chunks,
  * and lets the ONE replay path + the ONE persistence site carry the SAME copy with the
@@ -117,12 +118,17 @@ describe("INT-323 — both sites (research + empty prose → the copy rides the 
     expect(site1).toContain('turnTracker.record().state === "LIMIT_REACHED"');
   });
 
-  it("NEITHER site converts the turn state — no tracker calls at all", () => {
+  it("NEITHER site converts the turn state — the ONLY tracker token is the .record() read", () => {
     for (const site of [site1, site2]) {
-      expect(site).not.toContain("turnTracker.budgetStop");
-      expect(site).not.toContain("turnTracker.interrupted");
-      expect(site).not.toContain("turnTracker.final");
+      const trackerTokens = site.match(/turnTracker\.[a-zA-Z]+/g) ?? [];
+      expect(trackerTokens.every((t) => t === "turnTracker.record")).toBe(true);
     }
+  });
+
+  it("site 1 stays replay-only (no direct emission — the ONE replay path carries it)", () => {
+    expect(site1).not.toContain("emitContent");
+    expect(site1).not.toContain("persistAssistantTurn");
+    expect(site1).not.toContain("fetch(");
   });
 
   it("proof 6 — exactly-once: neither site persists or dispatches anything itself", () => {
@@ -146,6 +152,11 @@ describe("INT-323 — both sites (research + empty prose → the copy rides the 
   it("proof 5 — ordinary FINAL research turns (prose present) can never enter either site", () => {
     expect(site1).toContain("!finalAssistantText.trim()");
     expect(site2).toContain("!finalAssistantText.trim()");
+  });
+
+  it("review P2 — an answer-less closing stream drops its orphan trailing [DONE] before the flush", () => {
+    expect(core).toContain('if (heldTail.trim() === "data: [DONE]") heldLead.pop();');
+    expect(core).toContain("!answerStarted && heldLead.length");
   });
 
   it("the paige_research reference still rides assistantTurnMetadata (the reload contract)", () => {

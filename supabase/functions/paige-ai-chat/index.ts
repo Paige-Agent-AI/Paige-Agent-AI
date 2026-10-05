@@ -15703,6 +15703,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // stream that never carried text gets its terminal now (then its held bytes).
                 if (!closingFinished) turnTracker.interrupted();
                 interruptEmptyFinal();
+                // INT-323 (review P2): when the closing stream carried NO answer text, the
+                // translator's trailing `data: [DONE]` sits in heldLead; flushing it before the
+                // fallback copy below would terminate the 4/7 SSE consumers that break on [DONE]
+                // before the copy ever renders — making the copy reload-only on the exact path it
+                // exists for. The sentinel led nothing; drop it (the fallback below — or the
+                // pump's own tail — supplies the real one).
+                if (!answerStarted && heldLead.length) {
+                  const heldTail = new TextDecoder().decode(heldLead[heldLead.length - 1]);
+                  if (heldTail.trim() === "data: [DONE]") heldLead.pop();
+                }
                 startAnswer();
               }
             }

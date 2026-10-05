@@ -154,9 +154,53 @@ export async function assertPublicUrl(raw) {
 
 // A read-only page is an egress policy, not merely a navigation policy. Page JavaScript may issue
 // writes to an otherwise-public host, so only safe retrieval methods are allowed through Chromium.
+// (A bare method cannot tell a CORS preflight from a script's own OPTIONS, so OPTIONS is refused HERE;
+// requestEgressBlockReason below adds the one narrow, header-proven preflight exception.)
 export function requestMethodBlockReason(method) {
   const normalized = String(method || "").toUpperCase();
   return normalized === "GET" || normalized === "HEAD" ? null : "method:not-read-only";
+}
+
+const READ_METHODS = new Set(["GET", "HEAD"]);
+
+// INT-312 — the browser-level request policy: a method check PLUS one narrow exception, a CORS
+// preflight for a READ.
+//
+// A published workspace page loads its rows with supabase-js, whose GETs carry `apikey` /
+// `authorization` / `x-client-info` headers, so the browser sends an OPTIONS preflight before each one.
+// An OPTIONS that IS that preflight is allowed through (to a host that still passes the public-host /
+// private-range / metadata / DNS guard below — never a private host): a preflight carries no body and
+// asks the server a question; it cannot mutate anything.
+//
+// "Is a preflight" is decided by headers page script CANNOT forge. `Access-Control-Request-Method` is a
+// forbidden request-header name in the Fetch standard, so only the browser's own CORS machinery can set
+// it; a script's own `fetch(url, { method: "OPTIONS", body })` lacks it and stays blocked, body or not.
+// The preflight is allowed only when the request it announces is itself a read (GET/HEAD): a preflight
+// for a POST/PUT/PATCH/DELETE is refused, so a write's server never even sees its preflight — and the
+// write itself would be refused by the method rule anyway.
+//
+// HONEST NOTE (§13, measured 2026-10-04 on Playwright 1.62.1 / Chromium): with any route installed,
+// Playwright's Chromium driver answers a CORS preflight ITSELF (a permissive 204) before user route
+// handlers run, so in this version real preflights never reach this policy and were never aborted by
+// it. This rule is the explicit contract for the day the driver stops doing that, not a repair of a
+// failure that reproduces today. See smoke-render.mjs (published-page data contract).
+export function requestEgressBlockReason(request) {
+  const method = String(request?.method || "").toUpperCase();
+  if (READ_METHODS.has(method)) return null;
+  if (method === "OPTIONS") {
+    const headers = request.headers || {};
+    const announced = String(headers["access-control-request-method"] || "").toUpperCase();
+    const hasBody = request.hasBody === true;
+    if (announced && READ_METHODS.has(announced) && !hasBody) return null;
+    return announced ? "method:preflight-for-write" : "method:not-read-only";
+  }
+  return "method:not-read-only";
+}
+
+function routeRequestShape(req) {
+  let body = null;
+  try { body = req.postDataBuffer(); } catch { body = null; }
+  return { method: req.method(), headers: req.headers(), hasBody: !!(body && body.length) };
 }
 
 // Install the actual browser egress fence on the BrowserContext before any page exists. Context-level
@@ -166,7 +210,9 @@ export async function installReadOnlyBrowserEgress(context) {
   await context.routeWebSocket("**/*", (ws) => ws.close());
   await context.route("**/*", async (route) => {
     try {
-      if (requestMethodBlockReason(route.request().method())) return route.abort("blockedbyclient");
+      // Method first (read, or a read's preflight), THEN the destination host — the preflight exception
+      // never skips the private-host / metadata / DNS guard.
+      if (requestEgressBlockReason(routeRequestShape(route.request()))) return route.abort("blockedbyclient");
       const host = new URL(route.request().url()).hostname;
       if (await hostIsPrivate(host)) return route.abort("blockedbyclient");
       return route.fallback();

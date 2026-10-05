@@ -685,6 +685,9 @@ BEGIN
 
   UPDATE public.email_sequences SET live_version_id = v.id, status = st_now, activated_at = COALESCE(activated_at, now()),
     checked_at = NULL, updated_at = now() WHERE id = s.id;
+  -- Both flags end here, not at the end of the transaction, so nothing else run in it inherits them.
+  PERFORM set_config('paige.email_sequence_approve', '', true);
+  PERFORM set_config('paige.email_sequence_write', '', true);
   RETURN jsonb_build_object('sequence_id', s.id, 'version_id', v.id, 'status', st_now, 'emails', n);
 END $$;
 
@@ -758,6 +761,7 @@ BEGIN
   UPDATE public.email_campaigns SET status = 'blocked', blocked_reason = 'series_paused', updated_at = now()
    WHERE sequence_id = s.id AND status IN ('scheduled','sending','blocked');
   UPDATE public.email_sequences SET status = 'paused', blocked_reason = NULL, updated_at = now() WHERE id = s.id;
+  PERFORM set_config('paige.email_sequence_write', '', true);
   RETURN jsonb_build_object('sequence_id', s.id, 'status', 'paused');
 END $$;
 
@@ -786,6 +790,7 @@ BEGIN
   UPDATE public.email_campaigns SET status = 'sending', blocked_reason = NULL, updated_at = now()
    WHERE sequence_id = s.id AND status = 'blocked' AND sequence_position <= n;
   UPDATE public.email_sequences SET status = 'active', blocked_reason = NULL, updated_at = now() WHERE id = s.id;
+  PERFORM set_config('paige.email_sequence_write', '', true);
   RETURN jsonb_build_object('sequence_id', s.id, 'status', 'active');
 END $$;
 
@@ -821,6 +826,7 @@ BEGIN
   END LOOP;
   UPDATE public.email_sequences SET status = 'stopped', stopped_at = now(), blocked_reason = NULL,
     current_version_id = live_version_id, updated_at = now() WHERE id = s.id;
+  PERFORM set_config('paige.email_sequence_write', '', true);
   RETURN jsonb_build_object('sequence_id', s.id, 'status', 'stopped', 'people_left', n);
 END $$;
 
@@ -948,17 +954,18 @@ BEGIN
         'suppressed', count(*) FILTER (WHERE a.ineligible = 'suppressed'))
       FROM public._email_audience(t, rule, false) a),
     -- How each email of the running version is doing (every send of that position, across versions).
-    'emails', COALESCE((SELECT jsonb_agg(jsonb_build_object('position', c.sequence_position,
-        'sent', count(r.*) FILTER (WHERE r.status = 'sent'),
-        'tracked', count(r.*) FILTER (WHERE r.status = 'sent' AND r.route = 'managed'),
-        'opened', count(r.*) FILTER (WHERE r.route = 'managed' AND r.opened_at IS NOT NULL),
-        'clicked', count(r.*) FILTER (WHERE r.route = 'managed' AND r.clicked_at IS NOT NULL),
-        'waiting', count(r.*) FILTER (WHERE r.status IN ('planned','sending')),
+    'emails', COALESCE((SELECT jsonb_agg(q.j ORDER BY q.pos) FROM (
+      SELECT c.sequence_position AS pos, jsonb_build_object('position', c.sequence_position,
+        'sent', count(r.id) FILTER (WHERE r.status = 'sent'),
+        'tracked', count(r.id) FILTER (WHERE r.status = 'sent' AND r.route = 'managed'),
+        'opened', count(r.id) FILTER (WHERE r.route = 'managed' AND r.opened_at IS NOT NULL),
+        'clicked', count(r.id) FILTER (WHERE r.route = 'managed' AND r.clicked_at IS NOT NULL),
+        'waiting', count(r.id) FILTER (WHERE r.status IN ('planned','sending')),
         'next_at', min(COALESCE(r.not_before, now())) FILTER (WHERE r.status = 'planned'),
-        'not_delivered', count(r.*) FILTER (WHERE r.status IN ('failed','outcome_unknown')),
-        'skipped', count(r.*) FILTER (WHERE r.status = 'skipped')) ORDER BY c.sequence_position)
+        'not_delivered', count(r.id) FILTER (WHERE r.status IN ('failed','outcome_unknown')),
+        'skipped', count(r.id) FILTER (WHERE r.status = 'skipped')) AS j
       FROM public.email_campaigns c LEFT JOIN public.email_campaign_recipients r ON r.campaign_id = c.id
-     WHERE c.sequence_id = s.id GROUP BY c.sequence_position), '[]'::jsonb),
+     WHERE c.sequence_id = s.id GROUP BY c.sequence_position) q), '[]'::jsonb),
     'people', jsonb_build_object(
       'in_now', (SELECT count(*) FROM public.email_sequence_enrollments e WHERE e.sequence_id = s.id AND e.status = 'active'),
       'completed', (SELECT count(*) FROM public.email_sequence_enrollments e WHERE e.sequence_id = s.id AND e.status = 'completed'),

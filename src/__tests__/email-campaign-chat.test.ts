@@ -241,7 +241,9 @@ describe("email campaign chat tools", () => {
       expect(authorityAdmits(tool, operator, new Set(), EMAIL_CAMPAIGN_TOOL_NAMES)).toBe(false);
     }
     const chat = fs.readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
-    expect(chat).toContain("authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)");
+    // Campaign and series tools share one seat rule (E3c): the chat passes their union.
+    expect(chat).toContain("authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_MARKETING_TOOL_NAMES)");
+    expect(chat).toMatch(/const EMAIL_MARKETING_TOOL_NAMES[^\n]*\[\.\.\.EMAIL_CAMPAIGN_TOOL_NAMES, \.\.\.EMAIL_SERIES_TOOL_NAMES\]/);
     expect(chat).toMatch(/const DOOR_SEAT_TOOLS[\s\S]{0,600}\.\.\.EMAIL_CAMPAIGN_TOOL_NAMES/);
   });
 

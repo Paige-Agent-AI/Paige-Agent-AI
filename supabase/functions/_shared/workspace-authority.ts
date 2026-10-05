@@ -59,6 +59,8 @@ export const OUT_OF_BRANCH_ADMIN_TOOLS: ReadonlySet<string> = new Set([
   // Marketing email (E2b): the RPCs refuse anyone but the business's owner or an admin; listing them here
   // lets a member hear that before any approval card instead of after.
   "read_email_campaigns", "read_email_campaign_audience", "email_campaign_draft", "email_campaign_request_approval",
+  // Marketing email series (E3c): the same owner-or-admin rule.
+  "read_email_series", "email_series_draft", "email_series_request_approval",
 ]);
 
 /** The tools a caller can use only as this workspace's owner/admin (or the platform operator). */

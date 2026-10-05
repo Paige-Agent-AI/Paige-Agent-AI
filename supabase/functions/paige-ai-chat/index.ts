@@ -9,6 +9,7 @@ import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCol
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
+import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
@@ -83,8 +84,10 @@ const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
   ...COMMS_EMAIL_TOOL_NAMES,
   // Marketing email: its RPCs admit only an owner/admin SEAT of the active business (_email_caller_tenant),
   // never an agency manager acting in a sub-account or the operator acting as a business.
-  ...EMAIL_CAMPAIGN_TOOL_NAMES,
+  ...EMAIL_CAMPAIGN_TOOL_NAMES, ...EMAIL_SERIES_TOOL_NAMES,
 ]);
+// Marketing email's campaign and series tools: one owner/admin seat rule for both (E2b, E3c).
+const EMAIL_MARKETING_TOOL_NAMES: ReadonlySet<string> = new Set<string>([...EMAIL_CAMPAIGN_TOOL_NAMES, ...EMAIL_SERIES_TOOL_NAMES]);
 // The one publish door (growth-publish-command, V2b) admits the workspace's owner, an admin or its
 // managing agency — the Studio build rule (its tools are in WORKSPACE_BUILD_TOOLS). It is outside the
 // owner-ops branch, so the projection names it here or it would describe publishing to a member.
@@ -403,6 +406,9 @@ function describeStep(
     case "read_email_campaign_audience": return { label: failed ? "Couldn't count that campaign's audience" : "Counted who that campaign would reach", group: "owner" };
     case "email_campaign_draft": return { label: failed ? "Couldn't confirm the email draft" : "Saved an email draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
     case "email_campaign_request_approval": return { label: failed ? "Couldn't confirm it was filed for approval" : "Filed an email campaign for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
+    case "read_email_series": return { label: failed ? "Couldn't read your email series" : "Checked your email series", group: "owner" };
+    case "email_series_draft": return { label: failed ? "Couldn't confirm the email series was saved" : "Saved an email series draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
+    case "email_series_request_approval": return { label: failed ? "Couldn't confirm the series was filed for approval" : "Filed an email series for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
     // Calendar booking presets (owner) — a preset is a bookable /book PAGE; only publish makes it public.
     // Each verb special-cases CALENDAR_PRESET_RAIL_WRITE_FAILED: there the mutation IS verified and
     // PERSISTED (only the Rail evidence did not finish), so the chip must state the TRUE persisted
@@ -1326,6 +1332,43 @@ serve(async (req) => {
         const { data, error } = await supabaseClient.rpc("current_user_tenant_id");
         return error ? null : ((data ?? null) as string | null);
       })());
+    // INT-326 memory-scope authority (coordinator ruling 2026-10-05): durable tenant memory —
+    // read OR write — may key on the person only inside the workspace that is BOTH explicitly
+    // declared AND currently validated: `profiles.active_tenant_id` (read through the caller's
+    // own JWT, so RLS applies) AND the entitlement-validated resolver returning the SAME
+    // workspace. Neither alone is authority: the declared pointer can be stale (membership
+    // revoked/cleared) and the resolver alone would substitute the oldest membership the caller
+    // never chose. Declared null, stale, revoked, or mismatched ⇒ NO tenant-memory read or
+    // write this turn — fail closed, existence-silent (the log below names the failed leg,
+    // never whether any memory exists). One resolution per turn, shared by every memory
+    // consumer below (recall, semantic search, the writers, the de-dupe probe), so the whole
+    // turn governs memory by ONE captured scope. Not a second resolver: it CONSUMES
+    // callerActiveTenantId() and the same declared-profile read the Knowledge gate uses.
+    let memoryWorkspaceScopeRead: Promise<string | null> | null = null;
+    const memoryWorkspaceScope = (): Promise<string | null> =>
+      (memoryWorkspaceScopeRead ??= (async () => {
+        try {
+          const [declaredRead, validated] = await Promise.all([
+            supabaseClient
+              .from("profiles")
+              .select("active_tenant_id")
+              .eq("user_id", user.id)
+              .maybeSingle(),
+            callerActiveTenantId(),
+          ]);
+          const { data, error } = declaredRead;
+          if (error) {
+            console.error("[paige] memory workspace scope unreadable — no memory this turn",
+              JSON.stringify({ code: (error as any)?.code ?? null }));
+            return null;
+          }
+          const declared = (data as { active_tenant_id?: unknown } | null)?.active_tenant_id;
+          if (typeof declared !== "string" || !declared) return null;
+          return declared === validated ? declared : null;
+        } catch {
+          return null;
+        }
+      })());
       // THE SIX REFUSAL REASONS ARE NOT ONE KIND OF THING, and a consumer that treats them as one
     // asserts something false to the person. Two are PERMISSION verdicts — the read succeeded and
     // the answer was no. Four are UNKNOWN — an RPC blip, a failed read, a thrown exception —
@@ -1540,20 +1583,27 @@ JSON:`;
         );
       }
 
-      // Insert session summary memory (with embedding)
+      // Insert session summary memory (with embedding). INT-326 write rule: resolve the turn's
+      // declared∧validated scope BEFORE the paid embed — a no-client turn that established no
+      // workspace persists NO tenant memory and buys no embedding for it.
       if (!skipScopedMemoryWrites && summaryContent.trim()) {
-        const summaryEmbedding = await embedText(summaryContent.trim());
-        const memoryInsert: any = {
-          client_user_id: scopedClientId || user.id,
-          memory_type: "session_summary",
-          content: summaryContent.trim(),
-          source_session_id: rawData.sessionId || null,
-          embedding: summaryEmbedding,
-          metadata: { channel: "text" },
-        };
-        if (scopedClientId) memoryInsert.client_id = scopedClientId;
-        else memoryInsert.tenant_id = await callerActiveTenantId();
-        await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
+        const ownSummaryScope = scopedClientId ? undefined : await memoryWorkspaceScope();
+        if (ownSummaryScope === null) {
+          console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "session_summary" }));
+        } else {
+          const summaryEmbedding = await embedText(summaryContent.trim());
+          const memoryInsert: any = {
+            client_user_id: scopedClientId || user.id,
+            memory_type: "session_summary",
+            content: summaryContent.trim(),
+            source_session_id: rawData.sessionId || null,
+            embedding: summaryEmbedding,
+            metadata: { channel: "text" },
+          };
+          if (scopedClientId) memoryInsert.client_id = scopedClientId;
+          else memoryInsert.tenant_id = ownSummaryScope;
+          await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
+        }
       }
 
       // Insert milestone memories if detected
@@ -1572,8 +1622,14 @@ JSON:`;
             business_bank_opened: "Client mentioned opening a business bank account",
           };
 
+          // INT-326 write rule (see session_summary): resolve the scope ONCE before the loop so a
+          // no-scope turn skips every milestone embed and write, not just the insert.
+          const ownMilestoneScope = scopedClientId ? undefined : await memoryWorkspaceScope();
+          if (ownMilestoneScope === null) {
+            console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "milestone_completed" }));
+          }
           for (const m of milestones) {
-            if (labelMap[m]) {
+            if (labelMap[m] && ownMilestoneScope !== null) {
               const emb = await embedText(labelMap[m]);
               const milestoneMemory: any = {
                 client_user_id: scopedClientId || user.id,
@@ -1583,7 +1639,7 @@ JSON:`;
                 embedding: emb,
               };
               if (scopedClientId) milestoneMemory.client_id = scopedClientId;
-              else milestoneMemory.tenant_id = await callerActiveTenantId();
+              else milestoneMemory.tenant_id = ownMilestoneScope;
               await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
             }
           }
@@ -1615,9 +1671,16 @@ JSON:`;
             commitments: "commitment",
             open_loops: "open_loop",
           };
+          // INT-326 write rule (see session_summary): resolve the scope ONCE before the loops so a
+          // no-scope turn skips every fact embed and write, not just the insert.
+          const ownFactScope = scopedClientId ? undefined : await memoryWorkspaceScope();
+          if (ownFactScope === null) {
+            console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "fact_extraction" }));
+          }
           for (const [list, memoryType] of Object.entries(kindByList)) {
             for (const p of facts[list] ?? []) {
               if (typeof p !== "string" || !p.trim()) continue;
+              if (ownFactScope === null) continue;
               const emb = await embedText(p.trim());
               const factMemory: any = {
                 client_user_id: scopedClientId || user.id,
@@ -1628,7 +1691,7 @@ JSON:`;
                 metadata: { channel: "text", source: "auto_extracted" },
               };
               if (scopedClientId) factMemory.client_id = scopedClientId;
-              else factMemory.tenant_id = await callerActiveTenantId();
+              else factMemory.tenant_id = ownFactScope;
               await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
             }
           }
@@ -1947,7 +2010,8 @@ JSON:`;
     let memoryBlock = "";
     // INT-326 — A PERSON'S OWN MEMORY IS RECALLED ONLY IN THE WORKSPACE IT WAS WRITTEN IN (§9/§51).
     // Every `client_memory` row carries a NOT NULL tenant: a row about the caller is stamped with the
-    // caller's ACTIVE tenant by the writers below (`callerActiveTenantId()`). The no-client read used
+    // caller's established memory scope by the writers below (`memoryWorkspaceScope()` — the
+    // declared∧validated conjunction, coordinator ruling 2026-10-05). The no-client read used
     // to key on `client_user_id` alone through the service-role client, so a preference written in
     // workspace A was recalled into a conversation in workspace B. The read now uses the SAME source
     // the writers stamp with, so read scope and write scope cannot diverge:
@@ -1963,11 +2027,18 @@ JSON:`;
       // The workspace sample is needed on EVERY memory-reading turn, client turns included: the
       // race guard after the persona read compares it with the turn's workspace, and a client turn
       // with no sample would have its legitimate client memory dropped (or, if exempted, lose the
-      // guard). Only the OWN-memory read is filtered by it, so only that path waits for it before
-      // reading; a client turn's read is keyed on client_id, and its sample runs alongside the read
-      // instead of in front of it (no extra serial round trip). The read is cached per turn and is
-      // the same one the writers below stamp with.
-      const memoryTenantSample: Promise<string | null> = clientScopeDenied ? Promise.resolve(null) : callerActiveTenantId();
+      // guard). The sample is PER-ARM: the own-memory arm samples the declared∧validated memory
+      // scope (INT-326 ruling — one memoized resolution shared with the writers and the de-dupe
+      // probe, so the whole turn governs OWN memory by ONE captured scope); a CLIENT turn's read
+      // is keyed on client_id and belongs to the CLIENT's tenant, not the caller's declaration —
+      // its guard sample is the resolver the persona itself derives from, so a caller with a null
+      // or stale DECLARED pointer keeps their legitimately-read client memory instead of having it
+      // dropped for a mismatch their own declaration played no part in authorizing.
+      const memoryTenantSample: Promise<string | null> = clientScopeDenied
+        ? Promise.resolve(null)
+        : scopedClientId
+        ? callerActiveTenantId()
+        : memoryWorkspaceScope();
       const memoryTurnTenant = clientScopeDenied || scopedClientId ? null : await memoryTenantSample;
       const ownMemoryAllowed = !clientScopeDenied && !scopedClientId && memoryTurnTenant !== null;
       // Refused client context does NO memory work at all: the block below is skipped entirely,
@@ -2058,10 +2129,16 @@ JSON:`;
           const semanticBlock = semanticEntries.length > 0
             ? `\n\n--- Semantically-relevant past context for this question ---\n${semanticEntries.join("\n")}`
             : "";
+          // INT-326 (Impeccable): name the TRUE subject. With a client in focus the rows are that
+          // client's; with none they are the CALLER's own preferences as shared while working in
+          // THIS workspace — the heading must not claim a client that is not in scope.
+          const memoryHeading = scopedClientId
+            ? "What I know about this client from previous sessions"
+            : "What I've learned about how you work in this workspace";
           // The remembered spans above are sanitized; lead the block with the untrusted-data notice so
           // an embedded directive/tool-call/permission-change is never obeyed. The trusted instruction
           // below still scopes what to honor to tone/length/format PREFERENCES — data, not authority.
-          memoryBlock = `\n\n=== PAIGE MEMORY — What I know about this client from previous sessions ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
+          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
         }
       }
     } catch (err) {
@@ -2178,7 +2255,7 @@ JSON:`;
           // suppressed the same one in workspace B for a week. A client turn keys on the client.
           // With no workspace there is nothing to compare against (the insert below is refused by
           // the database with MEMORY_TENANT_UNRESOLVED, exactly as before), so no probe is made.
-          const dedupeTenant = scopedClientId ? null : await callerActiveTenantId();
+          const dedupeTenant = scopedClientId ? null : await memoryWorkspaceScope();
           const dedupeProbe = scopedClientId
             ? supabase.from("client_memory").select("id").eq("client_id", scopedClientId)
             : dedupeTenant
@@ -2192,7 +2269,10 @@ JSON:`;
               .limit(1)
               .maybeSingle()
             : { data: null };
-          if (!dup) {
+          // INT-326 write rule: with no established workspace the whole write is skipped HERE —
+          // before the paid embed, not by waiting for the database's MEMORY_TENANT_UNRESOLVED
+          // refusal. A turn that cannot name its workspace persists no tenant memory.
+          if (!dup && (scopedClientId || dedupeTenant)) {
             const emb = await embedText(lastUserMessage!.content);
             const row: any = {
               client_user_id: targetUserId,
@@ -2202,8 +2282,10 @@ JSON:`;
               metadata: { source: "explicit_signal", channel: "text" },
             };
             if (scopedClientId) row.client_id = scopedClientId;
-            else row.tenant_id = await callerActiveTenantId();
+            else row.tenant_id = dedupeTenant;
             await recordWrite("client_memory:extracted", supabase.from("client_memory").insert(row));
+          } else if (!dup && !scopedClientId) {
+            console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "explicit_signal" }));
           }
         }
       }
@@ -2265,7 +2347,11 @@ JSON:`;
 
     // INT-326 — MEMORY READ IN ANOTHER WORKSPACE NEVER REACHES THIS TURN. Client memory is loaded
     // before the turn's workspace is pinned here, so a workspace switch between the two reads would
-    // hand workspace A's memory to a turn now scoped to B. Compare once, before anything consumes the
+    // hand workspace A's memory to a turn now scoped to B. The comparison basis is the SAME
+    // declared∧validated memory scope the reads and writes were captured under (S4 convergence:
+    // the guard consumes the captured scope; the drop feeds the protected-evidence latch, which
+    // re-checks the workspace at every provider boundary — no memory-specific switching logic).
+    // Compare once, before anything consumes the
     // block (the protected-evidence latch and the prompt both read it later), and drop it on mismatch.
     // Dropping the text does NOT drop the protection: the turn still counts as having carried
     // protected evidence (`memoryDroppedForScope` below), so the scope re-check before dispatch still
@@ -7590,6 +7676,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // Marketing email (E2b): read campaigns and their audience, write drafts, file one for the owner's
     // approval. Governed by the general gate below; PAIGE has no approve or send tool.
     toolDefs.push(...EMAIL_CAMPAIGN_TOOLS as any);
+    // Marketing email series (E3c): read series, write a whole series as a draft, file it for the owner's one
+    // approval. The same general gate governs them; PAIGE has no approve, start, pause, stop or send tool.
+    toolDefs.push(...EMAIL_SERIES_TOOLS as any);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -7937,6 +8026,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       read_email_campaign_audience: "counting who an email would reach",
       email_campaign_draft: "writing an email campaign draft",
       email_campaign_request_approval: "filing an email campaign for your approval",
+      read_email_series: "checking your email series",
+      email_series_draft: "writing an email series",
+      email_series_request_approval: "filing an email series for your approval",
       booking_preset_create: "creating a booking calendar (a private draft)",
       booking_preset_revise: "revising a booking calendar",
       booking_preset_publish: "publishing a booking calendar's public page",
@@ -8234,6 +8326,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             : `Save a new email campaign draft${a?.name ? ` "${String(a.name).slice(0, 120)}"` : ""}${a?.subject ? ` with the subject "${String(a.subject).slice(0, 120)}"` : ""} in Marketing › Email. Nothing is sent.`;
         case "email_campaign_request_approval":
           return "Lock this email campaign for your decision: it stops changing and I count who it reaches. You then approve the send itself in Marketing › Email; nothing is sent until you do.";
+        case "email_series_draft": {
+          const emails = Array.isArray(a?.emails) ? a.emails.length : 0;
+          const count = emails ? ` with ${emails} email${emails === 1 ? "" : "s"}` : "";
+          return a?.series_id
+            ? `Rewrite this email series${emails ? ` as ${emails} email${emails === 1 ? "" : "s"}` : ""}. It stays a draft; if the series is running, the approved version keeps sending until you approve the change. Nothing is sent.`
+            : `Save a new email series draft${a?.name ? ` "${String(a.name).slice(0, 120)}"` : ""}${count} in Marketing › Email › Automations. Nothing is sent.`;
+        }
+        case "email_series_request_approval":
+          return "File this email series for your decision. Its emails, waits, who enters, when people leave and the sender are locked. You approve it in Marketing › Email; nothing sends until you do. One approval covers everyone who enters this version, within the daily limit, until you pause or stop it. Any later change is a new version that needs its own approval.";
         case "booking_preset_create":
           return `Create a booking calendar "${String(a?.name || "Untitled").slice(0, 80)}"${a?.model ? ` (${String(a.model).replaceAll("_", " ")})` : ""} as a PRIVATE DRAFT. Its public /book page is NOT live — publishing is a separate, explicit step.`;
         case "booking_preset_duplicate": {
@@ -9216,7 +9317,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // same predicate with the same resolver and refuses first, so a call that reaches here has
           // already passed it. Asked again so the START can never be wider than that gate.
           if (requiresWorkspaceAdmin(name, N8N_MANAGEMENT_TOOL_NAMES)
-              && !authorityAdmits(name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)) return false;
+              && !authorityAdmits(name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_MARKETING_TOOL_NAMES)) return false;
           const tenantId: string | null = personaCtx?.tenant_id ?? null;
           if (!tenantId && !STEP_START_WITHOUT_WORKSPACE.has(name)) return false;
           // The same one read the branch makes for this call (`crmWorkspaceBindingRefusal`'s memo).
@@ -9686,7 +9787,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // after they approved it. Same resolver as that gate (asked fresh per call); the later gate
         // stays as defense in depth.
         if (requiresWorkspaceAdmin(tc.function.name, N8N_MANAGEMENT_TOOL_NAMES)
-            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)) {
+            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_MARKETING_TOOL_NAMES)) {
           if (WORKSPACE_BUILD_TOOLS.has(tc.function.name)) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
             success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)),
@@ -9735,6 +9836,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const { confirm: _compat, ...draftContent } = gateArgs;
             const userTurns = messages.filter((message: any) => message?.role === "user");
             gateArgs.request_key = await emailCampaignRequestKey(personaCtx.tenant_id, user.id, draftContent, {
+              thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null,
+            });
+            tc.function.arguments = JSON.stringify(gateArgs);
+          }
+          // A new email series carries its create key from here too (E3c), for the same reason.
+          if (tc.function.name === "email_series_draft" && !gateArgs.series_id && !gateArgs.request_key && personaCtx?.tenant_id) {
+            const { confirm: _compat, ...seriesContent } = gateArgs;
+            const userTurns = messages.filter((message: any) => message?.role === "user");
+            gateArgs.request_key = await emailSeriesRequestKey(personaCtx.tenant_id, user.id, seriesContent, {
               thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null,
             });
             tc.function.arguments = JSON.stringify(gateArgs);
@@ -14237,6 +14347,40 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome: "outcome_unknown", error: "The email action did not report back.", note: "Read the campaigns before saying anything changed, and do not retry automatically." }) });
           }
+        } else if (EMAIL_SERIES_TOOL_NAMES.has(tc.function.name)) {
+          // Marketing email series (E3c). The same seam as campaigns: the caller's own session, the business
+          // this chat is in, a write reported only after a fresh read shows it, the receipt through the existing
+          // recorder. The owner's own words in this conversation are the facts PAIGE may use beyond the
+          // business's records; a link or price from anywhere else is refused before anything is written.
+          let seriesArgs: Record<string, unknown> = {};
+          try { seriesArgs = JSON.parse(tc.function.arguments || "{}"); } catch { seriesArgs = {}; }
+          const userTurns = messages.filter((message: any) => message?.role === "user");
+          const ownerText = userTurns.map((message: any) => typeof message?.content === "string" ? message.content
+            : Array.isArray(message?.content) ? message.content.map((part: any) => typeof part?.text === "string" ? part.text : "").join(" ") : "").join("\n");
+          const tid = personaCtx?.tenant_id ?? null;
+          try {
+            const result = await dispatchEmailSeriesChat({
+              tenantId: tid, userId: user.id, toolName: tc.function.name, args: seriesArgs, ownerText,
+              publicSiteUrl: (Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai").replace(/\/+$/, ""),
+              turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
+            }, { caller: supabaseClient });
+            if (!tc.function.name.startsWith("read_") && tid && result.outcome !== "failed" && result.outcome !== "invalid") {
+              const recorded = await recordCapabilityRun(supabase, {
+                tenantId: tid, actorId: user.id, capabilityKey: tc.function.name,
+                outcome: result.outcome === "succeeded" ? "capability_succeeded" : result.outcome === "refused" ? "capability_refused" : "capability_outcome_unknown",
+                runId: await stableRunId(result.outcome === "succeeded" && result.runId
+                  ? [tc.function.name, tid, result.runId]
+                  : [tc.function.name, tid, `${payloadThreadId ?? ""}:${tc.id}`]),
+              });
+              if (!recorded && result.outcome === "succeeded") {
+                result.content = { ...result.content, activity_recorded: false,
+                  note: `${String(result.content.note ?? "")} It is done, but it did not appear in the business's activity record; say so if asked what PAIGE did.`.trim() };
+              }
+            }
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
+          } catch {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome: "outcome_unknown", error: "The email series action did not report back.", note: "Read the series before saying anything changed, and do not retry automatically." }) });
+          }
         } else if (tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise" || tc.function.name === "campaign_brief_list") {
           // Solo Tenant Brain — Campaign Brief planning records. The helper uses the CALLER JWT
           // for tenant/role resolution and the EXISTING configure RPC, then independently reopens
@@ -14879,6 +15023,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",
         campaign_brief_create: "campaign_briefs", campaign_brief_revise: "campaign_briefs",
         email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
+        email_series_draft: "email_sequences", email_series_request_approval: "email_sequences",
         // Calendar booking presets — every verb's durable subject is the calendars row (the
         // booking /book page). duplicate mints a new row; the rest act on the named one.
         booking_preset_create: "calendars", booking_preset_revise: "calendars",
@@ -16570,6 +16715,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 paigeChatUploadId,
                 revalidateTenantKnowledgeScope,
                 traceFor("credit-report-extraction"),
+                // INT-326: the turn's captured memory scope — undefined for client-scoped turns,
+                // null when no workspace was established (the helper then writes nothing).
+                scopedClientId ? undefined : await memoryWorkspaceScope(),
               );
               if (!(await revalidateTenantKnowledgeScope())) {
                 pendingTenantKbTelemetry = null;
@@ -17213,6 +17361,10 @@ export async function runStructuredExtractionAndSync(
   uploadRecordId: string | null = null,
   revalidateKnowledgeScope: (() => Promise<boolean>) | null = null,
   trace?: Record<string, unknown>,
+  // INT-326: the turn's captured declared∧validated memory scope. `undefined` = not applicable
+  // (a client-scoped turn, or a direct test caller) — keep the legacy behavior. `null` = the turn
+  // established NO workspace — write nothing, fail closed. A string = stamp it; never a fallback.
+  ownMemoryScope?: string | null,
 ): Promise<any> {
   console.log("Starting structured extraction from analysis...");
 
@@ -17381,18 +17533,30 @@ export async function runStructuredExtractionAndSync(
       memory_type: "report_upload",
       content: memoryContent,
     };
+    // INT-326 write rule: a row about the caller takes the TURN'S captured declared∧validated
+    // scope, and a turn that established no workspace persists NOTHING (fail closed BEFORE the
+    // database's refusal — and never the resolver's first-membership fallback). The upload row in
+    // Step 5 is the document's own record, not memory, and is unaffected by this skip.
+    let remembered: "ok" | "scope_changed" | "rejected" = "ok";
     if (clientId) {
       memoryInsert.client_id = clientId;
-    } else {
-      // A row about the caller takes the caller's active tenant, read through the caller's own session
-      // (this client is service-role). Null leaves the database to refuse the row rather than guess.
+      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
+    } else if (ownMemoryScope === undefined) {
+      // Legacy path (direct callers): a row about the caller takes the caller's active tenant,
+      // read through the caller's own session (this client is service-role). Null leaves the
+      // database to refuse the row rather than guess.
       const caller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
         global: { headers: { Authorization: authHeader } },
       });
       const { data: callerTenant, error: callerTenantErr } = await caller.rpc("current_user_tenant_id");
       memoryInsert.tenant_id = callerTenantErr ? null : (callerTenant ?? null);
+      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
+    } else if (ownMemoryScope === null) {
+      console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "report_upload" }));
+    } else {
+      memoryInsert.tenant_id = ownMemoryScope;
+      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
     }
-    const remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
     if (remembered !== "ok") return stoppedBy(remembered, "client_memory");
 
     // Step 5: stamp the upload row. THIS IS THE DOCUMENT'S OWN RECORD, not a profile field, so it

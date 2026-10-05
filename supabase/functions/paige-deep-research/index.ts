@@ -867,6 +867,231 @@ async function synthesize(
   }
 }
 
+// ── R4 — DECOMPOSED CLAIM FORMATION (bounded synthesis units) ────────────────
+// The R3-measured defect: the single monolithic doc_draft call returns an EMPTY findings
+// array on 18/27 dev runs — exactly on comparisons, multi-part regulatory, and contested
+// questions — while retrieval stays healthy and the validator accepts 92% of whatever
+// candidates DO appear. R4 changes ONLY claim formation: the question is decomposed into
+// bounded ANSWER-COVERAGE units (not the planner's search queries — those are retrieval
+// artifacts), each unit synthesizes independently against the SAME citable set on the SAME
+// governed route, candidates are aggregated + deduped deterministically, and the UNCHANGED
+// validateAndBind gates the result. Retrieval, ranking, thresholds, budgets, and the
+// validator are untouched so the before/after stays causal.
+
+// Bounded R4 constants (deliberately tight; the ruling forbids "keep trying until answered").
+const R4_MAX_UNITS = 6; // one overall + up to five coverage obligations
+const R4_MAX_SYNTH_CALLS = 7; // hard call ceiling for the whole run (incl. any fallback)
+const R4_UNIT_MAX_TOKENS = 900; // per-unit output budget (monolithic used 2400)
+const R4_UNIT_CONCURRENCY = 3; // units run in bounded parallel lanes
+
+type UnitCoverageKind =
+  | "overall" // the question as a whole (simple factual questions live here)
+  | "side" // ONE side of a comparison (A facts / B facts)
+  | "relation" // the comparison/difference itself
+  | "facet" // one sub-question of a multi-part question
+  | "position" // ONE position in a materially contested question
+  | "insufficiency"; // the explicit "can this be established?" obligation
+
+interface SynthUnit {
+  unit_id: string; // stable run-local id "u1".. — rides the dossier
+  objective: string; // the answer obligation in question terms
+  coverage_kind: UnitCoverageKind;
+  source_refs: number[]; // citable indexes presented to this unit
+  status: "pending" | "synthesized" | "insufficient" | "failed";
+}
+
+interface UnitSynthOut {
+  findings: RawFinding[];
+  insufficient?: boolean; // the unit itself concludes its obligation cannot be met
+}
+
+// The unit PLANNER: one cheap extraction-tier call that turns the QUESTION (not the search
+// plan) into answer-coverage obligations. Deterministic fallbacks keep the seam universal:
+// any parse failure degrades to the single overall unit = the pre-R4 shape exactly.
+async function planSynthesisUnits(
+  question: string,
+  domainHint: string,
+  citable: SourceRec[],
+): Promise<SynthUnit[]> {
+  const titles = citable.slice(0, 14).map((s) => `[${s.index}] ${s.title}`).join("\n");
+  const sys =
+    "You decompose a RESEARCH QUESTION into the bounded set of ANSWER COVERAGE obligations — " +
+    "what must be separately established for the question to be answered. These are NOT search " +
+    "queries. Rules:\n" +
+    "• A simple factual question is ONE unit with kind \"overall\".\n" +
+    "• A comparison (X vs Y) becomes one \"side\" unit per side PLUS one \"relation\" unit for the " +
+    "comparison/difference itself. Never only one side.\n" +
+    "• A multi-part question (several distinct asks) becomes one \"facet\" unit per distinct ask, " +
+    "up to five.\n" +
+    "• A CONTESTED question (credible sources materially disagree) becomes one \"position\" unit " +
+    "per position the evidence actually expresses (max 3) — do NOT manufacture consensus.\n" +
+    "• If the question plausibly cannot be established from public sources, include one " +
+    "\"insufficiency\" unit for that determination.\n" +
+    "• Total units (excluding overall): at most " + (R4_MAX_UNITS - 1) + ". If the question is " +
+    "simple, fewer is correct.\n" +
+    'Return ONLY JSON: {"units":[{"objective":string,"coverage_kind":"overall"|"side"|"relation"|"facet"|"position"|"insufficiency"}]}. ' +
+    "Objectives are written in the question's own terms. No prose.";
+  const user =
+    `RESEARCH QUESTION: ${question}\n` +
+    (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
+    `\nGATHERED SOURCE TITLES (context only — units follow the QUESTION, not these titles):\n${titles}`;
+  try {
+    const resp = await routedChatCompletion("extract", {
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 700,
+    });
+    const parsed = parseJsonLoose<{ units?: Array<{ objective?: string; coverage_kind?: string }> }>(llmContent(resp));
+    const kinds = new Set(["overall", "side", "relation", "facet", "position", "insufficiency"]);
+    const units: SynthUnit[] = [];
+    for (const u of parsed?.units ?? []) {
+      if (units.length >= R4_MAX_UNITS) break;
+      const objective = typeof u?.objective === "string" ? u.objective.trim().slice(0, 240) : "";
+      const kind = typeof u?.coverage_kind === "string" && kinds.has(u.coverage_kind) ? u.coverage_kind as UnitCoverageKind : "facet";
+      if (objective.length >= 8) units.push({ unit_id: `u${units.length + 1}`, objective, coverage_kind: kind, source_refs: [], status: "pending" });
+    }
+    // R4 review P2: deterministic post-plan guard — a comparison that planned only ONE
+    // side, or a contested plan with a single position and no relation/insufficiency,
+    // degrades to the single overall unit (prompt enforcement is not a guarantee).
+    if (units.length) {
+      const sides = units.filter((u) => u.coverage_kind === "side");
+      const positions = units.filter((u) => u.coverage_kind === "position");
+      const hasRelationOrInsuff = units.some((u) => u.coverage_kind === "relation" || u.coverage_kind === "insufficiency");
+      const oneSided = sides.length === 1 && !hasRelationOrInsuff;
+      const singlePosition = positions.length === 1 && !hasRelationOrInsuff;
+      if (!oneSided && !singlePosition) return units;
+      console.warn("[paige-deep-research] R4 unit plan degenerate (one-sided/single-position); degrading to overall");
+    }
+  } catch (e) {
+    console.warn("[paige-deep-research] unit planning failed (degrade to overall):", (e as Error)?.message);
+  }
+  // Degraded shape = the pre-R4 contract exactly: one unit, the whole question.
+  return [{ unit_id: "u1", objective: question.slice(0, 240), coverage_kind: "overall", source_refs: [], status: "pending" }];
+}
+
+// Per-unit synthesis: the SAME grounding system prompt as the monolithic path (word for
+// word except the goal is the UNIT's obligation), the SAME route/model class, a tighter
+// per-unit token budget, and an explicit insufficient flag so a unit can bow out honestly
+// without zeroing its siblings.
+async function synthesizeUnit(
+  unit: SynthUnit,
+  question: string,
+  domainHint: string,
+  citable: SourceRec[],
+): Promise<UnitSynthOut | null> {
+  const ctx = citable.map((s) => {
+    const body = s.content ? `\n${s.content.slice(0, 1500)}` : "";
+    return `[${s.index}] ${s.title}\n${s.snippet}${body}\n${s.url}`;
+  }).join("\n\n");
+  const sys =
+    "You are a rigorous research synthesizer. State a fact ONLY if it appears in the fetched " +
+    "text of a specific SOURCE, and tag that fact with the source's [n]. Use NO prior " +
+    "knowledge, memory, or assumptions. A factual claim is any name, phone number, website/URL, " +
+    "figure, threshold, date, or statistic. If a field is not present in a source, set it to " +
+    "null — never invent it. Never emit a name that does not appear verbatim in a cited source. " +
+    "For any figure or requirement, append \"as listed on [n], verify directly — terms change.\" " +
+    "If the SOURCES available to you contain MATERIALLY CONFLICTING positions on your objective, " +
+    "emit SEPARATE findings for each position the sources actually state, each with its own " +
+    "citations — never collapse them, never manufacture consensus. If the sources genuinely " +
+    "cannot establish your objective, set \"insufficient\" to true and emit an empty findings " +
+    "array — that is a correct answer, not a failure. " +
+    'Output ONLY JSON: {"insufficient":boolean,"findings":[{"summary":string,"citations":number[],' +
+    '"name":string|null,"website":string|null,"phone":string|null,"values":string[]}]}. `citations` ' +
+    "must list the [n] indices that support the finding and must be non-empty. `name`/`website`/" +
+    "`phone` are for entity findings (leave null for prose findings). `values` holds any " +
+    "figures/thresholds/dates quoted verbatim from a cited source. No prose outside the JSON.";
+  const user =
+    `RESEARCH GOAL (answer obligation): ${unit.objective}\nFULL QUESTION FOR CONTEXT: ${question}\n` +
+    (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
+    `\nSOURCES:\n${ctx}\n\nWrite grounded findings for THIS obligation only. Every finding MUST carry at least one [n] citation.`;
+  try {
+    const resp = await routedChatCompletion("doc_draft", {
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      max_tokens: R4_UNIT_MAX_TOKENS,
+    });
+    const parsed = parseJsonLoose<UnitSynthOut>(llmContent(resp));
+    if (!parsed || !Array.isArray(parsed.findings)) return { findings: [] };
+    return parsed;
+  } catch (e) {
+    console.warn(`[paige-deep-research] unit ${unit.unit_id} synthesis error:`, (e as Error)?.message);
+    return null;
+  }
+}
+
+// Deterministic aggregation + dedupe across units. Two candidates are duplicates when their
+// summaries are token-set near-identical (>= 0.8 Jaccard on content tokens); the union keeps
+// the FIRST occurrence's summary and MERGES citation lists — the validator re-checks every
+// citation, so union can only ever ADD a citation the kept claim must still survive. A
+// CONFLICT never dedupes: two candidates with materially different token sets (a genuine
+// disagreement) stay separate findings, each with its own citations.
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (!a.size || !b.size) return 0;
+  let inter = 0;
+  for (const t of a) if (b.has(t)) inter++;
+  return inter / (a.size + b.size - inter);
+}
+// R4 review P1: the content-token set drops digit runs and short tokens, so figure-only
+// disagreements ("7.25 vs 15 dollars") and short-source disputes dedupe away — manufactured
+// consensus. The dedupe key therefore ALSO compares numeric fingerprints and quoted values:
+// two candidates whose numbers or non-empty `values` differ are NEVER duplicates.
+function numericTokens(text: string): Set<string> {
+  return new Set((text.match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(/,/g, "")));
+}
+function sameClaim(rfA: { summary?: string; values?: string[] }, rfB: { summary?: string; values?: string[] }): boolean {
+  const tokA = new Set(tokens(`${rfA.summary ?? ""}`));
+  const tokB = new Set(tokens(`${rfB.summary ?? ""}`));
+  if (jaccard(tokA, tokB) < 0.8) return false;
+  const numA = numericTokens(`${rfA.summary ?? ""} ${(rfA.values ?? []).join(" ")}`);
+  const numB = numericTokens(`${rfB.summary ?? ""} ${(rfB.values ?? []).join(" ")}`);
+  // differing numeric fingerprints => different facts (even in near-identical prose)
+  const numInter = new Set([...numA].filter((n) => numB.has(n)));
+  if (numA.size > 0 && numB.size > 0 && (numInter.size < numA.size || numInter.size < numB.size)) return false;
+  const valsA = new Set((rfA.values ?? []).map((v) => v.trim()).filter(Boolean));
+  const valsB = new Set((rfB.values ?? []).map((v) => v.trim()).filter(Boolean));
+  if (valsA.size > 0 && valsB.size > 0) {
+    let allIn = true;
+    for (const v of valsA) if (!valsB.has(v)) { allIn = false; break; }
+    if (!allIn) return false;
+  }
+  return true;
+}
+function aggregateUnits(
+  perUnit: Array<{ unit: SynthUnit; out: UnitSynthOut | null }>,
+): { findings: RawFinding[]; unitDiagnostics: Array<Record<string, unknown>> } {
+  const kept: Array<{ rf: RawFinding; tokens: Set<string> }> = [];
+  const unitDiagnostics: Array<Record<string, unknown>> = [];
+  for (const { unit, out } of perUnit) {
+    const emitted = out && Array.isArray(out.findings) ? out.findings : [];
+    let aggregated = 0;
+    let dedupedAway = 0;
+    for (const rf of emitted) {
+      const toks = new Set(tokens(`${rf.summary ?? ""}`));
+      let merged = false;
+      for (const k of kept) {
+        if (sameClaim(k.rf, rf)) {
+          const unionCites = new Set([...(k.rf.citations ?? []), ...(rf.citations ?? [])]);
+          k.rf.citations = Array.from(unionCites);
+          merged = true;
+          dedupedAway++;
+          break;
+        }
+      }
+      if (!merged) { kept.push({ rf, tokens: toks }); aggregated++; }
+    }
+    unit.status = out === null ? "failed" : out.insufficient === true ? "insufficient" : "synthesized";
+    unitDiagnostics.push({
+      unit_id: unit.unit_id, objective: unit.objective.slice(0, 160), coverage_kind: unit.coverage_kind,
+      source_refs: unit.source_refs.slice(0, 14),
+      synthesis_returned: out !== null, insufficient: out?.insufficient === true,
+      candidates_emitted: emitted.length, aggregated, deduped_away: dedupedAway,
+    });
+  }
+  return { findings: kept.map((k) => k.rf), unitDiagnostics };
+}
+
 // ── Field-level verification helpers (A5) ───────────────────────────────────
 function phonesIn(text: string): string[] {
   const raw = text.match(/(?:\+?\d[\s().-]?){9,15}\d/g) ?? [];
@@ -1752,6 +1977,7 @@ serve(async (req) => {
   const dossier: {
     v: 1; hops: Array<Record<string, unknown>>; synthesis: { returned: boolean; candidates: number };
     candidates: CandidateDiag[]; caps_applied: { candidates_truncated: boolean };
+    units?: Array<Record<string, unknown>>;
   } = { v: 1, hops: [], synthesis: { returned: false, candidates: 0 }, candidates: [], caps_applied: { candidates_truncated: false } };
   const hopBudget = () => ({ searches, reads, cost_usd_est: Number(costUSD.toFixed(4)), elapsed_ms: Date.now() - t0 });
 
@@ -1898,14 +2124,50 @@ serve(async (req) => {
   // In dossier mode the SAME call additionally emits the atomic per-field-cited
   // profile records; there is never a second model round-trip.
   costUSD += COST.synthesis;
-  const synth = await synthesize(question, domainHint, citable, entityTarget);
-  dossier.synthesis.returned = !!synth;
-  dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;
-  if (!synth) {
-    const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
-    return json(result);
+  // ── R4 — decomposed claim formation (general path only; dossier mode keeps its own
+  // single specialized call by design — entity profiles are already atomic per field).
+  let synth: SynthOut;
+  if (entityTarget) {
+    const mono = await synthesize(question, domainHint, citable, entityTarget);
+    if (!mono) {
+      const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
+      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+      return json(result);
+    }
+    synth = mono;
+  } else {
+    const units = await planSynthesisUnits(question, domainHint, citable);
+    for (const u of units) u.source_refs = citable.slice(0, 14).map((x) => x.index);
+    costUSD += COST.cheapLLM; // the unit planner's extract call
+    // bounded lanes: R4_UNIT_CONCURRENCY at a time, hard call ceiling R4_MAX_SYNTH_CALLS
+    const perUnit: Array<{ unit: SynthUnit; out: UnitSynthOut | null }> = [];
+    let callsMade = 0;
+    // R4 review P2: a phase deadline anchored on the run clock — a lane that cannot start
+    // in time is skipped (its units aggregate as pending/failed), so the unit phase can
+    // never blow the edge wall clock worst case (per-call deadline x lanes).
+    const synthDeadline = t0 + BND.WALL_CLOCK_MS + 110_000; // gathering budget + bounded unit headroom
+    for (let i = 0; i < units.length; i += R4_UNIT_CONCURRENCY) {
+      if (Date.now() > synthDeadline) {
+        console.warn("[paige-deep-research] R4 unit-phase deadline reached; aggregating completed units only");
+        for (const skipped of units.slice(i)) perUnit.push({ unit: skipped, out: null });
+        break;
+      }
+      const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).slice(0, Math.max(0, R4_MAX_SYNTH_CALLS - callsMade));
+      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable); }));
+      lane.forEach((u, j) => perUnit.push({ unit: u, out: outs[j] }));
+    }
+    const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);
+    dossier.units = unitDiagnostics;
+    synth = { findings: unitFindings };
+    // all units failed at the transport level = the monolithic failure class (honest error)
+    if (perUnit.length > 0 && perUnit.every((pu) => pu.out === null)) {
+      const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
+      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+      return json(result);
+    }
   }
+  dossier.synthesis.returned = true;
+  dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;
 
   // ── POST-VALIDATION gate ──────────────────────────────────────────────────
   const findings = validateAndBind(synth, citable, strict, dossier.candidates);

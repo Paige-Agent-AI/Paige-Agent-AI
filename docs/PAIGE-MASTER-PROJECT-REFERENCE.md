@@ -907,6 +907,50 @@ Reference or any domain ledger; it governs how their facts become release and cu
 - Proof: independent non-writer exact-head review PASS 70c70748; all seven required workflows PASS; 8176 tests/563 files plus 20 delivery tests, TypeScript baseline 10/current 10; 50 SQL assertions/replay/actual concurrency; 40 responsive fixture cases. Production metadata/ACL verified. Authenticated owner save/issue/document, second-tenant UI, opportunity actions and sends remain PROOF OWED because browser automation is unavailable. No fabricated provider/payment outcomes; Settings Billing, canonical records and deferred INT-299 preserved.
 - Evidence: docs/evidence/ui-delivery/solo-sales-invoice-customization.md. Recovery: forward fix retaining issued artifacts and operation replay. Customer-release eligibility: no; no customer version or announcement. This identity-only closeout is exempt from recursive shipped logging under AGENTS.md.
 
+**2026-10-06 Marketing email E3c: PAIGE writes email series from chat. Release channel: `production` on merge (migration `20270595000000`, `paige-ai-chat`, frontend); classification: `tenant-visible` Solo surface, `PARTIAL` until an authenticated chat drive.**
+- *Tools* (`_shared/email-series-chat.ts`, Spine domain `email_campaigns`, declared through the capability kit):
+  - `read_email_series` reads the series, or one in full with owner words beside each value. It also returns the business's own live links and recorded prices.
+  - `email_series_draft` writes or changes the WHOLE series in one call: who enters, every email with its wait, and when people leave. It is `ordinary` with the default `confirm` lane.
+  - `email_series_request_approval` files the one approval and is `ordinary`.
+  - PAIGE has no approve, start, pause, resume, stop or send tool; `email_sequence_approve` stays human-only.
+- *Migration `20270595000000`:*
+  - `email_sequences.request_key` plus a unique index.
+  - `email_series_draft` uses the same `email_sequence_*` owner functions the series view calls.
+    - A series waiting for approval is refused, not withdrawn.
+    - A running series gets a new draft version while its approved one keeps sending.
+    - A stopped series is refused.
+  - `email_series_submit_for_approval` uses source `paige`, and a retry returns the same approval.
+  - `read_email_series` and `read_email_series_links` cover published pages, active funnels and forms, booking pages with a host, the Setup-confirmed website, and active prices.
+  - `email_sequence_duplicate` is Start a copy.
+  - `read_email_sequence` is rename-wrapped to add `waiting_to_enter`.
+  - The autonomy catalogue gains rows (Campaigns), and the activity wording is added.
+  - Every chat function names the business (`_email_paige_tenant`).
+- *Grounding:* before any write, the adapter refuses three kinds of unsupported content.
+  - **A link** (written out, or a bare domain or email address a mail app would turn into a link) must be one of the business's own live links, already in the series, or given by the owner in this conversation.
+  - **A price** must be recorded, already in the series, or written by the owner as money or next to a price word.
+  - **A fill-in** such as `[Your name]` or `{{first_name}}` is refused, because the sender does not personalise.
+  - The refusal names the missing fact and changes nothing, and PAIGE asks. There is no resume store; that is shared C4c, not built.
+  - Offers, deadlines, guarantees and results are held only by the tool description and business context.
+- *UI:*
+  - The two Welcome starters read "Send a one-time welcome email" and "Start an automated welcome series".
+  - The Automations Ask PAIGE prompt and the series view's "Write with PAIGE" ask her to write a series draft.
+  - **Paused:** the page says people who match while paused join when it resumes, and shows "Join when you resume" with a count.
+  - **Approving:** the approve panel says one approval covers everyone who enters that version, and a change needs a new approval.
+  - **Stop** is confirmed inline ("Stop for good" / "Keep it running") and says it is final. A stopped series offers Start a copy, and says that a copy of a "matching" series can include people who already went through it.
+  - The series view and the Automations list re-read when a chat turn ends, and over unsaved edits they ask the owner to choose.
+- *Proof:* `scripts/sql/email-series-chat-proof.sql`, rolled back on the PR's preview database, returned 40 results. Tests: adapter 22 and series render 25. Each guard was mutation-checked, and the render drive passed 1152/1152.
+- *Review fixes (independent verifier):*
+  - A chat turn is compared with what the server last held, not with what is being typed, so a turn that changed nothing never raises "PAIGE changed" or stops autosave.
+  - Nothing saves while the owner chooses between versions.
+  - Keep my edits removes PAIGE's extra emails.
+  - Bare domains, email addresses and more price forms are checked.
+  - An incomplete email in a whole-series write is refused.
+- *Not built here:*
+  - the four E3 hardening debts, ranked in the PR;
+  - per-form audiences: `_email_audience` cannot target one form's submitters yet;
+  - a server-side check for offers and claims;
+  - pause, stop and approve from chat.
+
 **2026-10-05 Marketing email E3: series that send by themselves (welcome, nurture, win-back). Release channel: `production` on merge (migration `20270580000000`, `email-campaign-worker`, frontend); classification: `tenant-visible` Solo surface, `PARTIAL` until an authenticated drive.**
 - *Surface* (`src/solo/marketing-email-series.tsx`, `marketing-email-series-model.ts`): Marketing › Email › Automations lists the business's series (state, emails, people in it now, sent in 30 days, next send) and offers three starters when there are none (welcome new contacts, nurture leads toward a booking, win back contacts quiet for 90 days), each editable, with Ask PAIGE beside them; once one exists the same three sit under "New series". The series page builds it (who enters: new contacts as they arrive, or everyone who matches a rule or saved segment, with the reach today; up to 10 emails, each with its wait in days and hours; when someone leaves: on reaching the goal, or when they stop matching; send from), saves as you type, previews each email, files it for approval, and, once running, shows people in it, joined, sent, next send, how far people get, who left and why, and recent people with Remove. Pause, Resume and Stop (final) are on the page; a change to a running series is a new version approved again. The dashboard's "Plan a nurture series" starter now creates one.
 - *Migration `20270580000000`:* `email_sequences`, `email_sequence_versions` (frozen once filed), `email_sequence_steps`, `email_sequence_enrollments` (one per contact per series); `email_campaigns.sequence_id`/`sequence_position` (each email of a live version is a hidden step campaign, so the worker's claim, lease, eligibility, daily limit, footer, unsubscribe, receipts and metering are reused, not copied); `email_campaign_recipients.enrollment_id`. Owner RPCs (`authenticated`, `is_tenant_admin` of the active workspace): create, update_draft, step_save/delete/move, edit, discard_draft, delete (never-started only), request_approval, approve (requires a person), decline, pause, resume, stop, remove_contact; reads `read_email_sequences`, `read_email_sequence`. `email_sequence_tick` is `service_role` only. Campaign reads, the dashboard, settle, open-envelopes and segment delete are redefined with a series filter or guard; a trigger refuses any person-callable write to a series' step campaign.
@@ -3559,7 +3603,7 @@ Audience, Content, Email and Ads ship as read-only views (no header and no Plann
 built feature is a backend decision for the owner (`docs/product/solo-marketing-ia-proposal.md` §4):
 Audience needs a Clients-owned segment table + RPC; Content needs dated briefs for a calendar; Email
 has its backend (E1, #1700, live 2026-10-04) and its dashboard and campaign editor (E2, §4.0); it
-PAIGE's chat tools for it (E2b, §4.0) and series that send by themselves (E3, §4.0); PAIGE cannot yet build series from chat (E3c); Ads needs a tenant
+PAIGE's chat tools for it (E2b, §4.0), series that send by themselves (E3, §4.0) and PAIGE writing series from chat (E3c, §4.0); Ads needs a tenant
 ad-account connection + spend ingestion. Library rows cannot yet be opened from Marketing, and
 Audience charts and rows cannot yet open Clients filtered by stage, source or tag, and there is no saved segment to target.
 

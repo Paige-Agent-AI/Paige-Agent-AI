@@ -72,7 +72,8 @@ describe("the fingerprint still VARIES by the fields that define the action's id
 
 describe("the ignore-set is NARROW — it never swallows a consequential parameter", () => {
   it("only action_advance's decision_rationale and a new email draft's server-settled create key are listed", () => {
-    expect(Object.keys(NON_IDENTITY_ARGS)).toEqual(["action_advance", "email_campaign_draft"]);
+    expect(Object.keys(NON_IDENTITY_ARGS)).toEqual(["action_advance", "email_campaign_draft", "email_series_draft"]);
+    expect(NON_IDENTITY_ARGS.email_series_draft).toEqual(["request_key"]);
     expect(NON_IDENTITY_ARGS.action_advance).toEqual(["decision_rationale"]);
     expect(NON_IDENTITY_ARGS.email_campaign_draft).toEqual(["request_key"]);
   });

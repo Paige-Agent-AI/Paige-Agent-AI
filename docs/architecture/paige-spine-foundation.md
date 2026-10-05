@@ -154,3 +154,10 @@ A Spine Change Request and coordinated owner review are required for registry sh
 ### Required handoff packet
 
 Every agent leaves: exact base/head; active-owner heads inspected; affected-flow and collision map; changed files; registry key and domain owner; human surface; Rail/source and safe adapter; roles and denial cases; consumer/deployment identity; test commands and results; runtime/authenticated evidence; remaining BLOCKED, FAIL, and UNVERIFIED items; and explicit merge/deployment authority. That packet lets the next agent continue without relying on a particular person's memory.
+
+
+### SCR-2026-10-05 — declared ordinary internal mutation adapter
+
+Authority: the owner's accepted INT-311 execution ladder and explicit authorization to proceed with ordinary implementation through the canonical Spine/Trust systems (2026-10-04/05). This additive Capability Kit adapter binds a branded ordinary internal-mutation declaration to the existing governedExecution decision. It changes no autonomy resolution, permission, approval storage, claim redemption, provider binding registry, receipt ledger or high-risk policy. The existing high/confirm adapter remains unchanged.
+
+`decideDeclaredOrdinaryCapability` rejects unbranded or mismatched declarations, non-mutation effects, non-ordinary risk, non-confirm declaration metadata, external/provider-connected bindings, unresolved availability and missing canonical receipt channel. Current Trust and exact stored approval arguments remain authoritative. Sales draft create/revise are the initial consumers; issuance, sending and money movement cannot enter this ordinary adapter. Exact-head independent review and CI remain required; authenticated runtime remains UNVERIFIED.

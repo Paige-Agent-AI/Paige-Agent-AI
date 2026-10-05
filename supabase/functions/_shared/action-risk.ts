@@ -502,6 +502,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["platform_post_notification", "ordinary", "posts a notice on the operator's own alert surface"],
   // create_invoice
   ["billing_create_invoice", "ordinary", "raises a draft bill; sending it is the separate high-risk act"],
+  ["sales_revise_invoice_draft", "ordinary", "revises an unissued canonical draft; publication, delivery and collection remain separately governed acts"],
   // propose_client_update
   ["crm_propose_contact_update", "ordinary", "stages a change the operator approves before it applies"],
   // ingest_credit_scores

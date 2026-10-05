@@ -75,7 +75,7 @@
         },
         "governed_write": {
           "status": "inherited",
-          "note": "Collection terms extend canonical agreements; reviewed imports append canonical obligations/receipts. Canonical operation replay, version checks and transactional Rail are reused. Invoice preferences use invoice.settings_update / sales_update_invoice_settings with settings-version CAS and the existing invoice operation store; issued documents keep their frozen presentation. No second CRM, offer or payment store."
+          "note": "Collection terms extend canonical agreements; reviewed imports append canonical obligations/receipts. Canonical operation replay, version checks and transactional Rail are reused. Invoice preferences use invoice.settings_update / sales_update_invoice_settings with settings-version CAS and the existing invoice operation store; issued documents keep their frozen presentation. Governed Chat draft creation/revision binds billing_create_invoice / sales_revise_invoice_draft through sales-invoice-draft-command, the common invoice writer and current shared Trust gate. Exact stored draft approval, immutable replay and atomic Rail have local proof; hosted creation/reopen remains UNVERIFIED. No second CRM, offer or payment store."
         },
         "verified_outcome": {
           "status": "proof_owed",

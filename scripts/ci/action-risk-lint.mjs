@@ -114,18 +114,42 @@ export function studioPublishDoorBound(handler) {
 
 /** Closed declared adapter, not any function whose name resembles a gate. */
 export function invoiceDeclaredGateBound(handler, decision) {
+  const body=decision.split('export function decideDeclaredCapability(')[1]?.split('export function decideDeclaredOrdinaryCapability(')[0] ?? '';
   return handler.includes('SALES_INVOICE_ACTIONS[command.action]')
     && /import\s*\{\s*decideDeclaredCapability\s*\}\s*from\s*["']\.\.\/_shared\/capability-kit\/decision\.ts["']/.test(handler)
     && /import\s*\{\s*SALES_INVOICE_KIT_BY_ACTION\s*\}\s*from\s*["']\.\.\/_shared\/paige-spine\/domains\/sales_invoice\.ts["']/.test(handler)
     && handler.includes('decideDeclaredCapability(SALES_INVOICE_KIT_BY_ACTION[capability], {')
     && /import\s*\{\s*decideGovernedExecution\s*\}\s*from\s*["']\.\.\/paige-spine\/governedExecution\.ts["']/.test(decision)
-    && decision.includes("if (!isDefinedCapability(declaration)) throw new TypeError('CAPABILITY_DECLARATION_REQUIRED')")
-    && decision.includes('key !== input.capability.id')
-    && decision.includes('classifyAction(key) !== declaration.governance.risk')
-    && decision.includes("declaration.governance.approval !== 'confirm'")
-    && decision.includes("input.capability.availability === 'unknown'")
-    && decision.includes('input.capability.outcomeChannel !== declaration.receipt.recorder')
-    && decision.includes('return decideGovernedExecution(input);');
+    && body.includes("if (!isDefinedCapability(declaration)) throw new TypeError('CAPABILITY_DECLARATION_REQUIRED')")
+    && body.includes('key !== input.capability.id')
+    && body.includes('classifyAction(key) !== declaration.governance.risk')
+    && body.includes("declaration.governance.approval !== 'confirm'")
+    && body.includes("declaration.governance.risk !== 'high'")
+    && body.includes("input.capability.availability === 'unknown'")
+    && body.includes('input.capability.outcomeChannel !== declaration.receipt.recorder')
+    && body.includes('return decideGovernedExecution(input);');
+}
+export function ordinaryDeclaredGateBound(decision) {
+  const body=decision.split('export function decideDeclaredOrdinaryCapability(')[1] ?? '';
+  return body.includes('isDefinedCapability(declaration)')
+    && body.includes('key !== input.capability.id')
+    && body.includes('classifyAction(key) !== declaration.governance.risk')
+    && body.includes("declaration.effect !== 'mutation'")
+    && body.includes("declaration.governance.risk !== 'ordinary'")
+    && body.includes("declaration.providerBinding.kind !== 'internal'")
+    && body.includes('input.capability.outcomeChannel !== declaration.receipt.recorder')
+    && body.includes("input.capability.availability === 'unknown'")
+    && body.includes('return decideGovernedExecution(input);');
+}
+export function salesDraftDoorBound(chat, salesChat, draftChat, door, admission, decision) {
+  return chat.includes('...SALES_INVOICE_TOOLS') && salesChat.includes('...SALES_DRAFT_TOOLS')
+    && salesChat.includes('dispatchCommercialDraftChat(ctx,deps,')
+    && draftChat.includes("from './draft-capabilities.ts'")
+    && draftChat.includes("functions.invoke('sales-invoice-draft-command'")
+    && door.includes('await admitCommercialDraft(')
+    && admission.includes("from '../capability-kit/decision.ts'")
+    && admission.includes('decideDeclaredOrdinaryCapability(declaration,')
+    && ordinaryDeclaredGateBound(decision);
 }
 export function parseExemptions(src) {
   const at = src.indexOf("const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([");
@@ -212,6 +236,12 @@ function selfTest() {
     verbSourceMatches: true,
   };
   let bad = 0;
+  const draftSources = [CHAT,'supabase/functions/_shared/sales-invoice-chat.ts','supabase/functions/_shared/sales-commercial/draft-chat.ts','supabase/functions/sales-invoice-draft-command/index.ts','supabase/functions/_shared/sales-commercial/draft-admission.ts','supabase/functions/_shared/capability-kit/decision.ts'].map(path=>fs.readFileSync(path,'utf8'));
+  bad += ok('draft guard follows the real declaration/dispatch/shared-gate chain',salesDraftDoorBound(...draftSources));
+  for (const [index,token] of [[0,'...SALES_INVOICE_TOOLS'],[1,'...SALES_DRAFT_TOOLS'],[1,'dispatchCommercialDraftChat(ctx,deps,'],[2,"functions.invoke('sales-invoice-draft-command'"],[3,'await admitCommercialDraft('],[4,"from '../capability-kit/decision.ts'"],[4,'decideDeclaredOrdinaryCapability(declaration,'],[5,"declaration.providerBinding.kind !== 'internal'"],[5,"declaration.governance.risk !== 'ordinary'"]]) {
+    const broken=[...draftSources];broken[index]=broken[index].replace(token,'BROKEN_BINDING');
+    bad += ok(`draft guard refuses broken binding ${token}`,!salesDraftDoorBound(...broken));
+  }
   const invoiceHandler = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
   const invoiceDecision = fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8');
   bad += ok('invoice declared gate follows the exact canonical adapter', invoiceDeclaredGateBound(invoiceHandler, invoiceDecision));
@@ -402,6 +432,21 @@ const governedEdgeActions = [
   ...CONTACT_SCOPED_EDGE_HANDLERS.flatMap((path) => parseCapabilityConstants(fs.readFileSync(path, "utf8"))),
 ];
 const requiredClassifications = [];
+// The ordinary draft door uses the same shared gate; the high-only Kit adapter is not widened.
+// Follow its real Chat import/dispatch and declaration, rather than exempting a new policy key.
+const draftDoor = 'supabase/functions/sales-invoice-draft-command/index.ts';
+if (fs.existsSync(draftDoor)) {
+  const salesChat = fs.readFileSync('supabase/functions/_shared/sales-invoice-chat.ts','utf8');
+  const draftChat = fs.readFileSync('supabase/functions/_shared/sales-commercial/draft-chat.ts','utf8');
+  const admission = fs.readFileSync('supabase/functions/_shared/sales-commercial/draft-admission.ts','utf8');
+  const declarations = fs.readFileSync('supabase/functions/_shared/sales-commercial/draft-capabilities.ts','utf8');
+  const door = fs.readFileSync(draftDoor,'utf8');
+  if (!salesDraftDoorBound(chatSrc,salesChat,draftChat,door,admission,fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts','utf8'))) throw new Error('Sales draft door lost its declared Chat/shared-governance binding');
+  const keys = [...declarations.matchAll(/actionRiskKey:'([a-z0-9_]+)'/g)].map(match=>match[1]);
+  if (keys.length !== 2 || new Set(keys).size !== 2) throw new Error('Sales draft declaration keys could not be parsed');
+  importedTools.push(...keys);
+  requiredClassifications.push(...keys);
+}
 if (fs.existsSync(SALES_INVOICE_HANDLER)) {
   const source = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
   if (!invoiceDeclaredGateBound(source, fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8'))) throw new Error('Invoice handler no longer binds its canonical action map and validated declaration to the governed gate');

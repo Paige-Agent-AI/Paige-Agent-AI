@@ -7691,7 +7691,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             return false;
           }
         }
-        // CRM command proposals are intentionally action-door scoped (tenant + actor + exact
+        // CRM and Sales command proposals are intentionally action-door scoped (tenant + actor + exact
         // capability) and carry NULL thread/client scope because the Edge Function cannot trust
         // model/request-provided scope. Record an inline-card decline against that exact, server-
         // issued proposal too. The tool-name restriction prevents this fallback from consuming a
@@ -7701,7 +7701,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const { error: crmCancellationError } = await supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id).eq("tenant_id", personaCtx.tenant_id)
-            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES])
+            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES])
             .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
             .not("server_issued_at", "is", null);
           if (crmCancellationError) {
@@ -9017,6 +9017,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // Sales uses its canonical action door, which alone claims approval and executes stored
         // arguments. This branch stays after scope/seat guards and before the legacy Chat gate.
         if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name) || SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name)) {
+          // Preserve the shared mutation guard even though this canonical door runs before it.
+          // Failed owner-decline persistence must never fall through an ordinary AUTO draft.
+          if (!cancellationsRecorded || !(await revalidateProposalScope())) {
+            toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify({
+              success: false, not_applied: true, error: 'confirmation_context_unavailable',
+              message: 'The workspace or declined approval could not be verified. No Sales command was dispatched. Reopen the workspace and retry; do not use another tool to bypass this refusal.',
+            }) });
+            continue;
+          }
           let invoiceArgs: Record<string, unknown> = {};
           try { invoiceArgs = JSON.parse(tc.function.arguments || '{}'); } catch { invoiceArgs = {}; }
           const userTurns = messages.filter((message: any) => message?.role === 'user');
@@ -14575,6 +14584,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         comms_add_email_domain: "tenant_email_domains",
         comms_set_primary_email_domain: "tenant_email_domains",
         billing_create_invoice: "paige_invoices", billing_send_invoice: "paige_invoices",
+        sales_revise_invoice_draft: "paige_invoices",
         sales_update_invoice_settings: "tenants", // canonical tenant brand.invoice_preferences; no client memory target
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",

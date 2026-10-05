@@ -544,7 +544,13 @@ async function drive({
 
 console.log("\nauthorized paths still work (no regression)");
 {
-  const noClient = await drive({ clientId: undefined });
+  // INT-326: own-memory recall requires a seated workspace (declared ∧ validated). This scenario
+  // seats the caller the way a Solo owner's persona resolves; an UNSEATED caller has no workspace
+  // at all and legitimately recalls nothing (40.1-40.2).
+  const noClient = await drive({
+    clientId: undefined,
+    rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } },
+  });
   assert("1.1 with NO clientId, memory is read scoped to the caller's own user id",
     noClient.memoryReads.some((r) => r.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id" && f[2] === USER)),
     JSON.stringify(noClient.memoryReads.map((r) => r.filters)));
@@ -900,7 +906,8 @@ console.log("\nthe SESSION-SUMMARY branch is bound to the same decision");
     refusedSum.rec.inserts.filter((i) => i.table === "client_memory").length === 0,
     JSON.stringify(refusedSum.rec.inserts.filter((i) => i.table === "client_memory").map((i) => i.row)));
   assert("9.3b …while the NO-CLIENT path still writes the caller's own summary (9.3 is not over-broad)",
-    (await drive({ clientId: undefined, stream: true, extraBody: sessionBody }))
+    (await drive({ clientId: undefined, stream: true, extraBody: sessionBody,
+      rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } } }))
       .rec.inserts.some((i) => i.table === "client_memory" && (i.row?.client_user_id ?? null) === USER),
     "a legitimate self-summary was suppressed — the gate is too wide");
 }
@@ -6542,7 +6549,20 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     JSON.stringify({ atRest: atRest.embeds, inA: inA.embeds }));
 
   // F — the workspace changes between the memory read and the persona read: the block is dropped.
-  const raced = await turn(WS_A, WS_B);
+  // Under the declared∧validated authority (group 40) the drift is staged on the DECLARED pointer
+  // itself: read #1 — the memory scope's conjunction — still sees A (validated A, so the scope is
+  // A and the read happens under A); the persona then resolves B and every LATER declared re-read
+  // returns B, so the turn is consistently B and the block read under A is dropped and logged.
+  let declaredReads = 0;
+  const raced = await turn(WS_A, WS_B, {
+    tablesExtra: {
+      client_memory: admit,
+      profiles: () => {
+        declaredReads += 1;
+        return [{ active_tenant_id: declaredReads <= 1 ? WS_A : WS_B }];
+      },
+    },
+  });
   assert("37.10 [F] memory read in A is never handed to a turn that resolved to B",
     raced.modelEgress.length > 0 && !egress(raced).includes(RECENT_A) && !egress(raced).includes(SEMANTIC_A),
     JSON.stringify({ calls: raced.modelEgress.length, recent: egress(raced).includes(RECENT_A) }));
@@ -6584,6 +6604,144 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
   assert("37.17 [F] …and a client turn whose workspace moved between the memory read and the persona read drops it",
     focusedRaced.modelEgress.length > 0 && !egress(focusedRaced).includes(ABOUT_CLIENT),
     JSON.stringify({ calls: focusedRaced.modelEgress.length, client: egress(focusedRaced).includes(ABOUT_CLIENT) }));
+}
+
+
+// ============================================================================================
+// 40 — INT-326 authority follow-up: the memory scope is DECLARED ∧ VALIDATED, on reads AND writes.
+//
+// Coordinator ruling 2026-10-05: neither `profiles.active_tenant_id` alone (it can be stale —
+// membership revoked or cleared) nor `current_user_tenant_id()` alone (its first-membership
+// fallback substitutes a workspace the caller never chose) is sufficient authority for durable
+// tenant memory. Only their AGREEMENT is a scope; declared null / stale / revoked / mismatched
+// means no tenant-memory read or write, fail closed, existence-silent. The same one captured
+// scope governs recall, semantic search, the writers and the de-dupe probe. Here the stale case
+// is staged directly: the persona (and so the declared pointer, which this fake ties to it) says
+// A while the entitlement-validated resolver answers B.
+// ============================================================================================
+{
+  const WS_A = CALLER_TENANT, WS_B = OTHER_TENANT;
+  const RECENT_A = "INT326-RECENT-PREFERENCE-WRITTEN-IN-A";
+  const PREF = "please be brief from now on";
+  const now = new Date().toISOString();
+  const ROWS = [
+    { client_user_id: USER, client_id: null, tenant_id: WS_A, memory_type: "user_preference", content: RECENT_A, created_at: now, is_active: true },
+    { client_user_id: USER, client_id: null, tenant_id: WS_B, memory_type: "user_preference", content: PREF, created_at: now, is_active: true },
+    // A client-scoped row, so 40.7's focused turn has real memory to render under the client heading.
+    { client_user_id: USER, client_id: OWN, tenant_id: WS_A, memory_type: "coach_note", content: "INT326-CLIENT-FOCUSED-ROW", created_at: now, is_active: true },
+  ];
+  const admit = (filters) => ROWS.filter((r) => filters.every((f) => {
+    if ((f[0] === "eq" || f[0] === "is") && f[1] in r) return r[f[1]] === f[2];
+    return true;
+  }));
+  const memoryTables = { serviceTablesExtra: { client_memory: admit }, tablesExtra: { client_memory: admit } };
+  const persona = (tenant) => ({ get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } });
+  const turn = (active, personaTenant, extra = {}) => drive({
+    stream: true, ...memoryTables, ...extra,
+    rpcOverrides: { ...persona(personaTenant), get_actor_access: { data: { tier: "tenant" }, error: null },
+      current_user_tenant_id: { data: active, error: null }, ...(extra.rpcOverrides ?? {}) },
+  });
+  const egress = (r) => r.modelEgress.join("\n");
+  const ownReads = (r) => r.memoryReads.filter((m) => m.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id") && !m.filters.some((f) => f[0] === "gte"));
+
+  // 40.1 — READ side of the stale case: declared A ≠ validated B means no own-memory read, no search.
+  const stale = await turn(WS_B, WS_A);
+  assert("40.1 a STALE declared pointer (declared A, validated B) yields NO own-memory read and no semantic RPC",
+    ownReads(stale).length === 0 && stale.memoryRpc.length === 0 && !egress(stale).includes("PAIGE MEMORY \u2014 "),
+    JSON.stringify({ reads: stale.memoryReads.map((m) => m.filters), rpc: stale.memoryRpc.length }));
+  assert("40.2 …and no fallback: B is never silently substituted for the stale declaration",
+    !egress(stale).includes(RECENT_A) && !egress(stale).includes(PREF),
+    "neither workspace's memory may appear under a stale declaration");
+
+  // 40.3 — WRITE side of the stale case: the explicit preference signal writes NOTHING.
+  const staleWrite = await turn(WS_B, WS_A, { text: PREF });
+  assert("40.3 a STALE declaration writes no tenant memory: no de-dupe probe, no insert",
+    !staleWrite.memoryReads.some((m) => m.filters.some((f) => f[0] === "gte" && f[1] === "created_at"))
+      && !(staleWrite.rec.inserts ?? []).some((i) => i.table === "client_memory"),
+    JSON.stringify({ probes: staleWrite.memoryReads.filter((m) => m.filters.some((f) => f[0] === "gte")).length, inserts: (staleWrite.rec.inserts ?? []).filter((i) => i.table === "client_memory").length }));
+  assert("40.4 …and says so in the log by scope, never by content",
+    staleWrite.logged.some((l) => l.level === "error" && /own-memory write skipped/.test(l.msg)),
+    JSON.stringify(staleWrite.logged.filter((l) => l.level === "error").map((l) => l.msg.slice(0, 80))));
+
+  // 40.5 — the summary-mode extractors obey the same rule.
+  const sessionBody = { generateSessionSummary: true, sessionMessages: [{ role: "user", content: "keep my updates short" }, { role: "assistant", content: "understood" }] };
+  const staleSum = await turn(WS_B, WS_A, { extraBody: sessionBody });
+  assert("40.5 summary/milestone/fact extraction writes NOTHING under a stale declaration",
+    !(staleSum.rec.inserts ?? []).some((i) => i.table === "client_memory"),
+    JSON.stringify((staleSum.rec.inserts ?? []).filter((i) => i.table === "client_memory").map((i) => i.row?.memory_type)));
+
+  // 40.6 — the AGREEING case still works end-to-end (guards this section against over-blocking).
+  const healthy = await turn(WS_A, WS_A);
+  assert("40.6 declared ∧ validated agreeing recalls that workspace's memory under the truthful heading",
+    egress(healthy).includes(RECENT_A) && egress(healthy).includes("how you work in this workspace")
+      && !egress(healthy).includes("What I know about this client from previous sessions"),
+    JSON.stringify({ calls: healthy.modelEgress.length }));
+
+  // 40.7 — headings are subject-true on BOTH arms (Impeccable).
+  const focused = await turn(WS_A, WS_A, { clientId: OWN });
+  assert("40.7 a client in focus keeps the client heading; without one the heading names the workspace",
+    egress(focused).includes("What I know about this client from previous sessions")
+      && !egress(focused).includes("how you work in this workspace"),
+    "client-scoped turns must keep the client heading");
+
+  // 40.8 — A → B → A: the return to A recalls A fresh; B never bled in either direction.
+  const backToA = await turn(WS_A, WS_A);
+  assert("40.8 after a B turn, a fresh A turn recalls A's own memory again (no cached carry, no bleed)",
+    egress(backToA).includes(RECENT_A) && !egress(backToA).includes(PREF),
+    JSON.stringify({ calls: backToA.modelEgress.length }));
+
+  // 40.9 — OPERATOR BRIEFING isolation: tenant rows never become operator content (owner-context).
+  const OPERATOR = { is_platform_operator: { data: true, error: null }, get_actor_access: { data: { tier: "god" }, error: null } };
+  const OP_TENANTLESS = "PRIVATE-OPERATOR-TENANTLESS-MARKER";
+  const OP_TENANTROW = "PRIVATE-SOLO-WORKSPACE-MEMORY-MARKER";
+  const opBrief = await drive({
+    stream: true, rpcOverrides: OPERATOR,
+    serviceTablesExtra: {
+      paige_owner_memory: (filters) => (filters.some((f) => f[0] === "is" && f[1] === "tenant_id" && f[2] === null)
+        ? [{ memory_type: "active_priority", content: OP_TENANTLESS, created_at: now }]
+        : [{ memory_type: "active_priority", content: OP_TENANTROW, created_at: now }]),
+    },
+  });
+  assert("40.9 the operator briefing reads TENANT-LESS owner memory only",
+    opBrief.rec.from.some((f) => f.table === "paige_owner_memory"
+      && f.filters.some((x) => x[0] === "is" && x[1] === "tenant_id" && x[2] === null)),
+    JSON.stringify(opBrief.rec.from.filter((f) => f.table === "paige_owner_memory").map((f) => f.filters)));
+  // 40.11 — a CLIENT turn keeps its legitimately-read client memory even when the CALLER's own
+  // declaration is stale: the client arm's guard sample is the resolver (the same source the
+  // persona derives from), not the caller's declared pointer — the client's rows belong to the
+  // client's tenant, which client authorization already established.
+  const staleOwnFocused = await turn(WS_A, WS_A, {
+    clientId: OWN,
+    tablesExtra: {
+      client_memory: admit,
+      profiles: () => [{ active_tenant_id: WS_B }], // the caller's own declaration points elsewhere
+    },
+  });
+  // A stale CALLER declaration on a client turn is later refused by the declared-scope
+  // revalidator (the whole turn, evidence-carrying as it is) — but the memory guard runs FIRST,
+  // and the guard must not report a "different workspace" drop it has no basis for: the client's
+  // rows belong to the client's tenant and the read never used the caller's declaration.
+  assert("40.11 a stale CALLER declaration does not log a spurious memory-workspace drop on a client turn",
+    !staleOwnFocused.logged.some((l) => /memory was read in a different workspace/.test(l.msg)),
+    JSON.stringify(staleOwnFocused.logged.filter((l) => /different workspace|client memory/.test(l.msg)).map((l) => l.msg.slice(0, 90))));
+  assert("40.11b …and the turn is refused by the declared-scope revalidator, not by memory",
+    staleOwnFocused.status === 409 && staleOwnFocused.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
+    JSON.stringify({ status: staleOwnFocused.status }));
+
+  // 40.12 — the STATIC prompt sentence is subject-relative too (the heading's truthfulness must
+  // not be undone one section later by a sentence that claims every block is "this client's").
+  assert("40.12 the static MEMORY instruction reads the block's heading instead of assuming a client",
+    healthy.modelEgress.some((b) => b.includes("read its heading for who it is about"))
+      // The OLD framing asserted the block was about a client unconditionally; the new sentence
+      // names the client case explicitly, so the negative pin targets the old sentence's own
+      // construction ("present, it's what you know"), which the new wording never contains.
+      && healthy.modelEgress.every((b) => !b.includes("block is present, it's what you know about this client")),
+    JSON.stringify({ egress: healthy.modelEgress.length }));
+
+  assert("40.10 …so this human's Solo-workspace memory never becomes platform doctrine",
+    opBrief.modelEgress.some((b) => b.includes(OP_TENANTLESS))
+      && opBrief.modelEgress.every((b) => !b.includes(OP_TENANTROW)),
+    JSON.stringify({ egress: opBrief.modelEgress.length }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

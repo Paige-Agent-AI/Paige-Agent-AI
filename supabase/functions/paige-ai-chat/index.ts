@@ -13585,6 +13585,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ...contact, client_ref: account_number, contact_methods: orderedContactMethods(client_contact_methods),
               })) };
             } else if (tc.function.name === "crm_get_contact_summary") {
+              // This service-role read must never diagnose relationships without a workspace.
+              if (!crmTenantId) throw new Error("tenant_not_resolved");
               const id = await resolveClientReference(admin, crmTenantId, args.client_ref);
               // §9 IDOR FIX: scope the contact fetch to the caller's tenant so a
               // foreign client_id resolves to null → contact_not_found (never

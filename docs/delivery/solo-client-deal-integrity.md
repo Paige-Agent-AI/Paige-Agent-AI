@@ -72,3 +72,13 @@ Final focused suite after current-main rebase: **102 tests / ten files PASS**. A
 Nonwriter review completed on 35c7ed4b4e7dba605f3e0f66b3b80683eb069887: FAIL, one P2. Active Clients NewDealDialog accepted free-text unlinked reasons that canonical CRM refuses. The editor now uses the same three allowed reason values; missing selection refuses, all three are component-tested. Revised test failed first (INPUT instead of SELECT), then all four editor cases passed. No additional material findings were reported. Trailing fixture-driver blank line also removed. One exact-head repair recheck remains required and will be recorded in PR #1761 before merge.
 
 Post-review rendered correction: relationship picker initial focus repaired after the checked-in browser driver exposed reassignment focus loss. Ten viewport/theme cases and 18 focused tests pass. Prior COMPLETE PASS applies to 02fb00f8 only; review of the new head requires escalation under AGENTS.md merge gate item 2. No merge/deployment claim.
+
+## Coordinator-authorized CI repair / current-main reconciliation
+Rebased onto 5b72df95231ba2f0c9d0633408b3e825796d7c0b. Existing Opportunities/Pipeline layout is preserved; this lane adds canonical client binding and governed correction, not a pipeline reconfiguration.
+
+- Impeccable ENOENT was invalid UTF-8: a CP1252 ellipsis byte in ContactDealsSection. Corrected to the same visible Unicode text. Pinned 4.1.0 detector passed all 18 changed UI targets. UTF-8 validation and a valid/invalid/missing-file self-test now precede the unchanged detector gate.
+- Chat relationship diagnostics now explicitly refuse an unresolved workspace before any service-role contact-summary query. The required tenant type stays non-null.
+- Form admission supersedes separate stage-update and submission-binding failures with one atomic admission refusal. Stage progression remains supported, and real PostgreSQL proves binding failure rolls back stage movement; archived stage refusal and closed replay are retained.
+- The assignee guard had flagged the missing canonical roster call, not a retained coach-role predicate. Restored creation-time owner selection via loadAssignableStaff / get_tenant_assignable_members. The selected member is passed through the same governed deal.create command, server active-membership checks, Trust and readback. No direct owner write or title-role exception.
+
+Coordinator authorized one final independent recheck only AFTER exact-head CI is green and the head frozen. Do not run it early. Authenticated generic cross-surface acceptance, second-tenant negative, hosted persistence/deployment and owner-account regression remain UNVERIFIED.

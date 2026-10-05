@@ -66,7 +66,7 @@ export function ContactDealsSection({ contactId }: { contactId: string }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {!activeTenantId ? "Choose a workspace to view linked deals." : !current || phase === "loading" ? "Loading linked deals…" : phase === "error" ? "Could not load linked deals." : visibleDeals.length === 0 ? "No deals linked to this client in this workspace." : `${visibleDeals.length} linked deal${visibleDeals.length === 1 ? "" : "s"}`}
+          {!activeTenantId ? "Choose a workspace to view linked deals." : !current || phase === "loading" ? "Loading linked dealsâ€¦" : phase === "error" ? "Could not load linked deals." : visibleDeals.length === 0 ? "No deals linked to this client in this workspace." : `${visibleDeals.length} linked deal${visibleDeals.length === 1 ? "" : "s"}`}
 
         </div>
         <Button size="sm" onClick={() => setNewOpen(true)} disabled={!current || phase !== "ready" || !defaultPipeline}>

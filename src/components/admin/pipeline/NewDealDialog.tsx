@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { loadAssignableStaff, type AssignableStaff } from "@/lib/team/assignableStaff";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { CrmDealCommandReview } from "@/solo/deals/CrmDealCommandReview";
 import { useSoloDealClients } from "@/solo/deals/useSoloDealClients";
@@ -36,6 +37,9 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
   const contacts = clientPicker.clients.map(c => ({ id: c.id, label: c.name, email: c.primaryEmail }));
   const [unlinkedReason, setUnlinkedReason] = useState("");
   const [review, setReview] = useState<{tenantId: string; command: Record<string, unknown>} | null>(null);
+  const [ownerId, setOwnerId] = useState("me");
+  const [staff, setStaff] = useState<AssignableStaff[]>([]);
+  const [staffLoading, setStaffLoading] = useState(false);
   const [value, setValue] = useState<string>("");
   const [closeDate, setCloseDate] = useState<string>("");
   const [offerType, setOfferType] = useState<string>("none");
@@ -48,6 +52,17 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
 
 
   const { offers: tenantOffers } = useTenantOffers();
+
+  useEffect(() => {
+    setStaff([]); setOwnerId("me");
+    if (!open || !activeTenantId || accountContextLoading) return;
+    let cancelled = false;
+    setStaffLoading(true);
+    loadAssignableStaff().then(rows => { if (!cancelled) setStaff(rows); })
+      .catch(() => { if (!cancelled) setStaff([]); })
+      .finally(() => { if (!cancelled) setStaffLoading(false); });
+    return () => { cancelled = true; };
+  }, [open, activeTenantId, accountContextLoading]);
 
   const initialStageId = defaultStageId || stages[0]?.id || "";
   useEffect(() => {
@@ -81,9 +96,13 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
     if (value && (!/^\d+(?:\.\d{1,2})?$/.test(value) || !Number.isSafeInteger(dollarsToCents(value)))) {
       toast.error("Enter a non-negative amount with up to two decimal places"); return;
     }
+    if (ownerId !== "me" && (staffLoading || !staff.some(member => member.user_id === ownerId))) {
+      toast.error("Choose an available workspace member"); return;
+    }
     setReview({tenantId: activeTenantId, command: {
       action: "deal.create", title: title.trim(), pipeline_id: pipeline.id, stage_id: stageId,
       ...(contactId === "none" ? {unlinked_reason: unlinkedReason.trim()} : {contact_id: contactId}),
+      ...(ownerId === "me" ? {} : {owner_user_id: ownerId}),
       value_cents: dollarsToCents(value || "0"), currency: "USD",
       expected_close_date: closeDate || null,
       offer_type: offerType === "none" ? null : offerType === "other" ? (offerCustom.trim() || "other") : offerType,
@@ -193,8 +212,11 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
                 </Popover>
               </div>
               <div>
-                <Label className="text-xs">Owner</Label>
-                <p className="text-sm text-muted-foreground">Owner assignment is reviewed separately after creation.</p>
+                <Label htmlFor="deal-owner" className="text-xs">Owner</Label>
+                <select id="deal-owner" className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={ownerId} onChange={e => setOwnerId(e.target.value)} disabled={staffLoading}>
+                  <option value="me">Me</option>
+                  {staff.map(member => <option key={member.user_id} value={member.user_id}>{member.name}</option>)}
+                </select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

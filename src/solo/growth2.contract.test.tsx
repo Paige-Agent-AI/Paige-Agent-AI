@@ -338,9 +338,14 @@ describe("Solo Campaigns approved contract", () => {
     expect(invariantMigration).toContain("pg_advisory_xact_lock(hashtextextended('pipeline-stage-order:'||new.pipeline_id::text,0))");
     expect(archiveMigration).toContain("for share");
     expect(archiveMigration).toContain("where id=_stage_id for update");
-    expect(submissionProcessor).toContain("deal_stage_update_failed");
-    expect(submissionProcessor).toContain("submission_deal_link_failed");
-    expect(submissionProcessor).toContain('.is("archived_at", null)');
+    // Admission now owns stage advance + durable binding in one transaction.
+    const admission = readFileSync(resolve(process.cwd(), "supabase/migrations/20270588000000_solo_form_deal_identity.sql"), "utf8");
+    expect(submissionProcessor).toContain('admin.rpc("growth_attach_submission_deal"');
+    expect(submissionProcessor).toContain('if(attachError || !attached) return {status:"error",result:{},error:"submission_deal_admission_failed"}');
+    expect(admission).toContain("archived_at IS NULL FOR SHARE");
+    expect(admission).toContain("UPDATE public.deals SET stage_id=stage WHERE id=deal.id RETURNING * INTO deal");
+    expect(admission).toContain("UPDATE public.growth_form_submissions SET deal_id=deal.id WHERE id=sub.id");
+    expect(admission.indexOf("UPDATE public.deals SET stage_id=stage")).toBeLessThan(admission.indexOf("UPDATE public.growth_form_submissions SET deal_id=deal.id"));
     expect(visibilityMigration).toContain("_deal_admin or (_is_coach");
     expect(visibilityMigration).toContain("d.owner_user_id=_caller");
     expect(visibilityMigration).toContain("dc.assigned_coach_user_id=_caller");
@@ -363,7 +368,7 @@ describe("Solo Campaigns approved contract", () => {
     expect(pipelineSettings).toContain('rpc("set_default_pipeline" as never');
     expect(pipelineSettings).not.toContain("update({ is_default:");
     expect(defaultSetterMigration).toContain("pg_advisory_xact_lock(hashtextextended('pipeline-default:'||_tenant::text,0))");
-    expect(contactDeals).toContain('from("pipeline_stages").select("*").is("archived_at", null)');
+    expect(contactDeals).toContain('from("pipeline_stages").select("*").eq("tenant_id", activeTenantId).is("archived_at", null)');
     expect(stageAutomationRules).toContain('.eq("pipeline_id", pid).is("archived_at", null)');
     expect(paigeChat.match(/\.is\("archived_at", null\)/g)?.length).toBeGreaterThanOrEqual(2);
     expect(paigeMcp).toContain('.eq("tenant_id", tenantId)\n        .is("archived_at", null)');

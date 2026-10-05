@@ -193,10 +193,15 @@ function extractJson(raw: string): Record<string, unknown> | null {
  * fabricate a pass, §31 — the INVERSE of the visual critic's fail-open-to-SHIP). The single call
  * self-traces to L1 via routedChatCompletion(trace); we wire no second trace (no double-count).
  */
-export async function rubricJudge(input: ScorerInput, trace?: TraceCtx): Promise<ScoreResult> {
+export async function rubricJudge(input: ScorerInput, trace?: TraceCtx, version: "v1" | "v2" = "v1"): Promise<ScoreResult> {
+  // R3 judge repair: v1 keeps its exact original behavior (500-token budget) so the frozen
+  // Q0 baseline stays reproducible. v2 raises ONLY the output budget (1600) — the finding-wise
+  // entailment audits degraded at 500 — and stamps the scorer name so results are separable.
+  const maxTokens = version === "v2" ? 1600 : 500;
+  const scorerName = version === "v2" ? "rubric_judge_v2" : "rubric_judge";
   const rubric = typeof input.rubric === "string" ? input.rubric.trim() : "";
   if (!rubric) {
-    return { scorer: "rubric_judge", scorerKind: "llm_judge", score: null, passed: null, status: "needs_config", rationale: "no rubric supplied" };
+    return { scorer: scorerName, scorerKind: "llm_judge", score: null, passed: null, status: "needs_config", rationale: "no rubric supplied" };
   }
 
   const ctx: TraceCtx = {
@@ -219,7 +224,7 @@ export async function rubricJudge(input: ScorerInput, trace?: TraceCtx): Promise
         { role: "user", content: `Rubric:\n${rubric}\n\nOutput to score:\n${outputString(input.output)}${expectedBlock}` },
       ],
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: maxTokens,
     };
     const resp = await routedChatCompletion("plan", body, ctx);
     content = resp?.choices?.[0]?.message?.content ?? "";
@@ -227,7 +232,7 @@ export async function rubricJudge(input: ScorerInput, trace?: TraceCtx): Promise
     costUsd = estimateJudgeCost(model, resp?.usage?.prompt_tokens, resp?.usage?.completion_tokens);
   } catch (e) {
     console.error("[eval] rubricJudge call failed (non-fatal):", (e as Error)?.message);
-    return { scorer: "rubric_judge", scorerKind: "llm_judge", score: null, passed: null, status: "low_confidence", rationale: "judge call errored", judgeModel: model };
+    return { scorer: scorerName, scorerKind: "llm_judge", score: null, passed: null, status: "low_confidence", rationale: "judge call errored", judgeModel: model };
   }
 
   const parsed = extractJson(content);
@@ -236,9 +241,9 @@ export async function rubricJudge(input: ScorerInput, trace?: TraceCtx): Promise
   if (score === null) {
     // Unparseable / no numeric score → low_confidence, NEVER a fabricated pass (§31).
     console.error("[eval] rubricJudge unparseable reply:", content.slice(0, 300));
-    return { scorer: "rubric_judge", scorerKind: "llm_judge", score: null, passed: null, status: "low_confidence", rationale: "judge reply unparseable", judgeModel: model, costUsd };
+    return { scorer: scorerName, scorerKind: "llm_judge", score: null, passed: null, status: "low_confidence", rationale: "judge reply unparseable", judgeModel: model, costUsd };
   }
   const rationale = typeof parsed?.rationale === "string" ? parsed.rationale.slice(0, 1000) : undefined;
   // A judge's numeric score passes at >= 0.5 (a scored, real verdict — not a fabricated default).
-  return { scorer: "rubric_judge", scorerKind: "llm_judge", score, passed: score >= 0.5, status: "scored", rationale, judgeModel: model, costUsd };
+  return { scorer: scorerName, scorerKind: "llm_judge", score, passed: score >= 0.5, status: "scored", rationale, judgeModel: model, costUsd };
 }

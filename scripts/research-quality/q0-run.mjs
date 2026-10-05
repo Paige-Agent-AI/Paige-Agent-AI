@@ -208,22 +208,55 @@ async function seedPhase() {
   }
 }
 
+// ── phase: rescore-v2 — re-score the FROZEN Q0 packs with the corrected judge ──
+async function rescorePhase() {
+  const tok = await session();
+  const metricSets = {
+    q0_entailment: { rubric: RUBRICS.entailment, filter: () => true },
+    q0_precision: { rubric: RUBRICS.precision, filter: () => true },
+    q0_completeness: { rubric: RUBRICS.completeness, filter: () => true },
+    q0_contradiction: { rubric: RUBRICS.contradiction, filter: (c) => c.class === "contested" },
+    q0_insufficiency: { rubric: RUBRICS.insufficiency, filter: (c) => c.answer_class === "insufficient" || c.answer_class === "judgment" },
+  };
+  for (const [name, ms] of Object.entries(metricSets)) {
+    const dsId = psql(`insert into paige_eval_dataset (tenant_id, name, description, target_kind, target_ref) values ('${TENANT}', '${name}-v2', 'INT-322 R3 corrected-judge re-score of the frozen Q0 evidence', 'trace_batch', '${name}-v2') returning id;`).match(/[0-9a-f-]{36}/)[0];
+    for (const c of cases.filter(ms.filter)) {
+      const pack = readEvidence(c.id);
+      const output = {
+        case_id: c.id, question: c.question, sub_questions: c.sub_questions,
+        findings: pack.engine_result?.findings ?? [],
+        sources_included: (pack.engine_result?.sources ?? []).filter((x) => !x.excluded).map((x) => ({ index: x.index, url: x.url, title: x.title, snippet: (x.snippet ?? "").slice(0, 600) })),
+        coverage: pack.engine_result?.coverage ?? {},
+      };
+      const sqlIns = "insert into paige_eval_case (dataset_id, tenant_id, input, rubric, metadata) values ('" + dsId + "', '" + TENANT + "', '" + JSON.stringify(output).replaceAll("'", "''") + "'::jsonb, '" + JSON.stringify(ms.rubric(c)).replaceAll("'", "''") + "', '" + JSON.stringify({ q0_case: c.id, class: c.class, split: c.split, judge: "v2" }).replaceAll("'", "''") + "'::jsonb);";
+      psql(sqlIns);
+    }
+    const resp = await fetch(EVAL, {
+      method: "POST",
+      headers: { apikey: process.env.Q0_ANON_KEY, Authorization: `Bearer ${tok}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ dataset_id: dsId, scorers: ["rubric_judge_v2"] }),
+    });
+    const body = await resp.json().catch(() => ({}));
+    console.log(`${name}-v2: dataset=${dsId} http=${resp.status} ok=${body.ok} scored=${body.result?.scored_count}`);
+  }
+}
+
 // ── phase: report ──────────────────────────────────────────────────────────
 async function reportPhase() {
   // pull ALL q0 judge results from the canonical store
   // metric name comes from the dataset ref
   const rows2 = JSON.parse(psql(`select coalesce(json_agg(x),'[]'::json) from (
-    select ds.target_ref as metric, c.metadata->>'q0_case' as q0_case, r.score, r.status, r.rationale, r.judge_model, r.cost_estimate_usd
+    select ds.target_ref as metric, r.scorer as judge_version, c.metadata->>'q0_case' as q0_case, r.score, r.status, r.rationale, r.judge_model, r.cost_estimate_usd
     from paige_eval_result r
     join paige_eval_case c on c.id = r.case_id
     join paige_eval_dataset ds on ds.id = c.dataset_id
-    where ds.target_ref like 'q0_%-v1'
+    where ds.target_ref like 'q0_%'
   ) x;`));
   const agg = { generated_at: new Date().toISOString(), per_case: [], aggregate: {} };
   for (const c of corpus.cases) {
     const pack = readEvidence(c.id);
     const judges = {};
-    for (const r of rows2.filter((x) => x.q0_case === c.id)) judges[r.metric.replace("q0_", "").replace("-v1", "")] = { score: r.score, status: r.status, rationale: r.rationale, judge_model: r.judge_model };
+    for (const r of rows2.filter((x) => x.q0_case === c.id)) judges[r.metric] = { score: r.score, status: r.status, rationale: r.rationale, judge_model: r.judge_model };
     agg.per_case.push({ case_id: c.id, split: c.split, class: c.class, answer_class: c.answer_class, deterministic: pack.deterministic_metrics, judges });
   }
   const avg = (xs) => { const v = xs.filter((x) => typeof x === "number"); return v.length ? Number((v.reduce((a, b) => a + b, 0) / v.length).toFixed(3)) : null; };
@@ -231,9 +264,16 @@ async function reportPhase() {
     const set = agg.per_case.filter((p) => split === "all" || p.split === split);
     agg.aggregate[split] = {
       n: set.length,
-      judge_entailment: avg(set.map((p) => p.judges.entailment?.score)),
-      judge_precision: avg(set.map((p) => p.judges.precision?.score)),
-      judge_completeness: avg(set.map((p) => p.judges.completeness?.score)),
+      judge_entailment: avg(set.map((p) => (p.judges["q0_entailment-v1"] ?? p.judges.entailment_v1)?.score)),
+      judge_v2_entailment: avg(set.map((p) => p.judges["q0_entailment-v2"]?.score)),
+      judge_v2_precision: avg(set.map((p) => p.judges["q0_precision-v2"]?.score)),
+      judge_v2_completeness: avg(set.map((p) => p.judges["q0_completeness-v2"]?.score)),
+      judge_v2_contradiction: avg(set.filter((p) => p.judges["q0_contradiction-v2"]).map((p) => p.judges["q0_contradiction-v2"]?.score)),
+      judge_v2_insufficiency: avg(set.filter((p) => p.judges["q0_insufficiency-v2"]).map((p) => p.judges["q0_insufficiency-v2"]?.score)),
+      judge_v2_cost_usd: Number(rows2.filter((r) => r.judge_version === "rubric_judge_v2" && set.some((x) => x.case_id === r.q0_case)).reduce((a2, r) => a2 + (r.cost_estimate_usd ?? 0), 0).toFixed(4)),
+      parse_degradation_v2: (() => { const rs = rows2.filter((r) => r.judge_version === "rubric_judge_v2" && set.some((x) => x.case_id === r.q0_case)); return rs.length ? Number((rs.filter((r) => r.status !== "scored").length / rs.length).toFixed(3)) : null; })(),
+      judge_precision: avg(set.map((p) => (p.judges["q0_precision-v1"] ?? p.judges.precision)?.score)),
+      judge_completeness: avg(set.map((p) => (p.judges["q0_completeness-v1"] ?? p.judges.completeness)?.score)),
       judge_contradiction: avg(set.filter((p) => p.judges.contradiction).map((p) => p.judges.contradiction?.score)),
       judge_insufficiency: avg(set.filter((p) => p.judges.insufficiency).map((p) => p.judges.insufficiency?.score)),
       primary_ratio: avg(set.map((p) => p.deterministic?.primary_ratio)),
@@ -254,5 +294,6 @@ switch (phase) {
   case "metrics": metricsPhase(); break;
   case "seed": await seedPhase(); break;
   case "report": await reportPhase(); break;
-  default: console.error("usage: q0-run.mjs --phase <run|metrics|seed|report> [caseIds]"); process.exit(1);
+  case "rescore": await rescorePhase(); break;
+  default: console.error("usage: q0-run.mjs <run|metrics|seed|report|rescore> [caseIds]"); process.exit(1);
 }

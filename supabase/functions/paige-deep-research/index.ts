@@ -876,19 +876,71 @@ function digitsOnly(s: string): string { return s.replace(/\D/g, ""); }
 
 // ── Deterministic post-validation + bind (A5) ───────────────────────────────
 // Runs AFTER ranking. `citable` = non-excluded sources with their final `index`.
+// R3 — the canonical drop-reason taxonomy, DERIVED FROM validateAndBind's actual branches
+// (not invented): the citation guard collapses three distinct causes the dossier must
+// distinguish, the name check is a whole-record drop, and the strict entity-contact rule
+// is a drop only in strict mode.
+type CandidateDropReason =
+  | "citation_missing" // synthesis emitted no citations field at all
+  | "citation_empty" // citations array present but empty
+  | "citation_unresolvable" // refs exist but none resolve to a citable source
+  | "name_token_mismatch" // entity name not grounded in any cited source
+  | "contact_unverified_strict"; // strict mode: name ok but every claimed contact vector failed
+
+interface CandidateDiag {
+  cid: string;
+  summary: string;
+  citations_emitted: number[];
+  resolved: number[];
+  unresolved: Array<{ ref: number; reason: "index_out_of_range" | "source_excluded" }>;
+  name: string | null;
+  checks: {
+    name_grounded: boolean | null;
+    website: "pass" | "nulled" | "n/a";
+    phone: "pass" | "nulled" | "n/a";
+    values_grounded: number;
+    values_dropped: number;
+  };
+  outcome: "accepted" | "dropped";
+  drop_reason: CandidateDropReason | null;
+}
+
 function validateAndBind(
   synth: SynthOut,
   citable: SourceRec[],
   strict: boolean,
+  diag?: CandidateDiag[], // R3: OPTIONAL collector — the return value is byte-identical with or without it
 ): Finding[] {
   const byIndex = new Map<number, SourceRec>();
   for (const s of citable) byIndex.set(s.index, s);
 
   const out: Finding[] = [];
+  let cidN = 0;
   for (const rf of synth.findings ?? []) {
+    // R3 dossier row (bounded): candidate identity + citation-resolution detail.
+    const emitted = Array.isArray(rf.citations) ? rf.citations.filter((c) => typeof c === "number") : [];
+    const resolvedRefs = Array.from(new Set((rf.citations ?? []).filter((c) => byIndex.has(c))));
+    const row: CandidateDiag = {
+      cid: `c${++cidN}`,
+      summary: String(rf.summary ?? "").slice(0, 240),
+      citations_emitted: emitted.slice(0, 12),
+      resolved: resolvedRefs.slice(0, 12),
+      unresolved: emitted.filter((c) => !byIndex.has(c)).slice(0, 8)
+        .map((c) => ({ ref: c, reason: "index_out_of_range" as const })),
+      name: (rf.name ?? "").trim().slice(0, 120) || null,
+      checks: { name_grounded: null, website: "n/a", phone: "n/a", values_grounded: 0, values_dropped: 0 },
+      outcome: "dropped",
+      drop_reason: null,
+    };
+    const collect = (reason: CandidateDropReason) => { row.drop_reason = reason; diag?.push(row); };
+
     // Resolve citations to real, non-excluded sources; drop the rest.
     const cites = Array.from(new Set((rf.citations ?? []).filter((c) => byIndex.has(c))));
-    if (cites.length === 0) continue; // empty/unresolvable citations are ILLEGAL → drop
+    if (cites.length === 0) {
+      // R3: distinguish the three citation-guard causes the original collapse hid.
+      collect(!Array.isArray(rf.citations) ? "citation_missing" : rf.citations.length === 0 ? "citation_empty" : "citation_unresolvable");
+      continue; // empty/unresolvable citations are ILLEGAL → drop
+    }
 
     const cited = cites.map((c) => byIndex.get(c)!);
     const citedText = cited.map((s) => `${s.snippet}\n${s.content}`).join("\n").toLowerCase();
@@ -901,7 +953,8 @@ function validateAndBind(
       const nameTokens = tokens(name);
       const present = nameTokens.length > 0 &&
         nameTokens.every((t) => citedText.includes(t));
-      if (!present) continue; // name not grounded anywhere it was cited → drop whole record
+      row.checks.name_grounded = present;
+      if (!present) { collect("name_token_mismatch"); continue; } // name not grounded anywhere it was cited → drop whole record
     }
 
     // (2) Website check — emitted host must equal/subdomain a cited host (URL or body link).
@@ -909,6 +962,7 @@ function validateAndBind(
     if (website) {
       const wHost = hostOf(website.startsWith("http") ? website : `https://${website}`);
       const vouched = !!wHost && (citedHosts.has(wHost) || citedText.includes(wHost));
+      row.checks.website = vouched ? "pass" : "nulled";
       if (!vouched) { website = null; unverified.push("website"); }
     }
 
@@ -918,6 +972,7 @@ function validateAndBind(
       const want = digitsOnly(phone);
       const pool = phonesIn(citedText);
       const matched = want.length >= 10 && pool.some((p) => p.endsWith(want.slice(-10)));
+      row.checks.phone = matched ? "pass" : "nulled";
       if (!matched) { phone = null; unverified.push("phone"); } // highest-harm error — never surface
     }
 
@@ -931,8 +986,8 @@ function validateAndBind(
       const grounded = nums.length === 0
         ? citedText.includes(vs.toLowerCase())
         : nums.every((n) => citedText.includes(n.toLowerCase()));
-      if (grounded) keptValues.push(vs);
-      else unverified.push(`value:${vs}`); // ungrounded figure dropped, never a bare fabricated range
+      if (grounded) { keptValues.push(vs); row.checks.values_grounded++; }
+      else { row.checks.values_dropped++; unverified.push(`value:${vs}`); } // ungrounded figure dropped, never a bare fabricated range
     }
 
     // Emit rule: an ENTITY record (has a name) survives only if name passed AND, when a contact
@@ -941,13 +996,15 @@ function validateAndBind(
     const claimedContact = !!((rf.website ?? "").trim() || (rf.phone ?? "").trim());
     const survivingContact = !!(website || phone);
     if (name && claimedContact && !survivingContact) {
-      if (strict) continue; // drop records where everything-but-name failed
+      if (strict) { collect("contact_unverified_strict"); continue; } // drop records where everything-but-name failed
       unverified.push("contact");
     }
 
     // Confidence derived deterministically from the surviving cites (A5).
     const confidence = deriveConfidence(cited);
 
+    row.outcome = "accepted";
+    diag?.push(row);
     out.push({
       text: composeText(rf.summary, name, website, phone, keptValues),
       citations: cites,
@@ -1456,6 +1513,7 @@ async function persistRun(
   req: DeepResearchRequest,
   result: DeepResearchResult,
   tenantId: string | null,
+  dossier?: unknown, // R3: bounded diagnostics; NULL on pre-R3 callers
 ): Promise<void> {
   // M0 FAIL-CLOSED FOR PERSISTENCE: without unambiguous tenant lineage the run is NOT
   // stored — the research result still returns to the caller, but the platform never
@@ -1484,6 +1542,7 @@ async function persistRun(
       configured: result.coverage.configured,
       // B2 — nullable dossier profile; null on the general path (back-compat).
       entity_profile: result.entity_profile ?? null,
+      dossier: (dossier ?? null) as never, // R3: bounded diagnostics on the canonical record
     });
     if (runErr) { console.error("[paige-deep-research] persist run failed:", runErr.message); return; }
 
@@ -1688,6 +1747,14 @@ serve(async (req) => {
   // billed against the gathering budget. The three WALL_CLOCK_MS comparisons below all read this t0.
   t0 = Date.now();
 
+  // ── R3 — the inspectable dossier (diagnostics ONLY; nothing downstream reads it) ──
+  // Bounded by the engine's own hop/query/read caps plus explicit candidate caps below.
+  const dossier: {
+    v: 1; hops: Array<Record<string, unknown>>; synthesis: { returned: boolean; candidates: number };
+    candidates: CandidateDiag[]; caps_applied: { candidates_truncated: boolean };
+  } = { v: 1, hops: [], synthesis: { returned: false, candidates: 0 }, candidates: [], caps_applied: { candidates_truncated: false } };
+  const hopBudget = () => ({ searches, reads, cost_usd_est: Number(costUSD.toFixed(4)), elapsed_ms: Date.now() - t0 });
+
   // ── Bounded PLAN → SEARCH → READ → GAP-CHECK loop (A3) ────────────────────
   outer:
   for (let hop = 0; hop < effectiveMaxHops; hop++) {
@@ -1732,29 +1799,49 @@ serve(async (req) => {
     }
 
     // (b) SEARCH — Firecrawl fan-out
+    const searchesRun: string[] = [];
+    const sourcesBeforeSearch = sources.length;
     for (const q of queries) {
       if (searches >= BND.MAX_TOTAL_SEARCHES) break;
       if (Date.now() - t0 > BND.WALL_CLOCK_MS) { stop = "wall_clock"; break outer; }
       const r = await callWebSearch(SUPABASE_URL, SERVICE_KEY, q);
       if (!r.configured) { configured = false; stop = "unconfigured"; break outer; } // §13 — never fabricate
       searches++;
+      searchesRun.push(q.slice(0, 160));
       costUSD += COST.search;
       for (const hit of r.results) upsertSource(sources, hit);
     }
 
     // (c) READ — top-ranked unread sources' full body
     const ranked = rankSources(sources, freshnessDays);
+    const readsSelected: number[] = [];
+    const readsContentOk: number[] = [];
+    const readsEmpty: number[] = [];
     for (const s of ranked) {
       if (reads >= BND.MAX_READS) break;
       if (s.read || s.excluded) continue;
       if (Date.now() - t0 > BND.WALL_CLOCK_MS) { stop = "wall_clock"; break outer; }
       const live = sources.find((x) => x.url === s.url)!;
+      readsSelected.push(sources.indexOf(live)); // R3: run-local source position (canonical indexes are stamped by rankSources)
       const content = await fetchUrl(SUPABASE_URL, SERVICE_KEY, s.url);
       live.read = true;
       reads++;
       costUSD += COST.read;
-      if (content) live.content = content;
+      if (content) { live.content = content; readsContentOk.push(sources.indexOf(live)); }
+      else readsEmpty.push(sources.indexOf(live));
     }
+    // R3: the hop record (bounded by the engine's own per-hop caps).
+    dossier.hops.push({
+      hop,
+      planner: entityTarget ? "entity" : "llm",
+      planned_queries: queries.slice(0, BND.MAX_QUERIES_PER_HOP),
+      searches_run: searchesRun.slice(0, BND.MAX_QUERIES_PER_HOP),
+      search_hits_added: sources.length - sourcesBeforeSearch,
+      reads_selected: readsSelected.slice(0, BND.MAX_READS),
+      reads_content_ok: readsContentOk.slice(0, BND.MAX_READS),
+      reads_empty: readsEmpty.slice(0, BND.MAX_READS),
+      budget: hopBudget(),
+    });
 
     if (searches >= BND.MAX_TOTAL_SEARCHES && reads >= BND.MAX_READS) { stop = "budget"; break; }
     if (hop + 1 >= effectiveMaxHops) stop = "max_hops";
@@ -1803,7 +1890,7 @@ serve(async (req) => {
         ? "Search ran but returned no results. No verifiable sources, so no findings — nothing was fabricated."
         : "Sources were found but none met the reliability bar. No findings produced rather than surface unverifiable claims.",
     );
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId);
+    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
     return json(result);
   }
 
@@ -1812,14 +1899,17 @@ serve(async (req) => {
   // profile records; there is never a second model round-trip.
   costUSD += COST.synthesis;
   const synth = await synthesize(question, domainHint, citable, entityTarget);
+  dossier.synthesis.returned = !!synth;
+  dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;
   if (!synth) {
     const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId);
+    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
     return json(result);
   }
 
   // ── POST-VALIDATION gate ──────────────────────────────────────────────────
-  const findings = validateAndBind(synth, citable, strict);
+  const findings = validateAndBind(synth, citable, strict, dossier.candidates);
+  if (dossier.candidates.length > 64) { dossier.candidates = dossier.candidates.slice(0, 64); dossier.caps_applied.candidates_truncated = true; } // R3 cap
 
   // ── DOSSIER profile gate (Section C) — runs AFTER validateAndBind, over the
   // same non-excluded ranked sources. Emitted only if ≥1 typed item survived.
@@ -1843,7 +1933,7 @@ serve(async (req) => {
     // only `coverage` (B1). entity_profile.unverified_notes stays canonical.
     result.coverage.unverified_notes = entityProfile.unverified_notes;
   }
-  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId);
+  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
   return json(result);
   } catch (e) {
     // §13 — any unexpected failure returns a STRUCTURED honest error, never a

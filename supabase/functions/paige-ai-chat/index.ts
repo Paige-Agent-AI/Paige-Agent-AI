@@ -1919,23 +1919,31 @@ JSON:`;
       //
       // Durable memory recall is WORKSPACE-bound: a person's identity is not a workspace grant,
       // so the no-client arm below may key on the person ONLY inside the workspace the caller
-      // explicitly holds. The scope authority is the caller's DECLARED active workspace
-      // (profiles.active_tenant_id, read through the caller's own JWT so RLS applies) — never
-      // current_user_tenant_id(), whose first-membership fallback would invent a workspace the
-      // caller never chose (a cleared pointer means NO memory scope, not the oldest membership).
-      // NULL — the platform operator, an unresolved scope, or a failed read — recalls NOTHING:
-      // no recent read, no paid embedding, no RPC, no block, exactly like the refused-client
-      // path. The operator surface reads owner memory through the §52 briefing, never
-      // tenant/client memory keyed on the person.
+      // explicitly AND currently holds. The scope is the CONJUNCTION the tenant-Knowledge gate
+      // already uses (tkScopeIsDeclaredActive): the caller's DECLARED active workspace
+      // (profiles.active_tenant_id, read through the caller's own JWT so RLS applies) is a
+      // memory scope only when the ENTITLEMENT-VALIDATED resolver (current_user_tenant_id(),
+      // shared memo with the writers) returns the SAME workspace. The declared pointer alone is
+      // never trusted — it can be stale (membership revoked/cleared), and the resolver's
+      // first-membership fallback must not be substituted either: declared≠resolved means NO
+      // memory scope at all, exactly as the KB gate refuses set-but-unentitled. NULL — the
+      // platform operator, an unresolved scope, a failed read, or a stale pointer — recalls
+      // NOTHING: no recent read, no paid embedding, no RPC, no block, exactly like the
+      // refused-client path. The operator surface reads owner memory through the §52 briefing,
+      // never tenant/client memory keyed on the person.
       let memoryScopeTenantRead: Promise<string | null> | null = null;
       const memoryScopeTenantId = (): Promise<string | null> =>
         (memoryScopeTenantRead ??= (async () => {
           try {
-            const { data, error } = await supabaseClient
-              .from("profiles")
-              .select("active_tenant_id")
-              .eq("user_id", user.id)
-              .maybeSingle();
+            const [declaredRead, resolved] = await Promise.all([
+              supabaseClient
+                .from("profiles")
+                .select("active_tenant_id")
+                .eq("user_id", user.id)
+                .maybeSingle(),
+              callerActiveTenantId(),
+            ]);
+            const { data, error } = declaredRead;
             if (error) {
               // §13 — diagnosable, existence-silent: the log says the scope read failed, never
               // whether any memory exists. A failed scope is not a scope: no memory this turn.
@@ -1944,7 +1952,8 @@ JSON:`;
               return null;
             }
             const declared = (data as { active_tenant_id?: unknown } | null)?.active_tenant_id;
-            return typeof declared === "string" && declared ? declared : null;
+            if (typeof declared !== "string" || !declared) return null;
+            return declared === resolved ? declared : null;
           } catch {
             return null;
           }

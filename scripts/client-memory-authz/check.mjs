@@ -5374,6 +5374,11 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
     seated.modelEgress.some((b) => b.includes("how you work in this workspace"))
     && seated.modelEgress.every((b) => !b.includes("What I know about this client from previous sessions")),
     "expected the workspace-relative heading, never the client heading, without a client in scope");
+  assert("39.1b the no-client RECENT read carries the captured workspace predicate (own pin, not only 1.1b)",
+    seated.memoryReads.some((r) =>
+      r.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id" && f[2] === USER)
+      && r.filters.some((f) => f[0] === "eq" && f[1] === "tenant_id" && f[2] === CALLER_TENANT)),
+    JSON.stringify(seated.memoryReads.map((r) => r.filters)));
 
   // 39.2 — NO workspace (the default unseated caller) → no memory work at all, existence-silent.
   // The egress marker is the em-dash heading opener "PAIGE MEMORY — ": the STATIC prompt rule in
@@ -5445,6 +5450,20 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
     && scopeFail.modelEgress.every((b) => !b.includes("PAIGE MEMORY \u2014 "))
     && scopeFail.logged.some((l) => l.msg.includes("memory workspace scope unreadable")),
     JSON.stringify({ reads: scopeFail.memoryReads.length, rpc: scopeFail.memoryRpc.length }));
+
+  // 39.11 — a STALE declared pointer is not a memory scope. The pointer names a workspace the
+  // entitlement-validated resolver no longer returns (membership revoked/cleared): the resolver
+  // falls back to the oldest membership, and the KB gate refuses declared!=resolved — memory must
+  // refuse the same way, never substitute. Modeled by seating the persona+declared at
+  // CALLER_TENANT while current_user_tenant_id answers a DIFFERENT workspace.
+  const stalePointer = await drive({
+    clientId: undefined, stream: true,
+    rpcOverrides: { ...SEATED, current_user_tenant_id: { data: OTHER_TENANT, error: null } },
+  });
+  assert("39.11 a declared pointer the resolver no longer validates yields NO memory scope (fail closed, never the fallback)",
+    stalePointer.memoryReads.length === 0 && stalePointer.memoryRpc.length === 0
+    && stalePointer.modelEgress.every((b) => !b.includes("PAIGE MEMORY — ")),
+    JSON.stringify({ reads: stalePointer.memoryReads.map((r) => r.filters), rpc: stalePointer.memoryRpc.length }));
 
   // 39.10 — the client-in-focus arm is unchanged: client-keyed, and the CLIENT heading is kept.
   const clientFocused = await drive({ clientId: OWN, stream: true });

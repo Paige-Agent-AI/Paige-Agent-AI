@@ -385,6 +385,16 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
   // agree). A check overrides it to model the case current_user_tenant_id() hides: a null or
   // stale active_tenant_id where the persona tenant is the COALESCE oldest-membership fallback.
   const declaredActiveTenant = activeTenantId === "__USE_PERSONA__" ? personaTenant : activeTenantId;
+  // The ENTITLEMENT-VALIDATED resolver, modeled over this fake's own axes exactly as production
+  // (20260714144656) computes it: the declared pointer when the caller holds an active membership
+  // in it, else the OLDEST membership by joined_at, else null. Since INT-326 S1 the no-client
+  // memory recall resolves this RPC as one conjunct of its workspace scope, so a scenario with
+  // no explicit `current_user_tenant_id` stub still gets the answer its persona/memberships
+  // axes imply — a default that disagreed with them would silently strip the memory block from
+  // every seated scenario (which is how its absence first showed: 21.l and 5.3 went red).
+  const resolvedTenant = declaredActiveTenant && memberships.includes(declaredActiveTenant)
+    ? declaredActiveTenant
+    : (memberships[0] ?? null);
   const logged = [];
   syncThrows = throwOnSync;
   resetEmbeds();
@@ -406,6 +416,7 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
     authUser: unauthenticated ? null : { id: USER, email: "owner@example.test" },
     rpcs: {
       check_rate_limit: { data: true, error: null },
+      current_user_tenant_id: { data: resolvedTenant, error: null },
       get_paige_persona_context: () => {
         const state = personaStates[Math.min(personaCall++, personaStates.length - 1)];
         // A FUNCTION IS A THROWER, not a tenant id. Without this the function fell through and

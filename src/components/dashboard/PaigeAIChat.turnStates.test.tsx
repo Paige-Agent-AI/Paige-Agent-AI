@@ -662,6 +662,45 @@ describe("C4a — a resumed approval is one answer, live and on reload", () => {
     expect(reloaded.textContent).not.toContain("Approved — run it.");
   });
 
+  it("a CHAIN of approvals is one answer: one line at the first answer over every step, on reload", async () => {
+    // Kills: drawing the line only over the first pair. A resumed answer can propose again; when that
+    // second card is approved too, the third answer belongs to the same piece of work.
+    const FP2 = "fedcba9876543210:66666666-7777-4888-8999-aaaaaaaaaaaa";
+    harness.threads = [{ id: "thread-c", title: "Renewal", updated_at: "2026-10-05T10:00:00Z" }];
+    harness.turns = [
+      { id: "u1", role: "user", content: "send the renewal", created_at: "2026-10-05T09:00:00Z" },
+      { id: "a1", role: "assistant", content: "Here's what I'll send.", created_at: "2026-10-05T09:00:05Z", bundle_ref: {
+        paige_confirm: [{ tool: "send_email", summary: "Send the renewal proposal to Daniel Reyes", fingerprint: FP }],
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1, waiting_on: { kind: "approval", approvals: 1 } },
+        turn_trace: [{ label: "Drafted the cover note", group: "owner", status: "done" }],
+      } },
+      { id: "u2", role: "user", content: "Approved — run it.", created_at: "2026-10-05T09:01:00Z" },
+      { id: "a2", role: "assistant", content: "Sent. Want a follow-up task?", created_at: "2026-10-05T09:01:04Z", bundle_ref: {
+        paige_confirm: [{ tool: "task_create", summary: "Create a follow-up task for Friday", fingerprint: FP2 }],
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" }, waiting_on: { kind: "approval", approvals: 1 } },
+        turn_trace: [{ label: "Sent to Daniel", group: "owner", status: "done" }],
+        paige_resume: { kind: "approval", from_turn_id: null, outcomes: [{ tool: "send_email", outcome: "ran" }], approval_outcome: report },
+      } },
+      { id: "u3", role: "user", content: "Approved — run it.", created_at: "2026-10-05T09:02:00Z" },
+      { id: "a3", role: "assistant", content: "Done — it's on Friday.", created_at: "2026-10-05T09:02:04Z", bundle_ref: {
+        turn_state: { v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" } },
+        turn_trace: [{ label: "Created the follow-up task", group: "owner", status: "done" }],
+        paige_resume: { kind: "approval", from_turn_id: null, outcomes: [{ tool: "task_create", outcome: "ran" }], approval_outcome: { actions: [{ fingerprint: FP2, outcome: "ran" }] } },
+      } },
+    ];
+    server();
+    const host = await mount();
+    await act(async () => { await flush(); });
+    expect(lines(host)).toHaveLength(1);
+    expect(lineText(lines(host)[0])).toBe("What PAIGE did · 3 steps");
+    await openTrace(lines(host)[0]);
+    expect(rowsOf(lines(host)[0])).toEqual([
+      ["Drafted the cover noteOwner Ops", "done"], ["Sent to DanielOwner Ops", "done"], ["Created the follow-up taskOwner Ops", "done"],
+    ]);
+    expect(host.querySelectorAll('[data-paige-continues="resumed"]')).toHaveLength(2);
+    expect(host.textContent).not.toContain("Approved — run it.");
+  });
+
   it("only an APPROVAL is drawn as the same answer: a resumed answer after a decline keeps its own line", async () => {
     // Kills: loosening the merge to any decision. A decline never carries an act forward; if a record
     // ever says otherwise, the two answers are not drawn as one piece of work.

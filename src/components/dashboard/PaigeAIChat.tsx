@@ -2455,25 +2455,49 @@ const PaigeAIChatInner = ({
   };
   /** For the answer that asked: the index of the resumed answer that continues it, or -1. */
   const resumedAt = (index: number): number => (index + 2 < messages.length && resumesFrom(index + 2) === index ? index + 2 : -1);
-  /** The resumed answer's line, over both answers' steps. */
-  const resumedViewFor = (askedAt: number, at: number): TurnView | null => {
-    const asked = messages[askedAt];
-    const resumed = messages[at];
-    const priorRows = asked.turnSnapshot?.rows ?? [];
-    const awaitingApproval = confirmCardLive(resumed, at);
+  // A resumed answer can itself propose and be approved again, so the work forms a CHAIN: the answer
+  // that first asked (the head), every answer that carried an approval forward, and the last one (the
+  // tail). The whole chain is one answer — one line at the head over every step, one footer under the
+  // tail — never a line that covers only the first two.
+  const chainHead = (index: number): number => {
+    let i = index;
+    for (let from = resumesFrom(i); from >= 0; from = resumesFrom(i)) i = from;
+    return i;
+  };
+  const chainTail = (index: number): number => {
+    let i = index;
+    for (let next = resumedAt(i); next >= 0; next = resumedAt(i)) i = next;
+    return i;
+  };
+  /** Steps and time of every answer in the chain before the tail, in order. */
+  const chainPrior = (head: number, tail: number): { rows: TurnRow[]; elapsedMs: number | null } => {
+    let rows: TurnRow[] = [];
+    let elapsedMs: number | null = 0;
+    for (let i = head; i < tail; i += 2) {
+      const snap = messages[i].turnSnapshot;
+      rows = i === head ? [...(snap?.rows ?? [])] : mergeResumedRows(rows, snap?.rows ?? []);
+      elapsedMs = elapsedMs !== null && typeof snap?.elapsedMs === "number" ? elapsedMs + snap.elapsedMs : null;
+    }
+    return { rows, elapsedMs };
+  };
+  const addElapsed = (prior: number | null, own: number | null | undefined): number | null =>
+    prior !== null && typeof own === "number" ? prior + own : null;
+  /** The chain's line, over every answer's steps and the time all of them took. */
+  const resumedViewFor = (head: number, tail: number): TurnView | null => {
+    const resumed = messages[tail];
+    const prior = chainPrior(head, tail);
+    const awaitingApproval = confirmCardLive(resumed, tail);
     if (liveTurn && liveTurn.assistantId === resumed.id) {
-      return deriveLiveTurnView({ ...liveInputFor(liveTurn, resumed.content.trim() !== "", awaitingApproval), rows: mergeResumedRows(priorRows, liveTurn.rows), now: Date.now() });
+      const input = liveInputFor(liveTurn, resumed.content.trim() !== "", awaitingApproval);
+      return deriveLiveTurnView({ ...input, rows: mergeResumedRows(prior.rows, liveTurn.rows), elapsedMs: addElapsed(prior.elapsedMs, input.elapsedMs), now: Date.now() });
     }
     return resumed.turnSnapshot
-      ? deriveSnapshotView({ ...resumed.turnSnapshot, rows: mergeResumedRows(priorRows, resumed.turnSnapshot.rows) }, { personaName: persona.name, awaitingApproval })
+      ? deriveSnapshotView({ ...resumed.turnSnapshot, rows: mergeResumedRows(prior.rows, resumed.turnSnapshot.rows), elapsedMs: addElapsed(prior.elapsedMs, resumed.turnSnapshot.elapsedMs) }, { personaName: persona.name, awaitingApproval })
       : null;
   };
   const turnViewFor = (message: Message, index: number): TurnView | null => {
     if (message.role !== "assistant") return null;
-    const from = resumesFrom(index);
-    if (from >= 0) return resumedViewFor(from, index);
-    const resumedIndex = resumedAt(index);
-    if (resumedIndex >= 0) return resumedViewFor(index, resumedIndex);
+    if (resumesFrom(index) >= 0 || resumedAt(index) >= 0) return resumedViewFor(chainHead(index), chainTail(index));
     const awaitingApproval = confirmCardLive(message, index);
     if (liveTurn && liveTurn.assistantId === message.id) {
       return deriveLiveTurnView({ ...liveInputFor(liveTurn, message.content.trim() !== "", awaitingApproval), now: Date.now() });
@@ -2498,8 +2522,8 @@ const PaigeAIChatInner = ({
     if (!view) return null;
     // C4a — the resumed answer's line is drawn once, at the top of the answer that asked (a3/a4).
     if (resumesFrom(index) >= 0) return null;
-    const resumedIndex = resumedAt(index);
-    if (resumedIndex >= 0) {
+    if (resumedAt(index) >= 0) {
+      const resumedIndex = chainTail(index);
       const resumed = messages[resumedIndex];
       const lineProps = {
         idBase: `turn-${message.id}`,
@@ -2513,7 +2537,9 @@ const PaigeAIChatInner = ({
         // One voice per state, as on every other answer: where the report card speaks for the
         // approval (Solo), the line stays quiet; where there is none (the drawer), the line says
         // "Approved. PAIGE is working" (frame a3).
-        const input = { ...liveInputFor(liveTurn, resumed.content.trim() !== "", awaiting), rows: mergeResumedRows(message.turnSnapshot?.rows ?? [], liveTurn.rows) };
+        const prior = chainPrior(index, resumedIndex);
+        const own = liveInputFor(liveTurn, resumed.content.trim() !== "", awaiting);
+        const input = { ...own, rows: mergeResumedRows(prior.rows, liveTurn.rows), elapsedMs: addElapsed(prior.elapsedMs, own.elapsedMs) };
         return <PaigeLiveTurnStatus input={input} announce={!awaiting && !resumed.approvalOutcome} {...lineProps} />;
       }
       return <PaigeTurnStatus view={view} {...lineProps} />;
@@ -2551,8 +2577,7 @@ const PaigeAIChatInner = ({
     // again" is the person's own request, never the card's decision sentence.
     if (resumedAt(index) >= 0) return null;
     const live = liveTurn?.assistantId === message.id;
-    const from = resumesFrom(index);
-    const original = from >= 0 ? precedingUserText(from) : live ? liveTurn?.userText : precedingUserText(index);
+    const original = resumesFrom(index) >= 0 ? precedingUserText(chainHead(index)) : live ? liveTurn?.userText : precedingUserText(index);
     return (
       <PaigeTurnFooter
         footer={footerFor(view.footer, view.kind, original)}

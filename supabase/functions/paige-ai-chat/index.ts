@@ -19,7 +19,7 @@ import { prepareCalendarLinkShare, sendCalendarLink, calendarLinkSocialCopy, typ
 import { AGREEMENT_TOOLS } from '../_shared/paige-spine/domains/agreement.ts';
 import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
-import { draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
+import { agreementSendPrecheck, draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
 import { N8N_MANAGEMENT_TOOLS, runN8nManagement } from '../_shared/n8n-management.ts';
 import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
@@ -84,6 +84,71 @@ const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
 // managing agency — the Studio build rule (its tools are in WORKSPACE_BUILD_TOOLS). It is outside the
 // owner-ops branch, so the projection names it here or it would describe publishing to a member.
 const PUBLISH_DOOR_ADMIN_TOOLS: ReadonlySet<string> = GROWTH_PUBLISH_DOOR_TOOL_NAMES;
+// C2b — the per-round step hooks executeToolCalls drives: `start` when a call that passed every policy
+// gate reaches its handler, `finish` the moment it is over (with its one result, or none when it threw).
+type ToolStepHooks = {
+  start: (tc: any, toolIndex: number) => void;
+  finish: (tc: any, toolIndex: number, res: any) => void;
+};
+// The announced tools that run with no workspace resolved (a tenant-less caller — in practice the
+// Platform Operator at rest, §53, the only one the owner/admin role gate admits without a workspace):
+// each reaches its handler and finishes with its own answer, so it is announced like any other call.
+// Every other announced tool is refused without a workspace — by the role gate (the Studio build and
+// email tools need a seat), by its branch, or by its RPC — so it is not announced then (C2b). Audited
+// tool by tool against STEP_START_LABELS; the decision table is in docs/delivery/paige-conversational-loop-c2.md.
+const STEP_START_WITHOUT_WORKSPACE: ReadonlySet<string> = new Set([
+  "capability_status",     // the per-turn capability projection; needs no workspace and no role
+  "presence_who_online",   // presence_list_online(p_tenant_id null): the operator sees platform-wide
+  "presence_is_online",    // presence_check_user: is_platform_owner() searches platform-wide, no tenant needed
+  "web_search",            // paige-web-search: no tenant input
+  "deep_research",         // paige-deep-research: persisted owner-scoped to the user, no tenant input
+  "list_subagents",        // the specialist registry: platform defaults need no workspace
+  "delegate_to_subagent",  // the same registry, dispatched for the caller
+  "action_advance",        // advance_action admits is_platform_owner(caller) for an action in any tenant
+  "inbox_list",            // list_inbox_messages keys on current_user_tenant_id(): no tenant → an honest empty list
+  "integrations_list",     // list_integration_surface: no tenant → an empty surface, never a raise
+  "contact_event_status",  // get_contact_event_status (INVOKER, RLS); the branch answers success either way
+  "propose_action",        // files a paige_pending_approvals row; tenant_id is nullable there
+  "growth_list",           // no tenant → the branch answers an empty page list, success
+  "calendar_book_meeting", // create_internal_booking admits is_platform_owner(); internal_bookings.tenant_id is nullable
+]);
+// The owner-ops tools that read or write through the RLS-BYPASSING service-role client, so the
+// dispatch refuses them without a resolved workspace and binds them to the caller's OWN workspace
+// (see the owner-ops branch). Read there, and by the step START, which must not announce a call that
+// those two checks will refuse (C2b).
+const CRM_SERVICE_TOOLS: ReadonlySet<string> = new Set([
+  "crm_update_pipeline_stage", "crm_assign_coach", "crm_create_task", "crm_log_activity",
+  "crm_search_contacts", "crm_get_contact_summary", "crm_list_deals", "crm_list_tasks", "crm_pipeline_summary",
+]);
+// The retired social tools. Absent from the model's tool definitions and refused at dispatch every
+// time, so the step START never announces them either. One set for both (§18).
+const UNAVAILABLE_SOCIAL_TOOLS: ReadonlySet<string> = new Set(["social_post", "social_analytics", "social_accounts"]);
+// propose_action's draft, read from its arguments: what is filed, and the two shapes that are refused
+// before anything is written — no message body, and no recipient (no linked contact and no address).
+// Pure. The dispatch branch files from it, and the step START asks the same reading so a draft the
+// branch will refuse is never announced as running (§18: one reading, not two that can drift).
+function readProposeActionDraft(args: any, scopedClientId: string | null): {
+  actionType: string;
+  channel: "sms" | "email";
+  contactId: any;
+  body: string;
+  summary: string;
+  draftContent: Record<string, unknown>;
+  problem: "no_body" | "no_recipient" | null;
+} {
+  const actionType = String(args.action_type || "email").toLowerCase();
+  const channel = actionType === "sms" ? "sms" : "email";
+  const contactId = args.contact_id || scopedClientId || null;
+  const body = String(args.body || "").trim();
+  const summary = String(args.summary || (channel === "sms" ? "Text a client" : "Email a client")).trim();
+  const draftContent: Record<string, unknown> = { channel, body };
+  if (args.to) draftContent.to = String(args.to);
+  if (channel === "email" && args.subject) draftContent.subject = String(args.subject);
+  // Gap 3 guard (#132): never file a headless send approval — one with no linked contact AND no
+  // recipient address can never be sent (the DB CHECK constraint enforces this too).
+  const problem = !body ? "no_body" : (!contactId && !draftContent.to) ? "no_recipient" : null;
+  return { actionType, channel, contactId, body, summary, draftContent, problem };
+}
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
@@ -155,6 +220,8 @@ import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
 // OBSERVES the loop (§18: one home for the shape, shared with the client parser).
 import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
+// C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
+import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
 // owner/admin-only chat tool, the early refusal, and the projection.
@@ -202,6 +269,20 @@ const SUBAGENT_FRIENDLY: Record<string, string> = {
   "content-writer": "your content specialist",
   "research-analyst": "your research specialist",
 };
+/**
+ * Does this tool result REPORT A FAILURE? The one reading a step's FINISH uses — its wording here in
+ * describeStep and its `done` / `error` status in the step hooks — so the two cannot disagree. Tools
+ * report failure three ways: `success: false` (most), `ok: false` (the calendar-link reads, the n8n
+ * management tools, some RPC pass-throughs), and a bare `error` string with no success flag at all
+ * (sibling functions passed through as-is: paige-web-search, paige-write-back). An affirmative
+ * `success: true` or `ok: true` wins over an `error` field.
+ */
+function toolResultReportsFailure(out: any): boolean {
+  if (!out || typeof out !== "object") return false;
+  if (out.success === false || out.ok === false) return true;
+  if (out.success === true || out.ok === true) return false;
+  return typeof out.error === "string" && out.error.trim() !== "";
+}
 function describeStep(
   tc: any,
   res: any,
@@ -211,7 +292,7 @@ function describeStep(
   try { args = JSON.parse(tc?.function?.arguments ?? "{}"); } catch { /* ignore */ }
   let out: any = {};
   try { out = JSON.parse(res?.content ?? "{}"); } catch { /* ignore */ }
-  const failed = out?.success === false;
+  const failed = toolResultReportsFailure(out);
 
   // Drop policy-gated rejections (funding-not-enabled, permission-denied) and web_fetch —
   // never render these as work or as failure. web_fetch is now a functional SSRF-guarded
@@ -340,10 +421,16 @@ function describeStep(
       ? { label: "Restored a booking calendar, evidence incomplete", group: "owner", detail: "back to draft/paused · Rail not recorded" }
       : { label: failed ? "Could not restore that booking calendar" : "Restored a booking calendar", group: "owner", detail: failed ? "nothing changed" : "back to draft/paused · not public · Rail recorded" };
     case "booking_preset_list": return { label: failed ? "Couldn't read your booking calendars" : "Checked your booking calendars", group: "owner" };
-    // Calendar-link sharing (E7). prepare/social_copy are reads (never `failed`); send keys on the
-    // TRUE outcome — a queued send is NOT "sent", and a refused/failed send is never a success (§13).
-    case "calendar_link_prepare": return { label: "Prepared a booking link to share", group: "owner", detail: out?.shareable === false ? "calendar isn't public yet" : undefined };
-    case "calendar_link_social_copy": return { label: "Prepared social post copy", group: "owner", detail: "copy-ready · nothing posted" };
+    // Calendar-link sharing (E7). prepare/social_copy are reads, and a read can still be refused: a
+    // malformed or foreign calendar id, a workspace that moved, an unreadable share state each come
+    // back `{ ok: false, code }`, and a refused read never says "Prepared". send keys on the TRUE
+    // outcome — a queued send is NOT "sent", and a refused/failed send is never a success (§13).
+    case "calendar_link_prepare": return failed
+      ? { label: "Couldn't prepare that booking link", group: "owner", detail: "nothing shared" }
+      : { label: "Prepared a booking link to share", group: "owner", detail: out?.shareable === false ? "calendar isn't public yet" : undefined };
+    case "calendar_link_social_copy": return failed
+      ? { label: "Couldn't prepare that social post copy", group: "owner", detail: "nothing posted" }
+      : { label: "Prepared social post copy", group: "owner", detail: "copy-ready · nothing posted" };
     // Agreements (INT-178) — both are READS, so neither can report a send. The detail says how many
     // were read, never that anything was delivered or signed.
     // THE OUTWARD-FACING ONE. This chip is read by someone deciding whether their client has been
@@ -8613,7 +8700,55 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // this looks up what it needs to decide, under the caller's own session: the kind's executor, and for
     // action_advance the action as stored. What it cannot find out is read, never waved through.
     // Returns the refusal PAIGE reads, or null.
-    const outboundDraftRefusal = async (
+    // ONE READ PER TOOL CALL (C2b). The step START asks this exact question just before the dispatch
+    // branch asks it again, so a refused draft never shows as running. The answer is kept for the call
+    // it was asked for and dropped when the next call starts (`outboundDraftMemo.clear()` in
+    // executeToolCalls), so the branch reuses it instead of repeating the lookups and the warning. Keyed
+    // on the exact tool, stage and arguments: anything different is asked fresh.
+    const outboundDraftMemo = new Map<string, Promise<Record<string, unknown> | null>>();
+    // THE SERVICE-ROLE CRM TOOLS' WORKSPACE BINDING, READ ONCE PER TOOL CALL (C2b). The step START and
+    // the owner-ops branch ask the same question about the same call; two reads could straddle a
+    // workspace switch, and the START would then announce a call the branch refuses (running → error
+    // for a call that never ran). So both ask `crmWorkspaceBindingRefusal`, whose one read of the
+    // caller's own workspace is kept for the call it was asked for and dropped when the next call starts
+    // (`callerOwnTenantMemo = null` beside `outboundDraftMemo.clear()` in executeToolCalls). Each tool
+    // still gets its OWN fresh read — never one read shared across the batch (the branch says why).
+    let callerOwnTenantMemo: Promise<{ tenant: string | null; failed: boolean }> | null = null;
+    const readCallerOwnTenant = (): Promise<{ tenant: string | null; failed: boolean }> => {
+      callerOwnTenantMemo ??= (async () => {
+        // THE USER-SCOPED CLIENT, NOT THE SERVICE ONE: current_user_tenant_id() is keyed on auth.uid(),
+        // which is NULL under the service role (see the owner-ops branch).
+        const { data: ownTenant, error: ownTenantErr } = await supabaseClient.rpc("current_user_tenant_id");
+        if (ownTenantErr) {
+          // LOUD, not swallowed (§32): a failed check and a genuine mismatch are different things and
+          // must not report the same cause (§13). Logged once per call, by whichever asks first.
+          console.error("[paige] CRM workspace binding check FAILED:", ownTenantErr.message);
+        }
+        return { tenant: (ownTenant as string | null) ?? null, failed: !!ownTenantErr };
+      })();
+      return callerOwnTenantMemo;
+    };
+    // The refusal code when the caller's own workspace is not `crmTenantId` (fail CLOSED: a check that
+    // could not run is refused too, under its own code), or null when it is.
+    const crmWorkspaceBindingRefusal = async (
+      crmTenantId: string | null,
+    ): Promise<"workspace_check_failed" | "workspace_mismatch" | null> => {
+      const own = await readCallerOwnTenant();
+      if (own.failed || !own.tenant || own.tenant !== crmTenantId) return own.failed ? "workspace_check_failed" : "workspace_mismatch";
+      return null;
+    };
+    const outboundDraftRefusal = (
+      tool: string, args: Record<string, unknown>, stage: "filing" | "approved",
+    ): Promise<Record<string, unknown> | null> => {
+      let key: string;
+      try { key = `${tool}\u0000${stage}\u0000${JSON.stringify(args)}`; } catch { return outboundDraftRefusalRead(tool, args, stage); }
+      const known = outboundDraftMemo.get(key);
+      if (known) return known;
+      const asked = outboundDraftRefusalRead(tool, args, stage);
+      outboundDraftMemo.set(key, asked);
+      return asked;
+    };
+    const outboundDraftRefusalRead = async (
       tool: string, args: Record<string, unknown>, stage: "filing" | "approved",
     ): Promise<Record<string, unknown> | null> => {
       if (!OUTBOUND_DRAFT_TOOLS.has(tool)) return null;
@@ -8716,7 +8851,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // (including the terminal Unknown-tool branch). Approvals accumulate into
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
-      const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>) => {
+      const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
         // A Studio act stopped before it ran — switched off in autonomy settings, or the caller is not
         // this workspace's owner/admin — still files its receipt, as refused, so the activity feed
         // shows the attempt and why nothing changed. A held-for-approval proposal files none: the
@@ -8743,6 +8878,73 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         };
       const toolResults: any[] = [];
       const executed: any[] = [];
+      // ── C2b · MAY THIS CALL BE ANNOUNCED AS RUNNING? ────────────────────────────────────────────
+      // Asked at the START point, immediately before dispatch. THE CONTRACT:
+      //
+      //   1. NO START for a call a POLICY gate refuses: authority, the seat (client seat), the
+      //      workspace role, the autonomy lane, an approval still owed, a door (sales, publish, CRM —
+      //      they decide remotely and get a FINISH only), the Studio capability boundary, the
+      //      workspace binding (no workspace; the service-role CRM tools bound to a workspace that is
+      //      not the caller's own), and internal text in a draft for a customer. The gates ahead of
+      //      this point `continue` before it; the ones still inside the dispatch chain are asked
+      //      again below, the same way, WITHOUT producing a result.
+      //   2. NO START for a call whose non-empty arguments cannot be parsed at all: nothing true can
+      //      be said about what it would do. (Empty or whitespace-only arguments read as `{}`.)
+      //   3. A START for a call that passed every policy gate and reaches its handler. If the handler
+      //      then rejects its INPUT — argument validation: an empty title, a malformed id, an unknown
+      //      status, invalid preset arguments, a missing mission id — the row closes `error`. That is
+      //      BY DESIGN and truthful: the action was attempted. Input validation is not re-asked here.
+      //
+      // Some input checks ARE asked below, because each is a shared source the branch itself calls
+      // (the same function, the same one read) and asking it costs nothing: growth_form_save's
+      // question list (`buildFormSchemaFromQuestions`), agreement_send's workspace and id
+      // (`agreementSendPrecheck`), propose_action's body and recipient (`readProposeActionDraft`),
+      // action_advance's unaddressable id, the CRM binding memo (`crmWorkspaceBindingRefusal`), and the
+      // no-workspace check. THAT LIST IS NOT COMPLETE AND IS NOT MEANT TO BE: a handler's input check
+      // that is not on it still gives START then `error`, under rule 3.
+      //
+      // A refusal only the far end can make (a backend's workspace refusal, an RPC's own check) cannot
+      // be known before the call either; such a row closes `error` or `withdrawn`, never `done`. A tool
+      // with no START wording (web_fetch, the doors, the social tools, an unknown name) is never
+      // announced. Any throw here means no START: being silent is always truthful.
+      const announceStart = async (tc: any): Promise<boolean> => {
+        try {
+          // `any`, as everywhere in this dispatch: the door sets are typed by their own literal names.
+          const name = tc?.function?.name ?? "";
+          if (!describeStepStart(tc, describeStep)) return false;
+          if (CRM_COMMAND_TOOL_NAMES.has(name) || GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(name)
+              || SALES_INVOICE_TOOL_NAMES.has(name) || SALES_COLLECTIONS_TOOL_NAMES.has(name)) return false;
+          // Defense in depth: the early role gate (WORKSPACE ROLE, BEFORE ANY APPROVAL CARD) asks this
+          // same predicate with the same resolver and refuses first, so a call that reaches here has
+          // already passed it. Asked again so the START can never be wider than that gate.
+          if (requiresWorkspaceAdmin(name, N8N_MANAGEMENT_TOOL_NAMES)
+              && !authorityAdmits(name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)) return false;
+          const tenantId: string | null = personaCtx?.tenant_id ?? null;
+          if (!tenantId && !STEP_START_WITHOUT_WORKSPACE.has(name)) return false;
+          // The same one read the branch makes for this call (`crmWorkspaceBindingRefusal`'s memo).
+          if (CRM_SERVICE_TOOLS.has(name) && await crmWorkspaceBindingRefusal(tenantId)) return false;
+          // Rule 2: arguments that do not parse are never announced. Empty or whitespace reads as {}.
+          const rawArgs = typeof tc.function.arguments === "string" ? tc.function.arguments : "";
+          let args: any = {};
+          if (rawArgs.trim() !== "") {
+            try { args = JSON.parse(rawArgs); } catch { return false; }
+          }
+          const stage = approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing";
+          if (name === "action_advance" && unaddressableConfirmArgs("action_advance", args)) return false;
+          if ((name === "action_file" || name === "action_advance" || name === "calendar_link_send")
+              && await outboundDraftRefusal(name, args, stage)) return false;
+          if (name === "propose_action") {
+            if (await outboundDraftRefusal("propose_action", args, "filing")) return false;
+            if (readProposeActionDraft(args, scopedClientId).problem) return false;
+          }
+          // The pure refusals the branches make before any I/O, asked through the same functions.
+          if (name === "growth_form_save" && !buildFormSchemaFromQuestions(args).ok) return false;
+          if (name === "agreement_send" && !agreementSendPrecheck(tenantId, args.agreementId ?? null).ok) return false;
+          return true;
+        } catch {
+          return false;
+        }
+      };
       for (const [toolIndex, tc] of toolCalls.entries()) {
         if (!tc || !tc.function?.name) continue;
         // Actual dispatch boundary: the account may change after the model round was
@@ -8765,6 +8967,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return { toolResults, executed, scopeInvalidated: true };
         }
         executed.push(tc);
+        // C2b — the per-call FINISH wraps everything from here to the end of the iteration (see the
+        // `finally` below the last dispatch branch). The body is deliberately NOT re-indented under
+        // this `try`. The scope check above stays outside it: a call it stops never started.
+        outboundDraftMemo.clear();
+        callerOwnTenantMemo = null;
+        const resultsBeforeThisCall = toolResults.length;
+        try {
 
         // ── STUDIO CAPABILITY BOUNDARY (V1) ──────────────────────────────────
         // A Studio turn may dispatch only its role's scope, whatever the model names — the list it
@@ -9658,6 +9867,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           // autoMode === 'auto', or the approval matched this exact call → fall through to execute.
         }
+
+        // ── C2b · THE START ──────────────────────────────────────────────────────────────────────
+        // Every gate above has passed, and the dispatch below is about to run this call. It is
+        // announced on the step trace as `running` now — unless `announceStart` finds that a check
+        // inside the dispatch chain will refuse it, or it has no start wording. Its FINISH (the
+        // `finally` at the end of this iteration) closes the same row.
+        if (stepHooks && await announceStart(tc)) stepHooks.start(tc, toolIndex);
 
         if (tc.function.name === "update_client_data") {
           try {
@@ -10814,10 +11030,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // (presence_who_online) INTENTIONALLY run platform-wide for a null-tenant owner — so they
             // must NOT be refused here. Scoping the guard to the service-role set keeps their behavior
             // unchanged while still refusing an unscoped fleet-wide read/write.
-            const CRM_SERVICE_TOOLS = new Set([
-              "crm_update_pipeline_stage", "crm_assign_coach", "crm_create_task", "crm_log_activity",
-              "crm_search_contacts", "crm_get_contact_summary", "crm_list_deals", "crm_list_tasks", "crm_pipeline_summary",
-            ]);
+            // (The set is CRM_SERVICE_TOOLS, at module scope: the step START asks the same two questions.)
             if (CRM_SERVICE_TOOLS.has(tc.function.name) && !crmTenantId) {
               toolResults.push({
                 tool_call_id: tc.id,
@@ -10882,19 +11095,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // exists to close. revalidateTenantKnowledgeScope() does not cover it either: it
               // early-returns true when the turn carries no protected content, so on an ordinary
               // turn nothing else re-checks scope between tools.
-              const { data: ownTenant, error: ownTenantErr } = await supabaseClient.rpc(
-                "current_user_tenant_id",
-              );
-              if (ownTenantErr) {
-                // LOUD, not swallowed (§32): a failed check and a genuine mismatch are different
-                // things and must not report the same cause (§13).
-                console.error("[paige] CRM workspace binding check FAILED:", ownTenantErr.message);
-              }
-              const callerOwnTenant = (ownTenant as string | null) ?? null;
-              const callerTenantErr = !!ownTenantErr;
+              // (C2b) The read is `crmWorkspaceBindingRefusal`'s: ONE per tool call, shared with the
+              // step START so the two can never straddle a switch — still fresh for every call.
               // Fail CLOSED: if we cannot establish the caller's own workspace, we cannot establish
               // that it is the conversation's, and these handlers bypass RLS.
-              if (callerTenantErr || !callerOwnTenant || callerOwnTenant !== crmTenantId) {
+              const bindingRefusal = await crmWorkspaceBindingRefusal(crmTenantId);
+              if (bindingRefusal) {
                 toolResults.push({
                   tool_call_id: tc.id,
                   role: "tool",
@@ -10902,7 +11108,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     success: false,
                     // Distinct codes: the model must not tell an operator their workspace did not
                     // match when the truth is that the check itself could not run.
-                    error: callerTenantErr ? "workspace_check_failed" : "workspace_mismatch",
+                    error: bindingRefusal,
                   }),
                 });
                 continue;
@@ -12801,7 +13007,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // One RPC: a refusal the database answered rolled it back whole (approval-outcome.ts).
               if (error) throw refusedByDatabase(error);
               result = { success: true, ...(data as any) };
-            } else if (tc.function.name === "social_post" || tc.function.name === "social_analytics" || tc.function.name === "social_accounts") {
+            } else if (UNAVAILABLE_SOCIAL_TOOLS.has(tc.function.name)) {
               // Phase 0 containment. These legacy names are deliberately absent from the model's
               // tool definitions. If a stale/forged tool call nevertheless reaches dispatch,
               // fail closed before role lookup, tenant handling, credentials, or provider I/O.
@@ -13487,24 +13693,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
               continue;
             }
-            const actionType = String(args.action_type || "email").toLowerCase();
-            const channel = actionType === "sms" ? "sms" : "email";
-            const contactId = args.contact_id || scopedClientId || null;
-            const body = String(args.body || "").trim();
-            const summary = String(args.summary || (channel === "sms" ? "Text a client" : "Email a client")).trim();
-            if (!body) {
+            // The draft's reading is shared with the step START (readProposeActionDraft, §18).
+            const { actionType, channel, contactId, summary, draftContent, problem } = readProposeActionDraft(args, scopedClientId);
+            if (problem === "no_body") {
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "No message body was drafted." }) });
               continue;
             }
-            const draftContent: Record<string, unknown> = { channel, body };
-            if (args.to) draftContent.to = String(args.to);
-            if (channel === "email" && args.subject) draftContent.subject = String(args.subject);
-            // Gap 3 guard (#132): never file a headless send approval — one with no
-            // linked contact AND no recipient address can never be sent (the DB CHECK
-            // constraint enforces this too). Return a clean, actionable signal so Paige
-            // resolves the recipient first (look the contact up, or ask the user) rather
-            // than queueing an un-sendable draft or hitting a raw constraint error.
-            if (!contactId && !draftContent.to) {
+            // Gap 3 guard (#132): never file a headless send approval. Return a clean, actionable
+            // signal so Paige resolves the recipient first (look the contact up, or ask the user)
+            // rather than queueing an un-sendable draft or hitting a raw constraint error.
+            if (problem === "no_recipient") {
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "no_recipient", note: `This ${channel} draft has no recipient on file. Resolve the contact first — look them up (crm_search_contacts) or ask the user for the ${channel === "sms" ? "phone number" : "email address"} — then file it for approval.` }) });
               continue;
             }
@@ -14149,6 +14347,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
+        } finally {
+          // C2b — THE FINISH, the moment this call is over, whichever way it left: a result, a
+          // refusal (`continue`), or a throw. Its one result is the entry this call pushed (the
+          // loop's one-result-per-executed-tc invariant), found by position rather than by `tc.id`,
+          // which a provider may omit. The hook never throws.
+          stepHooks?.finish(tc, toolIndex, toolResults.length > resultsBeforeThisCall ? toolResults[resultsBeforeThisCall] : undefined);
+        }
       }
       return { toolResults, executed, scopeInvalidated: false };
       };
@@ -14691,15 +14896,89 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // loop, approvals/confirms, then her actual reply. Loop bounds, no-progress
       // guard, convo balance, and persistence are all preserved exactly.
       const enc = new TextEncoder();
-      // NEUTRAL progress goes straight to the wire on every turn. An action step's label comes
-      // from a fixed vocabulary and its detail is a fixed phrase or a count, with one exception:
-      // buying a number shows the number the model asked for. None of it is source text, a title
-      // or a snippet, so it is shown while a protected answer is still being checked. It is NOT
-      // read by the client-seat check (R3); on a client seat every tool the seat may not use is
-      // refused before it runs and renders no step, so the only step a client sees is the fixed
-      // label of the one write a client may make.
+      // NEUTRAL progress goes straight to the wire on every turn: emitStep is never held for a
+      // protected answer's final check. An action step's label comes from a fixed vocabulary (for
+      // action_file a validated department name, for delegate_to_subagent a fixed specialist name).
+      // Its detail is MOSTLY a fixed phrase or a count, but not always. What is true: buying a number
+      // shows the number the model asked for; web_search and deep_research show the model's own query
+      // (its first 80 characters); agreement_draft shows the agreement's title as saved. So a FINISHED
+      // step can carry model- or workspace-authored text to the wire while a protected answer is still
+      // being checked. No retrieved source text, page content or snippet is ever a detail. (C2b does
+      // not widen this: a START never carries a detail.) It is NOT read by the client-seat check (R3);
+      // on a client seat every tool the seat may not use is refused before it runs and renders no
+      // step, so the only step a client sees is the fixed label of the one write a client may make.
       const emitStep = (controller: ReadableStreamDefaultController, s: any) =>
         controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: s })}\n\n`));
+      // C2b — TRUTHFUL START + FINISH for each tool call (docs/delivery/paige-conversational-loop-c2.md).
+      //
+      // START (`running`) is sent only for a call that passed every policy gate and reaches its handler
+      // (`announceStart` states the rule and its shared pre-checks, which are not a complete list of
+      // the handler's own checks), with a fixed present-tense label and never a detail. FINISH
+      // closes the SAME id with the SAME seq: `done` / `error` from the tool's own result, worded by
+      // describeStep (detail allowed, as before); `withdrawn` when describeStep would not render the
+      // result and a START is open (the row is removed); nothing when it would not render and nothing
+      // started (as before); `error` with the START label when the call threw before it produced a
+      // result. Only `done` / `error` ever reach `stepTrace`, so only they can persist.
+      //
+      // IDS ARE UNIQUE PER TURN. `round` restarts on every continuation pass, and a provider may omit a
+      // call's id (consumeRound keeps ""), so the id carries the pass and the call's index as well.
+      const createToolStepHooks = (
+        controller: ReadableStreamDefaultController,
+        round: number,
+        pass: number,
+        finishedSteps: Map<any, ReturnType<typeof describeStep>>,
+      ): ToolStepHooks => {
+        const open = new Map<number, { id: string; seq: number; label: string; group: "owner" | "client" | "shared" }>();
+        const stepId = (tc: any, toolIndex: number) => `${pass}:${round}:${toolIndex}:${tc?.id ?? ""}`;
+        const send = (s: Record<string, unknown>) => { try { emitStep(controller, s); } catch { /* client hung up */ } };
+        return {
+          start: (tc, toolIndex) => {
+            try {
+              const s = describeStepStart(tc, describeStep);
+              if (!s) return;
+              const st = { id: stepId(tc, toolIndex), round, seq: ++stepSeq, kind: "action" as const, label: s.label, group: s.group,
+                status: "running" as const, ts: Date.now() - startedAt };
+              open.set(toolIndex, { id: st.id, seq: st.seq, label: st.label, group: st.group });
+              send(st);
+            } catch { /* a cosmetic-trace throw must never break the agentic loop */ }
+          },
+          finish: (tc, toolIndex, res) => {
+            try {
+              const started = open.get(toolIndex);
+              open.delete(toolIndex);
+              if (!res) {
+                // It threw before producing a result. Only a call that STARTED has a row to close.
+                if (!started) return;
+                const st = { id: started.id, round, seq: started.seq, kind: "action" as const, label: started.label, group: started.group,
+                  status: "error" as const, ts: Date.now() - startedAt };
+                stepTrace.push(st);
+                send(st);
+                return;
+              }
+              // `done` / `error` from the SAME reading describeStep's wording uses (`toolResultReportsFailure`),
+              // so a result that reports failure in any of the shapes tools use never closes `done`.
+              let ok = true;
+              try { ok = !toolResultReportsFailure(JSON.parse(res?.content ?? "{}")); } catch { /* keep ok */ }
+              const derived = describeStep(tc, res);
+              finishedSteps.set(tc, derived);
+              if (!derived) {
+                // Not rendered (a gated or stub result). A START already on screen is taken back.
+                if (started) send({ id: started.id, round, seq: started.seq, kind: "action", label: started.label, group: started.group,
+                  status: "withdrawn", ts: Date.now() - startedAt });
+                return;
+              }
+              const st = {
+                id: started?.id ?? stepId(tc, toolIndex), round, seq: started?.seq ?? ++stepSeq, kind: "action" as const,
+                label: derived.label, group: derived.group,
+                status: (ok ? "done" : "error") as "done" | "error", detail: derived.detail,
+                ts: Date.now() - startedAt,
+              };
+              stepTrace.push(st);
+              send(st);
+            } catch { /* a cosmetic-trace throw must never break the agentic loop */ }
+          },
+        };
+      };
       // PROTECTED content is held on a protected turn and released only after the final check.
       // On an ordinary turn this is a pass-through, so live token streaming is unchanged.
       //
@@ -14935,7 +15214,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               try { emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_step: ts })}\n\n`)); } catch { /* client hung up */ }
             }
 
-            const { toolResults, executed, scopeInvalidated } = await executeToolCalls(toolCalls, queuedApprovals);
+            // C2b — each tool's step is sent from INSIDE the dispatch, as it starts and as it finishes,
+            // instead of all at once when the round ends. The hooks carry this round's ids and the
+            // wire; `finishedSteps` keeps each call's describeStep answer for the rail label below.
+            const finishedSteps = new Map<any, ReturnType<typeof describeStep>>();
+            const toolStepHooks = createToolStepHooks(controller, round, continuationsUsed, finishedSteps);
+            const { toolResults, executed, scopeInvalidated } = await executeToolCalls(toolCalls, queuedApprovals, toolStepHooks);
             // An approved call its card will report as "couldn't confirm" tells the model the same,
             // before the model reads it, so Paige never says "that failed" beside a card that says
             // check first (approval-outcome.ts).
@@ -14968,9 +15252,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             totalToolCalls += sumToolCost(executed);
             seenSignatures.add(sig);
-            // Emit each executed tool's step LIVE as it resolves (done/error). Derived
-            // read-only from the already-executed call; gated/stub calls are dropped so
-            // they never render as a scary failure.
+            // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
+            // What stays at the round's end reads the round as a whole, after the approval rewrite:
+            // the confirm/research/CRM traces, the audit row and the rail.
             for (const tc of executed) {
               try {
                 const res = toolResults.find((r: any) => r.tool_call_id === tc.id);
@@ -15010,19 +15294,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // step should not RENDER; it says nothing about whether a write happened, and a
                 // tool it does not recognise would otherwise execute with no record at all.
                 auditWriteForTool(tc, res);
-                const derived = describeStep(tc, res);
+                // The label the step finished with (the approval rewrite above adds only fields
+                // describeStep does not read, so asking again would give the same answer).
+                const derived = finishedSteps.has(tc) ? finishedSteps.get(tc) : describeStep(tc, res);
                 if (!derived) continue; // gated/stub calls dropped (never render as failure)
                 // Mirror a successful client-scoped mutation onto the rail (§8) —
                 // fire-and-forget, guarded, and only on real success (ok === true).
                 if (ok) void emitRailForTool(tc, res, derived.label);
-                const st = {
-                  id: `${round}:${tc.id}`, round, seq: ++stepSeq, kind: "action" as const,
-                  label: derived.label, group: derived.group,
-                  status: (ok ? "done" : "error") as "done" | "error", detail: derived.detail,
-                  ts: Date.now() - startedAt,
-                };
-                stepTrace.push(st);
-                try { emitStep(controller, st); } catch { /* client hung up */ }
               } catch { /* a cosmetic-trace throw must never break the agentic loop */ }
             }
             convo.push({ role: "assistant", content: content || null, tool_calls: executed });

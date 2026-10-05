@@ -260,14 +260,29 @@ export type AgreementSendPort = (
   agreementId: string,
 ) => PromiseLike<{ ok: boolean; status: number; body: unknown }>;
 
+/**
+ * The refusals `sendAgreement` makes before any I/O: no workspace, or an id that is not a UUID. Pure,
+ * and exported so the chat's step START (paige-ai-chat `announceStart`) asks the SAME question rather
+ * than a copy of it — a send these refuse is never announced as running.
+ */
+export function agreementSendPrecheck(
+  expectedTenantId: string | null | undefined,
+  rawAgreementId: unknown,
+): { ok: true; agreementId: string } | { ok: false; reason: "no_workspace" | "bad_agreement_id" } {
+  if (!expectedTenantId) return { ok: false, reason: "no_workspace" };
+  const agreementId = typeof rawAgreementId === "string" ? rawAgreementId.trim() : "";
+  if (!UUID.test(agreementId)) return { ok: false, reason: "bad_agreement_id" };
+  return { ok: true, agreementId };
+}
+
 export async function sendAgreement(input: {
   send: AgreementSendPort;
   expectedTenantId: string | null | undefined;
   agreementId: unknown;
 }): Promise<AgreementSendResult> {
-  if (!input.expectedTenantId) return sendFail("no_workspace");
-  const agreementId = typeof input.agreementId === "string" ? input.agreementId.trim() : "";
-  if (!UUID.test(agreementId)) return sendFail("bad_agreement_id");
+  const pre = agreementSendPrecheck(input.expectedTenantId, input.agreementId);
+  if (!pre.ok) return sendFail(pre.reason);
+  const agreementId = pre.agreementId;
 
   let reply: { ok: boolean; status: number; body: unknown };
   try {

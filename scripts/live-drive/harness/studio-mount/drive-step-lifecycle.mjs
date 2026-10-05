@@ -65,6 +65,7 @@ async function matrix() {
       const name = `solo-${w}x${h}-paige-${paige}`;
       const page = await browser.newPage({ viewport: { width: w, height: h } });
       page.on("pageerror", (e) => errors.push(`${name}: ${e}`));
+      page.on("console", (m) => { if (m.type() === "error" && !m.text().startsWith("Failed to load resource")) errors.push(`${name} console: ${m.text()}`); });
       await page.goto(`${base}?theme=${theme}&paige=${paige}&stream=lifecycle`);
       await page.waitForSelector(".vs-home");
       await page.locator(".vs-card", { hasText: "New client intake" }).click();

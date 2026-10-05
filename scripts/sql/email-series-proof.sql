@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
--- Email series (E3) — rollback proof of every series path, for 20270570000000.
+-- Email series (E3) — rollback proof of every series path, for 20270580000000.
 --
 -- HOW TO RUN: on a preview branch seeded by scripts/sql/email-series-preview-seed.sql, run the whole
 -- file as one statement batch (it is one transaction). It ends with RAISE EXCEPTION 'PROOF …' carrying

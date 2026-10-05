@@ -2,7 +2,7 @@
 -- Email series (E3) — fixture for the rollback proofs below. DISPOSABLE PREVIEW DATABASE ONLY.
 --
 -- Creates one throwaway user and business (owner membership, active business, postal address) on a
--- Supabase preview branch that has migrations through 20270570000000. Never run it on production:
+-- Supabase preview branch that has migrations through 20270580000000. Never run it on production:
 -- it writes rows that are not rolled back. The proofs read the two fixed ids it creates.
 -- Proofs: scripts/sql/email-series-proof.sql (every series path) and
 --         scripts/sql/email-series-isolation-proof.sql (the review fixes).

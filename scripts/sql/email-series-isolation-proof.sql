@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
--- Email series (E3) — rollback proof of the review fixes, for 20270570000000.
+-- Email series (E3) — rollback proof of the review fixes, for 20270580000000.
 --
 -- HOW TO RUN: as scripts/sql/email-series-proof.sql (preview branch seeded by
 -- scripts/sql/email-series-preview-seed.sql; one transaction ending in RAISE EXCEPTION 'PROOF …').

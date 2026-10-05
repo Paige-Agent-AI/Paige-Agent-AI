@@ -576,15 +576,15 @@ group("tenantless Platform Operator — unresolved scope does no work");
     ![AGENCY, CHILD, SOLO].includes(r.kbCall?.args?.p_tenant_id),
     `got ${r.kbCall?.args?.p_tenant_id}`,
   );
-  // The KB block's embed is measured as a DELTA, not as a global zero. Two OTHER embed
-  // calls (the client-memory semantic pull and the rag_documents pull) live in this handler
-  // and are outside this PR's authorized scope — asserting `embeds === 0` would have been a
-  // claim about code this change does not touch, and would fail for the wrong reason.
+  // The KB block's embed is measured as a DELTA, not as a global zero. Since INT-326 S1 the
+  // client-memory semantic pull is ALSO workspace-gated (an unresolved scope spends nothing on
+  // memory: no read, no embed, no RPC), so the unresolved turn is exactly TWO embeds poorer —
+  // the KB block's and the memory pull's. The rag_documents pull remains scope-independent.
   const resolvedRun = await drive({ personaTenant: SOLO, memberships: [SOLO] });
   assert(
     "5.3 the KB pathway makes NO paid embedding call when scope is unresolved",
-    r.embeds === resolvedRun.embeds - 1,
-    `unresolved made ${r.embeds} embeds, resolved made ${resolvedRun.embeds}; expected exactly one fewer (the KB block's)`,
+    r.embeds === resolvedRun.embeds - 2,
+    `unresolved made ${r.embeds} embeds, resolved made ${resolvedRun.embeds}; expected exactly two fewer (the KB block's + the workspace-gated memory pull's)`,
   );
   assert(
     "5.4 no tenant telemetry row is written",
@@ -3806,7 +3806,11 @@ for (const [label, next] of [
   const r = await drive({ personaTenant: CHILD, memberships: [CHILD, AGENCY],
     chunkContent: "DECLARED-SCOPE-PRIVATE-MARKER", tableExtras: { profiles: (filters) => {
       if (filters.some(([op, cols]) => op === "select" && cols === "active_tenant_id")) reads++;
-      if (reads <= 1) return [{ active_tenant_id: CHILD }];
+      // reads <= 2: the FIRST read of the turn is INT-326 S1's memory workspace scope (the
+      // no-client memory recall resolves the declared workspace before any memory work); the
+      // second is this pathway's initial declared check. The drift value begins on the THIRD
+      // read — the post-retrieval recheck this group exists to prove refuses the turn.
+      if (reads <= 2) return [{ active_tenant_id: CHILD }];
       if (next === "throws") throw new Error("profile read unavailable");
       if (next === "missing") return [];
       return [{ active_tenant_id: next }];

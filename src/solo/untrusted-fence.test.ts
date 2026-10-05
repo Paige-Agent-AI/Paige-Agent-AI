@@ -236,7 +236,11 @@ describe("paige-ai-chat fences the retrieved-knowledge surfaces (source contract
   });
 
   it("fences memoryBlock — durable, cross-principal remembered content", () => {
-    expect(SRC).toContain("=== PAIGE MEMORY — What I know about this client from previous sessions ===\\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}");
+    // INT-326 S1: the heading is subject-relative (a client in focus vs the caller's own
+    // preferences in this workspace) — the fence notice must still lead the block in both shapes.
+    expect(SRC).toContain("=== PAIGE MEMORY — ${memoryHeading} ===\\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}");
+    expect(SRC).toContain('"What I know about this client from previous sessions"');
+    expect(SRC).toContain('"What I\'ve learned about how you work in this workspace"');
     // both remembered spans (recent + semantic) are sanitized
     expect(SRC).toContain("): ${sanitizeUntrustedText(mem.content)}");
     expect(SRC).toContain("]: ${sanitizeUntrustedText(hit.content).slice(0, 400)}");

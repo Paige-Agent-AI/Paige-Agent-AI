@@ -9,6 +9,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { idempotencyKey } from "../_shared/durable-job/mod.ts";
 import { applyBoundContact, bindContactToTenant } from "../_shared/paige-orchestration/resource-binder.ts";
+import { isOrchestratorLocalAgentFunctionAllowed } from "../_shared/marketplace-authority-containment.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -680,6 +681,15 @@ Deno.serve(async (req) => {
       return fail(`Unknown sub-agent: ${payload.slug}`, 404);
     }
     if (!agent.enabled) return fail(`Sub-agent disabled: ${payload.slug}`, 403);
+    if (agent.runtime === "local") {
+      // Refused BEFORE the invocation row is written, so a refusal never leaves a `pending` row behind.
+      if (!agent.edge_function) return fail(`Sub-agent ${agent.slug} has no edge_function configured`, 500);
+      // INT-310: the target comes from a paige_subagents row (tenant-admin writable) and is called with
+      // the SERVICE ROLE, so only an allowlisted, canonical local-agent function may be reached.
+      if (!isOrchestratorLocalAgentFunctionAllowed(agent.edge_function)) {
+        return fail(`Sub-agent ${agent.slug} is not a registered local specialist`, 403);
+      }
+    }
 
     const startedAt = Date.now();
     const invocationId = await logInvocation({
@@ -698,7 +708,6 @@ Deno.serve(async (req) => {
     // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
     // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
     if (agent.runtime === "local") {
-      if (!agent.edge_function) return fail(`Sub-agent ${agent.slug} has no edge_function configured`, 500);
       result = await invokeLocal(agent.edge_function, boundInput, ctx);
     } else if (agent.runtime === "soft") {
       result = await invokeSoft(

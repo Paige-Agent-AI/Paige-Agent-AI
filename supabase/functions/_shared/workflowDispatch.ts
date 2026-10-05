@@ -11,7 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { contactHintsFromPayload, emitAutomationRail } from "./railAutomation.ts";
 import { platformOperatorTenantId } from "./platform-operator-tenant.ts";
-import { canonicalDirectFunctionName, isMarketplaceDirectFunctionBlocked } from "./marketplace-authority-containment.ts";
+import { canonicalDirectFunctionName, isMarketplaceDirectFunctionBlocked, isServiceDispatchDirectFunctionAllowed } from "./marketplace-authority-containment.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -282,6 +282,13 @@ export async function dispatchWorkflowRun(opts: DispatchOpts): Promise<DispatchR
       const directFunctionName = canonicalDirectFunctionName(opts.directFunctionName);
       if (!directFunctionName || isMarketplaceDirectFunctionBlocked(directFunctionName)) {
         const errText = "direct_function_not_allowed";
+        await updateRun({ status: "failed", error: errText, completed_at: new Date().toISOString() });
+        return { status: "failed", error: errText };
+      }
+      // INT-310: this call carries the SERVICE-ROLE bearer and a caller-shaped body, so only an
+      // allowlisted target (one that derives tenant/actor server-side) may receive it.
+      if (!isServiceDispatchDirectFunctionAllowed(directFunctionName)) {
+        const errText = "direct_function_not_allowlisted";
         await updateRun({ status: "failed", error: errText, completed_at: new Date().toISOString() });
         return { status: "failed", error: errText };
       }

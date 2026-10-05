@@ -2440,7 +2440,7 @@ mcp.tool("cancel_workflow_run", {
 // ---------- register_workflow ----------
 mcp.tool("register_workflow", {
   description:
-    "Register a new workflow in the caller's tenant's registry. Master tenant can use any provider; sub-tenants are restricted to provider='webhook_external' or 'direct_edge_function'. Doctrine §118 + §119.",
+    "Register a new workflow in the caller's tenant's registry. Master tenant can use any provider; sub-tenants are restricted to provider='webhook_external' or 'direct_edge_function'. A 'direct_edge_function' row runs only when a person triggers it with their own sign-in (trigger-workflow); `run_workflow`, the action bus and the scheduler will refuse it unless the target is on the service-dispatch allowlist (currently empty). Doctrine §118 + §119.",
   inputSchema: z.object({
     key: z.string().describe("snake_case, unique per tenant"),
     label: z.string(),

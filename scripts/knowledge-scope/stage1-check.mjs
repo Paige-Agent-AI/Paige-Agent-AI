@@ -452,6 +452,16 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
       tenant_members: () => memberships.map((t) => ({ tenant_id: t })),
       profiles: () => [{ active_tenant_id: declaredActiveTenant }],
       ...tableExtras,
+      // A THREAD ROW ALWAYS HAS AN OWNER. The handler refuses a thread whose `tenant_id` is not the
+      // turn's workspace (owner addition 2026-10-05), and a production row always carries that column.
+      // A scripted thread row that does not name its tenant models the caller's OWN thread, so it is
+      // filled with the workspace the turn resolves first — the same default `profiles` uses above. A
+      // scenario that scripts `tenant_id` (including null) keeps exactly what it wrote.
+      ...(typeof tableExtras.paige_chat_threads === "function" ? {
+        paige_chat_threads: (filters) => (tableExtras.paige_chat_threads(filters) ?? []).map((row) =>
+          row && typeof row === "object" && !("tenant_id" in row)
+            ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null, ...row } : row),
+      } : {}),
     },
   });
 

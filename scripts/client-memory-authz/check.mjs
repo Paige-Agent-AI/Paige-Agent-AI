@@ -476,6 +476,22 @@ async function drive({
         return [{ memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString() }];
       },
       ...tablesExtra,
+      // A THREAD ROW ALWAYS HAS AN OWNER. The handler refuses a thread whose `tenant_id` is not the
+      // turn's workspace (owner addition 2026-10-05), and a production row always carries that column.
+      // A scripted thread row that does not name its tenant models the caller's OWN thread, so it is
+      // filled with the workspace the persona resolves — the same default the fake gives `profiles`. A
+      // scenario that scripts `tenant_id` (including null, a platform thread) keeps exactly what it wrote.
+      ...(typeof tablesExtra.paige_chat_threads === "function" ? {
+        paige_chat_threads: (filters) => {
+          const persona = rpcOverrides.get_paige_persona_context;
+          const answer = persona === undefined
+            ? { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null }] }
+            : typeof persona === "function" ? null : persona; // a scripted function is not called twice
+          const own = typeof answer?.data?.[0]?.tenant_id === "string" ? answer.data[0].tenant_id : null;
+          return (tablesExtra.paige_chat_threads(filters) ?? []).map((row) =>
+            row && typeof row === "object" && !("tenant_id" in row) ? { tenant_id: own, ...row } : row);
+        },
+      } : {}),
     },
   });
 
@@ -2913,6 +2929,13 @@ const mirrorConfirms = (st) => (t, row) => {
   assert("20.4c …labelled as recollection rather than as the record",
     /your own recollection, not the record/.test(p0) && /the record wins/.test(p0),
     "prose about a conversation is being presented with the authority of a real row");
+  // …and the block's own header does not undo that label: it used to call everything inside it "from
+  // the record" and "what the platform actually holds", the recollection included (owner 2026-10-05).
+  assert("20.4d the carrying block's header and footer do not call the recalled conversation the record",
+    /=== WHAT YOU ARE CARRYING \(from earlier work, not from this conversation\) ===/.test(p0)
+      && !/WHAT YOU ARE CARRYING \(from the record/.test(p0)
+      && /Except for any earlier conversation recalled above, this is what the platform actually holds/.test(p0),
+    (p0.match(/=== WHAT YOU ARE CARRYING[^\n]*/) ?? [""])[0]);
 
   // ── 20.5 SCOPE. The read takes NO tenant argument — scope is derived server-side from the
   // session — and when a client is in focus it narrows to that client, which is what stops a
@@ -5087,6 +5110,217 @@ console.log("\nV2b — chat publishing goes through the one publish door");
   assert("35.4 a lost door answer is reported as couldn't confirm, never ran or didn't run",
     outcomes(lost)[0]?.actions?.[0]?.outcome === "unconfirmed" && /"outcome_unknown":true/.test(lost.modelEgress.join("\n").replace(/\\"/g, '"')),
     JSON.stringify(outcomes(lost)));
+}
+
+console.log("\nsurface-aware self-knowledge — what she can do, what the owner says, and what is operator scope (owner 2026-10-05)");
+{
+  // THE CASE THE OWNER SURFACED: in their Solo workspace they said the dev team is building Marketing and
+  // Sales, and PAIGE answered as if she were tracking the platform build herself. Three sources must stay
+  // apart in what she is SENT: the per-turn capability projection (what she can do here), what the person
+  // TELLS her (their account), and operator-only program state (never in a workspace chat — not even when
+  // the human in the workspace is the platform owner). These checks read the real system prompt the
+  // handler built; what a real model then SAYS is not provable here (scripted model double).
+  const { CAPABILITY_TRUTH_RULE } = await import("../../supabase/functions/_shared/paige-capability-status/render.ts");
+  const OWNER_MARKER = "PRIVATE-OPERATOR-PRIORITY-MARKER";
+  const ownerMemory = {
+    paige_owner_memory: () => [{ memory_type: "active_priority", content: `${OWNER_MARKER} — wire Marketing and Sales into the platform.`, created_at: new Date().toISOString() }],
+  };
+  // The platform owner's actor tier is `god`; that is the hardest case for a leak, so it is the one driven.
+  const OPERATOR = { is_platform_operator: { data: true, error: null }, get_actor_access: { data: { tier: "god" }, error: null } };
+  const SOLO_OWNER = { ...OPERATOR, studio_role_ok: { data: true, error: null } };
+  const OPERATOR_ONLY = ["=== OPERATOR BRIEFING", "DOCTRINE §-INDEX", "PLATFORM SNAPSHOT", OWNER_MARKER];
+  const streamed = (r) => { try { return JSON.parse(r.modelEgress.find((x) => { try { return JSON.parse(x).stream === true; } catch { return false; } }) ?? "null"); } catch { return null; } };
+  const sysText = (r) => { const b = streamed(r); return typeof b?.system === "string" ? b.system : JSON.stringify(b?.system ?? ""); };
+  // The system prompt as sent, with JSON escaping undone, so a rule containing quotes can be found whole.
+  const sysPlain = (r) => { const b = streamed(r); return typeof b?.system === "string" ? b.system : (Array.isArray(b?.system) ? b.system.map((x) => x?.text ?? "").join("\n") : ""); };
+  const emitted = (r) => new Set((streamed(r)?.tools ?? []).map((t) => t?.name).filter(Boolean));
+  const capabilityBlock = (r) => {
+    const sys = sysPlain(r);
+    const at = sys.indexOf("WHAT YOU CAN ACTUALLY DO HERE");
+    if (at < 0) return "";
+    const end = sys.indexOf("\n\n=====", at + 10);
+    return sys.slice(at, end > at ? end : undefined);
+  };
+
+  // A — a Solo owner who is ALSO a platform operator, describing the roadmap in their own workspace.
+  const solo = await drive({
+    stream: true, rpcOverrides: SOLO_OWNER, serviceTablesExtra: ownerMemory,
+    text: "We're building Sales and Marketing inside you right now.",
+  });
+  const soloSys = sysPlain(solo);
+  assert("38.1 a Solo turn (owner who is also a platform operator) carries the who-said-it contract beside the capability block",
+    capabilityBlock(solo).includes(CAPABILITY_TRUTH_RULE),
+    JSON.stringify({ hasBlock: capabilityBlock(solo).length > 0, hasRule: soloSys.includes(CAPABILITY_TRUTH_RULE) }));
+  // …and its referent is true in both places it is read (the block and the capability_status note), and a
+  // claimed capability is answered with the state the report gives it before the scenario-E line is used.
+  const stateFirstAt = CAPABILITY_TRUTH_RULE.indexOf("answer with the state this report gives it");
+  const lastResortAt = CAPABILITY_TRUTH_RULE.indexOf("That's the direction you've given me, but this workspace does not currently expose that capability to me yet.");
+  assert("38.2 …the contract tells her to attribute owner-described plans, answer a claim with its listed state, and hold the projection over an owner's claim (A, E)",
+    CAPABILITY_TRUTH_RULE.includes("Based on what you're telling me") && CAPABILITY_TRUTH_RULE.includes("this capability report")
+      && !/this block/i.test(CAPABILITY_TRUTH_RULE) && stateFirstAt > -1 && lastResortAt > stateFirstAt
+      && CAPABILITY_TRUTH_RULE.slice(stateFirstAt, lastResortAt).includes("Only when it is not listed as something you can do at all"),
+    JSON.stringify({ stateFirstAt, lastResortAt, head: CAPABILITY_TRUTH_RULE.slice(0, 120) }));
+  // B / §52 — the human is the platform owner, but the SURFACE is a workspace: no operator briefing,
+  // no doctrine index, no platform snapshot, no owner-memory row.
+  assert("38.3 no operator briefing or program-state text reaches a workspace chat, even for the platform owner (B, §52/§53)",
+    OPERATOR_ONLY.every((m) => !sysText(solo).includes(m)),
+    JSON.stringify(OPERATOR_ONLY.filter((m) => sysText(solo).includes(m))));
+  // The capability block lists only what this turn really emitted, under the projection's own headings.
+  const HEADINGS = ["CAN DO NOW", "CAN PREPARE FOR YOUR APPROVAL", "NEEDS A CONNECTION OR SETUP FIRST", "CAN ATTEMPT, BUT NOT PROVEN HERE YET", "NOT SOMETHING YOU CAN DO HERE YET", "CANNOT CONFIRM FOR THIS WORKSPACE", "NOT AVAILABLE TO THIS PERSON HERE"];
+  const blockText = capabilityBlock(solo);
+  const tools = emitted(solo);
+  let section = "";
+  const strays = [];
+  const sectionsSeen = new Set();
+  for (const line of blockText.split("\n")) {
+    const heading = HEADINGS.find((h) => line.startsWith(h));
+    if (heading) { section = heading; sectionsSeen.add(heading); continue; }
+    if (line.startsWith("YOUR SPECIALISTS")) { section = "specialists"; continue; }
+    const m = line.match(/^- [^:]+: (.+?)(?: — .*)?$/);
+    if (!m || section === "specialists" || section === "NOT SOMETHING YOU CAN DO HERE YET") continue;
+    for (const name of m[1].split(", ")) if (!tools.has(name)) strays.push(`${section}: ${name}`);
+  }
+  assert("38.4 the capability block names only tools emitted this turn, each under a projection state heading",
+    tools.size > 0 && sectionsSeen.size > 0 && strays.length === 0,
+    JSON.stringify({ emitted: tools.size, sections: [...sectionsSeen], strays: strays.slice(0, 5) }));
+
+  // D — the SAME operator, tenant-less: the operator surface is unchanged. The briefing is reached (the
+  // control that 38.3 is not passing on a broken loader), and no workspace capability block is built.
+  const operator = await drive({ stream: true, rpcOverrides: OPERATOR, serviceTablesExtra: ownerMemory, text: "What's on the table?" });
+  assert("38.5 CONTROL (D) — on the tenant-less operator surface the operator briefing still arrives, unchanged",
+    sysText(operator).includes("=== OPERATOR BRIEFING") && sysText(operator).includes(OWNER_MARKER),
+    sysText(operator).slice(0, 120));
+  assert("38.6 …and that surface gets no workspace capability block (operator scope is not a workspace)",
+    capabilityBlock(operator) === "", capabilityBlock(operator).slice(0, 80));
+  // §52 UNKNOWN SCOPE: the persona read FAILED, so whether this is a workspace turn is unknown, and the
+  // handler's default persona (a null tenant) looks exactly like the operator surface. The operator's
+  // briefing must not even be LOADED on such a turn. (Measured at base: the turn was already refused
+  // before the model by the active-workspace re-check — 409 ACTIVE_ACCOUNT_CHANGED — so this is defence
+  // in depth on the load, not a briefing that reached a model.)
+  const unknownScope = await drive({
+    stream: true, serviceTablesExtra: ownerMemory, text: "What's on the table?",
+    rpcOverrides: { ...OPERATOR, get_paige_persona_context: { data: null, error: { message: "fixture: persona read failed" } } },
+  });
+  const ownerMemoryReads = unknownScope.rec.from.filter((f) => f.table === "paige_owner_memory");
+  assert("38.7 a failed persona read never loads the operator briefing (an unknown scope is not tenant-less)",
+    ownerMemoryReads.length === 0 && unknownScope.modelEgress.every((b) => OPERATOR_ONLY.every((m) => !b.includes(m))),
+    JSON.stringify({ ownerMemoryReads: ownerMemoryReads.length, status: unknownScope.status, egress: unknownScope.modelEgress.length }));
+
+  // THE ROLLING SUMMARY. A folded summary is model-written prose about what was SAID; read back as
+  // "things you already know", an owner's roadmap remark became her own knowledge on later turns.
+  const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const SAID = "SUMMARY-MARKER the owner said the dev team is building Marketing and Sales.";
+  const recalled = await drive({
+    stream: true, rpcOverrides: SOLO_OWNER, extraBody: { threadId: THREAD }, text: "Where were we?",
+    tablesExtra: { paige_chat_threads: () => [{ studio_session_id: null, summary: SAID, message_count: 3, summary_through_seq: 0, last_compacted_at: null }] },
+  });
+  const recallSys = sysPlain(recalled);
+  const recallAt = recallSys.indexOf("CONVERSATION MEMORY");
+  const recallLine = recallAt >= 0 ? recallSys.slice(recallAt, recallSys.indexOf(SAID, recallAt)) : "";
+  assert("38.8 the rolling summary reaches her as her recollection of what was said, not as things she knows",
+    recallSys.includes(SAID) && /recollection of what was said/i.test(recallLine) && !/things you already know/i.test(recallLine),
+    recallLine.slice(0, 200));
+  // …and the summarizer is told to keep the owner's account attributed, and not to log an action Paige
+  // never took (a live summary recorded "flagging the mismatch to the dev team" — there is no such channel).
+  const turnsAt = new Date(Date.now() - 3600_000).toISOString();
+  const folding = await drive({
+    stream: true, rpcOverrides: SOLO_OWNER, extraBody: { threadId: THREAD }, text: "Next.",
+    tablesExtra: {
+      paige_chat_threads: () => [{ studio_session_id: null, summary: null, message_count: 16, summary_through_seq: 0, last_compacted_at: null }],
+      paige_chat_turns: () => Array.from({ length: 16 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", content: `turn ${i + 1}`, seq: i + 1, created_at: turnsAt })),
+    },
+  });
+  const foldBody = folding.modelEgress.find((x) => x.includes("Maintain a rolling memory")) ?? "";
+  assert("38.9 the summarizer is told to attribute what the owner SAID about plans and never to record an action Paige did not take",
+    foldBody.length > 0 && foldBody.includes("the owner said") && /never record a promise to pass something on/i.test(foldBody),
+    JSON.stringify({ folded: foldBody.length > 0, tail: foldBody.slice(foldBody.indexOf("PRESERVE"), foldBody.indexOf("PRESERVE") + 420) }));
+
+  // THE THREAD MUST BE THIS WORKSPACE'S (§9). RLS lets the platform owner read EVERY thread, so a
+  // super_admin standing in their Solo workspace could name a platform-lens thread (tenant_id NULL) and
+  // its operator summary would be folded and read into the Solo prompt — a verifier proved that with a
+  // probe. The fixture rows below model what RLS returns to the platform owner: the row, whatever its
+  // workspace. Every thread read and write keys on the id alone, so the refusal has to come first.
+  const PLATFORM_THREAD = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const PLATFORM_SUMMARY = "PLATFORM-THREAD-SUMMARY-MARKER the operator's program priorities for this week.";
+  const SUPER_ADMIN_SOLO = { ...SOLO_OWNER, is_platform_owner: { data: true, error: null } };
+  const threadRow = (tenantId, summary, extra = {}) => () => [{
+    tenant_id: tenantId, lens: tenantId === null ? "platform" : "coach", studio_session_id: null, summary,
+    message_count: 16, summary_through_seq: 0, last_compacted_at: null, last_image_content_id: null, last_image_anchor_at: null, ...extra,
+  }];
+  const foldableTurns = () => Array.from({ length: 16 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", content: `platform turn ${i + 1}`, seq: i + 1, created_at: turnsAt }));
+  const threadWrites = (r) => ({
+    appends: r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append").length,
+    threadUpdates: r.rec.from.filter((f) => f.table === "paige_chat_threads" && f.op === "update").length,
+  });
+  const crossed = await drive({
+    stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    tablesExtra: { paige_chat_threads: threadRow(null, PLATFORM_SUMMARY), paige_chat_turns: foldableTurns },
+  });
+  const crossedBody = (() => { try { return JSON.parse(crossed.bodyText); } catch { return null; } })();
+  assert("38.10 a super_admin in their Solo workspace naming a platform-lens thread is refused 409 ACTIVE_ACCOUNT_CHANGED (§9)",
+    crossed.status === 409 && crossedBody?.code === "ACTIVE_ACCOUNT_CHANGED",
+    JSON.stringify({ status: crossed.status, body: crossed.bodyText.slice(0, 160) }));
+  assert("38.11 …and that thread's summary never reaches any model call — not the turn, not the fold — and nothing is written to it",
+    crossed.modelEgress.every((b) => !b.includes("PLATFORM-THREAD-SUMMARY-MARKER") && !b.includes("platform turn 1"))
+      && threadWrites(crossed).appends === 0 && threadWrites(crossed).threadUpdates === 0,
+    JSON.stringify({ egress: crossed.modelEgress.length, leaked: crossed.modelEgress.some((b) => b.includes("PLATFORM-THREAD-SUMMARY-MARKER")), ...threadWrites(crossed) }));
+  // The same rule for a thread in ANOTHER tenant workspace, and for a thread whose owner could not be read.
+  const foreign = await drive({
+    stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    tablesExtra: { paige_chat_threads: threadRow(OTHER_TENANT, PLATFORM_SUMMARY) },
+  });
+  const unread = await drive({
+    stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    tablesExtra: { paige_chat_threads: threadRow(CALLER_TENANT, PLATFORM_SUMMARY) },
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).trim() === "tenant_id") ? { message: "connection reset", code: "08006" } : null) },
+  });
+  assert("38.12 a thread in another tenant workspace is refused the same way, before any model call",
+    foreign.status === 409 && foreign.modelEgress.length === 0 && foreign.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
+    JSON.stringify({ status: foreign.status, egress: foreign.modelEgress.length }));
+  assert("38.13 a thread whose owner could not be read is refused (an unknown owner is not a match)",
+    unread.status === 409 && unread.modelEgress.length === 0 && unread.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
+    JSON.stringify({ status: unread.status, egress: unread.modelEgress.length }));
+  // CONTROL — the same super_admin's own Solo thread still works, and its summary is what she recalls.
+  const ownSolo = await drive({
+    stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    tablesExtra: { paige_chat_threads: threadRow(CALLER_TENANT, "OWN-SOLO-SUMMARY-MARKER we planned the spring launch.", { message_count: 3 }) },
+  });
+  assert("38.14 CONTROL — the same person's own Solo thread still answers, its summary reaches the turn, and the user turn is saved to it",
+    ownSolo.status === 200 && sysPlain(ownSolo).includes("OWN-SOLO-SUMMARY-MARKER")
+      && ownSolo.rec.rpc.some((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "user"),
+    JSON.stringify({ status: ownSolo.status, recalled: sysPlain(ownSolo).includes("OWN-SOLO-SUMMARY-MARKER"), ...threadWrites(ownSolo) }));
+  // CONTROL — on the tenant-less operator surface the platform thread is theirs (null matches null).
+  const ownPlatform = await drive({
+    stream: true, rpcOverrides: OPERATOR, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    tablesExtra: { paige_chat_threads: threadRow(null, PLATFORM_SUMMARY, { message_count: 3 }) },
+  });
+  assert("38.15 CONTROL — the operator on their own tenant-less surface still reaches their platform thread and its summary",
+    ownPlatform.status === 200 && sysPlain(ownPlatform).includes("PLATFORM-THREAD-SUMMARY-MARKER"),
+    JSON.stringify({ status: ownPlatform.status, recalled: sysPlain(ownPlatform).includes("PLATFORM-THREAD-SUMMARY-MARKER") }));
+  // THE REVERSE DIRECTION — on the tenant-less operator surface, a WORKSPACE's thread is not theirs either.
+  // RLS admits the platform owner to it, so without the check its summary would be folded into the operator
+  // prompt beside the §52 briefing. A check skipped whenever the persona tenant is null would pass every
+  // case above; this one fails it.
+  const operatorIntoWorkspace = await drive({
+    stream: true, rpcOverrides: OPERATOR, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    tablesExtra: { paige_chat_threads: threadRow(CALLER_TENANT, "WORKSPACE-THREAD-SUMMARY-MARKER the client's private plan.") },
+  });
+  assert("38.16 the operator on the tenant-less surface naming a workspace's thread is refused 409 and its summary reaches no model",
+    operatorIntoWorkspace.status === 409 && operatorIntoWorkspace.bodyText.includes("ACTIVE_ACCOUNT_CHANGED")
+      && operatorIntoWorkspace.modelEgress.every((b) => !b.includes("WORKSPACE-THREAD-SUMMARY-MARKER")) && threadWrites(operatorIntoWorkspace).appends === 0,
+    JSON.stringify({ status: operatorIntoWorkspace.status, egress: operatorIntoWorkspace.modelEgress.length, ...threadWrites(operatorIntoWorkspace) }));
+  // AN UNKNOWN SCOPE MATCHES NOTHING. A failed persona read leaves the default null tenant, which looks
+  // exactly like the operator surface — so a null-tenant platform thread would "match" it. Refused.
+  const unknownScopeThread = await drive({
+    stream: true, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    rpcOverrides: { ...OPERATOR, get_paige_persona_context: { data: null, error: { message: "fixture: persona read failed" } } },
+    tablesExtra: { paige_chat_threads: threadRow(null, PLATFORM_SUMMARY), paige_chat_turns: foldableTurns },
+  });
+  assert("38.17 a turn whose scope is unknown (persona read failed) cannot use a null-tenant thread: refused 409, nothing reaches a model",
+    unknownScopeThread.status === 409 && unknownScopeThread.bodyText.includes("ACTIVE_ACCOUNT_CHANGED")
+      && unknownScopeThread.modelEgress.every((b) => !b.includes("PLATFORM-THREAD-SUMMARY-MARKER") && !b.includes("platform turn 1"))
+      && threadWrites(unknownScopeThread).appends === 0,
+    JSON.stringify({ status: unknownScopeThread.status, egress: unknownScopeThread.modelEgress.length, ...threadWrites(unknownScopeThread) }));
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

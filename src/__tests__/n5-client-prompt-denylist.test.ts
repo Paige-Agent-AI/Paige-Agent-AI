@@ -394,7 +394,7 @@ const NEUTRAL_CTX = (userContext: string, clientContext: string) =>
     // prompt section from the very scan that exists to catch vertical language reaching a
     // coaching-generic tenant.
     operatingMemoryBlock:
-      "\n\n=== WHAT YOU ARE CARRYING (from the record, not from this conversation) ===\n" +
+      "\n\n=== WHAT YOU ARE CARRYING (from earlier work, not from this conversation) ===\n" +
       "You owe them:\n- Send the recap (task, open, due 2026-09-03)\n=== END ===\n",
     sessionDocContext: "",
     userContext,

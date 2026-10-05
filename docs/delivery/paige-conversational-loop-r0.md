@@ -361,6 +361,137 @@ capabilities.
   the turn cannot call. Availability‑gated *emission* (withholding a `needs_setup` tool from the model)
   is a later, separate step under §58 — it changes behaviour; the projection does not.
 
+### 20.1 Who said it: capability truth vs what the owner says vs operator scope (owner addition 2026-10-05)
+
+**Owner ruling (Antonio, 2026-10-05, binding).** In a Solo workspace the owner said the dev team is
+building Marketing and Sales. PAIGE replied *"I'm tracking that the dev team is wiring Marketing and
+Sales into this platform"*. She was repeating what they had told her, but it sounded like she was reading
+program state. The three sources stay apart:
+
+1. **What she can do now** comes only from this turn's projection (§20): emitted tools × declaration ×
+   lane × workspace role × readiness. Each tool lands in one of these states: available now; available
+   but approval-gated; needs setup; can attempt but not proven here (`proof_owed`); not for this person;
+   or not something she can do yet.
+2. **What the owner tells her about future development is their account.** She acknowledges it as theirs
+   ("Based on what you're telling me…"). She never presents it as her own knowledge, never treats it as a
+   live capability, and never says she is tracking the build.
+3. **Platform roadmap, delivery, release and program state is operator scope.** A workspace chat never
+   must never receive it, even when the person in the workspace is the platform owner. Being that person
+   is not operator authority (§9/§52/§53). As built, this holds for every source except per-user client
+   memory; see the known gap below.
+
+If the owner says a capability is live and the projection places it in another state (needs approval,
+needs setup, needs the owner or an admin, not proven here), she answers with that state. Only when the
+projection does not offer it at all does she keep to it with: *"That's the direction you've given me, but
+this workspace does not currently expose that capability to me yet."*
+
+**As built (no new store, no capability list, no new memory):**
+
+- **The rule (one home).** It is `CAPABILITY_TRUTH_RULE` in
+  `_shared/paige-capability-status/render.ts`. It is printed inside the projected capability block, and
+  `capability_status` returns the same constant as `note`, so the two cannot disagree. The rule names
+  no capability, so a newly shipped, emitted tool reads CAN DO NOW with no edit to it (scenario C). It
+  refers to "this capability report", a referent true both in the block and in the tool's `note`. The
+  `capability_status` tool description points at that note rather than restating the rule (§18).
+- **Rolling thread summary.** This was the leak path: a summary folded owner remarks such as "the dev
+  team is building…" into prose. That prose was read back as *"things you already know"*. On prod,
+  5 tenant-thread summaries carried dev/roadmap claims as fact, one of them an action Paige never took.
+  - The read-back is now labelled as her recollection of what was said, not a record of what exists or
+    of what she can do.
+  - The summarizer is told to attribute plans to the owner ("the owner said…") and never to record a
+    promise to pass something on as an action taken.
+  - Existing summary rows are not rewritten. The new label changes how they are READ. Re-attribution is
+    NOT guaranteed: the next fold feeds the old summary back as PRIOR SUMMARY, so its wording can
+    survive, and a thread nobody returns to keeps its old text.
+  - The continuity block (earlier conversations, from `paige_operating_memory`) no longer says it is
+    "from the record"; its footer carves the recalled conversations out of "what the platform actually
+    holds". The data loaded is unchanged.
+- **Thread-tenant check (§9) — a leak closed.** Every use of the request's `threadId` (user-turn append,
+  pre-flight fold, the summary read, Studio and image-anchor reads, assistant append, title, post-turn
+  fold) keyed on the id alone, on the caller's client. RLS admits the platform owner to every thread, so
+  a super_admin whose active workspace is a Solo tenant could name a platform-lens thread (tenant_id
+  NULL) and its operator summary reached the Solo prompt — a verifier proved it by probe. `paige-ai-chat`
+  now reads the thread's `tenant_id` once, right after the persona read and before any use, and refuses
+  the turn with 409 `ACTIVE_ACCOUNT_CHANGED` when it is not the turn's workspace (null matches only
+  null) or when the read fails. This is the rule the Live path already applied
+  (`.eq("tenant_id", scope.tenantId)`). A thread the caller cannot read at all is left as before: every
+  later thread read is on the same RLS-bound client and returns nothing, the append RPC carries its own
+  workspace predicate, and the service-role writes are already pinned to the active tenant.
+  - §37 consumers of the code: `PaigeAIChat` reads it through `parsePaigeChatError` and shows the
+    server's message; `useStudioChat` shows its generic failure line. No edge function sends a
+    `threadId` to `paige-ai-chat`, and `useOperatorChat` sends none. The thread rail is already scoped
+    by workspace (`usePaigeThreads`), so a legitimate client only reaches this on a mid-flight switch.
+  - Both directions are refused: a workspace turn naming a platform thread (38.10–38.11) and a
+    tenant-less operator turn naming a workspace's thread (38.16).
+  - **Known edge, not live today.** The front end shows the platform desk when a staff user's
+    `profiles.active_tenant_id` is null, but the persona resolver falls back to a linked client row or
+    the first active membership. A super_admin with either would see the platform desk yet get a
+    workspace persona, and every desk turn would now be refused instead of running degraded. Prod has
+    neither for any operator (read-only check at review), so nothing breaks now; aligning the two
+    definitions of "platform mode" is a named follow-up.
+  - Not addressed: the check compares workspace only. Inside one workspace a caller whom RLS already
+    admits to a coworker's thread can name it; that is not an escalation (they can read it directly)
+    and writes still require `caller_user_id = auth.uid()`.
+  - An unknown turn scope (the persona read failed, so its null tenant only looks tenant-less) never
+    matches a readable thread, so it is refused too (38.17). Before this, a null-tenant platform thread
+    would have matched it, and its summary could be folded before the later scope re-check refused the
+    turn.
+  - **Also newly refused (§58, latent):**
+    - The check compares against the persona tenant, but `paige_chat_thread_create` stamps
+      `current_user_tenant_id()`. The persona resolver reads a linked `clients` row first, so a user
+      with a linked client row in another workspace would now be refused in their own threads. Prod has
+      0 users with `linked_user_id`. Reconciling the two is part of the "platform mode" follow-up.
+    - A platform owner opening another workspace's Studio chat is now refused; `paige_studio_thread_ensure`
+      admits them there. Refusing is consistent with this rule, and it is declared here.
+- **Known gap, not closed here: per-user client memory is not workspace-scoped.** With no client in
+  scope, the recent `client_memory` read keys on `client_user_id` and `match_paige_memory` keys on the
+  user id; neither filters by workspace, and `chat_message_embeddings` has no tenant column. So a
+  preference stated on the operator desk could be recalled in that person's Solo chat (and a person in
+  two workspaces carries memories between them). Prod: 0 `client_memory` rows and 0 embeddings for any
+  platform operator, so it is latent. Scoping it means deciding what happens to rows with no workspace
+  and adding a tenant to the embeddings store — a memory-contract change, proposed to the owner as its own follow-up task (not yet tracked in the repo).
+  Until it lands, "operator context never reaches a workspace chat" holds for the briefing, owner
+  memory, doctrine, continuity and thread summaries, not for per-user client memory.
+- **§52 operator briefing.** It already required a tenant-less persona plus `is_platform_operator()`.
+  It now also requires that the persona read succeeded (`proposalScopeResolved`). Before this, a failed
+  read defaulted to a null tenant, which looked tenant-less.
+  - Measured at base: that turn was already refused before the model (409 `ACTIVE_ACCOUNT_CHANGED`), so
+    this was not a leak that reached a model.
+  - The change stops the owner-memory, metrics and doctrine reads from running on a turn whose scope is
+    unknown.
+  - The operator surface itself is unchanged (scenario D control).
+- **`client_memory` extraction is unchanged.** It records only what the client expressed
+  (preferences, commitments, open loops). It is read back as tone/format data, and only the client app
+  (`AppShell` → `PaigeChat`) drives that mode.
+
+**Scenario D, the operator program projection.** None exists: there is no Spine domain, table or tool
+for program, delivery or release state. The tenant-less operator turn gets the §52 briefing and no
+capability block, and that stays as it is. Building an operator program/delivery projection would be
+new backend work, a named follow-up that is not built here.
+
+**Evidence.**
+
+- **Automated:** `test:client-memory-authz` group 38 (38.1–38.17) and 20.4d. It reads the real system
+  prompt the handler sent for a Solo owner who is also a platform operator (actor tier `god`):
+  - the contract is beside the capability block;
+  - no briefing, doctrine index, platform snapshot or owner-memory row is present;
+  - the block names only emitted tools, under projection headings;
+  - the tenant-less operator still gets the briefing and no block;
+  - a failed persona read loads no briefing;
+  - the summary label and the summarizer instruction are present;
+  - a super_admin in Solo naming a platform-lens thread, another workspace's thread, or a thread whose
+    owner could not be read is refused 409 before any model call, with nothing written to the thread;
+    their own Solo thread, and the operator's own platform thread on the tenant-less surface, still work;
+  - the carrying block's header no longer calls the recollection the record (20.4d).
+- **Vitest:** `paige-capability-projection.test.ts` covers the "surface-aware self-knowledge" scenarios
+  A/E, B and C, plus the `proof_owed` tool description.
+- **Mutation-proven:** each assertion fails when its change is reverted.
+- **UNVERIFIED:** what a real model *says* for scenarios A, B and E. The harnesses use scripted model
+  doubles. `paige-eval` scores stored outputs only and holds no datasets.
+  - Follow-up: a rubric dataset over post-deploy `paige_llm_trace` replies, or a scenario runner (new
+    §34 work).
+- **OWED:** an authenticated Solo drive by the owner.
+
 ## 21. Manifest refresh / invalidation contract
 
 Today it is already recomputed every request (good), with three real staleness windows: inside a

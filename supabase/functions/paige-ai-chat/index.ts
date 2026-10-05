@@ -213,7 +213,7 @@ import { customerBoundTexts, type DraftContext, draftRefusal, internalTextInDraf
 import { PLANNED_CAPABILITIES, projectCapabilities, type Lane } from "../_shared/paige-capability-status/projection.ts";
 import { LEGACY_CAPABILITIES } from "../_shared/paige-capability-status/legacy-capabilities.ts";
 import type { ReadinessResolverId, ReadinessState } from "../_shared/paige-capability-status/readiness.ts";
-import { renderProjectedCapabilityBlock, type SpecialistSummary } from "../_shared/paige-capability-status/render.ts";
+import { CAPABILITY_TRUTH_RULE, renderProjectedCapabilityBlock, type SpecialistSummary } from "../_shared/paige-capability-status/render.ts";
 import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
 // paige-turn — the turn contract (docs/delivery/paige-conversational-loop-c1.md). The stream says when a turn
 // started and how it ended, and the assistant turn records the same, from one pure reducer that only
@@ -2075,7 +2075,7 @@ JSON:`;
             `- ${t.title || "Untitled"} (${t.turns ?? "?"} turns, last ${when(t.last_active)}): ${String(t.summary ?? "").replace(/\s+/g, " ").trim().slice(0, 600)}`).join("\n")}`);
         }
         if (parts.length) {
-          operatingMemoryBlock = `\n\n=== WHAT YOU ARE CARRYING (from the record, not from this conversation) ===\n${parts.join("\n\n")}\n=== END ===\n\nThis is what the platform actually holds for this person right now. Use it to pick up where you left off and to answer "what's outstanding" without asking them. Do NOT read it out as a list unless they ask — refer to it the way someone who remembered would. Never claim an item is done when it is listed as open, and never describe an attempt that failed as though it succeeded. Where an earlier conversation is quoted, it is your recollection of what was SAID — treat the other sections as what is true, and if the two disagree, the record wins.\n`;
+          operatingMemoryBlock = `\n\n=== WHAT YOU ARE CARRYING (from earlier work, not from this conversation) ===\n${parts.join("\n\n")}\n=== END ===\n\nExcept for any earlier conversation recalled above, this is what the platform actually holds for this person right now. Use it to pick up where you left off and to answer "what's outstanding" without asking them. Do NOT read it out as a list unless they ask — refer to it the way someone who remembered would. Never claim an item is done when it is listed as open, and never describe an attempt that failed as though it succeeded. Where an earlier conversation is quoted, it is your recollection of what was SAID — treat the other sections as what is true, and if the two disagree, the record wins.\n`;
         }
       }
     } catch (err) {
@@ -2190,6 +2190,39 @@ JSON:`;
       console.warn("[paige-ai-chat] persona context resolution failed (defaulting to neutral):", e);
     }
     const fundingEnabled = personaCtx.funding_enabled;
+
+    // THE THREAD MUST BELONG TO THIS TURN'S WORKSPACE (§9, owner addition 2026-10-05). Every later use
+    // of `payloadThreadId` — the user-turn append, the pre-flight fold, the summary read that becomes
+    // CONVERSATION MEMORY, the Studio and image-anchor reads, the assistant append, the title and the
+    // post-turn fold — keys on the thread id alone, on the caller's client. RLS admits the platform
+    // owner to EVERY thread, so a super_admin whose active workspace is a Solo tenant could pass the id
+    // of a platform-lens thread (tenant_id NULL) and its operator summary would be folded and read into
+    // the Solo prompt. Proven by probe before this check existed. The Live path already pins its thread
+    // to the scope's tenant (`.eq("tenant_id", scope.tenantId)` above); this is the same rule for every
+    // turn, made once, before anything reads or writes the thread.
+    //   · A READABLE thread whose tenant is not this turn's (null matches only null) → refused.
+    //   · A FAILED read → refused: an unknown owner is not a match (the same rule the protected-scope
+    //     re-check applies to a resolver error).
+    //   · An UNKNOWN turn scope (the persona read failed, so its null tenant only looks tenant-less) →
+    //     refused for any readable thread: nothing can be shown to match it (the §52 rule below).
+    //   · NO ROW → unchanged. RLS hid it or it does not exist; every later thread read uses this same
+    //     caller client and so returns nothing, the append RPC carries its own workspace predicate
+    //     (20261020100000), and the service-role writes are already pinned to the active tenant.
+    if (payloadThreadId) {
+      const { data: turnThread, error: turnThreadErr } = await supabaseClient
+        .from("paige_chat_threads").select("tenant_id").eq("id", payloadThreadId).maybeSingle();
+      const threadTenantId = (turnThread as { tenant_id?: string | null } | null)?.tenant_id ?? null;
+      if (turnThreadErr || (turnThread && (!proposalScopeResolved || threadTenantId !== (personaCtx.tenant_id ?? null)))) {
+        console.error("[paige] thread is outside this turn's workspace — refused before use", JSON.stringify({
+          read_failed: !!turnThreadErr, code: (turnThreadErr as any)?.code ?? null,
+          thread_tenant_id: threadTenantId, turn_tenant_id: personaCtx.tenant_id ?? null,
+        }));
+        return new Response(
+          JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
 
     // Identity is now known — stamp the turn's trace context (see `traceCtx` at the top of the
     // handler). Every `gatewayCompat` site BELOW this line writes an attributed row from here on.
@@ -5093,7 +5126,13 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // swap below targets the core by VALUE (never fires for an operator, no studio thread), so the
     // splice can't desync it. A platform_admin with no seeded rows gets a NO-OP (loadOwnerContextBlock
     // returns null) — honest, never a fabricated identity (§13); seed their rows to enable their brief.
-    if (personaCtx.tenant_id == null) {
+    // TENANT-LESS MUST BE KNOWN, NOT DEFAULTED (owner addition 2026-10-05): `personaCtx` starts at a
+    // null tenant, so a persona read that FAILED looks exactly like the operator surface, and the
+    // operator's memory rows, platform metrics and doctrine index were loaded for a turn whose scope was
+    // unknown. (Measured: the active-workspace re-check before dispatch refused that turn, so the
+    // briefing did not reach a model — this closes the load, as defence in depth.) The briefing only
+    // opens when the persona read succeeded and said "no workspace" (`proposalScopeResolved`).
+    if (personaCtx.tenant_id == null && proposalScopeResolved) {
       try {
         const { data: isOperator } = await supabaseClient.rpc("is_platform_operator");
         if (isOperator === true) {
@@ -5238,7 +5277,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         const toFold = (rows as Array<{ seq: number }>).slice(0, foldCount);
         const cutoffSeq = toFold[toFold.length - 1].seq;
         const transcript = toFold.map((t: any) => `${t.role === "user" ? "Owner" : "Paige"}: ${t.content}`).join("\n").slice(0, 12000);
-        const prompt = `Maintain a rolling memory of a long working chat between a business owner and their assistant Paige. Update the summary so nothing important is lost as older turns scroll off. PRESERVE explicitly: the owner's name & preferences, decisions made, tasks/actions Paige took or QUEUED, any PENDING approvals still open, names of clients/contacts, dates, numbers, and open loops. 4-8 tight sentences, flowing prose, no bullets.\n\nPRIOR SUMMARY:\n${th.summary ?? "(none)"}\n\nOLDER TURNS TO FOLD IN:\n${transcript}\n\nUPDATED SUMMARY:`;
+        const prompt = `Maintain a rolling memory of a long working chat between a business owner and their assistant Paige. Update the summary so nothing important is lost as older turns scroll off. PRESERVE explicitly: the owner's name & preferences, decisions made, tasks/actions Paige took or QUEUED, any PENDING approvals still open, names of clients/contacts, dates, numbers, and open loops. ATTRIBUTE what was only said: when the owner describes plans, upcoming features or what a team is building, write it as theirs ("the owner said…"), never as established fact. Record as done only what Paige actually did or queued — never record a promise to pass something on to a person or team as an action taken. 4-8 tight sentences, flowing prose, no bullets.\n\nPRIOR SUMMARY:\n${th.summary ?? "(none)"}\n\nOLDER TURNS TO FOLD IN:\n${transcript}\n\nUPDATED SUMMARY:`;
         emit?.({ state: "progress", pct: 35 }); // cheap-model summarizer call dispatched
         const resp = await gatewayCompat("anthropic", {
           method: "POST",
@@ -5435,7 +5474,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           // After persona + systemPrompt, before operator/CRM context.
           aiMessages.splice(2, 0, {
             role: "system",
-            content: `CONVERSATION MEMORY — earlier in THIS chat, older turns folded into a running summary. Treat this as things you already know and can refer back to naturally:\n${th.summary}`,
+            content: `CONVERSATION MEMORY — earlier in THIS chat, older turns folded into a running summary. It is your recollection of what was said, not a record of what exists or of what you can do — refer back to it naturally:\n${th.summary}`,
           });
         }
       } catch (e) { console.warn("[paige] recall fetch failed:", (e as Error)?.message); }
@@ -13066,6 +13105,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 count: projection.rows.length,
                 capabilities: projection.rows,
                 specialists: projection.specialists,
+                // The same who-said-it rule the prompt block carries (owner addition 2026-10-05), so a
+                // model that answers from this result meets the same contract as one reading the block.
+                note: CAPABILITY_TRUTH_RULE,
               };
             } else if (tc.function.name === "contact_event_status") {
               // The READ half of contact.created (§13/§947): report whether a new contact's event

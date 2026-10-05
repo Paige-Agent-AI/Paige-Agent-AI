@@ -46,6 +46,7 @@ import { urlBlockReason, assertPublicUrl, installReadOnlyBrowserEgress, loadDeny
 // /render — screenshot capture of Paige's own pages for the §33 critique loop. The capture logic lives
 // in ./render.mjs (§18 one home) so smoke-render.mjs exercises the code the server runs (§32).
 import { renderConfig, validateRenderRequest, renderCapture } from "./render.mjs";
+import { validatePdfRequest, renderPdf } from "./pdf.mjs";
 
 const PORT = process.env.PORT || 8080;
 const SECRET = process.env.PAIGE_BROWSER_SHARED_SECRET || "";
@@ -526,4 +527,15 @@ app.post("/render", rateLimit, async (req, res) => { // codeql[js/missing-rate-l
   }
 });
 
+app.post('/pdf', rateLimit, async (req, res) => {
+  if (!auth(req, res)) return;
+  if (!validatePdfRequest(req.body)) return res.status(400).json({ error: 'invalid_pdf_input' });
+  if (inFlight >= MAX_CONCURRENT) return res.status(429).json({ error: 'busy' });
+  inFlight++;
+  try {
+    const bytes = await renderPdf(await getBrowser(), req.body.html);
+    return res.type('application/pdf').set('Cache-Control', 'no-store').send(bytes);
+  } catch { return res.status(503).json({ error: 'pdf_unavailable' }); }
+  finally { inFlight--; }
+});
 app.listen(PORT, () => console.log(`[paige-browser] listening on :${PORT}`));

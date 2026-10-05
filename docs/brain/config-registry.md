@@ -86,6 +86,9 @@ and checked by the `trg_email_campaign_approval_guard` trigger on `paige_pending
 `_email_campaign_approval_withdrawn`, returns a campaign to draft when its approval is rejected anywhere. Before each
 send the worker calls `email_campaign_dispatch_begin` (service role only); a recipient held by quiet hours is
 recorded `deferred` (back to planned with `not_before`, 1 minute to 24 hours). No new secret.
+E2 (migration `20270560000000`) adds three reads for the Email tab, owner/admin of the caller's business only:
+`read_email_marketing_dashboard(p_days 7|30|90, p_tz IANA zone)`, `read_email_campaign(p_campaign_id)` and
+`read_email_rule_choices()`. No new secret, cron or function.
 
 **Platform alerting evaluator** (A2, migration `20260923000000` + edge function `alerting-evaluate`,
 2026-08-20 — ✅ §32.b rollback-proved on prod pre-merge). Adds `paige_alert_rule.condition_met_since`
@@ -505,7 +508,7 @@ Values intentionally omitted.
   (12 — per-tenant attempts per window, counted on the log), `STUDIO_CRITIQUE_LOOP_WINDOW_MIN` (60 — how
   far back a deliverable/session's loop rows count). Landing pages (not funnels or forms) render through
   paige-browser `/render` using the SAME edge secrets `PAIGE_BROWSER_URL` + `PAIGE_BROWSER_SECRET` below
-  (branch `screenshots-on-paige-browser`, 2026-10-04 — live only once merged and deployed).
+  (PR #1712, merged and deployed 2026-10-04; the authenticated production capture is UNPROVEN — DEL-093, INT-312 in PR #1717).
   **RETIRED:** `VISUAL_RENDERER_URL` / `VISUAL_RENDERER_SECRET` (edge) and `FLY_RENDERER_SHARED_SECRET`
   (Fly) — they pointed at `paige-visual-renderer`, a Fly app that was never deployed (NXDOMAIN); no code
   reads them after this change. If either edge secret exists on prod it is dead and may be unset.

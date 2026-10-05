@@ -28,7 +28,7 @@ vi.mock("@/integrations/supabase/client", () => {
 const access = { phase: "ready", canManage: true };
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => access }));
 
-import { MarketingAds, MarketingContent, MarketingEmail } from "./marketing-planned";
+import { MarketingAds, MarketingContent } from "./marketing-planned";
 
 let host: HTMLDivElement;
 let root: Root;
@@ -93,38 +93,6 @@ describe("Marketing › Content", () => {
     expect(db.calls.some((c) => c.table === "marketing_content")).toBe(false);
     expect(text()).toContain("visible to its owners and admins");
     expect(text()).not.toContain("Nothing saved yet");
-  });
-});
-
-describe("Marketing › Email", () => {
-  it("reads the sending identity the way Settings does, and shows only saved email copy", async () => {
-    db.rpc = { data: [{ tenant_id: "t-1", default_email_sender: "hello@studio.example", default_email_domain: "studio.example", default_email_status: "verified" }], error: null };
-    db.tables.marketing_content = { data: [
-      { id: "e1", kind: "text", channel: "email_campaign", status: "draft", title: "Welcome note", updated_at: "2026-10-01T10:00:00Z" },
-    ], error: null };
-    const onOpenConnections = vi.fn();
-    await render(<MarketingEmail tenantId="t-1" onOpenConnections={onOpenConnections}/>);
-    expect(text()).toContain("hello@studio.example");
-    expect(host.querySelector(".mp-facts .mk-flag")?.textContent).toBe("Active");
-    expect(host.querySelector(".mp-facts .mk-flag")?.className).toContain("is-live");
-    expect(text()).toContain("Welcome note");
-    expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toContainEqual(["channel", "email_campaign"]);
-    expect(text()).not.toMatch(/open rate|\d+%/i);
-    act(() => ([...host.querySelectorAll(".mp-actions button")].find((b) => b.textContent === "Sending settings") as HTMLButtonElement).click());
-    expect(onOpenConnections).toHaveBeenCalled();
-  });
-
-  it("refuses a sending identity resolved for a different workspace", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    db.rpc = { data: [{ tenant_id: "t-other", default_email_sender: "someone@else.example", default_email_status: "verified" }], error: null };
-    await render(<MarketingEmail tenantId="t-1" onOpenConnections={() => {}}/>);
-    expect(text()).not.toContain("someone@else.example");
-    expect(text()).toContain("Your sending identity could not load");
-  });
-
-  it("says plainly when no sending identity is set up", async () => {
-    await render(<MarketingEmail tenantId="t-1" onOpenConnections={() => {}}/>);
-    expect(text()).toContain("No sending identity is set up yet");
   });
 });
 

@@ -6,6 +6,17 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### Merged before the final review returned (2026-10-04, INT-312 / DEL-093)
+
+**Symptom → root cause → rule.** #1712 merged five minutes before its requested Codex review landed a
+P1, and #1713 merged six minutes before its review flagged the `LIVE` claim it was making. Waiting for
+the review you asked for is part of the gate, not a courtesy — a merge that outruns it turns findings
+into follow-up PRs and lets a docs PR certify what the review would have stopped. And a review's
+reading of code is a hypothesis too: the P1 was right about the fence's policy but, measured, wrong
+about its effect (Playwright 1.62.1 answers CORS preflights itself), so run it before repairing it.
+
+---
+
 ### "Handled by another path" is a claim — name the path, or the case is open (2026-09-26)
 
 **Symptom.** #1458's first head refused a shortened id before it could become an approval card, and

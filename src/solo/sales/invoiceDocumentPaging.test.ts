@@ -1,9 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
-const source=readFileSync('supabase/functions/sales-invoice-document/index.ts','utf8');
-const snippet=source.slice(source.indexOf('const record='),source.indexOf('const refuse='));
-const collect=new Function(ts.transpileModule(snippet,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return collectLedger;')() as (client:{rpc:(name:string,args:Record<string,unknown>)=>Promise<{data:unknown;error:unknown}>},name:string,args:Record<string,unknown>)=>Promise<Record<string,unknown>|null>;
+import {collectInvoiceLedger as collect} from '../../../supabase/functions/_shared/sales-invoice-ledger';
 const page=(n:number,more:boolean,count:number)=>({version:1,current_invoice_number:'INV-1',payment_ledger:{rows:Array.from({length:n},()=>({})),count,as_of:'2026-10-04'},has_more:more,next_cursor:more?{ordinal:n}:null});
 describe('actual document edge bounded ledger collector',()=>{
  it('collects scoped pages with only server cursor and marks complete',async()=>{const calls:Record<string,unknown>[]=[];const pages=[page(100,true,101),page(1,false,101)];const result=await collect({rpc:async(name,args)=>{expect(name).toBe('read_public_sales_invoice_payment_ledger');calls.push(args);return {data:pages.shift(),error:null};}},'read_public_sales_invoice_payment_ledger',{_token_hash:'hash'});expect(result?.ledger_complete).toBe(true);expect(calls[1]).toEqual({_token_hash:'hash',_limit:100,_cursor:{ordinal:100}});});

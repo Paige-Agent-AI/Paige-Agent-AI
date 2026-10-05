@@ -775,19 +775,19 @@ Reference or any domain ledger; it governs how their facts become release and cu
 - Evidence: `docs/delivery/paige-conversational-loop-c2.md`; [c2a-step-lifecycle](evidence/ui-delivery/c2a-step-lifecycle.md).
 
 **2026-10-04 PAIGE conversational loop C1b — PaigeAIChat on the shared stream reader — PR [#1716](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1716), main `713dcce8c0ed31027bad00aaf2489201011e32f1`. Release channel: production; classification: internal-only.** The main dashboard chat moved off its hand-written SSE loop onto `readPaigeStreamWithRaw`, so all four chat surfaces share one parser; content, approval and research cards, CRM results, greeting and saved-thread behaviour are preserved. Why: owner ruling "C1b — PROCEED … do not alter product behavior simply to complete reader convergence".
-- Proof: exact-head independent review SHIP; CI PASS; `PaigeAIChat.stream` characterization suite.
+- Proof: the PR body records an independent adversarial verifier, a compliance review and a second independent verifier (whose finding — a halted turn still ending at a later `[DONE]` — was fixed before merge), and Codex with no findings; no exact-head verdict comment was recorded. CI PASS; `PaigeAIChat.stream` characterization suite.
 - Production: frontend only; Vercel `dpl_EG3jJ1sxd8GrDJ5zcCHPFYPjeH2g` READY. No edge or migration change.
 - Boundary: the authenticated regression drive across PaigeAIChat, Studio, Operator and portal is UNVERIFIED / PROOF OWED. Customer-release eligibility: no.
 - Evidence: `docs/delivery/paige-conversational-loop-c1.md` "C1b as built"; [paigeaichat-shared-reader](evidence/ui-delivery/paigeaichat-shared-reader.md).
 
 **2026-10-04 PAIGE conversational loop C1 (paige-turn) — every chat turn says when it started and how it ended — PR [#1710](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1710), main `db6488b1b7db25cbe9d4535dcc467a59c947e69a`. Release channel: production; classification: internal-only, no visible change.** A `paige_turn` frame opens and closes every chat stream with closed-enum state and mode, persisted as `bundle_ref.turn_state` / `turn_trace`. Why: the owner-approved C0a→C6 program; turn state is the control signal later slices render from.
-- Proof: exact-head independent review SHIP after the review rounds recorded on the PR; CI PASS; knowledge-scope and client-memory-authz turn-frame groups.
+- Proof: the PR body records the review rounds and a final compliance verdict SHIP, with results on the merged head `4f0850190`; no separate exact-head independent-verifier verdict comment was recorded. CI PASS; knowledge-scope and client-memory-authz turn-frame groups.
 - Production: edge run `37234555407` deployed `paige-ai-chat`; Vercel `dpl_ALXQfEa12DaELgzErosKpfsyw6X1` READY.
 - Boundary: wire terminal on an ordinary streamed turn is provisional; the persisted state is authoritative. Authenticated drive UNVERIFIED. Customer-release eligibility: no.
 - Evidence: `docs/delivery/paige-conversational-loop-c1.md`; [paige-turn-stream-contract](evidence/ui-delivery/paige-turn-stream-contract.md).
 
 **2026-10-04 PAIGE conversational loop C0a — capability awareness becomes a projection; admin becomes a tenant role — PR [#1697](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1697), main `3768bc8e4cf51435e8da5a7cc7223dedd2ff74a1`. Release channel: production; classification: internal-only.** What PAIGE says she can do is projected each turn from the tools she is handed (lane resolved in one batch RPC, migration `20270552000000`); a member is refused an owner/admin tool before any approval card. Why: the owner-approved conversational-loop program, first slice.
-- Proof: exact-head independent review completed before merge; CI, PAIGE Spine contract, Security Audit PASS.
+- Proof: the PR body records verifier and compliance findings folded in before merge; no review is recorded at the merged head `d746e6124` (a later merge of main after the Codex fix at `22ca489af`). Post-merge CI, PAIGE Spine contract and Security Audit PASS.
 - Production: migrations run `37223850866` PASS; edge run `37223850924` PASS; Vercel `dpl_FJg9D66zVmoBVdPfS5biA9mUXKHi` READY.
 - Boundary: authenticated owner and member drives UNVERIFIED / PROOF OWED. Customer-release eligibility: no.
 - Evidence: master §4 "PAIGE conversational loop · C0a"; `docs/delivery/paige-conversational-loop-r0.md`.

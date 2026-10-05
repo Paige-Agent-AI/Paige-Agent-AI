@@ -25,6 +25,6 @@ The draft workspace does not fetch the issued-document endpoint or label itself 
 
 Local isolated PostgreSQL proof runs the actual migrations twice, refuses receipt/correction/void without side effects during dispatch, proves a concurrent receipt waits for the uncommitted claim then refuses, and permits a financial write after finalization. Removing the guard makes that regression fail. No production records are written by this fixture.
 
-Focused tests: 220 invoice/billing/delivery contracts and 17 component tests PASS. Rendered draft/static results are recorded in the UI evidence. Exact-head separate review, CI, merge, migration persistence, edge deployment and production web identity are required and remain pending before PR preparation.
+Focused tests: 220 invoice/billing/delivery contracts and 17 component tests PASS. 24 rendered draft cases, production build, focused ESLint, TypeScript ratchet (10/10 baseline/current) and migration/binding/integration lints PASS. Impeccable mobile preview-toggle correction is included. Exact-head separate review, CI, merge, migration persistence, edge deployment and production web identity are required and remain pending before PR preparation.
 
 Release channel: development, production authorized after gates. Classification: internal-only. No customer release name or announcement. Recovery: scoped forward fix; never release an uncertain dispatch merely because a clock expired. Provider maturity and authenticated tenant acceptance are not inferred.

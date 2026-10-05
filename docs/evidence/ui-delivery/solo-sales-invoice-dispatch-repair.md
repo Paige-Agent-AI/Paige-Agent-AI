@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: approved invoice pop-out retained; narrow lifecycle/concur
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo business owners inspect the invoice, record/correct received payments and prepare delivery; customers download a real PDF.
 VISUAL_DIRECTION: PASS: Mineral/Obsidian tokens; invoice preview beside an operational action pane, one body scroll, full-screen compact workspace.
 AUTOMATED_EVIDENCE: PASS: 220 invoice/billing/delivery contracts and 17 component tests; actual PostgreSQL repeated migration and cross-session dispatch/receipt proof. Removing the guard makes the regression fail.
-STATIC_EVIDENCE: UNVERIFIED: static ratchet and build running; exact results recorded in the PR before merge.
+STATIC_EVIDENCE: PASS: production build, focused ESLint, migration/binding/integration lints and TypeScript ratchet (baseline 10/current 10) pass.
 RENDERED_EVIDENCE: PASS: 24 actual-component draft pop-outs, both themes, dock states and six sizes; assets/solo-sales-invoice-dispatch-repair/draft-proof.json, 1536-dark.png and 390-light.png.
 BEHAVIORAL_EVIDENCE: PASS: draft opens with zero issued-document requests; publication readback enables preview; late issued response after switching to draft is discarded; actual rendered publication review/cancel and invoker focus restoration. Synthetic local auth/RPC only.
 AUTHENTICATED_RUNTIME: UNVERIFIED: trusted CUA process failed; signed-in owner/second-tenant, production bearer document and provider attachment acceptance not driven. No external email or payment mutation performed.
@@ -46,3 +46,5 @@ SOLO_900X1000_PAIGE_OPEN: PASS: draft-proof.json both themes; unchanged viewport
 ## Scoped correctness proof
 
 See [repair routing and contract](../../delivery/solo-sales-invoice-dispatch-repair.md). SQLSTATE P5501 provides a closed recovery sentence; no database payload enters customer copy. There is no time-based unlock or invented send outcome. Independent exact-head non-writer and Impeccable finish reviews must complete; verdicts are recorded in the PR.
+
+Impeccable finish review found a draft-only mobile preview toggle with no document. Repaired by hiding that toggle for drafts and showing the not-issued guidance on compact layouts. Updated 17 component tests and 24 rendered cases PASS. Reproducer: scripts/live-drive/invoice-draft-workspace-smoke.mjs with the existing local synthetic Sales harness on port 5289.

@@ -16,7 +16,8 @@ import type {
   GrowthPageTheme,
 } from "@/lib/growth";
 import { GrowthBlocks } from "@/components/growth/GrowthBlocks";
-import { resolveGrowthTheme, GROWTH_BRAND_FLOOR, buildGrowthBrandFloor } from "@/components/growth/growth-theme";
+import { resolveGrowthTheme, resolveGrowthFontPair, GROWTH_BRAND_FLOOR, buildGrowthBrandFloor } from "@/components/growth/growth-theme";
+import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
 import { GP_FADE_RISE, GP_PRESS, fadeRiseStyle, useReducedMotion } from "@/components/growth/growth-motion";
 import { GrowthFormEmbed } from "@/pages/public/GrowthFormRenderer";
 
@@ -340,8 +341,15 @@ function Scope({
   children: React.ReactNode;
 }) {
   const vars = resolveGrowthTheme(null, brandFloor);
+  // Same brand-font loading as <GrowthBlocks>, so the form and thank-you steps wear the brand faces too.
+  const fontPair = resolveGrowthFontPair(null, brandFloor);
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
+  useBrandFontFaces(node, fontPair ? [fontPair.display, fontPair.body] : []);
   return (
     <div
+      ref={setNode}
+      data-gp=""
+      data-gp-font={fontPair ? "brand" : undefined}
       className={className}
       style={{
         ...(vars as Record<string, string>),

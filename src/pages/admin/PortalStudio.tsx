@@ -7,16 +7,17 @@ import { PageShell } from "@/components/ui/page/PageShell";
 import { PageHeader } from "@/components/ui/page/PageHeader";
 import { SectionCard } from "@/components/ui/page/SectionCard";
 import { EmptyState } from "@/components/ui/page/EmptyState";
-import { ColorField, LogoUploader, FONT_OPTIONS } from "@/components/ui/page/BrandControls";
+import { ColorField, LogoUploader, BrandFontPicker } from "@/components/ui/page/BrandControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useBrandKit } from "@/hooks/useBrandKit";
+import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
+import { brandFontStack, resolveBrandFontPair } from "@/lib/brand-fonts";
 import { usePortalConfig } from "@/hooks/usePortalConfig";
 import { usePlaybook } from "@/lib/playbook";
 import {
@@ -152,7 +153,15 @@ export default function PortalStudio() {
     ? brandForm.accent_color : (eff?.accent_color ?? ACCENT_FLOOR);
   const previewName = brandForm.product_name.trim() || eff?.product_name || bk.state?.tenantName || "Your brand";
   const previewLogo = own.logo_url || eff?.logo_url || null;
-  const previewFont = brandForm.font || eff?.font || undefined;
+  // Preview type: a library font previews in its REAL faces (display for the greeting, its paired body
+  // face for the rest), loaded the same way the published page loads them. Anything else previews as
+  // its plain name, exactly as before.
+  const previewFontName = brandForm.font || eff?.font || "";
+  const previewPair = resolveBrandFontPair(previewFontName);
+  const previewFont = previewPair ? brandFontStack(previewPair.body) : previewFontName || undefined;
+  const previewDisplayFont = previewPair ? brandFontStack(previewPair.display) : previewFont;
+  const [previewNode, setPreviewNode] = useState<HTMLDivElement | null>(null);
+  useBrandFontFaces(previewNode, previewPair ? [previewPair.display, previewPair.body] : []);
 
   const invalidHex =
     (!!brandForm.primary_color.trim() && !isValidHex(brandForm.primary_color)) ||
@@ -296,18 +305,14 @@ export default function PortalStudio() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <label htmlFor="portal-brand-typeface" className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                       <TypeIcon className="h-3.5 w-3.5 text-muted-foreground" /> Typeface
-                    </span>
-                    <Select
-                      value={brandForm.font || "System default"}
-                      onValueChange={(v) => setBrandForm((f) => ({ ...f, font: v === "System default" ? "" : v }))}
-                    >
-                      <SelectTrigger><SelectValue placeholder="System default" /></SelectTrigger>
-                      <SelectContent>
-                        {FONT_OPTIONS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    </label>
+                    <BrandFontPicker
+                      id="portal-brand-typeface"
+                      value={brandForm.font}
+                      onChange={(v) => setBrandForm((f) => ({ ...f, font: v }))}
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -410,7 +415,7 @@ export default function PortalStudio() {
               description="A representative view — not live client data."
             >
               <div className="p-4">
-                <div className="overflow-hidden rounded-xl border border-border shadow-card">
+                <div ref={setPreviewNode} className="overflow-hidden rounded-xl border border-border shadow-card">
                   {/* masthead */}
                   <div className="flex items-center gap-2.5 px-4 py-3" style={{ background: previewPrimary }}>
                     {previewLogo ? (
@@ -452,7 +457,7 @@ export default function PortalStudio() {
                   </div>
                   {/* home card */}
                   <div className="space-y-3 p-5" style={{ fontFamily: previewFont }}>
-                    <p className="text-base font-semibold text-foreground">{headlineText}</p>
+                    <p className="text-base font-semibold text-foreground" style={{ fontFamily: previewDisplayFont }}>{headlineText}</p>
                     <p className="text-sm text-muted-foreground">{subheadText}</p>
                     <button
                       type="button" disabled

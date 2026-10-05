@@ -1,0 +1,186 @@
+{
+  "frames": [
+    {
+      "viewport": "1536x770",
+      "paige": "closed",
+      "file": "solo-1536x770-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        545,
+        476,
+        374,
+        35
+      ],
+      "docScrollWidth": 1536,
+      "ownerScrollWidth": 1536,
+      "ownerClientWidth": 1536,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1536x770",
+      "paige": "open",
+      "file": "solo-1536x770-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        355,
+        493,
+        321,
+        35
+      ],
+      "docScrollWidth": 1536,
+      "ownerScrollWidth": 1156,
+      "ownerClientWidth": 1156,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1366x768",
+      "paige": "closed",
+      "file": "solo-1366x768-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        460,
+        476,
+        374,
+        35
+      ],
+      "docScrollWidth": 1366,
+      "ownerScrollWidth": 1366,
+      "ownerClientWidth": 1366,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1366x768",
+      "paige": "open",
+      "file": "solo-1366x768-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        270,
+        493,
+        236,
+        35
+      ],
+      "docScrollWidth": 1366,
+      "ownerScrollWidth": 986,
+      "ownerClientWidth": 986,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1024x768",
+      "paige": "closed",
+      "file": "solo-1024x768-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        289,
+        493,
+        255,
+        35
+      ],
+      "docScrollWidth": 1024,
+      "ownerScrollWidth": 1024,
+      "ownerClientWidth": 1024,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1024x768",
+      "paige": "open",
+      "file": "solo-1024x768-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        99,
+        654,
+        65,
+        35
+      ],
+      "docScrollWidth": 1024,
+      "ownerScrollWidth": 644,
+      "ownerClientWidth": 644,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "900x1000",
+      "paige": "closed",
+      "file": "solo-900x1000-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        457,
+        476,
+        424,
+        35
+      ],
+      "docScrollWidth": 900,
+      "ownerScrollWidth": 900,
+      "ownerClientWidth": 900,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "900x1000",
+      "paige": "open",
+      "file": "solo-900x1000-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        267,
+        511,
+        234,
+        35
+      ],
+      "docScrollWidth": 900,
+      "ownerScrollWidth": 520,
+      "ownerClientWidth": 520,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    }
+  ],
+  "list_dark": {
+    "groups": [
+      "Editorial serif",
+      "Premium serif",
+      "Humanist sans",
+      "Geometric sans",
+      "Product sans",
+      "Condensed display",
+      "Expressive display",
+      "Classic"
+    ],
+    "options": 26,
+    "brandFacesLoaded": 25,
+    "firstOptionFamily": "brand-source-serif-4, \"Source Serif 4\", Georgia, \"Times New Roman\", serif"
+  },
+  "selection": {
+    "trigger": "Bodoni Moda",
+    "hint": "Headings use Bodoni Moda; body text uses Source Sans 3.",
+    "focusOnTrigger": true,
+    "writes": [
+      {
+        "fn": "set_tenant_brand",
+        "args": {
+          "_tenant_id": "harness-tenant",
+          "_patch": {
+            "font": "Bodoni Moda"
+          }
+        }
+      }
+    ]
+  },
+  "list_light": {
+    "groups": [
+      "Editorial serif",
+      "Premium serif",
+      "Humanist sans",
+      "Geometric sans",
+      "Product sans",
+      "Condensed display",
+      "Expressive display",
+      "Classic"
+    ],
+    "options": 26,
+    "brandFacesLoaded": 25,
+    "firstOptionFamily": "brand-source-serif-4, \"Source Serif 4\", Georgia, \"Times New Roman\", serif"
+  }
+}

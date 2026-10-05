@@ -26,16 +26,11 @@ INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_
 -- ── A + MUTATION: without the grant the engine's exact write is denied ──────────────────
 -- (Savepoint-scoped revoke proves BOTH the pre-repair state and the mutation in one motion;
 --  the rollback restores the granted state the later proofs rely on.)
--- The grant under test is established INSIDE this proof's own transaction. The spine
--- job's reproduce/reconcile machinery (rebuild → reproduce production's grants → apply
--- the change under review) can leave the AMBIENT grant state at production's — which
--- lacks this migration until it deploys — at any point around this step; a proof that
--- depended on ambient state would be green or red depending on step ordering, not on
--- the grant matrix. The migration's own survival through that sequence is separately
--- proven by grant-ordering-proof.sh; here we grant, then prove the matrix.
-GRANT INSERT ON public.research_runs TO service_role;
-GRANT INSERT ON public.research_sources TO service_role;
-
+-- Runs on the FRESH-BUILT database (this proof's workflow step executes immediately
+-- after `supabase start`, before the reproduce/reconcile machinery re-derives grant
+-- state from production — production lacks this migration until it deploys). On the
+-- fresh build every tree migration is applied, so the grant under test is ambiently
+-- present; the reconcile interplay is grant-ordering-proof.sh's own subject.
 SAVEPOINT before_grant;
 REVOKE INSERT ON public.research_runs FROM service_role;
 REVOKE INSERT ON public.research_sources FROM service_role;

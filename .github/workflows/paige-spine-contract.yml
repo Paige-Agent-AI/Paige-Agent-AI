@@ -158,6 +158,13 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
+      # INT-309: the research persistence grants — runs on the FRESH-BUILT database, where
+      # every tree migration (including this change's GRANT) is ambiently applied. Later,
+      # the reproduce/reconcile machinery re-derives grant state from production — which
+      # lacks this migration until it deploys — and that interplay is grant-ordering-proof.sh's
+      # own subject; proving the matrix here keeps this proof independent of that ordering.
+      - run: supabase test db supabase/tests/research_persist_service_grants.sql
+        if: ${{ !cancelled() }}
       # Production's grants are reproduced on the schema production actually has, and only then is
       # the change under review applied on top — so its own grants and revokes, dynamic SQL,
       # schema-wide ones and out-of-order migrations included, land exactly as written. Guessing
@@ -176,10 +183,6 @@ jobs:
       # no-tenant-parameter RPCs, policy shapes). The engine-side lineage logic is pinned by
       # src/__tests__/deep-research-m0-contract.test.ts.
       - run: supabase test db supabase/tests/research_tenant_lineage.sql
-        if: ${{ !cancelled() }}
-      # INT-309: the persistence grants — the permission-denied root cause reproduced and
-      # repaired (INSERT-only minimality, browser roles refused, M0 policy set unchanged).
-      - run: supabase test db supabase/tests/research_persist_service_grants.sql
         if: ${{ !cancelled() }}
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql

@@ -3332,8 +3332,12 @@ The ⌘K launcher + right-side Paige presence rail chrome is a reusable primitiv
   context, authority, memory, tools, records, or actions. Realtime transport remains disabled until
   account scopes, voice authorization, retention/ZRM application, quota, concurrency, and Paige's
   calendar-month hard cost limit plus conservative per-character price ceiling are independently
-  verified. The service-only control plane rechecks canonical proof and atomically reserves uncached
-  TTS cost before any provider call; ambiguous provider outcomes stay counted, actor deletion cannot
+  verified. [§13 CORRECTED 2026-10-05, INT-324 grounding — see Section 10: Live Conversation reached
+  LIVE on prod while `paige_voice_readiness.transport_enabled` = false and `hard_cost_limit_usd` is
+  NULL; the relay reads neither, and Live reserves no voice cost and has no voice-spend cap; its language-model turn is capped through `model-router`.] The service-only control
+  plane rechecks canonical proof and atomically reserves uncached message-playback TTS cost before
+  any provider call [§13 CORRECTED 2026-10-05: true for ElevenLabs only until INT-324 Slice A — the
+  OpenAI branch metered after the fact and reserved nothing]; ambiguous provider outcomes stay counted, actor deletion cannot
   erase spend, and activation commits readiness plus profile atomically. Revocation or an exceeded
   cap fails closed. No provider or voice reference appears in customer UI. INT-321 (2026-10-05,
   ships on merge): a refused message-playback reservation names the limit that refused it — this
@@ -3342,6 +3346,16 @@ The ⌘K launcher + right-side Paige presence rail chrome is a reusable primitiv
   profile failure is a retry, never a session-long disable. Owner ruling 2026-10-05 (policy, migration
   20270581010000): the default monthly message-playback allowance every workspace inherits is $40
   (was $10), for every Solo alike; the $100 platform cap and the $0.30/1,000-char ceiling are unchanged.
+  INT-324 Slice A (2026-10-05, ships on merge, PR TBD; no migration, no cap/rate/provider/rollout
+  change): `paige-tts` reserves through the one `reserve_paige_voice_cost_internal` seam before EITHER
+  provider — the OpenAI branch now reserves before `synthesizeSpeechStream(` exactly as ElevenLabs
+  does before `elevenlabsTts(`, releases only on a typed pre-dispatch `NeedsConfigError`, commits once
+  the provider answered (before streaming) and fails closed with `tts_cost_settlement_unavailable` if
+  the commit fails. Latent on prod until the active profile is pointed at OpenAI (it is ElevenLabs
+  Jessica). NOT covered and still uncapped: Live Conversation (relay mouth = ElevenLabs streaming,
+  ears = Deepgram Flux) — Slice B, owner numbers owed (Section 5). OPEN policy item: the $40 the owner
+  ruled for Solo is the inherited default for EVERY tier without its own row (Agency, Sub-account,
+  Enterprise included) — Slice C, owner ruling owed.
 - ✅ **Supabase** — Postgres + RLS + edge functions + auth. Prod ref `xygzykjyynhzqytbqnzu`. 231+ edge functions. 688+ migrations. RLS helpers: `is_platform_owner()` (operator scope), `current_user_tenant_id()` (tenant scope).
 - ✅ **Vercel** — deploy target. `vercel.json` at repo root.
 - ✅ **LLM providers via `_shared/model-router.ts`** — text tier: Anthropic + Featherless. Capability tier: OpenAI + Gemini + Groq + Ideogram + Replicate + Meshy + ElevenLabs.
@@ -3502,6 +3516,27 @@ Grouped:
 ---
 
 ## 5. Current focus + known gaps
+
+### Voice spend parity — Live Conversation is uncapped, non-Solo allowance unruled — GAPS (2026-10-05, INT-324)
+
+Message playback reserves before either provider (ElevenLabs already did; OpenAI from INT-324 Slice A,
+PR TBD). Two gaps remain, both needing the owner:
+- **Slice B — Live Conversation voice spend has no reservation and no cap** (its model turn is capped via `model-router`). `paige-live-relay` calls
+  ElevenLabs streaming (mouth, characters) and Deepgram Flux via `stt-router` (ears, audio duration)
+  without touching the reservation seam; its usage sink is a no-op (`paige-live-relay/index.ts`
+  `usage: { emit() {} }`) and prod holds 0 Live/STT usage rows. Every top-level Solo/standalone
+  workspace is admitted (10 of 10 on prod per the INT-324 grounding readback). The live `stt_audio_ms`
+  usage event also undercounts: frames are forwarded to Flux outside an active turn but only counted
+  inside one. Needs a migration (surface/unit/quantity on the reservation table, a per-surface core
+  function, a candidate-slot profile check for Live) and owner numbers: a per-workspace monthly Live
+  allowance (dollars or minutes) and whether Live shares the $100 platform cap; a $/audio-minute
+  ceiling for Flux; whether $0.30/1,000 chars bounds ElevenLabs conversational streaming. A fail-closed
+  default of 0 would switch Live off for every admitted workspace.
+- **Slice C — the $40 default is generic, the ruling was Solo.** `default_tenant_monthly_limit_usd = 40`
+  applies to every workspace without its own row (prod: 10 standalone, 2 agency, 4 sub-account).
+  What Agency, Sub-account and Enterprise should inherit (the same $40, nothing, or an agency-set
+  amount under §61 resell) is an owner decision; a tier-scoped default needs a server twin of
+  `resolveTierKey` and a §66 tier-matrix row in the same commit.
 
 ### Solo Marketing Planned tabs — GAPS, each named on its tab (2026-10-04)
 
@@ -5090,6 +5125,8 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 ---
 
 ## 10. §13 corrections log
+
+- **2026-10-05 · INT-324 GROUNDING: LIVE CONVERSATION IS ADMITTED AND UNCAPPED, AND TWO DOCS SAY OTHERWISE.** Found by the INT-324 voice-spend grounding (read-only, at `5307015f6`; prod readback by that grounding, not re-queried by the Slice A build). (1) `docs/doctrine/tier-matrix.md` (the "Live Conversation — admitted to the rollout today" row) says "`pilot_rollout_scope` ships `'off'`; no account admitted". Prod's `paige_live_pilot_authorized_internal` is the `20270425000000` body (active membership + `live_conversation_tier_allows` + no explicit switch-off) and does not read `pilot_rollout_scope`; every top-level standalone workspace is admitted (10 of 10; 0 agency, 0 sub-account), and 4 sessions reached LIVE, the last 2026-09-24. (2) Section 4's ElevenLabs bullet said realtime transport stays disabled until a calendar-month hard cost limit is verified; the relay never reads `transport_enabled` or `hard_cost_limit_usd` (false / NULL on prod) and Live reserves no cost at all — marked corrected in place. The same bullet said uncached TTS cost is reserved before any provider call; that held for ElevenLabs only, and INT-324 Slice A (PR TBD) makes it true for OpenAI. Not fixed here: the tier-matrix row is left as written until the Live spend slice (Section 5, Slice B) settles what "admitted" should read, because rewriting it now would record an uncapped surface as a finished one. Open policy item recorded alongside: the owner's $40 ruling was for Solo, the shipped default is inherited by every tier (Section 5, Slice C).
 
 - **2026-10-05 · INT-310 / INT-317 CLOSEOUT: #1726 MERGED, ALL FIVE STALE C1 BUNDLES NOW PROVIDER-SERVED — FOUR BY CI, EMAIL-COMPOSER BY AN OWNER-AUTHORIZED MANUAL DEPLOY (DEL-094, INT-320).** #1726 (squash `30d9d4bdd`; exact-head review of `75beceb07`: SHIP; CI `verify`, PAIGE Spine `contract` + `database-contract`, Security Audit `audit`: green) was deployed by `deploy-edge-functions` run 454 (`37252234579`), which logged `✓ deployed` for ten functions and advanced `edge-live` to `30d9d4bdd`. **The provider, read directly, did not take all ten.** Updated by the CI runner at 01:39 UTC: `subagent-compliance` v32, `-content-drafter` v80, `-data-consistency` v3 and `-stack-strategist` v31 (byte-identical to main, carrying the C1 tenant predicate), plus `paige-orchestrator` v101, `dispatch-queued-workflow-runs` v60 and `paige-ai-chat` v323. `paige-mcp` v664 is byte-identical to `30d9d4bdd` (all 17 files) but was written from a non-CI path (below). **Not taken: `subagent-email-composer` stayed v77 (2026-09-29) for the second CI deploy in a row**, still answering the public anon key past its (absent) gate; **and `trigger-workflow` stayed v60 (2026-09-27)** — behaviourally equivalent, since the only change to its bundle since then is #1726's added allowlist exports, which it does not import, but a third silent no-op for INT-320. Under a bounded owner authorization (main's exact source, this one function only, `verify_jwt=true`, no `edge-live` change), it was deployed through the Supabase MCP deploy path: **v78, `ezbr` `ae1b4f341928…`, updated 01:57:51 UTC; all ten bundled files byte-identical to `origin/main`**; deployed source carries `isAuthorizedInternalCaller`, `bindContactToTenant`, the `current_user_tenant_id()` user path and the tenant-bound read. **Safe production probe (public anon key, random UUIDs, no real data), 01:58 UTC:** `subagent-email-composer` **401** (was 424); `paige-problem-reverse-engineer` 401; the seven C0 specialists 401; `paige-orchestrator` 401; `subagent-forge` with a forged `X-Orchestrator-Call` 403. **C0 + C1 are now deployed and provider-verified for every function they changed; INT-317 (#1726) is deployed in every function whose behaviour it changes (orchestrator, sweeper, paige-mcp, paige-ai-chat).** `edge-live` was never moved by hand; its history (claiming `d7a2dfc3a`/`30d9d4bdd` were live while bundles were stale) is preserved as INT-320 evidence. **INT-320 clues, recorded and not investigated here:** email-composer silently no-op'd twice under CI while siblings in the same run updated; `paige-mcp` v664 carries `entrypoint_path` `/app/supabase/functions/…` (not the CI runner's `/home/runner/work/…`) and an `updated_at` (01:39:46) matching email-composer's deploy moment, not its own — a second deployer or a cross-wired deploy is possible; the #1719 deploy run started (01:03:30) before C1's run finished (01:03:36). **UNVERIFIED:** the orchestrator's live refusal of an unlisted local target before the invocation row (proven by handler tests and review mutations, not in production — it needs an authenticated caller and a tenant-admin row); that listed specialists still execute in production (no invocations since the deploys; last was email-composer 2026-10-04 13:02); authenticated synthetic A/B acceptance of the binder (no test credentials in this session). **Routed, not worked here:** INT-318 (funding entitlement keyed on the alias, not the target), INT-319 (workflow execution-door drift, incl. readiness R16 not run by CI and the sweeper's non-CAS terminate), INT-320 (deploy integrity), INT-314, INT-315, INT-316 (incl. `paige-deep-research` trusting `body.user_id` under the service bearer; safe through the orchestrator only because INT-308 overwrites it).
 - **2026-10-05 · "SEQUENCES ARE E3" AND "AUTOMATIONS ARE BUILT NEXT" ARE NO LONGER TRUE; THE E3 MIGRATION IS `20270580000000`, NOT `20270566000000` OR `20270570000000`.** The E2 entry and the Planned-tabs gap said sequences come later; E3 ships them (marked superseded in place). E3's migration was written as `20270566000000`; Sales S1 merged its own `20270566000000` first, so E3 was renumbered to `20270570000000`; before E3 merged, Sales applied `20270571000000` to prod, and `db push` (never `--include-all`) refuses a version below the last applied one, so E3 was renumbered again to `20270580000000` after re-reading prod's applied versions, main and the open PRs. The collision guard re-ran clean both times. Lesson: re-read prod's last applied version immediately before merging, not only when the PR is opened. Also found while driving E3: the marketing harness only routed named modules to its Supabase stub, so a new module reached the real client and every series view rendered "could not load"; the new module is now routed.

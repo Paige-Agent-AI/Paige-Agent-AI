@@ -552,7 +552,7 @@ id who also had to hold `super_admin`. Separately, and deliberately not collapse
 | Capability | God | Agency | Enterprise | Solo | Sub-account | Client | Anon | Deploy state |
 |---|---|---|---|---|---|---|---|---|
 | Live Conversation — product eligibility (own tenant, role, thread, memory) | — (no tenant book) | — (refused by tier) | ✓ | ✓ | — (release DEFERRED) | — | 403 | migration `20270422000000`; the three admission edge callers redeploy |
-| Live Conversation — admitted to the rollout today | — | — | — | — | — | — | 403 | `pilot_rollout_scope` ships `'off'`; no account admitted |
+| Live Conversation — admitted to the rollout today | — | — | — | — | — | — | 403 | `pilot_rollout_scope` ships `'off'`; no account admitted. [§13 correction 2026-10-05: false on prod — migration `20270425000000` removed the scope check and every top-level Solo workspace is admitted; see master reference §10, INT-324 grounding] |
 
 **The two rows say different things on purpose.** One ✓ per tier that conflated "every Solo account
 is eligible" with "who may speak today" would re-commit in this ledger exactly the conflation the

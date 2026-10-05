@@ -171,7 +171,7 @@ interface H {
 /** rows: clients id→tenant. memberships: user→tenants they belong to. activeTenant: profiles.active_tenant_id. */
 function loadEdge(
   fn: string,
-  world: { rows: Record<string, string>; activeTenant?: string | null; memberOf?: string[] },
+  world: { rows: Record<string, string>; activeTenant?: string | null; memberOf?: string[]; tenantRpcFails?: boolean },
   stubs: Record<string, unknown> = {},
   mutate: Record<string, (s: string) => string> = {},
 ): H {
@@ -226,7 +226,9 @@ function loadEdge(
       from: (t: string) => { h.from.push(t); return chain(t); },
       rpc: async (name: string) => {
         if (name === "verify_cron_token") return { data: false, error: null };
-        if (name === "current_user_tenant_id" && isUserA) return { data: world.activeTenant ?? null, error: null };
+        if (name === "current_user_tenant_id" && isUserA) {
+          return world.tenantRpcFails ? { data: null, error: { message: "db unavailable" } } : { data: world.activeTenant ?? null, error: null };
+        }
         if (name === "get_paige_persona_context" && isUserA) return { data: [{ tenant_id: world.activeTenant ?? null, funding_enabled: false }], error: null };
         return { data: null, error: null };
       },
@@ -427,6 +429,13 @@ describe("INT-310 C1 — email-composer: internal path, compliance hand-off, wor
     expect((await inA.handler(post(compose(CONTACT_B), USER_A))).status).toBe(404);
     const inB = loadEdge("subagent-email-composer", { rows, activeTenant: TENANT_B, memberOf: [TENANT_A, TENANT_B] }, DRAFTING);
     expect((await inB.handler(post(compose(CONTACT_B), USER_A))).status).toBe(200);
+  });
+
+  it("a failure resolving the person's workspace is a 503, not a not-found", async () => {
+    const h = loadEdge("subagent-email-composer", { rows, activeTenant: TENANT_A, memberOf: [TENANT_A], tenantRpcFails: true }, DRAFTING);
+    const res = await h.handler(post(compose(CONTACT_A), USER_A));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({ error: "resource_verification_unavailable" });
   });
 
   it("a caller-supplied context.tenant_id does not override a person's own workspace", async () => {

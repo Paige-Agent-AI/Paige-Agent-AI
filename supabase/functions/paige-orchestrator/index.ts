@@ -650,8 +650,9 @@ Deno.serve(async (req) => {
     // INT-310 C1: bind every caller-selected contact (input.contact_id / input.client_id /
     // context.contact_id) to the SERVER-RESOLVED tenant before any specialist — all of which read
     // clients with the service role — can see it. Malformed, missing, foreign or disagreeing
-    // selectors get one indistinguishable refusal, before any agent lookup or invocation row, so
-    // nothing about a foreign row is ever fetched, returned or persisted.
+    // selectors get one indistinguishable refusal, before any agent lookup or invocation row. The
+    // binder reads only the selected row's owning tenant_id (the canonical subject check); no foreign
+    // row CONTENT is ever returned, forwarded to a specialist, or persisted.
     const binding = await bindContactToTenant(supabase, tenantId, payload.input ?? {}, ctx);
     if (!binding.ok) {
       console.warn(`[paige-orchestrator] INT-310: contact selector refused (${binding.error})`);

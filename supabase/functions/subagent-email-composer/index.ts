@@ -155,19 +155,29 @@ Deno.serve(async (req) => {
   }
 
   let workspaceTenant: string | null = null;
+  let workspaceResolveFailed = false;
   if (isInternalCall) {
+    // The canonical internal caller (service-role bearer or a verified cron token — the same trust
+    // class) forwards the tenant it already resolved; the orchestrator sets it from its own binder.
     const t = (payload.context as { tenant_id?: unknown } | undefined)?.tenant_id;
     workspaceTenant = typeof t === "string" ? t : null;
   } else if (userClient) {
     try {
-      const { data: t } = await userClient.rpc("current_user_tenant_id");
+      const { data: t, error: tErr } = await userClient.rpc("current_user_tenant_id");
+      if (tErr) throw tErr;
       workspaceTenant = typeof t === "string" ? t : null;
     } catch (e) {
+      workspaceResolveFailed = true;
       console.warn("[email-composer] tenant resolve failed:", (e as Error)?.message);
     }
   }
   // Bind the selected contact (input.contact_id / context.contact_id) to that workspace through the
   // canonical binder: a malformed, missing, foreign or disagreeing selector is one uniform refusal.
+  // An infrastructure failure resolving the workspace is reported as such (503), never as a
+  // not-found — the same distinction the binder draws for its own lookup error.
+  if (workspaceResolveFailed && (input.contact_id || payload.context?.contact_id)) {
+    return ok({ ok: false, error: "resource_verification_unavailable" }, 503);
+  }
   const binding = await bindContactToTenant(
     supabase, workspaceTenant, input as unknown as Record<string, unknown>, payload.context ?? {},
   );

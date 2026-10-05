@@ -5883,7 +5883,11 @@ console.log("\nC4a — an approval resumes the same objective on the server");
 // The publish and Sales doors are MODELLED (their claim predicates, replay-before-claim and
 // re-propose-on-failed-claim are cited at each model); they are not run here.
 console.log("\nC4b — a door approval resumes on the server; the door stays the only claim site");
-{
+// A check below that approves a card the real door never minted cannot mean anything, so the group
+// stops there with a NAMED failure carrying the door's own answer (proposeVia), never a TypeError on
+// `card.fingerprint` that hides why. The rest of the harness still runs.
+class Group40Abort extends Error {}
+try {
   await import("../../supabase/functions/crm-command/index.ts");
   const { capturedHandler: capturedDoor } = await import("./stub-serve.mjs");
   const crmDoor = capturedDoor();
@@ -5936,15 +5940,23 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
     studio_role_ok: { data: true, error: null },
   });
   // What crm-command reads about the caller with its service client: an active owner seat, the route.
+  // INT-327 (#1761): a deal is created FOR a resolved canonical client (or as an explicitly unlinked
+  // prospect). crm-command resolves a client_ref with its service client inside the caller's workspace
+  // (client-ref.ts: clients, eq tenant_id, eq account_number) — modelled with those filters honoured, so
+  // a reference from another workspace, or one that no longer exists, is not found here either.
+  const DEAL_CLIENT_REF = "CLT-0042";
+  const DEAL_CLIENT_ROWS = [{ id: OWN, tenant_id: CALLER_TENANT, account_number: DEAL_CLIENT_REF, first_name: "Dana", last_name: "Reyes" }];
+  const clientsByFilter = (rows) => (filters) => rows.filter((row) => filters.every(([op, col, value]) => op !== "eq" || row[col] === value));
   const DOOR_SERVICE = {
     tenant_members: () => [{ role: "owner", status: "active" }],
     tenants: () => [{ account_number: 3855, account_type: "standalone", parent_tenant_id: null }],
+    clients: clientsByFilter(DEAL_CLIENT_ROWS),
   };
   const turnsWith = (fp, tool) => ({ paige_chat_turns: () => [
     { id: SUSPENDED, role: "assistant", content: "Here is what I'll do.", seq: 2, bundle_ref: { paige_confirm: [{ tool, summary: "Do it", fingerprint: fp }] } },
   ] });
-  const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {} } = {}) => drive({
-    stream: true, text: body.approvedConfirmations || body.declinedConfirmations ? "Approved — run it." : "please do it",
+  const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {}, clientId } = {}) => drive({
+    stream: true, clientId, text: body.approvedConfirmations || body.declinedConfirmations ? "Approved — run it." : "please do it",
     extraBody: { ...(threadId ? { threadId } : {}), ...body }, toolCall,
     rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), ...extraRpc },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE, ...extraService },
@@ -5967,10 +5979,20 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
     return r.data ?? await r.error?.context?.json?.();
   };
   const CONTACT = { name: "crm_create_contact", args: { patch: { first_name: "Dana", last_name: "Reyes" } } };
-  const DEAL = { name: "deal_create", args: { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE } };
+  // The client is named the way Paige is shown it (lower-case here: the door normalizes it).
+  const DEAL = { name: "deal_create", args: { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE, client_ref: DEAL_CLIENT_REF.toLowerCase() } };
   const proposeVia = async (store, db, call, opts = {}) => {
     const r = await crmDrive(store, db, { toolCall: call, ...opts });
-    return cardsOf(r.bodyText)[0] ?? null;
+    const card = cardsOf(r.bodyText)[0] ?? null;
+    if (!card) {
+      // What the door answered instead (the tool result PAIGE was given), so the failure names its cause.
+      const told = toldModel(r);
+      const answer = told.slice(told.lastIndexOf('"tool_result"'), told.lastIndexOf('"tool_result"') + 400);
+      assert(`40.G (guard) the real door minted a ${call.name} card for this check to approve`, false,
+        JSON.stringify({ door: doorCalls(r).map((c) => c.body), answer, errors: r.logged.filter((l) => l.level === "error").map((l) => l.msg).slice(-3) }));
+      throw new Group40Abort(`no ${call.name} card was minted, so nothing after it can be checked`);
+    }
+    return card;
   };
 
   // ── 40.1 THE PROD STRAND, both tools. The real door mints the proposal; the person approves; the model
@@ -5992,7 +6014,7 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
       !!card && /^[0-9a-f]{16}$/.test(card.fingerprint ?? "") && minted.rows === 1 && minted.row?.thread_id == null && minted.row?.scoped_client_id == null
         && minted.row?.tool_name === label && typeof minted.row?.args?.idempotency_key === "string" && minted.executions === 0,
       JSON.stringify({ card, minted }));
-    const stored = st.rows.find((row) => row.fingerprint === card.fingerprint);
+    const stored = st.rows.find((row) => row.fingerprint === card?.fingerprint);
     assert(`40.1 ${label}: approved with NO model re-emit — the door executes the STORED command once, under the stored key`,
       db.executions.length === 1 && db.executions[0].idempotency_key === stored.args.idempotency_key
         && db.executions[0].command.action === stored.args.command.action
@@ -6014,6 +6036,39 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
       JSON.stringify({ outcome, resumed: resumedFrames(r.bodyText).length, egress: r.modelEgress[0]?.slice(0, 200) }));
     assert(`40.1d ${label}: no fresh card, and no second proposal row`,
       cardsOf(r.bodyText).length === 0 && st.rows.length === 1, JSON.stringify({ cards: cardsOf(r.bodyText), rows: st.rows.length }));
+    if (label === "deal_create") {
+      // INT-327 × C4b: the door stores the command AFTER resolving the client (contact-refs.ts, in place),
+      // and the pinned resume hands that stored command back — so what runs is the deal FOR that client.
+      // Kills: a resume that rebuilt the command from the call (or dropped the reference) on the way.
+      const ran = db.executions[0]?.command;
+      assert("40.1e deal_create (INT-327): the stored proposal carries the canonical client (reference normalized, resolved to that workspace's contact), and the resume runs the deal WITH it",
+        stored?.args?.command?.client_ref === DEAL_CLIENT_REF && stored?.args?.command?.contact_id === OWN
+          && !("unlinked_reason" in (stored?.args?.command ?? {}))
+          && ran?.client_ref === DEAL_CLIENT_REF && ran?.contact_id === OWN,
+        JSON.stringify({ stored: stored?.args?.command, ran }));
+    }
+  }
+
+  // ── 40.1f INT-327's Chat-side preservation, carried through C4b. In a client-scoped conversation the
+  // model may omit the client; Chat preserves the AUTHORIZED client's reference on deal.create
+  // (preserveResolvedDealClient, paige-ai-chat ~L9608) BEFORE the door is asked, so the door stores the
+  // deal for that client, and the server resume runs exactly that stored command. Kills: dropping the
+  // preservation (the door would refuse an unlinked deal: no card); a resume that bypassed what the door
+  // stored.
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const scopedClients = { clients: clientsByFilter(DEAL_CLIENT_ROWS) };
+    const bare = { name: "deal_create", args: { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE } };
+    const card = await proposeVia(st, db, bare, { clientId: OWN, extraTables: scopedClients });
+    const minted = st.rows[0]?.args?.command;
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, fixtureTool: "deal_create", clientId: OWN, extraTables: scopedClients });
+    const ran = db.executions[0]?.command;
+    assert("40.1f deal_create in a client-scoped conversation, client omitted by the model: Chat preserves the authorized client, the door stores it resolved, and the resume runs that stored deal once",
+      minted?.client_ref === DEAL_CLIENT_REF && minted?.contact_id === OWN && st.rows[0]?.scoped_client_id == null
+        && db.executions.length === 1 && ran?.contact_id === OWN && ran?.client_ref === DEAL_CLIENT_REF
+        && JSON.stringify(doorCalls(r)[0]?.body?.command) === JSON.stringify(st.rows[0].args.command)
+        && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "ran",
+      JSON.stringify({ minted, ran, outcome: outcomeOf(r.bodyText) }));
   }
 
   // ── 40.2 EXACTLY ONCE ACROSS THE CARD'S OWN LANE AND THE SERVER RESUME. (a) The card lane ran it first
@@ -6437,7 +6492,9 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
         const answer = await base(options);
         if (answer.data?.outcome !== "approval_required") return answer;
         const now = Date.now();
-        const reuse = store.rows.find((r) => r.tool_name === "sales_void_invoice" && !r.consumed && r.args?.operation_id === options.body.operation_id
+        // The door reuses only the CALLER's live cycle: this person, this workspace (sales-invoice-command ~L73-77).
+        const reuse = store.rows.find((r) => r.user_id === USER && r.tenant_id === CALLER_TENANT
+          && r.tool_name === "sales_void_invoice" && !r.consumed && r.args?.operation_id === options.body.operation_id
           && r.server_issued_at != null && r.expires_at > new Date(now).toISOString());
         if (reuse) return { data: { ...answer.data, fingerprint: reuse.fingerprint }, error: null };
         const args = { ...salesArgs, approval_cycle_nonce: crypto.randomUUID() };
@@ -6515,6 +6572,28 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
       assert("40.9k …a live row of another tool with the same fingerprint value is not retired (synthetic collision)",
         guard && logG.length === 0 && stG.rows[1].consumed === false && stG.rows.length === 3 && stG.rows[2].consumed === true,
         JSON.stringify({ guard, rows: stG.rows.map((r) => ({ id: r.id, tool: r.tool_name, consumed: !!r.consumed })) }));
+    }
+    // THE RETIREMENT TAKES ONLY THIS WORKSPACE'S AND THIS PERSON'S ROWS. The same synthetic collision, but
+    // the colliding live row belongs to ANOTHER WORKSPACE (same person, same tool, same fingerprint value)
+    // or to ANOTHER PERSON (same workspace, same tool, same value), issued inside the retirement's window —
+    // stamped just before the stale request, so it is inside the window however long the decline took.
+    // Neither is this request's to retire. Kills: dropping `tenant_id` (X1) or `user_id` (X2) from the
+    // retirement — each otherwise left every check green (exact-head review, 2026-10-05).
+    for (const [id, label, patch] of [
+      ["40.9l", "another WORKSPACE's", { tenant_id: OTHER_TENANT, issued_in_request: "another-workspace" }],
+      ["40.9m", "another PERSON's", { user_id: FOREIGN, issued_in_request: "another-person" }],
+    ]) {
+      const stH = makeConfirmStore([await doorRow("sales_void_invoice", salesArgs)]);
+      stH.rows.push({ ...structuredClone(stH.rows[0]), id: "row-collision", ...patch, consumed: false });
+      const logH = [];
+      await salesDecline(stH, logH);
+      const guard = stH.rows[0].consumed === true && stH.rows[1].consumed === false;
+      stH.rows[1].server_issued_at = new Date().toISOString();
+      const stale = await salesStale(stH, logH);
+      assert(`${id} …a live row of ${label} with the same tool and fingerprint value, issued inside the window, is not retired (synthetic collision)`,
+        guard && logH.length === 0 && stH.rows[1].consumed === false && stH.rows.length === 3 && stH.rows[2].consumed === true
+          && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed",
+        JSON.stringify({ guard, rows: stH.rows.map((r) => ({ id: r.id, user: r.user_id, tenant: r.tenant_id, consumed: !!r.consumed })), outcome: outcomeOf(stale.bodyText) }));
     }
   }
 
@@ -6604,7 +6683,7 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
       "task.reopen": { ...TASK_AT },
       "task.cancel": { ...TASK_AT },
       "activity.log": { contact_id: C, patch: { kind: "note", body: "Spoke about onboarding." } },
-      "deal.create": { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE },
+      "deal.create": { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE, client_ref: DEAL_CLIENT_REF },
       "deal.update": { deal_id: D, expected_version: 3, title: "Acme retainer (annual)" },
       "deal.assign_owner": { deal_id: D, expected_version: 3, owner_user_id: U },
       "deal.assign_contact": { deal_id: D, expected_version: 3, contact_id: C },
@@ -6642,6 +6721,37 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
     }
     assert(`40.13 every non-preview CRM action (${actions.length}) minted by the real door and approved with no re-emit runs its STORED command once, under its stored key`,
       failures.length === 0, JSON.stringify(failures).slice(0, 4000));
+  }
+
+  // ── 40.14 A RESUME NEVER BYPASSES INT-327. The pinned resume hands the door the command IT stored, and
+  // the door re-validates and re-resolves that command on every request before it claims anything
+  // (crm-command: the relationship rule in its schema, then resolveCommandContactRefs). So (a) a deal
+  // proposal stored WITHOUT a canonical client — one minted before INT-327 shipped, still inside its
+  // window — is refused by the door when carried forward: nothing runs; and (b) a stored deal whose
+  // client no longer resolves in this workspace (deleted, or moved) is refused as not found: nothing
+  // runs. Neither becomes a fresh card. Kills: a resume path that skipped the door's validation, or
+  // executed the stored command without re-resolving its client.
+  {
+    const unlinked = { command: { action: "deal.create", title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE }, idempotency_key: "k-pre-int327", approval_subject: "deal:pre-int327" };
+    const st = makeConfirmStore([await doorRow("deal_create", unlinked)]);
+    const db = crmDb();
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [st.rows[0].fingerprint] }, fixtureTool: "deal_create" });
+    const told = toldModel(r);
+    assert("40.14a a stored deal proposal with NO canonical client (pre-INT-327), carried forward: the door is handed it and refuses it — nothing runs, no card, never reported ran",
+      doorCalls(r).length === 1 && JSON.stringify(doorCalls(r)[0].body.command) === JSON.stringify(unlinked.command)
+        && db.executions.length === 0 && cardsOf(r.bodyText).length === 0
+        && outcomeOf(r.bodyText)?.actions?.[0]?.outcome !== "ran" && /CRM_COMMAND_INVALID/.test(told),
+      JSON.stringify({ door: doorCalls(r).map((c) => c.body), executions: db.executions.length, outcome: outcomeOf(r.bodyText), consumed: st.rows[0].consumed }));
+
+    const gone = { command: { action: "deal.create", title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE, client_ref: DEAL_CLIENT_REF, contact_id: OWN }, idempotency_key: "k-client-gone", approval_subject: "deal:gone" };
+    const st2 = makeConfirmStore([await doorRow("deal_create", gone)]);
+    const db2 = crmDb();
+    const r2 = await crmDrive(st2, db2, { body: { approvedConfirmations: [st2.rows[0].fingerprint] }, fixtureTool: "deal_create",
+      extraService: { clients: clientsByFilter([]) } });
+    assert("40.14b a stored deal whose client no longer resolves in this workspace, carried forward: the door re-resolves it and refuses (not found) — nothing runs, no card",
+      doorCalls(r2).length === 1 && db2.executions.length === 0 && cardsOf(r2.bodyText).length === 0
+        && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome !== "ran" && /CRM_CONTACT_NOT_FOUND/.test(toldModel(r2)),
+      JSON.stringify({ executions: db2.executions.length, outcome: outcomeOf(r2.bodyText), consumed: st2.rows[0].consumed }));
   }
 
   // ── 40.12 RESUME PRESERVES THE THREAD. A door row carries no thread, so the card is the binding: the
@@ -6695,6 +6805,9 @@ console.log("\nC4b — a door approval resumes on the server; the door stays the
         && dealRow?.consumed === false && st3.rows.length === 2,
       JSON.stringify({ door: doorCalls(both).map((c) => c.body?.approved_fingerprint), executions: db3.executions.map((e) => e.command.action), deal: dealRow?.consumed }));
   }
+} catch (e) {
+  if (!(e instanceof Group40Abort)) throw e;
+  assert(`40.ABORT group 40 stopped: ${e.message}`, false);
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

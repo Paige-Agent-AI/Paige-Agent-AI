@@ -272,9 +272,27 @@ drawer). No visible text says "resumed".
    stays live — whether it was shown months (40.9i) or minutes (40.9j) before. Rows already consumed
    keep their `consumed_at` (40.4h), and another tool's row is never touched (40.9k, a synthetic 64-bit
    collision: the fingerprint hashes the tool). A retirement that fails is logged (`console.error`), and
-   the outcome reported is unchanged — nothing ran here (40.2e, 40.4e, 40.4f, 40.9h, 40.9i). The
+   the outcome reported is unchanged — nothing ran here (40.2e, 40.4e, 40.4f, 40.9h, 40.9i). Another
+   workspace's or another person's row with the same tool and fingerprint is never touched either
+   (40.9l, 40.9m — synthetic collisions, added after the exact-head review found that dropping the
+   `tenant_id` or `user_id` predicate left every check green). The
    longer-term fix is a cycle nonce in crm-command's proposals (as Sales has); that is a door change, not
    made here — **open**.
+
+   **The retirement's race window, stated.** "Issued since selection" is `server_issued_at ≥ (the
+   moment this request selected the pinned row − 2 s)` (`doorSelectedAt`, `paige-ai-chat` ~L8966). So a
+   LEGITIMATE card for the same act and fingerprint that a concurrent request minted inside that ~2 s
+   window (or while this request ran) and that is not the pinned row is retired with the door's unshown
+   re-proposal. That fails closed: nothing runs, the person's approval of that card answers "can't
+   confirm / check first" or "expired", and the act is proposed again on request — never an act run
+   without its approval. For CRM the live unique index (user, fingerprint) means the concurrent card and
+   the re-proposal are one row, so this is the same row either way.
+
+   **Clock-skew caveat.** The window compares the chat's clock (selection) with the door isolate's clock
+   (`server_issued_at` on the re-proposal). If the door's clock runs more than ~2 s behind the chat's,
+   its re-proposal is stamped before the window and escapes retirement: that unshown proposal stays live
+   until it expires (30 min CRM, 10 min Sales), claimable by the old token meanwhile. Same class, and the
+   same durable fix, as the open crm-command cycle-nonce item above; not closed here.
 4. **A door tool called again in the same reply is refused.** A door decides its own lane, so C4a's
    "put it back on confirm" clamp cannot apply; a drifted re-emit on a lane at `auto` would be a second
    write. While the reply carries a door approval forward, any other call to that door tool is not run
@@ -416,22 +434,23 @@ user request. C4a needs no push at all — the approval POST is the resume. Neit
 
 **C4b.**
 
-- Group 40 (`scripts/client-memory-authz/check.mjs`): 64 checks (43 in the first build, 13 added by the
-  round-2 review fixes, 8 by round 3: 40.4g ×3, 40.4g2, 40.4h, 40.9j, 40.9k, 40.12d). The CRM checks run the REAL
+- Group 40 (`scripts/client-memory-authz/check.mjs`): 70 checks (43 in the first build, 13 added by the
+  round-2 review fixes, 8 by round 3: 40.4g ×3, 40.4g2, 40.4h, 40.9j, 40.9k, 40.12d; 6 after the rebase
+  over INT-327 and the exact-head review: 40.1e, 40.1f, 40.14a, 40.14b, 40.9l, 40.9m). The CRM checks run the REAL
   `crm-command` handler (captured through the same module boundary as the chat): its readback before the
   claim, its atomic claim on the shared proposal store, its governed decision, its re-proposal and its
   executor call all run as shipped; only the database is the harness's (the proposal store with real
   filter semantics; `read_crm_command_result` / `execute_crm_command` as a committed-result table keyed
   by the idempotency key). The publish and Sales doors are MODELLED on their cited claim / replay /
-  re-propose behaviour, not run. Whole harness 731/0 (base 667/0; the first build measured 710/0, round 2
-  723/0). Round 3's 8 checks against the round-2 server: 2 red (40.4g's first assertion, 40.4g2); the
+  re-propose behaviour, not run. Whole harness 737/0 (base 667/0, measured on `origin/main` `51be9b75b`;
+  the first build measured 710/0, round 2 723/0, round 3 731/0). Round 3's 8 checks against the round-2 server: 2 red (40.4g's first assertion, 40.4g2); the
   other 6 pin behaviour that already held and exist to kill M5, M6, M8, M9. Run
   against the C4a head with the final harness: 33 of the round-2 harness's 56 group-40 checks red (the rest pin behaviour
   that already held and kill mutants). Run against the FIRST C4b build (before the review fixes): 6 red —
   40.4e, 40.4f, 40.9g, 40.9h, 40.12, 40.12c — plus 2 vitest (`sales-chat-cancellation`,
   `crm-command-chat-adoption`).
 - 40.13 drives every non-preview CRM action in the catalog (27; a guard fails if one is added without a
-  row) through the REAL crm-command: minted by the door, approved with no model re-emit, the stored
+  row; since INT-327 its `deal.create` row names its client by `client_ref`) through the REAL crm-command: minted by the door, approved with no model re-emit, the stored
   command runs once under the stored key. Each command is a minimal schema-valid one; the record reads
   and executor are the harness's committed-result table, so this proves the carry-forward contract
   (shape → door schema → claimed-vs-requested), not each action's business effect.
@@ -446,13 +465,16 @@ user request. C4a needs no push at all — the approval POST is the resume. Neit
   test injects `doorPin` / `settlePinnedDoorResult` (no pinned call in that test); the publish / Sales
   drives (40.9–40.9f) now carry a thread turn showing the card, because a door token is carried forward
   only from the thread that showed its card (40.12).
-- Other gates: `ci:tsc` 10 (= base); Deno check `paige-ai-chat` 10 diagnostics, identical code
-  multiset to base; `crm-command`, `growth-publish-command`, `sales-invoice-command`,
-  `sales-collection-command`, `sales-invoice-draft-command` check clean (= base); knowledge-scope 420/0
-  (= base); **full vitest, measured whole-suite on both sides (clean `git worktree add --detach` of
-  `d78a349ed`, never a stash): base 621 files, 9316 passed / 0 failed (2 skipped); C4b 622 files, 9325
-  passed / 0 failed (2 skipped)** — the +1 file / +9 tests are `door-resume-pinned`; the
-  `TenantCommandCenterShell.ownership` load-timing flake did not fire on either side in this run. (The
+- Other gates (re-measured after the rebase, against the current base `origin/main` `51be9b75b`): `ci:tsc`
+  10 (= base); Deno check `paige-ai-chat` 10 diagnostics, identical (code, message) multiset to base;
+  `crm-command`, `growth-publish-command`, `sales-invoice-command`, `sales-collection-command`,
+  `sales-invoice-draft-command` check clean (= base); knowledge-scope 420/0 (= base); **full vitest,
+  measured whole-suite on both sides (clean `git worktree add --detach` of `51be9b75b`, never a stash):
+  base 625 files passed + 2 skipped, 9361 passed / 0 failed (2 skipped); C4b 626 files passed + 2
+  skipped, 9371 passed / 0 failed (2 skipped)** — the +1 file / +10 tests are `door-resume-pinned` (9)
+  and the frozen-command case in `crm-contact-refs` (1); the `TenantCommandCenterShell.ownership`
+  load-timing flake did not fire on either side in this run. (Before the rebase, against `d78a349ed`:
+  base 621 files 9316 / 0, C4b 622 files 9325 / 0.) (The
   round-2 claim "touched vitest suites 357/357 (= base)" was a subset, and the whole suite was in fact
   red: `crm-executor-error-surfacing` asserted the pre-C4b source string — round 3, finding 1);
   `door-resume-pinned`, `sales-chat-cancellation`, `crm-command-chat-adoption`, `crm-approval-door-wiring` 54/54; all 67
@@ -506,6 +528,44 @@ user request. C4a needs no push at all — the approval POST is the resume. Neit
 | M11 a failed door claim settled without re-reading the row (round 3, the round-2 behaviour) | 40.4g, 40.4g2 |
 | F4 re-run against the round-3 code (no time bound) | 40.9i, 40.9j |
 | S1 vitest: the CRM failure result built from a hand-picked subset (`code: crmBody.code` for `...crmBody`) | `crm-executor-error-surfacing` "forwards the whole failure body…" |
+| X1 retirement drops `tenant_id` (exact-head review: survived) | 40.9l |
+| X2 retirement drops `user_id` (exact-head review: survived) | 40.9m |
+| R1 crm-command resolves the frozen canonical command in place (the pre-fix code, below) | 40.G / 40.ABORT (the deal card is never minted); vitest `crm-contact-refs` source contract |
+| R2 INT-327's Chat-side `preserveResolvedDealClient` dropped | 40.G / 40.ABORT at 40.1f (the door refuses the unlinked deal: `CRM_COMMAND_INVALID` at `command.client_ref`) |
+
+**Rebase over INT-327 (#1761, `51be9b75b`) — what broke and what was fixed.** After the rebase the
+harness crashed at 40.2c (`Cannot read properties of null (reading 'fingerprint')`): no `deal_create`
+card was minted. Two causes, both found by driving the real crm-command:
+
+1. *Fixture gap.* INT-327 makes `deal.create` require a canonical client (`client_ref` / `contact_id`)
+   or an explicit `unlinked_reason`; group 40's deal fixture named neither, and crm-command correctly
+   refused it (`CRM_COMMAND_INVALID`, `command.client_ref`). The fixture now names its client by
+   `client_ref` (and 40.13's row too), and the harness models crm-command's service-side client lookup
+   with its filters honoured (`clients`, `eq tenant_id`, `eq account_number`).
+2. *Product defect, on `main` since 2026-10-01 (`124a2f3be`), not introduced by C4b or INT-327.*
+   crm-command canonicalizes the request into a FROZEN object (`catalog.ts` `markCanonicalCrmCommand`)
+   and then `resolveCommandContactRefs` fills references in place — which throws in strict mode
+   (`Cannot assign to read only property 'client_ref'`). So every crm-command request that names a
+   contact by `client_ref` — the reference Paige is shown, and since INT-327 the required shape of a
+   linked deal — threw before anything was proposed or run. Reproduced against a clean `origin/main`
+   worktree for `deal.create` and `contact.update`. Fixed in crm-command: the resolver works on a copy
+   that is issued back through the canonical boundary (`body.command = canonicalizeCrmCommand(resolvedCommand)`),
+   before the readback, the approval subject and the request; a vitest case pins both halves (the frozen
+   object throws, the re-canonicalized copy carries the resolved client and keeps the INT-327 approval
+   subject). Production impact was not measured here (no prod access in this slice) — it should be
+   checked in the deploy's post-deploy scan.
+
+INT-327 × C4b, proven: the door stores the deal AFTER resolving its client, so the pinned resume runs
+the stored command WITH that client (40.1e); in a client-scoped conversation where the model omits the
+client, Chat's `preserveResolvedDealClient` adds it before the door is asked and the resume runs that
+stored deal (40.1f); and the resume never bypasses INT-327 — the door re-validates and re-resolves the
+stored command on every request, so a stored deal with no client (a pre-INT-327 proposal still in its
+window) is refused (40.14a) and a stored deal whose client no longer resolves is refused as not found
+(40.14b), nothing runs, no card. The group now stops with a NAMED failure (40.G, carrying the door's
+answer, then 40.ABORT) instead of a TypeError when a card it approves was never minted; the rest of the
+harness still runs. One harness model made more faithful, declared: the modelled Sales door now reuses
+only the caller's live cycle (this person, this workspace — `sales-invoice-command` ~L73-77); no
+existing check changed outcome.
 
 Not killed, stated: **V7b** (drop only `.not("issued_in_request","is",null)` from the door selection) is
 equivalent — the next predicate `.neq("issued_in_request", requestNonce)` already excludes NULL (SQL
@@ -550,7 +610,9 @@ the door's claim predicate for predicate.
 - The real model's wording after a resume (it reads the result and continues); the harness model is a
   stub.
 - Studio takes the same server path (harness 39.20) but its client does not render the resumed frame
-  (C3b); not driven in a browser. Operator does not take it at all (no thread is sent) — open work.
+  (C3b); not driven in a browser. On Operator (no thread is sent) the C4a general-gate resume does not
+  run — open work; Operator **door** approvals inside a workspace do resume since C4b (40.11b, §2b
+  "Operator").
 - The real model's adherence to the neutral rule 1 and the turn-local note (harness model is a stub).
 - C4b: the publish and Sales doors were modelled, not run (40.9h / 40.9i model the Sales re-mint, cited
   to `sales-invoice-command` ~L114-139); the real `crm-command` ran against a harness database. A

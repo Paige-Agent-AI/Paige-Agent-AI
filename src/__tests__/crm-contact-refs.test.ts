@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // the client_ref Paige was shown into the contact a governed CRM command acts on.
 import { normalizeClientRef, resolveClientRef } from "../../supabase/functions/_shared/client-ref";
 import { resolveCommandContactRefs, type ContactRefCommand } from "../../supabase/functions/_shared/crm-command/contact-refs";
-import { CRM_COMMAND_TOOLS, crmApprovalSubject } from "../../supabase/functions/_shared/crm-command/catalog";
+import { CRM_COMMAND_TOOLS, canonicalizeCrmCommand, crmApprovalSubject } from "../../supabase/functions/_shared/crm-command/catalog";
 import { orderedContactMethods } from "../../supabase/functions/_shared/contact-methods";
 
 afterEach(() => vi.restoreAllMocks());
@@ -154,8 +154,14 @@ describe("the CRM tools Paige is shown", () => {
 describe("crm-command resolves references before anything is decided", () => {
   const source = readFileSync("supabase/functions/crm-command/index.ts", "utf8");
   it("resolves before the cached readback, the approval subject and the request it executes", () => {
-    const resolve = source.indexOf("resolveCommandContactRefs(admin, tenantId, body.command");
+    const resolve = source.indexOf("resolveCommandContactRefs(admin, tenantId, resolvedCommand");
     expect(resolve).toBeGreaterThan(0);
+    // …on a copy of the frozen canonical command, issued back through the canonical boundary before use.
+    const reissue = source.indexOf("body.command = canonicalizeCrmCommand(resolvedCommand)");
+    expect(source.indexOf("const resolvedCommand = { ...body.command }")).toBeGreaterThan(0);
+    expect(source.indexOf("const resolvedCommand = { ...body.command }")).toBeLessThan(resolve);
+    expect(reissue).toBeGreaterThan(resolve);
+    expect(reissue).toBeLessThan(source.indexOf("const requestArgs = { command: body.command"));
     expect(resolve).toBeLessThan(source.indexOf("const requestArgs = { command: body.command"));
     expect(resolve).toBeLessThan(source.indexOf('admin.rpc("read_crm_command_result"'));
     expect(resolve).toBeLessThan(source.indexOf("crmApprovalSubject(body.command.action"));
@@ -190,5 +196,23 @@ describe("deal creation retains the resolved client's approval identity", () => 
     expect(await crmApprovalSubject("deal.create", resolved)).toBe(await crmApprovalSubject("deal.create", proposed));
     expect(await crmApprovalSubject("deal.create", { ...resolved, title: "Different opportunity" })).not.toBe(await crmApprovalSubject("deal.create", proposed));
     expect(await crmApprovalSubject("deal.create", { ...resolved, client_ref: "CLT-BO0000000002", contact_id: BO })).not.toBe(await crmApprovalSubject("deal.create", proposed));
+  });
+});
+
+describe("the door resolves references on a copy of the frozen canonical command", () => {
+  // crm-command canonicalizes (and freezes) the request, then resolves references IN PLACE. Doing that
+  // on the frozen object threw for every client_ref-named command; the door now resolves a copy and
+  // re-canonicalizes it. This pins both halves so neither regresses silently.
+  it("a frozen canonical command cannot be resolved in place, and a re-canonicalized copy carries the resolved client", async () => {
+    const proposed = { action: "deal.create", title: "New opportunity", pipeline_id: "pipeline-a", stage_id: "stage-a", client_ref: "clt-ada000000001" };
+    const { client } = clientsTable(BOOK);
+    const canonical = canonicalizeCrmCommand(proposed);
+    await expect(resolveCommandContactRefs(client, TENANT, canonical as ContactRefCommand, "test")).rejects.toThrow(/read only/);
+    const copy = { ...canonical };
+    expect((await resolveCommandContactRefs(client, TENANT, copy, "test")).ok).toBe(true);
+    const reissued = canonicalizeCrmCommand(copy);
+    expect(reissued).toMatchObject({ client_ref: "CLT-ADA000000001", contact_id: ADA });
+    expect(Object.isFrozen(reissued)).toBe(true);
+    expect(await crmApprovalSubject("deal.create", reissued)).toBe(await crmApprovalSubject("deal.create", canonical));
   });
 });

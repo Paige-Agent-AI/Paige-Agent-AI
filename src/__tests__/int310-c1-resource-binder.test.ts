@@ -171,7 +171,7 @@ interface H {
 /** rows: clients id→tenant. memberships: user→tenants they belong to. activeTenant: profiles.active_tenant_id. */
 function loadEdge(
   fn: string,
-  world: { rows: Record<string, string>; activeTenant?: string | null; memberOf?: string[]; tenantRpcFails?: boolean },
+  world: { rows: Record<string, string>; activeTenant?: string | null; memberOf?: string[]; tenantRpcFails?: boolean; agentFn?: string },
   stubs: Record<string, unknown> = {},
   mutate: Record<string, (s: string) => string> = {},
 ): H {
@@ -218,7 +218,7 @@ function loadEdge(
       // A neutral (non-finance) local agent, so the §2 funding opt-in gate does not hide it.
       if (table === "paige_subagents" && f.slug === "ops-helper") {
         return Promise.resolve({ data: [{ slug: "ops-helper", name: "Ops Helper", domain: "operations", description: "",
-          runtime: "local", edge_function: "subagent-data-consistency", enabled: true, tenant_id: null, config: {} }], error: null });
+          runtime: "local", edge_function: world.agentFn ?? "subagent-data-consistency", enabled: true, tenant_id: null, config: {} }], error: null });
       }
       return Promise.resolve({ data: [], error: null });
     };
@@ -366,6 +366,36 @@ const EMAIL_STUBS = {
   "_shared/attachment-extract.ts": { ATTACHMENT_SOURCE_INSTRUCTION: "", bytesToBase64: () => "", extractAttachmentText: async () => "", },
 };
 const compose = (contactId: string) => ({ input: { intent: "reach out", contact_id: contactId } });
+
+describe("INT-310 — the orchestrator reaches only allowlisted local specialists", () => {
+  // A tenant admin can write a paige_subagents row naming ANY function; the orchestrator calls it with the
+  // service role. The row here is the same neutral agent, pointed at targets that are not specialists.
+  const base = { rows: { [CONTACT_A]: TENANT_A }, activeTenant: TENANT_A, memberOf: [TENANT_A] };
+  for (const target of ["send-message", "subagent-forge", "paige-orchestrator", "subagent-market-research", "../../rest/v1/clients"]) {
+    it(`edge_function "${target}" → 403, nothing called, no invocation row written`, async () => {
+      const h = loadEdge("paige-orchestrator", { ...base, agentFn: target }, ORCH_STUBS);
+      const res = await h.handler(post({ action: "tool_invoke", slug: "ops-helper", input: {} }, USER_A));
+      expect(res.status).toBe(403);
+      expect(h.fetches).toEqual([]);
+      expect(h.from).not.toContain("paige_subagent_invocations");
+    });
+  }
+
+  it("an allowlisted specialist is still reached (the gate is not a blanket refusal)", async () => {
+    const h = loadEdge("paige-orchestrator", base, ORCH_STUBS);
+    const res = await h.handler(post({ action: "tool_invoke", slug: "ops-helper", input: {} }, USER_A));
+    expect(res.status).toBe(200);
+    expect(h.fetches.some((x) => x.url.endsWith("/functions/v1/subagent-data-consistency"))).toBe(true);
+  });
+
+  it("mutation proof: without the call-site check the service-role call reaches the unlisted target", async () => {
+    const h = loadEdge("paige-orchestrator", { ...base, agentFn: "send-message" }, ORCH_STUBS, {
+      "paige-orchestrator/index.ts": (src) => src.replace("!isOrchestratorLocalAgentFunctionAllowed(agent.edge_function)", "false"),
+    });
+    await h.handler(post({ action: "tool_invoke", slug: "ops-helper", input: {} }, USER_A));
+    expect(h.fetches.some((x) => x.url.endsWith("/functions/v1/send-message"))).toBe(true);
+  });
+});
 
 describe("INT-310 C1 — email-composer binds the contact to the caller's own workspace", () => {
   const rows = { [CONTACT_A]: TENANT_A, [CONTACT_B]: TENANT_B };

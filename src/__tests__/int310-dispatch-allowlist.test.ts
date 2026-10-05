@@ -144,7 +144,11 @@ describe("INT-310 orchestrator local-agent allowlist — the predicate", () => {
   });
   it("refuses any other function, and every non-canonical spelling (no path can escape the functions route)", () => {
     for (const v of [
-      "send-message", "subagent-forge", "paige-orchestrator", "subagent-sales-pipeline", "subagent-coach-copilot",
+      "send-message", "subagent-forge", "paige-orchestrator",
+      // Registered by early migrations but absent from prod's registry (2026-10-05) and not built to the
+      // contract: sales-pipeline / coach-copilot (undeployed, unscoped), financial-research (INT-316,
+      // trusts input.user_id), market-research (no caller gate). Each needs review before it is listed.
+      "subagent-sales-pipeline", "subagent-coach-copilot", "subagent-financial-research", "subagent-market-research",
       "../../rest/v1/clients", "%2e%2e/%2e%2e/auth/v1/admin/users", "subagent-email-composer/../x",
       "Subagent-Email-Composer", " subagent-email-composer", "", null, 7,
     ]) {

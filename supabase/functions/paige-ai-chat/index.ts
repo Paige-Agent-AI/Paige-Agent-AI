@@ -90,11 +90,27 @@ type ToolStepHooks = {
   start: (tc: any, toolIndex: number) => void;
   finish: (tc: any, toolIndex: number, res: any) => void;
 };
-// The announced tools that run with no workspace resolved (a tenant-less operator, §53): every other
-// announced tool is refused or answers "no workspace" without one, so it is not announced then (C2b).
+// The announced tools that run with no workspace resolved (a tenant-less caller — in practice the
+// Platform Operator at rest, §53, the only one the owner/admin role gate admits without a workspace):
+// each reaches its handler and finishes with its own answer, so it is announced like any other call.
+// Every other announced tool is refused without a workspace — by the role gate (the Studio build and
+// email tools need a seat), by its branch, or by its RPC — so it is not announced then (C2b). Audited
+// tool by tool against STEP_START_LABELS; the decision table is in docs/delivery/paige-conversational-loop-c2.md.
 const STEP_START_WITHOUT_WORKSPACE: ReadonlySet<string> = new Set([
-  "capability_status", "presence_who_online", "web_search", "deep_research",
-  "list_subagents", "delegate_to_subagent",
+  "capability_status",     // the per-turn capability projection; needs no workspace and no role
+  "presence_who_online",   // presence_list_online(p_tenant_id null): the operator sees platform-wide
+  "presence_is_online",    // presence_check_user: is_platform_owner() searches platform-wide, no tenant needed
+  "web_search",            // paige-web-search: no tenant input
+  "deep_research",         // paige-deep-research: persisted owner-scoped to the user, no tenant input
+  "list_subagents",        // the specialist registry: platform defaults need no workspace
+  "delegate_to_subagent",  // the same registry, dispatched for the caller
+  "action_advance",        // advance_action admits is_platform_owner(caller) for an action in any tenant
+  "inbox_list",            // list_inbox_messages keys on current_user_tenant_id(): no tenant → an honest empty list
+  "integrations_list",     // list_integration_surface: no tenant → an empty surface, never a raise
+  "contact_event_status",  // get_contact_event_status (INVOKER, RLS); the branch answers success either way
+  "propose_action",        // files a paige_pending_approvals row; tenant_id is nullable there
+  "growth_list",           // no tenant → the branch answers an empty page list, success
+  "calendar_book_meeting", // create_internal_booking admits is_platform_owner(); internal_bookings.tenant_id is nullable
 ]);
 // The owner-ops tools that read or write through the RLS-BYPASSING service-role client, so the
 // dispatch refuses them without a resolved workspace and binds them to the caller's OWN workspace

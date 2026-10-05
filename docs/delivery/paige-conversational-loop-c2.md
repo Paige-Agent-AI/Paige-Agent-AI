@@ -116,10 +116,61 @@ gates that sit inside the dispatch chain, and it refuses unparseable arguments (
 | no START wording (including the social tools and the doors in `STEP_NO_START`) | `describeStepStart` |
 | sales, publish and CRM doors | the door name sets (`CRM_COMMAND_TOOL_NAMES`, `GROWTH_PUBLISH_DOOR_TOOL_NAMES`, `SALES_*_TOOL_NAMES`) |
 | owner/admin role (defense in depth behind the early role gate) | `requiresWorkspaceAdmin` + `authorityAdmits(authorityForCall(tc.id))` (cached per call) |
-| no workspace resolved | `personaCtx.tenant_id`; only `STEP_START_WITHOUT_WORKSPACE` (6 tools that run tenant-less) may start without one |
+| no workspace resolved | `personaCtx.tenant_id`; only `STEP_START_WITHOUT_WORKSPACE` (14 tools that run tenant-less, audited below) may start without one |
 | service-role CRM tools bound to the caller's own workspace | `crmWorkspaceBindingRefusal`: one read of `current_user_tenant_id` per call, memoized and shared with the owner-ops branch, cleared when the next call starts |
 | internal text in a customer draft (`action_file`, `action_advance`, `propose_action`, `calendar_link_send`) | `outboundDraftRefusal`, memoized per call on tool + stage + arguments |
 | non-empty arguments that do not parse | `JSON.parse` of the raw arguments; empty or whitespace reads as `{}` |
+
+**Which tools START with no workspace (review fix, Codex on PR #1729).** The first cut listed 6 tools.
+`presence_is_online` was missing: it runs with no workspace (`presence_check_user` lets the platform owner
+search platform-wide), so a tenant-less operator got a `done` row with no `running` row before it. Every
+tool in `STEP_START_LABELS` (and the two in `STEP_START_SAME_LABEL`) was then audited for the same gap.
+The only tenant-less caller who gets past the early role gate (`requiresWorkspaceAdmin` +
+`authorityAdmits`, index.ts:9345) on an owner/admin tool is the Platform Operator (global
+`super_admin`); the Studio build tools need a workspace admin and the email tools a seat, both false
+with no workspace. Rule: a tool is in the set when, with `personaCtx.tenant_id` null, it reaches its
+handler and finishes with its own answer; it stays out when the role gate, its branch, its helper or its
+RPC refuses for want of a workspace (that refusal is the workspace-binding gate of rule 1: FINISH-only,
+as before). Line numbers are `supabase/functions/paige-ai-chat/index.ts` at the review-fix commit unless
+another file is named.
+
+| tool | no workspace | evidence |
+|---|---|---|
+| `capability_status`, `web_search`, `deep_research`, `list_subagents`, `delegate_to_subagent`, `presence_who_online` | **runs** (already in the set) | no tenant input, or a tenant-optional backend: 13030, 10164, 10193, 13581; `presence_list_online(p_tenant_id null)` 13151 |
+| `presence_is_online` | **runs** — added | 13161; `presence_check_user` ORs `is_platform_owner()` (20260712160000_user_presence_layer.sql:148) |
+| `action_advance` | **runs** — added | 12981; `advance_action` admits `is_platform_owner(_caller)` (20260804140000_advance_action_address_scope_guard.sql:74) |
+| `inbox_list` | **runs** — added (an honest empty list) | 13066; `list_inbox_messages` filters on `current_user_tenant_id()`, no raise (20270112000000_comms_messages_read.sql:38) |
+| `integrations_list` | **runs** — added (an empty surface) | 13025; `list_integration_surface` filters on `current_user_tenant_id()`, its other halves catch their own errors (20270410214500_paige_sees_gateway_mcp_connections.sql:164) |
+| `contact_event_status` | **runs** — added | 13042: the branch answers `success: true` whether the INVOKER RPC returns or errors |
+| `propose_action` | **runs** — added | 13679: inserts `paige_pending_approvals` with `tenant_id` null, a nullable column (20260629175341_…sql:206) |
+| `growth_list` | **runs** — added (an empty page list) | 12615: no tenant → `{ data: [] }`, success |
+| `calendar_book_meeting` | **runs** — added | 12403; `create_internal_booking` admits `is_platform_owner()` (20270519010000_contact_methods_dependents.sql:903); `internal_bookings.tenant_id` is nullable |
+| `comms_connection_summary`, `comms_list_numbers`, `comms_registration_status` | refused by the branch (`tenant_not_resolved`) | 11167, 11219, 11352 |
+| `comms_search_numbers`, `comms_buy_number` | refused by the edge function (`tenant_not_resolved`) | comms-search-numbers/index.ts:156, comms-purchase-number/index.ts:129 |
+| `comms_name_number`, `comms_set_primary_number` | refused by the RPC (`NO_TENANT_FOR_CALLER`) | 20260901010000_tenant_phone_number_edit_seams.sql:82, 168 |
+| `comms_draft_registration` | refused by the edge function (`LEGAL_PROFILE_REQUIRED`: no legal profile for no tenant) | comms-a2p-draft/index.ts:262 |
+| `crm_search_contacts`, `crm_get_contact_summary`, `crm_pipeline_summary`, `crm_list_deals`, `crm_list_tasks` | refused by the branch (`CRM_SERVICE_TOOLS`, `tenant_not_resolved`) | 11034 |
+| `crm_list_team` | refused by the RPC (`TEAM_FORBIDDEN`: `is_tenant_member(NULL)` is false) | 13145; 20260711160000_paige_onboarding_tools.sql:19 |
+| `crm_assign_contact` | refused by the RPC (`ASSIGN_FORBIDDEN`) | 13168; 20260711160000_paige_onboarding_tools.sql:52 |
+| `action_list`, `action_get` | refused by the RPC (`ACTION_FORBIDDEN`) | 13134; 20260711140000_action_bus.sql:436 |
+| `action_file` | refused by the RPC (`ACTION_FORBIDDEN`) | 12962; 20260714092000_growth_submission_processor.sql:534 |
+| `member_grant_role`, `member_revoke_role` | refused by the RPC (no active tenant context) | 12201, 12207; 20270508000000_forbid_title_role_value.sql:106, 20270511000000_no_row_holds_the_retired_title_role.sql:141 |
+| `pipeline_configure` | refused by the branch | 11914 |
+| `improvement_propose`, `improvement_list`, `improvement_decide` | refused by the branch | 13084 |
+| `mission_create`, `mission_revise`, `mission_transition` | refused by the branch (`MISSION_TENANT_NOT_RESOLVED`) | 13750 |
+| `campaign_brief_create`, `campaign_brief_revise`, `campaign_brief_list` | refused by the branch (`CAMPAIGN_BRIEF_TENANT_NOT_RESOLVED`) | 13841, 13867 |
+| the eight `booking_preset_*` tools | refused by the branch (`CALENDAR_PRESET_TENANT_NOT_RESOLVED`) | 13920, 13942 |
+| `calendar_link_prepare`, `calendar_link_social_copy`, `calendar_link_send` | refused by the branch | 13991 |
+| `agreement_send`, `agreement_draft`, `agreement_list`, `agreement_status` | refused by the helper (`no_workspace`) before any I/O | _shared/agreements/chat-write.ts:129, 272; chat-read.ts:256 |
+| `draft_marketing_content`, `content_save`, `generate_image`, `growth_page_generate`, `growth_page_save`, `growth_form_save` | refused by the early role gate (a Studio build tool needs a workspace admin) | 9345; `WORKSPACE_BUILD_TOOLS` |
+| `read_email_campaigns`, `read_email_campaign_audience`, `email_campaign_draft`, `email_campaign_request_approval` | refused by the early role gate (an email tool needs a seat) | 9345; `EMAIL_CAMPAIGN_TOOL_NAMES` |
+
+Residual (not changed here): the START asks `personaCtx.tenant_id`, while several RPCs above key on
+`current_user_tenant_id()`. If `get_paige_persona_context` itself fails, the persona is null while the
+JWT may still carry a workspace; a read tool marked "refused by the RPC" could then run and close `done`
+with no START. Mutating tools are not affected (a failed persona read leaves `proposalScopeResolved`
+false, so the gate refuses them). The audit reads the dispatch branches and the RPC definitions in
+`supabase/migrations`; it is not a query against production.
 
 **Shared pre-checks.** A few input checks are also asked before START, because each is a shared source
 the branch itself calls (the same function, or the same one read), so asking it costs nothing:
@@ -222,7 +273,7 @@ follow-up covers these two paths as well.
 
 **Evidence** (classes kept apart).
 - Automated harness, against in-memory doubles (not an authenticated runtime): client-memory-authz
-  578/0 (base 559/0) — 36.21–36.26 (start A, finish A, start B, finish B; distinct rows without provider
+  579/0 (base 559/0; 578/0 at 32f14ee before the review fix) — 36.21–36.26 (start A, finish A, start B, finish B; distinct rows without provider
   ids; every gate-refused shape never `running`; 36.23b–g the in-chain checks, including a workspace
   switch at every read point and a fresh read per call; withdrawn absent from `turn_trace`; a throw
   closes `error`; the mid-batch change); 36.23h (truncated JSON arguments to `web_search` and
@@ -233,7 +284,9 @@ follow-up covers these two paths as well.
   share", then `error` "Couldn't prepare that booking link"); 36.27b (`web_search` closes `running` →
   `error` "Couldn't search the web" for both a `success: false` result and a bare-`error` result, the
   shape paige-web-search returns on a provider error); 36.8d (the lifecycle audit is not vacuous), 36.8e
-  (each broken lifecycle shape flagged). knowledge-scope 420/0 — 16.4 and 22.2b (a running or withdrawn
+  (each broken lifecycle shape flagged); 36.23i (review fix: with no workspace, `presence_is_online` shows
+  `running` then `done` on one id and seq, and `crm_list_team`, whose RPC refuses, is never `running` and
+  closes `error`). knowledge-scope 420/0 — 16.4 and 22.2b (a running or withdrawn
   step classifies neutral). The step-lifecycle rules live in the shared stream auditor
   (`scripts/lib/audit-turn-frames.mjs` `auditStepLifecycle`) and run over every driven turn.
 - Unit: `src/__tests__/paige-step-start.test.ts` 9/9 (parity, tense, no detail, never-announced tools).
@@ -249,7 +302,9 @@ follow-up covers these two paths as well.
   (36.27 fails) or a bare `error` (36.27b fails); either calendar-link failure label removed (36.27
   fails). Two mutants survive, as expected: the role re-ask sits behind the early role gate, which refuses
   the same calls first, so it is defense in depth; and the step id's pass part replaced with `0` changes
-  nothing, for the reason given above.
+  nothing, for the reason given above. Review fix: removing `presence_is_online` from
+  `STEP_START_WITHOUT_WORKSPACE` fails 36.23i (a `done` row with no `running` row, the Codex finding);
+  adding `crm_list_team` to it fails 36.23i (`running` then `error`).
 - The social tools are never announced: they are in `STEP_NO_START`, so `describeStepStart` refuses them
   on the line before any other check. A separate `UNAVAILABLE_SOCIAL_TOOLS` line in `announceStart` was
   unreachable and is removed (putting it back changes no result); the set is still used at dispatch.
@@ -257,4 +312,10 @@ follow-up covers these two paths as well.
   `matrix()` pages as well as `run()`. Syntax-checked only; not driven for this change.
 - C2a evidence wording: the running glyph is described as "light lavender (measured rgb(185,168,255))",
   not "violet". No field, PASS value or path changed.
+- UI delivery evidence record (AGENTS.md "Evidence and review": a backend change that alters a visible
+  flow carries `Visible-Flow-Impact: yes` and a record): `docs/evidence/ui-delivery/c2b-step-start-finish.md`.
+  C2b changes no UI file; the rendering of `running` / `done` / `error` / withdrawn is C2a's, so the record
+  reuses C2a's frames (`docs/evidence/ui-delivery/assets/c2a-step-lifecycle/`) and cites the harness
+  streams above as the server-side evidence. Checked with the CI validator's own exported functions
+  (`classifyUiChanges` with the trailer declared, `validateEvidenceText`): no errors.
 - UNVERIFIED: an authenticated drive on the live platform.

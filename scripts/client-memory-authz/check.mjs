@@ -5478,6 +5478,29 @@ console.log("\npaige_turn — every stream says it started and ends once, before
   assert("36.23c a tool the dispatch answers with no workspace (tenant_not_resolved) is never shown as running",
     Object.values(noWorkspace).every(([r, fired]) => fired && runningFrames(r).length === 0),
     JSON.stringify(Object.fromEntries(Object.entries(noWorkspace).map(([k, [r, fired]]) => [k, { fired, steps: actionFrames(r) }]))));
+  // 36.23i …and a tool that DOES run with no workspace is announced like any other call. The same
+  // tenant-less operator asks whether someone is online: presence_check_user answers platform-wide for
+  // the operator (is_platform_owner()), so the call reaches its handler, runs and returns a match. It
+  // shows `running`, then `done` on the same id and seq — never a FINISH with no START (Codex review,
+  // PR #1729). The control: a tool whose RPC refuses a caller with no workspace (list_team_members
+  // raises TEAM_FORBIDDEN, is_tenant_member(NULL) being false) is still never announced, and closes
+  // `error` on a FINISH-only row.
+  const presenceTenantless = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Riley is online.",
+    toolCall: { name: "presence_is_online", args: { query: "Riley" } },
+    ...TENANTLESS, rpcOverrides: { ...TENANTLESS.rpcOverrides, presence_check_user: { data: [{ user_id: OWN, full_name: "Riley Park", avatar_url: null, is_online: true, status: "online", last_seen: new Date().toISOString() }], error: null } } });
+  const teamTenantless = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Open a workspace first.",
+    toolCall: { name: "crm_list_team", args: {} },
+    ...TENANTLESS, rpcOverrides: { ...TENANTLESS.rpcOverrides, list_team_members: { data: null, error: { code: "42501", message: "TEAM_FORBIDDEN" } } } });
+  const pr = actionFrames(presenceTenantless);
+  const tm = actionFrames(teamTenantless);
+  assert("36.23i with no workspace, a tool that runs anyway (presence_is_online) shows running then done on one row; one whose RPC refuses (crm_list_team) is never running and closes error",
+    presenceTenantless.rec.rpc.some((c) => c.name === "presence_check_user") && toldModel(presenceTenantless).includes("Riley Park")
+      && pr.length === 2 && pr.map((x) => x.status).join() === "running,done"
+      && pr[0].id === pr[1].id && pr[0].seq === pr[1].seq && pr[0].label === "Checking if someone's online" && !("detail" in pr[0])
+      && traceOf(presenceTenantless).length === 1 && traceOf(presenceTenantless)[0].status === "done"
+      && teamTenantless.rec.rpc.some((c) => c.name === "list_team_members")
+      && runningFrames(teamTenantless).length === 0 && tm.length === 1 && tm[0].status === "error",
+    JSON.stringify({ presence: pr, presenceTrace: traceOf(presenceTenantless), team: tm }));
 
   // 36.23d A proposal with a message but nobody to send it to — no contact and no address — is refused
   // in the branch (`no_recipient`) and is never announced.

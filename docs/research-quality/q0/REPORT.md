@@ -57,11 +57,11 @@ No aggregate "truth score." The vector is canonical; `baseline.json` carries per
 
 ## D. Baseline results
 
-**Development (n=24):** entailment 1.0 (vacuous — see limitations) · precision 0.765 · completeness **0.354** · contradiction **0.25** · insufficiency **1.0** · primary_ratio 0.449 · independence 0.737 · findings-with-citations 1.0 · **empty-findings rate 0.792** · median latency 56.8s · engine trace cost $0.289 · judge cost $1.78 (105 judge calls).
+**Development (n=24):** entailment 1.0 (vacuous — see limitations; scored 23/30 corpus-wide) · precision 0.765 (**scored on only 8/24 dev cases** — 16 judge replies unparseable → null, not zero) · completeness **0.354** (29/30 scored corpus-wide) · contradiction **0.25** (5/5) · insufficiency **1.0** (10/10) · primary_ratio 0.449 · independence 0.737 · findings-with-citations 1.0 · **empty-findings rate 0.792** · median latency 56.8s · engine trace cost $0.289 · judge cost $1.78 dev (105 judge calls corpus-wide incl. holdout).
 
 **Holdout (n=6):** precision 0.79 · completeness 0.40 · contradiction **0.0** · insufficiency 1.0 · primary_ratio 0.139 · independence 0.889 · empty-findings 0.667 · median latency 60.1s.
 
-**The headline**: 79% of development cases (19/24) produced **zero validated findings** despite retrieving 15–69 sources each — including trivially answerable ones (F1 federal minimum wage: 25 sources, 0 findings) and **all five high-stakes cases** (IRS dates, SEC accreditation, FDIC limits: 0 findings each). Meanwhile 2 of 5 insufficient-evidence cases DID produce findings (honest ones — the judge scored their refusal behavior 1.0). The system refuses more on answerable questions than on unanswerable ones.
+**The headline**: 79% of development cases (19/24) produced **zero validated findings** despite retrieving 15–69 sources each — including trivially answerable ones (F1 federal minimum wage: 25 sources, 0 findings) and **all five high-stakes cases** (IRS dates, SEC accreditation, FDIC limits: 0 findings each). Meanwhile 2 of 5 insufficient-evidence cases DID produce findings (honest ones — the judge scored their refusal behavior 1.0). The system refuses more on answerable questions than on unanswerable ones. **Confound caveat**: 8 of the 10 insufficiency-judged 1.0s arrive via the same empty-findings channel that is itself the dominant failure mode — only S2/S3 behaviorally demonstrated honest insufficiency with content; the insufficiency vector conflates "refused correctly" with "returned nothing at all."
 
 ## E. Raw-evidence location
 

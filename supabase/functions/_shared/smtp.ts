@@ -318,7 +318,9 @@ export async function resolveSmtpCreds(
 // Send — SSRF-guard, connect (STARTTLS/implicit TLS), AUTH, send, close.
 // -----------------------------------------------------------------------------
 
+import type {EmailAttachment} from './email-attachments.ts';
 export interface SmtpSendInput {
+  attachments?: EmailAttachment[];
   host: string;
   port: number;
   /** true = implicit TLS (465). false/undefined = STARTTLS (587/25/2525). */
@@ -386,6 +388,7 @@ export async function smtpSend(
       subject,
       content,
       html,
+      attachments: input.attachments?.map(a=>({...a,encoding:'base64' as const})),
       inReplyTo: input.inReplyTo ? sanitizeHeaderValue(input.inReplyTo) : undefined,
       headers: Object.fromEntries(Object.entries(input.headers ?? {})
         .filter(([name]) => /^[A-Za-z0-9-]{1,64}$/.test(name))

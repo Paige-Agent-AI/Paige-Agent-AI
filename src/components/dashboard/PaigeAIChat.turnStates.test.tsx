@@ -401,6 +401,11 @@ describe("C3a — proof (5): approval presentation without a synthetic bubble", 
     const sent = bodies[1].messages.filter((m) => m.role === "user").at(-1)!;
     expect(sent.content).toBe("Approved — run it.");
     expect(bodies[1].approvedConfirmations).toEqual(["fp-1"]);
+    // The view's own fields never ride the wire: the request is the shape it was before C3.
+    for (const m of bodies[1].messages as Array<Record<string, unknown>>) {
+      expect(m).not.toHaveProperty("turnSnapshot");
+      expect(m).not.toHaveProperty("decision");
+    }
     expect(host.textContent).not.toContain("Approved — run it.");
     const continuation = host.querySelector<HTMLElement>('[data-paige-continues="approval"]');
     expect(continuation).not.toBeNull();

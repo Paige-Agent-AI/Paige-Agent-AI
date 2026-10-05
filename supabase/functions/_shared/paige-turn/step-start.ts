@@ -70,6 +70,9 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   read_email_campaign_audience: "Counting who that campaign would reach",
   email_campaign_draft: "Saving an email draft",
   email_campaign_request_approval: "Filing an email campaign for approval",
+  read_email_series: "Checking your email series",
+  email_series_draft: "Writing an email series",
+  email_series_request_approval: "Filing an email series for approval",
   // Agreements
   agreement_send: "Sending the agreement for signature",
   agreement_draft: "Drafting the agreement",

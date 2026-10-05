@@ -7,6 +7,7 @@ import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
+import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
@@ -79,8 +80,10 @@ const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
   ...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,
   // Marketing email: its RPCs admit only an owner/admin SEAT of the active business (_email_caller_tenant),
   // never an agency manager acting in a sub-account or the operator acting as a business.
-  ...EMAIL_CAMPAIGN_TOOL_NAMES,
+  ...EMAIL_CAMPAIGN_TOOL_NAMES, ...EMAIL_SERIES_TOOL_NAMES,
 ]);
+// Marketing email's campaign and series tools: one owner/admin seat rule for both (E2b, E3c).
+const EMAIL_MARKETING_TOOL_NAMES: ReadonlySet<string> = new Set<string>([...EMAIL_CAMPAIGN_TOOL_NAMES, ...EMAIL_SERIES_TOOL_NAMES]);
 // The one publish door (growth-publish-command, V2b) admits the workspace's owner, an admin or its
 // managing agency — the Studio build rule (its tools are in WORKSPACE_BUILD_TOOLS). It is outside the
 // owner-ops branch, so the projection names it here or it would describe publishing to a member.
@@ -399,6 +402,9 @@ function describeStep(
     case "read_email_campaign_audience": return { label: failed ? "Couldn't count that campaign's audience" : "Counted who that campaign would reach", group: "owner" };
     case "email_campaign_draft": return { label: failed ? "Couldn't confirm the email draft" : "Saved an email draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
     case "email_campaign_request_approval": return { label: failed ? "Couldn't confirm it was filed for approval" : "Filed an email campaign for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
+    case "read_email_series": return { label: failed ? "Couldn't read your email series" : "Checked your email series", group: "owner" };
+    case "email_series_draft": return { label: failed ? "Couldn't confirm the email series was saved" : "Saved an email series draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
+    case "email_series_request_approval": return { label: failed ? "Couldn't confirm the series was filed for approval" : "Filed an email series for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
     // Calendar booking presets (owner) — a preset is a bookable /book PAGE; only publish makes it public.
     // Each verb special-cases CALENDAR_PRESET_RAIL_WRITE_FAILED: there the mutation IS verified and
     // PERSISTED (only the Rail evidence did not finish), so the chip must state the TRUE persisted
@@ -7664,6 +7670,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // Marketing email (E2b): read campaigns and their audience, write drafts, file one for the owner's
     // approval. Governed by the general gate below; PAIGE has no approve or send tool.
     toolDefs.push(...EMAIL_CAMPAIGN_TOOLS as any);
+    // Marketing email series (E3c): read series, write a whole series as a draft, file it for the owner's one
+    // approval. The same general gate governs them; PAIGE has no approve, start, pause, stop or send tool.
+    toolDefs.push(...EMAIL_SERIES_TOOLS as any);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -8011,6 +8020,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       read_email_campaign_audience: "counting who an email would reach",
       email_campaign_draft: "writing an email campaign draft",
       email_campaign_request_approval: "filing an email campaign for your approval",
+      read_email_series: "checking your email series",
+      email_series_draft: "writing an email series",
+      email_series_request_approval: "filing an email series for your approval",
       booking_preset_create: "creating a booking calendar (a private draft)",
       booking_preset_revise: "revising a booking calendar",
       booking_preset_publish: "publishing a booking calendar's public page",
@@ -8308,6 +8320,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             : `Save a new email campaign draft${a?.name ? ` "${String(a.name).slice(0, 120)}"` : ""}${a?.subject ? ` with the subject "${String(a.subject).slice(0, 120)}"` : ""} in Marketing › Email. Nothing is sent.`;
         case "email_campaign_request_approval":
           return "Lock this email campaign for your decision: it stops changing and I count who it reaches. You then approve the send itself in Marketing › Email; nothing is sent until you do.";
+        case "email_series_draft": {
+          const emails = Array.isArray(a?.emails) ? a.emails.length : 0;
+          const count = emails ? ` with ${emails} email${emails === 1 ? "" : "s"}` : "";
+          return a?.series_id
+            ? `Rewrite this email series${emails ? ` as ${emails} email${emails === 1 ? "" : "s"}` : ""}. It stays a draft; if the series is running, the approved version keeps sending until you approve the change. Nothing is sent.`
+            : `Save a new email series draft${a?.name ? ` "${String(a.name).slice(0, 120)}"` : ""}${count} in Marketing › Email › Automations. Nothing is sent.`;
+        }
+        case "email_series_request_approval":
+          return "File this email series for your decision. Its emails, waits, who enters, when people leave and the sender are locked. You approve it in Marketing › Email; nothing sends until you do. One approval covers everyone who enters this version, within the daily limit, until you pause or stop it. Any later change is a new version that needs its own approval.";
         case "booking_preset_create":
           return `Create a booking calendar "${String(a?.name || "Untitled").slice(0, 80)}"${a?.model ? ` (${String(a.model).replaceAll("_", " ")})` : ""} as a PRIVATE DRAFT. Its public /book page is NOT live — publishing is a separate, explicit step.`;
         case "booking_preset_duplicate": {
@@ -9289,7 +9310,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // same predicate with the same resolver and refuses first, so a call that reaches here has
           // already passed it. Asked again so the START can never be wider than that gate.
           if (requiresWorkspaceAdmin(name, N8N_MANAGEMENT_TOOL_NAMES)
-              && !authorityAdmits(name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)) return false;
+              && !authorityAdmits(name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_MARKETING_TOOL_NAMES)) return false;
           const tenantId: string | null = personaCtx?.tenant_id ?? null;
           if (!tenantId && !STEP_START_WITHOUT_WORKSPACE.has(name)) return false;
           // The same one read the branch makes for this call (`crmWorkspaceBindingRefusal`'s memo).
@@ -9729,7 +9750,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // after they approved it. Same resolver as that gate (asked fresh per call); the later gate
         // stays as defense in depth.
         if (requiresWorkspaceAdmin(tc.function.name, N8N_MANAGEMENT_TOOL_NAMES)
-            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)) {
+            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_MARKETING_TOOL_NAMES)) {
           if (WORKSPACE_BUILD_TOOLS.has(tc.function.name)) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
             success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)),
@@ -9778,6 +9799,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const { confirm: _compat, ...draftContent } = gateArgs;
             const userTurns = messages.filter((message: any) => message?.role === "user");
             gateArgs.request_key = await emailCampaignRequestKey(personaCtx.tenant_id, user.id, draftContent, {
+              thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null,
+            });
+            tc.function.arguments = JSON.stringify(gateArgs);
+          }
+          // A new email series carries its create key from here too (E3c), for the same reason.
+          if (tc.function.name === "email_series_draft" && !gateArgs.series_id && !gateArgs.request_key && personaCtx?.tenant_id) {
+            const { confirm: _compat, ...seriesContent } = gateArgs;
+            const userTurns = messages.filter((message: any) => message?.role === "user");
+            gateArgs.request_key = await emailSeriesRequestKey(personaCtx.tenant_id, user.id, seriesContent, {
               thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null,
             });
             tc.function.arguments = JSON.stringify(gateArgs);
@@ -14280,6 +14310,40 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome: "outcome_unknown", error: "The email action did not report back.", note: "Read the campaigns before saying anything changed, and do not retry automatically." }) });
           }
+        } else if (EMAIL_SERIES_TOOL_NAMES.has(tc.function.name)) {
+          // Marketing email series (E3c). The same seam as campaigns: the caller's own session, the business
+          // this chat is in, a write reported only after a fresh read shows it, the receipt through the existing
+          // recorder. The owner's own words in this conversation are the facts PAIGE may use beyond the
+          // business's records; a link or price from anywhere else is refused before anything is written.
+          let seriesArgs: Record<string, unknown> = {};
+          try { seriesArgs = JSON.parse(tc.function.arguments || "{}"); } catch { seriesArgs = {}; }
+          const userTurns = messages.filter((message: any) => message?.role === "user");
+          const ownerText = userTurns.map((message: any) => typeof message?.content === "string" ? message.content
+            : Array.isArray(message?.content) ? message.content.map((part: any) => typeof part?.text === "string" ? part.text : "").join(" ") : "").join("\n");
+          const tid = personaCtx?.tenant_id ?? null;
+          try {
+            const result = await dispatchEmailSeriesChat({
+              tenantId: tid, userId: user.id, toolName: tc.function.name, args: seriesArgs, ownerText,
+              publicSiteUrl: (Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai").replace(/\/+$/, ""),
+              turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
+            }, { caller: supabaseClient });
+            if (!tc.function.name.startsWith("read_") && tid && result.outcome !== "failed" && result.outcome !== "invalid") {
+              const recorded = await recordCapabilityRun(supabase, {
+                tenantId: tid, actorId: user.id, capabilityKey: tc.function.name,
+                outcome: result.outcome === "succeeded" ? "capability_succeeded" : result.outcome === "refused" ? "capability_refused" : "capability_outcome_unknown",
+                runId: await stableRunId(result.outcome === "succeeded" && result.runId
+                  ? [tc.function.name, tid, result.runId]
+                  : [tc.function.name, tid, `${payloadThreadId ?? ""}:${tc.id}`]),
+              });
+              if (!recorded && result.outcome === "succeeded") {
+                result.content = { ...result.content, activity_recorded: false,
+                  note: `${String(result.content.note ?? "")} It is done, but it did not appear in the business's activity record; say so if asked what PAIGE did.`.trim() };
+              }
+            }
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
+          } catch {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome: "outcome_unknown", error: "The email series action did not report back.", note: "Read the series before saying anything changed, and do not retry automatically." }) });
+          }
         } else if (tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise" || tc.function.name === "campaign_brief_list") {
           // Solo Tenant Brain — Campaign Brief planning records. The helper uses the CALLER JWT
           // for tenant/role resolution and the EXISTING configure RPC, then independently reopens
@@ -14922,6 +14986,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",
         campaign_brief_create: "campaign_briefs", campaign_brief_revise: "campaign_briefs",
         email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
+        email_series_draft: "email_sequences", email_series_request_approval: "email_sequences",
         // Calendar booking presets — every verb's durable subject is the calendars row (the
         // booking /book page). duplicate mints a new row; the rest act on the named one.
         booking_preset_create: "calendars", booking_preset_revise: "calendars",

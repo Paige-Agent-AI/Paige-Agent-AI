@@ -44,6 +44,7 @@ export const NON_IDENTITY_ARGS: Readonly<Record<string, readonly string[]>> = Ob
   // included, are what run on approval, so the same campaign is made once. Without this, approving two
   // drafts together never matches either card.
   email_campaign_draft: ["request_key"],
+  email_series_draft: ["request_key"],
 });
 
 // ── THE SUBJECT-ID FOR BATCH DISAMBIGUATION (§9/§13/§39) ─────────────────────────────────────────

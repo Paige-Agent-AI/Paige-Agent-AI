@@ -5,6 +5,11 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { PipelineCommandDesk } from "./PipelineCommandDesk";
 
+const crm = vi.hoisted(() => ({ invoke: vi.fn() }));
+vi.mock("@/hooks/useTenantContext", () => ({useTenantContext: () => ({activeTenantId: "t1", accountContextLoading: false})}));
+vi.mock("./deals/useSoloDealClients", () => ({useSoloDealClients: () => ({phase: "ready", clients: [{id: "client-a", name: "Avery Brooks", primaryEmail: "avery@example.test"}], retry: vi.fn(), loadMore: vi.fn(), hasMore: false})}));
+vi.mock("@/integrations/supabase/client", () => ({supabase: {functions: {invoke: crm.invoke}, auth: {getSession: async () => ({data: {session: {user: {id: "actor-a"}}}})}}}));
+
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const stage = (id, label, stageType = "open", movePolicy = "direct") => ({
@@ -87,6 +92,9 @@ describe("Pipeline Command Desk MVP", () => {
   let host: HTMLDivElement;
   let root: Root;
   beforeEach(() => {
+    sessionStorage.clear();
+    crm.invoke.mockReset();
+    crm.invoke.mockResolvedValue({data: {ok: true, readback: {id: "new-deal", contact_id: "client-a"}}, error: null});
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
@@ -127,35 +135,33 @@ describe("Pipeline Command Desk MVP", () => {
     expect(host.textContent).toContain("Deal record unavailable in this workspace. Nothing was changed.");
     expect(host.querySelector('[role="dialog"]')).toBeNull();
   });
-  it("creates a deal through the tenant-owned deal contract", async () => {
-    const data = makeData();
-    render(data);
-    act(() =>
-      [...host.querySelectorAll("button")]
-        .find((button) => button.textContent === "New deal")
-        ?.click(),
-    );
-    const inputs = host.querySelectorAll(".pipeline-desk-form input");
-    act(() => {
-      Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        "value",
-      )?.set?.call(inputs[0], "Avery Brooks");
-      inputs[0].dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    await act(async () =>
-      [...host.querySelectorAll("button")]
-        .find((button) => button.textContent === "Create deal")
-        ?.click(),
-    );
-    expect(data.pipelineAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "create-deal",
-        pipelineId: "p1",
-        stageId: "s1",
-        title: "Avery Brooks",
-      }),
-    );
+  const button = (text: string) => [...host.querySelectorAll("button")].find(b => b.textContent === text) as HTMLButtonElement;
+  const click = async (text: string) => { expect(button(text)).toBeTruthy(); await act(async () => button(text).click()); };
+  const fill = (input: HTMLInputElement, value: string) => act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value); input.dispatchEvent(new Event("input", {bubbles: true})); });
+  const select = (input: HTMLSelectElement, value: string) => act(() => { input.value=value; input.dispatchEvent(new Event("change", {bubbles: true})); });
+  const startLinked = async (data = makeData()) => {
+    render(data); await click("New deal");
+    fill(host.querySelector(".pipeline-desk-form input")!, "Avery Brooks");
+    select(host.querySelector(".pipeline-client-picker select")!, "client-a");
+    await click("Create deal");
+  };
+  it("creates a linked deal through real canonical CRM review", async () => {
+    const data = makeData(); await startLinked(data); expect(crm.invoke).not.toHaveBeenCalled();
+    await click("Continue");
+    expect(crm.invoke).toHaveBeenCalledWith("crm-command", {body: expect.objectContaining({expected_tenant_id: "t1", command: {action: "deal.create", pipeline_id: "p1", stage_id: "s1", title: "Avery Brooks", contact_id: "client-a", tags: [], notes: ""}, idempotency_key: expect.any(String)})});
+    expect(data.pipelineAction).not.toHaveBeenCalled();
+  });
+  it("refuses creation without an explicitly selected client", async () => {
+    render(); await click("New deal"); fill(host.querySelector(".pipeline-desk-form input")!, "Avery Brooks"); await click("Create deal");
+    expect(host.textContent).toContain("Choose a canonical client record"); expect(crm.invoke).not.toHaveBeenCalled();
+  });
+  it("requires and sends explicit unlinked prospect intent", async () => {
+    crm.invoke.mockResolvedValue({data: {ok: true, readback: {id: "new-deal", contact_id: null}}, error: null});
+    render(); await click("New deal"); fill(host.querySelector(".pipeline-desk-form input")!, "New prospect");
+    act(() => host.querySelectorAll<HTMLInputElement>('input[type="radio"]')[1].click());
+    await click("Create deal"); expect(host.textContent).toContain("Choose why this prospect"); expect(crm.invoke).not.toHaveBeenCalled();
+    select(host.querySelector(".pipeline-desk-form select")!, "early_stage_prospect"); await click("Create deal"); await click("Continue");
+    expect(crm.invoke.mock.calls[0][1].body.command).toEqual({action: "deal.create", pipeline_id: "p1", stage_id: "s1", title: "New prospect", unlinked_reason: "early_stage_prospect", tags: [], notes: ""});
   });
 
   it("turns a closing-stage move into an explicit outcome decision", () => {
@@ -254,37 +260,13 @@ describe("Pipeline Command Desk MVP", () => {
     });
     expect(host.querySelector('[role="dialog"]')).toBeNull();
   });
-  it("keeps one stable idempotency key across a retry of the same deal draft", async () => {
-    const data = makeData();
-    data.pipelineAction = vi.fn(async (_action: Record<string, unknown>) => ({
-      ok: false,
-      message: "Retry safely",
-    }));
-    render(data);
-    act(() =>
-      [...host.querySelectorAll("button")]
-        .find((button) => button.textContent === "New deal")
-        ?.click(),
-    );
-    const input = host.querySelector(
-      ".pipeline-desk-form input",
-    ) as HTMLInputElement;
-    act(() => {
-      Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        "value",
-      )?.set?.call(input, "Retry record");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    const save = () =>
-      [...host.querySelectorAll("button")]
-        .find((button) => button.textContent === "Create deal")
-        ?.click();
-    await act(async () => save());
-    await act(async () => save());
-    const first = data.pipelineAction.mock.calls[0]?.[0]?.idempotencyKey;
-    const second = data.pipelineAction.mock.calls[1]?.[0]?.idempotencyKey;
-    expect(second).toBe(first);
+  it("recovers an uncertain result with the same exact CRM operation", async () => {
+    crm.invoke.mockRejectedValueOnce(Error("Connection interrupted"));
+    const data = makeData(); await startLinked(data); await click("Continue");
+    expect(host.textContent).toContain("result is unknown"); await click("Recover original action");
+    expect(crm.invoke.mock.calls[1][1].body).toEqual(crm.invoke.mock.calls[0][1].body);
+    expect(crm.invoke.mock.calls[0][1].body.idempotency_key).toEqual(expect.any(String));
+    expect(data.pipelineAction).not.toHaveBeenCalled();
   });
 
   it("renders only the top dialog and preserves native Space on inner controls", () => {

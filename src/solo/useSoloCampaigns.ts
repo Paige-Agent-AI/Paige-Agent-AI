@@ -850,7 +850,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
             pipelineId: row.pipeline_id,
             stageId: row.stage_id,
             clientId: row.client_id ?? null,
-            clientName: row.client_name || "Client not recorded",
+            clientName: row.client_id ? row.client_name || "Client name unavailable" : "Client unavailable or not linked",
             owner: row.owner_user_id ? "Assigned owner" : "Owner not recorded",
             status: row.status || "Not recorded",
             source: row.source || "Source not recorded",

@@ -1,0 +1,20 @@
+import React from 'react';
+import {act} from 'react';
+import {createRoot,type Root} from 'react-dom/client';
+import {describe,it,expect,vi,beforeEach,afterEach} from 'vitest';
+const m=vi.hoisted(()=>({tenant:'tenant-a',fail:false,queries:[] as {table:string;filters:Record<string,string>}[],navigate:vi.fn()}));
+vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>({activeTenantId:m.tenant,accountContextLoading:false})}));
+vi.mock('react-router-dom',()=>({useNavigate:()=>m.navigate,useLocation:()=>({pathname:'/solo/test/clients'})}));
+vi.mock('@/components/tenant-shell/tenantShellRoutes',()=>({tenantRoutePrefixForPath:()=>'/solo/test'}));
+vi.mock('@/components/admin/pipeline/NewDealDialog',()=>({NewDealDialog:()=>null}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{from:(table:string)=>{const q={table,filters:{} as Record<string,string>};m.queries.push(q);const chain={select:()=>chain,eq:(k:string,v:string)=>{q.filters[k]=v;return chain},is:()=>chain,order:()=>chain,then:(resolve:(value:unknown)=>unknown)=>resolve({error:m.fail?{message:'failed'}:null,data:table==='deals'?[{id:'deal-a',title:'Discovery',status:'open',value_cents:100,currency:'USD',stage_id:'stage-a',pipeline_id:'pipeline-a'}]:[]})};return chain}}}));
+import {ContactDealsSection} from './ContactDealsSection';
+let root:Root,node:HTMLDivElement;
+const render=async()=>{await act(async()=>root.render(<ContactDealsSection contactId="client-a"/>));};
+beforeEach(()=>{m.tenant='tenant-a';m.fail=false;m.queries=[];m.navigate.mockReset();node=document.createElement('div');document.body.append(node);root=createRoot(node)});
+afterEach(async()=>{await act(async()=>root.unmount());node.remove()});
+describe('client deals workspace boundary',()=>{
+ it('filters every read and opens canonical opportunities',async()=>{await render();expect(m.queries).toHaveLength(3);for(const q of m.queries)expect(q.filters.tenant_id).toBe('tenant-a');expect(m.queries[0].filters.contact_client_id).toBe('client-a');await act(async()=>[...node.querySelectorAll('button')].find(b=>b.textContent?.includes('Discovery'))!.click());expect(m.navigate).toHaveBeenCalledWith('/solo/test/sales/opportunities?view=board&deal=deal-a')});
+ it('shows read failure instead of a false empty result',async()=>{m.fail=true;await render();expect(node.textContent).toContain('Could not load linked deals');expect(node.textContent).not.toContain('Discovery');expect(node.textContent).toContain('Retry linked deals')});
+ it('does not retain records when workspace authority disappears',async()=>{await render();m.tenant='';await render();expect(node.textContent).not.toContain('Discovery');expect(node.textContent).toContain('Choose a workspace')});
+});

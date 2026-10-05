@@ -178,3 +178,17 @@ describe("a contact's methods as a reader sees them", () => {
     expect(orderedContactMethods(null)).toEqual([]);
   });
 });
+
+
+describe("deal creation retains the resolved client's approval identity", () => {
+  it("matches before and after server reference resolution, without losing commercial inputs", async () => {
+    const proposed = { action: "deal.create", title: "New opportunity", pipeline_id: "pipeline-a", stage_id: "stage-a", client_ref: "clt-ada000000001" };
+    const { client } = clientsTable(BOOK);
+    const resolved = { ...proposed };
+    expect((await resolveCommandContactRefs(client, TENANT, resolved, "test")).ok).toBe(true);
+    expect(resolved).toMatchObject({ client_ref: "CLT-ADA000000001", contact_id: ADA });
+    expect(await crmApprovalSubject("deal.create", resolved)).toBe(await crmApprovalSubject("deal.create", proposed));
+    expect(await crmApprovalSubject("deal.create", { ...resolved, title: "Different opportunity" })).not.toBe(await crmApprovalSubject("deal.create", proposed));
+    expect(await crmApprovalSubject("deal.create", { ...resolved, client_ref: "CLT-BO0000000002", contact_id: BO })).not.toBe(await crmApprovalSubject("deal.create", proposed));
+  });
+});

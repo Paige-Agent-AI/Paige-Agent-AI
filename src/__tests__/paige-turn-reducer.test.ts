@@ -250,10 +250,34 @@ describe("frames obey the contract", () => {
     expect(() => t.frame("completed")).toThrow();
   });
 
-  it("never emits the events reserved for a later slice", () => {
+  it("never emits the event still reserved for a later slice", () => {
     const t = tracker();
     expect(() => t.frame("segment")).toThrow();
-    expect(() => t.frame("resumed")).toThrow();
+  });
+
+  // C4a — `resumed` is real now: the turn that carries an approved act forward says so once, while
+  // it is still WORKING, and its record keeps the kind (closed enum) and nothing else.
+  it("a resumed turn says resumed while WORKING and records the kind only", () => {
+    const t = tracker();
+    t.resumed("approval");
+    expect(t.frame("resumed")).toEqual({ v: 1, event: "resumed", state: "WORKING", mode: "pending" });
+    t.toolsExecuted([ran("contact_create")]);
+    t.roundStarted(); t.naturalStop();
+    expect(t.record()).toEqual({ v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" } });
+    expect(readTurnRecord(JSON.parse(JSON.stringify(t.record())))).toEqual(t.record());
+  });
+
+  it("an ordinary turn's record carries no resumed key", () => {
+    const t = tracker();
+    t.roundStarted(); t.naturalStop();
+    expect(Object.keys(t.record())).not.toContain("resumed");
+  });
+
+  it("the reader drops a resumed kind outside the contract", () => {
+    expect(readTurnRecord({ v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approved" } }))
+      .toEqual({ v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1 });
+    expect(readTurnRecord({ v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "work" } })?.resumed)
+      .toEqual({ kind: "work" });
   });
 });
 

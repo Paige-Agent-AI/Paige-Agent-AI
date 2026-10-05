@@ -55,6 +55,7 @@ import {
   deriveLiveTurnView,
   deriveSnapshotView,
   isDecisionReplyText,
+  mergeResumedRows,
   outcomeFromRecord,
   readPaigeStreamWithRaw,
   readTurnRecord,
@@ -69,6 +70,7 @@ import {
 } from "@/lib/paige-stream";
 import { PaigeLiveTurnStatus, PaigeTurnFooter, PaigeTurnStatus } from "@/components/paige/chat/PaigeTurnStatus";
 import type { TurnFrame } from "../../../supabase/functions/_shared/paige-turn/contract";
+import { readResumeRecord } from "../../../supabase/functions/_shared/paige-turn/resume";
 import { parseLiveConversationCard, type LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
 import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/components/chat/anchoredTranscriptScroll";
 import {
@@ -175,6 +177,8 @@ type LiveTurn = {
   /** After Stop, move keyboard focus to the footer. False when Stop came from a Live voice
    *  interruption: the person is talking, not tabbing, and focus must not be pulled. */
   stopFocus: boolean;
+  /** C4a — the server said `resumed`: this answer carries the person's approval forward. */
+  resumed: boolean;
 };
 
 // crypto.randomUUID is undefined in some insecure-context / older webviews — guard
@@ -453,6 +457,7 @@ const PaigeAIChatInner = ({
             endCause: cause,
             source: "live",
             hasContent: m.content.trim() !== "",
+            ...(next.resumed ? { resumed: true } : {}),
           },
         } : m)
       : prev);
@@ -970,6 +975,7 @@ const PaigeAIChatInner = ({
           endCause: null,
           source: "reload",
           hasContent: t.content.trim() !== "",
+          ...(record.resumed ? { resumed: true } : {}),
         } : undefined;
         return mkMsg({
           ...(tid ? { id: tid } : {}),
@@ -1014,6 +1020,17 @@ const PaigeAIChatInner = ({
       const created = turns.find((t) => (t as { id?: string }).id === m.id) as { created_at?: string } | undefined;
       const at = created?.created_at ? Date.parse(created.created_at) : NaN;
       mapped[i - 1] = { ...prev, confirmReceipt: { decision: said, ts: Number.isFinite(at) ? at : null, result: decisionCardResult(m.content) } };
+    }
+    // C4a — an answer that carried an approval forward saved the card's report exactly as the wire
+    // sent it (`bundle_ref.paige_resume.approval_outcome`), so a reload draws the same report card the
+    // person saw live — through the same reader (`applyServerOutcome`), against the card that asked.
+    for (let i = 0; i < mapped.length; i += 1) {
+      const m = mapped[i];
+      if (m.role !== "assistant" || !m.turnSnapshot?.resumed) continue;
+      const saved = turns.find((t) => (t as { id?: string }).id === m.id) as { bundle_ref?: Record<string, unknown> | null } | undefined;
+      const report = readResumeRecord(saved?.bundle_ref?.paige_resume)?.approval_outcome;
+      if (!report?.actions.length) continue;
+      mapped[i] = { ...m, approvalOutcome: applyServerOutcome(pendingApprovalOutcome(mapped.slice(0, i), report.actions.map((a) => a.fingerprint)), report) };
     }
       // R2b §12 — resolve the research references through the governed get RPC after the
       // transcript paints (history load never blocks on research reads). A resolved run
@@ -1329,7 +1346,7 @@ const PaigeAIChatInner = ({
     settleLiveTurn("done");
     writeLiveTurn({
       assistantId, startedAt: assistantTs, frame: null, rows: [], writing: false, gateOpen: false,
-      streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true,
+      streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true, resumed: false,
     });
     const gateId = window.setTimeout(() => updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true })), TURN_LINE_GATE_MS);
     const timeoutId = soloTenantSafety ? window.setTimeout(() => {
@@ -1563,7 +1580,9 @@ const PaigeAIChatInner = ({
         if (frame.type === "malformed") { halted = true; continue; }
         if (frame.type === "turn") {
           const turnFrame = frame.turn;
-          updateLiveTurn(assistantId, (t) => ({ ...t, frame: turnFrame }));
+          // C4a — `resumed` sticks for the rest of the read: later frames (the terminal) replace the
+          // frame, never the fact that this answer carries an approval forward.
+          updateLiveTurn(assistantId, (t) => ({ ...t, frame: turnFrame, resumed: t.resumed || turnFrame.event === "resumed" }));
           continue;
         }
         try {
@@ -2416,10 +2435,45 @@ const PaigeAIChatInner = ({
   const liveInputFor = (lt: LiveTurn, hasContent: boolean, awaitingApproval: boolean) => ({
     frame: lt.frame, rows: lt.rows, streaming: lt.streaming, writing: lt.writing, gateOpen: lt.gateOpen,
     startedAt: lt.startedAt, endCause: lt.endCause, elapsedMs: lt.elapsedMs, hasContent, awaitingApproval,
-    personaName: persona.name,
+    personaName: persona.name, resumed: lt.resumed,
   });
+  // ── C4a — ONE ANSWER, ONE LINE (prototype frames a3/a4) ─────────────────────────────────────
+  // When the server carries an approval forward (`resumed`, live or saved), the answer that showed the
+  // card and the answer that ran it are one piece of work, and the runtime now says so. They are drawn
+  // as one: a single line at the top of the answer that asked — it restarts on the same line ("Sending
+  // to Daniel"), then reads "What PAIGE did" over the steps before AND after the card — and no seam
+  // between the two bubbles. Only when the server said `resumed`; any other decision follow-up keeps
+  // C3's closer-gap presentation, unchanged.
+  const isResumedAnswer = (m: Message | undefined): boolean => !!m && m.role === "assistant"
+    && ((liveTurn?.assistantId === m.id && liveTurn.resumed) || m.turnSnapshot?.resumed === true);
+  /** For a resumed answer at `index`: the index of the answer it continues, or -1. */
+  const resumesFrom = (index: number): number => {
+    if (index < 2 || !isResumedAnswer(messages[index])) return -1;
+    const decision = messages[index - 1];
+    const asked = messages[index - 2];
+    return decision?.role === "user" && decision.decision === "approved" && asked?.role === "assistant" ? index - 2 : -1;
+  };
+  /** For the answer that asked: the index of the resumed answer that continues it, or -1. */
+  const resumedAt = (index: number): number => (index + 2 < messages.length && resumesFrom(index + 2) === index ? index + 2 : -1);
+  /** The resumed answer's line, over both answers' steps. */
+  const resumedViewFor = (askedAt: number, at: number): TurnView | null => {
+    const asked = messages[askedAt];
+    const resumed = messages[at];
+    const priorRows = asked.turnSnapshot?.rows ?? [];
+    const awaitingApproval = confirmCardLive(resumed, at);
+    if (liveTurn && liveTurn.assistantId === resumed.id) {
+      return deriveLiveTurnView({ ...liveInputFor(liveTurn, resumed.content.trim() !== "", awaitingApproval), rows: mergeResumedRows(priorRows, liveTurn.rows), now: Date.now() });
+    }
+    return resumed.turnSnapshot
+      ? deriveSnapshotView({ ...resumed.turnSnapshot, rows: mergeResumedRows(priorRows, resumed.turnSnapshot.rows) }, { personaName: persona.name, awaitingApproval })
+      : null;
+  };
   const turnViewFor = (message: Message, index: number): TurnView | null => {
     if (message.role !== "assistant") return null;
+    const from = resumesFrom(index);
+    if (from >= 0) return resumedViewFor(from, index);
+    const resumedIndex = resumedAt(index);
+    if (resumedIndex >= 0) return resumedViewFor(index, resumedIndex);
     const awaitingApproval = confirmCardLive(message, index);
     if (liveTurn && liveTurn.assistantId === message.id) {
       return deriveLiveTurnView({ ...liveInputFor(liveTurn, message.content.trim() !== "", awaitingApproval), now: Date.now() });
@@ -2442,6 +2496,28 @@ const PaigeAIChatInner = ({
   const holdTurnLine = (line: HTMLElement) => transcriptScrollRef.current?.holdMessageAt(line);
   const renderTurnLine = (message: Message, index: number, view: TurnView | null) => {
     if (!view) return null;
+    // C4a — the resumed answer's line is drawn once, at the top of the answer that asked (a3/a4).
+    if (resumesFrom(index) >= 0) return null;
+    const resumedIndex = resumedAt(index);
+    if (resumedIndex >= 0) {
+      const resumed = messages[resumedIndex];
+      const lineProps = {
+        idBase: `turn-${message.id}`,
+        open: turnTraceOpen[message.id] ?? false,
+        onOpenChange: (open: boolean) => openTurnTrace(message.id, open),
+        onTraceToggle: holdTurnLine,
+        personaName: persona.name,
+      };
+      if (liveTurn && liveTurn.assistantId === resumed.id) {
+        const awaiting = confirmCardLive(resumed, resumedIndex);
+        // One voice per state, as on every other answer: where the report card speaks for the
+        // approval (Solo), the line stays quiet; where there is none (the drawer), the line says
+        // "Approved. PAIGE is working" (frame a3).
+        const input = { ...liveInputFor(liveTurn, resumed.content.trim() !== "", awaiting), rows: mergeResumedRows(message.turnSnapshot?.rows ?? [], liveTurn.rows) };
+        return <PaigeLiveTurnStatus input={input} announce={!awaiting && !resumed.approvalOutcome} {...lineProps} />;
+      }
+      return <PaigeTurnStatus view={view} {...lineProps} />;
+    }
     const common = {
       idBase: `turn-${message.id}`,
       open: turnTraceOpen[message.id] ?? false,
@@ -2471,8 +2547,12 @@ const PaigeAIChatInner = ({
   };
   const renderTurnFooter = (message: Message, index: number, view: TurnView | null) => {
     if (!view?.footer) return null;
+    // C4a — the combined answer's footer closes the combined answer, under the resumed one; its "Ask
+    // again" is the person's own request, never the card's decision sentence.
+    if (resumedAt(index) >= 0) return null;
     const live = liveTurn?.assistantId === message.id;
-    const original = live ? liveTurn?.userText : precedingUserText(index);
+    const from = resumesFrom(index);
+    const original = from >= 0 ? precedingUserText(from) : live ? liveTurn?.userText : precedingUserText(index);
     return (
       <PaigeTurnFooter
         footer={footerFor(view.footer, view.kind, original)}
@@ -2619,16 +2699,21 @@ const PaigeAIChatInner = ({
               // as a new request, and nothing here says otherwise (server-carried resume is C4).
               const continues = message.role === "assistant" && index > 0
                 && messages[index - 1]?.role === "user" && !!messages[index - 1]?.decision;
+              // C4a — when the server carried the approval forward, the two answers are ONE answer:
+              // no gap, and (in bubble mode) one bubble, the seam closed on both sides.
+              const resumedHere = resumesFrom(index) >= 0;
+              const continuedBelow = resumedAt(index) >= 0;
               return (
               <div
                 key={message.id}
                 data-paige-message-id={message.id}
                 data-paige-message-anchor-key={messageScrollAnchorKey(message.role, message.content)}
-                data-paige-continues={continues ? "approval" : undefined}
+                data-paige-continues={resumedHere ? "resumed" : continues ? "approval" : undefined}
                 className={cn(
                   "flex min-w-0",
                   message.role === "user" ? "flex-row-reverse" : "w-full flex-row",
                   continues && "!mt-2",
+                  resumedHere && "!mt-0",
                 )}
               >
                 <div
@@ -2658,6 +2743,9 @@ const PaigeAIChatInner = ({
                           // column (still capped at 80%), so the line and the card are not squeezed
                           // into a bubble shrunk to its first sentence.
                           message.role === "assistant" && (turnView || (!!message.confirm?.length && !message.confirmResolved)) && "w-full",
+                          // C4a — one bubble across the resumed seam (and both halves take the column).
+                          continuedBelow && "w-full rounded-b-none border-b-0 pb-2",
+                          resumedHere && "w-full rounded-t-none border-t-0 pt-2",
                         ),
                   )}
                 >

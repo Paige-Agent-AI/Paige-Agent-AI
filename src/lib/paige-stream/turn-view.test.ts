@@ -14,6 +14,7 @@ import {
   deriveSnapshotView,
   formatElapsed,
   isDecisionReplyText,
+  mergeResumedRows,
   readTurnTrace,
   settleTurnRows,
   upsertTurnRow,
@@ -300,5 +301,31 @@ describe("REFUSED names a cause only while exactly one emitter exists", () => {
     expect(at).toBeGreaterThan(0);
     // It sits inside the client-scope refusal branch, a few lines below its opening.
     expect(src.slice(Math.max(0, at - 1600), at)).toContain("if (clientScopeDenied) {");
+  });
+});
+
+// C4a — a resumed approval is one answer (frames a3/a4).
+describe("turn view — a resumed approval (C4a)", () => {
+  it("merges the steps before the card and after it, in that order, with ids that cannot collide", () => {
+    const merged = mergeResumedRows([row("trace-0", "Drafted the cover note")], [row("trace-0", "Sent to Daniel")]);
+    expect(merged.map((r) => [r.id, r.label])).toEqual([["before:trace-0", "Drafted the cover note"], ["after:trace-0", "Sent to Daniel"]]);
+    expect(new Set(merged.map((r) => r.id)).size).toBe(2);
+  });
+
+  it("while the carried-forward act runs, the line names the step and a reader hears “Approved. PAIGE is working”", () => {
+    const v = deriveLiveTurnView(live({ frame: frame("resumed", "WORKING", "pending"), resumed: true, rows: [row("a", "Sending to Daniel", "running")] }))!;
+    expect([v.kind, v.text, v.announce]).toEqual(["work", "Sending to Daniel", "Approved. PAIGE is working"]);
+  });
+
+  it("an ordinary turn's working line never says Approved", () => {
+    const v = deriveLiveTurnView(live({ rows: [row("a", "Sending to Daniel", "running")] }))!;
+    expect(v.announce).toBe("PAIGE is working");
+  });
+
+  it("once it settles, the resumed answer reads like any finished answer — no claim beyond its record", () => {
+    const v = deriveLiveTurnView(live({ frame: frame("completed", "FINAL", "action"), resumed: true, streaming: false, endCause: "done", elapsedMs: 3_000, rows: [row("a", "Drafted"), row("b", "Sent")] }))!;
+    expect([v.kind, v.text, v.announce]).toEqual(["done", "What PAIGE did · 2 steps", "Done"]);
+    const reload = deriveSnapshotView({ outcome: { state: "FINAL", mode: "action" }, rows: [row("a", "Drafted"), row("b", "Sent")], elapsedMs: null, endCause: null, source: "reload", hasContent: true, resumed: true }, { awaitingApproval: false, personaName: "PAIGE" })!;
+    expect([reload.kind, reload.text]).toEqual(["done", "What PAIGE did · 2 steps"]);
   });
 });

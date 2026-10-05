@@ -1,0 +1,2444 @@
+{
+ "c4a-matrix-a4-page-light-1536x770": {
+  "name": "c4a-matrix-a4-page-light-1536x770",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1536,
+  "h": 770,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-page-dark-1536x770": {
+  "name": "c4a-matrix-a4-page-dark-1536x770",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 1536,
+  "h": 770,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-light-1536x770": {
+  "name": "c4a-matrix-a4-drawer-light-1536x770",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1536,
+  "h": 770,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-dark-1536x770": {
+  "name": "c4a-matrix-a4-drawer-dark-1536x770",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1536,
+  "h": 770,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-page-light-1366x768": {
+  "name": "c4a-matrix-a4-page-light-1366x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-page-dark-1366x768": {
+  "name": "c4a-matrix-a4-page-dark-1366x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-light-1366x768": {
+  "name": "c4a-matrix-a4-drawer-light-1366x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-dark-1366x768": {
+  "name": "c4a-matrix-a4-drawer-dark-1366x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-page-light-1024x768": {
+  "name": "c4a-matrix-a4-page-light-1024x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1024,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-page-dark-1024x768": {
+  "name": "c4a-matrix-a4-page-dark-1024x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 1024,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-light-1024x768": {
+  "name": "c4a-matrix-a4-drawer-light-1024x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1024,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-dark-1024x768": {
+  "name": "c4a-matrix-a4-drawer-dark-1024x768",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1024,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-page-light-900x1000": {
+  "name": "c4a-matrix-a4-page-light-900x1000",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 900,
+  "h": 1000,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 14.72,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-page-dark-900x1000": {
+  "name": "c4a-matrix-a4-page-dark-900x1000",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 900,
+  "h": 1000,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 16.18,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-light-900x1000": {
+  "name": "c4a-matrix-a4-drawer-light-900x1000",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "light",
+  "w": 900,
+  "h": 1000,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-matrix-a4-drawer-dark-900x1000": {
+  "name": "c4a-matrix-a4-drawer-dark-900x1000",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 900,
+  "h": 1000,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a3-resumed-running-page-light": {
+  "name": "c4a-a3-resumed-running-page-light",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "followHold": 3,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Sending to Daniel",
+     "textRatio": 10.1,
+     "metaRatio": 5.37,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(61, 57, 65)",
+    "outlineStyle": "none",
+    "ratio": 10.1
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "running",
+     "textRatio": 10.1,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "working"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-page-light": {
+  "name": "c4a-a4-resumed-done-page-light",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-closed-page-light": {
+  "name": "c4a-a4-resumed-done-closed-page-light",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "rounded-xl border p-3.5 transition-colors motion-reduce:tran",
+    "outline": "rgb(33, 30, 36)",
+    "outlineStyle": "none",
+    "ratio": 13.99
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a3-resumed-running-drawer-light": {
+  "name": "c4a-a3-resumed-running-drawer-light",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "followHold": 3,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Sending to Daniel",
+     "textRatio": 10.1,
+     "metaRatio": 5.37,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(61, 57, 65)",
+    "outlineStyle": "none",
+    "ratio": 10.1
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "running",
+     "textRatio": 10.1,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-drawer-light": {
+  "name": "c4a-a4-resumed-done-drawer-light",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    },
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-closed-drawer-light": {
+  "name": "c4a-a4-resumed-done-closed-drawer-light",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "w-fit max-w-full rounded-md outline-offset-2",
+    "outline": "rgb(33, 30, 36)",
+    "outlineStyle": "none",
+    "ratio": 14.72
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a3-resumed-running-page-dark": {
+  "name": "c4a-a3-resumed-running-page-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "followHold": 3,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Sending to Daniel",
+     "textRatio": 11.81,
+     "metaRatio": 7.57,
+     "glyphRatio": 6.38
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(214, 208, 201)",
+    "outlineStyle": "none",
+    "ratio": 11.81
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "running",
+     "textRatio": 11.81,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "working"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-page-dark": {
+  "name": "c4a-a4-resumed-done-page-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-closed-page-dark": {
+  "name": "c4a-a4-resumed-done-closed-page-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "rounded-xl border p-3.5 transition-colors motion-reduce:tran",
+    "outline": "rgb(246, 242, 234)",
+    "outlineStyle": "none",
+    "ratio": 15.1
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a3-resumed-running-drawer-dark": {
+  "name": "c4a-a3-resumed-running-drawer-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "followHold": 3,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Sending to Daniel",
+     "textRatio": 11.81,
+     "metaRatio": 7.57,
+     "glyphRatio": 6.38
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(214, 208, 201)",
+    "outlineStyle": "none",
+    "ratio": 11.81
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "running",
+     "textRatio": 11.81,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-drawer-dark": {
+  "name": "c4a-a4-resumed-done-drawer-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    },
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-a4-resumed-done-closed-drawer-dark": {
+  "name": "c4a-a4-resumed-done-closed-drawer-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "w-fit max-w-full rounded-md outline-offset-2",
+    "outline": "rgb(246, 242, 234)",
+    "outlineStyle": "none",
+    "ratio": 16.18
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-rm-a3-reduced-motion-page-light": {
+  "name": "c4a-rm-a3-reduced-motion-page-light",
+  "scenario": "approval",
+  "resume": true,
+  "followHold": 3,
+  "reduce": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Sending to Daniel",
+     "textRatio": 10.1,
+     "metaRatio": 5.37,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "rounded-xl border p-3.5 transition-colors motion-reduce:tran",
+    "outline": "rgb(33, 30, 36)",
+    "outlineStyle": "none",
+    "ratio": 14.83
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "working"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-kbd-a4-line-page-dark": {
+  "name": "c4a-kbd-a4-line-page-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "approve",
+   "tabToLine"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(156, 143, 224)",
+    "outlineStyle": "solid",
+    "ratio": 6.38
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-zoom200-a4-page-light": {
+  "name": "c4a-zoom200-a4-page-light",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 683,
+  "h": 384,
+  "dpr": 2,
+  "after": [
+   "approve"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "New chat"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "rounded-xl border p-3.5 transition-colors motion-reduce:tran",
+    "outline": "rgb(33, 30, 36)",
+    "outlineStyle": "none",
+    "ratio": 13.99
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [
+    "done"
+   ],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4a-reflow320-a4-drawer-dark": {
+  "name": "c4a-reflow320-a4-drawer-dark",
+  "scenario": "approval",
+  "resume": true,
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 320,
+  "h": 720,
+  "after": [
+   "approve"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 4 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "New chat"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "w-fit max-w-full rounded-md outline-offset-2",
+    "outline": "rgb(246, 242, 234)",
+    "outlineStyle": "none",
+    "ratio": 16.18
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "Approved. PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 1,
+   "lineCount": 1,
+   "reportCard": [],
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ }
+}

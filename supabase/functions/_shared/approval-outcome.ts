@@ -31,8 +31,10 @@
 
 export type ApprovalOutcomeKind = "ran" | "not_run" | "unconfirmed";
 
-/** Why a tool's approvals could not be spent this turn — set by the approval doors. */
-export type ApprovalRefusalReason = "ambiguous" | "unclaimable" | "lookup_failed";
+/** Why a tool's approvals could not be spent this turn — set by the approval doors. `expired` is
+ *  set by the approval resume (C4a, _shared/paige-turn/resume.ts): the proposal's window closed
+ *  before the person approved it, so nothing ran. */
+export type ApprovalRefusalReason = "ambiguous" | "unclaimable" | "lookup_failed" | "expired";
 
 type NoteKey =
   | ApprovalRefusalReason
@@ -67,6 +69,9 @@ const NOTES: Record<NoteKey, (many: boolean) => string> = {
     ? "Nothing changed. Those approvals no longer match anything Paige can run."
     : "Nothing changed. That approval no longer matches anything Paige can run.",
   lookup_failed: () => "Nothing changed. Something went wrong on our side while checking your approval.",
+  expired: (many) => many
+    ? "Nothing changed. Those approvals expired before they were used. Ask Paige again if you still want them."
+    : "Nothing changed. That approval expired before it was used. Ask Paige again if you still want it.",
   not_attempted: (many) => many ? "Nothing changed. Paige didn't run these." : "Nothing changed. Paige didn't run this.",
   id_refused: (many) => many
     ? "Nothing changed. Paige couldn't tell exactly which items these were, so she stopped."

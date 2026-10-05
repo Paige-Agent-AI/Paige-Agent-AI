@@ -1,4 +1,7 @@
-export const COLLECTION_ACTIONS = { 'collection.save_terms': 'sales_save_collection_terms', 'collection.stage_import': 'sales_stage_collection_import', 'collection.commit_import': 'sales_commit_collection_import', 'collection.record_receipt':'sales_record_manual_payment', 'collection.reverse_receipt':'sales_reverse_manual_payment' } as const;
+import {UUID,MAX_MINOR,MAX_SCHEDULE,object,invalid,integer,date,text,only} from './primitives.ts';
+export {UUID,MAX_MINOR,MAX_SCHEDULE,object,invalid,integer,date,text,only} from './primitives.ts';
+import {parseCommercialTermsCreateCommand,type CommercialTermsCreateCommand} from '../sales-commercial/terms-command.ts';
+export const COLLECTION_ACTIONS = { 'collection.create_commercial_terms':'sales_create_commercial_terms', 'collection.save_terms': 'sales_save_collection_terms', 'collection.stage_import': 'sales_stage_collection_import', 'collection.commit_import': 'sales_commit_collection_import', 'collection.record_receipt':'sales_record_manual_payment', 'collection.reverse_receipt':'sales_reverse_manual_payment' } as const;
 export type CollectionKind = 'full'|'installment'|'recurring'|'deposit'|'milestone'|'custom';
 export type CollectionDate = { due_date:string; amount_cents:number; label:string|null };
 export type CollectionTerms = {
@@ -8,15 +11,6 @@ export type CollectionTerms = {
   late_fee:{fixed_cents:number;rate_bps:number;grace_days:number;agreement_basis:string|null};
   interest:{annual_bps:number;agreement_basis:string|null};
 };
-export const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const MAX_MINOR=2147483647;
-export const MAX_SCHEDULE=240;
-export const object=(value:unknown):value is Record<string,unknown>=>!!value&&typeof value==='object'&&!Array.isArray(value);
-export function invalid():never{throw new TypeError('COLLECTION_CONTRACT_INVALID');}
-export function integer(value:unknown,min=0,max=MAX_MINOR):number{if(typeof value!=='number'||!Number.isSafeInteger(value)||value<min||value>max)return invalid();return value;}
-export function date(value:unknown):string{if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||value<'1900-01-01'||value>'9999-12-31')return invalid();const parsed=new Date(value+'T00:00:00Z');if(!Number.isFinite(parsed.valueOf())||parsed.toISOString().slice(0,10)!==value)return invalid();return value;}
-export function text(value:unknown,max:number,required=false):string|null{if(value===null||value===undefined)return required?invalid():null;if(typeof value!=='string'||value.length>max||(required&&!value.trim()))return invalid();return value;}
-export function only(value:Record<string,unknown>,keys:string[]):void{if(Object.keys(value).some(key=>!keys.includes(key)))invalid();}
 export function anchoredDate(anchor:string,index:number,months:number):string{
   const [year,month,day]=anchor.split('-').map(Number);const target=year*12+month-1+index*months;
   const y=Math.floor(target/12),m=target%12;if(y>9999)invalid();
@@ -52,6 +46,7 @@ export function parseCollectionTerms(value:unknown):CollectionTerms{
 }
 
 export type CollectionCommand =
+ | CommercialTermsCreateCommand
  | {action:'collection.save_terms';agreement_id:string;expected_version:number;terms:CollectionTerms}
  | {action:'collection.stage_import';source_account:string;rows:CollectionImportRow[]}
  | {action:'collection.commit_import';batch_id:string;expected_digest:string}
@@ -85,6 +80,7 @@ export function parseCollectionImportRows(value:unknown):CollectionImportRow[]{
 }
 export function parseCollectionCommand(value:unknown):CollectionCommand{
   if(!object(value))return invalid();
+  if(value.action==='collection.create_commercial_terms')return parseCommercialTermsCreateCommand(value);
   if(value.action==='collection.record_receipt'||value.action==='collection.reverse_receipt'){
     if(typeof value.invoice_id!=='string'||!UUID.test(value.invoice_id))return invalid();
     const common={invoice_id:value.invoice_id.toLowerCase(),expected_version:integer(value.expected_version,1,Number.MAX_SAFE_INTEGER)};

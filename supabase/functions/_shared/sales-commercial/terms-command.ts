@@ -1,4 +1,4 @@
-import {date,integer,only,object,text,UUID} from '../sales-collections/contract.ts';
+import {date,integer,only,object,text,UUID} from '../sales-collections/primitives.ts';
 
 /** Creation of a recorded fixed obligation only. Signing, scheduling, invoicing and collection
  * remain independent acts. The SQL common writer owns business validation and saved facts.

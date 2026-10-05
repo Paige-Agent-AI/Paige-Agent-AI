@@ -4,15 +4,19 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'supabase/functions/_shared/sales-collections/**'
+      - 'supabase/functions/_shared/sales-commercial/**'
       - 'supabase/functions/sales-collection-command/**'
       - 'scripts/sql/sales-collections-proof.*'
+      - 'scripts/sql/sales-commercial-create-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
     paths:
       - 'supabase/migrations/**'
       - 'supabase/functions/_shared/sales-collections/**'
+      - 'supabase/functions/_shared/sales-commercial/**'
       - 'scripts/sql/sales-collections-proof.*'
+      - 'scripts/sql/sales-commercial-create-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -41,6 +45,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-collections-proof.mjs "$(command -v psql)" 56347 /var/lib/postgresql/data postgres
+      - name: Canonical commercial creation, approval stamp, exact replay, receipt rollback and ACL
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-commercial-create-proof.mjs "$(command -v psql)" 56347 /var/lib/postgresql/data postgres
       - name: Preserve Collections SQL proof receipt
         if: always()
         uses: actions/upload-artifact@v4

@@ -30,3 +30,5 @@ describe('Collections canonical governance',()=>{
   expect(result.kind).toBe('execute');if(result.kind==='execute')expect(result.args).toEqual(stored);
  });
 });
+
+it('a new commercial obligation uses the same high-risk approval gate even with auto selected',()=>{const declared=SALES_COLLECTION_KIT_BY_ACTION.sales_create_commercial_terms;const command={action:'collection.create_commercial_terms',client_id:'11111111-1111-4111-8111-111111111111',offer_id:'22222222-2222-4222-8222-222222222222',term_kind:'one_time',agreed_amount_minor:350000,agreed_currency:'usd',billing_interval:null,interval_count:null,installments_total:null,payment_schedule:'on_start',starts_on:'2026-11-01',ends_on:null,title:null,notes:null};const adapted={...input,capability:{...input.capability,id:'sales_create_commercial_terms'},requestArgs:{...requestArgs,command},approval:{autonomyLane:'auto'}};expect(decideDeclaredCapability(declared,adapted as never).kind).toBe('propose');expect(decideDeclaredCapability(declared,{...adapted,approval:{autonomyLane:'off'}} as never).kind).toBe('refuse');});

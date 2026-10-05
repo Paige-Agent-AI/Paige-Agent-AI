@@ -1,5 +1,6 @@
 import {readFileSync} from 'node:fs';
 import {transpileModule,ModuleKind,ScriptTarget} from 'typescript';
+import {commercialTermsSummary} from '../../../../supabase/functions/_shared/sales-commercial/terms-summary';
 import {it,expect} from 'vitest';
 import {decideDeclaredCapability} from '../../../../supabase/functions/_shared/capability-kit/decision';
 import {SALES_COLLECTION_KIT_BY_ACTION} from '../../../../supabase/functions/_shared/paige-spine/domains/sales_collections';
@@ -8,16 +9,16 @@ const tenant='11111111-1111-4111-8111-111111111111',operation='22222222-2222-422
 const command={action:'collection.commit_import',batch_id:'33333333-3333-4333-8333-333333333333',expected_digest:'a'.repeat(64)};
 const source=readFileSync('supabase/functions/sales-collection-command/index.ts','utf8').replace(/^import .*;\r?\n/gm,'');
 const compiled=transpileModule(source,{compilerOptions:{module:ModuleKind.None,target:ScriptTarget.ES2022}}).outputText;
-function setup(options:{role?:string;tenant?:string;replay?:unknown;claimed?:unknown;auditFails?:boolean}={}){
+function setup(options:{role?:string;tenant?:string;replay?:unknown;claimed?:unknown;auditFails?:boolean;preview?:unknown}={}){
  let handler!:(r:Request)=>Promise<Response>;const calls:{name:string;args:unknown}[]=[];
  const caller={auth:{getUser:async()=>({data:{user:{id:'owner'}},error:null})},rpc:async(name:string)=>({data:name==='current_user_tenant_id'?options.tenant??tenant:'auto',error:null})};
- const admin={rpc:async(name:string,args:unknown)=>{calls.push({name,args});return {data:name==='read_sales_collection_command_result'?options.replay??null:name==='preview_sales_collection_command'?{eligible:true,summary:'Review exact import'}:{ok:true,batch:{id:command.batch_id}},error:null}},from:(table:string)=>{
+ const admin={rpc:async(name:string,args:unknown)=>{calls.push({name,args});return {data:name==='read_sales_collection_command_result'?options.replay??null:name==='preview_sales_collection_command'?options.preview??{eligible:true,summary:'Review exact import'}:{ok:true,batch:{id:command.batch_id}},error:null}},from:(table:string)=>{
   let mutation='';const builder:Record<string,unknown>={};for(const method of ['eq','is','not','neq','gt','lte','contains','order','limit'])builder[method]=()=>builder;
   builder.select=()=>builder;builder.update=()=>{mutation='update';return builder};builder.insert=(args:unknown)=>{calls.push({name:'insert:'+table,args});mutation='insert';return builder};
   builder.maybeSingle=async()=>({data:table==='tenant_members'?{role:options.role??'owner',status:'active'}:mutation==='update'?options.claimed?{args:options.claimed}:null:mutation==='insert'?{summary:'Review import',expires_at:'2099-01-01T00:00:00Z'}:null,error:null});
   builder.then=(resolve:(v:unknown)=>unknown,reject:(v:unknown)=>unknown)=>Promise.resolve({error:table==='paige_audit_log'&&options.auditFails?{code:'failure'}:null}).then(resolve,reject);return builder;
  }};
- const scope={Deno:{env:{get:(key:string)=>key},serve:(fn:typeof handler)=>{handler=fn}},createClient:(_url:string,key:string)=>key==='SUPABASE_ANON_KEY'?caller:admin,confirmFingerprint:async()=>'0123456789abcdef',decideDeclaredCapability,SALES_COLLECTION_KIT_BY_ACTION,databaseAnswered:()=>true,UUID,COLLECTION_ACTIONS,parseCollectionCommand};
+ const scope={Deno:{env:{get:(key:string)=>key},serve:(fn:typeof handler)=>{handler=fn}},createClient:(_url:string,key:string)=>key==='SUPABASE_ANON_KEY'?caller:admin,confirmFingerprint:async()=>'0123456789abcdef',decideDeclaredCapability,SALES_COLLECTION_KIT_BY_ACTION,databaseAnswered:()=>true,UUID,COLLECTION_ACTIONS,parseCollectionCommand,commercialTermsSummary};
  new Function(...Object.keys(scope),compiled)(...Object.values(scope));
  return {calls,request:async(extra:Record<string,unknown>={})=>{const response=await handler(new Request('https://example.test',{method:'POST',body:JSON.stringify({expected_tenant_id:tenant,operation_id:operation,command,...extra})}));return {status:response.status,body:await response.json()}}};
 }
@@ -40,3 +41,7 @@ it('a canonical stored approval executes the exact reviewed digest with server a
  const test=setup({claimed:args});expect((await test.request({approved_fingerprint:'0123456789abcdef'})).body.ok).toBe(true);
  expect(test.calls.find(c=>c.name==='execute_sales_collection_command')?.args).toMatchObject({_actor_user_id:'owner',_expected_tenant_id:tenant,_operation_id:operation,_command:command,_governance:{decision_receipt_recorded:true,tool:'sales_commit_collection_import'}});
 });
+
+const commercialCommand={action:'collection.create_commercial_terms',client_id:tenant,offer_id:operation,term_kind:'one_time',agreed_amount_minor:350000,agreed_currency:'usd',billing_interval:null,interval_count:null,installments_total:null,payment_schedule:'on_start',starts_on:'2026-11-01',ends_on:null,title:null,notes:null};
+it('new commercial creation presents exact canonical labels and amount without executing under auto',async()=>{const test=setup({preview:{eligible:true,context:{client_id:tenant,offer_id:operation,client_name:'Client X',offer_name:'Advisory',labels_truncated:false}}});expect((await test.request({command:commercialCommand})).body.outcome).toBe('approval_required');const card=test.calls.find(c=>c.name==='insert:paige_pending_confirmations')?.args as {summary:string};expect(card.summary).toContain('Client X / Advisory');expect(card.summary).toContain('3,500.00');expect(card.summary).not.toContain(tenant);expect(test.calls.some(c=>c.name==='execute_sales_collection_command')).toBe(false);});
+it('new commercial creation cannot propose an opaque or unverified approval context',async()=>{const test=setup();const result=await test.request({command:commercialCommand});expect(result.status).toBe(422);expect(result.body.code).toBe('COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE');expect(test.calls.some(c=>c.name==='insert:paige_pending_confirmations')).toBe(false);});

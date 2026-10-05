@@ -1,0 +1,10 @@
+import {describe,it,expect} from 'vitest';
+import {commercialTermsSummary} from '../../supabase/functions/_shared/sales-commercial/terms-summary.ts';
+import type {CommercialTermsCreateCommand} from '../../supabase/functions/_shared/sales-commercial/terms-command.ts';
+const command:CommercialTermsCreateCommand={action:'collection.create_commercial_terms',client_id:'11111111-1111-4111-8111-111111111111',offer_id:'22222222-2222-4222-8222-222222222222',term_kind:'installment',agreed_amount_minor:350000,agreed_currency:'usd',billing_interval:'month',interval_count:1,installments_total:10,payment_schedule:'custom',starts_on:'2026-11-01',ends_on:null,title:null,notes:null};
+const preview={eligible:true,context:{client_id:command.client_id,offer_id:command.offer_id,client_name:'Client X',offer_name:'Advisory',labels_truncated:false}};
+describe('exact commercial proposal',()=>{
+ it.each([['usd','3,500.00'],['jpy','350,000'],['kwd','350.000']])('formats %s using its currency precision', (currency,amount)=>{const text=commercialTermsSummary({...command,agreed_currency:currency},preview);expect(text).toContain(amount);expect(text).toContain('10 installments');expect(text).toContain('2026-11-01');expect(text).not.toContain(command.client_id);});
+ it.each([{client_id:command.offer_id},{offer_id:command.client_id},{labels_truncated:true},{client_name:null},{offer_name:''}])('refuses incomplete or mismatched display context %j',change=>{expect(()=>commercialTermsSummary(command,{...preview,context:{...preview.context,...change}})).toThrow();});
+ it('preserves an unknown currency as exact minor units instead of inventing decimals',()=>{expect(commercialTermsSummary({...command,agreed_currency:'zzz'},preview)).toContain('ZZZ 350000 minor units');});
+});

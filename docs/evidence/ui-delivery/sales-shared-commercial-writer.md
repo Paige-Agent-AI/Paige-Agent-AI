@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: ten pre-edit answers and canonical owner/collision map in docs/delivery/sales-commercial-s2.md.
-PAIGE_UI_DESIGN: NOT_APPLICABLE: no UI or interaction change.
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md routing assessed; existing human flow preserved with no UI or interaction change. Impeccable truth/provenance checks retained.
 MATERIAL_FLOW_CHANGE: NO: existing human RPC signature, authority checks, normalization, business write and readback preserved.
 FLOW_PROTOTYPE: NOT_REQUIRED: private implementation extraction only. Future commercial-package review requires its own approved prototype.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: preserve the human commercial-terms writer while providing one private implementation for future governed execution.
@@ -25,10 +25,10 @@ MUST_PRESERVE: existing 19-argument human RPC, actor attribution, tenant-first g
 ACCEPTANCE_CRITERIA: unchanged human save behavior and inaccessible private writer; future governed executor must separately prove actor, tenant and canonical Trust decision before internal invocation.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: active #1748 Chat handler/Gateway untouched; signing paige_agreements stays distinct from commercial tenant_client_agreements.
-INTERNAL_BUILD_IDENTITY: base=1d1341edc1a5209742ff69a08116fd711fe5dfec; environment=local; migration=20270586000000; deployment=NOT_APPLICABLE.
+INTERNAL_BUILD_IDENTITY: base=1d1341edc1a5209742ff69a08116fd711fe5dfec; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(20270586000000 production persistence); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/sales-shared-commercial-writer.md.
 RELEASE_CHANNEL: development: local extraction; independent exact-head review, CI and production readback required.
 RELEASE_CLASSIFICATION: internal-only: preparatory S2 canonical writer seam.
 CUSTOMER_RELEASE_IDENTITY: none: conversational commercial transaction not accepted.
 RELEASE_NOTE_REQUIRED: no: internal foundation only.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: SQL fixture proof is not authenticated runtime or commercial execution proof.
-RELEASE_RECOVERY: forward-fix the shared wrapper while retaining canonical commercial rows; no destructive data rewrite.
+RELEASE_RECOVERY: position=forward-fix the shared wrapper while retaining canonical commercial rows; reference=docs/delivery/sales-commercial-s2.md.

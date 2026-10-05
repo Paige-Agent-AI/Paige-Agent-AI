@@ -9,6 +9,7 @@ vi.mock('@/solo/deals/CrmDealCommandReview',()=>({CrmDealCommandReview:(props:{t
 vi.mock('@/hooks/useTenantOffers',()=>({useTenantOffers:()=>({offers:[]})}));
 vi.mock('@/components/admin/contacts/NewContactDialog',()=>({NewContactDialog:()=>null}));
 import {NewDealDialog} from './NewDealDialog';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let root:Root,node:HTMLDivElement;
 const render=async(defaultContactId?:string)=>{await act(async()=>root.render(<NewDealDialog open onOpenChange={()=>{}} pipeline={{id:'pipeline-a',name:'Main'} as import('@/lib/pipelines').Pipeline} stages={[{id:'stage-a',pipeline_id:'pipeline-a',label:'New',order_index:0} as import('@/lib/pipelines').PipelineStage]} defaultContactId={defaultContactId} onCreated={()=>{}}/>));};
 const input=async(el:HTMLInputElement,value:string)=>{await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}))})};
@@ -17,5 +18,5 @@ beforeEach(()=>{m.review=null;node=document.createElement('div');document.body.a
 afterEach(async()=>{await act(async()=>root.unmount());node.remove()});
 describe('governed full deal editor',()=>{
  it('preserves known client identity and emits exact command without owner insertion',async()=>{await render('client-a');await input(document.querySelector('input[placeholder="e.g. Acme SBA Loan"]')!,'Discovery');await click('Review deal');expect(m.review.tenantId).toBe('tenant-a');expect(m.review.command).toEqual({action:'deal.create',title:'Discovery',pipeline_id:'pipeline-a',stage_id:'stage-a',contact_id:'client-a',value_cents:0,currency:'USD',expected_close_date:null,offer_type:null})});
- it('requires explicit unlinked intent rather than silently creating null relationships',async()=>{await render();await input(document.querySelector('input[placeholder="e.g. Acme SBA Loan"]')!,'Discovery');await click('Review deal');expect(m.review).toBeNull();await input(document.getElementById('deal-unlinked-reason') as HTMLInputElement,'Client not identified yet');await click('Review deal');expect(m.review.command.unlinked_reason).toBe('Client not identified yet');expect(m.review.command).not.toHaveProperty('contact_id')});
+ it.each(['anonymous_prospect','early_stage_prospect','import_pending_identity'])('requires explicit canonical unlinked intent %s',async allowedReason=>{await render();await input(document.querySelector('input[placeholder="e.g. Acme SBA Loan"]')!,'Discovery');await click('Review deal');expect(m.review).toBeNull();const reason=document.getElementById('deal-unlinked-reason') as HTMLSelectElement;expect(reason.tagName).toBe('SELECT');await act(async()=>{reason.value=allowedReason;reason.dispatchEvent(new Event('change',{bubbles:true}))});await click('Review deal');expect(m.review.command.unlinked_reason).toBe(allowedReason);expect(m.review.command).not.toHaveProperty('contact_id')});
 });

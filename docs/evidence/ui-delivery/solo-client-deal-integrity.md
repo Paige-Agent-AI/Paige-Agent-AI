@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: canonical client choice and governed relationship rea
 FLOW_PROTOTYPE: WAIVED: owner-decision=2026-10-05 COORDINATOR CORRECTION — CONTINUE INT-327; reason=owner explicitly directs internal prototype evidence to support implementation without blocking manual UI integration.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owners create or correct a real opportunity with an explicit canonical client relationship.
 VISUAL_DIRECTION: PASS: existing PAIGE Operate drawer, tokens and controls; readable labels, deliberate record selection and honest unlinked states.
-AUTOMATED_EVIDENCE: PASS: 102 tests across ten focused files; source-executed tool guard, CRM identity, form replay and actual manual components.
+AUTOMATED_EVIDENCE: PASS: 104 tests across ten focused files; source-executed tool guard, CRM identity, form replay and actual manual components.
 STATIC_EVIDENCE: PASS: Vite build; tsc ratchet baseline 10/current 10; focused lint; migration version, definer ACL, governance and tool contracts.
 RENDERED_EVIDENCE: PASS: solo-client-deal-assets/result.json records ten actual-component Chromium cases, five viewports and two themes, with no page errors/overflow; synthetic standalone fixture excludes full Solo shell.
 BEHAVIORAL_EVIDENCE: PASS: component tests prove explicit client choice, refusal, unlinked intent, exact request recovery and actor/workspace containment; authenticated execution is excluded.
@@ -52,3 +52,5 @@ Local PostgreSQL proof uses two synthetic tenants, the real tenant-link trigger,
 Independent integrated review is required on the exact final head before merge. No INT-327 merge, deployment or production mutation has occurred.
 
 Reproduce the component fixture with scripts/live-drive/solo-client-deal/README.md. Final JSON and desktop/mobile images are checked into solo-client-deal-assets; fixture data is generic and provider-free. Deno check of crm-command and growth-process-submission PASS.
+
+Independent integrated review at 35c7ed4b4e7dba605f3e0f66b3b80683eb069887 found one P2 canonical reason mismatch in the active Clients editor. Repaired with the three-value selector and failing-first test; one final exact-head recheck is required. The Chromium matrix mounts PipelineCommandDesk, not the separate Clients Radix dialog; that dialog has real-component jsdom proof, while its browser geometry is UNVERIFIED.

@@ -227,7 +227,12 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
                 <Input value={offerCustom} onChange={(e) => setOfferCustom(e.target.value)} placeholder="Name this offer" />
               </div>
             )}
-            {contactId === "none" && !defaultContactId && <div><Label htmlFor="deal-unlinked-reason">Reason for no linked client *</Label><Input id="deal-unlinked-reason" value={unlinkedReason} onChange={e => setUnlinkedReason(e.target.value)} /></div>}
+            {contactId === "none" && !defaultContactId && <div><Label htmlFor="deal-unlinked-reason">Reason for no linked client *</Label><select id="deal-unlinked-reason" className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={unlinkedReason} onChange={e => setUnlinkedReason(e.target.value)}>
+                <option value="">Choose a reason</option>
+                <option value="anonymous_prospect">Anonymous prospect</option>
+                <option value="early_stage_prospect">Early-stage prospect</option>
+                <option value="import_pending_identity">Imported record · identity pending</option>
+              </select></div>}
             {clientPicker.phase === "error" && <p role="alert">Could not load clients. <Button type="button" variant="outline" onClick={clientPicker.retry}>Retry clients</Button></p>}
             {clientPicker.hasMore && <Button type="button" variant="outline" onClick={clientPicker.loadMore}>Load more clients</Button>}
           </div>}

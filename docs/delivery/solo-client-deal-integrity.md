@@ -66,3 +66,7 @@ Production Vite build PASS (47.25 seconds). Canonical tsc ratchet PASS: baseline
 Authenticated browser initialization failed twice with “trusted Node process exited unexpectedly; kernel reset”. This prevents authenticated tenant switching, PAIGE natural-language driving and production orphan correction in this environment. No credentials were scraped or alternative browser-session access attempted. Authenticated acceptance remains UNVERIFIED, not a prototype approval dependency.
 
 Final focused suite after current-main rebase: **102 tests / ten files PASS**. Actual component Chromium: **ten viewport/theme cases PASS**, including linked/unlinked creation, reassignment and exact-operation recovery with keyboard focus retained. Reproduction and checked-in artifacts are in docs/evidence/ui-delivery/solo-client-deal-integrity.md. Full-shell/authenticated proof remains excluded. Deno check of both changed CRM/form endpoints PASS.
+
+## Integrated independent review disposition
+
+Nonwriter review completed on 35c7ed4b4e7dba605f3e0f66b3b80683eb069887: FAIL, one P2. Active Clients NewDealDialog accepted free-text unlinked reasons that canonical CRM refuses. The editor now uses the same three allowed reason values; missing selection refuses, all three are component-tested. Revised test failed first (INPUT instead of SELECT), then all four editor cases passed. No additional material findings were reported. Trailing fixture-driver blank line also removed. One exact-head repair recheck remains required and will be recorded in PR #1761 before merge.

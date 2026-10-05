@@ -1055,6 +1055,12 @@
       "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
     },
     {
+      "tool": "sales_create_commercial_terms",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "_create_sales_commercial_terms_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270587000000_sales_governed_commercial_create.sql; scripts/sql/sales-commercial-create-proof.mjs verifies exactly-once replay and receipt-failure rollback."
+    },
+    {
       "tool": "sales_save_collection_terms",
       "risk": "high",
       "receipt": "emits",

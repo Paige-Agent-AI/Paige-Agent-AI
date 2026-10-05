@@ -20,6 +20,8 @@ BEGIN
   OR coalesce(_command->>'starts_on','') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
   OR (_command->'ends_on'<>'null'::jsonb AND coalesce(_command->>'ends_on','') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
   OR jsonb_typeof(_command->'title') NOT IN ('null','string') OR length(_command->>'title')>200
+  OR (_command->>'title') IS DISTINCT FROM nullif(btrim(_command->>'title'),'')
+  OR (_command->>'notes') IS DISTINCT FROM nullif(btrim(_command->>'notes'),'')
   OR jsonb_typeof(_command->'notes') NOT IN ('null','string') OR length(_command->>'notes')>2000 THEN
   RAISE EXCEPTION 'Invalid fixed commercial record command' USING ERRCODE='22023';
  END IF;
@@ -311,7 +313,8 @@ DO $$ BEGIN
   ALTER FUNCTION public.list_tool_autonomy(uuid) RENAME TO _list_tool_autonomy_before_commercial_create;
  END IF;
 END $$;
-REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_commercial_create(uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_commercial_create(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_commercial_create(uuid) FROM service_role;
 CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid DEFAULT NULL)
 RETURNS TABLE(tool_key text,label text,category text,mode text,is_default boolean,updated_at timestamptz)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -322,9 +325,10 @@ BEGIN
   tenant:=public.current_user_tenant_id();
   IF public.is_platform_owner() AND _tenant_id IS NOT NULL THEN tenant:=_tenant_id;END IF;
  ELSE tenant:=_tenant_id;END IF;
- RETURN QUERY SELECT 'sales_create_commercial_terms'::text,'Create customer commercial terms'::text,'Payments'::text,
-  coalesce(a.mode,'confirm'),a.mode IS NULL,a.updated_at FROM (SELECT 1) singleton
-  LEFT JOIN public.tenant_tool_autonomy a ON a.tenant_id=tenant AND a.tool_key='sales_create_commercial_terms';
+ RETURN QUERY WITH catalog(tool_key,label,category) AS (VALUES
+  ('sales_create_commercial_terms','Create customer commercial terms','Payments')
+ ) SELECT c.tool_key,c.label,c.category,coalesce(a.mode,'confirm'),a.mode IS NULL,a.updated_at
+ FROM catalog c LEFT JOIN public.tenant_tool_autonomy a ON a.tenant_id=tenant AND a.tool_key=c.tool_key;
 END $$;
 REVOKE ALL ON FUNCTION public.list_tool_autonomy(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.list_tool_autonomy(uuid) TO authenticated,service_role;

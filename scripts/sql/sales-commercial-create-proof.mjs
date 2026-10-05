@@ -54,8 +54,13 @@ try {
  assert.equal(run("SELECT has_function_privilege('service_role','public._create_sales_commercial_terms_command(uuid,uuid,uuid,jsonb,jsonb)','EXECUTE');").trim(),'f');
  deny(execute(randomUUID(),command,{...governance,approved_fingerprint:'wrong'}),'42501');
  deny(execute(randomUUID(),command,{...governance,approval_channel:'standing_autonomy_setting',approved_fingerprint:null}),'42501',"PERFORM set_config('proof.mode','auto',true);");
- for(const change of [{starts_on:'1899-12-31'},{ends_on:'2026-10-31'},{agreed_amount_minor:2147483648},{interval_count:13},{installments_total:241},{actor_user_id:actor},{title:1}])deny(execute(randomUUID(),{...command,...change}),'22023');
+ for(const change of [{starts_on:'1899-12-31'},{ends_on:'2026-10-31'},{agreed_amount_minor:2147483648},{interval_count:13},{installments_total:241},{actor_user_id:actor},{title:1},{title:' padded '},{notes:'   '}])deny(execute(randomUUID(),{...command,...change}),'22023');
  deny(execute(randomUUID(),{...command,starts_on:'2026-02-30'}),'22008');
+ // Exercise normalized text through the actual writer and readback; rollback keeps count proofs stable.
+ for(const fields of [{title:'Agreed terms',notes:'No discount'},{title:null,notes:null}]){
+  const saved=JSON.parse(run('BEGIN;'+execute(randomUUID(),{...command,...fields})+'ROLLBACK;').trim().split(/\r?\n/).find(line=>line.startsWith('{')));
+  assert.equal(saved.outcome,'commercial_terms_created');
+ }
  const preview=JSON.parse(run(`SELECT preview_sales_collection_command('${actor}','${tenant}',${literal(command)});`).trim());
  assert.equal(preview.eligible,true);assert.equal(preview.consequence.amount_cents,350000);assert.equal(preview.consequence.record_owner,'commercial_collection_terms');
  assert.equal(run('SELECT count(*) FROM tenant_client_agreements;').trim(),'0');assert.equal(run('SELECT count(*) FROM paige_sales_collection_operations;').trim(),'0');

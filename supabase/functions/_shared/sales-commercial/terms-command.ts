@@ -11,6 +11,8 @@ export interface CommercialTermsCreateCommand {
  payment_schedule:'on_signing'|'on_start'|'in_advance'|'in_arrears'|'on_milestone'|'custom';
  starts_on:string;ends_on:string|null;title:string|null;notes:string|null;
 }
+// Match PostgreSQL btrim(text): ASCII spaces only, before fingerprinting.
+const canonicalText=(value:unknown,max:number):string|null=>{const checked=text(value,max);return checked===null?null:(checked.replace(/^ +| +$/g,'')||null);};
 const keys=['action','client_id','offer_id','term_kind','agreed_amount_minor','agreed_currency',
  'billing_interval','interval_count','installments_total','payment_schedule','starts_on','ends_on','title','notes'];
 const invalid=():never=>{throw new TypeError('COMMERCIAL_TERMS_CREATE_INVALID');};
@@ -21,7 +23,7 @@ const invalid=():never=>{throw new TypeError('COMMERCIAL_TERMS_CREATE_INVALID');
  */
 export function parseCommercialTermsCreateCommand(value:unknown):CommercialTermsCreateCommand {
  if(!object(value))return invalid();only(value,keys);
- if(keys.some(key=>!Object.hasOwn(value,key))||value.action!=='collection.create_commercial_terms'
+ if(keys.some(key=>!Object.prototype.hasOwnProperty.call(value,key))||value.action!=='collection.create_commercial_terms'
   ||typeof value.client_id!=='string'||!UUID.test(value.client_id)
   ||typeof value.offer_id!=='string'||!UUID.test(value.offer_id)
   ||!['one_time','installment'].includes(String(value.term_kind))
@@ -39,5 +41,5 @@ export function parseCommercialTermsCreateCommand(value:unknown):CommercialTerms
   term_kind:value.term_kind as CommercialTermsCreateCommand['term_kind'],agreed_amount_minor:amount,agreed_currency:value.agreed_currency,
   billing_interval:installment?'month':null,interval_count:installment?Number(value.interval_count):null,
   installments_total:installment?Number(value.installments_total):null,payment_schedule:value.payment_schedule as CommercialTermsCreateCommand['payment_schedule'],
-  starts_on:start,ends_on:end,title:text(value.title,200),notes:text(value.notes,2000)};
+  starts_on:start,ends_on:end,title:canonicalText(value.title,200),notes:canonicalText(value.notes,2000)};
 }

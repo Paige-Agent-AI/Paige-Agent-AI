@@ -11,9 +11,11 @@ export function commercialTermsSummary(command:CommercialTermsCreateCommand,prev
   ||typeof context.client_name!=='string'||!context.client_name.trim()||context.client_name.length>200
   ||typeof context.offer_name!=='string'||!context.offer_name.trim()||context.offer_name.length>200)throw new TypeError('COMMERCIAL_CONTEXT_UNAVAILABLE');
  const currency=command.agreed_currency.toUpperCase();
- const supported=new Set(Intl.supportedValuesOf('currency'));
+ const supportedValuesOf=(Intl as unknown as {supportedValuesOf?:(key:'currency')=>string[]}).supportedValuesOf;
+ if(!supportedValuesOf)throw new TypeError('CURRENCY_PRECISION_UNAVAILABLE');
+ const supported=new Set(supportedValuesOf('currency'));
  let amount=currency+' '+command.agreed_amount_minor+' minor units';
  if(supported.has(currency)){const format=new Intl.NumberFormat('en-US',{style:'currency',currency,currencyDisplay:'code'});const digits=format.resolvedOptions().maximumFractionDigits;if(digits===undefined)throw new TypeError('CURRENCY_PRECISION_UNAVAILABLE');amount=format.format(command.agreed_amount_minor/(10**digits));}
  const cadence=command.term_kind==='installment'?command.installments_total+' installments at '+command.interval_count+'-month intervals':'one-time obligation';
- return 'Create draft commercial terms for '+context.client_name+' / '+context.offer_name+': '+amount+' total; '+cadence+'; starts '+command.starts_on+(command.ends_on?'; ends '+command.ends_on:'; no end date specified')+'; payment timing '+command.payment_schedule+'. This creates recorded commercial terms only. It does not issue an invoice, request signature, activate a payment schedule or collect money.';
+ return 'Create draft commercial terms for '+context.client_name+' / '+context.offer_name+': '+amount+' total; '+cadence+'; starts '+command.starts_on+(command.ends_on?'; ends '+command.ends_on:'; no end date specified')+'; payment timing '+command.payment_schedule+'; title '+(command.title===null?'None':JSON.stringify(command.title))+'; notes '+(command.notes===null?'None':JSON.stringify(command.notes))+'. This creates recorded commercial terms only. It does not issue an invoice, request signature, activate a payment schedule or collect money.';
 }

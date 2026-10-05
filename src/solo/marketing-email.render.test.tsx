@@ -218,6 +218,49 @@ describe("Marketing › Email campaign editor", () => {
     expect(calls.filter((c) => c.fn === "email_campaign_update_draft")).toHaveLength(1);
   });
 
+  it("a draft PAIGE changed from chat replaces what is shown when nothing here is unsaved", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    await mount();
+    const byPaige = campaignRead();
+    byPaige.version.subject = "Written by PAIGE";
+    answers.read_email_campaign = { data: byPaige, error: null };
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
+    await flush();
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!.value).toBe("Written by PAIGE");
+    expect(text()).toContain("PAIGE updated this campaign.");
+    expect(calls.filter((c) => c.fn === "email_campaign_update_draft")).toHaveLength(0);
+  });
+
+  it("a chat turn that changed nothing leaves the editor alone", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    await mount();
+    const reads = calls.filter((c) => c.fn === "read_email_campaign").length;
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
+    await flush();
+    expect(calls.filter((c) => c.fn === "read_email_campaign").length).toBe(reads + 1);
+    expect(text()).not.toContain("PAIGE updated");
+  });
+
+  it("when PAIGE changed the draft during unsaved edits, the owner is told and can take her version", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    await mount();
+    await type(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!, "Mine, not saved yet");
+    const byPaige = campaignRead();
+    byPaige.version.subject = "Written by PAIGE";
+    answers.read_email_campaign = { data: byPaige, error: null };
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
+    await flush();
+    expect(text()).toContain("PAIGE changed this campaign while you were editing. Your edits will save over hers.");
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!.value).toBe("Mine, not saved yet");
+    await act(async () => { button("Show PAIGE's version")!.click(); });
+    await flush();
+    expect(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!.value).toBe("Written by PAIGE");
+    expect(text()).not.toContain("while you were editing");
+  });
+
   it("an edit still pending when the editor closes is saved, not dropped", async () => {
     window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
     answers.read_email_campaign = { data: campaignRead(), error: null };

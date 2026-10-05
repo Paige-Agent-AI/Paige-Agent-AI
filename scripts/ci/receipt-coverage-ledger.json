@@ -650,6 +650,18 @@
       "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
+      "tool": "email_campaign_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_CAMPAIGN_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-campaign-chat.ts) returns: capability_succeeded only when a fresh read_email_campaigns readback shows the intended draft or the version frozen with its approval pending, capability_refused for a database-named refusal, capability_outcome_unknown otherwise; runId is stableRunId(tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "email_campaign_request_approval",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_CAMPAIGN_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-campaign-chat.ts) returns: capability_succeeded only when a fresh read_email_campaigns readback shows the intended draft or the version frozen with its approval pending, capability_refused for a database-named refusal, capability_outcome_unknown otherwise; runId is stableRunId(tool, tenant, thread:tool-call)"
+    },
+    {
       "tool": "growth_form_save",
       "risk": "ordinary",
       "receipt": "emits",

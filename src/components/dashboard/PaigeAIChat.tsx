@@ -1638,6 +1638,8 @@ const PaigeAIChatInner = ({
       if (businessMissionId && ticketAccepted(requestTicket)) {
         window.dispatchEvent(new CustomEvent("business-mission:refresh", { detail: { missionId: businessMissionId } }));
       }
+      // Any screen PAIGE's tools may have changed during this turn (the email editor, for one) looks again.
+      if (ticketAccepted(requestTicket)) window.dispatchEvent(new CustomEvent("paige:turn-settled"));
     }
   };
 

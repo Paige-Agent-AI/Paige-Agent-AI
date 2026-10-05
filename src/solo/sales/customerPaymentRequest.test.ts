@@ -7,5 +7,5 @@ describe('customer hosted request readback',()=>{
  it.each(['outcome_unknown','settled','provider_accepted','failed'])('never exposes checkout from %s',state=>expect(readCustomerPaymentRequest({...fixture,payment_request:{...fixture.payment_request,state}},now)?.url).toBeNull());
  it.each(['https://example.com/pay','https://checkout.stripe.com.evil.test/pay','https://user:secret@checkout.stripe.com/pay'])('refuses unsafe URL %s',provider_url=>expect(readCustomerPaymentRequest({...fixture,payment_request:{...fixture.payment_request,provider_url}},now)?.url).toBeNull());
  it('suppresses expired or over-balance requests',()=>{expect(readCustomerPaymentRequest(fixture,Date.parse('2026-10-07'))?.url).toBeNull();expect(readCustomerPaymentRequest({...fixture,remaining_cents:0},now)?.url).toBeNull();});
- it('does not equate acceptance with confirmation',()=>expect(customerPaymentRequestCopy('provider_accepted')).toBe('Payment is being confirmed'));
+ it('does not equate acceptance with confirmation',()=>expect(customerPaymentRequestCopy('provider_accepted')).toBe('The provider accepted the request. Payment has not been confirmed yet'));
 });

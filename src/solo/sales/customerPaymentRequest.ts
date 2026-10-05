@@ -1,4 +1,4 @@
-export type CustomerPaymentRequest={amountMinor:number;currency:string;state:string;url:string|null;remainingMinor:number};
+export type CustomerPaymentRequest={amountMinor:number;currency:string;state:string;url:string|null;remainingMinor:number;expiresAt:number|null};
 const states=['prepared','dispatching','provider_accepted','customer_action_required','outcome_unknown','settled','failed','expired','cancelled'];
 /** Read-only presentation of the server's existing invoice/bearer projection. */
 export function readCustomerPaymentRequest(value:unknown,now=Date.now()):CustomerPaymentRequest|null{
@@ -11,13 +11,14 @@ export function readCustomerPaymentRequest(value:unknown,now=Date.now()):Custome
  if(row.state==='customer_action_required'&&Number(root.remaining_cents)>=Number(row.amount_minor)&&typeof row.expires_at==='string'&&Date.parse(row.expires_at)>now&&typeof row.provider_url==='string'){
   try{const candidate=new URL(row.provider_url);if(candidate.protocol==='https:'&&candidate.hostname==='checkout.stripe.com'&&!candidate.username&&!candidate.password&&!candidate.port)url=candidate.href;}catch{/* unavailable hosted surface */}
  }
- return {amountMinor:Number(row.amount_minor),currency:row.currency,state:row.state,url,remainingMinor:Number(root.remaining_cents)};
+ return {amountMinor:Number(row.amount_minor),currency:row.currency,state:row.state,url,remainingMinor:Number(root.remaining_cents),expiresAt:typeof row.expires_at==='string'&&Number.isFinite(Date.parse(row.expires_at))?Date.parse(row.expires_at):null};
 }
 export function customerPaymentRequestCopy(state:string):string{
  switch(state){
  case 'customer_action_required':return 'Payment requested';
  case 'prepared':return 'Payment request is being prepared';
- case 'dispatching':case 'provider_accepted':return 'Payment is being confirmed';
+ case 'dispatching':return 'Payment request is being created';
+ case 'provider_accepted':return 'The provider accepted the request. Payment has not been confirmed yet';
  case 'outcome_unknown':return "We couldn't confirm the payment yet. The business is checking with the payment provider.";
  case 'settled':return 'Payment confirmed';
  case 'failed':return 'Payment could not be completed';

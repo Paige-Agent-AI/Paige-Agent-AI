@@ -1,5 +1,6 @@
 import type {SalesPaymentAdmin} from './database-port.ts';
 import {salesStripeClient} from './stripe-client.ts';
+import {readStripeHostedRequest} from './stripe-hosted.ts';
 import {parseClaimedPayment} from './operation-projection.ts';
 import {persistProviderPaymentReadback} from './invoice-payment-adapter.ts';
 import {reconcileVerifiedSalesStripeEvent,type SalesStripeEventPorts} from './stripe-event.ts';
@@ -31,11 +32,22 @@ export async function routeVerifiedSalesStripeEvent(admin:SalesPaymentAdmin,even
   if(!merchant.data)return {handled:false,status:200,code:'OTHER_DOMAIN'};
   if(typeof merchant.data.tenant_id!=='string')throw new Error('PAYMENT_MERCHANT_UNAVAILABLE');
   if(merchant.data.provider_environment!==stripe.environment)return {handled:true,status:400,code:'PAYMENT_EVENT_SCOPE_REFUSED'};
-  // Admission progresses because each registered operation leaves the unregistered set.
-  // Provider reads run through the shared leased envelope, not an unbounded webhook loop.
-  const admission=await admin.rpc('register_pending_sales_payment_reconciliation_work',{_expected_tenant_id:merchant.data.tenant_id,_merchant_account_id:value.account,_environment:stripe.environment,_limit:25});
-  const body=object(admission.data);
-  if(admission.error||!body||!Array.isArray(body.registered)||typeof body.has_more!=='boolean')throw new Error('PAYMENT_READBACK_REQUIRED');
-  return {handled:true,status:body.has_more?503:200,code:body.has_more?'PAYMENT_READBACK_REQUIRED':'PAYMENT_RECONCILIATION_QUEUED'};
+  // A signed availability event can read exhausted operations without resetting work.
+  // Each successful readback leaves this event's bounded batch, so retries progress.
+  const batch=await admin.rpc('read_sales_balance_event_operations',{_expected_tenant_id:merchant.data.tenant_id,_merchant_account_id:value.account,_environment:stripe.environment,_event_id:value.id,_limit:3});
+  const body=object(batch.data);
+  if(batch.error||!body||!Array.isArray(body.rows)||body.rows.length>3||typeof body.has_more!=='boolean')throw new Error('PAYMENT_READBACK_REQUIRED');
+  let unknown=false;
+  await Promise.all(body.rows.map(async rowValue=>{
+   const row=object(rowValue);if(!row||typeof row.id!=='string'||typeof row.actor_user_id!=='string')throw new Error('PAYMENT_READBACK_REQUIRED');
+   const claim=parseClaimedPayment(row,String(merchant.data!.tenant_id),row.actor_user_id,row.id);
+   if(!await ports.merchantStillBound(claim))throw new Error('PAYMENT_READBACK_REQUIRED');
+   const result=await readStripeHostedRequest(claim.request,claim.operation,stripe,claim.operation.provider_operation_id,Math.max(0,Math.floor(Date.parse(claim.dispatchStartedAt)/1000)-60));
+   await ports.persistReadback(claim,result,String(value.id));
+   if(result.state==='outcome_unknown'){unknown=true;return;}
+   const complete=await admin.rpc('complete_sales_balance_event_readback',{_expected_tenant_id:claim.operation.tenant_id,_operation_id:claim.operation.id,_merchant_account_id:value.account,_environment:stripe.environment,_event_id:value.id});
+   if(complete.error)throw new Error('PAYMENT_READBACK_REQUIRED');
+  }));
+  return {handled:true,status:body.has_more||unknown?503:200,code:body.has_more||unknown?'PAYMENT_READBACK_REQUIRED':'PAYMENT_EVENT_RECONCILED'};
  }catch {return {handled:true,status:503,code:'PAYMENT_READBACK_REQUIRED'};}
 }

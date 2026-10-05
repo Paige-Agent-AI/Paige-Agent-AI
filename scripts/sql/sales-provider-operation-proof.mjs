@@ -335,6 +335,10 @@ try {
  assert(!('request_payload' in exhaustedOwnerRead));assert(!('server_idempotency_key' in exhaustedOwnerRead));
  assert.equal(JSON.parse(run(service('SELECT claim_sales_payment_reconciliation_work(25);')).split('\n').at(-1)).claims.length,0,'exhausted checks do not reset the same work');
  assert.equal(run(`SELECT state FROM paige_invoice_provider_operations WHERE id='${remainingOp}';`),'dispatching');
+ const availabilityBatch=()=>JSON.parse(run(service(`SELECT read_sales_balance_event_operations('${tenant}','acct_fixtureA','test','evt_lateAvailable',3);`)).split('\n').at(-1));
+ assert.equal(availabilityBatch().rows[0].id,remainingOp,'signed account availability includes exhausted existing operation');
+ deny(service(`SELECT read_sales_balance_event_operations('${otherTenant}','acct_fixtureA','test','evt_lateAvailable',3);`),/scope unavailable/);
+ deny(service(`SELECT read_sales_balance_event_operations('${tenant}','acct_fixtureA','live','evt_lateAvailable',3);`),/scope unavailable/);
  const finalReadback={...readback,provider_object_id:'cs_test_final',provider_transaction_id:'ch_final',provider_settlement_id:'txn_final',amount_minor:290000,invoice_version:4};
  const settleFinal=()=>service(`SELECT allocate_verified_sales_invoice_payment('${tenant}','${remainingOp}','${remainingToken}',${literal(finalReadback)});`);
  run(`CREATE TRIGGER proof_rail_fail BEFORE INSERT ON paige_workspace_events FOR EACH ROW EXECUTE FUNCTION proof_rail_fail();`);
@@ -352,6 +356,8 @@ try {
  deny(service(`SELECT allocate_verified_sales_invoice_payment('${tenant}','${remainingOp}','${remainingToken}',${literal({...finalReadback,provider_transaction_id:'ch_fixture',provider_settlement_id:'txn_fixture'})});`),/duplicate key|unique/i);
  assert.equal(run(`SELECT state FROM paige_invoice_provider_operations WHERE id='${remainingOp}';`),'dispatching');
  run(settleFinal());
+ run(service(`SELECT complete_sales_balance_event_readback('${tenant}','${remainingOp}','acct_fixtureA','test','evt_lateAvailable');`));
+ assert.equal(availabilityBatch().rows.length,0,'event replay cannot add another allocation');
  assert.equal(run(`SELECT status FROM paige_durable_work WHERE id='${cappedClaim.work_id}';`),'succeeded','late verified settlement satisfies exhausted work');
  assert.equal(run(`SELECT attempt_count FROM paige_durable_work WHERE id='${cappedClaim.work_id}';`),'25','terminal close does not reset exhausted attempt budget');
  const fullRead=JSON.parse(run(`SELECT _sales_invoice_read('${tenant}','${invoice}');`));

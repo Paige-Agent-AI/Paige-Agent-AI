@@ -314,7 +314,8 @@ DO $$ BEGIN
   ALTER FUNCTION public.list_tool_autonomy(uuid) RENAME TO _list_tool_autonomy_before_provider_request;
  END IF;
 END $$;
-REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_provider_request(uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_provider_request(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_provider_request(uuid) FROM service_role;
 CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid DEFAULT NULL)
 RETURNS TABLE(tool_key text,label text,category text,mode text,is_default boolean,updated_at timestamptz)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -651,7 +652,7 @@ BEGIN
    'reconciliation_reason',CASE WHEN w.blocked_reason IN ('provider_pending','provider_outcome_unknown','reconciliation_exhausted') THEN w.blocked_reason ELSE NULL END) ORDER BY op.created_at DESC,op.id DESC),'[]'::jsonb)
  INTO rows FROM(SELECT * FROM public.paige_invoice_provider_operations WHERE tenant_id=_expected_tenant_id AND invoice_id=_invoice_id ORDER BY created_at DESC,id DESC LIMIT 25) op
  LEFT JOIN public.paige_durable_work w ON w.id=op.reconciliation_work_id AND w.tenant_id=op.tenant_id AND w.intent_id=op.id
-  AND w.initiating_user_id=op.actor_user_id AND w.work_kind='sales_payment_reconciliation' AND w.capability_key='sales.payment_reconcile';
+  AND w.initiating_user_id=op.actor_user_id AND w.work_kind='sales_payment_reconciliation' AND w.capability_key='sales_invoice.payment_request';
  RETURN jsonb_build_object('rows',rows,'invoice_number',truth->'invoice_number','remaining_cents',truth->'remaining_cents','has_more',count_rows>25);
 END $$;
 REVOKE ALL ON FUNCTION public.list_sales_invoice_payment_operations(uuid,uuid) FROM PUBLIC,anon,service_role;
@@ -695,7 +696,7 @@ BEGIN
   RAISE EXCEPTION 'Payment reconciliation identity is immutable' USING ERRCODE='42501'; END IF;
  IF NEW.reconciliation_work_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.paige_durable_work w WHERE w.id=NEW.reconciliation_work_id
   AND w.tenant_id=NEW.tenant_id AND w.initiating_user_id=NEW.actor_user_id AND w.intent_id=NEW.id AND w.thread_id IS NULL
-  AND w.work_kind='sales_payment_reconciliation' AND w.capability_key='sales.payment_reconcile'
+  AND w.work_kind='sales_payment_reconciliation' AND w.capability_key='sales_invoice.payment_request'
   AND w.scope_epoch='sales_payment_operation:'||NEW.id::text AND w.request_payload=public._sales_payment_reconciliation_payload(NEW.id)
   AND w.authority_context=jsonb_build_object('tenant_id',NEW.tenant_id::text,'actor_user_id',NEW.actor_user_id::text,
    'operation_id',NEW.id::text,'provenance','authorized_payment_system_readback','allowed_effect','provider_get_and_canonical_reconciliation')) THEN
@@ -723,11 +724,11 @@ BEGIN
  IF op.reconciliation_work_id IS NULL THEN
   INSERT INTO public.paige_durable_work(tenant_id,initiating_user_id,intent_id,thread_id,capability_key,work_kind,authority_context,scope_epoch,
    idempotency_key,lease_until,max_attempts,request_payload)
-  VALUES(op.tenant_id,op.actor_user_id,op.id,NULL,'sales.payment_reconcile','sales_payment_reconciliation',context,
+  VALUES(op.tenant_id,op.actor_user_id,op.id,NULL,'sales_invoice.payment_request','sales_payment_reconciliation',context,
    'sales_payment_operation:'||op.id::text,'paige-work:'||gen_random_uuid()::text,now()+interval '5 minutes',25,payload)
   ON CONFLICT(tenant_id,initiating_user_id,intent_id) DO NOTHING;
   SELECT * INTO w FROM public.paige_durable_work WHERE tenant_id=op.tenant_id AND initiating_user_id=op.actor_user_id AND intent_id=op.id FOR UPDATE;
-  IF NOT FOUND OR w.capability_key<>'sales.payment_reconcile' OR w.work_kind<>'sales_payment_reconciliation'
+  IF NOT FOUND OR w.capability_key<>'sales_invoice.payment_request' OR w.work_kind<>'sales_payment_reconciliation'
    OR w.thread_id IS NOT NULL OR w.authority_context IS DISTINCT FROM context OR w.request_payload IS DISTINCT FROM payload
    OR w.scope_epoch IS DISTINCT FROM 'sales_payment_operation:'||op.id::text THEN
    RAISE EXCEPTION 'Payment reconciliation identity collision' USING ERRCODE='42501'; END IF;
@@ -774,7 +775,7 @@ BEGIN
  LOOP
   SELECT * INTO op FROM public.paige_invoice_provider_operations WHERE reconciliation_work_id=w.id AND tenant_id=w.tenant_id;
   IF NOT FOUND OR w.request_payload IS DISTINCT FROM public._sales_payment_reconciliation_payload(op.id)
-   OR w.initiating_user_id<>op.actor_user_id OR w.intent_id<>op.id OR w.capability_key<>'sales.payment_reconcile' THEN
+   OR w.initiating_user_id<>op.actor_user_id OR w.intent_id<>op.id OR w.capability_key<>'sales_invoice.payment_request' THEN
    RAISE EXCEPTION 'Payment reconciliation scope unavailable' USING ERRCODE='42501'; END IF;
   IF w.status='claimed' AND w.lease_until<=now() THEN
    PERFORM public.transition_paige_durable_work(w.id,w.idempotency_key,'expired',NULL,'The previous reconciliation lease expired; checking canonical payment state.',NULL,'lease_expired',300,false);
@@ -866,7 +867,7 @@ BEGIN
   RAISE EXCEPTION 'Canonical payment readback required' USING ERRCODE='42501'; END IF;
  IF op.reconciliation_work_id IS NULL THEN RETURN jsonb_build_object('work_id',NULL,'work_status',NULL,'operation_state',op.state); END IF;
  SELECT * INTO w FROM public.paige_durable_work WHERE tenant_id=op.tenant_id AND id=op.reconciliation_work_id FOR UPDATE;
- IF NOT FOUND OR w.work_kind<>'sales_payment_reconciliation' OR w.capability_key<>'sales.payment_reconcile'
+ IF NOT FOUND OR w.work_kind<>'sales_payment_reconciliation' OR w.capability_key<>'sales_invoice.payment_request'
   OR w.initiating_user_id<>op.actor_user_id OR w.intent_id<>op.id OR w.request_payload IS DISTINCT FROM public._sales_payment_reconciliation_payload(op.id) THEN
   RAISE EXCEPTION 'Payment reconciliation scope unavailable' USING ERRCODE='42501'; END IF;
  terminal:=CASE WHEN op.state='settled' THEN 'succeeded' ELSE 'failed' END;
@@ -890,4 +891,40 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.settle_sales_payment_reconciliation_work(uuid,uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.settle_sales_payment_reconciliation_work(uuid,uuid) TO service_role;
+
+-- Signed balance events may reconcile exhausted work directly. The retry budget/history
+-- stays intact; only provider GET/readback can close the existing work through allocation.
+ALTER TABLE public.paige_invoice_provider_operations ADD COLUMN IF NOT EXISTS last_balance_event_id text;
+CREATE OR REPLACE FUNCTION public.read_sales_balance_event_operations(_expected_tenant_id uuid,_merchant_account_id text,_environment text,_event_id text,_limit integer DEFAULT 3) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE rows jsonb; more boolean;
+BEGIN
+ PERFORM public._sales_payment_operation_service();
+ IF _event_id IS NULL OR _event_id!~'^evt_[A-Za-z0-9]+$' OR _limit IS NULL OR _limit NOT BETWEEN 1 AND 3
+ OR NOT EXISTS(SELECT 1 FROM public.tenant_stripe_accounts WHERE tenant_id=_expected_tenant_id AND stripe_account_id=_merchant_account_id AND provider_environment=_environment) THEN
+ RAISE EXCEPTION 'Payment event scope unavailable' USING ERRCODE='42501'; END IF;
+ SELECT coalesce(jsonb_agg(to_jsonb(o)),'[]'::jsonb) INTO rows FROM
+ (SELECT * FROM public.paige_invoice_provider_operations WHERE tenant_id=_expected_tenant_id AND provider='stripe'
+ AND merchant_account_id=_merchant_account_id AND environment=_environment
+ AND state IN ('dispatching','provider_accepted','customer_action_required','outcome_unknown')
+ AND last_balance_event_id IS DISTINCT FROM _event_id ORDER BY updated_at,id LIMIT _limit) o;
+ SELECT EXISTS(SELECT 1 FROM public.paige_invoice_provider_operations WHERE tenant_id=_expected_tenant_id AND provider='stripe'
+ AND merchant_account_id=_merchant_account_id AND environment=_environment
+ AND state IN ('dispatching','provider_accepted','customer_action_required','outcome_unknown')
+ AND last_balance_event_id IS DISTINCT FROM _event_id OFFSET _limit) INTO more;
+ RETURN jsonb_build_object('rows',rows,'has_more',more);
+END $$;
+REVOKE ALL ON FUNCTION public.read_sales_balance_event_operations(uuid,text,text,text,integer) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.read_sales_balance_event_operations(uuid,text,text,text,integer) TO service_role;
+CREATE OR REPLACE FUNCTION public.complete_sales_balance_event_readback(_expected_tenant_id uuid,_operation_id uuid,_merchant_account_id text,_environment text,_event_id text) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ PERFORM public._sales_payment_operation_service();
+ IF _event_id IS NULL OR _event_id!~'^evt_[A-Za-z0-9]+$' OR NOT EXISTS(SELECT 1 FROM public.tenant_stripe_accounts WHERE tenant_id=_expected_tenant_id AND stripe_account_id=_merchant_account_id AND provider_environment=_environment) THEN
+ RAISE EXCEPTION 'Payment event scope unavailable' USING ERRCODE='42501'; END IF;
+ UPDATE public.paige_invoice_provider_operations SET last_balance_event_id=_event_id WHERE id=_operation_id AND tenant_id=_expected_tenant_id AND provider='stripe' AND merchant_account_id=_merchant_account_id AND environment=_environment;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Payment event scope unavailable' USING ERRCODE='42501'; END IF;
+END $$;
+REVOKE ALL ON FUNCTION public.complete_sales_balance_event_readback(uuid,uuid,text,text,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.complete_sales_balance_event_readback(uuid,uuid,text,text,text) TO service_role;
 COMMIT;

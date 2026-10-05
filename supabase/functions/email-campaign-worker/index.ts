@@ -182,7 +182,17 @@ Deno.serve(async (req) => {
     // Durable work refuses an inactive business, and there is nothing to track for one.
     if (claim.blocked !== "business_inactive") {
       const opened = await admin.rpc("email_campaign_dispatch_open", { p_version_id: claim.campaign.version_id });
-      if (opened.error) console.error("[email-campaign-worker] envelope open failed", { version: claim.campaign.version_id, reason: opened.error.message });
+      if (opened.error) {
+        // No durable record of this send means no receipt for it: send nothing. The leased recipients go
+        // back in the queue (deferred holds them 15 minutes) rather than lapse into outcome_unknown.
+        console.error("[email-campaign-worker] envelope open failed", { version: claim.campaign.version_id, reason: opened.error.message });
+        for (const r of claim.recipients ?? []) {
+          await record(admin, r.id, { outcome: "deferred", notBefore: null, error: "envelope_open_failed" });
+          totals.deferred++;
+        }
+        notes.push({ campaign_id: claim.campaign.id, deferred: "envelope_open_failed" });
+        continue;
+      }
     }
 
     if (claim.blocked) {

@@ -381,6 +381,16 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
 
+### Marketing email E2 — the Email dashboard and campaign editor (branch `claude/gifted-bell-qfezxb`, 2026-10-04)
+
+Solo Marketing › Email (`/solo/{account}/growth/email`). The same RPC seam as E1, plus three reads
+(`read_email_marketing_dashboard`, `read_email_campaign`, `read_email_rule_choices`) on the caller's active workspace,
+owner or admin only.
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Email dashboard, campaign editor, segments | ✗ (no workspace; §61 default) | ✗ no screen (the agency does not run its own email book here) | **✓** owner/admin; a member is told only owners and admins can | DB allows owner/admin; the sub-account tree has no Email screen yet | ✗ | ✗ | LIVE on merge (Solo) |
+
 ### Marketing email E1 — the sending foundation (branch `claude/gifted-bell-qfezxb`, 2026-10-04)
 
 Backend only: no surface changes in this slice (the Email tab is unchanged until E2). Recorded here

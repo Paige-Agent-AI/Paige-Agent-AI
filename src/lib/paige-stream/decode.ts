@@ -6,8 +6,9 @@
 // spine does not), so moving a surface onto this reader changes none of its handling.
 //
 // The server writes one top-level key per frame. The order below only matters for a frame carrying
-// several; it keeps every consumer's own branch order (step before phase before content, confirm
-// before content). A known key whose value is falsy is passed over, as every consumer's
+// several; it keeps the typed consumers' own branch order (step before phase before content, confirm
+// before content). PaigeAIChat's order differs, so it dispatches on the raw object
+// (decodePaigeFrameWithRaw) and uses only the `done` and `malformed` names. A known key whose value is falsy is passed over, as every consumer's
 // `if (parsed.key)` did.
 import { isTurnFrame, TURN_FRAME_KEY, type TurnFrame } from "../../../supabase/functions/_shared/paige-turn/contract";
 
@@ -28,14 +29,31 @@ export type PaigeFrame =
   | { type: "turn"; turn: TurnFrame }
   /** Not JSON at all. The reader's `malformed` option decides what happens next. */
   | { type: "malformed" }
-  /** Valid JSON this reader does not name. Every surface drops it: no state, nothing rendered. */
+  /** Valid JSON this reader does not name. The typed consumers drop it (no state, nothing rendered);
+   *  PaigeAIChat dispatches on the raw object instead and acts on several such keys. */
   | { type: "unknown"; frame: unknown };
 
 /** Never throws: anything it cannot name is "unknown", anything it cannot parse is "malformed". */
 export function decodePaigeFrame(payload: string): PaigeFrame {
-  if (payload === "[DONE]") return { type: "done" };
+  return decodePaigeFrameWithRaw(payload).frame;
+}
+
+/**
+ * The same frame, plus the parsed JSON value it was named from (undefined for done and malformed).
+ *
+ * For the one consumer that dispatches over the WHOLE object in its own branch order rather than on
+ * the single key named here — PaigeAIChat, whose order (Live error, Live output, step, Live card,
+ * phase, proposal, client scope, …) predates this reader and differs from it for a frame carrying
+ * more than one key. Naming stays here; the order stays with that surface.
+ */
+export function decodePaigeFrameWithRaw(payload: string): { frame: PaigeFrame; raw: unknown } {
+  if (payload === "[DONE]") return { frame: { type: "done" }, raw: undefined };
   let parsed: unknown;
-  try { parsed = JSON.parse(payload); } catch { return { type: "malformed" }; }
+  try { parsed = JSON.parse(payload); } catch { return { frame: { type: "malformed" }, raw: undefined }; }
+  return { frame: nameFrame(parsed), raw: parsed };
+}
+
+function nameFrame(parsed: unknown): PaigeFrame {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return { type: "unknown", frame: parsed };
   const o = parsed as Record<string, unknown>;
 

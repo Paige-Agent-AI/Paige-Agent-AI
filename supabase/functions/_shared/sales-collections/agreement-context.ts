@@ -1,14 +1,15 @@
-import { MAX_MINOR, UUID, object, parseCollectionTerms } from './contract.ts';
+import { UUID, object, parseCollectionTerms } from './contract.ts';
 import { previewCollectionSchedule } from './model.ts';
 
 const fail = (): never => { throw new TypeError('COLLECTION_CONTEXT_UNVERIFIED'); };
 const id = (value: unknown): string => typeof value === 'string' && UUID.test(value) ? value.toLowerCase() : fail();
 const nullableId = (value: unknown): string | null => value === null ? null : id(value);
 const minor = (value: unknown): number | null => value === null ? null
-  : typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= MAX_MINOR ? value : fail();
+  : typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : fail();
 function label(value: unknown, truncated: unknown): { value: string | null; truncated: boolean } {
-  if (typeof truncated !== 'boolean' || (value !== null && (typeof value !== 'string' || value.length > 200))) return fail();
+  if (typeof truncated !== 'boolean' || (value !== null && (typeof value !== 'string' || Array.from(value).length > 200))) return fail();
   if (value === null && truncated) return fail();
+  if (truncated && typeof value === 'string' && Array.from(value).length !== 200) return fail();
   return { value: value as string | null, truncated };
 }
 
@@ -24,6 +25,7 @@ export function projectCollectionAgreement(value: unknown, tenantId: string): Re
   const amount = minor(value.agreed_amount_minor);
   const currency = value.agreed_currency;
   if (currency !== null && (typeof currency !== 'string' || !/^[a-z]{3}$/.test(currency))) return fail();
+  if ((amount === null) !== (currency === null)) return fail();
   const version = value.collection_terms_version;
   if (!Number.isSafeInteger(version) || Number(version) < 0 || typeof value.terms_current !== 'boolean') return fail();
   const terms = value.collection_terms === null ? null : parseCollectionTerms(value.collection_terms);

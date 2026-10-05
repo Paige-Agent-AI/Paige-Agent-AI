@@ -50,10 +50,20 @@ describe('canonical commercial collection context', () => {
   it('retains explicit label truncation so names cannot silently stand in for exact context', () => {
     expect(projectCollectionAgreement({ ...row, title: 'A'.repeat(200), title_truncated: true }, tenant)).toMatchObject({ title_truncated: true });
   });
+  it('preserves canonical zero or large safe recorded amounts without treating them as payable schedules', () => {
+    for (const amount of [0, 2147483648]) expect(projectCollectionAgreement({ ...row, agreed_amount_minor: amount,
+      collection_terms: null, collection_terms_version: 0, terms_current: false }, tenant))
+      .toMatchObject({ amount_cents: amount, terms_state: 'absent', schedule_preview: null, authority: 'not_evaluated' });
+  });
+  it('uses the same Unicode character bound as PostgreSQL for multilingual source labels', () => {
+    expect(projectCollectionAgreement({ ...row, title: '😀'.repeat(200), title_truncated: true }, tenant)).toMatchObject({ title: '😀'.repeat(200) });
+    expect(() => projectCollectionAgreement({ ...row, title: '😀'.repeat(201) }, tenant)).toThrow();
+  });
   it.each([
     { tenant_id: client }, { client_id: 'private' }, { offer_id: 'private' }, { id: 'private' },
     { title: 'A'.repeat(201) }, { title_truncated: undefined }, { client_name: null, client_name_truncated: true },
     { agreed_amount_minor: -1 }, { agreed_currency: 'USD' }, { status: 'completed_payment' },
+    { agreed_amount_minor: null }, { agreed_currency: null }, { title: 'short', title_truncated: true },
     { collection_terms_version: 0 }, { collection_terms_version: 1.5 }, { terms_current: false },
     { collection_terms: { ...assembled.terms, currency: 'private' } },
   ])('refuses malformed, foreign or contradictory canonical context %j', change => {

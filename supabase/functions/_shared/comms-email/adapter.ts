@@ -110,11 +110,15 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
 
     // The approved call named a person's address and a sender's address. If either moved since the
     // card was shown, this is a different email than the one approved: refuse, send nothing.
-    const parties = await d.resolveParties();
+    // These reads run before anything is prepared, so a failure here sent nothing: a refusal the
+    // owner can safely retry, never an "unknown" that would forbid a resend.
+    let parties: Awaited<ReturnType<CommsEmailExecutorDependencies["resolveParties"]>>;
+    try { parties = await d.resolveParties(); } catch { return refused("COMMS_EMAIL_PARTIES_UNAVAILABLE"); }
     if (parties.kind === "contact_not_in_workspace") return refused("CONTACT_NOT_IN_WORKSPACE");
     if (parties.kind === "recipient_missing" || ("recipient" in parties && parties.recipient !== stored.recipient)) return refused("RECIPIENT_CHANGED");
     if (parties.kind !== "resolved" || parties.connectorId !== stored.command.connector_id || !parties.fromAddress || parties.fromAddress !== stored.fromAddress) return refused("SENDER_CHANGED");
-    const readiness = await d.readiness(parties);
+    let readiness: Awaited<ReturnType<CommsEmailExecutorDependencies["readiness"]>>;
+    try { readiness = await d.readiness(parties); } catch { return refused("EMAIL_READINESS_UNVERIFIED"); }
     if (!readiness.eligible) {
       return { ok: false, outcome: readiness.state === "needs_setup" ? "needs_setup" : readiness.state === "held" && !readiness.reason.startsWith("BLOCKED_") ? "held" : "refused", operation_id: input.operationId, reason: readiness.reason, delivery_confirmed: false };
     }

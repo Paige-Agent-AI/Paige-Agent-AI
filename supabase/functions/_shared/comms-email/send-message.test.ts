@@ -43,6 +43,9 @@ interface Options {
   // The database's own binding state when finalize runs, if it differs from the read snapshot
   // (another request claimed in between). Defaults to the snapshot.
   dbState?: string;
+  // The message row's own tenant (null = a row with no resolvable workspace) and the contact row's.
+  messageTenant?: string | null;
+  clientTenant?: string;
 }
 
 function setup(options: Options = {}) {
@@ -70,9 +73,9 @@ function setup(options: Options = {}) {
       const result = () => {
         if (mode !== "select") return { data: { id: table === "messages" ? MSG : "row-id" }, error: null };
         if (table === "messages") {
-          return { data: { tenant_id: TENANT, status: options.draftStatus ?? "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { source: "comms-email-command", comms_email_binding: b } }, error: null };
+          return { data: { tenant_id: options.messageTenant === undefined ? TENANT : options.messageTenant, status: options.draftStatus ?? "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { source: "comms-email-command", comms_email_binding: b } }, error: null };
         }
-        if (table === "clients") return { data: { tenant_id: TENANT, emails: options.contactEmails ?? ["Client@Example.test"] }, error: null };
+        if (table === "clients") return { data: { tenant_id: options.clientTenant ?? TENANT, emails: options.contactEmails ?? ["Client@Example.test"] }, error: null };
         if (table === "channel_connectors") {
           return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", provider: options.provider ?? "resend", from_address: "owner@business.test", from_name: "Owner Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         }
@@ -407,6 +410,28 @@ describe("send-message comms_email path (real handler source, network substitute
       expect(s.fetchCalls, JSON.stringify(data)).toHaveLength(0);
       expect(s.names(), JSON.stringify(data)).not.toContain("finalize_comms_email_send");
     }
+  });
+
+  it("no exact workspace = no send: a governed row with no resolvable tenant is refused before claim or provider", async () => {
+    const s = setup({ messageTenant: null });
+    const r = await s.request();
+    expect(r.status).toBe(409);
+    expect(r.body).toEqual({ error: "comms_email_binding_invalid" });
+    expect(s.fetchCalls).toEqual([]);
+    expect(s.names()).not.toContain("claim_comms_email_send");
+    expect(s.finalizeCalls()).toEqual([]);
+  });
+
+  it("the suppression check reads the binding's workspace, never another one a contact row names", async () => {
+    // A contact row resolving to a different workspace must not steer the pre-send read elsewhere.
+    const s = setup({ clientTenant: OTHER });
+    const r = await s.request();
+    // The existing cross-workspace contact guard refuses first (403); the comms WORKSPACE_CHANGED
+    // check behind it is a second line, never the only one.
+    expect(r.status).toBe(403);
+    expect(r.body).toEqual({ error: "forbidden_cross_tenant_contact" });
+    expect(s.fetchCalls).toEqual([]);
+    expect(s.names()).not.toContain("claim_comms_email_send");
   });
 
   it("legacy email sends are untouched: no abort signal, no 20 s deadline, no forced key", async () => {

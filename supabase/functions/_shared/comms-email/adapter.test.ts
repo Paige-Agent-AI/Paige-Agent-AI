@@ -53,6 +53,14 @@ describe("executeCommsEmailSend", () => {
       expect(r.outcome).toBe(["unknown", "dispatching"].includes(s) ? "outcome_unknown" : s);
     }
   });
+  it("a failed read of the parties or the readiness before prepare is a refusal (nothing was prepared or sent), not unknown", async () => {
+    const parties = deps({ resolveParties: async () => { throw new Error("db down"); } });
+    expect(await executeCommsEmailSend(await input(), parties.d)).toMatchObject({ ok: false, outcome: "refused", reason: "COMMS_EMAIL_PARTIES_UNAVAILABLE" });
+    expect(parties.log).toEqual([]);
+    const ready = deps({ readiness: async () => { throw new Error("db down"); } });
+    expect(await executeCommsEmailSend(await input(), ready.d)).toMatchObject({ ok: false, outcome: "refused", reason: "EMAIL_READINESS_UNVERIFIED" });
+    expect(ready.log).toEqual([]);
+  });
   it("an unanswered send is outcome_unknown, never success", async () => {
     const t = deps({ send: async () => { throw new Error("network"); } });
     expect(await executeCommsEmailSend(await input(), t.d)).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" });

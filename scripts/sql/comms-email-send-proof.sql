@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
--- INT-328 — rollback proof for 20270589000000_comms_email_send.sql (comms.email_send).
+-- INT-328 — rollback proof for 20270596000000_comms_email_send.sql (comms.email_send).
 --
 -- HOW TO RUN: node scripts/sql/run-rollback-proof.mjs --lean scripts/sql/comms-email-send-proof.sql
 --   and execute the printed batch (psql, or the Supabase MCP execute_sql tool). BEGIN..ROLLBACK:
@@ -48,7 +48,7 @@ INSERT INTO public.channel_connectors (id, tenant_id, channel_type, provider, fr
  ('cccccccc-3280-4000-8000-000000000003','aaaaaaaa-3280-4000-8000-000000000002','email','resend','foreign@biz.example.invalid','active',true);
 
 -- ── the migration under proof ───────────────────────────────────────────────────────────────
-\i supabase/migrations/20270589000000_comms_email_send.sql
+\i supabase/migrations/20270596000000_comms_email_send.sql
 
 -- ── helpers ─────────────────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.ok(_ord int, _cond boolean, _label text) RETURNS void LANGUAGE sql AS $$

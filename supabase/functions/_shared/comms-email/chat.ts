@@ -157,6 +157,7 @@ const REASON_NOTES: Record<string, string> = {
   APPROVAL_STORE_UNAVAILABLE: "Approvals could not be saved or read just now, so nothing was sent. It is safe to try again in a moment.",
   APPROVAL_CYCLE_INVALID: "That approval no longer matches this email, so nothing was sent. Propose it again.",
   APPROVAL_CLAIM_INVALID: "That approval could not be used, so nothing was sent. Propose it again.",
+  SEND_NOT_ADMITTED: "It was approved but not sent, because the sending step did not take it. Nothing went out; it is safe to approve it again.",
 };
 function notSentNote(...keys: unknown[]): string {
   const plain = keys.map((k) => typeof k === "string" ? REASON_NOTES[k] : undefined).find((n) => n);
@@ -261,6 +262,11 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     // answers; anything else that lacks an outcome (a runtime/gateway body) stays unconfirmed.
     const preSendRefusal = result.outcome === undefined && typeof result.code === "string" && PRE_SEND_DOOR_CODES.has(result.code);
     if (preSendRefusal) return { tokens, content: { ...safe, success: false, outcome: "refused", delivery_confirmed: false, note: notSentNote(result.code) } };
+    if (result.outcome === "outcome_unknown" && result.code === "COMMS_EMAIL_IDENTICAL_IN_FLIGHT") {
+      // Not "reconciled": the other send was named, not settled.
+      const { reconciled: _notSettled, ...unsettled } = safe;
+      return { tokens, content: { ...unsettled, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: "An identical email to this person is already being sent, so this one was held back. Do not resend. Say it may already have gone out; asking again later will check that send rather than send a second one." } };
+    }
     if (typeof result.outcome !== "string" || UNCONFIRMED.has(result.outcome)) return { tokens, content: withReplay({ ...safe, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: UNKNOWN_NOTE }) };
     if (result.outcome === "sender_choice_required") {
       return { tokens, content: { ...safe, success: false, senders: readSenders(result.senders), note: "Nothing was sent. More than one business email address can send this. Ask the person which address to send from, then call again with that connector_id." } };

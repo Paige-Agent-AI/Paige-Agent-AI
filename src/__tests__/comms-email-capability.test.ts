@@ -59,7 +59,7 @@ describe("the canonical command", () => {
     const input = { recipient: "dana@example.test", connectorId: id, subject: "Héllo", bodyText: "Line 1\nLine 2" };
     const expected = createHash("sha256").update(`dana@example.test\n${id}\nHéllo\nLine 1\nLine 2`, "utf8").digest("hex");
     expect(await commsEmailContentDigest(input)).toBe(expected);
-    const migration = readFileSync("supabase/migrations/20270589000000_comms_email_send.sql", "utf8");
+    const migration = readFileSync("supabase/migrations/20270596000000_comms_email_send.sql", "utf8");
     expect(migration).toContain("_recipient||E'\\n'||_connector_id::text||E'\\n'||_subject||E'\\n'||_body_text,'UTF8'),'sha256'),'hex')");
   });
   it("normalizes addresses the way send-message compares them", () => {

@@ -81,6 +81,19 @@ Deno.serve(async req => {
     try {
       const after = object(await readResult(operationId));
       if (after?.outcome !== "prepared") return result;
+      // The claim also refuses while an IDENTICAL email (same recipient + content) is dispatching or
+      // unknown under another operation. This operation sent nothing, but telling the owner "Not sent"
+      // would invite a resend of an email that may already have gone out: name that send instead.
+      if (typeof after.message_id === "string") {
+        const b = object(await readBinding(after.message_id));
+        if (b && typeof b.recipient === "string" && typeof b.content_digest === "string") {
+          const { data: pending, error } = await admin.rpc("find_comms_email_pending_reconciliation", { _expected_tenant_id: tenantId, _recipient: b.recipient, _content_digest: b.content_digest });
+          if (error) return result;
+          if (typeof pending === "string" && pending !== operationId) {
+            return { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: pending, operation_id: operationId, delivery_confirmed: false };
+          }
+        }
+      }
       return { ok: false, outcome: "refused", reason: "SEND_NOT_ADMITTED", operation_id: operationId, delivery_confirmed: false };
     } catch { return result; }
   };

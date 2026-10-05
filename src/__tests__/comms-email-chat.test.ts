@@ -205,11 +205,19 @@ describe('comms.email_send Chat dispatch', () => {
     expect(String(fresh.content.note)).not.toContain(note);
   });
 
+  it('an identical email already in flight is narrated as unconfirmed, never as Not sent', async () => {
+    const r = await dispatchCommsEmailChat(context, harness([], { ok: false, outcome: 'outcome_unknown', code: 'COMMS_EMAIL_IDENTICAL_IN_FLIGHT', reconciled_operation_id: '99999999-9999-4999-8999-999999999999' }).deps as never);
+    expect(r.content).toMatchObject({ success: false, outcome: 'outcome_unknown', delivery_confirmed: false });
+    expect(String(r.content.note)).toMatch(/already being sent/);
+    expect(String(r.content.note)).not.toMatch(/Not sent/);
+    expect(r.content.reconciled).toBeUndefined();
+  });
+
   it('every reachable reason has a plain-language note and no note quotes an internal code', async () => {
     const reasons = ['RECIPIENT_EMAIL_MISSING', 'TENANT_EMAIL_SENDER_MISSING', 'EMAIL_PROVIDER_NOT_CONFIGURED', 'EMAIL_RECONNECT_REQUIRED', 'BLOCKED_SUPPRESSED', 'BLOCKED_CLIENT_DND', 'BLOCKED_NO_CONSENT',
       'QUEUED_TENANT_DND', 'QUEUED_QUIET_HOURS', 'RECIPIENT_PREFERENCES_UNVERIFIED', 'EMAIL_READINESS_UNVERIFIED', 'CONTACT_NOT_IN_WORKSPACE', 'RECIPIENT_CHANGED', 'SENDER_CHANGED', 'CONTENT_CHANGED',
       'SEND_NO_LONGER_ELIGIBLE', 'PRE_SEND_UNVERIFIED', 'PROVIDER_REJECTED', 'PROVIDER_NOT_ATTEMPTED', 'UNSPECIFIED', 'WORKSPACE_CHANGED', 'COMMS_EMAIL_RECONCILIATION_REQUIRED',
-      'COMMS_EMAIL_INVALID', 'COMMS_EMAIL_AUTHORITY_UNAVAILABLE', 'COMMS_EMAIL_PREPARE_REFUSED'];
+      'COMMS_EMAIL_INVALID', 'COMMS_EMAIL_AUTHORITY_UNAVAILABLE', 'COMMS_EMAIL_PREPARE_REFUSED', 'SEND_NOT_ADMITTED'];
     const codes = ['COMMS_EMAIL_COMMAND_INVALID', 'UNAUTHENTICATED', 'METHOD_NOT_ALLOWED', 'COMMS_EMAIL_FORBIDDEN', 'COMMS_EMAIL_REPLAY_UNAVAILABLE', 'COMMS_EMAIL_PARTIES_UNAVAILABLE',
       'COMMS_EMAIL_RECONCILIATION_UNVERIFIED', 'APPROVAL_STORE_UNAVAILABLE', 'APPROVAL_CYCLE_INVALID', 'APPROVAL_CLAIM_INVALID', 'COMMS_EMAIL_DECISION_RECEIPT_FAILED'];
     const notes = new Set<string>();

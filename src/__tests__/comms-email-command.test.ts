@@ -136,6 +136,7 @@ function setup(options: Setup = {}) {
   const fetchStub = async (_url: string, init: { body: string }) => {
     const payload = JSON.parse(init.body) as Row;
     sends.push(payload);
+    (options as Row & { onSend?: (b: Map<string, Row>) => void }).onSend?.(bindings);
     const binding = bindings.get(String(payload.comms_email_operation_id).toLowerCase());
     if (options.sendBehavior === "throw") { if (binding) binding.state = "unknown"; throw new Error("network"); }
     // Timed out before send-message claimed: the row is still 'prepared', but the call never answered.
@@ -236,6 +237,48 @@ describe("comms-email-command: the canonical approval cycle", () => {
     expect(stored).toMatchObject({ expected_tenant_id: TENANT, operation_id: OP, recipient: "dana@example.test", from_address: "owner@business.test", command: { ...command, connector_id: SENDER } });
     expect(r.body.fingerprint).toBe(await confirmFingerprint(COMMS_EMAIL_TOOL, stored));
     expect(t.named("prepare_comms_email_send")).toEqual([]); expect(t.sends).toEqual([]);
+  });
+  it("the fingerprint binds every material field: changing any one of them is a different approval", async () => {
+    const t = setup();
+    await t.request();
+    const stored = t.named("insert:paige_pending_confirmations")[0].args.args as Row;
+    const base = await confirmFingerprint(COMMS_EMAIL_TOOL, stored);
+    const cmd = stored.command as Row;
+    const mutations: [string, Row][] = [
+      ["tenant", { ...stored, expected_tenant_id: "10000000-0000-4000-8000-0000000000ff" }],
+      ["operation", { ...stored, operation_id: OP_2 }],
+      ["contact", { ...stored, command: { ...cmd, contact_id: FOREIGN_CONTACT } }],
+      ["sender connector", { ...stored, command: { ...cmd, connector_id: SENDER_2 } }],
+      ["subject", { ...stored, command: { ...cmd, subject: "Checking in!" } }],
+      ["body", { ...stored, command: { ...cmd, body: `${cmd.body} ` } }],
+      ["resolved recipient address", { ...stored, recipient: "dana2@example.test" }],
+      ["sender address", { ...stored, from_address: "owner2@business.test" }],
+      ["content digest", { ...stored, content_digest: "0".repeat(64) }],
+    ];
+    for (const [field, mutated] of mutations) expect(await confirmFingerprint(COMMS_EMAIL_TOOL, mutated), field).not.toBe(base);
+    // The same arguments under another tool are another approval too.
+    expect(await confirmFingerprint("billing_send_invoice", stored)).not.toBe(base);
+  });
+  it("declined, expired and consumed approvals are terminal: none of them sends", async () => {
+    for (const end of ["declined", "expired", "consumed"] as const) {
+      const t = setup();
+      const proposal = await t.request();
+      const row = t.tables.paige_pending_confirmations[0];
+      if (end === "expired") row.expires_at = "2000-01-01T00:00:00.000Z";
+      else row.consumed_at = "2000-01-01T00:00:00.000Z"; // a decline consumes the row exactly like a use
+      const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
+      expect(r.body.outcome, end).not.toBe("provider_accepted");
+      expect(t.named("prepare_comms_email_send"), end).toEqual([]);
+      expect(t.sends, end).toEqual([]);
+    }
+  });
+  it("a comms approval can be spent only by this door: the invoice door consumes only its own tool's rows", () => {
+    const invoiceDoor = readFileSync("supabase/functions/sales-invoice-command/index.ts", "utf8");
+    // The invoice door's consume is keyed to its own capability tool name, never comms_send_email.
+    expect(invoiceDoor).toMatch(/\.update\(\{ consumed_at[^)]*\)[\s\S]{0,120}\.eq\("tool_name", capability\)/);
+    expect(invoiceDoor).not.toContain("comms_send_email");
+    const commsDoor = readFileSync("supabase/functions/comms-email-command/index.ts", "utf8");
+    expect(commsDoor).toMatch(/\.update\(\{ consumed_at[^)]*\)[\s\S]{0,120}\.eq\("tool_name", COMMS_EMAIL_TOOL\)/);
   });
   it("a changed subject is a different approval", async () => {
     const t = setup();
@@ -391,6 +434,20 @@ describe("comms-email-command: a send the claim did not admit, and the lingering
     const proposal = await t.request();
     const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
     expect(r.body).toMatchObject({ ok: false, outcome: "refused", reason: "SEND_NOT_ADMITTED", operation_id: OP, delivery_confirmed: false });
+    expect(t.bindings.get(OP)?.state).toBe("prepared");
+  });
+  it("not admitted because an IDENTICAL email went in flight between prepare and claim: outcome_unknown naming that send, never 'Not sent'", async () => {
+    const OTHER_OP = "99999999-9999-4999-8999-999999999999";
+    const t = setup({ sendBehavior: "not_admitted" });
+    // Between this operation's prepare and its claim, another approved operation with the same
+    // recipient + content starts dispatching (the SQL claim then refuses this one).
+    (t.options as Row).onSend = (bindings: Map<string, Row>) => {
+      const mine = bindings.get(OP)!;
+      bindings.set(OTHER_OP, { ...mine, operation_id: OTHER_OP, message_id: "60000000-0000-4000-8000-000000000099", state: "dispatching" });
+    };
+    const proposal = await t.request();
+    const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
+    expect(r.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: OTHER_OP, delivery_confirmed: false });
     expect(t.bindings.get(OP)?.state).toBe("prepared");
   });
   it("send-message never answered while the row is still prepared: outcome_unknown (it may still be admitted)", async () => {

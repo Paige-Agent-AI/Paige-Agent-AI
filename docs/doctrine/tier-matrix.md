@@ -334,6 +334,23 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### Governed one-to-one business email — `comms.email_send` (INT-328, branch `claude/hopeful-goldberg-p6ind7`; NOT live until merged and its migration is persisted)
+
+PAIGE may email ONE existing contact from the business's own connected sender, after the person approves the exact email on the Needs-your-OK card (recipient name + address, sending address, subject, body). Door: `comms-email-command`; transport: `send-message` (bound branch); approval: the canonical `paige_pending_confirmations` claim; Rail: `record_capability_run('comms_send_email', …)`. Provider acceptance is reported as "sent (accepted for delivery)", never delivered/received.
+
+| Tier | Can send through `comms_send_email` | Notes |
+|---|---|---|
+| God / Super Admin | — refused | No tenant; the door requires `current_user_tenant_id()` + an owner/admin seat in it. Operator comms is a separate surface (supabase/functions/CLAUDE.md). |
+| Agency (own book) | ✓ owner/admin | Same seat rule as the invoice and CRM doors; follows owner task #124 if Agency's CRM cluster changes. |
+| Agency managing a sub-account | — refused | A context-switched manager holds no owner/admin seat in the child. |
+| Standalone (Solo) | ✓ owner/admin | Primary target surface (canonical Solo shell). Read-only members refused before any card. |
+| Sub-account | ✓ owner/admin | Same as Solo (§60). |
+| Client | — | Client seat sealed; no chat tool. |
+| Anonymous | 403 | No session. |
+
+Also changed for every tier that renders Conversations: a row carrying a governed send binding (`comms_email_binding` or `sales_invoice_binding`) is never shown or counted as an approvable "Paige drafted" draft; it shows "Sending…" or "Couldn't confirm this went out — don't resend" with no Approve/Edit. No tier gains or loses any other surface; `propose_action` and the Live-desk approval path are unchanged (§58).
+
+
 ### Solo Sales customer invoice lifecycle — PR #1688
 
 Standalone Solo owners/admins in the active session workspace may propose customer-invoice publication, manual full/partial receipts, reversals and voids through canonical high-risk confirmation. Read-only roles gain no writes; platform operator authority is not widened. Anonymous access requires a valid expiring hashed invoice grant and exposes only the controlled customer document/balance. No Agency or sub-account UI expansion. Production code/migrations deployed; authenticated mutation and provider acceptance proof remain owed. Settings Billing is unchanged. See `docs/delivery/solo-sales-invoice-publication.md`.

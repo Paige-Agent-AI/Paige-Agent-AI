@@ -4,6 +4,7 @@ export interface InvoiceReadinessAdmin {from(table:string):{select(columns:strin
 import { runPreSend } from '../pre-send-pipeline.ts';
 import type { SupabaseAdminLike } from '../twilio.ts';
 import { invoiceDeliveryReadiness,type InvoiceDeliveryReadiness } from './readiness.ts';
+import { readEmailSenderFacts } from '../comms-email/readiness.ts';
 type ObjectValue=Record<string,unknown>;
 const object=(v:unknown):ObjectValue=>v&&typeof v==='object'&&!Array.isArray(v)?v as ObjectValue:{};
 /** Caller must resolve authenticated actor/current tenant/admin first; this reads only safe setup metadata. */
@@ -19,9 +20,8 @@ export async function readInvoiceDeliveryReadiness(admin:InvoiceReadinessAdmin,i
   let sms;
   if(input.channel==='email') {
    if(!input.connectorId)return invoiceDeliveryReadiness(facts);
-   const {data,error}=await admin.from('channel_connectors').select('tenant_id,active,status,provider,from_address,credentials_vault_ref,config').eq('tenant_id',input.tenantId).eq('id',input.connectorId).eq('channel_type','email').maybeSingle();
-   if(error)throw Error('setup_read_failed');const c=object(data),config=object(c.config);
-   sender={tenantMatches:c.tenant_id===input.tenantId,active:c.active===true&&c.status==='active',provider:String(c.provider??''),fromAddress:typeof c.from_address==='string'?c.from_address:null,credentialReferencePresent:typeof c.credentials_vault_ref==='string'&&!!c.credentials_vault_ref,smtpConfigured:typeof config.host==='string'&&Number.isInteger(config.port)};
+   // §18: the ONE connector sender-fact read (also used by comms.email_send readiness). No row → no sender.
+   sender=await readEmailSenderFacts(admin as never,input.tenantId,input.connectorId)??undefined;
   }else {
    const [account,numbers,a2p]=await Promise.all([admin.from('tenant_twilio_subaccounts').select('subaccount_sid,api_key_sid,auth_token_vault_ref').eq('tenant_id',input.tenantId).maybeSingle(),admin.from('tenant_phone_numbers').select('phone_number,capabilities').eq('tenant_id',input.tenantId).eq('status','active'),admin.from('tenant_a2p_registrations').select('status').eq('tenant_id',input.tenantId).maybeSingle()]);
    if(account.error||numbers.error||a2p.error)throw Error('setup_read_failed');const a=object(account.data);

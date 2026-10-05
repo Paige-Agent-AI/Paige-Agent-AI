@@ -1001,6 +1001,10 @@ Deno.serve(async (req) => {
   // INT-328: anything else the read RPC found changed since approval (e.g. the contact method was
   // removed) — the canonical claim would refuse it anyway; refuse it here so the row is finalized.
   if (commsBinding && !commsBindingEligible) return await refuseCommsEmail("SEND_NO_LONGER_ELIGIBLE");
+  // INT-328: no exact workspace = no send. tenantId is re-derived above from the contact and connector
+  // rows; the pre-send (suppression / DND) read below must run against the binding's own workspace and
+  // nothing else, so any disagreement refuses before claim or provider admission.
+  if (commsBinding && tenantId !== commsBinding.tenant_id) return await refuseCommsEmail("WORKSPACE_CHANGED");
 
   // ── >>> PRE-SEND PIPELINE SEAM <<< (SEND-MESSAGE-CONTRACT §3 steps 1–5) ──────────
   // Runs the LOCKED compliance order after §9 tenant derivation + the §5 dedupe guard,

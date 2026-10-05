@@ -1,6 +1,6 @@
 RESET ROLE;
-\ir ../../supabase/migrations/20270572000000_sales_governed_invoice_draft.sql
-\ir ../../supabase/migrations/20270572000000_sales_governed_invoice_draft.sql
+\ir ../../supabase/migrations/20270582000000_sales_governed_invoice_draft.sql
+\ir ../../supabase/migrations/20270582000000_sales_governed_invoice_draft.sql
 SELECT proof_assert(NOT has_function_privilege('authenticated','public._save_sales_billing_draft(uuid,uuid,uuid,bigint,uuid,jsonb)','EXECUTE')
  AND NOT has_function_privilege('authenticated','public.execute_sales_invoice_draft_command(uuid,uuid,uuid,jsonb,jsonb)','EXECUTE'),'browser cannot supply actor or governance');
 CREATE TEMP TABLE governed_draft_command AS SELECT jsonb_build_object('action','invoice.draft_create','invoice_id','60000000-0000-0000-0000-000000000810','expected_version',0,'draft',draft) command FROM exact_input;

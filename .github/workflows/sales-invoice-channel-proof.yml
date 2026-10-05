@@ -6,6 +6,9 @@ on:
       - 'supabase/functions/_shared/sales-invoice-delivery/**'
       - 'supabase/functions/send-message/**'
       - 'scripts/sql/sales-invoice-channel-proof.*'
+      - 'scripts/sql/sales-governed-draft-proof.*'
+      - 'supabase/functions/_shared/sales-commercial/**'
+      - 'supabase/functions/sales-invoice-draft-command/**'
       - '.github/workflows/sales-invoice-channel-proof.yml'
   push:
     branches: [main]
@@ -13,6 +16,9 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/functions/_shared/sales-invoice-delivery/**'
       - 'scripts/sql/sales-invoice-channel-proof.*'
+      - 'scripts/sql/sales-governed-draft-proof.*'
+      - 'supabase/functions/_shared/sales-commercial/**'
+      - 'supabase/functions/sales-invoice-draft-command/**'
       - '.github/workflows/sales-invoice-channel-proof.yml'
 permissions:
   contents: read
@@ -41,4 +47,8 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-invoice-channel-proof.mjs "$(command -v psql)" 56348 postgres /var/lib/postgresql/data
+      - name: Actual governed draft migration, Trust, atomic receipt and competing revisions
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-governed-draft-proof.mjs "$(command -v psql)" 56348 postgres /var/lib/postgresql/data --draft-concurrency
 

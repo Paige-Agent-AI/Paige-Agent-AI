@@ -113,4 +113,3 @@ try{
  }
  console.log('PASS: governed draft creation, current Trust refusal, immutable replay, canonical readback and atomic Rail rollback; exact-deposit migration replay, role/tenant/replay/version guards and precise issuance; preferences migration replay, roles, numbering, frozen presentation, canonical Rail and '+(draftConcurrency?'real simultaneous draft replay and competing draft CAS':concurrency?'real simultaneous preferences CAS/publication/replay':'serial regression')+'. Hosted authentication/provider proof UNVERIFIED.');
 }finally{if(concurrency){database='postgres';run(`DROP DATABASE ${ownedDatabase};`);console.log('Removed only the uniquely owned concurrency database.');}}
-

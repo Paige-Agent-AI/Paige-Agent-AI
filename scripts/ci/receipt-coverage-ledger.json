@@ -266,7 +266,7 @@
       "tool": "billing_create_invoice",
       "risk": "ordinary",
       "receipt": "seeded_undeclared",
-      "evidence": "New governed Sales Chat/UI command binding atomically records canonical Rail in execute_sales_invoice_draft_command (20270572000000). Overall seeded posture retained: legacy MCP create_invoice remains LEGACY / SHOULD CONVERGE and does not establish equivalent coverage."
+      "evidence": "New governed Sales Chat/UI command binding atomically records canonical Rail in execute_sales_invoice_draft_command (20270582000000). Overall seeded posture retained: legacy MCP create_invoice remains LEGACY / SHOULD CONVERGE and does not establish equivalent coverage."
     },
     {
       "tool": "billing_send_invoice",
@@ -1076,7 +1076,7 @@
       "tool": "sales_revise_invoice_draft",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "execute_sales_invoice_draft_command in 20270572000000 atomically calls canonical record_capability_run, reads the same draft and stores its immutable invoice operation. Actual SQL proves receipt rollback and once-only concurrent replay."
+      "evidence": "execute_sales_invoice_draft_command in 20270582000000 atomically calls canonical record_capability_run, reads the same draft and stores its immutable invoice operation. Actual SQL proves receipt rollback and once-only concurrent replay."
     }
   ]
 }

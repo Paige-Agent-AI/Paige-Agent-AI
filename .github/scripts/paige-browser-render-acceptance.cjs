@@ -64,7 +64,11 @@ function validUrl(raw) {
 
 (async () => {
   const input = typeof INPUT === "object" && INPUT ? INPUT : {};
-  const env = process.env.PAIGE_BROWSER_SHARED_SECRET ? process.env : serverEnv();
+  const fromSession = !!process.env.PAIGE_BROWSER_SHARED_SECRET;
+  const env = fromSession ? process.env : serverEnv();
+  // Where the secret was found (never the secret): tells whether an SSH session inherits the app's
+  // secrets, which other post-deploy proofs on this host depend on.
+  console.log(JSON.stringify({ check: "secret_source", source: fromSession ? "ssh_session_env" : (env.PAIGE_BROWSER_SHARED_SECRET ? "server_process_env" : "not_found") }));
   const secret = env.PAIGE_BROWSER_SHARED_SECRET || "";
   const port = Number(env.PORT || process.env.PORT || 8080);
   // The host's own slice bounds (render.mjs loadRenderConfig defaults and clamps), so "bounded" is checked

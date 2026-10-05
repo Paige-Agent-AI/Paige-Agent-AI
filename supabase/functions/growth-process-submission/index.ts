@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
       // Idempotency: a done/skipped dispatch is permanent; an error dispatch is retried (re-run + upsert).
       if (p.automationId) {
         const prior = doneByAutomation.get(p.automationId);
-        if (prior === "done" || prior === "skipped") {
+        if ((prior === "done" || prior === "skipped") && p.executor !== "pipeline_attach") {
           skipped.push({ slug: p.slug, reason: "already_dispatched" });
           continue;
         }
@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
       let outcome: ExecOutcome;
       try {
         outcome = await runExecutor(p, {
-          admin, tenantId, submissionId, form, payload, submission,
+          admin, tenantId, submissionId, claimAttempt: claim.attempts, form, payload, submission,
           contactId, setContactId: (id: string) => { contactId = id; },
         });
       } catch (e) {
@@ -318,7 +318,7 @@ Deno.serve(async (req) => {
       }
 
       // Ledger the true outcome (real rows only; synthesized fallback carries no automation_id).
-      if (p.automationId) {
+      if (p.automationId && p.executor !== "pipeline_attach") {
         await admin.from("growth_submission_dispatches").upsert({
           submission_id: submissionId,
           automation_id: p.automationId,
@@ -365,6 +365,7 @@ type ExecCtx = {
   admin: any;
   tenantId: string;
   submissionId: string;
+  claimAttempt: number;
   // deno-lint-ignore no-explicit-any
   form: any;
   payload: Record<string, unknown>;
@@ -375,7 +376,7 @@ type ExecCtx = {
 };
 
 async function runExecutor(
-  p: { slug: string; executor: string; lane: string | null; config: Record<string, unknown>; targetConfig: Record<string, unknown> },
+  p: { automationId: string | null; slug: string; executor: string; lane: string | null; config: Record<string, unknown>; targetConfig: Record<string, unknown> },
   ctx: ExecCtx,
 ): Promise<ExecOutcome> {
   const { admin, tenantId, submissionId, form, payload } = ctx;
@@ -425,8 +426,12 @@ async function runExecutor(
           contactId = s(created);
         }
         if (!contactId) return { status: "error", result: {}, error: "contact_unresolved" };
+        const { data: pinned, error: pinErr } = await admin.from("growth_form_submissions")
+          .update({ contact_id: contactId }).eq("id", submissionId).eq("tenant_id", tenantId)
+          .eq("processing_state", "claimed").eq("attempts", ctx.claimAttempt).is("contact_id", null)
+          .select("id").maybeSingle();
+        if(pinErr || !pinned) return {status:"error",result:{},error:"submission_contact_link_failed"};
         ctx.setContactId(contactId);
-        await admin.from("growth_form_submissions").update({ contact_id: contactId }).eq("id", submissionId);
       }
 
       let customFieldsError: string | undefined;
@@ -458,62 +463,11 @@ async function runExecutor(
         if (!idn.email && !idn.phone) return { status: "done", result: { note: "no_contact_for_pipeline" } };
         return { status: "error", result: {}, error: "no_contact_for_pipeline" };
       }
-      const pipelineId = s(p.config.pipeline_id) ?? s(form.pipeline_id);
-      const stageId = s(p.config.stage_id) ?? s(form.stage_id);
-      if (!pipelineId) return { status: "done", result: { note: "no_pipeline_configured" } };
-
-      // S9 ownership: the pipeline (and stage) MUST belong to this tenant.
-      const { data: pipe } = await admin.from("pipelines").select("id, tenant_id, name").eq("id", pipelineId).maybeSingle();
-      if (!pipe || pipe.tenant_id !== tenantId) {
-        return { status: "error", result: {}, error: "pipeline_not_in_tenant" };
-      }
-      let resolvedStageId = stageId;
-      if (resolvedStageId) {
-        const { data: st } = await admin.from("pipeline_stages").select("id, pipeline_id, tenant_id").eq("id", resolvedStageId).maybeSingle();
-        if (!st || st.pipeline_id !== pipelineId || (st.tenant_id && st.tenant_id !== tenantId)) {
-          return { status: "error", result: {}, error: "stage_not_in_pipeline" };
-        }
-      } else {
-        // No stage named - fall to the lowest-order OPEN stage of the pipeline.
-        const { data: firstStage } = await admin
-          .from("pipeline_stages")
-          .select("id").eq("pipeline_id", pipelineId).eq("stage_type", "open")
-          .is("archived_at", null)
-          .order("order_index", { ascending: true }).limit(1).maybeSingle();
-        resolvedStageId = firstStage?.id ?? null;
-        if (!resolvedStageId) return { status: "error", result: {}, error: "no_open_stage" };
-      }
-
-      // Advance an existing OPEN deal for this contact on this pipeline, else create one.
-      const { data: existingDeal } = await admin
-        .from("deals")
-        .select("id, stage_id")
-        .eq("tenant_id", tenantId).eq("pipeline_id", pipelineId).eq("contact_client_id", contactId).eq("status", "open")
-        .order("created_at", { ascending: true }).limit(1).maybeSingle();
-
-      let dealId: string;
-      if (existingDeal?.id) {
-        if (existingDeal.stage_id !== resolvedStageId) {
-          const { error: moveErr } = await admin.from("deals").update({ stage_id: resolvedStageId }).eq("id", existingDeal.id);
-          if (moveErr) return { status: "error", result: {}, error: `deal_stage_update_failed: ${moveErr.message}` };
-        }
-        dealId = existingDeal.id;
-      } else {
-        const title = s(payload.name) ?? s(payload.email) ?? `${form.name ?? "Form"} lead`;
-        const { data: newDeal, error: dealErr } = await admin
-          .from("deals")
-          .insert({
-            title, pipeline_id: pipelineId, stage_id: resolvedStageId, contact_client_id: contactId,
-            status: "open", source: "paige_form", tenant_id: tenantId,
-            created_by: await resolveIntakeOperator(admin, tenantId, form.created_by),
-          })
-          .select("id").single();
-        if (dealErr || !newDeal) return { status: "error", result: {}, error: `deal_insert_failed: ${dealErr?.message ?? "no id"}` };
-        dealId = newDeal.id;
-      }
-      const { error: linkErr } = await admin.from("growth_form_submissions").update({ deal_id: dealId }).eq("id", submissionId);
-      if (linkErr) return { status: "error", result: {}, error: `submission_deal_link_failed: ${linkErr.message}` };
-      return { status: "done", result: { deal_id: dealId, stage_id: resolvedStageId } };
+      const {data: attached,error: attachError}=await admin.rpc("growth_attach_submission_deal",{
+        p_submission_id:submissionId,p_claim_attempt:ctx.claimAttempt,p_automation_id:p.automationId,
+      });
+      if(attachError || !attached) return {status:"error",result:{},error:"submission_deal_admission_failed"};
+      return {status:"done",result:attached};
     }
 
     // -- paige_action / surface_to_client: file the action onto the bus (governed lane). --

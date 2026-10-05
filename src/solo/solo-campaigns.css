@@ -769,3 +769,20 @@
 @container (max-width:460px){.me-stats{grid-template-columns:minmax(0,1fr)}.me-results{grid-template-columns:repeat(2,minmax(0,1fr))}.me-warn{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.me .me-starters button,.me .me-chip,.me .me-senders button,.me .me-segments button,.me-frame,.me-progress i{transition:none}.me .me-starters button:hover:not(:disabled){transform:none}.me-drawer{animation:none}}
 @media(forced-colors:active){.me .me-chip[aria-pressed="true"],.me .me-senders button[aria-checked="true"]{border:2px solid Highlight}.me-progress i{background:Highlight}}
+
+/* Client identity is an explicit choice, shared by creation and governed reassignment. */
+.pipeline-client-picker,.pipeline-relationship-editor,.pipeline-relationship-review{display:grid;gap:12px;min-width:0}
+.pipeline-client-picker label{display:grid;gap:6px}
+.pipeline-client-picker input,.pipeline-client-picker select{width:100%;min-height:44px;font:inherit;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);padding:10px 12px}
+.pipeline-client-picker p,.pipeline-relationship-review p{margin:0;overflow-wrap:anywhere;line-height:1.5}
+.pipeline-client-selected{display:grid;gap:4px;padding:12px;background:var(--surface-sunk);border-radius:9px;color:var(--ink-2)}
+.pipeline-client-selected strong{color:var(--ink)}
+.pipeline-relationship-choice{display:grid;gap:12px;margin:0;padding:12px 0;border:0;border-block:1px solid var(--line)}
+.pipeline-relationship-choice legend{padding-block:4px;font-weight:600;color:var(--ink)}
+.pipeline-desk-form .pipeline-relationship-choice label{display:flex;align-items:center;gap:9px;font-size:14px}
+.pipeline-desk-form .pipeline-relationship-choice input{width:18px;min-height:18px;accent-color:var(--purple)}
+.pipeline-relationship-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pipeline-desk-form label,.pipeline-deal-detail label{font-size:14px}
+.pipeline-desk-form input,.pipeline-desk-form select,.pipeline-desk-form textarea{min-height:44px;font-size:14px}
+.pipeline-client-picker :focus-visible,.pipeline-relationship-choice :focus-visible,.pipeline-relationship-review :focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+@media(max-width:700px){.pipeline-desk-form input,.pipeline-desk-form select,.pipeline-desk-form textarea,.pipeline-client-picker input,.pipeline-client-picker select{font-size:16px}}

@@ -269,6 +269,13 @@ export async function crmApprovalSubject(action: CrmAction, command: Record<stri
     identity = contact;
   } else if (action.startsWith("deal.") && action !== "deal.create") {
     identity = canonicalCommand.deal_id ?? null;
+  } else if (action === "deal.create" && normalizeClientRef(canonicalCommand.client_ref)) {
+    // Reference resolution adds the UUID on the server. It must not change the
+    // subject Chat uses to find that exact stored proposal. The resolver rejects
+    // a mismatched supplied UUID; execution still uses the full stored command.
+    const args = { ...crmCommandFingerprintArgs(canonicalCommand) };
+    delete args.contact_id;
+    identity = stableCommandValue({ action, ...args, client_ref: contact });
   } else {
     identity = stableCommandValue({ action, ...crmCommandFingerprintArgs(canonicalCommand) });
   }
@@ -306,6 +313,7 @@ function contactCreatePatchSchema() {
 
 const properties = {
   idempotency_key: { type: "string", maxLength: 192, description: "Optional stable retry key. Paige may omit it; the server settles one." },
+  unlinked_reason: { type: "string", enum: ["anonymous_prospect", "early_stage_prospect", "import_pending_identity"], description: "Deal creation only: explicitly unlinked prospect intent. Never use this to bypass resolving a named client. Omit when client_ref/contact_id is present." },
   client_ref: { type: "string", description: "The contact's client_ref, exactly as crm_search_contacts returned it. This is how you name a contact." },
   loser_client_ref: { type: "string", description: "The losing contact's client_ref for a merge, exactly as crm_search_contacts returned it." },
   contact_id: { type: ["string", "null"], description: "Only when a read gave you a contact's UUID rather than its client_ref (a deal's contact_client_id). Otherwise name the contact with client_ref." },
@@ -366,7 +374,7 @@ export const CRM_ACTION_LABEL: Record<CrmAction, string> = {
   "task.create":"create a task; company and deal links are supported, while contact linking remains unavailable until the canonical task model owns that relationship", "task.update":"edit a task", "task.assign":"assign a task", "task.reschedule":"reschedule a task",
   "task.complete":"complete a task", "task.reopen":"reopen a task", "task.cancel":"cancel a task while retaining its history", "task.delete":"permanently delete a task",
   "activity.log":"log an internal CRM activity; this never sends email or SMS and never places a call",
-  "deal.create":"create a deal", "deal.update":"edit reversible deal fields", "deal.assign_owner":"change a deal's owner",
+  "deal.create":"create a deal; persist the resolved canonical client_ref, or explicitly state unlinked prospect intent. Ask when a named client is unresolved or ambiguous", "deal.update":"edit reversible deal fields", "deal.assign_owner":"change a deal's owner",
   "deal.assign_contact":"change a deal's contact", "deal.move":"move a deal stage", "deal.close":"close a deal",
   "deal.reopen":"reopen a deal", "deal.delete":"permanently delete a deal",
 };

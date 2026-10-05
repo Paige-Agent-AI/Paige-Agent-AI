@@ -1,6 +1,7 @@
 import { BUSINESS_MISSION_TOOLS } from '../_shared/paige-spine/domains/business_mission.ts';
 import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, resolveSelectedBusinessMissionContext } from '../_shared/business-mission-tenant-brain.ts';
 import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.ts';
+import { preserveResolvedDealClient, projectDealRelationshipIntegrity } from "../_shared/crm-command/deal-relationship-integrity.ts";
 import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
@@ -9374,6 +9375,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const currentUserTurn = userTurns[userTurns.length - 1] ?? null;
           delete crmArgs.idempotency_key;
           delete crmArgs.confirm;
+          if (action === "deal.create") crmArgs = preserveResolvedDealClient({ action, ...crmArgs }, scopedClientRef);
           const sourceCrmCommand = { action, ...crmArgs };
           const canonicalCrmCommand = canonicalizeCrmCommand(sourceCrmCommand);
           const fallbackKeys = await crmCommandFallbackIdempotencyKeys(canonicalCrmCommand, sourceCrmCommand, {
@@ -9665,6 +9667,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           let gateArgs: any = {};
           try { gateArgs = JSON.parse(tc.function.arguments || "{}"); } catch { gateArgs = {}; }
+          // The structural pipeline door must never become an alternate CRM producer.
+          if (tc.function.name === "pipeline_configure" && ![
+            "create-pipeline", "update-pipeline", "activate-pipeline", "archive-pipeline", "restore-pipeline",
+            "create-stage", "update-stage", "archive-stage", "restore-stage", "reorder-stages", "move-deal",
+            "create-folder", "rename-folder", "archive-folder", "restore-folder", "move-pipeline-to-folder",
+          ].includes(gateArgs?.command?.type)) {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+              success: false, error: "Use the governed CRM deal capability to create or assign an opportunity. Resolve its canonical client first, or explicitly identify an intentionally unlinked prospect.",
+            }) });
+            continue;
+          }
           if ((tc.function.name === "mission_create" || tc.function.name === "mission_revise" || tc.function.name === "mission_transition") && !gateArgs.request_key) {
             gateArgs.request_key = crypto.randomUUID();
             tc.function.arguments = JSON.stringify(gateArgs);
@@ -13572,6 +13585,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ...contact, client_ref: account_number, contact_methods: orderedContactMethods(client_contact_methods),
               })) };
             } else if (tc.function.name === "crm_get_contact_summary") {
+              // This service-role read must never diagnose relationships without a workspace.
+              if (!crmTenantId) throw new Error("tenant_not_resolved");
               const id = await resolveClientReference(admin, crmTenantId, args.client_ref);
               // §9 IDOR FIX: scope the contact fetch to the caller's tenant so a
               // foreign client_id resolves to null → contact_not_found (never
@@ -13585,6 +13600,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 admin.from("deal_activities").select("id, deal_id, type, summary, created_at").in("deal_id", []).limit(1),
               ]);
               if (contact.error) throw contact.error;
+              if (deals.error) throw deals.error;
               if (!contact.data) {
                 result = { success: false, error: "contact_not_found" };
               } else {
@@ -13597,10 +13613,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const { data: commLog } = await admin.from("communication_log").select("channel, message_type, subject, preview, created_at").eq("user_id", (contact.data as any)?.linked_user_id || "00000000-0000-0000-0000-000000000000").order("created_at", { ascending: false }).limit(10);
                 // Every address the contact holds, from its contact methods.
                 const { client_contact_methods: methodRows, ...profile } = contact.data as any;
+                const unlinked = (deals.data || []).length ? { data: [], error: null }
+                  : await admin.from("deals").select("id, tenant_id, contact_client_id, title, pipeline_id, stage_id, status")
+                    .eq("tenant_id", crmTenantId).is("contact_client_id", null)
+                    .order("updated_at", { ascending: false }).limit(101);
+                const relationshipIntegrity = projectDealRelationshipIntegrity({
+                  tenantId: crmTenantId, linkedDealCount: (deals.data || []).length,
+                  clientLabels: [[profile.first_name, profile.last_name].filter(Boolean).join(" "), profile.entity_name || ""],
+                  unlinkedDeals: (unlinked.data || []).slice(0, 100), queryFailed: Boolean(unlinked.error),
+                  truncated: (unlinked.data || []).length > 100,
+                });
                 result = {
                   success: true,
                   contact: { ...profile, client_ref: profile.account_number ?? null, contact_methods: orderedContactMethods(methodRows) },
                   deals: deals.data || [],
+                  relationship_integrity: relationshipIntegrity,
                   open_tasks: tasksRes.data || [],
                   recent_deal_activity: recentActivity,
                   recent_communications: commLog || [],

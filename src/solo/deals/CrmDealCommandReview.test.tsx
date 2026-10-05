@@ -1,0 +1,26 @@
+import React from 'react';
+import {act} from 'react';
+import {createRoot, type Root} from 'react-dom/client';
+import {describe,it,expect,vi,beforeEach,afterEach} from 'vitest';
+const mocks=vi.hoisted(()=>({invoke:vi.fn(),tenant:'test-tenant-a',actor:'test-owner'}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{functions:{invoke:mocks.invoke},auth:{getSession:async()=>({data:{session:{user:{id:mocks.actor}}}})}}}));
+vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>({activeTenantId:mocks.tenant,accountContextLoading:false})}));
+import {CrmDealCommandReview} from './CrmDealCommandReview';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+let node:HTMLDivElement,root:Root;const done=vi.fn(),close=vi.fn();
+const command={action:'deal.create',title:'Discovery',pipeline_id:'pipeline-a',stage_id:'stage-a',contact_id:'client-a'};
+const render=async()=>{await act(async()=>root.render(<CrmDealCommandReview tenantId="test-tenant-a" command={command} onComplete={done} onClose={close}/>));};
+const click=async(text:string)=>{const button=[...node.querySelectorAll('button')].find(x=>x.textContent===text);expect(button).toBeTruthy();await act(async()=>button!.click());};
+beforeEach(()=>{node=document.createElement('div');document.body.append(node);root=createRoot(node);sessionStorage.clear();mocks.invoke.mockReset();mocks.tenant='test-tenant-a';mocks.actor='test-owner';done.mockReset();close.mockReset();});
+afterEach(async()=>{await act(async()=>root.unmount());node.remove();});
+describe('manual deal action uses canonical CRM governance',()=>{
+ it('binds exact approval to the original command and operation',async()=>{mocks.invoke.mockResolvedValueOnce({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',summary:'Create Discovery for the selected client'},error:null}).mockResolvedValueOnce({data:{ok:true,readback:{id:'deal-a',contact_id:'client-a'}},error:null});await render();await click('Continue');expect(done).not.toHaveBeenCalled();await click('Approve action');const first=mocks.invoke.mock.calls[0][1].body;expect(first.expected_tenant_id).toBe('test-tenant-a');expect(mocks.invoke.mock.calls[1][1].body).toEqual({...first,approved_fingerprint:'0123456789abcdef'});expect(done).toHaveBeenCalledOnce();});
+ it('recovers unknown outcome using same operation without stale approval',async()=>{mocks.invoke.mockRejectedValueOnce(Error('Network')).mockResolvedValueOnce({data:{ok:true,readback:{id:'deal-a',contact_id:'client-a'}},error:null});await render();await click('Continue');expect(done).not.toHaveBeenCalled();await click('Recover original action');expect(mocks.invoke.mock.calls[1][1].body).toEqual(mocks.invoke.mock.calls[0][1].body);expect(done).toHaveBeenCalledOnce();});
+ it('refuses execution after workspace switch',async()=>{await render();mocks.tenant='test-tenant-b';await render();expect(node.textContent).toContain('Workspace changed');expect(mocks.invoke).not.toHaveBeenCalled();});
+ it('refuses execution when the authenticated actor changes',async()=>{await render();mocks.actor='another-owner';await click('Continue');expect(mocks.invoke).not.toHaveBeenCalled();expect(node.textContent).toContain('Account changed');});
+ it('retains recovery if actor changes during provider-independent CRM dispatch',async()=>{mocks.invoke.mockImplementationOnce(async()=>{mocks.actor='another-owner';return {data:{ok:true,readback:{id:'deal-a',contact_id:'client-a'}},error:null};});await render();await click('Continue');expect(done).not.toHaveBeenCalled();await click('Close · recovery retained');expect(sessionStorage.length).toBe(1);});
+ it('rejects readback carrying a different canonical client',async()=>{mocks.invoke.mockResolvedValueOnce({data:{ok:true,readback:{id:'deal-a',contact_id:'client-b'}},error:null});await render();await click('Continue');expect(done).not.toHaveBeenCalled();expect(node.textContent).toContain('unknown');});
+ it('retains unknown operation on remount and never substitutes new inputs',async()=>{mocks.invoke.mockRejectedValueOnce(Error('Network'));await render();await click('Continue');const original=mocks.invoke.mock.calls[0][1].body;await act(async()=>root.unmount());root=createRoot(node);await act(async()=>root.render(<CrmDealCommandReview tenantId="test-tenant-a" command={{...command,title:'Different'}} onComplete={done} onClose={close}/>));mocks.invoke.mockResolvedValueOnce({data:{ok:true,readback:{id:'deal-a',contact_id:'client-a'}},error:null});await click('Recover original action');expect(mocks.invoke.mock.calls[1][1].body).toEqual(original);expect(done).toHaveBeenCalledOnce();});
+ it('abandons an unexecuted proposal when returning to edit',async()=>{mocks.invoke.mockResolvedValueOnce({data:{outcome:'approval_required',fingerprint:'fingerprint',summary:'Review'},error:null});await render();await click('Continue');await click('Back to details');expect(sessionStorage.length).toBe(0);expect(done).not.toHaveBeenCalled();});
+ it('does not treat missing canonical readback as success',async()=>{mocks.invoke.mockResolvedValueOnce({data:{ok:true},error:null});await render();await click('Continue');expect(done).not.toHaveBeenCalled();expect(node.textContent).toContain('unknown');});
+});

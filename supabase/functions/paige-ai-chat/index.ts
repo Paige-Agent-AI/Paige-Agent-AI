@@ -5,6 +5,7 @@ import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_T
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
+import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
@@ -75,6 +76,9 @@ const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
 // same rule through authorityAdmits so it never describes a door tool the door would refuse (C0a).
 const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
   ...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,
+  // Marketing email: its RPCs admit only an owner/admin SEAT of the active business (_email_caller_tenant),
+  // never an agency manager acting in a sub-account or the operator acting as a business.
+  ...EMAIL_CAMPAIGN_TOOL_NAMES,
 ]);
 // The one publish door (growth-publish-command, V2b) admits the workspace's owner, an admin or its
 // managing agency — the Studio build rule (its tools are in WORKSPACE_BUILD_TOOLS). It is outside the
@@ -302,6 +306,11 @@ function describeStep(
       ? { label: "Campaign Brief revision saved, evidence incomplete", group: "owner", detail: "canonical planning record verified · Rail not recorded" }
       : { label: failed ? "Could not verify that Campaign Brief revision" : "Revised and verified a Campaign Brief", group: "owner", detail: failed ? "no verified outcome" : "planning record · Rail recorded · nothing launched" };
     case "campaign_brief_list": return { label: failed ? "Couldn't read your campaign briefs" : "Checked your campaign briefs", group: "owner" };
+    // Marketing email (owner) — a draft sends nothing; filing waits for a person to approve.
+    case "read_email_campaigns": return { label: failed ? "Couldn't read your email campaigns" : "Checked your email campaigns", group: "owner" };
+    case "read_email_campaign_audience": return { label: failed ? "Couldn't count that campaign's audience" : "Counted who that campaign would reach", group: "owner" };
+    case "email_campaign_draft": return { label: failed ? "Couldn't confirm the email draft" : "Saved an email draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
+    case "email_campaign_request_approval": return { label: failed ? "Couldn't confirm it was filed for approval" : "Filed an email campaign for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
     // Calendar booking presets (owner) — a preset is a bookable /book PAGE; only publish makes it public.
     // Each verb special-cases CALENDAR_PRESET_RAIL_WRITE_FAILED: there the mutation IS verified and
     // PERSISTED (only the Rail evidence did not finish), so the chip must state the TRUE persisted
@@ -6195,7 +6204,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "draft_marketing_content",
-              description: "Team only. Draft marketing content for the tenant — social posts, ad copy, email campaigns, captions, blog outlines, or SMS broadcasts — in their brand voice. Returns draft text for the operator to review; drafting is safe and has no side effects (sending is a separate approval-gated step). Use when the operator asks you to write, create, or draft marketing/social/ad/email content.",
+              description: "Team only. Draft marketing content for the tenant — social posts, ad copy, email copy, captions, blog outlines, or SMS broadcasts — in their brand voice. For an email the owner will send from Marketing > Email, use email_campaign_draft instead, which saves it there. Returns draft text for the operator to review; drafting is safe and has no side effects (sending is a separate approval-gated step). Use when the operator asks you to write, create, or draft marketing/social/ad/email content.",
               parameters: {
                 type: "object",
                 properties: {
@@ -7339,6 +7348,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     toolDefs.push(...CRM_COMMAND_TOOLS as any);
     toolDefs.push(...SALES_INVOICE_TOOLS as any);
     toolDefs.push(...SALES_COLLECTIONS_TOOLS);
+    // Marketing email (E2b): read campaigns and their audience, write drafts, file one for the owner's
+    // approval. Governed by the general gate below; PAIGE has no approve or send tool.
+    toolDefs.push(...EMAIL_CAMPAIGN_TOOLS as any);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -7682,6 +7694,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       campaign_brief_create: "saving a campaign brief",
       campaign_brief_revise: "revising a campaign brief",
       campaign_brief_list: "checking your campaign briefs",
+      read_email_campaigns: "checking your email campaigns",
+      read_email_campaign_audience: "counting who an email would reach",
+      email_campaign_draft: "writing an email campaign draft",
+      email_campaign_request_approval: "filing an email campaign for your approval",
       booking_preset_create: "creating a booking calendar (a private draft)",
       booking_preset_revise: "revising a booking calendar",
       booking_preset_publish: "publishing a booking calendar's public page",
@@ -7973,6 +7989,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Save a campaign brief "${String(a?.name || "Untitled").slice(0, 120)}" for this workspace — a planning record of the campaign's intent. This launches, sends, and publishes nothing.`;
         case "campaign_brief_revise":
           return `Revise the campaign brief you just read${a?.expectedVersion ? ` (version ${a.expectedVersion})` : ""} — a change to the planning record only. It launches, sends, and publishes nothing.`;
+        case "email_campaign_draft":
+          return a?.campaign_id
+            ? `Change the draft of this email campaign${a?.subject ? ` (subject "${String(a.subject).slice(0, 120)}")` : ""}. It stays a draft; nothing is sent.`
+            : `Save a new email campaign draft${a?.name ? ` "${String(a.name).slice(0, 120)}"` : ""}${a?.subject ? ` with the subject "${String(a.subject).slice(0, 120)}"` : ""} in Marketing › Email. Nothing is sent.`;
+        case "email_campaign_request_approval":
+          return "Lock this email campaign for your decision: it stops changing and I count who it reaches. You then approve the send itself in Marketing › Email; nothing is sent until you do.";
         case "booking_preset_create":
           return `Create a booking calendar "${String(a?.name || "Untitled").slice(0, 80)}"${a?.model ? ` (${String(a.model).replaceAll("_", " ")})` : ""} as a PRIVATE DRAFT. Its public /book page is NOT live — publishing is a separate, explicit step.`;
         case "booking_preset_duplicate": {
@@ -9117,7 +9139,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // after they approved it. Same resolver as that gate (asked fresh per call); the later gate
         // stays as defense in depth.
         if (requiresWorkspaceAdmin(tc.function.name, N8N_MANAGEMENT_TOOL_NAMES)
-            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
+            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)) {
           if (WORKSPACE_BUILD_TOOLS.has(tc.function.name)) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
             success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)),
@@ -9146,6 +9168,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // returns the stored result rather than writing a second brief.
           if ((tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise") && !gateArgs.idempotency_key) {
             gateArgs.idempotency_key = crypto.randomUUID();
+            tc.function.arguments = JSON.stringify(gateArgs);
+          }
+          // A new email campaign carries its create key from here, for the same reason: the approved call
+          // redeems the stored arguments, so it must make the campaign this proposal named, once. The key
+          // is derived from the turn, so a repeated call in the same turn finds the campaign already made.
+          if (tc.function.name === "email_campaign_draft" && !gateArgs.campaign_id && !gateArgs.request_key && personaCtx?.tenant_id) {
+            const { confirm: _compat, ...draftContent } = gateArgs;
+            const userTurns = messages.filter((message: any) => message?.role === "user");
+            gateArgs.request_key = await emailCampaignRequestKey(personaCtx.tenant_id, user.id, draftContent, {
+              thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null,
+            });
             tc.function.arguments = JSON.stringify(gateArgs);
           }
           // ── ONE CANONICAL PERMISSION VALUE, SETTLED BEFORE ANYTHING READS IT ────────────────
@@ -13564,6 +13597,39 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch (e) {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success:false,error:"The mission was not changed.",note:"No work ran and no Mission success may be claimed." }) });
           }
+        } else if (EMAIL_CAMPAIGN_TOOL_NAMES.has(tc.function.name)) {
+          // Marketing email (E2b). The adapter runs on the CALLER's session (supabaseClient), so the
+          // database's owner/admin and business scope decide, and every call names the business this chat
+          // is in. A write is reported as done only after a fresh read shows it; its receipt goes to the
+          // Rail through the existing recorder. PAIGE files for approval and never approves or sends.
+          let emailArgs: Record<string, unknown> = {};
+          try { emailArgs = JSON.parse(tc.function.arguments || "{}"); } catch { emailArgs = {}; }
+          const userTurns = messages.filter((message: any) => message?.role === "user");
+          const tid = personaCtx?.tenant_id ?? null;
+          try {
+            const result = await dispatchEmailCampaignChat({
+              tenantId: tid, userId: user.id, toolName: tc.function.name, args: emailArgs,
+              turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
+            }, { caller: supabaseClient });
+            if (!tc.function.name.startsWith("read_") && tid && result.outcome !== "failed" && result.outcome !== "invalid") {
+              // A completed act is keyed by what it produced (the draft version, or the approval filed), so a
+              // retried call that found the same result records one activity, not two.
+              const recorded = await recordCapabilityRun(supabase, {
+                tenantId: tid, actorId: user.id, capabilityKey: tc.function.name,
+                outcome: result.outcome === "succeeded" ? "capability_succeeded" : result.outcome === "refused" ? "capability_refused" : "capability_outcome_unknown",
+                runId: await stableRunId(result.outcome === "succeeded" && result.runId
+                  ? [tc.function.name, tid, result.runId]
+                  : [tc.function.name, tid, `${payloadThreadId ?? ""}:${tc.id}`]),
+              });
+              if (!recorded && result.outcome === "succeeded") {
+                result.content = { ...result.content, activity_recorded: false,
+                  note: `${String(result.content.note ?? "")} It is done, but it did not appear in the business's activity record; say so if asked what PAIGE did.`.trim() };
+              }
+            }
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
+          } catch {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome: "outcome_unknown", error: "The email action did not report back.", note: "Read the campaigns before saying anything changed, and do not retry automatically." }) });
+          }
         } else if (tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise" || tc.function.name === "campaign_brief_list") {
           // Solo Tenant Brain — Campaign Brief planning records. The helper uses the CALLER JWT
           // for tenant/role resolution and the EXISTING configure RPC, then independently reopens
@@ -14198,6 +14264,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         save_to_knowledge_base: "knowledge_base",
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",
         campaign_brief_create: "campaign_briefs", campaign_brief_revise: "campaign_briefs",
+        email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
         // Calendar booking presets — every verb's durable subject is the calendars row (the
         // booking /book page). duplicate mints a new row; the rest act on the named one.
         booking_preset_create: "calendars", booking_preset_revise: "calendars",
@@ -14324,7 +14391,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const TARGET_ID_KEYS = [
         "agreement_id", "batch_id", "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
         "page_id", "funnel_id", "content_id", "booking_id", "log_id", "automation_id", "mission_id", "plan_id",
-        "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "tenant_id", "id",
+        "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "campaign_id", "tenant_id", "id",
       ] as const;
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const resolveWriteTargetId = (args: any, out: any): string | null => {

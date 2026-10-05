@@ -155,7 +155,10 @@ Justification: Vector search RPCs. Internally scope by tenant. `match_paige_memo
 migration `20270304000000`, §53/§59) derives authority PER TARGET — cross-USER: self /
 `is_platform_operator`; staff cross-CONTACT via `can_access_contact` (per-contact tenant-correct) — with
 each data-branch gated on its own flag and search params bounded; `service_role` is trusted to pass
-server-resolved ids. anon/PUBLIC revoked.
+server-resolved ids. anon/PUBLIC revoked. INT-326 (migration `20270588326000`, #1760): now
+`match_paige_memory(vector, uuid, uuid, float8, int, int, uuid)` — a person's own rows only inside one
+workspace (`_target_tenant_id`; a JWT caller's own `current_user_tenant_id()`, a different one refused
+unless operator), never a client-keyed row, and the tenant-less chat-embedding branch removed.
 
 ### Function: public.get_approval_queue_counts / public.unassigned_queue_for_caller
 Grants: authenticated

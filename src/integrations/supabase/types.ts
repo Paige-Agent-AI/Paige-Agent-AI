@@ -2738,6 +2738,7 @@ export type Database = {
           memory_type: string
           metadata: Json | null
           source_session_id: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -2751,6 +2752,7 @@ export type Database = {
           memory_type: string
           metadata?: Json | null
           source_session_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -2764,6 +2766,7 @@ export type Database = {
           memory_type?: string
           metadata?: Json | null
           source_session_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -2793,6 +2796,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "paige_unassigned_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_memory_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -21390,6 +21400,7 @@ export type Database = {
           _message_count?: number
           _query_embedding: string
           _target_client_id?: string
+          _target_tenant_id?: string
           _target_user_id: string
         }
         Returns: {

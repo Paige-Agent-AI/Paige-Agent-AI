@@ -2639,11 +2639,19 @@ group("safety-first streaming: the sources the first enumeration missed");
   // uploaded PDF — and it is interpolated into the prompt of every later turn. Buffering the
   // frame while streaming the persisted extraction of it on every turn afterwards is not a rule,
   // it is a coincidence of which surface happened to be audited.
+  // INT-326: own memory is read only when the caller has an active workspace, so this scenario
+  // resolves one (CHILD). Without it the handler correctly reads no own memory and the three checks
+  // below would prove nothing about the final-check gate. The row is stamped like a production row;
+  // this fake table does not apply query filters, so the workspace filter itself is proven in
+  // `test:client-memory-authz` group 37, not here.
   const memoryOpts = {
     kbRejects: true,
     provider: ["private-text"],
+    rpcExtras: { current_user_tenant_id: { data: CHILD, error: null } },
     tableExtras: {
       client_memory: () => [{
+        tenant_id: CHILD,
+        client_id: null,
         memory_type: "report_upload",
         content: "Credit report analyzed (consumer). Scores: EQ 712, EX 705, TU 698. PRIVATE-MEMORY-MARKER",
         created_at: new Date().toISOString(),

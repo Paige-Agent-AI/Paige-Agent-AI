@@ -352,6 +352,13 @@ if (chatSrc.includes('...CAMPAIGN_BRIEF_TOOLS')) {
   if (!campaignTools.length) throw new Error('Campaign Brief catalog could not be parsed');
   importedTools.push(...campaignTools);
 }
+if (chatSrc.includes('...EMAIL_CAMPAIGN_TOOLS')) {
+  if (!/import\s*\{[^}]*EMAIL_CAMPAIGN_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/email-campaign-chat\.ts['"]/.test(chatSrc)) throw new Error('Unresolved email campaign catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/email-campaign-chat.ts', 'utf8');
+  const emailTools = [...source.matchAll(/\bname:\s*["']((?:read_)?email_campaign[a-z_]*)["']/g)].map(m => m[1]);
+  if (!emailTools.length) throw new Error('Email campaign catalog could not be parsed');
+  importedTools.push(...emailTools);
+}
 if (chatSrc.includes('...CALENDAR_PRESET_TOOLS')) {
   if (!/import\s*\{[^}]*CALENDAR_PRESET_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/calendar_preset\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Calendar Preset catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/calendar_preset.ts', 'utf8');

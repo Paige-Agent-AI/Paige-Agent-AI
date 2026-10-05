@@ -150,6 +150,15 @@ function Reach({ preview, newsletter }: { preview: { phase: Phase; data: Preview
 }
 
 type Draft = { name: string; kind: string; subject: string; preheader: string; source: string | null; html: string; sender: Sender; audience: Rule; segment_id: string | null; scheduled_for: string | null; conversion_goal: string };
+// What a draft holds on the server, in one comparable string: key order and time formats normalised, so
+// only a real change differs.
+const canon = (v: unknown): unknown => Array.isArray(v) ? v.map(canon)
+  : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, canon(x)])) : v;
+const heldKey = (h: { name: string; kind: string; state: string; subject: string; preheader: string; html: string; audience: unknown; segment_id: string | null; scheduled_for: string | null; conversion_goal: string }) =>
+  JSON.stringify(canon({ ...h, name: h.name.trim(), scheduled_for: h.scheduled_for ? Date.parse(h.scheduled_for) : null }));
+const serverKey = (d: CampaignRead) => heldKey({ name: d.campaign.name, kind: d.campaign.kind, state: `${d.campaign.status}/${d.version.id}/${d.version.state}`,
+  subject: d.version.subject, preheader: d.version.preheader, html: d.version.body_html, audience: d.version.audience ?? {},
+  segment_id: d.version.segment_id, scheduled_for: d.version.scheduled_for, conversion_goal: d.version.conversion_goal });
 const toLocalInput = (iso: string | null) => { if (!iso) return ""; const d = new Date(iso); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 
 export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpenConnections }: { campaignId: string; onBack: () => void; onOpenSettings: (() => void) | null; onOpenConnections: (() => void) | null }) {
@@ -162,6 +171,10 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
   const [width, setWidth] = React.useState<"desktop" | "phone">("desktop");
   const [declineOpen, setDeclineOpen] = React.useState(false);
   const [declineReason, setDeclineReason] = React.useState("");
+  // PAIGE can change this draft from chat while it is open here. `held` is what the server held when this
+  // screen last loaded or saved it; a chat turn that leaves something different behind was PAIGE's.
+  const held = React.useRef<string | null>(null);
+  const [changedByPaige, setChangedByPaige] = React.useState(false);
 
   React.useEffect(() => {
     let live = true;
@@ -170,6 +183,8 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
       if (error) { console.error("[marketing-email] campaign read failed", error); setRead({ phase: "error", data: null, missing: error.message === "campaign_not_found" }); return; }
       const d = data as CampaignRead;
       setRead({ phase: "ready", data: d });
+      held.current = serverKey(d);
+      setChangedByPaige(false);
       const source = sourceOf(d.version.body_html);
       setDraft({ name: d.campaign.name, kind: d.campaign.kind, subject: d.version.subject, preheader: d.version.preheader, source,
         html: d.version.body_html, sender: d.version.sender, audience: d.version.audience ?? {}, segment_id: d.version.segment_id,
@@ -208,24 +223,29 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
       p_scheduled_for: d.scheduled_for, p_clear_schedule: !d.scheduled_for, p_conversion_goal: d.conversion_goal,
     });
     if (error) { console.error("[marketing-email] draft save failed", error); setSave("failed"); setNotice({ tone: "bad", text: errorWords(error) }); return false; }
+    held.current = heldKey({ name: d.name, kind: d.kind, state: `${data.campaign.status}/${data.version.id}/${data.version.state}`, subject: d.subject,
+      preheader: d.preheader, html, audience: d.audience, segment_id: d.segment_id, scheduled_for: d.scheduled_for, conversion_goal: d.conversion_goal });
+    setChangedByPaige(false);
     setSave(rev === revision.current ? "saved" : "dirty");
     return true;
   };
   React.useEffect(() => {
-    if (!draft || !editable || save !== "dirty") return;
+    // While PAIGE's change and the owner's unsaved edits disagree, nothing saves until the owner chooses.
+    if (!draft || !editable || save !== "dirty" || changedByPaige) return;
     const timer = setTimeout(() => { void persist(draft); }, 800);
     return () => clearTimeout(timer);
-  }, [draft, editable, save, persist]);
+  }, [draft, editable, save, persist, changedByPaige]);
   const change = (patch: Partial<Draft>) => { revision.current += 1; setDraft((d) => (d ? { ...d, ...patch } : d)); setSave("dirty"); setNotice(null); };
 
   // Leaving must never drop the last edits: Back saves first, unmounting saves what is pending, and the
   // browser asks before a reload or a closed tab while anything is unsaved.
   const unsaved = Boolean(editable && draft && save !== "saved");
-  const pending = React.useRef<{ draft: Draft | null; unsaved: boolean; persist: typeof persist }>({ draft: null, unsaved: false, persist });
-  pending.current = { draft, unsaved, persist };
+  const pending = React.useRef<{ draft: Draft | null; unsaved: boolean; conflict: boolean; persist: typeof persist }>({ draft: null, unsaved: false, conflict: false, persist });
+  pending.current = { draft, unsaved, conflict: changedByPaige, persist };
   React.useEffect(() => () => {
-    const { draft: last, unsaved: open, persist: flush } = pending.current;
-    if (open && last) void flush(last);
+    // An open choice between PAIGE's change and unsaved edits is not answered by closing: PAIGE's stays.
+    const { draft: last, unsaved: open, conflict, persist: flush } = pending.current;
+    if (open && last && !conflict) void flush(last);
   }, []);
   React.useEffect(() => {
     if (!unsaved) return;
@@ -233,7 +253,25 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [unsaved]);
+  // When a chat turn ends, look again. A change PAIGE made replaces what is shown, unless there are edits
+  // here not yet saved: then say so, so neither version is lost without the owner seeing it.
+  React.useEffect(() => {
+    const check = () => {
+      rpc("read_email_campaign", { p_campaign_id: campaignId }).then(({ data, error }) => {
+        if (error || !data || held.current === null || serverKey(data as CampaignRead) === held.current) return;
+        if (pending.current.unsaved) { setChangedByPaige(true); return; }
+        reload();
+        setNotice({ tone: "ok", text: "PAIGE updated this campaign." });
+      });
+    };
+    window.addEventListener("paige:turn-settled", check);
+    return () => window.removeEventListener("paige:turn-settled", check);
+  }, [campaignId]);
+  const takePaigeVersion = () => { pending.current.unsaved = false; revision.current += 1; setChangedByPaige(false); reload(); };
+  const keepMine = () => { setChangedByPaige(false); setSave("dirty"); };
+
   const leave = async () => {
+    if (changedByPaige && !window.confirm("PAIGE changed this campaign while you were editing. Save your edits over hers and leave?")) return;
     if (unsaved && draft) {
       pending.current.unsaved = false; // this save is the one; unmounting need not repeat it
       if (!(await persist(draft)) && !window.confirm("Your latest changes did not save. Leave anyway and lose them?")) { pending.current.unsaved = true; return; }
@@ -252,6 +290,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
   };
   const review = async () => {
     if (!draft || !data) return;
+    if (changedByPaige) { setNotice({ tone: "bad", text: "Choose which version to keep before sending it for approval." }); return; }
     if (!(await persist(draft))) return;
     await act("review", "email_campaign_request_approval", { p_version_id: data.version.id, p_source: "owner" });
   };
@@ -284,7 +323,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
         {editable ? <label className="me-name-input"><span className="campaigns-sr-only">Campaign name</span><input value={draft.name} maxLength={200} onChange={(e) => change({ name: e.target.value })}/></label> : <h2>{c.name}</h2>}
         <span className="me-kind">{KIND_LABEL[draft.kind] ?? "Campaign"}</span>
         <span className={`mk-flag ${c.status === "completed" ? "is-live" : c.status === "blocked" || (c.status === "failed" && !p.not_confirmed) ? "is-blocked" : c.status === "partially_completed" || c.status === "failed" ? "is-warn" : c.status === "draft" || c.status === "cancelled" ? "" : "is-review"}`}>{state}</span>
-        {editable && <span className="me-save" aria-live="polite">{save === "saving" ? "Saving…" : save === "dirty" ? "Unsaved changes" : save === "failed" ? "Not saved" : "Saved"}</span>}
+        {editable && <span className="me-save" aria-live="polite">{changedByPaige ? "Waiting for your choice" : save === "saving" ? "Saving…" : save === "dirty" ? "Unsaved changes" : save === "failed" ? "Not saved" : "Saved"}</span>}
       </div>
       <div className="me-editor-acts">
         {editable && <button type="button" className="btn btn-s" onClick={() => void remove()} disabled={busy !== null}>Delete</button>}
@@ -292,6 +331,9 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
       </div>
     </div>
     {notice && <p className={`me-notice ${notice.tone === "bad" ? "is-bad" : "is-ok"}`} role={notice.tone === "bad" ? "alert" : "status"}>{notice.text}</p>}
+    {changedByPaige && <p className="me-notice is-warn" role="status">PAIGE changed this campaign while you were editing. Nothing is saved until you choose.{" "}
+      <button type="button" className="btn btn-s" onClick={keepMine}>Keep my edits</button>{" "}
+      <button type="button" className="btn btn-s" onClick={takePaigeVersion}>Show PAIGE's version</button></p>}
     {data.last_declined && editable && <p className="me-notice is-warn" role="status">Version {data.last_declined.version_no} was declined{data.last_declined.reason ? `: “${data.last_declined.reason}”` : "."} This is a new draft; change what you need and send it for approval again.</p>}
     {!data.postal_address && editable && <div className="mo-next me-warn"><span className="mo-next-plate" aria-hidden="true"><Ic.shield size={16}/></span><div><h2>Add your postal address</h2><p>Every marketing email shows the sender’s postal address. You can write this campaign now; it sends once the address is added.</p></div>{onOpenSettings && <button type="button" className="btn btn-s" onClick={onOpenSettings}>Open Settings</button>}</div>}
 
@@ -371,7 +413,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
         </section>
 
         <section className="campaigns-surface mo-panel" aria-labelledby="me-write">
-          <div className="mo-panel-head"><div><h2 id="me-write">Email</h2></div>{editable && <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `Write the email for my campaign "${draft.name}" (${KIND_LABEL[draft.kind] ?? "Campaign"}${draft.subject ? `, subject "${draft.subject}"` : ""}). Ask me who it is for and what I want them to do before you write it. Give me a subject line, a preview line and the body here so I can paste them into the campaign. You cannot save or send campaigns yet, so do not say you did.` } }))}><Ic.spark size={12}/>Write with PAIGE</button>}</div>
+          <div className="mo-panel-head"><div><h2 id="me-write">Email</h2></div>{editable && <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `Write the email for my campaign "${draft.name}" (campaign ${campaignId}, ${KIND_LABEL[draft.kind] ?? "Campaign"}${draft.subject ? `, subject "${draft.subject}"` : ""}). Ask me who it is for and what I want them to do before you write it. Then save the subject line, preview line and body into this campaign's draft. Do not file it for approval unless I ask, and never say it was sent.` } }))}><Ic.spark size={12}/>Write with PAIGE</button>}</div>
           <label className="me-input"><span>Subject</span><input value={draft.subject} maxLength={300} disabled={!editable} onChange={(e) => change({ subject: e.target.value })} placeholder="What the inbox shows first"/></label>
           <label className="me-input"><span>Preview text</span><input value={draft.preheader} maxLength={300} disabled={!editable} onChange={(e) => change({ preheader: e.target.value })} placeholder="The line shown after the subject"/></label>
           <label className="me-input"><span>{draft.source !== null ? "Message" : "Message (HTML)"}</span>

@@ -56,6 +56,9 @@ export const ROLE_FREE_BRANCH_TOOLS: ReadonlySet<string> = new Set(["capability_
  */
 export const OUT_OF_BRANCH_ADMIN_TOOLS: ReadonlySet<string> = new Set([
   "list_subagents", "delegate_to_subagent", "forge_subagent", "propose_action",
+  // Marketing email (E2b): the RPCs refuse anyone but the business's owner or an admin; listing them here
+  // lets a member hear that before any approval card instead of after.
+  "read_email_campaigns", "read_email_campaign_audience", "email_campaign_draft", "email_campaign_request_approval",
 ]);
 
 /** The tools a caller can use only as this workspace's owner/admin (or the platform operator). */

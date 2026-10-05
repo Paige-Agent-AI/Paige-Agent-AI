@@ -5,6 +5,7 @@
 // Acts (all through the E1 RPCs, so PAIGE can do the same from chat, §10):
 //   email_campaign_create       a new draft (campaign, newsletter, re-engagement, welcome)
 //   email_campaign_update_draft the starting audience for re-engagement and welcome
+//   email_sequence_create       a new email series (marketing-email-series.tsx builds and runs it)
 // The campaign itself is written, addressed, previewed and sent for approval in the editor
 // (marketing-email-editor.tsx). Nothing on this page sends anything.
 import React from "react";
@@ -14,6 +15,7 @@ import { ACTIVITY_LABEL, EMAIL_PERIODS, KIND_LABEL, activityDetail, ago, campaig
 import { AskPaige, ChartBoundary, OverviewStat } from "./marketing-ui";
 import { AskPaigeButton, Frame, TabActions, type Phase } from "./marketing-planned";
 import { EmailCampaignEditor, EmailCampaignList, SegmentDialog } from "./marketing-email-editor";
+import { EmailSeriesView, SeriesPanel, createSeries } from "./marketing-email-series";
 
 // The shared icon set is untyped; these views pass only a size.
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
@@ -71,9 +73,10 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
   onOpenSettings: (() => void) | null;
 }) {
   const [days, setDays] = React.useState<number>(30);
-  const [view, setView] = React.useState<{ kind: "dashboard" } | { kind: "campaign"; id: string } | { kind: "all" }>(() => {
-    const id = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("campaign") : null;
-    return id ? { kind: "campaign", id } : { kind: "dashboard" };
+  const [view, setView] = React.useState<{ kind: "dashboard" } | { kind: "campaign"; id: string } | { kind: "series"; id: string } | { kind: "all" }>(() => {
+    const q = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const id = q?.get("campaign"), series = q?.get("series");
+    return id ? { kind: "campaign", id } : series ? { kind: "series", id: series } : { kind: "dashboard" };
   });
   const [segment, setSegment] = React.useState<{ open: boolean; id: string | null }>({ open: false, id: null });
   const [creating, setCreating] = React.useState<string | null>(null);
@@ -86,6 +89,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
     setView(next);
     const url = new URL(window.location.href);
     if (next.kind === "campaign") url.searchParams.set("campaign", next.id); else url.searchParams.delete("campaign");
+    if (next.kind === "series") url.searchParams.set("series", next.id); else url.searchParams.delete("series");
     window.history.replaceState(window.history.state, "", url.toString());
   }, []);
 
@@ -129,7 +133,16 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
     go({ kind: "campaign", id: row.campaign_id });
   };
 
+  const startSeries = async () => {
+    setCreating("nurture"); setCreateError(null);
+    const made = await createSeries("nurture");
+    setCreating(null);
+    if ("error" in made) { setCreateError(made.error); return; }
+    go({ kind: "series", id: made.id });
+  };
+
   if (view.kind === "campaign") return <EmailCampaignEditor campaignId={view.id} onBack={() => { go({ kind: "dashboard" }); read.retry(); }} onOpenSettings={onOpenSettings} onOpenConnections={onOpenConnections}/>;
+  if (view.kind === "series") return <EmailSeriesView sequenceId={view.id} onBack={() => { go({ kind: "dashboard" }); read.retry(); }} onOpenSettings={onOpenSettings} onOpenConnections={onOpenConnections}/>;
   if (view.kind === "all") return <EmailCampaignList key={tenantId ?? "none"} tenantId={tenantId} onBack={() => go({ kind: "dashboard" })} onOpen={(id) => go({ kind: "campaign", id })}/>;
 
   const d = read.data;
@@ -143,7 +156,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
     { key: "newsletter", icon: <Ic.doc size={20}/>, title: "Create a newsletter", detail: "To people who opted in", act: () => void create("newsletter", "newsletter", "Newsletter") },
     { key: "welcome", icon: <Ic.users size={20}/>, title: "Welcome new contacts", detail: "To your new leads", act: () => void create("welcome", "welcome", "Welcome", { stages: ["new_lead", "lead"] }) },
     { key: "reengagement", icon: <Ic.clock size={20}/>, title: "Re-engagement campaign", detail: "Not contacted in 90 days", act: () => void create("reengagement", "reengagement", "We miss you", { inactive_days: 90 }) },
-    { key: "nurture", icon: <Ic.trend size={20}/>, title: "Plan a nurture series", detail: "PAIGE plans it with you", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Help me plan a short nurture series of marketing emails for my leads. Ask me who it is for and what I want them to do, then save the first email as a campaign draft in Marketing › Email. Series that send by themselves come later, so plan the rest with me but do not say they will go out on their own. Never say anything was sent." } })) },
+    { key: "nurture", icon: <Ic.trend size={20}/>, title: "Plan a nurture series", detail: "Sends by itself once you approve it", act: () => void startSeries() },
     { key: "paige", icon: <Ic.spark size={20}/>, title: "Use PAIGE", detail: "Describe what you need", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Draft a marketing email for my business. Ask me who it is for and what it should say before you write it, then save it as a campaign draft in Marketing › Email. Do not file it for approval unless I ask, and never say it was sent." } })) },
   ];
 
@@ -213,12 +226,10 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
               : <div className="campaigns-state me-chart-empty"><h2>{stats.sent.value ? "Opens are not reported for these emails" : "Nothing sent in this period"}</h2><p>{stats.sent.value ? "Emails sent through your own mail server do not report opens or clicks." : "Rates appear here after your first campaign goes out."}</p></div>}
           </section>
           <section className="campaigns-surface mo-panel" aria-labelledby="me-auto">
-            <div className="mo-panel-head"><div><h2 id="me-auto">Automations</h2><p>Emails that send on their own when something happens.</p></div></div>
-            <div className="me-auto-empty">
-              <span className="mo-next-plate" aria-hidden="true"><Ic.bolt size={16}/></span>
-              <div><strong>No automations yet</strong><p>Welcome, nurture and re-engagement series that send by themselves are built next. Until then, send each one as a campaign from Start creating.</p></div>
-            </div>
-            <AskPaige prompt="Which automated email series would help my business most, and what should each email say? Use only what you know about my business; do not send or schedule anything."/>
+            <div className="mo-panel-head"><div><h2 id="me-auto">Automations</h2><p>Email series that send by themselves once you approve them.</p></div></div>
+            <SeriesPanel tenantId={tenantId} onOpen={(id) => go({ kind: "series", id })}/>
+            <AskPaige prompt="Which email series would help my business most (a welcome for new contacts, a nurture for leads, or a win-back for quiet contacts), and what should each email say? Use only what you know about my business. Draft the emails here in chat; do not send or schedule anything."/>
+            <p className="mo-note">Series share the {d.sending.daily_cap.toLocaleString()}-a-day limit with your campaigns. Series emails that don’t fit today wait; they’re never dropped.</p>
           </section>
           <section className="campaigns-surface mo-panel" aria-labelledby="me-activity">
             <div className="mo-panel-head"><div><h2 id="me-activity">Recent activity</h2></div></div>

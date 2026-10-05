@@ -2,6 +2,8 @@
 // x-cron-token (migration 20270549000000); a service-role bearer is also accepted.
 //
 // Each tick:
+//   0. Moves email series on (email_sequence_tick, E3): enrolls, applies exits, and plans each person's
+//      next email as a planned recipient of the series' own campaign. Sending is then steps 1-4, unchanged.
 //   1. Claims a batch of one due campaign (email_campaign_dispatch_claim). The database has already
 //      expired stale leases to outcome_unknown, blocked a campaign whose business, postal address or
 //      approved sender is no longer valid, re-checked every recipient's eligibility and applied the
@@ -25,6 +27,7 @@ const CONCURRENCY = 5;
 const SEND_TIMEOUT_MS = 25_000;
 const TICK_BUDGET_MS = 40_000;
 const ENVELOPE_LEASE_SECONDS = 3600;
+const SERIES_TICK_LIMIT = 200;
 
 type Admin = ReturnType<typeof adminClient>;
 
@@ -169,6 +172,15 @@ Deno.serve(async (req) => {
   const totals = { batches: 0, sent: 0, failed: 0, outcome_unknown: 0, skipped: 0, deferred: 0, stopped: 0 };
   const notes: Array<Record<string, unknown>> = [];
 
+  // Email series (E3): enroll people who now match, apply the exits and plan each person's next email as
+  // a planned recipient of the series' own campaign, so the claims below send it like any other. A failed
+  // tick sends nothing new from series this run; campaigns still go.
+  const { data: series, error: seriesErr } = await admin.rpc("email_sequence_tick", { p_limit: SERIES_TICK_LIMIT });
+  if (seriesErr) {
+    console.error("[email-campaign-worker] series tick failed", { reason: seriesErr.message });
+    notes.push({ series_error: seriesErr.message });
+  }
+
   while (Date.now() - started < TICK_BUDGET_MS) {
     const { data, error } = await admin.rpc("email_campaign_dispatch_claim", { p_limit: BATCH_SIZE });
     if (error) {
@@ -239,5 +251,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json(200, { ...totals, notes, envelopes, elapsed_ms: Date.now() - started });
+  return json(200, { ...totals, series: seriesErr ? null : series, notes, envelopes, elapsed_ms: Date.now() - started });
 });

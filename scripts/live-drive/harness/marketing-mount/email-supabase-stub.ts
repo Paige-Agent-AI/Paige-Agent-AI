@@ -87,6 +87,58 @@ const versionFor = (id: string) => {
   };
 };
 
+// Email series (E3). `?series=<id>` opens the series view on one of these.
+const seriesRows = [
+  { id: "q-running", name: "Welcome series", kind: "welcome", status: "active", blocked_reason: null, emails: 3, entry_mode: "new_contacts", change_state: null, in_now: 18, entered: 64, sent_30d: 151, next_send_at: new Date(Date.now() + 3 * 3_600_000).toISOString(), activated_at: iso(21), updated_at: iso(0, 1) },
+  { id: "q-blocked", name: "Win back quiet contacts", kind: "reengagement", status: "blocked", blocked_reason: "sender_needs_attention", emails: 3, entry_mode: "matching", change_state: null, in_now: 26, entered: 51, sent_30d: 97, next_send_at: null, activated_at: iso(14), updated_at: iso(0, 4) },
+  { id: "q-draft", name: "Nurture leads", kind: "nurture", status: "draft", blocked_reason: null, emails: 4, entry_mode: "matching", change_state: null, in_now: 0, entered: 0, sent_30d: 0, next_send_at: null, activated_at: null, updated_at: iso(1) },
+];
+const md = (s: string) => `<!--paige-src:${btoa(String.fromCharCode(...new TextEncoder().encode(s)))}-->\n<p>${s}</p>`;
+const seriesSteps = [
+  { position: 1, delay_minutes: 0, subject: "Welcome to Northfield Advisory", preheader: "Here’s what happens next", body_html: md(body) },
+  { position: 2, delay_minutes: 2880, subject: "How we work with clients", preheader: "Three things our clients count on", body_html: md("Hi again,\n\nEvery engagement starts with a 60-minute working session, a written plan within a week, and a check-in every week.") },
+  { position: 3, delay_minutes: 7200, subject: "Ready to talk?", preheader: "Book a 20-minute call", body_html: md("If the timing is right, pick a time that suits you.\n\n[[Book a call|https://northfield.example/book]]") },
+];
+const seriesFor = (id: string) => {
+  const status = ({ "q-running": "active", "q-paused": "paused", "q-blocked": "blocked", "q-pending": "pending_approval", "q-change": "active", "q-stopped": "stopped" } as Record<string, string>)[id] ?? "draft";
+  const state = id === "q-pending" ? "locked" : id === "q-change" || id === "q-draft" ? "draft" : "approved";
+  const live = !["q-draft", "q-pending"].includes(id);
+  const nurture = id === "q-draft";
+  return {
+    sequence: { id, name: nurture ? "Nurture leads" : id === "q-blocked" ? "Win back quiet contacts" : "Welcome series", kind: nurture ? "nurture" : id === "q-blocked" ? "reengagement" : "welcome", status,
+      blocked_reason: status === "blocked" ? "sender_needs_attention" : null, activated_at: live ? iso(21) : null, stopped_at: status === "stopped" ? iso(1) : null,
+      created_at: iso(22), updated_at: iso(0, 1), live_version_id: live ? "v-live" : null },
+    version: { id: `v-${id}`, version_no: id === "q-change" ? 2 : 1, state, entry_mode: id === "q-blocked" || nurture ? "matching" : "new_contacts",
+      audience: id === "q-blocked" ? { inactive_days: 90 } : nurture ? { stages: ["qualified"] } : { stages: ["new_lead"] }, segment_id: null, segment_name: null,
+      exit_on_goal: nurture ? "booking" : "none", exit_when_unmatched: id === "q-blocked", sender: { mode: "connector", connector_id: "conn-1" },
+      sender_snapshot: state === "draft" ? null : { mode: "connector", from_address: "dana@northfield.example", from_name: "Dana at Northfield", ok: true },
+      expected_entrants: id === "q-blocked" ? 46 : null, approval_id: state === "locked" ? "a-q" : null, approved_at: live ? iso(21) : null,
+      steps: nurture ? [...seriesSteps, { position: 4, delay_minutes: 10080, subject: "", preheader: "", body_html: "" }] : seriesSteps },
+    live: id === "q-change" ? { id: "v-live", version_no: 1, entry_mode: "new_contacts", steps: seriesSteps.map(({ position, delay_minutes, subject }) => ({ position, delay_minutes, subject })) } : null,
+    approval: state === "locked" ? { status: "pending", source: "owner" } : null, last_declined: null,
+    entry_preview: { matched: 31, eligible: 29, eligible_new: 29, no_address: 2, opted_out: 0, suppressed: 0 },
+    emails: live ? [
+      { position: 1, sent: 63, tracked: 63, opened: 39, clicked: 7, waiting: 0, next_at: null, not_delivered: 0, skipped: 1 },
+      { position: 2, sent: 50, tracked: 50, opened: 27, clicked: 5, waiting: 11, next_at: new Date(Date.now() + 3 * 3_600_000).toISOString(), not_delivered: 0, skipped: 0 },
+      { position: 3, sent: 38, tracked: 38, opened: 19, clicked: 6, waiting: 7, next_at: new Date(Date.now() + 26 * 3_600_000).toISOString(), not_delivered: 1, skipped: 0 },
+    ] : [],
+    people: live ? { in_now: 18, completed: 37, left: 9, by_email: { "2": 11, "3": 7 }, left_because: { reached_goal: 4, suppressed: 3, removed: 1, not_confirmed: 1 },
+      recent: [
+        { client_id: "k-1", name: "Maya Ortiz", email: "maya@example.com", status: "active", exit_reason: null, position: 2, entered_at: iso(2), last_sent_at: iso(2), finished_at: null },
+        { client_id: "k-2", name: "Jon Bell", email: "jon@example.com", status: "completed", exit_reason: null, position: 3, entered_at: iso(9), last_sent_at: iso(2), finished_at: iso(2) },
+        { client_id: "k-3", name: null, email: "pat@example.com", status: "exited", exit_reason: "reached_goal", position: 2, entered_at: iso(6), last_sent_at: iso(4), finished_at: iso(3) },
+      ] } : { in_now: 0, completed: 0, left: 0, by_email: {}, left_because: {}, recent: [] },
+    senders: [
+      { mode: "connector", connector_id: "conn-1", provider: "gmail", from_address: "dana@northfield.example", from_name: "Dana at Northfield", healthy: true },
+    ],
+    managed_sender: { ok: true, mode: "managed", provider: "resend", from_address: "northfield@mail.paigeagent.ai", from_name: "Northfield" },
+    resolves: { ok: true, mode: "connector", from_address: "dana@northfield.example", from_name: "Dana at Northfield" },
+    postal_address: "1200 Peachtree St NE, Suite 400, Atlanta, GA 30309, US", business_name: "Northfield Advisory",
+    segments: segments.map(({ id: sid, name, rule }) => ({ id: sid, name, rule })), choices,
+    sending: { daily_cap: 500, used_last_24h: 148, remaining_today: 352 },
+  };
+};
+
 function answer(data: unknown): Promise<Answer> {
   if (mode === "loading") return new Promise(() => {});
   if (mode === "error") return Promise.resolve({ data: null, error: { message: "harness_read_failed" } });
@@ -100,6 +152,8 @@ function rpc(name: string, args: Record<string, unknown> = {}): Promise<Answer> 
     case "read_email_rule_choices": return answer(choices);
     case "email_audience_preview": return answer({ matched: 161, eligible: 148, no_address: 9, opted_out: 3, suppressed: 1, no_consent: 0, daily_cap: 500, remaining_today: 352, postal_address_set: true });
     case "email_campaign_update_draft": return Promise.resolve({ data: "v-draft", error: null });
+    case "read_email_sequences": return answer({ sequences: mode === "first" ? [] : seriesRows });
+    case "read_email_sequence": return answer(seriesFor(String(args.p_sequence_id)));
     default: return Promise.resolve({ data: null, error: null });
   }
 }

@@ -285,6 +285,39 @@ describe("email-campaign-worker handler", () => {
     expect(state.rail.mock.calls[0][1]).toMatchObject({ tenantId: "t1", actorId: "u1", capabilityKey: "marketing_email_campaign", outcome: "capability_succeeded" });
   });
 
+  it("moves email series on before claiming, so a series email planned this tick goes out this tick", async () => {
+    let claims = 0;
+    state.rpc.mockImplementation(async (name: string) => {
+      if (name === "email_sequence_tick") return { data: { series: 1, enrolled: 2, planned: 2 }, error: null };
+      if (name === "email_campaign_dispatch_claim") return { data: claims++ === 0 ? { ...claim, recipients: [claim.recipients[0]] } : { campaign: null }, error: null };
+      if (name === "email_campaign_dispatch_begin") return { data: true, error: null };
+      if (name === "email_campaign_dispatch_open_envelopes") return { data: [], error: null };
+      return { data: null, error: null };
+    });
+    const res = await (await post()).json();
+    const names = state.rpc.mock.calls.map(([n]) => n);
+    expect(names.indexOf("email_sequence_tick")).toBeGreaterThanOrEqual(0);
+    expect(names.indexOf("email_sequence_tick")).toBeLessThan(names.indexOf("email_campaign_dispatch_claim"));
+    expect(state.rpc.mock.calls.find(([n]) => n === "email_sequence_tick")![1]).toEqual({ p_limit: 200 });
+    expect(res.series).toEqual({ series: 1, enrolled: 2, planned: 2 });
+    expect(sends).toHaveLength(1);
+  });
+
+  it("still sends campaigns when the series tick fails, and says the tick failed", async () => {
+    let claims = 0;
+    state.rpc.mockImplementation(async (name: string) => {
+      if (name === "email_sequence_tick") return { data: null, error: { message: "canceling statement due to statement timeout" } };
+      if (name === "email_campaign_dispatch_claim") return { data: claims++ === 0 ? { ...claim, recipients: [claim.recipients[0]] } : { campaign: null }, error: null };
+      if (name === "email_campaign_dispatch_begin") return { data: true, error: null };
+      if (name === "email_campaign_dispatch_open_envelopes") return { data: [], error: null };
+      return { data: null, error: null };
+    });
+    const res = await (await post()).json();
+    expect(sends).toHaveLength(1);
+    expect(res.series).toBeNull();
+    expect(res.notes).toContainEqual({ series_error: "canceling statement due to statement timeout" });
+  });
+
   it("heartbeats an envelope whose campaign is still sending", async () => {
     state.rpc.mockImplementation(async (name: string) => {
       if (name === "email_campaign_dispatch_claim") return { data: { campaign: null }, error: null };

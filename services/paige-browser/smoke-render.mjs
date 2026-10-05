@@ -19,13 +19,21 @@
 //      run with no settle budget left skips the network-idle wait.
 //   7. refusals — origin outside the allowlist, a private host even when allowlisted, payload over the
 //      cap, unknown viewport, both/neither targets.
+//   9. INT-312 data contract — a published page that loads its rows the way GrowthPageRenderer does
+//      (supabase-js headers, cross-origin, so every read is CORS-preflighted; brand RPC as a GET)
+//      becomes ready and captures through the real fence, while a POST/DELETE to the same data origin,
+//      a script's own OPTIONS, and a preflighted read to a private host all stay blocked. 9b drives the
+//      fence handler directly with preflight-shaped requests (synthetic), because Playwright's Chromium
+//      driver answers real preflights before any route handler sees them.
 //
 // Run:  node smoke-render.mjs   (or: npm run smoke:render)
 import { chromium } from "playwright";
 import { renderConfig, validateRenderRequest, renderCapture, pickPagePayload, pagePayloadBytes } from "./render.mjs";
+import { installReadOnlyBrowserEgress } from "./ssrf-guard.mjs";
 
 const ORIGIN = "https://93.184.216.34";      // stands in for https://paigeagent.ai
 const THIRD_PARTY = "https://93.184.216.35";  // stands in for a media embed host
+const DATA = "https://93.184.216.36";         // stands in for the Supabase project (<ref>.supabase.co)
 
 let fails = 0;
 const check = (label, cond, detail) => {
@@ -108,6 +116,78 @@ async function instrument(ctx) {
     if (pathname === "/p/demo/away") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><script>setTimeout(() => location.replace("${THIRD_PARTY}/elsewhere"), 50)</script>` });
     return route.fulfill({ status: 404, contentType: "text/html", body: "<!doctype html>not found" });
   });
+}
+
+// ── INT-312 fixture: a published page that loads its data the way GrowthPageRenderer does ─────────
+// supabase-js request shape: apikey + Bearer authorization + x-client-info + accept-profile on every
+// read, and the brand RPC as a GET (`rpc(..., { get: true })`). Cross-origin with those headers, every
+// read is CORS-preflighted. The page is ready only once all three answers are in.
+const SUPABASE_HEADERS = `{ apikey: "anon-key", authorization: "Bearer anon-key", "x-client-info": "supabase-js-web/2.57.4", "accept-profile": "public", accept: "application/json" }`;
+const SUPABASE_PAGE_HTML = `<!doctype html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0">
+<div id="root"><div style="height:600px">loading…</div></div>
+<script>
+  const H = ${SUPABASE_HEADERS};
+  const read = (path) => fetch("${DATA}" + path, { headers: H }).then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  const settle = (p) => p.then(() => "delivered", () => "blocked");
+  const marker = (state) => { const m = document.createElement("div"); m.hidden = true; m.setAttribute("data-growth-page-ready", state); document.body.appendChild(m); };
+  window.__probe = {};
+  // Writes and a private-host read the page tries on the side — every one must be refused.
+  Promise.all([
+    settle(fetch("${DATA}/rest/v1/rpc/track_view", { method: "POST", headers: { ...H, "content-type": "application/json" }, body: "{}" })),
+    settle(fetch("${DATA}/rest/v1/growth_pages?id=eq.p1", { method: "DELETE", headers: H })),
+    settle(fetch("${DATA}/rest/v1/growth_pages", { method: "OPTIONS", body: "x" })),
+    settle(fetch("https://127.0.0.1/rest/v1/tenants?select=id", { headers: H })),
+  ]).then(([post, del, scriptOptions, privateRead]) => Object.assign(window.__probe, { post, del, scriptOptions, privateRead, sideDone: true }));
+  (async () => {
+    try {
+      const tenants = await read("/rest/v1/tenants?select=id&slug=eq.demo");
+      const pages = await read("/rest/v1/growth_pages?select=id,title,status,blocks_json,theme_json&tenant_id=eq." + tenants[0].id + "&slug=eq.supabase&status=eq.published");
+      const brand = await read("/rest/v1/rpc/peek_tenant_portal_brand?_slug=demo");
+      const root = document.getElementById("root");
+      root.innerHTML = "";
+      for (const b of pages[0].blocks_json) {
+        const s = document.createElement("section");
+        s.style.height = "800px"; s.style.background = brand[0].primary_color; s.textContent = b.title;
+        root.appendChild(s);
+      }
+      // Wait for the side probes so the run cannot capture before they have been decided.
+      while (!window.__probe.sideDone) await new Promise((r) => setTimeout(r, 20));
+      marker("true");
+    } catch (e) {
+      console.error("[growth-page] lookup failed:", e);
+      marker("error");
+    }
+  })();
+</script></body>`;
+
+const dataLog = [];
+let dataProbe = null;
+let privateDelivered = 0;
+async function instrumentData(ctx) {
+  await instrument(ctx);
+  const cors = {
+    "access-control-allow-origin": ORIGIN,
+    "access-control-allow-methods": "GET, HEAD, POST, PATCH, DELETE, OPTIONS",
+    "access-control-allow-headers": "apikey, authorization, x-client-info, accept-profile, content-profile, content-type, accept",
+    "access-control-max-age": "0",
+  };
+  await ctx.route(`${DATA}/**`, (route) => {
+    const r = route.request();
+    const h = r.headers();
+    const { pathname } = new URL(r.url());
+    dataLog.push({ method: r.method(), path: pathname, apikey: !!h.apikey, clientInfo: !!h["x-client-info"], acrMethod: h["access-control-request-method"] || null });
+    if (r.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors, body: "" });
+    const json = (body) => route.fulfill({ status: 200, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify(body) });
+    if (r.method() === "GET" && pathname === "/rest/v1/tenants") return json([{ id: "t1" }]);
+    if (r.method() === "GET" && pathname === "/rest/v1/growth_pages") return json([{ id: "p1", title: "Demo", status: "published", blocks_json: [{ title: "One" }, { title: "Two" }, { title: "Three" }], theme_json: {} }]);
+    if (r.method() === "GET" && pathname === "/rest/v1/rpc/peek_tenant_portal_brand") return json([{ primary_color: "#1f3b6e", accent_color: null, font: null, logo_url: null }]);
+    return route.fulfill({ status: 404, headers: cors, body: "" });
+  });
+  await ctx.route("https://127.0.0.1/**", (route) => {
+    privateDelivered++;
+    return route.fulfill({ status: 200, headers: { "access-control-allow-origin": "*" }, body: "[]" });
+  });
+  await ctx.route(`${ORIGIN}/p/demo/supabase`, (route) => route.fulfill({ status: 200, contentType: "text/html", body: SUPABASE_PAGE_HTML }));
 }
 
 const isJpeg = (b64) => {
@@ -269,6 +349,75 @@ try {
   for (const [label, body, status, reason] of refusals) {
     const v = await validateRenderRequest(body, cfg);
     check(`refuses ${label} (${status} ${reason})`, v.ok === false && v.status === status && v.reason === reason, JSON.stringify(v));
+  }
+
+  // ── 9: INT-312 — a REAL published page's data contract, through the REAL fence ─────────────────
+  // GrowthPageRenderer reads three things with supabase-js before it marks itself ready: the tenant
+  // (GET /rest/v1/tenants), the page row (GET /rest/v1/growth_pages) and the brand
+  // (GET /rest/v1/rpc/peek_tenant_portal_brand — `rpc(..., { get: true })`). Every one is cross-origin
+  // (app → Supabase) and carries apikey / authorization / x-client-info, so Chromium preflights it.
+  // This fixture mirrors that shape against a second public "data" origin and becomes ready ONLY once
+  // all three answers arrive. If any read is blocked, the page marks itself "error" → render_failed.
+  dataLog.length = 0;
+  const rData = await renderCapture(browser, await validateRenderRequest({ url: `${ORIGIN}/p/demo/supabase` }, cfg), cfg, {
+    instrumentContext: instrumentData,
+    onPage: async (page) => { dataProbe = await page.evaluate(() => window.__probe); },
+  });
+  check("published page with Supabase-shaped preflighted reads becomes ready and captures",
+    rData.ok === true && rData.full_height === 2400 && rData.slices?.length === 2 && rData.slices.every((s) => isJpeg(s.jpeg_base64)),
+    JSON.stringify({ ...rData, slices: rData.slices?.length, dataLog }));
+  const gets = dataLog.filter((e) => e.method === "GET");
+  check("all three reads reached the data origin as GETs carrying the supabase-js headers",
+    JSON.stringify(gets.map((e) => e.path).sort()) === JSON.stringify(["/rest/v1/growth_pages", "/rest/v1/rpc/peek_tenant_portal_brand", "/rest/v1/tenants"]) &&
+      gets.every((e) => e.apikey && e.clientInfo),
+    JSON.stringify(dataLog));
+  const writesDelivered = dataLog.filter((e) => !["GET", "HEAD", "OPTIONS"].includes(e.method));
+  check("a page POST / DELETE to the data origin is still blocked (nothing delivered, both rejected)",
+    writesDelivered.length === 0 && dataProbe?.post === "blocked" && dataProbe?.del === "blocked",
+    JSON.stringify({ writesDelivered, dataProbe }));
+  const optionsDelivered = dataLog.filter((e) => e.method === "OPTIONS");
+  check("a script's own OPTIONS (with a body, no preflight headers) is still blocked",
+    dataProbe?.scriptOptions === "blocked" && optionsDelivered.every((e) => e.acrMethod === "GET" || e.acrMethod === "HEAD"),
+    JSON.stringify({ optionsDelivered, dataProbe }));
+  check("a preflighted read to a PRIVATE host is still blocked (nothing delivered, fetch rejected)",
+    privateDelivered === 0 && dataProbe?.privateRead === "blocked", JSON.stringify({ privateDelivered, dataProbe }));
+  // Which path answered the preflights is printed, not asserted: Playwright 1.62.1's Chromium driver
+  // answers a CORS preflight itself when any route is installed, so 0 here is expected today. If a
+  // future driver routes preflights to handlers, they reach the data origin through the fence's
+  // preflight rule, and the checks above still hold.
+  console.log(`    (preflights that reached the data origin's handler: ${optionsDelivered.length} — 0 means the Playwright driver answered them)`);
+
+  // ── 9b: the fence's own handler, driven directly with a preflight-shaped request ───────────────
+  // Because the driver answers real preflights before route handlers run, the browser leg above cannot
+  // show what the FENCE decides about one. This drives the installed handler itself with synthetic
+  // requests (labelled synthetic — not a browser run): the policy the next driver would meet.
+  let fenceHandler = null;
+  await installReadOnlyBrowserEgress({ routeWebSocket: async () => {}, route: async (_p, h) => { fenceHandler = h; } });
+  const decide = async (method, url, headers = {}, body = null) => {
+    let verdict = "none";
+    await fenceHandler({
+      request: () => ({ method: () => method, url: () => url, headers: () => headers, postDataBuffer: () => body }),
+      abort: async () => { verdict = "abort"; },
+      fallback: async () => { verdict = "allow"; },
+    });
+    return verdict;
+  };
+  const preflightGet = { origin: ORIGIN, "access-control-request-method": "GET", "access-control-request-headers": "apikey,authorization,x-client-info" };
+  for (const [label, method, url, headers, body, want] of [
+    ["preflight for a GET to a public data host", "OPTIONS", `${DATA}/rest/v1/tenants`, preflightGet, null, "allow"],
+    ["preflight for a GET to a loopback host", "OPTIONS", "https://127.0.0.1/rest/v1/tenants", preflightGet, null, "abort"],
+    ["preflight for a GET to cloud metadata", "OPTIONS", "http://169.254.169.254/latest/meta-data", preflightGet, null, "abort"],
+    ["preflight for a GET to a private range", "OPTIONS", "https://10.0.0.5/rest/v1/tenants", preflightGet, null, "abort"],
+    ["preflight announcing a POST", "OPTIONS", `${DATA}/rest/v1/rpc/f`, { ...preflightGet, "access-control-request-method": "POST" }, null, "abort"],
+    ["preflight announcing a DELETE", "OPTIONS", `${DATA}/rest/v1/x`, { ...preflightGet, "access-control-request-method": "DELETE" }, null, "abort"],
+    ["OPTIONS without preflight headers", "OPTIONS", `${DATA}/rest/v1/x`, {}, null, "abort"],
+    ["preflight-shaped OPTIONS carrying a body", "OPTIONS", `${DATA}/rest/v1/x`, preflightGet, Buffer.from("x"), "abort"],
+    ["GET to a public data host", "GET", `${DATA}/rest/v1/tenants`, {}, null, "allow"],
+    ["POST to a public data host", "POST", `${DATA}/rest/v1/rpc/f`, {}, Buffer.from("{}"), "abort"],
+    ["DELETE to a public data host", "DELETE", `${DATA}/rest/v1/x`, {}, null, "abort"],
+  ]) {
+    const got = await decide(method, url, headers, body);
+    check(`fence (synthetic): ${label} → ${want}`, got === want, `got ${got}`);
   }
 } finally {
   await browser.close();

@@ -178,6 +178,13 @@ silent blank.
   (§32). **Honest caveat (§13/#138):** full DNS-rebinding closure (a short-TTL record that flips
   between our check and Chromium's connect) is tracked as #138; mid-redirect to a literal internal host
   IS caught.
+- **Read-only egress fence (`installReadOnlyBrowserEgress`).** Every browser context refuses WebSockets and
+  every request that is not GET/HEAD — with one narrow exception (INT-312): a body-less CORS preflight whose
+  browser-only `Access-Control-Request-Method` announces GET/HEAD, to a host that still passes the SSRF guard.
+  A published page's supabase-js reads are preflighted, so this keeps URL mode's data contract explicit. A
+  write's preflight, a script's own OPTIONS and every private host stay blocked. Honest note: on Playwright
+  1.62.1 the Chromium driver answers CORS preflights itself before route handlers run, so the rule is the
+  contract for a driver that stops doing so (smoke-render.mjs §9/§9b prove both).
 - **Two-layer content denylist (Slice 3a, owner-ruled 2026-08-12).** Layer 1: the container resolver is
   Cloudflare for Families (`1.1.1.3`/`1.0.0.3`) — malware/adult domains sinkhole to `0.0.0.0`, which the
   guard denies (`denylist:cloudflare-families`). Layer 2: a StevenBlack/hosts snapshot baked into the
@@ -215,7 +222,12 @@ node smoke-render.mjs   # /render: real render.mjs + real Chromium + the real se
 `smoke-render.mjs` stands a public IP literal in for `paigeagent.ai` and fulfills its responses in a
 test receiver, so it needs no outbound network; the production egress fence still decides first on
 every request. It proves slice geometry, payload isolation from child frames, the mobile preset, honest
-truncation, the `not_ready` / `http_404` / off-origin-redirect failures, and every refusal.
+truncation, the `not_ready` / `http_404` / off-origin-redirect failures, every refusal, and (INT-312) a
+published page that loads Supabase-shaped preflighted reads from a second public origin through the real fence.
+
+Production acceptance (DEL-093): `.github/workflows/paige-browser-render-acceptance.yml` (workflow_dispatch) runs
+`/render` inside the Fly machine via `flyctl ssh console` — page mode (bundled sample) and/or a real published
+`/p/...` URL — and prints metadata only; the shared secret never leaves the machine. Unproven until dispatched.
 
 In the sandbox the pre-installed Chromium is at `/opt/pw-browsers/`; `smoke.mjs` auto-detects it and
 falls back to Playwright's own resolution elsewhere. Chromium outbound network is blocked in the

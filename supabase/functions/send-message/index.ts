@@ -1,3 +1,7 @@
+import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
+import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
+import {renderDocumentPdf} from '../_shared/document-pdf.ts';
+import {pdfEmailAttachment} from '../_shared/email-attachments.ts';
 import { readInvoiceDeliveryReadiness, type InvoiceReadinessAdmin } from "../_shared/sales-invoice-delivery/readiness-reader.ts";
 import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
 // Unified send dispatcher — routes email via Resend, SMS via Twilio.
@@ -157,6 +161,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
         text: msg.body_text ?? null,
         inReplyTo: msg.in_reply_to_provider_id ?? null,
         headers: buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl),
+        attachments: ctx.serverAttachments,
       });
       if (!sent.ok || !sent.data) {
         return {
@@ -211,6 +216,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
         text: msg.body_text ?? null,
         inReplyTo: msg.in_reply_to_provider_id ?? null,
         headers: buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl),
+        attachments: ctx.serverAttachments,
       });
       if (!sent.ok) {
         return {
@@ -251,6 +257,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
         subject: msg.subject || "(no subject)",
         html: msg.body_html || msg.body_text || "",
         headers: Object.keys(headers).length ? headers : undefined,
+        attachments: ctx.serverAttachments?.map(a=>({filename:a.filename,content:a.content,content_type:a.contentType})),
       }),
     });
     const json = await res.json().catch(() => ({}));
@@ -1162,6 +1169,13 @@ Deno.serve(async (req) => {
         // A losing/concurrent/uncertain claim must not finalize another attempt's operation.
         if (claimError || !claimed || claimed.state !== "dispatching") return new Response(JSON.stringify({ ok: false, outcome: "outcome_unknown", error: "invoice_dispatch_claim_unconfirmed", message_id: invoiceBinding.message_id }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         invoiceDispatchClaimed = true;
+        const projection=await collectInvoiceLedger(admin as unknown as Parameters<typeof collectInvoiceLedger>[0],'read_public_sales_invoice_payment_ledger',{_token_hash:await sha256Hex(token)});
+        const facts=projection as Record<string,unknown>|null;
+        if(!facts||facts.invoice_id!==invoiceBinding.invoice_id||facts.document_input_digest!==invoiceBinding.document_digest||facts.version!==invoiceBinding.expected_lifecycle_version)throw Error('INVOICE_ATTACHMENT_UNAVAILABLE');
+        const invoiceHtml=renderSalesInvoiceDocument(projection);if(!invoiceHtml)throw Error('INVOICE_ATTACHMENT_UNAVAILABLE');
+        ctx.serverAttachments=[pdfEmailAttachment(await renderDocumentPdf(invoiceHtml),String(facts.current_invoice_number??'document'))];
+        const current=await admin.rpc('_sales_invoice_read',{_tenant:tenantId,_invoice:invoiceBinding.invoice_id});
+        if(current.error||!current.data||current.data.version!==facts.version||current.data.status!=='issued')throw Error('INVOICE_CHANGED_DURING_PDF');
         outMsg.body_html = transientHtml;
         invoiceProviderAttempted = true;
       }
@@ -1522,7 +1536,9 @@ Deno.serve(async (req) => {
   outcome = status; // 'sent' | 'failed'
   if (status === "failed" && !reason) reason = errorText;
   if (invoiceBinding) {
-    const invoiceOutcome = invoiceProviderAttempted || invoiceDispatchClaimed
+    // A confirmed claim followed by a local PDF failure never called a provider.
+    // Uncertain claims returned earlier; attempted provider sends remain unknown on failure.
+    const invoiceOutcome = invoiceProviderAttempted
       ? status === "sent" && vendor_message_id ? "provider_accepted" : "unknown"
       : "failed";
     const receipt = await finalizeInvoice(invoiceOutcome, vendor_message_id);

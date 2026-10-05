@@ -508,7 +508,7 @@ Values intentionally omitted.
   (12 — per-tenant attempts per window, counted on the log), `STUDIO_CRITIQUE_LOOP_WINDOW_MIN` (60 — how
   far back a deliverable/session's loop rows count). Landing pages (not funnels or forms) render through
   paige-browser `/render` using the SAME edge secrets `PAIGE_BROWSER_URL` + `PAIGE_BROWSER_SECRET` below
-  (branch `screenshots-on-paige-browser`, 2026-10-04 — live only once merged and deployed).
+  (PR #1712, merged and deployed 2026-10-04; the authenticated production capture is UNPROVEN — DEL-093, INT-312 in PR #1717).
   **RETIRED:** `VISUAL_RENDERER_URL` / `VISUAL_RENDERER_SECRET` (edge) and `FLY_RENDERER_SHARED_SECRET`
   (Fly) — they pointed at `paige-visual-renderer`, a Fly app that was never deployed (NXDOMAIN); no code
   reads them after this change. If either edge secret exists on prod it is dead and may be unset.

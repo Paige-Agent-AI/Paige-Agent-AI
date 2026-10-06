@@ -2357,8 +2357,8 @@ const PaigeAIChatInner = ({
   const openAsk = !isLoading && lastMessage?.role === "assistant" && lastMessage.ask ? lastMessage.ask : null;
   // An answer CLAIMED with nothing after it: the person's reply directly follows her question and is
   // the thread's newest turn, so nothing came back from PAIGE — the request may still be running, or it
-  // died (a reload, or "may still be working" re-read, shows exactly this). The composer stays bound to
-  // that question: a re-send names it, so the server can say "may still be working" while the claim is
+  // died (a reload, or the "already has your answer" re-read, shows exactly this). The composer stays bound to
+  // that question: a re-send names it, so the server can say it already has the answer while the claim is
   // young and ask the question again once it is not — never a second, unbound message that could start
   // the same work twice. The question's card stays frozen ("Answered below"); only the composer binds.
   const priorMessage = messages[messages.length - 2];
@@ -2966,7 +2966,7 @@ const PaigeAIChatInner = ({
                             );
                           }
                           const reply = messages.slice(index + 1).find((x) => x.role === "user");
-                          return <PaigeAskRecord standing={standing === "answered" ? (reply?.answer?.skipped ? "skipped" : "answered") : "unanswered"} />;
+                          return <PaigeAskRecord name={persona.name || "PAIGE"} standing={standing === "answered" ? (reply?.answer?.skipped ? "skipped" : "answered") : "unanswered"} />;
                         })()}
                         {message.queued?.map((q) => (
                           <div key={q.id} className="mt-2 flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5">
@@ -3319,9 +3319,9 @@ const PaigeAIChatInner = ({
                 <span className="min-w-0">
                   {claimedAsk
                     // The server's own window (ANSWER_STRANDED_AFTER_MINUTES): younger, a re-send is
-                    // told she may still be working; older, she asks the question again.
+                    // told she already has it; older, she asks the question again.
                     ? answeringAsk
-                      ? `${persona.name || "PAIGE"} has your answer. If she hasn't replied ${ANSWER_STRANDED_AFTER_MINUTES} minutes after you sent it, send it again and she'll ask her question again`
+                      ? `${persona.name || "PAIGE"} has your answer. No reply within ${ANSWER_STRANDED_AFTER_MINUTES} minutes? Send it again and she'll ask again.`
                       : askFileAttached ? "Your file goes as a new message" : "Sending as a new message"
                     : answeringAsk
                       ? `${persona.name || "PAIGE"} is waiting on your answer above`

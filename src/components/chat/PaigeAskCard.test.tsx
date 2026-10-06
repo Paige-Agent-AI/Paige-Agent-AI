@@ -85,4 +85,13 @@ describe("PaigeAskCard", () => {
     }
     expect(askReplyText([OPTIONS[2]])).toBe("Mirror Lumen Freight");
   });
+
+  it("the record names the tenant's assistant, and a skipped question reads as settled, not as an open question", () => {
+    const skipped = render(<PaigeAskRecord standing="skipped" name="Ava" />);
+    const open = render(<PaigeAskRecord standing="unanswered" />);
+    const answered = render(<PaigeAskRecord standing="answered" />);
+    expect(skipped.textContent).toBe("You let Ava choose");
+    expect(skipped.querySelector("svg")?.getAttribute("class")).toBe(answered.querySelector("svg")?.getAttribute("class"));
+    expect(skipped.querySelector("svg")?.getAttribute("class")).not.toBe(open.querySelector("svg")?.getAttribute("class"));
+  });
 });

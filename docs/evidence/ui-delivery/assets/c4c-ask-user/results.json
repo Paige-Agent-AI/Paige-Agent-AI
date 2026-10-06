@@ -6024,7 +6024,7 @@
     "submitDisabled": null,
     "record": "Answered below",
     "answering": "claimed",
-    "hint": "PAIGE has your answer. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask her question again",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
     "hintButtons": 1,
     "placeholder": "Send your answer again…",
     "contrast": [
@@ -6085,7 +6085,7 @@
     "submitDisabled": null,
     "record": "Answered below",
     "answering": "claimed",
-    "hint": "PAIGE has your answer. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask her question again",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
     "hintButtons": 1,
     "placeholder": "Send your answer again…",
     "contrast": [
@@ -6146,7 +6146,7 @@
     "submitDisabled": null,
     "record": "Answered below",
     "answering": "claimed",
-    "hint": "PAIGE has your answer. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask her question again",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
     "hintButtons": 1,
     "placeholder": "Send your answer again…",
     "contrast": [
@@ -6207,7 +6207,7 @@
     "submitDisabled": null,
     "record": "Answered below",
     "answering": "claimed",
-    "hint": "PAIGE has your answer. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask her question again",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
     "hintButtons": 1,
     "placeholder": "Send your answer again…",
     "contrast": [
@@ -6274,7 +6274,7 @@
     "submitDisabled": null,
     "record": "Answered below",
     "answering": "claimed",
-    "hint": "PAIGE has your answer. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask her question again",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
     "hintButtons": 1,
     "placeholder": "Send your answer again…",
     "contrast": [

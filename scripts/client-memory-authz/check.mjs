@@ -7277,7 +7277,7 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
       && rec17?.ask_id !== a17.frame?.ask_id && rec17?.reopens === a17.frame?.ask_id && rec17?.question === ASK_FREE.args.prompt
       && rec17?.needs === "the start date" && rec17?.objective === "Setting up Kestrel's onboarding"
       && again17?.bundle_ref?.turn_state?.state === "ASK_USER" && again17?.bundle_ref?.turn_state?.waiting_on?.kind === "choice"
-      && String(again17?.content).startsWith("I couldn't carry on from your answer, so nothing was done with it yet.") && String(again17?.content).endsWith(ASK_FREE.args.prompt)
+      && String(again17?.content).startsWith("I didn't finish carrying on from your answer. Anything I'd already done is saved.") && String(again17?.content).endsWith(ASK_FREE.args.prompt)
       && JSON.stringify(order17.slice(-3)) === JSON.stringify(["assistant:ask", "user:answer", "assistant:ask"]),
     JSON.stringify({ status: fail17.status, body: bodyJson(fail17), order17, again: again17 }));
   const old17 = await answer(s17, a17.frame?.ask_id, "Start it November 1.");
@@ -7343,8 +7343,8 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
   const young19 = await answer(young.st, young.askId, "Start it November 1.");
   const undated = strandedStore(null);
   const undated19 = await answer(undated.st, undated.askId, "Start it November 1.");
-  assert("41.19 a claim with nothing after it, seconds old (or of unknown age): 409 ASK_ANSWER_IN_PROGRESS — said as 'may still be working', with the same 10-minute window the server applies — nothing saved, no model call",
-    [young19, undated19].every((r) => r.status === 409 && bodyJson(r)?.code === "ASK_ANSWER_IN_PROGRESS" && /may still be working/.test(bodyJson(r)?.reason ?? "") && /hasn't replied 10 minutes after you sent it/.test(bodyJson(r)?.reason ?? "")
+  assert("41.19 a claim with nothing after it, seconds old (or of unknown age): 409 ASK_ANSWER_IN_PROGRESS — said as 'already has your answer' (never claims she is still working), with the same 10-minute window the server applies — nothing saved, no model call",
+    [young19, undated19].every((r) => r.status === 409 && bodyJson(r)?.code === "ASK_ANSWER_IN_PROGRESS" && /already has your answer/.test(bodyJson(r)?.reason ?? "") && !/still (be )?working/.test(bodyJson(r)?.reason ?? "") && /hasn't replied 10 minutes after you sent it/.test(bodyJson(r)?.reason ?? "")
       && appends(r).length === 0 && r.modelEgress.length === 0),
     JSON.stringify([young19, undated19].map((r) => ({ status: r.status, body: bodyJson(r) }))));
   const dead = strandedStore(11 * 60_000);
@@ -7421,7 +7421,7 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
       && pairConts.length === 1 && (pairOlder === null || (pairOlder.status === 409 && pairOlder.modelEgress.length === 0)),
     JSON.stringify({ first: pair1.responses.map((x) => [x.status, x.bodyText.slice(0, 60)]), reasks, named, answered: pairAns.responses.map((x) => x.status), older: pairOlder && [pairOlder.status, bodyJson(pairOlder)?.code] }));
   // ── 41.19f TWO RE-SENDS OF A YOUNG CLAIM AT ONCE (the first request may still be running): both told
-  // "may still be working", nothing saved, PAIGE never called a second time.
+  // "already has your answer", nothing saved, PAIGE never called a second time.
   const youngPair = strandedStore(30_000);
   const yp = await answer(youngPair.st, youngPair.askId, "Start it November 1.", { concurrent: 2 });
   assert("41.19f two re-sends of a young claim at once: both 409 ASK_ANSWER_IN_PROGRESS, nothing saved, no model call",
@@ -7466,6 +7466,47 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
     reads23 >= 2 && r23.status === 409 && bodyJson(r23)?.code === "ACTIVE_ACCOUNT_CHANGED" && appends(r23, "user").length === 0 && r23.modelEgress.length === 0
       && live23?.state === "live" && back23.status === 200 && resumedOf(back23).length === 1 && streamedCalls(back23).length === 1,
     JSON.stringify({ reads23, status: r23.status, body: bodyJson(r23), live23, back: back23.status }));
+
+  // ── 41.23b THE WORKSPACE CHANGES AFTER PAIGE WAS REACHED (the in-stream re-check, mid-answer). The
+  // stream stops and nothing can be saved after the claim (the thread now belongs to another workspace),
+  // so the claim strands — and PAIGE may already have acted. What happens next must stay TRUE: the
+  // re-sent answer is told PAIGE already has it (never that she is still working), the question asked
+  // again never says nothing was done, and answering it tells PAIGE an earlier attempt may have done
+  // part of the work, so she checks before repeating it.
+  let found23b = null;
+  for (let n = 3; n <= 8 && !found23b; n += 1) {
+    const st = makeThreadStore(THREADS);
+    const a = await askThen(st);
+    let reads = 0;
+    const r = await answer(st, a.frame?.ask_id, "Start it November 1.", { toolCall: PAGE, ...evidence23, rpc: { get_paige_persona_context: () => { reads += 1; return PERSONA(reads < n ? CALLER_TENANT : OTHER_TENANT).get_paige_persona_context; } } });
+    if (r.status === 200 && streamedCalls(r).length >= 1 && /active workspace changed/i.test(r.bodyText)) found23b = { st, a, r, n };
+  }
+  const st23b = found23b?.st;
+  const claim23b = st23b?.turns.at(-1);
+  const live23b = found23b ? resolveLiveness(st23b, found23b.a.frame?.ask_id) : null;
+  assert("41.23b the workspace changes after PAIGE was reached: the stream stops, the claim is the last turn (nothing saved after it) and reads as pending",
+    !!found23b && claim23b?.role === "user" && !!claim23b?.bundle_ref?.paige_resume && appends(found23b.r, "assistant").length === 0 && live23b?.state === "pending",
+    JSON.stringify({ n: found23b?.n ?? null, last: claim23b?.role ?? null, live: live23b }));
+  const young23b = found23b ? await answer(st23b, found23b.a.frame?.ask_id, "Start it November 1.", evidence23) : null;
+  if (claim23b) claim23b.created_at = new Date(Date.now() - 11 * 60_000).toISOString();
+  const dead23b = found23b ? await answer(st23b, found23b.a.frame?.ask_id, "Start it November 1.", evidence23) : null;
+  const again23b = st23b?.turns.at(-1);
+  const againRec23b = readAskRecord(again23b?.bundle_ref?.paige_ask);
+  assert("41.23c …re-sent inside the window it is told PAIGE already has it (not that she is still working); after the window the question is asked again, and neither the reply nor the re-asked question says nothing was done",
+    young23b?.status === 409 && bodyJson(young23b)?.code === "ASK_ANSWER_IN_PROGRESS" && !/still (be )?working|nothing was done/i.test(bodyJson(young23b)?.reason ?? "")
+      && dead23b?.status === 409 && bodyJson(dead23b)?.code === "ASK_REOPENED" && againRec23b?.reopens === found23b?.a.frame?.ask_id
+      && /Anything she'd already done is saved/.test(bodyJson(dead23b)?.reason ?? "") && !/nothing was done/i.test(bodyJson(dead23b)?.reason ?? "")
+      && String(again23b?.content).startsWith("I didn't finish carrying on from your answer. Anything I'd already done is saved.") && !/nothing was done/i.test(String(again23b?.content)),
+    JSON.stringify({ young: young23b && bodyJson(young23b), dead: dead23b && bodyJson(dead23b), again: again23b?.content }));
+  const re23b = againRec23b ? await answer(st23b, againRec23b.ask_id, "Start it November 1.", evidence23) : null;
+  assert("41.23d …answering the re-asked question resumes once and tells PAIGE an earlier attempt may have done part of the work — check what exists, repeat nothing",
+    re23b?.status === 200 && resumedOf(re23b).length === 1 && streamedCalls(re23b).length === 1
+      && toldModel(re23b).includes("earlier attempt") && toldModel(re23b).includes("check what already exists") && toldModel(re23b).includes("do not repeat anything that already happened"),
+    JSON.stringify({ status: re23b?.status }));
+  // The control: a first answer is never told about an earlier attempt.
+  assert("41.23e a first answer's note says nothing about an earlier attempt",
+    !toldModel(found23b?.r ?? { modelEgress: [] }).includes("earlier attempt"),
+    "first answer mentioned an earlier attempt");
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

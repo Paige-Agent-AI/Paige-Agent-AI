@@ -364,7 +364,7 @@ describe("C4c — a refused answer is put back, never re-sent as something else"
 
 describe("C4c — an answer that never reached PAIGE comes back as the same question, asked again", () => {
   const ASK_AGAIN = "b6b6b6b6-1111-4222-8333-444444444444";
-  const REASON = "PAIGE couldn't carry on from your answer, so nothing was done with it yet. She's asked the question again.";
+  const REASON = "PAIGE didn't finish carrying on from your answer. Anything she'd already done is saved, and she's asked the question again.";
   const reopened = (status: number) => ({
     ok: false as const, status,
     json: async () => ({ code: "ASK_REOPENED", cause_code: status === 429 ? null : "chat_unavailable", error: REASON, reason: REASON, ask_reopened: { prompt: "When should the onboarding start?", options: [], multi: false, allow_other: true, ask_id: ASK_AGAIN } }),
@@ -374,7 +374,7 @@ describe("C4c — an answer that never reached PAIGE comes back as the same ques
     { id: "u1", role: "user", content: "Set up onboarding for Kestrel." },
     { id: "q1", role: "assistant", content: "When should the onboarding start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 1, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: ASK_ID, question: "When should the onboarding start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: null } } },
     { id: "u2", role: "user", content: "Start it November 1.", bundle_ref: { paige_resume: { kind: "answer", key: `answer:${ASK_ID}`, from_turn_id: "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a" } } },
-    { id: "q2", role: "assistant", content: "I couldn't carry on from your answer, so nothing was done with it yet.\n\nWhen should the onboarding start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 0, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: ASK_AGAIN, question: "When should the onboarding start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: null, reopens: ASK_ID } } },
+    { id: "q2", role: "assistant", content: "I didn't finish carrying on from your answer. Anything I'd already done is saved.\n\nWhen should the onboarding start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 0, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: ASK_AGAIN, question: "When should the onboarding start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: null, reopens: ASK_ID } } },
   ];
 
   for (const status of [500, 429]) {
@@ -389,7 +389,7 @@ describe("C4c — an answer that never reached PAIGE comes back as the same ques
       expect(textarea(host).value).toBe("Start it November 1."); // back in the box, never re-sent by itself
       expect(harness.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "PAIGE asked again", description: `${REASON} Your message is back in the box.` }));
       expect(harness.loadTurns).toHaveBeenCalledWith("thread-a");
-      expect(host.textContent).toContain("I couldn't carry on from your answer");
+      expect(host.textContent).toContain("I didn't finish carrying on from your answer. Anything I'd already done is saved.");
       expect(hint(host)?.dataset.paigeAnswering).toBe("answer");
       expect(button(host, /^Retry$/)).toBeNull(); // no retry of the old question's id
       await act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.click(); await flush(); });
@@ -399,30 +399,30 @@ describe("C4c — an answer that never reached PAIGE comes back as the same ques
     });
   }
 
-  it("still with PAIGE (a claim younger than any request): the words come back, the server's 'may still be working' is said, the thread is re-read — nothing re-sent", async () => {
-    const reason = "PAIGE already has your answer to that question and may still be working on it, so this wasn't sent again. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask the question again.";
+  it("still with PAIGE (a claim younger than any request): the words come back, the server's 'already has your answer' is said, the thread is re-read — nothing re-sent", async () => {
+    const reason = "PAIGE already has your answer to that question, so this wasn't sent again. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask the question again.";
     const bodies = server(asks([], "When should the onboarding start?"), { ok: false as const, status: 409, json: async () => ({ code: "ASK_ANSWER_IN_PROGRESS", error: reason, reason }), clone() { return { json: this.json }; } });
     const host = await mount();
     await send(host, "Set up onboarding for Kestrel.");
     await send(host, "Start it November 1.");
     expect(bodies).toHaveLength(2);
     expect(textarea(host).value).toBe("Start it November 1.");
-    expect(harness.toast).toHaveBeenCalledWith(expect.objectContaining({ description: expect.stringContaining("may still be working") }));
+    expect(harness.toast).toHaveBeenCalledWith(expect.objectContaining({ description: expect.stringContaining("already has your answer") }));
     expect(harness.loadTurns).toHaveBeenCalledWith("thread-a");
   });
 });
 
 describe("C4c — an answer claimed with nothing after it keeps the composer bound to its question (re-verifier 2, V2-1)", () => {
-  const IN_PROGRESS = "PAIGE already has your answer to that question and may still be working on it, so this wasn't sent again. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask the question again.";
+  const IN_PROGRESS = "PAIGE already has your answer to that question, so this wasn't sent again. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask the question again.";
   const inProgress = () => ({ ok: false as const, status: 409, json: async () => ({ code: "ASK_ANSWER_IN_PROGRESS", error: IN_PROGRESS, reason: IN_PROGRESS }), clone() { return { json: this.json }; } });
   const ASK_AGAIN = "b6b6b6b6-1111-4222-8333-444444444444";
-  const REOPENED = "PAIGE couldn't carry on from your answer, so nothing was done with it yet. She's asked the question again.";
+  const REOPENED = "PAIGE didn't finish carrying on from your answer. Anything she'd already done is saved, and she's asked the question again.";
   const reopened = () => ({ ok: false as const, status: 409, json: async () => ({ code: "ASK_REOPENED", error: REOPENED, reason: REOPENED, ask_reopened: { prompt: "When should the onboarding start?", options: [], multi: false, allow_other: true, ask_id: ASK_AGAIN } }), clone() { return { json: this.json }; } });
   const question = { id: "q1", role: "assistant", content: "When should the onboarding start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 1, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: ASK_ID, question: "When should the onboarding start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: null } } };
   const claim = { id: "u2", role: "user", content: "Start it November 1.", bundle_ref: { paige_resume: { kind: "answer", key: `answer:${ASK_ID}`, from_turn_id: "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a" } } };
   const claimedTurns = () => [{ id: "u1", role: "user", content: "Set up onboarding for Kestrel." }, question, claim];
 
-  it("'may still be working' → the thread is re-read → sending again names the SAME question (resume), and keeps naming it until the server asks again", async () => {
+  it("'already has your answer' → the thread is re-read → sending again names the SAME question (resume), and keeps naming it until the server asks again", async () => {
     const bodies = server(asks([], "When should the onboarding start?"), inProgress(), inProgress(), reopened());
     const host = await mount();
     await send(host, "Set up onboarding for Kestrel.");
@@ -433,7 +433,7 @@ describe("C4c — an answer claimed with nothing after it keeps the composer bou
     // The re-read thread ends on the claim: the question is frozen as answered, the composer stays bound.
     expect(record(host)!.textContent).toBe("Answered below");
     expect(hint(host)!.dataset.paigeAnswering).toBe("claimed");
-    expect(hint(host)!.textContent).toContain("PAIGE has your answer. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask her question again");
+    expect(hint(host)!.textContent).toContain("PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.");
     expect(textarea(host).placeholder).toBe("Send your answer again…");
     expect(textarea(host).value).toBe("Start it November 1.");
     // Sent again inside the window: still the answer to THAT question — never an unbound message.
@@ -442,7 +442,7 @@ describe("C4c — an answer claimed with nothing after it keeps the composer bou
     expect(bodies).toHaveLength(3);
     expect(bodies[2].resume).toEqual({ kind: "answer", ask_id: ASK_ID });
     // …and once the server asks the question again, the re-read thread holds it open and the next send answers the NEW id.
-    harness.turns = [...claimedTurns(), { id: "q2", role: "assistant", content: "I couldn't carry on from your answer, so nothing was done with it yet.\n\nWhen should the onboarding start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 0, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: ASK_AGAIN, question: "When should the onboarding start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: null, reopens: ASK_ID } } }];
+    harness.turns = [...claimedTurns(), { id: "q2", role: "assistant", content: "I didn't finish carrying on from your answer. Anything I'd already done is saved.\n\nWhen should the onboarding start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 0, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: ASK_AGAIN, question: "When should the onboarding start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: null, reopens: ASK_ID } } }];
     await act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.click(); await flush(); });
     await act(async () => { await flush(); });
     expect(bodies[3].resume).toEqual({ kind: "answer", ask_id: ASK_ID });

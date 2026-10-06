@@ -593,8 +593,10 @@ export const ANSWER_STRANDED_AFTER_MINUTES = 10;
 export const ANSWER_STRANDED_AFTER_MS = ANSWER_STRANDED_AFTER_MINUTES * 60 * 1000;
 
 /** The line a re-asked question opens with: what happened, truthfully, and nothing about starting
- *  over (the question that follows is the same one). */
-export const ASK_REOPEN_LEAD = "I couldn't carry on from your answer, so nothing was done with it yet.";
+ *  over (the question that follows is the same one). It must be true whether or not PAIGE was reached
+ *  before the attempt stopped — a workspace switch mid-answer ends the stream with nothing saved after
+ *  the claim, after tools may already have run — so it never says nothing was done. */
+export const ASK_REOPEN_LEAD = "I didn't finish carrying on from your answer. Anything I'd already done is saved.";
 
 /**
  * The SAME question, asked again under a new id, because PAIGE could not carry on from the answer to
@@ -760,6 +762,9 @@ export function answerTurnNote(ask: AskRecord, opts: { skipped: boolean }): stri
   if (ask.objective) lines.push(`What you were doing: ${quote(ask.objective)}.`);
   if (ask.needs) lines.push(`What you needed from them: ${quote(ask.needs)}.`);
   if (ask.options.length) lines.push(`The choices you offered (label → value): ${ask.options.map((o) => `${quote(o.label)} → ${quote(o.value)}`).join("; ")}.`);
+  if (ask.reopens) {
+    lines.push("You asked this question again because an earlier attempt to carry on from an answer to it did not finish, and that attempt may already have done part of the work. Before you act, check what already exists — records already created or changed, proposals already waiting for approval — and do not repeat anything that already happened.");
+  }
   if (opts.skipped) {
     lines.push("They chose not to answer and asked you to use your best judgement. Pick the most reasonable option, say in one plain line what you picked and why, then carry on.");
   } else {

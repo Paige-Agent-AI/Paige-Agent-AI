@@ -341,7 +341,7 @@ Deno.test("C4c: a question asked again keeps the saved words, need and objective
   assertEquals(again.record, { ...ask, ask_id: NEW, reopens: ASK_ID });
   assertEquals(readAskRecord(JSON.parse(JSON.stringify(again.record))), again.record);
   assertEquals(again.turnState, { v: 1, state: "ASK_USER", mode: "clarify", rounds: 0, tools: 0, waiting_on: { kind: "choice" } });
-  assert(again.content.startsWith("I couldn't carry on from your answer, so nothing was done with it yet.") && again.content.endsWith(ask.question));
+  assert(again.content.startsWith("I didn't finish carrying on from your answer. Anything I'd already done is saved.") && again.content.endsWith(ask.question));
   assert(!/starting over|start over|okay/i.test(again.content));
   assertEquals(reopenAsk(again.record, "c5c5c5c5-1111-4222-8333-444444444444").record.reopens, NEW); // names the one it re-asks
   assertEquals(readAskRecord({ ...again.record, reopens: "nope" })?.reopens, undefined);
@@ -357,6 +357,16 @@ Deno.test("C4c: the answer note carries the saved question forward, refuses inve
   const skip = answerTurnNote(ask, { skipped: true });
   assert(skip.includes("best judgement") && !skip.includes("do not invent it") && skip.includes("approves nothing"));
   assertEquals([ASK_ALONGSIDE_CALLS_RESULT.refused_before_run, ASK_ALONGSIDE_CALLS_RESULT.error], [true, "ask_alone"]);
+  // A first question says nothing about an earlier attempt; a re-asked one tells PAIGE that attempt may
+  // have done part of the work, so she checks before acting instead of repeating it.
+  assert(!note.includes("earlier attempt"));
+  const again = reopenAsk(ask, "c5c5c5c5-0000-4000-8000-000000000009").record;
+  for (const opts of [{ skipped: false }, { skipped: true }]) {
+    const reNote = answerTurnNote(again, opts);
+    assert(reNote.includes("earlier attempt") && reNote.includes("check what already exists") && reNote.includes("do not repeat anything that already happened") && reNote.includes("approves nothing"));
+  }
+  // The re-ask lead never claims nothing was done: it must be true whether or not PAIGE was reached.
+  assert(!/nothing was done/i.test(reopenAsk(ask, "c5c5c5c5-0000-4000-8000-000000000009").content));
 });
 
 Deno.test("C4c: the first question's id follows the chain of re-asked questions — it never names one that is no longer open", () => {

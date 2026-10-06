@@ -168,9 +168,10 @@ export function PaigeAskCard({ options, multi = false, question, disabled, focus
 }
 
 /** Where a closed question stands, frozen in place: no control left on it (c3 / c5 / c6). */
-export function PaigeAskRecord({ standing }: { standing: "answered" | "skipped" | "unanswered" }) {
-  const Icon = standing === "answered" ? Check : CircleHelp;
-  const text = standing === "answered" ? "Answered below" : standing === "skipped" ? "You let PAIGE choose" : "Not answered";
+export function PaigeAskRecord({ standing, name = "PAIGE" }: { standing: "answered" | "skipped" | "unanswered"; name?: string }) {
+  // A skipped question is resolved too (PAIGE chose), so it reads with the same settled glyph.
+  const Icon = standing === "unanswered" ? CircleHelp : Check;
+  const text = standing === "answered" ? "Answered below" : standing === "skipped" ? `You let ${name} choose` : "Not answered";
   return (
     <div data-paige-ask-record={standing} className="mt-2 flex items-center gap-2 text-[12.5px] leading-[18px] text-muted-foreground">
       <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />

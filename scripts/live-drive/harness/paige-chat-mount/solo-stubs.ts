@@ -114,7 +114,7 @@ const ASK_AGAIN_ID = "b6b6b6b6-1111-4222-8333-444444444444";
 const ASK_REOPENED_TURNS = [
   ...ASK_TURNS,
   { id: "k-u2", role: "user", content: "Light start — intake form now, kickoff next month", created_at: at(33), bundle_ref: { paige_resume: { kind: "answer", key: `answer:${ASK_ID}`, from_turn_id: "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a" } } },
-  { id: "k-a2", role: "assistant", content: `I couldn't carry on from your answer, so nothing was done with it yet.\n\n${ASK_QUESTION}`, created_at: at(34), bundle_ref: {
+  { id: "k-a2", role: "assistant", content: `I didn't finish carrying on from your answer. Anything I'd already done is saved.\n\n${ASK_QUESTION}`, created_at: at(34), bundle_ref: {
     turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 0, tools: 0, waiting_on: { kind: "choice" } },
     paige_ask: { v: 1, ask_id: ASK_AGAIN_ID, question: ASK_QUESTION, options: ASK_OPTIONS, multi: false, allow_other: true, needs: "which start to build", objective: "Setting up The Kestrel Group's onboarding", reopens: ASK_ID },
   } },

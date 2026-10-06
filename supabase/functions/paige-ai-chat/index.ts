@@ -5542,8 +5542,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // conversation (the client clears it from the composer), and PAIGE did not act on it.
       ASK_ANSWER_SUPERSEDED: "Another message reached PAIGE before your answer, so she didn't act on it and her question stays unanswered. Your answer is kept in the conversation.",
       ASK_ALREADY_ANSWERED: "PAIGE already has your answer to that question, so this wasn't sent again.",
-      ASK_ANSWER_IN_PROGRESS: `PAIGE already has your answer to that question and may still be working on it, so this wasn't sent again. If she hasn't replied ${ANSWER_STRANDED_AFTER_MINUTES} minutes after you sent it, send it again and she'll ask the question again.`,
-      ASK_REOPENED: "PAIGE couldn't carry on from your answer, so nothing was done with it yet. She's asked the question again.",
+      ASK_ANSWER_IN_PROGRESS: `PAIGE already has your answer to that question, so this wasn't sent again. If she hasn't replied ${ANSWER_STRANDED_AFTER_MINUTES} minutes after you sent it, send it again and she'll ask the question again.`,
+      ASK_REOPENED: "PAIGE didn't finish carrying on from your answer. Anything she'd already done is saved, and she's asked the question again.",
       CHECK_UNAVAILABLE: "I couldn't check that question just now, so nothing was sent. Try again in a moment.",
       SAVE_UNAVAILABLE: "I couldn't save your answer just now, so nothing was sent. Try again in a moment.",
     } as const;
@@ -8803,68 +8803,69 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // main chat adds the free-form case (no options: answered in the person's own words) and the two
     // short fields the answer turn carries the objective forward with.
     const mainChatAsks = !studioSessionId && !!payloadThreadId && !liveRuntimeScope && !attachedDocument && callerTier !== "client";
-    if (mainChatAsks) {
+    // ONE definition of the question tool, worded for the surface that offers it (Studio and the main
+    // chat never both apply: the main chat requires no Studio session). One tool, one handler, one
+    // declaration site.
+    const askChoicesSpec = studioSessionId ? {
+      // #292 — inside a Studio session, the design agent's clickable-decision tool (its own wording).
+      description: "Ask the customer ONE decision as tappable choice CARDS instead of prose. Use ONLY when there are 2-4 genuinely distinct paths and you truly need them to pick. Give each option a short label AND a one-line description of what it means; when you have a REAL absolute https image URL that previews the option, include it as `preview` (never invent one). One decision per call; at most one clarify round, then build. Every option must map to something you will actually build once they pick — no dead-end or coming-soon choices.",
+      parameters: {
+        type: "object",
+        required: ["prompt", "options"],
+        properties: {
+          prompt: { type: "string", description: "Short question, in-voice (<=12 words)." },
+          options: {
+            type: "array", minItems: 2, maxItems: 4,
+            items: {
+              type: "object", required: ["label", "value"],
+              properties: {
+                label: { type: "string", description: "2-4 words shown on the card." },
+                value: { type: "string", description: "Canonical string sent back as the answer." },
+                description: { type: "string", description: "One short line (<=12 words) explaining what this option means." },
+                preview: { type: "string", description: "OPTIONAL absolute https image URL that visually previews this option (a real reference/thumbnail). Omit if you don't have a real one — never invent a URL." },
+              },
+            },
+          },
+          multi: { type: "boolean", description: "true = pick several then Continue; default single-select." },
+          allow_other: { type: "boolean", description: "true = also let the customer skip the cards and type their own answer instead." },
+        },
+      },
+    } : mainChatAsks ? {
+      description: "Pause and ask the person ONE question when you cannot continue the current piece of work without a real fact or choice only they have (a date, an amount, which agreement, which person). Do not ask what you can look up, and do not ask to confirm an action — actions are approved on their own card. Give the question in one or two short sentences that say why you need it. Offer 2-4 options only when the answer is a bounded choice; otherwise leave options out and they will answer in their own words. Call it ON ITS OWN, after any other calls you need: it ends your turn, and when they answer you continue the same work.",
+      parameters: {
+        type: "object",
+        required: ["prompt", "needs", "objective"],
+        properties: {
+          prompt: { type: "string", description: "The question, in-voice, with the one-line reason you need it (<= 2 short sentences)." },
+          needs: { type: "string", description: "The one fact you need, in a few words (e.g. \"the start date\")." },
+          objective: { type: "string", description: "What you were doing when you paused, in a few words (e.g. \"Setting up Kestrel's onboarding\")." },
+          options: {
+            type: "array", minItems: 2, maxItems: 4,
+            items: {
+              type: "object", required: ["label", "value"],
+              properties: {
+                label: { type: "string", description: "2-4 words." },
+                value: { type: "string", description: "Canonical string you will act on." },
+                description: { type: "string", description: "One short line (<=12 words) on what this option means." },
+              },
+            },
+          },
+          multi: { type: "boolean", description: "true = they may pick several." },
+        },
+      },
+    } : null;
+    if (askChoicesSpec) {
       toolDefs.push({
         type: "function",
         function: {
           name: "ask_choices",
-          description: "Pause and ask the person ONE question when you cannot continue the current piece of work without a real fact or choice only they have (a date, an amount, which agreement, which person). Do not ask what you can look up, and do not ask to confirm an action — actions are approved on their own card. Give the question in one or two short sentences that say why you need it. Offer 2-4 options only when the answer is a bounded choice; otherwise leave options out and they will answer in their own words. Call it ON ITS OWN, after any other calls you need: it ends your turn, and when they answer you continue the same work.",
-          parameters: {
-            type: "object",
-            required: ["prompt", "needs", "objective"],
-            properties: {
-              prompt: { type: "string", description: "The question, in-voice, with the one-line reason you need it (<= 2 short sentences)." },
-              needs: { type: "string", description: "The one fact you need, in a few words (e.g. \"the start date\")." },
-              objective: { type: "string", description: "What you were doing when you paused, in a few words (e.g. \"Setting up Kestrel's onboarding\")." },
-              options: {
-                type: "array", minItems: 2, maxItems: 4,
-                items: {
-                  type: "object", required: ["label", "value"],
-                  properties: {
-                    label: { type: "string", description: "2-4 words." },
-                    value: { type: "string", description: "Canonical string you will act on." },
-                    description: { type: "string", description: "One short line (<=12 words) on what this option means." },
-                  },
-                },
-              },
-              multi: { type: "boolean", description: "true = they may pick several." },
-            },
-          },
+          description: askChoicesSpec.description,
+          parameters: askChoicesSpec.parameters,
         },
       } as any);
     }
-    // #292 — inside a Studio session, give the design agent the clickable-decision tool (its own
-    // Studio wording; the main chat's is above, C4c). Handled as a turn-ender in the stream loop, not a
-    // backend call.
+    // #292 — the question tool (above) is handled as a turn-ender in the stream loop, not a backend call.
     if (studioSessionId) {
-      toolDefs.push({
-        type: "function",
-        function: {
-          name: "ask_choices",
-          description: "Ask the customer ONE decision as tappable choice CARDS instead of prose. Use ONLY when there are 2-4 genuinely distinct paths and you truly need them to pick. Give each option a short label AND a one-line description of what it means; when you have a REAL absolute https image URL that previews the option, include it as `preview` (never invent one). One decision per call; at most one clarify round, then build. Every option must map to something you will actually build once they pick — no dead-end or coming-soon choices.",
-          parameters: {
-            type: "object",
-            required: ["prompt", "options"],
-            properties: {
-              prompt: { type: "string", description: "Short question, in-voice (<=12 words)." },
-              options: {
-                type: "array", minItems: 2, maxItems: 4,
-                items: {
-                  type: "object", required: ["label", "value"],
-                  properties: {
-                    label: { type: "string", description: "2-4 words shown on the card." },
-                    value: { type: "string", description: "Canonical string sent back as the answer." },
-                    description: { type: "string", description: "One short line (<=12 words) explaining what this option means." },
-                    preview: { type: "string", description: "OPTIONAL absolute https image URL that visually previews this option (a real reference/thumbnail). Omit if you don't have a real one — never invent a URL." },
-                  },
-                },
-              },
-              multi: { type: "boolean", description: "true = pick several then Continue; default single-select." },
-              allow_other: { type: "boolean", description: "true = also let the customer skip the cards and type their own answer instead." },
-            },
-          },
-        },
-      } as any);
       // V1 — the design agent is OFFERED only its role's scope. This filters the list the turn
       // already carries (it never adds a tool); dispatch enforces the same scope again below, so a
       // tool the model names anyway is still refused. (document_generate, which has no Studio

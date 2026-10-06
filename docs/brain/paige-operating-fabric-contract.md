@@ -354,7 +354,20 @@ BusinessOperatingSnapshot {
   `no_adapter`.
 - **The projection is built LAST and bounded.** Every unavailable area appears as a NOT AVAILABLE
   line. The closing instruction forbids estimating, and states that an unavailable area is unknown,
-  not zero.
+  not zero. `maxChars` budgets the domain sections only. The header, the "left out for length" line,
+  and the instruction are never dropped, and areas left out for length must be named as unknown.
+- **Adapter text cannot forge the projection.** The validator refuses control characters
+  (`control_chars`), and the projection collapses every adapter string to one line. A free-text
+  reason from an adapter never reaches the model. Adapter reasons pass through only as closed codes
+  (`[A-Za-z0-9_:.-]`, ≤120 characters). A code that collides with a composer code is prefixed
+  `adapter:`. Anything else becomes `adapter_reason_unreadable`.
+- **Hostile or broken adapters cannot break the composer.** A throwing getter, a null adapter, or a
+  malformed result degrades to `invalid_result` or `adapter_error`. No error text is ever surfaced.
+  `timeoutMs` is clamped to 60s, and `maxDomains` is floored and capped at 20.
+- **Periods are strict.** ISO instants are digit-checked, so `2026-02-30T00:00Z` is refused. Only
+  IANA zones are accepted, and raw offsets are refused. A day whose local midnight does not exist
+  (Santiago, Havana, Beirut, Cairo DST) starts at its first real instant. The verifier brute-forced
+  every IANA zone around the 2025–2027 DST changes and found 0 mismatches.
 - **`previousPeriod(period)`** gives the equal-length prior window for "what changed since last
   time". This is the proactive seam (below), not built as a job.
 

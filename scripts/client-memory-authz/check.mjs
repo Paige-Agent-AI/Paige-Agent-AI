@@ -312,6 +312,27 @@ globalThis.fetch = async (url, init) => {
     // `gatewayCompat` reshapes the request to Anthropic-native before it reaches fetch, so the
     // caller's `response_format` is gone by here and cannot be used to identify the call. The
     // reply must be Anthropic-shaped too — the gateway converts it back to `choices[0].message`.
+    // INT-334 R4 — the TURN CLASSIFIER (_shared/paige-turn/classify.ts). Answer it the way a real
+    // classifier would for this harness's turns: a short acknowledgement or bare reply is light
+    // conversation; anything else is ordinary work on this workspace's records. A scenario can
+    // override per turn (`classification`), including `null` for a classifier that fails.
+    if (String(init?.body ?? "").includes("You label one message sent to PAIGE")) {
+      const turnState = modelTurnState.getStore();
+      let reply;
+      if (turnState && Object.hasOwn(turnState, "classification")) {
+        reply = turnState.classification === null ? "not json" : JSON.stringify(turnState.classification);
+      } else {
+        const msg = (String(init?.body ?? "").match(/MESSAGE:\\n<<<\\n([\s\S]*?)\\n>>>/) ?? [])[1] ?? "";
+        const light = msg.trim().split(/\s+/).length <= 3;
+        reply = JSON.stringify(light
+          ? { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 }
+          : { intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.9 });
+      }
+      return new Response(JSON.stringify({
+        id: "msg_classify", type: "message", role: "assistant", model: "test",
+        content: [{ type: "text", text: reply }], stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 1 },
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     const isReadCheck = String(init?.body ?? "").includes("verify that you can literally read the PDF");
     const isExtraction = String(init?.body ?? "").includes("Extract the structured data into the required JSON format");
     const text = isReadCheck ? JSON.stringify(readCheckReply) : isExtraction && extractionReplyText !== null ? extractionReplyText : "ok";

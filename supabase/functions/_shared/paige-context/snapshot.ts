@@ -96,10 +96,17 @@ const DEFAULT_MAX_CUSTOM_DAYS = 366;
 
 type LocalParts = { year: number; month: number; day: number; hour: number; minute: number; second: number };
 
+/**
+ * An IANA zone name (`UTC`, `Asia/Kolkata`, `Etc/GMT+5`, legacy links like `Japan`). Engines also accept
+ * raw offsets such as `+05:30`; those are refused, because an offset has no DST rules and is not the
+ * contract's IANA zone.
+ */
+const IANA_ZONE = /^[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z0-9_+-]+)*$/;
+
 function zoneFormatter(timezone: string): Intl.DateTimeFormat | null {
-  if (typeof timezone !== "string" || timezone.trim() === "") return null;
+  if (typeof timezone !== "string" || !IANA_ZONE.test(timezone.trim())) return null;
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    const fmt = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
       hourCycle: "h23",
       year: "numeric",
@@ -109,6 +116,7 @@ function zoneFormatter(timezone: string): Intl.DateTimeFormat | null {
       minute: "2-digit",
       second: "2-digit",
     });
+    return IANA_ZONE.test(fmt.resolvedOptions().timeZone) ? fmt : null;
   } catch {
     // An unknown zone is a refusal the caller reports (`invalid_timezone`), not a silent fallback.
     return null;
@@ -154,7 +162,28 @@ function isoDate(p: { year: number; month: number; day: number }): string {
 }
 
 const ISO_DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
-const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:\d{2})$/;
+const ISO_INSTANT =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(?:Z|[+-](\d{2}):(\d{2}))$/;
+
+function realCalendarDate(year: number, month: number, day: number): boolean {
+  const check = new Date(Date.UTC(year, month - 1, day));
+  return check.getUTCFullYear() === year && check.getUTCMonth() === month - 1 && check.getUTCDate() === day;
+}
+
+/**
+ * A full ISO-8601 instant with an explicit zone designator, checked digit by digit. `Date.parse` alone is
+ * too forgiving: it rolls `2026-02-30T00:00:00Z` over to March 2 and reads `"1"` as the year 2001.
+ */
+export function parseIsoInstant(value: string): number | null {
+  const m = ISO_INSTANT.exec(value);
+  if (!m) return null;
+  const [year, month, day, hour, minute] = [m[1], m[2], m[3], m[4], m[5]].map(Number);
+  const second = m[6] === undefined ? 0 : Number(m[6]);
+  if (!realCalendarDate(year, month, day) || hour > 23 || minute > 59 || second > 59) return null;
+  if (m[7] !== undefined && (Number(m[7]) > 23 || Number(m[8]) > 59)) return null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : null;
+}
 
 /**
  * A custom bound is either a full ISO instant with an explicit zone designator, or a bare date — read as
@@ -167,18 +196,20 @@ function parseCustomBound(value: string, fmt: Intl.DateTimeFormat): number | nul
     const year = Number(dateOnly[1]);
     const month = Number(dateOnly[2]);
     const day = Number(dateOnly[3]);
-    const check = new Date(Date.UTC(year, month - 1, day));
-    if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) {
-      return null;
-    }
+    if (!realCalendarDate(year, month, day)) return null;
     return localMidnightUtc(year, month, day, fmt);
   }
-  if (!ISO_INSTANT.test(trimmed)) return null;
-  const ms = Date.parse(trimmed);
-  return Number.isFinite(ms) ? ms : null;
+  return parseIsoInstant(trimmed);
 }
 
+/**
+ * Resolve a named or custom period against an injected clock. Bad caller INPUT (zone, bounds, key) is a
+ * typed refusal. A bad injected CLOCK (`now` not a valid Date) is a programming error, not user input, so
+ * it throws a TypeError instead of borrowing a refusal code that would name the wrong cause.
+ */
 export function resolveSnapshotPeriod(input: ResolveSnapshotPeriodInput): ResolveSnapshotPeriodResult {
+  const nowMs = input.now instanceof Date ? input.now.getTime() : Number.NaN;
+  if (!Number.isFinite(nowMs)) throw new TypeError("resolveSnapshotPeriod: now must be a valid Date");
   if (!(SNAPSHOT_PERIOD_KEYS as readonly string[]).includes(input.key)) {
     return { ok: false, reason: "unknown_period" };
   }
@@ -186,8 +217,6 @@ export function resolveSnapshotPeriod(input: ResolveSnapshotPeriodInput): Resolv
   const fmt = zoneFormatter(input.timezone);
   if (!fmt) return { ok: false, reason: "invalid_timezone" };
   const timezone = fmt.resolvedOptions().timeZone;
-  const nowMs = input.now.getTime();
-  if (!Number.isFinite(nowMs)) return { ok: false, reason: "custom_bounds_invalid" };
   const nowIso = new Date(nowMs).toISOString();
   const today = localParts(nowMs, fmt);
 
@@ -262,18 +291,22 @@ export function resolveSnapshotPeriod(input: ResolveSnapshotPeriodInput): Resolv
   }
 }
 
+function plural(n: number, unit: string): string {
+  return `${n} ${unit}${n === 1 ? "" : "s"}`;
+}
+
+/** "7 days", "80 days and 8 hours", "12 hours", "2 hours and 30 minutes" — words an owner reads. */
 function describeDuration(ms: number): string {
-  if (ms % DAY_MS === 0) {
-    const days = ms / DAY_MS;
-    return `${days} ${days === 1 ? "day" : "days"}`;
-  }
-  const totalMinutes = Math.round(ms / 60_000);
-  const hours = Math.floor(totalMinutes / 60);
+  const totalMinutes = Math.max(0, Math.round(ms / 60_000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
   const minutes = totalMinutes % 60;
   const parts: string[] = [];
-  if (hours > 0) parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
-  if (minutes > 0 || hours === 0) parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`);
-  return parts.join(" ");
+  if (days > 0) parts.push(plural(days, "day"));
+  if (hours > 0) parts.push(plural(hours, "hour"));
+  // Minutes only matter below a day; a quarter-to-date window does not need its minutes spelled out.
+  if (days === 0 && (minutes > 0 || hours === 0)) parts.push(plural(minutes, "minute"));
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
 }
 
 /**
@@ -288,7 +321,7 @@ export function previousPeriod(period: SnapshotPeriod): SnapshotPeriod {
   const duration = describeDuration(length);
   const label = period.basis === "rolling"
     ? `the previous ${duration}`
-    : `the previous ${duration} (just before ${period.label})`;
+    : `the previous ${duration}, just before ${period.label}`;
   return {
     key: "custom",
     start: new Date(start - length).toISOString(),
@@ -342,6 +375,10 @@ export function isSnapshotDomain(value: unknown): value is SnapshotDomain {
   return typeof value === "string" && (SNAPSHOT_DOMAINS as readonly string[]).includes(value);
 }
 
+/**
+ * count = a whole number of things · currency_minor = whole minor units (cents) with `currency` ·
+ * percent = 0–100 (25 means 25%, never 0.25) · ratio = a plain multiplier (1.5) · days = a duration.
+ */
 export const SNAPSHOT_METRIC_UNITS = ["count", "currency_minor", "percent", "ratio", "days"] as const;
 export type SnapshotMetricUnit = (typeof SNAPSHOT_METRIC_UNITS)[number];
 
@@ -430,8 +467,11 @@ export type ValidateDomainSnapshotResult =
   | { readonly ok: false; readonly reason: string };
 
 class ShapeError extends Error {
-  constructor(readonly reason: string) {
+  // Declared explicitly (not a parameter property) so the file also runs under type-stripping runners.
+  readonly reason: string;
+  constructor(reason: string) {
     super(reason);
+    this.reason = reason;
   }
 }
 
@@ -445,15 +485,25 @@ function record(value: unknown, path: string, allowed: readonly string[]): Obj {
   if (value === null || typeof value !== "object" || Array.isArray(value)) fail(`not_object:${path}`);
   const obj = value as Obj;
   for (const k of Object.keys(obj)) {
-    if (!allowed.includes(k)) fail(`unknown_field:${path}.${k}`);
+    // The field name is adapter-chosen: keep only a short, plain slice of it in the reason.
+    if (!allowed.includes(k)) fail(`unknown_field:${path}.${k.replace(/[^A-Za-z0-9_]/g, "").slice(0, 40)}`);
   }
   return obj;
 }
+
+/**
+ * Line breaks and other control characters (C0, DEL, C1, U+2028/2029). Every adapter string ends up on
+ * ONE line of the projection; a summary carrying a newline could otherwise start a forged section
+ * ("[Clients] ... 999") or a forged instruction line the model would read as fact.
+ */
+// eslint-disable-next-line no-control-regex -- matching control characters is the point of this guard
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
 
 function text(obj: Obj, field: string, path: string, max: number): string {
   const v = obj[field];
   if (typeof v !== "string" || v.trim() === "") fail(`field:${path}.${field}`);
   if (v.length > max) fail("over_bound");
+  if (CONTROL_CHARS.test(v)) fail("control_chars");
   return v;
 }
 
@@ -470,7 +520,7 @@ function oneOf<T extends string>(obj: Obj, field: string, path: string, allowed:
 
 function instant(obj: Obj, field: string, path: string): string {
   const v = text(obj, field, path, SNAPSHOT_BOUNDS.shortText);
-  if (!Number.isFinite(Date.parse(v))) fail(`field:${path}.${field}`);
+  if (parseIsoInstant(v) === null) fail(`field:${path}.${field}`);
   return v;
 }
 
@@ -513,6 +563,9 @@ function validateMetric(value: unknown, domain: SnapshotDomain, i: number): Snap
     metricValue = null;
   } else if (typeof raw === "number") {
     if (!Number.isFinite(raw)) fail("non_finite");
+    // Beyond 2^53 a number is no longer exact and renders in exponent form; no real figure is that big.
+    if (Math.abs(raw) > Number.MAX_SAFE_INTEGER) fail("out_of_range");
+    if (unit === "count" && !Number.isInteger(raw)) fail("count_not_integer");
     metricValue = raw;
   } else {
     fail(`field:${path}.value`);
@@ -675,6 +728,12 @@ export type SnapshotAdapterContext = {
   readonly signal?: AbortSignal;
 };
 
+/**
+ * One domain's owning read. When it cannot produce a snapshot it returns unavailable/degraded with a
+ * REASON CODE (`feature_not_enabled`, `clients_rpc_failed`), never an error message: the composer passes
+ * codes of the closed form `[A-Za-z0-9_][A-Za-z0-9_:.-]{0,119}` through, and replaces anything else
+ * (free text, a message that may carry a query or an email) with `adapter_reason_unreadable`.
+ */
 export type DomainSnapshotAdapter = {
   readonly domain: SnapshotDomain;
   readonly owner: string;
@@ -724,16 +783,20 @@ export type ComposeOperatingSnapshotInput = {
   readonly adapters: readonly DomainSnapshotAdapter[];
   readonly now: Date;
   readonly currentScopeEpoch: number | string;
-  /** Per-adapter timeout. Default 4000ms. */
+  /** Per-adapter timeout in whole ms. Default 4000; clamped to SNAPSHOT_MAX_TIMEOUT_MS. */
   readonly timeoutMs?: number;
-  /** Most domains read in one composition. Default 12. */
+  /** Most domains read in one composition, a whole number ≥ 1. Default 12 (non-integers floor first). */
   readonly maxDomains?: number;
 };
 
 export const SNAPSHOT_DEFAULT_TIMEOUT_MS = 4000;
 export const SNAPSHOT_DEFAULT_MAX_DOMAINS = 12;
 
-/** Composer-issued reason codes (adapter-supplied reasons pass through as given). */
+/**
+ * Composer-issued reason codes. An adapter's own code passes through unchanged, EXCEPT one that collides
+ * with these (an adapter saying `timeout` or `no_workspace`) — that is prefixed `adapter:` so it can never
+ * be mistaken for the composer's own finding.
+ */
 export const SNAPSHOT_REASON = {
   noWorkspace: "no_workspace",
   scopeChanged: "scope_changed",
@@ -745,7 +808,11 @@ export const SNAPSHOT_REASON = {
   duplicateAdapter: "duplicate_adapter",
   noAdapter: "no_adapter",
   noReasonGiven: "no_reason_given",
+  adapterReasonUnreadable: "adapter_reason_unreadable",
 } as const;
+
+/** The namespace an adapter code is moved into when it collides with a composer code. */
+export const ADAPTER_REASON_PREFIX = "adapter:";
 
 /**
  * `contextUnavailable` is typed to `null` data; this re-types the same result for the snapshot record
@@ -757,10 +824,16 @@ function unavailableSnapshot(reason: string): ContextSourceResult<DomainSnapshot
 }
 
 const ERROR_CODE = /^[A-Z0-9_]{2,64}$/;
-const MAX_PASSTHROUGH_REASON = 300;
+const ADAPTER_REASON_CODE = /^[A-Za-z0-9_][A-Za-z0-9_:.-]{0,119}$/;
+/** Longest per-adapter timeout honoured; larger values (or ones past setTimeout's 2^31-1 ms) clamp here. */
+export const SNAPSHOT_MAX_TIMEOUT_MS = 60_000;
 
-function positiveOr(value: number | undefined, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+const COMPOSER_CODES: readonly string[] = Object.values(SNAPSHOT_REASON);
+
+/** A positive whole number, else the fallback; never above `max`. Floors BEFORE checking, so 0.5 → fallback. */
+function wholeOr(value: number | undefined, fallback: number, max: number): number {
+  const n = typeof value === "number" && Number.isFinite(value) ? Math.floor(value) : 0;
+  return n >= 1 ? Math.min(n, max) : fallback;
 }
 
 function dedupeDomains(domains: readonly SnapshotDomain[]): SnapshotDomain[] {
@@ -772,17 +845,46 @@ function dedupeDomains(domains: readonly SnapshotDomain[]): SnapshotDomain[] {
 function errorReason(error: unknown): string {
   // The message never leaves: it may carry a query, an email, a provider payload. A short, closed-format
   // code the adapter chose on purpose is the only thing that rides along.
-  if (error !== null && typeof error === "object") {
-    const code = (error as { code?: unknown }).code;
-    if (typeof code === "string" && ERROR_CODE.test(code)) return `${SNAPSHOT_REASON.adapterError}:${code}`;
+  try {
+    if (error !== null && typeof error === "object") {
+      const code = (error as { code?: unknown }).code;
+      if (typeof code === "string" && ERROR_CODE.test(code)) return `${SNAPSHOT_REASON.adapterError}:${code}`;
+    }
+  } catch {
+    // A thrown object whose `code` getter throws is still just a failed read.
   }
   return SNAPSHOT_REASON.adapterError;
 }
 
-function passThroughReason(reason: unknown): string {
+/**
+ * An adapter's own unavailable/degraded reason. Closed-form codes pass through unchanged; the domain's
+ * NOT-CONNECTED sentence passes through verbatim; a code that collides with a composer code moves into
+ * the `adapter:` namespace; anything else (free text, an error message) is replaced, never rendered.
+ */
+function passThroughReason(reason: unknown, domain: SnapshotDomain): string {
   if (typeof reason !== "string" || reason.trim() === "") return SNAPSHOT_REASON.noReasonGiven;
-  const flat = reason.replace(/\s+/g, " ").trim();
-  return flat.length > MAX_PASSTHROUGH_REASON ? `${flat.slice(0, MAX_PASSTHROUGH_REASON - 1)}…` : flat;
+  if (reason === NOT_CONNECTED_DOMAINS[domain]) return reason;
+  if (!ADAPTER_REASON_CODE.test(reason)) return SNAPSHOT_REASON.adapterReasonUnreadable;
+  const collides = COMPOSER_CODES.some((code) => reason === code || reason.startsWith(`${code}:`));
+  return collides ? `${ADAPTER_REASON_PREFIX}${reason}` : reason;
+}
+
+type UsableAdapter = { readonly domain: SnapshotDomain; readonly adapter: DomainSnapshotAdapter };
+
+/** Read each adapter's domain ONCE, dropping anything that is not an adapter (null, a hostile getter). */
+function usableAdapters(adapters: readonly unknown[]): UsableAdapter[] {
+  const out: UsableAdapter[] = [];
+  for (const a of adapters) {
+    try {
+      if (a === null || typeof a !== "object") continue;
+      const domain = (a as { domain?: unknown }).domain;
+      if (!isSnapshotDomain(domain) || typeof (a as { read?: unknown }).read !== "function") continue;
+      out.push({ domain, adapter: a as DomainSnapshotAdapter });
+    } catch {
+      continue;
+    }
+  }
+  return out;
 }
 
 type AdapterOutcome =
@@ -827,18 +929,24 @@ function settle(
 ): ContextSourceResult<DomainSnapshot> {
   if (outcome.kind === "timeout") return contextDegraded(SNAPSHOT_REASON.timeout);
   if (outcome.kind === "error") return contextDegraded(errorReason(outcome.error));
-  const result = outcome.result;
-  if (result === null || typeof result !== "object") return contextDegraded(SNAPSHOT_REASON.invalidResult);
-  const r = result as { status?: unknown; reason?: unknown; data?: unknown };
-  if (r.status === "available") {
-    const checked = validateDomainSnapshot(r.data, { domain, period });
-    return checked.ok
-      ? contextAvailable(checked.snapshot)
-      : contextDegraded(`${SNAPSHOT_REASON.invalidShape}:${checked.reason}`);
+  try {
+    const result = outcome.result;
+    if (result === null || typeof result !== "object") return contextDegraded(SNAPSHOT_REASON.invalidResult);
+    const r = result as { status?: unknown; reason?: unknown; data?: unknown };
+    const status = r.status;
+    if (status === "available") {
+      const checked = validateDomainSnapshot(r.data, { domain, period });
+      return checked.ok
+        ? contextAvailable(checked.snapshot)
+        : contextDegraded(`${SNAPSHOT_REASON.invalidShape}:${checked.reason}`);
+    }
+    if (status === "unavailable") return unavailableSnapshot(passThroughReason(r.reason, domain));
+    if (status === "degraded") return contextDegraded(passThroughReason(r.reason, domain));
+    return contextDegraded(SNAPSHOT_REASON.invalidResult);
+  } catch {
+    // A result whose `status`/`reason` getter throws: an unreadable result, and its message stays here.
+    return contextDegraded(SNAPSHOT_REASON.invalidResult);
   }
-  if (r.status === "unavailable") return unavailableSnapshot(passThroughReason(r.reason));
-  if (r.status === "degraded") return contextDegraded(passThroughReason(r.reason));
-  return contextDegraded(SNAPSHOT_REASON.invalidResult);
 }
 
 /**
@@ -852,8 +960,9 @@ export async function composeOperatingSnapshot(
 ): Promise<BusinessOperatingSnapshot> {
   const { identity, period, now } = input;
   const requested = dedupeDomains(input.domains);
-  const timeoutMs = positiveOr(input.timeoutMs, SNAPSHOT_DEFAULT_TIMEOUT_MS);
-  const maxDomains = Math.floor(positiveOr(input.maxDomains, SNAPSHOT_DEFAULT_MAX_DOMAINS));
+  const timeoutMs = wholeOr(input.timeoutMs, SNAPSHOT_DEFAULT_TIMEOUT_MS, SNAPSHOT_MAX_TIMEOUT_MS);
+  const maxDomains = wholeOr(input.maxDomains, SNAPSHOT_DEFAULT_MAX_DOMAINS, SNAPSHOT_DOMAINS.length);
+  const adapters = usableAdapters(input.adapters);
 
   const domains: Record<string, ContextSourceResult<DomainSnapshot>> = {};
   const timedOut: string[] = [];
@@ -889,7 +998,7 @@ export async function composeOperatingSnapshot(
   const planned: Record<string, ContextSourceResult<DomainSnapshot> | "run"> = {};
 
   for (const domain of toRun) {
-    const owners = input.adapters.filter((a) => a.domain === domain);
+    const owners = adapters.filter((a) => a.domain === domain).map((a) => a.adapter);
     if (owners.length > 1) {
       planned[domain] = contextDegraded(SNAPSHOT_REASON.duplicateAdapter);
       continue;
@@ -1015,11 +1124,32 @@ export const SNAPSHOT_DOMAIN_LABELS: Readonly<Record<SnapshotDomain, string>> = 
   research: "Research",
 });
 
-/** ISO-4217 minor-unit exponents that are not 2. Deterministic; no locale data involved. */
+/**
+ * ISO-4217 minor-unit exponents, written out so the output never depends on the host's ICU data. A code
+ * not listed here is NOT given invented decimals: it renders as "<CUR> <n> minor units" (the
+ * `_shared/sales-commercial/terms-summary.ts` rule).
+ */
 const ZERO_DECIMAL = new Set([
   "BIF", "CLP", "DJF", "GNF", "ISK", "JPY", "KMF", "KRW", "PYG", "RWF", "UGX", "UYI", "VND", "VUV", "XAF", "XOF", "XPF",
 ]);
 const THREE_DECIMAL = new Set(["BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND"]);
+const FOUR_DECIMAL = new Set(["CLF", "UYW"]);
+const TWO_DECIMAL = new Set(
+  ("AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF " +
+    "CHE CHF CHW CNY COP COU CRC CUP CVE CZK DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GTQ GYD " +
+    "HKD HNL HTG HUF IDR ILS INR IRR JMD KES KGS KHR KPW KYD KZT LAK LBP LKR LRD LSL MAD MDL MGA MKD MMK MNT " +
+    "MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD PAB PEN PGK PHP PKR PLN QAR RON RSD RUB SAR " +
+    "SBD SCR SDG SEK SGD SHP SLE SLL SOS SRD SSP STN SVC SYP SZL THB TJS TMT TOP TRY TTD TWD TZS UAH USD USN " +
+    "UYU UZS VED VES WST XCD XCG YER ZAR ZMW ZWG ZWL").split(" "),
+);
+
+function currencyExponent(currency: string): number | null {
+  if (TWO_DECIMAL.has(currency)) return 2;
+  if (ZERO_DECIMAL.has(currency)) return 0;
+  if (THREE_DECIMAL.has(currency)) return 3;
+  if (FOUR_DECIMAL.has(currency)) return 4;
+  return null;
+}
 
 function group(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -1033,11 +1163,15 @@ function plainNumber(value: number, maxDecimals: number): string {
   return `${sign}${group(whole)}${trimmed ? `.${trimmed}` : ""}`;
 }
 
-/** Minor units → "USD 1,250.00". Integer math only, so the output never depends on the host locale. */
+/**
+ * Minor units → "USD 1,250.00". Integer math only, so the output never depends on the host locale. An
+ * unknown currency code keeps its minor units explicit ("XYZ 1,250 minor units") — never guessed decimals.
+ */
 export function formatCurrencyMinor(minor: number, currency: string): string {
-  const exponent = ZERO_DECIMAL.has(currency) ? 0 : THREE_DECIMAL.has(currency) ? 3 : 2;
   const sign = minor < 0 ? "-" : "";
   const abs = Math.abs(Math.trunc(minor));
+  const exponent = currencyExponent(currency);
+  if (exponent === null) return `${currency} ${sign}${group(String(abs))} minor units`;
   const scale = 10 ** exponent;
   const whole = Math.floor(abs / scale);
   const frac = exponent === 0 ? "" : `.${String(abs % scale).padStart(exponent, "0")}`;
@@ -1049,8 +1183,8 @@ export function formatSnapshotMetricValue(metric: SnapshotMetric): string {
   switch (metric.unit) {
     case "currency_minor":
       return formatCurrencyMinor(metric.value, metric.currency ?? "");
-    case "percent":
-      return `${plainNumber(metric.value, 1)}%`;
+    case "percent": // 0–100 by contract (SNAPSHOT_METRIC_UNITS)
+      return `${plainNumber(metric.value, 2)}%`;
     case "ratio":
       return plainNumber(metric.value, 2);
     case "days":
@@ -1066,10 +1200,19 @@ const BASIS_TAG: Readonly<Record<SnapshotMetricBasis, string>> = {
   all_time: "all time",
 };
 
-/** Composer-issued codes → plain words for the model. Anything else is an adapter's own reason. */
+/** "feature_not_enabled" → "feature not enabled": an adapter code read aloud, not raw snake_case. */
+function spokenCode(code: string): string {
+  return code.replace(/[_:.-]+/g, " ").trim();
+}
+
+/**
+ * Composer-issued codes → plain words for the model. An adapter's own code is read out as "the source
+ * reported: <words>" (its `adapter:` prefix, if it collided with a composer code, is dropped first).
+ */
 export function plainSnapshotReason(domain: SnapshotDomain, reason: string | undefined): string {
-  const r = reason ?? SNAPSHOT_REASON.noReasonGiven;
+  const r = oneLine(reason ?? SNAPSHOT_REASON.noReasonGiven);
   if (r === NOT_CONNECTED_DOMAINS[domain]) return r;
+  if (r.startsWith(ADAPTER_REASON_PREFIX)) return `the source reported: ${spokenCode(r.slice(ADAPTER_REASON_PREFIX.length))}`;
   if (r === SNAPSHOT_REASON.noWorkspace) return "no business workspace is selected, so nothing was read";
   if (r === SNAPSHOT_REASON.scopeChanged) return "the workspace changed during this read, so nothing from it was used";
   if (r === SNAPSHOT_REASON.overBudget) return "too many areas were asked for at once; ask about this one on its own";
@@ -1081,7 +1224,21 @@ export function plainSnapshotReason(domain: SnapshotDomain, reason: string | und
   if (r === SNAPSHOT_REASON.duplicateAdapter) return "more than one source claimed this area, so neither was used";
   if (r.startsWith(`${SNAPSHOT_REASON.noAdapter}:`)) return "this area is not wired into the business read yet";
   if (r === SNAPSHOT_REASON.noReasonGiven) return "the source gave no reason";
-  return r;
+  if (r === SNAPSHOT_REASON.adapterReasonUnreadable) return "the source gave a reason that could not be shown";
+  // Not-connected text reaches here only via a hand-built snapshot for another domain; anything else that
+  // is not a closed-form code is not rendered.
+  if (!ADAPTER_REASON_CODE.test(r)) return "the source gave a reason that could not be shown";
+  return `the source reported: ${spokenCode(r)}`;
+}
+
+/**
+ * Collapse every run of whitespace/control characters to one space. The validator already refuses control
+ * characters in adapter text; this is the projection's own guard for a snapshot that reached it some
+ * other way (e.g. parsed back from JSON), so one fact can never span — or forge — a line.
+ */
+function oneLine(value: string): string {
+  // eslint-disable-next-line no-control-regex -- collapsing control characters is the point
+  return value.replace(/[\s\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ").trim();
 }
 
 function domainSection(domain: SnapshotDomain, result: ContextSourceResult<DomainSnapshot> | undefined): string[] {
@@ -1093,40 +1250,47 @@ function domainSection(domain: SnapshotDomain, result: ContextSourceResult<Domai
     return [`[${title}] NOT AVAILABLE — ${reason}`];
   }
   const s = result.data;
-  const lines = [`[${title}] ${s.freshness === "snapshot" ? "stored snapshot as of" : "read at"} ${s.as_of}`];
-  if (s.coverage === "partial") lines.push(`- Coverage is partial: ${s.coverage_note ?? "no note"}`);
+  const t = oneLine;
+  const lines = [`[${title}] ${s.freshness === "snapshot" ? "stored snapshot as of" : "read at"} ${t(s.as_of)}`];
+  if (s.coverage === "partial") lines.push(`- Coverage is partial: ${t(s.coverage_note ?? "no note")}`);
   if (s.headline.length === 0) lines.push("- No figures reported.");
   for (const m of s.headline) {
-    const tags = [BASIS_TAG[m.basis], m.window_note].filter((t): t is string => typeof t === "string" && t !== "");
-    lines.push(`- ${m.label}: ${formatSnapshotMetricValue(m)} (${tags.join("; ")})`);
+    const tags = [BASIS_TAG[m.basis], m.window_note].filter((x): x is string => typeof x === "string" && x !== "");
+    lines.push(`- ${t(m.label)}: ${formatSnapshotMetricValue(m)} (${tags.map(t).join("; ")})`);
   }
-  for (const c of s.changes) lines.push(`- Change${c.direction ? ` (${c.direction})` : ""}: ${c.summary}`);
-  for (const o of s.outcomes) lines.push(`- Outcome ${o.capability_key}: ${o.succeeded} succeeded, ${o.failed} failed`);
-  for (const r of s.risks) lines.push(`- Risk (${r.severity}): ${r.summary}`);
-  for (const u of s.upcoming) lines.push(`- Upcoming ${u.at}: ${u.summary}`);
-  for (const g of s.goal_links) lines.push(`- Game plan link: ${g.relation} mission ${g.mission_id}`);
-  lines.push(`- Source: ${s.sources.map((x) => `${x.system}/${x.adapter}`).join(", ")}`);
+  for (const c of s.changes) lines.push(`- Change${c.direction ? ` (${c.direction})` : ""}: ${t(c.summary)}`);
+  for (const o of s.outcomes) {
+    lines.push(`- Outcome ${t(o.capability_key)}: ${o.succeeded} succeeded, ${o.failed} failed`);
+  }
+  for (const r of s.risks) lines.push(`- Risk (${r.severity}): ${t(r.summary)}`);
+  for (const u of s.upcoming) lines.push(`- Upcoming ${t(u.at)}: ${t(u.summary)}`);
+  for (const g of s.goal_links) lines.push(`- Game plan link: ${g.relation} mission ${t(g.mission_id)}`);
+  lines.push(`- Source: ${s.sources.map((x) => `${t(x.system)}/${t(x.adapter)}`).join(", ")}`);
   return lines;
 }
 
 export const SNAPSHOT_PROJECTION_INSTRUCTION =
   "Report only what is listed above. Name every area marked NOT AVAILABLE. Never estimate a number that is " +
   "not listed. A listed value of 0 is a real zero; an area marked NOT AVAILABLE is unknown, not zero. " +
-  "Numbers labelled 'right now' are current state, not activity in the period.";
+  "Numbers labelled 'right now' are current state, not activity in the period. Areas left out for length " +
+  "were not included here: name them too, and treat them as unknown.";
 
 /**
- * Plain-text projection for the model, built from the structured snapshot. Bounded by `maxChars`: when
- * over, whole domain sections are dropped from the end and a line names every dropped area — never a
- * mid-line cut, never a silent omission. Same input, same string.
+ * Plain-text projection for the model, built from the structured snapshot. `maxChars` (default 6000) is
+ * the budget for DOMAIN SECTIONS: when over, whole sections are dropped from the end and a line names
+ * every dropped area — never a mid-line cut, never a silent omission. The header, that "left out" line and
+ * the closing instruction are never dropped, so a `maxChars` smaller than those three returns them anyway
+ * (the honesty lines outrank the budget). Same input, same string.
  */
 export function projectOperatingSnapshot(
   s: BusinessOperatingSnapshot,
   opts?: { readonly maxChars?: number },
 ): string {
-  const maxChars = Math.floor(positiveOr(opts?.maxChars, 6000));
+  const maxChars = wholeOr(opts?.maxChars, 6000, Number.MAX_SAFE_INTEGER);
   const p = s.period;
-  const header =
-    `Business read for ${p.label} (${p.start} to ${p.end}, ${p.timezone}; composed ${s.composed_at}).`;
+  const header = oneLine(
+    `Business read for ${p.label} (${p.start} to ${p.end}, ${p.timezone}; composed ${s.composed_at}).`,
+  );
   const sections = s.requested.map((d) => ({ domain: d, text: domainSection(d, s.domains[d]).join("\n") }));
 
   const render = (kept: number): string => {

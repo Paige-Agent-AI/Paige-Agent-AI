@@ -1067,10 +1067,10 @@ async function synthesizeUnit(
     // JSON body after an OK call is treated as truncation-class too (the parse fallback
     // of R4 conflated it with true-empty and threw the work away unreported).
     const r5resp = resp as { choices?: Array<{ finish_reason?: string }>; paige_stop?: { stop_reason?: string }; model?: string; provider?: string };
-    // R6-A telemetry: record what the SHARED ROUTER served (research's readback, not its choice)
-    (unit as { __served_model?: string }).__served_model =
+    // R6-A telemetry: record the model the SHARED ROUTER reports it served (readback, not choice)
+    (unit as { __served_model?: string | null }).__served_model =
       typeof r5resp?.model === "string" && r5resp.model
-        ? `${String(r5resp.provider ?? "")}/${r5resp.model}`.replace(/^\//, "")
+        ? r5resp.model
         : null;
     void cognitiveClass; // present for the R6-B class-bearing seam; deliberately unused here
     const stopReason = r5resp?.paige_stop?.stop_reason ?? r5resp?.choices?.[0]?.finish_reason ?? null;
@@ -1166,7 +1166,7 @@ function aggregateUnits(
       // synthesis call (provider/model from the routed response) + the declared cognitive
       // class. Research never picks the model; it records what the fabric served.
       cognitive_class: RESEARCH_COGNITIVE_CLASSES.unit_synthesis,
-      served_model: (unit as { __served_model?: string }).__served_model ?? null,
+      served_model: (unit as { __served_model?: string | null }).__served_model ?? null,
       source_refs: unit.source_refs.slice(0, 14),
       synthesis_returned: out !== null, insufficient: outcome === "insufficient",
       truncated: out?.outcome === "truncated",

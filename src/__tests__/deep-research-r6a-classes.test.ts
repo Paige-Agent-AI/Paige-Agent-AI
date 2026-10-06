@@ -76,7 +76,6 @@ describe("R6-A — the frontier escalation predicate (behavioral, on the real ex
   const build = () => {
     const fnText = extractFn(core, "shouldEscalateToFrontier");
     const typeText = core.match(/type UnitOutcome = [^;]+;/)![0];
-    const iface = core.slice(core.indexOf("interface EscalationInputs"), core.indexOf("}", core.indexOf("interface EscalationInputs")) + 1);
     return (new Function(js(`${typeText}\n${fnText}\nreturn shouldEscalateToFrontier;`)) as unknown as () => (x: {
       unitKind: string; evidenceSufficient: boolean; sourceCount: number; priorOutcome: string | null; ambiguityUnresolved: boolean;
     }) => { escalate: boolean; reason: string | null })();
@@ -115,7 +114,7 @@ describe("R6-A — the frontier escalation predicate (behavioral, on the real ex
 describe("R6-A — telemetry readback (the router's report, not research's choice)", () => {
   it("unit diagnostics carry the declared cognitive class + the served model from the routed response", () => {
     expect(core).toContain("cognitive_class: RESEARCH_COGNITIVE_CLASSES.unit_synthesis,");
-    expect(core).toContain("served_model: (unit as { __served_model?: string }).__served_model ?? null,");
+    expect(core).toContain("served_model: (unit as { __served_model?: string | null }).__served_model ?? null,");
   });
   it("the served model is READ from the shared router's response (never written from research)", () => {
     expect(core).toContain("__served_model =");

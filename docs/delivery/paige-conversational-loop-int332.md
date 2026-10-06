@@ -700,6 +700,10 @@ Intelligence Router architecture and are NOT absorbed into INT-332:
 3. **The forced-termination closing call** is not claim-guarded (below).
 4. **Broader semantic routing.** Offer kind, step attribution and restatement are regex readings of PAIGE's own words;
    their residual misses (e.g. "move Dana to Proposal and Sam to Lost" is not cut) are recorded per round in §5.
+5. **A bare completion claim the readback vocabulary does not know** (U3, found by the final review on the exact head).
+   "Want me to launch the funnel?" → `growth_funnel_generate` → "Launched! Your funnel is live." ends FINAL with no line:
+   `SAYS_DONE` knows "I've launched" but not a sentence-initial "Launched!", so the generator-only turn is terminal.
+   Identical at all five reviewed heads (not introduced by this change); the same vocabulary-gap class as item 4.
 
 - **Made-up progress on a non-offer action turn** (prod replay, 2026-10-06: "Archiving the four workflows now — on it" after a long reply, no tool, cards only two turns later). That is the C1 action-intent path, which reads the person's own words, not INT-332's offer path. It needs the same kept-reply-plus-line treatment applied to C1's exhausted branch. Own change.
 
@@ -727,4 +731,45 @@ Evidence classes are kept separate: merge/deploy evidence does not imply authent
   - fixed generic line restored instead of `ranNote` → 6 red (43.29 X6, X1; 43.30 L; 43.31 D2, U1, M1).
 - Final independent reviewer (five questions, exact head) and GitHub CI: recorded in the PR.
 
-**Merge, deploy, provider readback, authenticated Solo proof:** recorded below after merge.
+- Final independent reviewer (non-author) on exact head `f1364f907` (code = `8643261be`): **SHIP, no BLOCKER.** 77 probes
+  re-run on five heads, none worse and 26 improved over `7def77b8d`; the behaviour matches the round-15 design; no new
+  execution or authority path (0 approval rows, 0 CRM executions in every probe); the line cannot claim an effect that did
+  not happen; true completed work is never hidden. NIT: U2 contradicts "Saved!" only implicitly. New residual U3 → §6.5.
+- GitHub CI on `f1364f907`: 9 of 9 checks green (lint, contract, database-contract, verify, audit, UI delivery evidence,
+  web-fetch-hardening-smoke, Supabase Preview, Vercel Preview Comments). Base `main` unchanged at `eff41d6a` before merge.
+
+**Merge / deploy evidence (2026-10-06):**
+- PR #1781 squash-merged at `expectedHeadSha` `f1364f907` → `main` `49ea9580e6ae38dcdb4fa4423f554863255a0099`.
+- `deploy-edge-functions` run 37523952754 (#487): SUCCESS; log "Deploying Function: paige-ai-chat (script size: 1.7 MB)" →
+  "✓ deployed paige-ai-chat" at 20:07:13Z; `edge-live` moved `d8ef0b9ef` → `49ea9580e`. No migration.
+
+**Provider readback (production, read-only, separate from the deploy log — INT-320):**
+- `list_edge_functions`: `paige-ai-chat` version **347**, ACTIVE, `updated_at` 2026-10-06T20:07:13.211Z, `verify_jwt` true,
+  `ezbr_sha256` `58d50b7e…9346`.
+- `get_edge_function` v347 returned 145 files; **145 of 145 byte-identical** (sha256) to the repo at `49ea9580e`, including
+  `paige-ai-chat/index.ts` (`2516ca49…ccbfc`) and `_shared/paige-turn/continuity.ts` (`75338809…a029`). Every round-15 marker
+  (`ranNote`, `stepToolsRan`, `STEP_NOT_DONE_NOTE`, `NOTHING_RAN_NOTE`, "In this reply") is present in the deployed copy and
+  absent at the parent commit. Not checked: the reverse direction (repo imports missing from the bundle); `ezbr_sha256` was
+  not reproduced locally. This proves the deployed source, not runtime behaviour.
+
+**Authenticated Solo production proof — BLOCKED (provider), PROOF OWED:**
+- Controlled drive, 2026-10-06 20:09Z, `scripts/proof/int332-production-drive.mjs`, as the synthetic Solo owner of the
+  synthetic standalone workspace "Vibe Proof Test Co" (fresh password set before, rotated after; 30 sessions and 30 refresh
+  tokens revoked; contact "Proof Recipient" is Resend's sandbox `delivered@`; the script approves nothing). Scenarios: long
+  (40 earlier turns), fresh, decline, email — each an offer turn then "Yes we may as well for sure" / "Ok I'll do it myself".
+- Result: **every offer turn returned HTTP 500 `chat_unavailable`**, so no offer existed to accept and no INT-332 behaviour
+  was exercised. A bare "hi" with no thread also returned 500. 0 approval rows written; 4 synthetic threads remain in the
+  synthetic workspace (`7ca32899…`, `19e33f51…`, `697f3077…`, `9472894d…`).
+- Cause, from production traces and logs (read-only): Anthropic answered every call `400 invalid_request_error` with a
+  234-byte body (`paige_llm_trace` error_class `http_400`, issue `unclassified`). The SAME signature began at **16:59:17Z on
+  `paige-eval-judge`** (claude-sonnet-5, not part of this deploy), mid-run, right after 70 successful calls — three hours
+  before this merge deployed. No Anthropic call from any function has succeeded since. Anthropic's account-level error
+  "Your credit balance is too low to access the Anthropic API…" with a request id serializes to exactly 234 bytes. The
+  only `paige-ai-chat` change since its last success (15:36Z) is this merge, but the failure spans models and a function
+  this merge did not touch, so it is the provider account, not this code; a revert would not restore chat.
+  Honest limit: the response body itself is not captured (only its size and type), so "credit balance" is the
+  best-supported reading, not a quoted message.
+- Owed: once the Anthropic account serves requests again, re-run the same script (new one-time password, rotate after) and
+  record long / fresh / decline / email here: the accepted turn reaches a tool or a governed card, never the cheap one-round
+  zero-tool path; a send that did not run never leaves "Sent!" standing without the server's line; wire = transcript.
+

@@ -890,7 +890,7 @@ export async function composeOperatingSnapshot(
 
   for (const domain of toRun) {
     const owners = input.adapters.filter((a) => a.domain === domain);
-    if (owners.length > 99) {
+    if (owners.length > 1) {
       planned[domain] = contextDegraded(SNAPSHOT_REASON.duplicateAdapter);
       continue;
     }

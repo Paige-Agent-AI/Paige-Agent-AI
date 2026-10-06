@@ -9,6 +9,7 @@ describe('invoice payment presentation',()=>{
     expect(invoicePaymentStatus('issued',499700,499700,0)).toBe('Paid · business-recorded');
     expect(invoicePaymentStatus('void',499700,202400,297300)).toBe('Void');
   });
+  it('distinguishes confirmed and mixed full payments',()=>{expect(invoicePaymentStatus('issued',1000,0,0,1000)).toBe('Paid · provider-confirmed');expect(invoicePaymentStatus('issued',1000,100,0,900)).toBe('Paid · confirmed and business-recorded');expect(invoicePaymentStatus('issued',1000,100,600,300)).toBe('Partially paid · outstanding');});
   it('never claims paid from malformed or inconsistent balance facts',()=>{
     expect(invoicePaymentStatus('issued',499700,0,0)).toBe('Issued · balance unavailable');
     expect(invoicePaymentStatus('issued',499700,-1,499701)).toBe('Issued · balance unavailable');

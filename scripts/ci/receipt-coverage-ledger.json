@@ -1096,6 +1096,12 @@
       "risk": "ordinary",
       "receipt": "emits",
       "evidence": "execute_sales_invoice_draft_command in 20270582000000 atomically calls canonical record_capability_run, reads the same draft and stores its immutable invoice operation. Actual SQL proves receipt rollback and once-only concurrent replay."
+    },
+    {
+      "tool": "sales_create_payment_request",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "prepare_sales_invoice_payment_request and allocate_verified_sales_invoice_payment in 20270597000001_sales_invoice_provider_operations.sql atomically record existing public.record_capability_run and canonical Rail with provider operation, actor and tenant. Real PostgreSQL proof verifies receipt failure rolls allocation back."
     }
   ]
 }

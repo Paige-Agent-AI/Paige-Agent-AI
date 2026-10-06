@@ -263,9 +263,9 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
       agent_id: trace?.agent_id ?? null,
       parent_trace_id: trace?.parent_trace_id ?? null,
       provider,
-      // On failure there is no echoed id: name the model that was called — Claude's resolved id, or
-      // the open model's — rather than null, so a rejected call is attributable to a model.
-      model: resp?.model ?? (provider === "anthropic" ? resolvedClaudeModel(body, route.tier) : (route.model ?? null)),
+      // On failure there is no echoed id: name the Claude model that was called (resolved, including
+      // the PDF upgrade) rather than null. Only the Claude leg can fail here — see the catch below.
+      model: resp?.model ?? (provider === "anthropic" ? resolvedClaudeModel(body, route.tier) : null),
       job_kind: trace?.job_kind ?? jobKind,
       modality: "text",
       tier: route.tier,
@@ -285,7 +285,7 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
       doctrine_gate_hits: budgetCheck?.gate
         ? { budget: { level: budgetCheck.gate.replace("budget_", ""), accrued_usd: budgetCheck.accrued_usd, ceiling_usd: budgetCheck.ceiling_usd, band: budgetCheck.band } }
         : null,
-      metadata: { caller_function: trace?.agent_id },
+      metadata: { caller_function: trace?.agent_id, ...(resp?.paige_stop ?? {}) },
     });
   };
   try {
@@ -298,7 +298,9 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
     emit("anthropic", claudeResp, "success");
     return claudeResp;
   } catch (e) {
-    emit(route.provider === "featherless" ? "featherless" : "anthropic", null, "error", e);
+    // featherlessChat never throws (it returns null and falls through to Claude), so anything caught
+    // here came from the Claude leg — attribute it to Anthropic, never to the open model that was skipped.
+    emit("anthropic", null, "error", e);
     throw e;
   }
 }
@@ -460,6 +462,11 @@ function fluxInput(task: unknown): Record<string, unknown> {
 // trace written before the provider could echo an id.
 function claudeTextTier(model?: string): ClaudeTier {
   return model === "classification" || model === CLAUDE_CLASSIFICATION ? "classification" : "reasoning";
+}
+// The Claude id a claudeText call resolves to — the override's tier, upgraded for a PDF exactly as
+// chatCompletionCompat upgrades it — for a trace written before (or without) a provider-echoed id.
+function claudeTextModel(task: unknown, model?: string): string {
+  return resolvedClaudeModel({ messages: taskMessages(task) as any }, claudeTextTier(model));
 }
 async function claudeText(task: unknown, model?: string): Promise<ProviderCallResult> {
   if (!Deno.env.get("ANTHROPIC_API_KEY")) throw new NeedsConfigError("anthropic");
@@ -1015,7 +1022,7 @@ export async function callModel(
       provider: failedProvider,
       // A Claude cell names the Claude model it called (claudeText's own tier mapping); other
       // providers keep the override they were given.
-      model: failedProvider === "anthropic" ? tierModel(claudeTextTier(effectiveOverride)) : (opts.model_override ?? null),
+      model: failedProvider === "anthropic" ? claudeTextModel(task, effectiveOverride) : (opts.model_override ?? null),
       status: "error",
       error_class: (e as Error)?.name ?? "error",
       error_message: (e as Error)?.message ?? String(e),
@@ -1039,7 +1046,7 @@ export async function callModel(
         traceLLMCall({
           ...traceBase,
           provider: "anthropic",
-          model: result.model || tierModel(claudeTextTier(undefined)),
+          model: result.model || claudeTextModel(task, undefined),
           status: "success",
           metadata: { ...traceBase.metadata, fallback_from: `${failedProvider}/${tier}` },
         });
@@ -1049,7 +1056,7 @@ export async function callModel(
         traceLLMCall({
           ...traceBase,
           provider: "anthropic",
-          model: tierModel(claudeTextTier(undefined)),
+          model: claudeTextModel(task, undefined),
           status: "error",
           error_class: (fallbackErr as Error)?.name ?? "error",
           error_message: (fallbackErr as Error)?.message ?? String(fallbackErr),

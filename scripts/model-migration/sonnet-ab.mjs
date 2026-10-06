@@ -1,16 +1,20 @@
 /**
- * INT-329 — the frozen Sonnet 5 vs Sonnet 5.5 A/B, run through PAIGE's REAL request shapes.
+ * INT-329 — the frozen Sonnet 5 vs Sonnet 5.5 A/B over PAIGE's REAL gateway seam.
  *
- * Every call goes through the shipped `_shared/claude.ts` seam (gatewayCompat streamed — the Chat
- * front door and its tool loop — and model-router `routedChatCompletion("doc_draft")` — Deep Research
+ * WHAT IS REAL: every model call goes through the shipped `_shared/claude.ts` translation —
+ * gatewayCompat streamed (the Chat front door's request shape: legacy label → tier, tools, automatic
+ * prompt caching, sampling strip) and model-router `routedChatCompletion("doc_draft")` (Deep Research
  * synthesis). The ONLY difference between the arms is the model id: a transport wrapper rewrites
- * `CLAUDE_REASONING` to the arm's id on the way out, so system prompt, tools, caching, sampling strip
- * and translation are byte-identical between arms. Measurement is read back from the `paige_llm_trace`
- * rows the seam itself wrote (served model, tokens, cache, latency) — the same evidence production has.
+ * `CLAUDE_REASONING` to the arm's id on the way out. Tokens/cache/latency are read back from the
+ * `paige_llm_trace` rows the seam itself wrote; stop reasons, refusals, thinking blocks and between-tool
+ * narration are read off the provider's own response at the transport.
+ * WHAT IS HARNESS-AUTHORED: the tool loop (a faithful but separate copy of the round structure), the
+ * system prompt, the tool definitions and their FROZEN results, and case 8, which is a C4-SHAPED
+ * transcript — it does not drive the server's C4 resume path (paige_resume, answer claim, card
+ * execution). That path's proof on 5.5 is owed to an authenticated drive after cutover.
  *
- * Tool results are FROZEN fixtures (no tenant data, no side effects). Each case carries a grader;
- * graders are deliberately conservative pattern checks and every transcript is written out for a human
- * read — a pattern pass is a screen, not a verdict.
+ * Graders are conservative pattern screens; every transcript is written out for a human read.
+ * The GO/NO-GO rule below is PRE-REGISTERED (fixed before any live run) and printed in the report.
  *
  *   ANTHROPIC_API_KEY=… node --import ./scripts/client-memory-authz/register.mjs \
  *     scripts/model-migration/sonnet-ab.mjs [--reps 3] [--arms claude-sonnet-5,claude-sonnet-5-5] \
@@ -60,10 +64,49 @@ globalThis.fetch = async (url, init = {}) => {
   if (!u.startsWith("https://api.anthropic.com/")) throw new Error(`sonnet-ab: unexpected network call ${u}`);
   const body = JSON.parse(init.body);
   if (body.model === REASONING) body.model = ARM;
-  wire.push({ model: body.model, stream: !!body.stream, keys: Object.keys(body).sort() });
-  if (MOCK) return mockProvider(body);
-  return realFetch(url, { ...init, body: JSON.stringify(body) });
+  const rec = { arm: ARM, requested: body.model, stream: !!body.stream, keys: Object.keys(body).sort(), served: null,
+    status: null, stop_reason: null, stop_category: null, thinking_blocks: 0, text_chars: 0, tool_uses: 0 };
+  wire.push(rec);
+  const resp = MOCK ? mockProvider(body) : await realFetch(url, { ...init, body: JSON.stringify(body) });
+  rec.status = resp.status;
+  if (!resp.ok || !resp.body) return resp;
+  if (!body.stream) {
+    try {
+      const j = await resp.clone().json();
+      observe(rec, { type: "message_start", message: j });
+      for (const b of j.content ?? []) observe(rec, { type: "content_block_start", content_block: b, text: b.text });
+      observe(rec, { type: "message_delta", delta: { stop_reason: j.stop_reason, stop_details: j.stop_details } });
+    } catch { /* recorded as unobserved */ }
+    return resp;
+  }
+  // Tee the stream: the seam reads one branch exactly as it would in production; we read the other.
+  const [forSeam, forUs] = resp.body.tee();
+  pending.push((async () => {
+    const reader = forUs.getReader(); const dec = new TextDecoder(); let buf = "";
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n"); buf = lines.pop() ?? "";
+      for (const l of lines) { const t = l.trim(); if (!t.startsWith("data:")) continue; try { observe(rec, JSON.parse(t.slice(5).trim())); } catch { /* ping etc. */ } }
+    }
+  })());
+  return new Response(forSeam, { status: resp.status, headers: resp.headers });
 };
+const pending = [];
+function observe(rec, ev) {
+  if (ev.type === "message_start" && typeof ev.message?.model === "string") rec.served = ev.message.model;
+  if (ev.type === "content_block_start") {
+    const t = ev.content_block?.type;
+    if (t === "thinking" || t === "redacted_thinking") rec.thinking_blocks++;
+    if (t === "tool_use") rec.tool_uses++;
+    if (t === "text" && typeof ev.text === "string") rec.text_chars += ev.text.length;
+  }
+  if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") rec.text_chars += ev.delta.text.length;
+  if (ev.type === "message_delta") {
+    if (ev.delta?.stop_reason) rec.stop_reason = ev.delta.stop_reason;
+    if (ev.delta?.stop_details?.category) rec.stop_category = ev.delta.stop_details.category;
+  }
+}
 
 const claude = await import("../../supabase/functions/_shared/claude.ts");
 const router = await import("../../supabase/functions/_shared/model-router.ts");
@@ -82,6 +125,14 @@ const SYSTEM = [
   "memory, and your own inference. If a capability is unavailable, say so instead of improvising.",
   "Never create a duplicate of something that already exists; if a tool reports a duplicate, say what exists.",
   ...Array.from({ length: 40 }, (_, i) => `Operating note ${i + 1}: keep replies short, name the record you used, and offer the next useful step for the owner's clients, follow-ups, invoices and campaigns.`),
+].join("\n");
+
+// 512–1023 tokens: above Sonnet 5.5's cache floor, below Sonnet 5's. Two rounds on the same prefix
+// show whether the second round READS the cache — the band where the two models' caching differs.
+const SYSTEM_MID = [
+  "You are Paige, the operator assistant inside a client-based service business's workspace.",
+  "Active workspace: Northwind Advisory. Never claim an action happened unless a tool result says so.",
+  ...Array.from({ length: 14 }, (_, i) => `Operating note ${i + 1}: keep replies short, name the record you used, and offer the next useful step for the owner's clients, follow-ups, invoices and campaigns.`),
 ].join("\n");
 
 const fn = (name, description, properties, required = []) => ({ type: "function", function: { name, description, parameters: { type: "object", properties, required } } });
@@ -132,7 +183,7 @@ const C = [
     expectTools: [], grade: [said(/May 2/i), not(/\b(sent|scheduled) (it|the email)\b/i)] },
   { id: "7", name: "tool failure → truthful recovery", messages: [{ role: "user", content: "What's Marcus Lee's email?" }],
     expectTools: ["crm_contact_search"], grade: [said(/couldn'?t|could not|unable|timed? ?out|didn'?t (load|come back)|error/i), not(/@[a-z0-9-]+\.[a-z]/i)] },
-  { id: "8", name: "C4 resumed approval turn (accepted ≠ delivered)", messages: [
+  { id: "8", name: "C4-shaped approval transcript (accepted ≠ delivered; not the server resume path)", messages: [
       { role: "user", content: "Send invoice INV-1042 to Ana." },
       { role: "assistant", content: null, tool_calls: [{ id: "toolu_c4send", type: "function", function: { name: "invoice_send", arguments: "{\"number\":\"INV-1042\"}" } }] },
       { role: "tool", tool_call_id: "toolu_c4send", content: JSON.stringify({ ok: true, status: "proposed", requires_approval: true, proposal_id: "prop_91" }) },
@@ -160,6 +211,8 @@ const C = [
     ], expectTools: [], toolOverrides: { invoice_create: () => ({ ok: false, error: "DUPLICATE", existing: "INV-1042" }) },
     grade: [said(/INV-1042|already/i)] },
   { id: "14", name: "Deep Research synthesis smoke (doc_draft, non-tuning)", research: true },
+  { id: "15", name: "mid-length prompt (512–1023 tok) — cache band", system: SYSTEM_MID, messages: [{ role: "user", content: "What's Ana Ruiz's email?" }],
+    expectTools: ["crm_contact_search"], grade: [said(/ana\.ruiz@northwind-client\.example/i)] },
 ];
 
 // ── the Deep Research smoke case (routedChatCompletion, the shipped synthesis seam) ───────────
@@ -212,7 +265,7 @@ async function readSse(stream) {
 }
 
 async function runChat(c) {
-  const convo = [{ role: "system", content: SYSTEM }, ...c.messages];
+  const convo = [{ role: "system", content: c.system ?? SYSTEM }, ...c.messages];
   const fixtures = { ...toolFixtures, ...(c.toolOverrides ?? {}) };
   const toolsCalled = [];
   let final = "", rounds = 0, finish = null, error = null;
@@ -254,15 +307,28 @@ for (let rep = 1; rep <= REPS; rep++) {
     for (const arm of ARMS) {          // interleaved so time-of-day drift hits both arms alike
       ARM = arm;
       const before = traces().length;
+      const wireBefore = wire.length;
       let out;
       try { out = c.research ? await runResearch() : await runChat(c); }
       catch (e) { out = { text: "", rounds: 0, toolsCalled: [], grades: [false], error: String(e?.message ?? e), wallMs: 0 }; }
       await settle(before + Math.max(1, out.rounds));
+      await Promise.all(pending.splice(0));
       const rows = traces().slice(before);
+      const w = wire.slice(wireBefore);
       results.push({
         case: c.id, name: c.name, arm, rep, ...out,
         passed: out.grades.every(Boolean),
-        served_models: [...new Set(rows.map((r) => r.model))],
+        // Served ids come off the provider's own response for THIS arm (the seam's error rows can only
+        // name the id it requested, which is the rewritten constant, not the arm).
+        served_models: [...new Set(w.map((x) => x.served).filter(Boolean))],
+        stop_reasons: w.map((x) => x.stop_reason),
+        refusals: w.filter((x) => x.stop_reason === "refusal").map((x) => x.stop_category ?? "uncategorised"),
+        max_tokens_stops: w.filter((x) => x.stop_reason === "max_tokens").length,
+        thinking_blocks: w.reduce((s, x) => s + x.thinking_blocks, 0),
+        // Text the model wrote in rounds that ended in a tool call — the between-tool narration Chat
+        // shows as "thought" steps. On 5.5 longer notes move into (empty) thinking blocks.
+        interim_text_chars: w.filter((x) => x.stop_reason === "tool_use").reduce((s, x) => s + x.text_chars, 0),
+        http_errors: w.filter((x) => x.status && x.status >= 400).length,
         calls: rows.length,
         errors: rows.filter((r) => r.status !== "success").length,
         tokens_in: rows.reduce((s, r) => s + (r.tokens_in ?? 0), 0),
@@ -294,11 +360,32 @@ const summary = ARMS.map((arm) => {
     total_cost_usd: Number(totalCost.toFixed(4)),
     cost_per_completed_objective_usd: passed.length ? Number((totalCost / passed.length).toFixed(5)) : null,
     served_models: [...new Set(rs.flatMap((r) => r.served_models))],
+    refusals: rs.flatMap((r) => r.refusals),
+    max_tokens_stops: rs.reduce((s, r) => s + r.max_tokens_stops, 0),
+    http_errors: rs.reduce((s, r) => s + r.http_errors, 0),
+    thinking_blocks: rs.reduce((s, r) => s + r.thinking_blocks, 0),
+    interim_text_chars: rs.reduce((s, r) => s + r.interim_text_chars, 0),
+    cache_band_case_reads: rs.filter((r) => r.case === "15").map((r) => r.cache_read),
   };
 });
+
+// ── PRE-REGISTERED decision rule (fixed before any live run; the owner may still overrule it) ──
+// GO for the candidate (last arm) against the baseline (first arm) only if ALL hold:
+const RULE = [
+  ["completion non-inferior (≥ baseline − 5 pts)", (b, c) => c.completion_rate >= b.completion_rate - 0.05],
+  ["no refusal on these benign cases", (_b, c) => c.refusals.length === 0],
+  ["no max_tokens cut-off", (_b, c) => c.max_tokens_stops === 0],
+  ["provider errors not above baseline", (b, c) => c.provider_errors + c.http_errors <= b.provider_errors + b.http_errors],
+  ["cost per completed objective ≤ 1.15× baseline", (b, c) => b.cost_per_completed_objective_usd == null || (c.cost_per_completed_objective_usd ?? Infinity) <= 1.15 * b.cost_per_completed_objective_usd],
+  ["p95 case latency ≤ 1.25× baseline", (b, c) => b.p95_case_latency_ms == null || (c.p95_case_latency_ms ?? Infinity) <= 1.25 * b.p95_case_latency_ms],
+  ["prompt cache still read (cache_read > 0)", (_b, c) => c.cache_read > 0],
+];
+const [base, cand] = [summary[0], summary[summary.length - 1]];
+const verdict = RULE.map(([name, f]) => ({ name, pass: !!f(base, cand) }));
+const GO = verdict.every((v) => v.pass);
 mkdirSync(OUT, { recursive: true });
 const stamp = new Date().toISOString();
-writeFileSync(path.join(OUT, "ab-results.json"), JSON.stringify({ stamp, mock: MOCK, reps: REPS, arms: ARMS, price_per_mtok: PRICE, summary, results, wire_keys: [...new Set(wire.map((w) => w.keys.join(",")))] }, null, 2) + "\n");
+writeFileSync(path.join(OUT, "ab-results.json"), JSON.stringify({ stamp, mock: MOCK, reps: REPS, arms: ARMS, price_per_mtok: PRICE, decision: { rule: RULE.map(([n]) => n), verdict, go: GO }, summary, results, wire }, null, 2) + "\n");
 const pct = (x) => (x == null ? "—" : `${(x * 100).toFixed(0)}%`);
 const md = [
   `# INT-329 Sonnet 5 vs 5.5 — frozen A/B${MOCK ? " (MOCK PROVIDER — proves the harness only, says nothing about either model)" : ""}`,
@@ -306,6 +393,11 @@ const md = [
   "| arm | completion | provider errors | model calls | in | out | cache read | cache write | median case latency | p95 | cost | cost / completed objective | served |",
   "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
   ...summary.map((s) => `| ${s.arm} | ${s.completed}/${s.runs} (${pct(s.completion_rate)}) | ${s.provider_errors} | ${s.model_calls} | ${s.tokens_in} | ${s.tokens_out} | ${s.cache_read} | ${s.cache_create} | ${s.median_case_latency_ms} ms | ${s.p95_case_latency_ms} ms | $${s.total_cost_usd} | ${s.cost_per_completed_objective_usd == null ? "—" : "$" + s.cost_per_completed_objective_usd} | ${s.served_models.join(", ")} |`),
+  "", "| arm | refusals | max_tokens stops | http errors | thinking blocks | between-tool narration (chars) | cache read on the 512–1023 case |",
+  "|---|---|---|---|---|---|---|",
+  ...summary.map((s) => `| ${s.arm} | ${s.refusals.length}${s.refusals.length ? " (" + s.refusals.join(", ") + ")" : ""} | ${s.max_tokens_stops} | ${s.http_errors} | ${s.thinking_blocks} | ${s.interim_text_chars} | ${s.cache_band_case_reads.join(", ") || "—"} |`),
+  "", `## Pre-registered decision: ${MOCK ? "(mock — not a decision)" : GO ? "**GO**" : "**NO-GO**"} for ${cand.arm} vs ${base.arm}`, "",
+  ...verdict.map((v) => `- ${v.pass ? "PASS" : "FAIL"} — ${v.name}`),
   "", "## Per case (passes / runs per arm)", "",
   `| case | ${ARMS.join(" | ")} |`, `|---|${ARMS.map(() => "---").join("|")}|`,
   ...cases.map((c) => `| ${c.id} ${c.name} | ${ARMS.map((a) => { const rs = results.filter((r) => r.case === c.id && r.arm === a); return `${rs.filter((r) => r.passed).length}/${rs.length}`; }).join(" | ")} |`),
@@ -344,6 +436,8 @@ function mockProvider(body) {
     [/Using ONLY/, [], JSON.stringify({ findings: [{ claim: "Ireland 12.5%", source_ids: ["S1"] }, { claim: "Singapore 17%", source_ids: ["S2"] }] })],
   ];
   const hit = plan.find(([re]) => re.test(userText));
+  // MOCK_FAULTS=1 makes the candidate arm misbehave the ways 5.5 might, to prove the report sees it.
+  const faulty = process.env.MOCK_FAULTS === "1" && body.model === ARMS[ARMS.length - 1];
   const tool = hit?.[1]?.[toolResultsSoFar] ?? null;
   const text = hit?.[2] ?? "OK.";
   const model = body.model;
@@ -352,6 +446,16 @@ function mockProvider(body) {
   }
   const ev = (o) => `event: ${o.type}\ndata: ${JSON.stringify(o)}\n\n`;
   const parts = [ev({ type: "message_start", message: { id: "m", model, usage } })];
+  if (faulty && /workshop/.test(userText)) {
+    parts.push(ev({ type: "message_delta", delta: { stop_reason: "refusal", stop_details: { type: "refusal", category: "general_harms" } }, usage: { output_tokens: 1 } }));
+    parts.push(ev({ type: "message_stop" }));
+    return new Response(parts.join(""), { status: 200, headers: { "content-type": "text/event-stream" } });
+  }
+  if (faulty && tool) parts.push(ev({ type: "content_block_start", index: 9, content_block: { type: "thinking", thinking: "" } }));
+  if (!faulty && tool) {
+    parts.push(ev({ type: "content_block_start", index: 8, content_block: { type: "text", text: "" } }));
+    parts.push(ev({ type: "content_block_delta", index: 8, delta: { type: "text_delta", text: "Let me look that up." } }));
+  }
   if (tool) {
     parts.push(ev({ type: "content_block_start", index: 0, content_block: { type: "tool_use", id: `toolu_${Math.random().toString(36).slice(2, 9)}`, name: tool[0], input: {} } }));
     parts.push(ev({ type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(tool[1]) } }));

@@ -13,7 +13,7 @@
 // rather than special-casing an id at a call site.
 
 import { DoctrineViolation } from "./model-router-gates.ts";
-import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "./claude.ts";
+import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "./claude-models.ts";
 
 /**
  * Per-provider allowed model ids. Keys are the router's provider slugs. Anything not listed
@@ -22,7 +22,7 @@ import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "./claude.ts";
  */
 export const MODEL_ALLOWLIST: Record<string, string[]> = {
   // Anthropic — Claude tiers via claude.ts. "reasoning"/"classification" are the router's tier
-  // aliases; the concrete ids are DERIVED from claude.ts so a model switch there is the only edit
+  // aliases; the concrete ids are DERIVED from claude-models.ts so a model switch there is the only edit
   // (INT-329). A retired id is deliberately NOT kept: claudeText maps any non-classification
   // override to the reasoning tier, so a stale "claude-sonnet-5" override would run the CURRENT
   // model under the old label.

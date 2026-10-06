@@ -16,6 +16,10 @@
 
 import { traceLLMCall, traceAdmin, type TraceCtx } from "./llm-trace.ts";
 import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
+// The model ids live in ONE dependency-free home (§18, `claude-models.ts`); this client re-exports
+// them so every existing `import { CLAUDE_REASONING } from "./claude.ts"` keeps working.
+import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "./claude-models.ts";
+export { CLAUDE_CLASSIFICATION, CLAUDE_REASONING };
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -105,18 +109,9 @@ async function anthropicFailureDiagnostic(resp: Response): Promise<string> {
   });
 }
 
-// THE ONE SWITCH for which Claude model PAIGE reasons on. Every reasoning-tier path — Chat (streamed
-// and not), the tool loop, C4 resumes, Deep Research synthesis, drafting, the strategist, the eval
-// judge, visual critique, the callModel frontier cell and its fallback — resolves through this
-// constant; the allow-list derives from it and the trace records the id the provider served.
-// INT-329 (2026-10-06): claude-sonnet-5 → claude-sonnet-5-5. Same prices, tokenizer and context.
-// ROLLBACK = set this back to "claude-sonnet-5" and merge; CI redeploys every importer. Nothing else
-// needs to change: no request field a live path sends differs between the two models (proved by
-// scripts/model-migration/reasoning-tier-check.mjs). The dormant `paige_thinking` branch below sends
-// `thinking.type: "enabled"`, which BOTH models reject — it stays off (paige-ai-chat
-// STUDIO_THINKING_ENABLED=false) and must be rewritten before it is ever turned on.
-export const CLAUDE_REASONING = "claude-sonnet-5-5";
-export const CLAUDE_CLASSIFICATION = "claude-haiku-4-5"; // alias: the provider serves the current snapshot
+// The dormant `paige_thinking` branch in buildClaudeRequest sends `thinking.type: "enabled"`, which
+// both Sonnet 5 and Sonnet 5.5 reject — it stays off (paige-ai-chat STUDIO_THINKING_ENABLED=false)
+// and must be rewritten for adaptive thinking before it is ever turned on.
 export type ClaudeTier = "reasoning" | "classification";
 
 export function tierModel(tier: ClaudeTier): string {
@@ -137,14 +132,14 @@ function modelRejectsSampling(model: string): boolean {
 // {type:"tool"} is an HTTP 400. The gateway paths already send only "auto"; this guards the one path
 // that forwards a caller's choice verbatim (callClaude), so a direct caller asking to force a tool
 // degrades to "auto" on these models instead of failing the request. Haiku keeps forced tool use.
-function modelRejectsForcedToolChoice(model: string): boolean {
+export function modelRejectsForcedToolChoice(model: string): boolean {
   return /sonnet-5-5|opus-5-5|fable-5-1/i.test(model);
 }
 
 // Map a legacy gateway model string to a Paige tier, preserving the original
 // cost/capability intent (pro/gpt-4 => reasoning; flash/lite/mini => classification).
 export function tierForLegacyModel(model?: string): ClaudeTier {
-  const m = (model ?? "").toLowerCase();
+  const m = (typeof model === "string" ? model : "").toLowerCase();
   if (/pro|gpt-4|opus|sonnet|o1|o3/.test(m)) return "reasoning";
   return "classification"; // flash, flash-lite, mini, haiku, unknown => cheap tier
 }
@@ -301,7 +296,13 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
   if (opts.tools?.length) body.tools = opts.tools;
   if (opts.toolChoice) {
     const forced = ["any", "tool"].includes((opts.toolChoice as { type?: string })?.type ?? "");
-    body.tool_choice = forced && modelRejectsForcedToolChoice(model) ? { type: "auto" } : opts.toolChoice;
+    if (forced && modelRejectsForcedToolChoice(model)) {
+      // Loud, not silent: a caller that relies on a forced call now gets an optional one.
+      console.warn(`[claude] forced tool_choice degraded to auto — ${model} rejects forced tool use`);
+      body.tool_choice = { type: "auto" };
+    } else {
+      body.tool_choice = opts.toolChoice;
+    }
   }
   if (opts.stopSequences?.length) body.stop_sequences = opts.stopSequences;
 
@@ -348,7 +349,7 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
         latency_ms: Date.now() - t0,
         input: opts.messages,
         output: text,
-        metadata: { caller_function: opts.trace.agent_id },
+        metadata: { caller_function: opts.trace.agent_id, ...stopMeta(data?.stop_reason, data?.stop_details) },
       });
     }
     return { text, toolUses, stopReason: data?.stop_reason ?? null, usage: data?.usage ?? null, raw: data };
@@ -413,7 +414,8 @@ type LooseContentBlock = {
   data?: string;
 };
 function messagesCarryDocument(messages: OaiMessage[]): boolean {
-  for (const m of messages ?? []) {
+  if (!Array.isArray(messages)) return false; // a malformed body must never throw from a trace path
+  for (const m of messages) {
     const c = m?.content;
     if (!Array.isArray(c)) continue;
     for (const b of c as LooseContentBlock[]) {
@@ -440,6 +442,17 @@ export function resolveRequestTier(body: OpenAIStyleBody, tierOverride?: ClaudeT
     return DOCUMENT_CAPABLE_TIER;
   }
   return base;
+}
+
+/** Why the provider stopped, for the trace — additive metadata only (status and finish_reason keep
+ *  their meaning). A `refusal` (five categories on Sonnet 5.5) or a `max_tokens` cut-off otherwise reads
+ *  exactly like a normal answer, which is the regression a model switch most needs to see. */
+export function stopMeta(reason: unknown, details: unknown): { stop_reason?: string; stop_category?: string } {
+  const out: { stop_reason?: string; stop_category?: string } = {};
+  if (typeof reason === "string") out.stop_reason = reason;
+  const cat = (details as { category?: unknown } | null | undefined)?.category;
+  if (typeof cat === "string") out.stop_category = cat;
+  return out;
 }
 
 /** The Claude model id a gateway-shaped request resolves to — what a trace names when the call fails
@@ -508,6 +521,8 @@ export async function chatCompletionCompat(body: OpenAIStyleBody, tierOverride?:
     // this compat object has NEVER emitted, so its token counter has always been zero. Named here
     // because an inventory that omits a consumer is worth less than no inventory at all; the dead
     // read is pre-existing and tracked separately, not introduced or fixed here.
+    // `paige_stop` is additive and read only by the trace writers (gatewayCompat, model-router emit).
+    paige_stop: stopMeta(result.stopReason, (result.raw as { stop_details?: unknown } | null)?.stop_details),
     usage: result.usage
       ? {
           prompt_tokens: result.usage.input_tokens,
@@ -625,6 +640,7 @@ async function streamAnthropicAsOpenAI(
       let toolIndex = -1;
       const blockToTool = new Map<number, number>();
       let stopReason = "end_turn";
+      let stopDetails: unknown = null;
       // §34 L1.1 — usage/output capture for the streaming trace row (net-new parse: Anthropic ships
       // input_tokens on message_start and cumulative output_tokens on message_delta).
       let inTok: number | null = null;
@@ -683,6 +699,7 @@ async function streamAnthropicAsOpenAI(
               }
             } else if (ev.type === "message_delta") {
               if (ev.delta?.stop_reason) stopReason = ev.delta.stop_reason;
+              if (ev.delta?.stop_details) stopDetails = ev.delta.stop_details;
               if (ev.usage?.output_tokens != null) outTok = ev.usage.output_tokens; // cumulative final count
               // Opportunistic secondary read — message_delta is NOT documented to echo cache counts.
               // Explicit null-checks so an absent field keeps the message_start value.
@@ -717,7 +734,7 @@ async function streamAnthropicAsOpenAI(
             input: (reqBody as { messages?: unknown }).messages,
             output: outText,
             error_class: streamErrored ? "stream_interrupted" : null,
-            metadata: { caller_function: trace.agent_id },
+            metadata: { caller_function: trace.agent_id, ...(streamErrored ? {} : stopMeta(stopReason, stopDetails)) },
           });
         }
       }
@@ -805,7 +822,7 @@ export async function gatewayCompat(
       latency_ms: Date.now() - started,
       input: parsed.messages,
       output: data?.choices?.[0]?.message?.content ?? null,
-      metadata: { caller_function: ctx.agent_id },
+      metadata: { caller_function: ctx.agent_id, ...(data?.paige_stop ?? {}) },
     });
     return { ok: true, status: 200, json: async () => data, text: async () => JSON.stringify(data) };
   } catch (e) {

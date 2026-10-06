@@ -466,10 +466,12 @@ Repo: **`Paige-Agent-AI/Paige-Agent-AI`** (✅ this is the accessible repo for G
 Grouped by domain; these are the env-var **names**, evidence the integration exists in the edge layer.
 Values intentionally omitted.
 
-- **Claude model ids (not secrets):** the reasoning tier is `CLAUDE_REASONING` and the classification tier
-  `CLAUDE_CLASSIFICATION`, both in `supabase/functions/_shared/claude.ts` — the ONE place a Claude model id is
-  chosen (INT-329: reasoning = `claude-sonnet-5-5` on the PR branch; production stays `claude-sonnet-5` until
-  the INT-329 cutover merges). The allow-list derives from these constants; do not hard-code an id elsewhere.
+- **Claude model ids (not secrets):** `supabase/functions/_shared/claude-models.ts` is the ONE place a Claude
+  model id is chosen: `CLAUDE_REASONING` (reasoning tier) and `CLAUDE_CLASSIFICATION`. `claude.ts` re-exports them,
+  and the allow-list derives from them. Never hard-code an id elsewhere. What production actually runs is what
+  `paige_llm_trace.model` records (the served id), not what a branch says. INT-329 moves reasoning from
+  `claude-sonnet-5` to `claude-sonnet-5-5`. The A/B secret name is `PAIGE_ANTHROPIC_AB_KEY` (GitHub Actions,
+  `model-ab` workflow, owner-added).
 - **LLM / model router (§14/§34):** `ANTHROPIC_API_KEY`, `OPENAI_BASE_URL`, `GROQ_BASE_URL`,
   `FEATHERLESS_API_KEY`, `FEATHERLESS_BASE_URL`, `FEATHERLESS_DEFAULT_MODEL` (primary open-flexible
   slug override; back-compat alias `FEATHERLESS_CHEAP_MODEL`), `FEATHERLESS_MODEL_<KIND>` (per-job-kind

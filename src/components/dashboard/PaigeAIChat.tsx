@@ -4,7 +4,7 @@ import { StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Clock, Paperclip, X, ArrowDown, ArrowRight, Hand } from "lucide-react";
+import { Send, Loader2, Clock, Paperclip, X, ArrowDown, ArrowRight, Hand, CircleHelp } from "lucide-react";
 import { Link, useInRouterContext } from "react-router-dom";
 import { PaigeResearchCard, type PaigeResearchResult } from "@/components/paige/chat/PaigeResearchCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ import { EntityDiagramCard } from "@/components/chat/EntityDiagramCard";
 import { extractEntityDiagram } from "@/lib/entityDiagram";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { PaigeConfirmCard, PaigeConfirmRecord } from "@/components/chat/PaigeConfirmCard";
+import { PaigeAskCard, PaigeAskRecord, type PaigeAskOption } from "@/components/chat/PaigeAskCard";
 import {
   applyServerOutcome,
   approvalOutcomeTranscript,
@@ -63,6 +64,7 @@ import {
   settleOpenSteps,
   settleTurnRows,
   upsertTurnRow,
+  type AskStanding,
   type TurnEndCause,
   type TurnRow,
   type TurnSnapshot,
@@ -70,7 +72,7 @@ import {
 } from "@/lib/paige-stream";
 import { PaigeLiveTurnStatus, PaigeTurnFooter, PaigeTurnStatus } from "@/components/paige/chat/PaigeTurnStatus";
 import type { TurnFrame } from "../../../supabase/functions/_shared/paige-turn/contract";
-import { readResumeRecord } from "../../../supabase/functions/_shared/paige-turn/resume";
+import { ANSWER_STRANDED_AFTER_MINUTES, readAnswerClaim, readAskRecord, readResumeRecord } from "../../../supabase/functions/_shared/paige-turn/resume";
 import { parseLiveConversationCard, type LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
 import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/components/chat/anchoredTranscriptScroll";
 import {
@@ -158,7 +160,18 @@ type Message = {
   /** C3a — reload: what the next user turn said about this answer's card. Claims nothing about
    *  whether the action ran — only what the person answered. */
   confirmReceipt?: { decision: "approved" | "declined"; ts: number | null; result: string | null };
+  /** C4c — on an ASSISTANT turn: PAIGE paused this piece of work to ask (her question is `content`).
+   *  `askId` is the server's own id for it, from the frame live or `bundle_ref.paige_ask` on reload. */
+  ask?: { askId: string; options: PaigeAskOption[]; multi: boolean; question?: string };
+  /** C4c — on a USER turn: this reply was sent AS the answer to that question (the server bound it,
+   *  once). A skip ("use your best guess") is the fixed sentence `ASK_SKIP_REPLY`, hidden in
+   *  presentation like a decision sentence — it stays in `messages` and in the saved thread. */
+  answer?: { askId: string; skipped: boolean };
 };
+
+/** C4c — what "Skip, use your best guess" sends on the person's behalf (c6). The server is told it
+ *  is a skip by the request (`resume.skipped`), never by these words. */
+const ASK_SKIP_REPLY = "Use your best guess.";
 
 /** C3a — the answer being read right now (or just finished in this session). Keyed by the
  *  assistant message id it belongs to; cleared at every transcript reset. */
@@ -179,6 +192,9 @@ type LiveTurn = {
   stopFocus: boolean;
   /** C4a — the server said `resumed`: this answer carries the person's approval forward. */
   resumed: boolean;
+  /** C4c — this read was sent as the ANSWER to PAIGE's question: its `resumed` frame carries an
+   *  answer forward, not an approval, so it is never drawn or announced as one. */
+  answering?: boolean;
 };
 
 // crypto.randomUUID is undefined in some insecure-context / older webviews — guard
@@ -479,6 +495,9 @@ const PaigeAIChatInner = ({
   }, [messages]);
   // Which answers' "What PAIGE did" is open (the Stop footer's "See what finished" opens one).
   const [turnTraceOpen, setTurnTraceOpen] = useState<Record<string, boolean>>({});
+  // C4c — the question the person chose to talk past ("Ask something else instead"): the composer
+  // then sends an ordinary message, and the question is left unanswered (c5).
+  const [askSetAside, setAskSetAside] = useState<string | null>(null);
   // The live approval card scrolled out of view → a quiet hint above the composer (frame a2).
   const [approvalOffscreen, setApprovalOffscreen] = useState(false);
   const approvalObserverRef = useRef<IntersectionObserver | null>(null);
@@ -700,6 +719,11 @@ const PaigeAIChatInner = ({
     doc?: AttachedDocument | null;
     draftHandle: ComposerDraftHandle | null;
     requestIntentId: string;
+    /** C4c — an answer is retried with its question's id. The server binds it once: a retry is refused
+     *  as already with PAIGE (her continuation exists, or may still be running) or — when PAIGE was
+     *  never reached — the question is asked again under a new id and the reply says so. Never a
+     *  second continuation, and never "already answered" when nothing came of it. */
+    answer?: { askId: string; skipped: boolean; card?: boolean };
     live?: boolean;
     /** Solo: the turn carried an approval or a decline, which a retry can never replay. */
     decision?: boolean;
@@ -975,8 +999,13 @@ const PaigeAIChatInner = ({
           endCause: null,
           source: "reload",
           hasContent: t.content.trim() !== "",
-          ...(record.resumed ? { resumed: true } : {}),
+          // C4a — only an APPROVAL carried forward draws the two answers as one (a3/a4). An answer
+          // carried forward (C4c) is the person speaking between them, so the two stay two (c3).
+          ...(record.resumed?.kind === "approval" ? { resumed: true } : {}),
         } : undefined;
+        // C4c — the question this answer ended on, and (on the person's turn) the question it answered.
+        const askRecord = t.role === "assistant" ? readAskRecord(b.paige_ask) : null;
+        const answerClaim = t.role === "user" ? readAnswerClaim(b.paige_resume) : null;
         return mkMsg({
           ...(tid ? { id: tid } : {}),
           ...(created ? { ts: Date.parse(created) } : {}),
@@ -1002,6 +1031,8 @@ const PaigeAIChatInner = ({
             : undefined,
           artifacts: artifacts?.length ? artifacts : undefined,
           ...(turnSnapshot ? { turnSnapshot } : {}),
+          ...(askRecord ? { ask: { askId: askRecord.ask_id, options: askRecord.options.map(({ label, value, description }) => ({ label, value, ...(description ? { description } : {}) })), multi: askRecord.multi, question: askRecord.question } } : {}),
+          ...(answerClaim ? { answer: { askId: answerClaim.key.slice("answer:".length), skipped: answerClaim.skipped === true } } : {}),
         });
         if (turnResearchRefs?.length) researchRefsAll.push(...turnResearchRefs);
       });
@@ -1297,6 +1328,9 @@ const PaigeAIChatInner = ({
     declinedFingerprints?: string[],
     voiceSink?: LiveVoiceSink,
     requestIntentId: string = durableIntentUuid(),
+    /** C4c — this message answers PAIGE's open question (the server binds it to that question once).
+     *  `card`: the answer was a choice (or the skip) made on her question's card, not typed words. */
+    answer?: { askId: string; skipped: boolean; card?: boolean },
   ) => {
     if (soloTenantSafety && !activeTenantId) return;
     // Solo: this turn carries a decision; an approval's outcome card answers for it (see below).
@@ -1317,6 +1351,7 @@ const PaigeAIChatInner = ({
       doc,
       draftHandle: persistedDraft,
       requestIntentId,
+      ...(answer ? { answer } : {}),
       live: Boolean(voiceSink),
       decision: decisionTurn,
     };
@@ -1346,7 +1381,7 @@ const PaigeAIChatInner = ({
     settleLiveTurn("done");
     writeLiveTurn({
       assistantId, startedAt: assistantTs, frame: null, rows: [], writing: false, gateOpen: false,
-      streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true, resumed: false,
+      streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true, resumed: false, answering: !!answer,
     });
     const gateId = window.setTimeout(() => updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true })), TURN_LINE_GATE_MS);
     const timeoutId = soloTenantSafety ? window.setTimeout(() => {
@@ -1458,7 +1493,7 @@ const PaigeAIChatInner = ({
             // server refuses an empty message and that turn stays on screen (approvalOutcome.ts).
             // C3a's display-only fields (an answer's `turnSnapshot` and reloaded `confirmReceipt`, a
             // decision turn's `decision`) never ride the wire: what is sent is the shape it was before C3.
-            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.map(({ turnSnapshot: _view, confirmReceipt: _receipt, decision: _decided, ...m }) =>
+            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.map(({ turnSnapshot: _view, confirmReceipt: _receipt, decision: _decided, ask: _ask, answer: _answer, ...m }) =>
               m.role === "assistant" && m.content.trim() === "" && m.approvalOutcome
                 ? { ...m, content: approvalOutcomeTranscript(m.approvalOutcome) } : m),
             ...(voiceSink ? { liveRuntimeChallenge: voiceSink.challenge } : {}),
@@ -1472,6 +1507,8 @@ const PaigeAIChatInner = ({
             // whose fingerprint is here; `confirm:true` on its own no longer opens it.
             ...(approvedFingerprints?.length ? { approvedConfirmations: approvedFingerprints } : {}),
             ...(declinedFingerprints?.length ? { declinedConfirmations: declinedFingerprints } : {}),
+            // C4c — this message answers PAIGE's question. It names the question; it grants nothing.
+            ...(answer && !voiceSink ? { resume: { kind: "answer", ask_id: answer.askId, ...(answer.skipped ? { skipped: true } : {}) } } : {}),
             // Attachment (#480): the edge inlines pdf/image as image_url and docx
             // textContent as a text block. Pass the REAL mimeType/kind/textContent
             // — the hook already extracted docx client-side.
@@ -1501,6 +1538,47 @@ const PaigeAIChatInner = ({
         // Once dispatched, an HTTP failure does not prove the turn or its
         // governed tools did nothing. Keep the Live transcript, never replay it.
         if (voiceSink) throw new Error("live_answer_unavailable");
+        // C4c — THE ANSWER WAS NOT CARRIED FORWARD. Either it was never bound (the question was moved
+        // past, PAIGE already has an answer to it, or it could not be checked), or it was bound but PAIGE
+        // was never reached (the gateway refused, the request failed) and the server ASKED THE QUESTION
+        // AGAIN under a new id (`ASK_REOPENED`, whatever the status). Checked before the status branches
+        // below, because a re-asked question can come back on a 429 as well. The message is NOT
+        // reinterpreted as an ordinary one and never re-sent by itself: it goes back where it was — the
+        // typed words are still in the composer — and the transcript is re-read, so what is on screen is
+        // what the thread really holds (the re-asked question, open; or the other tab's answer and
+        // PAIGE's continuation).
+        if (answer) {
+          const refusal = await response.clone().json().then((b: { code?: unknown; answer_kept?: unknown }) => b && typeof b === "object" ? b : null).catch(() => null);
+          const code = typeof refusal?.code === "string" ? refusal.code : null;
+          if (code === "ASK_ALREADY_ANSWERED" || code === "ASK_NOT_OPEN" || code === "ASK_ANSWER_UNAVAILABLE" || code === "ASK_ANSWER_IN_PROGRESS" || code === "ASK_REOPENED") {
+            const askErr = await parsePaigeChatError(response);
+            if (!ticketAccepted(requestTicket)) return;
+            // The server says what happened to the answer; where the person's words are now is this
+            // client's to say, because it is what put them there. Typed words stay in the composer.
+            // A choice made on the card was never in the composer — the card itself comes back if
+            // the question is open again — so nothing is said about the box. An answer the server
+            // KEPT in the conversation (another message reached PAIGE first) is in the transcript the
+            // re-read below draws, so it leaves the composer — sending it again would only repeat it.
+            const kept = refusal?.answer_kept === true;
+            if (kept && persistedDraft && shouldClearComposerDraft({ terminalDone: true, currentDraft: readComposerDraft(persistedDraft), submittedText: userText })) {
+              clearComposerDraft(persistedDraft);
+            }
+            const where = kept || answer.card ? "" : " Your message is back in the box.";
+            toast({ title: kept ? "Another message came first" : askErr.title, description: `${askErr.description}${where}` });
+            setMessages(rollback);
+            retryTurnRef.current = null;
+            releaseRequestBusy(requestTicket);
+            if (enableHistory) setStreamingThreadId(null);
+            settleLiveTurn("done", assistantId);
+            if (threadId && code !== "ASK_ANSWER_UNAVAILABLE") {
+              try {
+                const turns = await threadsApi.loadTurns(threadId);
+                if (ticketAccepted(requestTicket) && turns.length) setMessages(turnsToMessages(turns));
+              } catch { /* the rollback stands */ }
+            }
+            return;
+          }
+        }
         if (response.status === 429) {
           toast({
             title: "Rate Limit Reached",
@@ -1550,6 +1628,8 @@ const PaigeAIChatInner = ({
       // The document proposal, if this turn produced one. At most one per turn — a turn carries at
       // most one attached document — so a variable rather than a list.
       let proposalThisTurn: ExtractionProposal | null = null;
+      // C4c — the question this answer ended on, if PAIGE paused to ask (`paige_choices`).
+      let askThisTurn: Message["ask"] | undefined;
       let streamDone = false;
 
       setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
@@ -1582,7 +1662,7 @@ const PaigeAIChatInner = ({
           const turnFrame = frame.turn;
           // C4a — `resumed` sticks for the rest of the read: later frames (the terminal) replace the
           // frame, never the fact that this answer carries an approval forward.
-          updateLiveTurn(assistantId, (t) => ({ ...t, frame: turnFrame, resumed: t.resumed || turnFrame.event === "resumed" }));
+          updateLiveTurn(assistantId, (t) => ({ ...t, frame: turnFrame, resumed: t.resumed || (turnFrame.event === "resumed" && !t.answering) }));
           continue;
         }
         try {
@@ -1680,6 +1760,20 @@ const PaigeAIChatInner = ({
             }
             continue;
           }
+          // C4c — PAIGE paused this piece of work to ask. Her question IS the answer's words (the server
+          // ends the turn on it and saves it as the turn's content); its id is the server's, so the
+          // reply can be bound to exactly this question. Bounded here as the server bounded it.
+          if (parsed.paige_choices && typeof parsed.paige_choices === "object" && typeof parsed.paige_choices.ask_id === "string") {
+            const c = parsed.paige_choices as { prompt?: unknown; options?: unknown; multi?: unknown; ask_id: string };
+            const options: PaigeAskOption[] = Array.isArray(c.options)
+              ? (c.options as Array<Record<string, unknown>>).filter((o) => typeof o?.label === "string" && typeof o?.value === "string")
+                .slice(0, 4).map((o) => ({ label: String(o.label), value: String(o.value), ...(typeof o.description === "string" && o.description ? { description: String(o.description) } : {}) }))
+              : [];
+            askThisTurn = { askId: c.ask_id, options: options.length >= 2 ? options : [], multi: c.multi === true, ...(typeof c.prompt === "string" && c.prompt ? { question: c.prompt } : {}) };
+            if (!assistantMessage && typeof c.prompt === "string") assistantMessage = c.prompt;
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, ask: askThisTurn }]);
+            continue;
+          }
           // #12 — conversation-compacting lifecycle (approaching/start/progress/done/skipped).
           if (parsed.paige_compacting) { setCompacting(parsed.paige_compacting as CompactingSignal); continue; }
           // Structured event: Paige queued an action to the approvals desk.
@@ -1739,7 +1833,7 @@ const PaigeAIChatInner = ({
           if (typeof content === "string" && content) {
             if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
             assistantMessage += content;
-            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined, ...(askThisTurn ? { ask: askThisTurn } : {}) }]);
           }
         } catch {
           halted = true;
@@ -1900,7 +1994,7 @@ const PaigeAIChatInner = ({
   /** `approvedFingerprints` carries the exact calls a person ticked on a confirm card. The server's
    *  gate requires the call it is about to run to be one of them; a `confirm:true` flag alone no
    *  longer opens it. Absent on every ordinary turn. */
-  const handleSend = async (overrideText?: string, approvedFingerprints?: string[], declinedFingerprints?: string[], voiceSink?: LiveVoiceSink) => {
+  const handleSend = async (overrideText?: string, approvedFingerprints?: string[], declinedFingerprints?: string[], voiceSink?: LiveVoiceSink, opts?: { answer?: { askId: string; skipped: boolean } }) => {
     const originDraft = composerScope.writableHandle;
     if (dictationActive || !originDraft) { voiceSink?.failed(); return; }
     const text = (overrideText ?? input).trim();
@@ -1921,6 +2015,15 @@ const PaigeAIChatInner = ({
     setDictationGeneration(dictationGenerationRef.current);
     const rollback = messages;
     let userContent = text || (currentDoc ? `Analyze this document: ${currentDoc.name}` : "");
+    // C4c — is this message the ANSWER to PAIGE's open question? Only when it says so: a choice or a
+    // skip on the question's own card, or words typed while the composer is answering it (the person
+    // can switch that off with "Ask something else instead"). A decision on an approval card, a voice
+    // turn, a document or a quick chip is never an answer. The server re-checks that the question is
+    // still open and binds the answer to it once.
+    const answer = opts?.answer
+      ?? (overrideText === undefined && !voiceSink && !approvedFingerprints?.length && !declinedFingerprints?.length && !currentDoc && answeringAsk
+        ? { askId: answeringAsk.askId, skipped: false }
+        : undefined);
     // The card that asked settles into a record of the answer, in place. `rollback` keeps the live
     // card, so a decision that never leaves puts it back exactly as it was.
     //
@@ -2133,6 +2236,7 @@ const PaigeAIChatInner = ({
         // model's history and the saved thread are what they were before C3; the `decision` mark is
         // stripped at the POST and only decides where the transcript is drawn.
         ...(decision ? { decision } : {}),
+        ...(answer ? { answer } : {}),
       }),
     ];
     if (askedAt >= 0 && (decision === "declined" || (decision && !soloTenantSafety))) decisionFocusRef.current = messages[askedAt].id;
@@ -2152,6 +2256,8 @@ const PaigeAIChatInner = ({
       echoFingerprints,
       declinedFingerprints,
       trackedVoiceSink,
+      undefined,
+      answer && opts?.answer ? { ...answer, card: true } : answer,
     );
     if (trackedVoiceSink && !voiceSettled) trackedVoiceSink.failed();
   };
@@ -2195,6 +2301,7 @@ const PaigeAIChatInner = ({
       undefined,
       undefined,
       retry.requestIntentId,
+      retry.answer,
     );
   };
 
@@ -2239,6 +2346,27 @@ const PaigeAIChatInner = ({
         : `${visibleSteps.length} ${visibleSteps.length === 1 ? "step" : "steps"} so far`;
   const composerBlocked = !composerScope.writable;
   const composerSendBlocked = composerBlocked || dictationActive;
+  // ── C4c — PAIGE's open question (frames c2 / c3 / c5) ─────────────────────────────────────────
+  // A question is OPEN while it is the last thing in the conversation and nothing is being read.
+  // While it is open the composer answers it — it says so, and "Ask something else instead" turns
+  // that off for this question (the message is then an ordinary one and the question stays
+  // unanswered). The server, not this, decides what is open: it re-checks every answer.
+  // A message carrying a file is never an answer (the server refuses one beside a document), so while
+  // a file is attached the composer says it is sending a new message — never that it is answering.
+  const lastMessage = messages[messages.length - 1];
+  const openAsk = !isLoading && lastMessage?.role === "assistant" && lastMessage.ask ? lastMessage.ask : null;
+  // An answer CLAIMED with nothing after it: the person's reply directly follows her question and is
+  // the thread's newest turn, so nothing came back from PAIGE — the request may still be running, or it
+  // died (a reload, or the "already has your answer" re-read, shows exactly this). The composer stays bound to
+  // that question: a re-send names it, so the server can say it already has the answer while the claim is
+  // young and ask the question again once it is not — never a second, unbound message that could start
+  // the same work twice. The question's card stays frozen ("Answered below"); only the composer binds.
+  const priorMessage = messages[messages.length - 2];
+  const claimedAsk = !isLoading && !openAsk && lastMessage?.role === "user" && lastMessage.answer
+    && priorMessage?.role === "assistant" && priorMessage.ask?.askId === lastMessage.answer.askId ? priorMessage.ask : null;
+  const boundAsk = openAsk ?? claimedAsk;
+  const askFileAttached = !!boundAsk && !!attachedDoc;
+  const answeringAsk = boundAsk && askSetAside !== boundAsk.askId && composerScope.writable && !askFileAttached ? boundAsk : null;
 
   // The composer's pieces, built once and arranged by presentation. Both chromes
   // drive the SAME handlers — one engine, two frames (§18: no forked composer).
@@ -2267,7 +2395,9 @@ const PaigeAIChatInner = ({
         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
       }}
       placeholder={
-        cd
+        answeringAsk
+          ? claimedAsk ? "Send your answer again…" : answeringAsk.options.length ? "Or type your own answer…" : "Type your answer…"
+          : cd
           ? "Ask about the platform — the fleet, the rails, the machine"
           : soloTenantSafety
             ? "Talk while she works…"
@@ -2429,13 +2559,22 @@ const PaigeAIChatInner = ({
   const confirmCardLive = (message: Message, index: number) =>
     !!message.confirm?.length && !message.confirmResolved && !message.confirmDecision
     && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint))));
+  /** C4c — where the question an answer ended on stands: open while nothing has been said since; then
+   *  answered (the next thing the person said was sent AS its answer — or a skip) or not answered. */
+  const askStandingAt = (index: number): AskStanding | undefined => {
+    const m = messages[index];
+    if (m?.role !== "assistant" || !m.ask) return undefined;
+    const reply = messages.slice(index + 1).find((x) => x.role === "user");
+    if (!reply) return "open";
+    return reply.answer?.askId === m.ask.askId ? "answered" : "unanswered";
+  };
   const assistantIsEmpty = (m: Message) =>
     !m.content.trim() && !m.approvalOutcome && !m.queued?.length && !m.crmResults?.length && !m.research?.length
     && !m.confirm?.length && !m.artifacts?.length && !m.extractionProposal;
   const liveInputFor = (lt: LiveTurn, hasContent: boolean, awaitingApproval: boolean) => ({
     frame: lt.frame, rows: lt.rows, streaming: lt.streaming, writing: lt.writing, gateOpen: lt.gateOpen,
     startedAt: lt.startedAt, endCause: lt.endCause, elapsedMs: lt.elapsedMs, hasContent, awaitingApproval,
-    personaName: persona.name, resumed: lt.resumed,
+    personaName: persona.name, resumed: lt.resumed, ask: askStandingAt(messages.findIndex((m) => m.id === lt.assistantId)),
   });
   // ── C4a — ONE ANSWER, ONE LINE (prototype frames a3/a4) ─────────────────────────────────────
   // When the server carries an approval forward (`resumed`, live or saved), the answer that showed the
@@ -2502,7 +2641,7 @@ const PaigeAIChatInner = ({
     if (liveTurn && liveTurn.assistantId === message.id) {
       return deriveLiveTurnView({ ...liveInputFor(liveTurn, message.content.trim() !== "", awaitingApproval), now: Date.now() });
     }
-    return message.turnSnapshot ? deriveSnapshotView(message.turnSnapshot, { personaName: persona.name, awaitingApproval }) : null;
+    return message.turnSnapshot ? deriveSnapshotView(message.turnSnapshot, { personaName: persona.name, awaitingApproval, ask: askStandingAt(index) }) : null;
   };
   // "Ask again" puts the original request back in the composer and never sends it: a request that
   // already did things (wrote to the CRM, for one) would be repeated if it were re-sent by itself.
@@ -2716,6 +2855,9 @@ const PaigeAIChatInner = ({
               // visible "Approved — run it." bubble). It stays in `messages`, in every POST and in the
               // saved thread; only this drawing skips it.
               if (message.role === "user" && message.decision) return null;
+              // C4c — "Skip, use your best guess" is said by the question's own record ("You let PAIGE
+              // choose"), not by a bubble of words the person did not type (c6). It stays in `messages`.
+              if (message.role === "user" && message.answer?.skipped) return null;
               const turnView = turnViewFor(message, index);
               // An answer with nothing to show yet (the first 400 ms) draws no empty bubble.
               if (message.role === "assistant" && !turnView && assistantIsEmpty(message)) return null;
@@ -2805,6 +2947,27 @@ const PaigeAIChatInner = ({
                         {before && <MarkdownMessage content={before} />}
                         {diagram && <EntityDiagramCard data={diagram} />}
                         {after && <MarkdownMessage content={after} />}
+                        {/* C4c — the question's choices while it is open (c2), then its record in place:
+                            answered below, PAIGE chose, or not answered (c3 / c6 / c5). */}
+                        {message.ask && (() => {
+                          const ask = message.ask;
+                          const standing = askStandingAt(index);
+                          if (standing === "open") {
+                            return (
+                              <PaigeAskCard
+                                options={ask.options}
+                                multi={ask.multi}
+                                question={ask.question ?? message.content}
+                                disabled={composerSendBlocked || isLoading}
+                                focusOnMount={soloTenantSafety}
+                                onAnswer={(reply) => void handleSend(reply, undefined, undefined, undefined, { answer: { askId: ask.askId, skipped: false } })}
+                                onSkip={() => void handleSend(ASK_SKIP_REPLY, undefined, undefined, undefined, { answer: { askId: ask.askId, skipped: true } })}
+                              />
+                            );
+                          }
+                          const reply = messages.slice(index + 1).find((x) => x.role === "user");
+                          return <PaigeAskRecord name={persona.name || "PAIGE"} standing={standing === "answered" ? (reply?.answer?.skipped ? "skipped" : "answered") : "unanswered"} />;
+                        })()}
                         {message.queued?.map((q) => (
                           <div key={q.id} className="mt-2 flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5">
                             <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -3147,6 +3310,37 @@ const PaigeAIChatInner = ({
                 <Hand className="h-3.5 w-3.5 text-foreground/80" aria-hidden />
                 {persona.name || "PAIGE"} is waiting on your OK above
               </p>
+            )}
+            {/* C4c — the composer is answering PAIGE's question (c2): it says so, and the person can
+                turn that off for this question and say something else instead (c5). */}
+            {boundAsk && composerScope.writable && (
+              <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs leading-4 text-muted-foreground" data-paige-answering={answeringAsk ? (claimedAsk ? "claimed" : "answer") : "new"}>
+                <CircleHelp className="h-3.5 w-3.5 shrink-0 text-foreground/80" aria-hidden />
+                <span className="min-w-0">
+                  {claimedAsk
+                    // The server's own window (ANSWER_STRANDED_AFTER_MINUTES): younger, a re-send is
+                    // told she already has it; older, she asks the question again.
+                    ? answeringAsk
+                      ? `${persona.name || "PAIGE"} has your answer. No reply within ${ANSWER_STRANDED_AFTER_MINUTES} minutes? Send it again and she'll ask again.`
+                      : askFileAttached ? "Your file goes as a new message" : "Sending as a new message"
+                    : answeringAsk
+                      ? `${persona.name || "PAIGE"} is waiting on your answer above`
+                      : askFileAttached
+                        ? "Your file goes as a new message — her question stays unanswered"
+                        : "Sending as a new message — her question stays unanswered"}
+                </span>
+                {/* With a file attached there is nothing to switch: removing the file (its chip, just
+                    below) is how the composer answers her again. */}
+                {!askFileAttached && (
+                  <button
+                    type="button"
+                    onClick={() => setAskSetAside(answeringAsk ? boundAsk.askId : null)}
+                    className="rounded-sm font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+                  >
+                    {answeringAsk ? "Ask something else instead" : claimedAsk ? "Send it as your answer" : "Answer her question"}
+                  </button>
+                )}
+              </div>
             )}
             {/* Pending attachment chip — sits above the input, removable (§13). */}
             {attachedDoc && (

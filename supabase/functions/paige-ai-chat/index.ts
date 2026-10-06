@@ -227,6 +227,7 @@ import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
+import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -772,6 +773,15 @@ const messageSchema = z.object({
    *  of the next message is a refusal the model has to interpret correctly — and the proposal it
    *  describes stays redeemable for its whole window. These are cancelled outright instead. */
   declinedConfirmations: z.array(z.string().regex(/^[0-9a-f]{16}(?::[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/)).max(16).optional(),
+  /** C4c — this message ANSWERS the question PAIGE asked (`ask_id`, as the question's own frame and
+   *  saved turn carry it). It identifies what the message is a reply to; it grants nothing. The server
+   *  re-derives from the thread that the question is still the latest turn and unanswered, and binds
+   *  the answer to it once (`paige_chat_turns_resume_uk`). `skipped` = "Skip, use your best guess". */
+  resume: z.object({
+    kind: z.literal("answer"),
+    ask_id: z.string().uuid(),
+    skipped: z.boolean().optional(),
+  }).strict().optional(),
   // RETIRED HERE, 2026-09-02: `confirmedActions`, a second approval channel carrying a
   // pipeline-archive token, arrived from a parallel branch. It solved the same problem as the two
   // fields above — bind the approval to the exact thing approved — for exactly one action.
@@ -981,6 +991,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // C4c — set once an answer has been claimed and before PAIGE is called (below): an exit on that
+  // stretch, the outer catch included, saves the question again instead of stranding the answer.
+  let afterAnswerClaimFailure: ((resp: Response) => Promise<Response>) | null = null;
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -1125,7 +1138,7 @@ serve(async (req) => {
       if (!scope || scope.actorId !== user.id || scope.threadId !== validatedData.threadId ||
         input.length !== 1 || input[0].role !== "user" ||
         await liveRuntimeDigest(input[0].content) !== scope.transcriptHash ||
-        validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length ||
+        validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length || validatedData.resume ||
         validatedData.document || validatedData.attachments?.length || validatedData.generateSessionSummary ||
         validatedData.sessionMessages || validatedData.sessionDocumentContext) return refuseLive();
       const [{ data: tenant, error: tenantError }, { data: thread, error: threadError }] = await Promise.all([
@@ -5502,9 +5515,110 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // didn't trip the pre-flight (e.g. Paige's long reply is what pushed the tail over).
     const maybeRefreshSummary = (threadId: string) => foldThreadSummary(threadId);
 
+    // C4c — AN ANSWER IS BOUND TO ITS QUESTION, ONCE, AND PAIGE IS CALLED ON IT. A message that says
+    // it answers a question (`resume: {kind: "answer", ask_id}`) is accepted as an answer only when,
+    // re-derived here from the thread itself (the caller's own session): the question is the LATEST
+    // turn of this thread, it is still waiting on a reply, and the workspace this turn runs in is the
+    // one the person declared AND the one the server validates (a stale declaration does not answer
+    // anything). Anything else is refused truthfully here, with NO model call and nothing saved; the
+    // message is NOT reinterpreted as an ordinary one (the client puts it back in the composer).
+    //
+    // The CLAIM is written later, immediately before PAIGE is called — after the last workspace check
+    // (`answerBinding` → `answerResume`, at the model call): the person's turn is appended carrying
+    // `paige_resume.key = answer:<ask_id>`, and the partial unique index on the transcript lets exactly
+    // one such turn exist per thread, so a second answer — a double tap, another tab, a retry — is
+    // refused by the database, and PAIGE is never asked a second time. If anything fails between the
+    // claim and PAIGE (the gateway refuses, an unexpected throw), the SAME question is saved again under
+    // a new id (`afterAnswerClaimFailure`) — one question never ends with zero continuations.
+    // An answer grants nothing: it only shapes the prompt (`answerTurnNote`); every act PAIGE proposes
+    // after it still meets the gate.
+    let answerBinding: { turnId: string; ask: AskRecord; skipped: boolean; content: string } | null = null;
+    let answerResume: { askId: string; turnId: string; ask: AskRecord; skipped: boolean } | null = null;
+    // What happened to the answer — and only that. Where the person's words now are (still in the
+    // composer, or a choice made on the card) is the client's to say: it is the one that put them back.
+    const ANSWER_REASON = {
+      ASK_NOT_OPEN: "That question isn't open any more, so your message wasn't sent as an answer.",
+      // The claim was written, but another message reached the thread first: the answer is IN the
+      // conversation (the client clears it from the composer), and PAIGE did not act on it.
+      ASK_ANSWER_SUPERSEDED: "Another message reached PAIGE before your answer, so she didn't act on it and her question stays unanswered. Your answer is kept in the conversation.",
+      ASK_ALREADY_ANSWERED: "PAIGE already has your answer to that question, so this wasn't sent again.",
+      ASK_ANSWER_IN_PROGRESS: `PAIGE already has your answer to that question, so this wasn't sent again. If she hasn't replied ${ANSWER_STRANDED_AFTER_MINUTES} minutes after you sent it, send it again and she'll ask the question again.`,
+      ASK_REOPENED: "PAIGE didn't finish carrying on from your answer. Anything she'd already done is saved, and she's asked the question again.",
+      CHECK_UNAVAILABLE: "I couldn't check that question just now, so nothing was sent. Try again in a moment.",
+      SAVE_UNAVAILABLE: "I couldn't save your answer just now, so nothing was sent. Try again in a moment.",
+    } as const;
+    const refuseAnswer = (status: number, code: "ASK_NOT_OPEN" | "ASK_ALREADY_ANSWERED" | "ASK_ANSWER_IN_PROGRESS" | "ASK_REOPENED" | "ASK_ANSWER_UNAVAILABLE", reason: string, why: string, extra: Record<string, unknown> = {}) => {
+      console.warn("[paige] answer not bound to a question — refused before the model", JSON.stringify({ code, why, correlation: payloadRequestIntentId ?? null }));
+      return new Response(JSON.stringify({ error: reason, reason, code, ...extra }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    };
+    const notOpen = (why: string) => refuseAnswer(409, "ASK_NOT_OPEN", ANSWER_REASON.ASK_NOT_OPEN, why);
+    // THE SAME QUESTION, ASKED AGAIN, because the answer to it never reached PAIGE. Saved as PAIGE's own
+    // turn through the caller's session (the same append, the same ownership and workspace checks),
+    // waiting on a reply exactly like the first; its words are the saved question's, not regenerated.
+    // Null when it could not be saved (the workspace changed, the store refused) — logged, never thrown.
+    const saveQuestionAgain = async (ask: AskRecord): Promise<AskRecord | null> => {
+      if (!payloadThreadId) return null;
+      try {
+        const again = reopenAsk(ask, crypto.randomUUID());
+        const { error } = await supabaseClient.rpc("paige_chat_turn_append", {
+          p_thread_id: payloadThreadId, p_role: "assistant", p_content: again.content,
+          p_surfaces_used: null, p_load_id: null, p_model: null,
+          p_tokens_used: null, p_latency_ms: null,
+          p_bundle_ref: { turn_state: again.turnState, paige_ask: again.record } as any,
+          p_tool_calls: null,
+        });
+        if (error) {
+          console.error("[paige] the question could not be asked again", JSON.stringify({ code: (error as { code?: string }).code ?? null, correlation: payloadRequestIntentId ?? null }));
+          return null;
+        }
+        return again.record;
+      } catch (e) {
+        console.error("[paige] the question could not be asked again", JSON.stringify({ message: (e as Error)?.message ?? String(e), correlation: payloadRequestIntentId ?? null }));
+        return null;
+      }
+    };
+    if (validatedData.resume) {
+      // One resume per request, through the thread that holds the question; never a Live turn, a
+      // document turn, or a decision on an approval card riding beside it.
+      if (!payloadThreadId) return notOpen("no_thread");
+      if (validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length || attachedDocument || turnAttachments?.length) {
+        return notOpen("mixed_request");
+      }
+      // A client portal seat is never asked a question with this tool (it is not offered there).
+      if (callerTier === "client") return notOpen("client_seat");
+      // Declared ∧ validated: the workspace the person chose (profiles.active_tenant_id) must be the
+      // one the server resolves for this turn and the one the thread belongs to (checked above, 409).
+      const turnTenant = personaCtx.tenant_id ?? null;
+      const declaredScope = turnTenant ? await memoryWorkspaceScope() : null;
+      if (!proposalScopeResolved || (turnTenant !== null && declaredScope !== turnTenant)) return notOpen("workspace_unconfirmed");
+      const latest = [...messages].reverse().find((m: any) => m.role === "user")?.content;
+      if (typeof latest !== "string" || !latest.trim()) return notOpen("empty_answer");
+      const { data: recent, error: recentError } = await supabaseClient.from("paige_chat_turns")
+        .select("id,role,bundle_ref,created_at").eq("thread_id", payloadThreadId)
+        .order("seq", { ascending: false }).limit(25);
+      if (recentError) return refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.CHECK_UNAVAILABLE, "turn_read_failed");
+      const live = resolveAskLiveness((recent ?? []) as Array<{ id?: unknown; role?: unknown; bundle_ref?: unknown; created_at?: unknown }>, validatedData.resume.ask_id);
+      if (live.state === "answered") return refuseAnswer(409, "ASK_ALREADY_ANSWERED", ANSWER_REASON.ASK_ALREADY_ANSWERED, "already_answered");
+      if (live.state === "reopened") return refuseAnswer(409, "ASK_REOPENED", ANSWER_REASON.ASK_REOPENED, "already_reopened", { ask_reopened: askFrame(live.ask) });
+      if (live.state === "pending") {
+        // The claim is the thread's newest turn: nothing has come back from PAIGE. Younger than any
+        // request can run, it may still be in flight — say exactly that. Older, the request that
+        // claimed it is gone: ask the same question again so it can be answered and the work continue.
+        if (live.claimedAt === null || Date.now() - live.claimedAt < ANSWER_STRANDED_AFTER_MS) {
+          return refuseAnswer(409, "ASK_ANSWER_IN_PROGRESS", ANSWER_REASON.ASK_ANSWER_IN_PROGRESS, "claim_pending");
+        }
+        const again = await saveQuestionAgain(live.ask);
+        if (!again) return refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.SAVE_UNAVAILABLE, "reopen_failed");
+        return refuseAnswer(409, "ASK_REOPENED", ANSWER_REASON.ASK_REOPENED, "claim_stranded", { ask_reopened: askFrame(again) });
+      }
+      if (live.state !== "live") return notOpen(live.reason);
+      answerBinding = { turnId: live.turnId, ask: live.ask, skipped: validatedData.resume.skipped === true, content: latest };
+    }
+
     if (payloadThreadId) {
       const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content;
-      if (typeof latestUserText === "string" && latestUserText.trim()) {
+      // An answer's turn is appended once, as its claim, immediately before PAIGE is called (below).
+      if (!answerBinding && typeof latestUserText === "string" && latestUserText.trim()) {
         try {
           await supabaseClient.rpc("paige_chat_turn_append", {
             p_thread_id: payloadThreadId, p_role: "user", p_content: latestUserText,
@@ -8681,37 +8795,77 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
     };
 
-    // #292 — inside a Studio session, give the design agent the clickable-decision tool (studio-gated
-    // so main Paige never gains it). Handled as a turn-ender in the stream loop, not a backend call.
-    if (studioSessionId) {
+    // C4c — THE SAME QUESTION TOOL IN THE MAIN CHAT. Offered only where a question can be answered and
+    // bound: a saved thread (the question turn IS the ask, and the answer claims it on that thread),
+    // never a Live turn, never a client portal seat, never a document turn (its path offers tools but
+    // runs none, so a question there could never be shown), never a turn with no thread (Operator sends
+    // none: there it keeps asking in prose, unchanged). One tool, one handler (`ask_choices`, below); the
+    // main chat adds the free-form case (no options: answered in the person's own words) and the two
+    // short fields the answer turn carries the objective forward with.
+    const mainChatAsks = !studioSessionId && !!payloadThreadId && !liveRuntimeScope && !attachedDocument && callerTier !== "client";
+    // ONE definition of the question tool, worded for the surface that offers it (Studio and the main
+    // chat never both apply: the main chat requires no Studio session). One tool, one handler, one
+    // declaration site.
+    const askChoicesSpec = studioSessionId ? {
+      // #292 — inside a Studio session, the design agent's clickable-decision tool (its own wording).
+      description: "Ask the customer ONE decision as tappable choice CARDS instead of prose. Use ONLY when there are 2-4 genuinely distinct paths and you truly need them to pick. Give each option a short label AND a one-line description of what it means; when you have a REAL absolute https image URL that previews the option, include it as `preview` (never invent one). One decision per call; at most one clarify round, then build. Every option must map to something you will actually build once they pick — no dead-end or coming-soon choices.",
+      parameters: {
+        type: "object",
+        required: ["prompt", "options"],
+        properties: {
+          prompt: { type: "string", description: "Short question, in-voice (<=12 words)." },
+          options: {
+            type: "array", minItems: 2, maxItems: 4,
+            items: {
+              type: "object", required: ["label", "value"],
+              properties: {
+                label: { type: "string", description: "2-4 words shown on the card." },
+                value: { type: "string", description: "Canonical string sent back as the answer." },
+                description: { type: "string", description: "One short line (<=12 words) explaining what this option means." },
+                preview: { type: "string", description: "OPTIONAL absolute https image URL that visually previews this option (a real reference/thumbnail). Omit if you don't have a real one — never invent a URL." },
+              },
+            },
+          },
+          multi: { type: "boolean", description: "true = pick several then Continue; default single-select." },
+          allow_other: { type: "boolean", description: "true = also let the customer skip the cards and type their own answer instead." },
+        },
+      },
+    } : mainChatAsks ? {
+      description: "Pause and ask the person ONE question when you cannot continue the current piece of work without a real fact or choice only they have (a date, an amount, which agreement, which person). Do not ask what you can look up, and do not ask to confirm an action — actions are approved on their own card. Give the question in one or two short sentences that say why you need it. Offer 2-4 options only when the answer is a bounded choice; otherwise leave options out and they will answer in their own words. Call it ON ITS OWN, after any other calls you need: it ends your turn, and when they answer you continue the same work.",
+      parameters: {
+        type: "object",
+        required: ["prompt", "needs", "objective"],
+        properties: {
+          prompt: { type: "string", description: "The question, in-voice, with the one-line reason you need it (<= 2 short sentences)." },
+          needs: { type: "string", description: "The one fact you need, in a few words (e.g. \"the start date\")." },
+          objective: { type: "string", description: "What you were doing when you paused, in a few words (e.g. \"Setting up Kestrel's onboarding\")." },
+          options: {
+            type: "array", minItems: 2, maxItems: 4,
+            items: {
+              type: "object", required: ["label", "value"],
+              properties: {
+                label: { type: "string", description: "2-4 words." },
+                value: { type: "string", description: "Canonical string you will act on." },
+                description: { type: "string", description: "One short line (<=12 words) on what this option means." },
+              },
+            },
+          },
+          multi: { type: "boolean", description: "true = they may pick several." },
+        },
+      },
+    } : null;
+    if (askChoicesSpec) {
       toolDefs.push({
         type: "function",
         function: {
           name: "ask_choices",
-          description: "Ask the customer ONE decision as tappable choice CARDS instead of prose. Use ONLY when there are 2-4 genuinely distinct paths and you truly need them to pick. Give each option a short label AND a one-line description of what it means; when you have a REAL absolute https image URL that previews the option, include it as `preview` (never invent one). One decision per call; at most one clarify round, then build. Every option must map to something you will actually build once they pick — no dead-end or coming-soon choices.",
-          parameters: {
-            type: "object",
-            required: ["prompt", "options"],
-            properties: {
-              prompt: { type: "string", description: "Short question, in-voice (<=12 words)." },
-              options: {
-                type: "array", minItems: 2, maxItems: 4,
-                items: {
-                  type: "object", required: ["label", "value"],
-                  properties: {
-                    label: { type: "string", description: "2-4 words shown on the card." },
-                    value: { type: "string", description: "Canonical string sent back as the answer." },
-                    description: { type: "string", description: "One short line (<=12 words) explaining what this option means." },
-                    preview: { type: "string", description: "OPTIONAL absolute https image URL that visually previews this option (a real reference/thumbnail). Omit if you don't have a real one — never invent a URL." },
-                  },
-                },
-              },
-              multi: { type: "boolean", description: "true = pick several then Continue; default single-select." },
-              allow_other: { type: "boolean", description: "true = also let the customer skip the cards and type their own answer instead." },
-            },
-          },
+          description: askChoicesSpec.description,
+          parameters: askChoicesSpec.parameters,
         },
       } as any);
+    }
+    // #292 — the question tool (above) is handled as a turn-ender in the stream loop, not a backend call.
+    if (studioSessionId) {
       // V1 — the design agent is OFFERED only its role's scope. This filters the list the turn
       // already carries (it never adds a tool); dispatch enforces the same scope again below, so a
       // tool the model names anyway is still refused. (document_generate, which has no Studio
@@ -9234,6 +9388,61 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // C4a — on a resume turn the first model call is LAZY: the resumed acts run first (the stream's
     // first round), and PAIGE is called with their results at the end of that round, through the
     // same loop call every later round uses. Every other turn makes this call exactly as before.
+    // C4c — an ANSWER turn tells PAIGE, from the SAVED question (never from the request), that the
+    // latest message answers it and the paused objective continues. Turn-local, like RESUME_TURN_NOTE;
+    // the gateway folds system notes into the system prompt.
+    if (answerBinding) {
+      // C4c — THE CLAIM, the last thing before PAIGE is called (every workspace check above has passed).
+      const binding = answerBinding;
+      const askId = binding.ask.ask_id;
+      const { data: claimTurnId, error: claimError } = await supabaseClient.rpc("paige_chat_turn_append", {
+        p_thread_id: payloadThreadId, p_role: "user", p_content: binding.content,
+        p_surfaces_used: null, p_load_id: null, p_model: null,
+        p_tokens_used: null, p_latency_ms: null,
+        p_bundle_ref: { paige_resume: answerClaim(askId, binding.turnId, binding.skipped) } as any,
+        p_tool_calls: null,
+      });
+      if (claimError) {
+        const code = (claimError as { code?: string }).code;
+        if (code === "23505") return refuseAnswer(409, "ASK_ALREADY_ANSWERED", ANSWER_REASON.ASK_ALREADY_ANSWERED, "claim_lost");
+        // The thread belongs to another workspace than the person's active one (they switched): the
+        // question is not open from here, and trying again from here cannot change that.
+        if (/different workspace/.test(String((claimError as { message?: string }).message ?? ""))) return notOpen("workspace_changed");
+        console.error("[paige] answer claim could not be written", JSON.stringify({ code: code ?? null }));
+        return refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.SAVE_UNAVAILABLE, "claim_failed");
+      }
+      // From here until the stream is handed back, every exit saves the question again (one at most).
+      let askedAgain = false;
+      afterAnswerClaimFailure = async (resp: Response) => {
+        if (askedAgain) return resp;
+        askedAgain = true;
+        const again = await saveQuestionAgain(binding.ask);
+        if (!again) return resp;
+        let original: Record<string, unknown> = {};
+        try { original = await resp.clone().json(); } catch { /* keep the status, say what happened */ }
+        console.warn("[paige] answer claimed but PAIGE was not reached — the question was asked again", JSON.stringify({ status: resp.status, cause: original.code ?? null, correlation: payloadRequestIntentId ?? null }));
+        return new Response(JSON.stringify({ ...original, error: ANSWER_REASON.ASK_REOPENED, reason: ANSWER_REASON.ASK_REOPENED, code: "ASK_REOPENED", cause_code: typeof original.code === "string" ? original.code : null, ask_reopened: askFrame(again) }),
+          { status: resp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      };
+      // Bound only if it directly follows the question as the thread now stands: a message that slipped
+      // in between the check above and this claim (another tab) moved past the question first. PAIGE is
+      // not called; the claim stays in the transcript as what it is — a reply to a question already
+      // moved past (`resolveAskLiveness` reads it as superseded, never as an answer).
+      const { data: after, error: afterError } = await supabaseClient.from("paige_chat_turns")
+        .select("id,role,bundle_ref").eq("thread_id", payloadThreadId)
+        .order("seq", { ascending: false }).limit(25);
+      // A read that fails here leaves the claim written and unverified: the question is asked again
+      // (the same exit as any failure after the claim), never left with an answer and nothing after it.
+      if (afterError || typeof claimTurnId !== "string") {
+        return afterAnswerClaimFailure(refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.CHECK_UNAVAILABLE, "claim_unverified"));
+      }
+      if (!answerClaimBound((after ?? []) as Array<{ id?: unknown; role?: unknown; bundle_ref?: unknown }>, askId, claimTurnId)) {
+        afterAnswerClaimFailure = null;
+        return refuseAnswer(409, "ASK_NOT_OPEN", ANSWER_REASON.ASK_ANSWER_SUPERSEDED, "superseded_at_claim", { answer_kept: true });
+      }
+      answerResume = { askId, turnId: binding.turnId, ask: binding.ask, skipped: binding.skipped };
+      aiMessages.push({ role: "system", content: answerTurnNote(answerResume.ask, { skipped: answerResume.skipped }) });
+    }
     const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
       method: "POST",
       headers: {
@@ -9261,8 +9470,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (response && !response.ok) {
       const errorId = crypto.randomUUID();
       const status = response.status;
-      if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded.", errorId }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (status === 402) return new Response(JSON.stringify({ error: "AI service requires additional credits.", errorId }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // C4c — an answer claimed for this turn is not stranded by the refusal: the question is asked again.
+      const answered = (r: Response) => afterAnswerClaimFailure ? afterAnswerClaimFailure(r) : Promise.resolve(r);
+      if (status === 429) return answered(new Response(JSON.stringify({ error: "Rate limit exceeded.", errorId }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }));
+      if (status === 402) return answered(new Response(JSON.stringify({ error: "AI service requires additional credits.", errorId }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }));
       console.error(`[AI-CHAT-ERROR-${errorId}] AI gateway error:`, { status, timestamp: new Date().toISOString() });
       // #587 — a document turn whose model call still failed (e.g. Anthropic rejected the PDF for a
       // reason preflight couldn't see) returns a STRUCTURED reason-class, never a bare "An error
@@ -9270,8 +9481,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the model on a document attach is surfaced as such; everything else stays a 500.
       const gwStructured = structuredChatError(status, { hadDocument: !!attachedDocument });
       const gwStatus = (attachedDocument && (status === 400 || status === 413 || status === 415)) ? 422 : 500;
-      return new Response(JSON.stringify({ ...gwStructured, error: gwStructured.reason, errorId }), { status: gwStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return answered(new Response(JSON.stringify({ ...gwStructured, error: gwStructured.reason, errorId }), { status: gwStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } }));
     }
+    // C4c — `afterAnswerClaimFailure` stays armed until the stream is handed back: a throw before then
+    // (no tool has run yet — tools run inside the stream) still asks the question again. Once the stream
+    // runs, a failure ends inside it, in its own interrupted turn — a continuation that says what
+    // happened — and the outer catch can no longer be reached.
 
     // R3 — THE ONE READ of what a client seat is about to see, called by both release points (the
     // agentic stream and the document stream). The vocabulary comes from this turn's own request: the
@@ -15656,6 +15871,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       let tenantKnowledgeScopeInvalidated = false;
       // Accumulates Paige's final reply text so we can persist the turn (#94).
       let finalAssistantText = "";
+      // C4c — the question this turn ended on (the record saved as `bundle_ref.paige_ask`), if any.
+      let askedThisTurn: AskRecord | null = null;
       let turnSavedSomething = false;
 
       // The agentic loop now runs INSIDE the response stream (#152) so Paige's
@@ -15811,7 +16028,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // reading the card gets on the wire (`resumedApprovalClassified`), so a reload reads back
       // exactly what the person was told. Only on a resume turn, and only where a bundle is written.
       function withResumeRecord<M extends { bundleRef?: unknown }>(meta: M): M {
-        if (resumeCalls.length === 0 || !meta.bundleRef || typeof meta.bundleRef !== "object") return meta;
+        if (!meta.bundleRef || typeof meta.bundleRef !== "object") return meta;
+        // C4c — a turn that ENDED on a question keeps the question beside its record (the ask is
+        // this turn); an answer turn names the question it carried forward. Neither carries
+        // authority: the claim is the person's own turn, held unique by the database.
+        if (askedThisTurn && turnTracker.state === "ASK_USER") {
+          meta = { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>), paige_ask: askedThisTurn } };
+        }
+        if (resumeCalls.length === 0 && answerResume) {
+          try {
+            return { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>), paige_resume: resumeRecord("answer", answerResume.turnId, []) } };
+          } catch (e) {
+            console.error("[paige] answer resume record not attached", JSON.stringify({ correlation_id: requestNonce, message: (e as Error)?.message ?? String(e) }));
+            return meta;
+          }
+        }
+        if (resumeCalls.length === 0) return meta;
         try {
           const outcomes = [...resumeTokens.entries()].map(([token, info]) => ({ tool: info.tool, outcome: resumedApprovalClassified(token).outcome }));
           return { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>), paige_resume: resumeRecord("approval", resumeFromTurnId, outcomes, approvalOutcomeFrame) } };
@@ -15944,6 +16176,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             turnTracker.resumed("approval");
             controller.enqueue(enc.encode(turnFrameLine(turnTracker.frame("resumed"))));
             resumeRound = { content: "", toolCalls: [...resumeCalls], allChunks: [], hasToolCall: true, finished: true };
+          } else if (answerResume) {
+            // C4c — the answer was bound before PAIGE was called; her first round IS the continuation
+            // of the paused objective. Same frame, same place, a different closed kind.
+            turnTracker.resumed("answer");
+            controller.enqueue(enc.encode(turnFrameLine(turnTracker.frame("resumed"))));
           }
           while (true) {
           for (let round = 0; round < MAX_ROUNDS; round++) {
@@ -15970,25 +16207,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // customer a clickable decision. Emit the chips as a paige_choices frame, persist the
             // question as the assistant turn (§13 re-readable), and stop this turn — the tapped chip
             // comes back as the next user message. Studio-gated so main Paige never triggers it.
-            const chooseTc = studioSessionId ? realCalls.find((tc: any) => tc.function?.name === "ask_choices") : undefined;
-            if (chooseTc) {
+            const chooseTc = (studioSessionId || mainChatAsks) ? realCalls.find((tc: any) => tc.function?.name === "ask_choices") : undefined;
+            // C4c — in the main chat a question asked BESIDE other calls is not shown (it could be
+            // answered before those calls finish and are read): the other calls run as usual, and the
+            // question gets a result telling PAIGE to ask it on its own (`askAlongside` below). Studio
+            // keeps its behaviour exactly.
+            const askAlongside = !!chooseTc && mainChatAsks && realCalls.length > 1;
+            if (chooseTc && !askAlongside) {
               let a: any = {}; try { a = JSON.parse(chooseTc.function.arguments ?? "{}"); } catch { /* keep {} */ }
-              const opts = Array.isArray(a.options)
-                ? a.options
-                    .filter((o: any) => o && typeof o.label === "string" && typeof o.value === "string")
-                    .slice(0, 4)
-                    .map((o: any) => ({
-                      label: String(o.label).slice(0, 60),
-                      value: String(o.value).slice(0, 300),
-                      // U1 — carry the richer card fields through to the client, sanitized + bounded.
-                      // preview is passed ONLY when it's a real absolute http(s) URL (§13 — never
-                      // fabricate; a non-URL is dropped, not rendered as a broken image).
-                      ...(typeof o.description === "string" && o.description.trim() ? { description: String(o.description).slice(0, 160) } : {}),
-                      ...(typeof o.preview === "string" && /^https?:\/\//i.test(o.preview.trim()) ? { preview: o.preview.trim() } : {}),
-                    }))
-                : [];
-              const frame = { prompt: String(a.prompt ?? "").slice(0, 300), options: opts, multi: !!a.multi, allow_other: !!a.allow_other };
-              if (frame.options.length >= 2) {
+              // ONE record for the question (resume.ts): bounded exactly as the Studio card always
+              // bounded it (label 60, value 300, description 160; a preview only when it is a real
+              // absolute http(s) URL — §13 never fabricate), with a server-minted id. In the main chat a
+              // question with no options is a free-form question; in Studio two to four are required.
+              const askRecord = buildAskRecord(a, { askId: crypto.randomUUID(), freeForm: mainChatAsks });
+              if (askRecord) {
+                const frame = askFrame(askRecord);
                 // PROTECTED. `prompt` and every option's label/description are the model's own
                 // words, written from the same Knowledge-bearing prompt as any reply — and on
                 // this branch the frame IS the whole assistant turn (`finalChunks = []` below),
@@ -15998,6 +16231,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // The chips ARE the answer here, so the terminal (ASK_USER) precedes them on an
                 // ordinary turn; a protected turn holds both and says so at release.
                 turnTracker.choicesAsked();
+                askedThisTurn = askRecord;
                 emitTurnTerminalBeforeAnswer(controller);
                 emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_choices: frame })}\n\n`));
                 finalAssistantText = frame.prompt;
@@ -16040,7 +16274,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // wire; `finishedSteps` keeps each call's describeStep answer for the rail label below.
             const finishedSteps = new Map<any, ReturnType<typeof describeStep>>();
             const toolStepHooks = createToolStepHooks(controller, round, continuationsUsed, finishedSteps);
-            const { toolResults, executed, scopeInvalidated } = await executeToolCalls(toolCalls, queuedApprovals, toolStepHooks);
+            const { toolResults, executed, scopeInvalidated } = await executeToolCalls(askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls, queuedApprovals, toolStepHooks);
             // An approved call its card will report as "couldn't confirm" tells the model the same,
             // before the model reads it, so Paige never says "that failed" beside a card that says
             // check first (approval-outcome.ts).
@@ -16124,7 +16358,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 if (ok) void emitRailForTool(tc, res, derived.label);
               } catch { /* a cosmetic-trace throw must never break the agentic loop */ }
             }
-            convo.push({ role: "assistant", content: content || null, tool_calls: executed });
+            // C4c — a question asked beside other calls is answered in the conversation (so every
+            // tool_use has its result) with "ask it on its own", never shown and never executed.
+            convo.push({ role: "assistant", content: content || null, tool_calls: askAlongside ? [...executed, chooseTc] : executed });
+            if (askAlongside) toolResults.push({ tool_call_id: chooseTc.id, role: "tool", content: JSON.stringify(ASK_ALONGSIDE_CALLS_RESULT) });
             // BEFORE the results reach the model, not after. Everything content-bearing is
             // emitted below this loop, so switching here is genuinely "before any protected
             // content can emit" rather than merely usually so.
@@ -17190,7 +17427,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // #587 — the outer catch returns a STRUCTURED reason-class, never a bare "An error occurred", so
     // the client always has a real reason to show. `error` is kept (= reason) for any legacy consumer.
     const outerStructured = structuredChatError(500, { message: error instanceof Error ? error.message : "" });
-    return new Response(JSON.stringify({ ...outerStructured, error: outerStructured.reason, errorId }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const outer = new Response(JSON.stringify({ ...outerStructured, error: outerStructured.reason, errorId }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // C4c — a throw between an answer's claim and PAIGE asks the question again rather than strand it.
+    if (afterAnswerClaimFailure) {
+      try { return await afterAnswerClaimFailure(outer); } catch { /* the plain failure stands */ }
+    }
+    return outer;
   }
 });
 

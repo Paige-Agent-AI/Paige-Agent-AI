@@ -7,6 +7,9 @@
 // ?scenario=fast|normal|research|approval|limit|interrupted|stop|refused|reload|first
 // ?hold=<n>        stop the stream after n chunks and keep it open (a mid-turn frame)
 // ?theme=light|dark  ?layout=page|drawer  (page = the Solo PAIGE workspace, drawer = the docked panel)
+// ?scenario=ask|askfree|askreload|askreload-answered  C4c: PAIGE pauses to ask; an answer (a request
+//                  carrying `resume`) is answered by a server that carried it forward; ?answerFollow=card
+//                  makes that continuation end on an approval card; any other second message is ordinary
 // ?resume=1        C4a: Approve is answered by a server that carried the approval forward
 //                  (`paige_turn` resumed); ?followHold=<n> holds THAT follow-up after n chunks (frame a3)
 import { createRoot } from "react-dom/client";
@@ -35,6 +38,22 @@ const thought = (label: string) => f({ paige_step: { id: "t:1", seq: 0, round: 1
 const DONE: Chunk = { wait: 60, data: "data: [DONE]\n\n" };
 
 const ACK = "I'll check your contacts, pipeline and open tasks for anyone who's gone quiet.";
+// C4c — PAIGE pauses the same piece of work to ask (frames c1–c6).
+const ASK_ID = "a5a5a5a5-1111-4222-8333-444444444444";
+const ASK_Q = "The Kestrel Group signed a 14-person engagement but didn't pick a start. Which start should I build?";
+const ASK_OPTIONS = [
+  { label: "Full kickoff", value: "full_kickoff", description: "90-minute workshop plus the intake form" },
+  { label: "Light start", value: "light_start", description: "Intake form now, kickoff next month" },
+  { label: "Mirror Lumen Freight", value: "mirror_lumen", description: "Copy the onboarding you ran for Lumen Freight" },
+];
+const askScript = (options: typeof ASK_OPTIONS | [], prompt: string): Chunk[] => [
+  turn("started", "WORKING", "pending"),
+  step("a:1:0", 1, "Reading The Kestrel Group's agreement", "running"),                              // hold=2 → c1
+  step("a:1:0", 1, "Read The Kestrel Group's agreement", "done", "14-person engagement · signed Oct 2", 800),
+  turn("waiting", "ASK_USER", "clarify"),
+  f({ paige_choices: { prompt, options, multi: false, allow_other: true, ask_id: ASK_ID } }),
+  DONE,
+];
 const NORMAL_BODY = "\n\nThree clients haven't heard from you in over two weeks:\n\n- **Priya Natarajan** — 19 days. Her last touch was the session recap on Sept 16.\n- **The Kestrel Group** — 16 days, and they're mid-onboarding.\n- **Lumen Freight** — 15 days, though Maya's week-7 session is Thursday.\n\nPriya is the one I'd move on first, so I added a follow-up for Fri 10:00.";
 const FP = "fp_7c1harness";
 
@@ -115,6 +134,8 @@ const scripts: Record<string, Chunk[]> = {
     step("a:1:1", 2, "Reviewing your pipeline", "running"),
     { wait: 3_600_000, data: "" },
   ],
+  ask: askScript(ASK_OPTIONS, ASK_Q),
+  askfree: askScript([], "The Kestrel Group signed but didn't pick a start date. When should the onboarding start?"),
   refused: [
     turn("started", "WORKING", "pending"),
     f({ client_scope: { status: "refused", kind: "permission", reason: "not_in_workspace" } }),
@@ -134,6 +155,29 @@ const followUps: Record<string, Chunk[]> = {
     DONE,
   ],
   declined: [turn("started", "WORKING", "pending"), turn("completed", "FINAL", "fast_answer", 300), say("Okay — it's not sent. The draft stays here if you change your mind."), DONE],
+  // C4c — the answer bound once; the same work picks back up (c3 → c4). followHold=3 → c3 running.
+  answered: [
+    turn("started", "WORKING", "pending"),
+    turn("resumed", "WORKING", "pending"),
+    step("b:1:0", 1, "Creating the intake form", "running"),
+    step("b:1:0", 1, "Created the intake form", "done", "8 questions", 900),
+    step("b:1:1", 2, "Linked it in Kestrel's welcome email", "done", "Saved to your drafts"),
+    turn("completed", "FINAL", "build"),
+    say("Got it — building the light start. The intake form is ready and linked in Kestrel's welcome email, which is waiting in your drafts."),
+    DONE,
+  ],
+  // …and the work the answer unblocked needs an approval: the card follows in the same answer.
+  answeredCard: [
+    turn("started", "WORKING", "pending"),
+    turn("resumed", "WORKING", "pending"),
+    step("b:1:0", 1, "Drafted Kestrel's welcome email", "done", "Starts the week of Nov 3"),
+    f({ paige_confirm: { tool: "send_email", summary: "Send the welcome email to The Kestrel Group", fingerprint: FP } }),
+    turn("waiting", "WAIT_APPROVAL", "action"),
+    say("Got it — November 1. Here's the welcome email; nothing goes out until you say so."),
+    DONE,
+  ],
+  // The person moved on instead of answering (c5): an ordinary message, an ordinary answer.
+  other: [turn("started", "WORKING", "pending"), turn("completed", "FINAL", "fast_answer", 300), say("Two sessions tomorrow: **Priya Natarajan** at 9:30 and **Maya Okafor** (Lumen Freight) at 2:00. Your afternoon after 3:00 is open."), DONE],
   // C4a — the same approval, carried forward by the server: it says `resumed`, runs the stored act
   // (the step), reports the card's outcome, and only then does PAIGE speak. followHold=3 → frame a3.
   resumed: [
@@ -156,7 +200,10 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const body = JSON.parse(String(init?.body ?? "{}"));
   const log = (window as unknown as { __c3: { requests: unknown[] } }).__c3.requests;
   log.push(body);
-  const chunks = body.approvedConfirmations ? (resume ? followUps.resumed : followUps.approved) : body.declinedConfirmations ? followUps.declined : (scripts[scenario] ?? scripts.normal);
+  const chunks = body.approvedConfirmations ? (resume ? followUps.resumed : followUps.approved) : body.declinedConfirmations ? followUps.declined
+    : body.resume ? (params.get("answerFollow") === "card" ? followUps.answeredCard : followUps.answered)
+    : log.length > 1 && scenario.startsWith("ask") ? followUps.other
+    : (scripts[scenario] ?? scripts.normal);
   const limit = log.length === 1 && hold !== null ? hold : log.length > 1 && followHold !== null ? followHold : chunks.length;
   const signal = init?.signal;
   return new Response(new ReadableStream<Uint8Array>({

@@ -302,7 +302,10 @@ const AUTHORITY_CLAIM = [
   new RegExp(`\\b(?:your |the )?approvals? (?:are|is|look|looks|seem|seems)\\s+(?:to be\\s+)?(?:off|disabled|turned off|switched off)\\b[^.!?\\n]{0,30}(?:\\b(?:so|then)\\s+|,\\s*)${SELF}\\b|\\b(?:since|because|as|now that|if you'?ve|if you have)\\b[^.!?\\n]{0,30}\\b(?:approvals?\\b[^.!?\\n]{0,15}\\b(?:off|disabled)|(?:disabled|turned off) (?:your )?approvals?)\\b[^.!?\\n]{0,30}${SELF}\\b`, "i"),
   // deciding a card is not needed, then acting on it: "This doesn't need a card, so I'll send it now."
   new RegExp(`\\b(?:this|that|it)\\s+(?:doesn'?t|does not|won'?t|will not)\\s+need\\s+(?:a|an|the|your|any)\\s+(?:approval card|card|approval|sign[- ]off)\\b[^.!?\\n]{0,20}(?:\\bso\\s+|,\\s*)${SELF}\\b`, "i"),
-  /\b(?:do(?:es)?|is|are|have|has)\s+(?:you|your (?:workspace|account|business)|the workspace|approvals?|approval controls?)\b[^.!?\n]{0,40}\b(?:approv\w*[^.!?\n]{0,40}\b)?(?:enabled|on|off|turned on|turned off|set up|required)\b[^.!?\n]*\?/i,
+  // Asking whether approvals are on. The question must be ABOUT approval: either approval is the subject
+  // ("Are approvals enabled?") or it is named after "you/your workspace" ("Do you have approvals on?").
+  // "What are you working on?" is not (prod replay 2026-10-06: 7 false hits when approval was optional).
+  /\b(?:do(?:es)?|is|are|have|has)\s+(?:(?:you|your (?:workspace|account|business)|the workspace)\b[^.!?\n]{0,40}\bapprov\w*|(?:your |the )?(?:approvals?|approval controls?))\b[^.!?\n]{0,40}\b(?:enabled|on|off|turned on|turned off|set up|required)\b[^.!?\n]*\?/i,
   new RegExp(`\\b${SELF}\\b[^.!?\\n]{0,60}(?<!\\b(?:the|a|an|this|that|your|his|her|their|my|our)\\s)\\b${WRITE_VERB}\\w*\\b[^.!?\\n]{0,50}\\b(?:without (?:the|a|an|any|your) (?:approval\\s+)?(?:card|approval|ok|sign[- ]off)|without approval|(?:no|without a) card needed|no approval (?:needed|required))\\b`, "i"),
   new RegExp(`\\b${SELF}\\s+(?:just\\s+)?(?:skip|bypass|go around|get around)\\s+(?:the |your )?(?:approvals?|cards?)\\b`, "i"),
 ];

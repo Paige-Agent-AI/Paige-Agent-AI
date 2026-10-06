@@ -348,3 +348,25 @@ Deno.test("review round 4 — the independent reviewer's 232 adversarial inputs,
   }
   assertEquals(wrong, []);
 });
+
+Deno.test("production replay at the round-4 head — ordinary questions are not approval questions", () => {
+  // The seven false hits a read-only replay of 30 days of PAIGE's own prose found when the approval-question
+  // rule made the word "approval" optional. Each is PAIGE asking what the person wants — never a claim.
+  const N = { cardMinted: false, standingCard: false };
+  for (const s of ["What are you actually trying to move on?",
+    "What are you looking to change or audit on it?",
+    "What have you got on hand for those five?",
+    "What do you want to focus on that doesn't depend on these pieces?",
+    "What do you want to test next that doesn't depend on the stuck approval cards?",
+    "Want me to try building the draft one more time, or do you want to hold off until your dev team looks at what's going on?",
+    "What are you working on?"]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+    assertEquals(unbackedClaim(s, { cardMinted: true, standingCard: false }), null, s);
+  }
+  // …while the real approval questions still read as PAIGE deciding approval.
+  for (const s of ["Here's what I need to know: does your workspace have approval controls enabled?",
+    "Are approvals enabled for your workspace?", "Are your approvals turned off?", "Do you have approvals on?",
+    "Is approval required for this?", "Are approval controls set up in your account?"]) {
+    assertEquals(unbackedClaim(s, N), "authority", s);
+  }
+});

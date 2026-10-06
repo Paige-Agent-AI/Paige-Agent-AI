@@ -178,6 +178,16 @@ in the same un-negated sentence; "need to … Approve" is an explanation) and th
 narrated card is not reachable by any wording rule: its turn was 2 minutes from another client's real proposal, so the
 evidence window counts it as backed — recorded, not tuned around.
 
+**Re-measured at the round-4 head (second read-only replay, 2026-10-06; 194 turns 09-07→10-06, md5-verified; guard
+copies taken by `git show` from each sha, row data deleted after).** `0470b4cae`: 6 hits, 6 true, 0 false. `14f3ccfb1`:
+**13 hits, 6 true, 7 false**, all `authority`. Cause: round 4 made "approv…" optional in the approval-question rule, so
+"What are you working on?", "What have you got on hand…?", "…do you want to hold off…?" matched. Fixed in the next
+commit: the question must name approval, either as its subject ("Are approvals enabled?") or after "you/your
+workspace". The seven prod sentences are now a unit test, which fails against `14f3ccfb1`. After the fix the guard
+again flags only the six true hits. One borderline miss at every head, not fixed: "Approval card coming for her deal
+next." (09-30, no card minted). "Next" is not read as now, and widening the announcement rule has regressed earlier
+rounds twice, so this is recorded rather than tuned.
+
 **Static:** `deno check paige-ai-chat/index.ts` — 10 diagnostics, identical codes to base (1 TS2339, 7 TS2345, 1 TS2740,
 1 TS2769). All 96 `npm run` steps in `ci.yml` pass except `test:deno-ratchet` (147/2: "a missing check tool FAILS") —
 **measured identical at base** in a clean worktree, environmental.

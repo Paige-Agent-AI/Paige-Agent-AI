@@ -27,7 +27,7 @@ const NOW = new Date('2026-10-06T12:00:00.000Z');
 
 function period(key = 'last_7_days', now = NOW, timezone = 'UTC'): SnapshotPeriod {
   const r = resolveSnapshotPeriod({ key, now, timezone });
-  if (!r.ok) throw new Error(`fixture period refused: ${r.reason}`);
+  if ('reason' in r) throw new Error(`fixture period refused: ${r.reason}`);
   return r.period;
 }
 
@@ -380,7 +380,7 @@ describe('validateDomainSnapshot', () => {
   it('keeps only a short, plain slice of an adapter-chosen unknown field name', () => {
     const r = ok({ ['bob@example.com' + 'x'.repeat(100)]: 1 });
     expect(r.ok).toBe(false);
-    if (!r.ok) {
+    if ('reason' in r) {
       expect(r.reason).toBe(`unknown_field:snapshot.bobexamplecom${'x'.repeat(27)}`);
       expect(r.reason).not.toContain('@');
     }
@@ -783,7 +783,7 @@ describe('projectOperatingSnapshot', () => {
     expect(s.domains.revenue).toEqual({ status: 'degraded', reason: 'invalid_shape:control_chars', data: null });
     // Even a snapshot that reached the projection some other way stays one fact per line.
     const tampered = JSON.parse(JSON.stringify(await compose({ domains: ['revenue', 'payments'] }))) as BusinessOperatingSnapshot;
-    (tampered.domains.revenue.data as { risks: unknown[] }).risks = [{ kind: 'k', summary: forged, severity: 'info' }];
+    (tampered.domains.revenue.data as unknown as { risks: unknown[] }).risks = [{ kind: 'k', summary: forged, severity: 'info' }];
     const out = projectOperatingSnapshot(tampered);
     const starts = out.split('\n').filter((l) => l.startsWith('[Payments'));
     expect(starts).toEqual(['[Payments and collections] NOT AVAILABLE — this area is not wired into the business read yet']);

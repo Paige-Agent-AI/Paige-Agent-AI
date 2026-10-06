@@ -936,7 +936,9 @@ function settle(
     const status = r.status;
     if (status === "available") {
       const checked = validateDomainSnapshot(r.data, { domain, period });
-      return checked.ok
+      // `in` narrows under both strict and the app tsconfig (strict:false), where a boolean
+      // discriminant alone does not.
+      return "snapshot" in checked
         ? contextAvailable(checked.snapshot)
         : contextDegraded(`${SNAPSHOT_REASON.invalidShape}:${checked.reason}`);
     }

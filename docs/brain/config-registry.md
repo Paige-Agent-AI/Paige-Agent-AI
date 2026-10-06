@@ -471,7 +471,7 @@ Values intentionally omitted.
   and the allow-list derives from them. Never hard-code an id elsewhere. What production actually runs is what
   `paige_llm_trace.model` records (the served id), not what a branch says. INT-329 part 2 moved
   reasoning from `claude-sonnet-5` to `claude-sonnet-5-5` by owner ruling (2026-10-06), which superseded the A/B gate.
-  `PAIGE_ANTHROPIC_AB_KEY` is NOT set and not required. The `model-ab` workflow stays only as an optional tool.
+  `PAIGE_ANTHROPIC_AB_KEY` is not required by that ruling (the owner declined to add it). The `model-ab` workflow stays only as an optional tool.
 - **LLM / model router (§14/§34):** `ANTHROPIC_API_KEY`, `OPENAI_BASE_URL`, `GROQ_BASE_URL`,
   `FEATHERLESS_API_KEY`, `FEATHERLESS_BASE_URL`, `FEATHERLESS_DEFAULT_MODEL` (primary open-flexible
   slug override; back-compat alias `FEATHERLESS_CHEAP_MODEL`), `FEATHERLESS_MODEL_<KIND>` (per-job-kind

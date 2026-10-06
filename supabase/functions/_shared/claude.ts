@@ -105,21 +105,40 @@ async function anthropicFailureDiagnostic(resp: Response): Promise<string> {
   });
 }
 
-export const CLAUDE_REASONING = "claude-sonnet-5";       // alias: auto-upgrades
-export const CLAUDE_CLASSIFICATION = "claude-haiku-4-5"; // alias: auto-upgrades
+// THE ONE SWITCH for which Claude model PAIGE reasons on. Every reasoning-tier path — Chat (streamed
+// and not), the tool loop, C4 resumes, Deep Research synthesis, drafting, the strategist, the eval
+// judge, visual critique, the callModel frontier cell and its fallback — resolves through this
+// constant; the allow-list derives from it and the trace records the id the provider served.
+// INT-329 (2026-10-06): claude-sonnet-5 → claude-sonnet-5-5. Same prices, tokenizer and context.
+// ROLLBACK = set this back to "claude-sonnet-5" and merge; CI redeploys every importer. Nothing else
+// needs to change: no request field a live path sends differs between the two models (proved by
+// scripts/model-migration/reasoning-tier-check.mjs). The dormant `paige_thinking` branch below sends
+// `thinking.type: "enabled"`, which BOTH models reject — it stays off (paige-ai-chat
+// STUDIO_THINKING_ENABLED=false) and must be rewritten before it is ever turned on.
+export const CLAUDE_REASONING = "claude-sonnet-5-5";
+export const CLAUDE_CLASSIFICATION = "claude-haiku-4-5"; // alias: the provider serves the current snapshot
 export type ClaudeTier = "reasoning" | "classification";
 
-function tierModel(tier: ClaudeTier): string {
+export function tierModel(tier: ClaudeTier): string {
   return tier === "reasoning" ? CLAUDE_REASONING : CLAUDE_CLASSIFICATION;
 }
 
-// The current reasoning-tier Claude models (Sonnet 5 / Opus 4.x / Fable 5) REJECT any non-default
-// sampling parameter (temperature/top_p/top_k) with an HTTP 400. The classification tier (Haiku 4.5)
-// still accepts them. Callers routinely pass a temperature, so strip it for the models that refuse it
-// rather than 400 the whole request — otherwise every reasoning call that sets temperature fails
-// (this was the paige-public-chat / paige-deep-research / paige-voice-chat 400->502 defect).
+// The current reasoning-tier Claude models (Sonnet 5 / Sonnet 5.5 / Opus 4.x / Fable 5) REJECT any
+// non-default sampling parameter (temperature/top_p/top_k) with an HTTP 400. The classification tier
+// (Haiku 4.5) still accepts them. Callers routinely pass a temperature, so strip it for the models that
+// refuse it rather than 400 the whole request — otherwise every reasoning call that sets temperature
+// fails (this was the paige-public-chat / paige-deep-research / paige-voice-chat 400->502 defect).
+// `sonnet-5` deliberately matches `sonnet-5-5` too.
 function modelRejectsSampling(model: string): boolean {
   return /sonnet-5|opus-4|fable-5/i.test(model);
+}
+
+// Sonnet 5.5 (like Opus 5.5 / Fable 5.1) REJECTS forced tool use — tool_choice {type:"any"} or
+// {type:"tool"} is an HTTP 400. The gateway paths already send only "auto"; this guards the one path
+// that forwards a caller's choice verbatim (callClaude), so a direct caller asking to force a tool
+// degrades to "auto" on these models instead of failing the request. Haiku keeps forced tool use.
+function modelRejectsForcedToolChoice(model: string): boolean {
+  return /sonnet-5-5|opus-5-5|fable-5-1/i.test(model);
 }
 
 // Map a legacy gateway model string to a Paige tier, preserving the original
@@ -224,7 +243,7 @@ export interface ClaudeCallOpts {
   maxTokens?: number;         // default 2048
   temperature?: number;
   tools?: unknown[];          // Anthropic tool schema: {name, description, input_schema}
-  toolChoice?: unknown;       // {type:"auto"|"any"|"tool", name?}
+  toolChoice?: unknown;       // {type:"auto"|"any"|"tool", name?} — any/tool degrade to auto on the reasoning tier
   stopSequences?: string[];
   signal?: AbortSignal;
   /** §34 L1.1 — OPT-IN trace: a DIRECT callClaude caller (one that bypasses callModel/routedChatCompletion)
@@ -280,7 +299,10 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
   if (opts.system) body.system = opts.system;
   if (opts.temperature != null && !modelRejectsSampling(model)) body.temperature = opts.temperature;
   if (opts.tools?.length) body.tools = opts.tools;
-  if (opts.toolChoice) body.tool_choice = opts.toolChoice;
+  if (opts.toolChoice) {
+    const forced = ["any", "tool"].includes((opts.toolChoice as { type?: string })?.type ?? "");
+    body.tool_choice = forced && modelRejectsForcedToolChoice(model) ? { type: "auto" } : opts.toolChoice;
+  }
   if (opts.stopSequences?.length) body.stop_sequences = opts.stopSequences;
 
   const t0 = Date.now();
@@ -314,7 +336,8 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
       traceLLMCall({
         ...opts.trace,
         provider: "anthropic",
-        model,
+        // The id the provider SERVED (an alias resolves to a concrete snapshot), else what we asked for.
+        model: typeof data?.model === "string" ? data.model : model,
         job_kind: opts.trace.job_kind ?? "text",
         modality: "text",
         status: "success",
@@ -419,6 +442,12 @@ export function resolveRequestTier(body: OpenAIStyleBody, tierOverride?: ClaudeT
   return base;
 }
 
+/** The Claude model id a gateway-shaped request resolves to — what a trace names when the call fails
+ *  before the provider echoes one. Never the caller's legacy label (`google/gemini-…`), never null. */
+export function resolvedClaudeModel(body: OpenAIStyleBody, tierOverride?: ClaudeTier): string {
+  return tierModel(resolveRequestTier(body, tierOverride));
+}
+
 export async function chatCompletionCompat(body: OpenAIStyleBody, tierOverride?: ClaudeTier, signal?: AbortSignal): Promise<any> {
   // Extract system + translate messages (incl. assistant tool_calls -> tool_use).
   const { system: sys0, msgs } = splitMessages(body.messages as OaiMessage[]);
@@ -519,8 +548,8 @@ function buildClaudeRequest(body: OpenAIStyleBody): Record<string, unknown> {
     // (persona + voice + context blocks + tools). Top-level cache_control makes the API
     // cache the prefix and move the breakpoint forward as conversations grow — cache
     // reads bill at 0.1x, which is the single biggest Anthropic-spend lever for the
-    // main chat. Minimum cacheable length (Sonnet 5: 1024 tokens) is far exceeded by
-    // the assembled chat prompt; prompts below the floor cache silently as no-ops.
+    // main chat. Minimum cacheable length (Sonnet 5.5: 512 tokens; Haiku 4.5 higher) is far
+    // exceeded by the assembled chat prompt; prompts below the floor cache silently as no-ops.
     cache_control: { type: "ephemeral" },
   };
   if (system) req.system = system;
@@ -603,6 +632,9 @@ async function streamAnthropicAsOpenAI(
       // Cache counts ride the SAME message_start usage object that input_tokens does.
       let cacheReadTok: number | null = null;
       let cacheCreateTok: number | null = null;
+      // The id the provider actually served (message_start echoes it). The request carries an
+      // alias; the trace is evidence, so it records what ran.
+      let servedModel: string | null = null;
       let outText = "";
       let streamErrored = false;
       send(controller, { choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
@@ -621,6 +653,7 @@ async function streamAnthropicAsOpenAI(
             let ev: any;
             try { ev = JSON.parse(js); } catch { continue; }
             if (ev.type === "message_start") {
+              if (typeof ev.message?.model === "string") servedModel = ev.message.model;
               inTok = ev.message?.usage?.input_tokens ?? inTok;
               // `?? previous`, never `?? null`: an absent field must not erase a reported value.
               cacheReadTok = ev.message?.usage?.cache_read_input_tokens ?? cacheReadTok;
@@ -672,7 +705,7 @@ async function streamAnthropicAsOpenAI(
           traceLLMCall({
             ...trace,
             provider: "anthropic",
-            model: streamModel,
+            model: servedModel ?? streamModel,
             job_kind: trace.job_kind ?? "chat",
             modality: "text",
             status: streamErrored ? "error" : "success",
@@ -760,7 +793,8 @@ export async function gatewayCompat(
     traceLLMCall({
       ...ctx,
       provider: "anthropic",
-      model: data?.model ?? (typeof parsed.model === "string" ? parsed.model : null),
+      // `parsed.model` is the caller's legacy gateway label, never a Claude id — never trace it.
+      model: data?.model ?? resolvedClaudeModel(parsed),
       job_kind: ctx.job_kind ?? "chat",
       modality: "text",
       status: "success",
@@ -779,7 +813,8 @@ export async function gatewayCompat(
     traceLLMCall({
       ...ctx,
       provider: "anthropic",
-      model: typeof parsed.model === "string" ? parsed.model : null,
+      // The Claude model the request resolved to — what rejected it — not the caller's legacy label.
+      model: resolvedClaudeModel(parsed),
       job_kind: ctx.job_kind ?? "chat",
       modality: "text",
       status: "error",

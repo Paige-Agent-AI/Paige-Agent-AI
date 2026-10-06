@@ -25,7 +25,7 @@
  * that only runs on the author's Node version is not a gate. The loader is already proven in CI by
  * the sibling `trace-wiring` suite and is version-independent.
  */
-import { estimateTokenCostUsd, tokenRate } from "../../supabase/functions/_shared/token-pricing.ts";
+import { ANTHROPIC_MODEL_PER_1K, estimateTokenCostUsd, tokenRate } from "../../supabase/functions/_shared/token-pricing.ts";
 
 let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) { pass++; } else { fail++; console.log(`  FAIL  ${name}`); } };
@@ -51,6 +51,13 @@ eq(tokenRate("anthropic", "claude-sonnet-5").in, tokenRate("anthropic", null).in
    "1.7 §33 critique routes claude-sonnet-5; its rate equals the old provider default (cap unmoved)");
 eq(tokenRate("anthropic", "claude-sonnet-5").out, tokenRate("anthropic", null).out,
    "1.8 …on the output rate too");
+// INT-329: the reasoning tier moved to claude-sonnet-5-5. Pricing it by VALUE alone cannot tell "matched
+// the Sonnet row" from "fell back to the provider default" (both are 0.003/0.015), so the matched row is
+// asserted by name — an unknown-model fallback must never be what prices the live reasoning tier.
+eq(ANTHROPIC_MODEL_PER_1K.find(([needle]) => "claude-sonnet-5-5".includes(needle))?.[0], "sonnet",
+   "1.9 claude-sonnet-5-5 is priced by the explicit Sonnet row, not the unknown-model default");
+eq(estimateTokenCostUsd("anthropic", "claude-sonnet-5-5", 1000, 1000), estimateTokenCostUsd("anthropic", "claude-sonnet-5", 1000, 1000),
+   "1.10 …at the same estimate as claude-sonnet-5 (list prices are identical, so the A/B is like-for-like)");
 
 // ── 2. UNKNOWN IS NOT ZERO ──────────────────────────────────────────────────────────────────
 console.log("2. an unpriceable call returns undefined, never 0");

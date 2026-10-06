@@ -129,8 +129,9 @@ export function saysItWasDone(text: string): boolean {
 }
 const SAYS_DONE = /\b(?:all set|taken care of|it'?s handled|that'?s handled)\b|(?:^|[.!?:]\s+)(?:done|sorted|all done)(?=\s*[.!,—–-]|\s*$)|\bi'?ve (?:just |now |already |gone ahead and )?(?:linked|sent|re-?sent|added|created|updated|moved|scheduled|booked|queued|set (?:it |that |this )?up|tagged|enrolled|logged|saved|filed|posted|published|changed|assigned|marked|cancell?ed|fired|submitted|raised|attached|converted|merged|refunded|issued|texted|emailed|messaged|pinged|notified|imported|invited|connected|synced|launched|pushed|forwarded|shared|waived|extended|rebooked|unsubscribed|fixed|restored|approved)\b|\bi (?:just |already |went ahead and )?(?:sent|linked|added|moved|updated|forwarded|shared|waived|booked|scheduled|emailed|texted)\b|(?:^|[.!?:]\s+)(?:added|linked|sent|re-?sent|queued|moved|booked|scheduled|tagged|enrolled|posted|published|logged|filed|assigned|attached|submitted|texted|emailed|messaged|pinged|notified|imported|archived|refunded|charged|invited|forwarded|shared|waived|rebooked|unsubscribed|looped|updated|changed|saved|created)\b(?! by| below| above| version| draft below)|\b(?:sent|forwarded|emailed|texted|shared) (?:it|that|them|this) (?:to|over to|with)\b|\b(?:\w+ing)\b[^.!?\n]{0,25}\bnow\b(?![^.!?\n]*\?)/i;
 
-/** The server's line after a held offer's last reply when no tool ran: true in every case. */
-export const NOTHING_RAN_NOTE = "No tool ran in this reply, so nothing above was sent, saved or changed.";
+/** The server's line after a held offer's last reply when nothing was written: true in every case, including a
+ * reply that reports something done earlier ("it was already sent on Monday") — it speaks only of this reply. */
+export const NOTHING_RAN_NOTE = "Nothing was sent, saved or changed in this reply.";
 // A reply that says it is done ("Done.", "Linked!", "Sorted.") cannot also be "the step can no longer be done".
 const DONE_WORDS = /\b(?:done|all set|sorted|it'?s handled|that'?s handled|taken care of)\b|(?:^|[.!?:]\s+)(?:\w+ed|sent|done|set)!/i;
 

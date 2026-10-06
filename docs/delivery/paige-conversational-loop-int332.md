@@ -198,6 +198,34 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5i. Independent review — round 9 (`f2357dac6`): FIX_FIRST, fixed
+
+- **B1: a prose offer accepted with "go ahead", "please do" or "do it" lost its answer.** Accepting an offer
+  bypassed the C1 text heuristic only for held kinds, so an accepted prose offer fell through to
+  `ACTION_INTENT_RE` on the person's words. The answer was continued, and the generic sentence then replaced it
+  (12 of 23 common acceptance phrasings).
+  - **Fix:** an accepted offer decides action intent on its own. Held kinds are action, prose is not.
+  - 43.25.B1 covers four phrasings; it fails with the old line.
+- **S1: cost and pressure on unknown steps.** 42% of realistic prose offers classify as unknown. Each took four
+  reasoning-tier calls under "call its tool".
+  - **Fix:** an unknown step gets ONE continuation, with a neutral message: "if it changes something, call its
+    tool; if it is only an answer, give it in full".
+  - Two calls, then the kept reply with the line (43.25.S1).
+- **S2: the line was false beside a past fact.** "It was already sent on Monday" was followed by "nothing above was
+  sent". The line now speaks only of this reply: **"Nothing was sent, saved or changed in this reply."**
+- **S3: a read then a made-up result stood** ("Linked!" after a contact search), and a failed continuation left the
+  reply with no line.
+  - **Fix:** on a held offer, writes (MUTATING_TOOLS, plus ask_choices) and cards end the turn. A read ends it only
+    when the reply does not read as done (`saysItWasDone`). The kept-reply line is now keyed on "nothing was
+    written" rather than "no tool ran", and it also covers a failed continuation call.
+  - Tests: 43.25.T1, F2, and T0 (a read offer answered from the read still ends in two calls).
+  - Mutations: the old isActionIntent fails 4 tests; counting reads as acting fails 1.
+- **Not changed (NIT):**
+  - "Yes, make it warmer" is not a bare acceptance, so it takes the ordinary C1 path. This was true at every head.
+  - The prose-note path reports mode `fast_answer`, which is cosmetic.
+
+Harness 899/0. Deno 22/22. `deno check` 10, identical to base.
+
 ### 5h. Independent review — round 8 (`2e29e8f74`) + second production replay: FIX_FIRST, outcome made safe
 
 Round 8 found the same two-list problem inside the round-7 completion list.

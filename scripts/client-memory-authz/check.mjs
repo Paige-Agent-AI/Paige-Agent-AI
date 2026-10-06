@@ -7951,8 +7951,10 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     ["43.24.N7", LINK6, "Dana is already linked to that deal, so there's nothing to do."],
   ]) {
     const o = await held6(offer, "sure", text);
-    assert(`${id} a held offer with no tool: four rounds, then the reply KEPT with the server's line that nothing ran — ${text}`,
-      o.calls === 4 && o.saved === keptWithNote(text) && o.terminal === "LIMIT_REACHED" && o.rows === 0, JSON.stringify(o));
+    // an act gets three continuations, an unknown step one (round 9)
+    const rounds = ["43.24.S4", "43.24.U1", "43.24.S5"].includes(id) ? 2 : 4;
+    assert(`${id} a held offer with nothing written: ${rounds} rounds, then the reply KEPT with the server's line — ${text}`,
+      o.calls === rounds && o.saved === keptWithNote(text) && o.terminal === "LIMIT_REACHED" && o.rows === 0, JSON.stringify(o));
   }
   // a PROSE offer is never held: a reply that reads as if it did something gets the line beneath it, nothing else
   for (const [id, offer, text] of [
@@ -7972,6 +7974,35 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     const o = await held6(LINK6, "sure", text);
     assert(`${id} accepted act that can no longer be done ends as said: ${text}`, o.calls === 1 && o.saved === text, JSON.stringify(o));
   }
+
+  // 43.25 (review round 9) — an accepted offer decides action intent alone, whatever words said yes; an unknown
+  // step gets one continuation; a read alone is not the step when the reply then claims it; a failed continuation
+  // still gets the server's line; the line is true beside a past fact.
+  const heldWith = async (offer, reply, script, extra = {}) => {
+    const st = makeThreadStore(THREADS), cs = makeConfirmStore(), dbx = crmDb();
+    seedOffer(st, THREAD_FRESH, { history: 1, offer });
+    const rr = await turn(st, cs, dbx, { text: reply, threadId: THREAD_FRESH, script, ...extra });
+    return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
+  };
+  const WARM = "Here it is, warmer:\n\nHi Dana, hope your week is going well. Just checking you got the link.";
+  for (const reply of ["yes please do", "go ahead", "yeah let's do it", "perfect, do it"]) {
+    const o = await heldWith("Here's your draft.\n\nWant me to make it warmer?", reply, x4(WARM));
+    assert(`43.25.B1 a prose offer accepted with "${reply}": the answer stands after one call`, o.calls === 1 && o.saved === WARM && o.terminal === "FINAL", JSON.stringify(o));
+  }
+  const HEAD = "Try this: \"Win back ten hours a week, without hiring.\"";
+  const u = await heldWith("That's the landing page.\n\nWant me to punch up the headline?", "sure", x4(HEAD));
+  assert("43.25.S1 an unknown step gets ONE continuation: two calls, the answer kept with the line", u.calls === 2 && u.saved === keptWithNote(HEAD), JSON.stringify(u));
+  const PAST = "Looks like it was already sent on Monday and she opened it Tuesday, so there's no need to resend.";
+  const pa = await heldWith("Dana's invoice is on file.\n\nWant me to resend the invoice to her?", "sure", x4(PAST));
+  assert("43.25.S2 a held reply reporting a past fact is kept, and the line speaks only of this reply", pa.saved === keptWithNote(PAST) && NOTE === "Nothing was sent, saved or changed in this reply.", JSON.stringify(pa));
+  const FAKE = "Linked! Dana's deal is now attached to her contact.";
+  const rt = await heldWith(LINK6, "sure", [{ name: "crm_search_contacts", args: { query: "Dana" } }, FAKE, FAKE, FAKE, FAKE]);
+  assert("43.25.T1 a read then a made-up result is not the step: held, kept with the line, nothing proposed", rt.saved === keptWithNote(FAKE) && rt.rows === 0, JSON.stringify(rt));
+  const READ_OK = "Here are Dana's deals: Acme ($4,000, Proposal Sent) and Bolt ($1,200, Won).";
+  const ro = await heldWith("Dana has two deals.\n\nWant me to pull up her deals?", "sure", [{ name: "crm_search_contacts", args: { query: "Dana" } }, READ_OK]);
+  assert("43.25.T0 a read offer answered from the read ends the turn: no hold, no line", ro.calls === 2 && ro.saved === READ_OK && ro.terminal === "FINAL", JSON.stringify(ro));
+  const ff = await heldWith(LINK6, "sure", [FAKE, FAKE], { failStreamCalls: [2] });
+  assert("43.25.F2 the continuation call fails: the reply is still followed by the server's line", ff.saved === keptWithNote(FAKE), JSON.stringify(ff));
 
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.

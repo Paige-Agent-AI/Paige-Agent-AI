@@ -15932,6 +15932,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // event machinery. No second runner, no unbounded loop: a hard budget stops it.
       const MAX_CONTINUATIONS = 3;
       let continuationsUsed = 0;
+      // INT-332 — on a held accepted offer a read alone is not the step: count what changes something.
+      let writeAttempts = 0;
+      let continuationFailed = false;
+      // An unknown step gets one continuation, not three: it may well be an answer (review round 9).
+      const continuationLimit = acceptedKind === "unknown" && heldAccept ? 1 : MAX_CONTINUATIONS;
       // Action intent is CONSERVATIVE on purpose: imperative mutations the platform actually
       // performs. A question (ending in "?"), a greeting, or a bare statement is a terminal
       // state — the assignment forbids continuing after a genuine question that needs the
@@ -15940,7 +15945,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const isActionIntent = (() => {
         if (callerTier === "client") return false; // client seats' tools are deny-by-default
         // INT-332 — accepting PAIGE's own single offer is a request for that action, in any words.
-        if (heldAccept) return true;
+        // An accepted offer decides it alone: held steps are action, an accepted prose answer is not — whatever
+        // words the person used to say yes ("go ahead", "please do"; review round 9).
+        if (acceptedKind !== null && resumeCalls.length === 0 && !answerResume) return heldAccept;
         const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
         const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
         if (!text || text.length < 3) return false;
@@ -16404,6 +16411,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             totalToolCalls += sumToolCost(executed);
+            writeAttempts += executed.filter((tc: any) => MUTATING_TOOLS.has(tc?.function?.name) || tc?.function?.name === "ask_choices").length;
             if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
             // What stays at the round's end reads the round as a whole, after the approval rewrite:
@@ -16530,20 +16538,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           }
           if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
-              && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
+              && isActionIntent && continuationsUsed < continuationLimit && !studioSessionId) {
             const acceptedTurn = heldAccept;
             const proseTerminal = typeof finalAssistantText === "string"
               && (acceptedTurn
                 ? (PROSE_REFUSAL_RE.test(finalAssistantText) || NO_LONGER_POSSIBLE.test(finalAssistantText))
                 : (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?")));
-            const signalTerminal = totalToolCalls > 0
+            // On a held offer a read alone does not end it when the reply then says it did the step ("Linked!").
+            const readThenClaims = acceptedTurn && writeAttempts === 0 && typeof finalAssistantText === "string" && saysItWasDone(finalAssistantText);
+            const signalTerminal = (totalToolCalls > 0 && !readThenClaims)
               || queuedApprovals.length > 0
               || confirmTrace.length > 0
               || crmResultTrace.length > 0;
             if (!signalTerminal && !proseTerminal) {
               continuationsUsed += 1;
               convo.push({ role: "assistant", content: finalAssistantText || "" });
-              convo.push({ role: "user", content: acceptedTurn
+              convo.push({ role: "user", content: acceptedTurn && acceptedKind === "unknown"
+                ? "The person accepted what you offered. If it changes a record or sends something, nothing has been done yet — call its tool now (when it needs their approval, the tool puts the card in front of them). If it is only an answer, give that answer in full, without saying anything was done."
+                : acceptedTurn
                 ? "The person accepted the step you offered, and it has not been done: no tool ran in this turn, so nothing was sent or changed, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
@@ -16560,12 +16572,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   // paige-turn — the request was already judged unresolved, and the retry failed: the
                   // prose stands on the wire, but the turn did not finish what it set out to do.
                   turnTracker.interrupted();
+                  continuationFailed = true;
                 }
               } catch (e) {
                 // Budget-exceeded or a transport throw: the prose we already have stands, and the turn
                 // records why it stopped — a spend ceiling is a limit, anything else an interruption.
                 if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
                 else turnTracker.interrupted();
+                continuationFailed = true;
               }
             }
           }
@@ -16604,16 +16618,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // `[DONE]`), it is complete by construction, and the ONE replay path sends terminal →
           // paige_phase → exactly the saved sentence → [DONE], held and released like any other on a
           // protected turn. A client seat never reaches this branch (`isActionIntent` is false there).
+          // INT-332 — a held accepted offer that ran out of rounds (or whose continuation failed) with nothing
+          // changed: its last reply is KEPT, followed by the server's line. True whether that reply was an answer,
+          // a question, or a made-up result (the line contradicts it). A read may have run; nothing was written.
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && heldAccept && !claimAnswered
+              && (continuationsUsed >= continuationLimit || continuationFailed) && writeAttempts === 0
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
+              && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
+            finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
+            if (!continuationFailed) turnTracker.budgetStop();
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+            claimAnswered = true;
+          }
           if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent && !claimAnswered
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId) {
-            // INT-332 — on a held accepted offer the last reply is kept, followed by the server's line that nothing
-            // ran: true whether that reply was an answer (it stays) or a made-up result (the line contradicts it).
-            const keptReply = heldAccept && typeof finalAssistantText === "string" ? finalAssistantText.trim() : "";
-            const exhausted = keptReply
-              ? `${keptReply}\n\n${NOTHING_RAN_NOTE}`
-              : "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+            const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
             finalAssistantText = exhausted;
             turnTracker.budgetStop();
             finalChunks = [
@@ -16625,7 +16650,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // INT-332 — an accepted PROSE offer is not held, but a reply that reads as if it did something while no
           // tool ran gets the server's line beneath it. Only a line is added: the answer itself always stands.
           if (finalChunks && !liveRuntimeScope && !forcedTermination && !claimAnswered && !studioSessionId
-              && acceptedKind === "prose" && totalToolCalls === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
+              && acceptedKind === "prose" && writeAttempts === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
               && typeof finalAssistantText === "string" && finalAssistantText.trim() && saysItWasDone(finalAssistantText)) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
             finalChunks = [

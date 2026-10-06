@@ -582,7 +582,8 @@ Deno.test("review round 7 + production replay — the kind of step decides how i
     assertEquals(offerKind(W(o)), "prose", o);
   }
   // The server's line after a held reply is true whatever that reply said.
-  assert(/no tool ran/i.test(NOTHING_RAN_NOTE) && /nothing above was sent, saved or changed/.test(NOTHING_RAN_NOTE));
+  // It speaks only of this reply, so it stays true beside "it was already sent on Monday" (round 9).
+  assertEquals(NOTHING_RAN_NOTE, "Nothing was sent, saved or changed in this reply.");
   // Honest impossibilities end an accepted act; a claimed result beside one does not.
   for (const t of ["That meeting was cancelled, so there's nothing to reschedule.", "Since then the deal has been archived.",
     "That contact no longer exists in your CRM, so I have nothing to link.", "That deal was deleted, so I've left everything as is.",

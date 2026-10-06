@@ -373,5 +373,49 @@ for (const status of ["cancelled", "queued", "in_progress"]) {
   ok(r.reasoning.effort === "low" && l.reasoning.effort === "none", "7.10 Sol never receives effort none (it rejects it); Luna keeps it");
 }
 
+console.log("8. review round 2 — served-id tag in the stream, {} in non-stream results, contradicted .done, terminal status");
+{
+  const r = ad.toChatCompletion({ model: "gpt-6.1-sol", status: "completed", output: [{ type: "function_call", call_id: "c9", name: "ping", arguments: "" }] }, "gpt-6.1-sol");
+  ok(r.choices[0].message.tool_calls[0].function.arguments === "{}", "8.1 a non-streamed call with no arguments comes back as {}, not an empty string");
+}
+{
+  const t = transport(() => sse([
+    { type: "response.created", response: { model: "gpt-6.1-sol-2026-09-30" } },
+    { type: "response.output_item.done", output_index: 0, item: { type: "reasoning", id: "rs_1", encrypted_content: "E", summary: [] } },
+    { type: "response.output_text.delta", delta: "hi" },
+    { type: "response.completed", response: { model: "gpt-6.1-sol-2026-09-30", status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } },
+  ]));
+  const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", fetchImpl: t });
+  const f = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
+  const tagged = f.find((p) => p.choices[0].delta.paige_provider_items);
+  ok(tagged?.choices[0].delta.paige_provider === "openai:gpt-6.1-sol", "8.2 streamed reasoning is tagged with the REQUESTED model, so a dated served id still replays");
+}
+{
+  const from = traceCount();
+  const t = transport(() => sse([
+    { type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "fc_m", call_id: "call_m", name: "crm_contact_lookup", arguments: "" } },
+    { type: "response.function_call_arguments.delta", item_id: "fc_m", delta: "{\"q\":\"X" },
+    { type: "response.function_call_arguments.done", item_id: "fc_m", arguments: "{\"z\":1}" },
+    { type: "response.completed", response: { model: "gpt-6.1-sol", status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } },
+  ]));
+  const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }], tools: [TOOL] }, { model: "gpt-6.1-sol", fetchImpl: t }, TRACE);
+  const f = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
+  const [row] = await tracesSince(from);
+  ok(!f.some((p) => p.choices[0].finish_reason) && row?.status === "error" && row.error_message === "tool_arguments_mismatch",
+     "8.3 a .done that contradicts the streamed arguments fails the turn (no finish, traced error)");
+}
+{
+  const from = traceCount();
+  const t = transport(() => sse([
+    { type: "response.output_text.delta", delta: "partial" },
+    { type: "response.completed", response: { model: "gpt-6.1-sol", status: "cancelled", usage: { input_tokens: 1, output_tokens: 1 } } },
+  ]));
+  const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", fetchImpl: t }, TRACE);
+  const f = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
+  const [row] = await tracesSince(from);
+  ok(!f.some((p) => p.choices[0].finish_reason) && row?.status === "error" && row.error_message === "response_cancelled",
+     "8.4 a terminal event whose own status is cancelled is an error in the stream, as it is without streaming");
+}
+
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

@@ -100,7 +100,7 @@ The work ships as bounded PRs, R1–R12. Each entry below labels its evidence cl
   Cached-input pricing stays with INT-331.
 
 ### Proof
-- **Automated:** `npm run test:openai-responses` gives 79/0 (after review round 1), through the real adapter with an injected transport and the recording fake Supabase. It is wired into CI. Eleven planted defects were each caught:
+- **Automated:** `npm run test:openai-responses` gives 83/0 (after review round 2), through the real adapter with an injected transport and the recording fake Supabase. It is wired into CI. Eleven planted defects were each caught:
   - `store:true`;
   - hosted tools allowed;
   - a forced `tool_choice` passed through;
@@ -136,6 +136,16 @@ The work ships as bounded PRs, R1–R12. Each entry below labels its evidence cl
 8. **The adapter did not enforce its own limits.** It now enforces the allow-list, and Sol and Astra never receive effort `none`.
 9. **A pricing comment was false.** The `token-pricing.ts` comment is now model-neutral.
 
-Gate: 79/0. Each of the 9 findings was reinstated and caught, alongside the earlier 11 defects.
+Gate: 79/0 at the end of round 1. **Correction (round 2):** the claim that each of the 9 findings was reinstated and caught was overstated. Re-reinstating them, the confirming reviewer found two that passed: the stream tagging reasoning with the served id (finding 1) and the non-stream result returning `""` arguments (finding 6). Both now have their own tests (8.2, 8.1).
+
+### Review round 2 (independent confirmation, SHIP)
+All nine round-1 fixes were confirmed against the real module. Further findings, all Low:
+- **L1, fixed.** A `.done` that contradicted the streamed arguments finished as a clean tool call carrying invalid JSON. Those bytes are already sent, so the turn is now a traced `tool_arguments_mismatch` error with no finish (8.3).
+- **L2, fixed.** The stream trusted the `response.completed` event name. A terminal response whose own status is `cancelled` (or anything other than `completed`/`incomplete`) is now an error, matching the non-stream path (8.4).
+- **L3, fixed.** The two coverage gaps above (8.1, 8.2).
+- **L4, carried to R7.** Replay puts a turn's reasoning items before its text and calls. If one output interleaves reasoning and calls, the provider may reject the reordered replay. Unverified live; R7 tests it.
+- **Info.** Trace `input` is `body.messages`, so replayed encrypted reasoning blobs reach `paige_llm_trace.input`, up to its truncation limit. Dated served ids are refused by the allow-list; callers pass the alias.
+
+Gate: 83/0. Each of the four round-2 fixes was reverted on its own and caught by exactly its own test (M1→8.2, M2→8.1, M3→8.3, M4→8.4).
 
 **Carried to R5–R7:** the stream can finish with `length` or `content_filter`. `paige-ai-chat` treats any `finish_reason` as finished (index.ts ~9648, ~16757), so a refusal or a truncation must be surfaced when the seam is wired.

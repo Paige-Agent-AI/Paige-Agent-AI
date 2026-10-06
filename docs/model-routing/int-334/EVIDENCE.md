@@ -100,7 +100,7 @@ The work ships as bounded PRs, R1–R12. Each entry below labels its evidence cl
   Cached-input pricing stays with INT-331.
 
 ### Proof
-- **Automated:** `npm run test:openai-responses` gives 83/0 (after review round 2), through the real adapter with an injected transport and the recording fake Supabase. It is wired into CI. Eleven planted defects were each caught:
+- **Automated:** `npm run test:openai-responses` gives 84/0 (after review round 3), through the real adapter with an injected transport and the recording fake Supabase. It is wired into CI. Eleven planted defects were each caught:
   - `store:true`;
   - hosted tools allowed;
   - a forced `tool_choice` passed through;
@@ -147,5 +147,12 @@ All nine round-1 fixes were confirmed against the real module. Further findings,
 - **Info.** Trace `input` is `body.messages`, so replayed encrypted reasoning blobs reach `paige_llm_trace.input`, up to its truncation limit. Dated served ids are refused by the allow-list; callers pass the alias.
 
 Gate: 83/0. Each of the four round-2 fixes was reverted on its own and caught by exactly its own test (M1→8.2, M2→8.1, M3→8.3, M4→8.4).
+
+### Review round 3 (independent, on the round-2 commit, SHIP)
+- **Low, fixed.** An early `.done` with empty arguments emitted the `{}` fallback, so a later event carrying the real arguments became a mismatch error. The fallback is now emitted only when the stream finishes (8.5; reverting it fails 8.5, and dropping the end-of-stream fallback fails 7.8).
+- **Low, accepted.** A `.done` that differs from the streamed deltas only in whitespace is treated as a mismatch. OpenAI's `.done` is the exact joined deltas, so this is a deliberate strict choice.
+- **Carried to R7.** Tool-call deltas from a turn that fails are already on the wire. The R7 caller must act on tool calls only after a `tool_calls` finish, never on deltas from an unfinished turn.
+
+Gate: 84/0.
 
 **Carried to R5–R7:** the stream can finish with `length` or `content_filter`. `paige-ai-chat` treats any `finish_reason` as finished (index.ts ~9648, ~16757), so a refusal or a truncation must be surfaced when the seam is wired.

@@ -797,7 +797,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
 - It reports honestly: errors, failed or truncated streams and refusals are never a clean success.
 - Traces carry the served model and cached tokens separately.
 - The allow-list and pricing gain the three ids: $0.10/$0.50, $2/$10 and $10/$50 per MTok.
-- Proof: `test:openai-responses` 83/0, in CI. A first independent review returned BLOCK on 9 findings, all fixed. A second confirmed them (SHIP) and found 3 Low issues, also fixed: a contradicted streamed `.done` and a stream ending `cancelled` are now errors, and two fixes that had no test now do. Every round-2 fix, reverted alone, fails its own test. One Low item (replay ordering when reasoning interleaves with calls) is carried to R7. The existing model gates are unchanged.
+- Proof: `test:openai-responses` 83/0, in CI. A first independent review returned BLOCK on 9 findings, all fixed. A second confirmed them (SHIP) and found 3 Low issues, also fixed: a contradicted streamed `.done`, and a stream whose terminal status is anything but completed or incomplete, are now errors, and two fixes that had no test now do. Every round-2 fix, reverted alone, fails its own test. One Low item (replay ordering when reasoning interleaves with calls) is carried to R7. The existing model gates are unchanged.
 - Live behaviour is UNVERIFIED until R7 routes to it. The owner set and rotated `OPENAI_API_KEY` on 2026-10-06.
 - The R0 routing map and the R2 evidence are in [INT-334 evidence](model-routing/int-334/EVIDENCE.md).
 

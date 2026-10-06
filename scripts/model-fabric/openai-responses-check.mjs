@@ -417,5 +417,19 @@ console.log("8. review round 2 — served-id tag in the stream, {} in non-stream
      "8.4 a terminal event whose own status is cancelled is an error in the stream, as it is without streaming");
 }
 
+{
+  // An early empty `.done`, then the item's real arguments: the real arguments win, cleanly.
+  const t = transport(() => sse([
+    { type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "fc_e", call_id: "call_e", name: "crm_contact_lookup", arguments: "" } },
+    { type: "response.function_call_arguments.done", item_id: "fc_e", arguments: "" },
+    { type: "response.output_item.done", output_index: 0, item: { type: "function_call", id: "fc_e", call_id: "call_e", name: "crm_contact_lookup", arguments: "{\"q\":1}" } },
+    { type: "response.completed", response: { model: "gpt-6.1-sol", status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } },
+  ]));
+  const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }], tools: [TOOL] }, { model: "gpt-6.1-sol", fetchImpl: t });
+  const f = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
+  const args = f.flatMap((p) => p.choices[0].delta.tool_calls ?? []).map((c) => c.function?.arguments ?? "").join("");
+  ok(args === "{\"q\":1}" && f.some((p) => p.choices[0].finish_reason === "tool_calls"), "8.5 an early empty .done does not pre-empt the arguments that arrive later");
+}
+
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

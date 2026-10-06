@@ -432,14 +432,14 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
         t.emitted += delta;
         send(c, { choices: [{ index: 0, delta: { tool_calls: [{ index: t.index, function: { arguments: delta } }] }, finish_reason: null }] });
       };
-      /** At the end of a call: emit whatever the deltas missed, or "{}" when the call had no arguments. */
+      /** At the end of a call: emit whatever the deltas missed. A call that never gets arguments is given "{}"
+       *  only when the stream finishes, so an early empty `.done` cannot pre-empt a later event carrying them. */
       const settleArgs = (c: ReadableStreamDefaultController<Uint8Array>, t: { index: number; emitted: string }, full: unknown) => {
         const fullArgs = typeof full === "string" ? full : "";
         if (fullArgs && fullArgs.startsWith(t.emitted)) emitArgs(c, t, fullArgs.slice(t.emitted.length));
         // A `.done` that contradicts what was already streamed cannot be repaired (those bytes are sent):
         // the call's arguments are untrustworthy, so the turn is reported as failed, never as a clean call.
         else if (fullArgs && failure === null) failure = "tool_arguments_mismatch";
-        if (!t.emitted) emitArgs(c, t, "{}");
       };
       send(controller, { choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
       try {
@@ -499,7 +499,10 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
         const truncated = !finalResponse && !failure; // the stream ended without a terminal event
         const stop = stopFor(finalResponse?.status, finalResponse?.incomplete_details?.reason, refused, nextTool > 0);
         const errored = streamErrored || !!failure || truncated;
-        if (!errored) send(controller, { choices: [{ index: 0, delta: {}, finish_reason: stop.finish_reason }] });
+        if (!errored) {
+          for (const t of new Set(tools.values())) if (!t.emitted) emitArgs(controller, t, "{}");
+          send(controller, { choices: [{ index: 0, delta: {}, finish_reason: stop.finish_reason }] });
+        }
         controller.enqueue(enc.encode("data: [DONE]\n\n"));
         controller.close();
         emitTrace(trace, {

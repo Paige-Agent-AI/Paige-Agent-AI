@@ -52,12 +52,15 @@ async function chat(tok, { threadId, messages }) {
 async function lastAssistant(R, threadId) {
   const q = await R(`paige_chat_turns?select=id,role,content,created_at,bundle_ref&thread_id=eq.${threadId}&role=eq.assistant&order=seq.desc&limit=1`);
   const row = Array.isArray(q.json) ? q.json[0] : null;
-  return row ? { id: row.id, state: row.bundle_ref?.turn_state ?? null, cards: (row.bundle_ref?.paige_confirm ?? []).map((c) => c.tool), content: String(row.content).slice(0, 240) } : null;
+  return row ? { id: row.id, state: row.bundle_ref?.turn_state ?? null, cards: (row.bundle_ref?.paige_confirm ?? []).map((c) => c.tool), content: String(row.content) } : null;
 }
 
+// The email scenario: an approval-required SEND offered, accepted, and the end state checked — a governed card,
+// or (if no send ran) never a "Sent!" standing without the server's line.
+const EMAIL_PROMPT = (tag) => `Look up my contact Proof Recipient and tell me in two sentences what you see. Don't send anything yet. End your reply by offering one thing, as a question: to email Proof Recipient a short recap titled "INT-332 recap ${tag}".`;
 const OFFER_PROMPT = (tag) => `Look up my contact Proof Recipient and tell me in two sentences what you see. Don't change anything yet. End your reply by offering one thing, as a question: to add a follow-up task for Proof Recipient titled "INT-332 follow-up ${tag}" due Friday.`;
 
-async function scenario(tok, R, { name, history, reply }) {
+async function scenario(tok, R, { name, history, reply, prompt = OFFER_PROMPT }) {
   const created = await R("rpc/paige_chat_thread_create", { method: "POST", body: JSON.stringify({ p_contact_id: null, p_lens: "coach", p_title: `INT-332 proof ${RUN} ${name}`, p_consent_snapshot: null }) });
   const threadId = typeof created.json === "string" ? created.json : created.json?.id;
   if (!threadId) throw new Error(`thread create failed ${created.status}`);
@@ -69,7 +72,7 @@ async function scenario(tok, R, { name, history, reply }) {
     messages.push({ role, content });
   }
   const tag = `${RUN}-${name}`;
-  messages.push({ role: "user", content: OFFER_PROMPT(tag) });
+  messages.push({ role: "user", content: prompt(tag) });
   const offer = await chat(tok, { threadId, messages });
   const offerSaved = await lastAssistant(R, threadId);
   out({ scenario: name, step: "offer", threadId, history, status: offer.status, terminal: offer.terminal, cards: offer.cards, saved: offerSaved });
@@ -77,7 +80,12 @@ async function scenario(tok, R, { name, history, reply }) {
   messages.push({ role: "user", content: reply });
   const acc = await chat(tok, { threadId, messages });
   const accSaved = await lastAssistant(R, threadId);
-  out({ scenario: name, step: "reply", reply, status: acc.status, terminal: acc.terminal, cards: acc.cards, text: acc.text.slice(0, 300), saved: accSaved });
+  const NOTE_RE = /Nothing was sent, saved or changed in this reply\.|nothing was sent and no client record was changed\.|The step you accepted wasn't carried out in this reply\./;
+  const claimsDone = /\b(?:sent|emailed|updated|created|added|linked)!|\bi'?ve (?:sent|emailed|updated|created|added|linked)\b/i.test(acc.text);
+  out({ scenario: name, step: "reply", reply, status: acc.status, terminal: acc.terminal, cards: acc.cards,
+    wireEqualsSaved: accSaved ? accSaved.content.trim() === acc.text.trim() : null,
+    claimsDoneWithoutCardOrLine: claimsDone && acc.cards.length === 0 && !NOTE_RE.test(acc.text),
+    text: acc.text.slice(0, 400), saved: accSaved ? { ...accSaved, content: accSaved.content.slice(0, 400) } : null });
   return { threadId, offer, acc };
 }
 
@@ -89,5 +97,6 @@ async function main() {
   await scenario(token, R, { name: "long", history: 40, reply: "Yes we may as well for sure" });
   await scenario(token, R, { name: "fresh", history: 0, reply: "Yes we may as well for sure" });
   await scenario(token, R, { name: "decline", history: 0, reply: "Ok I'll do it myself" });
+  await scenario(token, R, { name: "email", history: 0, reply: "Yes we may as well for sure", prompt: EMAIL_PROMPT });
 }
 main().catch((e) => { out({ error: String(e?.message ?? e) }); process.exit(1); });

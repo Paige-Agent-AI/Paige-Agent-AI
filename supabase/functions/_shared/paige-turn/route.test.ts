@@ -101,6 +101,9 @@ Deno.test("state floors hold; cheap never carries tools; unsure never cheap; key
         assert(RANK[r.cognitive_class] >= RANK.operational, `state floor is operational: ${why}`);
         assert(TRANK[r.capability.tools] >= TRANK[unclassified.capability.tools], `tools lowered below the state floor: ${why}`);
       }
+      if (r.basis === "ambiguous_offer") {
+        assertEquals([r.intent, r.capability.tools], ["clarify", "read"], `an ambiguous offer is a question, never an act: ${why}`);
+      }
       if (r.basis === "accepted_offer" && s.acceptedOfferKind !== "prose") {
         assertEquals(r.capability.tools, "act", `an accepted act/unknown step keeps the governed tools: ${why}`);
       }
@@ -140,6 +143,7 @@ Deno.test("fallback: provider health only; never on an answer; never after outpu
   for (const f of NOT_FALLBACK) assert(!mayFallback(f, clean), f);
   assert(!mayFallback("provider_outage", { ...clean, emittedToolCalls: true }), "a round that showed a tool call does not move");
   assert(!mayFallback("provider_outage", { ...clean, emittedText: true }), "a round the person already saw does not move");
-  assert(mayFallback("provider_outage", { emittedToolCalls: true, emittedText: true, sideEffectProvenNone: true }), "proven unexecuted may move");
+  assert(mayFallback("provider_outage", { emittedToolCalls: true, emittedText: false, sideEffectProvenNone: true }), "a tool call proven unexecuted may move");
+  assert(!mayFallback("provider_outage", { emittedToolCalls: true, emittedText: true, sideEffectProvenNone: true }), "text the person saw cannot be unsaid");
   assertEquals(PROVIDER_FAILURES.length, 7);
 });

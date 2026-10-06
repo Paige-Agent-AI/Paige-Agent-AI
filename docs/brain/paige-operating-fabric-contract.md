@@ -137,7 +137,8 @@ cell above is therefore UNVERIFIED at runtime**, even where the code path is sha
   `operator_dashboard_metrics`, `issue_analytics_evidence_bundle`, and `get_analytics_daily_summary`
   are period-capable and tenant-derived, but only the UI calls them. **This is the single biggest
   stranded asset for "how are our numbers looking?"**
-- **Tenant Systems Check.** 794 runs and 21,715 findings are reachable only through `useSystemsCheck`.
+- **Tenant Systems Check.** 794 runs and 7,906 findings are reachable only through `useSystemsCheck`.
+  The platform-wide total, operator findings included, is 21,725.
 - **Business Vault.** About 9 tables and 31 RPCs exist. `business_vault_get_context` has 0 callers,
   and every table has 0 rows.
 - **Governed memory seam.** `record_/get_/forget_paige_memory` and `match_paige_owner_memory` have 0
@@ -186,8 +187,9 @@ cell above is therefore UNVERIFIED at runtime**, even where the code path is sha
   (`:3315`), departments default to "legacy 2" (`:3336`), and memory, RAG, KB, team, business-context,
   social, mission, focused-client, sender, and rail-hydration blocks warn and continue.
 - **Assembly is load-everything.** Every block is built before the model-tier decision, and only
-  tenant, tier, funding, studio, and surface flags gate it. The Turn Route is not consumed on `main`.
-  R4 is unmerged.
+  tenant, tier, funding, studio, and surface flags gate it. Since INT-334 R4 (#1789, `53dbf7eb5`)
+  the Turn Route chooses the **model**, but nothing yet uses it to choose **context**, and its tool
+  exposure does not yet narrow `toolDefs` (carried to R5).
 - **New rule this fabric enforces (contract §3.4):** every new source ships as a typed resolver. The
   Business Operating Snapshot is a typed, intent-selected source by construction. It runs only when a
   turn asks for a business review.
@@ -201,8 +203,9 @@ cell above is therefore UNVERIFIED at runtime**, even where the code path is sha
 3. It assembles context inline (`:1990-6060`).
 4. `toolDefs` holds 95 tools plus domain arrays (`:6149`, `:7809-7819`), and every model call receives
    all of them. Only Studio narrows the set.
-5. The model tier comes from a regex plus the foreground offer (`:9006-9051`). It does not come from
-   the Turn Route yet.
+5. The model tier comes from the Turn Route (INT-334 R4, #1789). The route is resolved from thread
+   state first, then a bounded advisory classifier. The old `substantiveTurnIntent` regex is gone.
+   Line numbers in this section are from `8b7f975`, before R4.
 6. The tool loop runs, gated on finished rounds (R7a), followed by a tools-free stream (`:16772`).
 7. The turn is persisted through `paige_chat_turn_append`, and receipts are written through
    `recordCapabilityRun`.
@@ -375,8 +378,9 @@ BusinessOperatingSnapshot {
 Chat tool. Live reaches it through the shared runtime, so a spoken "give me a read on the last week"
 and its typed equivalent resolve the same tenant, period, domains, authority, and semantics. The
 Intelligence Router decides **which model** reasons over it. This fabric decides **what context** that
-is. R8, when built, should expose this tool on a `research: none, intent: answer, tools: read` route
-for business-review turns, and not on acknowledgements.
+is. When the route's tool exposure narrows `toolDefs` (carried to R5 in INT-334), this tool belongs
+on an `intent: answer`, `tools: read` route for business-review turns, and not on
+acknowledgements.
 
 **Proactive future (designed, NOT built, needs separate authorization):** a bounded Harness job
 composes `composeOperatingSnapshot(previousPeriod(p))` and the current period, and lets each domain
@@ -408,7 +412,7 @@ entry-point slice, not a new memory or context system.
 
 | Lane | What it owns | Collision with this fabric | Resolution |
 |---|---|---|---|
-| Intelligence Router INT-334 (R4 branch `claude/confident-lovelace-mi714v`; R5–R8) | model and class selection in `paige-ai-chat` (`substantiveTurnIntent` replacement), `paige-turn/classify*.ts`, R8 tool narrowing | Fabric adds one tool and a dispatch branch; R4 edits model selection. No line overlap expected. R8 will narrow `toolDefs`. | Fabric never selects models. It exposes `business_review` as a read tool for R8's route table to include or exclude. Sync main before merge. |
+| Intelligence Router INT-334 (R4 merged as #1789; R5–R8 open) | model and class selection in `paige-ai-chat` (Turn Route + `paige-turn/classify*.ts`), and the route's tool-exposure narrowing (carried to R5) | Fabric adds one tool and a dispatch branch; the router owns model choice and narrowing. No line overlap expected. | Fabric never selects models. It exposes `read_business_snapshot` as a read tool for the route's narrowing to include or exclude. Sync main before merge. |
 | Memory S5 (`s5-owner-memory-cutover`) + INT-326 | owner/workspace memory cutover, `record_paige_memory` body, memoryBlock region of chat | G's workspace and performance audiences change the same table and RPC | Fabric ships **no memory code**. G is a proposal sequenced after S5 merges and needs an owner ruling. |
 | Deep Research R-series (R3–R6, `docs/research-quality`) | `paige-deep-research`, dossier, cognitive-class map for research phases | The `research` domain adapter would read `list_workspace_research` | Read-only, later slice. Research results are reported as provisional, never as business facts. |
 | Conversational Loop C0–C4 (C4d/e paused) | turn contract, approvals, resume, claim guard | The tool is a read with no approval card. Live already refuses approvals. | None. A read needs no loop changes. |
@@ -425,7 +429,7 @@ entry-point slice, not a new memory or context system.
 | **F2** | First adapters over **existing** tenant-derived reads: `sales_pipeline`/`clients`/`revenue` ← `practice_dashboard_metrics(p_window_days)`; `work`/`operations` ← `practice_attention_queue()` (+ tenant `systems_check_snapshot`); `game_plan` ← `list_business_missions`. Register Spine read `business.operating_snapshot` (chatBinding PARTIAL); one chat tool `business_review` + dispatch, caller-JWT client with the persona-tenant == `current_user_tenant_id()` bracket (the `pipelineWorkspaceRead` precedent) | `_shared/paige-context/adapters/*`, Spine domain file, `paige-ai-chat` (tool push + dispatch only) | unit + registry lint; authenticated Chat drive owed; Live drive owed |
 | **F3** | Domain-owned windowed reads: Rail outcomes in [start,end) (SECURITY DEFINER, tenant from `current_user_tenant_id()`, §59 in-body check); bookings in window; comms counts in window | one migration per owning domain + adapter | §32 persisted-apply; §37 producer inventory |
 | **F4** | Payments period read (receivables, collected in period, overdue) by the Sales lane, consumed by the `payments` adapter | Sales lane migration + adapter | lane owner |
-| **F5** | Context Assembly: move the snapshot and two inline blocks (business-context, team-authority) to typed resolvers selected by the Turn Route once R4 merges | `paige-ai-chat` context region | after R4 |
+| **F5** | Context Assembly: move the snapshot and two inline blocks (business-context, team-authority) to typed resolvers selected by the Turn Route (R4 has merged) | `paige-ai-chat` context region | after F2; coordinate with R5 narrowing |
 | **F6** | Workspace and performance memory audiences (G) | `paige_owner_memory` + RLS + `record_paige_memory` | **owner ruling**; after S5 |
 | **F7** | Game Plan targets (H) + snapshot progress-against-target | new table + RPC + Spine | **owner ruling** (material product decision) |
 | **F8** | Proactive "what changed" Harness job | durable-job + action bus | **separate authorization** |

@@ -72,11 +72,15 @@ const realFetch = globalThis.fetch;
 let embedCount = 0;
 let providerPlan = [];
 let providerCalls = [];
+// INT-334 R4 — the turn classifier's calls, kept apart from `providerCalls` so a check's provider plan
+// and call count stay the model rounds it scripts. Every classifier payload is still egress: checks
+// below prove it never leaves on a switched account and never carries account Knowledge.
+let classifierCalls = [];
 let syncCalls = [];
 let syncThrows = false;
 function embedCalls() { return embedCount; }
 function resetEmbeds() { embedCount = 0; }
-function resetProvider(plan = []) { providerPlan = [...plan]; providerCalls = []; syncCalls = []; }
+function resetProvider(plan = []) { providerPlan = [...plan]; providerCalls = []; classifierCalls = []; syncCalls = []; }
 function anthropicStream(kind = "text") {
   const responseText = kind === "private-text"
     ? "CHILD-PRIVATE-MARKER"
@@ -271,7 +275,17 @@ globalThis.fetch = async (url, init) => {
     });
   }
   if (href === "https://api.anthropic.com/v1/messages") {
-    providerCalls.push(JSON.parse(String(init?.body ?? "{}")));
+    const sent = JSON.parse(String(init?.body ?? "{}"));
+    if (String(sent.system ?? "").startsWith("You label one message sent to PAIGE")) {
+      classifierCalls.push(sent);
+      // An ordinary answer that needs this workspace's records: the route stays operational, as before R4.
+      const label = { intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.9 };
+      return new Response(JSON.stringify({ content: [{ type: "text", text: JSON.stringify(label) }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    providerCalls.push(sent);
     const next = providerPlan.shift() ?? "text";
     // An extraction that parses but FAILS validation, so the `logSyncFailure` path is reached
     // with the full `structured` payload — the write 14b.1/14b.2 are about.
@@ -498,7 +512,7 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
   const kbCall = rec.rpc.find((r) => r.name === "match_tenant_knowledge");
   const memberReads = rec.from.filter((f) => f.table === "tenant_members");
   const telemetry = rec.inserts.find((i) => i.table === "kb_query_telemetry");
-  return { rec, kbCall, memberReads, telemetry, logged, status, embeds: embedCalls(), providerCalls: [...providerCalls], responseText, syncCalls: [...syncCalls] };
+  return { rec, kbCall, memberReads, telemetry, logged, status, embeds: embedCalls(), providerCalls: [...providerCalls], classifierCalls: [...classifierCalls], responseText, syncCalls: [...syncCalls] };
 }
 
 // ── 1 · Multi-membership active-account resolution ───────────────────────────────
@@ -787,8 +801,28 @@ group("active-account changes after retrieval fail closed before provider egress
       provider: ["text"],
     });
     assert(`12 ${label}: no provider request is made`, r.providerCalls.length === 0, `provider calls: ${r.providerCalls.length}`);
+    assert(`12 ${label}: not even the turn classifier egresses`, r.classifierCalls.length === 0, `classifier calls: ${r.classifierCalls.length}`);
     assert(`12 ${label}: no stale telemetry is written`, !r.telemetry, JSON.stringify(r.telemetry?.row ?? null));
     assert(`12 ${label}: the turn fails closed`, r.status === 409, `status ${r.status}`);
+  }
+  // 12b · INT-334 R4 — the turn classifier is an AWAITED provider round-trip between the pre-egress check
+  // (persona call 2) and the chat dispatch. A switch that lands DURING it is caught by the re-check after it
+  // (persona call 3): the classifier — which carries only the message — ran, and the Knowledge-carrying chat
+  // call never fires. Without that re-check this dispatches the prior account's Knowledge.
+  {
+    const r = await drive({
+      personaTenant: CHILD,
+      personaSequence: [CHILD, CHILD, AGENCY],
+      memberships: [CHILD, AGENCY],
+      chunkContent: "CHILD-PRIVATE-MARKER",
+      provider: ["text"],
+    });
+    assert("12b a switch during the turn classifier: the classifier ran, the chat dispatch never fired",
+      r.classifierCalls.length === 1 && r.providerCalls.length === 0,
+      `classifier calls: ${r.classifierCalls.length}, provider calls: ${r.providerCalls.length}`);
+    assert("12b-i the classifier payload carries no account Knowledge",
+      !r.classifierCalls.some((b) => JSON.stringify(b).includes("CHILD-PRIVATE-MARKER")), JSON.stringify(r.classifierCalls).slice(0, 400));
+    assert("12b-ii the turn fails closed with the active-account cancellation", r.status === 409, `status ${r.status}`);
   }
 }
 
@@ -803,6 +837,10 @@ group("active-account changes after retrieval fail closed before provider egress
 //
 // If one of these fails, do NOT just bump the number. Re-derive the table for that shape, then
 // fix every timing in the group that depends on it.
+// INT-334 R4 — a fresh agentic turn (every group below drives one: no attachment, no approval, no
+// answer binding) now runs the turn classifier, and re-checks the account after it. That inserts ONE
+// boundary right after the pre-egress check — "post-classifier" — and every later index moves up by one.
+// The tables below are re-derived for it, not bumped.
 const personaCalls = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
 const assertShape = async (label, plan, expected) => {
   const control = await drive({
@@ -818,12 +856,12 @@ const assertShape = async (label, plan, expected) => {
 
 group("active-account changes during the agent loop stop later provider calls");
 {
-  await assertShape("grp13 tool+text", ["tool", "text"], 8);
+  await assertShape("grp13 tool+text", ["tool", "text"], 9);
   const r = await drive({
     personaTenant: CHILD,
-    // initial resolution → initial provider boundary → post-round boundary →
-    // actual tool-dispatch boundary (where the switch occurs)
-    personaSequence: [CHILD, CHILD, CHILD, AGENCY],
+    // initial resolution → initial provider boundary → post-classifier boundary → post-round
+    // boundary → actual tool-dispatch boundary (where the switch occurs)
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [AGENCY, CHILD],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -1301,7 +1339,7 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
 // ── 16 · The dispatch guard is asserted PER TOOL, not once per batch ──────────────
 group("tool dispatch re-asserts scope for every tool, not once per round");
 {
-  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 9);
+  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 10);
   // WHY THIS GROUP EXISTS. Reverting the dispatch check from per-tool back to per-batch
   // was undetectable by every other check in this file: a round with ONE tool behaves
   // identically either way, and every earlier group uses a one-tool round. A batch is not
@@ -1312,9 +1350,9 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // HOW THE SWITCH IS TIMED. `personaSequence` is consumed one entry per
   // `get_paige_persona_context` call, clamped at the last entry, so `n` CHILDs followed by
   // AGENCY switches the account at call index `n`. The calls, in order, are:
-  //   0 turn start (personaCtx)   1 pre-egress revalidation   2 post-round revalidation
-  //   3 tool-1 dispatch           4 tool-2 dispatch           5 pre-continuation
-  // so n=3 lands the switch on the FIRST tool's check and n=4 on the SECOND's.
+  //   0 turn start (personaCtx)   1 pre-egress revalidation   2 post-classifier revalidation
+  //   3 post-round revalidation   4 tool-1 dispatch           5 tool-2 dispatch   6 pre-continuation
+  // so n=4 lands the switch on the FIRST tool's check and n=5 on the SECOND's.
   //
   // THE DISCRIMINATOR is the step trace. Since C2b each tool's step is sent the moment that tool
   // finishes (docs/delivery/paige-conversational-loop-c2.md), so a tool that RAN shows its step even
@@ -1345,7 +1383,7 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // THE BOUNDARY IS FOUND, NOT WRITTEN DOWN. External review made the sharper version of the
   // point the shape assertions only half-cover: those catch a check being ADDED or REMOVED (the
   // total moves), but not one being MOVED (total unchanged, every index shifts by one). If that
-  // happened, `runTools(4)` would land BEFORE the first tool instead of between the two, and
+  // happened, `runTools(5)` would land BEFORE the first tool instead of between the two, and
   // 16.4-16.6 would still see zero narrated tools, one provider call and no telemetry — passing
   // for the wrong reason with the per-tool guard gone.
   //
@@ -1353,8 +1391,8 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // both return an error result before reaching their RPC). Before C2b a mid-batch abort also
   // suppressed the step trace, so "tool 1 ran" was not observable at all; it now is (16.4). What is
   // observable either way is the TRANSITION:
-  // the smallest n at which the round completes. A per-tool guard puts three refusal boundaries
-  // before completion (post-round, tool-1, tool-2); a per-batch guard puts two. So the transition
+  // the smallest n at which the round completes. A per-tool guard puts four refusal boundaries
+  // before completion (post-classifier, post-round, tool-1, tool-2); a per-batch guard puts three. So the transition
   // point itself distinguishes them, and it is derived rather than assumed.
   let firstComplete = null;
   for (let n = 2; n <= 10; n++) {
@@ -1373,8 +1411,8 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // honest statement of the gap rather than a claim that one exists.
   assert(
     "16.0 the round first completes at the boundary a PER-TOOL guard implies",
-    firstComplete === 5,
-    `first complete at n=${firstComplete}; 5 means three refusal boundaries precede completion (post-round, tool-1, tool-2). 4 means only two — the per-tool guard is gone. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
+    firstComplete === 6,
+    `first complete at n=${firstComplete}; 6 means four refusal boundaries precede completion (post-classifier, post-round, tool-1, tool-2). 5 means only three — the per-tool guard is gone. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
   );
 
   const beforeFirst = await runTools(firstComplete - 2);
@@ -1411,7 +1449,7 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
 // ── 17 · The durable record is written at the LAST boundary, not the first ────────
 group("Knowledge telemetry commits only after the reply has actually crossed");
 {
-  await assertShape("grp17 tool-less round", ["private-text"], 5);
+  await assertShape("grp17 tool-less round", ["private-text"], 6);
   // Telemetry is the one DURABLE row this mechanism writes, so it is committed after the
   // reply has been forwarded and the scope re-asserted a final time — not before the frames,
   // where a later cancellation would leave a permanent record claiming a retrieval grounded
@@ -1419,12 +1457,12 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // otherwise invisible: every earlier group either cancels before the reply (so no telemetry
   // either way) or holds scope throughout (so telemetry either way).
   //
-  // Call indices on a tool-less agentic round: 0 turn start, 1 pre-egress, 2 post-round,
-  // 3 pre-emission, 4 post-drain. n=4 therefore switches the account at the post-drain
+  // Call indices on a tool-less agentic round: 0 turn start, 1 pre-egress, 2 post-classifier,
+  // 3 post-round, 4 pre-emission, 5 post-drain. n=5 therefore switches the account at the post-drain
   // boundary ALONE — the reply is already out, and only the durable write is left to refuse.
   const atPostDrain = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1468,7 +1506,7 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // its own reason rather than as a side effect of shifting later call indices.
   const atPreEmission = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1489,20 +1527,20 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
 // ── 18 · Each loop-continuation boundary is individually load-bearing ─────────────
 group("every provider re-entry in the agent loop re-asserts scope on its own");
 {
-  await assertShape("grp18a tool+text", ["tool", "text"], 8);
-  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 8);
+  await assertShape("grp18a tool+text", ["tool", "text"], 9);
+  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 9);
   // The loop re-asserts scope at three distinct points and, until this group existed, TWO of
   // them could be deleted with the suite still fully green — the surviving checks happened to
   // catch the switch at a neighbouring boundary instead. A guard that no check can distinguish
   // from its neighbour is a guard nobody will notice losing. Each assertion below pins ONE
   // boundary by timing the switch to land exactly on it (indices, single-tool round:
-  //   0 turn start · 1 pre-egress · 2 post-round · 3 tool dispatch · 4 pre-continuation
-  //   · 5 pre-closing-call · 6 pre-emission · 7 post-drain)
+  //   0 turn start · 1 pre-egress · 2 post-classifier · 3 post-round · 4 tool dispatch
+  //   · 5 pre-continuation · 6 pre-closing-call · 7 pre-emission · 8 post-drain)
   // and by counting provider calls, which is the only signal that separates "the next call was
   // never made" from "it was made and its result was later suppressed".
   //
   // THE TABLE ABOVE IS ONLY VALID FOR THE FAILED-CONTINUATION SHAPE both assertions below
-  // drive. When the continuation SUCCEEDS there is no closing call, and index 5 is the second
+  // drive. When the continuation SUCCEEDS there is no closing call, and index 6 is the second
   // round's post-round check instead of the pre-closing-call one. No assertion here is wrong —
   // 18.3 proves the failed-continuation path was actually taken — but do not time a new switch
   // off this table without re-deriving it for the round shape you are driving. Groups 16 and 17
@@ -1513,7 +1551,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     after a switch re-sends the prior account's private content to the provider.
   const atContinuation = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -1535,7 +1573,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     a different code path from (a) and cannot be covered by it.
   const atClosingCall = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "fail", "text"],
@@ -3634,7 +3672,9 @@ group("every provider call files its trace row under the tenant whose evidence i
   );
   assert(
     "23.2 every trace row on a resolved-tenant chat turn is ATTRIBUTED, and to the right job",
-    JSON.stringify(traceRows(chatTurn)) === JSON.stringify(["chat-close:tenant", "chat-tool-loop:tenant", "chat:tenant"]),
+    // INT-334 R4 — a fresh chat turn also runs the turn classifier, after the account is verified, and
+    // its row is attributed to the same tenant like every other call on the turn.
+    JSON.stringify(traceRows(chatTurn)) === JSON.stringify(["chat-close:tenant", "chat-tool-loop:tenant", "chat:tenant", "turn-classify:tenant"]),
     JSON.stringify(traceRows(chatTurn)),
   );
 

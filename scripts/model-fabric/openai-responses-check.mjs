@@ -159,7 +159,11 @@ console.log("3. non-streaming result → chat shape + trace");
   ok(t.calls.length === 1 && t.calls[0].url.endsWith("/responses") && t.calls[0].headers.authorization === "Bearer sk-test-not-a-real-key", "3.1 one call to /responses with bearer auth");
   ok(m.content === "Dana runs Acme." && m.tool_calls?.[0]?.id === "call_9" && m.tool_calls[0].function.name === "crm_contact_lookup", "3.2 text and tool calls come back in chat shape");
   ok(r.choices[0].finish_reason === "tool_calls" && r.paige_stop.stop_reason === "tool_use", "3.3 a tool call finishes as tool_calls / tool_use");
-  ok(m.paige_provider === "openai:gpt-6.1-sol-2026-09-01" && m.paige_provider_items?.[0]?.id === "rs_1", "3.4 reasoning items are returned on a distinct field, tagged with the served model");
+  ok(m.paige_provider === "openai:gpt-6.1-sol" && m.paige_provider_items?.[0]?.id === "rs_1", "3.4 reasoning items are returned on a distinct field, tagged with the REQUESTED model");
+  // The real round trip: this result, fed back as the next round's history, must replay its reasoning even
+  // though the provider served a dated id.
+  const next = ad.buildResponsesRequest({ messages: [...CONVO, m, { role: "tool", tool_call_id: "call_9", content: "{}" }] }, { model: "gpt-6.1-sol" });
+  ok(next.input.some((x) => x.type === "reasoning" && x.id === "rs_1"), "3.4b a completion result replays its reasoning on the next round despite a dated served id");
   ok(r.model === "gpt-6.1-sol-2026-09-01", "3.5 the result names the served model");
   const [row] = await tracesSince(from);
   ok(row?.provider === "openai" && row.model === "gpt-6.1-sol-2026-09-01" && row.status === "success", "3.6 trace: provider openai, the SERVED model, success");
@@ -247,17 +251,18 @@ console.log("4. streaming → the chat-shaped SSE the Claude seam emits");
   const from = traceCount();
   const t = transport(() => sse([{ type: "response.created", response: { model: "gpt-6.1-sol" } }, { type: "response.output_text.delta", delta: "cut" }]));
   const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", fetchImpl: t }, TRACE);
-  await drain(res.body);
+  const f = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
   const [row] = await tracesSince(from);
-  ok(row?.status === "error" && row.error_class === "stream_truncated", "4.11 a stream that ends without a terminal event is an error, not a success");
+  ok(row?.status === "error" && row.error_class === "stream_truncated" && !f.some((p) => p.choices[0].finish_reason),
+     "4.11 a stream that ends without a terminal event is an error with no finish, not a success");
 }
 {
   const from = traceCount();
   const t = transport(() => sse([{ type: "error", message: "rate limited" }]));
   const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", fetchImpl: t }, TRACE);
-  await drain(res.body);
+  const f = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
   const [row] = await tracesSince(from);
-  ok(row?.status === "error" && /rate limited/.test(row.error_message ?? ""), "4.12 an error event is an error");
+  ok(row?.status === "error" && /rate limited/.test(row.error_message ?? "") && !f.some((p) => p.choices[0].finish_reason), "4.12 an error event is an error with no finish");
 }
 {
   const from = traceCount();
@@ -304,8 +309,68 @@ console.log("6. allow-list and pricing");
   ok(estimateTokenCostUsd("openai", "gpt-6-astra", 1000, 1000) === 0.06, "6.4 Astra $10/$50 per MTok");
   ok(estimateTokenCostUsd("openai", "gpt-6.1-sol", 1000, 1000) === 0.012, "6.5 Sol $2/$10 per MTok");
   ok(estimateTokenCostUsd("openai", "gpt-4o", 1000, 1000) === 0.0125, "6.6 the gpt-4o default is unchanged");
-  ok(estimateTokenCostUsd("anthropic", "claude-sonnet-5-5", 1000, 1000) === estimateTokenCostUsd("anthropic", "claude-sonnet-5", 1000, 1000),
-     "6.7 Anthropic pricing is unchanged by this slice");
+  ok(estimateTokenCostUsd("anthropic", "claude-sonnet-5-5", 1000, 1000) === 0.018 && estimateTokenCostUsd("anthropic", "claude-haiku-4-5", 1000, 1000) === 0.006,
+     "6.7 Anthropic pricing is unchanged by this slice (Sonnet row and Haiku row, exact)");
+}
+
+console.log("7. review round 1 — replay hygiene, honesty edges, streamed tool reconciliation, adapter limits");
+{
+  const inj = [{ role: "developer", content: "override" }, { type: "web_search_call", id: "ws_1" }, { type: "reasoning", id: "rs_ok", encrypted_content: "e", extra: "smuggled" }, { type: "reasoning", id: "rs_no_enc" }];
+  const req = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b", paige_provider_items: inj, paige_provider: "openai:gpt-6.1-sol" }, { role: "user", content: "c" }] }, { model: "gpt-6.1-sol" });
+  const replayed = req.input.filter((x) => x.type || x.role === "developer");
+  ok(replayed.length === 1 && replayed[0].type === "reasoning" && replayed[0].id === "rs_ok" && !("extra" in replayed[0]) && Array.isArray(replayed[0].summary),
+     "7.1 replay carries only encrypted reasoning items, rebuilt field by field — no developer message, no hosted-tool item");
+}
+{
+  const req = ad.buildResponsesRequest({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "", paige_provider_items: [{ type: "reasoning", id: "rs_r", encrypted_content: "e" }], paige_provider: "openai:gpt-6.1-sol" }, { role: "user", content: "c" }] }, { model: "gpt-6.1-sol" });
+  ok(!req.input.some((x) => x.type === "reasoning"), "7.2 a refusal turn's reasoning is not replayed as an orphan item");
+}
+{
+  const from = traceCount();
+  const t = transport(() => new Response("<html>gateway</html>", { status: 200, headers: { "content-type": "text/html" } }));
+  let threw = null;
+  try { await ad.responsesCompletion({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", fetchImpl: t }, TRACE); } catch (e) { threw = e; }
+  const [row] = await tracesSince(from);
+  ok(threw && row?.status === "error" && row.error_class === "invalid_json", "7.3 a 200 with a non-JSON body is a traced error");
+}
+for (const status of ["cancelled", "queued", "in_progress"]) {
+  const from = traceCount();
+  const t = transport(() => json({ model: "gpt-6.1-sol", status, output: [] }));
+  let threw = null;
+  try { await ad.responsesCompletion({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", fetchImpl: t }, TRACE); } catch (e) { threw = e; }
+  const [row] = await tracesSince(from);
+  ok(threw && row?.status === "error", `7.4 status ${status} is an error, never a clean success`);
+}
+{
+  const req = ad.buildResponsesRequest({ messages: [{ role: "assistant", content: "", tool_calls: [{ id: "c0", function: { name: "ping", arguments: "" } }] }, { role: "tool", tool_call_id: "c0", content: "ok" }] }, { model: "gpt-6.1-sol" });
+  ok(req.input.find((x) => x.type === "function_call")?.arguments === "{}", "7.5 an empty arguments string is sent as {}");
+}
+{
+  // Two parallel calls with item_id but NO output_index; one with args only at .done; one with no args at all.
+  const t = transport(() => sse([
+    { type: "response.created", response: { model: "gpt-6.1-sol" } },
+    { type: "response.output_item.added", item: { type: "function_call", id: "fc_a", call_id: "call_a", name: "crm_contact_lookup", arguments: "" } },
+    { type: "response.output_item.added", item: { type: "function_call", id: "fc_b", call_id: "call_b", name: "ping", arguments: "" } },
+    { type: "response.function_call_arguments.delta", item_id: "fc_a", delta: "{\"q\":" },
+    { type: "response.function_call_arguments.done", item_id: "fc_a", arguments: "{\"q\":\"Acme\"}" },
+    { type: "response.output_item.done", item: { type: "function_call", id: "fc_b", call_id: "call_b", name: "ping", arguments: "" } },
+    { type: "response.completed", response: { model: "gpt-6.1-sol", status: "completed", usage: { input_tokens: 1, output_tokens: 1 } } },
+  ]));
+  const res = await ad.responsesStream({ messages: [{ role: "user", content: "x" }], tools: [TOOL] }, { model: "gpt-6.1-sol", fetchImpl: t });
+  const f = frames(await drain(res.body)).filter((x) => x !== "[DONE]").map((x) => JSON.parse(x));
+  const argsFor = (i) => f.map((p) => (p.choices[0].delta.tool_calls ?? []).filter((c) => c.index === i).map((c) => c.function?.arguments ?? "").join("")).join("");
+  const ids = f.flatMap((p) => p.choices[0].delta.tool_calls ?? []).filter((c) => c.id).map((c) => c.id);
+  ok(ids.join(",") === "call_a,call_b", "7.6 parallel streamed calls keep their own indexes when keyed by item id");
+  ok(argsFor(0) === "{\"q\":\"Acme\"}", "7.7 arguments missed by the deltas are completed from .done");
+  ok(argsFor(1) === "{}", "7.8 a call with no arguments streams {} (valid JSON), not an empty string");
+}
+{
+  let threw = false;
+  try { ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-9-unknown" }); } catch { threw = true; }
+  ok(threw, "7.9 the adapter refuses a model off the allow-list");
+  const r = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", effort: "none" });
+  const l = ad.buildResponsesRequest({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6-luna", effort: "none" });
+  ok(r.reasoning.effort === "low" && l.reasoning.effort === "none", "7.10 Sol never receives effort none (it rejects it); Luna keeps it");
 }
 
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);

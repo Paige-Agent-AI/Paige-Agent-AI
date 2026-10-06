@@ -25,6 +25,7 @@
 import { NeedsConfigError } from "./provider-types.ts";
 import { envKey } from "./env-key.ts";
 import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
+import { assertModelAllowed } from "./model-allowlist.ts";
 import {
   OPENAI_EFFORT_BY_CLASS,
   OPENAI_MODEL_BY_CLASS,
@@ -39,6 +40,7 @@ const MODEL_CALL_DEADLINE_MS = 120_000;
 function baseUrl(): string {
   return Deno.env.get("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
 }
+// One name: OPENAI_API_KEY (the image path reads the same secret). envKey tolerates case, not spelling.
 function openaiKey(): string {
   const k = envKey("OPENAI_API_KEY");
   if (!k) throw new NeedsConfigError("openai");
@@ -91,10 +93,31 @@ export class ProviderToolRefused extends Error {
   }
 }
 
-/** The provider+model tag carried on assistant turns that hold replayable provider items. */
+/** The provider+model tag carried on assistant turns that hold replayable provider items. It names the
+ *  model PAIGE REQUESTED (the alias it will request again), never the dated id the provider served, so a
+ *  turn's reasoning replays on the next round of the same tool loop. */
 export function providerTag(model: string): string {
   return `openai:${model}`;
 }
+
+/** Only encrypted reasoning items may be replayed, rebuilt field by field. Anything else a stored history
+ *  carries (a developer message, a hosted-tool call item, …) is dropped: replay is never a side door. */
+function replayableItems(items: unknown[]): unknown[] {
+  const out: unknown[] = [];
+  for (const it of items) {
+    const r = it as { type?: unknown; id?: unknown; encrypted_content?: unknown; summary?: unknown };
+    if (r?.type !== "reasoning" || typeof r.encrypted_content !== "string" || !r.encrypted_content) continue;
+    out.push({
+      type: "reasoning",
+      ...(typeof r.id === "string" ? { id: r.id } : {}),
+      encrypted_content: r.encrypted_content,
+      summary: Array.isArray(r.summary) ? r.summary : [],
+    });
+  }
+  return out;
+}
+
+const SOL_ASTRA_NO_NONE = (model: string) => !model.startsWith("gpt-6-luna");
 
 // ── chat shape → Responses request ─────────────────────────────────────────────────────────────
 
@@ -140,6 +163,9 @@ function toolDef(t: ChatShapeTool): Record<string, unknown> {
 
 /** Build the Responses request body. Pure: no env, no I/O — exported for the conformance gate. */
 export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOpts): Record<string, unknown> {
+  // The adapter enforces its own limits rather than trusting every caller to: an id off the allow-list is
+  // refused, and Sol/Astra (which reject `none`) never receive it.
+  assertModelAllowed("openai", opts.model);
   const instructions: string[] = [];
   const input: unknown[] = [];
   const tag = providerTag(opts.model);
@@ -150,12 +176,16 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
     } else if (m.role === "user") {
       input.push({ role: "user", content: userParts(m.content) });
     } else if (m.role === "assistant") {
-      // Provider items first, in the order the provider produced them, and only for the same model.
-      if (Array.isArray(m.paige_provider_items) && m.paige_provider === tag) input.push(...m.paige_provider_items);
       const t = textOf(m.content);
+      const calls = m.tool_calls ?? [];
+      // Reasoning items first, in the order produced, only for the same requested model, and only when the
+      // turn has an item for them to precede (a refusal turn has none — an orphan reasoning item is invalid).
+      if (Array.isArray(m.paige_provider_items) && m.paige_provider === tag && (t || calls.length)) {
+        input.push(...replayableItems(m.paige_provider_items));
+      }
       if (t) input.push({ role: "assistant", content: [{ type: "output_text", text: t }] });
-      for (const tc of m.tool_calls ?? []) {
-        input.push({ type: "function_call", call_id: tc.id, name: tc.function.name, arguments: tc.function.arguments ?? "{}" });
+      for (const tc of calls) {
+        input.push({ type: "function_call", call_id: tc.id, name: tc.function.name, arguments: tc.function.arguments || "{}" });
       }
     } else if (m.role === "tool") {
       input.push({ type: "function_call_output", call_id: m.tool_call_id, output: textOf(m.content) });
@@ -169,7 +199,7 @@ export function buildResponsesRequest(body: ChatShapeBody, opts: ResponsesCallOp
     max_output_tokens: body.max_tokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
   };
   if (instructions.length) req.instructions = instructions.join("\n\n");
-  if (opts.effort) req.reasoning = { effort: opts.effort };
+  if (opts.effort) req.reasoning = { effort: opts.effort === "none" && SOL_ASTRA_NO_NONE(opts.model) ? "low" : opts.effort };
   if (body.tools?.length) {
     req.tools = body.tools.map(toolDef);
     // PAIGE never forces a tool through the provider: "none" is honoured, anything else is "auto".
@@ -223,7 +253,7 @@ export function toChatCompletion(resp: any, requestedModel: string): Record<stri
         else if (c?.type === "refusal") refused = true;
       }
     } else if (item?.type === "function_call") {
-      toolCalls.push({ id: item.call_id, type: "function", function: { name: item.name, arguments: item.arguments ?? "{}" } });
+      toolCalls.push({ id: item.call_id, type: "function", function: { name: item.name, arguments: item.arguments || "{}" } });
     } else if (item?.type === "reasoning") {
       providerItems.push(item);
     }
@@ -240,7 +270,7 @@ export function toChatCompletion(resp: any, requestedModel: string): Record<stri
         role: "assistant",
         content: text,
         ...(toolCalls.length ? { tool_calls: toolCalls } : {}),
-        ...(providerItems.length ? { paige_provider_items: providerItems, paige_provider: providerTag(served) } : {}),
+        ...(providerItems.length ? { paige_provider_items: providerItems, paige_provider: providerTag(requestedModel) } : {}),
       },
       finish_reason: stop.finish_reason,
     }],
@@ -309,11 +339,20 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
     emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: detail });
     throw new Error(`OpenAI ${resp.status}: ${detail}`);
   }
-  const data = await resp.json();
-  if (data?.status === "failed" || data?.error) {
-    const msg = String(data?.error?.message ?? "response failed").slice(0, 500);
+  let data: any;
+  try {
+    data = await resp.json();
+  } catch (e) {
+    const m = String((e as Error)?.message ?? e).slice(0, 500);
+    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: "invalid_json", error_message: m });
+    throw new Error(`OpenAI returned a non-JSON body: ${m}`);
+  }
+  // Only a completed or incomplete response carries an answer; failed, cancelled, queued or in-progress
+  // (or an error object) is an error, never a quiet empty success.
+  if (data?.error || (data?.status !== "completed" && data?.status !== "incomplete")) {
+    const msg = String(data?.error?.message ?? `response status ${data?.status ?? "missing"}`).slice(0, 500);
     emitTrace(trace, { model: typeof data?.model === "string" ? data.model : opts.model, status: "error", started, input: body.messages, error_class: "response_failed", error_message: msg });
-    throw new Error(`OpenAI response failed: ${msg}`);
+    throw new Error(`OpenAI response not completed: ${msg}`);
   }
   const chat = toChatCompletion(data, opts.model);
   const msg = (chat.choices as any[])[0].message;
@@ -369,8 +408,36 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
       let finalResponse: any = null;
       let failure: string | null = null;
       let streamErrored = false;
-      const toolIndexByOutput = new Map<number, number>();
+      // A streamed function call is identified by its item id (output_index as fallback). Its arguments are
+      // reconciled against the `.done` events so a call never ends with lost or empty (invalid) arguments.
+      const tools = new Map<string, { index: number; emitted: string }>();
       let nextTool = 0;
+      const keyOf = (ev: any): string | null =>
+        typeof ev?.item_id === "string" ? `id:${ev.item_id}`
+        : typeof ev?.item?.id === "string" ? `id:${ev.item.id}`
+        : typeof ev?.output_index === "number" ? `ix:${ev.output_index}` : null;
+      const openTool = (c: ReadableStreamDefaultController<Uint8Array>, keys: (string | null)[], callId: string, name: string) => {
+        const t = { index: nextTool++, emitted: "" };
+        for (const k of keys) if (k) tools.set(k, t);
+        send(c, { choices: [{ index: 0, delta: { tool_calls: [{ index: t.index, id: callId, type: "function", function: { name, arguments: "" } }] }, finish_reason: null }] });
+        return t;
+      };
+      const toolFor = (ev: any) => {
+        const a = keyOf(ev);
+        const b = typeof ev?.output_index === "number" ? `ix:${ev.output_index}` : null;
+        return (a && tools.get(a)) || (b && tools.get(b)) || undefined;
+      };
+      const emitArgs = (c: ReadableStreamDefaultController<Uint8Array>, t: { index: number; emitted: string }, delta: string) => {
+        if (!delta) return;
+        t.emitted += delta;
+        send(c, { choices: [{ index: 0, delta: { tool_calls: [{ index: t.index, function: { arguments: delta } }] }, finish_reason: null }] });
+      };
+      /** At the end of a call: emit whatever the deltas missed, or "{}" when the call had no arguments. */
+      const settleArgs = (c: ReadableStreamDefaultController<Uint8Array>, t: { index: number; emitted: string }, full: unknown) => {
+        const fullArgs = typeof full === "string" ? full : "";
+        if (fullArgs && fullArgs.startsWith(t.emitted)) emitArgs(c, t, fullArgs.slice(t.emitted.length));
+        if (!t.emitted) emitArgs(c, t, "{}");
+      };
       send(controller, { choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
       try {
         while (true) {
@@ -395,14 +462,18 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
             } else if (type === "response.refusal.delta" || type === "response.refusal.done") {
               refused = true; // never surfaced as answer text; reported as a refusal stop
             } else if (type === "response.output_item.added" && ev.item?.type === "function_call") {
-              const ti = nextTool++;
-              toolIndexByOutput.set(ev.output_index, ti);
-              send(controller, { choices: [{ index: 0, delta: { tool_calls: [{ index: ti, id: ev.item.call_id, type: "function", function: { name: ev.item.name, arguments: "" } }] }, finish_reason: null }] });
+              if (!toolFor(ev)) openTool(controller, [keyOf(ev), typeof ev.output_index === "number" ? `ix:${ev.output_index}` : null], ev.item.call_id, ev.item.name);
             } else if (type === "response.function_call_arguments.delta" && typeof ev.delta === "string") {
-              const ti = toolIndexByOutput.get(ev.output_index);
-              if (ti !== undefined) send(controller, { choices: [{ index: 0, delta: { tool_calls: [{ index: ti, function: { arguments: ev.delta } }] }, finish_reason: null }] });
+              const t = toolFor(ev);
+              if (t) emitArgs(controller, t, ev.delta); // an unknown call is settled from its `.done` below
+            } else if (type === "response.function_call_arguments.done") {
+              const t = toolFor(ev);
+              if (t) settleArgs(controller, t, ev.arguments);
+            } else if (type === "response.output_item.done" && ev.item?.type === "function_call") {
+              const t = toolFor(ev) ?? openTool(controller, [keyOf(ev), typeof ev.output_index === "number" ? `ix:${ev.output_index}` : null], ev.item.call_id, ev.item.name);
+              settleArgs(controller, t, ev.item.arguments);
             } else if (type === "response.output_item.done" && ev.item?.type === "reasoning") {
-              send(controller, { choices: [{ index: 0, delta: { paige_provider_items: [ev.item], paige_provider: providerTag(servedModel ?? opts.model) }, finish_reason: null }] });
+              send(controller, { choices: [{ index: 0, delta: { paige_provider_items: [ev.item], paige_provider: providerTag(opts.model) }, finish_reason: null }] });
             } else if (type === "response.completed" || type === "response.incomplete") {
               finalResponse = ev.response;
               if (typeof ev.response?.model === "string") servedModel = ev.response.model;

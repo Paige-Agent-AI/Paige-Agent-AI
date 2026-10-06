@@ -797,8 +797,8 @@ Reference or any domain ledger; it governs how their facts become release and cu
 - It reports honestly: errors, failed or truncated streams and refusals are never a clean success.
 - Traces carry the served model and cached tokens separately.
 - The allow-list and pricing gain the three ids: $0.10/$0.50, $2/$10 and $10/$50 per MTok.
-- Proof: `test:openai-responses` 66/0, in CI, with 11 planted defects each caught. The existing model gates are unchanged.
-- Live behaviour is UNVERIFIED. It waits on the owner's OpenAI key and data-terms decision.
+- Proof: `test:openai-responses` 79/0, in CI. One independent review returned BLOCK on 9 findings; all are fixed, each reinstated defect is caught, and so are 11 earlier planted defects. The existing model gates are unchanged.
+- Live behaviour is UNVERIFIED until R7 routes to it. The owner set and rotated `OPENAI_API_KEY` on 2026-10-06.
 - The R0 routing map and the R2 evidence are in [INT-334 evidence](model-routing/int-334/EVIDENCE.md).
 
 **2026-10-06 INT-329 part 2 (R1): Anthropic reasoning seam → `claude-sonnet-5-5` by OWNER RULING (no A/B).** The owner retired Sonnet 5 and superseded the earlier requirement (recorded in the part-1 entry below) to gate this switch on a frozen A/B. The change is one line, `CLAUDE_REASONING` in `_shared/claude-models.ts`. Classification (`claude-haiku-4-5`) is unchanged. The same ruling makes Sonnet 5.5 one frontier peer, not PAIGE's universal brain. Turn routing (state → intent → capability → governance → cognitive class → model) and first-class GPT-6 (`gpt-6.1-sol` operational, `gpt-6-astra` frontier, `gpt-6-luna` cheap) are INT-334, R2–R12, in separate PRs.

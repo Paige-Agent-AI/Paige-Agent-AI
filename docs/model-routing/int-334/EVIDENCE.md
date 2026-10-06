@@ -100,7 +100,7 @@ The work ships as bounded PRs, R1–R12. Each entry below labels its evidence cl
   Cached-input pricing stays with INT-331.
 
 ### Proof
-- **Automated:** `npm run test:openai-responses` gives 66/0, through the real adapter with an injected transport and the recording fake Supabase. It is wired into CI. Eleven planted defects were each caught:
+- **Automated:** `npm run test:openai-responses` gives 79/0 (after review round 1), through the real adapter with an injected transport and the recording fake Supabase. It is wired into CI. Eleven planted defects were each caught:
   - `store:true`;
   - hosted tools allowed;
   - a forced `tool_choice` passed through;
@@ -118,4 +118,24 @@ The work ships as bounded PRs, R1–R12. Each entry below labels its evidence cl
 
 ### UNVERIFIED
 - Every live OpenAI behaviour is unverified: served ids, real event order, reasoning-item replay across tool rounds, cache hits, and latency.
-- Reason: `OPENAI_API_KEY` is not documented as set in the Supabase edge secrets, and the owner has not yet accepted OpenAI as a processor of tenant data. The adapter stays dormant until R7 routes to it after that decision.
+- Reason: nothing calls the adapter until R7, and R7 carries the first live proof.
+- Key status, as reported by the owner on 2026-10-06; names only, values never read:
+  - `OPENAI_API_KEY` is set, and the owner rotated it the same day because the old value may have expired.
+  - A second, misspelled secret (`OPEN_AI_API_KEY`) was deleted.
+  - The adapter reads only `OPENAI_API_KEY`.
+- Providing the key is taken as the owner's go-ahead for OpenAI as a provider. The adapter keeps `store:false`.
+
+### Review round 1 (independent, BLOCK, all fixed)
+1. **Reasoning replay never fired.** Items were tagged with the dated served id but matched against the requested alias. They are now tagged with the requested model.
+2. **Replay was a side door.** Any item type passed through. Replay now carries only encrypted `reasoning` items, rebuilt field by field.
+3. **Orphan reasoning after a refusal.** A refusal turn's reasoning is no longer replayed.
+4. **A non-JSON 200 threw with no trace.** It is now a traced `invalid_json` error.
+5. **`cancelled`, `queued` and `in_progress` read as success.** Only `completed` and `incomplete` now carry an answer.
+6. **Empty tool arguments went out as `""`.** They are now sent as `{}`.
+7. **Streamed calls were keyed on `output_index` only.** They are now keyed by `item_id`, with arguments reconciled from the `.done` events. A call with no arguments streams `{}`.
+8. **The adapter did not enforce its own limits.** It now enforces the allow-list, and Sol and Astra never receive effort `none`.
+9. **A pricing comment was false.** The `token-pricing.ts` comment is now model-neutral.
+
+Gate: 79/0. Each of the 9 findings was reinstated and caught, alongside the earlier 11 defects.
+
+**Carried to R5–R7:** the stream can finish with `length` or `content_filter`. `paige-ai-chat` treats any `finish_reason` as finished (index.ts ~9648, ~16757), so a refusal or a truncation must be surfaced when the seam is wired.

@@ -472,6 +472,7 @@ Values intentionally omitted.
   `paige_llm_trace.model` records (the served id), not what a branch says. INT-329 part 2 moved
   reasoning from `claude-sonnet-5` to `claude-sonnet-5-5` by owner ruling (2026-10-06), which superseded the A/B gate.
   `PAIGE_ANTHROPIC_AB_KEY` is not required by that ruling (the owner declined to add it). The `model-ab` workflow stays only as an optional tool.
+- **OpenAI reasoning (INT-334):** `OPENAI_API_KEY` (set and rotated by the owner 2026-10-06; the stray `OPEN_AI_API_KEY` was deleted — name only, value never read here) feeds `_shared/openai-responses.ts` (Responses API, `store:false`). GPT-6 ids are chosen in `_shared/openai-models.ts` only.
 - **LLM / model router (§14/§34):** `ANTHROPIC_API_KEY`, `OPENAI_BASE_URL`, `GROQ_BASE_URL`,
   `FEATHERLESS_API_KEY`, `FEATHERLESS_BASE_URL`, `FEATHERLESS_DEFAULT_MODEL` (primary open-flexible
   slug override; back-compat alias `FEATHERLESS_CHEAP_MODEL`), `FEATHERLESS_MODEL_<KIND>` (per-job-kind

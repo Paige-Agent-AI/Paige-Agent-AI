@@ -18335,7 +18335,7 @@ export async function runStructuredExtractionAndSync(
       }));
       if (governed !== "ok") remembered = governed;
     }
-    if (remembered !== "ok") return stoppedBy(remembered, "client_memory");
+    if (remembered !== "ok") return stoppedBy(remembered, clientId ? "client_memory" : "paige_owner_memory");
 
     // Step 5: stamp the upload row. THIS IS THE DOCUMENT'S OWN RECORD, not a profile field, so it
     // is written without asking — the person uploaded this file and this row is what became of it.

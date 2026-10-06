@@ -102,6 +102,9 @@ const handler = async (req: Request): Promise<Response> => {
     const columnByTable: Record<string, string> = {
       client_memory: "client_user_id",
       paige_owner_memory: "user_id",
+      credit_alerts: "client_id",
+      client_notes: "author_user_id",
+      coach_clients: "client_user_id",
     };
     for (const t of owned) {
       await track(`delete ${t}`, admin.from(t).delete().eq(columnByTable[t] ?? "user_id", user_id));

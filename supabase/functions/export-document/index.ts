@@ -27,7 +27,7 @@
 // true outcome (succeeded / failed / outcome_unknown) via record_capability_run (service-role).
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-// The Claude model id resolves through _shared/claude-models.ts, the one place it is chosen (INT-329).
+// Renders through the model router's in-process doc-render cell (no Claude call); the router bundles _shared/claude-models.ts (INT-329).
 import { callModel } from "../_shared/model-router.ts";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 

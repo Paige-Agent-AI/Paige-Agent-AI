@@ -28,6 +28,7 @@ import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS } from "../../supabase/functions/_shared/paige-turn/reducer";
 import { turnFrameLine } from "../../supabase/functions/_shared/paige-turn/contract";
+import { executableToolCalls, readModelRound } from "../../supabase/functions/_shared/paige-turn/round";
 
 describe("INT-104 Live final-answer streaming preserves the canonical tool gate", () => {
   const code = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
@@ -81,7 +82,7 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(code.match(/!finalChunks && \(forcedTermination \|\| liveAnswerPending\) && !tenantKnowledgeScopeInvalidated/g)).toHaveLength(2);
   });
   it("does not mistake early prose followed by a late tool call for an answer", async () => {
-    const consume = new Function(js(`return ${initializer("consumeRound")};`))();
+    const consume = new Function("executableToolCalls", "readModelRound", js(`return ${initializer("consumeRound")};`))(executableToolCalls, readModelRound);
     let upstream!: ReadableStreamDefaultController<Uint8Array>;
     const stream = new ReadableStream<Uint8Array>({ start(c) { upstream = c; } });
     let completed = false;
@@ -94,13 +95,17 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     upstream.close();
     expect((await result).hasToolCall).toBe(true);
     expect((await result).finished).toBe(true);
+    expect((await result).runnable).toBe(true); // INT-334 (R7): a finished tool round may run its calls
   });
   it("reports a round the provider never finished (no finish_reason before the translator's [DONE])", async () => {
-    const consume = new Function(js(`return ${initializer("consumeRound")};`))();
+    const consume = new Function("executableToolCalls", "readModelRound", js(`return ${initializer("consumeRound")};`))(executableToolCalls, readModelRound);
     const enc = new TextEncoder();
     const round = (body: string) => consume(new Response(new ReadableStream<Uint8Array>({ start(c) { c.enqueue(enc.encode(body)); c.close(); } })));
     const cut = await round(`${ROLE_LINE}data: {"choices":[{"delta":{"content":"Half an"}}]}\n\ndata: [DONE]\n\n`);
     expect(cut).toMatchObject({ content: "Half an", hasToolCall: false, finished: false });
+    // INT-334 (R7): a tool round the provider never finished shows its call and may run none of it.
+    const cutTool = await round(`${ROLE_LINE}data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c","function":{"name":"governed_write","arguments":"{}"}}]}}]}\n\ndata: [DONE]\n\n`);
+    expect(cutTool).toMatchObject({ hasToolCall: true, finished: false, runnable: false });
     const whole = await round(`${ROLE_LINE}data: {"choices":[{"delta":{"content":"Whole."}}]}\n\n${FINISH_LINE}data: [DONE]\n\n`);
     expect(whole).toMatchObject({ content: "Whole.", hasToolCall: false, finished: true });
   });

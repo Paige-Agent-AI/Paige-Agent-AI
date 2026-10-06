@@ -16744,7 +16744,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // recorded state is untouched — whatever it is flows to the record verbatim. (Site 2,
           // after the closing stream, covers the LIMIT_REACHED path where finalChunks is null;
           // this site covers the replayed-round sibling.)
-          if (finalChunks && !unfinishedRound && !forcedTermination && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
+          if (finalChunks && !forcedTermination && !unfinishedRound && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
             const limited = researchLimitFallbackCopy(researchTrace, turnTracker.record().state === "LIMIT_REACHED");
             finalAssistantText = limited;

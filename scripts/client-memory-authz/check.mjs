@@ -8044,6 +8044,23 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   const ls = await run26("Dana has a few open deals.\n\nWant me to pull up her deals?", "sure", [READ10, LIST]);
   assert("43.26.N1 a read answered with a listing head (\"Scheduled: …\") ends the turn: two calls, no line", ls.calls === 2 && ls.saved === LIST && ls.terminal === "FINAL", JSON.stringify(ls));
 
+  // 43.27 (review round 11) — "the step was done" means a classifier write, not any non-read tool: a held act
+  // after a read whose name is not a read prefix, then a made-up result, is still held; the line it gets is the
+  // one that stays true when an unclassified tool ran.
+  for (const tool of ["crm_pipeline_summary", "plan_list"]) {
+    const FAKE11 = "Linked! Dana's deal is now attached to her contact.";
+    const o = await run26(LINK6, "sure", [{ name: tool, args: {} }, FAKE11, FAKE11, FAKE11, FAKE11]);
+    assert(`43.27.B1 a held act, a ${tool} read, then a made-up result: held, kept with a true line`, o.calls > 2 && o.saved === `${FAKE11}\n\n${NOTE}` && o.rows === 0, JSON.stringify(o));
+  }
+
+  {
+    const FAKE11 = "Linked! Dana's deal is now attached to her contact.";
+    const o = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal" } }, FAKE11, FAKE11, FAKE11, FAKE11], { outbound: DR26, rpc: DRRPC26 });
+    const STEP_NOT_DONE = continuity.STEP_NOT_DONE_NOTE ?? "\u0000none";
+    assert("43.27.B2 a held act, an unclassified tool (deep_research), then a made-up result: held, kept with \"the step wasn't carried out\"",
+      o.saved === `${FAKE11}\n\n${STEP_NOT_DONE}` && o.rows === 0, JSON.stringify(o));
+  }
+
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.
   const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();

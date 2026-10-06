@@ -198,6 +198,41 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5k. Independent review — round 11 (`59d9ff4e3`): FIX_FIRST, fixed
+
+Round 11 confirmed every round-10 finding closed: N4/N4b, the restatements E/E2, N1, and read-then-announce. The
+ordinary paths are unchanged.
+
+- **B1: one counter was doing two jobs.** The broad "might have changed something" count also decided whether a
+  read had ended the turn. So a read tool named by suffix (`crm_pipeline_summary`, `plan_list`, `inbox_list`…) or
+  `web_search`, followed by a made-up "Linked!", ended FINAL. That was a regression against round 10.
+  - **Fix: the counter is split.**
+    - `classifierWrites` (MUTATING_TOOLS plus ask_choices) is what "the step was done" means.
+    - `writeAttempts` (anything not a verified read) only decides which line the server may add.
+  - **The line now has two forms:**
+    - **"Nothing was sent, saved or changed in this reply."** when only plain reads ran;
+    - **"The step you accepted wasn't carried out in this reply."** on an act when some other tool ran. This is
+      true, since no write did the step.
+    - On an unknown step with other tools, no line is added.
+  - The 20 suffix-named read tools the reviewer verified as selects or read RPCs are listed explicitly
+    (`NAMED_READ_TOOLS`).
+  - Tests: 43.27.B1 (`crm_pipeline_summary`, `plan_list`) and 43.27.B2 (`deep_research` on an act). With one
+    counter, B2 fails.
+- **S1: `restatesOffer` was a bag of words.** It accepted "yes text him" ← "text her", "remove dana" ← "remove Sam
+  and keep Dana", and "delete the original" ← "…not the original".
+  - **Fix:**
+    - The reply must follow the offered step in order, starting at its verb.
+    - "it/that/this" may stand in for the object.
+    - A person's pronoun counts only if the offer used that same one.
+    - An offer that sets one thing against another (not / keep / except / instead / rather) is never accepted by
+      a restatement.
+- **S2: `announcesTheStep` matched any "I'll + verb".** It flagged "I'll skip it", "I'll be here" and "I'll go
+  with…". **Fix:** it now matches only the offered step's own verb ("I'll link it").
+- **Recorded:** "yes send the card" on the two-act production offer accepts the whole offer, the same as a bare
+  yes (NIT). The note quotes the reply.
+
+Harness 910/0. Deno 24/24. `deno check` gives 10 diagnostics, the same as base.
+
 ### 5j. Independent review — round 10 (`9e54b9f3d`): FIX_FIRST, fixed
 
 All round-9 findings were confirmed closed. The `isActionIntent` change is behaviour-equivalent when no offer was

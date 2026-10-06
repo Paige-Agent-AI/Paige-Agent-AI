@@ -660,6 +660,25 @@ Deno.test("review round 10 — a yes that restates the step accepts it; listing 
   assert(restatesOffer("yes text her", "Want me to text her the link?"));
   for (const t of ["Scheduled: Thursday 2pm with Dana.", "Updated last on Monday: proposal v2.", "Created on March 2, it has 3 deals.",
     "Here's what's happening now: two deals are pending now."]) assert(!saysItWasDone(t), t);
-  assert(announcesTheStep("Found Dana, I'll link the deal to her contact."));
-  for (const t of ["I'll keep an eye on it.", "Here are her deals.", "Let me know if you want more."]) assert(!announcesTheStep(t), t);
+  assert(announcesTheStep("Found Dana, I'll link the deal to her contact.", LINK));
+  for (const t of ["I'll keep an eye on it.", "Here are her deals.", "Let me know if you want more."]) assert(!announcesTheStep(t, LINK), t);
+});
+
+Deno.test("review round 11 — a restatement follows the offered step; only its own verb is an announcement", () => {
+  // A different person, a reversed object, or a correction is not a restatement.
+  for (const [r, o] of [["yes text him", "Want me to text her the link?"], ["yes email him", "Want me to email Dana the recap?"],
+    ["remove dana", "Want me to remove Sam from the deal and keep Dana?"], ["delete the original", "Want me to delete her duplicate contact, not the original?"],
+    ["yes archive the new one", "Want me to archive the old deal and not the new one?"], ["yes link the contact to the deal", "Want me to link the deal to her contact?"]]) {
+    assert(!restatesOffer(r, o), `${r} <- ${o}`);
+  }
+  for (const [r, o] of [["yes text her", "Want me to text her the link?"], ["yes text her the link", "Want me to text her the link?"],
+    ["yes link it", "Want me to link the deal to her contact?"], ["sure, link the deal", "Want me to link the deal to her contact?"]]) {
+    assert(restatesOffer(r, o), `${r} <- ${o}`);
+  }
+  const LINK = "Want me to link the deal to her contact?";
+  for (const t of ["Looks like it's already linked, I'll skip it then.", "Dana has two deals. I'll be here if you need anything.",
+    "I'll go with the Retainer deal unless you say otherwise.", "I'll be honest: there's no linking tool here.", "Let me pull up the Retainer one."]) {
+    assert(!announcesTheStep(t, LINK), t);
+  }
+  assert(announcesTheStep("Got it, I'll link it now.", LINK));
 });

@@ -232,7 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
-import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, saysItWasDone, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, saysItWasDone, STEP_NOT_DONE_NOTE, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -15937,7 +15937,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // saves a run, previews mint bindings, web tools log events — review round 10). The server's line that nothing
       // was saved is only ever added when nothing but plain reads ran.
       const PLAIN_READ_TOOL = /^(?:crm_(?:search|get|list|read)_|get_|list_|search_|lookup_|read_|find_|view_|fetch_|query_|describe_|show_)/;
+      // Read-only tools named by suffix, each verified as a select / read RPC (review round 11).
+      const NAMED_READ_TOOLS = new Set(["crm_pipeline_summary", "plan_list", "action_list", "action_get", "inbox_list", "integrations_list",
+        "automation_list", "automation_triggers_list", "improvement_list", "growth_list", "pipeline_catalogue", "comms_list_numbers",
+        "comms_search_numbers", "comms_connection_summary", "comms_registration_status", "presence_who_online", "presence_is_online",
+        "marketplace_browse", "zapier_list_actions", "document_pending_reviews"]);
       let writeAttempts = 0;
+      // A write by the classifier (or a question card): what "the step was done" means. Kept separate from the
+      // broad count above, which only decides whether the server may say nothing was saved (review round 11).
+      let classifierWrites = 0;
       let continuationFailed = false;
       // An unknown step gets one continuation, not three: it may well be an answer (review round 9).
       const continuationLimit = acceptedKind === "unknown" && heldAccept ? 1 : MAX_CONTINUATIONS;
@@ -16415,7 +16423,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             totalToolCalls += sumToolCost(executed);
-            writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !PLAIN_READ_TOOL.test(n); }).length;
+            writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !(PLAIN_READ_TOOL.test(n) || NAMED_READ_TOOLS.has(n)); }).length;
+            classifierWrites += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || n === "ask_choices"; }).length;
             if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
             // What stays at the round's end reads the round as a whole, after the approval rewrite:
@@ -16549,8 +16558,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ? (PROSE_REFUSAL_RE.test(finalAssistantText) || NO_LONGER_POSSIBLE.test(finalAssistantText))
                 : (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?")));
             // On a held offer a read alone does not end it when the reply then says it did the step ("Linked!").
-            const readThenClaims = acceptedTurn && writeAttempts === 0 && typeof finalAssistantText === "string"
-              && (saysItWasDone(finalAssistantText) || (acceptedKind === "act" && announcesTheStep(finalAssistantText)));
+            const readThenClaims = acceptedTurn && classifierWrites === 0 && typeof finalAssistantText === "string"
+              && (saysItWasDone(finalAssistantText) || (acceptedKind === "act" && announcesTheStep(finalAssistantText, foreground.offer.kind === "accepted" ? foreground.offer.offer : "")));
             const signalTerminal = (totalToolCalls > 0 && !readThenClaims)
               || queuedApprovals.length > 0
               || confirmTrace.length > 0
@@ -16626,11 +16635,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // INT-332 — a held accepted offer that ran out of rounds (or whose continuation failed) with nothing
           // changed: its last reply is KEPT, followed by the server's line. True whether that reply was an answer,
           // a question, or a made-up result (the line contradicts it). A read may have run; nothing was written.
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && heldAccept && !claimAnswered
-              && (continuationsUsed >= continuationLimit || continuationFailed) && writeAttempts === 0
+          // The line: "nothing was saved" only when nothing but plain reads ran; otherwise, on an act, the narrower
+          // truth that the accepted step itself was not carried out; on an unknown step with other tools, no line.
+          const heldNote = writeAttempts === 0 ? NOTHING_RAN_NOTE : acceptedKind === "act" ? STEP_NOT_DONE_NOTE : null;
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && heldAccept && !claimAnswered && heldNote
+              && (continuationsUsed >= continuationLimit || continuationFailed) && classifierWrites === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
-            finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
+            finalAssistantText = `${finalAssistantText.trim()}\n\n${heldNote}`;
             if (!continuationFailed) turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),

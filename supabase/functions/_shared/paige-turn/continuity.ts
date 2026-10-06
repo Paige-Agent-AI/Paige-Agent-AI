@@ -129,10 +129,17 @@ export function saysItWasDone(text: string): boolean {
 }
 const SAYS_DONE = /\b(?:all set|taken care of|it'?s handled|that'?s handled)\b|(?:^|[.!?:]\s+)(?:done|sorted|all done)(?=\s*[.!,—–-]|\s*$)|\bi'?ve (?:just |now |already |gone ahead and )?(?:linked|sent|re-?sent|added|created|updated|moved|scheduled|booked|queued|set (?:it |that |this )?up|tagged|enrolled|logged|saved|filed|posted|published|changed|assigned|marked|cancell?ed|fired|submitted|raised|attached|converted|merged|refunded|issued|texted|emailed|messaged|pinged|notified|imported|invited|connected|synced|launched|pushed|forwarded|shared|waived|extended|rebooked|unsubscribed|fixed|restored|approved)\b|\bi (?:just |already |went ahead and )?(?:sent|linked|added|moved|updated|forwarded|shared|waived|booked|scheduled|emailed|texted)\b|(?:^|[.!?:]\s+)(?:added|linked|sent|re-?sent|queued|moved|booked|scheduled|tagged|enrolled|posted|published|logged|filed|assigned|attached|submitted|texted|emailed|messaged|pinged|notified|imported|archived|refunded|charged|invited|forwarded|shared|waived|rebooked|unsubscribed|looped|updated|changed|saved|created)\b(?! by| below| above| version| draft below|\s*:|\s+(?:last|on|at|in|for|every|each|daily|weekly)\b)|\b(?:sent|forwarded|emailed|texted|shared) (?:it|that|them|this) (?:to|over to|with)\b|\b(?:link|send|re-?send|mov|add|creat|updat|schedul|book|queu|tagg|enroll|post|publish|fir|attach|log|sav|submitt|continu|import|archiv|delet|remov|merg|cancel|refund|charg|text|email|messag|ping|forward|shar|waiv|extend|rebook|unsubscrib|invit|connect|sync|launch|push)ing\b[^.!?\n]{0,25}\bnow\b(?![^.!?\n]*\?)/i;
 
-/** On a held act, a reply that announces the step instead of doing it ("Found Dana — I'll link the deal."). */
-export function announcesTheStep(text: string): boolean {
-  return typeof text === "string" && /\b(?:i'?ll|i will|let me|i'?m going to|i'?m about to)\s+(?:now\s+|go ahead and\s+|just\s+)?(?!keep|let you|need|check back|wait|hold|leave|stay|know|see|think|explain|walk|show|look)\w+/i.test(strip(text));
+/** On a held act, a reply that announces THE OFFERED STEP instead of doing it ("Found Dana — I'll link the deal.").
+ * Only the step's own verb counts: "I'll skip it", "I'll be here" are not announcements (review round 11). */
+export function announcesTheStep(text: string, offer: string): boolean {
+  if (typeof text !== "string") return false;
+  const verb = offeredStepWords(offer)[0];
+  if (!verb || !/^[a-z-]+$/.test(verb)) return false;
+  return new RegExp(`\\b(?:i'?ll|i will|let me|i'?m going to|i'?m about to)\\s+(?:now\\s+|go ahead and\\s+|just\\s+)?${verb.replace(/-/g, "-?")}\\b`, "i").test(strip(text));
 }
+
+/** On a held ACT where a tool that may have changed something ran but no write did: the step itself was not done. */
+export const STEP_NOT_DONE_NOTE = "The step you accepted wasn't carried out in this reply.";
 
 /** The server's line after a held offer's last reply when nothing was written: true in every case, including a
  * reply that reports something done earlier ("it was already sent on Monday") — it speaks only of this reply. */
@@ -251,19 +258,35 @@ export function restatesOffer(reply: string, offer: string): boolean {
   if (!r || r.includes("?") || r.split(" ").length > 10) return false;
   const words = r.replace(/^(?:(?:yes|yeah|yep|yup|sure|ok|okay|perfect|great|please|alright|absolutely|definitely|go ahead and|let'?s|do it and)\s+)+/, "").split(" ").filter(Boolean);
   if (!words.length) return false;
+  const offered = offeredStepWords(offer);
+  if (!offered.length) return false;
+  // An offer that sets one thing against another ("…remove Sam and keep Dana", "…not the original") is never
+  // accepted by a restatement: which half the reply names is a correction, not a yes (review round 11).
+  if (offered.some((w) => /^(?:not|keep|except|instead|rather)$/.test(w))) return false;
+  const base = (w: string) => w.replace(/^re-/, "re");
+  if (base(words[0]) !== base(offered[0])) return false;
+  // The rest follows the offered step IN ORDER; "it/that/this" may stand for its object; a pronoun for a person
+  // counts only when the offer used that same one ("yes text him" never accepts "text her").
+  const STAND_IN = new Set(["it", "that", "this", "those", "these", "them"]);
+  const FILLER = new Set(["now", "please", "then", "too", "up", "over"]);
+  let k = 1;
+  for (const w of words.slice(1)) {
+    if (FILLER.has(w)) continue;
+    const at = offered.slice(k).findIndex((o) => base(o) === base(w));
+    if (at >= 0) { k += at + 1; continue; }
+    if (STAND_IN.has(w) && !(w === "them" && !offered.includes("them"))) continue;
+    return false;
+  }
+  return true;
+}
+/** The offered step's words, from its verb on (the offer phrase and "and I'll / go ahead" removed). */
+function offeredStepWords(offer: string): string[] {
   OFFER_PHRASE.lastIndex = 0;
   const o = strip(offer).toLowerCase();
   const m = OFFER_PHRASE.exec(o);
-  if (!m) return false;
-  const offered = o.slice(m.index + m[0].length).replace(/[^a-z0-9' -]+/g, " ").split(/\s+/).filter(Boolean)
-    .filter((w) => !/^(?:and|then|i'?ll|i|will|go|ahead|just|now)$/.test(w));
-  const verb = offered[0];
-  if (!verb) return false;
-  const base = (w: string) => w.replace(/^re-/, "re");
-  if (base(words[0]) !== base(verb)) return false;
-  const FILLER = new Set(["it", "her", "him", "them", "that", "this", "those", "these", "now", "please", "the", "a", "an", "up", "over", "too", "then"]);
-  const offerWords = new Set(offered.map(base));
-  return words.slice(1).every((w) => FILLER.has(w) || offerWords.has(base(w)));
+  if (!m) return [];
+  return o.slice(m.index + m[0].length).replace(/[^a-z0-9' -]+/g, " ").split(/\s+/).filter(Boolean)
+    .filter((w, i) => !(i < 3 && /^(?:and|then|i'?ll|i|will|go|ahead|just|now)$/.test(w)));
 }
 
 export function isAffirmativeReply(text: string): boolean {

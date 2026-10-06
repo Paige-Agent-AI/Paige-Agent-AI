@@ -230,7 +230,7 @@ Gate: 84/0.
   | Check | Result |
   |---|---|
   | `test:model-fabric` | 80/0 (new) |
-  | `test:client-memory-authz` | 942/0 (43.42f: a cheap round keeps its tools) |
+  | `test:client-memory-authz` | 943/0 (43.42f: a cheap round keeps its tools; 43.42g: a cheap turn's claim correction runs on the reasoning tier) |
   | `test:knowledge-scope` | 429/0 |
   | Deno `route` + `round` + `classify` + `provider-failure` | 39/0 |
   | Every other CI npm harness | exits 0 |
@@ -245,6 +245,7 @@ Gate: 84/0.
   - Dropping the extras or the class effort fails 2.
   - Returning a budget stop instead of rethrowing it fails 2.
   - Classing a missing key as an outage fails 1.
+  - Running the claim correction on the turn's own class fails 43.42g.
 - **Deploy:** `_shared/claude.ts` changes, so the merge redeploys every function that imports it. That includes the four INT-320-stale functions (content-draft, extract-business-credit-report, generate-outreach-draft, growth-funnel-draft); one readback is owed after the deploy.
 - **Independent exact-head review of `d30cd850a` — FIX, fixed:**
 
@@ -259,5 +260,7 @@ Gate: 84/0.
 
 - **Must close before `OPENAI_CHAT_ENABLED` turns on (review S5, added to the R6/R7 release bar):**
   - **Budget gate:** `responsesStream` has no tenant budget gate; only `gatewayCompat` enforces the daily ceiling. The OpenAI path must apply the same gate.
-  - **Documents:** `toResponsesContent` does not carry a PDF/document part. A document turn on OpenAI is refused before any call (`unknown`, no fallback). Before the flip, a document turn must either be supported or routed to Anthropic.
+  - **Adapter refusals:** `toResponsesContent` does not carry a PDF/document part, and the adapter refuses hosted tools; both throw `ProviderToolRefused` before any call, which the fabric classes `unknown` (no fallback). Nothing was sent, so falling back is provably safe. Before the flip, give such a refusal its own fallback-eligible class (or route document turns to Anthropic first) so a document turn is served by Sonnet rather than failing.
+- **Side effect of naming a missing Anthropic key:** `claude.ts` now throws `NeedsConfigError`, so `model-router.ts` `callModel` reports its honest `needs_config` for an Anthropic cell with no key, instead of throwing into the frontier fallback. Callers already handle `needs_config`; production has the key, so nothing changes there.
+- **Round 2 on `ed7c79801` — SHIP.** The reviewer byte-compared all five rounds against `main` with OpenAI off: every site × every class × a plain and a PDF turn, Studio thinking on and off — 48/48 identical requests. S1 (the claim correction's class was untested) closed by 43.42g; S2 recorded above.
 - **Carried:** R5b narrows the tool list by the route's capability and domain, and traces tool-definition tokens separately (prompt, cache-write, cache-read and output are already separate columns); context compaction is separate. R6/R7: the Sol canary to the release bar, the flip, Astra, and the classifier onto the cheap class.

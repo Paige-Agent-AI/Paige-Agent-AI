@@ -798,8 +798,9 @@ Reference or any domain ledger; it governs how their facts become release and cu
 - Chat's five streamed rounds (entry, loop, claim correction, continuation, close) use it. The claim correction is always operational.
 - Every round keeps the governed tool list. The first head took tools off cheap rounds; the independent review found no rescue on Live, client seats or question-phrased requests, so that moves to R5b with a rescue for every surface.
 - A thrown error is classed by its own type: a missing key is `auth_config` (OpenAI and Anthropic), other pre-fetch throws `unknown` (no fallback).
-- Before `OPENAI_CHAT_ENABLED` turns on: the OpenAI path needs the tenant budget gate, and document turns must be supported or routed to Anthropic.
-- Proof: `test:model-fabric` 80/0; `test:client-memory-authz` 942/0; `test:knowledge-scope` 429/0; Deno 39/0; every CI npm harness exits 0; chat diagnostics 10 → 9. Evidence: [INT-334 evidence, R5a](model-routing/int-334/EVIDENCE.md).
+- Before `OPENAI_CHAT_ENABLED` turns on: the OpenAI path needs the tenant budget gate, and an adapter refusal (a document part, a hosted tool) needs a fallback-eligible class or document turns routed to Anthropic.
+- Independent review: FIX (B1, reverted) then SHIP; with OpenAI off, all five rounds' requests are byte-identical to `main` (48/48).
+- Proof: `test:model-fabric` 80/0; `test:client-memory-authz` 943/0; `test:knowledge-scope` 429/0; Deno 39/0; every CI npm harness exits 0; chat diagnostics 10 → 9. Evidence: [INT-334 evidence, R5a](model-routing/int-334/EVIDENCE.md).
 
 **2026-10-06 INT-334 R4 in production:** merged `53dbf7eb5` (#1789); `paige-ai-chat` v351 is 150/150 byte-identical to it. `turn-classify` latency/timeout rate owed from traffic.
 

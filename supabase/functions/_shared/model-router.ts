@@ -483,6 +483,7 @@ async function claudeText(task: unknown, model?: string): Promise<ProviderCallRe
     cache_read_input_tokens: resp?.usage?.cache_read_input_tokens,
     cache_creation_input_tokens: resp?.usage?.cache_creation_input_tokens,
     latency_ms: Date.now() - started,
+    stop: resp?.paige_stop,
   };
 }
 
@@ -1155,7 +1156,7 @@ export async function callModel(
     doctrine_gate_hits: budgetCheck?.gate
       ? { budget: { level: budgetCheck.gate.replace("budget_", ""), accrued_usd: budgetCheck.accrued_usd, ceiling_usd: budgetCheck.ceiling_usd, band: budgetCheck.band } }
       : null,
-    metadata: { caller_function: opts.callerFunction, actor_role: opts.actorRole },
+    metadata: { caller_function: opts.callerFunction, actor_role: opts.actorRole, ...(result.stop ?? {}) },
   });
 
   return {

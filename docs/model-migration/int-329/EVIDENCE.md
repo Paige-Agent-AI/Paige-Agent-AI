@@ -1,5 +1,9 @@
 # INT-329: Claude reasoning tier, Sonnet 5 → Sonnet 5.5 (evidence record)
 
+**Sequencing.** GitHub dispatches a workflow only from the default branch, so the A/B gate has to land before the switch it gates.
+- **Part 1, PR #1772:** the seam, trace truth, the gate and the `model-ab` workflow. The model stays `claude-sonnet-5`.
+- **Part 2:** the one-line flip of `CLAUDE_REASONING`, merged only after a GO.
+
 Each entry names its evidence class: **automated** (a script that runs), **static** (typecheck or build), **deployed-runtime (preview)**, **production read-only** (a query against prod), or **UNVERIFIED** (with the reason).
 
 ## 1. The seam
@@ -23,9 +27,10 @@ The gate drives the real seams under the repo's Node loader, with a recording fa
 
 | Run | Result |
 |---|---|
-| Head | **63 passed, 0 failed** |
-| Base seam `66d16b6` (check plus the data-only `claude-models.ts`; every other line base) | **52 passed, 11 failed** |
-| Rollback dry run (constant set back to `claude-sonnet-5`, nothing else changed) | **63/0**, plus token-pricing 22/0, trace-wiring 20/0, client-memory-authz 813/0, knowledge-scope 423/0 |
+| Head, constant `claude-sonnet-5` (part 1) | **65 passed, 0 failed** |
+| Head, constant `claude-sonnet-5-5` (the part-2 state) | **65 passed, 0 failed** |
+| Base seam `66d16b6` (a 63-check version of the gate, plus the data-only `claude-models.ts`; every other line base) | **52 passed, 11 failed** |
+| Earlier cutover-shaped dry run (constant flipped back, nothing else) | 63/0, plus token-pricing 22/0, trace-wiring 20/0, client-memory-authz 813/0, knowledge-scope 423/0 |
 
 The 11 base failures are all trace-truth or stop-reason defects:
 - 1.5, 3.5, 3.8: the requested alias is traced instead of the served id.
@@ -51,6 +56,8 @@ The rollback dry run means the documented one-line rollback keeps CI green.
 | Malformed-body guard removed | 4.4 ×3 |
 | Streamed trace back to the requested id | 3.5, 3.8 |
 | callModel failure trace back to null | 5b.1 |
+| `claudeText` drops the stop reason | 5c.4 |
+| Stream trace invents `end_turn` | 5c.5 |
 
 ## 3. Static
 
@@ -104,21 +111,32 @@ There are 15 cases and a pre-registered GO/NO-GO rule. The candidate is GO only 
 
 Verified with `--mock` only:
 - Clean mock: 15/15 on both arms.
+- `MOCK_FAULTS=2`: the candidate's stream dies partway through. The run survives; the case is counted as a failure plus a provider error; the report and a per-case partial file are written; exit is 0.
+- `--reps abc` and a single distinct arm are each refused before any spend.
+- The narration count is reported but deliberately not scored. Whether quieter "thought" steps are acceptable is the owner's call.
 - `MOCK_FAULTS=1`: the candidate's refusal (with its category), 9 thinking blocks, and between-tool narration falling from 180 to 0 characters are all reported. The rule fails on completion and on refusal.
 
-**UNVERIFIED:** every live A/B number. The run needs PAIGE's own Anthropic key, which is in neither the build sandbox, any workflow, nor the preview project. Run it with the `model-ab` workflow once the owner adds `PAIGE_ANTHROPIC_AB_KEY`, or anywhere that key already lives.
+**UNVERIFIED:** every live A/B number. The run needs PAIGE's own Anthropic key, which is in neither the build sandbox, any workflow, nor the preview project.
+
+Once part 1 is on `main`, run it two ways:
+- the `model-ab` workflow: add the `PAIGE_ANTHROPIC_AB_KEY` secret, then dispatch it with `arms=claude-sonnet-5,claude-sonnet-5-5`;
+- or `npm run ab:sonnet` wherever that key lives.
 
 ## 7. Owed before and after cutover
 
-1. INT-322's clean R4 Sonnet 5 capture. The merge is held until it lands.
-2. The live A/B, GO under the pre-registered rule, plus a small Deep Research compatibility smoke (dev cases, not the holdout).
-3. Merge. Then verify:
+1. INT-322's clean R4 Sonnet 5 capture. The part-1 merge is held until it lands, so `paige-deep-research` is not redeployed mid-drive; its requests are byte-identical, but a redeploy can still disturb an in-flight run.
+2. Merge part 1. Then:
+   - read back the served bundles;
+   - confirm prod traces now carry served ids and `stop_reason`;
+   - confirm the null-model rows stop appearing.
+3. The live A/B (`model-ab`), GO under the pre-registered rule. Include a small Deep Research compatibility smoke (dev cases, not the holdout).
+4. Part 2: the one-line flip. Merge it, then verify:
    - provider-served bundles for `paige-ai-chat`, `paige-deep-research` and a sample of the 39 affected functions;
    - the first production `claude-sonnet-5-5` trace;
    - one tool round;
    - a non-zero cache read;
    - 4xx/5xx rates against the baseline.
-4. An authenticated drive of one real C4 resume on 5.5.
+5. An authenticated drive of one real C4 resume on 5.5.
 
 Cutover notes:
 - Caches are per model, so the first turns after cutover (or after a rollback) rewrite their prefixes.

@@ -640,6 +640,9 @@ async function streamAnthropicAsOpenAI(
       let toolIndex = -1;
       const blockToTool = new Map<number, number>();
       let stopReason = "end_turn";
+      // What the PROVIDER said, for the trace — null until a message_delta carries it, so a stream
+      // that ends without one is never recorded as a clean end_turn it did not send.
+      let traceStopReason: string | null = null;
       let stopDetails: unknown = null;
       // §34 L1.1 — usage/output capture for the streaming trace row (net-new parse: Anthropic ships
       // input_tokens on message_start and cumulative output_tokens on message_delta).
@@ -698,7 +701,7 @@ async function streamAnthropicAsOpenAI(
                 send(controller, { choices: [{ index: 0, delta: { paige_thinking: ev.delta.thinking }, finish_reason: null }] });
               }
             } else if (ev.type === "message_delta") {
-              if (ev.delta?.stop_reason) stopReason = ev.delta.stop_reason;
+              if (ev.delta?.stop_reason) { stopReason = ev.delta.stop_reason; traceStopReason = ev.delta.stop_reason; }
               if (ev.delta?.stop_details) stopDetails = ev.delta.stop_details;
               if (ev.usage?.output_tokens != null) outTok = ev.usage.output_tokens; // cumulative final count
               // Opportunistic secondary read — message_delta is NOT documented to echo cache counts.
@@ -734,7 +737,7 @@ async function streamAnthropicAsOpenAI(
             input: (reqBody as { messages?: unknown }).messages,
             output: outText,
             error_class: streamErrored ? "stream_interrupted" : null,
-            metadata: { caller_function: trace.agent_id, ...(streamErrored ? {} : stopMeta(stopReason, stopDetails)) },
+            metadata: { caller_function: trace.agent_id, ...(streamErrored ? {} : stopMeta(traceStopReason, stopDetails)) },
           });
         }
       }

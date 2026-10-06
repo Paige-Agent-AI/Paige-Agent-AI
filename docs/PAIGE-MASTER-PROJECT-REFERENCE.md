@@ -763,32 +763,38 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-**2026-10-06 INT-329: the Claude reasoning tier moves from `claude-sonnet-5` to `claude-sonnet-5-5` through the ONE model-id home (`_shared/claude-models.ts`, re-exported by `claude.ts`) — PR #1772, held as a draft.** Release channel: `development`. Migrations: `NOT_APPLICABLE`. Edge: **not deployed**; a merge redeploys 39 functions (the full set is in the evidence record). The merge is held until INT-322's clean R4 Sonnet 5 re-drive is captured (it was running on prod at 12:00 UTC on 2026-10-06) and the live A/B is GO. Classification: internal-only, no customer version. The classification tier (`claude-haiku-4-5`) is unchanged.
-- **Allow-list:** derives its Anthropic ids from the constants. The superseded id is rejected, so an override naming it can't run 5.5 under the old label. No producer passes it.
-- **Forced tool use:** `callClaude` degrades a forced `tool_choice` to `auto` on the models that 400 on it, and logs a warning when it does. No live caller sends one.
+**2026-10-06 INT-329 (1 of 2): the Claude reasoning tier gets ONE model-id home, truthful traces and a frozen A/B gate. The model stays `claude-sonnet-5` in this part — PR #1772.** The cutover to `claude-sonnet-5-5` is part 2: a one-line PR changing `CLAUDE_REASONING` in `_shared/claude-models.ts`, merged only after the A/B is GO. The split exists because GitHub dispatches a workflow only from the default branch, so the A/B gate must land before the switch it gates.
+- Build identity: release channel `development`. Migrations `NOT_APPLICABLE`.
+- Deploy: a merge redeploys 39 functions. Their request bodies are byte-identical; only trace metadata changes. The merge is held until INT-322's clean R4 Sonnet 5 re-drive is captured, so `paige-deep-research` is not redeployed mid-drive.
+- Classification: internal-only. No customer version.
+- **Seam:** `claude-models.ts` is the only place a Claude id is chosen. `claude.ts` re-exports it and the allow-list derives from it (superseded and future ids are rejected until they are the constant). `callClaude` degrades a forced `tool_choice` to `auto`, with a warning, on models that reject it (Sonnet 5.5 / Opus 5.5 / Fable 5.1). No live caller sends one.
 - **Trace truth:**
   - Streamed rows record the provider-served id.
-  - Gateway, routed-text and callModel failure/fallback rows record the resolved Claude id (PDF upgrade included), never `null` and never the legacy `google/gemini-…` label.
-  - A failure after the Featherless fall-through is attributed to Anthropic, the only leg that can throw.
-  - `stop_reason`/`stop_category` join llm-trace's metadata allowlist, so refusals (five categories on 5.5) and `max_tokens` cut-offs are visible. Status and `finish_reason` semantics are unchanged.
+  - Gateway, routed-text and callModel failure/fallback rows record the resolved Claude id (PDF upgrade included), never `null` (41 prod rows in 14 days) and never the legacy `google/gemini-…` label (2 rows).
+  - A failure after the Featherless fall-through is attributed to Anthropic.
+  - `stop_reason`/`stop_category` join llm-trace's metadata allowlist on the stream, gateway, routed and callModel frontier paths. A stream that never says why it stopped records none. Status and `finish_reason` semantics are unchanged.
   - A malformed body can no longer make the error path throw.
-- **Compatibility (grounded against the shipped request shapes):** no reasoning path sends `thinking`, effort, `top_p`/`top_k`, a forced `tool_choice`, computer use or a prefill; temperature is stripped. Prices, tokenizer and context are identical; 5.5 is priced on the explicit Sonnet row. Effort stays at the API default. Tuning is a separate decision, because 5.5 recalibrates the levels.
-- **Live-only risks:**
-  - Between-tool narration may move into empty `thinking` blocks, which empties Chat's "thought" steps.
-  - Thinking blocks are not round-tripped (same as Sonnet 5).
-  - The 2048 default `max_tokens` has to absorb thinking.
-  - Refusals are still unhandled in product behaviour.
+- **Compatibility of the part-2 switch** (grounded against the shipped request shapes):
+  - No reasoning path sends `thinking`, effort, `top_p`/`top_k`, a forced `tool_choice`, computer use or a prefill; temperature is stripped.
+  - Prices, tokenizer and context are identical, and 5.5 is priced on the explicit Sonnet row.
+  - Effort stays at the API default.
+  - Only a live run can settle the rest:
+    - between-tool narration may move into empty `thinking` blocks;
+    - thinking blocks are not round-tripped (same as Sonnet 5);
+    - the 2048 default `max_tokens` must absorb thinking;
+    - refusals are still unhandled in product behaviour.
 - **Proof:**
-  - `npm run test:reasoning-tier` (in CI): head 63/0; base seam 52/11 (every failure a trace-truth/stop defect). The rollback dry run (constant flipped back, nothing else) is 63/0 with every sibling suite green.
-  - 9 request bodies are byte-identical to the frozen base snapshot apart from `model`, and 8 planted defects are each caught.
-  - token-pricing 22/0, trace-wiring 20/0, client-memory-authz 813/0, knowledge-scope 423/0. `deno check` is clean on the changed shared modules.
-  - Preview deployed-runtime row: a routed failure traced `claude-sonnet-5-5`, not `null`. The preview has no Anthropic key, so no model call ran.
+  - `npm run test:reasoning-tier` (in CI) is model-agnostic: 65/0 with the constant at `claude-sonnet-5` AND at `claude-sonnet-5-5`. The base seam fails 11, every one a trace-truth or stop defect.
+  - 9 request bodies are byte-identical to the frozen base snapshot apart from `model`, and 10 planted defects are each caught.
+  - token-pricing 22/0, trace-wiring 20/0, client-memory-authz 813/0, knowledge-scope 423/0, and 8 vitest files 214/214. `deno check` is clean on the changed shared modules, with identical pre-existing diagnostics on four functions.
+  - Preview runtime: a routed failure traced `claude-sonnet-5-5`, not `null` (preview has no Anthropic key, so no model call ran).
   - Record: [INT-329 evidence](model-migration/int-329/EVIDENCE.md).
-- **Boundary:**
-  - The frozen A/B (`npm run ab:sonnet`; cloud: the `model-ab` workflow) uses the real gateway seam with a harness-authored loop, fixtures and a C4-*shaped* transcript. It has a pre-registered GO/NO-GO rule and is verified with `--mock` only.
-  - **Every live A/B, tool-loop, cache/cost and Deep Research number is UNVERIFIED.** The run needs PAIGE's Anthropic key: the `model-ab` workflow reads the `PAIGE_ANTHROPIC_AB_KEY` secret, which the owner adds.
-  - The real server C4 resume on 5.5, and the first production 5.5 trace, are owed after cutover.
-  - Rollback: set the constant back and merge.
+- **The A/B gate:** `npm run ab:sonnet`, and in the cloud the `model-ab` workflow (dispatch-only, once on `main`). It runs through the real gateway seam with a harness-authored loop, fixtures and a C4-*shaped* transcript. It records stop reasons, refusals, thinking blocks and narration at the transport, uses a pre-registered GO/NO-GO rule, survives stream errors, writes partial results per case, and has spend guards. Verified with `--mock` only.
+- **Owed:**
+  - every live A/B, tool-loop, cache/cost and Deep Research number: UNVERIFIED until the owner adds `PAIGE_ANTHROPIC_AB_KEY` and dispatches;
+  - part 2;
+  - the first production 5.5 trace;
+  - a real C4 resume drive on 5.5.
 
 **2026-10-06 PAIGE conversational loop C4c — PAIGE asks one question, waits, and the same objective resumes on the answer — #1771 (branch `c4c-askuser` on `0fe769ef8`). Release channel: not yet merged; classification: internal-only, authenticated acceptance PROOF OWED (C4f).** ASK_USER is the third interrupt reason over the ONE C4a/C4b resume model. `paige-ai-chat` now offers the existing `ask_choices` tool in the main chat on a saved thread (not Live, not a document turn, not a client portal seat, not a turn with no thread — the Operator surface sends none and keeps asking in prose); a question asked beside other calls is answered "ask it on its own". The question turn IS the ask: `bundle_ref.paige_ask {v, ask_id, question, options, multi, allow_other, needs, objective}` beside `turn_state` ASK_USER; the server mints `ask_id` and sends it with `paige_choices`. A reply sent as the answer (`resume: {kind: "answer", ask_id[, skipped]}`) is bound only when the question is still the thread's newest turn and waiting, in the declared ∧ validated workspace; the person's turn is appended carrying the claim `paige_resume.key = answer:<ask_id>`, held unique per thread by the new partial index `paige_chat_turns_resume_uk` (migration `20270596000000`, the only database addition — four justifications in its header), so a second answer is refused before any model call; a stale, unknown, foreign or second answer is refused truthfully (409/503) and never reinterpreted. PAIGE continues with a turn-local note built from the SAVED question (do not start over, never invent a missing fact, an answer approves nothing); the continuation is recorded `turn_state.resumed {kind: "answer"}` + `paige_resume {kind: "answer", from_turn_id}`. A consequential act after the answer still becomes a card and resumes through C4a/C4b. Client (Solo chat, PAIGE drawer; frozen C3 frames c1–c6): the question's choices inline (ink "Use this", "Skip, use your best guess"), the composer answering it with "Ask something else instead", the question freezing as Answered below / You let PAIGE choose / Not answered, the same on reload. Studio's own question is unchanged (two to four options) and now saved as the same record; its client does not bind replies yet.
 - Proof: client-memory-authz group 41 (56 checks over acceptance 1–12, isolation 1–5 and two review rounds; harness 809/0, base 750/0) and 40.15 (ask → answer → a real crm-command door card → approval → one execution); Deno resume tests 29/29 (base 20); pgTAP 11/11 and a two-session race 7/7 on local PG16 (CI wired); vitest askUser 25/25, PaigeAskCard 6/6, turn-view (+4), whole suite 9458 passed (base 9423); every server/database mutant killed, client 1 equivalent (stated); harness renders: 83 frames. Whole-suite numbers: delivery doc §6 (C4c).

@@ -8,12 +8,13 @@
 // synthesis, drafting, the strategist, the eval judge, visual critique, the callModel frontier cell
 // and its fallback — resolves through CLAUDE_REASONING. The trace records the id the provider served.
 //
-// INT-329 (2026-10-06): claude-sonnet-5 → claude-sonnet-5-5. Same list prices, tokenizer and context.
-// ROLLBACK = set CLAUDE_REASONING back to "claude-sonnet-5" and merge; CI redeploys every importer.
-// No other file changes: no request field a live path sends differs between the two models
-// (proved by scripts/model-migration/reasoning-tier-check.mjs, which passes on either value).
+// INT-329: the cutover to claude-sonnet-5-5 is ONE line — this constant — in its own PR, merged only
+// after the frozen A/B (`model-ab` workflow) is GO. Same list prices, tokenizer and context. Rollback
+// is the same line in reverse; CI redeploys every importer. No other file changes: no request field a
+// live path sends differs between the two models (proved by
+// scripts/model-migration/reasoning-tier-check.mjs, which passes on either value).
 // Caches are per model, so a switch in either direction cold-starts every cached prefix once.
-export const CLAUDE_REASONING = "claude-sonnet-5-5";
+export const CLAUDE_REASONING = "claude-sonnet-5";
 export const CLAUDE_CLASSIFICATION = "claude-haiku-4-5"; // alias: the provider serves the current snapshot
 
 /** Reasoning ids PAIGE has run on. The check fails on any other value, so a future switch is a

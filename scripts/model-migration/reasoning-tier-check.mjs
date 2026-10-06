@@ -77,7 +77,7 @@ globalThis.fetch = async (url, init = {}) => {
       ev({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } }),
       ev({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "streamed" } }),
       ev({ type: "content_block_stop", index: 0 }),
-      ev({ type: "message_delta", delta: { stop_reason: stop.reason, ...(stopDetails ? { stop_details: stopDetails } : {}) }, usage: { output_tokens: 11 } }),
+      ...(stop.omitDelta ? [] : [ev({ type: "message_delta", delta: { stop_reason: stop.reason, ...(stopDetails ? { stop_details: stopDetails } : {}) }, usage: { output_tokens: 11 } })]),
       ev({ type: "message_stop" }),
     ].join("");
     return new Response(sse, { status: 200, headers: { "content-type": "text/event-stream" } });
@@ -305,6 +305,20 @@ console.log("5c. why the provider stopped reaches the trace (refusal / max_token
   await router.routedChatCompletion("doc_draft", { messages: [{ role: "user", content: "x" }] }, { agent_id: "check" });
   const [row2] = await tracesSince(before2);
   ok(row2?.metadata?.stop_reason === "max_tokens", `5c.3 a non-streamed max_tokens stop is recorded (got ${row2?.metadata?.stop_reason})`);
+
+  stopNext = { reason: "refusal", category: "cyber" };
+  const before3 = traceCount();
+  await router.callModel("text", "frontier", { prompt: "critique" }, { tenantId: "11111111-1111-4111-8111-111111111111", callerFunction: "check" });
+  const row3 = (await tracesSince(before3)).find((r) => r.provider === "anthropic" && r.status === "success");
+  ok(row3?.metadata?.stop_reason === "refusal" && row3?.metadata?.stop_category === "cyber",
+     `5c.4 a refusal on the callModel frontier cell (critique, document worker, forge) is recorded (got ${row3?.metadata?.stop_reason})`);
+
+  stopNext = { reason: "end_turn", omitDelta: true };
+  const before4 = traceCount();
+  const r4 = await claude.gatewayCompat("anthropic", { body: JSON.stringify({ model: "google/gemini-2.5-pro", messages: [{ role: "user", content: "x" }], stream: true }) }, { agent_id: "check", job_kind: "chat" });
+  await drain(r4.body);
+  const [row4] = await tracesSince(before4);
+  ok(row4 && !("stop_reason" in (row4.metadata ?? {})), "5c.5 a stream that never said why it stopped records no stop_reason (never an invented end_turn)");
 }
 
 console.log("6. the request shapes the reasoning model rejects never leave the seam");

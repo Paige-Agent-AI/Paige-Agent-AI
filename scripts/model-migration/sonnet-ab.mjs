@@ -39,6 +39,9 @@ const REPS = Number(arg("--reps", MOCK ? "1" : "3"));
 const ARMS = arg("--arms", "claude-sonnet-5,claude-sonnet-5-5").split(",");
 const ONLY = arg("--cases", "") ? new Set(arg("--cases", "").split(",")) : null;
 const OUT = arg("--out", MOCK ? path.join(process.env.TMPDIR || "/tmp", "int-329-mock") : "docs/model-migration/int-329");
+// Spend guard: a paid run is bounded and must actually compare two models.
+if (!Number.isInteger(REPS) || REPS < 1 || REPS > 10) { console.error(`sonnet-ab: --reps must be an integer 1–10 (got ${arg("--reps", "")})`); process.exit(2); }
+if (new Set(ARMS).size < 2) { console.error(`sonnet-ab: --arms needs at least two distinct model ids (got ${ARMS.join(",")})`); process.exit(2); }
 const KEY = process.env.ANTHROPIC_API_KEY || "";
 if (!MOCK && !KEY) {
   console.error("sonnet-ab: ANTHROPIC_API_KEY is not set. This harness spends against PAIGE's own Anthropic org; " +
@@ -82,12 +85,19 @@ globalThis.fetch = async (url, init = {}) => {
   // Tee the stream: the seam reads one branch exactly as it would in production; we read the other.
   const [forSeam, forUs] = resp.body.tee();
   pending.push((async () => {
-    const reader = forUs.getReader(); const dec = new TextDecoder(); let buf = "";
-    for (;;) {
-      const { done, value } = await reader.read(); if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split("\n"); buf = lines.pop() ?? "";
-      for (const l of lines) { const t = l.trim(); if (!t.startsWith("data:")) continue; try { observe(rec, JSON.parse(t.slice(5).trim())); } catch { /* ping etc. */ } }
+    // A stream error (socket reset, the seam's own deadline) reaches BOTH tee branches. The seam
+    // handles its copy; this copy must too, or one bad stream would crash a paid run before any
+    // result is written. The error is recorded on the call instead.
+    try {
+      const reader = forUs.getReader(); const dec = new TextDecoder(); let buf = "";
+      for (;;) {
+        const { done, value } = await reader.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n"); buf = lines.pop() ?? "";
+        for (const l of lines) { const t = l.trim(); if (!t.startsWith("data:")) continue; try { observe(rec, JSON.parse(t.slice(5).trim())); } catch { /* ping etc. */ } }
+      }
+    } catch (e) {
+      rec.stream_error = String(e?.message ?? e);
     }
   })());
   return new Response(forSeam, { status: resp.status, headers: resp.headers });
@@ -328,7 +338,7 @@ for (let rep = 1; rep <= REPS; rep++) {
         // Text the model wrote in rounds that ended in a tool call — the between-tool narration Chat
         // shows as "thought" steps. On 5.5 longer notes move into (empty) thinking blocks.
         interim_text_chars: w.filter((x) => x.stop_reason === "tool_use").reduce((s, x) => s + x.text_chars, 0),
-        http_errors: w.filter((x) => x.status && x.status >= 400).length,
+        http_errors: w.filter((x) => (x.status && x.status >= 400) || x.stream_error).length,
         calls: rows.length,
         errors: rows.filter((r) => r.status !== "success").length,
         tokens_in: rows.reduce((s, r) => s + (r.tokens_in ?? 0), 0),
@@ -339,6 +349,9 @@ for (let rep = 1; rep <= REPS; rep++) {
         cost_usd: rows.reduce((s, r) => s + costOf(r), 0),
       });
       process.stdout.write(`rep ${rep} case ${c.id.padStart(2)} ${arm.padEnd(18)} ${results.at(-1).passed ? "PASS" : "FAIL"}  calls=${rows.length} served=${results.at(-1).served_models.join("|")}\n`);
+      // Written after EVERY case: a run that dies partway still leaves what it paid for.
+      mkdirSync(OUT, { recursive: true });
+      writeFileSync(path.join(OUT, "ab-results.partial.json"), JSON.stringify({ mock: MOCK, reps: REPS, arms: ARMS, results }, null, 2) + "\n");
     }
   }
 }
@@ -380,6 +393,9 @@ const RULE = [
   ["p95 case latency ≤ 1.25× baseline", (b, c) => b.p95_case_latency_ms == null || (c.p95_case_latency_ms ?? Infinity) <= 1.25 * b.p95_case_latency_ms],
   ["prompt cache still read (cache_read > 0)", (_b, c) => c.cache_read > 0],
 ];
+// Deliberately NOT in the rule: the between-tool narration count. Sonnet 5.5 is documented to move
+// longer notes into (empty) thinking blocks, so a drop is expected; whether Chat's quieter "thought"
+// steps are acceptable is a product judgment. It is REPORTED for the owner, not scored.
 const [base, cand] = [summary[0], summary[summary.length - 1]];
 const verdict = RULE.map(([name, f]) => ({ name, pass: !!f(base, cand) }));
 const GO = verdict.every((v) => v.pass);
@@ -438,6 +454,14 @@ function mockProvider(body) {
   const hit = plan.find(([re]) => re.test(userText));
   // MOCK_FAULTS=1 makes the candidate arm misbehave the ways 5.5 might, to prove the report sees it.
   const faulty = process.env.MOCK_FAULTS === "1" && body.model === ARMS[ARMS.length - 1];
+  // MOCK_FAULTS=2: the candidate's stream dies partway through case 2 — the run must survive it.
+  if (process.env.MOCK_FAULTS === "2" && body.model === ARMS[ARMS.length - 1] && body.stream && /Ana Ruiz's email/.test(userText)) {
+    const enc = new TextEncoder();
+    const head = `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { id: "m", model: body.model, usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`;
+    return new Response(new ReadableStream({
+      start(ctrl) { ctrl.enqueue(enc.encode(head)); setTimeout(() => ctrl.error(new Error("socket reset")), 20); },
+    }), { status: 200, headers: { "content-type": "text/event-stream" } });
+  }
   const tool = hit?.[1]?.[toolResultsSoFar] ?? null;
   const text = hit?.[2] ?? "OK.";
   const model = body.model;

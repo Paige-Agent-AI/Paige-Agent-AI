@@ -322,11 +322,6 @@
   {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "comms_send_email"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "comms_send_email_choosing_the_sender"
   },
   {

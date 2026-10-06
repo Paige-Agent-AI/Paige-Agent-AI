@@ -120,7 +120,9 @@ export function toExcerpt(value: unknown): { text: string | null; truncated: boo
 }
 
 /** Only these scalar keys survive into metadata — never a raw opts/headers object (S0/S6). */
-const METADATA_ALLOWLIST = ["caller_function", "actor_role", "retry_of", "attempt", "capped", "low_confidence"] as const;
+// stop_reason / stop_category (INT-329): why the provider stopped — `refusal` + its category, or a
+// `max_tokens` cut-off — which otherwise read exactly like a normal answer. Provider-enum strings only.
+const METADATA_ALLOWLIST = ["caller_function", "actor_role", "retry_of", "attempt", "capped", "low_confidence", "stop_reason", "stop_category"] as const;
 function safeMetadata(meta: Record<string, unknown> | undefined): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (!meta) return out;

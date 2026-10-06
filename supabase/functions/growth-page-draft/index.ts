@@ -227,7 +227,7 @@ const DELIVERABLE_SIGNAL_RE =
 
 // Output ceiling for the page generation (§13 — the whole feature dies without it).
 // _shared/claude.ts defaults `max_tokens` to 2048. This job is now routed to the reasoning
-// tier (claude-sonnet-5), which writes LONGER copy than the model this prompt was tuned
+// tier (CLAUDE_REASONING in _shared/claude.ts), which writes LONGER copy than the model this prompt was tuned
 // against — and a full page is a BIG single JSON object: hero + feature_grid + faq + pricing +
 // steps + cta + embedded_form + seo_json. Under a 2048-token ceiling that object truncates
 // mid-write, extractJson throws on the broken JSON, and the retry hits the identical ceiling

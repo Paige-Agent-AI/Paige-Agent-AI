@@ -16,7 +16,7 @@
 //   • read    → POST ${SUPABASE_URL}/functions/v1/fetch-url-content  (SSRF-guarded fetch).
 //   • models  → _shared/model-router.ts routedChatCompletion(jobKind):
 //               "extract" (PLAN/GAP-CHECK, cheap) · "score" (tie-breaks, cheap) ·
-//               "doc_draft" (the ONE final synthesis → Claude reasoning tier = claude-sonnet-5).
+//               "doc_draft" (the ONE final synthesis → Claude reasoning tier = CLAUDE_REASONING).
 //
 // Persistence is via the SERVICE-ROLE client into research_runs + research_sources —
 // the service role is the write boundary. (CORRECTION 2026-10-03, M0: this header used to
@@ -747,7 +747,7 @@ function planEntityHop(
 }
 
 // ── SYNTHESIS (A3d/A5) — the ONE Claude reasoning call ──────────────────────
-// jobKind "doc_draft" resolves to the Claude reasoning tier (claude-sonnet-5) and is NEVER
+// jobKind "doc_draft" resolves to the Claude reasoning tier (CLAUDE_REASONING) and is NEVER
 // routed to an open model (only CHEAP_KINDS are). This is the single sensitive call.
 interface RawFinding {
   summary: string;

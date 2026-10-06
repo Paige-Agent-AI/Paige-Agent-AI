@@ -105,6 +105,8 @@
     "test:growth-intake": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/_shared/growth-intake.test.ts",
     "test:token-pricing": "node --import ./scripts/client-memory-authz/register.mjs scripts/token-pricing/check.mjs",
     "test:trace-wiring": "node --import ./scripts/client-memory-authz/register.mjs scripts/token-pricing/trace-wiring.mjs",
+    "test:reasoning-tier": "node --import ./scripts/client-memory-authz/register.mjs scripts/model-migration/reasoning-tier-check.mjs",
+    "ab:sonnet": "node --import ./scripts/client-memory-authz/register.mjs scripts/model-migration/sonnet-ab.mjs",
     "test:extraction-proposal": "node --import ./scripts/knowledge-scope/register.mjs scripts/extraction-proposal/check.mjs",
     "test:checked-write": "node --import ./scripts/knowledge-scope/register.mjs scripts/checked-write/check.mjs",
     "test:apply-extraction": "node --import ./scripts/apply-extraction/register.mjs scripts/apply-extraction/check.mjs",

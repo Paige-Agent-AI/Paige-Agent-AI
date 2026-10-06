@@ -1,0 +1,65 @@
+# INT-329 — the frozen Sonnet A/B, run in the cloud (§64: no laptop dependency).
+#
+# MANUAL ONLY (workflow_dispatch): every run spends against PAIGE's Anthropic org — single-digit
+# dollars for 3 reps. Nothing triggers it automatically.
+#
+# Needs the repo secret PAIGE_ANTHROPIC_AB_KEY (an Anthropic key in PAIGE's own org, so rate limits,
+# caching and account-level behaviour match production). Adding that secret is the owner's call;
+# without it the job FAILS LOUDLY rather than reporting a result it never produced (§13).
+name: model-ab
+on:
+  workflow_dispatch:
+    inputs:
+      reps:
+        description: "Repetitions per case per arm"
+        default: "3"
+        required: true
+      arms:
+        description: "Comma-separated model ids; the FIRST is the baseline, the LAST the candidate"
+        default: "claude-sonnet-5,claude-sonnet-5-5"
+        required: true
+      cases:
+        description: "Optional comma-separated case ids (blank = all)"
+        default: ""
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  ab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Require the A/B key
+        env:
+          KEY: ${{ secrets.PAIGE_ANTHROPIC_AB_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::PAIGE_ANTHROPIC_AB_KEY is not set — no A/B was run. Add it under Settings → Secrets → Actions."
+            exit 1
+          fi
+      - name: Run the frozen A/B
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.PAIGE_ANTHROPIC_AB_KEY }}
+          REPS: ${{ inputs.reps }}
+          ARMS: ${{ inputs.arms }}
+          CASES: ${{ inputs.cases }}
+        run: |
+          set -euo pipefail
+          extra=()
+          if [ -n "$CASES" ]; then extra=(--cases "$CASES"); fi
+          npm run -s ab:sonnet -- --reps "$REPS" --arms "$ARMS" --out ab-out "${extra[@]}"
+          cat ab-out/ab-report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: model-ab-${{ github.run_id }}
+          path: ab-out/
+          if-no-files-found: error

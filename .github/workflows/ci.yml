@@ -900,6 +900,15 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:trace-wiring
 
+      # INT-329 — the Claude reasoning tier is ONE constant. This drives the real claude.ts /
+      # model-router seams with a recording fake Anthropic and fails if any path stops resolving
+      # through CLAUDE_REASONING, if a request body drifts from the frozen pre-switch snapshot in
+      # anything but `model`, if a field the reasoning model rejects leaves the seam, or if a trace
+      # names anything but the model that served (or rejected) the call.
+      - name: Smoke — Claude reasoning tier (one seam, frozen request shapes, truthful trace model)
+        if: ${{ !cancelled() }}
+        run: npm run test:reasoning-tier
+
       - name: Smoke — active-account Knowledge scope (§9 tenant KB fail-closed)
         if: ${{ !cancelled() }}
         run: npm run test:knowledge-scope

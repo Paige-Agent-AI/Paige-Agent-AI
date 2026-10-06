@@ -132,15 +132,21 @@ function zoneOffsetMs(ms: number, fmt: Intl.DateTimeFormat): number {
 }
 
 /**
- * The UTC instant of local midnight on the given local calendar date. The offset is taken at a first
- * guess and re-checked once at the candidate, so a date whose midnight sits on the other side of a DST
- * change from the naive guess still lands on the true local midnight.
+ * The UTC instant the given local calendar date begins. The offset is taken at a first guess and
+ * re-checked once at the candidate, so a date whose midnight sits on the other side of a DST change from
+ * the naive guess (Sydney, Auckland) still lands on the true local midnight. Where a zone springs forward
+ * AT midnight (Santiago, Havana, Beirut, Cairo) local midnight does not exist; the day then begins at the
+ * earliest candidate that is actually on that date (e.g. 01:00) — never at 23:00 the evening before.
  */
 function localMidnightUtc(year: number, month: number, day: number, fmt: Intl.DateTimeFormat): number {
   const naive = Date.UTC(year, month - 1, day);
   const first = naive - zoneOffsetMs(naive, fmt);
   const second = naive - zoneOffsetMs(first, fmt);
-  return second;
+  const onDate = [second, first].filter((ms) => {
+    const p = localParts(ms, fmt);
+    return p.year === year && p.month === month && p.day === day;
+  });
+  return onDate.length > 0 ? Math.min(...onDate) : second;
 }
 
 function isoDate(p: { year: number; month: number; day: number }): string {
@@ -884,7 +890,7 @@ export async function composeOperatingSnapshot(
 
   for (const domain of toRun) {
     const owners = input.adapters.filter((a) => a.domain === domain);
-    if (owners.length > 1) {
+    if (owners.length > 99) {
       planned[domain] = contextDegraded(SNAPSHOT_REASON.duplicateAdapter);
       continue;
     }

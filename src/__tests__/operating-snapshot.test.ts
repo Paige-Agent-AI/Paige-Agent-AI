@@ -118,6 +118,28 @@ describe('resolveSnapshotPeriod', () => {
     );
   });
 
+  it('today in Australia/Sydney across both DST changes (east of UTC: the offset re-check matters)', () => {
+    // 2026-10-04: clocks go forward at 02:00; midnight was still AEST (+10:00)
+    expect(period('today', new Date('2026-10-04T05:00:00Z'), 'Australia/Sydney').start).toBe(
+      '2026-10-03T14:00:00.000Z',
+    );
+    // 2026-04-05: clocks go back at 03:00; midnight was still AEDT (+11:00)
+    expect(period('today', new Date('2026-04-05T05:00:00Z'), 'Australia/Sydney').start).toBe(
+      '2026-04-04T13:00:00.000Z',
+    );
+  });
+
+  it('where midnight does not exist, the day begins at its first real instant, not the evening before', () => {
+    // America/Santiago springs forward at 00:00 on 2026-09-06 → the day starts at 01:00 (-03:00)
+    expect(period('today', new Date('2026-09-06T15:00:00Z'), 'America/Santiago').start).toBe(
+      '2026-09-06T04:00:00.000Z',
+    );
+    // Asia/Beirut springs forward at 00:00 on 2026-03-29 → the day starts at 01:00 (+03:00)
+    expect(period('today', new Date('2026-03-29T10:00:00Z'), 'Asia/Beirut').start).toBe(
+      '2026-03-28T22:00:00.000Z',
+    );
+  });
+
   it('today in Asia/Kolkata (+05:30) uses the local date, not the UTC one', () => {
     // 20:00Z on the 5th is 01:30 on the 6th in Kolkata
     const p = period('today', new Date('2026-10-05T20:00:00Z'), 'Asia/Kolkata');

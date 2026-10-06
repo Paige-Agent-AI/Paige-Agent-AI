@@ -400,7 +400,31 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
 
-### PAIGE conversational loop C4c — PAIGE asks, waits, and the same objective resumes on the answer (branch `c4c-askuser`, 2026-10-06; ships on merge, NOT live)
+### PAIGE conversational loop INT-332 — an accepted offer is the task; a card is never narrated into being (2026-10-06; ships on merge)
+
+Main chat on a saved thread (`paige-ai-chat`). When PAIGE's immediately preceding answer closed on ONE offer and the
+person plainly accepts it, the turn runs on the reasoning tier as an action and PAIGE is told the offered step is the
+task; the gate (`crm-command` or the general gate) still decides approval. Any reply that claims an approval card no tool
+created, or decides approval itself, is corrected inside the turn and otherwise replaced by the server's truthful sentence.
+
+| tier | effect |
+|---|---|
+| God / Operator (tenant-less) | applies on a saved thread (same chat core) |
+| Agency | applies (same chat core) |
+| Standalone (Solo) | applies — the repro surface |
+| Sub-account | applies (same chat core, own thread only — RLS) |
+| Client (portal seat) | offer acceptance OFF (tools deny-by-default); the unbacked-claim guard still applies |
+| Anonymous | N/A — no chat |
+
+Final behaviour (owner-accepted design): an accepted offer to explain/draft/summarise is not held; an accepted act or
+unknown step is held until a write, a card, an `ask_choices` question or a stated impossibility, and if it runs out of
+rounds the reply is kept with a server line that names what actually ran ("Nothing was sent, saved or changed in this
+reply." / "In this reply a page draft was generated; nothing was sent and no client record was changed." / "The step
+you accepted wasn't carried out in this reply."). A yes that restates the offered step accepts it.
+
+Not Studio, not Live, not a document turn. No new table, column, flag or store.
+
+### PAIGE conversational loop C4c — PAIGE asks, waits, and the same objective resumes on the answer (#1771, merged `66d16b68c` 2026-10-06)
 
 When PAIGE cannot continue a piece of work without one fact only the person has, she asks (`ask_choices`,
 now offered in the main chat as well as Studio) and the turn waits (ASK_USER). The question turn IS the ask

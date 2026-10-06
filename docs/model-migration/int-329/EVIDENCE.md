@@ -162,11 +162,21 @@ Squash `55c820c57`; `deploy-edge-functions` run `37477403615` ran 14:15–14:19 
 
 This is the INT-320 failure again: a CLI success line with no change at the provider. These five behave as before (same model) and lack only the trace-truth changes. Part 2 must not land while they are stale, or `paige-eval`'s judge would stay on Sonnet 5.
 
-**Recovery:** a comment-only cross-reference in each of the five entrypoints. `edge-affected.py` selects exactly these five, so CI redeploys them. A `workflow_dispatch` could not do this: its baseline is `edge-live`, which already names the merge. The provider readback after that merge is recorded below once it lands.
+**Recovery:** a comment-only cross-reference in each of the five entrypoints. `edge-affected.py` selects exactly these five, so CI redeploys them. A `workflow_dispatch` could not do this: its baseline is `edge-live`, which already names the merge. That merged as #1775 (squash `0598780b1`). The deploy run moved `edge-live` to it at about 14:56 UTC. **Provider readback, recorded below:** each of the five advanced one version, updated 14:55:44–14:55:55 UTC, and every served file is byte-identical to `0598780b1`.
+
+| Function | Version | Files byte-identical | `CLAUDE_REASONING` |
+|---|---|---|---|
+| `export-document` | v27 → v28 | 19/19 | `claude-sonnet-5` |
+| `generate-lender-summary` | v75 → v76 | 6/6 | `claude-sonnet-5` |
+| `growth-funnel-draft` | v77 → v78 | 22/22 | `claude-sonnet-5` |
+| `paige-eval` | v67 → v68 | 20/20 | `claude-sonnet-5` |
+| `paige-media` | v20 → v21 | 18/18 | (no `claude-models.ts` in bundle) |
+
+**All 48 functions affected by part 1 are now provider-served.** The re-touch was taken on the first try, unlike `subagent-email-composer` under INT-310.
 
 **Trace behaviour:** no LLM traffic since the deploy (last row 13:54 UTC). Prod's Anthropic traffic is human- or run-driven, with no scheduled producer. The anonymous public-chat path is gated on a published chatbot block, and no synthetic tenant has one. Opening that gate would mean a production write, so it was not done.
 
-**UNVERIFIED, owed to the next real traffic:**
+**UNVERIFIED, owed to the next real traffic** (still 0 trace rows since 14:19 UTC at the readback):
 - a streamed success row with the served id;
 - failure and fallback rows with a model;
 - `stop_reason` in metadata.

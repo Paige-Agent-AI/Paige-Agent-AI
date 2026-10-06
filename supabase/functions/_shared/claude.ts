@@ -15,6 +15,7 @@
 // (paige-ai-chat, broker-paige-chat) get a dedicated streaming path in R4.
 
 import { traceLLMCall, traceAdmin, type TraceCtx } from "./llm-trace.ts";
+import { classifyProviderFailure } from "./provider-failure.ts";
 import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
 // The model ids live in ONE dependency-free home (§18, `claude-models.ts`); this client re-exports
 // them so every existing `import { CLAUDE_REASONING } from "./claude.ts"` keeps working.
@@ -104,6 +105,8 @@ async function anthropicFailureDiagnostic(resp: Response): Promise<string> {
     error_type: errorType,
     error_path: errorPath,
     issue_codes: [...new Set(issueCodes)],
+    // INT-334 — what the response PROVES went wrong (closed class; the message is read, never kept).
+    failure_class: classifyProviderFailure({ provider: "anthropic", status: resp.status, errorType: typeof rawType === "string" ? rawType : null, message: rawMessage }),
     captured_bytes: capturedBytes,
     truncated,
   });
@@ -590,7 +593,7 @@ function buildClaudeRequest(body: OpenAIStyleBody): Record<string, unknown> {
 async function streamAnthropicAsOpenAI(
   reqBody: Record<string, unknown>,
   trace?: TraceCtx,
-): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array> }> {
+): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: string }> {
   const streamStarted = Date.now();
   const streamModel = typeof reqBody?.model === "string" ? reqBody.model : null;
   const resp = await fetch(ANTHROPIC_URL, {
@@ -625,7 +628,10 @@ async function streamAnthropicAsOpenAI(
         metadata: { caller_function: trace.agent_id },
       });
     }
-    return { ok: false, status: resp.status };
+    // INT-334 — the class the provider's own error proves (never its text), for the fabric's fallback decision.
+    let failureClass: string | undefined;
+    try { failureClass = JSON.parse(detail)?.failure_class; } catch { /* a non-JSON detail proves nothing */ }
+    return { ok: false, status: resp.status, failureClass };
   }
 
   const enc = new TextEncoder();
@@ -750,7 +756,7 @@ export async function gatewayCompat(
   _url: string,
   init: { body?: string; method?: string; headers?: unknown },
   trace?: TraceCtx,
-): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; json: () => Promise<any>; text: () => Promise<string> }> {
+): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: string; json: () => Promise<any>; text: () => Promise<string> }> {
   const raw = init?.body ? JSON.parse(init.body) : {};
   // A body that parses to a non-object (`null`, a number) is treated as empty so the call fails as a
   // response through the error path below, never as a throw out of it.
@@ -807,7 +813,7 @@ export async function gatewayCompat(
       // The streamed turn traces itself when it drains (tokens are only known then). Pass a context
       // ({} if the caller didn't thread one) so the stream always writes an honest row. §34 L1.1.
       const r = await streamAnthropicAsOpenAI(buildClaudeRequest(parsed), ctx);
-      return { ok: r.ok, status: r.status, body: r.body, json: async () => ({}), text: async () => "" };
+      return { ok: r.ok, status: r.status, body: r.body, failureClass: r.failureClass, json: async () => ({}), text: async () => "" };
     }
     const data = await chatCompletionCompat(parsed);
     // §34 L1.1 — non-stream gateway call is a DISTINCT entry (not via callModel/routedChatCompletion),

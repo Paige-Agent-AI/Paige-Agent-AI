@@ -286,20 +286,10 @@ export const CLASS_POLICY: Readonly<Record<Exclude<CognitiveClass, "deterministi
 
 // ── Fallback eligibility ───────────────────────────────────────────────────────────────────────────
 
-/**
- * Why a model call failed, as the fabric classifies it from what the provider ACTUALLY returned
- * (status, error type, a recognised message) — never inferred. `unknown` is a real answer.
- */
-export const PROVIDER_FAILURES = [
-  "auth_config",       // missing/invalid key, unconfigured provider (401/403, NeedsConfig)
-  "billing",           // the provider said the account has no credit / billing problem
-  "rate_limit",        // 429, or the provider named a usage/rate limit
-  "model_unavailable", // 404 model, no access to the model
-  "invalid_request",   // 400 the provider attributes to the request (schema, parameter)
-  "provider_outage",   // 5xx, overloaded, timeout, connection failure
-  "unknown",
-] as const;
-export type ProviderFailure = (typeof PROVIDER_FAILURES)[number];
+/** Why a model call failed — the one classification, from what the provider's response proves. */
+export { PROVIDER_FAILURE_CLASSES as PROVIDER_FAILURES } from "../provider-failure.ts";
+export type { ProviderFailureClass as ProviderFailure } from "../provider-failure.ts";
+import type { ProviderFailureClass as ProviderFailure } from "../provider-failure.ts";
 
 /** Outcomes that are ANSWERS, not failures. None of them may ever move a turn to another provider. */
 export const NOT_FALLBACK = [

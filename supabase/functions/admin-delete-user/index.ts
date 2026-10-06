@@ -91,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
       "credit_utilization_snapshots", "tasks", "documents", "consent_events",
       "notifications", "notification_preferences", "push_subscriptions",
       "push_notification_preferences", "push_notification_log",
-      "legal_acceptances", "client_goals", "client_memory", "client_notes",
+      "legal_acceptances", "client_goals", "client_memory", "paige_owner_memory", "client_notes",
       "communication_preferences", "tenant_members", "coach_clients",
       "broker_profiles", "broker_team_members", "affiliate_profiles",
     ];

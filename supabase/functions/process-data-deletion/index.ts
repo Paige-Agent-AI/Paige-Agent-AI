@@ -104,6 +104,15 @@ serve(async (req) => {
           .eq("client_user_id", userId),
       );
 
+      // S5: owner/workspace memory is a second durable home for the same person — a deletion
+      // must not leave a canonical copy behind.
+      await safe("paige_owner_memory", () =>
+        supabase
+          .from("paige_owner_memory")
+          .update({ content: "DELETED", is_active: false })
+          .eq("user_id", userId),
+      );
+
       // 6. Mark request completed
       await safe("mark_completed", () =>
         supabase

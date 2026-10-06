@@ -2667,7 +2667,12 @@ group("safety-first streaming: the sources the first enumeration missed");
   const memoryOpts = {
     kbRejects: true,
     provider: ["private-text"],
-    rpcExtras: { current_user_tenant_id: { data: CHILD, error: null } },
+    // S5: OWNER/WORKSPACE continuity recalls through the governed read — the marker row is
+    // staged there (client_memory only serves the CLIENT arm now).
+    rpcExtras: {
+      current_user_tenant_id: { data: CHILD, error: null },
+      get_paige_memory: { data: [{ id: "pom-1", memory_type: "report_upload", content: "Credit report analyzed (consumer). Scores: EQ 712, EX 705, TU 698. PRIVATE-MEMORY-MARKER", source_thread_id: null, metadata: { audience: "owner_personal", confirmation_state: "proposed" }, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }], error: null },
+    },
     tableExtras: {
       client_memory: () => [{
         tenant_id: CHILD,

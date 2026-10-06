@@ -20464,6 +20464,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      forget_paige_memory: { Args: { p_id: string; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: undefined }
+      get_paige_memory: { Args: { p_memory_types?: string[] | null; p_limit?: number | null; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: { id: string; memory_type: string; content: string; source_thread_id: string | null; metadata: Json | null; created_at: string; updated_at: string }[] }
       get_paige_persona_context: {
         Args: never
         Returns: {
@@ -21846,6 +21848,7 @@ export type Database = {
         }
         Returns: string
       }
+      record_paige_memory: { Args: { p_memory_type: string; p_content: string; p_source_thread_id?: string | null; p_metadata?: unknown | null; p_supersede_prior?: boolean | null; p_confirmation_state?: string | null; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: string }
       refresh_analytics_views: { Args: never; Returns: undefined }
       reject_affiliate_application: {
         Args: { _application_id: string; _notes?: string }

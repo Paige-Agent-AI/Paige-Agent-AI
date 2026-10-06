@@ -564,9 +564,10 @@ console.log("\nauthorized paths still work (no regression)");
     clientId: undefined,
     rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } },
   });
-  assert("1.1 with NO clientId, memory is read scoped to the caller's own user id",
-    noClient.memoryReads.some((r) => r.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id" && f[2] === USER)),
-    JSON.stringify(noClient.memoryReads.map((r) => r.filters)));
+  const ownRpc1 = noClient.rec.rpc.filter((c) => c.name === "get_paige_memory");
+  assert("1.1 with NO clientId, memory is read scoped to the caller's own user id (S5: the governed owner-memory read)",
+    ownRpc1.length === 1 && ownRpc1[0].args?.p_user_id === USER && ownRpc1[0].args?.p_tenant_id === CALLER_TENANT,
+    JSON.stringify({ rpc: ownRpc1.map((c) => c.args), reads: noClient.memoryReads.map((r) => r.filters) }));
   assert("1.2 …and never keyed on a client_id",
     !noClient.memoryReads.some((r) => r.filters.some((f) => f[0] === "eq" && f[1] === "client_id")));
 
@@ -918,10 +919,14 @@ console.log("\nthe SESSION-SUMMARY branch is bound to the same decision");
   assert("9.3 …and writes NO client_memory row at all — the caller is not a fallback subject",
     refusedSum.rec.inserts.filter((i) => i.table === "client_memory").length === 0,
     JSON.stringify(refusedSum.rec.inserts.filter((i) => i.table === "client_memory").map((i) => i.row)));
-  assert("9.3b …while the NO-CLIENT path still writes the caller's own summary (9.3 is not over-broad)",
-    (await drive({ clientId: undefined, stream: true, extraBody: sessionBody,
-      rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } } }))
-      .rec.inserts.some((i) => i.table === "client_memory" && (i.row?.client_user_id ?? null) === USER),
+  const selfSum = await drive({ clientId: undefined, stream: true, extraBody: sessionBody,
+    rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } } });
+  const selfSumWrite = selfSum.rec.rpc.filter((c) => c.name === "record_paige_memory");
+  assert("9.3b …while the NO-CLIENT path still writes the caller's own summary (S5: through the governed seam, proposed)",
+    selfSumWrite.length === 1 && selfSumWrite[0].args?.p_user_id === USER
+      && selfSumWrite[0].args?.p_tenant_id === CALLER_TENANT
+      && selfSumWrite[0].args?.p_memory_type === "session_summary"
+      && selfSumWrite[0].args?.p_confirmation_state === "proposed",
     "a legitimate self-summary was suppressed — the gate is too wide");
 }
 
@@ -8802,7 +8807,22 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     if ((f[0] === "eq" || f[0] === "is") && f[1] in r) return r[f[1]] === f[2];
     return true; // order/limit/select/gte(now) admit
   }));
-  const memoryTables = { serviceTablesExtra: { client_memory: admit }, tablesExtra: { client_memory: admit } };
+  // S5: OWNER/WORKSPACE memory lives in paige_owner_memory (scoped rows); client_memory keeps
+  // only what the client arm reads (the ABOUT-a-client row). The governed read derivation
+  // serves the owner rows scope-filtered, exactly as the real seam does.
+  const OWNER_ROWS = [
+    { user_id: USER, tenant_id: WS_A, memory_type: "preference", content: RECENT_A, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
+    // The same preference text, saved in A — what the 7-day de-dupe probe could wrongly find from B.
+    { user_id: USER, tenant_id: WS_A, memory_type: "preference", content: PREF, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
+  ];
+  const admitOwner = (filters) => OWNER_ROWS.filter((r) => filters.every((f) => {
+    if ((f[0] === "eq") && f[1] in r) return r[f[1]] === f[2];
+    return true;
+  }));
+  const memoryTables = {
+    serviceTablesExtra: { client_memory: admit, paige_owner_memory: admitOwner },
+    tablesExtra: { client_memory: admit },
+  };
   const semantic = (args) => {
     const scoped = Object.prototype.hasOwnProperty.call(args ?? {}, "_target_tenant_id");
     const hit = [{ source: "memory", memory_type: "user_preference", content: SEMANTIC_A, similarity: 0.95 }];
@@ -8822,41 +8842,42 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
 
   // A — a memory written in A appears in A.
   const inA = await turn(WS_A, WS_A);
-  const readA = ownRead(inA);
-  assert("37.1 [A] the no-client recent read is pinned to the turn's workspace and to the person's own rows",
-    has(readA, "eq", "tenant_id", WS_A) && has(readA, "is", "client_id", null) && has(readA, "eq", "client_user_id", USER),
-    JSON.stringify(readA?.filters ?? null));
-  assert("37.2 [A] the semantic search is told the workspace",
-    inA.memoryRpc.length === 1 && inA.memoryRpc[0].args._target_tenant_id === WS_A,
-    JSON.stringify(inA.memoryRpc.map((r) => r.args._target_tenant_id)));
-  assert("37.3 [A] …and both memories reach Paige in A (the positive control: nothing here is vacuous)",
-    egress(inA).includes(RECENT_A) && egress(inA).includes(SEMANTIC_A),
+  const ownRpcA = inA.rec.rpc.filter((c) => c.name === "get_paige_memory");
+  assert("37.1 [A] the no-client recall is the GOVERNED owner-memory read, pinned to the person and the turn's workspace",
+    ownRpcA.length === 1 && ownRpcA[0].args?.p_user_id === USER && ownRpcA[0].args?.p_tenant_id === WS_A,
+    JSON.stringify(ownRpcA.map((c) => c.args)));
+  assert("37.2 [A] the own arm makes NO semantic memory search (owner-memory semantic recall is the C6 projection's)",
+    inA.memoryRpc.length === 0,
+    JSON.stringify({ rpc: inA.memoryRpc.length, note: "embeds counter is shared with the KB/rag pulls" }));
+  assert("37.3 [A] …and the owner's own memory reaches Paige in A (the positive control: nothing here is vacuous)",
+    egress(inA).includes(RECENT_A) && !egress(inA).includes(SEMANTIC_A),
     JSON.stringify({ recent: egress(inA).includes(RECENT_A), semantic: egress(inA).includes(SEMANTIC_A), calls: inA.modelEgress.length }));
   assert("37.4 [E] a row the caller wrote ABOUT a client never enters their own recall",
     !egress(inA).includes(ABOUT_CLIENT), "a client-keyed row reached the caller's no-client prompt");
 
   // B — the same person, working in B, does not get A's memory.
   const inB = await turn(WS_B, WS_B);
-  const readB = ownRead(inB);
-  assert("37.5 [B] in workspace B the recent read is pinned to B, never unscoped",
-    has(readB, "eq", "tenant_id", WS_B) && has(readB, "is", "client_id", null),
-    JSON.stringify(readB?.filters ?? null));
-  assert("37.6 [B] …the semantic search is told B",
-    inB.memoryRpc.length === 1 && inB.memoryRpc[0].args._target_tenant_id === WS_B,
-    JSON.stringify(inB.memoryRpc.map((r) => r.args)));
+  const ownRpcB = inB.rec.rpc.filter((c) => c.name === "get_paige_memory");
+  assert("37.5 [B] in workspace B the governed read is pinned to B, never unscoped",
+    ownRpcB.length === 1 && ownRpcB[0].args?.p_tenant_id === WS_B && ownRpcB[0].args?.p_user_id === USER,
+    JSON.stringify(ownRpcB.map((c) => c.args)));
+  assert("37.6 [B] …and no semantic search runs for the own arm",
+    inB.memoryRpc.length === 0,
+    JSON.stringify({ rpc: inB.memoryRpc.length }));
   assert("37.7 [B] …and nothing written in A reaches Paige in B",
     inB.modelEgress.length > 0 && !egress(inB).includes(RECENT_A) && !egress(inB).includes(SEMANTIC_A),
     JSON.stringify({ calls: inB.modelEgress.length, recent: egress(inB).includes(RECENT_A), semantic: egress(inB).includes(SEMANTIC_A) }));
 
   // C — an operator at rest (no workspace) does no memory work at all: no read, no paid embedding, no RPC.
   const atRest = await turn(null, null);
-  assert("37.8 [C] with no workspace there is no own-memory read and no semantic search",
-    !atRest.memoryReads.some((m) => m.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id") && !m.filters.some((f) => f[0] === "gte"))
+  assert("37.8 [C] with no workspace there is no own-memory read of any kind",
+    atRest.rec.rpc.filter((c) => c.name === "get_paige_memory").length === 0
+      && !atRest.memoryReads.some((m) => m.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id"))
       && atRest.memoryRpc.length === 0,
-    JSON.stringify({ reads: atRest.memoryReads.map((m) => m.filters), rpc: atRest.memoryRpc.length }));
-  assert("37.9 [C] …the memory embedding (a paid call) is skipped versus a workspace turn, and no memory reaches Paige",
-    atRest.embeds < inA.embeds && !egress(atRest).includes(RECENT_A) && !egress(atRest).includes(SEMANTIC_A),
-    JSON.stringify({ atRest: atRest.embeds, inA: inA.embeds }));
+    JSON.stringify({ governed: atRest.rec.rpc.filter((c) => c.name === "get_paige_memory").length, reads: atRest.memoryReads.map((m) => m.filters), rpc: atRest.memoryRpc.length }));
+  assert("37.9 [C] …and no memory reaches Paige in the workspace-less state",
+    !egress(atRest).includes(RECENT_A) && !egress(atRest).includes(PREF),
+    JSON.stringify({ atRest: atRest.embeds, inA: inA.embeds, note: "embeds counter is shared with the KB/rag pulls" }));
 
   // F — the workspace changes between the memory read and the persona read: the block is dropped.
   // Under the declared∧validated authority (group 40) the drift is staged on the DECLARED pointer
@@ -8887,13 +8908,17 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
   const prefB = await drive({ stream: true, ...memoryTables, text: PREF,
     rpcOverrides: { ...persona(WS_B), get_actor_access: { data: { tier: "tenant" }, error: null },
       current_user_tenant_id: { data: WS_B, error: null }, match_paige_memory: semantic } });
-  const dedupe = prefB.memoryReads.find((m) => m.filters.some((f) => f[0] === "gte" && f[1] === "created_at"));
-  assert("37.12 the 7-day preference de-dupe probe is pinned to the workspace and the person's own rows",
-    has(dedupe, "eq", "tenant_id", WS_B) && has(dedupe, "is", "client_id", null),
+  const dedupe = prefB.rec.from.find((m) => m.table === "paige_owner_memory"
+    && m.filters.some((f) => f[0] === "gte" && f[1] === "created_at"));
+  assert("37.12 the 7-day preference de-dupe probes OWNER memory, pinned to the workspace and the person",
+    !!dedupe && has(dedupe, "eq", "tenant_id", WS_B) && has(dedupe, "eq", "user_id", USER) && has(dedupe, "eq", "memory_type", "preference"),
     JSON.stringify(dedupe?.filters ?? null));
-  assert("37.13 …so a preference already saved in A is still saved in B, stamped B",
-    (prefB.rec.inserts ?? []).some((i) => i.table === "client_memory" && i.row?.memory_type === "user_preference" && i.row?.tenant_id === WS_B),
-    JSON.stringify((prefB.rec.inserts ?? []).filter((i) => i.table === "client_memory").map((i) => i.row?.tenant_id)));
+  const savedB = prefB.rec.rpc.filter((c) => c.name === "record_paige_memory");
+  assert("37.13 …so a preference already saved in A is still saved in B — through the governed seam, stamped B, proposed",
+    savedB.length === 1 && savedB[0].args?.p_tenant_id === WS_B && savedB[0].args?.p_user_id === USER
+      && savedB[0].args?.p_memory_type === "preference" && savedB[0].args?.p_confirmation_state === "proposed"
+      && savedB[0].args?.p_metadata?.audience === "owner_personal",
+    JSON.stringify(savedB.map((c) => c.args)));
 
   // The client path is unchanged: keyed on the AUTHORIZED client, the user branch off.
   const focused = await turn(WS_A, WS_A, { clientId: OWN });

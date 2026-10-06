@@ -9041,7 +9041,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
     // The route's facts are all server-resolved here; only the classifier is still to come (below, after
     // the last pre-egress account check).
-    const lastUserText = typeof lastUserMessage?.content === "string" ? lastUserMessage.content : "";
+    const lastUserContent: unknown = lastUserMessage?.content;
+    const lastUserText = typeof lastUserContent === "string" ? lastUserContent : "";
     const turnRouteFacts: Omit<TurnRouteFacts, "classification"> = {
       surface: studioSessionId ? "studio" : liveRuntimeScope ? "live" : "chat",
       approvedCard: approvedConfirmations.size > 0,

@@ -20,7 +20,7 @@
 | H class produced | 1/4 | 2/4 | **4/4 (35 findings)** |
 | C / S / A produced | 1/4, 2/4, 1/4 | 1/4, 0/4, 0/4 | 2/4, 2/4, 1/4 |
 
-Unit outcomes across 48 executed units: **ok 29 · truncated 16 · insufficient 3 · failed 0 · silent 0**. The 7 remaining zero-candidate cases are fully typed: 5 are all-units-truncated (C1, C4, A1, A2 — first-class diagnostics, work visibly lost not hidden) and 3 units typed insufficiency (S3, S4, A4 — **the honest answer** for genuinely unestablishable questions, now surfaced as meta-state instead of vanishing).
+Unit outcomes across 48 executed units: **ok 29 · truncated 16 · insufficient 3 · failed 0 · silent 0**. The 7 remaining zero-candidate cases are fully typed: 4 are all-units-truncated (C1, C4, A1, A2 — first-class diagnostics, work visibly lost not hidden; records correction 2026-10-07: the original count said 5) and 3 units typed insufficiency (S3, S4, A4 — **the honest answer** for genuinely unestablishable questions, now surfaced as meta-state instead of vanishing).
 
 ## D — Semantic vector (Judge v2, unmodified)
 Scored 63/66; 6 judge calls (contradiction ×2, insufficiency ×4) errored on a **recurring provider 400 window** (the same instant invalid_request pattern as 2026-10-05; 14 anthropic errors 16:00–18:00Z against 148 successes — environmental again, not R5):

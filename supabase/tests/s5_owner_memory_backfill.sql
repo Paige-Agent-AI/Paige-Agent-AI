@@ -17,6 +17,14 @@ VALUES ('e15e5e00-0000-4000-8000-00000000e001', 'a15a5a00-0000-4000-8000-0000000
         'c15c5c00-0000-4000-8000-00000000c001', 'S5', 'Clientrow', 's5-proof-client@paigeagent-test.example', 'active')
 ON CONFLICT (id) DO NOTHING;
 
+-- The two fixture humans must belong to the fixture tenant: the client-memory tenant trigger
+-- (enforce_client_memory_tenant, MEMORY_SUBJECT_NOT_IN_TENANT) enforces subject-in-tenant on
+-- no-client rows, exactly as production does.
+INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at)
+VALUES ('a15a5a00-0000-4000-8000-00000000a001', 'c15c5c00-0000-4000-8000-00000000c001', 'owner', 'active', true, now()),
+       ('a15a5a00-0000-4000-8000-00000000a001', 'c15c5c00-0000-4000-8000-00000000c002', 'member', 'active', false, now())
+ON CONFLICT DO NOTHING;
+
 -- A pre-existing canonical row that MUST NOT be touched by the backfill.
 INSERT INTO public.paige_owner_memory (id, tenant_id, user_id, memory_type, content, created_by, metadata)
 VALUES ('b15b5b00-0000-4000-8000-00000000b001', NULL, 'c15c5c00-0000-4000-8000-00000000c001',

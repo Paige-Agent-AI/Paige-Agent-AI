@@ -241,6 +241,7 @@ const CARD_OBJECT = [
   /\bhere(?:'s| is| comes)\s+(?:the|your|an?)\s+(?:approval card|needs your ok card|approval request|card)\b/i,
   /\b(?:sending|putting up|staging|queuing|raising)\s+(?:you\s+)?(?:the|a|an|your|that|this)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
   /\b(?:the|your)\s+(?:approval\s+|needs your ok\s+)?card\s+(?:should|will)\s+(?:now\s+)?(?:appear|show up|pop up)\b/i,
+  /\bcard\s+(?:is\s+|'s\s+)?(?:coming|on its way)\s+(?:now|right now|right up|your way)\b/i,
   /\b(?:put|putting|placed|added)\s+(?:it|this|that|them)\s+on\s+(?:a|an|the)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
 ];
 // R3 — telling the person to approve on a card: it says the card is there.
@@ -265,9 +266,17 @@ const NEW_CARD = /\b(?:new|second|another|next)\b/i;
 const AUTHORITY_CLAIM = [
   /\bif (?:your |the )?(?:approvals?|approval (?:controls?|settings?|gate)|trust (?:compass|settings?|level))\b[^.!?\n]{0,40}\b(?:off|disabled|turned off|switched off|not (?:on|enabled|required|needed|turned on))\b/i,
   /\b(?:do(?:es)?|is|are|have|has)\s+(?:you|your (?:workspace|account|business)|the workspace)\b[^.!?\n]{0,40}\bapprov\w*[^.!?\n]{0,40}\b(?:enabled|on|off|turned on|turned off|set up|required)\b[^.!?\n]*\?/i,
-  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me|i'?m able to)\b[^.!?\n]{0,50}\b(?:directly|without (?:the|a|an|any|your) (?:approval\s+)?(?:card|approval)|without approval)\b/i,
+  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me|i'?m able to)\b[^.!?\n]{0,50}\b(?:without (?:the|a|an|any|your) (?:approval\s+)?(?:card|approval)|without approval|(?:no|without a) card needed)\b/i,
   /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me)\s+(?:just\s+)?(?:skip|bypass|go around|get around)\s+(?:the |your )?(?:approval|card)\b/i,
 ];
+
+// "Directly" is ordinary capability talk ("I can query it directly"); it is PAIGE going around approval only
+// in a sentence about the card or approval, offered, and not negated (prod replay 2026-10-06: 15 of 16
+// authority hits were the bare adverb in honest replies).
+const DIRECTLY_AROUND_APPROVAL = (s: string) =>
+  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me|i'?m able to)\b[^.!?\n]{0,50}\bdirectly\b/i.test(s)
+  && /\b(?:approv\w*|card|sign[- ]off)\b/i.test(s)
+  && !/\b(?:can'?t|cannot|won'?t|not|never|isn'?t|aren'?t)\b/i.test(s);
 
 const clausesOf = (text: string) => strip(text)
   .split(/(?<=[.!?])\s+|\n+/)
@@ -282,7 +291,7 @@ const clausesOf = (text: string) => strip(text)
 export function unbackedClaim(text: string, opts: { cardMinted: boolean; standingCard: boolean }): UnbackedClaim | null {
   if (typeof text !== "string" || !text.trim()) return null;
   const sentences = strip(text).split(/(?<=[.!?])\s+|\n+/).map((x) => x.trim()).filter(Boolean);
-  if (sentences.some((s) => AUTHORITY_CLAIM.some((re) => re.test(s)))) return "authority";
+  if (sentences.some((s) => AUTHORITY_CLAIM.some((re) => re.test(s)) || DIRECTLY_AROUND_APPROVAL(s))) return "authority";
   if (opts.cardMinted) return null;
   for (const c of clausesOf(text)) {
     const approvalContext = APPROVAL_CARD.test(c) || (CARD_WORD.test(c) && APPROVE_WORD.test(c));
@@ -290,7 +299,8 @@ export function unbackedClaim(text: string, opts: { cardMinted: boolean; standin
     if (!cardMentioned) continue;
     if (NEGATED.test(c) || EARLIER_CARD.test(c)) continue;
     if (opts.standingCard && !NEW_CARD.test(c)) continue;
-    if (APPROVE_ON_CARD.test(c) && !/\b(?:if|when|whenever) you\b/i.test(c)) return "card";
+    // "…you'll need to hit Approve on the card" explains how it will work; it does not say a card is there.
+    if (APPROVE_ON_CARD.test(c) && !/\b(?:if|when|whenever) you\b|\b(?:need|needs|have|has) to\b/i.test(c)) return "card";
     if (OFFER_OR_CONDITION.test(c)) continue;
     if (ANNOUNCE_NOW.test(c)) return "card";
     if (CARD_OBJECT.some((re) => re.test(c))) return "card";

@@ -178,7 +178,10 @@ Deno.test("F10 PROD — narrating a card that no tool created is an unbacked cla
     "Card sent.", "I sent the card.", "Hit Approve on the card and it's done.", "Look for the Needs your OK card below.",
     "I'll send the approval card now.", "Let me send the approval card now.", "Sending the card your way now.", "The approval request is out.",
     "I've teed up the approval card.", "Done — the card is live.", "Approve it on the card below and I'll read it back.",
-    "Sending the approval card now. Want me to build the invoice after?", "I'll send the approval card now, and once you approve I'll build the invoice."]) {
+    "Sending the approval card now. Want me to build the invoice after?", "I'll send the approval card now, and once you approve I'll build the invoice.",
+    // prod replay 2026-10-06 — missed claims (turns 140, 143) and true hits (128, 138, 144, 177)
+    "Approval card coming now for Dana Reyes.", "Jacqueline's card coming now.", "You should see a \"Needs your OK\" card.",
+    "Locking in the archive — you should see a \"Needs your OK\" card for this one.", "Jacqueline's approval card is live now."]) {
     assertEquals(unbackedClaim(s, N), "card", s);
   }
 });
@@ -197,7 +200,9 @@ Deno.test("claims — other cards, explanations, offers, futures and earlier car
     "The approval card I sent yesterday is still waiting for you.", "That card was approved and the link ran.", "You approved the card, so the deal is now linked.",
     "Here's how approvals work: when I propose a write, an approval card appears and nothing runs until you approve it.",
     "When I propose a write, a Needs your OK card shows up in the chat.", "The approval card you approved has run — the deal is linked.",
-    "Approved — that card ran and the deal is linked.", "Cards appear right here in the chat when something needs your OK."]) {
+    "Approved — that card ran and the deal is linked.", "Cards appear right here in the chat when something needs your OK.",
+    // prod replay 2026-10-06 — turn 170, an explanation and an offer, not a card on screen
+    "This needs your approval through the workspace's approval control before I run it — you'll need to hit Approve on the card."]) {
     assertEquals(unbackedClaim(s, N), null, s);
   }
   const standing = { cardMinted: false, standingCard: true };
@@ -211,9 +216,9 @@ Deno.test("claims — other cards, explanations, offers, futures and earlier car
 Deno.test("E PROD — PAIGE guessing a setting or offering a way around approval is an authority claim, even beside a real card", () => {
   assertEquals(unbackedClaim(PROD_BYPASS, N), "authority");
   assertEquals(unbackedClaim(PROD_BYPASS, { cardMinted: true, standingCard: true }), "authority");
-  for (const s of ["I can just do it directly if you want.", "I could skip the approval this time.", "Want me to run it without the card?",
+  for (const s of ["I could skip the approval this time.", "Want me to run it without the card?",
     "Does your workspace have approval controls enabled?", "If your Trust settings are turned off, we can apply the change directly.",
-    "Let me bypass the card for this one."]) {
+    "Let me bypass the card for this one.", "I can run this link directly — no approval card needed."]) {
     assertEquals(unbackedClaim(s, N), "authority", s);
   }
   // review round 1 — true statements of what happened or how it works are not PAIGE deciding approval
@@ -222,7 +227,15 @@ Deno.test("E PROD — PAIGE guessing a setting or offering a way around approval
     "Reads are free: approval is not needed to look up contacts.", "I made the change directly — stage moves don't need approval in your workspace.",
     "Your Trust Compass is set to Draft, so writes are not on autopilot.", "I ran it directly since it's set to auto.",
     "The link ran directly because your Trust settings put CRM writes on auto. I read it back: it's linked.",
-    "You can skip the approval card for low-risk tasks by raising Trust in Settings."]) {
+    "You can skip the approval card for low-risk tasks by raising Trust in Settings.",
+    // prod replay 2026-10-06 — the bare adverb "directly" in honest capability talk (15 false hits); with no
+    // card or approval in the sentence, "directly" is not a claim about approval
+    "I can just do it directly if you want.",
+    "Whenever that lands, I'll actually be able to execute the pause directly instead of just mapping it out for you.",
+    "I can draft and route a test email for approval, but I can't send it directly — outbound email always routes to your approval queue first.",
+    "If they mentioned specific endpoints, I can test those directly and report back.", "Right now I can work with n8n and Zapier directly through their existing seams.",
+    "Once that's live I'll be able to add him directly, but right now the gate is still down.", "I can create deals for both of them directly in the active pipeline.",
+    "I can wire the community platform directly into here instead of through the other CRM."]) {
     assertEquals(unbackedClaim(s, N), null, s);
   }
 });

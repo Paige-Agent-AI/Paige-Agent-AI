@@ -159,6 +159,18 @@ probes: acceptances and non-acceptances, offers and choices, approval-card claim
 cards, explanations, earlier cards, authority guesses and true statements. Deno resume + continuity 43/43 under CI's
 sandbox flags.
 
+**Measured on real production prose (read-only replay, 2026-10-06):** `unbackedClaim` run over every assistant turn of
+the last 30 days that mentions a card, approval, "directly", skip or bypass (180 turns, content verified against
+Postgres `md5`), with each turn's real card evidence (`paige_confirm`, WAIT_APPROVAL, or a proposal row within 2 minutes)
+and its previous turn's standing card. **Round-2 guard: 6 hits, 6 true, 0 false** — the four narrated cards with no
+proposal row (2026-09-30, 10-01 ×2, and the 10-06 strand itself), a fifth missed by round 2 ("Approval card coming now for
+…", now caught), and the 10-06 authority turn. **Round-2 build before this measurement: 21 hits, 5 true, 16 false** —
+15 of them the bare adverb "directly" in honest capability talk ("I can query it directly"), 1 an explanation ("you'll
+need to hit Approve on the card"). Both were fixed from the measurement (authority "directly" now needs a card or approval
+in the same un-negated sentence; "need to … Approve" is an explanation) and the prod sentences became unit fixtures. One
+narrated card is not reachable by any wording rule: its turn was 2 minutes from another client's real proposal, so the
+evidence window counts it as backed — recorded, not tuned around.
+
 **Static:** `deno check paige-ai-chat/index.ts` — 10 diagnostics, identical codes to base (1 TS2339, 7 TS2345, 1 TS2740,
 1 TS2769). All 96 `npm run` steps in `ci.yml` pass except `test:deno-ratchet` (147/2: "a missing check tool FAILS") —
 **measured identical at base** in a clean worktree, environmental.
@@ -187,6 +199,7 @@ session scratchpad). Findings and what changed:
 | 7 | real acceptances missed ("Go", "sure, why not", "um, yeah", "100%") | SHOULD-FIX | whitelist covers them; fixtures |
 | 8 | the doc said the guard skips document turns; and "a spent budget records LIMIT_REACHED" was not true on a failed call | SHOULD-FIX | §4 corrected; §3.4 states both outcomes |
 | 9–11 | "I can also" read as one offer; an "or" inside one offer's object asks; quoted offer text in the note | NIT | 9 now asks (safe); 10, 11 kept as is, as the reviewer judged them |
+| — | the guard's false-positive rate on real prose was unmeasured (the reviewer's "biggest evidence gap") | — | measured: 21 hits / 16 false on the first fix, then 6 / 0 false after fixing from it (§5) |
 
 ## 6. Parked / not in this change (with evidence)
 

@@ -82,6 +82,107 @@ interface SendBody {
   // A stable per-recipient send identity (the campaign worker passes its recipient id). Forwarded to
   // the provider as Idempotency-Key where the provider supports one (Resend).
   idempotency_key?: string;
+  // ── INT-328 comms.email_send (additive; only comms-email-command sends these, service role). ──
+  // The governed one-recipient business email. The prepared messages row carries
+  // meta.comms_email_binding; this path re-reads it, sends exactly that, and finalizes it.
+  comms_email_operation_id?: string;
+  // true = re-enter an 'unknown'/stale-'dispatching' Resend operation under the SAME
+  // provider idempotency key (the claim RPC decides whether that is allowed).
+  comms_email_reconcile?: boolean;
+}
+
+// ── INT-328 comms.email_send helpers. Every one is used ONLY on the comms_email path. ──
+const COMMS_EMAIL_PROVIDER_TIMEOUT_MS = 20_000;
+const COMMS_EMAIL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+interface CommsEmailBinding {
+  operation_id: string; tenant_id: string; contact_id: string; connector_id: string;
+  recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp";
+  subject: string; body_html: string; state: string;
+}
+type CommsEmailOutcome = "provider_accepted" | "failed" | "refused" | "unknown";
+type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
+// The Resend branch of the email adapter honours this signal; Gmail/SMTP seams take none, so the
+// deadline below also races them. Never set on any other path.
+type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null };
+
+// read_comms_email_send_binding returns the binding (flat, like the invoice read) plus the
+// message's tenant. A nested `comms_email_binding` object is accepted too. Anything malformed,
+// or a tenant that is not the message row's own, is no binding at all.
+function parseCommsEmailBinding(value: unknown, messageTenantId: string | null): CommsEmailBinding | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const outer = value as Record<string, unknown>;
+  const v = (outer.comms_email_binding && typeof outer.comms_email_binding === "object"
+    ? { ...(outer.comms_email_binding as Record<string, unknown>), message_tenant_id: outer.message_tenant_id ?? outer.tenant_id }
+    : outer) as Record<string, unknown>;
+  for (const key of ["operation_id", "tenant_id", "contact_id", "connector_id"]) {
+    if (typeof v[key] !== "string" || !COMMS_EMAIL_UUID.test(v[key] as string)) return null;
+  }
+  if (!messageTenantId || v.tenant_id !== messageTenantId) return null;
+  if (typeof v.message_tenant_id === "string" && v.message_tenant_id !== messageTenantId) return null;
+  if (typeof v.recipient !== "string" || !/^\S+@\S+\.\S+$/.test(v.recipient) || v.recipient.length > 320) return null;
+  if (typeof v.from_address !== "string" || !/^\S+@\S+\.\S+$/.test(v.from_address)) return null;
+  if (v.provider !== "resend" && v.provider !== "gmail" && v.provider !== "smtp") return null;
+  if (typeof v.subject !== "string" || !v.subject.trim() || v.subject.length > 200 || /[\r\n]/.test(v.subject)) return null;
+  if (typeof v.body_html !== "string" || !v.body_html) return null;
+  if (typeof v.state !== "string") return null;
+  return {
+    operation_id: v.operation_id as string, tenant_id: v.tenant_id as string,
+    contact_id: v.contact_id as string, connector_id: v.connector_id as string,
+    recipient: v.recipient, from_address: v.from_address, provider: v.provider,
+    subject: v.subject, body_html: v.body_html, state: v.state,
+  };
+}
+
+// Classify a comms_email provider attempt. `failed` is ONLY for an outcome where the provider
+// provably did not take the message (never attempted, credentials unusable before any network
+// send, or a definitive 4xx rejection). Anything that MIGHT have been accepted is `unknown`,
+// because `failed` invites a fresh send and `unknown` forbids one.
+function commsEmailDeliveryOutcome(
+  attempted: boolean, delivery: OutboundDelivery | null, providerMessageId: string | null,
+): { outcome: CommsEmailOutcome; reason: string | null } {
+  if (!attempted) return { outcome: "failed", reason: "PROVIDER_NOT_ATTEMPTED" };
+  if (!delivery) return { outcome: "unknown", reason: "PROVIDER_RESULT_UNCONFIRMED" }; // threw / deadline
+  if (delivery.ok) {
+    return providerMessageId
+      ? { outcome: "provider_accepted", reason: null }
+      : { outcome: "unknown", reason: "PROVIDER_RECEIPT_MISSING" };
+  }
+  const notSent = new Set([
+    "gmail_requires_admin", "gmail_oauth_not_configured", "gmail_token_failed",
+    "smtp_requires_admin", "smtp_not_configured", "smtp_creds_failed",
+  ]);
+  if (delivery.reason && notSent.has(delivery.reason)) return { outcome: "failed", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" };
+  if (!delivery.reason && delivery.error === "RESEND_API_KEY missing") return { outcome: "failed", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" };
+  // An SMTP exception may land after DATA was accepted; only the pre-socket host guard is definitive.
+  if (delivery.reason === "smtp_send_failed") {
+    return String(delivery.error ?? "").startsWith("smtp_send_failed:")
+      ? { outcome: "unknown", reason: "PROVIDER_RESULT_UNCONFIRMED" }
+      : { outcome: "failed", reason: "PROVIDER_REJECTED" };
+  }
+  const httpStatus = Number((delivery.meta as { http_status?: unknown } | undefined)?.http_status);
+  if (Number.isInteger(httpStatus) && httpStatus >= 400 && httpStatus < 500 && httpStatus !== 409 && httpStatus !== 429) {
+    return { outcome: "failed", reason: "PROVIDER_REJECTED" };
+  }
+  return { outcome: "unknown", reason: "PROVIDER_RESULT_UNCONFIRMED" };
+}
+
+async function sendWithinCommsEmailDeadline(
+  send: () => Promise<OutboundDelivery>, controller: AbortController,
+): Promise<OutboundDelivery> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      send(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error("comms_email_provider_deadline"));
+        }, COMMS_EMAIL_PROVIDER_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }
 
 const MAX_COMMS_ATTACHMENTS = 10;
@@ -169,6 +270,9 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
           needs_config: sent.needs_config === true,
           reason: sent.needs_config ? "gmail_oauth_not_configured" : "gmail_send_failed",
           error: sent.error ?? "gmail_send_failed",
+          // INT-328: the HTTP status (0 = no response) lets the comms_email path tell a definitive
+          // rejection from an uncertain one. Additive; no other caller reads delivery.meta for email.
+          meta: { http_status: sent.status },
         };
       }
       return { ok: true, status: "sent" as const, provider_message_id: sent.data.id };
@@ -242,7 +346,10 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
     const headers: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
     if (msg.in_reply_to_provider_id) headers["In-Reply-To"] = msg.in_reply_to_provider_id;
 
+    // INT-328: only the comms_email path sets abortSignal; every other send's request is unchanged.
+    const abortSignal = (ctx as CommsEmailSendContext).abortSignal ?? null;
     const res = await fetch("https://api.resend.com/emails", {
+      ...(abortSignal ? { signal: abortSignal } : {}),
       method: "POST",
       headers: {
         Authorization: `Bearer ${resendKey}`,
@@ -266,6 +373,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
         ok: false,
         status: "failed" as const,
         error: `resend_${res.status}: ${JSON.stringify(json).slice(0, 300)}`,
+        meta: { http_status: res.status }, // INT-328 additive (see the Gmail branch above)
       };
     }
     return { ok: true, status: "sent" as const, provider_message_id: json?.id ?? null };
@@ -473,6 +581,25 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  // ── INT-328 comms.email_send: a governed one-recipient business email is an immediate, single,
+  //    attachment-free email of a PREPARED row, sent only by comms-email-command under the service
+  //    role. It never rides marketing, the invoice binding, or the scheduler.
+  const commsEmailRequested = body?.comms_email_operation_id !== undefined || body?.comms_email_reconcile !== undefined;
+  if (commsEmailRequested) {
+    if (typeof body.comms_email_operation_id !== "string" || !COMMS_EMAIL_UUID.test(body.comms_email_operation_id) ||
+        (body.comms_email_reconcile !== undefined && typeof body.comms_email_reconcile !== "boolean") ||
+        body.channel !== "email" || body.marketing !== undefined || body.scheduled_for !== undefined ||
+        body.attachments !== undefined || body.invoice_delivery_operation_id !== undefined) {
+      return new Response(JSON.stringify({ error: "comms_email_send_shape_invalid" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!isInternal || typeof body.message_id !== "string" || !body.message_id) {
+      return new Response(JSON.stringify({ error: "comms_email_binding_required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
   // A marketing email is a fresh, immediate email send: never a scheduled row, never a release of a
   // stored draft (the generic drain re-sends those without the marketing guarantees below).
   if (body.marketing === true && (body.channel !== "email" || body.scheduled_for || body.message_id || body.invoice_delivery_operation_id)) {
@@ -541,7 +668,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (isInternal && !body.invoice_delivery_operation_id && data.status !== "queued") {
+    if (isInternal && !body.invoice_delivery_operation_id && !commsEmailRequested && data.status !== "queued") {
       return new Response(JSON.stringify({ error: "scheduled_message_not_releasable" }), {
         status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -605,6 +732,74 @@ Deno.serve(async (req) => {
     const { data: invoiceFacts, error: factsError } = await admin.rpc("_sales_invoice_read", { _tenant: tenantId, _invoice: invoiceBinding.invoice_id });
     const readiness = !factsError ? await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId: tenantId!, invoice: invoiceFacts, channel: body.channel === "sms" ? "sms" : "email", connectorId: effectiveConnectorId }, key => Deno.env.get(key)) : null;
     if (!readiness?.eligible) return new Response(JSON.stringify({ok:false,outcome:"prepared",code:readiness?.reason ?? "DELIVERY_READINESS_UNVERIFIED"}), {status:422,headers:{...corsHeaders,"Content-Type":"application/json"}});
+  }
+  // ── INT-328 comms.email_send binding. A prepared governed email is never an ordinary editable
+  //    draft: it is sent only with its operation id, and only exactly as prepared.
+  let commsBinding: CommsEmailBinding | null = null;
+  const commsReconcile = body.comms_email_reconcile === true;
+  let commsDispatchClaimed = false;
+  // The attempt number THIS request's claim returned. finalize_comms_email_send accepts a
+  // 'dispatching' outcome only from the attempt holding the claim; null = this request never claimed.
+  let commsClaimedAttempt: number | null = null;
+  let commsProviderAttempted = false;
+  let commsDelivery: OutboundDelivery | null = null;
+  let commsBindingEligible = false;
+  if (commsEmailRequested || draftRow?.meta?.comms_email_binding) {
+    if (!commsEmailRequested || !isInternal || !body.message_id) {
+      return new Response(JSON.stringify({ error: "comms_email_binding_required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data, error } = await admin.rpc("read_comms_email_send_binding", { _message_id: body.message_id });
+    const parsed = !error ? parseCommsEmailBinding(data, tenantId) : null;
+    if (!parsed || parsed.operation_id !== body.comms_email_operation_id || draftRow?.channel_type !== "email" ||
+        body.channel !== "email" || effectiveContactId !== parsed.contact_id || effectiveConnectorId !== parsed.connector_id ||
+        draftRow?.contact_id !== parsed.contact_id || draftRow?.connector_id !== parsed.connector_id ||
+        body.to !== parsed.recipient || body.subject !== parsed.subject || body.body !== parsed.body_html) {
+      return new Response(JSON.stringify({ error: "comms_email_binding_invalid" }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    commsBinding = parsed;
+    // The read RPC's own whole-row check (message, connector, contact method all still as prepared).
+    commsBindingEligible = (data as { eligible?: unknown }).eligible === true;
+  }
+  // The single comms_email response shape. Provider ids, error text, keys and headers never appear.
+  const commsEmailResponse = (outcome: CommsEmailOutcome | "outcome_unknown", reason: string | null, extra: Record<string, unknown> = {}, httpStatus = 200): Response =>
+    new Response(JSON.stringify({
+      ok: outcome === "provider_accepted", outcome, ...(reason ? { reason } : {}),
+      message_id: body.message_id ?? null, delivery_confirmed: false, ...extra,
+    }), { status: httpStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const finalizeCommsEmail = async (outcome: CommsEmailOutcome, providerId: string | null, reason: string | null) => {
+    if (!commsBinding) return null;
+    const { data, error } = await admin.rpc("finalize_comms_email_send", {
+      _message_id: body.message_id, _operation_id: commsBinding.operation_id,
+      // The binding keeps only lowercase code-shaped reasons (finalize_comms_email_send).
+      _outcome: outcome, _provider_message_id: providerId, _reason: reason ? reason.toLowerCase() : null,
+      _claimed_attempt: commsClaimedAttempt,
+    });
+    return !error && data && typeof data === "object" ? data : null;
+  };
+  // Refuse BEFORE any claim: finalize 'refused' from 'prepared'. A reconcile is re-entering an
+  // operation that may already have gone out — it is never re-finalized as refused; it stays
+  // unknown for a human, and nothing is sent.
+  // An unclaimed request may only finalize an operation still 'prepared'. One another attempt is
+  // dispatching (or that already has an outcome) belongs to that attempt: this request reports
+  // outcome_unknown and writes nothing — it never turns a possibly-sent email into "Not sent".
+  // finalize_comms_email_send enforces the same rule in the database (the read is only a snapshot).
+  const unclaimedMayFinalize = (): boolean => commsClaimedAttempt === null && commsBinding?.state === "prepared";
+  const refuseCommsEmail = async (reason: string): Promise<Response> => {
+    if (commsReconcile) {
+      return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }, 409);
+    }
+    if (!unclaimedMayFinalize()) return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
+    const receipt = await finalizeCommsEmail("refused", null, reason);
+    return commsEmailResponse(receipt ? "refused" : "outcome_unknown", reason);
+  };
+  // INT-328: a governed email row that is no longer a draft has a recorded outcome (or one in
+  // flight); it is never re-sent here and never answered with the generic "deduped: sent".
+  if (commsBinding && draftRow?.status !== "draft") {
+    return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
   }
   const scheduledBinding = draftRow?.meta?.scheduled_binding as Record<string, unknown> | undefined;
   if (isInternal && draftRow?.status === "queued") {
@@ -742,6 +937,13 @@ Deno.serve(async (req) => {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  // INT-328: the approved sender is the prepared one. A connector whose address or provider moved
+  // after approval is a different sender — refuse rather than send as someone else.
+  if (commsBinding && (!connectorRow?.from_address ||
+      connectorRow.from_address.trim().toLowerCase() !== commsBinding.from_address.trim().toLowerCase() ||
+      connectorRow.provider !== commsBinding.provider)) {
+    return await refuseCommsEmail("SENDER_CHANGED");
+  }
 
   if (effectiveContactId) {
     // The recipient must be one of the contact's own addresses for this channel — any of them,
@@ -750,6 +952,7 @@ Deno.serve(async (req) => {
     const recipient = normalizeRecipient(body.channel, body.to);
     const recipientBelongsToContact = recipient !== "" &&
       contactAddresses.some((address) => normalizeRecipient(body.channel, address) === recipient);
+    if (!recipientBelongsToContact && commsBinding) return await refuseCommsEmail("RECIPIENT_CHANGED");
     if (!recipientBelongsToContact && !invoiceBinding) {
       if (isInternal && body.message_id && tenantId) {
         // A scheduled row keeps the exact recipient approved when it was queued. If the
@@ -794,6 +997,14 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
+  // INT-328: anything else the read RPC found changed since approval (e.g. the contact method was
+  // removed) — the canonical claim would refuse it anyway; refuse it here so the row is finalized.
+  if (commsBinding && !commsBindingEligible) return await refuseCommsEmail("SEND_NO_LONGER_ELIGIBLE");
+  // INT-328: no exact workspace = no send. tenantId is re-derived above from the contact and connector
+  // rows; the pre-send (suppression / DND) read below must run against the binding's own workspace and
+  // nothing else, so any disagreement refuses before claim or provider admission.
+  if (commsBinding && tenantId !== commsBinding.tenant_id) return await refuseCommsEmail("WORKSPACE_CHANGED");
 
   // ── >>> PRE-SEND PIPELINE SEAM <<< (SEND-MESSAGE-CONTRACT §3 steps 1–5) ──────────
   // Runs the LOCKED compliance order after §9 tenant derivation + the §5 dedupe guard,
@@ -921,6 +1132,18 @@ Deno.serve(async (req) => {
           status: "failed", error: null, message_id: null,
           outcome: preSend.outcome, reason: preSend.reason, scheduled_for: preSend.queueUntil ?? null, deferred: true,
         }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      // INT-328: a governed email is never queued or scheduled. A block AND a queue disposition both
+      // finalize 'refused' with the pre-send outcome as the reason; a fail-closed check error is a
+      // not-attempted failure. Nothing is written to the row here — finalize owns it.
+      if (commsBinding) {
+        if (preSend.outcome === "error") {
+          if (commsReconcile) return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }, 409);
+          if (!unclaimedMayFinalize()) return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
+          const receipt = await finalizeCommsEmail("failed", null, "PRE_SEND_UNVERIFIED");
+          return commsEmailResponse(receipt ? "failed" : "outcome_unknown", "PRE_SEND_UNVERIFIED");
+        }
+        return await refuseCommsEmail(preSend.outcome);
       }
       if (invoiceBinding) {
         const receipt = await finalizeInvoice("failed");
@@ -1152,8 +1375,12 @@ Deno.serve(async (req) => {
         // Only a marketing send advertises List-Unsubscribe: on a 1:1 reply, a thread or an invoice a
         // one-click "Unsubscribe" would write a channel-wide suppression (channel-adapters.ts doc).
         listUnsubscribeUrl: body.marketing === true ? (oneClickUrl ?? null) : null,
-        idempotencyKey: typeof body.idempotency_key === "string" && /^[A-Za-z0-9:_-]{1,128}$/.test(body.idempotency_key)
-          ? body.idempotency_key : null,
+        // INT-328: a governed email's provider key is ALWAYS its operation's — never a caller's — so a
+        // reconcile re-enters Resend under the very key the first attempt used.
+        idempotencyKey: commsBinding
+          ? `comms-email:${commsBinding.operation_id}`
+          : typeof body.idempotency_key === "string" && /^[A-Za-z0-9:_-]{1,128}$/.test(body.idempotency_key)
+            ? body.idempotency_key : null,
         // #141b: Gmail dispatch INSIDE the email adapter (§18 — not a second 'email' entry).
         // provider!=='gmail' leaves the Resend path byte-for-byte unchanged.
         provider: connectorRow?.provider ?? null,
@@ -1179,7 +1406,33 @@ Deno.serve(async (req) => {
         outMsg.body_html = transientHtml;
         invoiceProviderAttempted = true;
       }
-      const delivery = await adapter.send(outMsg, ctx);
+      let commsAbort: AbortController | null = null;
+      if (commsBinding) {
+        // The one atomic provider-admission point (mirrors the invoice claim above). A losing,
+        // concurrent or uncertain claim never calls the provider and never finalizes: the
+        // operation belongs to whichever attempt holds it.
+        const { data: claimed, error: claimError } = await admin.rpc("claim_comms_email_send", {
+          _message_id: body.message_id, _operation_id: commsBinding.operation_id, _reconcile: commsReconcile,
+        });
+        const claimedAttempt = (claimed as { attempts?: unknown } | null)?.attempts;
+        // `admitted` is set true ONLY by the call that performed the prepared→dispatching update. A
+        // caller that lost a race re-reads a row already 'dispatching' with the winner's attempt
+        // number; without this flag it would be indistinguishable and send the email a second time.
+        if (claimError || !claimed || (claimed as { admitted?: unknown }).admitted !== true ||
+            (claimed as { state?: unknown }).state !== "dispatching" ||
+            typeof claimedAttempt !== "number" || !Number.isInteger(claimedAttempt) || claimedAttempt < 1) {
+          return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
+        }
+        commsDispatchClaimed = true;
+        commsClaimedAttempt = claimedAttempt;
+        commsAbort = new AbortController();
+        (ctx as CommsEmailSendContext).abortSignal = commsAbort.signal;
+        commsProviderAttempted = true;
+      }
+      const delivery = commsAbort
+        ? await sendWithinCommsEmailDeadline(() => adapter.send(outMsg, ctx), commsAbort)
+        : await adapter.send(outMsg, ctx);
+      if (commsBinding) commsDelivery = delivery;
       // #141b/#141c HONEST NOTE (§13): the paige_messages_audit.pipe_used CHECK is
       // ('resend','twilio','ghl_fallback') — 'gmail'/'smtp' are not yet legal values, so widening
       // it is a tracked follow-up (an enum migration carries its own §37 producer inventory). The
@@ -1188,7 +1441,7 @@ Deno.serve(async (req) => {
       pipe_used = "resend";
       if (!delivery.ok) {
         throw new Error(
-          invoiceBinding ? "invoice_provider_result_unconfirmed" : delivery.error || (isGmail ? "gmail_send_failed" : isSmtp ? "smtp_send_failed" : "resend_send_failed"),
+          invoiceBinding ? "invoice_provider_result_unconfirmed" : commsBinding ? "comms_email_provider_not_accepted" : delivery.error || (isGmail ? "gmail_send_failed" : isSmtp ? "smtp_send_failed" : "resend_send_failed"),
         );
       }
       vendor_message_id = delivery.provider_message_id ?? null;
@@ -1266,7 +1519,10 @@ Deno.serve(async (req) => {
       status = "sent";
     }
   } catch (e) {
-    errorText = invoiceBinding ? "invoice_delivery_requires_review" : (e as Error).message.slice(0, 500);
+    // INT-328: a governed email's durable audit text is a code, never the provider's words.
+    errorText = invoiceBinding ? "invoice_delivery_requires_review"
+      : commsBinding ? "comms_email_requires_review"
+      : (e as Error).message.slice(0, 500);
     status = "failed";
   }
 
@@ -1298,7 +1554,11 @@ Deno.serve(async (req) => {
   // NEVER change the { status, error } payload this function returns to existing callers.
   let messageRowId: string | null = null;
   try {
-    if (status === "sent") {
+    if (commsBinding) {
+      // INT-328: finalize_comms_email_send owns the prepared row (sent + receipt, failed/blocked, or
+      // untouched for unknown). The generic patch would claim 'failed' for an unknown attempt.
+      messageRowId = body.message_id ?? null;
+    } else if (status === "sent") {
       if (body.message_id) {
         const { data: updated } = await admin
           .from("messages")
@@ -1535,6 +1795,19 @@ Deno.serve(async (req) => {
   // reason: prefer the SMS reason code the branch set, else the raw error text on failure.
   outcome = status; // 'sent' | 'failed'
   if (status === "failed" && !reason) reason = errorText;
+  if (commsBinding) {
+    // A throw before the claim (e.g. no Resend key) never reached a provider. A reconcile that did not
+    // win its claim cannot finalize an operation that is not 'prepared' — it stays for review.
+    if (!commsDispatchClaimed && commsReconcile) {
+      return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }, 409);
+    }
+    if (!commsDispatchClaimed && !unclaimedMayFinalize()) {
+      return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
+    }
+    const classified = commsEmailDeliveryOutcome(commsProviderAttempted, commsDelivery, status === "sent" ? vendor_message_id : null);
+    const receipt = await finalizeCommsEmail(classified.outcome, classified.outcome === "provider_accepted" ? vendor_message_id : null, classified.reason);
+    return commsEmailResponse(receipt ? classified.outcome : "outcome_unknown", classified.reason);
+  }
   if (invoiceBinding) {
     // A confirmed claim followed by a local PDF failure never called a provider.
     // Uncertain claims returned earlier; attempted provider sends remain unknown on failure.

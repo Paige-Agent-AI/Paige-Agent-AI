@@ -7812,6 +7812,18 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       && saved18?.content === fallbackOf("authority", true) && c18.rows.length === 1,
     JSON.stringify({ terminal: terminalOf(r18), saved: saved18?.content, savedState: saved18?.bundle_ref?.turn_state?.state, cards: cardsOf(r18).flat().length }));
 
+  // 43.19 (review round 2, S6) a tool ran, then a narrated card whose correction call FAILS: the turn is not
+  // marked INTERRUPTED (the work it did stands) and the server's sentence says that work is shown above.
+  const s19 = makeThreadStore(THREADS), c19 = makeConfirmStore(), db19 = crmDb();
+  seedOffer(s19, THREAD_FRESH, { history: 1, offer: "Dana's deal is linked." });
+  const r19 = await turn(s19, c19, db19, { text: "Find Dana for me.", threadId: THREAD_FRESH,
+    script: [{ name: "crm_search_contacts", args: { query: "Dana" } }, NARRATION], failStreamCalls: [3] });
+  const saved19 = savedAssistant(s19, THREAD_FRESH);
+  assert("43.19 a failed correction after a tool ran: not INTERRUPTED, and the server's sentence names the work shown above",
+    terminalOf(r19)?.state !== "INTERRUPTED" && saved19?.bundle_ref?.turn_state?.state !== "INTERRUPTED"
+      && saved19?.content === fallbackOf("card", true) && c19.rows.length === 0,
+    JSON.stringify({ terminal: terminalOf(r19), savedState: saved19?.bundle_ref?.turn_state?.state, saved: saved19?.content }));
+
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.
   const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();

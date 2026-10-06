@@ -9,6 +9,7 @@
 import { assert, assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
 import {
   acceptedOfferNote,
+  CLAIM_CORRECTION,
   ambiguousOfferNote,
   claimFallback,
   closingOffer,
@@ -253,4 +254,44 @@ Deno.test("notes and fallbacks — bounded, quoted, grant nothing, and the serve
     assert(!/nothing is waiting/i.test(copy), copy);
     assertEquals(/shown above/.test(copy), didWork, copy);
   }
+});
+
+Deno.test("review round 2 — the guard, the offer reader and the acceptance on the second reviewer's probes", () => {
+  // B1: the card correction forbids re-calling what already ran.
+  assert(/Do not call a tool again for anything that already ran/.test(CLAIM_CORRECTION.card));
+  // S1: true "after you approve… directly" sentences, and read-only "without approval", are not authority claims.
+  for (const s of ["Once you approve the card, I'll send it directly to Dana.", "Approve the card and I'll email the invoice directly to Afonso.",
+    "I sent the approval card. After you approve, I'll text him directly.", "I can look up contacts without approval — reads are free.",
+    "I can research anything without approval.", "If approval is not required for tasks, they run right away.",
+    "If your Trust Compass is turned off, I only observe."]) {
+    assert(unbackedClaim(s, { cardMinted: true, standingCard: false }) !== "authority", s);
+  }
+  // S2: choices laid out without the word "or".
+  for (const text of ["Two ways to do this:\n\n- Link the deal now\n- Wait for him to reply first\n\nWant me to go ahead?",
+    "There are two paths here:\n\n1. Link the deal to Afonso\n2. Create a new contact for him\n\nShould I proceed?",
+    "I can link it to Afonso. I could also create a new contact for him.\n\nWant me to do it?",
+    "Want me to send the card? I could also draft the follow-up.", "Want me to queue it up? Happy to also draft the follow-up."]) {
+    assertEquals(readForeground(thread(text), "yes", NOW).offer.kind, "ambiguous", text);
+  }
+  // N1: single offers that only look like choices still accept.
+  for (const text of ["Want me to send it either way?", "Should I go ahead either way?", "Want me to update the payment options?",
+    "Want me to add Stripe as an option?", "Should I send the card now instead of waiting until Monday?"]) {
+    assertEquals(readForeground(thread(text), "yes", NOW).offer.kind, "accepted", text);
+  }
+  // S3: cards some other noun owns, and a truthful conditional, are not approval-card claims.
+  for (const s of ["Here's the card payment summary for March.", "Here is the card on file for Dana.", "Your card was sent to Stripe for verification.",
+    "I created a card for Dana in the Leads column.", "The approval card will appear once I propose the change — want me to?"]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+  }
+  // S4: real claims that were missed.
+  for (const s of ["You\u2019ll see a Needs your OK card for this one.", "Card's up!", "The card's ready — tap Approve.",
+    "I've already sent the approval card — approve it when ready.", "I've put it in your Approvals tab — approve it there.",
+    "It's in your approvals queue now.", "Sending the approval card now, no rush.", "The approval card is up, nothing else needed from you.",
+    "I'll send the approval card.", "On it — I'll get that approval card over to you.", "Approval card incoming!", "Done. Approval card below 👇"]) {
+    assertEquals(unbackedClaim(s, N), "card", s);
+  }
+  assertEquals(unbackedClaim("I\u2019ll run it without the card.", N), "authority");
+  // S5 / N3: polite words alone, and a thumbs-down, are not acceptance.
+  for (const no of ["no worries", "No problem", "yes 👎", "ok ❌"]) assert(!isAffirmativeReply(no), no);
+  for (const yes of ["no worries, go ahead", "no problem — do it"]) assert(isAffirmativeReply(yes), yes);
 });

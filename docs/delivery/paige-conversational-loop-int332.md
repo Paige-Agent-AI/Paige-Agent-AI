@@ -117,8 +117,8 @@ Actor-goal flows (F1–F12, from the order):
 
 ## 5. Evidence (classes kept separate)
 
-**Automated — handler + real door (`test:client-memory-authz`, group 43, 27 checks):** 841 passed / 0 failed on the
-candidate. **At base** (clean worktree of `d20b323e9` with the same harness): 825 passed / **16 failed — all in group
+**Automated — handler + real door (`test:client-memory-authz`, group 43, 28 checks):** 842 passed / 0 failed on the
+candidate (841 before 43.19, added in review round 2). **At base** (clean worktree of `d20b323e9` with the same harness): 825 passed / **16 failed — all in group
 43**, every other group green; the checks that must hold on both sides (F5–F9, F11, F12, the `confirm:true` gate, and the
 three "stay quiet" checks 43.14/43.16/43.17 — base has no guard to misfire) pass at base. **At the first-round head**
 (`47d5e66ba`, clean worktree): 835 / **6 failed — 43.14–43.18, every review finding reproduced through the real handler**,
@@ -162,7 +162,8 @@ sandbox flags.
 **Measured on real production prose (read-only replay, 2026-10-06):** `unbackedClaim` run over every assistant turn of
 the last 30 days that mentions a card, approval, "directly", skip or bypass (180 turns, content verified against
 Postgres `md5`), with each turn's real card evidence (`paige_confirm`, WAIT_APPROVAL, or a proposal row within 2 minutes)
-and its previous turn's standing card. **Round-2 guard: 6 hits, 6 true, 0 false** — the four narrated cards with no
+and its previous turn's standing card. **IN-SAMPLE — the guard was then tuned on these same turns, so this is not an
+out-of-sample false-positive rate.** **Round-2 guard: 6 hits, 6 true, 0 false** — the four narrated cards with no
 proposal row (2026-09-30, 10-01 ×2, and the 10-06 strand itself), a fifth missed by round 2 ("Approval card coming now for
 …", now caught), and the 10-06 authority turn. **Round-2 build before this measurement: 21 hits, 5 true, 16 false** —
 15 of them the bare adverb "directly" in honest capability talk ("I can query it directly"), 1 an explanation ("you'll
@@ -180,6 +181,23 @@ evidence window counts it as backed — recorded, not tuned around.
 **UNVERIFIED:** how often the REAL model, on the reasoning tier with the note, calls the tool on the first round (the
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
+
+### 5c. Independent review — round 2 (non-author, exact head `1176c3bbd`): FIX_FIRST, fixed
+
+| # | finding | fix |
+|---|---|---|
+| B1 | the CARD correction still said "call its tool now" with no "never re-call what already ran" (the round-1 3c repeat risk, on the card path) | the sentence is in both corrections now; unit-asserted |
+| S1 | true "approve first, then I'll … directly" sentences and read-only "without approval" flagged as authority, even beside a minted card | "directly" excludes approve-first sentences; "without approval" excludes read verbs (look up, research, read, search…); a conditional setting must license an act ("…then I can…") to count |
+| S2 | choices with no "or" — "two ways/paths", lists under such a heading, "I could also", "happy to also" — read as one offer | MULTI_PATH over the last three paragraphs; "could also / happy to also" added |
+| S3 | `CARD_OBJECT` shapes skipped the approval test (card on file, card payment summary, a lead card in a column, a card sent to Stripe) | a card owned by another noun (payment, Stripe, column, lead, portal…) is skipped unless the sentence names an approval card; "once I propose…" is a condition |
+| S4 | missed: curly apostrophes, "Card's up!", "I've already sent the approval card", "I've put it in your Approvals tab", "no rush" voiding a claim, "I'll send the approval card", "Approval card incoming!", "…below 👇" | apostrophes normalised; `'s` forms; "already"/approvals-list exempt only when nothing is created now; negation must govern the card; an unconditioned "I'll send the approval card" is a claim; incoming/below/into the approvals list |
+| S5 | "no worries" / "no problem" alone read as yes | they count only beside an acceptance; 👎 ❌ 🚫 ✋ reject |
+| S6 | a failed correction after work ran (WAIT_WORK, an executed write) recorded INTERRUPTED over it | the failure keeps the turn's own state whenever a tool ran or a card was minted; 43.19 (red with the old guard) |
+| S7 | the replay figure is in-sample | labelled so above |
+| N1–N3 | "either way", "instead of", "payment options" asked which; a stale comment; 👎 | single offers accept again; comment corrected; 👎 rejects |
+| N4 | the foreground read inherits the turns policy (a tenant admin can read a member's client-scoped thread) | not new exposure — the summary and fold reads use the same scope; noted, unchanged |
+
+Every probe from this round is a unit fixture (the "review round 2" test). Harness 842/0.
 
 ### 5b. Independent review — round 1 (non-author, exact head `47d5e66ba`): FIX_FIRST, fixed
 

@@ -16501,12 +16501,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
                 continueContinuation = true;
-              } else if (!cardThisTurn()) {
-                // A card minted this turn keeps the turn WAIT_APPROVAL: the card is on screen either way.
+              } else if (!cardThisTurn() && totalToolCalls === 0) {
+                // A card minted, work accepted (WAIT_WORK) or a write that ran keeps the turn's own state: the
+                // correction failing does not undo what this turn did.
                 turnTracker.interrupted();
               }
             } catch (e) {
-              if (!cardThisTurn()) {
+              if (!cardThisTurn() && totalToolCalls === 0) {
                 if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
                 else turnTracker.interrupted();
               }
@@ -16560,7 +16561,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // turn did (its steps and any card stay on the wire above the sentence).
               const truthful = claimFallback(stillClaimed, { didWork: totalToolCalls > 0 || cardMinted });
               finalAssistantText = truthful;
-              if (continuationsUsed >= MAX_CONTINUATIONS && !cardMinted) turnTracker.budgetStop();
+              if (continuationsUsed >= MAX_CONTINUATIONS && !cardMinted && totalToolCalls === 0) turnTracker.budgetStop();
               finalChunks = [
                 enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: truthful } }] })}\n\n`),
                 enc.encode("data: [DONE]\n\n"),

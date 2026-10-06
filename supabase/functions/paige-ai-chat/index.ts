@@ -232,6 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, CLAIM_FALLBACK, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -5933,6 +5934,12 @@ BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal req
 
 YOUR OWN WORDS ARE NEVER EVIDENCE — a claim that something happened (created, updated, deleted, archived, restored, sent, enrolled, moved, connected, completed) requires a real result, receipt, or verified readback from a tool call in THIS conversation. Your own words in a PREVIOUS turn are never evidence that the action occurred — if a prior turn claimed something and no tool result or outcome card backs it, treat that claim as unverified and correct course rather than building on it. The test is always: "Is there a machine result in this conversation that proves this happened?" If not, you do not claim it, and you do not treat your earlier claim as proof.
 
+AN ACCEPTED OFFER IS THE TASK — when your last message offered one specific action and the person accepts it ("yes", "sure", "go ahead", "may as well"), carry it out in this turn by calling its tool; when it needs their approval, the tool is what puts the card in front of them. Never say a card is coming, ready, sent or waiting unless a tool in this turn returned one. If you offered more than one thing, ask which before acting.
+
+APPROVAL IS NOT YOURS TO DECIDE — whether an act needs the person's approval is decided by the platform when you call its tool (the act's risk, the workspace's Trust settings, the person's role, the workspace). Never guess it from a setting, never ask whether approvals are on, and never offer to skip a card or run something directly. If a card the person expected did not appear, call the tool again rather than describing one.
+
+NAME RECORDS, DON'T PRINT THEM — refer to people, deals and records by their names. Never put raw record ids (long hex strings) or internal field names (like contact_client_id or expected_version) in your reply; when two records share a name, tell them apart by something the person knows (stage, value, date, or the last four characters, like "deal …d798").
+
 SEARCH BEFORE SAYING NO — before you tell the operator "the platform can't do that" or "that tool doesn't exist" or "that's not available", check the tools you actually have in this turn. Remembered historical tools or your own earlier narration about what's available can never outrank the live tool list in front of you. If you have not checked, say "let me check what I can do" and look.
 
 CHECK YOUR OWN HANDS BEFORE DESCRIBING THEM — when the operator asks what you can or cannot do (with n8n, Zapier, an integration, a data source, anything), your answer comes from the LIVE TOOL MANIFEST in this turn, enumerated before you speak — never from memory, never from an earlier turn's narration. A connection/readiness block describes STATE (connected or not, approved counts, last check), never CAPABILITY: "0 approved workflows" does not mean you lack workflow tools — it means no standing pre-approval exists, and your management tools are still in your hands (reads run ungated; their writes run propose-first — you offer, the operator approves the specific action right here). Stating "I can't" or "I don't have the ability" about a domain your manifest carries tools for — without having checked the manifest this turn — is a fabrication with the operator's trust as its cost: they take your first word as the truth. If asked "what can we do with X?", the correct move is to enumerate X's tools from the manifest AND run the cheapest read to prove the lane live, then answer from what came back. This is NOT limited to direct questions: when the operator so much as MENTIONS connecting, changing, or using an integration — even in passing ("I just connected my n8n account") — that is your cue to ground yourself the same way: check the manifest for that domain's tools, prove the lane live with the cheapest read, and proactively offer what you can now do, rather than waiting to be asked or describing limits you have not checked.
@@ -9005,8 +9012,33 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (/\b(creat(e|ing)|build( me| a| an| the)|generat(e|ing)|draft( me| a| an| the)|make me|write me (a|an|the)|set up|schedule|book (a|an|the|this)|enroll|move .* (to|into) .* stage|publish|launch|add (a|an|the|this) (contact|deal|task|meeting|event|pipeline|stage))\b/.test(t)) return true;
       return false;
     };
-    const substantiveTurn =
-      !!lastUserMessage && substantiveTurnIntent(String(lastUserMessage.content ?? ""));
+    // INT-332 — THE FOREGROUND OFFER (_shared/paige-turn/continuity.ts). Both gates above and C1's
+    // `isActionIntent` read only the person's literal words, so "Yes we may as well for sure" — accepting
+    // the one action PAIGE had just offered — counted as neither: the turn went to the cheap tier, which
+    // narrated "Sending the approval card now…" with no tool, and that prose stood as FINAL (prod
+    // 2026-10-06, no confirmation row). Read PAIGE's immediately preceding turn from the caller's OWN
+    // thread (session client, RLS): if it was a finished, recent answer that closed on ONE offer, and the
+    // reply plainly accepts it, the offered step is this turn's task — the reasoning tier, C1 action
+    // intent, and a note that says so. It grants nothing: the tool still goes through the gate, which
+    // alone decides whether the step needs a card. A read that fails is the ordinary path. The same read
+    // tells the claim guard (C1, below) whether a card from the previous turn is still standing.
+    let foreground: Foreground = { offer: { kind: "none", reason: "no_previous_turn" }, standingCard: false };
+    if (payloadThreadId && !studioSessionId && !liveRuntimeScope && !attachedDocument && !answerBinding && lastUserMessage) {
+      try {
+        const { data: fgTurns, error: fgError } = await supabaseClient.from("paige_chat_turns")
+          .select("role,content,created_at,bundle_ref").eq("thread_id", payloadThreadId)
+          .in("role", ["user", "assistant"]).order("seq", { ascending: false }).limit(3);
+        if (!fgError) foreground = readForeground((fgTurns ?? []) as ForegroundTurn[], String(lastUserMessage.content ?? ""), Date.now());
+      } catch (e) {
+        console.warn("[paige] foreground read failed; ordinary path:", (e as Error)?.message);
+      }
+    }
+    // An approval turn carries its own act forward (C4a/C4b); a client seat's tools are deny-by-default.
+    const offerAccepted = foreground.offer.kind === "accepted" && callerTier !== "client" && approvedConfirmations.size === 0;
+    const offerAmbiguous = foreground.offer.kind === "ambiguous" && callerTier !== "client" && approvedConfirmations.size === 0;
+    if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
+    const substantiveTurn = offerAccepted
+      || (!!lastUserMessage && substantiveTurnIntent(String(lastUserMessage.content ?? "")));
 
     if (!(await revalidateTenantKnowledgeScope())) {
       return new Response(
@@ -9448,6 +9480,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
       answerResume = { askId, turnId: binding.turnId, ask: binding.ask, skipped: binding.skipped };
       aiMessages.push({ role: "system", content: answerTurnNote(answerResume.ask, { skipped: answerResume.skipped }) });
+    }
+    // INT-332 — PAIGE hears that the person is answering her offer, last, beside their words.
+    if (resumeCalls.length === 0 && !answerResume && foreground.offer.kind !== "none" && (offerAccepted || offerAmbiguous)) {
+      const reply = String(lastUserMessage?.content ?? "");
+      aiMessages.push({ role: "system", content: offerAccepted
+        ? acceptedOfferNote(foreground.offer.offer, reply)
+        : ambiguousOfferNote(foreground.offer.offer, reply) });
     }
     const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
       method: "POST",
@@ -15889,6 +15928,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const ACTION_INTENT_RE = /(?:^|[.!?\n]\s*|,\s*)(?:add|updat|chang|mov|set|mak|complet|fil|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|subscrib)(?:e|es|ed|ing|ion|ions)?\b|\b(?:can|could|need|want|let|like)\s+(?:you\s+)?(?:to\s+)?(?:add|updat|chang|mov|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|set|mak|complet|fil)(?:e|es|ed|ing)?\b|\b(?:go ahead|do it|run it|ship it|sign (?:\w+ )?up|enroll(?:ed)? (?:her|him|them|this)|archive[d]? (?:that|the|this)|delet(?:e|ed) (?:that|the|this|it)|(?:add|updat|chang|mov|complet|fil)[a-z]* (?:a|an|the|this|that|it|her|him|them|my|our) |please (?:add|updat|chang|mov|complet|fil|mak|set|send|creat|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|subscrib|pay|remind|cancel|approv|confirm|book|invit|renam|sign|do|run|go))\b/i;
       const isActionIntent = (() => {
         if (callerTier === "client") return false; // client seats' tools are deny-by-default
+        // INT-332 — accepting PAIGE's own single offer is a request for that action, in any words.
+        if (offerAccepted && resumeCalls.length === 0 && !answerResume) return true;
         const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
         const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
         if (!text || text.length < 3) return false;
@@ -16433,7 +16474,41 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // conversation, the provider is re-called through the existing gateway, and the SAME
           // for loop re-enters with the new response (via the while wrapper). A hard budget
           // of MAX_CONTINUATIONS stops it. The `!hasToolCall` block is byte-identical to main.
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
+          // INT-332 — AN UNBACKED CLAIM IS NEVER A TERMINAL ANSWER. Prose that says an approval card is
+          // coming, ready or waiting when no card was created in this turn (and none is standing from the
+          // previous one), or that decides approval itself ("approvals are off", "I can run it directly"),
+          // is fed back with a correction — on the reasoning tier, inside the same continuation budget —
+          // whatever the person's words were. If it still stands when the budget is spent or the retry
+          // fails, the server answers truthfully below. Checked before C1's own test: a claimed card is
+          // not "a question" just because the same reply also asks one.
+          let claimContinued = false;
+          const claim = finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
+            ? unbackedClaim(finalAssistantText, { cardMinted: queuedApprovals.length > 0 || confirmTrace.length > 0, standingCard: foreground.standingCard })
+            : null;
+          if (claim && continuationsUsed < MAX_CONTINUATIONS) {
+            claimContinued = true;
+            continuationsUsed += 1;
+            convo.push({ role: "assistant", content: finalAssistantText || "" });
+            convo.push({ role: "user", content: CLAIM_CORRECTION[claim] });
+            try {
+              const correctionResponse = await gatewayCompat("anthropic", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: "google/gemini-2.5-pro", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+              }, traceFor("chat-claim-correction"));
+              if (correctionResponse.ok) {
+                currentResponse = correctionResponse;
+                finalChunks = null; finalAssistantText = "";
+                continueContinuation = true;
+              } else {
+                turnTracker.interrupted();
+              }
+            } catch (e) {
+              if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
+              else turnTracker.interrupted();
+            }
+          }
+          if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
             const proseTerminal = typeof finalAssistantText === "string"
               && (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?"));
@@ -16468,6 +16543,25 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           }
+          // INT-332 — the correction did not take, or could not run: the claim never reaches the person.
+          // The server authors the whole answer, exactly as the exhausted branch below does, and the wire
+          // and the transcript carry the same sentence. It takes precedence over that branch: "nothing is
+          // waiting for your OK" is the specific truth; a spent budget is still recorded as one.
+          let claimAnswered = false;
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId) {
+            const stillClaimed = unbackedClaim(finalAssistantText, { cardMinted: queuedApprovals.length > 0 || confirmTrace.length > 0, standingCard: foreground.standingCard });
+            if (stillClaimed) {
+              const truthful = CLAIM_FALLBACK[stillClaimed];
+              finalAssistantText = truthful;
+              if (continuationsUsed >= MAX_CONTINUATIONS) turnTracker.budgetStop();
+              finalChunks = [
+                enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: truthful } }] })}\n\n`),
+                enc.encode("data: [DONE]\n\n"),
+              ];
+              lastRoundFinished = true;
+              claimAnswered = true;
+            }
+          }
           // Budget exhausted on an unresolved action: the honest blockage sentence, not
           // a replay of the last narration. THE WIRE AND THE TRANSCRIPT CARRY THE SAME
           // SENTENCE (§13/§94).
@@ -16481,7 +16575,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // `[DONE]`), it is complete by construction, and the ONE replay path sends terminal →
           // paige_phase → exactly the saved sentence → [DONE], held and released like any other on a
           // protected turn. A client seat never reaches this branch (`isActionIntent` is false there).
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent && !claimAnswered
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId) {

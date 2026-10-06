@@ -285,6 +285,11 @@ globalThis.fetch = async (url, init) => {
         }
       }
       const turn = modelTurnState.getStore();
+      // INT-332 — `streamScript` scripts this turn's streamed calls one by one (index 0 = call 1): a
+      // string is a prose round, `{ name, args }` a tool round. A call past its end falls through.
+      const scripted = turn?.streamScript && turn.streamCalls >= 1 ? turn.streamScript[turn.streamCalls - 1] : undefined;
+      if (typeof scripted === "string") return sseModelReply(scripted);
+      if (scripted && typeof scripted === "object") return sseToolCallReply(scripted.name, scripted.args, "", `toolu_s${turn.streamCalls}`);
       if (turn ? turn.toolCallOnce : toolCallOnce) {
         // A scripted turn may call several tools, one per round, in order (`toolCall` as a list).
         const spec = turn?.next ?? toolCallSpec;
@@ -393,6 +398,8 @@ async function drive({
   throwStreamCalls = [],
   /** The status a `failStreamCalls` call answers with (the gateway's own 429, 402, …). Default 529. */
   failStreamStatus = 529,
+  /** INT-332 — what each streamed model call answers, in order (see the stub). Default none. */
+  streamScript = null,
 }) {
   // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
   // an admin seat with no resolved workspace (get_paige_persona_context falls back to
@@ -501,7 +508,7 @@ async function drive({
     },
   });
 
-  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, failStreamStatus, breakStreamCalls, throwStreamCalls }, async () => {
+  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, failStreamStatus, breakStreamCalls, throwStreamCalls, streamScript }, async () => {
     let status = null, bodyText = "", partialText = "";
     try {
       const res = await handler(new Request("http://local/paige-ai-chat", {
@@ -7507,6 +7514,268 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
   assert("41.23e a first answer's note says nothing about an earlier attempt",
     !toldModel(found23b?.r ?? { modelEgress: [] }).includes("earlier attempt"),
     "first answer mentioned an earlier attempt");
+}
+
+// ── 43. INT-332 — AN ACCEPTED OFFER REACHES A TOOL, A CARD, A QUESTION OR A TRUTHFUL REFUSAL ─────────────
+//
+// Prod 2026-10-06, a long Solo thread: PAIGE closed a FINAL answer with "Want me to send that approval card
+// now…?", the owner replied "Yes we may as well for sure", and the turn was FINAL / fast_answer / 0 tools:
+// "Sending the approval card now…" — no tool, no card, no proposal row. The next turn guessed an authority
+// rule ("if approvals are OFF I can run it directly"). These checks drive the REAL chat handler and the
+// REAL crm-command door (its own claim, minting and executor calls) over a thread store and the shared
+// proposal store. What they hold: an affirmative to ONE fresh offer PAIGE just made runs on the tier that
+// calls tools and is told the offered step is the task; prose that claims a card no tool created, or that
+// decides approval, is never the answer; and nothing here can create, run or duplicate an act the gate
+// would not — a choice asks, a stale/standing/foreign offer is the ordinary path, an approval runs once.
+console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question or a truthful refusal");
+{
+  const continuity = await import("../../supabase/functions/_shared/paige-turn/continuity.ts").catch(() => ({}));
+  const { CLAUDE_REASONING, CLAUDE_CLASSIFICATION } = await import("../../supabase/functions/_shared/claude-models.ts");
+  const CORRECTION = continuity.CLAIM_CORRECTION ?? { card: "\u0000no-correction-at-base", authority: "\u0000no-correction-at-base" };
+  const FALLBACK = continuity.CLAIM_FALLBACK ?? { card: "\u0000no-fallback-at-base", authority: "\u0000no-fallback-at-base" };
+  await import("../../supabase/functions/crm-command/index.ts");
+  const door = capturedHandler();
+  assert("43.G the real crm-command handler is the one these checks drive (not the chat's)", door !== handler, "captured the chat handler");
+
+  const THREAD = "43320000-0000-4000-8000-000000000001";
+  const THREAD_FRESH = "43320000-0000-4000-8000-000000000002";
+  const THREAD_B = "43320000-0000-4000-8000-000000000003";        // the same person's thread in workspace B
+  const THREAD_OTHER_USER = "43320000-0000-4000-8000-000000000004";
+  const DEAL_ID = "a0799c2d-79ee-4880-b86a-7743b5e9d798";
+  const THREADS = [
+    { id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER },
+    { id: THREAD_FRESH, tenant_id: CALLER_TENANT, caller_user_id: USER },
+    { id: THREAD_B, tenant_id: OTHER_TENANT, caller_user_id: USER },
+    { id: THREAD_OTHER_USER, tenant_id: CALLER_TENANT, caller_user_id: FOREIGN },
+  ];
+  const framesOf = (text) => String(text ?? "").split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .flatMap((l) => { try { return [JSON.parse(l.slice(6))]; } catch { return []; } });
+  const cardsOf = (r) => framesOf(r.bodyText).filter((f) => f.paige_confirm).map((f) => f.paige_confirm);
+  const contentOf = (r) => framesOf(r.bodyText).map((f) => f.choices?.[0]?.delta?.content ?? "").join("");
+  const terminalOf = (r) => framesOf(r.bodyText).map((f) => f.paige_turn).filter(Boolean).find((t) => t.event === "completed" || t.event === "waiting") ?? null;
+  const streamed = (r) => r.modelEgress.filter((b) => b.includes('"stream":true')).map((b) => { try { return JSON.parse(b); } catch { return {}; } });
+  const modelOf = (r, i = 0) => streamed(r)[i]?.model ?? null;
+  const told = (r) => r.modelEgress.join("\n").replace(/\\"/g, '"');
+  const doorCalls = (r) => r.rec.functions.filter((f) => f.name === "crm-command");
+  const savedAssistant = (store, threadId) => store.turns.filter((t) => t.thread_id === threadId && t.role === "assistant").at(-1) ?? null;
+
+  // The door's world: the committed-result table it reads back and writes through, an owner seat, and the
+  // canonical client it resolves the reference against — exactly as group 40 models it.
+  const crmDb = () => ({ committed: new Map(), executions: [] });
+  const crmRpcs = (db) => ({
+    read_crm_command_result: (args) => ({ data: db.committed.get(`${args._tenant_id}:${args._actor_id}:${args._idempotency_key}`) ?? null, error: null }),
+    execute_crm_command: (args) => {
+      const key = `${args._tenant_id}:${args._actor_id}:${args._idempotency_key}`;
+      const prior = db.committed.get(key);
+      if (prior) return { data: { ...prior, replayed: true }, error: null };
+      db.executions.push({ command: args._command, idempotency_key: args._idempotency_key });
+      const result = { ok: true, outcome: "succeeded", action: args._command?.action, readback: { id: DEAL_ID } };
+      db.committed.set(key, result);
+      return { data: result, error: null };
+    },
+  });
+  const realDoor = async (options) => {
+    const res = await door(new Request("http://local/crm-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: options?.headers?.Authorization ?? "Bearer test-jwt" },
+      body: JSON.stringify(options?.body ?? {}),
+    }));
+    const json = await res.json();
+    return res.ok ? { data: json, error: null } : { data: null, error: { name: "FunctionsHttpError", message: `status ${res.status}`, context: { status: res.status, json: async () => json } } };
+  };
+  const CLIENT_REF = "CLT-0042";
+  const clientsByFilter = (rows) => (filters) => rows.filter((row) => filters.every(([op, col, value]) => op !== "eq" || row[col] === value));
+  const DOOR_SERVICE = {
+    tenant_members: () => [{ role: "owner", status: "active" }],
+    tenants: () => [{ account_number: 3855, account_type: "standalone", parent_tenant_id: null }],
+    clients: clientsByFilter([{ id: OWN, tenant_id: CALLER_TENANT, account_number: CLIENT_REF, first_name: "Dana", last_name: "Reyes" }]),
+    client_memory: () => [],
+  };
+  const SEAT = (tenant = CALLER_TENANT) => ({
+    get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+    current_user_tenant_id: { data: tenant, error: null },
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    studio_role_ok: { data: true, error: null },
+    match_paige_memory: { data: [], error: null },
+  });
+  const ASSIGN = { name: "crm_assign_deal_contact", args: { deal_id: DEAL_ID, client_ref: CLIENT_REF, expected_version: 3 } };
+  // The offer, shaped like prod's 15:21:48 turn (names swapped for the harness's own client).
+  const OFFER = "Here's where things stand.\n\n**Sales / CRM** — anything that writes, I draft and you approve on a card.\n\n**Back to Dana** — the link is still outstanding. Want me to send that approval card now so we actually close this loop, and then move into building her $2,500 invoice for Wednesday?";
+  // Prod's 15:25:30 reply, verbatim in shape: a card narrated, none created.
+  const NARRATION = "Sending the approval card now for the canonical deal-to-contact link.\n\n**What you're approving:**\nLink deal \"Dana Reyes — Retainer\" to contact Dana Reyes.\n\nOnce you click Approve on the card, I'll read the deal back and confirm the link took.";
+  // Prod's 15:26:19 reply: approval guessed from a setting.
+  const BYPASS = "If approvals are OFF in your workspace, then I can run this link directly without the card — just say the word.";
+  const AFTER_CARD = "That's in front of you now — approve it and I'll read the deal back.";
+  const FINAL = (state = "FINAL") => ({ turn_state: { v: 1, state, mode: "answer", tools: 3, rounds: 2 } });
+  const ago = (ms) => new Date(Date.now() - ms).toISOString();
+
+  const seedOffer = (store, threadId, { history = 2, offer = OFFER, ageMs = 4 * 60_000, bundle = FINAL() } = {}) => {
+    for (let i = 0; i < history; i++) store.seed(threadId, i % 2 ? "assistant" : "user", i % 2 ? `Earlier answer ${i}.` : `Earlier question ${i}.`, i % 2 ? FINAL() : null, ago(ageMs + (history - i) * 60_000));
+    return store.seed(threadId, "assistant", offer, bundle, ago(ageMs));
+  };
+  const turn = (store, confirms, db, { text, threadId = THREAD, script, tenant = CALLER_TENANT, body = {} } = {}) => drive({
+    stream: true, text, streamScript: script,
+    extraBody: { threadId, ...body },
+    rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), paige_chat_turn_append: (args) => store.append(args) },
+    tablesExtra: { paige_chat_turns: store.table, paige_chat_threads: store.threadsTable, client_memory: () => [], paige_pending_confirmations: confirms.table },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+    onInsert: mirrorConfirms(confirms),
+    functionsExtra: { "crm-command": realDoor },
+  });
+
+  // ── 43.1 THE PROD STRAND, on a LONG thread (40 earlier turns). PAIGE narrates the card first — exactly
+  // what the cheap tier did — then, corrected inside the same turn, calls the tool. The real door mints
+  // ONE proposal; the wire, the saved turn and the store agree; the narration never reaches the person.
+  // Red at base: the cheap tier, no note, and the narration saved as FINAL with no card.
+  const s1 = makeThreadStore(THREADS), c1 = makeConfirmStore(), db1 = crmDb();
+  seedOffer(s1, THREAD, { history: 40 });
+  const r1 = await turn(s1, c1, db1, { text: "Yes we may as well for sure", script: [NARRATION, ASSIGN, AFTER_CARD] });
+  const card1 = cardsOf(r1).flat()[0] ?? null;
+  const saved1 = savedAssistant(s1, THREAD);
+  assert("43.1a F1 (long thread) the accepted offer runs on the reasoning tier, not the cheap one",
+    modelOf(r1, 0) === CLAUDE_REASONING, JSON.stringify({ model: modelOf(r1, 0) }));
+  assert("43.1b …and PAIGE is told the person is answering her offer, quoting the offer she made",
+    told(r1).includes("THE PERSON IS ANSWERING YOUR OFFER") && told(r1).includes("Want me to send that approval card now"), "no foreground note");
+  assert("43.1c the narrated card is corrected inside the turn (no card existed), on the reasoning tier",
+    told(r1).includes(CORRECTION.card) && modelOf(r1, 1) === CLAUDE_REASONING, JSON.stringify({ second: modelOf(r1, 1) }));
+  assert("43.1d F10 the real door minted exactly ONE crm_assign_deal_contact proposal, and one card went out naming it",
+    doorCalls(r1).length === 1 && c1.rows.length === 1 && c1.rows[0].tool_name === "crm_assign_deal_contact" && !!card1 && db1.executions.length === 0,
+    JSON.stringify({ door: doorCalls(r1).length, rows: c1.rows.map((r) => r.tool_name), card: card1, executions: db1.executions.length }));
+  assert("43.1e F10 wire = persist: the turn ends WAIT_APPROVAL and the saved turn carries the same card",
+    terminalOf(r1)?.state === "WAIT_APPROVAL" && saved1?.bundle_ref?.turn_state?.state === "WAIT_APPROVAL"
+      && saved1?.bundle_ref?.paige_confirm?.[0]?.fingerprint === card1?.fingerprint && c1.rows[0].fingerprint === card1?.fingerprint,
+    JSON.stringify({ terminal: terminalOf(r1), saved: saved1?.bundle_ref?.turn_state, savedFp: saved1?.bundle_ref?.paige_confirm?.[0]?.fingerprint, wireFp: card1?.fingerprint }));
+  assert("43.1f the narration never reached the person: not on the wire, not in the saved turn",
+    !contentOf(r1).includes("Sending the approval card now") && !String(saved1?.content).includes("Sending the approval card now"),
+    JSON.stringify({ wire: contentOf(r1).slice(0, 120), saved: String(saved1?.content).slice(0, 120) }));
+
+  // ── 43.2 THE FRESH-THREAD CONTROL: the same offer as a thread's first exchange; PAIGE calls the tool at once.
+  const s2 = makeThreadStore(THREADS), c2 = makeConfirmStore(), db2 = crmDb();
+  seedOffer(s2, THREAD_FRESH, { history: 1 });
+  const r2 = await turn(s2, c2, db2, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: [ASSIGN, AFTER_CARD] });
+  const card2 = cardsOf(r2).flat()[0] ?? null;
+  assert("43.2 F1 (fresh thread) reasoning tier, one door call, one proposal, one card, WAIT_APPROVAL, no correction needed",
+    modelOf(r2, 0) === CLAUDE_REASONING && doorCalls(r2).length === 1 && c2.rows.length === 1 && !!card2
+      && terminalOf(r2)?.state === "WAIT_APPROVAL" && !told(r2).includes(CORRECTION.card),
+    JSON.stringify({ model: modelOf(r2, 0), door: doorCalls(r2).length, rows: c2.rows.length, terminal: terminalOf(r2) }));
+
+  // ── 43.3 F11 — the card is approved: the door runs the stored act exactly once, through C4, and a
+  // second approval of the same card runs nothing.
+  const r3 = card2 ? await turn(s2, c2, db2, { text: "Approved — run it.", threadId: THREAD_FRESH, body: { approvedConfirmations: [card2.fingerprint] }, script: ["Done — Dana's deal is linked to her record."] }) : null;
+  const r3b = card2 ? await turn(s2, c2, db2, { text: "Approved — run it.", threadId: THREAD_FRESH, body: { approvedConfirmations: [card2.fingerprint] }, script: ["Done."] }) : null;
+  assert("43.3 F11 approving the minted card executes the stored assign once; approving it again executes nothing more",
+    db2.executions.length === 1 && db2.executions[0].command?.action === "deal.assign_contact" && c2.rows[0].consumed === true && !!r3 && !!r3b,
+    JSON.stringify({ executions: db2.executions.map((e) => e.command?.action), consumed: c2.rows[0]?.consumed }));
+
+  // ── 43.4 F12 — a card is already standing (the previous turn is WAIT_APPROVAL) and the person says "yes"
+  // again: that is not an offer to accept, PAIGE is not told it is, and even when she re-emits the same
+  // call the door does not create a second proposal. Pointing at the card above is not an unbacked claim.
+  const s4 = makeThreadStore(THREADS), c4 = makeConfirmStore(), db4 = crmDb();
+  seedOffer(s4, THREAD_FRESH, { history: 1 });
+  await turn(s4, c4, db4, { text: "yes", threadId: THREAD_FRESH, script: [ASSIGN, AFTER_CARD] });
+  const r4 = await turn(s4, c4, db4, { text: "yes", threadId: THREAD_FRESH, script: [ASSIGN, "The card above is still waiting — approve it there."] });
+  const liveRows4 = c4.rows.filter((r) => !r.consumed);
+  assert("43.4 F12 with a card standing, a second yes is not read as an offer and creates no second live proposal; nothing executes",
+    !told(r4).includes("THE PERSON IS ANSWERING YOUR OFFER") && liveRows4.length === 1 && db4.executions.length === 0 && !told(r4).includes(CORRECTION.card),
+    JSON.stringify({ rows: c4.rows.length, live: liveRows4.length, executions: db4.executions.length }));
+
+  // ── 43.5 F2 — other plain acceptances read the same way.
+  for (const [i, reply] of ["sure", "go ahead", "yep 👍"].entries()) {
+    const s = makeThreadStore(THREADS), c = makeConfirmStore(), db = crmDb();
+    seedOffer(s, THREAD_FRESH, { history: 1 });
+    const r = await turn(s, c, db, { text: reply, threadId: THREAD_FRESH, script: [ASSIGN, AFTER_CARD] });
+    assert(`43.5.${i + 1} F2 "${reply}" accepts the offer: reasoning tier, the note, one card`,
+      modelOf(r, 0) === CLAUDE_REASONING && told(r).includes("THE PERSON IS ANSWERING YOUR OFFER") && c.rows.length === 1,
+      JSON.stringify({ model: modelOf(r, 0), rows: c.rows.length }));
+  }
+
+  // ── 43.6 F4 — an offer of alternatives: "yes" asks which; nothing is proposed.
+  const s6 = makeThreadStore(THREADS), c6 = makeConfirmStore(), db6 = crmDb();
+  seedOffer(s6, THREAD_FRESH, { history: 1, offer: "Two things are open.\n\nWant me to send the approval card now, or build her invoice first?" });
+  const r6 = await turn(s6, c6, db6, { text: "yes", threadId: THREAD_FRESH, script: ["Which first — the link card or the invoice?"] });
+  assert("43.6 F4 alternatives: PAIGE is told to ask which, she asks, and no door call or proposal happens",
+    told(r6).includes("BUT IT NAMED MORE THAN ONE THING") && doorCalls(r6).length === 0 && c6.rows.length === 0 && terminalOf(r6)?.state === "FINAL",
+    JSON.stringify({ door: doorCalls(r6).length, terminal: terminalOf(r6) }));
+
+  // ── 43.7 F5 / F6 — an informational turn, and a stale offer: the ordinary path, on the ordinary tier.
+  const s7 = makeThreadStore(THREADS), c7 = makeConfirmStore(), db7 = crmDb();
+  seedOffer(s7, THREAD_FRESH, { history: 1, offer: "Your pipeline has 4 open deals worth $12,400. Dana's is still at $0." });
+  const r7 = await turn(s7, c7, db7, { text: "ok", threadId: THREAD_FRESH, script: ["Anything else you want on it?"] });
+  const s7b = makeThreadStore(THREADS), c7b = makeConfirmStore(), db7b = crmDb();
+  seedOffer(s7b, THREAD_FRESH, { history: 1, ageMs: 2 * 60 * 60_000 });
+  const r7b = await turn(s7b, c7b, db7b, { text: "yes", threadId: THREAD_FRESH, script: ["Do you mean the link to Dana from earlier? Want me to set that up now?"] });
+  assert("43.7a F5 an acknowledgement of an informational answer is just that: cheap tier, no note, no correction, FINAL",
+    modelOf(r7, 0) === CLAUDE_CLASSIFICATION && !told(r7).includes("ANSWERING YOUR OFFER") && !told(r7).includes("Correction:") && terminalOf(r7)?.state === "FINAL",
+    JSON.stringify({ model: modelOf(r7, 0), terminal: terminalOf(r7) }));
+  assert("43.7b F6 a two-hour-old offer is not continued by a bare yes: cheap tier, no note, nothing proposed",
+    modelOf(r7b, 0) === CLAUDE_CLASSIFICATION && !told(r7b).includes("ANSWERING YOUR OFFER") && c7b.rows.length === 0,
+    JSON.stringify({ model: modelOf(r7b, 0), rows: c7b.rows.length }));
+
+  // ── 43.8 F7 / F8 — the offer is in another workspace's thread, or another person's: never continued.
+  const s8 = makeThreadStore(THREADS), c8 = makeConfirmStore(), db8 = crmDb();
+  seedOffer(s8, THREAD_B, { history: 1 });
+  seedOffer(s8, THREAD_OTHER_USER, { history: 1 });
+  // The model here answers in prose: what these hold is that the foreign offer is never READ as one.
+  const ASKS = "Which deal do you mean?";
+  const r8a = await turn(s8, c8, db8, { text: "yes", threadId: THREAD_B, script: [ASKS] });
+  const r8b = await turn(s8, c8, db8, { text: "yes", threadId: THREAD_OTHER_USER, script: [ASKS] });
+  assert("43.8a F7 a thread from another workspace: the turn is refused before PAIGE is reached — no note, no model call, no door call",
+    !told(r8a).includes("ANSWERING YOUR OFFER") && streamed(r8a).length === 0 && doorCalls(r8a).length === 0,
+    JSON.stringify({ status: r8a.status, calls: streamed(r8a).length, door: doorCalls(r8a).length }));
+  assert("43.8b F8 another person's thread: their offer is invisible (RLS) and never continued — no note, cheap tier, nothing proposed",
+    !told(r8b).includes("ANSWERING YOUR OFFER") && modelOf(r8b, 0) === CLAUDE_CLASSIFICATION && doorCalls(r8b).length === 0 && c8.rows.length === 0,
+    JSON.stringify({ status: r8b.status, model: modelOf(r8b, 0), door: doorCalls(r8b).length, rows: c8.rows.length }));
+
+  // ── 43.9 F9 — the offered act can't be done: a truthful refusal is a terminal answer (no loop, no fallback).
+  const s9 = makeThreadStore(THREADS), c9 = makeConfirmStore(), db9 = crmDb();
+  seedOffer(s9, THREAD_FRESH, { history: 1 });
+  const REFUSAL = "I can't link that deal from here — it was closed after I offered, so there's nothing to link.";
+  const r9 = await turn(s9, c9, db9, { text: "yes", threadId: THREAD_FRESH, script: [REFUSAL] });
+  assert("43.9 F9 a truthful refusal ends the turn as said: one model call, FINAL, saved verbatim, nothing proposed",
+    streamed(r9).length === 1 && terminalOf(r9)?.state === "FINAL" && savedAssistant(s9, THREAD_FRESH)?.content === REFUSAL && c9.rows.length === 0,
+    JSON.stringify({ calls: streamed(r9).length, terminal: terminalOf(r9), saved: savedAssistant(s9, THREAD_FRESH)?.content }));
+
+  // ── 43.10 THE MODEL NEVER CALLS THE TOOL. Every round narrates a card. After the correction budget the
+  // server answers truthfully: the person reads that nothing is waiting, the wire and the transcript agree,
+  // and nothing was proposed. Red at base: the narration is saved as the answer.
+  const s10 = makeThreadStore(THREADS), c10 = makeConfirmStore(), db10 = crmDb();
+  seedOffer(s10, THREAD_FRESH, { history: 1 });
+  const r10 = await turn(s10, c10, db10, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: [NARRATION, NARRATION, NARRATION, NARRATION, NARRATION] });
+  const saved10 = savedAssistant(s10, THREAD_FRESH);
+  assert("43.10 a card narrated every round never becomes the answer: the server's truthful sentence is on the wire and saved, the turn records its spent budget; nothing proposed",
+    contentOf(r10).includes(FALLBACK.card) && saved10?.content === FALLBACK.card && !contentOf(r10).includes("Sending the approval card now")
+      && terminalOf(r10)?.state === "LIMIT_REACHED" && saved10?.bundle_ref?.turn_state?.state === "LIMIT_REACHED"
+      && c10.rows.length === 0 && doorCalls(r10).length === 0,
+    JSON.stringify({ wire: contentOf(r10).slice(0, 160), saved: saved10?.content, terminal: terminalOf(r10), savedState: saved10?.bundle_ref?.turn_state?.state }));
+
+  // ── 43.11 E — PAIGE deciding approval herself (prod's 15:26 reply) is corrected; her truthful answer stands.
+  const s11 = makeThreadStore(THREADS), c11 = makeConfirmStore(), db11 = crmDb();
+  seedOffer(s11, THREAD_FRESH, { history: 1, offer: "I've looked at Dana's deal. It's still unlinked." });
+  const TRUTH = "Whether it needs your OK is decided when I set it up — I'll put it through and you'll get a card if it needs one.";
+  const r11 = await turn(s11, c11, db11, { text: "The approval card doesn't show up", threadId: THREAD_FRESH, script: [BYPASS, TRUTH] });
+  assert("43.11 E an authority claim ('approvals are OFF… run it directly') is corrected inside the turn and never reaches the person",
+    told(r11).includes(CORRECTION.authority) && savedAssistant(s11, THREAD_FRESH)?.content === TRUTH && !contentOf(r11).includes("run this link directly"),
+    JSON.stringify({ saved: savedAssistant(s11, THREAD_FRESH)?.content, wire: contentOf(r11).slice(0, 120) }));
+
+  // ── 43.13 C1 — accepting the offer is action intent in any words: prose that only promises ("On it —
+  // I'll link it now.") claims no card, so the claim guard does not see it; C1 must still carry the turn
+  // on to the tool instead of letting the promise stand as the answer.
+  const s13 = makeThreadStore(THREADS), c13 = makeConfirmStore(), db13 = crmDb();
+  seedOffer(s13, THREAD_FRESH, { history: 1 });
+  const r13 = await turn(s13, c13, db13, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["On it — I'll link Dana's deal now.", ASSIGN, AFTER_CARD] });
+  assert("43.13 C1 a promise without a tool call is continued (not a claim, so not the guard's), and the card is minted",
+    told(r13).includes("The requested task is still unresolved") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
+    JSON.stringify({ rows: c13.rows.length, terminal: terminalOf(r13) }));
+
+  // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
+  // no rendered card approved, the door mints a card and executes nothing.
+  const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();
+  seedOffer(s12, THREAD_FRESH, { history: 1 });
+  const r12 = await turn(s12, c12, db12, { text: "yes", threadId: THREAD_FRESH, script: [{ name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD] });
+  assert("43.12 E a model-asserted confirm:true executes nothing: the gate still mints the card",
+    db12.executions.length === 0 && c12.rows.length === 1 && cardsOf(r12).flat().length >= 1,
+    JSON.stringify({ executions: db12.executions.length, rows: c12.rows.length }));
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

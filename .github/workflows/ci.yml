@@ -814,6 +814,18 @@ jobs:
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/continuity.test.ts
 
+      - name: INT-334 R3 — the Turn Route (state before words, class before model) and the finished-round tool gate
+        if: ${{ !cancelled() }}
+        run: |
+          # The Turn Route (supabase/functions/_shared/paige-turn/route.ts): thread state sets a floor no
+          # classifier lowers; cheap never carries tools; a route carries no authority; Sol/Astra lead,
+          # Sonnet 5.5 is second; fallback only on recognised provider-health failures, never after output.
+          # The round gate (round.ts): a tool call runs only from a round that reached a normal tool-use stop.
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/paige-turn/route.test.ts supabase/functions/_shared/paige-turn/round.test.ts
+          # The same gate through BOTH real stream converters (Anthropic and OpenAI), provider-native events.
+          npm run -s test:round-gate
+
       - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
         if: ${{ !cancelled() }}
         run: |

@@ -690,6 +690,17 @@ session scratchpad). Findings and what changed:
 
 ## 6. Parked / not in this change (with evidence)
 
+**Owner ruling 2026-10-06:** round 15's design (strict step attribution + truthful execution readback) is the stopping
+architecture for this hotfix. The four items below are explicitly PARKED to the capability-first / state-aware PAIGE
+Intelligence Router architecture and are NOT absorbed into INT-332:
+
+1. **Multi-act offers.** "Want me to research Acme and email Dana the summary?" → research runs → "I've researched
+   Acme and emailed Dana the summary" ends FINAL at every head (one-step continuity follows the first act).
+2. **Made-up progress on ordinary non-offer action turns** (below).
+3. **The forced-termination closing call** is not claim-guarded (below).
+4. **Broader semantic routing.** Offer kind, step attribution and restatement are regex readings of PAIGE's own words;
+   their residual misses (e.g. "move Dana to Proposal and Sam to Lost" is not cut) are recorded per round in §5.
+
 - **Made-up progress on a non-offer action turn** (prod replay, 2026-10-06: "Archiving the four workflows now — on it" after a long reply, no tool, cards only two turns later). That is the C1 action-intent path, which reads the person's own words, not INT-332's offer path. It needs the same kept-reply-plus-line treatment applied to C1's exhausted branch. Own change.
 
 - **INT-333, card copy → CRM lane.** `crm-command` `summaryFor` writes `Change deal ${deal_id}'s contact to ${client_ref}`
@@ -705,5 +716,15 @@ session scratchpad). Findings and what changed:
 
 ## 7. Merge, deploy, production
 
-Recorded in the PR and the master doc's delivery log on completion (merge commit, `deploy-edge-functions` run,
-`edge-live` drift, and the controlled Solo repro — or `PROOF OWED` with the reason).
+Evidence classes are kept separate: merge/deploy evidence does not imply authenticated acceptance.
+
+**Pre-merge (exact code head `8643261be`):**
+- Continuity unit suite (Deno, CI flags): 28 passed, 0 failed.
+- client-memory-authz harness: 930 passed, 0 failed.
+- Deno edge ratchet vs merge-base `99233e9f`: `paige-ai-chat` base 10 → head 10 diagnostics, no new or increased.
+- Round-15 mutation proofs on the final implementation:
+  - round-14 loose matching restored → 4 red (43.31 D2, U1, R2, B2);
+  - fixed generic line restored instead of `ranNote` → 6 red (43.29 X6, X1; 43.30 L; 43.31 D2, U1, M1).
+- Final independent reviewer (five questions, exact head) and GitHub CI: recorded in the PR.
+
+**Merge, deploy, provider readback, authenticated Solo proof:** recorded below after merge.

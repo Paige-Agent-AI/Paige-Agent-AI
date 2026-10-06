@@ -822,7 +822,8 @@ jobs:
           # Sonnet 5.5 is second; fallback only on recognised provider-health failures, never after output.
           # The round gate (round.ts): a tool call runs only from a round that reached a normal tool-use stop.
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
-            supabase/functions/_shared/paige-turn/route.test.ts supabase/functions/_shared/paige-turn/round.test.ts
+            supabase/functions/_shared/paige-turn/route.test.ts supabase/functions/_shared/paige-turn/round.test.ts \
+            supabase/functions/_shared/paige-turn/classify.test.ts
           # The same gate through BOTH real stream converters (Anthropic and OpenAI), provider-native events.
           npm run -s test:round-gate
 

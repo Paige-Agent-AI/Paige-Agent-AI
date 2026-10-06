@@ -2,7 +2,7 @@
 //
 // Creates and drops one fresh database in the explicitly verified disposable local cluster, applies
 // scripts/sql/comms-email-send-concurrency-schema.sql (dependency stub) and then the migration
-// supabase/migrations/20270596000000_comms_email_send.sql VERBATIM, seeds two tenants, and races
+// supabase/migrations/20270597000000_comms_email_send.sql VERBATIM, seeds two tenants, and races
 // separate psql sessions (separate backends, separate transactions) against the SQL.
 //
 // Usage: node scripts/sql/comms-email-send-concurrency-proof.mjs <psql> <local-port> <local-user> <verified-disposable-data-directory>
@@ -25,7 +25,7 @@ const [binary, port, user, expectedDirectory] = process.argv.slice(2);
 if (!binary || !/^\d+$/.test(port ?? '') || !user || !expectedDirectory) throw new Error('Usage: node scripts/sql/comms-email-send-concurrency-proof.mjs <psql> <local-port> <local-user> <verified-disposable-data-directory>');
 const cwd = fileURLToPath(new URL('.', import.meta.url));
 const migrationPath = process.env.COMMS_EMAIL_MIGRATION_OVERRIDE
-  || fileURLToPath(new URL('../../supabase/migrations/20270596000000_comms_email_send.sql', import.meta.url));
+  || fileURLToPath(new URL('../../supabase/migrations/20270597000000_comms_email_send.sql', import.meta.url));
 const args = database => ['-h', '127.0.0.1', '-p', port, '-U', user, '-d', database, '-v', 'ON_ERROR_STOP=1', '-t', '-A', '-q'];
 function sync(database, sql) {
   const result = spawnSync(binary, args(database), { cwd, input: sql, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });

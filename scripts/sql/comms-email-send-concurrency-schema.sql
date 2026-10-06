@@ -1,6 +1,6 @@
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
 -- DISPOSABLE LOCAL POSTGRES ONLY. Minimal stub of exactly what
--- supabase/migrations/20270596000000_comms_email_send.sql references, so the migration can be
+-- supabase/migrations/20270597000000_comms_email_send.sql references, so the migration can be
 -- applied VERBATIM on top of it by scripts/sql/comms-email-send-concurrency-proof.mjs.
 --
 -- Every object below mirrors the shape the migration reads (column names, CHECK values, function

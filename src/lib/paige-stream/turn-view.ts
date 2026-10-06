@@ -35,7 +35,10 @@ export interface TurnRow {
 }
 
 export type TurnLineKind = "think" | "work" | "wait" | "done" | "warn" | "stop" | "held" | "neutral" | "bg";
-export type TurnGlyph = "dot" | "check" | "hand" | "triangle" | "pause" | "lock" | "clock" | "none";
+export type TurnGlyph = "dot" | "check" | "hand" | "triangle" | "pause" | "lock" | "clock" | "help" | "none";
+/** C4c — where a question PAIGE asked stands: still open (the person's call), answered (or let her
+ *  choose), or moved past without an answer. Presentation only; the server decides what is open. */
+export type AskStanding = "open" | "answered" | "unanswered";
 export type TurnEndCause = "done" | "cancelled" | "timeout";
 export type TurnFooterAction = "see" | "askAgain";
 
@@ -109,6 +112,8 @@ export interface LiveTurnInput {
   personaName?: string;
   /** C4a — the server said `resumed`: the person's approval is being carried forward (frame a3). */
   resumed?: boolean;
+  /** C4c — this answer ended on a question; where it stands (frames c2 / c3 / c5). */
+  ask?: AskStanding;
 }
 
 const nameOf = (personaName?: string) => (personaName && personaName.trim()) || "PAIGE";
@@ -226,7 +231,7 @@ function doneLine(rows: TurnRow[], elapsed: number | null, name: string): TurnVi
 /** The line for an answer that is no longer being read. */
 export function deriveSnapshotView(
   snap: TurnSnapshot,
-  opts: { personaName?: string; awaitingApproval: boolean },
+  opts: { personaName?: string; awaitingApproval: boolean; ask?: AskStanding },
 ): TurnView | null {
   const name = nameOf(opts.personaName);
   const rows = snap.rows;
@@ -272,6 +277,14 @@ export function deriveSnapshotView(
     case "FINAL":
       return o.mode === "fast_answer" ? null : doneLine(rows, elapsed, name);
     case "ASK_USER":
+      // C4c — c2: still open, it is the person's call; c5: they moved on, so it stays unanswered (it
+      // is never answered for them). Answered (c3/c6): what she did before asking, as any answer.
+      if (opts.ask === "open") {
+        return { kind: "wait", glyph: "help", text: "Your call", elapsed: null, steps: null, rows, footer: null, announce: `${name} has a question for you` };
+      }
+      if (opts.ask === "unanswered") {
+        return { kind: "neutral", glyph: "help", text: "Question not answered", elapsed: null, steps: null, rows, footer: null, announce: "Question not answered" };
+      }
       return doneLine(rows, elapsed, name);
     case "WAIT_APPROVAL":
       if (opts.awaitingApproval) {
@@ -328,7 +341,7 @@ function deriveLiveTurnViewInner(i: LiveTurnInput): TurnView | null {
   if (!i.streaming) {
     return deriveSnapshotView(
       { outcome: i.frame ? { state: i.frame.state, mode: i.frame.mode } : null, rows: i.rows, elapsedMs: i.elapsedMs, endCause: i.endCause ?? "done", source: "live", hasContent: i.hasContent },
-      { personaName: i.personaName, awaitingApproval: i.awaitingApproval },
+      { personaName: i.personaName, awaitingApproval: i.awaitingApproval, ask: i.ask },
     );
   }
 

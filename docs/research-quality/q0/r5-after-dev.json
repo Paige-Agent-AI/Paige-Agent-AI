@@ -1,0 +1,289 @@
+[
+ {
+  "id": "F1",
+  "class": "fresh_fact",
+  "stop": "max_hops",
+  "units": 2,
+  "cands": 7,
+  "acc": 6,
+  "outcomes": [
+   "ok",
+   "ok"
+  ]
+ },
+ {
+  "id": "F2",
+  "class": "fresh_fact",
+  "stop": "max_hops",
+  "units": 1,
+  "cands": 7,
+  "acc": 7,
+  "outcomes": [
+   "ok"
+  ]
+ },
+ {
+  "id": "F3",
+  "class": "fresh_fact",
+  "stop": "max_hops",
+  "units": 2,
+  "cands": 10,
+  "acc": 10,
+  "outcomes": [
+   "ok",
+   "ok"
+  ]
+ },
+ {
+  "id": "F4",
+  "class": "fresh_fact",
+  "stop": "max_hops",
+  "units": 1,
+  "cands": 4,
+  "acc": 4,
+  "outcomes": [
+   "ok"
+  ]
+ },
+ {
+  "id": "M1",
+  "class": "multihop_comparison",
+  "stop": "max_hops",
+  "units": 6,
+  "cands": 23,
+  "acc": 21,
+  "outcomes": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ]
+ },
+ {
+  "id": "M2",
+  "class": "multihop_comparison",
+  "stop": "max_hops",
+  "units": 3,
+  "cands": 4,
+  "acc": 4,
+  "outcomes": [
+   "truncated",
+   "ok",
+   "truncated"
+  ]
+ },
+ {
+  "id": "M3",
+  "class": "multihop_comparison",
+  "stop": "budget",
+  "units": 0,
+  "cands": 5,
+  "acc": 5,
+  "outcomes": []
+ },
+ {
+  "id": "M4",
+  "class": "multihop_comparison",
+  "stop": "max_hops",
+  "units": 3,
+  "cands": 22,
+  "acc": 22,
+  "outcomes": [
+   "ok",
+   "ok",
+   "ok"
+  ]
+ },
+ {
+  "id": "H1",
+  "class": "high_stakes",
+  "stop": "max_hops",
+  "units": 2,
+  "cands": 6,
+  "acc": 6,
+  "outcomes": [
+   "ok",
+   "ok"
+  ]
+ },
+ {
+  "id": "H2",
+  "class": "high_stakes",
+  "stop": "max_hops",
+  "units": 2,
+  "cands": 8,
+  "acc": 8,
+  "outcomes": [
+   "ok",
+   "truncated"
+  ]
+ },
+ {
+  "id": "H3",
+  "class": "high_stakes",
+  "stop": "max_hops",
+  "units": 2,
+  "cands": 12,
+  "acc": 12,
+  "outcomes": [
+   "ok",
+   "ok"
+  ]
+ },
+ {
+  "id": "H4",
+  "class": "high_stakes",
+  "stop": "max_hops",
+  "units": 2,
+  "cands": 10,
+  "acc": 9,
+  "outcomes": [
+   "ok",
+   "ok"
+  ]
+ },
+ {
+  "id": "C1",
+  "class": "contested",
+  "stop": "no_results",
+  "units": 3,
+  "cands": 0,
+  "acc": 0,
+  "outcomes": [
+   "truncated",
+   "truncated",
+   "truncated"
+  ]
+ },
+ {
+  "id": "C2",
+  "class": "contested",
+  "stop": "max_hops",
+  "units": 3,
+  "cands": 3,
+  "acc": 3,
+  "outcomes": [
+   "ok",
+   "ok",
+   "truncated"
+  ]
+ },
+ {
+  "id": "C3",
+  "class": "contested",
+  "stop": "max_hops",
+  "units": 3,
+  "cands": 7,
+  "acc": 7,
+  "outcomes": [
+   "ok",
+   "truncated",
+   "truncated"
+  ]
+ },
+ {
+  "id": "C4",
+  "class": "contested",
+  "stop": "no_results",
+  "units": 2,
+  "cands": 0,
+  "acc": 0,
+  "outcomes": [
+   "truncated",
+   "truncated"
+  ]
+ },
+ {
+  "id": "S1",
+  "class": "insufficient",
+  "stop": "max_hops",
+  "units": 2,
+  "cands": 4,
+  "acc": 3,
+  "outcomes": [
+   "truncated",
+   "ok"
+  ]
+ },
+ {
+  "id": "S2",
+  "class": "insufficient",
+  "stop": "max_hops",
+  "units": 1,
+  "cands": 7,
+  "acc": 7,
+  "outcomes": [
+   "ok"
+  ]
+ },
+ {
+  "id": "S3",
+  "class": "insufficient",
+  "stop": "no_results",
+  "units": 1,
+  "cands": 0,
+  "acc": 0,
+  "outcomes": [
+   "insufficient"
+  ]
+ },
+ {
+  "id": "S4",
+  "class": "insufficient",
+  "stop": "no_results",
+  "units": 1,
+  "cands": 0,
+  "acc": 0,
+  "outcomes": [
+   "insufficient"
+  ]
+ },
+ {
+  "id": "A1",
+  "class": "abundant_insufficient",
+  "stop": "no_results",
+  "units": 3,
+  "cands": 0,
+  "acc": 0,
+  "outcomes": [
+   "truncated",
+   "truncated",
+   "truncated"
+  ]
+ },
+ {
+  "id": "A2",
+  "class": "abundant_insufficient",
+  "stop": "no_results",
+  "units": 1,
+  "cands": 0,
+  "acc": 0,
+  "outcomes": [
+   "truncated"
+  ]
+ },
+ {
+  "id": "A3",
+  "class": "abundant_insufficient",
+  "stop": "max_hops",
+  "units": 1,
+  "cands": 6,
+  "acc": 6,
+  "outcomes": [
+   "ok"
+  ]
+ },
+ {
+  "id": "A4",
+  "class": "abundant_insufficient",
+  "stop": "no_results",
+  "units": 1,
+  "cands": 0,
+  "acc": 0,
+  "outcomes": [
+   "insufficient"
+  ]
+ }
+]

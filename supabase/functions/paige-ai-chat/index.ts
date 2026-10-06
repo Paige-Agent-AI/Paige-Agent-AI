@@ -16435,7 +16435,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               let ok = true;
               try { ok = (JSON.parse(String(toolResultContent.get(tc?.id) ?? "{}")) as { success?: unknown })?.success !== false; } catch { /* non-JSON result: not a stated failure */ }
               if (!ok) return false;
-              return !(heldAccept && acceptedKind === "act" && foreground.offer.kind === "accepted") || stepToolDoes(n, foreground.offer.offer);
+              return !(heldAccept && acceptedKind === "act" && foreground.offer.kind === "accepted") || stepToolDoes(n, foreground.offer.offer, foreground.offer.context ?? "");
             }).length;
             if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).

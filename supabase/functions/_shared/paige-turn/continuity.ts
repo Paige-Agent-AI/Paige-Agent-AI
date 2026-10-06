@@ -38,7 +38,7 @@ export const OFFER_FRESH_MS = 30 * 60 * 1000;
 export type ForegroundTurn = { role?: unknown; content?: unknown; created_at?: unknown; bundle_ref?: unknown };
 
 export type ForegroundOffer =
-  | { kind: "accepted"; offer: string }
+  | { kind: "accepted"; offer: string; context?: string }
   | { kind: "ambiguous"; offer: string }
   | { kind: "none"; reason: ForegroundNoneReason };
 
@@ -268,8 +268,10 @@ export function restatesOffer(reply: string, offer: string): boolean {
   const offerPerson = offered.find((w) => w === "her" || w === "him");
   // A singular person pronoun cannot stand for one of several people the offer named ("email Dana and Sam"), nor
   // for someone the offer set aside ("text Dana, not Sam") — that is a narrowing, not a yes (review round 13).
-  const severalNamed = /\b[A-Z][a-z]+(?:'s)?\s+(?:and|,)\s*[A-Z][a-z]+/.test(step.kept.join(" "));
-  const namedAside = step.removed.some((t) => /^[A-Z][a-z]+$/.test(t));
+  // Several people = names joined right after the verb ("email Dana and Sam…"); not "to Onboarding and Nurture".
+  const severalNamed = /^[A-Z][a-z]+(?:'s)?$/.test(step.kept[1] ?? "") && /^(?:and|&)$/i.test(step.kept[2] ?? "") && /^[A-Z][a-z]+$/.test(step.kept[3] ?? "");
+  // Set aside = a CONTRAST that removed a name ("text Dana, not Sam") — a second act after "and" removes no one.
+  const namedAside = step.contrast && step.removed.some((t) => /^[A-Z][a-z]+$/.test(t));
   let k = 1;
   for (const w of words.slice(1)) {
     if (FILLER.has(w) || ARTICLES.has(w)) continue;
@@ -290,7 +292,7 @@ export function restatesOffer(reply: string, offer: string): boolean {
  * pronoun or possessive ("…and keep Dana", "…, then open a new one"). Names stay capitalised, so "email Dana and
  * Sam" is one step. `removed` is what the cut took away.
  */
-function offeredStep(offer: string): { kept: string[]; removed: string[] } | null {
+function offeredStep(offer: string): { kept: string[]; removed: string[]; contrast: boolean } | null {
   OFFER_PHRASE.lastIndex = 0;
   const o = strip(offer);
   const m = OFFER_PHRASE.exec(o);
@@ -300,15 +302,17 @@ function offeredStep(offer: string): { kept: string[]; removed: string[] } | nul
   if (!toks.length || toks[0] === ",") return null;
   const NOT_A_VERB = /^(?:the|a|an|her|his|their|its|my|your|our|this|that|these|those|it|them|him|she|he|they|we|you|i|so|to|for|with|by|on|in|at|of)$/i;
   let cut = toks.length;
+  let contrast = false;
   for (let i = 1; i < toks.length; i++) {
     const t = toks[i];
-    if (/^(?:not|except|instead|rather|but)$/i.test(t)) { cut = i; break; }
+    if (/^(?:not|except|instead|rather|but)$/i.test(t)) { cut = i; contrast = true; break; }
     if (/^(?:and|then|,)$/i.test(t)) {
       const next = toks[i + 1] === "then" || toks[i + 1] === "and" ? toks[i + 2] : toks[i + 1];
+      if (next && /^(?:not|except|instead|rather|but)$/i.test(next)) { cut = i; contrast = true; break; }
       if (next && /^[a-z]/.test(next) && !NOT_A_VERB.test(next)) { cut = i; break; }
     }
   }
-  return { kept: toks.slice(0, cut).filter((t) => t !== ","), removed: toks.slice(cut).filter((t) => t !== ",") };
+  return { kept: toks.slice(0, cut).filter((t) => t !== ","), removed: toks.slice(cut).filter((t) => t !== ","), contrast };
 }
 function offeredStepWords(offer: string): string[] {
   return offeredStep(offer)?.kept.map((t) => t.toLowerCase()) ?? [];
@@ -316,15 +320,22 @@ function offeredStepWords(offer: string): string[] {
 
 /**
  * Whether a tool that carries out steps itself (a page/funnel generator, research, copy drafting, a filed approval,
- * a question card) is THIS offered step: on an act, only when the offered verb is what the tool does. Drafting the
- * copy is not emailing it (review round 13: "email Dana the recap?" → draft → "Done, I've emailed her" stood).
+ * a question card) is THIS offered step. Judged by what the step concerns, not only its verb: a page or funnel step
+ * is the generators', a research step research's, a copy step drafting's. A step that SENDS, LINKS or MOVES
+ * something is never one of theirs (drafting the copy is not emailing it — review round 13). When the offered verb
+ * is generic ("go ahead", "do that", "get started") the plan before the offer decides (review round 14).
  */
-export function stepToolDoes(tool: string, offer: string): boolean {
+export function stepToolDoes(tool: string, offer: string, context = ""): boolean {
   if (tool === "propose_action" || tool === "ask_choices") return true;
-  const verb = offeredStepWords(offer)[0] ?? "";
-  if (tool === "growth_page_generate" || tool === "growth_funnel_generate") return /^(?:draft|build|create|make|generate|put|design|mock|spin|set)$/.test(verb);
-  if (tool === "deep_research") return /^(?:research|look|dig|investigate|find|check|analy[sz]e|compare|study|explore)$/.test(verb);
-  if (tool === "draft_marketing_content") return /^(?:draft|write|rewrite|punch|polish|come|tighten|compose)$/.test(verb);
+  const words = offeredStepWords(offer);
+  const verb = words[0] ?? "";
+  const generic = !verb || /^(?:go|do|proceed|start|get|handle|take|run|kick|move forward)$/.test(verb);
+  const step = generic ? `${words.join(" ")} ${strip(context).toLowerCase()}` : words.join(" ");
+  const DELIVERS = /\b(?:send|sending|email|emailing|text|texting|share|post|publish|link|linking|forward|message|notify|invite|book|schedule|move|tag|enroll|assign|archive|delete)\b/;
+  if (generic ? DELIVERS.test(strip(context).toLowerCase().split(/\n/).slice(-2).join(" ")) && !/\b(?:page|landing|funnel|site|website|research|report|competitor|copy|draft)\b/.test(step) : DELIVERS.test(verb)) return false;
+  if (tool === "growth_page_generate" || tool === "growth_funnel_generate") return /\b(?:page|landing|funnel|site|website|lead magnet)\b/.test(step);
+  if (tool === "deep_research") return /^(?:research|look|dig|investigate|find|check|analy[sz]e|compare|study|explore)$/.test(verb) || /\b(?:research|competitors?|report|market|analysis|deep dive|look (?:at|into)|dig into|investigate|analy[sz]e|compare|study|explore)\b/.test(step);
+  if (tool === "draft_marketing_content") return /^(?:draft|write|rewrite|punch|polish|come|tighten|compose)$/.test(verb) || /\b(?:copy|caption|post|newsletter|headline|ad|blurb|draft)\b/.test(step);
   return false;
 }
 
@@ -391,7 +402,9 @@ export function readForeground(turns: ForegroundTurn[] | null | undefined, reply
   if (!closing) return { offer: { kind: "none", reason: "no_offer" }, standingCard };
   if (!isAffirmativeReply(reply) && !restatesOffer(reply, closing.offer)) return { offer: { kind: "none", reason: "not_affirmative" }, standingCard };
   if (closing.count > 1 || closing.alternatives) return { offer: { kind: "ambiguous", offer: closing.offer }, standingCard };
-  return { offer: { kind: "accepted", offer: closing.offer }, standingCard };
+  // The plan before the offer (its last two paragraphs): what a generic "Want me to go ahead?" refers to.
+  const context = (typeof prev.content === "string" ? prev.content : "").split(/\n\s*\n/).slice(-3).join("\n\n").slice(-1200);
+  return { offer: { kind: "accepted", offer: closing.offer, context }, standingCard };
 }
 
 const quote = (s: string, n: number) => s.replace(/[«»]/g, "").replace(/\s+/g, " ").trim().slice(0, n);

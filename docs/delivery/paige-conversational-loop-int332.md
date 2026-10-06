@@ -198,6 +198,45 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5n. Independent review — round 14 (`574f80bfd`): FIX_FIRST, fixed
+
+Round 14 confirmed round 13's B1 and S1–S3 closed. C1–C7 and C10 are identical across r12, r13 and r14. The
+production offer cuts at ", and then move", and every restatement of it is accepted.
+
+- **B1: `stepToolDoes` brought back round 12's BL-2 for generic and idiomatic offers.** "Want me to go ahead?",
+  "Should I do that?", "get started on the landing page" and "redo the landing page" have no listed verb. So a page
+  or research run that really happened got "The step you accepted wasn't carried out" (false). This regressed
+  against round 13.
+  - **Fix:** a step tool is judged by what the step concerns, not only by its verb:
+    - a page/funnel step belongs to the generators;
+    - a research step (including "look at / dig into") belongs to research;
+    - a copy step belongs to drafting.
+  - A step whose verb sends, links, moves, books, tags or archives never belongs to them.
+  - For a generic verb, the plan before the offer decides. `readForeground` now carries its last paragraphs as
+    `context`.
+  - "I'll link Dana's deal. Want me to go ahead?", then research, then "Linked!" is still held with the
+    step-not-done line (43.30.L).
+- **B2: the pronoun rules rejected ordinary replies to compound offers.** `namedAside` treated any capitalised
+  word cut off by a second act (a stage, a weekday) as a person set aside, and `severalNamed` treated any
+  "Capital and Capital" as two people. So "yes email her" was rejected for "email Dana the recap and move her deal
+  to Proposal", and a made-up "Done" stood.
+  - **Fix:**
+    - "set aside" counts only for a CONTRAST cut ("not / except / instead / rather / but", with or without a
+      comma);
+    - "several people" means names joined right after the verb ("email Dana and Sam…").
+- **Tests:**
+  - **43.30, 9 cases:**
+    - V1/V2/V3/V5: a generic or idiomatic page offer with the generator.
+    - V12: a generic research offer.
+    - L: the link plan with research.
+    - Q1/Q3: compound pronoun restatements.
+  - **Deno round-14 test.**
+  - **Mutations:** removing the plan context fails 3; the old `namedAside` fails 1.
+- **Recorded:** a narrowing reply that the restatement rejects ("Texted him!") goes to the ordinary path. That is
+  where a made-up claim was before INT-332 too (SW3, unchanged at every head).
+
+Harness 925/0. Deno 27/27. `deno check` 10, identical to base.
+
 ### 5m. Independent review — round 13 (`3712350c1`): FIX_FIRST, fixed
 
 Round 13 confirmed round 12's BL-1 and BL-2 closed. C1–C9 are identical to round 12.

@@ -8098,6 +8098,34 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     assert("43.29.X1 a link offer, research ran, then \"Linked!\": held, kept with \"the step wasn't carried out\"", x1.saved === `${FAKE13}\n\n${continuity.STEP_NOT_DONE_NOTE}`, JSON.stringify(x1));
   }
 
+  // 43.30 (review round 14) — a generic or idiomatic offer ("Want me to go ahead?", "get started on the landing
+  // page") is judged by what the step concerns, read from the plan before it: a page generator that ran IS the step.
+  // A pronoun restatement of a compound offer ("email Dana the recap and move her deal to Proposal" → "yes email
+  // her") is an accepted offer. A plan to link, then research, then "Linked!" is still not the step.
+  {
+    const GP = { name: "growth_page_generate", args: { brief: "Workshop on the 14th" } };
+    const GPF = { "growth-page-draft": { data: { blocks: [{ type: "hero", headline: "Workshop" }], theme_json: null, seo_json: { title: "Workshop" } }, error: null } };
+    const CDR = { studio_role_ok: { data: true, error: null } };
+    const MADE = "I've created a draft of the workshop page, take a look below.";
+    const PLAN = "Here's the plan for Dana's workshop page: a hero, the agenda, and a signup form.\n\n";
+    for (const [id, offer, reply] of [["43.30.V1", PLAN + "Want me to go ahead?", "sure"], ["43.30.V2", PLAN + "Should I do that?", "yes"],
+      ["43.30.V3", "Dana's workshop is on the 14th.\n\nWant me to get started on the landing page?", "sure"], ["43.30.V5", "That page is dated.\n\nWant me to redo the landing page?", "sure"]]) {
+      const o = await run26(offer, reply, [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
+      assert(`${id} the generator ran on a generic/idiomatic page offer: "I've created a draft" ends the turn, no false line`, o.calls === 2 && o.saved === MADE && o.terminal === "FINAL", JSON.stringify(o));
+    }
+    const v12 = await run26("I'd look at Acme's pricing and positioning.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Acme?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    assert("43.30.V12 research ran on a generic offer whose plan is research: the answer stands", v12.calls === 2 && v12.saved === SAVEDR26, JSON.stringify(v12));
+    const FAKEL = "Linked! Dana's deal is now attached to her contact.";
+    const lk = await run26("I'll link Dana's deal to her contact.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Dana?" } }, FAKEL, FAKEL, FAKEL, FAKEL], { outbound: DR26, rpc: DRRPC26 });
+    assert("43.30.L a generic offer whose plan is to LINK, research ran, then \"Linked!\": held, \"the step wasn't carried out\"", lk.saved === `${FAKEL}\n\n${continuity.STEP_NOT_DONE_NOTE}`, JSON.stringify(lk));
+    const EM = "Done, I've emailed her the recap.";
+    const q1 = await run26("Call went well.\n\nWant me to email Dana the recap and move her deal to Proposal?", "yes email her", x4(EM));
+    assert("43.30.Q1 \"yes email her\" to a compound offer is accepted: a made-up \"Done\" is held, kept with the line", q1.saved === keptWithNote(EM) && q1.rows === 0, JSON.stringify(q1));
+    const AD = "Done, I've added her.";
+    const q3 = await run26("Dana is ready.\n\nWant me to add Dana to Onboarding and Nurture?", "yes add her", x4(AD));
+    assert("43.30.Q3 \"yes add her\" (\"to Onboarding and Nurture\" are not two people): held, kept with the line", q3.saved === keptWithNote(AD), JSON.stringify(q3));
+  }
+
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.
   const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();

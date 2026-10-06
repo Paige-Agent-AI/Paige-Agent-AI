@@ -605,8 +605,8 @@ Deno.test("review round 7 + production replay — the kind of step decides how i
   const NOW = Date.parse("2026-10-06T16:00:00Z");
   const t = (text: string) => [{ role: "user", content: "yes", created_at: "2026-10-06T15:59:00Z" },
     { role: "assistant", content: text, created_at: "2026-10-06T15:58:00Z", bundle_ref: { turn_state: { v: 1, state: "FINAL" } } }];
-  assertEquals(readForeground(t("Looks clean. Ready to archive it? Just say yes and I'll pull the trigger.") as never, "yes", NOW).offer,
-    { kind: "accepted", offer: "Ready to archive it?" });
+  const ra = readForeground(t("Looks clean. Ready to archive it? Just say yes and I'll pull the trigger.") as never, "yes", NOW).offer;
+  assertEquals([ra.kind, ra.kind === "accepted" ? ra.offer : null], ["accepted", "Ready to archive it?"]);
   assertEquals(readForeground(t("Want me to send it? Say the word and it goes.") as never, "yes", NOW).offer.kind, "accepted");
   assertEquals(readForeground(t("Want me to go ahead and create the deal for him? Or did you want him dropped straight into Proposal?") as never, "yes", NOW).offer.kind, "ambiguous");
   assertEquals(readForeground(t("I checked his record. It's ready to link. Would you like me to link it now?") as never, "yes", NOW).offer.kind, "accepted");
@@ -718,4 +718,20 @@ Deno.test("review round 13 — the offered step is cut at a second act or contra
   assert(stepToolDoes("deep_research", "Want me to research Acme's competitors?"));
   assert(stepToolDoes("growth_page_generate", "Want me to draft a landing page for the workshop?"));
   assert(stepToolDoes("propose_action", "Want me to link the deal to her contact?"));
+});
+
+Deno.test("review round 14 — step tools by what the step concerns (the plan decides a generic offer); compound offers keep pronouns", () => {
+  const PLAN = "Here's the plan for Dana's workshop page: a hero, the agenda, and a signup form.";
+  assert(stepToolDoes("growth_page_generate", "Want me to go ahead?", PLAN));
+  assert(stepToolDoes("growth_page_generate", "Want me to get started on the landing page?"));
+  assert(stepToolDoes("growth_page_generate", "Want me to redo the landing page?"));
+  assert(stepToolDoes("deep_research", "Want me to go ahead?", "I'd look at Acme's pricing and positioning."));
+  assert(!stepToolDoes("deep_research", "Want me to go ahead?", "I'll link Dana's deal to her contact."));
+  assert(!stepToolDoes("draft_marketing_content", "Want me to go ahead?", "I'll email Dana the recap."));
+  assert(!stepToolDoes("growth_page_generate", "Want me to send Dana the landing page link?"));
+  for (const [r, o] of [["yes email her", "Want me to email Dana the recap and move her deal to Proposal?"], ["yes add her", "Want me to add Dana to Onboarding and Nurture?"],
+    ["yes send her the link", "Want me to send Dana the link, then follow up Friday?"], ["yes send her the card", "Want me to send Dana the approval card now, and then move into building her invoice for Wednesday?"]]) {
+    assert(restatesOffer(r, o), `${r} <- ${o}`);
+  }
+  for (const [r, o] of [["yes text him", "Want me to text Dana, not Sam?"], ["yes email her", "Want me to email Dana and Sam the recap?"]]) assert(!restatesOffer(r, o), `${r} <- ${o}`);
 });

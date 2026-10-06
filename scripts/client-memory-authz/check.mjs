@@ -1093,11 +1093,20 @@ function makeConfirmStore(seed = []) {
     if (op === "in") return value.includes(v);
     return true;
   });
-  return {
+  const store = {
     rows,
+    /** The row the last insert wrote, for PostgREST's `insert(...).select(...)` readback (set by
+     *  mirrorConfirms). A door that mints a proposal reads its own row back that way; without this the
+     *  readback saw EVERY row and a store holding history answered "multiple rows" (C4b, 40.4c). */
+    lastInsert: null,
     table: (filters) => {
       const update = filters.find(([op]) => op === "update")?.[1];
       const columns = filters.find(([op]) => op === "select")?.[1];
+      const inserted = store.lastInsert;
+      store.lastInsert = null;
+      if (inserted && filters.length === 1 && columns !== undefined) {
+        return [Object.fromEntries(String(columns).split(",").map((key) => [key, key === "consumed_at" ? consumedAt(inserted) : structuredClone(inserted[key])]))];
+      }
       if (!update && columns === undefined) return [];
       const hits = rows.filter((row) => matches(row, filters))
         .slice(0, filters.find(([op]) => op === "limit")?.[1] ?? rows.length);
@@ -1113,6 +1122,7 @@ function makeConfirmStore(seed = []) {
       });
     },
   };
+  return store;
 }
 
 /** Mirror inserts LIVE, as the handler writes them, honouring the live-proposal unique index.
@@ -1127,6 +1137,7 @@ const mirrorConfirms = (st) => (t, row) => {
   // outcomes look identical from the handler's side.
   if (clash) return { code: "23505", message: "duplicate key value violates unique constraint" };
   st.rows.push({ id: `row-${st.rows.length}`, consumed: false, expires_at:'2099-01-01T00:00:00Z', ...row });
+  st.lastInsert = st.rows.at(-1);
   return null;
 };
 
@@ -5850,6 +5861,953 @@ console.log("\nC4a — an approval resumes the same objective on the server");
   assert("39.21 a door tool's proposal is never carried forward by the general resume (nothing claimed, no resumed frame)",
     !!DOOR && !st21.rows[0].consumed && resumedFrames(doorTurn.bodyText).length === 0,
     JSON.stringify({ DOOR, consumed: st21.rows[0].consumed }));
+}
+
+// ── 40. C4b — A DOOR APPROVAL RESUMES ON THE SERVER ─────────────────────────────────────────────────
+//
+// docs/delivery/paige-conversational-loop-c4.md §3. A door (crm-command, the Sales doors,
+// growth-publish-command) mints its own proposal — thread and client NULL, the bare fingerprint as the
+// card token, the door's own stored request as `args`. Until C4b only a MODEL re-emitting the call
+// reached the door with the approval (prod, 30 days: 8 of 21 door approvals never executed — deal_create
+// 5 of 7, crm_create_contact 3 of 10). Now the server carries the approved proposal forward itself,
+// pinned to the stored row, through the SAME door branch, and the door — still the only claim site —
+// runs what it stored.
+//
+// THE CRM DOOR IN THESE CHECKS IS THE REAL ONE. `supabase/functions/crm-command/index.ts` is loaded
+// through the same module boundary as the chat (its serve() captured), and `functions.invoke` routes
+// to it: its own readback-before-claim, its atomic claim on the shared proposal store, its
+// governed decision, its proposal minting and its executor call all run as shipped. Only the database
+// is the harness's: the proposal store (makeConfirmStore, with real filter semantics), and the two
+// executor RPCs, modelled as a committed-result table keyed by the idempotency key — which is exactly
+// the contract crm-command reads (`read_crm_command_result`) and writes (`execute_crm_command`).
+// The publish and Sales doors are MODELLED (their claim predicates, replay-before-claim and
+// re-propose-on-failed-claim are cited at each model); they are not run here.
+console.log("\nC4b — a door approval resumes on the server; the door stays the only claim site");
+// A check below that approves a card the real door never minted cannot mean anything, so the group
+// stops there with a NAMED failure carrying the door's own answer (proposeVia), never a TypeError on
+// `card.fingerprint` that hides why. The rest of the harness still runs.
+class Group40Abort extends Error {}
+try {
+  await import("../../supabase/functions/crm-command/index.ts");
+  const { capturedHandler: capturedDoor } = await import("./stub-serve.mjs");
+  const crmDoor = capturedDoor();
+  if (crmDoor === handler) throw new Error("group 40: crm-command's handler was not captured");
+
+  const THREAD = "c4b0c4b0-c4b0-4c4b-8c4b-c4b0c4b0c4b0";
+  const SUSPENDED = "5b5b5b5b-5b5b-4b5b-8b5b-5b5b5b5b5b5b";
+  const PIPELINE = "71717171-7171-4171-8171-717171717171";
+  const STAGE = "72727272-7272-4272-8272-727272727272";
+  const framesOf = (text) => String(text ?? "").split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .flatMap((l) => { try { return [JSON.parse(l.slice(6))]; } catch { return []; } });
+  const outcomeOf = (text) => framesOf(text).find((f) => f.paige_approval_outcome)?.paige_approval_outcome ?? null;
+  const resumedFrames = (text) => framesOf(text).filter((f) => f.paige_turn?.event === "resumed");
+  const cardsOf = (text) => framesOf(text).filter((f) => f.paige_confirm).map((f) => f.paige_confirm);
+  const savedAnswer = (r) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant").at(-1)?.args?.p_bundle_ref ?? null;
+  const toldModel = (r) => r.modelEgress.join("\n").replace(/\\"/g, '"');
+  const doorCalls = (r, name = "crm-command") => r.rec.functions.filter((f) => f.name === name);
+
+  // The committed-result table crm-command reads back and writes through (keyed as the executor keys it).
+  const crmDb = () => ({ committed: new Map(), executions: [] });
+  const crmRpcs = (db) => ({
+    read_crm_command_result: (args) => ({ data: db.committed.get(`${args._tenant_id}:${args._actor_id}:${args._idempotency_key}`) ?? null, error: null }),
+    execute_crm_command: (args) => {
+      const key = `${args._tenant_id}:${args._actor_id}:${args._idempotency_key}`;
+      const prior = db.committed.get(key);
+      if (prior) return { data: { ...prior, replayed: true }, error: null };
+      db.executions.push({ command: args._command, idempotency_key: args._idempotency_key, tenant: args._tenant_id });
+      const result = { ok: true, outcome: "succeeded", action: args._command?.action, readback: { id: `rec-${db.executions.length}` } };
+      db.committed.set(key, result);
+      return { data: result, error: null };
+    },
+  });
+  // supabase-js `functions.invoke` over the REAL door handler: a 2xx is data, anything else a
+  // FunctionsHttpError whose context is the response, exactly as the chat and the card lane read it.
+  const realCrmDoor = async (options) => {
+    const res = await crmDoor(new Request("http://local/crm-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: options?.headers?.Authorization ?? "Bearer test-jwt" },
+      body: JSON.stringify(options?.body ?? {}),
+    }));
+    const json = await res.json();
+    return res.ok ? { data: json, error: null } : { data: null, error: { name: "FunctionsHttpError", message: `status ${res.status}`, context: { status: res.status, json: async () => json } } };
+  };
+  const PERSONA = (tenant) => ({ get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } });
+  const SEAT = (tenant) => ({
+    ...PERSONA(tenant),
+    current_user_tenant_id: { data: tenant, error: null },
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    studio_role_ok: { data: true, error: null },
+  });
+  // What crm-command reads about the caller with its service client: an active owner seat, the route.
+  // INT-327 (#1761): a deal is created FOR a resolved canonical client (or as an explicitly unlinked
+  // prospect). crm-command resolves a client_ref with its service client inside the caller's workspace
+  // (client-ref.ts: clients, eq tenant_id, eq account_number) — modelled with those filters honoured, so
+  // a reference from another workspace, or one that no longer exists, is not found here either.
+  const DEAL_CLIENT_REF = "CLT-0042";
+  const DEAL_CLIENT_ROWS = [{ id: OWN, tenant_id: CALLER_TENANT, account_number: DEAL_CLIENT_REF, first_name: "Dana", last_name: "Reyes" }];
+  const clientsByFilter = (rows) => (filters) => rows.filter((row) => filters.every(([op, col, value]) => op !== "eq" || row[col] === value));
+  const DOOR_SERVICE = {
+    tenant_members: () => [{ role: "owner", status: "active" }],
+    tenants: () => [{ account_number: 3855, account_type: "standalone", parent_tenant_id: null }],
+    clients: clientsByFilter(DEAL_CLIENT_ROWS),
+  };
+  const turnsWith = (fp, tool) => ({ paige_chat_turns: () => [
+    { id: SUSPENDED, role: "assistant", content: "Here is what I'll do.", seq: 2, bundle_ref: { paige_confirm: [{ tool, summary: "Do it", fingerprint: fp }] } },
+  ] });
+  const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {}, clientId } = {}) => drive({
+    stream: true, clientId, text: body.approvedConfirmations || body.declinedConfirmations ? "Approved — run it." : "please do it",
+    extraBody: { ...(threadId ? { threadId } : {}), ...body }, toolCall,
+    rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), ...extraRpc },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE, ...extraService },
+    tablesExtra: { paige_pending_confirmations: store.table, ...(body.approvedConfirmations ? turnsWith(body.approvedConfirmations[0], fixtureTool) : {}), ...extraTables },
+    onInsert: mirrorConfirms(store),
+    functionsExtra: { "crm-command": realCrmDoor },
+    concurrentRequests: concurrent,
+    tableErrorsExtra: tableErrors,
+  });
+  // The approved card's OWN lane (PaigeAIChat.tsx ~L1932-1960): it invokes crm-command directly with the
+  // card's command, idempotency key and fingerprint, before (and instead of) echoing it to the chat.
+  const cardLane = async (store, db, card, tenant = CALLER_TENANT) => {
+    fake.setScenario({
+      authUser: { id: USER, email: "owner@example.test" }, onInsert: mirrorConfirms(store),
+      rpcs: { ...SEAT(tenant), ...crmRpcs(db) },
+      serviceTables: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+      tables: { paige_pending_confirmations: store.table },
+    });
+    const r = await realCrmDoor({ body: { command: card.command, idempotency_key: card.idempotency_key, approved_fingerprint: card.fingerprint } });
+    return r.data ?? await r.error?.context?.json?.();
+  };
+  const CONTACT = { name: "crm_create_contact", args: { patch: { first_name: "Dana", last_name: "Reyes" } } };
+  // The client is named the way Paige is shown it (lower-case here: the door normalizes it).
+  const DEAL = { name: "deal_create", args: { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE, client_ref: DEAL_CLIENT_REF.toLowerCase() } };
+  const proposeVia = async (store, db, call, opts = {}) => {
+    const r = await crmDrive(store, db, { toolCall: call, ...opts });
+    const card = cardsOf(r.bodyText)[0] ?? null;
+    if (!card) {
+      // What the door answered instead (the tool result PAIGE was given), so the failure names its cause.
+      const told = toldModel(r);
+      const answer = told.slice(told.lastIndexOf('"tool_result"'), told.lastIndexOf('"tool_result"') + 400);
+      assert(`40.G (guard) the real door minted a ${call.name} card for this check to approve`, false,
+        JSON.stringify({ door: doorCalls(r).map((c) => c.body), answer, errors: r.logged.filter((l) => l.level === "error").map((l) => l.msg).slice(-3) }));
+      throw new Group40Abort(`no ${call.name} card was minted, so nothing after it can be checked`);
+    }
+    return card;
+  };
+
+  // ── 40.1 THE PROD STRAND, both tools. The real door mints the proposal; the person approves; the model
+  // does NOT re-emit. The door is handed the stored proposal and executes it exactly once, from what it
+  // stored. Red at base (nothing reached the door: 0 executions). Kills: deleting the door half of the
+  // resume; the CRM branch ignoring the pin.
+  const strand = async (call) => {
+    const st = makeConfirmStore();
+    const db = crmDb();
+    const card = await proposeVia(st, db, call);
+    const minted = { rows: st.rows.length, executions: db.executions.length, row: st.rows[0] && { ...st.rows[0] } };
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card?.fingerprint] }, fixtureTool: call.name });
+    return { st, db, card, r, minted };
+  };
+  const contact = await strand(CONTACT);
+  const deal = await strand(DEAL);
+  for (const [label, { st, db, card, r, minted }] of [["crm_create_contact", contact], ["deal_create", deal]]) {
+    assert(`40.0 ${label}: the real door minted ONE door-scoped proposal (thread and client NULL, bare token, its own key) — guards 40.1`,
+      !!card && /^[0-9a-f]{16}$/.test(card.fingerprint ?? "") && minted.rows === 1 && minted.row?.thread_id == null && minted.row?.scoped_client_id == null
+        && minted.row?.tool_name === label && typeof minted.row?.args?.idempotency_key === "string" && minted.executions === 0,
+      JSON.stringify({ card, minted }));
+    const stored = st.rows.find((row) => row.fingerprint === card?.fingerprint);
+    assert(`40.1 ${label}: approved with NO model re-emit — the door executes the STORED command once, under the stored key`,
+      db.executions.length === 1 && db.executions[0].idempotency_key === stored.args.idempotency_key
+        && db.executions[0].command.action === stored.args.command.action
+        && JSON.stringify(Object.fromEntries(Object.entries(db.executions[0].command).filter(([k]) => k !== "approval_channel" && !k.startsWith("__"))))
+          === JSON.stringify(Object.fromEntries(Object.entries(stored.args.command).filter(([k]) => !k.startsWith("__"))))
+        && db.executions[0].command.approval_channel === "operator_card" && stored.consumed === true,
+      JSON.stringify({ executions: db.executions, stored: stored?.args, consumed: stored?.consumed }));
+    const pinnedBody = doorCalls(r)[0]?.body;
+    assert(`40.1b ${label}: the door is handed exactly the pinned proposal — its fingerprint, its stored command and key — and nothing else`,
+      doorCalls(r).length === 1 && pinnedBody?.approved_fingerprint === card.fingerprint
+        && JSON.stringify(pinnedBody?.command) === JSON.stringify(stored.args.command) && pinnedBody?.idempotency_key === stored.args.idempotency_key
+        && Object.keys(pinnedBody ?? {}).sort().join() === "approved_fingerprint,command,idempotency_key",
+      JSON.stringify(doorCalls(r).map((c) => c.body)));
+    const outcome = outcomeOf(r.bodyText);
+    assert(`40.1c ${label}: the card reports ran from the door's own answer; one resumed frame; PAIGE is called after, with the result`,
+      outcome?.actions?.length === 1 && outcome.actions[0].fingerprint === card.fingerprint && outcome.actions[0].outcome === "ran"
+        && resumedFrames(r.bodyText).length === 1 && r.modelEgress.length >= 1
+        && new RegExp(`"tool_use_id":"resume_${card.fingerprint}"`).test(r.modelEgress[0].replace(/\\"/g, '"')),
+      JSON.stringify({ outcome, resumed: resumedFrames(r.bodyText).length, egress: r.modelEgress[0]?.slice(0, 200) }));
+    assert(`40.1d ${label}: no fresh card, and no second proposal row`,
+      cardsOf(r.bodyText).length === 0 && st.rows.length === 1, JSON.stringify({ cards: cardsOf(r.bodyText), rows: st.rows.length }));
+    if (label === "deal_create") {
+      // INT-327 × C4b: the door stores the command AFTER resolving the client (contact-refs.ts, in place),
+      // and the pinned resume hands that stored command back — so what runs is the deal FOR that client.
+      // Kills: a resume that rebuilt the command from the call (or dropped the reference) on the way.
+      const ran = db.executions[0]?.command;
+      assert("40.1e deal_create (INT-327): the stored proposal carries the canonical client (reference normalized, resolved to that workspace's contact), and the resume runs the deal WITH it",
+        stored?.args?.command?.client_ref === DEAL_CLIENT_REF && stored?.args?.command?.contact_id === OWN
+          && !("unlinked_reason" in (stored?.args?.command ?? {}))
+          && ran?.client_ref === DEAL_CLIENT_REF && ran?.contact_id === OWN,
+        JSON.stringify({ stored: stored?.args?.command, ran }));
+    }
+  }
+
+  // ── 40.1f INT-327's Chat-side preservation, carried through C4b. In a client-scoped conversation the
+  // model may omit the client; Chat preserves the AUTHORIZED client's reference on deal.create
+  // (preserveResolvedDealClient, paige-ai-chat ~L9608) BEFORE the door is asked, so the door stores the
+  // deal for that client, and the server resume runs exactly that stored command. Kills: dropping the
+  // preservation (the door would refuse an unlinked deal: no card); a resume that bypassed what the door
+  // stored.
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const scopedClients = { clients: clientsByFilter(DEAL_CLIENT_ROWS) };
+    const bare = { name: "deal_create", args: { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE } };
+    const card = await proposeVia(st, db, bare, { clientId: OWN, extraTables: scopedClients });
+    const minted = st.rows[0]?.args?.command;
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, fixtureTool: "deal_create", clientId: OWN, extraTables: scopedClients });
+    const ran = db.executions[0]?.command;
+    assert("40.1f deal_create in a client-scoped conversation, client omitted by the model: Chat preserves the authorized client, the door stores it resolved, and the resume runs that stored deal once",
+      minted?.client_ref === DEAL_CLIENT_REF && minted?.contact_id === OWN && st.rows[0]?.scoped_client_id == null
+        && db.executions.length === 1 && ran?.contact_id === OWN && ran?.client_ref === DEAL_CLIENT_REF
+        && JSON.stringify(doorCalls(r)[0]?.body?.command) === JSON.stringify(st.rows[0].args.command)
+        && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "ran",
+      JSON.stringify({ minted, ran, outcome: outcomeOf(r.bodyText) }));
+  }
+
+  // ── 40.2 EXACTLY ONCE ACROSS THE CARD'S OWN LANE AND THE SERVER RESUME. (a) The card lane ran it first
+  // (it strips the token it ran, so a second surface — a stale tab, Studio, the drawer — is what sends
+  // it): the server asks the door, which reads back what it committed under the stored key. No second
+  // execution; the card says ran (from the readback, not optimism). (b) The server ran it first; the
+  // card lane then runs in a stale tab: the door reads back, nothing runs twice. (c) Two POSTs of the
+  // same approval at once: one execution. Kills: skipping the door for a used row (40.2a would read
+  // "can't confirm"); the door branch sending a fresh key (40.2a/b would execute twice).
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const lane = await cardLane(st, db, card);
+    assert("40.2 the card's own lane ran the stored proposal once (the guard for 40.2a)",
+      lane?.ok === true && db.executions.length === 1 && st.rows[0].consumed === true, JSON.stringify({ lane, executions: db.executions.length }));
+    const after = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    const outcome = outcomeOf(after.bodyText);
+    assert("40.2a card lane first, then the server resume: the door reads back — no second execution, the card says ran",
+      db.executions.length === 1 && doorCalls(after).length === 1 && doorCalls(after)[0].body.idempotency_key === card.idempotency_key
+        && outcome?.actions?.[0]?.outcome === "ran" && cardsOf(after.bodyText).length === 0 && st.rows.length === 1,
+      JSON.stringify({ executions: db.executions.length, outcome, rows: st.rows.length }));
+  }
+  {
+    const { st, db, card } = await strand(CONTACT);
+    const lane = await cardLane(st, db, card);
+    assert("40.2b server resume first, then the card lane in a stale tab: the door reads back — still one execution",
+      db.executions.length === 1 && lane?.ok === true && lane?.outcome === "succeeded" && st.rows.length === 1,
+      JSON.stringify({ executions: db.executions.length, lane }));
+  }
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, DEAL);
+    const twice = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, concurrent: 2 });
+    const outcomes = twice.responses.map((r) => outcomeOf(r.bodyText)?.actions?.[0]?.outcome ?? null).sort();
+    assert("40.2c two approvals of one door card at once: exactly one execution",
+      db.executions.length === 1, JSON.stringify({ executions: db.executions.length, rows: st.rows.length }));
+    assert("40.2d …each request reports ran (its own run, or the door's readback of the other's) or can't confirm — never 'didn't run', never a fresh card",
+      outcomes.every((o) => o === "ran" || o === "unconfirmed") && outcomes.includes("ran")
+        && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
+      JSON.stringify({ outcomes, rows: st.rows.map((r) => ({ consumed: r.consumed, issued: r.issued_in_request })) }));
+    // A request that loses the claim before the winner has committed makes crm-command propose the act
+    // again (its own behaviour on a failed claim, crm-command ~L575+), under the SAME fingerprint. That
+    // proposal is never shown, and it is retired before the request ends: no live row is left for the
+    // card's token to claim later. Kills: not retiring the door's re-proposal (settlePinnedDoorResult).
+    assert("40.2e …a door that proposed again for the loser left NO live proposal behind (and never a card)",
+      st.rows.every((row) => row.consumed === true) && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
+      JSON.stringify({ rows: st.rows.map((row) => ({ consumed: !!row.consumed, issued: row.issued_in_request })) }));
+  }
+
+  // ── 40.3 ANOTHER WORKSPACE / ANOTHER PERSON: the row is not selected, the door is never handed it,
+  // nothing runs, the approval stays unspent. Kills: dropping the user or tenant predicate from the
+  // door selection (then the door is handed it and claims under the caller's own tenant and user —
+  // which the claim would refuse, but the selection must never be wider than the claim).
+  for (const [label, patch] of Object.entries({ "another workspace": { tenant_id: OTHER_TENANT }, "another person": { user_id: FOREIGN },
+    // Not a door's own proposal at all: a door tool's row that carries a thread or a focused client was
+    // not minted by the door, and the door's claim (thread and client NULL) could never take it.
+    "a thread (not a door row)": { thread_id: THREAD }, "a focused client (not a door row)": { scoped_client_id: OWN } })) {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    Object.assign(st.rows[0], patch);
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    assert(`40.3 a door proposal of ${label} is not carried forward: the door is never handed it, nothing runs, unspent`,
+      doorCalls(r).length === 0 && db.executions.length === 0 && !st.rows[0].consumed && resumedFrames(r.bodyText).length === 0,
+      JSON.stringify({ door: doorCalls(r).map((c) => c.body), consumed: st.rows[0].consumed }));
+  }
+
+  // ── 40.4 EXPIRED / ALREADY USED WITH NOTHING COMMITTED / DECLINED — truthful outcomes, nothing runs.
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    st.rows[0].expires_at = "2000-01-01T00:00:00Z";
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    const outcome = outcomeOf(r.bodyText);
+    assert("40.4 expired: the door is not asked (it would only propose again), nothing runs, the card says it expired",
+      doorCalls(r).length === 0 && db.executions.length === 0 && outcome?.actions?.[0]?.outcome === "not_run" && /expired/.test(outcome?.note ?? "")
+        && cardsOf(r.bodyText).length === 0,
+      JSON.stringify(outcome));
+  }
+  {
+    // Declined (Not now), then approved from a stale card: the row is used and nothing was committed.
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    await crmDrive(st, db, { body: { declinedConfirmations: [card.fingerprint] } });
+    assert("40.4b (guard) Not now consumed the door proposal", st.rows[0].consumed === true, JSON.stringify(st.rows[0]));
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    const outcome = outcomeOf(r.bodyText);
+    assert("40.4c a used approval with nothing committed under its key: nothing runs, the card says can't confirm, no fresh card",
+      db.executions.length === 0 && outcome?.actions?.[0]?.outcome === "unconfirmed" && /can't be used any more/.test(outcome?.note ?? "")
+        && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("approval_already_used"),
+      JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
+    // The door proposed the act again under the SAME fingerprint (the stored command and key re-hash to
+    // it). That row was never shown, and it must not stay live: the same declined token, posted once
+    // more (a third surface, a re-send), would claim and run it. Kills: not retiring the re-proposal.
+    const liveAfter = st.rows.filter((row) => !row.consumed);
+    const again = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    assert("40.4e declined, approved from a stale card, then posted AGAIN: no hidden live proposal was left, nothing ever runs",
+      liveAfter.length === 0 && db.executions.length === 0 && st.rows.every((row) => row.consumed === true)
+        && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(again.bodyText).length === 0,
+      JSON.stringify({ liveAfter: liveAfter.length, executions: db.executions.length, outcome: outcomeOf(again.bodyText) }));
+  }
+  {
+    // Expired between this request's selection and the door's claim: the door proposes again; the
+    // carried-forward approval reads "expired", not "can't confirm", and no card is shown. Time really
+    // passes: the proposal's window closes while the door's claim is on its way (an async store answer).
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const closesAt = Date.now() + 1500;
+    st.rows[0].expires_at = new Date(closesAt).toISOString();
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] },
+      extraTables: { paige_pending_confirmations: async (filters) => {
+        const isClaim = filters.some(([op]) => op === "update") && filters.some(([op, col]) => op === "gt" && col === "expires_at");
+        if (isClaim) await new Promise((res) => setTimeout(res, Math.max(0, closesAt - Date.now()) + 20));
+        const now = new Date().toISOString();
+        return st.table(filters.map((f) => (f[0] === "gt" && f[1] === "expires_at" ? ["gt", "expires_at", now] : f)));
+      } } });
+    const outcome = outcomeOf(r.bodyText);
+    assert("40.4d expired between selection and the door's claim: nothing runs, the card says it expired, no fresh card",
+      db.executions.length === 0 && outcome?.actions?.[0]?.outcome === "not_run" && /expired/.test(outcome?.note ?? "")
+        && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("approval_expired"),
+      JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
+    // The person was told it expired. The door's fresh proposal (same fingerprint) is retired, so a
+    // later re-send of the same token runs nothing — "expired" stays true.
+    const liveAfter = st.rows.filter((row) => !row.consumed && row.expires_at > new Date().toISOString());
+    const later = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    assert("40.4f …and the token posted again later: no live proposal was left behind, nothing runs",
+      liveAfter.length === 0 && db.executions.length === 0 && cardsOf(later.bodyText).length === 0
+        && outcomeOf(later.bodyText)?.actions?.[0]?.outcome !== "ran",
+      JSON.stringify({ liveAfter: liveAfter.length, executions: db.executions.length, outcome: outcomeOf(later.bodyText) }));
+  }
+  {
+    // THE DOOR'S CLAIM ITSELF COULD NOT RUN (a store error on its claim update) while the card is still
+    // live. crm-command reads that as nothing claimed and proposes again — its insert meets the live
+    // card (the live unique index) and it answers with THAT card. Nothing ran, and the approval is still
+    // good: the truthful outcome is C4a's "could not be checked" (the pinned row re-read: still live),
+    // never "it may already have happened". The card was shown minutes ago (a real card, not a row
+    // minted milliseconds before the request), so it is outside the retirement's clock allowance
+    // altogether — it must stay live. Kills: settling a failed door claim without re-reading the row;
+    // widening the retirement's allowance (it would consume the person's live card).
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    st.rows[0].server_issued_at = new Date(Date.now() - 5 * 60_000).toISOString();
+    const claimDown = ({ filters }) => (filters.some(([op]) => op === "update") && filters.some(([op, col]) => op === "gt" && col === "expires_at")
+      ? { code: "57014", message: "canceling statement due to statement timeout" } : null);
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
+    const outcome = outcomeOf(r.bodyText);
+    assert("40.4g the door's claim errors while the card is live: nothing runs, the person is told it could not be checked (not 'may already have happened'), no card",
+      db.executions.length === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "not_run"
+        && /checking your approval/.test(outcome?.note ?? "") && toldModel(r).includes("approval_check_unavailable")
+        && !toldModel(r).includes("approval_already_used") && cardsOf(r.bodyText).length === 0,
+      JSON.stringify({ outcome, executions: db.executions.length, told: toldModel(r).match(/approval_[a-z_]+/g) }));
+    assert("40.4g …and the person's card is still live (not retired), so the same Approve, sent again, runs it once",
+      st.rows.length === 1 && st.rows[0].consumed === false, JSON.stringify(st.rows.map((row) => ({ consumed: !!row.consumed, issued: row.server_issued_at }))));
+    const retry = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    assert("40.4g …the retry runs the stored command once and reports ran",
+      db.executions.length === 1 && st.rows[0].consumed === true && outcomeOf(retry.bodyText)?.actions?.[0]?.outcome === "ran",
+      JSON.stringify({ executions: db.executions.length, outcome: outcomeOf(retry.bodyText) }));
+    // The same failed claim on a card minted a moment ago (inside the clock allowance): the pinned row is
+    // never what the retirement consumes, so it is still live and the outcome is still "could not be
+    // checked". Kills: dropping the pinned-row exclusion from the retirement.
+    const st2 = makeConfirmStore(); const db2 = crmDb();
+    const card2 = await proposeVia(st2, db2, CONTACT);
+    const r2 = await crmDrive(st2, db2, { body: { approvedConfirmations: [card2.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
+    assert("40.4g2 …a card minted a moment before the request is the pinned row, and the retirement never consumes it",
+      db2.executions.length === 0 && st2.rows.length === 1 && st2.rows[0].consumed === false
+        && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome === "not_run" && toldModel(r2).includes("approval_check_unavailable"),
+      JSON.stringify({ rows: st2.rows.map((row) => ({ consumed: !!row.consumed })), outcome: outcomeOf(r2.bodyText) }));
+  }
+  {
+    // THE RETIREMENT TAKES ONLY WHAT IS STILL LIVE. History with the
+    // card's fingerprint (a declined card, and an earlier unshown re-proposal already retired), both
+    // issued inside the retirement's window, both consumed at a known moment. A stale Approve: the
+    // pinned (newest) row is used, the door proposes again, and only that fresh row is retired — the
+    // consumed rows keep their consumed_at (an audit of when each was used stays true). Kills: dropping
+    // `consumed_at IS NULL` from the retirement (the older consumed row is re-stamped).
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const now = Date.now();
+    const base = st.rows[0];
+    Object.assign(base, { server_issued_at: new Date(now - 1000).toISOString(), consumed: true, consumedAt: new Date(now - 900).toISOString() });
+    st.rows.push({ ...structuredClone(base), id: "row-older-reproposal", issued_in_request: "an-earlier-reproposal",
+      server_issued_at: new Date(now - 500).toISOString(), consumed: true, consumedAt: new Date(now - 450).toISOString() });
+    const before = st.rows.map((row) => ({ id: row.id, consumedAt: row.consumedAt ?? null }));
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    const fresh = st.rows.filter((row) => !before.some((b) => b.id === row.id));
+    assert("40.4h a stale Approve over consumed history: nothing runs, the door's fresh proposal is retired, every consumed row keeps its consumed_at",
+      db.executions.length === 0 && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(r.bodyText).length === 0
+        && fresh.length === 1 && fresh[0].consumed === true
+        && before.filter((b) => b.consumedAt !== null).every((b) => st.rows.find((row) => row.id === b.id)?.consumedAt === b.consumedAt),
+      JSON.stringify({ before, after: st.rows.map((row) => ({ id: row.id, consumedAt: row.consumedAt ?? null })), outcome: outcomeOf(r.bodyText) }));
+  }
+
+  // ── 40.5 A MODEL THAT CALLS THE DOOR TOOL AGAIN AFTER THE RESUME — the same act, or a drifted one —
+  // is not run and gets no card. A door decides its own lane, so a drifted re-emit on a lane at `auto`
+  // would otherwise be a second write. Kills: removing the door re-emit guard.
+  for (const [label, lane, args] of [
+    ["the same act", "confirm", CONTACT.args],
+    ["a drifted re-emit on a lane at auto", "auto", { patch: { first_name: "Dana", last_name: "Reyes", email: "dana@example.test" } }],
+  ]) {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, toolCall: { name: CONTACT.name, args },
+      extraRpc: { resolve_tool_autonomy: { data: lane, error: null } } });
+    assert(`40.5 ${label}: the model's call is refused as already handled — one execution, no card, the door asked once`,
+      db.executions.length === 1 && doorCalls(r).length === 1 && cardsOf(r.bodyText).length === 0
+        && toldModel(r).includes("already_handled_this_reply"),
+      JSON.stringify({ executions: db.executions.length, door: doorCalls(r).length, cards: cardsOf(r.bodyText).length }));
+  }
+
+  // ── 40.5c THE "ELSEWHERE" HALF OF THE RE-EMIT GUARD. Declined, then a stale Approve whose reply ALSO
+  // has the model call the door tool for the same act. The carried-forward call reads "can't confirm"
+  // (nothing was committed); the model's own call must not reach the door either — it would claim (or,
+  // with the re-proposal retired, re-propose as a fresh card) the act the person turned down. Kills:
+  // a guard that only refuses re-emits after a call that ran ("here").
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    await crmDrive(st, db, { body: { declinedConfirmations: [card.fingerprint] } });
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, toolCall: CONTACT });
+    const lostResults = (toldModel(r).match(/"error":"approval_already_used"/g) ?? []).length;
+    assert("40.5c declined, stale Approve, and the model calls the door again: the re-emit is refused too — nothing runs, no card, the door asked once",
+      db.executions.length === 0 && doorCalls(r).length === 1 && cardsOf(r.bodyText).length === 0 && lostResults >= 2,
+      JSON.stringify({ executions: db.executions.length, door: doorCalls(r).length, cards: cardsOf(r.bodyText).length, lostResults }));
+  }
+
+  // ── 40.6 WITHHELD: the approved door tool is not offered on this turn (a Studio scope without CRM).
+  // Not run, approval unspent, the card says it no longer matches. Kills: dropping the capability check
+  // from the door half.
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const SESSION = "5e550000-0000-4000-8000-0000000000c4";
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] },
+      extraService: { paige_subagents: (filters) => (filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio"))
+        ? [{ config: { capability_scope: { version: 1, mode: "allowlist", tools: ["ask_choices", "capability_status", "growth_list"] } } }] : [] },
+      extraTables: { paige_chat_threads: () => [{ studio_session_id: SESSION, summary: null, last_image_content_id: null, last_image_anchor_at: null }],
+        studio_sessions: () => [{ id: SESSION, artifact_refs: [], title: "Spring launch" }] } });
+    const outcome = outcomeOf(r.bodyText);
+    assert("40.6 an approved door tool not offered this turn: the door is not handed it, nothing runs, unspent, 'no longer matches'",
+      doorCalls(r).length === 0 && db.executions.length === 0 && !st.rows[0].consumed && resumedFrames(r.bodyText).length === 0
+        && /no longer matches anything Paige can run/.test(outcome?.note ?? ""),
+      JSON.stringify({ door: doorCalls(r).length, consumed: st.rows[0].consumed, outcome }));
+  }
+
+  // ── 40.7 A→B→A. Minted in A. In B (with A's thread): 409 before anything. In B with NO thread (a door
+  // needs none): the row is not B's, so nothing is selected. Back in A: runs once. Again in A: the door
+  // reads back, nothing runs twice. Kills: selecting door rows by fingerprint without the workspace.
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const threadOfA = { paige_chat_threads: () => [{ id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER, contact_id: null }] };
+    const inB = await crmDrive(st, db, { tenant: OTHER_TENANT, body: { approvedConfirmations: [card.fingerprint] }, extraTables: threadOfA });
+    assert("40.7 minted in A, approved while B is active (A's thread): 409, the door is never asked, nothing runs",
+      inB.status === 409 && doorCalls(inB).length === 0 && db.executions.length === 0 && !st.rows[0].consumed, JSON.stringify({ status: inB.status }));
+    const inBNoThread = await crmDrive(st, db, { tenant: OTHER_TENANT, threadId: null, body: { approvedConfirmations: [card.fingerprint] } });
+    assert("40.7b …and in B with no thread at all: not B's proposal, so it is not selected and the door is never handed it",
+      doorCalls(inBNoThread).length === 0 && db.executions.length === 0 && !st.rows[0].consumed && resumedFrames(inBNoThread.bodyText).length === 0,
+      JSON.stringify({ door: doorCalls(inBNoThread).map((c) => c.body) }));
+    const backInA = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, extraTables: threadOfA });
+    assert("40.7c …back in A it runs once, under A", db.executions.length === 1 && db.executions[0].tenant === CALLER_TENANT && st.rows[0].consumed === true,
+      JSON.stringify(db.executions));
+    const againInA = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, extraTables: threadOfA });
+    assert("40.7d …and sent again in A (a refresh, a reopened thread): read back as ran, nothing runs twice",
+      db.executions.length === 1 && outcomeOf(againInA.bodyText)?.actions?.[0]?.outcome === "ran", JSON.stringify(outcomeOf(againInA.bodyText)));
+  }
+
+  // ── 40.8 WIRE = PERSIST = RELOAD for a door resume: the saved answer carries turn_state.resumed and
+  // paige_resume (the suspended turn, the door tool, its outcome), and its report is the wire frame.
+  {
+    const { r, card } = contact;
+    const saved = savedAnswer(r);
+    const { readResumeRecord } = await import("../../supabase/functions/_shared/paige-turn/resume.ts");
+    const rec = readResumeRecord(saved?.paige_resume);
+    assert("40.8 the saved answer records the door resume: kind, the suspended turn, the door tool's outcome",
+      saved?.turn_state?.resumed?.kind === "approval" && rec?.kind === "approval" && rec.from_turn_id === SUSPENDED
+        && JSON.stringify(rec.outcomes) === JSON.stringify([{ tool: "crm_create_contact", outcome: "ran" }]),
+      JSON.stringify(saved ? { turn_state: saved.turn_state, paige_resume: saved.paige_resume } : null));
+    assert("40.8b the saved report is exactly the frame the card read live (a reload rebuilds the same card)",
+      JSON.stringify(rec?.approval_outcome) === JSON.stringify(outcomeOf(r.bodyText)) && rec?.approval_outcome?.actions?.[0]?.fingerprint === card.fingerprint,
+      JSON.stringify({ saved: rec?.approval_outcome, wire: outcomeOf(r.bodyText) }));
+  }
+
+  // ── 40.9 THE PUBLISH AND SALES DOORS each resume once. MODELLED doors (not run here):
+  //  - growth-publish-command: claims only with the approved fingerprint and the artifact id
+  //    (_shared/growth-publish-command/door.ts ~L307-319); a failed claim answers 409
+  //    APPROVAL_NOT_AVAILABLE and never proposes again (~L344-348).
+  //  - sales-invoice-command: replays a committed operation before anything (~L54-57); claims with the
+  //    fingerprint (~L95-104); a failed claim proposes again (~L114-139).
+  const PAGE_ID = "3b3b3b3b-3b3b-4b3b-8b3b-3b3b3b3b3b3b";
+  const INVOICE = "4c4c4c4c-4c4c-4c4c-8c4c-4c4c4c4c4c4c";
+  const OPERATION = "4d4d4d4d-4d4d-4d4d-8d4d-4d4d4d4d4d4d";
+  const { confirmFingerprint } = await import("../../supabase/functions/_shared/confirm-fingerprint.ts");
+  const doorRow = async (tool, args, extra = {}) => ({ user_id: USER, tenant_id: CALLER_TENANT, thread_id: null, scoped_client_id: null,
+    tool_name: tool, fingerprint: await confirmFingerprint(tool, args), issued_in_request: "a-door-request", args, summary: "door act", ...extra });
+  const claimRow = (store, b, tool, extraMatch = () => true) => {
+    const now = new Date().toISOString();
+    const hit = store.rows.find((r) => r.user_id === USER && r.tenant_id === CALLER_TENANT && r.tool_name === tool && r.fingerprint === b.approved_fingerprint
+      && r.thread_id == null && r.scoped_client_id == null && !r.consumed && r.server_issued_at != null && r.expires_at > now && extraMatch(r));
+    if (hit) { hit.consumed = true; hit.consumedAt = now; }
+    return hit ?? null;
+  };
+  const httpErr = (status, body) => ({ data: null, error: { name: "FunctionsHttpError", context: { status, json: async () => body } } });
+  const publishArgs = { action: "publish", kind: "page", id: PAGE_ID, expected_tenant_id: CALLER_TENANT, approval_subject: `publish:page:${PAGE_ID}`, approval_cycle_nonce: "11111111-2222-4333-8444-555555555555" };
+  const salesArgs = { command: { action: "invoice.void", invoice_id: INVOICE, expected_version: 2, reason: "Issued twice by mistake" }, operation_id: OPERATION, expected_tenant_id: CALLER_TENANT,
+    approval_subject: `invoice.void:${INVOICE}`, approval_cycle_nonce: "22222222-3333-4444-8555-666666666666" };
+  const modelDoors = (store, log) => ({
+    "growth-publish-command": (options) => {
+      const b = options.body;
+      if (!b.approved_fingerprint) return { data: { ok: false, approval_required: true, fingerprint: "e".repeat(16), summary: "Publish" }, error: null };
+      const hit = claimRow(store, b, "growth_page_publish", (r) => r.args?.id === b.id);
+      if (!hit) return httpErr(409, { ok: false, refused: true, outcome: "refused", code: "APPROVAL_NOT_AVAILABLE", error: "That approval was already used or has expired, so nothing ran." });
+      log.push({ door: "publish", id: hit.args.id });
+      return { data: { ok: true, action: "publish", kind: "page", id: hit.args.id, status: "published", published_at: "2026-10-05T10:00:00Z", url: "/p/acme/spring" }, error: null };
+    },
+    "sales-invoice-command": (options) => {
+      const b = options.body;
+      const prior = log.find((e) => e.door === "sales" && e.operation === b.operation_id);
+      if (prior) return { data: { ...prior.result, replayed: true }, error: null };
+      const hit = b.approved_fingerprint ? claimRow(store, b, "sales_void_invoice") : null;
+      if (!hit) return { data: { ok: false, outcome: "approval_required", fingerprint: "f".repeat(16), operation_id: b.operation_id, summary: "Void" }, error: null };
+      const result = { ok: true, operation: { id: hit.args.operation_id, action: hit.args.command.action }, invoice: { id: INVOICE, status: "void", version: 3 } };
+      log.push({ door: "sales", operation: hit.args.operation_id, command: hit.args.command, result });
+      return { data: result, error: null };
+    },
+  });
+  // The card each approval answers was shown in THIS thread (a door approval is carried forward only
+  // from the thread whose turn carried its card — 40.12).
+  const cardTurns = (fp) => turnsWith(fp, "door_tool");
+  const modelDrive = (store, log, approved, toolCall) => drive({
+    stream: true, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: approved }, toolCall,
+    rpcOverrides: { ...SEAT(CALLER_TENANT) },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    tablesExtra: { paige_pending_confirmations: store.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }], ...cardTurns(approved[0]) },
+    onInsert: mirrorConfirms(store), functionsExtra: modelDoors(store, log),
+  });
+  {
+    const st = makeConfirmStore([await doorRow("growth_page_publish", publishArgs)]);
+    const log = [];
+    const r = await modelDrive(st, log, [st.rows[0].fingerprint]);
+    const calls = doorCalls(r, "growth-publish-command");
+    assert("40.9 publish: approved with no re-emit — the door is handed the stored page and fingerprint and publishes it once",
+      log.filter((e) => e.door === "publish").length === 1 && calls.length === 1 && calls[0].body.approved_fingerprint === st.rows[0].fingerprint
+        && calls[0].body.id === PAGE_ID && st.rows[0].consumed === true && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "ran"
+        && resumedFrames(r.bodyText).length === 1,
+      JSON.stringify({ log, calls: calls.map((c) => c.body), outcome: outcomeOf(r.bodyText) }));
+    const again = await modelDrive(st, log, [st.rows[0].fingerprint]);
+    const outcome = outcomeOf(again.bodyText);
+    assert("40.9b publish, sent again: the publish door keeps no readback, so it is not asked — can't confirm, nothing runs twice",
+      log.filter((e) => e.door === "publish").length === 1 && doorCalls(again, "growth-publish-command").length === 0
+        && outcome?.actions?.[0]?.outcome === "unconfirmed",
+      JSON.stringify({ outcome, calls: doorCalls(again, "growth-publish-command").length }));
+    // Claimed by another request between this request's selection and the door's claim: the door says
+    // "not available" (nothing ran HERE), which for the approval reads can't confirm — never "didn't run".
+    const st2 = makeConfirmStore([await doorRow("growth_page_publish", publishArgs)]);
+    const log2 = [];
+    const doors2 = modelDoors(st2, log2);
+    const raced = await drive({
+      stream: true, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: [st2.rows[0].fingerprint] },
+      rpcOverrides: { ...SEAT(CALLER_TENANT) }, serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      tablesExtra: { paige_pending_confirmations: st2.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }], ...cardTurns(st2.rows[0].fingerprint) },
+      onInsert: mirrorConfirms(st2),
+      functionsExtra: { ...doors2, "growth-publish-command": (o) => { st2.rows[0].consumed = true; st2.rows[0].consumedAt = new Date().toISOString(); return doors2["growth-publish-command"](o); } },
+    });
+    const outcome2 = outcomeOf(raced.bodyText);
+    assert("40.9c publish, claimed elsewhere between selection and the door: can't confirm (never 'didn't run'), no card",
+      log2.length === 0 && outcome2?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(raced.bodyText).length === 0,
+      JSON.stringify({ outcome2 }));
+    // A pinned call is handed its proposal by the server; it never depends on the bridge's own approval
+    // lookup (which an unpinned call still makes). With that lookup failing, the carried-forward
+    // approval still runs once. Kills: not passing the pin to the publish bridge.
+    const st3 = makeConfirmStore([await doorRow("growth_page_publish", publishArgs)]);
+    const log3 = [];
+    const lookupDown = await drive({
+      stream: true, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: [st3.rows[0].fingerprint] },
+      rpcOverrides: { ...SEAT(CALLER_TENANT) }, serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      tablesExtra: { paige_pending_confirmations: st3.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }], ...cardTurns(st3.rows[0].fingerprint) },
+      tableErrorsExtra: { "paige_pending_confirmations:select": ({ filters }) =>
+        (filters.some((f) => f[0] === "gt" && f[1] === "expires_at") && !filters.some((f) => f[0] === "update") ? { code: "XX000", message: "lookup down" } : null) },
+      onInsert: mirrorConfirms(st3), functionsExtra: modelDoors(st3, log3),
+    });
+    assert("40.9f publish: the carried-forward approval does not depend on the bridge's approval lookup — it runs once with that lookup down",
+      log3.filter((e) => e.door === "publish").length === 1 && outcomeOf(lookupDown.bodyText)?.actions?.[0]?.outcome === "ran",
+      JSON.stringify({ log3, outcome: outcomeOf(lookupDown.bodyText) }));
+    // Declined ("Not now") in a thread, then approved from a stale surface. The decline must consume the
+    // publish door's own proposal (thread and client NULL), as it does CRM's and Sales': otherwise the
+    // server carries the stale approval to the door and the page the person turned down goes live.
+    // Kills: the publish door's tools missing from the decline seam (cancelConfirmations).
+    const st4 = makeConfirmStore([await doorRow("growth_page_publish", publishArgs)]);
+    const log4 = [];
+    await drive({ stream: true, text: "Not now.", extraBody: { threadId: THREAD, declinedConfirmations: [st4.rows[0].fingerprint] },
+      rpcOverrides: { ...SEAT(CALLER_TENANT) }, serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      tablesExtra: { paige_pending_confirmations: st4.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }] },
+      onInsert: mirrorConfirms(st4), functionsExtra: modelDoors(st4, log4) });
+    const declinedConsumed = st4.rows[0].consumed === true;
+    const stale = await modelDrive(st4, log4, [st4.rows[0].fingerprint]);
+    assert("40.9g publish declined (Not now), then approved from a stale surface: the decline consumed it — nothing publishes, can't confirm, no card",
+      declinedConsumed && log4.filter((e) => e.door === "publish").length === 0 && doorCalls(stale, "growth-publish-command").length === 0
+        && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(stale.bodyText).length === 0,
+      JSON.stringify({ declinedConsumed, log4, outcome: outcomeOf(stale.bodyText) }));
+  }
+  {
+    const st = makeConfirmStore([await doorRow("sales_void_invoice", salesArgs)]);
+    const log = [];
+    const r = await modelDrive(st, log, [st.rows[0].fingerprint]);
+    const calls = doorCalls(r, "sales-invoice-command");
+    assert("40.9d Sales: approved with no re-emit — the door is handed the stored command, operation and fingerprint, and voids once",
+      log.filter((e) => e.door === "sales").length === 1 && calls.length === 1 && calls[0].body.approved_fingerprint === st.rows[0].fingerprint
+        && calls[0].body.operation_id === OPERATION && JSON.stringify(calls[0].body.command) === JSON.stringify(salesArgs.command)
+        && st.rows[0].consumed === true && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "ran" && resumedFrames(r.bodyText).length === 1,
+      JSON.stringify({ log: log.map((e) => e.operation), calls: calls.map((c) => c.body), outcome: outcomeOf(r.bodyText) }));
+    const again = await modelDrive(st, log, [st.rows[0].fingerprint]);
+    assert("40.9e Sales, sent again: the door replays the committed operation — ran, nothing runs twice, no card",
+      log.filter((e) => e.door === "sales").length === 1 && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "ran" && cardsOf(again.bodyText).length === 0,
+      JSON.stringify({ outcome: outcomeOf(again.bodyText) }));
+
+    // A Sales door whose claim finds nothing proposes again (sales-invoice-command ~L114-139): it reuses
+    // a live cycle for the same operation, else mints a fresh one (a new cycle nonce, so a new
+    // fingerprint). Modelled HERE with that insert, so the retirement of what it minted is observable.
+    const remintingSales = (store, log) => {
+      const base = modelDoors(store, log)["sales-invoice-command"];
+      return async (options) => {
+        const answer = await base(options);
+        if (answer.data?.outcome !== "approval_required") return answer;
+        const now = Date.now();
+        // The door reuses only the CALLER's live cycle: this person, this workspace (sales-invoice-command ~L73-77).
+        const reuse = store.rows.find((r) => r.user_id === USER && r.tenant_id === CALLER_TENANT
+          && r.tool_name === "sales_void_invoice" && !r.consumed && r.args?.operation_id === options.body.operation_id
+          && r.server_issued_at != null && r.expires_at > new Date(now).toISOString());
+        if (reuse) return { data: { ...answer.data, fingerprint: reuse.fingerprint }, error: null };
+        const args = { ...salesArgs, approval_cycle_nonce: crypto.randomUUID() };
+        const row = await doorRow("sales_void_invoice", args, { issued_in_request: crypto.randomUUID(), server_issued_at: new Date(now).toISOString(), expires_at: new Date(now + 600_000).toISOString() });
+        store.rows.push({ id: `row-sales-${store.rows.length}`, consumed: false, ...row });
+        return { data: { ...answer.data, fingerprint: row.fingerprint }, error: null };
+      };
+    };
+    const salesDecline = (store, log) => drive({ stream: true, text: "Not now.", extraBody: { threadId: THREAD, declinedConfirmations: [store.rows[0].fingerprint] },
+      rpcOverrides: { ...SEAT(CALLER_TENANT) }, serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      tablesExtra: { paige_pending_confirmations: store.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }] },
+      onInsert: mirrorConfirms(store), functionsExtra: modelDoors(store, log) });
+    const salesStale = (store, log) => drive({ stream: true, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: [store.rows[0].fingerprint] },
+      rpcOverrides: { ...SEAT(CALLER_TENANT) }, serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      tablesExtra: { paige_pending_confirmations: store.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }], ...cardTurns(store.rows[0].fingerprint) },
+      onInsert: mirrorConfirms(store), functionsExtra: { ...modelDoors(store, log), "sales-invoice-command": remintingSales(store, log) } });
+    {
+      // Declined, then a stale Approve: the door finds nothing to claim and mints a fresh cycle no card
+      // shows. It is retired by the fingerprint the door proposed (not the card's), so no live, unshown
+      // Sales proposal is left behind. Kills: retiring only the card's own fingerprint.
+      const stD = makeConfirmStore([await doorRow("sales_void_invoice", salesArgs)]);
+      const logD = [];
+      await salesDecline(stD, logD);
+      const declined = stD.rows[0].consumed === true;
+      const stale = await salesStale(stD, logD);
+      assert("40.9h Sales declined, then approved from a stale surface: nothing voids, can't confirm, and the door's fresh unshown proposal is retired",
+        declined && logD.length === 0 && stD.rows.length === 2 && stD.rows.every((r) => r.consumed === true)
+          && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(stale.bodyText).length === 0,
+        JSON.stringify({ declined, log: logD.length, rows: stD.rows.map((r) => ({ fp: r.fingerprint, consumed: !!r.consumed })), outcome: outcomeOf(stale.bodyText) }));
+    }
+    {
+      // …but a card for the same operation that was ALREADY live before this request (shown elsewhere,
+      // its own cycle and fingerprint) is the door's answer when it reuses it — and it is not this
+      // request's to retire: only rows issued since this request selected the pinned one are. Kills:
+      // dropping the time bound from the retirement.
+      const stE = makeConfirmStore([await doorRow("sales_void_invoice", salesArgs),
+        await doorRow("sales_void_invoice", { ...salesArgs, approval_cycle_nonce: "33333333-4444-4555-8666-777777777777" }, { issued_in_request: "an-earlier-request" })]);
+      const logE = [];
+      await salesDecline(stE, logE);
+      const stale = await salesStale(stE, logE);
+      assert("40.9i …a live Sales card for the same operation issued BEFORE this request stays live (it was not this request's to retire)",
+        logE.length === 0 && stE.rows[0].consumed === true && stE.rows[1].consumed === false && stE.rows.length === 2
+          && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed",
+        JSON.stringify({ rows: stE.rows.map((r) => ({ fp: r.fingerprint, consumed: !!r.consumed })), outcome: outcomeOf(stale.bodyText) }));
+    }
+    {
+      // The same, with that earlier card shown MINUTES before the request (not at the start of the year,
+      // as above): the retirement's clock allowance is seconds, so a card a person was shown minutes ago
+      // is never inside it. Kills: widening the allowance (to an hour, say).
+      const stF = makeConfirmStore([await doorRow("sales_void_invoice", salesArgs),
+        await doorRow("sales_void_invoice", { ...salesArgs, approval_cycle_nonce: "44444444-5555-4666-8777-888888888888" },
+          { issued_in_request: "a-card-minutes-ago", server_issued_at: new Date(Date.now() - 5 * 60_000).toISOString() })]);
+      const logF = [];
+      await salesDecline(stF, logF);
+      const stale = await salesStale(stF, logF);
+      assert("40.9j …and a live Sales card shown MINUTES before this request stays live too (the allowance is seconds, not minutes)",
+        logF.length === 0 && stF.rows[0].consumed === true && stF.rows[1].consumed === false && stF.rows.length === 2
+          && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed",
+        JSON.stringify({ rows: stF.rows.map((r) => ({ fp: r.fingerprint, consumed: !!r.consumed, issued: r.server_issued_at })), outcome: outcomeOf(stale.bodyText) }));
+    }
+    {
+      // THE RETIREMENT TAKES ONLY THIS DOOR TOOL'S ROWS. A live row of ANOTHER tool carrying the declined
+      // card's 16-hex value, issued inside the retirement's window. Only a 64-bit collision produces one
+      // (the fingerprint hashes the tool), so this row is SYNTHETIC. Under the live unique index (user,
+      // fingerprint) the CRM door could not even re-propose beside it, so the predicate is observable only
+      // here, where the declined card's fingerprint is consumed and the Sales door mints a new cycle's.
+      // Kills: dropping `tool_name` from the retirement (near-equivalent in production, for that reason).
+      const stG = makeConfirmStore([await doorRow("sales_void_invoice", salesArgs)]);
+      stG.rows.push({ ...structuredClone(stG.rows[0]), id: "row-collision", tool_name: "configure_tenant_pipeline", issued_in_request: "another-tool",
+        server_issued_at: new Date().toISOString(), consumed: false });
+      const logG = [];
+      await salesDecline(stG, logG);
+      const guard = stG.rows[0].consumed === true && stG.rows[1].consumed === false;
+      await salesStale(stG, logG);
+      assert("40.9k …a live row of another tool with the same fingerprint value is not retired (synthetic collision)",
+        guard && logG.length === 0 && stG.rows[1].consumed === false && stG.rows.length === 3 && stG.rows[2].consumed === true,
+        JSON.stringify({ guard, rows: stG.rows.map((r) => ({ id: r.id, tool: r.tool_name, consumed: !!r.consumed })) }));
+    }
+    // THE RETIREMENT TAKES ONLY THIS WORKSPACE'S AND THIS PERSON'S ROWS. The same synthetic collision, but
+    // the colliding live row belongs to ANOTHER WORKSPACE (same person, same tool, same fingerprint value)
+    // or to ANOTHER PERSON (same workspace, same tool, same value), issued inside the retirement's window —
+    // stamped just before the stale request, so it is inside the window however long the decline took.
+    // Neither is this request's to retire. Kills: dropping `tenant_id` (X1) or `user_id` (X2) from the
+    // retirement — each otherwise left every check green (exact-head review, 2026-10-05).
+    for (const [id, label, patch] of [
+      ["40.9l", "another WORKSPACE's", { tenant_id: OTHER_TENANT, issued_in_request: "another-workspace" }],
+      ["40.9m", "another PERSON's", { user_id: FOREIGN, issued_in_request: "another-person" }],
+    ]) {
+      const stH = makeConfirmStore([await doorRow("sales_void_invoice", salesArgs)]);
+      stH.rows.push({ ...structuredClone(stH.rows[0]), id: "row-collision", ...patch, consumed: false });
+      const logH = [];
+      await salesDecline(stH, logH);
+      const guard = stH.rows[0].consumed === true && stH.rows[1].consumed === false;
+      stH.rows[1].server_issued_at = new Date().toISOString();
+      const stale = await salesStale(stH, logH);
+      assert(`${id} …a live row of ${label} with the same tool and fingerprint value, issued inside the window, is not retired (synthetic collision)`,
+        guard && logH.length === 0 && stH.rows[1].consumed === false && stH.rows.length === 3 && stH.rows[2].consumed === true
+          && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed",
+        JSON.stringify({ guard, rows: stH.rows.map((r) => ({ id: r.id, user: r.user_id, tenant: r.tenant_id, consumed: !!r.consumed })), outcome: outcomeOf(stale.bodyText) }));
+    }
+  }
+
+  // ── 40.10 WHAT IS NOT CARRIED FORWARD keeps its existing path: a CRM preview binding (the door cannot
+  // take `{action, preview_id}` back as a command) and a row whose args no longer hash to its
+  // fingerprint. Nothing is handed to the door, nothing is claimed, no resumed frame.
+  {
+    const previewArgs = { command: { action: "deal.delete", preview_id: "73737373-7373-4373-8373-737373737373" }, idempotency_key: "k-preview", approval_subject: "deal:x" };
+    const st = makeConfirmStore([await doorRow("crm_delete_deal", previewArgs)]);
+    const db = crmDb();
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [st.rows[0].fingerprint] } });
+    assert("40.10 a CRM preview-bound proposal is not carried forward (no door call, unspent, no resumed frame)",
+      doorCalls(r).length === 0 && !st.rows[0].consumed && resumedFrames(r.bodyText).length === 0,
+      JSON.stringify({ door: doorCalls(r).map((c) => c.body) }));
+    const tamperedRow = await doorRow("crm_create_contact", { command: { action: "contact.create", patch: { first_name: "A", last_name: "B" } }, idempotency_key: "k1", approval_subject: "s" });
+    tamperedRow.args = { ...tamperedRow.args, command: { action: "contact.create", patch: { first_name: "Mallory", last_name: "B" } } };
+    const st2 = makeConfirmStore([tamperedRow]);
+    const r2 = await crmDrive(st2, db, { body: { approvedConfirmations: [st2.rows[0].fingerprint] } });
+    assert("40.10b a row whose stored request no longer hashes to its fingerprint is not carried forward",
+      doorCalls(r2).length === 0 && !st2.rows[0].consumed && resumedFrames(r2.bodyText).length === 0,
+      JSON.stringify({ door: doorCalls(r2).map((c) => c.body) }));
+    // Not a door's proposal at all: a door-tool row the server never issued, or one no request minted.
+    // The door's own claim refuses both (server_issued_at / issued_in_request NOT NULL); the selection
+    // must never be wider than the claim, so neither is handed to the door. Kills: dropping the
+    // server-issued filters from the door selection.
+    for (const [label, patch] of [["the server never issued", { server_issued_at: null }], ["no request minted", { issued_in_request: null }]]) {
+      const row = await doorRow("crm_create_contact", { command: { action: "contact.create", patch: { first_name: "Ana", last_name: "Diaz" } }, idempotency_key: "k-untrusted", approval_subject: "contact.create:ana" }, patch);
+      const stX = makeConfirmStore([row]);
+      const rX = await crmDrive(stX, db, { body: { approvedConfirmations: [row.fingerprint] } });
+      assert(`40.10c a door-tool row ${label} is not selected: the door is never handed it, nothing runs, no resumed frame`,
+        doorCalls(rX).length === 0 && !stX.rows[0].consumed && resumedFrames(rX.bodyText).length === 0,
+        JSON.stringify({ door: doorCalls(rX).map((c) => c.body) }));
+    }
+  }
+
+  // ── 40.11 OPERATOR (no thread is sent). A tenant-less operator has no door proposals to carry: none is
+  // selected (a door row always names a workspace). An operator who has entered a workspace has the
+  // door's own binding (this user, that workspace), so the approval is carried forward once, with no
+  // thread — the record has no suspended turn to name and nothing is persisted (no thread to persist to).
+  {
+    const OPERATOR = { is_platform_operator: { data: true, error: null }, is_super_admin: { data: true, error: null } };
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT, { threadId: null });
+    const atRest = await crmDrive(st, db, { tenant: null, threadId: null, body: { approvedConfirmations: [card.fingerprint] },
+      extraRpc: { ...OPERATOR, current_user_tenant_id: { data: null, error: null } }, extraService: { user_roles: () => [{ role: "super_admin" }] } });
+    assert("40.11 Operator at rest (no workspace): no door proposal is selected, nothing runs",
+      doorCalls(atRest).length === 0 && db.executions.length === 0 && !st.rows[0].consumed && resumedFrames(atRest.bodyText).length === 0,
+      JSON.stringify({ door: doorCalls(atRest).length }));
+    const entered = await crmDrive(st, db, { threadId: null, body: { approvedConfirmations: [card.fingerprint] },
+      extraRpc: { ...OPERATOR }, extraService: { user_roles: () => [{ role: "super_admin" }] } });
+    assert("40.11b Operator inside a workspace (no thread): the door approval is carried forward once, under the door's own binding",
+      db.executions.length === 1 && st.rows[0].consumed === true && resumedFrames(entered.bodyText).length === 1
+        && outcomeOf(entered.bodyText)?.actions?.[0]?.outcome === "ran",
+      JSON.stringify({ executions: db.executions.length, outcome: outcomeOf(entered.bodyText) }));
+  }
+
+  // ── 40.13 EVERY CRM ACTION THE RESUME CARRIES FORWARD, through the REAL door. 40.1 drives two
+  // actions; the rest were carried forward by inference (doorResumeShape → the door's own schema and
+  // its claimed-vs-requested check). Here each non-preview action is MINTED by the real crm-command
+  // (no approved fingerprint, lane confirm), then approved with no model re-emit: the door must
+  // execute the command it stored, once, under its stored key. A preview-bound action is listed by
+  // the catalog (CRM_PREVIEW_REQUIRED_ACTIONS) and covered by 40.10 — it keeps its existing path.
+  {
+    const { CRM_ACTION_CAPABILITY: CAPS, CRM_PREVIEW_REQUIRED_ACTIONS: PREVIEW } = await import("../../supabase/functions/_shared/crm-command/catalog.ts");
+    const C = "7a7a7a7a-7a7a-4a7a-8a7a-7a7a7a7a7a7a", CO = "7b7b7b7b-7b7b-4b7b-8b7b-7b7b7b7b7b7b", T = "7c7c7c7c-7c7c-4c7c-8c7c-7c7c7c7c7c7c";
+    const D = "7d7d7d7d-7d7d-4d7d-8d7d-7d7d7d7d7d7d", U = "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e", AT = "2026-10-01T10:00:00.000Z";
+    const CONTACT_AT = { contact_id: C, expected_updated_at: AT };
+    const TASK_AT = { task_id: T, expected_updated_at: AT };
+    const COMMANDS = {
+      "contact.create": { patch: { first_name: "Ana", last_name: "Diaz" } },
+      "contact.update": { ...CONTACT_AT, patch: { email: "ana@example.test" } },
+      "contact.archive": { ...CONTACT_AT, reason: "Duplicate entry" },
+      "contact.restore": { ...CONTACT_AT },
+      "contact.link_company": { ...CONTACT_AT, company_id: CO },
+      "contact.unlink_company": { ...CONTACT_AT, company_id: CO },
+      "contact.assign_coach": { ...CONTACT_AT, owner_user_id: U },
+      "contact.assign_owner": { ...CONTACT_AT, owner_user_id: U },
+      "company.create": { contact_id: C, patch: { name: "Acme Studio" } },
+      "company.update": { company_id: CO, expected_updated_at: AT, patch: { name: "Acme Studio LLC" } },
+      "company.archive": { company_id: CO, expected_updated_at: AT },
+      "company.restore": { company_id: CO, expected_updated_at: AT },
+      "task.create": { patch: { title: "Send the welcome pack" } },
+      "task.update": { ...TASK_AT, patch: { title: "Send the welcome pack today" } },
+      "task.assign": { ...TASK_AT, patch: { assigned_to: U } },
+      "task.reschedule": { ...TASK_AT, patch: { due_date: "2026-10-09" } },
+      "task.complete": { ...TASK_AT },
+      "task.reopen": { ...TASK_AT },
+      "task.cancel": { ...TASK_AT },
+      "activity.log": { contact_id: C, patch: { kind: "note", body: "Spoke about onboarding." } },
+      "deal.create": { title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE, client_ref: DEAL_CLIENT_REF },
+      "deal.update": { deal_id: D, expected_version: 3, title: "Acme retainer (annual)" },
+      "deal.assign_owner": { deal_id: D, expected_version: 3, owner_user_id: U },
+      "deal.assign_contact": { deal_id: D, expected_version: 3, contact_id: C },
+      "deal.move": { deal_id: D, pipeline_id: PIPELINE, target_stage_id: STAGE, expected_version: 3, expected_target_version: 1 },
+      "deal.close": { deal_id: D, expected_version: 3, outcome_type: "won", outcome_date: "2026-10-04" },
+      "deal.reopen": { deal_id: D, expected_version: 4, target_stage_id: STAGE },
+    };
+    const actions = Object.keys(CAPS).filter((a) => !PREVIEW.has(a));
+    const untabled = actions.filter((a) => !COMMANDS[a]);
+    assert("40.13 (guard) every non-preview CRM action in the catalog has a row in this table", untabled.length === 0 && actions.length === Object.keys(COMMANDS).length,
+      JSON.stringify({ untabled, actions: actions.length }));
+    const failures = [];
+    for (const action of actions) {
+      const st = makeConfirmStore(); const db = crmDb();
+      fake.setScenario({
+        authUser: { id: USER, email: "owner@example.test" }, onInsert: mirrorConfirms(st),
+        rpcs: { ...SEAT(CALLER_TENANT), ...crmRpcs(db) },
+        serviceTables: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+        tables: { paige_pending_confirmations: st.table },
+      });
+      const key = `k-${action}`;
+      const minted = await realCrmDoor({ body: { command: { action, ...COMMANDS[action] }, idempotency_key: key } });
+      const mint = minted.data ?? await minted.error?.context?.json?.();
+      const stored = st.rows[0]?.args;
+      if (mint?.outcome !== "approval_required" || st.rows.length !== 1) { failures.push({ action, stage: "mint", mint }); continue; }
+      const r = await crmDrive(st, db, { body: { approvedConfirmations: [mint.fingerprint] }, fixtureTool: CAPS[action] });
+      const ran = db.executions[0];
+      const sameCommand = ran && JSON.stringify(Object.fromEntries(Object.entries(ran.command).filter(([k]) => k !== "approval_channel" && !k.startsWith("__"))))
+        === JSON.stringify(Object.fromEntries(Object.entries(stored.command).filter(([k]) => !k.startsWith("__"))));
+      if (!(db.executions.length === 1 && ran.idempotency_key === key && sameCommand && st.rows[0].consumed === true
+        && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "ran" && cardsOf(r.bodyText).length === 0)) {
+        failures.push({ action, stage: "resume", executions: db.executions, stored: stored?.command, outcome: outcomeOf(r.bodyText),
+          door: doorCalls(r).map((c) => c.body), told: toldModel(r).slice(-400) });
+      }
+    }
+    assert(`40.13 every non-preview CRM action (${actions.length}) minted by the real door and approved with no re-emit runs its STORED command once, under its stored key`,
+      failures.length === 0, JSON.stringify(failures).slice(0, 4000));
+  }
+
+  // ── 40.14 A RESUME NEVER BYPASSES INT-327. The pinned resume hands the door the command IT stored, and
+  // the door re-validates and re-resolves that command on every request before it claims anything
+  // (crm-command: the relationship rule in its schema, then resolveCommandContactRefs). So (a) a deal
+  // proposal stored WITHOUT a canonical client — one minted before INT-327 shipped, still inside its
+  // window — is refused by the door when carried forward: nothing runs; and (b) a stored deal whose
+  // client no longer resolves in this workspace (deleted, or moved) is refused as not found: nothing
+  // runs. Neither becomes a fresh card. Kills: a resume path that skipped the door's validation, or
+  // executed the stored command without re-resolving its client.
+  {
+    const unlinked = { command: { action: "deal.create", title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE }, idempotency_key: "k-pre-int327", approval_subject: "deal:pre-int327" };
+    const st = makeConfirmStore([await doorRow("deal_create", unlinked)]);
+    const db = crmDb();
+    const r = await crmDrive(st, db, { body: { approvedConfirmations: [st.rows[0].fingerprint] }, fixtureTool: "deal_create" });
+    const told = toldModel(r);
+    assert("40.14a a stored deal proposal with NO canonical client (pre-INT-327), carried forward: the door is handed it and refuses it — nothing runs, no card, never reported ran",
+      doorCalls(r).length === 1 && JSON.stringify(doorCalls(r)[0].body.command) === JSON.stringify(unlinked.command)
+        && db.executions.length === 0 && cardsOf(r.bodyText).length === 0
+        && outcomeOf(r.bodyText)?.actions?.[0]?.outcome !== "ran" && /CRM_COMMAND_INVALID/.test(told),
+      JSON.stringify({ door: doorCalls(r).map((c) => c.body), executions: db.executions.length, outcome: outcomeOf(r.bodyText), consumed: st.rows[0].consumed }));
+
+    const gone = { command: { action: "deal.create", title: "Acme retainer", pipeline_id: PIPELINE, stage_id: STAGE, client_ref: DEAL_CLIENT_REF, contact_id: OWN }, idempotency_key: "k-client-gone", approval_subject: "deal:gone" };
+    const st2 = makeConfirmStore([await doorRow("deal_create", gone)]);
+    const db2 = crmDb();
+    const r2 = await crmDrive(st2, db2, { body: { approvedConfirmations: [st2.rows[0].fingerprint] }, fixtureTool: "deal_create",
+      extraService: { clients: clientsByFilter([]) } });
+    assert("40.14b a stored deal whose client no longer resolves in this workspace, carried forward: the door re-resolves it and refuses (not found) — nothing runs, no card",
+      doorCalls(r2).length === 1 && db2.executions.length === 0 && cardsOf(r2.bodyText).length === 0
+        && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome !== "ran" && /CRM_CONTACT_NOT_FOUND/.test(toldModel(r2)),
+      JSON.stringify({ executions: db2.executions.length, outcome: outcomeOf(r2.bodyText), consumed: st2.rows[0].consumed }));
+  }
+
+  // ── 40.12 RESUME PRESERVES THE THREAD. A door row carries no thread, so the card is the binding: the
+  // card was shown in thread X; its token posted in thread Y (whose turns never showed it) is not
+  // carried forward there — the door is not handed it, nothing runs, the approval stays unspent. Back in
+  // X it runs once, as the resume of X's suspended turn. Kills: carrying a door token forward in a
+  // thread that never showed its card.
+  {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const OTHER_THREAD = "c4b1c4b1-c4b1-4c4b-8c4b-c4b1c4b1c4b1";
+    const inY = await crmDrive(st, db, { threadId: OTHER_THREAD, body: { approvedConfirmations: [card.fingerprint] },
+      extraTables: { paige_chat_turns: () => [{ id: "6b6b6b6b-6b6b-4b6b-8b6b-6b6b6b6b6b6b", role: "assistant", content: "Hi.", seq: 2, bundle_ref: null }] } });
+    assert("40.12 a door card's token posted in ANOTHER thread is not carried forward there: the door is never handed it, nothing runs, unspent",
+      doorCalls(inY).length === 0 && db.executions.length === 0 && !st.rows[0].consumed && resumedFrames(inY.bodyText).length === 0,
+      JSON.stringify({ door: doorCalls(inY).map((c) => c.body), consumed: st.rows[0].consumed }));
+    const inX = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
+    const saved = savedAnswer(inX);
+    const { readResumeRecord } = await import("../../supabase/functions/_shared/paige-turn/resume.ts");
+    assert("40.12b …in the thread that showed the card it runs once, as the resume of that thread's suspended turn",
+      db.executions.length === 1 && st.rows[0].consumed === true && outcomeOf(inX.bodyText)?.actions?.[0]?.outcome === "ran"
+        && readResumeRecord(saved?.paige_resume)?.from_turn_id === SUSPENDED,
+      JSON.stringify({ executions: db.executions.length, outcome: outcomeOf(inX.bodyText) }));
+    // The thread's turns cannot be read: the card binding cannot be checked, so no door token is carried
+    // forward (it keeps its existing path) — never "carry it anyway". Kills: a read failure that leaves
+    // the door tokens in place.
+    const st2 = makeConfirmStore(); const db2 = crmDb();
+    const card2 = await proposeVia(st2, db2, CONTACT);
+    const unreadable = await drive({
+      stream: true, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: [card2.fingerprint] },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), ...crmRpcs(db2) },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+      tablesExtra: { paige_pending_confirmations: st2.table },
+      tableErrorsExtra: { "paige_chat_turns:select": () => ({ code: "XX000", message: "turns down" }) },
+      onInsert: mirrorConfirms(st2), functionsExtra: { "crm-command": realCrmDoor },
+    });
+    assert("40.12c the thread's turns cannot be read: no door token is carried forward, nothing runs, unspent",
+      doorCalls(unreadable).length === 0 && db2.executions.length === 0 && !st2.rows[0].consumed && resumedFrames(unreadable.bodyText).length === 0,
+      JSON.stringify({ door: doorCalls(unreadable).map((c) => c.body), consumed: st2.rows[0].consumed }));
+    // TWO door tokens in one request, only ONE of whose cards this thread showed: each token is bound to
+    // its own card, so only that one is carried forward; the other is never handed to the door, nothing
+    // of it runs, and it stays unspent. Kills: admitting every token once ANY of them was shown here.
+    const st3 = makeConfirmStore(); const db3 = crmDb();
+    const shown = await proposeVia(st3, db3, CONTACT);
+    const notShown = await proposeVia(st3, db3, DEAL);
+    const both = await crmDrive(st3, db3, { body: { approvedConfirmations: [shown.fingerprint, notShown.fingerprint] }, fixtureTool: "crm_create_contact" });
+    const dealRow = st3.rows.find((row) => row.fingerprint === notShown.fingerprint);
+    assert("40.12d two door tokens, only one card shown in this thread: only that one is carried forward — the other is never handed to the door, nothing of it runs, unspent",
+      doorCalls(both).length === 1 && doorCalls(both)[0].body.approved_fingerprint === shown.fingerprint
+        && db3.executions.length === 1 && db3.executions[0].command.action === "contact.create"
+        && dealRow?.consumed === false && st3.rows.length === 2,
+      JSON.stringify({ door: doorCalls(both).map((c) => c.body?.approved_fingerprint), executions: db3.executions.map((e) => e.command.action), deal: dealRow?.consumed }));
+  }
+} catch (e) {
+  if (!(e instanceof Group40Abort)) throw e;
+  assert(`40.ABORT group 40 stopped: ${e.message}`, false);
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

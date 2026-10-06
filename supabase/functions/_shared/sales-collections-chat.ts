@@ -36,9 +36,12 @@ type Dependencies = {
   admin: { from(name: string): { select(value: string): SalesCollectionsApprovalQuery } };
   caller: { rpc(name: string, args: Record<string, unknown>): PromiseLike<Reply>; functions: { invoke(name: string, options: { body: Record<string, unknown> }): Promise<Reply> } };
 };
-type Context = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn };
+/** C4b — `pinned`: the stored proposal the chat's approval resume carried forward (see
+ *  sales-invoice-chat.ts). When set, exactly that proposal is redeemed; the door still claims it. */
+type Context = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn;
+  pinned?: { fingerprint: string; args: unknown } };
 type Refusal = 'ambiguous' | 'unclaimable' | 'lookup_failed';
-type Result = { content: Record<string, unknown>; refusal?: Refusal; tokens?: string[] };
+type Result = { content: Record<string, unknown>; refusal?: Refusal; tokens?: string[]; spent?: string };
 function refusal(reason: Refusal): Result {
   const message = reason === 'ambiguous' ? 'More than one collection approval could apply.' : reason === 'lookup_failed' ? 'The collection approval could not be checked.' : 'The collection approval cannot be used in this scope.';
   return { refusal: reason, content: { success: false, error: message, note: 'Nothing was executed by this call. Ask for a fresh collection request; do not retry automatically.' } };
@@ -83,22 +86,27 @@ export async function dispatchSalesCollectionsChat(ctx: Context, deps: Dependenc
   const tokens: string[] = [];
   let approvedArgs: Record<string, unknown> | undefined;
   let fingerprint: string | undefined;
-  if (ctx.approved.size) {
+  if (ctx.pinned || ctx.approved.size) {
     try {
-      const reply = await deps.admin.from('paige_pending_confirmations').select('fingerprint,args')
-        .eq('tenant_id', ctx.tenantId).eq('user_id', ctx.userId).eq('tool_name', ctx.toolName)
-        .in('fingerprint', [...ctx.approved].map(token => token.split(':')[0]))
-        .is('thread_id', null).is('scoped_client_id', null).is('consumed_at', null)
-        .not('server_issued_at', 'is', null).not('issued_in_request', 'is', null)
-        .gt('expires_at', new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
-      if (reply.error) return refusal('lookup_failed');
-      const rows = reply.data ?? [];
-      for (const row of rows) for (const token of ctx.approved) if (token.split(':')[0] === row.fingerprint) tokens.push(token);
+      let rows: { fingerprint?: unknown; args?: unknown }[];
+      const approved = ctx.pinned ? new Set([ctx.pinned.fingerprint]) : ctx.approved;
+      if (ctx.pinned) rows = [{ fingerprint: ctx.pinned.fingerprint, args: ctx.pinned.args }];
+      else {
+        const reply = await deps.admin.from('paige_pending_confirmations').select('fingerprint,args')
+          .eq('tenant_id', ctx.tenantId).eq('user_id', ctx.userId).eq('tool_name', ctx.toolName)
+          .in('fingerprint', [...ctx.approved].map(token => token.split(':')[0]))
+          .is('thread_id', null).is('scoped_client_id', null).is('consumed_at', null)
+          .not('server_issued_at', 'is', null).not('issued_in_request', 'is', null)
+          .gt('expires_at', new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
+        if (reply.error) return refusal('lookup_failed');
+        rows = reply.data ?? [];
+      }
+      for (const row of rows) for (const token of approved) if (token.split(':')[0] === row.fingerprint) tokens.push(token);
       const reference=ctx.args.agreement_id??ctx.args.batch_id; const subject=typeof reference==='string'?action+':'+reference.toLowerCase():'';
-      const selected = resolveCrmApprovedFingerprint(rows, subject, ctx.sameToolCalls);
+      const selected = ctx.pinned ? { kind: 'claim' as const, fingerprint: ctx.pinned.fingerprint } : resolveCrmApprovedFingerprint(rows, subject, ctx.sameToolCalls);
       if (selected.kind === 'ambiguous') return { ...refusal('ambiguous'), tokens };
       if (selected.kind === 'claim') {
-        if (!ctx.approved.has(selected.fingerprint)) return { ...refusal('unclaimable'), tokens };
+        if (!approved.has(selected.fingerprint)) return { ...refusal('unclaimable'), tokens };
         const stored = rows.find(row => row.fingerprint === selected.fingerprint)?.args;
         if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { ...refusal('unclaimable'), tokens };
         approvedArgs = stored as Record<string, unknown>; fingerprint = selected.fingerprint;
@@ -114,6 +122,8 @@ export async function dispatchSalesCollectionsChat(ctx: Context, deps: Dependenc
       body = { expected_tenant_id: ctx.tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint };
     } else body = { expected_tenant_id: ctx.tenantId, operation_id: await salesCollectionsOperationId(ctx.tenantId, ctx.userId, command, ctx.turn), command };
   } catch { return approvedArgs ? { ...refusal('unclaimable'), tokens } : { content: { success: false, error: 'Invalid collection command. Read its current version and use the required fields.' }, tokens }; }
+  // C4b — a pinned call reports the approval it handed to the door (see sales-invoice-chat.ts).
+  const spent = ctx.pinned && fingerprint ? fingerprint : undefined;
   try {
     const reply = await deps.caller.functions.invoke('sales-collection-command', { body });
     let data = reply.data;
@@ -124,19 +134,19 @@ export async function dispatchSalesCollectionsChat(ctx: Context, deps: Dependenc
     }
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('unanswered');
     const result = data as Record<string, unknown>;
-    if (result.outcome === 'approval_required' && typeof result.fingerprint === 'string' && /^[0-9a-f]{16}$/.test(result.fingerprint)) return { tokens, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint, confirm_summary: typeof result.summary === 'string' ? result.summary : 'Approve this collection action', note: 'Show the Needs your OK card. Nothing changed yet. Do not call this tool again until the person approves.' } };
+    if (result.outcome === 'approval_required' && typeof result.fingerprint === 'string' && /^[0-9a-f]{16}$/.test(result.fingerprint)) return { tokens, spent, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint, confirm_summary: typeof result.summary === 'string' ? result.summary : 'Approve this collection action', note: 'Show the Needs your OK card. Nothing changed yet. Do not call this tool again until the person approves.' } };
     if(command.action==='collection.create_commercial_terms' && result.ok===true){
       const row=object(result.row),operation=object(result.operation);
       if(!row||typeof row.id!=='string'||!UUID.test(row.id)||row.tenant_id!==ctx.tenantId
         ||row.client_id!==command.client_id||row.offer_id!==command.offer_id||row.status!=='draft'
         ||row.amount_cents!==command.agreed_amount_minor||row.currency!==command.agreed_currency
         ||operation?.id!==body.operation_id||operation?.action!==command.action||result.outcome!=='commercial_terms_created')throw Error('unverified');
-      return {tokens,content:{success:true,outcome:'commercial_terms_created',commercial_terms_id:row.id,client_id:row.client_id,offer_id:row.offer_id,status:'draft',amount_cents:row.amount_cents,currency:row.currency,operation_id:operation.id,replayed:result.replayed===true,note:(result.replayed===true?'Historical saved result; read current commercial terms before reporting current status. ':'')+'Canonical fixed draft commercial obligation only. No invoice, signature, activated schedule or provider payment was created.'}};
+      return {tokens,spent,content:{success:true,outcome:'commercial_terms_created',commercial_terms_id:row.id,client_id:row.client_id,offer_id:row.offer_id,status:'draft',amount_cents:row.amount_cents,currency:row.currency,operation_id:operation.id,replayed:result.replayed===true,note:(result.replayed===true?'Historical saved result; read current commercial terms before reporting current status. ':'')+'Canonical fixed draft commercial obligation only. No invoice, signature, activated schedule or provider payment was created.'}};
     }
     const safe = salesCollectionsSafeResult(result);
     const completed=result.ok===true;
-    return { tokens, content: { ...safe, success: completed, ...(completed ? result.replayed === true ? { note: 'This is the saved result of an earlier operation. Read the collection again before reporting its current balance or status.' } : {} : { note: 'This call did not establish a completed action. Report the returned outcome; do not retry automatically.' }) } };
-  } catch { return { tokens, content: { success: false, outcome: 'outcome_unknown',  note: 'The collection request has no verified response. Check the collection before another action; do not claim success or retry automatically.' } }; }
+    return { tokens, spent, content: { ...safe, success: completed, ...(completed ? result.replayed === true ? { note: 'This is the saved result of an earlier operation. Read the collection again before reporting its current balance or status.' } : {} : { note: 'This call did not establish a completed action. Report the returned outcome; do not retry automatically.' }) } };
+  } catch { return { tokens, spent, content: { success: false, outcome: 'outcome_unknown',  note: 'The collection request has no verified response. Check the collection before another action; do not claim success or retry automatically.' } }; }
 }
 
 

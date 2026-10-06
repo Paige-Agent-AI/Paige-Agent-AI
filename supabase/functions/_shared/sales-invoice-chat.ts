@@ -62,9 +62,15 @@ export type Dependencies = {
   admin: { from(name: string): { select(value: string): SalesInvoiceApprovalQuery } };
   caller: { rpc(name: string, args: Record<string, unknown>): PromiseLike<Reply>; functions: { invoke(name: string, options: { body: Record<string, unknown> }): Promise<Reply> } };
 };
-export type Context = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn };
+/** C4b — `pinned`: the stored proposal the chat's approval resume carried forward, selected by the
+ *  chat under the door's own claim scope. When set, this call redeems exactly that proposal (no
+ *  lookup, no choosing, never an unapproved request); the door still claims it and runs what it stored. */
+export type Context = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn;
+  pinned?: { fingerprint: string; args: unknown } };
 type Refusal = 'ambiguous' | 'unclaimable' | 'lookup_failed';
-export type Result = { content: Record<string, unknown>; refusal?: Refusal; tokens?: string[] };
+/** `spent`: the approval this call handed to the door to redeem (set on a pinned call only, so the
+ *  approval outcome the chat already reports for an echoed Sales approval is unchanged). */
+export type Result = { content: Record<string, unknown>; refusal?: Refusal; tokens?: string[]; spent?: string };
 function refusal(reason: Refusal): Result {
   const message = reason === 'ambiguous' ? 'More than one invoice approval could apply.' : reason === 'lookup_failed' ? 'The invoice approval could not be checked.' : 'The invoice approval cannot be used in this scope.';
   return { refusal: reason, content: { success: false, error: message, note: 'Nothing was executed by this call. Ask for a fresh invoice request; do not retry automatically.' } };
@@ -126,22 +132,27 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
   const tokens: string[] = [];
   let approvedArgs: Record<string, unknown> | undefined;
   let fingerprint: string | undefined;
-  if (ctx.approved.size) {
+  if (ctx.pinned || ctx.approved.size) {
     try {
-      const reply = await deps.admin.from('paige_pending_confirmations').select('fingerprint,args')
-        .eq('tenant_id', ctx.tenantId).eq('user_id', ctx.userId).eq('tool_name', ctx.toolName)
-        .in('fingerprint', [...ctx.approved].map(token => token.split(':')[0]))
-        .is('thread_id', null).is('scoped_client_id', null).is('consumed_at', null)
-        .not('server_issued_at', 'is', null).not('issued_in_request', 'is', null)
-        .gt('expires_at', new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
-      if (reply.error) return refusal('lookup_failed');
-      const rows = reply.data ?? [];
-      for (const row of rows) for (const token of ctx.approved) if (token.split(':')[0] === row.fingerprint) tokens.push(token);
+      let rows: { fingerprint?: unknown; args?: unknown }[];
+      const approved = ctx.pinned ? new Set([ctx.pinned.fingerprint]) : ctx.approved;
+      if (ctx.pinned) rows = [{ fingerprint: ctx.pinned.fingerprint, args: ctx.pinned.args }];
+      else {
+        const reply = await deps.admin.from('paige_pending_confirmations').select('fingerprint,args')
+          .eq('tenant_id', ctx.tenantId).eq('user_id', ctx.userId).eq('tool_name', ctx.toolName)
+          .in('fingerprint', [...ctx.approved].map(token => token.split(':')[0]))
+          .is('thread_id', null).is('scoped_client_id', null).is('consumed_at', null)
+          .not('server_issued_at', 'is', null).not('issued_in_request', 'is', null)
+          .gt('expires_at', new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
+        if (reply.error) return refusal('lookup_failed');
+        rows = reply.data ?? [];
+      }
+      for (const row of rows) for (const token of approved) if (token.split(':')[0] === row.fingerprint) tokens.push(token);
       const subject = action==='invoice.settings_update'?`${action}:${ctx.tenantId}`:typeof ctx.args.invoice_id === 'string' ? `${action}:${ctx.args.invoice_id.toLowerCase()}` : '';
-      const selected = resolveCrmApprovedFingerprint(rows, subject, ctx.sameToolCalls);
+      const selected = ctx.pinned ? { kind: 'claim' as const, fingerprint: ctx.pinned.fingerprint } : resolveCrmApprovedFingerprint(rows, subject, ctx.sameToolCalls);
       if (selected.kind === 'ambiguous') return { ...refusal('ambiguous'), tokens };
       if (selected.kind === 'claim') {
-        if (!ctx.approved.has(selected.fingerprint)) return { ...refusal('unclaimable'), tokens };
+        if (!approved.has(selected.fingerprint)) return { ...refusal('unclaimable'), tokens };
         const stored = rows.find(row => row.fingerprint === selected.fingerprint)?.args;
         if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { ...refusal('unclaimable'), tokens };
         approvedArgs = stored as Record<string, unknown>; fingerprint = selected.fingerprint;
@@ -160,6 +171,9 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
       body = { expected_tenant_id: ctx.tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint };
     } else body = { expected_tenant_id: ctx.tenantId, operation_id: await salesInvoiceOperationId(ctx.tenantId, ctx.userId, command, ctx.turn), command };
   } catch { return approvedArgs ? { ...refusal('unclaimable'), tokens } : { content: { success: false, error: 'Invalid invoice command. Read its current version and use the required fields.' }, tokens }; }
+  // C4b — a pinned call reports the approval it handed to the door, so the resume reads this call's
+  // result as that approval's outcome. Every result below is the door's answer to that redemption.
+  const spent = ctx.pinned && fingerprint ? fingerprint : undefined;
   try {
     const reply = await deps.caller.functions.invoke(command.action.startsWith('collection.')?'sales-collection-command':'sales-invoice-command', { body });
     let data = reply.data;
@@ -170,13 +184,13 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     }
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('unanswered');
     const result = data as Record<string, unknown>;
-    if (result.outcome === 'approval_required' && typeof result.fingerprint === 'string' && /^[0-9a-f]{16}$/.test(result.fingerprint)) return { tokens, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint, confirm_summary: typeof result.summary === 'string' ? result.summary : 'Approve this invoice action', note: 'Show the Needs your OK card. Nothing changed yet. Do not call this tool again until the person approves.' } };
+    if (result.outcome === 'approval_required' && typeof result.fingerprint === 'string' && /^[0-9a-f]{16}$/.test(result.fingerprint)) return { tokens, spent, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint, confirm_summary: typeof result.summary === 'string' ? result.summary : 'Approve this invoice action', note: 'Show the Needs your OK card. Nothing changed yet. Do not call this tool again until the person approves.' } };
     const safe = salesInvoiceSafeResult(result);
-    if(command.action==='invoice.settings_update'){for(const k of Object.keys(safe))delete safe[k];const p=result.preferences as Record<string,unknown>|null;if(p&&p.tenant_id===ctx.tenantId&&Number.isSafeInteger(p.version)){safe.version=p.version;safe.outcome='settings_saved';}else if(result.ok===true)return {tokens,content:{success:false,outcome:'outcome_unknown',note:'Preferences readback was not verified. Recover the existing operation.'}};}
+    if(command.action==='invoice.settings_update'){for(const k of Object.keys(safe))delete safe[k];const p=result.preferences as Record<string,unknown>|null;if(p&&p.tenant_id===ctx.tenantId&&Number.isSafeInteger(p.version)){safe.version=p.version;safe.outcome='settings_saved';}else if(result.ok===true)return {tokens,spent,content:{success:false,outcome:'outcome_unknown',note:'Preferences readback was not verified. Recover the existing operation.'}};}
     if (action === 'invoice.email_send' || action === 'invoice.sms_send') {
       for (const key of Object.keys(safe)) if (!['ok', 'outcome', 'provider_receipt_available', 'delivery_confirmed', 'replayed'].includes(key)) delete safe[key];
     }
     const completed = result.ok === true && (!['invoice.email_send','invoice.sms_send'].includes(action) || result.outcome === 'provider_accepted');
-    return { tokens, content: { ...safe, success: completed, ...(completed ? result.replayed === true ? { note: 'This is the saved result of an earlier operation. Read the invoice again before reporting its current balance or status.' } : {} : { note: 'This call did not establish a completed action. Report the returned outcome; do not retry automatically.' }) } };
-  } catch { return { tokens, content: { success: false, outcome: 'outcome_unknown', ...(['invoice.email_send','invoice.sms_send'].includes(action) ? {} : { operation_id: body.operation_id }), note: 'The invoice request has no verified response. Check the invoice before another action; do not claim success or retry automatically.' } }; }
+    return { tokens, spent, content: { ...safe, success: completed, ...(completed ? result.replayed === true ? { note: 'This is the saved result of an earlier operation. Read the invoice again before reporting its current balance or status.' } : {} : { note: 'This call did not establish a completed action. Report the returned outcome; do not retry automatically.' }) } };
+  } catch { return { tokens, spent, content: { success: false, outcome: 'outcome_unknown', ...(['invoice.email_send','invoice.sms_send'].includes(action) ? {} : { operation_id: body.operation_id }), note: 'The invoice request has no verified response. Check the invoice before another action; do not claim success or retry automatically.' } }; }
 }

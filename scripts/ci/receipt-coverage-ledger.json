@@ -1100,7 +1100,7 @@
       "tool": "sales_create_payment_request",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "prepare_sales_invoice_payment_request and allocate_verified_sales_invoice_payment in 20270595000001_sales_invoice_provider_operations.sql atomically record existing public.record_capability_run and canonical Rail with provider operation, actor and tenant. Real PostgreSQL proof verifies receipt failure rolls allocation back."
+      "evidence": "prepare_sales_invoice_payment_request and allocate_verified_sales_invoice_payment in 20270597000001_sales_invoice_provider_operations.sql atomically record existing public.record_capability_run and canonical Rail with provider operation, actor and tenant. Real PostgreSQL proof verifies receipt failure rolls allocation back."
     }
   ]
 }

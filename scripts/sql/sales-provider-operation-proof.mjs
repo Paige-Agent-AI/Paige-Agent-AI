@@ -71,7 +71,7 @@ try {
  run(read('supabase/migrations/20270417000000_paige_durable_work_envelope.sql').split('-- Existing capability-specific records')[0]);
  run(read('supabase/migrations/20270418000000_paige_durable_document_work.sql').split('-- Authenticated submission:')[0]);
  if(mode!=='--baseline'){
-  const full=read('supabase/migrations/20270595000001_sales_invoice_provider_operations.sql');
+  const full=read('supabase/migrations/20270597000001_sales_invoice_provider_operations.sql');
   const migration=mode==='--s4-baseline'?full.split('-- S4 appends verified provider facts')[0]+'COMMIT;'
    :mode==='--reconciliation-baseline'?full.split('-- GET-only financial reconciliation')[0]+'COMMIT;':full;
   run(migration);run(migration);

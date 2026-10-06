@@ -13,7 +13,8 @@ fully supported.
 
 This file is the C4 record: the pre-edit packet summary, then each slice as built. C4a is the approval
 kind for general-gate, thread-scoped proposals (§2). C4b extends the same resume seam to door-scoped
-proposals — crm-command, the Sales doors, growth-publish-command (§2b).
+proposals — crm-command, the Sales doors, growth-publish-command (§2b). C4c adds the answer kind:
+PAIGE asks one question, waits, and the same objective resumes on the answer (§2c).
 
 ## 1. Pre-edit packet (summary)
 
@@ -371,18 +372,295 @@ General-gate (C4a) approvals on Operator remain open work (they are thread-scope
 - **The re-emit refusal for doors is by tool, not by act**, because the door, not the chat, decides the
   lane (mutant N8).
 
-## 3. Owner exit gates (owner numbering) — what C4a and C4b discharge
+## 2c. C4c — as built: PAIGE asks, waits, and the same objective resumes on the answer
+
+Coordinator order (binding, from the owner's C4 order): when PAIGE cannot continue an existing
+objective because one real fact or choice is missing, she asks, waits, and resumes the SAME objective
+when the answer arrives — another interrupt reason over the SAME resume model C4a/C4b established;
+no second continuation system; no new question store unless grounding proves one is required; a reply
+is not an answer merely because it is text; one ask → one resume; an answer supplies facts and never
+authority. Built on `main` `0fe769ef8` (C4a #1762 and C4b #1766 merged). Line numbers below are the
+build worktree's; base references are `0fe769ef8`.
+
+### A. Flow-by-Flow map
+
+Mode Existing Project + New Feature; depth Deep; risk R3 (persistence, a migration, cross-workspace
+scope). Actor: the owner or a team member in a saved PAIGE thread (Solo chat, PAIGE drawer; Studio
+keeps its own client). Goal: PAIGE finishes the work she started once she has the one missing fact.
+
+| Step | What happens | Home (file:line) |
+|---|---|---|
+| 1 Objective begins | An ordinary message on a saved thread; the turn is offered `ask_choices` (main chat: thread, not Live, not a document turn, not a client seat) | `paige-ai-chat/index.ts:8761` (`mainChatAsks`), tool def below it |
+| 2 Missing fact | PAIGE calls `ask_choices` on its own (`prompt`, `needs`, `objective`, optional 2–4 `options`); a call beside other calls is answered "ask it on its own" and not shown | `index.ts:16113` (`askAlongside`), `:16262` |
+| 3 ASK_USER emitted | `buildAskRecord` bounds it and mints `ask_id`; `paige_turn {waiting, ASK_USER, clarify}` then `paige_choices {prompt, options, multi, allow_other, ask_id}`; the turn ends (no closing completion) | `index.ts:16120-16140`; `resume.ts:525` |
+| 4 Question persisted | The question turn's `bundle_ref` = `turn_state` (ASK_USER, `waiting_on.kind: "choice"`) + `paige_ask {v, ask_id, question, options, multi, allow_other, needs, objective}`, beside it at the persist call site (never inside `assistantTurnMetadata`) | `index.ts:15933` (`withResumeRecord`) |
+| 5 Turn stops truthfully | Wire terminal `waiting/ASK_USER`; the client draws "Your call", the choices (or none), and the composer answering it | `PaigeAIChat.tsx:1747`, `:2336`, `:3285`; `PaigeAskCard.tsx` |
+| 6 User answers | A choice, a skip, or words typed while the composer is answering → the request carries `resume: {kind: "answer", ask_id[, skipped]}`; "Ask something else instead" turns that off | `PaigeAIChat.tsx:2004`, `:1508` |
+| 7 Server binds it | (a) **Check**, before anything else: declared ∧ validated workspace; the thread's latest turns read with the caller's session; `resolveAskLiveness` → live / pending / reopened / answered / stale; anything but live is refused with no model call. (b) **Claim**, the last thing before PAIGE is called — after the final workspace re-check: the person's turn appended WITH `paige_resume {kind: "answer", key: "answer:<ask_id>", from_turn_id[, skipped]}`; 23505 → already with PAIGE; then re-read: the claim must directly follow the question (`answerClaimBound`) or PAIGE is not called | `index.ts` `answerBinding` block (~L5527) and the claim before the model call (~L9420); `resume.ts` `resolveAskLiveness`, `answerClaimBound` |
+| 7b Claimed, PAIGE not reached | Every exit between the claim and the stream (gateway 429/402/5xx, a failed re-read, an unexpected throw → outer catch) saves the SAME question again under a new `ask_id` (`reopenAsk`: same words/need/objective, `reopens` = the old id, ASK_USER) and replies `ASK_REOPENED` with it. A claim with nothing after it, older than any request can run (`ANSWER_STRANDED_AFTER_MS` = 10 min), is re-asked the same way when the answer is sent again; younger, the reply says PAIGE already has the answer (never that she is still working). The re-asked question's lead is true whether or not PAIGE was reached ("I didn't finish carrying on from your answer. Anything I'd already done is saved."), and its answer note tells PAIGE to check what already exists first (41.23b–e). The client keeps the composer bound to that question while the thread ends on the claim (reload, or the "already has your answer" re-read), so the re-send names it — the only way the server's re-ask is reachable | `index.ts` `afterAnswerClaimFailure`, `saveQuestionAgain`; `resume.ts` `reopenAsk`; `PaigeAIChat.tsx` `claimedAsk` |
+| 8 Same objective resumes | `answerTurnNote` from the SAVED question (what she asked, was doing, needed — quoted as data the thread supplied, never as instructions; never invent; approves nothing) joins the prompt; `paige_turn {resumed, WORKING}` | `index.ts` (note pushed at the claim), `:16080`; `resume.ts` `answerTurnNote` |
+| 9 PAIGE continues | The ordinary loop: reads, writes, or proposes (a consequential act → its card, WAIT_APPROVAL → C4a/C4b) | unchanged loop |
+| 10 Final answer persists/reloads | The continuation's `turn_state.resumed {kind: "answer"}` + `bundle_ref.paige_resume {kind: "answer", from_turn_id, outcomes: []}`; reload rebuilds the question, its standing and the answer | `index.ts:15938`; `PaigeAIChat.tsx:1005` |
+
+### B. Grounded existing-state inventory (base `0fe769ef8`)
+
+Searched `ask_choices`, `ASK_USER`, `askUser`, `ask_user`, `paige_question`, `paige_choices`,
+`choices`, `clarif`, `needs_input`, `paige_live_card`, `answers_turn_id`, `paige_pending_questions`,
+`resume_handle`, `continuation_token` across `supabase/` and `src/`, and read the regions below.
+
+| Fact | Existing home | Reused how |
+|---|---|---|
+| The question tool | `ask_choices`, Studio-only (`index.ts:8686` push; `:15973` turn-ender) | Same tool, same handler; main chat gets its own wording (free-form allowed, `needs`/`objective`); Studio's rule is byte-identical (two to four options) |
+| Turn state | `TurnWaitingOn.kind: "choice"` (`contract.ts:93`); reducer `asked → ASK_USER` (`reducer.ts:182`); `RESUME_KINDS` already names `answer` | Unchanged contract; `turn_state.resumed {kind: "answer"}` is an existing value |
+| The resume record / frame | `bundle_ref.paige_resume` + `paige_turn resumed` (C4a/C4b, `resume.ts`, `index.ts:15813`) | Same frame, same record (`kind: "answer"`, `outcomes: []`), same `withResumeRecord` |
+| Thread / workspace | `paige_chat_threads.tenant_id`, the 409 thread check (`index.ts` ~L2407), `memoryWorkspaceScope` (declared ∧ validated), `proposalScopeResolved` | Reused as the answer's scope checks |
+| The person's turn | `paige_chat_turn_append` (`20261020100000:109-174`, owner + workspace in-body), appended at `index.ts:5509` | The answer IS that append, now carrying the claim |
+| Request / intent identity | `requestIntentId` (document turns only); approvals carry card tokens | Not used for the answer: the question's own `ask_id` is the identity |
+| Client rendering | `decode.ts` names `paige_choices`; Studio's `AskCard` (`StudioSession.tsx:22`); main chat had no `choices` branch; C3 drew ASK_USER as `doneLine` (`turn-view.ts:274`) | Main chat gains the card (`PaigeAskCard`) and the c2/c5 lines; Studio untouched |
+| Exactly-once for an answer | **none** — turns are append-only (`authenticated` SELECT only; no UPDATE path in `supabase/` or `src/`) and the append is an unconditional INSERT | The one database addition (below) |
+
+**The four justifications for the index** (also in the migration header):
+1. *What fact has no home.* "This question was answered by exactly one request." Nothing can be flipped
+   in place on an append-only transcript; two concurrent appends both land (prod, 30 days: 18 adjacent
+   identical user turns < 2 min apart — C4 grounding).
+2. *Why `turn_state` cannot hold it.* jsonb in one row: no cross-row uniqueness, no update after insert,
+   no ids or prose by contract, owner-forgeable through the append grant.
+3. *Why `paige_durable_work` cannot hold it.* Dialogue is not durable work; the table is service-only,
+   terminal rows immutable, identity fields frozen, its unique keys not "one reply per question"; using
+   it would give the conversation a second job lifecycle.
+4. *Why this is not a second workflow engine.* One partial unique index on the transcript that holds both
+   turns — the `paige_chat_turns_work_uk` precedent (`20270418000000:44`). No table, column, function,
+   trigger, worker, scheduler, lease or state machine. The resume runs in the existing chat loop.
+
+### C. Ask identity and persistence contract
+
+- **Identity.** `ask_id` = `crypto.randomUUID()` minted by the server when the question is asked; it
+  rides the `paige_choices` frame and `bundle_ref.paige_ask.ask_id` on the question turn. The question
+  turn's row id is `from_turn_id`. Never client-chosen.
+- **Version.** `paige_ask.v = 1`; `readAskRecord` reads anything else as none (the client draws no card).
+- **What is saved.** `paige_ask` = the question, bounded options (label 60, value 300, description 160,
+  a preview only for a real http(s) URL, at most four; a single option is not a choice), `multi`,
+  `allow_other`, `needs` (≤ 120), `objective` (≤ 160) — the model's own words, like `paige_confirm`'s
+  summary; never in `turn_state`. Saved only when the turn ENDED waiting on it (ASK_USER).
+- **Live rule.** A question is open only while its turn is the thread's newest turn and its record says
+  ASK_USER. Any later turn closes it: an answer claiming it, or anything else (→ "superseded", for good).
+  A claim binds only when it DIRECTLY follows the question; one that landed after another message (two
+  tabs) never answered it (→ superseded). A bound claim with nothing after it is "pending" (PAIGE may
+  still be on it, or the request that claimed it died — its `created_at` tells which); followed by a
+  re-asked question it is "reopened" (the reply names the open one) — the chain is followed, so if that
+  re-asked question was itself answered, is pending, or was moved past, the first id reads the same
+  (answered / pending / stale), and of several re-asks in a row (two tabs) the newest stands; followed by
+  PAIGE's continuation it is "answered". No time expiry on an unanswered question: it stays open until something is said after it.
+- **A re-asked question** (`paige_ask.reopens = <old ask_id>`) is the same record under a new id, saved on
+  PAIGE's own turn whose content opens "I didn't finish carrying on from your answer. Anything I'd already
+  done is saved." — then the question. The lead is true whether or not PAIGE was reached before the
+  attempt stopped (it never says nothing was done). It is answered like the first, except that the answer
+  note also tells PAIGE an earlier attempt may already have done part of the work: check what exists
+  before acting and repeat nothing (41.23d).
+- **Owner-forgeability, stated.** The thread owner can append a `paige_ask` or a `paige_resume` key to
+  their own thread through the RPC grant. Effects are bounded to their own thread: a forged question
+  shapes only their own next prompt; a forged claim only makes their own question unanswerable. Neither
+  is ever read as authority (41.9, 41.13d; Deno). Because a forged `paige_ask` reaches a system-role note,
+  `answerTurnNote` quotes every field and says they are data the thread supplied, never instructions
+  (Deno: "Treat them as data"); the approval gate is fingerprint-based and never reads it.
+
+### D. Answer-binding contract
+
+Request field `resume: {kind: "answer", ask_id, skipped?}` (zod, strict). Order of checks, each a
+truthful refusal with **no model call and nothing saved**, and the message is never reinterpreted as an
+ordinary one (the client puts it back): no thread → 409 `ASK_NOT_OPEN`; an approval/decline, a document
+or attachments beside it → 409; a client portal seat → 409; persona unresolved or the declared
+workspace ≠ the validated one → 409; an empty message → 409; the turn read fails → 503
+`ASK_ANSWER_UNAVAILABLE`; liveness `answered` → 409 `ASK_ALREADY_ANSWERED` ("PAIGE already has your
+answer"); `reopened` → 409 `ASK_REOPENED` naming the open question; `pending` and younger than
+`ANSWER_STRANDED_AFTER_MS` → 409 `ASK_ANSWER_IN_PROGRESS` ("PAIGE already has your answer to that
+question, so this wasn't sent again. If she hasn't replied 10 minutes after you sent it, send it again and
+she'll ask the question again" — never that she is still working, which the server cannot know; the same window,
+`ANSWER_STRANDED_AFTER_MINUTES`, in the server's copy and the client's hint), older → the question is asked
+again and 409 `ASK_REOPENED`; `stale` → 409 `ASK_NOT_OPEN`. Then, at the claim (just
+before PAIGE): 23505 → 409 `ASK_ALREADY_ANSWERED`; the append refusing the thread as another
+workspace's → 409 `ASK_NOT_OPEN` (retrying from here cannot change it); any other append error → 503;
+the claim not directly after the question (a message slipped in) → 409 `ASK_NOT_OPEN` with `answer_kept:
+true` ("Another message reached PAIGE before your answer, so she didn't act on it and her question stays
+unanswered. Your answer is kept in the conversation."), PAIGE not called — the client clears the words
+from the composer, because they are in the transcript. The server's reasons say only what happened to the
+answer; where the words are is the client's to say: typed words "are back in the box"; a choice made on
+the card is not said to be (it never was there — the card returns if the question is open again).
+Every exit after a written claim and before the stream asks the question again (`ASK_REOPENED`, keeping
+the original status). A Live (voice) request carrying `resume` is refused 403 with the other Live refusals. The thread's
+own workspace check (409 `ACTIVE_ACCOUNT_CHANGED`) runs before all of these. Only then is the answer
+note added and PAIGE called. **Natural-language answers** are accepted as written when sent as the
+answer; the note tells PAIGE to use the reply only for what it says and, if it does not give what she
+needed, to say so and ask again (or respond to what they said) — the server never maps a reply into a
+field. **Trust:** the note says an answer approves nothing; any consequential act PAIGE then calls meets
+the gate and its card (41.10, 41.12).
+
+### E. Exactly-once proof
+
+- Database: pgTAP `supabase/tests/chat_turn_answer_claim_unique.sql` 11/11 (second answer same thread →
+  23505, directly and through `paige_chat_turn_append` as the owner; same key another thread OK;
+  assistant rows unconstrained; no key / NULL key never conflict; one row remains). Two-session race
+  `scripts/proof/chat-answer-claim-race.mjs` 7/7 (the second committed session is observed WAITING on
+  the first's uncommitted answer; commit → 23505, rollback → the second lands; exactly one row). Both run
+  locally against PG16 with a minimal stand-in schema and a five-function pgTAP shim (labelled; CI runs
+  the real pgTAP on the replayed Supabase stack — wired into `paige-spine-contract.yml`). Mutations:
+  index dropped → 5 pgTAP failures and the race times out; role filter dropped → 2; thread dropped from
+  the key → 1.
+- Handler: 41.5 (sent again → 409 ALREADY_ANSWERED, no model call), 41.5b (two at once → one 200 / one
+  409, one claim row, one continuation, one model call), 41.11b (the approval the answer led to, sent
+  again, runs nothing). Client: Use this is gone the moment the answer is sent (no double send); a
+  refused answer is put back and the thread re-read.
+- **One ask never ends with zero resumes** (independent verifier F1, HIGH, fixed). The first build wrote
+  the claim before the model call and returned on a gateway refusal or a late workspace switch with
+  nothing after the claim; the client's retry was then refused "already answered" — untrue. Now: the
+  claim is written last, after the final workspace re-check (a switch before it leaves the question
+  open, 41.8); any exit between the claim and the stream asks the same question again (41.17 gateway
+  529, 41.17b the old id sent again → `ASK_REOPENED`, 41.17c the re-asked question answered → one
+  continuation, 41.17d a throw → outer catch, and a failed re-read); a claim left with nothing after it
+  says PAIGE already has it while young and is re-asked once older than any request (41.19–41.19c).
+  Once PAIGE is reached, a failure ends inside the stream in its own interrupted turn, a continuation
+  that says what happened (unchanged) — and that turn carries the answer's `paige_resume` record like any
+  continuation (41.21) — **with one exception: a workspace switch mid-answer** (exact-head review B1).
+  The in-stream workspace re-checks stop the stream and cannot save anything after the claim (the thread
+  now belongs to another workspace, and the append refuses it), so the claim strands after PAIGE may
+  already have run tools or queued a proposal (41.23b). The first build then told the person "nothing was
+  done with it yet" on the re-ask, and answering again ran the objective with no hint of the earlier
+  attempt. Now every word on that path is true either way — "already has your answer" (never "still
+  working"), "Anything I'd already done is saved" (never "nothing was done") — and the re-asked answer's
+  note tells PAIGE to check what already exists and repeat nothing (41.23c–41.23e; Deno; mutation: the
+  old copy fails 41.17/41.19/41.23c/41.23d, the note dropped fails 41.23d). **A claim with nothing after it is reachable from the client** (re-verifier 2,
+  V2-1): the first build's client re-read the thread after "may still be working" and then had no open
+  question, so a re-send went out as an ordinary message — the server's re-ask could never be reached,
+  the copy promising it was untrue, and a re-send inside the window could start the same work twice. Now
+  the composer stays bound to the claimed question (vitest: "already has your answer" → re-read → send
+  again carries `resume`; reload with a claim → bound), so inside the window the re-send is refused with
+  no model call (41.19, 41.19f: two at once) and after it the question is asked again exactly once
+  (41.19d) — two re-sends at once can each save a re-ask, but neither reaches PAIGE and only one answer
+  to the newest ever runs (41.19e). Residual, stated: a request killed by the platform between the claim
+  and PAIGE's reply, or a workspace switch mid-answer, leaves a claim that holds the composer on "has your
+  answer" for up to 10 minutes before a re-send re-asks it; after a mid-answer switch, whether the second
+  attempt repeats an auto-lane act the first already did rests on PAIGE following the check-first note
+  (model adherence, UNVERIFIED — confirm-lane acts still each need their own approval); two tabs re-asking a dead claim at the same moment can
+  each save the re-asked question (the older then reads "Not answered"; nothing executes).
+- **The claim and a message from another tab** (verifier F3): re-read after the claim; unless it directly
+  follows the question, PAIGE is not called (41.18) and the question reads as moved past for good.
+
+### F. Isolation proof (harness group 41)
+
+1 another tenant: 41.8 (409 before anything; the question stays open) · 2 the same user's other
+workspace: 41.8b (that thread never asked it → ASK_NOT_OPEN; A untouched) · 3 a stale declaration: 41.8c
+(declared B, validated A → refused), 41.8d (agreeing again → answered once) · 4 another user: 41.9 (RLS
+reads nothing; the RPC refuses a thread they do not own; nothing appended) · 5 Operator / no thread:
+41.13 (tool not offered), 41.13b (an answer refused for that reason, no turn read), 41.13e (an operator
+PAIGE chat WITH its platform thread: offered, bound once under the null scope) · client seat: 41.13c
+(not offered), 41.13d (refused as a client seat).
+
+### G. Composition proof (ASK_USER → answer → WAIT_APPROVAL → approval → execute)
+
+40.15 (the C4b door path, verifier F5): ask → answer → the REAL crm-command mints a door card →
+approval → the door runs its stored act exactly once, carried forward from the answer's continuation
+turn (`paige_resume.from_turn_id`) → approving again executes nothing; one question, one answer claim,
+one proposal row. 41.10: the answer resumes the objective and PAIGE proposes a consequential act → a card, terminal
+WAIT_APPROVAL, the turn still `resumed {kind: "answer"}`, nothing written. 41.11: approving that card runs
+the stored act once through C4a (`resumed {kind: "approval"}`, `from_turn_id` = the card's turn). 41.11b:
+sent again → nothing runs; one answer claim, one card, one execution. No new bubble type, no other
+workflow record, no new objective id: the thread and its turns are the record. Rendered:
+`c4c-c3-then-approval-*`.
+
+### H. Reload proof
+
+Server: 41.6 (before the answer: the latest turn is the question, ASK_USER, its record readable as asked);
+41.7 (after: question → answer (claim) → continuation (resumed), saved state = wire terminal). Client
+(vitest): open again on reload with its choices, "Your call", the composer answering it, and the answer
+carrying the SAVED id; after the answer: answered in place, the reply as written, the continuation its own
+answer (not merged as an approval); after a skip: hidden sentence, "You let PAIGE choose"; moved past:
+"Not answered"; a record outside the contract: no card; a claim with nothing after it: the card frozen
+"Answered below", the composer bound to that question (its send names the saved id); a claim for ANOTHER
+question: "Not answered", the composer free. Rendered: `c4c-reload-open-*`, `c4c-reload-answered-*`,
+`c4c-reload-claimed-*`, `c4c-reflow320-reload-claimed-page-light`.
+
+### I. Impeccable review
+
+Read SKILL.md, `reference/operate.md`, `reference/craft-floor.md` before the first UI edit; built to the
+frozen frames c1–c6. Operate mode: the tool disappears into the task — the question is PAIGE's words in
+her bubble; the choices are an inline radio group (no modal); one primary ink action, a quiet skip;
+nothing pre-selected; gold untouched (measured on 71 frames). Wording: "Your call" / "PAIGE has a
+question for you" / "PAIGE is waiting on your answer above" / "Ask something else instead" /
+"Answered below" / "You let PAIGE choose" / "Not answered" / "Question not answered" — the frames' own
+copy; no "resumed", no "starting over". Continuity: the earlier answer keeps its "What PAIGE did", the
+question freezes in place, the person's reply is their own bubble, PAIGE's continuation is a new answer
+whose line runs the new steps (c3) — no duplicate status bubble, no phantom approval card (a card appears
+only when the continuation proposes an act). Recovery: an answer with nothing after it keeps the composer
+on its question — "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask
+again.", placeholder "Send your answer again…", with "Ask something else
+instead" (frames `c4c-reload-claimed-*`). A stale or already-answered question is refused
+truthfully, the words go back to the composer and the thread is re-read; an answer PAIGE never reached
+comes back as the same question, asked again with one plain line of why ("I didn't finish carrying on
+from your answer. Anything I'd already done is saved.") and the composer answering the NEW question
+(vitest, 500 and 429); "PAIGE already has your answer" when that is all the server can know. A skipped
+question's record ("You let <name> choose", the tenant's assistant name) carries the settled check, not
+the question glyph. With a file attached the hint
+line says "Your file goes as a new message — her question stays unanswered" and offers no switch (a
+file is never an answer; compliance finding 5). Craft floor: option, hint and
+record text ≥ 5.32:1, lines ≥ 4.85:1, focus ring 6.43:1 (indigo), 320 px / 200 % reflow clean, reduced
+motion removes the sweep and the card fade. **One honest gap:** in frame c5 the line ("Question not
+answered") and the record ("Not answered") say the same thing twice — exactly as the frozen frame draws
+it; kept under §28 and flagged for the owner's next look.
+
+### Per-tier coverage (§51)
+
+| Tier | C4c behaviour | Proof |
+|---|---|---|
+| God / Super Admin, Operator surface | Not offered (no thread is sent); PAIGE asks in prose, unchanged; an answer is refused | 41.13, 41.13b |
+| God / Super Admin, PAIGE chat with its platform thread | Offered; answered once under the null scope | 41.13e |
+| Agency (as a tenant, PAIGE drawer / page) | Same handler path as Standalone; nothing reads account type | 41.x drive a tenant persona; not driven separately |
+| Standalone Tenant | Offered and bound once; another workspace 409; stale declaration refused | 41.0–41.12, 41.8–41.8d |
+| Sub-account | Same as Standalone (a tenant persona with a parent) | as Standalone; not driven separately |
+| Client (portal seat) | Not offered; an answer refused (`client_seat`) | 41.13c, 41.13d |
+| Anonymous | N/A: 401 before the body is read | read in source |
+| Studio | Its own rule unchanged; its question is now saved as the same record; its client still sends plain replies (ordinary messages) | 41.16 |
+
+### Design deviations from the brief, with evidence
+
+- **No paige_pending_questions, no resume ledger, no client token** — as ordered; the only addition is
+  the partial unique index (four justifications above).
+- **The composer answers by default while a question is open** (prototype c2: "Or type your own
+  answer…"), with "Ask something else instead" in the hint row — the coordinator's "answering mode" made
+  visible and reversible, rather than a separate mode the person must enter.
+- **Free-form questions** are allowed in the main chat only; Studio keeps two-to-four options (41.16).
+- **Sibling rule** (a question beside other calls is not shown) applies to the main chat only; Studio
+  keeps its behaviour (its siblings are still dropped — open, not this slice).
+- **Document turns** are not offered the tool (that path offers tools but runs none, so a question there
+  could never be shown).
+- **No time expiry** on a question: it stays open until something is said after it.
+- **Two question cards (§18), recorded as a deviation** (compliance finding 2). Studio keeps its own
+  `AskCard` (`src/solo/studio/StudioSession.tsx:22`); `PaigeAskCard` is the main chat's. Moving Studio
+  onto `PaigeAskCard` is a visible Studio change that needs its own §58 declaration and Studio's frames,
+  so it is not folded in here; it is a tracked follow-up (one shared ask card for Studio and the main
+  chat, then Studio's client binding its replies to the saved question).
+- **Frozen frame c5 says "not answered" twice** (the status line "Question not answered" and the record
+  "Not answered"). Built as frozen (§28); offered to the owner: drop the record line's words on c5, or
+  say "Moved on" there. Not changed here.
+- **The claim rides the person's own turn**, not a separate row; the `ask_id` is minted per question
+  rather than reusing the request nonce.
+
+### Evidence (C4c)
+
+See §6 (C4c block) and the evidence record `docs/evidence/ui-delivery/c4c-ask-user.md` (frames, mutation
+tables). Not verified: §7 (C4c bullets).
+
+## 3. Owner exit gates (owner numbering) — what C4a, C4b and C4c discharge
 
 | # | Gate | C4a |
 |---|---|---|
 | 1 | approval resume | **Approval part: discharged at harness level** for general-gate thread-scoped rows (39.1–39.1e) on the Solo chat, the PAIGE drawer and Studio, and (C4b) for door proposals — crm-command run as the REAL handler for every non-preview CRM action (40.1–40.1d, 40.13), the Sales and publish doors MODELLED, not run (40.9, 40.9d) — including Operator inside a workspace (40.11b). **Authenticated acceptance on the deployed platform: owed** (§7). **Open:** CRM preview-bound door proposals (merge, hard delete, bulk update, task/deal delete) keep their existing path; general-gate approvals on Operator (no thread is sent; 39.19). |
-| 2 | ask-user resume | C4c |
+| 2 | ask-user resume | **C4c: discharged at harness level** in the main chat (Solo chat, PAIGE drawer, an operator PAIGE chat with its thread): ask → wait → one bound answer → the same objective (41.1–41.2b, 41.15); Studio's question unchanged and saved as the same record (41.16). **Authenticated acceptance owed (C4f).** Open: the Operator surface (no thread) keeps asking in prose; Studio's client does not bind its replies yet |
 | 3 | durable-work resume | C4d |
-| 4 | same-objective identity preserved | **Discharged for approval**: same thread, `from_turn_id` (39.8), same request carries the act and PAIGE's continuation (39.1c) |
-| 5 | exact wire / persist / reload convergence | **Discharged for approval**: 39.8b (record = wire frame), vitest "wire = persist = reload" |
+| 4 | same-objective identity preserved | **Discharged for approval**: same thread, `from_turn_id` (39.8), same request carries the act and PAIGE's continuation (39.1c). **Answer (C4c)**: same thread, the question turn named by the claim and the continuation (41.1c, 41.1f), the saved question carried into the prompt (41.1d), and on into an approval (41.10–41.11) |
+| 5 | exact wire / persist / reload convergence | **Discharged for approval**: 39.8b (record = wire frame), vitest "wire = persist = reload". **Answer (C4c)**: 41.6, 41.7 and the askUser reload cases |
 | 6 | no synthetic approval bubble required for canonical history | **Discharged**: the stored act runs whether or not the model speaks; the decision sentence remains as the person's turn, hidden in presentation (C3) |
-| 7 | no duplicate act | **Discharged for approval**: 39.2, 39.2b, 39.3, 39.3c, 39.10, 39.13 (drifted re-emit on `auto`), 39.14 (re-authored same subject), 39.16, 18.7h, 18.H12, 18.H15; doors (real crm-command): 40.2a/2b (card lane + server, either order), 40.2c (double POST), 40.5 (re-emit, same and drifted on `auto`), 40.7d (sent again), 40.9b/9e |
-| 8 | workspace-switch isolation | **Approval path discharged**: 39.4 (another user/tenant/thread/client), 39.7 (A→B→A: 409 in B, runs once back in A); doors: 40.3 (another workspace / person / a non-door row), 40.7–40.7d (A→B→A with and without a thread), 40.10c (a door-tool row the server never issued), 40.12 (a door token posted in another thread) |
+| 7 | no duplicate act | **Answer (C4c)**: one answer → one continuation (41.5, 41.5b, pgTAP + two-session race); the approval it leads to runs once (41.11b). **Discharged for approval**: 39.2, 39.2b, 39.3, 39.3c, 39.10, 39.13 (drifted re-emit on `auto`), 39.14 (re-authored same subject), 39.16, 18.7h, 18.H12, 18.H15; doors (real crm-command): 40.2a/2b (card lane + server, either order), 40.2c (double POST), 40.5 (re-emit, same and drifted on `auto`), 40.7d (sent again), 40.9b/9e |
+| 8 | workspace-switch isolation | **Answer (C4c)**: 41.8–41.8d, 41.9, 41.13–41.13e. **Approval path discharged**: 39.4 (another user/tenant/thread/client), 39.7 (A→B→A: 409 in B, runs once back in A); doors: 40.3 (another workspace / person / a non-door row), 40.7–40.7d (A→B→A with and without a thread), 40.10c (a door-tool row the server never issued), 40.12 (a door token posted in another thread) |
 | 9 | truthful failure / expired / refused states | **Approval outcomes discharged**: 39.3b/3d (used elsewhere), 39.9 / 39.9b / 39.9c (expired, swept, expired mid-flight), 39.11 (lane off), 39.17 / 39.20b (no longer offered), 39.18 (role lost), check-unavailable path; PAIGE is told no outcome on a turn that was not resumed (39.12b); doors: 40.4 (expired), 40.4c (used, nothing committed), 40.4d (expired between selection and the door's claim), 40.4e / 40.4f (re-sent after either: nothing runs — the door's re-proposal was retired), 40.5c (a model re-emit after an approval that could not be used), 40.6 (not offered), 40.9c (publish claimed elsewhere), 40.9g (publish declined, then a stale Approve), 40.9h (Sales declined, then a stale Approve) |
 | 10 | Deep Research on the same resume substrate | C4d (the shared `paige_resume` / `resumed` contract is in place; `RESUME_KINDS` already names `work`) |
 
@@ -391,7 +669,7 @@ same token sent again runs nothing), stale cross-workspace (39.4, 39.7), A→B�
 not optimism (39.1b: the outcome comes from the act's own result; `classifySpentApproval` never reads a
 result that only fails to mention an error as success).
 
-## 4. Database decision (C4a, C4b)
+## 4. Database decision (C4a, C4b, C4c)
 
 No migration. The approval kind needs no new storage: the stored proposal row is the authoritative act,
 the CAS on `consumed_at` serialises execution, and what became of each approval is recorded on the turn
@@ -403,6 +681,12 @@ C4b: no migration either. The door's own proposal row stays the authoritative ac
 stays the only claim; exactly-once across retries rests on the doors' existing idempotency (crm-command's
 committed result keyed by the stored idempotency key, the Sales doors' committed operation), which C4b
 reaches by always sending the stored key/operation.
+
+C4c: ONE migration, `20270596000000_chat_turn_answer_claim_unique` — the partial unique index
+`paige_chat_turns_resume_uk (thread_id, (bundle_ref->'paige_resume'->>'key')) WHERE role = 'user' AND
+bundle_ref ? 'paige_resume'` that the plan named (C4c-1). Additive, non-destructive; the four
+justifications are in §2c(B) and the migration header. `paige_chat_turn_append` is unchanged: it already
+surfaces the 23505 to its caller (pgTAP), and the handler reads it.
 
 ## 5. Push decision
 
@@ -552,8 +836,12 @@ card was minted. Two causes, both found by driving the real crm-command:
    that is issued back through the canonical boundary (`body.command = canonicalizeCrmCommand(resolvedCommand)`),
    before the readback, the approval subject and the request; a vitest case pins both halves (the frozen
    object throws, the re-canonicalized copy carries the resolved client and keeps the INT-327 approval
-   subject). Production impact was not measured here (no prod access in this slice) — it should be
-   checked in the deploy's post-deploy scan.
+   subject). Production impact was not measured in this slice (no prod access here); the C4b
+   coordinator's post-deploy check then CONFIRMED the defect on production (crm-command, 2026-10-05
+   21:51 UTC, before the fix deployed) and the repair live with C4b (crm-command v77, coordinator-
+   reported). The repair is specific to this frozen canonical command: it resolves a copy and re-enters
+   the canonical boundary; it is not a pattern for mutating canonical commands in general. The
+   regression coverage (40.G / 40.ABORT, vitest `crm-contact-refs`) is kept.
 
 INT-327 × C4b, proven: the door stores the deal AFTER resolving its client, so the pinned resume runs
 the stored command WITH that client (40.1e); in a client-scoped conversation where the model omits the
@@ -603,6 +891,100 @@ Not mutated, stated: dropping `.neq("issued_in_request", requestNonce)` from the
 unobservable (doors mint with their own per-invocation nonce, never the chat's) and is kept to mirror
 the door's claim predicate for predicate.
 
+**C4c.** Base = a clean detached worktree at `0fe769ef8`; head = the C4c build worktree. Every number
+below was measured on both, whole-suite.
+
+- `scripts/client-memory-authz/check.mjs`: base 750/0 → first build 787/0 → after the review fixes
+  800/0 (group 41 = 47 checks; group 40 gains 40.15–40.15c, the door composition). Group 41 run against
+  the base server: 31 of the first 37 fail; the 6 that pass at base (41.3, 41.8, 41.11, 41.12, 41.13,
+  41.13c) pin behaviour that already held. The 10 added after review (41.17–41.20) all fail against the
+  first build's server; 40.15–40.15c pass there too (a test gap, not a defect) and bite on mutation P13.
+- `scripts/knowledge-scope/check.mjs`: 423/0 base = 423/0 head.
+- `supabase/functions/_shared/paige-turn/resume.test.ts` (Deno): base 20 → first build 26 → head 28, 28/28.
+- vitest, whole suite: base 628 files passed + 2 skipped, 9423 passed / 2 skipped → first build 630
+  files, 9448 → head 630 files passed + 2 skipped, 9452 passed / 2 skipped (+29: `PaigeAIChat.askUser`
+  19, `PaigeAskCard` 6, `turn-view` 4). `PaigeAIChat.askUser` against the base client: 12 of the first 14
+  fail; the 4 added after review all fail against the first build's client.
+- `npm run -s ci:tsc`: ratchet 10 = 10. `deno check supabase/functions/paige-ai-chat/index.ts`: 10
+  diagnostics at base and head, the same (code, message) multiset (one TS2769 message differs only in the
+  print order of a union's literals).
+- pgTAP `supabase/tests/chat_turn_answer_claim_unique.sql` 11/11 and the two-session race 7/7 (both re-run
+  after the review fixes; the migration and both proofs are unchanged), locally on
+  PG16 with a minimal stand-in schema and a labelled five-function pgTAP shim; CI runs both on the
+  replayed Supabase stack (`paige-spine-contract.yml`). DB mutants: §2c(E).
+- Lints: every `lint:*` passes except `lint:gold` and `lint:impeccable`, whose output is byte-identical
+  to base (pre-existing). `lint:shadow-vars` caught a selected-option inset ring that emitted no
+  box-shadow; fixed with Tailwind's `shadow:` type hint and the affected frames re-rendered.
+  `lint:migration-versions` passes. `impeccable detect` on the three touched UI files exits 0.
+- Harness renders (not live): 78 frames (7 added after review: the re-asked question on reload and a
+  file attached while a question is open, page and drawer, light and dark) in `docs/evidence/ui-delivery/assets/c4c-ask-user/` (light, dark,
+  320px, 390px, 200% zoom, reduced motion, keyboard), `results.json` beside them; the evidence record
+  passes `scripts/ci/ui-delivery-evidence.mjs`.
+- Mutation tables (server S/H/R/P, database DB, client C/CF, and the independent reviewer's mutants
+  re-applied to the moved code): the evidence record. Every server and database mutant is killed; client
+  C2 is equivalent today and stated.
+- Review fixes, measured whole-suite again at head: `ci:tsc` 10 = 10; `deno check` the same (code,
+  message) multiset as base (10); every `lint:*` exits 0 except `lint:gold` and `lint:impeccable`, whose
+  output is byte-identical to base; `impeccable detect` on PaigeAIChat.tsx and PaigeAskCard.tsx exits 0;
+  the evidence record validates.
+
+**C4c review fixes (second independent re-verifier — FIX_FIRST).**
+
+| Finding | Disposition |
+|---|---|
+| V2-1 MEDIUM (blocking): a request that dies after the claim leaves the claim as the newest turn; after "may still be working" the client re-read the thread, had no open question, and sent the person's re-send as an ordinary message — the server's re-ask was unreachable, the copy promising it untrue, and a re-send inside the window could start the same work twice | The composer stays bound to a claimed question (`claimedAsk` in `PaigeAIChat.tsx`: the thread ends on an answer claim that directly follows its question): the re-send carries `resume {kind: "answer", ask_id}`; the card stays frozen "Answered below"; the hint says "PAIGE has your answer. If she hasn't replied 10 minutes after you sent it, send it again and she'll ask her question again", with "Ask something else instead". Server unchanged in shape and proven exactly-once: young → 409 IN_PROGRESS, no model call (41.19; two at once 41.19f); stranded → re-asked once (41.19d: the same id sent again names that re-ask, nothing saved); two stranded re-sends at once never reach PAIGE and only one answer to the newest re-ask runs (41.19e). One window everywhere: `ANSWER_STRANDED_AFTER_MINUTES` = 10 drives the server constant, the server copy and the client hint (41.19 asserts the copy; mutation V21c). Vitest: IN_PROGRESS → re-read → send again carries `resume` (red on the previous build's client), reload with a claim binds the composer (red there too). Mutation V21a (the client drops `resume` on the stranded-claim re-send) killed by both; V21b (binds to any preceding question) killed. |
+| V2-2 LOW: `resolveAskLiveness` "reopened" did not follow the chain — Q1 → claim → Q2 → Q2's claim → continuation, then Q1's id sent again read "reopened" naming Q2 | The chain is followed: after a claim, the run of re-asks directly after it is read and the NEWEST is resolved; live → reopened (it), anything else → that state (answered / pending on Q2 / stale). Deno "the first question's id follows the chain…" (answered, pending, moved past, two re-asks at once); harness 41.17e (409 ASK_ALREADY_ANSWERED, never ASK_REOPENED). Both red on the previous build; mutation V22 (the previous build's shape) killed by the Deno test, 41.17e and 41.19e. |
+| V2-3 LOW (a): a claim that landed behind another tab's message is saved in the thread, yet the person was told their message was "back in the box — send it as a new message" | 409 ASK_NOT_OPEN with `answer_kept: true` and "Another message reached PAIGE before your answer, so she didn't act on it and her question stays unanswered. Your answer is kept in the conversation."; the client clears the words from the composer (they are in the transcript the re-read draws). 41.18 tightened (red on the previous build); vitest; mutations V23a, V23c killed. |
+| V2-3 LOW (b): a choice made on the card and refused was told "your message is back in the box", but it never was in the composer | The server's reasons now say only what happened to the answer; the client adds "Your message is back in the box." for typed words only. Vitest (card choice refused → no box sentence); mutation V23b killed. |
+| V2-4 test gaps | VFY2.429 / VFY2.402 adopted as 41.17f (kills N1); N2: vitest "a 5xx … Retry sends the same words WITH the question's id"; N7: vitest "a claim for ANOTHER question never binds the composer, and never answers this one"; N8: 41.22 (a document turn is not offered `ask_choices`); a pre-model ACTIVE_ACCOUNT_CHANGED after binding (a turn carrying memory evidence, the persona resolver switching after the first read): 41.23 — 409, no claim, no model call, the question still live, then answered once from A. All four mutations killed. |
+| V2-5 INFO: the in-stream snag turn after the claim was read as saved with `bundleRef: null` | Measured, not assumed: the snag turn already carries the answer's record — `withTurnRecord` builds the bundle for any non-empty text and `withResumeRecord` adds `paige_resume {kind: "answer", from_turn_id}` (and `turn_state.resumed {kind: "answer"}`). Pinned by 41.21 (a tool whose error cannot be read throws inside the continuation: snag saved INTERRUPTED, resumed answer, `paige_resume.from_turn_id` = the question turn, the question reads answered). No code change. |
+
+Measured again, whole-suite, base (the clean `0fe769ef8` worktree) → head:
+- `client-memory-authz` 750/0 → 809/0 (group 41 = 56 checks: +41.17e, 41.17f ×2, 41.19d, 41.19e,
+  41.19f, 41.21, 41.22, 41.23; 41.18 and 41.19 tightened). Group 41 at head run against the previous
+  build's server: 125 pass, 4 fail — 41.17e, 41.18, 41.19 (the copy), 41.19e; the others pass there too
+  (test gaps adopted from the re-verifier, each pinned by a mutation).
+- `knowledge-scope` 423/0 = 423/0.
+- Deno `resume.test.ts` 20 → 29, 29/29 (the new chain test red on the previous build).
+- vitest whole suite: 628 files passed + 2 skipped, 9423 passed / 2 skipped → 630 files passed + 2
+  skipped, 9458 passed / 2 skipped (+35: `PaigeAIChat.askUser` 25, `PaigeAskCard` 6, `turn-view` 4). The 6
+  added this round: 3 red on the previous build's client (the two V2-1 cases and the kept answer), 3
+  pinned by mutation (N2, N7, V23b).
+- `ci:tsc` ratchet 10 = 10; `deno check supabase/functions/paige-ai-chat/index.ts` 10 = 10 diagnostics,
+  identical (code, message) multiset.
+- Every `lint:*` (67 scripts) exits 0 except `lint:gold` (output byte-identical to base) and
+  `lint:impeccable` (identical to base once the worktree path is normalised); `lint:migration-versions`
+  passes; `impeccable detect` on PaigeAIChat.tsx and PaigeAskCard.tsx exits 0.
+- Harness renders (not live): 83 frames — the 78 re-rendered on the new client and 5 new
+  (`c4c-reload-claimed-{page,drawer}-{light,dark}`, `c4c-reflow320-reload-claimed-page-light`); every
+  frame: no overflow, no page errors, gold only on Send/Stop/Approve/New chat, ask text ≥ 5.32:1 (the
+  claimed hint 5.32:1 light, 7.52:1 dark). One frame (`c4c-c2-free-form-page-light`) came out of the
+  batch run before its first turn had landed and was re-rendered alone; it then matched the record.
+- The evidence record passes the gate's own checks (`verifyPinnedBundle`, `classifyUiChanges`,
+  `validateEvidenceText` from `scripts/ci/ui-delivery-evidence.mjs`) over the uncommitted tree against
+  `0fe769ef8` — the script's CLI needs a committed head, and nothing was committed.
+- Mutations this round (each reinstated, the named suite run, restored; sources byte-identical after):
+  N1, N2, N7, N8, V21a, V21b, V21c, V22, V23a, V23b, V23c — all killed (the evidence record's tables).
+
+**C4c review fixes (exact-head review of `05113f4ce` — FIX_FIRST) and the CI round on PR #1771.**
+
+| Finding | Disposition |
+|---|---|
+| B1 (blocking): a workspace switch after PAIGE was reached strands the claim (the in-stream re-checks stop the stream; the append refuses the thread as another workspace's, so nothing is saved after the claim). The re-ask then said "nothing was done with it yet" — false once PAIGE had run tools or queued a proposal — and answering it ran the objective again with no hint of the first attempt | Every word on that path is now true either way: `ASK_REOPEN_LEAD` = "I didn't finish carrying on from your answer. Anything I'd already done is saved."; `ASK_REOPENED` = "PAIGE didn't finish carrying on from your answer. Anything she'd already done is saved, and she's asked the question again."; `ASK_ANSWER_IN_PROGRESS` = "PAIGE already has your answer to that question, so this wasn't sent again. …" (never "may still be working", which the server cannot know). `answerTurnNote` on a re-asked question (`reopens` set) tells PAIGE an earlier attempt may have done part of the work: check what already exists and repeat nothing. New 41.23b–e drive the in-stream switch (persona flips mid-stream after the model call: claim last, `pending`; young re-send → IN_PROGRESS, no "still working"; aged → re-asked with the true lead; the re-asked answer's prompt carries the check-first line; a first answer's does not). Mutations (re-run one at a time by the fix-round verifier): the old lead → 41.17, 41.23c; the old in-progress reason → 41.19, 41.23c; the old reopened reason → 41.23c; the check-first line dropped → 41.23d; the line added to every answer → 41.23e. Deno: the note on a re-asked question (both skipped and not) and the lead never saying "nothing was done". Residual: whether PAIGE avoids repeating an auto-lane act rests on her following the note (model adherence, UNVERIFIED); confirm-lane acts each still need their own approval |
+| Craft 2: the claimed hint was long, had no full stop, and repeated the B1 untruth | "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again." (persona name) |
+| Craft 3 / 4: the skipped record used the open-question glyph and hard-coded "PAIGE" | The skipped record carries the settled check; `PaigeAskRecord` takes the tenant's assistant name (vitest: name, glyph = answered ≠ unanswered) |
+| Craft 1, 5, 6; nits (an `ask_choices` rejected by `buildAskRecord` falls through to dispatch as unknown; compaction one turn shorter; `ASK_ALREADY_ANSWERED` wording for a stranded claim followed by an ordinary message) | Not changed this round, recorded: the c5 double status is the frozen prototype wording (§7); the disabled "Use this" and arbitrary px sizes are within the craft floor's tolerance and left for the C3b/C4f visual pass |
+| CI `audit` red on every new head | Not this PR's: GHSA-68fv-2mgg-jv7q (high) on `source-map-js` 1.2.1, published after main's last green audit. Fixed here by bumping that one `package-lock.json` entry to 1.2.2 (integrity checked against the registry); `npm audit --omit=dev --audit-level=high` exits 0. Stated: the production build installs from `bun.lockb`, which this bump does not touch (the drift `security-audit.yml` already notes); which production package pulls it in was not traced |
+| CI `verify` red: capability-kit anti-bypass debt grew (`direct-tool-definition` · `ask_choices`) — the main chat's question tool was a second inline definition beside Studio's (the reviewer's registry-lint nit, measured by the stricter guard) | One declaration site: `askChoicesSpec` holds the surface's wording (Studio's or the main chat's, verbatim — the two never both apply) and one `toolDefs.push` defines the tool. capability-kit: "no new bypass" (baseline not touched); chat-tool-registry: 96 inline, none added. Harness 813/0 (group 39 Studio unchanged) |
+
+Fix-round independent verifier (§39, the delta `05113f4ce..1e4285aa2`): **SHIP**, no blocking findings;
+its notes taken here (this master/brain wording, the mutation attribution above, the lockfile scope).
+Measured at the fix head: `client-memory-authz` 813/0 (base 750/0); `knowledge-scope` 423/0; Deno
+`resume.test.ts` 29/29; `ci:tsc` 10 = 10; `deno check` index.ts 10 diagnostics, the same (code) multiset
+as base; every `lint:*` exits 0 except `lint:gold` and `lint:impeccable` (neither names a touched file;
+both fail identically on base); `impeccable detect` on PaigeAskCard.tsx and PaigeAIChat.tsx exits 0 with
+no findings; vitest whole suite 630 files passed + 2 skipped, 9459 passed / 2 skipped (+1 `PaigeAskCard` record test; the `TenantCommandCenterShell.ownership` failure the reviewer saw on both sides passed this run — it is unrelated and intermittent); harness renders: all 83 C4c frames re-rendered on the fixed client.
+
 ## 7. Not verified
 
 - An authenticated drive of the deployed chat (a real approval on a Solo test workspace): PROOF OWED.
@@ -637,3 +1019,31 @@ the door's claim predicate for predicate.
   claimed closed.
 - C4b: no visible UI changed (the same report card and resumed frame), so no new evidence record or
   render; the C4a renders cover the presentation.
+- C4c: an authenticated drive of the deployed chat — a real question on a Solo test workspace answered
+  once, then sent again, then from a second tab — is PROOF OWED to C4f (which drives C4a/C4b/C4c
+  together); the Solo QA tenant and `LIVE_DRIVE_*` credentials are still an owner decision.
+- C4c: the real model's choice of when to ask, its question's wording, and its adherence to the answer
+  note (continue the same work, never invent the missing fact, never treat the answer as approval) — the
+  harness model is a stub.
+- C4c: the migration's persisted apply on production (the `schema_migrations` row and the index in
+  `pg_indexes`) is owed after merge (§32); pgTAP and the race ran locally against a stand-in schema, not
+  the replayed stack.
+- C4c: Studio's client does not bind its replies to the saved question yet (the server saves Studio's
+  question as the same record; 41.16); Operator (no thread is sent) keeps asking in prose — the tool is
+  not offered there.
+- C4c: a question asked beside other calls in Studio still drops its siblings (unchanged, not this slice).
+- C4c: real fonts were not loaded in the harness frames (system fallback); contrast is measured on the
+  rendered pixels. Frame c5's record line ("Not answered") follows the frozen prototype wording.
+- C4c (re-verifier 2, V2-1): the claimed-answer path is proven in jsdom and against the harness's
+  doubles with seeded claim ages — not against a real platform kill of a running request, and not on the
+  deployed chat. A withheld continuation (the workspace changed while PAIGE was streaming a turn that
+  carried protected evidence) saves nothing after the claim, so the composer holds on "has your answer"
+  for up to 10 minutes before a re-send re-asks it — truthfully worded, and the re-asked answer tells PAIGE
+  to check what already exists, but whether she avoids repeating an auto-lane act rests on her following
+  that note (real-model adherence UNVERIFIED; stated residual, §2c(E); exact-head review B1).
+- C4c, acceptance item 3 on the DEFAULT composer path — **UNVERIFIED** (verifier F2). While a question
+  is open, typed words are sent as its answer by default (frame c2), so an unrelated reply typed there IS
+  bound as the answer; whether PAIGE then declines to fill the missing fact rests on the answer note
+  alone. 41.3c proves the note is in the prompt and says so; real-model adherence is not proven (the
+  harness model is a stub). What IS proven structurally: a message not sent as the answer ("Ask something
+  else instead", a file, a voice turn, an approval) is never bound (41.3, vitest c5, the file case).

@@ -381,6 +381,21 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
 
+### PAIGE conversational loop C4c — PAIGE asks, waits, and the same objective resumes on the answer (branch `c4c-askuser`, 2026-10-06; ships on merge, NOT live)
+
+When PAIGE cannot continue a piece of work without one fact only the person has, she asks (`ask_choices`,
+now offered in the main chat as well as Studio) and the turn waits (ASK_USER). The question turn IS the ask
+(`bundle_ref.paige_ask`); an answer sent as one (`resume: {kind: "answer", ask_id}`) is bound to it once
+(partial unique index `paige_chat_turns_resume_uk`, migration `20270596000000`) and PAIGE continues the same
+objective. An answer approves nothing: any consequential act still meets its card. Nothing in this slice
+reads account type; availability follows the thread and the seat.
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| PAIGE asks a question in the chat and waits (main chat) | ✗ on the Operator surface (no thread is sent; she asks in prose, unchanged); ✓ in a PAIGE chat that sends its platform thread | ✓ (as a tenant, PAIGE drawer/page; not driven separately) | **✓** Solo PAIGE chat and drawer | ✓ (a tenant persona with a parent; not driven separately) | ✗ not offered to a portal seat; an answer is refused (`client_seat`) | 403 (401 before the body) | PARTIAL: harness-proven (group 41), LIVE on merge; authenticated drive owed |
+| Answer it once and have the same work continue | as above (operator platform thread: bound under the null scope) | as Solo | **✓** declared ∧ validated workspace; another workspace 409; a second answer refused | as Solo | ✗ | 403 | PARTIAL: as above |
+| Studio's own question (two to four options) | — | — | unchanged; now saved as the same record | unchanged | — | — | unchanged behaviour |
+
 ### Marketing email E3c — PAIGE writes email series from chat (branch `claude/gifted-bell-qfezxb`, 2026-10-06)
 
 PAIGE's chat tools `read_email_series`, `email_series_draft` and `email_series_request_approval` write the

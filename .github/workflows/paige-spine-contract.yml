@@ -50,6 +50,7 @@ on:
       - "supabase/tests/user_address_readers.sql"
       - "supabase/tests/contact_methods_concurrency.sql"
       - "scripts/proof/contact-methods-add-race.mjs"
+      - "scripts/proof/chat-answer-claim-race.mjs"
       - "supabase/tests/contact_create_with_methods.sql"
       - "supabase/tests/user_primary_address.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
@@ -380,6 +381,17 @@ jobs:
       # acts, and a signed-out visitor cannot read studio history (owner rulings 2026-09-30/10-03).
       - run: supabase test db supabase/tests/vibe_studio_publish_lifecycle.sql
         if: ${{ !cancelled() }}
+      # C4c — one answer per question (20270596000000): the partial unique index on the transcript
+      # refuses a second answer turn for the same question with 23505 (directly and through
+      # paige_chat_turn_append as the owner), never constrains assistant turns, another thread, or a
+      # turn with no key; then two COMMITTED sessions race the same answer and exactly one wins.
+      - run: supabase test db supabase/tests/chat_turn_answer_claim_unique.sql
+        if: ${{ !cancelled() }}
+      - run: node scripts/proof/chat-answer-claim-race.mjs
+        if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        env:
+          CI: "true"
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read

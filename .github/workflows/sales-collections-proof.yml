@@ -10,6 +10,7 @@ on:
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
+      - 'scripts/sql/sales-package-read-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
@@ -21,6 +22,7 @@ on:
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
+      - 'scripts/sql/sales-package-read-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -57,6 +59,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+      - name: Commercial package canonical bridge, two-tenant read scope and receipt rollback
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-package-read-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
       - name: Preserve Collections SQL proof receipt
         if: always()
         uses: actions/upload-artifact@v4

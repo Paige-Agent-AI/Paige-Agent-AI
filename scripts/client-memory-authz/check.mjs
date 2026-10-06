@@ -285,6 +285,11 @@ globalThis.fetch = async (url, init) => {
         }
       }
       const turn = modelTurnState.getStore();
+      // INT-332 — `streamScript` scripts this turn's streamed calls one by one (index 0 = call 1): a
+      // string is a prose round, `{ name, args }` a tool round. A call past its end falls through.
+      const scripted = turn?.streamScript && turn.streamCalls >= 1 ? turn.streamScript[turn.streamCalls - 1] : undefined;
+      if (typeof scripted === "string") return sseModelReply(scripted);
+      if (scripted && typeof scripted === "object") return sseToolCallReply(scripted.name, scripted.args, "", `toolu_s${turn.streamCalls}`);
       if (turn ? turn.toolCallOnce : toolCallOnce) {
         // A scripted turn may call several tools, one per round, in order (`toolCall` as a list).
         const spec = turn?.next ?? toolCallSpec;
@@ -393,6 +398,8 @@ async function drive({
   throwStreamCalls = [],
   /** The status a `failStreamCalls` call answers with (the gateway's own 429, 402, …). Default 529. */
   failStreamStatus = 529,
+  /** INT-332 — what each streamed model call answers, in order (see the stub). Default none. */
+  streamScript = null,
 }) {
   // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
   // an admin seat with no resolved workspace (get_paige_persona_context falls back to
@@ -501,7 +508,7 @@ async function drive({
     },
   });
 
-  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, failStreamStatus, breakStreamCalls, throwStreamCalls }, async () => {
+  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, failStreamStatus, breakStreamCalls, throwStreamCalls, streamScript }, async () => {
     let status = null, bodyText = "", partialText = "";
     try {
       const res = await handler(new Request("http://local/paige-ai-chat", {
@@ -7507,6 +7514,652 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
   assert("41.23e a first answer's note says nothing about an earlier attempt",
     !toldModel(found23b?.r ?? { modelEgress: [] }).includes("earlier attempt"),
     "first answer mentioned an earlier attempt");
+}
+
+// ── 43. INT-332 — AN ACCEPTED OFFER REACHES A TOOL, A CARD, A QUESTION OR A TRUTHFUL REFUSAL ─────────────
+//
+// Prod 2026-10-06, a long Solo thread: PAIGE closed a FINAL answer with "Want me to send that approval card
+// now…?", the owner replied "Yes we may as well for sure", and the turn was FINAL / fast_answer / 0 tools:
+// "Sending the approval card now…" — no tool, no card, no proposal row. The next turn guessed an authority
+// rule ("if approvals are OFF I can run it directly"). These checks drive the REAL chat handler and the
+// REAL crm-command door (its own claim, minting and executor calls) over a thread store and the shared
+// proposal store. What they hold: an affirmative to ONE fresh offer PAIGE just made runs on the tier that
+// calls tools and is told the offered step is the task; prose that claims a card no tool created, or that
+// decides approval, is never the answer; and nothing here can create, run or duplicate an act the gate
+// would not — a choice asks, a stale/standing/foreign offer is the ordinary path, an approval runs once.
+console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question or a truthful refusal");
+{
+  const continuity = await import("../../supabase/functions/_shared/paige-turn/continuity.ts").catch(() => ({}));
+  const { CLAUDE_REASONING, CLAUDE_CLASSIFICATION } = await import("../../supabase/functions/_shared/claude-models.ts");
+  const CORRECTION = continuity.CLAIM_CORRECTION ?? { card: "\u0000no-correction-at-base", authority: "\u0000no-correction-at-base" };
+  const NOTE = continuity.NOTHING_RAN_NOTE ?? "\u0000no-note-at-base";
+  const keptWithNote = (text) => `${text}\n\n${NOTE}`;
+  const fallbackOf = (kind, didWork) => continuity.claimFallback ? continuity.claimFallback(kind, { didWork }) : "\u0000no-fallback-at-base";
+  await import("../../supabase/functions/crm-command/index.ts");
+  const door = capturedHandler();
+  assert("43.G the real crm-command handler is the one these checks drive (not the chat's)", door !== handler, "captured the chat handler");
+
+  const THREAD = "43320000-0000-4000-8000-000000000001";
+  const THREAD_FRESH = "43320000-0000-4000-8000-000000000002";
+  const THREAD_B = "43320000-0000-4000-8000-000000000003";        // the same person's thread in workspace B
+  const THREAD_OTHER_USER = "43320000-0000-4000-8000-000000000004";
+  const DEAL_ID = "a0799c2d-79ee-4880-b86a-7743b5e9d798";
+  const THREADS = [
+    { id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER },
+    { id: THREAD_FRESH, tenant_id: CALLER_TENANT, caller_user_id: USER },
+    { id: THREAD_B, tenant_id: OTHER_TENANT, caller_user_id: USER },
+    { id: THREAD_OTHER_USER, tenant_id: CALLER_TENANT, caller_user_id: FOREIGN },
+  ];
+  const framesOf = (text) => String(text ?? "").split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .flatMap((l) => { try { return [JSON.parse(l.slice(6))]; } catch { return []; } });
+  const cardsOf = (r) => framesOf(r.bodyText).filter((f) => f.paige_confirm).map((f) => f.paige_confirm);
+  const contentOf = (r) => framesOf(r.bodyText).map((f) => f.choices?.[0]?.delta?.content ?? "").join("");
+  const terminalOf = (r) => framesOf(r.bodyText).map((f) => f.paige_turn).filter(Boolean).find((t) => t.event === "completed" || t.event === "waiting") ?? null;
+  const streamed = (r) => r.modelEgress.filter((b) => b.includes('"stream":true')).map((b) => { try { return JSON.parse(b); } catch { return {}; } });
+  const modelOf = (r, i = 0) => streamed(r)[i]?.model ?? null;
+  const told = (r) => r.modelEgress.join("\n").replace(/\\"/g, '"');
+  const doorCalls = (r) => r.rec.functions.filter((f) => f.name === "crm-command");
+  const savedAssistant = (store, threadId) => store.turns.filter((t) => t.thread_id === threadId && t.role === "assistant").at(-1) ?? null;
+
+  // The door's world: the committed-result table it reads back and writes through, an owner seat, and the
+  // canonical client it resolves the reference against — exactly as group 40 models it.
+  const crmDb = () => ({ committed: new Map(), executions: [] });
+  const crmRpcs = (db) => ({
+    read_crm_command_result: (args) => ({ data: db.committed.get(`${args._tenant_id}:${args._actor_id}:${args._idempotency_key}`) ?? null, error: null }),
+    execute_crm_command: (args) => {
+      const key = `${args._tenant_id}:${args._actor_id}:${args._idempotency_key}`;
+      const prior = db.committed.get(key);
+      if (prior) return { data: { ...prior, replayed: true }, error: null };
+      db.executions.push({ command: args._command, idempotency_key: args._idempotency_key });
+      const result = { ok: true, outcome: "succeeded", action: args._command?.action, readback: { id: DEAL_ID } };
+      db.committed.set(key, result);
+      return { data: result, error: null };
+    },
+  });
+  const realDoor = async (options) => {
+    const res = await door(new Request("http://local/crm-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: options?.headers?.Authorization ?? "Bearer test-jwt" },
+      body: JSON.stringify(options?.body ?? {}),
+    }));
+    const json = await res.json();
+    return res.ok ? { data: json, error: null } : { data: null, error: { name: "FunctionsHttpError", message: `status ${res.status}`, context: { status: res.status, json: async () => json } } };
+  };
+  const CLIENT_REF = "CLT-0042";
+  const clientsByFilter = (rows) => (filters) => rows.filter((row) => filters.every(([op, col, value]) => op !== "eq" || row[col] === value));
+  const DOOR_SERVICE = {
+    tenant_members: () => [{ role: "owner", status: "active" }],
+    tenants: () => [{ account_number: 3855, account_type: "standalone", parent_tenant_id: null }],
+    clients: clientsByFilter([{ id: OWN, tenant_id: CALLER_TENANT, account_number: CLIENT_REF, first_name: "Dana", last_name: "Reyes" }]),
+    client_memory: () => [],
+  };
+  const SEAT = (tenant = CALLER_TENANT) => ({
+    get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+    current_user_tenant_id: { data: tenant, error: null },
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    studio_role_ok: { data: true, error: null },
+    match_paige_memory: { data: [], error: null },
+  });
+  const ASSIGN = { name: "crm_assign_deal_contact", args: { deal_id: DEAL_ID, client_ref: CLIENT_REF, expected_version: 3 } };
+  // The offer, shaped like prod's 15:21:48 turn (names swapped for the harness's own client).
+  const OFFER = "Here's where things stand.\n\n**Sales / CRM** — anything that writes, I draft and you approve on a card.\n\n**Back to Dana** — the link is still outstanding. Want me to send that approval card now so we actually close this loop, and then move into building her $2,500 invoice for Wednesday?";
+  // Prod's 15:25:30 reply, verbatim in shape: a card narrated, none created.
+  const NARRATION = "Sending the approval card now for the canonical deal-to-contact link.\n\n**What you're approving:**\nLink deal \"Dana Reyes — Retainer\" to contact Dana Reyes.\n\nOnce you click Approve on the card, I'll read the deal back and confirm the link took.";
+  // Prod's 15:26:19 reply: approval guessed from a setting.
+  const BYPASS = "If approvals are OFF in your workspace, then I can run this link directly without the card — just say the word.";
+  const AFTER_CARD = "That's in front of you now — approve it and I'll read the deal back.";
+  const FINAL = (state = "FINAL") => ({ turn_state: { v: 1, state, mode: "answer", tools: 3, rounds: 2 } });
+  const ago = (ms) => new Date(Date.now() - ms).toISOString();
+
+  const seedOffer = (store, threadId, { history = 2, offer = OFFER, ageMs = 4 * 60_000, bundle = FINAL() } = {}) => {
+    for (let i = 0; i < history; i++) store.seed(threadId, i % 2 ? "assistant" : "user", i % 2 ? `Earlier answer ${i}.` : `Earlier question ${i}.`, i % 2 ? FINAL() : null, ago(ageMs + (history - i) * 60_000));
+    return store.seed(threadId, "assistant", offer, bundle, ago(ageMs));
+  };
+  const turn = (store, confirms, db, { text, threadId = THREAD, script, tenant = CALLER_TENANT, body = {}, failStreamCalls = [] } = {}) => drive({
+    stream: true, text, streamScript: script, failStreamCalls,
+    extraBody: { threadId, ...body },
+    rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), paige_chat_turn_append: (args) => store.append(args) },
+    tablesExtra: { paige_chat_turns: store.table, paige_chat_threads: store.threadsTable, client_memory: () => [], paige_pending_confirmations: confirms.table },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+    onInsert: mirrorConfirms(confirms),
+    functionsExtra: { "crm-command": realDoor },
+  });
+
+  // ── 43.1 THE PROD STRAND, on a LONG thread (40 earlier turns). PAIGE narrates the card first — exactly
+  // what the cheap tier did — then, corrected inside the same turn, calls the tool. The real door mints
+  // ONE proposal; the wire, the saved turn and the store agree; the narration never reaches the person.
+  // Red at base: the cheap tier, no note, and the narration saved as FINAL with no card.
+  const s1 = makeThreadStore(THREADS), c1 = makeConfirmStore(), db1 = crmDb();
+  seedOffer(s1, THREAD, { history: 40 });
+  const r1 = await turn(s1, c1, db1, { text: "Yes we may as well for sure", script: [NARRATION, ASSIGN, AFTER_CARD] });
+  const card1 = cardsOf(r1).flat()[0] ?? null;
+  const saved1 = savedAssistant(s1, THREAD);
+  assert("43.1a F1 (long thread) the accepted offer runs on the reasoning tier, not the cheap one",
+    modelOf(r1, 0) === CLAUDE_REASONING, JSON.stringify({ model: modelOf(r1, 0) }));
+  assert("43.1b …and PAIGE is told the person is answering her offer, quoting the offer she made",
+    told(r1).includes("THE PERSON IS ANSWERING YOUR OFFER") && told(r1).includes("Want me to send that approval card now"), "no foreground note");
+  assert("43.1c the narrated card is corrected inside the turn (no card existed), on the reasoning tier",
+    told(r1).includes(CORRECTION.card) && modelOf(r1, 1) === CLAUDE_REASONING, JSON.stringify({ second: modelOf(r1, 1) }));
+  assert("43.1d F10 the real door minted exactly ONE crm_assign_deal_contact proposal, and one card went out naming it",
+    doorCalls(r1).length === 1 && c1.rows.length === 1 && c1.rows[0].tool_name === "crm_assign_deal_contact" && !!card1 && db1.executions.length === 0,
+    JSON.stringify({ door: doorCalls(r1).length, rows: c1.rows.map((r) => r.tool_name), card: card1, executions: db1.executions.length }));
+  assert("43.1e F10 wire = persist: the turn ends WAIT_APPROVAL and the saved turn carries the same card",
+    terminalOf(r1)?.state === "WAIT_APPROVAL" && saved1?.bundle_ref?.turn_state?.state === "WAIT_APPROVAL"
+      && saved1?.bundle_ref?.paige_confirm?.[0]?.fingerprint === card1?.fingerprint && c1.rows[0].fingerprint === card1?.fingerprint,
+    JSON.stringify({ terminal: terminalOf(r1), saved: saved1?.bundle_ref?.turn_state, savedFp: saved1?.bundle_ref?.paige_confirm?.[0]?.fingerprint, wireFp: card1?.fingerprint }));
+  assert("43.1f the narration never reached the person: not on the wire, not in the saved turn",
+    !contentOf(r1).includes("Sending the approval card now") && !String(saved1?.content).includes("Sending the approval card now"),
+    JSON.stringify({ wire: contentOf(r1).slice(0, 120), saved: String(saved1?.content).slice(0, 120) }));
+
+  // ── 43.2 THE FRESH-THREAD CONTROL: the same offer as a thread's first exchange; PAIGE calls the tool at once.
+  const s2 = makeThreadStore(THREADS), c2 = makeConfirmStore(), db2 = crmDb();
+  seedOffer(s2, THREAD_FRESH, { history: 1 });
+  const r2 = await turn(s2, c2, db2, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: [ASSIGN, AFTER_CARD] });
+  const card2 = cardsOf(r2).flat()[0] ?? null;
+  assert("43.2 F1 (fresh thread) reasoning tier, one door call, one proposal, one card, WAIT_APPROVAL, no correction needed",
+    modelOf(r2, 0) === CLAUDE_REASONING && doorCalls(r2).length === 1 && c2.rows.length === 1 && !!card2
+      && terminalOf(r2)?.state === "WAIT_APPROVAL" && !told(r2).includes(CORRECTION.card),
+    JSON.stringify({ model: modelOf(r2, 0), door: doorCalls(r2).length, rows: c2.rows.length, terminal: terminalOf(r2) }));
+
+  // ── 43.3 F11 — the card is approved: the door runs the stored act exactly once, through C4, and a
+  // second approval of the same card runs nothing.
+  const r3 = card2 ? await turn(s2, c2, db2, { text: "Approved — run it.", threadId: THREAD_FRESH, body: { approvedConfirmations: [card2.fingerprint] }, script: ["Done — Dana's deal is linked to her record."] }) : null;
+  const r3b = card2 ? await turn(s2, c2, db2, { text: "Approved — run it.", threadId: THREAD_FRESH, body: { approvedConfirmations: [card2.fingerprint] }, script: ["Done."] }) : null;
+  assert("43.3 F11 approving the minted card executes the stored assign once; approving it again executes nothing more",
+    db2.executions.length === 1 && db2.executions[0].command?.action === "deal.assign_contact" && c2.rows[0].consumed === true && !!r3 && !!r3b,
+    JSON.stringify({ executions: db2.executions.map((e) => e.command?.action), consumed: c2.rows[0]?.consumed }));
+
+  // ── 43.4 F12 — a card is already standing (the previous turn is WAIT_APPROVAL) and the person says "yes"
+  // again: that is not an offer to accept, PAIGE is not told it is, and even when she re-emits the same
+  // call the door does not create a second proposal. Pointing at the card above is not an unbacked claim.
+  const s4 = makeThreadStore(THREADS), c4 = makeConfirmStore(), db4 = crmDb();
+  seedOffer(s4, THREAD_FRESH, { history: 1 });
+  await turn(s4, c4, db4, { text: "yes", threadId: THREAD_FRESH, script: [ASSIGN, AFTER_CARD] });
+  const r4 = await turn(s4, c4, db4, { text: "yes", threadId: THREAD_FRESH, script: [ASSIGN, "The card above is still waiting — approve it there."] });
+  const liveRows4 = c4.rows.filter((r) => !r.consumed);
+  assert("43.4 F12 with a card standing, a second yes is not read as an offer and creates no second live proposal; nothing executes",
+    !told(r4).includes("THE PERSON IS ANSWERING YOUR OFFER") && liveRows4.length === 1 && db4.executions.length === 0 && !told(r4).includes(CORRECTION.card),
+    JSON.stringify({ rows: c4.rows.length, live: liveRows4.length, executions: db4.executions.length }));
+
+  // ── 43.5 F2 — other plain acceptances read the same way.
+  for (const [i, reply] of ["sure", "go ahead", "yep 👍"].entries()) {
+    const s = makeThreadStore(THREADS), c = makeConfirmStore(), db = crmDb();
+    seedOffer(s, THREAD_FRESH, { history: 1 });
+    const r = await turn(s, c, db, { text: reply, threadId: THREAD_FRESH, script: [ASSIGN, AFTER_CARD] });
+    assert(`43.5.${i + 1} F2 "${reply}" accepts the offer: reasoning tier, the note, one card`,
+      modelOf(r, 0) === CLAUDE_REASONING && told(r).includes("THE PERSON IS ANSWERING YOUR OFFER") && c.rows.length === 1,
+      JSON.stringify({ model: modelOf(r, 0), rows: c.rows.length }));
+  }
+
+  // ── 43.6 F4 — an offer of alternatives: "yes" asks which; nothing is proposed.
+  const s6 = makeThreadStore(THREADS), c6 = makeConfirmStore(), db6 = crmDb();
+  seedOffer(s6, THREAD_FRESH, { history: 1, offer: "Two things are open.\n\nWant me to send the approval card now, or build her invoice first?" });
+  const r6 = await turn(s6, c6, db6, { text: "yes", threadId: THREAD_FRESH, script: ["Which first — the link card or the invoice?"] });
+  assert("43.6 F4 alternatives: PAIGE is told to ask which, she asks, and no door call or proposal happens",
+    told(r6).includes("BUT IT NAMED MORE THAN ONE THING") && doorCalls(r6).length === 0 && c6.rows.length === 0 && terminalOf(r6)?.state === "FINAL",
+    JSON.stringify({ door: doorCalls(r6).length, terminal: terminalOf(r6) }));
+
+  // ── 43.7 F5 / F6 — an informational turn, and a stale offer: the ordinary path, on the ordinary tier.
+  const s7 = makeThreadStore(THREADS), c7 = makeConfirmStore(), db7 = crmDb();
+  seedOffer(s7, THREAD_FRESH, { history: 1, offer: "Your pipeline has 4 open deals worth $12,400. Dana's is still at $0." });
+  const r7 = await turn(s7, c7, db7, { text: "ok", threadId: THREAD_FRESH, script: ["Anything else you want on it?"] });
+  const s7b = makeThreadStore(THREADS), c7b = makeConfirmStore(), db7b = crmDb();
+  seedOffer(s7b, THREAD_FRESH, { history: 1, ageMs: 2 * 60 * 60_000 });
+  const r7b = await turn(s7b, c7b, db7b, { text: "yes", threadId: THREAD_FRESH, script: ["Do you mean the link to Dana from earlier? Want me to set that up now?"] });
+  assert("43.7a F5 an acknowledgement of an informational answer is just that: cheap tier, no note, no correction, FINAL",
+    modelOf(r7, 0) === CLAUDE_CLASSIFICATION && !told(r7).includes("ANSWERING YOUR OFFER") && !told(r7).includes("Correction:") && terminalOf(r7)?.state === "FINAL",
+    JSON.stringify({ model: modelOf(r7, 0), terminal: terminalOf(r7) }));
+  assert("43.7b F6 a two-hour-old offer is not continued by a bare yes: cheap tier, no note, nothing proposed",
+    modelOf(r7b, 0) === CLAUDE_CLASSIFICATION && !told(r7b).includes("ANSWERING YOUR OFFER") && c7b.rows.length === 0,
+    JSON.stringify({ model: modelOf(r7b, 0), rows: c7b.rows.length }));
+
+  // ── 43.8 F7 / F8 — the offer is in another workspace's thread, or another person's: never continued.
+  const s8 = makeThreadStore(THREADS), c8 = makeConfirmStore(), db8 = crmDb();
+  seedOffer(s8, THREAD_B, { history: 1 });
+  seedOffer(s8, THREAD_OTHER_USER, { history: 1 });
+  // The model here answers in prose: what these hold is that the foreign offer is never READ as one.
+  const ASKS = "Which deal do you mean?";
+  const r8a = await turn(s8, c8, db8, { text: "yes", threadId: THREAD_B, script: [ASKS] });
+  const r8b = await turn(s8, c8, db8, { text: "yes", threadId: THREAD_OTHER_USER, script: [ASKS] });
+  assert("43.8a F7 a thread from another workspace: the turn is refused before PAIGE is reached — no note, no model call, no door call",
+    !told(r8a).includes("ANSWERING YOUR OFFER") && streamed(r8a).length === 0 && doorCalls(r8a).length === 0,
+    JSON.stringify({ status: r8a.status, calls: streamed(r8a).length, door: doorCalls(r8a).length }));
+  assert("43.8b F8 another person's thread: their offer is invisible (RLS) and never continued — no note, cheap tier, nothing proposed",
+    !told(r8b).includes("ANSWERING YOUR OFFER") && modelOf(r8b, 0) === CLAUDE_CLASSIFICATION && doorCalls(r8b).length === 0 && c8.rows.length === 0,
+    JSON.stringify({ status: r8b.status, model: modelOf(r8b, 0), door: doorCalls(r8b).length, rows: c8.rows.length }));
+
+  // ── 43.9 F9 — the offered act can't be done: a truthful refusal is a terminal answer (no loop, no fallback).
+  const s9 = makeThreadStore(THREADS), c9 = makeConfirmStore(), db9 = crmDb();
+  seedOffer(s9, THREAD_FRESH, { history: 1 });
+  const REFUSAL = "I can't link that deal from here — it was closed after I offered, so there's nothing to link.";
+  const r9 = await turn(s9, c9, db9, { text: "yes", threadId: THREAD_FRESH, script: [REFUSAL] });
+  assert("43.9 F9 a truthful refusal ends the turn as said: one model call, FINAL, saved verbatim, nothing proposed",
+    streamed(r9).length === 1 && terminalOf(r9)?.state === "FINAL" && savedAssistant(s9, THREAD_FRESH)?.content === REFUSAL && c9.rows.length === 0,
+    JSON.stringify({ calls: streamed(r9).length, terminal: terminalOf(r9), saved: savedAssistant(s9, THREAD_FRESH)?.content }));
+
+  // ── 43.10 THE MODEL NEVER CALLS THE TOOL. Every round narrates a card. After the correction budget the
+  // server answers truthfully: the person reads that nothing is waiting, the wire and the transcript agree,
+  // and nothing was proposed. Red at base: the narration is saved as the answer.
+  const s10 = makeThreadStore(THREADS), c10 = makeConfirmStore(), db10 = crmDb();
+  seedOffer(s10, THREAD_FRESH, { history: 1 });
+  const r10 = await turn(s10, c10, db10, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: [NARRATION, NARRATION, NARRATION, NARRATION, NARRATION] });
+  const saved10 = savedAssistant(s10, THREAD_FRESH);
+  assert("43.10 a card narrated every round never becomes the answer: the server's truthful sentence is on the wire and saved, the turn records its spent budget; nothing proposed",
+    contentOf(r10).includes(fallbackOf("card", false)) && saved10?.content === fallbackOf("card", false) && !contentOf(r10).includes("Sending the approval card now")
+      && terminalOf(r10)?.state === "LIMIT_REACHED" && saved10?.bundle_ref?.turn_state?.state === "LIMIT_REACHED"
+      && c10.rows.length === 0 && doorCalls(r10).length === 0,
+    JSON.stringify({ wire: contentOf(r10).slice(0, 160), saved: saved10?.content, terminal: terminalOf(r10), savedState: saved10?.bundle_ref?.turn_state?.state }));
+
+  // ── 43.11 E — PAIGE deciding approval herself (prod's 15:26 reply) is corrected; her truthful answer stands.
+  const s11 = makeThreadStore(THREADS), c11 = makeConfirmStore(), db11 = crmDb();
+  seedOffer(s11, THREAD_FRESH, { history: 1, offer: "I've looked at Dana's deal. It's still unlinked." });
+  const TRUTH = "Whether it needs your OK is decided when I set it up — I'll put it through and you'll get a card if it needs one.";
+  const r11 = await turn(s11, c11, db11, { text: "The approval card doesn't show up", threadId: THREAD_FRESH, script: [BYPASS, TRUTH] });
+  assert("43.11 E an authority claim ('approvals are OFF… run it directly') is corrected inside the turn and never reaches the person",
+    told(r11).includes(CORRECTION.authority) && savedAssistant(s11, THREAD_FRESH)?.content === TRUTH && !contentOf(r11).includes("run this link directly"),
+    JSON.stringify({ saved: savedAssistant(s11, THREAD_FRESH)?.content, wire: contentOf(r11).slice(0, 120) }));
+
+  // ── 43.13 C1 — accepting the offer is action intent in any words: prose that only promises ("On it —
+  // I'll link it now.") claims no card, so the claim guard does not see it; C1 must still carry the turn
+  // on to the tool instead of letting the promise stand as the answer.
+  const s13 = makeThreadStore(THREADS), c13 = makeConfirmStore(), db13 = crmDb();
+  seedOffer(s13, THREAD_FRESH, { history: 1 });
+  const r13 = await turn(s13, c13, db13, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["On it — I'll link Dana's deal now.", ASSIGN, AFTER_CARD] });
+  assert("43.13 C1 a promise without a tool call is continued (not a claim, so not the guard's), and the card is minted",
+    told(r13).includes("The person accepted the step you offered") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
+    JSON.stringify({ rows: c13.rows.length, terminal: terminalOf(r13) }));
+
+  // ── 43.14–43.18 — independent review round 1 (FIX_FIRST). The guard runs on every ordinary turn, so it
+  // must stay quiet on true prose, and acceptance must stay narrow.
+  // 43.14 a payment card is not an approval card: Sales prose on an ordinary turn stands as said.
+  const s14 = makeThreadStore(THREADS), c14 = makeConfirmStore(), db14 = crmDb();
+  seedOffer(s14, THREAD_FRESH, { history: 1, offer: "Dana's deal is linked." });
+  const PAY = "The invoice is ready — Dana can pay by card or bank transfer. Your Stripe account is up, and card payments are ready.";
+  const r14 = await turn(s14, c14, db14, { text: "How can Dana pay?", threadId: THREAD_FRESH, script: [PAY] });
+  assert("43.14 a payment card is not an approval card: one model call, no correction, saved verbatim",
+    streamed(r14).length === 1 && !told(r14).includes("Correction:") && savedAssistant(s14, THREAD_FRESH)?.content === PAY,
+    JSON.stringify({ calls: streamed(r14).length, saved: savedAssistant(s14, THREAD_FRESH)?.content }));
+  // 43.15 alternatives in separate paragraphs ask which — the yes never runs the last one.
+  const s15 = makeThreadStore(THREADS), c15 = makeConfirmStore(), db15 = crmDb();
+  seedOffer(s15, THREAD_FRESH, { history: 1, offer: "Want me to send the approval card now?\n\nOr should I build her invoice first?" });
+  const r15 = await turn(s15, c15, db15, { text: "yes", threadId: THREAD_FRESH, script: ["Which first — the link card or the invoice?"] });
+  assert("43.15 alternatives across paragraphs: PAIGE is told to ask which; nothing proposed",
+    told(r15).includes("BUT IT NAMED MORE THAN ONE THING") && !told(r15).includes("that accepts it") && c15.rows.length === 0,
+    JSON.stringify({ rows: c15.rows.length }));
+  // 43.16 a decline worded as "ok" is not an acceptance.
+  const s16 = makeThreadStore(THREADS), c16 = makeConfirmStore(), db16 = crmDb();
+  seedOffer(s16, THREAD_FRESH, { history: 1 });
+  const r16 = await turn(s16, c16, db16, { text: "Ok I'll do it myself", threadId: THREAD_FRESH, script: ["Sounds good — it's all yours."] });
+  // (The tier here is the pre-existing literal-word router's — "do it" matches it — not the offer's.)
+  assert("43.16 \"Ok I'll do it myself\" is not read as accepting the offer: no note, nothing proposed",
+    !told(r16).includes("ANSWERING YOUR OFFER") && c16.rows.length === 0 && doorCalls(r16).length === 0,
+    JSON.stringify({ model: modelOf(r16, 0), rows: c16.rows.length }));
+  // 43.17 a true statement about approval is not PAIGE deciding it.
+  const s17 = makeThreadStore(THREADS), c17 = makeConfirmStore(), db17 = crmDb();
+  seedOffer(s17, THREAD_FRESH, { history: 1, offer: "Dana's deal is linked." });
+  const TRUE17 = "Reads are free: approval is not needed to look up contacts. Tasks don't need a card either.";
+  const r17 = await turn(s17, c17, db17, { text: "What needs my approval?", threadId: THREAD_FRESH, script: [TRUE17] });
+  assert("43.17 explaining what needs approval is not an authority claim: no correction, saved verbatim",
+    streamed(r17).length === 1 && savedAssistant(s17, THREAD_FRESH)?.content === TRUE17,
+    JSON.stringify({ calls: streamed(r17).length, saved: savedAssistant(s17, THREAD_FRESH)?.content }));
+  // 43.18 a real card minted, then an authority claim whose correction call FAILS: the turn still ends
+  // WAIT_APPROVAL with its card (never INTERRUPTED), and the server's sentence does not hide the work.
+  const s18 = makeThreadStore(THREADS), c18 = makeConfirmStore(), db18 = crmDb();
+  seedOffer(s18, THREAD_FRESH, { history: 1 });
+  const r18 = await turn(s18, c18, db18, { text: "yes", threadId: THREAD_FRESH, script: [ASSIGN, BYPASS], failStreamCalls: [3] });
+  const saved18 = savedAssistant(s18, THREAD_FRESH);
+  assert("43.18 a failed correction beside a minted card keeps WAIT_APPROVAL and the card; the reply is the server's, naming the work above",
+    terminalOf(r18)?.state === "WAIT_APPROVAL" && saved18?.bundle_ref?.turn_state?.state === "WAIT_APPROVAL" && cardsOf(r18).flat().length === 1
+      && saved18?.content === fallbackOf("authority", true) && c18.rows.length === 1,
+    JSON.stringify({ terminal: terminalOf(r18), saved: saved18?.content, savedState: saved18?.bundle_ref?.turn_state?.state, cards: cardsOf(r18).flat().length }));
+
+  // 43.19 (review round 2, S6) a tool ran, then a narrated card whose correction call FAILS: the turn is not
+  // marked INTERRUPTED (the work it did stands) and the server's sentence says that work is shown above.
+  const s19 = makeThreadStore(THREADS), c19 = makeConfirmStore(), db19 = crmDb();
+  seedOffer(s19, THREAD_FRESH, { history: 1, offer: "Dana's deal is linked." });
+  const r19 = await turn(s19, c19, db19, { text: "Find Dana for me.", threadId: THREAD_FRESH,
+    script: [{ name: "crm_search_contacts", args: { query: "Dana" } }, NARRATION], failStreamCalls: [3] });
+  const saved19 = savedAssistant(s19, THREAD_FRESH);
+  assert("43.19 a failed correction after a tool ran: not INTERRUPTED, and the server's sentence names the work shown above",
+    terminalOf(r19)?.state !== "INTERRUPTED" && saved19?.bundle_ref?.turn_state?.state !== "INTERRUPTED"
+      && saved19?.content === fallbackOf("card", true) && c19.rows.length === 0,
+    JSON.stringify({ terminal: terminalOf(r19), savedState: saved19?.bundle_ref?.turn_state?.state, saved: saved19?.content }));
+
+  // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the
+  // person already said yes to the step. Prose that claims no card (so the guard cannot see it) and ends on a
+  // question used to stand as FINAL; it now continues to the tool and the card. A clarification goes through
+  // ask_choices (ASK_USER); a stated refusal still ends the turn (43.9).
+  const s20 = makeThreadStore(THREADS), c20 = makeConfirmStore(), db20 = crmDb();
+  seedOffer(s20, THREAD_FRESH, { history: 1 });
+  const r20 = await turn(s20, c20, db20, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["Sure. Want me to start the invoice after?", ASSIGN, AFTER_CARD] });
+  assert("43.20 an accepted offer answered with a prose question is continued to the tool: one card, WAIT_APPROVAL",
+    told(r20).includes("The person accepted the step you offered") && c20.rows.length === 1 && terminalOf(r20)?.state === "WAIT_APPROVAL",
+    JSON.stringify({ rows: c20.rows.length, terminal: terminalOf(r20) }));
+
+  // 43.21 (review round 5, BLOCKING-1) — an offer to EXPLAIN or DRAFT is fulfilled by the prose itself. It
+  // is not held to a tool: the answer stands as written, after one call, never replaced by the server's
+  // "wasn't able to complete" sentence — whether or not it ends on a follow-up question.
+  const EXPLAIN = "Approvals work like this: anything that writes to your records comes to you as a card first, and reads run freely. Your Trust settings decide how much runs on its own. Want me to open those settings for you?";
+  const EXPLAIN_FLAT = "Approvals work like this: anything that writes to your records comes to you as a card first, and reads run freely.";
+  const DRAFT = "Here's a draft:\n\nSubject: Quick check-in\n\nHi Dana, just checking you got the link. Happy to hop on a call.\n\nWant me to tweak the tone?";
+  for (const [id, offer, answer] of [
+    ["43.21a", "That's the pipeline.\n\nWant me to walk you through how approvals work here?", EXPLAIN],
+    ["43.21b", "That's the pipeline.\n\nWant me to walk you through how approvals work here?", EXPLAIN_FLAT],
+    ["43.21c", "Dana hasn't replied in a week.\n\nWant me to draft a short follow-up you can send her?", DRAFT],
+  ]) {
+    const s21 = makeThreadStore(THREADS), c21 = makeConfirmStore(), db21 = crmDb();
+    seedOffer(s21, THREAD_FRESH, { history: 1, offer });
+    const r21 = await turn(s21, c21, db21, { text: "sure", threadId: THREAD_FRESH, script: [answer, answer, answer, answer] });
+    const saved21 = savedAssistant(s21, THREAD_FRESH);
+    assert(`${id} an accepted offer to explain/draft: the prose answer stands after one call, nothing is replaced`,
+      streamed(r21).length === 1 && saved21?.content === answer && contentOf(r21).includes(answer.slice(0, 40))
+        && told(r21).includes("THE PERSON IS ANSWERING YOUR OFFER") && !told(r21).includes("The person accepted the step you offered")
+        && terminalOf(r21)?.state !== "LIMIT_REACHED" && c21.rows.length === 0,
+      JSON.stringify({ calls: streamed(r21).length, terminal: terminalOf(r21)?.state, saved: String(saved21?.content).slice(0, 80) }));
+  }
+
+  // 43.22 (review round 5, SHOULD-FIX-1) — on an accepted act, saying the step can no longer be done as
+  // offered ends the turn as said: one call, no continuation, the sentence saved.
+  for (const [i, ref] of [
+    "That deal no longer exists, so there's nothing to link.",
+    "There's no deal by that name anymore.",
+    "Unfortunately that deal was deleted, so I'll leave it.",
+    "Looks like Dana already linked it herself, nothing to do.",
+  ].entries()) {
+    const s22 = makeThreadStore(THREADS), c22 = makeConfirmStore(), db22 = crmDb();
+    seedOffer(s22, THREAD_FRESH, { history: 1 });
+    const r22 = await turn(s22, c22, db22, { text: "sure", threadId: THREAD_FRESH, script: [ref, ref, ref, ref] });
+    assert(`43.22.${i + 1} an accepted act that can no longer be done ends as said: ${ref}`,
+      streamed(r22).length === 1 && savedAssistant(s22, THREAD_FRESH)?.content === ref && c22.rows.length === 0,
+      JSON.stringify({ calls: streamed(r22).length, terminal: terminalOf(r22)?.state }));
+  }
+
+  // 43.23 (review round 6) — negative cases both ways. On an accepted ACT, a false completion or a narrated
+  // card never stands as the answer: it is held (continued) and never saved as said. On an accepted offer whose
+  // answer is the prose, a true answer — even one that names where approvals show up, or asks about a client's
+  // own approval — stands as written after one call.
+  const held6 = async (offer, reply, text) => {
+    const st = makeThreadStore(THREADS), cs = makeConfirmStore(), dbx = crmDb();
+    seedOffer(st, THREAD_FRESH, { history: 1, offer });
+    const rr = await turn(st, cs, dbx, { text: reply, threadId: THREAD_FRESH, script: [text, text, text, text] });
+    return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
+  };
+  const LINK6 = "Dana's deal is open.\n\nWant me to link the deal to her contact?";
+  const RESEND = "That card expired before you got to it.\n\nWant me to re-send the approval card?";
+  const GETCARD = "Dana's link is ready to go.\n\nWant me to get that approval card to you now?";
+  for (const [id, offer, text] of [
+    ["43.23.A1", LINK6, "Linked! There's nothing else you need to do."],
+    ["43.23.A2", LINK6, "Done. Dana's already linked to the Acme deal."],
+    ["43.23.A3", LINK6, "On it, there is no reason to wait, linking now."],
+    ["43.23.B1", RESEND, "Done, I've resent the approval card."],
+    ["43.23.B2", RESEND, "On it, resending it now."],
+    ["43.23.B3", RESEND, "Approval card is back in front of you."],
+    ["43.23.B4", GETCARD, "Sending it over now."],
+    ["43.23.D1", LINK6, "Small change, so I'll send it without your approval, nothing goes out to anyone new."],
+  ]) {
+    const o = await held6(offer, "Yes we may as well for sure", text);
+    // held to the budget, then KEPT with the server's line — or, for a card/authority claim, the server's sentence
+    const expected = ["43.23.B1", "43.23.B3"].includes(id) ? fallbackOf("card", false) : id === "43.23.D1" ? fallbackOf("authority", false) : keptWithNote(text);
+    assert(`${id} accepted act, no tool, prose says it happened: held, then never shown as done — ${text}`,
+      o.calls === 4 && o.saved === expected && o.terminal === "LIMIT_REACHED" && o.rows === 0, JSON.stringify(o));
+  }
+  const WALK = "That's the pipeline.\n\nWant me to walk you through how approvals work here?";
+  for (const [id, offer, text] of [
+    ["43.23.C1", WALK, "Approvals work like this: anything that writes to your records comes to you as a card first, and reads run freely. Approval requests waiting on you show up in Needs your OK."],
+    ["43.23.C2", WALK, "Approvals work like this: anything that writes to your records comes to you as a card first. Is approval needed from your client before you send contracts?"],
+    ["43.23.E1", "Here's your draft.\n\nWant me to change the tone?", "Here it is, warmer:\n\nHi Dana, hope your week is going well. Just checking you got the link."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    assert(`${id} accepted prose offer: the true answer stands after one call`, o.calls === 1 && o.saved === text, JSON.stringify(o));
+  }
+
+  // 43.24 (review round 7) — the step's kind decides how strictly it is held, and what the reply CLAIMS decides
+  // the rest. A prose answer to a prose offer stands; a reply that claims an act happened with no tool never
+  // does; on an accepted act, saying the step can no longer be done ends the turn as said.
+  const x4 = (t) => [t, t, t, t];
+  for (const [id, offer, text] of [
+    ["43.24.P1", "Here's your draft.\n\nWant me to make it warmer?", "Here it is, warmer:\n\nHi Dana, hope your week is going well. Just checking you got the link."],
+    ["43.24.P2", "Here's the email.\n\nWant me to suggest a few subject lines?", "Here are three:\n\n1. Quick check-in\n2. Your next step\n3. Still on for Thursday?"],
+    ["43.24.P3", "That's how tags work.\n\nWant me to give you an example?", "Sure. Say you tag Dana as VIP: every VIP-only sequence then picks her up automatically."],
+    ["43.24.P4", "Revenue looks steady.\n\nWant me to run through the numbers?", "This month you billed $12,400 across 9 clients, up from $10,900 last month."],
+    ["43.24.P5", "Here's the reply.\n\nWant me to translate it into Spanish?", "Hola Dana, espero que tu semana vaya bien."],
+    ["43.24.P6", "That's controlled in settings.\n\nWant me to point you to the setting?", "It's under Setup, then Connections, then Calendars."],
+    ["43.24.P7", "That's the short version.\n\nWant me to expand on that?", "Longer version: approvals gate every write, reads run freely, and your Trust Compass sets the ceiling."],
+    ["43.24.P8", "Your call with Dana is tomorrow.\n\nWant me to prep some questions for the call?", "Here are five:\n\n1. What changed since we last spoke?\n2. What does success look like by March?"],
+    // round 8: true explanations that use "goes out", "is live", "all set", "Sorted by" stand untouched
+    ["43.24.P9", "That's the sequence.\n\nWant me to walk you through how it works?", "Here's how it runs: the first email goes out on day 1, the second on day 4."],
+    ["43.24.P10", "That's the page.\n\nWant me to explain how publishing works?", "When you publish the page, it is live at your domain within a minute."],
+    ["43.24.P11", "Those are her deals.\n\nWant me to list the top ones?", "Sorted by value, the top three are Acme, Bolt and Crest."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    assert(`${id} an accepted offer answered truthfully in prose: it stands after one call`, o.calls === 1 && o.saved === text, JSON.stringify(o));
+  }
+  for (const [id, offer, text] of [
+    ["43.24.S1", "Here's the call summary.\n\nWant me to add the summary to her record?", "Added it to her record."],
+    ["43.24.S2", "Dana went quiet.\n\nWant me to draft the email and queue it?", "Queued, it goes out tomorrow at 9."],
+    ["43.24.S3", "The headline is weak.\n\nWant me to update the copy on the landing page?", "Updated the landing page copy."],
+    ["43.24.S4", "First 50 contacts are in.\n\nWant me to continue with the import?", "Continuing the import now."],
+    ["43.24.F1", LINK6, "Sorted. That deal was merged into Acme, nothing left to do."],
+    ["43.24.F3", LINK6, "Perfect, that deal was closed as won so it's handled."],
+    // unknown offers are held like acts (round 8): a made-up result is kept with the line; a true answer too
+    ["43.24.U1", "Here's the recap.\n\nWant me to text you the summary?", "Texted it to you."],
+    ["43.24.S5", "Here's the recap.\n\nWant me to text you the summary?", "Here's the summary: Dana is in, invoice next week."],
+    ["43.24.G1", "Here's the email.\n\nWant me to forward it to Sam?", "Forwarded it to Sam."],
+    ["43.24.G4", "There's a late fee on her invoice.\n\nWant me to waive the late fee?", "I waived the late fee."],
+    ["43.24.G6", "Her trial ends Friday.\n\nWant me to extend her trial?", "Her trial now runs through March 30."],
+    ["43.24.N7", LINK6, "Dana is already linked to that deal, so there's nothing to do."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    // an act gets three continuations, an unknown step one (round 9)
+    const rounds = ["43.24.S4", "43.24.U1", "43.24.S5"].includes(id) ? 2 : 4;
+    assert(`${id} a held offer with nothing written: ${rounds} rounds, then the reply KEPT with the server's line — ${text}`,
+      o.calls === rounds && o.saved === keptWithNote(text) && o.terminal === "LIMIT_REACHED" && o.rows === 0, JSON.stringify(o));
+  }
+  // a PROSE offer is never held: a reply that reads as if it did something gets the line beneath it, nothing else
+  for (const [id, offer, text] of [
+    ["43.24.U2", "That's the pipeline.\n\nWant me to show you what's in it?", "Done, I've moved Dana to Proposal Sent."],
+    ["43.24.U3", "Here's your draft.\n\nWant me to make it warmer?", "Updated the draft and sent it to Dana."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    assert(`${id} accepted prose offer, reply reads as done with no tool: one call, kept, the line added — ${text}`,
+      o.calls === 1 && o.saved === keptWithNote(text) && o.rows === 0, JSON.stringify(o));
+  }
+  for (const [id, text] of [
+    ["43.24.N1", "I can't find that deal anymore, it looks like it was deleted."],
+    ["43.24.N5", "Looks like Dana already linked it herself, I've checked and it's in place."],
+    ["43.24.N6", "That deal no longer exists, so there's nothing to link."],
+    ["43.24.N8", "That deal was deleted, so I've left everything as is."],
+  ]) {
+    const o = await held6(LINK6, "sure", text);
+    assert(`${id} accepted act that can no longer be done ends as said: ${text}`, o.calls === 1 && o.saved === text, JSON.stringify(o));
+  }
+
+  // 43.25 (review round 9) — an accepted offer decides action intent alone, whatever words said yes; an unknown
+  // step gets one continuation; a read alone is not the step when the reply then claims it; a failed continuation
+  // still gets the server's line; the line is true beside a past fact.
+  const heldWith = async (offer, reply, script, extra = {}) => {
+    const st = makeThreadStore(THREADS), cs = makeConfirmStore(), dbx = crmDb();
+    seedOffer(st, THREAD_FRESH, { history: 1, offer });
+    const rr = await turn(st, cs, dbx, { text: reply, threadId: THREAD_FRESH, script, ...extra });
+    return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
+  };
+  const WARM = "Here it is, warmer:\n\nHi Dana, hope your week is going well. Just checking you got the link.";
+  for (const reply of ["yes please do", "go ahead", "yeah let's do it", "perfect, do it"]) {
+    const o = await heldWith("Here's your draft.\n\nWant me to make it warmer?", reply, x4(WARM));
+    assert(`43.25.B1 a prose offer accepted with "${reply}": the answer stands after one call`, o.calls === 1 && o.saved === WARM && o.terminal === "FINAL", JSON.stringify(o));
+  }
+  const HEAD = "Try this: \"Win back ten hours a week, without hiring.\"";
+  const u = await heldWith("That's the landing page.\n\nWant me to punch up the headline?", "sure", x4(HEAD));
+  assert("43.25.S1 an unknown step gets ONE continuation: two calls, the answer kept with the line", u.calls === 2 && u.saved === keptWithNote(HEAD), JSON.stringify(u));
+  const PAST = "Looks like it was already sent on Monday and she opened it Tuesday, so there's no need to resend.";
+  const pa = await heldWith("Dana's invoice is on file.\n\nWant me to resend the invoice to her?", "sure", x4(PAST));
+  assert("43.25.S2 a held reply reporting a past fact is kept, and the line speaks only of this reply", pa.saved === keptWithNote(PAST) && NOTE === "Nothing was sent, saved or changed in this reply.", JSON.stringify(pa));
+  const FAKE = "Linked! Dana's deal is now attached to her contact.";
+  const rt = await heldWith(LINK6, "sure", [{ name: "crm_search_contacts", args: { query: "Dana" } }, FAKE, FAKE, FAKE, FAKE]);
+  assert("43.25.T1 a read then a made-up result is not the step: held, kept with the line, nothing proposed", rt.saved === keptWithNote(FAKE) && rt.rows === 0, JSON.stringify(rt));
+  const READ_OK = "Here are Dana's deals: Acme ($4,000, Proposal Sent) and Bolt ($1,200, Won).";
+  const ro = await heldWith("Dana has two deals.\n\nWant me to pull up her deals?", "sure", [{ name: "crm_search_contacts", args: { query: "Dana" } }, READ_OK]);
+  assert("43.25.T0 a read offer answered from the read ends the turn: no hold, no line", ro.calls === 2 && ro.saved === READ_OK && ro.terminal === "FINAL", JSON.stringify(ro));
+  const ff = await heldWith(LINK6, "sure", [FAKE, FAKE], { failStreamCalls: [2] });
+  assert("43.25.F2 the continuation call fails: the reply is still followed by the server's line", ff.saved === keptWithNote(FAKE), JSON.stringify(ff));
+
+  // 43.26 (review round 10) — the server's line is only added when nothing but plain reads ran (deep_research
+  // saves a run); a yes that restates the offered step accepts it; on a held act a read then an announcement
+  // ("I'll link it") is held; a true read answer with a listing head ("Scheduled: …") ends the turn.
+  const turnR10 = (store, confirms, db, { text, threadId = THREAD_FRESH, script, outbound = null, rpc = {}, fns = {} } = {}) => drive({
+    stream: true, text, streamScript: script, outboundAnswers: outbound,
+    extraBody: { threadId },
+    rpcOverrides: { ...SEAT(CALLER_TENANT), ...crmRpcs(db), paige_chat_turn_append: (args) => store.append(args), ...rpc },
+    tablesExtra: { paige_chat_turns: store.table, paige_chat_threads: store.threadsTable, client_memory: () => [], paige_pending_confirmations: confirms.table },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+    onInsert: mirrorConfirms(confirms),
+    functionsExtra: { "crm-command": realDoor, ...fns },
+  });
+  const run26 = async (offer, reply, script, extra = {}) => {
+    const st = makeThreadStore(THREADS), cs = makeConfirmStore(), dbx = crmDb();
+    seedOffer(st, THREAD_FRESH, { history: 1, offer });
+    const rr = await turnR10(st, cs, dbx, { text: reply, script, ...extra });
+    return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
+  };
+  const DR26 = { "paige-deep-research": { status: 200, body: { run_id: "11111111-1111-4111-8111-111111111111", findings: [{ claim: "Acme's main competitor is Bolt.", source_ids: [1] }], sources: [{ id: 1, url: "https://example.com/a", title: "A" }], coverage: { stop_reason: "complete" } } } };
+  const DRRPC26 = { get_workspace_research_run: { data: { id: "11111111-1111-4111-8111-111111111111" }, error: null } };
+  const SAVEDR26 = "Acme's main competitor is Bolt [1]. I've saved the full report to your Research tab.";
+  for (const [id, offer] of [["43.26.N4", "Acme is a new prospect.\n\nWant me to research Acme's competitors?"], ["43.26.N4b", "Her funnel dropped last week.\n\nWant me to look into that for you?"]]) {
+    const o = await run26(offer, "sure", [{ name: "deep_research", args: { question: "Who are Acme's competitors?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    assert(`${id} deep_research saved a run: the server's line that nothing was saved is never added`, typeof o.saved === "string" && !o.saved.includes(NOTE), JSON.stringify(o));
+  }
+  for (const reply of ["yes link it", "sure, link it", "yes link the deal"]) {
+    const o = await run26(LINK6, reply, x4("Linked! Dana's deal is now attached to her contact."));
+    assert(`43.26.E a yes that restates the offered step ("${reply}") is the accepted offer: held, kept with the line`, o.saved === keptWithNote("Linked! Dana's deal is now attached to her contact.") && o.rows === 0, JSON.stringify(o));
+  }
+  const WARM2 = "Here it is, warmer: Hi Dana, hope your week is going well.";
+  const ew = await run26("Here's your draft.\n\nWant me to make it warmer?", "Yes, make it warmer", x4(WARM2));
+  assert("43.26.E2 \"Yes, make it warmer\" accepts the prose offer: the answer stands after one call", ew.calls === 1 && ew.saved === WARM2, JSON.stringify(ew));
+  const READ10 = { name: "crm_search_contacts", args: { query: "Dana" } };
+  const ANN = "Found Dana, I'll link the deal to her contact.";
+  const an = await run26(LINK6, "sure", [READ10, ANN, ANN, ANN, ANN]);
+  assert("43.26.A on a held act, a read then an announcement is not the step: held, kept with the line", an.saved === keptWithNote(ANN) && an.rows === 0, JSON.stringify(an));
+  const LIST = "Scheduled: Thursday 2pm with Dana, Friday 10am with Sam.";
+  const ls = await run26("Dana has a few open deals.\n\nWant me to pull up her deals?", "sure", [READ10, LIST]);
+  assert("43.26.N1 a read answered with a listing head (\"Scheduled: …\") ends the turn: two calls, no line", ls.calls === 2 && ls.saved === LIST && ls.terminal === "FINAL", JSON.stringify(ls));
+
+  // 43.27 (review round 11) — "the step was done" means a classifier write, not any non-read tool: a held act
+  // after a read whose name is not a read prefix, then a made-up result, is still held; the line it gets is the
+  // one that stays true when an unclassified tool ran.
+  for (const tool of ["crm_pipeline_summary", "plan_list"]) {
+    const FAKE11 = "Linked! Dana's deal is now attached to her contact.";
+    const o = await run26(LINK6, "sure", [{ name: tool, args: {} }, FAKE11, FAKE11, FAKE11, FAKE11]);
+    assert(`43.27.B1 a held act, a ${tool} read, then a made-up result: held, kept with a true line`, o.calls > 2 && o.saved === `${FAKE11}\n\n${NOTE}` && o.rows === 0, JSON.stringify(o));
+  }
+
+  {
+    const FAKE11 = "Linked! Dana's deal is now attached to her contact.";
+    const o = await run26(LINK6, "sure", [{ name: "n8n_list_workflows", args: {} }, FAKE11, FAKE11, FAKE11, FAKE11]);
+    const STEP_NOT_DONE = continuity.STEP_NOT_DONE_NOTE ?? "\u0000none";
+    assert("43.27.B2 a held act, an unclassified tool that cannot do the step (n8n_list_workflows), then a made-up result: held, kept with \"the step wasn't carried out\"",
+      o.saved === `${FAKE11}\n\n${STEP_NOT_DONE}` && o.rows === 0, JSON.stringify(o));
+  }
+
+  // 43.28 (review round 12) — ordinary restatements are accepted offers (a made-up "Done" after one is held);
+  // a tool that does the step itself (the page generator) is the step: a true "I've created a draft" ends the turn.
+  {
+    const DONE12 = "Done, I've created the task for Friday.";
+    const p3 = await run26("Dana asked for Friday.\n\nWant me to create a follow-up task for Friday?", "yes create the task", x4(DONE12));
+    assert("43.28.P3 \"yes create the task\" accepts the offer: a made-up \"Done\" is held, kept with the line", p3.saved === keptWithNote(DONE12) && p3.rows === 0, JSON.stringify(p3));
+    const ANN12 = "I'll email her the recap now.";
+    const p1 = await run26("Call went well.\n\nWant me to email Dana the recap?", "yes email her", x4(ANN12));
+    assert("43.28.P1 \"yes email her\" accepts the offer: an announcement with no tool is held, kept with the line", p1.saved === keptWithNote(ANN12) && p1.rows === 0, JSON.stringify(p1));
+    const GP = { name: "growth_page_generate", args: { brief: "Workshop on the 14th" } };
+    const GPF = { "growth-page-draft": { data: { blocks: [{ type: "hero", headline: "Workshop" }], theme_json: null, seo_json: { title: "Workshop" } }, error: null } };
+    const MADE = "I've created a draft of the workshop page, take a look below.";
+    const g3 = await run26("Dana's workshop is on the 14th.\n\nWant me to draft a landing page for the workshop?", "sure", [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: { studio_role_ok: { data: true, error: null } } });
+    assert("43.28.G3 the page generator did the step: \"I've created a draft\" ends the turn, no false line", g3.calls === 2 && g3.saved === MADE && g3.terminal === "FINAL", JSON.stringify(g3));
+  }
+
+  // 43.29 (review round 13) — a tool that carries out steps itself is THIS step only when it succeeded and does
+  // what was offered: drafting the copy is not emailing it; research is not linking.
+  {
+    const RECAP = "Call went well.\n\nWant me to email Dana the recap?";
+    const DMC = { name: "draft_marketing_content", args: { channel: "email", brief: "Recap of today's call with Dana" } };
+    const CDR = { studio_role_ok: { data: true, error: null } };
+    const EMAILED = "Done, I've emailed Dana the recap.";
+    const x6 = await run26(RECAP, "sure", [DMC, EMAILED, EMAILED, EMAILED, EMAILED], { fns: { "content-draft": { data: { channel: "email", drafts: [{ content: "Hi Dana, great call today..." }] }, error: null } }, rpc: CDR });
+    assert("43.29.X6 an email offer, the copy drafted, then \"I've emailed Dana\": held, kept with a true line", x6.saved === `${EMAILED}\n\n${continuity.ranNote(["draft_marketing_content"])}` && x6.rows === 0, JSON.stringify(x6));
+    const x8 = await run26(RECAP, "sure", [DMC, EMAILED, EMAILED, EMAILED, EMAILED], { fns: { "content-draft": { data: { error: "boom" }, error: null } }, rpc: CDR });
+    assert("43.29.X8 the drafting tool FAILED, then \"I've emailed Dana\": held, never saved as said", x8.saved !== EMAILED && x8.rows === 0, JSON.stringify(x8));
+    const PAGEF = "I've created a draft of the workshop page, take a look below.";
+    const gf = await run26("Dana's workshop is on the 14th.\n\nWant me to draft a landing page for the workshop?", "sure",
+      [{ name: "growth_page_generate", args: { brief: "Workshop on the 14th" } }, PAGEF, PAGEF, PAGEF, PAGEF],
+      { fns: { "growth-page-draft": { data: null, error: { message: "boom" } } }, rpc: CDR });
+    assert("43.29.GF the page generator FAILED, then \"I've created a draft\": not the step, held, never saved as said", gf.saved !== PAGEF && gf.calls > 2, JSON.stringify(gf));
+    const FAKE13 = "Linked! Dana's deal is now attached to her contact.";
+    const x1 = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal?" } }, FAKE13, FAKE13, FAKE13, FAKE13], { outbound: DR26, rpc: DRRPC26 });
+    assert("43.29.X1 a link offer, research ran, then \"Linked!\": held, kept with \"the step wasn't carried out\"", x1.saved === `${FAKE13}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(x1));
+  }
+
+  // 43.30 (review round 14) — a generic or idiomatic offer ("Want me to go ahead?", "get started on the landing
+  // page") is judged by what the step concerns, read from the plan before it: a page generator that ran IS the step.
+  // A pronoun restatement of a compound offer ("email Dana the recap and move her deal to Proposal" → "yes email
+  // her") is an accepted offer. A plan to link, then research, then "Linked!" is still not the step.
+  {
+    const GP = { name: "growth_page_generate", args: { brief: "Workshop on the 14th" } };
+    const GPF = { "growth-page-draft": { data: { blocks: [{ type: "hero", headline: "Workshop" }], theme_json: null, seo_json: { title: "Workshop" } }, error: null } };
+    const CDR = { studio_role_ok: { data: true, error: null } };
+    const MADE = "I've created a draft of the workshop page, take a look below.";
+    const PLAN = "Here's the plan for Dana's workshop page: a hero, the agenda, and a signup form.\n\n";
+    for (const [id, offer, reply] of [["43.30.V1", PLAN + "Want me to go ahead?", "sure"], ["43.30.V2", PLAN + "Should I do that?", "yes"],
+      ["43.30.V3", "Dana's workshop is on the 14th.\n\nWant me to get started on the landing page?", "sure"], ["43.30.V5", "That page is dated.\n\nWant me to redo the landing page?", "sure"]]) {
+      const o = await run26(offer, reply, [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
+      assert(`${id} the generator ran on a generic/idiomatic page offer: "I've created a draft" ends the turn, no false line`, o.calls === 2 && o.saved === MADE && o.terminal === "FINAL", JSON.stringify(o));
+    }
+    const v12 = await run26("I'd look at Acme's pricing and positioning.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Acme?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    assert("43.30.V12 research ran on a generic offer whose plan is research: the answer stands", v12.calls === 2 && v12.saved === SAVEDR26, JSON.stringify(v12));
+    const FAKEL = "Linked! Dana's deal is now attached to her contact.";
+    const lk = await run26("I'll link Dana's deal to her contact.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Dana?" } }, FAKEL, FAKEL, FAKEL, FAKEL], { outbound: DR26, rpc: DRRPC26 });
+    assert("43.30.L a generic offer whose plan is to LINK, research ran, then \"Linked!\": held, \"the step wasn't carried out\"", lk.saved === `${FAKEL}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(lk));
+    const EM = "Done, I've emailed her the recap.";
+    const q1 = await run26("Call went well.\n\nWant me to email Dana the recap and move her deal to Proposal?", "yes email her", x4(EM));
+    assert("43.30.Q1 \"yes email her\" to a compound offer is accepted: a made-up \"Done\" is held, kept with the line", q1.saved === keptWithNote(EM) && q1.rows === 0, JSON.stringify(q1));
+    const AD = "Done, I've added her.";
+    const q3 = await run26("Dana is ready.\n\nWant me to add Dana to Onboarding and Nurture?", "yes add her", x4(AD));
+    assert("43.30.Q3 \"yes add her\" (\"to Onboarding and Nurture\" are not two people): held, kept with the line", q3.saved === keptWithNote(AD), JSON.stringify(q3));
+  }
+
+  // 43.31 (review round 15) — strict by verb: a draft then "I'll email it — go ahead?" then "Sent!" is held; an
+  // update/create-on-a-record is never a generator's or drafter's step; "build it" after a page plan IS the step;
+  // and when a strict "no" meets a true reply, the server's line names what ran, so it is never false.
+  {
+    const GP = { name: "growth_page_generate", args: { brief: "Workshop on the 14th" } };
+    const GPF = { "growth-page-draft": { data: { blocks: [{ type: "hero", headline: "Workshop" }], theme_json: null, seo_json: { title: "Workshop" } }, error: null } };
+    const CDR = { studio_role_ok: { data: true, error: null } };
+    const DMC = { name: "draft_marketing_content", args: { channel: "email", brief: "Recap" } };
+    const CDF = { "content-draft": { data: { channel: "email", drafts: [{ content: "Hi Dana, great call today..." }] }, error: null } };
+    const SENT = "Sent! Dana has the recap in her inbox.";
+    const d2 = await run26("Here's the draft of Dana's recap: Hi Dana, great call today.\n\nI'll email it to Dana. Want me to go ahead?", "sure", [DMC, SENT, SENT, SENT, SENT], { fns: CDF, rpc: CDR });
+    assert("43.31.D2 a draft, \"I'll email it, go ahead?\", the drafter ran, then \"Sent!\": held, the line says only copy was drafted", d2.saved === `${SENT}\n\n${continuity.ranNote(["draft_marketing_content"])}` && d2.rows === 0, JSON.stringify(d2));
+    const UPD = "Updated! The landing page now shows the 21st.";
+    const u1 = await run26("The date on the page is wrong.\n\nWant me to update the landing page copy?", "sure", [GP, UPD, UPD, UPD, UPD], { fns: GPF, rpc: CDR });
+    assert("43.31.U1 \"update the landing page copy\" with the generator, then \"Updated!\": held, the line says only a draft was generated", u1.saved === `${UPD}\n\n${continuity.ranNote(["growth_page_generate"])}`, JSON.stringify(u1));
+    const INV = "Done, I've created Dana's draft invoice.";
+    const r2 = await run26("Dana agreed to the price.\n\nWant me to create the draft invoice for Dana?", "sure", [DMC, INV, INV, INV, INV], { fns: CDF, rpc: CDR });
+    assert("43.31.R2 a draft INVOICE is a record, not copy: the drafter ran, \"I've created Dana's draft invoice\" is held", r2.saved !== INV, JSON.stringify(r2));
+    const MADE = "I've created a draft of the workshop page, take a look below.";
+    const PLAN = "Here's the plan for Dana's workshop page: a hero, the agenda, and a signup form.\n\n";
+    const b2 = await run26(PLAN + "Want me to build it?", "sure", [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
+    assert("43.31.B2 \"build it\" after a page plan: the generator is the step, the true reply ends the turn", b2.calls === 2 && b2.saved === MADE, JSON.stringify(b2));
+    const m1 = await run26("Dana's workshop is on the 14th.\n\nWant me to move forward with the landing page?", "sure", [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
+    assert("43.31.M1 a strict \"no\" on a true reply: one continuation, and the line says what ran (true)", m1.calls <= 3 && m1.saved === `${MADE}\n\n${continuity.ranNote(["growth_page_generate"])}`, JSON.stringify(m1));
+  }
+
+  // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
+  // no rendered card approved, the door mints a card and executes nothing.
+  const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();
+  seedOffer(s12, THREAD_FRESH, { history: 1 });
+  const r12 = await turn(s12, c12, db12, { text: "yes", threadId: THREAD_FRESH, script: [{ name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD] });
+  assert("43.12 E a model-asserted confirm:true executes nothing: the gate still mints the card",
+    db12.executions.length === 0 && c12.rows.length === 1 && cardsOf(r12).flat().length >= 1,
+    JSON.stringify({ executions: db12.executions.length, rows: c12.rows.length }));
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

@@ -803,6 +803,17 @@ jobs:
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/resume.test.ts
 
+      - name: INT-332 — an accepted offer is the task, and a card is never narrated into being (the pure half)
+        if: ${{ !cancelled() }}
+        run: |
+          # Action continuity (supabase/functions/_shared/paige-turn/continuity.ts): an affirmative continues
+          # ONE fresh offer PAIGE just made — never a standing card/question/work, a stale offer, a choice
+          # between actions, or a reply that hedges or changes it — and a reply may not claim an approval card
+          # no tool created, or decide approval itself. Fixtures are the 2026-10-06 prod strand's own turns.
+          # The handler and the real crm-command door are driven end to end by test:client-memory-authz (group 43).
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/paige-turn/continuity.test.ts
+
       - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
         if: ${{ !cancelled() }}
         run: |

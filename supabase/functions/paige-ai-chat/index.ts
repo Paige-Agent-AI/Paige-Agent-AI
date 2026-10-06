@@ -232,6 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, ranNote, saysItWasDone, stepToolDoes, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -5933,6 +5934,12 @@ BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal req
 
 YOUR OWN WORDS ARE NEVER EVIDENCE — a claim that something happened (created, updated, deleted, archived, restored, sent, enrolled, moved, connected, completed) requires a real result, receipt, or verified readback from a tool call in THIS conversation. Your own words in a PREVIOUS turn are never evidence that the action occurred — if a prior turn claimed something and no tool result or outcome card backs it, treat that claim as unverified and correct course rather than building on it. The test is always: "Is there a machine result in this conversation that proves this happened?" If not, you do not claim it, and you do not treat your earlier claim as proof.
 
+AN ACCEPTED OFFER IS THE TASK — when your last message offered one specific action and the person accepts it ("yes", "sure", "go ahead", "may as well"), carry it out in this turn by calling its tool; when it needs their approval, the tool is what puts the card in front of them. If what you offered was an answer — an explanation, a breakdown, a draft for them to use — give it in full instead. Never say a card is coming, ready, sent or waiting unless a tool in this turn returned one. If you offered more than one thing, ask which before acting.
+
+APPROVAL IS NOT YOURS TO DECIDE — whether an act needs the person's approval is decided by the platform when you call its tool (the act's risk, the workspace's Trust settings, the person's role, the workspace). Never guess it from a setting, never ask whether approvals are on, and never offer to skip a card or run something directly. If a card the person expected did not appear, call the tool again rather than describing one.
+
+NAME RECORDS, DON'T PRINT THEM — refer to people, deals and records by their names. Never put raw record ids (long hex strings) or internal field names (like contact_client_id or expected_version) in your reply; when two records share a name, tell them apart by something the person knows (stage, value, date, or the last four characters, like "deal …d798").
+
 SEARCH BEFORE SAYING NO — before you tell the operator "the platform can't do that" or "that tool doesn't exist" or "that's not available", check the tools you actually have in this turn. Remembered historical tools or your own earlier narration about what's available can never outrank the live tool list in front of you. If you have not checked, say "let me check what I can do" and look.
 
 CHECK YOUR OWN HANDS BEFORE DESCRIBING THEM — when the operator asks what you can or cannot do (with n8n, Zapier, an integration, a data source, anything), your answer comes from the LIVE TOOL MANIFEST in this turn, enumerated before you speak — never from memory, never from an earlier turn's narration. A connection/readiness block describes STATE (connected or not, approved counts, last check), never CAPABILITY: "0 approved workflows" does not mean you lack workflow tools — it means no standing pre-approval exists, and your management tools are still in your hands (reads run ungated; their writes run propose-first — you offer, the operator approves the specific action right here). Stating "I can't" or "I don't have the ability" about a domain your manifest carries tools for — without having checked the manifest this turn — is a fabrication with the operator's trust as its cost: they take your first word as the truth. If asked "what can we do with X?", the correct move is to enumerate X's tools from the manifest AND run the cheapest read to prove the lane live, then answer from what came back. This is NOT limited to direct questions: when the operator so much as MENTIONS connecting, changing, or using an integration — even in passing ("I just connected my n8n account") — that is your cue to ground yourself the same way: check the manifest for that domain's tools, prove the lane live with the cheapest read, and proactively offer what you can now do, rather than waiting to be asked or describing limits you have not checked.
@@ -9005,8 +9012,42 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (/\b(creat(e|ing)|build( me| a| an| the)|generat(e|ing)|draft( me| a| an| the)|make me|write me (a|an|the)|set up|schedule|book (a|an|the|this)|enroll|move .* (to|into) .* stage|publish|launch|add (a|an|the|this) (contact|deal|task|meeting|event|pipeline|stage))\b/.test(t)) return true;
       return false;
     };
-    const substantiveTurn =
-      !!lastUserMessage && substantiveTurnIntent(String(lastUserMessage.content ?? ""));
+    // INT-332 — THE FOREGROUND OFFER (_shared/paige-turn/continuity.ts). Both gates above and C1's
+    // `isActionIntent` read only the person's literal words, so "Yes we may as well for sure" — accepting
+    // the one action PAIGE had just offered — counted as neither: the turn went to the cheap tier, which
+    // narrated "Sending the approval card now…" with no tool, and that prose stood as FINAL (prod
+    // 2026-10-06, no confirmation row). Read PAIGE's immediately preceding turn from the caller's OWN
+    // thread (session client, RLS): if it was a finished, recent answer that closed on ONE offer, and the
+    // reply plainly accepts it, the offered step is this turn's task — the reasoning tier, C1 action
+    // intent, and a note that says so. It grants nothing: the tool still goes through the gate, which
+    // alone decides whether the step needs a card. A read that fails is the ordinary path. The same read
+    // tells the claim guard (C1, below) whether a card from the previous turn is still standing.
+    let foreground: Foreground = { offer: { kind: "none", reason: "no_previous_turn" }, standingCard: false };
+    // (Not on an answer turn: its previous turn is PAIGE's question — never an offer or a standing card.)
+    if (payloadThreadId && !studioSessionId && !liveRuntimeScope && !answerBinding && lastUserMessage) {
+      try {
+        const { data: fgTurns, error: fgError } = await supabaseClient.from("paige_chat_turns")
+          .select("role,content,created_at,bundle_ref").eq("thread_id", payloadThreadId)
+          .in("role", ["user", "assistant"]).order("seq", { ascending: false }).limit(3);
+        if (!fgError) foreground = readForeground((fgTurns ?? []) as ForegroundTurn[], String(lastUserMessage.content ?? ""), Date.now());
+      } catch (e) {
+        console.warn("[paige] foreground read failed; ordinary path:", (e as Error)?.message);
+      }
+    }
+    // An approval turn carries its own act forward (C4a/C4b); a client seat's tools are deny-by-default.
+    // A document turn is its own request; the read above still runs on it so the claim guard knows whether a
+    // card is standing from the previous turn.
+    const offerEligible = callerTier !== "client" && approvedConfirmations.size === 0 && !attachedDocument && !answerBinding;
+    const offerAccepted = foreground.offer.kind === "accepted" && offerEligible;
+    const offerAmbiguous = foreground.offer.kind === "ambiguous" && offerEligible;
+    // What kind of step was accepted (act / prose / unknown). An answer PAIGE offered in prose is not held; any
+    // other accepted step (act or unknown) is held to tool / card / ask_choices / a stated impossibility, and if
+    // it runs out of rounds its last reply is KEPT with the server's line that nothing ran — never silently
+    // replaced, never left standing as if it had happened (review rounds 5–8: no word list decides this).
+    const acceptedKind = offerAccepted && foreground.offer.kind === "accepted" ? offerKind(foreground.offer.offer) : null;
+    if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
+    const substantiveTurn = offerAccepted
+      || (!!lastUserMessage && substantiveTurnIntent(String(lastUserMessage.content ?? "")));
 
     if (!(await revalidateTenantKnowledgeScope())) {
       return new Response(
@@ -9448,6 +9489,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
       answerResume = { askId, turnId: binding.turnId, ask: binding.ask, skipped: binding.skipped };
       aiMessages.push({ role: "system", content: answerTurnNote(answerResume.ask, { skipped: answerResume.skipped }) });
+    }
+    // Held = an accepted act or unknown step on a turn that is not resuming an approval or an answer.
+    const heldAccept = acceptedKind !== null && acceptedKind !== "prose" && resumeCalls.length === 0 && !answerResume;
+    // INT-332 — PAIGE hears that the person is answering her offer, last, beside their words.
+    if (resumeCalls.length === 0 && !answerResume && foreground.offer.kind !== "none" && (offerAccepted || offerAmbiguous)) {
+      const reply = String(lastUserMessage?.content ?? "");
+      aiMessages.push({ role: "system", content: offerAccepted
+        ? acceptedOfferNote(foreground.offer.offer, reply, { kind: acceptedKind ?? undefined })
+        : ambiguousOfferNote(foreground.offer.offer, reply) });
     }
     const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
       method: "POST",
@@ -15882,6 +15932,29 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // event machinery. No second runner, no unbounded loop: a hard budget stops it.
       const MAX_CONTINUATIONS = 3;
       let continuationsUsed = 0;
+      // INT-332 — on a held accepted offer a read alone is not the step. `writeAttempts` counts every tool that may
+      // have changed something: a write by the classifier, or ANY tool not plainly named as a read (deep_research
+      // saves a run, previews mint bindings, web tools log events — review round 10). The server's line that nothing
+      // was saved is only ever added when nothing but plain reads ran.
+      const PLAIN_READ_TOOL = /^(?:crm_(?:search|get|list|read)_|get_|list_|search_|lookup_|read_|find_|view_|fetch_|query_|describe_|show_)/;
+      // Read-only tools named by suffix, each verified as a select / read RPC (review round 11).
+      const NAMED_READ_TOOLS = new Set(["crm_pipeline_summary", "plan_list", "action_list", "action_get", "inbox_list", "integrations_list",
+        "automation_list", "automation_triggers_list", "improvement_list", "growth_list", "pipeline_catalogue", "comms_list_numbers",
+        "comms_search_numbers", "comms_connection_summary", "comms_registration_status", "presence_who_online", "presence_is_online",
+        "marketplace_browse", "document_pending_reviews"]);
+      // Tools that carry out a step themselves without being classifier writes: a generated draft, a saved research
+      // run, a filed approval (review round 12). Any of these, a classifier write or a question card = the step ran.
+      const STEP_CAPABLE_TOOLS = new Set(["growth_page_generate", "growth_funnel_generate", "deep_research", "draft_marketing_content", "propose_action", "ask_choices"]);
+      let writeAttempts = 0;
+      // A write by the classifier (or a question card): what "the step was done" means. Kept separate from the
+      // broad count above, which only decides whether the server may say nothing was saved (review round 11).
+      let classifierWrites = 0;
+      let continuationFailed = false;
+      // An unknown step gets one continuation, not three: it may well be an answer (review round 9).
+      // Step tools that ran successfully but were not judged to be the offered step: named in the server's line, and
+      // they cut the continuations to one — the model can say so if that WAS the step (review round 15).
+      const stepToolsRan: string[] = [];
+      const continuationLimitFor = () => (acceptedKind === "unknown" && heldAccept) || stepToolsRan.length > 0 ? 1 : MAX_CONTINUATIONS;
       // Action intent is CONSERVATIVE on purpose: imperative mutations the platform actually
       // performs. A question (ending in "?"), a greeting, or a bare statement is a terminal
       // state — the assignment forbids continuing after a genuine question that needs the
@@ -15889,6 +15962,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const ACTION_INTENT_RE = /(?:^|[.!?\n]\s*|,\s*)(?:add|updat|chang|mov|set|mak|complet|fil|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|subscrib)(?:e|es|ed|ing|ion|ions)?\b|\b(?:can|could|need|want|let|like)\s+(?:you\s+)?(?:to\s+)?(?:add|updat|chang|mov|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|set|mak|complet|fil)(?:e|es|ed|ing)?\b|\b(?:go ahead|do it|run it|ship it|sign (?:\w+ )?up|enroll(?:ed)? (?:her|him|them|this)|archive[d]? (?:that|the|this)|delet(?:e|ed) (?:that|the|this|it)|(?:add|updat|chang|mov|complet|fil)[a-z]* (?:a|an|the|this|that|it|her|him|them|my|our) |please (?:add|updat|chang|mov|complet|fil|mak|set|send|creat|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|subscrib|pay|remind|cancel|approv|confirm|book|invit|renam|sign|do|run|go))\b/i;
       const isActionIntent = (() => {
         if (callerTier === "client") return false; // client seats' tools are deny-by-default
+        // INT-332 — accepting PAIGE's own single offer is a request for that action, in any words.
+        // An accepted offer decides it alone: held steps are action, an accepted prose answer is not — whatever
+        // words the person used to say yes ("go ahead", "please do"; review round 9).
+        if (acceptedKind !== null && resumeCalls.length === 0 && !answerResume) return heldAccept;
         const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
         const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
         if (!text || text.length < 3) return false;
@@ -15901,6 +15978,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the honest blockage. The prompt REQUIRES these sentences, so continuing over them
       // pressures the model toward fabrication — each is a legitimate end.
       const PROSE_TERMINAL_RE = /(?:^|[.!?]\s+)(?:which (?:one|pipeline|contact|deal|stage|account)|what(?:'s| is) (?:your|the|their)|do you (?:want|mean|prefer)|should (?:i|we) (?:use|add|create|move|proceed)|are you sure|want me to|would you like|how (?:about|do i|do you))|(?:^|[.!?]\s+|\b)(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact|contacts|pipelines|tools) (?:for|exists|exist|available)|i wasn'?t able to complete)/i;
+      // INT-332 — the refusal / blockage half of PROSE_TERMINAL_RE alone. On a turn that accepts PAIGE's own
+      // single offer, a question in prose is NOT a terminal answer: the person already said yes to that step,
+      // so it ends at the tool (and its card), a stated refusal or blockage, or a question asked with
+      // ask_choices — which ends the turn ASK_USER. A prose question there is how the 2026-10-06 strand stood.
+      const PROSE_REFUSAL_RE = /(?:^|[.!?]\s+|\b)(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact|contacts|pipelines|tools) (?:for|exists|exist|available)|i wasn'?t able to complete)/i;
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
@@ -16347,6 +16429,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             totalToolCalls += sumToolCost(executed);
+            writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !(PLAIN_READ_TOOL.test(n) || NAMED_READ_TOOLS.has(n)); }).length;
+            // A step-capable tool is the step only when it succeeded and, on an accepted act, is what was offered.
+            classifierWrites += executed.filter((tc: any) => {
+              const n = String(tc?.function?.name ?? "");
+              if (MUTATING_TOOLS.has(n)) return true;
+              if (!STEP_CAPABLE_TOOLS.has(n)) return false;
+              let ok = true;
+              try { ok = (JSON.parse(String(toolResultContent.get(tc?.id) ?? "{}")) as { success?: unknown })?.success !== false; } catch { /* non-JSON result: not a stated failure */ }
+              if (!ok) return false;
+              const isStep = !(heldAccept && acceptedKind === "act" && foreground.offer.kind === "accepted") || stepToolDoes(n, foreground.offer.offer, foreground.offer.context ?? "");
+              if (!isStep) stepToolsRan.push(n);
+              return isStep;
+            }).length;
             if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
             // What stays at the round's end reads the round as a whole, after the approval rewrite:
@@ -16433,18 +16528,69 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // conversation, the provider is re-called through the existing gateway, and the SAME
           // for loop re-enters with the new response (via the while wrapper). A hard budget
           // of MAX_CONTINUATIONS stops it. The `!hasToolCall` block is byte-identical to main.
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
-              && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
+          // INT-332 — AN UNBACKED CLAIM IS NEVER A TERMINAL ANSWER. Prose that says an approval card is
+          // coming, ready or waiting when no card was created in this turn (and none is standing from the
+          // previous one), or that decides approval itself ("approvals are off", "I can run it directly"),
+          // is fed back with a correction — on the reasoning tier, inside the same continuation budget —
+          // whatever the person's words were. If it still stands when the budget is spent or the retry
+          // fails, the server answers truthfully below. Checked before C1's own test: a claimed card is
+          // not "a question" just because the same reply also asks one.
+          let claimContinued = false;
+          const cardThisTurn = () => queuedApprovals.length > 0 || confirmTrace.length > 0;
+          const claim = finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
+            ? unbackedClaim(finalAssistantText, { cardMinted: cardThisTurn(), standingCard: foreground.standingCard })
+            : null;
+          if (claim && continuationsUsed < MAX_CONTINUATIONS) {
+            claimContinued = true;
+            continuationsUsed += 1;
+            convo.push({ role: "assistant", content: finalAssistantText || "" });
+            convo.push({ role: "user", content: CLAIM_CORRECTION[claim] });
+            try {
+              const correctionResponse = await gatewayCompat("anthropic", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: "google/gemini-2.5-pro", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+              }, traceFor("chat-claim-correction"));
+              if (correctionResponse.ok) {
+                currentResponse = correctionResponse;
+                finalChunks = null; finalAssistantText = "";
+                continueContinuation = true;
+              } else if (!cardThisTurn() && totalToolCalls === 0) {
+                // A card minted, work accepted (WAIT_WORK) or a write that ran keeps the turn's own state: the
+                // correction failing does not undo what this turn did.
+                turnTracker.interrupted();
+              }
+            } catch (e) {
+              if (!cardThisTurn() && totalToolCalls === 0) {
+                if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
+                else turnTracker.interrupted();
+              }
+            }
+          }
+          if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
+              && isActionIntent && continuationsUsed < continuationLimitFor() && !studioSessionId) {
+            const acceptedTurn = heldAccept;
             const proseTerminal = typeof finalAssistantText === "string"
-              && (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?"));
-            const signalTerminal = totalToolCalls > 0
+              && (acceptedTurn
+                ? (PROSE_REFUSAL_RE.test(finalAssistantText) || NO_LONGER_POSSIBLE.test(finalAssistantText))
+                : (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?")));
+            // On a held offer a read alone does not end it when the reply then says it did the step ("Linked!").
+            const readThenClaims = acceptedTurn && classifierWrites === 0 && typeof finalAssistantText === "string"
+              && (saysItWasDone(finalAssistantText) || (acceptedKind === "act" && announcesTheStep(finalAssistantText, foreground.offer.kind === "accepted" ? foreground.offer.offer : "")));
+            const signalTerminal = (totalToolCalls > 0 && !readThenClaims)
               || queuedApprovals.length > 0
               || confirmTrace.length > 0
               || crmResultTrace.length > 0;
             if (!signalTerminal && !proseTerminal) {
               continuationsUsed += 1;
               convo.push({ role: "assistant", content: finalAssistantText || "" });
-              convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
+              convo.push({ role: "user", content: acceptedTurn && stepToolsRan.length > 0
+                ? `The person accepted the step you offered. This turn ran ${[...new Set(stepToolsRan)].join(", ")}, which is not that step as offered. If what you offered was exactly that and it is done, say what it produced, without calling it again and without claiming anything else was sent or changed. Otherwise call the tool that carries out the step now — when it needs their approval, the tool puts the card in front of them. If it cannot be done, say plainly why.`
+                : acceptedTurn && acceptedKind === "unknown"
+                ? "The person accepted what you offered. If it changes a record or sends something, nothing has been done yet — call its tool now (when it needs their approval, the tool puts the card in front of them). If it is only an answer, give that answer in full, without saying anything was done."
+                : acceptedTurn
+                ? "The person accepted the step you offered, and it has not been done: nothing that carries it out ran in this turn, so nothing was sent or changed by it, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
+                : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 const continuationResponse = await gatewayCompat("anthropic", {
                   method: "POST",
@@ -16459,13 +16605,37 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   // paige-turn — the request was already judged unresolved, and the retry failed: the
                   // prose stands on the wire, but the turn did not finish what it set out to do.
                   turnTracker.interrupted();
+                  continuationFailed = true;
                 }
               } catch (e) {
                 // Budget-exceeded or a transport throw: the prose we already have stands, and the turn
                 // records why it stopped — a spend ceiling is a limit, anything else an interruption.
                 if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
                 else turnTracker.interrupted();
+                continuationFailed = true;
               }
+            }
+          }
+          // INT-332 — the correction did not take, or could not run: the claim never reaches the person.
+          // The server authors the whole answer, exactly as the exhausted branch below does, and the wire
+          // and the transcript carry the same sentence. It takes precedence over that branch: "nothing is
+          // waiting for your OK" is the specific truth; a spent budget is still recorded as one.
+          let claimAnswered = false;
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId) {
+            const cardMinted = queuedApprovals.length > 0 || confirmTrace.length > 0;
+            const stillClaimed = unbackedClaim(finalAssistantText, { cardMinted, standingCard: foreground.standingCard });
+            if (stillClaimed) {
+              // Claims only what the server knows: nothing about earlier cards, and never hides work this
+              // turn did (its steps and any card stay on the wire above the sentence).
+              const truthful = claimFallback(stillClaimed, { didWork: totalToolCalls > 0 || cardMinted });
+              finalAssistantText = truthful;
+              if (continuationsUsed >= MAX_CONTINUATIONS && !cardMinted && totalToolCalls === 0) turnTracker.budgetStop();
+              finalChunks = [
+                enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: truthful } }] })}\n\n`),
+                enc.encode("data: [DONE]\n\n"),
+              ];
+              lastRoundFinished = true;
+              claimAnswered = true;
             }
           }
           // Budget exhausted on an unresolved action: the honest blockage sentence, not
@@ -16481,7 +16651,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // `[DONE]`), it is complete by construction, and the ONE replay path sends terminal →
           // paige_phase → exactly the saved sentence → [DONE], held and released like any other on a
           // protected turn. A client seat never reaches this branch (`isActionIntent` is false there).
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent
+          // INT-332 — a held accepted offer that ran out of rounds (or whose continuation failed) with nothing
+          // changed: its last reply is KEPT, followed by the server's line. True whether that reply was an answer,
+          // a question, or a made-up result (the line contradicts it). A read may have run; nothing was written.
+          // The line: "nothing was saved" only when nothing but plain reads ran; otherwise, on an act, the narrower
+          // truth that the accepted step itself was not carried out; on an unknown step with other tools, no line.
+          const heldNote = writeAttempts === 0 ? NOTHING_RAN_NOTE : (acceptedKind === "act" || stepToolsRan.length > 0) ? ranNote(stepToolsRan) : null;
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && heldAccept && !claimAnswered && heldNote
+              && (continuationsUsed >= continuationLimitFor() || continuationFailed) && classifierWrites === 0
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
+              && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
+            finalAssistantText = `${finalAssistantText.trim()}\n\n${heldNote}`;
+            if (!continuationFailed) turnTracker.budgetStop();
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+            claimAnswered = true;
+          }
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent && !claimAnswered
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId) {
@@ -16490,6 +16679,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
+          // INT-332 — an accepted PROSE offer is not held, but a reply that reads as if it did something while no
+          // tool ran gets the server's line beneath it. Only a line is added: the answer itself always stands.
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && !claimAnswered && !studioSessionId
+              && acceptedKind === "prose" && writeAttempts === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
+              && typeof finalAssistantText === "string" && finalAssistantText.trim() && saysItWasDone(finalAssistantText)) {
+            finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),
             ];
             lastRoundFinished = true;

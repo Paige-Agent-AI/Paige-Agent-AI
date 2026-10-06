@@ -163,7 +163,9 @@ let otherOutboundAnswers = null;
  * the handler's agentic loop sees a real tool call. Without this the whole tool loop — where
  * Paige acts on the focused client — was unreachable by any check.
  */
-const sseToolCallReply = (name, args, text = "", id = "toolu_test") =>
+// `ending` (INT-334 R7): "tool_use" is a finished tool round; "max_tokens" / "refusal" end it on that stop
+// reason instead; "cut" ends the stream with no message_delta or message_stop at all (a broken round).
+const sseToolCallReply = (name, args, text = "", id = "toolu_test", ending = "tool_use") =>
   new Response(
     [
       `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
@@ -174,8 +176,10 @@ const sseToolCallReply = (name, args, text = "", id = "toolu_test") =>
       ] : []),
       `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: text ? 1 : 0, content_block: { type: "tool_use", id, name } })}\n\n`,
       `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: text ? 1 : 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(args) } })}\n\n`,
-      `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "tool_use" } })}\n\n`,
-      `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
+      ...(ending === "cut" ? [] : [
+        `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: ending } })}\n\n`,
+        `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
+      ]),
     ].join(""),
     { status: 200, headers: { "Content-Type": "text/event-stream" } },
   );
@@ -289,7 +293,7 @@ globalThis.fetch = async (url, init) => {
       // string is a prose round, `{ name, args }` a tool round. A call past its end falls through.
       const scripted = turn?.streamScript && turn.streamCalls >= 1 ? turn.streamScript[turn.streamCalls - 1] : undefined;
       if (typeof scripted === "string") return sseModelReply(scripted);
-      if (scripted && typeof scripted === "object") return sseToolCallReply(scripted.name, scripted.args, "", `toolu_s${turn.streamCalls}`);
+      if (scripted && typeof scripted === "object") return sseToolCallReply(scripted.name, scripted.args, "", `toolu_s${turn.streamCalls}`, scripted.ending);
       if (turn ? turn.toolCallOnce : toolCallOnce) {
         // A scripted turn may call several tools, one per round, in order (`toolCall` as a list).
         const spec = turn?.next ?? toolCallSpec;
@@ -7825,6 +7829,30 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     terminalOf(r19)?.state !== "INTERRUPTED" && saved19?.bundle_ref?.turn_state?.state !== "INTERRUPTED"
       && saved19?.content === fallbackOf("card", true) && c19.rows.length === 0,
     JSON.stringify({ terminal: terminalOf(r19), savedState: saved19?.bundle_ref?.turn_state?.state, saved: saved19?.content }));
+
+  // 43.40 INT-334 (the R7 invariant) — A TOOL ROUND THAT NEVER FINISHED RUNS NOTHING. The provider shows a
+  // whole tool call (the accepted step) and then the round is cut off, hits its token limit, or ends as a
+  // refusal. Nothing from it executes — no door call, no card — no model is called again, and the turn
+  // ends INTERRUPTED with the server's own sentence. The CONTROL is the same call, finished: one card.
+  for (const [label, ending] of [["cut off", "cut"], ["at the token limit", "max_tokens"], ["as a refusal", "refusal"], ["CONTROL, finished", "tool_use"]]) {
+    const s40 = makeThreadStore(THREADS), c40 = makeConfirmStore(), db40 = crmDb();
+    seedOffer(s40, THREAD_FRESH, { history: 1 });
+    const r40 = await turn(s40, c40, db40, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: [{ ...ASSIGN, ending }, AFTER_CARD] });
+    const saved40 = savedAssistant(s40, THREAD_FRESH);
+    const calls40 = r40.modelEgress.filter((b) => b.includes('"stream":true')).length;
+    if (ending === "tool_use") {
+      assert(`43.40 ${label}: the same call from a finished round mints its card`,
+        c40.rows.length === 1 && terminalOf(r40)?.state === "WAIT_APPROVAL",
+        JSON.stringify({ rows: c40.rows.length, terminal: terminalOf(r40) }));
+    } else {
+      assert(`43.40 a whole tool call from a round ended ${label} runs nothing: no door call, no card, no second model call, the server's sentence, INTERRUPTED`,
+        doorCalls(r40).length === 0 && c40.rows.length === 0 && calls40 === 1
+          && saved40?.content?.startsWith("My last step was cut off before it finished, so I didn't run it.")
+          && saved40?.content?.includes("Nothing was sent, saved or changed in this reply.")
+          && saved40?.bundle_ref?.turn_state?.state === "INTERRUPTED",
+        JSON.stringify({ door: doorCalls(r40).length, rows: c40.rows.length, calls: calls40, saved: saved40?.content, state: saved40?.bundle_ref?.turn_state?.state }));
+    }
+  }
 
   // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the
   // person already said yes to the step. Prose that claims no card (so the guard cannot see it) and ends on a

@@ -232,6 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
+import { executableToolCalls, readModelRound, ROUND_NOT_FINISHED_NOTE, wholeArguments } from "../_shared/paige-turn/round.ts";
 import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, ranNote, saysItWasDone, stepToolDoes, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
@@ -9668,6 +9669,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // own message_stop, and ends a stream that broke with the same clean [DONE] — so a missing
         // finish_reason is the only sign a round was cut off. Read by the turn record, nothing else.
         let finished = false;
+        // INT-334 (the R7 invariant) — every `data:` payload in order, [DONE] included, for the shared
+        // finished-round gate (_shared/paige-turn/round.ts). A round's tool calls run only when it
+        // ended in a normal tool-use stop and every call is whole; a cut-off, refused or token-limited
+        // round shows its calls on the wire and runs none of them.
+        const payloads: string[] = [];
         // Carry a leftover-line buffer across reads: the gateway routinely splits
         // a `data: {...}` SSE record across two TCP reads, and parsing per-read
         // would drop those straddling deltas from `content` (the persisted text)
@@ -9677,6 +9683,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // The sentinel is the WHOLE payload. A reply that merely contains "[DONE]" is text, and
           // skipping it here dropped it from the saved turn and from R3's read while its bytes
           // still reached the person.
+          if (line.startsWith("data: ")) payloads.push(line.slice(6));
           if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") return;
           try {
             const parsed = JSON.parse(line.slice(6));
@@ -9711,7 +9718,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         sseBuf += fullDecoder.decode(); // flush any trailing multi-byte char
         if (sseBuf) handleLine(sseBuf); // final line without a trailing newline
-        return { content, toolCalls, allChunks, hasToolCall, finished };
+        const runnable = executableToolCalls(readModelRound(payloads)).length > 0;
+        return { content, toolCalls, allChunks, hasToolCall, finished, runnable };
       };
 
       // executeToolCalls dispatches one round's tool calls. Every tc that clears
@@ -9843,6 +9851,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         callerOwnTenantMemo = null;
         const resultsBeforeThisCall = toolResults.length;
         try {
+
+        // INT-334 (R7) — ARGUMENTS THAT DO NOT PARSE ARE NEVER RUN. A provider can cut a call off
+        // mid-JSON; several branches below read a parse failure as `{}` and would act on nothing the
+        // model chose. Refused here, before any branch reads them; the model sees the refusal and can
+        // send the call again whole. Empty arguments are a tool that takes no input, and pass.
+        if (!wholeArguments(tc.function.arguments)) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, code: "ARGUMENTS_UNPARSEABLE", error: "This call's arguments were incomplete, so it was not run. Send it again with complete arguments." }) });
+          continue;
+        }
 
         // ── STUDIO CAPABILITY BOUNDARY (V1) ──────────────────────────────────
         // A Studio turn may dispatch only its role's scope, whatever the model names — the list it
@@ -15989,6 +16006,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // paige-turn — whether the round `finalChunks` replays was FINISHED by the provider (consumeRound's
       // `finished`). Updated every round, so it describes the last one, which is the one replayed.
       let lastRoundFinished = true;
+      // INT-334 (R7) — set when a round showed tool calls but never finished choosing them: none ran, the
+      // server's own sentence is the answer, and no post-loop branch re-calls the model or rewrites it.
+      let unfinishedRound = false;
       let liveAnswerPending = false;
       let forcedTermination = false;
       let tenantKnowledgeScopeInvalidated = false;
@@ -16310,7 +16330,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const resumedRound = resumeRound;
             resumeRound = null;
             if (!resumedRound) turnTracker.roundStarted();
-            const { content, toolCalls, allChunks, hasToolCall, finished } = resumedRound ?? await consumeRound(currentResponse as Response);
+            const { content, toolCalls, allChunks, hasToolCall, finished, runnable } = resumedRound
+              ? { ...resumedRound, runnable: true } // a server-built resume round: the stored, approved act
+              : await consumeRound(currentResponse as Response);
             lastRoundFinished = finished;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
@@ -16323,6 +16345,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!hasToolCall) {
               if (liveRuntimeScope) liveAnswerPending = true;
               else { finalChunks = allChunks; finalAssistantText = content; }
+              break;
+            }
+            // INT-334 (R7 invariant) — tool calls from a round that never finished choosing them do not run.
+            // The provider showed them, then the round was cut off, refused, hit its token limit, or ended
+            // with a malformed call. Nothing from it executes; the turn ends INTERRUPTED and says so. Live
+            // takes its tools-free closing answer instead.
+            if (!runnable) {
+              console.warn(`[paige] unfinished tool round: ${toolCalls.filter(Boolean).length} call(s) shown, none run (finished=${finished})`);
+              lastRoundFinished = false;
+              unfinishedRound = true;
+              if (liveRuntimeScope) { liveAnswerPending = true; break; }
+              const nothingRan = totalToolCalls === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0;
+              const note = nothingRan ? `${ROUND_NOT_FINISHED_NOTE} ${NOTHING_RAN_NOTE}` : ROUND_NOT_FINISHED_NOTE;
+              finalAssistantText = note;
+              finalChunks = [
+                enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: note } }] })}\n\n`),
+                enc.encode("data: [DONE]\n\n"),
+              ];
               break;
             }
             const realCalls = toolCalls.filter((tc: any) => tc && tc.function?.name);
@@ -16519,7 +16559,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
           // The round answered with no tool call (Live: decided to answer). Observed here, after the
           // loop, so the `!hasToolCall` block itself stays byte-identical (n5 runs it in isolation).
-          if (!forcedTermination && (finalChunks || liveAnswerPending)) turnTracker.naturalStop();
+          if (!forcedTermination && !unfinishedRound && (finalChunks || liveAnswerPending)) turnTracker.naturalStop();
           // ── C1: THE POST-LOOP CONTINUATION CHECK ─────────────────────────────────────────
           // The for-loop has exited. If it exited via the prose-only branch (`!hasToolCall`)
           // with NO terminal state — nothing executed, no card minted, the prose itself is not
@@ -16537,7 +16577,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // not "a question" just because the same reply also asks one.
           let claimContinued = false;
           const cardThisTurn = () => queuedApprovals.length > 0 || confirmTrace.length > 0;
-          const claim = finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
+          const claim = finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
             ? unbackedClaim(finalAssistantText, { cardMinted: cardThisTurn(), standingCard: foreground.standingCard })
             : null;
           if (claim && continuationsUsed < MAX_CONTINUATIONS) {
@@ -16567,7 +16607,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           }
-          if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
+          if (!claimContinued && finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < continuationLimitFor() && !studioSessionId) {
             const acceptedTurn = heldAccept;
             const proseTerminal = typeof finalAssistantText === "string"
@@ -16621,7 +16661,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // and the transcript carry the same sentence. It takes precedence over that branch: "nothing is
           // waiting for your OK" is the specific truth; a spent budget is still recorded as one.
           let claimAnswered = false;
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId) {
+          if (finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId) {
             const cardMinted = queuedApprovals.length > 0 || confirmTrace.length > 0;
             const stillClaimed = unbackedClaim(finalAssistantText, { cardMinted, standingCard: foreground.standingCard });
             if (stillClaimed) {
@@ -16657,7 +16697,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // The line: "nothing was saved" only when nothing but plain reads ran; otherwise, on an act, the narrower
           // truth that the accepted step itself was not carried out; on an unknown step with other tools, no line.
           const heldNote = writeAttempts === 0 ? NOTHING_RAN_NOTE : (acceptedKind === "act" || stepToolsRan.length > 0) ? ranNote(stepToolsRan) : null;
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && heldAccept && !claimAnswered && heldNote
+          if (finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && heldAccept && !claimAnswered && heldNote
               && (continuationsUsed >= continuationLimitFor() || continuationFailed) && classifierWrites === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
@@ -16670,7 +16710,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             lastRoundFinished = true;
             claimAnswered = true;
           }
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent && !claimAnswered
+          if (finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && isActionIntent && !claimAnswered
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId) {
@@ -16685,7 +16725,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           // INT-332 — an accepted PROSE offer is not held, but a reply that reads as if it did something while no
           // tool ran gets the server's line beneath it. Only a line is added: the answer itself always stands.
-          if (finalChunks && !liveRuntimeScope && !forcedTermination && !claimAnswered && !studioSessionId
+          if (finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !claimAnswered && !studioSessionId
               && acceptedKind === "prose" && writeAttempts === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
               && typeof finalAssistantText === "string" && finalAssistantText.trim() && saysItWasDone(finalAssistantText)) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
@@ -16704,7 +16744,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // recorded state is untouched — whatever it is flows to the record verbatim. (Site 2,
           // after the closing stream, covers the LIMIT_REACHED path where finalChunks is null;
           // this site covers the replayed-round sibling.)
-          if (finalChunks && !forcedTermination && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
+          if (finalChunks && !forcedTermination && !unfinishedRound && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
             const limited = researchLimitFallbackCopy(researchTrace, turnTracker.record().state === "LIMIT_REACHED");
             finalAssistantText = limited;

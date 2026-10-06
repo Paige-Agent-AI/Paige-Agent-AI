@@ -156,3 +156,34 @@ Gate: 83/0. Each of the four round-2 fixes was reverted on its own and caught by
 Gate: 84/0.
 
 **Carried to R5–R7:** the stream can finish with `length` or `content_filter`. `paige-ai-chat` treats any `finish_reason` as finished (index.ts ~9648, ~16757), so a refusal or a truncation must be surfaced when the seam is wired.
+
+## R3: the Turn Route contract (pure) and R7a: the finished-round tool gate in chat (live defect closed)
+
+### What was built
+- **`_shared/paige-turn/route.ts`** replaces `substantiveTurnIntent` as the *contract* for model selection (chat adopts it in R4–R7). `resolveTurnRoute(facts)` is pure and total: server-resolved facts in, one route out.
+  - **State first.** In order: an approval verified by fingerprint → `deterministic` (the stored act runs; no model, no tools); an answer to PAIGE's standing question → operational with tools; an accepted offer (INT-332 `readForeground` + `offerKind`) → an act or unknown step is operational with the governed tools, a prose step may be cheap only when a trusted classifier calls it light and data-free; an offer with alternatives → PAIGE asks which; a standing card → operational, and typed words never approve it.
+  - **Classification second.** A cheap structured classifier (wired in R4/R5) supplies intent, research need, difficulty, image need and data need. It can raise a state's floor and never lower it; below 0.6 confidence it changes nothing. For an accepted offer it reads the accepted *step*, not the bare "yes".
+  - **Cheap never carries tools.** With no classifier, a fresh turn takes the conservative default: operational with the governed tools.
+  - **A route is not authority.** Its keys are pinned (`v, basis, intent, capability, cognitive_class, reasons`). It never predicts whether a card is needed; the tool/Spine door still decides risk, autonomy, role, workspace and approval.
+  - **Stays in the loop, not the route:** held-step continuation, accumulated-output inspection, the claim guard, truthful readback, the continuation budget, wire = transcript. WAIT_WORK is not a routing state (C4d/e paused).
+  - **Class policy (data):** operational Sol → Sonnet 5.5; frontier Astra → Sonnet 5.5; cheap Luna → open pool (Featherless, Groq) → Haiku.
+  - **Fallback eligibility:** only auth/config, billing, rate limit, model unavailable or provider outage, each as the provider's response proves it. Never on an invalid request, `unknown`, a refusal, an answer someone dislikes, honest research insufficiency, a governance refusal, a required approval or a downstream tool failure; never once a round emitted a tool call or visible text, unless proven unexecuted.
+- **`_shared/paige-turn/round.ts`** — the R7 invariant. `readModelRound` folds the chat-shaped stream both converters emit; `executableToolCalls` returns a round's named calls only when it ended in a normal tool-use stop (`finish_reason: "tool_calls"` then `[DONE]`, reader intact), else none. `wholeArguments` is the per-call check the dispatcher applies: an object or empty (a no-input tool; Anthropic streams no argument text for it), never cut-off JSON, an array or a scalar. `ROUND_NOT_FINISHED_NOTE` is the one sentence the person sees.
+
+### R7a: the gate in chat (a LIVE defect, closed)
+- **The defect (production, before this PR).** `consumeRound` recorded whether a round finished but nothing gated execution on it: any `tool_calls` delta set `hasToolCall` and the loop dispatched. Anthropic's converter maps every non-`tool_use` stop (`max_tokens`, `refusal`) to `stop`, and a broken stream ends with a clean `[DONE]` and no finish. So a cut-off, token-limited or refused round's visible calls ran, and several dispatch branches read cut-off JSON as `{}` (only the step announcer refused it). Found by the R5–R7 grounding map, 2026-10-06.
+- **The fix.** `consumeRound` collects its `data:` payloads and asks the shared gate. A round that is not runnable executes nothing, calls no model again (every post-loop continuation/correction branch is skipped via `unfinishedRound`), and ends INTERRUPTED with the server's sentence; when nothing ran this turn it adds `NOTHING_RAN_NOTE`. Live takes its tools-free closing answer instead. Server-built resume rounds (stored approved acts) are unaffected. Inside a finished round, a call failing `wholeArguments` is refused before any branch reads it (`ARGUMENTS_UNPARSEABLE`), so the model can resend it — the recover-and-retry behaviour (36.23h) is kept, the unsafe `{}` path is gone.
+
+### Proof
+- **Automated (Deno, CI):** `route.test.ts` + `round.test.ts` 28/0 — 30 route conformance cases (the R4 set: "Yes", "Sounds good", "We may as well", "For sure", "Go with that", "The second option", each by state) and a 664,320-combination state × classification sweep pinning the floors, cheap-without-tools, unsure-changes-nothing and the key set; the owner's six round cases plus pinning cases in both providers' finish mappings.
+- **Automated (Node, CI):** `test:round-gate` 30/0 — the REAL Anthropic converter (`gatewayCompat`) and the REAL OpenAI converter (`responsesStream`) fed provider-native events for eight cases; only the normal tool-use stop yields a call, for both.
+- **Automated (end to end, CI):** `test:client-memory-authz` 934/0, including 43.40: a whole accepted-step tool call from a round cut off / at the token limit / ended as a refusal → no door call, no card, exactly one model call, the server's sentence, INTERRUPTED; the CONTROL (same call, finished) mints its card.
+- **Mutation:** route 14 planted → 10 caught, 4 equivalent (the final cheap-tools guard; the standing-card floor it restores; the classifier's `cheap` assignment, reachable only when already cheap; an accepted act always carrying tools). Round 8 → 8 caught. Converters: making OpenAI finish any tool round as `tool_calls` fails 4 cases, Anthropic 2. **In chat: switching the gate off (today's production behaviour) fails exactly the three unfinished 43.40 cases.**
+- **Static:** Deno diagnostics on `paige-ai-chat` identical to `main` (10 = 10, same set); `deno check` clean on the new modules.
+- **Unchanged:** `test:openai-responses` 84/0, `test:reasoning-tier` 67/0.
+
+### Carried
+- **R4** wires state-first routing into chat against merged INT-332, with the classifier.
+- **R5–R7** move chat onto the shared streaming fabric; the gate is already in the loop, so every provider inherits it.
+- **Sol/Astra compatibility gate (from the loop lane):** before Sol becomes primary, replay the INT-332 fixtures against representative Sol output (offer detection, completion-claim detection, step matching, claim correction); same for Astra. Misses feed the semantic replacement, not more patterns.
+- **The INT-332 claim-correction call** is classified operational when R5–R7 remove the legacy labels.

@@ -944,6 +944,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:reasoning-tier
 
+      - name: Smoke — OpenAI Responses adapter (governed function tools only, chat-shaped SSE, truthful trace)
+        if: ${{ !cancelled() }}
+        run: npm run test:openai-responses
+
       - name: Smoke — active-account Knowledge scope (§9 tenant KB fail-closed)
         if: ${{ !cancelled() }}
         run: npm run test:knowledge-scope

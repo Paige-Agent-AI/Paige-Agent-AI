@@ -27,7 +27,7 @@
 //
 // EVERY PRE-EXISTING PAIRING KEEPS ITS EXACT PRICE. The provider defaults are the previous numbers
 // unchanged, so every sonnet-priced path — including the §33 visual-critique cost cap, which routes
-// frontier on the Sonnet reasoning tier (`claude-sonnet-5`; `claude-sonnet-5-5` matches the same Sonnet row if INT-329 part 2 switches to it) — computes byte-identically. Only models that were demonstrably
+// frontier on the Sonnet reasoning tier (`claude-sonnet-5-5` since INT-329 part 2; it matches the same Sonnet row) — computes byte-identically. Only models that were demonstrably
 // OVER-priced move, and only downward. The check suite pins this as its own case, so a later edit
 // that quietly reprices an existing pairing fails rather than passing silently.
 
@@ -48,6 +48,17 @@ export const ANTHROPIC_MODEL_PER_1K: ReadonlyArray<readonly [string, { in: numbe
   ["sonnet", { in: 0.003, out: 0.015 }],
 ];
 
+// OpenAI GPT-6 family (INT-334), list prices from openai.com, $/1K. Matched on the EXACT id prefix,
+// most specific first, so `gpt-6.1-sol` never falls into a shorter `gpt-6` entry. An unlisted OpenAI
+// model keeps the provider default above (gpt-4o) — never zero. Cached input is not priced here
+// (COST_BASIS excludes caching; INT-331 owns cache-aware cost).
+export const OPENAI_MODEL_PER_1K: ReadonlyArray<readonly [string, { in: number; out: number }]> = [
+  ["gpt-6.1-sol", { in: 0.002, out: 0.010 }],
+  ["gpt-6-sol", { in: 0.002, out: 0.010 }],
+  ["gpt-6-astra", { in: 0.010, out: 0.050 }],
+  ["gpt-6-luna", { in: 0.0001, out: 0.0005 }],
+];
+
 function round4(n: number): number { return Math.round(n * 10000) / 10000; }
 
 /** The $/1K in+out rate for a provider/model, or undefined when there is no basis to price it. */
@@ -55,6 +66,10 @@ export function tokenRate(provider: string, model?: string | null): { in: number
   if (provider === "anthropic" && typeof model === "string") {
     const m = model.toLowerCase();
     for (const [needle, rate] of ANTHROPIC_MODEL_PER_1K) if (m.includes(needle)) return rate;
+  }
+  if (provider === "openai" && typeof model === "string") {
+    const m = model.toLowerCase();
+    for (const [prefix, rate] of OPENAI_MODEL_PER_1K) if (m.startsWith(prefix)) return rate;
   }
   return TEXT_PER_1K[provider];
 }

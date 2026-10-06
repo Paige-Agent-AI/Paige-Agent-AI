@@ -24,8 +24,9 @@
 import {
   chatCompletionCompat,
   type ClaudeTier,
-  CLAUDE_REASONING,
   CLAUDE_CLASSIFICATION,
+  resolvedClaudeModel,
+  tierModel,
 } from "./claude.ts";
 import {
   accruedSpendToday,
@@ -262,7 +263,9 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
       agent_id: trace?.agent_id ?? null,
       parent_trace_id: trace?.parent_trace_id ?? null,
       provider,
-      model: resp?.model ?? null,
+      // On failure there is no echoed id: name the Claude model that was called (resolved, including
+      // the PDF upgrade) rather than null. Only the Claude leg can fail here — see the catch below.
+      model: resp?.model ?? (provider === "anthropic" ? resolvedClaudeModel(body, route.tier) : null),
       job_kind: trace?.job_kind ?? jobKind,
       modality: "text",
       tier: route.tier,
@@ -282,7 +285,7 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
       doctrine_gate_hits: budgetCheck?.gate
         ? { budget: { level: budgetCheck.gate.replace("budget_", ""), accrued_usd: budgetCheck.accrued_usd, ceiling_usd: budgetCheck.ceiling_usd, band: budgetCheck.band } }
         : null,
-      metadata: { caller_function: trace?.agent_id },
+      metadata: { caller_function: trace?.agent_id, ...(resp?.paige_stop ?? {}) },
     });
   };
   try {
@@ -295,7 +298,9 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
     emit("anthropic", claudeResp, "success");
     return claudeResp;
   } catch (e) {
-    emit(route.provider === "featherless" ? "featherless" : "anthropic", null, "error", e);
+    // featherlessChat never throws (it returns null and falls through to Claude), so anything caught
+    // here came from the Claude leg — attribute it to Anthropic, never to the open model that was skipped.
+    emit("anthropic", null, "error", e);
     throw e;
   }
 }
@@ -453,22 +458,32 @@ function fluxInput(task: unknown): Record<string, unknown> {
 // ── Provider adapters that need a wrapper to speak ProviderCallResult ───────────────────────
 // Claude text (frontier tier). Fail-closed on a missing ANTHROPIC_API_KEY so text degrades the
 // same honest way every other modality does. model_override picks the tier (reasoning default).
+// The Claude tier a callModel text override selects — the ONE mapping, shared by the call and by any
+// trace written before the provider could echo an id.
+function claudeTextTier(model?: string): ClaudeTier {
+  return model === "classification" || model === CLAUDE_CLASSIFICATION ? "classification" : "reasoning";
+}
+// The Claude id a claudeText call resolves to — the override's tier, upgraded for a PDF exactly as
+// chatCompletionCompat upgrades it — for a trace written before (or without) a provider-echoed id.
+function claudeTextModel(task: unknown, model?: string): string {
+  return resolvedClaudeModel({ messages: taskMessages(task) as any }, claudeTextTier(model));
+}
 async function claudeText(task: unknown, model?: string): Promise<ProviderCallResult> {
   if (!Deno.env.get("ANTHROPIC_API_KEY")) throw new NeedsConfigError("anthropic");
   const started = Date.now();
-  const tier: ClaudeTier =
-    model === "classification" || model === "claude-haiku-4-5" ? "classification" : "reasoning";
+  const tier = claudeTextTier(model);
   const resp = await chatCompletionCompat({ messages: taskMessages(task) as any, max_tokens: 2048 }, tier);
   const content = resp?.choices?.[0]?.message?.content ?? "";
   return {
     content: typeof content === "string" ? content : JSON.stringify(content),
     provider: "anthropic",
-    model: resp?.model ?? (tier === "reasoning" ? CLAUDE_REASONING : CLAUDE_CLASSIFICATION),
+    model: resp?.model ?? tierModel(tier),
     tokens_in: resp?.usage?.prompt_tokens,
     tokens_out: resp?.usage?.completion_tokens,
     cache_read_input_tokens: resp?.usage?.cache_read_input_tokens,
     cache_creation_input_tokens: resp?.usage?.cache_creation_input_tokens,
     latency_ms: Date.now() - started,
+    stop: resp?.paige_stop,
   };
 }
 
@@ -621,8 +636,8 @@ const ROUTE_TABLE: Partial<Record<Modality, Partial<Record<Tier, RouteCell>>>> =
     // ONLY a frontier cell exists on purpose: open-fast/open-flexible have NO cell, so callModel
     // resolves them to a clean needs_config degrade (never a wrong-provider substitution) — i.e.
     // "a design judgment never routes to an open model" is guaranteed STRUCTURALLY, not by a runtime
-    // check. claudeText → chatCompletionCompat → callClaude on CLAUDE_REASONING (claude-sonnet-5,
-    // vision-capable); the caller passes a base64 image data-URI block that toClaudeContent turns
+    // check. claudeText → chatCompletionCompat → callClaude on CLAUDE_REASONING (the reasoning
+    // tier, vision-capable); the caller passes a base64 image data-URI block that toClaudeContent turns
     // into an Anthropic vision block.
     frontier: {
       provider: "anthropic",
@@ -1006,7 +1021,9 @@ export async function callModel(
     traceLLMCall({
       ...traceBase,
       provider: failedProvider,
-      model: opts.model_override ?? null,
+      // A Claude cell names the Claude model it called (claudeText's own tier mapping); other
+      // providers keep the override they were given.
+      model: failedProvider === "anthropic" ? claudeTextModel(task, effectiveOverride) : (opts.model_override ?? null),
       status: "error",
       error_class: (e as Error)?.name ?? "error",
       error_message: (e as Error)?.message ?? String(e),
@@ -1030,7 +1047,7 @@ export async function callModel(
         traceLLMCall({
           ...traceBase,
           provider: "anthropic",
-          model: null,
+          model: result.model || claudeTextModel(task, undefined),
           status: "success",
           metadata: { ...traceBase.metadata, fallback_from: `${failedProvider}/${tier}` },
         });
@@ -1040,7 +1057,7 @@ export async function callModel(
         traceLLMCall({
           ...traceBase,
           provider: "anthropic",
-          model: null,
+          model: claudeTextModel(task, undefined),
           status: "error",
           error_class: (fallbackErr as Error)?.name ?? "error",
           error_message: (fallbackErr as Error)?.message ?? String(fallbackErr),
@@ -1139,7 +1156,7 @@ export async function callModel(
     doctrine_gate_hits: budgetCheck?.gate
       ? { budget: { level: budgetCheck.gate.replace("budget_", ""), accrued_usd: budgetCheck.accrued_usd, ceiling_usd: budgetCheck.ceiling_usd, band: budgetCheck.band } }
       : null,
-    metadata: { caller_function: opts.callerFunction, actor_role: opts.actorRole },
+    metadata: { caller_function: opts.callerFunction, actor_role: opts.actorRole, ...(result.stop ?? {}) },
   });
 
   return {

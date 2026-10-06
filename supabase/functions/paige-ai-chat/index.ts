@@ -8987,7 +8987,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     const STUDIO_THINKING_ENABLED = false; // HOTFIX: extended-thinking request 400'd the live Studio stream ("chat hit a snag"); disabled pending a real root-cause of the thinking+model interaction (§344). Sonnet lift stays; thinking param is dropped so the call reverts to a plain working stream.
     const paigeThinkingOn = !!studioSessionId && STUDIO_THINKING_ENABLED;
 
-    // #34 — Route SUBSTANTIVE turns to the reasoning tier (the "pro" legacy label ⇒ claude-sonnet-5
+    // #34 — Route SUBSTANTIVE turns to the reasoning tier (the "pro" legacy label ⇒ CLAUDE_REASONING
     // via tierForLegacyModel) so the mutating tool the cheap Haiku tier was DROPPING actually fires.
     // The anchoring bug: on "approved — run it" the Haiku tier failed to reliably emit the
     // document_generate tool_use, so the turn re-asked instead of acting (the 4×-reask loop). The
@@ -9455,7 +9455,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // U2/§14 — the Studio design agent runs on the REASONING tier (pro ⇒ claude-sonnet-5) so its
+        // U2/§14 — the Studio design agent runs on the REASONING tier (pro ⇒ CLAUDE_REASONING) so its
         // extended thinking is a real reasoning model, never Haiku; the doc-attach path already did.
         // #34 — substantiveTurn adds the reasoning tier for approval/creation intents (see above).
         model: (studioSessionId || attachedDocument || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",

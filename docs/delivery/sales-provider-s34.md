@@ -1,5 +1,13 @@
 # INT-311 S3/S4 — customer request through verified allocation
 
+## Owner continuation — 2026-10-06
+
+The owner authorizes completing the shared payment foundation and then recurring payments and conversational Collections. This is one canonical Solo-shell implementation for all current and future tenants. Each tenant supplies its own merchant binding; no owner account is a default, fallback, or global merchant. Generic tenant fixtures establish isolation without requiring the owner to open multiple live merchant accounts. The owner workspace may be an additional test target, never a code branch or the sole acceptance scope. A live merchant remains capable of real-money effects even when its workspace is used for testing; provider sandbox mode remains the financial test target.
+
+Current checkpoint: PR #1769 head `51d58305d4beb641b6a6168bdf838506f45fc1f8` has eleven completed successful GitHub checks, including verify, collections-sql, database-contract, UI evidence, Supabase Preview and Vercel Preview Comments. This proves CI for that candidate only, not merge, deployment, authenticated payment acceptance or PayPal parity. Stripe execution is implemented in the shared adapter; PayPal currently refuses execution honestly and still requires the tenant merchant-permission/onboarding adapter. The owner will connect PayPal when the reusable in-product connection flow is ready. Do not request credentials in conversation.
+
+Delivery sequence remains dependency-driven: complete provider request/readback/settlement/allocation parity, then exact authorized recurring mandates and lifecycle, then Collections driven by canonical unpaid balance. Agent-first commands and manual UI must call the same Spine/Trust/Rail capabilities. Recurring or Collections cannot declare successful collection from a checkout redirect, an unverified provider event, or a customer statement.
+
 Grounding: current main `d90a6da261d84143d9076a4319daf7b0bc76f2f5`, 2026-10-05. Development only. Owner authorizes S3/S4; stop before S5. INT-327 is separate, with authenticated acceptance owed.
 
 ## Pre-edit capability routing

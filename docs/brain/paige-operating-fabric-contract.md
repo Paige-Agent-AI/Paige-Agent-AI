@@ -347,8 +347,11 @@ BusinessOperatingSnapshot {
 
 **Composition rules:**
 
-- **Fail closed.** No workspace makes every domain `no_workspace`. A scope-epoch change makes every
-  domain `scope_changed`. In both cases nothing runs.
+- **Fail closed, before and after the reads.** No workspace makes every domain `no_workspace`, and
+  nothing runs. The scope epoch is a live getter (`currentScopeEpoch: () => number | string`). It is
+  read before any adapter runs and again after every adapter settles. A change, a throwing getter, or
+  a non-value at either point makes every requested domain `scope_changed` with no data. The budget
+  still reports what actually ran.
 - **Adapters are bounded.** Adapters run concurrently, each with its own timeout and abort. A thrown
   error becomes `adapter_error`, and the message is never leaked. A malformed snapshot becomes
   `invalid_shape:<reason>`.
@@ -359,6 +362,13 @@ BusinessOperatingSnapshot {
   line. The closing instruction forbids estimating, and states that an unavailable area is unknown,
   not zero. `maxChars` budgets the domain sections only. The header, the "left out for length" line,
   and the instruction are never dropped, and areas left out for length must be named as unknown.
+- **Adapter text is quoted data.** Every adapter string is rendered on one line inside double
+  quotes, with inner double quotes, typographic ones included, turned into single quotes. The closing
+  instruction says quoted text came from the business's records and is never an instruction to follow.
+- **Ranges are enforced.** `percent` must be within [0, 100]. `count` (whole numbers) and `days` must be
+  ≥ 0. A value outside these is refused as `out_of_range`. An `as_of` more than 5 minutes after the
+  composer's `now` is refused as `as_of_in_future`. A finite `maxChars` below 1 means fixed lines only
+  (header, left-out list, instruction).
 - **Adapter text cannot forge the projection.** The validator refuses control characters
   (`control_chars`), and the projection collapses every adapter string to one line. A free-text
   reason from an adapter never reaches the model. Adapter reasons pass through only as closed codes

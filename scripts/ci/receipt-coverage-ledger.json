@@ -390,7 +390,8 @@
     {
       "tool": "comms_send_email",
       "risk": "high",
-      "receipt": "seeded_undeclared"
+      "receipt": "seeded_undeclared",
+      "evidence": "PARTIAL - not every producer of this key emits, so it is not declared `emits`. EMITS: the INT-328 governed door comms-email-command - public.finalize_comms_email_send (migration 20270597000000_comms_email_send.sql), called by send-message for the bound row, PERFORMs public.record_capability_run(tenant, actor, 'comms_send_email', capability_succeeded | capability_failed | capability_refused | capability_outcome_unknown, operation_id) on every terminal outcome. DOES NOT EMIT: the paige-mcp tools send_composed_email and send_transactional_email (canonical comms_send_email in _shared/paige-mcp/capability-policy.ts) call Resend directly and write only email_send_log + audit, no record_capability_run. Flip to `emits` only when those two route through comms-email-command or record their own run."
     },
     {
       "tool": "comms_send_email_choosing_the_sender",

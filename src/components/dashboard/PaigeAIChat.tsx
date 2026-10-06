@@ -22,6 +22,7 @@ import { EntityDiagramCard } from "@/components/chat/EntityDiagramCard";
 import { extractEntityDiagram } from "@/lib/entityDiagram";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { PaigeConfirmCard, PaigeConfirmRecord } from "@/components/chat/PaigeConfirmCard";
+import { previewOf, rehydrateConfirmItems, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
 import { PaigeAskCard, PaigeAskRecord, type PaigeAskOption } from "@/components/chat/PaigeAskCard";
 import {
   applyServerOutcome,
@@ -101,6 +102,10 @@ import {
 // server budget. The durable-work envelope remains the real disconnect/retry fix.
 const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 
+// INT-328 — the server's preview of the exact email a confirm card will send rides the
+// `paige_confirm` frame beside `command` (as `preview` or `confirm_preview`); `previewOf` passes it
+// through the card's one gate (components/chat/confirmPreview), live and on reload.
+
 /** An action Paige filed to the approvals queue this turn (propose→confirm). */
 type QueuedApproval = { id: string; summary: string; category: string; contact_id: string | null };
 // REMOVED 2026-09-02 with the channel they described: `PipelineConfirmedAction` and
@@ -124,7 +129,7 @@ type Message = {
    *  them back so the gate runs that call and not whatever the model re-emits — see the gate's own
    *  note. Optional: a rehydrated turn has summaries but no live fingerprints, which is correct,
    *  because a past decision must never be re-fired (§15). */
-  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }>;
+  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: ConfirmEmailPreview }>;
   /** True on turns rehydrated from history: their confirm cards render settled,
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
@@ -954,12 +959,11 @@ const PaigeAIChatInner = ({
       .map((t) => {
         const b = (t.bundle_ref ?? {}) as Record<string, unknown>;
         const queued = Array.isArray(b.approval_queued) ? (b.approval_queued as QueuedApproval[]) : undefined;
-        const confirm = Array.isArray(b.paige_confirm)
-          // Rehydrated summaries only. Deliberately NOT typed with `fingerprint`: a stored turn
-          // carries no live fingerprint, and `confirmResolved` below renders it settled, so there
-          // is nothing here that could re-fire a decision already taken (§15).
-          ? (b.paige_confirm as Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }>)
-          : undefined;
+        // Rehydrated summaries only. Deliberately NOT given a live state: a stored turn carries no live
+        // fingerprint, and `confirmResolved` below renders it settled, so there is nothing here that
+        // could re-fire a decision already taken (§15). INT-328 — stored items pass the same preview
+        // gate as the live frame.
+        const confirm = rehydrateConfirmItems(b.paige_confirm);
         const crmResults = Array.isArray(b.paige_crm_result) ? b.paige_crm_result as PaigeCrmResult[] : undefined;
         // R2b §12 — a reloaded turn carries the run REFERENCE; the evidence rehydrates
         // from research_runs through the governed get RPC (the same door the Research
@@ -1796,7 +1800,7 @@ const PaigeAIChatInner = ({
           }
           // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
           if (parsed.paige_confirm?.summary) {
-            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}) });
+            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}), ...previewOf(parsed.paige_confirm) });
             setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             continue;
           }
@@ -2910,6 +2914,9 @@ const PaigeAIChatInner = ({
                           // column (still capped at 80%), so the line and the card are not squeezed
                           // into a bubble shrunk to its first sentence.
                           message.role === "assistant" && (turnView || (!!message.confirm?.length && !message.confirmResolved)) && "w-full",
+                          // INT-328 — on a phone, an answer carrying an email to approve takes the whole
+                          // column: at 80% the email wrapped at ~20 characters a line.
+                          message.role === "assistant" && !message.confirmResolved && message.confirm?.some((c) => !!c.preview) && "max-[479px]:max-w-full max-[479px]:p-3",
                           // C4a — one bubble across the resumed seam (and both halves take the column).
                           continuedBelow && "w-full rounded-b-none border-b-0 pb-2",
                           resumedHere && "w-full rounded-t-none border-t-0 pt-2",
@@ -3011,6 +3018,8 @@ const PaigeAIChatInner = ({
                             actions={message.confirm.map((c) => ({
                               summary: c.summary,
                               fingerprint: c.fingerprint,
+                              // INT-328 — the email itself, when the call sends one.
+                              ...(c.preview ? { preview: c.preview } : {}),
                             }))}
                             disabled={composerSendBlocked}
                             // Solo: after "Ask Paige again" the button that was pressed is gone, so

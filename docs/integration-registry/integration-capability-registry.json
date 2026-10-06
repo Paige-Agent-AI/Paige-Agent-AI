@@ -589,7 +589,7 @@
       "rail_mind_memory": "Future canonical Sales execution receipts on Rail; no mutable financial truth in Memory/Mind.",
       "status": "UNAVAILABLE",
       "owner": "Sales execution program INT-311",
-      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. No PayPal adapter or onboarding activation exists.",
+      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. A non-executing GET readback normalizer reuses the canonical payment contract; hosted dispatch, delegated transport and onboarding activation remain unavailable. Deterministic tests do not establish provider acceptance.",
       "next_slice": "Ground partner app access and merchant-integrations permissions; implement the same Sales hosted request to verified settlement/allocation vertical as Stripe.",
       "tier_eligibility": {
         "platform": "eligible",

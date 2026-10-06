@@ -215,3 +215,35 @@ Gate: 84/0.
   - **L4 — route.** An ambiguous offer is capped at read tools whatever the classifier says (PAIGE asks which; she does not act). No fallback after text the person already saw, even when a tool call is proven unexecuted. Removing either fails its test.
 - **Proof (fixed head):** Deno `route` + `round` + `classify` 34/0; `test:knowledge-scope` 429/0; `test:client-memory-authz` 941/0 (930 + 43.40 ×4 + 43.41 + 26.9 + 43.42a–e); every other CI npm harness exits 0; `test:round-gate` 30/0; `test:reasoning-tier` 67/0; `test:openai-responses` 84/0; Deno diagnostics on `paige-ai-chat` identical to `main` (10 = 10). Harness mutation: routing on the classifier alone (state ignored) fails 6 end-to-end cases (approval resumes; "sure", "go ahead", "yep 👍" accepting an offer).
 - **Carried:** the classifier moves to the fabric's cheap class (Luna first) in R5–R7; the route's tool exposure narrows `toolDefs` in R5 (tracking prompt, tool-definition, cache-write, cache-read and output tokens separately; context compaction is separate work).
+
+- **R4 in production:** merged as `53dbf7eb5` (#1789), deploy-edge-functions run 491 success. `paige-ai-chat` v351: 150/150 files byte-identical to `53dbf7eb5`. Source verified; the `turn-classify` latency and timeout rate are measured from traces once there is traffic (owed).
+
+## R5a: chat's streamed rounds open through the shared Model Fabric; a cheap round carries no tools
+- **The fabric** (`_shared/model-fabric.ts` `fabricChatStream`): a cognitive class in, one chat-shaped stream out. Candidates come from the Turn Route's `CLASS_POLICY` in the owner's order (operational: Sol → Sonnet 5.5; frontier: Astra → Sonnet 5.5; cheap: Luna → open pool → Haiku). The open pool does not stream, so it is skipped for chat. The Anthropic candidate goes through the real `gatewayCompat` (budget gate, request shaping and trace unchanged); the OpenAI candidate through `responsesStream` (`store:false`, function tools only, the class's effort).
+- **OpenAI stays off for chat.** `OPENAI_CHAT_ENABLED = false` until the controlled Sol canary meets the release bar; turning it on is a reviewed one-line PR, never an environment toggle. With it off, every class is served by Anthropic exactly as before R5: operational and frontier → Sonnet 5.5, cheap → Haiku, and a `deterministic` class that reaches a model → operational.
+- **Fallback is narrow** (route.ts `mayFallback`). The next candidate is tried only when the stream never opened AND the failure is proven health: auth/config, billing, rate limit, model unavailable, outage, or a network throw. Never on an invalid request or an unknown failure (that status reaches chat's existing handling unchanged), never once a stream opened, never for a budget stop (rethrown). Failure classes come from `_shared/provider-failure.ts`: status, error type and code, and recognised phrases only; the message text is never kept. Anthropic's credit-balance 400 is named `billing` (task #5).
+- **Chat's five streamed rounds** (entry, tool loop, claim correction, continuation, close/Live answer) open through the fabric for the route's class. The claim correction is always `operational` (INT-332). The legacy model labels at those sites are gone; the non-streamed calls are unchanged. Trace tags are unchanged (`chat`, `chat-tool-loop`, `chat-claim-correction`, `chat-continuation`, `chat-close`, `chat-live-answer`). A server log line names the attempts whenever a candidate failed.
+- **Cheap never carries tools, now applied** (review S1 on #1789). A cheap round is offered no tools, so light conversation cannot start a tool loop on the cheap model. A claim correction or an action-intent continuation lifts the turn to operational with the governed tools, so a go-ahead the classifier misreads as conversation costs one round, never the step (43.42g).
+- **Review S3 disposition (classifier outside the budget gate):** no change. The budget contract (`router-budget/mod.ts` `enforceBudget`) returns `allow_gated`, not `block`, for the cheap band at the hard ceiling; the classifier is a cheap-band call.
+- **Proof:**
+
+  | Check | Result |
+  |---|---|
+  | `test:model-fabric` | 75/0 (new) |
+  | `test:client-memory-authz` | 943/0 (+43.42f/g) |
+  | `test:knowledge-scope` | 429/0 |
+  | Deno `route` + `round` + `classify` + `provider-failure` | 39/0 |
+  | Every other CI npm harness | exits 0 |
+  | Deno diagnostics on `paige-ai-chat` | 10 → 9, nothing new |
+
+  `test:model-fabric` pins: OpenAI is never called while off; each class gets its Anthropic model; with OpenAI on, Sol/Astra/Luna serve first with `store:false` and the class's effort; fallback happens on 401, 429, insufficient_quota, 503 and a network throw, and does not happen on 400 or an unknown status; the same chat shape reaches the round gate from either provider.
+
+  The diagnostic that went away is the old `Response` cast on the closing call. Bites:
+  - Turning OpenAI on fails 19.
+  - Always falling back fails 4.
+  - Never falling back fails 16.
+  - Dropping the extras or the class effort fails 2.
+  - Always sending tools fails 43.42f/g.
+  - No escalation fails 43.42g.
+- **Deploy:** `_shared/claude.ts` changes, so the merge redeploys every function that imports it. That includes the four INT-320-stale functions (content-draft, extract-business-credit-report, generate-outreach-draft, growth-funnel-draft); one readback is owed after the deploy.
+- **Carried:** R5b narrows the tool list by the route's capability and domain, and traces tool-definition tokens separately (prompt, cache-write, cache-read and output are already separate columns); context compaction is separate. R6/R7: the Sol canary to the release bar, the flip, Astra, and the classifier onto the cheap class.

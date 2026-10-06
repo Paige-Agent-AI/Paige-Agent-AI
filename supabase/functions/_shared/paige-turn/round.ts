@@ -76,10 +76,16 @@ export function readModelRound(payloads: Iterable<string>, transportFailed = fal
   return { end, toolCalls, text };
 }
 
-function wholeCall(c: RoundToolCall): boolean {
-  if (!c.id || !c.name) return false;
+/**
+ * Whether a call's arguments are whole: a JSON object, or empty (a tool that takes no input —
+ * Anthropic streams no argument text for it, and dispatch reads it as `{}`). The dispatcher refuses a
+ * call that fails this BEFORE any branch can read it, so cut-off JSON is never run as `{}`.
+ */
+export function wholeArguments(raw: unknown): boolean {
+  const a = typeof raw === "string" ? raw : "";
+  if (!a.trim()) return true;
   try {
-    const v = JSON.parse(c.arguments || "");
+    const v = JSON.parse(a);
     return !!v && typeof v === "object" && !Array.isArray(v);
   } catch {
     return false;
@@ -87,14 +93,21 @@ function wholeCall(c: RoundToolCall): boolean {
 }
 
 /**
- * THE GATE. The calls `executeToolCalls` may receive from this round: all of them when the round
- * ended in a normal tool-use stop and every call is whole (an id, a name, a JSON-object argument),
- * otherwise NONE. A batch is all-or-nothing: if one call is malformed, the model's decision is not
- * trusted for the others either. This does not decide whether a call is ALLOWED — the gate after it
- * still does; it decides only whether the model finished asking.
+ * THE GATE. The calls `executeToolCalls` may receive from this round: every named call when the
+ * round ended in a normal tool-use stop, otherwise NONE. It decides only whether the model FINISHED
+ * choosing — a cut-off, failed, cancelled, token-limited or refused round runs nothing, whatever it
+ * showed. Within a finished round, a single call with malformed arguments is refused on its own by
+ * the dispatcher (`wholeArguments`), so the model sees that error and can correct it. Whether a call
+ * is ALLOWED is still the gate after this one.
  */
 export function executableToolCalls(round: ModelRound): RoundToolCall[] {
   if (round.end !== "tool_use") return [];
-  if (!round.toolCalls.length || !round.toolCalls.every(wholeCall)) return [];
-  return round.toolCalls;
+  return round.toolCalls.filter((c) => !!c.name);
 }
+
+/**
+ * What the person is told when a round showed tool calls but never finished choosing them. It says
+ * only what the server knows: that step did not run. (Whether anything ELSE ran this turn is added by
+ * the caller from its own count.)
+ */
+export const ROUND_NOT_FINISHED_NOTE = "My last step was cut off before it finished, so I didn't run it. Want me to try again?";

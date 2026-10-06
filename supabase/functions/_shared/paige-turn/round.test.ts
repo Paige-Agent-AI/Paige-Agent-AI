@@ -8,7 +8,7 @@
 //   call · a normal tool-use stop. Only the last may execute.
 // The real converters are driven end to end through this gate by scripts/model-fabric/round-gate-check.mjs.
 import { assert, assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
-import { executableToolCalls, readModelRound } from "./round.ts";
+import { executableToolCalls, readModelRound, wholeArguments } from "./round.ts";
 
 const f = (delta: Record<string, unknown>, finish: string | null = null) => JSON.stringify({ choices: [{ index: 0, delta, finish_reason: finish }] });
 const ROLE = f({ role: "assistant" });
@@ -67,20 +67,29 @@ for (const [name, c] of Object.entries(CASES)) {
   }
 }
 
-Deno.test("a tool-use stop with a malformed call runs none of the batch", () => {
+Deno.test("within a finished round, the gate passes every named call; whole arguments are checked per call", () => {
   const second = f({ tool_calls: [{ index: 1, id: "call_2", type: "function", function: { name: "ping", arguments: "{\"x\":" } }] });
   const round = readModelRound([ROLE, OPEN, HALF, REST, second, f({}, "tool_calls"), DONE]);
   assertEquals(round.end, "tool_use");
-  assertEquals(executableToolCalls(round), []);
+  const run = executableToolCalls(round);
+  assertEquals(run.map((c) => c.id), ["call_1", "call_2"]);
+  assertEquals(run.map((c) => wholeArguments(c.arguments)), [true, false], "the dispatcher refuses the malformed one alone");
 });
 
-Deno.test("a tool-use stop needs an id, a name and an object argument", () => {
+Deno.test("wholeArguments: an object or nothing; never cut-off JSON, an array or a scalar", () => {
+  for (const ok of ["", "  \n ", "{}", "{\"q\":\"Acme\"}"]) assert(wholeArguments(ok), JSON.stringify(ok));
+  for (const bad of ["{\"q\":\"Ac", "[1]", "1", "\"x\"", "null", "{"]) assert(!wholeArguments(bad), bad);
+  assert(wholeArguments(undefined), "absent arguments read as {}");
+});
+
+Deno.test("a call needs a name; an id may be synthesised by the server", () => {
+  const noName = f({ tool_calls: [{ index: 0, id: "c", type: "function", function: { arguments: "{}" } }] });
+  assertEquals(executableToolCalls(readModelRound([noName, f({}, "tool_calls"), DONE])), []);
   const noId = f({ tool_calls: [{ index: 0, type: "function", function: { name: "ping", arguments: "{}" } }] });
-  assertEquals(executableToolCalls(readModelRound([noId, f({}, "tool_calls"), DONE])), []);
-  const arr = f({ tool_calls: [{ index: 0, id: "c", type: "function", function: { name: "ping", arguments: "[1]" } }] });
-  assertEquals(executableToolCalls(readModelRound([arr, f({}, "tool_calls"), DONE])), []);
-  const ok = f({ tool_calls: [{ index: 0, id: "c", type: "function", function: { name: "ping", arguments: "{}" } }] });
-  assertEquals(executableToolCalls(readModelRound([ok, f({}, "tool_calls"), DONE])).length, 1);
+  assertEquals(executableToolCalls(readModelRound([noId, f({}, "tool_calls"), DONE])).length, 1);
+  const noInput = f({ tool_calls: [{ index: 0, id: "c", type: "function", function: { name: "ping", arguments: "" } }] });
+  assertEquals(executableToolCalls(readModelRound([noInput, f({}, "tool_calls"), DONE])).length, 1, "a no-input tool in a finished round runs");
+  assertEquals(executableToolCalls(readModelRound([noInput, f({}, "stop"), DONE])).length, 0, "…but never from an unfinished one");
 });
 
 Deno.test("a finish without [DONE] is unfinished; a finish before an error frame still needs [DONE]", () => {

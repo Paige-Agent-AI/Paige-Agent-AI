@@ -11,7 +11,7 @@
 // soft when she is done. No gold anywhere here (§11): gold is the act, and this is a watch surface.
 import "./paige-turn-status.css";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, AlertTriangle, Check, ChevronRight, Clock, Hand, Lock, PauseCircle, RotateCcw } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, ChevronRight, CircleHelp, Clock, Hand, Lock, PauseCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { deriveLiveTurnView, formatElapsed, type LiveTurnInput, type TurnFooterAction, type TurnGlyph, type TurnRow, type TurnView } from "@/lib/paige-stream";
@@ -40,6 +40,8 @@ function Glyph({ glyph }: { glyph: TurnGlyph }) {
     case "dot": return <span className="ptl-dot" aria-hidden />;
     case "check": return <Check className="ptl-settle" aria-hidden />;
     case "hand": return <Hand className="ptl-settle" aria-hidden />;
+    // C4c — a question PAIGE asked (c2 "Your call", c5 "Question not answered").
+    case "help": return <CircleHelp className="ptl-settle" aria-hidden />;
     case "triangle": return <AlertTriangle className="ptl-settle" aria-hidden />;
     case "pause": return <PauseCircle className="ptl-settle" aria-hidden />;
     case "lock": return <Lock aria-hidden />;

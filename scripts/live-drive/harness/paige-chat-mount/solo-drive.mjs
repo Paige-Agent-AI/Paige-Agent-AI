@@ -34,6 +34,8 @@ const PROMPTS = {
   interrupted: "Check every client's goals.",
   stop: "Who hasn't heard from us in two weeks?",
   refused: "Pull up Maya Okafor's session history.",
+  ask: "Set up onboarding for The Kestrel Group.",
+  askfree: "Set up onboarding for The Kestrel Group.",
 };
 const VIEWPORTS = [[1536, 770], [1366, 768], [1024, 768], [900, 1000]];
 
@@ -100,6 +102,39 @@ shots.push(shot("c4a-kbd-a4-line-page-dark", { scenario: "approval", resume: tru
 shots.push(shot("c4a-zoom200-a4-page-light", { scenario: "approval", resume: true, layout: "page", theme: "light", w: 683, h: 384, dpr: 2, after: ["approve"] }));
 shots.push(shot("c4a-reflow320-a4-drawer-dark", { scenario: "approval", resume: true, layout: "drawer", theme: "dark", w: 320, h: 720, after: ["approve"] }));
 
+// C4c — PAIGE asks, waits, and the same work picks back up (frames c1–c6), selected with --only c4c-.
+for (const [w, h] of VIEWPORTS) for (const layout of ["page", "drawer"]) for (const theme of ["light", "dark"]) {
+  shots.push(shot(`c4c-matrix-c2-${layout}-${theme}-${w}x${h}`, { scenario: "ask", layout, theme, w, h }));
+}
+for (const theme of ["light", "dark"]) for (const layout of ["page", "drawer"]) {
+  const s = (name, o) => shots.push(shot(`c4c-${name}-${layout}-${theme}`, { layout, theme, w: 1366, h: 768, ...o }));
+  s("c1-looking-before-asking", { scenario: "ask", hold: 2, untilLine: "Reading The Kestrel Group's agreement" });
+  s("c2-asks-your-call", { scenario: "ask" });
+  s("c2-picked", { scenario: "ask", after: ["pickSecond"] });
+  s("c2-free-form", { scenario: "askfree" });
+  s("c3-answered-working", { scenario: "ask", followHold: 3, after: ["pickSecond", "useThis"] });
+  s("c4-answered-done", { scenario: "ask", after: ["pickSecond", "useThis", "openFirstTrace"] });
+  s("c4-typed-answer-done", { scenario: "askfree", after: ["typeAnswer"] });
+  s("c5-asked-something-else", { scenario: "ask", after: ["askElse"] });
+  s("c6-skipped", { scenario: "ask", after: ["skip"] });
+  s("c3-then-approval", { scenario: "askfree", answerFollow: "card", after: ["typeAnswer"] });
+  s("reload-open", { scenario: "askreload", noSend: true });
+  s("reload-answered", { scenario: "askreload-answered", noSend: true, after: ["openFirstTrace"] });
+  // The answer never reached PAIGE: she asked the same question again (reload of that thread).
+  s("reload-reopened", { scenario: "askreload-reopened", noSend: true });
+  // A file attached while her question is open: the hint says the file goes as a new message.
+  s("open-with-file", { scenario: "askreload", noSend: true, doc: true });
+  // The answer was claimed and nothing came back after it: the composer stays bound to the question.
+  s("reload-claimed", { scenario: "askreload-claimed", noSend: true });
+}
+shots.push(shot("c4c-reflow320-reload-claimed-page-light", { scenario: "askreload-claimed", noSend: true, layout: "page", theme: "light", w: 320, h: 720 }));
+shots.push(shot("c4c-rm-c3-reduced-motion-page-light", { scenario: "ask", followHold: 3, reduce: true, layout: "page", theme: "light", w: 1366, h: 768, after: ["pickSecond", "useThis"] }));
+shots.push(shot("c4c-kbd-c2-option-focus-page-dark", { scenario: "ask", layout: "page", theme: "dark", w: 1366, h: 768, after: ["kbdPick"] }));
+shots.push(shot("c4c-zoom200-c2-page-light", { scenario: "ask", layout: "page", theme: "light", w: 683, h: 384, dpr: 2 }));
+shots.push(shot("c4c-reflow320-c2-drawer-dark", { scenario: "ask", layout: "drawer", theme: "dark", w: 320, h: 720 }));
+shots.push(shot("c4c-reflow320-c2-page-light", { scenario: "ask", layout: "page", theme: "light", w: 320, h: 720 }));
+shots.push(shot("c4c-phone390-c4-page-dark", { scenario: "ask", layout: "page", theme: "dark", w: 390, h: 844, after: ["pickSecond", "useThis"] }));
+
 const selected = only ? shots.filter((s) => only.some((o) => s.name.includes(o))) : shots;
 
 function startVite() {
@@ -142,7 +177,10 @@ const MEASURE = () => {
   }
   const sweeps = Array.from(document.querySelectorAll("[data-sweep]")).map((s) => getComputedStyle(s).animationName);
   const active = document.activeElement;
-  const focus = active && active !== document.body ? { tag: active.tagName.toLowerCase(), cls: String(active.className).slice(0, 60), outline: getComputedStyle(active).outlineColor, outlineStyle: getComputedStyle(active).outlineStyle, ratio: +ratio(parse(getComputedStyle(active).outlineColor), bgOf(active)).toFixed(2) } : null;
+  const focus = active && active !== document.body ? { tag: active.tagName.toLowerCase(), cls: String(active.className).slice(0, 60), outline: getComputedStyle(active).outlineColor, outlineStyle: getComputedStyle(active).outlineStyle, ratio: +ratio(parse(getComputedStyle(active).outlineColor), bgOf(active)).toFixed(2),
+    // A Tailwind focus ring is a box-shadow, not an outline (C4c's options): measure the ring itself.
+    ring: (getComputedStyle(active).boxShadow.match(/rgba?\([^)]+\)/g) ?? []).map(parse).filter((x) => x && x.a > 0.5)
+      .map((c) => ({ color: `rgb(${c.r}, ${c.g}, ${c.b})`, ratio: +ratio(c, bgOf(active.parentElement ?? active)).toFixed(2) })) } : null;
   const text = document.body.innerText;
   return {
     overflow: { doc: doc.scrollWidth > doc.clientWidth, transcript: transcript ? transcript.scrollWidth > transcript.clientWidth : null },
@@ -165,6 +203,22 @@ const MEASURE = () => {
     resumedSeams: document.querySelectorAll('[data-paige-continues="resumed"]').length,
     lineCount: lines.length,
     reportCard: Array.from(document.querySelectorAll("[data-state]")).map((n) => n.getAttribute("data-state")).filter(Boolean),
+    // C4c — the question in place: its options, the record it froze into, the composer's mode, and
+    // the contrast of the option text and the hint on what they sit on.
+    ask: {
+      options: document.querySelectorAll("[data-paige-ask-option]").length,
+      checked: Array.from(document.querySelectorAll("[data-paige-ask-option]")).map((o) => o.getAttribute("aria-checked")),
+      submitDisabled: document.querySelector("[data-paige-ask-submit]")?.getAttribute("aria-disabled") ?? null,
+      record: document.querySelector("[data-paige-ask-record]")?.textContent ?? null,
+      answering: document.querySelector("[data-paige-answering]")?.getAttribute("data-paige-answering") ?? null,
+      hint: document.querySelector("[data-paige-answering] span")?.textContent ?? null,
+      hintButtons: document.querySelectorAll("[data-paige-answering] button").length,
+      placeholder: document.querySelector("textarea")?.getAttribute("placeholder") ?? null,
+      contrast: [...document.querySelectorAll("[data-paige-ask-option] span span, [data-paige-answering] span, [data-paige-ask-record] span, [data-paige-ask-submit]")]
+        .filter((n) => n.getBoundingClientRect().height > 0 && n.textContent.trim())
+        .map((n) => +ratio(parse(getComputedStyle(n).color), bgOf(n)).toFixed(2)),
+      answerBubbles: Array.from(document.querySelectorAll("[data-paige-message-id]")).filter((el) => el.className.includes("flex-row-reverse")).length,
+    },
   };
 };
 
@@ -180,7 +234,8 @@ async function run() {
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e)));
       const q = new URLSearchParams({ scenario: s.scenario, theme: s.theme, layout: s.layout, ...(s.hold !== undefined ? { hold: String(s.hold) } : {}),
-        ...(s.resume ? { resume: "1" } : {}), ...(s.followHold !== undefined ? { followHold: String(s.followHold) } : {}) });
+        ...(s.resume ? { resume: "1" } : {}), ...(s.followHold !== undefined ? { followHold: String(s.followHold) } : {}),
+        ...(s.answerFollow ? { answerFollow: s.answerFollow } : {}), ...(s.doc ? { doc: "1" } : {}) });
       await page.goto(`${BASE}?${q}`);
       await page.waitForSelector("textarea", { timeout: 30_000 });
       // Record every announcement the live region makes (a change of state, never a step).
@@ -240,6 +295,22 @@ async function run() {
             console.log("toggle", JSON.stringify({ before, after }));
             toggleInView = before.inView ? after.inView : null;
           }
+        }
+        // C4c — answering PAIGE's question.
+        if (a === "pickSecond") { await page.locator("[data-paige-ask-option]").nth(1).click(); await page.waitForTimeout(250); }
+        if (a === "useThis") { await page.locator("[data-paige-ask-submit]").click(); await page.waitForTimeout(s.followHold !== undefined ? 1800 : 4600); }
+        if (a === "skip") { await page.locator("[data-paige-ask-skip]").click(); await page.waitForTimeout(4600); }
+        if (a === "typeAnswer") { await page.locator("textarea").fill("Start it November 1."); await page.keyboard.press("Enter"); await page.waitForTimeout(4600); }
+        if (a === "askElse") {
+          await page.getByRole("button", { name: "Ask something else instead" }).click();
+          await page.locator("textarea").fill("Actually — who's on my calendar tomorrow?");
+          await page.keyboard.press("Enter");
+          await page.waitForTimeout(2600);
+        }
+        if (a === "kbdPick") {
+          await page.locator("[data-paige-ask-option]").first().focus();
+          await page.keyboard.press("ArrowDown");
+          await page.waitForTimeout(250);
         }
         if (a === "approve") { await page.getByRole("button", { name: /^Approve/ }).first().click(); await page.waitForTimeout(4200); }
         if (a === "declineKbd") {

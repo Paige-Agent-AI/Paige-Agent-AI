@@ -93,6 +93,7 @@ export {
   readTurnTrace,
   settleTurnRows,
   upsertTurnRow,
+  type AskStanding,
   type LiveTurnInput,
   type TurnEndCause,
   type TurnFooterAction,

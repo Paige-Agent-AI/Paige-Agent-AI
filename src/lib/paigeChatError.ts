@@ -21,6 +21,11 @@ const TITLE_BY_CODE: Record<string, string> = {
   rate_limited: "Rate limit reached",
   insufficient_credits: "Service needs credits",
   chat_unavailable: "Something went wrong",
+  // C4c — an answer to PAIGE's question that was not carried forward (paige-ai-chat, refuseAnswer).
+  ASK_NOT_OPEN: "That question is closed",
+  ASK_ALREADY_ANSWERED: "PAIGE already has your answer",
+  ASK_ANSWER_IN_PROGRESS: "PAIGE already has your answer",
+  ASK_REOPENED: "PAIGE asked again",
 };
 
 /**

@@ -258,9 +258,11 @@ globalThis.fetch = async (url, init) => {
       const failing = modelTurnState.getStore();
       if (failing) {
         failing.streamCalls = (failing.streamCalls ?? 0) + 1;
+        // …or never answers at all: the request throws (a reset connection) — `throwStreamCalls`.
+        if (failing.throwStreamCalls?.includes(failing.streamCalls)) throw new TypeError("fixture: connection reset by peer");
         if (failing.failStreamCalls?.includes(failing.streamCalls)) {
           return new Response(JSON.stringify({ type: "error", error: { type: "overloaded_error", message: "fixture overloaded" } }),
-            { status: 529, headers: { "Content-Type": "application/json" } });
+            { status: failing.failStreamStatus ?? 529, headers: { "Content-Type": "application/json" } });
         }
         // A provider call that answers 200 and then BREAKS (paige-turn). `breakStreamCalls` maps a call
         // number to the text it gets out first ("" = before any text). The translator catches the
@@ -387,6 +389,10 @@ async function drive({
   failStreamCalls = [],
   /** Which streamed model calls answer 200 and then break, as { callNumber: textBeforeTheBreak }. */
   breakStreamCalls = {},
+  /** Which streamed model calls never answer: the request itself throws (1-based). Default none. */
+  throwStreamCalls = [],
+  /** The status a `failStreamCalls` call answers with (the gateway's own 429, 402, …). Default 529. */
+  failStreamStatus = 529,
 }) {
   // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
   // an admin seat with no resolved workspace (get_paige_persona_context falls back to
@@ -495,7 +501,7 @@ async function drive({
     },
   });
 
-  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, breakStreamCalls }, async () => {
+  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, failStreamStatus, breakStreamCalls, throwStreamCalls }, async () => {
     let status = null, bodyText = "", partialText = "";
     try {
       const res = await handler(new Request("http://local/paige-ai-chat", {
@@ -5863,6 +5869,47 @@ console.log("\nC4a — an approval resumes the same objective on the server");
     JSON.stringify({ DOOR, consumed: st21.rows[0].consumed }));
 }
 
+// C4c (group 41, and group 40's composition check) — THE TRANSCRIPT, as the database keeps it: one ordered store per scenario that the handler reads
+// (with the caller's session, newest first) and appends to (paige_chat_turn_append), with the
+// partial unique index modelled exactly — one USER turn per thread per `paige_resume.key` (23505).
+const makeThreadStore = (threads) => {
+  const turns = [];
+  let seq = 0;
+  const store = {
+    turns,
+    seed(threadId, role, content, bundle_ref = null, created_at = new Date().toISOString()) {
+      const id = crypto.randomUUID();
+      turns.push({ id, thread_id: threadId, role, content, bundle_ref: structuredClone(bundle_ref), seq: ++seq, created_at });
+      return id;
+    },
+    table: (filters) => {
+      const thread = filters.find(([op, col]) => op === "eq" && col === "thread_id")?.[2];
+      if (!threads.some((t) => t.id === thread && t.caller_user_id === USER)) return []; // RLS: own threads only
+      let rows = turns.filter((t) => t.thread_id === thread);
+      const order = filters.find(([op]) => op === "order");
+      rows = [...rows].sort((a, b) => (order?.[2]?.ascending === false ? b.seq - a.seq : a.seq - b.seq));
+      const limit = filters.find(([op]) => op === "limit")?.[1];
+      return rows.slice(0, limit ?? rows.length).map((t) => structuredClone(t));
+    },
+    threadsTable: (filters) => {
+      const id = filters.find(([op, col]) => op === "eq" && col === "id")?.[2];
+      return threads.filter((t) => t.id === id && t.caller_user_id === USER)
+        .map((t) => ({ id: t.id, tenant_id: t.tenant_id, caller_user_id: t.caller_user_id, contact_id: null, studio_session_id: null, summary: null, title: "Kestrel onboarding", message_count: 2 }));
+    },
+    append: (args) => {
+      const thread = threads.find((t) => t.id === args.p_thread_id);
+      if (!thread) return { data: null, error: { code: "P0001", message: "thread not found" } };
+      if (thread.caller_user_id !== USER) return { data: null, error: { code: "P0001", message: "thread not owned by caller" } };
+      const key = args.p_role === "user" ? args.p_bundle_ref?.paige_resume?.key : undefined;
+      if (key != null && turns.some((t) => t.thread_id === args.p_thread_id && t.role === "user" && t.bundle_ref?.paige_resume?.key === key)) {
+        return { data: null, error: { code: "23505", message: 'duplicate key value violates unique constraint "paige_chat_turns_resume_uk"' } };
+      }
+      return { data: store.seed(args.p_thread_id, args.p_role, args.p_content, args.p_bundle_ref ?? null), error: null };
+    },
+  };
+  return store;
+};
+
 // ── 40. C4b — A DOOR APPROVAL RESUMES ON THE SERVER ─────────────────────────────────────────────────
 //
 // docs/delivery/paige-conversational-loop-c4.md §3. A door (crm-command, the Sales doors,
@@ -6037,7 +6084,8 @@ try {
     assert(`40.1d ${label}: no fresh card, and no second proposal row`,
       cardsOf(r.bodyText).length === 0 && st.rows.length === 1, JSON.stringify({ cards: cardsOf(r.bodyText), rows: st.rows.length }));
     if (label === "deal_create") {
-      // INT-327 × C4b: the door stores the command AFTER resolving the client (contact-refs.ts, in place),
+      // INT-327 × C4b: the door stores the command AFTER resolving the client (contact-refs.ts, on a COPY
+      // of its frozen canonical command, re-issued through the canonical boundary — crm-command ~L367-375),
       // and the pinned resume hands that stored command back — so what runs is the deal FOR that client.
       // Kills: a resume that rebuilt the command from the call (or dropped the reference) on the way.
       const ran = db.executions[0]?.command;
@@ -6805,9 +6853,619 @@ try {
         && dealRow?.consumed === false && st3.rows.length === 2,
       JSON.stringify({ door: doorCalls(both).map((c) => c.body?.approved_fingerprint), executions: db3.executions.map((e) => e.command.action), deal: dealRow?.consumed }));
   }
+
+  // ── 40.15 C4c × C4b — ONE OBJECTIVE: PAIGE asks → the person answers → PAIGE proposes a DOOR act (the
+  // real crm-command mints the card) → the person approves → the door runs it EXACTLY ONCE, carried
+  // forward from the answer's continuation turn → approving again runs nothing. The composition Sales
+  // commercial assembly depends on (verifier F5: 41.10/41.11 composed only a C4a general-gate card).
+  {
+    const ts = makeThreadStore([{ id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER }]);
+    const st = makeConfirmStore(); const db = crmDb();
+    const onThread = { extraTables: { paige_chat_turns: ts.table, paige_chat_threads: ts.threadsTable }, extraRpc: { paige_chat_turn_append: (args) => ts.append(args), match_paige_memory: { data: [], error: null } } };
+    const asked = await crmDrive(st, db, { ...onThread, toolCall: { name: "ask_choices", args: { prompt: "Which name should the new contact go under?", needs: "the contact's name", objective: "Adding Kestrel's lead to your contacts" } } });
+    const ask = framesOf(asked.bodyText).find((f) => f.paige_choices)?.paige_choices ?? null;
+    const answered = await crmDrive(st, db, { ...onThread, body: { resume: { kind: "answer", ask_id: ask?.ask_id } }, toolCall: CONTACT });
+    const card = cardsOf(answered.bodyText)[0] ?? null;
+    const continuation = ts.turns.filter((t) => t.role === "assistant").at(-1);
+    assert("40.15 ask → answer → a DOOR card: the answer resumes the objective, the real door mints ONE proposal and nothing runs yet",
+      !!ask?.ask_id && answered.status === 200 && resumedFrames(answered.bodyText).length === 1 && !!card?.fingerprint
+        && st.rows.length === 1 && db.executions.length === 0 && continuation?.bundle_ref?.turn_state?.resumed?.kind === "answer"
+        && continuation?.bundle_ref?.turn_state?.state === "WAIT_APPROVAL",
+      JSON.stringify({ ask, status: answered.status, card, rows: st.rows.length, executions: db.executions.length, cont: continuation?.bundle_ref?.turn_state }));
+    const approved = await crmDrive(st, db, { ...onThread, body: { approvedConfirmations: [card?.fingerprint] }, fixtureTool: "crm_create_contact" });
+    const resumedTurn = ts.turns.filter((t) => t.role === "assistant").at(-1);
+    assert("40.15b …the approval runs the door's STORED act exactly once (C4b), carried forward from the answer's continuation turn, in the same thread",
+      approved.status === 200 && db.executions.length === 1 && doorCalls(approved).length === 1 && doorCalls(approved)[0].body.approved_fingerprint === card?.fingerprint
+        && st.rows[0].consumed === true && resumedTurn?.bundle_ref?.turn_state?.resumed?.kind === "approval"
+        && resumedTurn?.bundle_ref?.paige_resume?.from_turn_id === continuation?.id && cardsOf(approved.bodyText).length === 0,
+      JSON.stringify({ status: approved.status, executions: db.executions.length, door: doorCalls(approved).map((c) => c.body?.approved_fingerprint), consumed: st.rows[0]?.consumed, resumed: resumedTurn?.bundle_ref?.paige_resume }));
+    const again = await crmDrive(st, db, { ...onThread, body: { approvedConfirmations: [card?.fingerprint] }, fixtureTool: "crm_create_contact" });
+    const kinds = ts.turns.map((t) => `${t.role}:${t.bundle_ref?.paige_ask ? "ask" : t.bundle_ref?.turn_state?.resumed?.kind ?? (t.bundle_ref?.paige_resume?.kind === "answer" ? "answer" : "-")}`);
+    // (The door answers a re-sent approval from its committed result — C4b's replay — so the card reads
+    // the earlier outcome; what this checks is that nothing EXECUTES a second time.)
+    assert("40.15c …approving again executes nothing a second time (no new card, no new proposal); the thread holds ONE question, ONE answer, ONE door execution — no other workflow record",
+      db.executions.length === 1 && cardsOf(again.bodyText).length === 0 && st.rows.length === 1
+        && ts.turns.filter((t) => t.role === "user" && t.bundle_ref?.paige_resume?.kind === "answer").length === 1
+        && ts.turns.filter((t) => t.bundle_ref?.paige_ask).length === 1,
+      JSON.stringify({ executions: db.executions.length, outcome: outcomeOf(again.bodyText), kinds }));
+  }
 } catch (e) {
   if (!(e instanceof Group40Abort)) throw e;
   assert(`40.ABORT group 40 stopped: ${e.message}`, false);
+}
+
+// ── 41. C4c — PAIGE ASKS, WAITS, AND THE SAME OBJECTIVE RESUMES ON THE ANSWER ─────────────────────────
+//
+// docs/delivery/paige-conversational-loop-c4.md §2c. When PAIGE cannot continue without one fact only
+// the person has, she asks with `ask_choices` (now offered in the main chat on a saved thread). The
+// question turn IS the ask (`bundle_ref.paige_ask`, ASK_USER). A reply sent AS the answer (`resume:
+// {kind:"answer", ask_id}`) is bound to it once — re-derived from the thread, claimed through the
+// transcript's partial unique index — and PAIGE continues the same objective. Each check names the
+// defect it catches; "red at base" means it fails on main (before C4c the tool was Studio-only, nothing
+// was saved but the question's words, and every answer was an ordinary message that could land twice).
+console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the answer");
+{
+  const THREAD = "c4c41000-0000-4000-8000-000000000001";
+  const THREAD_B = "c4c41000-0000-4000-8000-000000000002";      // another thread of the same person, workspace B
+  const THREAD_OTHER_USER = "c4c41000-0000-4000-8000-000000000003";
+  const framesOf = (text) => String(text ?? "").split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .flatMap((l) => { try { return [JSON.parse(l.slice(6))]; } catch { return []; } });
+  const choicesOf = (r) => framesOf(r.bodyText).find((f) => f.paige_choices)?.paige_choices ?? null;
+  const turnFrames = (r) => framesOf(r.bodyText).filter((f) => f.paige_turn).map((f) => f.paige_turn);
+  const terminalOf = (r) => turnFrames(r).find((t) => t.event === "completed" || t.event === "waiting") ?? null;
+  const resumedOf = (r) => turnFrames(r).filter((t) => t.event === "resumed");
+  const streamedCalls = (r) => r.modelEgress.filter((b) => b.includes('"stream":true'));
+  const toldModel = (r) => r.modelEgress.join("\n").replace(/\\"/g, '"');
+  const bodyJson = (r) => { try { return JSON.parse(r.bodyText); } catch { return null; } };
+  const appends = (r, role) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && (!role || c.args?.p_role === role));
+  const offered = (r) => { try { return (JSON.parse(streamedCalls(r)[0] ?? "{}").tools ?? []).map((t) => t.name); } catch { return []; } };
+  // Imported defensively so this group can be run against main to show it is red there (main's
+  // resume.ts has none of the C4c readers).
+  const resumeModule = await import("../../supabase/functions/_shared/paige-turn/resume.ts").catch(() => ({}));
+  const readAskRecord = resumeModule.readAskRecord ?? (() => null);
+  const readAnswerClaim = resumeModule.readAnswerClaim ?? (() => null);
+  const readResumeRecord = resumeModule.readResumeRecord ?? (() => null);
+  const answerTurnNote = resumeModule.answerTurnNote ?? (() => "");
+  const resolveLiveness = (store, askId) => resumeModule.resolveAskLiveness
+    ? resumeModule.resolveAskLiveness([...store.turns].sort((x, y) => y.seq - x.seq), askId) : null;
+
+  const THREADS = [
+    { id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER },
+    { id: THREAD_B, tenant_id: OTHER_TENANT, caller_user_id: USER },
+    { id: THREAD_OTHER_USER, tenant_id: CALLER_TENANT, caller_user_id: FOREIGN },
+  ];
+  const PERSONA = (tenant) => ({ get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } });
+  const SEAT = (tenant = CALLER_TENANT) => ({
+    ...PERSONA(tenant),
+    current_user_tenant_id: { data: tenant, error: null },
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    studio_role_ok: { data: true, error: null },
+    match_paige_memory: { data: [], error: null },
+    growth_page_upsert: { data: { id: "page-41", slug: "kestrel-welcome", status: "draft", tenant_id: tenant }, error: null },
+  });
+  const ASK_FREE = { name: "ask_choices", args: { prompt: "Kestrel signed but didn't pick a start date. When should the onboarding start?", needs: "the start date", objective: "Setting up Kestrel's onboarding" } };
+  const ASK_CHOICE = { name: "ask_choices", args: {
+    prompt: "Kestrel signed a 14-person engagement but didn't pick a start. Which start should I build?",
+    needs: "which start to build", objective: "Setting up Kestrel's onboarding",
+    options: [
+      { label: "Full kickoff", value: "full_kickoff", description: "90-minute workshop plus the intake form" },
+      { label: "Light start", value: "light_start", description: "Intake form now, kickoff next month" },
+      { label: "Mirror Lumen Freight", value: "mirror_lumen", description: "Copy the onboarding you ran for Lumen Freight" },
+    ],
+  } };
+  const PAGE = { name: "growth_page_save", args: { title: "Kestrel welcome", blocks: [] } };
+  const turn = (store, { text = "Set up onboarding for Kestrel.", tenant = CALLER_TENANT, threadId = THREAD, toolCall, resume, body = {}, rpc = {}, tables = {}, service = {}, concurrent = 1, confirms, failStreamCalls = [], failStreamStatus, throwStreamCalls = [], tableErrors = {}, document } = {}) => drive({
+    stream: true, text, toolCall, failStreamCalls, ...(failStreamStatus ? { failStreamStatus } : {}), throwStreamCalls, tableErrorsExtra: tableErrors, ...(document ? { document } : {}),
+    extraBody: { ...(threadId ? { threadId } : {}), ...(resume ? { resume } : {}), ...body },
+    rpcOverrides: { ...SEAT(tenant), paige_chat_turn_append: (args) => store.append(args), ...rpc },
+    tablesExtra: {
+      paige_chat_turns: store.table, paige_chat_threads: store.threadsTable,
+      client_memory: () => [],
+      ...(confirms ? { paige_pending_confirmations: confirms.table } : {}),
+      ...tables,
+    },
+    serviceTablesExtra: { client_memory: () => [], ...service },
+    ...(confirms ? { onInsert: mirrorConfirms(confirms) } : {}),
+    concurrentRequests: concurrent,
+  });
+  const askThen = async (store, ask = ASK_FREE, opts = {}) => {
+    const r = await turn(store, { toolCall: ask, ...opts });
+    return { r, frame: choicesOf(r), askTurn: store.turns.filter((t) => t.role === "assistant").at(-1) ?? null };
+  };
+  const answer = (store, askId, text, opts = {}) => turn(store, { text, resume: { kind: "answer", ask_id: askId, ...(opts.skipped ? { skipped: true } : {}) }, ...opts });
+
+  // ── 41.1 A MISSING SCALAR FACT. PAIGE asks (free-form, no options) and the turn waits; the person's
+  // own words answer it; the SAME objective resumes. Red at base: the tool was never offered outside
+  // Studio, nothing about the question was saved, and an answer was just another message.
+  const s1 = makeThreadStore(THREADS);
+  const a1 = await askThen(s1);
+  assert("41.0 the main chat on a saved thread is offered the question tool (the owner seat)",
+    offered(a1.r).includes("ask_choices"), JSON.stringify(offered(a1.r).filter((n) => /ask/.test(n))));
+  const rec1 = readAskRecord(a1.askTurn?.bundle_ref?.paige_ask);
+  assert("41.1 PAIGE asks a free-form question: one paige_choices frame with a server ask_id and no options; the turn ends waiting ASK_USER",
+    !!a1.frame && /^[0-9a-f-]{36}$/.test(a1.frame.ask_id ?? "") && Array.isArray(a1.frame.options) && a1.frame.options.length === 0
+      && terminalOf(a1.r)?.event === "waiting" && terminalOf(a1.r)?.state === "ASK_USER",
+    JSON.stringify({ frame: a1.frame, terminal: terminalOf(a1.r) }));
+  assert("41.1b the question turn IS the ask: saved with its words, paige_ask (same id, needs, objective) and turn_state ASK_USER waiting on choice",
+    a1.askTurn?.content === ASK_FREE.args.prompt && rec1?.ask_id === a1.frame?.ask_id && rec1?.needs === "the start date"
+      && rec1?.objective === "Setting up Kestrel's onboarding"
+      && a1.askTurn?.bundle_ref?.turn_state?.state === "ASK_USER" && a1.askTurn?.bundle_ref?.turn_state?.waiting_on?.kind === "choice",
+    JSON.stringify(a1.askTurn));
+  const r1 = await answer(s1, a1.frame?.ask_id, "Start it November 1.");
+  const claim1 = readAnswerClaim(s1.turns.find((t) => t.role === "user" && t.content === "Start it November 1.")?.bundle_ref?.paige_resume);
+  assert("41.1c the answer is bound to the question once: the person's turn carries the claim answer:<ask_id> from the question turn",
+    r1.status === 200 && claim1?.key === `answer:${a1.frame?.ask_id}` && claim1?.from_turn_id === a1.askTurn?.id
+      && appends(r1, "user").length === 1,
+    JSON.stringify({ status: r1.status, claim1, userAppends: appends(r1, "user").length }));
+  assert("41.1d PAIGE continues the SAME objective: one model call, told (from the SAVED question) what she asked, what she was doing and what she needed",
+    streamedCalls(r1).length === 1 && toldModel(r1).includes("THIS TURN CARRIES AN ANSWER FORWARD")
+      && toldModel(r1).includes(ASK_FREE.args.prompt) && toldModel(r1).includes("Setting up Kestrel's onboarding") && toldModel(r1).includes("the start date"),
+    toldModel(r1).slice(0, 200));
+  assert("41.1e the wire says resumed once (WORKING) after started; the turn completes FINAL",
+    resumedOf(r1).length === 1 && resumedOf(r1)[0].state === "WORKING" && turnFrames(r1)[0]?.event === "started" && terminalOf(r1)?.state === "FINAL",
+    JSON.stringify(turnFrames(r1)));
+  const cont1 = s1.turns.filter((t) => t.role === "assistant").at(-1);
+  const res1 = readResumeRecord(cont1?.bundle_ref?.paige_resume);
+  assert("41.1f the continuation is saved as the same objective resumed by an answer: turn_state.resumed {kind: answer}, paige_resume names the question turn",
+    cont1?.bundle_ref?.turn_state?.resumed?.kind === "answer" && res1?.kind === "answer" && res1.from_turn_id === a1.askTurn?.id && res1.outcomes.length === 0,
+    JSON.stringify(cont1?.bundle_ref));
+
+  // ── 41.2 A BOUNDED CHOICE. Options ride the frame and the record; the selection resumes.
+  const s2 = makeThreadStore(THREADS);
+  const a2 = await askThen(s2, ASK_CHOICE);
+  assert("41.2 a bounded choice: three options on the wire and in the saved record, single-select",
+    a2.frame?.options?.length === 3 && a2.frame.multi === false && readAskRecord(a2.askTurn?.bundle_ref?.paige_ask)?.options?.map((o) => o.value).join() === "full_kickoff,light_start,mirror_lumen",
+    JSON.stringify(a2.frame));
+  const r2 = await answer(s2, a2.frame?.ask_id, "Light start");
+  assert("41.2b picking an option resumes the same objective, with the choices PAIGE offered named for her",
+    r2.status === 200 && resumedOf(r2).length === 1 && toldModel(r2).includes('"Light start" → "light_start"'),
+    JSON.stringify({ status: r2.status, resumed: resumedOf(r2).length }));
+
+  // ── 41.3 AN UNRELATED REPLY DOES NOT SILENTLY SATISFY THE ASK. (a) A message NOT sent as the answer
+  // is an ordinary message: no claim, no resume, no note — and the question is then stale for good.
+  // (b) A reply sent as the answer but that does not give the fact: PAIGE is told not to invent it.
+  const s3 = makeThreadStore(THREADS);
+  const a3 = await askThen(s3);
+  const other3 = await turn(s3, { text: "Actually — who's on my calendar tomorrow?" });
+  const u3 = s3.turns.find((t) => t.content === "Actually — who's on my calendar tomorrow?");
+  assert("41.3 an ordinary message after an open question is NOT taken as its answer: no claim, no resumed frame, no answer note",
+    other3.status === 200 && !u3?.bundle_ref?.paige_resume && resumedOf(other3).length === 0 && !toldModel(other3).includes("CARRIES AN ANSWER FORWARD"),
+    JSON.stringify({ status: other3.status, bundle: u3?.bundle_ref, resumed: resumedOf(other3).length }));
+  assert("41.3b the answer note forbids filling the missing fact from an unrelated reply, and says an answer approves nothing",
+    /do not invent it, assume it, or fill it in from something unrelated/.test(answerTurnNote(readAskRecord(a3.askTurn?.bundle_ref?.paige_ask), { skipped: false }))
+      && /approves nothing/.test(answerTurnNote(readAskRecord(a3.askTurn?.bundle_ref?.paige_ask), { skipped: false })),
+    answerTurnNote(readAskRecord(a3.askTurn?.bundle_ref?.paige_ask), { skipped: false }));
+  const s3b = makeThreadStore(THREADS);
+  const a3b = await askThen(s3b);
+  const unrelated = await answer(s3b, a3b.frame?.ask_id, "the weather is nice");
+  assert("41.3c a reply sent as the answer that does not give the fact: PAIGE is told what she needed and not to invent it — nothing is written into any field",
+    unrelated.status === 200 && toldModel(unrelated).includes("the start date") && toldModel(unrelated).includes("do not invent it")
+      && unrelated.outboundCalls.length === 0 && unrelated.rec.rpc.every((c) => ["paige_chat_turn_append", "check_rate_limit", "current_user_tenant_id", "is_platform_operator", "is_platform_owner", "get_paige_persona_context", "match_paige_memory", "get_actor_access", "studio_role_ok", "is_tenant_admin_as", "resolve_tool_autonomy"].includes(c.name) || !/upsert|save|update|create|insert/.test(c.name)),
+    JSON.stringify({ status: unrelated.status, outbound: unrelated.outboundCalls.length, rpcs: [...new Set(unrelated.rec.rpc.map((c) => c.name))] }));
+
+  // ── 41.4 A STALE ASK REFUSES SAFELY: the question was superseded (41.3's ordinary message), so an
+  // answer to it now is refused — 409, nothing appended, PAIGE never asked.
+  const stale = await answer(s3, a3.frame?.ask_id, "Start it November 1.");
+  assert("41.4 an answer to a question someone moved past: 409 ASK_NOT_OPEN, nothing saved, no model call",
+    stale.status === 409 && bodyJson(stale)?.code === "ASK_NOT_OPEN" && appends(stale).length === 0 && stale.modelEgress.length === 0,
+    JSON.stringify({ status: stale.status, body: bodyJson(stale), appends: appends(stale).length, egress: stale.modelEgress.length }));
+  const unknownAsk = await answer(s3, crypto.randomUUID(), "Start it November 1.");
+  assert("41.4b an answer naming a question this thread never asked: 409 ASK_NOT_OPEN, nothing saved, no model call",
+    unknownAsk.status === 409 && bodyJson(unknownAsk)?.code === "ASK_NOT_OPEN" && appends(unknownAsk).length === 0 && unknownAsk.modelEgress.length === 0,
+    JSON.stringify({ status: unknownAsk.status, body: bodyJson(unknownAsk) }));
+
+  // ── 41.4c A question turn that did not END waiting (its answer was withheld by the final check, or it
+  // was interrupted) is not open, even when its record names the question — nothing is answered.
+  const s4c = makeThreadStore(THREADS);
+  s4c.seed(THREAD, "user", "Set up onboarding for Kestrel.");
+  s4c.seed(THREAD, "assistant", "I held that answer back after a final check.", {
+    turn_state: { v: 1, state: "WITHHELD", mode: "clarify", rounds: 1, tools: 0 },
+    paige_ask: { v: 1, ask_id: "c4c41000-0000-4000-8000-0000000000c4", question: "When should it start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: "Onboarding" },
+  });
+  const notWaiting = await answer(s4c, "c4c41000-0000-4000-8000-0000000000c4", "Start it November 1.");
+  assert("41.4c a question turn that ended WITHHELD (not waiting) cannot be answered: 409 ASK_NOT_OPEN, nothing saved, no model call",
+    notWaiting.status === 409 && bodyJson(notWaiting)?.code === "ASK_NOT_OPEN" && appends(notWaiting).length === 0 && notWaiting.modelEgress.length === 0,
+    JSON.stringify({ status: notWaiting.status, body: bodyJson(notWaiting) }));
+
+  // ── 41.5 ONE ASK → ONE RESUME. Sent again later (a reload, a retry): refused as already answered.
+  // Sent twice at once (a double tap, two tabs): the database lets one win; the other is refused
+  // before any model call — one claim row, one continuation.
+  const again = await answer(s1, a1.frame?.ask_id, "Start it November 1.");
+  assert("41.5 an already-answered question cannot be answered again: 409 ASK_ALREADY_ANSWERED, nothing saved, no model call",
+    again.status === 409 && bodyJson(again)?.code === "ASK_ALREADY_ANSWERED" && appends(again).length === 0 && again.modelEgress.length === 0,
+    JSON.stringify({ status: again.status, body: bodyJson(again) }));
+  const s5 = makeThreadStore(THREADS);
+  const a5 = await askThen(s5);
+  const double = await answer(s5, a5.frame?.ask_id, "Start it November 1.", { concurrent: 2 });
+  const statuses5 = double.responses.map((x) => x.status).sort();
+  const claims5 = s5.turns.filter((t) => t.role === "user" && t.bundle_ref?.paige_resume?.key === `answer:${a5.frame?.ask_id}`);
+  const conts5 = s5.turns.filter((t) => t.role === "assistant" && t.bundle_ref?.paige_resume?.kind === "answer");
+  assert("41.5b two answers at once: one 200 and one 409, ONE claim row, ONE continuation, ONE model call",
+    JSON.stringify(statuses5) === JSON.stringify([200, 409]) && claims5.length === 1 && conts5.length === 1 && streamedCalls(double).length === 1
+      && double.responses.some((x) => { try { return JSON.parse(x.bodyText).code === "ASK_ALREADY_ANSWERED"; } catch { return false; } }),
+    JSON.stringify({ statuses5, claims: claims5.length, conts: conts5.length, streamed: streamedCalls(double).length }));
+
+  // ── 41.6 RELOAD BEFORE THE ANSWER: what a reload reads is the question, open, exactly as asked
+  // (the client rebuilds the card from this record — vitest). 41.7 RELOAD AFTER: the claim, then the
+  // continuation, and the wire terminal = the saved state.
+  const reread = s2.turns.find((t) => t.id === a2.askTurn?.id);
+  assert("41.6 reload before answering: the latest turn is the question, its record still ASK_USER, its options readable as asked",
+    !!reread && readAskRecord(reread.bundle_ref?.paige_ask)?.options?.length === 3 && reread.bundle_ref?.turn_state?.state === "ASK_USER"
+      && JSON.stringify(readAskRecord(a1.askTurn?.bundle_ref?.paige_ask)) === JSON.stringify(a1.askTurn?.bundle_ref?.paige_ask),
+    JSON.stringify(reread?.bundle_ref));
+  const order1 = s1.turns.map((t) => `${t.role}:${t.bundle_ref?.paige_ask ? "ask" : t.bundle_ref?.paige_resume?.kind ?? "-"}`);
+  assert("41.7 reload after answering: question → the answer (its claim) → the continuation (resumed), and the saved state is the wire's terminal",
+    JSON.stringify(order1.slice(-3)) === JSON.stringify(["assistant:ask", "user:answer", "assistant:answer"])
+      && cont1?.bundle_ref?.turn_state?.state === terminalOf(r1)?.state,
+    JSON.stringify({ order1, saved: cont1?.bundle_ref?.turn_state?.state, wire: terminalOf(r1)?.state }));
+
+  // ── 41.8 WORKSPACE SWITCH: the question was asked in A; the person is now in B. The thread is
+  // refused (409 ACTIVE_ACCOUNT_CHANGED) before anything is read, claimed or asked.
+  const s8 = makeThreadStore(THREADS);
+  const a8 = await askThen(s8);
+  const inB = await answer(s8, a8.frame?.ask_id, "Start it November 1.", { tenant: OTHER_TENANT });
+  assert("41.8 (isolation 1) an answer from another workspace: 409 before anything — no claim, no model call, the question still open",
+    inB.status === 409 && bodyJson(inB)?.code === "ACTIVE_ACCOUNT_CHANGED" && appends(inB).length === 0 && inB.modelEgress.length === 0
+      && s8.turns.at(-1)?.id === a8.askTurn?.id,
+    JSON.stringify({ status: inB.status, body: bodyJson(inB) }));
+  // (isolation 2) the same person's OTHER workspace thread, naming this question's id: not that
+  // thread's question, so not open there — and nothing in thread A moves.
+  const crossThread = await answer(s8, a8.frame?.ask_id, "Start it November 1.", { tenant: OTHER_TENANT, threadId: THREAD_B });
+  assert("41.8b (isolation 2) the same person in their other workspace's thread cannot answer this question: 409 ASK_NOT_OPEN, no model call, A untouched",
+    crossThread.status === 409 && bodyJson(crossThread)?.code === "ASK_NOT_OPEN" && crossThread.modelEgress.length === 0
+      && appends(crossThread).length === 0 && s8.turns.at(-1)?.id === a8.askTurn?.id,
+    JSON.stringify({ status: crossThread.status, body: bodyJson(crossThread) }));
+  // (isolation 3) a STALE declaration: the server resolves A, but the workspace the person declared
+  // is B (profiles.active_tenant_id). Declared ∧ validated must agree, or nothing is answered.
+  const staleDecl = await answer(s8, a8.frame?.ask_id, "Start it November 1.", { tables: { profiles: () => [{ user_id: USER, active_tenant_id: OTHER_TENANT }] } });
+  assert("41.8c (isolation 3) a stale active-workspace declaration cannot answer: 409 ASK_NOT_OPEN, no claim, no model call",
+    staleDecl.status === 409 && bodyJson(staleDecl)?.code === "ASK_NOT_OPEN" && appends(staleDecl).length === 0 && staleDecl.modelEgress.length === 0,
+    JSON.stringify({ status: staleDecl.status, body: bodyJson(staleDecl), appends: appends(staleDecl).length }));
+  // …and back in A with the declaration agreeing, the same question is still answerable, once.
+  const backInA = await answer(s8, a8.frame?.ask_id, "Start it November 1.");
+  assert("41.8d …back in A, declared and validated, the question is answered once and the objective resumes",
+    backInA.status === 200 && resumedOf(backInA).length === 1, JSON.stringify({ status: backInA.status }));
+
+  // ── 41.9 ANOTHER PERSON CANNOT ANSWER (isolation 4). The question lives in someone else's thread:
+  // under RLS this caller reads none of it, and the append RPC refuses a thread they do not own.
+  const s9 = makeThreadStore(THREADS);
+  const theirAsk = s9.seed(THREAD_OTHER_USER, "assistant", "When should it start?", {
+    turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 1, tools: 0, waiting_on: { kind: "choice" } },
+    paige_ask: { v: 1, ask_id: "c4c41000-0000-4000-8000-0000000000aa", question: "When should it start?", options: [], multi: false, allow_other: true, needs: "the start date", objective: "Onboarding" },
+  });
+  const foreignAnswer = await answer(s9, "c4c41000-0000-4000-8000-0000000000aa", "Start it November 1.", { threadId: THREAD_OTHER_USER });
+  assert("41.9 (isolation 4) a second person cannot answer someone else's question: refused, nothing appended to their thread, no model call",
+    foreignAnswer.status !== 200 && s9.turns.length === 1 && s9.turns[0].id === theirAsk && foreignAnswer.modelEgress.length === 0,
+    JSON.stringify({ status: foreignAnswer.status, body: bodyJson(foreignAnswer), turns: s9.turns.length }));
+
+  // ── 41.10 ASK_USER → answer → WAIT_APPROVAL: the answer gives the fact; what PAIGE then wants to do
+  // is a consequential act, and it becomes a card — one objective, no execution, no other record.
+  const s10 = makeThreadStore(THREADS);
+  const c10 = makeConfirmStore();
+  const a10 = await askThen(s10, ASK_FREE, { confirms: c10 });
+  const r10 = await answer(s10, a10.frame?.ask_id, "Start it November 1.", { toolCall: PAGE, confirms: c10 });
+  const card10 = framesOf(r10.bodyText).find((f) => f.paige_confirm)?.paige_confirm ?? null;
+  const cont10 = s10.turns.filter((t) => t.role === "assistant").at(-1);
+  assert("41.10 after the answer PAIGE proposes the act: a card, terminal WAIT_APPROVAL, the turn still records resumed {kind: answer}",
+    !!card10?.fingerprint && terminalOf(r10)?.state === "WAIT_APPROVAL" && resumedOf(r10).length === 1
+      && cont10?.bundle_ref?.turn_state?.resumed?.kind === "answer" && cont10?.bundle_ref?.turn_state?.state === "WAIT_APPROVAL"
+      && r10.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0 && c10.rows.length === 1 && !c10.rows[0].consumed,
+    JSON.stringify({ card10, terminal: terminalOf(r10), upserts: r10.rec.rpc.filter((c) => c.name === "growth_page_upsert").length, rows: c10.rows.length }));
+
+  // ── 41.11 …approval then runs it EXACTLY ONCE through C4a, in the same thread, and PAIGE continues.
+  const approve11 = await turn(s10, { text: "Approved — run it.", body: { approvedConfirmations: [card10?.fingerprint] }, confirms: c10 });
+  const resume11 = s10.turns.filter((t) => t.role === "assistant").at(-1);
+  assert("41.11 approving the card the answer led to runs the stored act once (C4a), resumed {kind: approval}, from the card's turn",
+    approve11.status === 200 && approve11.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 1 && c10.rows[0].consumed === true
+      && resume11?.bundle_ref?.turn_state?.resumed?.kind === "approval" && readResumeRecord(resume11?.bundle_ref?.paige_resume)?.from_turn_id === cont10?.id,
+    JSON.stringify({ status: approve11.status, upserts: approve11.rec.rpc.filter((c) => c.name === "growth_page_upsert").length, consumed: c10.rows[0].consumed, resumed: resume11?.bundle_ref?.turn_state }));
+  const approve11b = await turn(s10, { text: "Approved — run it.", body: { approvedConfirmations: [card10?.fingerprint] }, confirms: c10 });
+  assert("41.11b …and the same approval sent again runs nothing (one ask → one answer → one card → one execution)",
+    approve11b.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0
+      && s10.turns.filter((t) => t.role === "user" && t.bundle_ref?.paige_resume?.kind === "answer").length === 1,
+    JSON.stringify({ upserts: approve11b.rec.rpc.filter((c) => c.name === "growth_page_upsert").length }));
+
+  // ── 41.12 AN ANSWER CONFERS NO AUTHORITY. "Yes, send it" as the answer still produces a card, never
+  // an execution; and an answer cannot ride beside an approval in the same request.
+  const s12 = makeThreadStore(THREADS);
+  const c12 = makeConfirmStore();
+  const a12 = await askThen(s12, ASK_FREE, { confirms: c12 });
+  const yes = await answer(s12, a12.frame?.ask_id, "Yes, publish it now.", { toolCall: { name: PAGE.name, args: { ...PAGE.args, confirm: true } }, confirms: c12 });
+  assert("41.12 an answer saying 'yes, publish it' is not an approval: the act becomes a card, nothing runs",
+    framesOf(yes.bodyText).some((f) => f.paige_confirm) && yes.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0
+      && terminalOf(yes)?.state === "WAIT_APPROVAL",
+    JSON.stringify({ cards: framesOf(yes.bodyText).filter((f) => f.paige_confirm).length, upserts: yes.rec.rpc.filter((c) => c.name === "growth_page_upsert").length }));
+  const s12b = makeThreadStore(THREADS);
+  const a12b = await askThen(s12b);
+  const mixed = await answer(s12b, a12b.frame?.ask_id, "Start it November 1.", { body: { approvedConfirmations: ["0123456789abcdef"] } });
+  assert("41.12b an answer cannot carry an approval beside it: refused before anything, no claim, no model call",
+    mixed.status === 409 && bodyJson(mixed)?.code === "ASK_NOT_OPEN" && appends(mixed).length === 0 && mixed.modelEgress.length === 0,
+    JSON.stringify({ status: mixed.status, body: bodyJson(mixed) }));
+
+  // ── 41.13 OPERATOR / NO THREAD (isolation 5), classified on its own: with no thread nothing can be
+  // bound, so the question tool is not offered (PAIGE asks in prose, unchanged) and an answer is refused.
+  const s13 = makeThreadStore(THREADS);
+  const noThread = await turn(s13, { threadId: null, rpc: { get_actor_access: { data: { tier: "god" }, error: null }, ...PERSONA(null), is_platform_operator: { data: true, error: null } } });
+  assert("41.13 (isolation 5) no thread (the Operator surface sends none): the question tool is not offered",
+    noThread.status === 200 && !offered(noThread).includes("ask_choices"), JSON.stringify(offered(noThread).filter((n) => /ask/.test(n))));
+  const noThreadAnswer = await answer(s13, crypto.randomUUID(), "Start it November 1.", { threadId: null });
+  const whyRefused = (r) => r.logged.filter((l) => /answer not bound to a question/.test(l.msg)).map((l) => { try { return JSON.parse(l.msg.slice(l.msg.indexOf("{"))).why; } catch { return null; } });
+  assert("41.13b …and an answer with no thread is refused for THAT reason (never read as anything): 409 ASK_NOT_OPEN, nothing saved, no model call",
+    noThreadAnswer.status === 409 && bodyJson(noThreadAnswer)?.code === "ASK_NOT_OPEN" && noThreadAnswer.modelEgress.length === 0
+      && JSON.stringify(whyRefused(noThreadAnswer)) === JSON.stringify(["no_thread"]) && noThreadAnswer.rec.from.every((f) => f.table !== "paige_chat_turns"),
+    JSON.stringify({ status: noThreadAnswer.status, body: bodyJson(noThreadAnswer), why: whyRefused(noThreadAnswer) }));
+  const clientSeat = await askThen(makeThreadStore(THREADS), ASK_FREE, { rpc: { get_actor_access: { data: { tier: "client" }, error: null } } });
+  assert("41.13c a client portal seat is not offered the question tool",
+    !offered(clientSeat.r).includes("ask_choices") && !clientSeat.frame, JSON.stringify(offered(clientSeat.r).filter((n) => /ask/.test(n))));
+  // …and a client seat that names a question (one it could only have forged into its own thread) is
+  // refused as a client seat, before the thread is read.
+  const s13d = makeThreadStore(THREADS);
+  s13d.seed(THREAD, "assistant", "When should it start?", {
+    turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 1, tools: 0, waiting_on: { kind: "choice" } },
+    paige_ask: { v: 1, ask_id: "c4c41000-0000-4000-8000-0000000000d4", question: "When should it start?", options: [], multi: false, allow_other: true, needs: null, objective: null },
+  });
+  const seatAnswer = await answer(s13d, "c4c41000-0000-4000-8000-0000000000d4", "Start it November 1.", { rpc: { get_actor_access: { data: { tier: "client" }, error: null } } });
+  assert("41.13d a client portal seat cannot answer a question: refused as a client seat, nothing saved, no model call",
+    seatAnswer.status === 409 && JSON.stringify(whyRefused(seatAnswer)) === JSON.stringify(["client_seat"]) && appends(seatAnswer).length === 0 && seatAnswer.modelEgress.length === 0,
+    JSON.stringify({ status: seatAnswer.status, why: whyRefused(seatAnswer) }));
+
+  // (isolation 5, the other half) the platform operator in a PAIGE chat that DOES send its platform
+  // thread (tenant NULL): offered, and the answer is bound under the operator's null scope, once.
+  const THREAD_P = "c4c41000-0000-4000-8000-000000000004";
+  const sP = makeThreadStore([...THREADS, { id: THREAD_P, tenant_id: null, caller_user_id: USER }]);
+  const OP41 = { ...PERSONA(null), current_user_tenant_id: { data: null, error: null }, get_actor_access: { data: { tier: "god" }, error: null }, is_platform_operator: { data: true, error: null }, is_platform_owner: { data: true, error: null } };
+  const opAsk = await askThen(sP, ASK_FREE, { threadId: THREAD_P, rpc: OP41 });
+  const opAnswer = await answer(sP, opAsk.frame?.ask_id, "Start it November 1.", { threadId: THREAD_P, rpc: OP41 });
+  assert("41.13e (isolation 5) the operator in a PAIGE chat with its platform thread: offered, and the answer is bound once under the null scope",
+    offered(opAsk.r).includes("ask_choices") && opAnswer.status === 200 && resumedOf(opAnswer).length === 1
+      && sP.turns.filter((t) => t.role === "user" && t.bundle_ref?.paige_resume?.key === `answer:${opAsk.frame?.ask_id}`).length === 1,
+    JSON.stringify({ offered: offered(opAsk.r).includes("ask_choices"), status: opAnswer.status, body: bodyJson(opAnswer) }));
+
+  // ── 41.14 A QUESTION ASKED BESIDE OTHER CALLS (main chat): the other calls run; the question is not
+  // shown (it could be answered before they finish) and PAIGE is told to ask it on its own. Red at
+  // base in Studio's rule: the sibling calls were silently dropped.
+  const s14 = makeThreadStore(THREADS);
+  const beside = await turn(s14, { toolCall: { batch: [{ name: "web_search", args: { query: "Kestrel Group" } }, ASK_FREE] } });
+  assert("41.14 a question beside another call: not shown, the other call ran, PAIGE told 'ask it on its own'",
+    !choicesOf(beside) && toldModel(beside).includes('"ask_alone"') && terminalOf(beside)?.state !== "ASK_USER"
+      && toldModel(beside).includes('"tool_use_id":"toolu_test_0"') && toldModel(beside).includes('"tool_use_id":"toolu_test_1"'),
+    JSON.stringify({ choices: choicesOf(beside), terminal: terminalOf(beside) }));
+
+  // ── 41.15 SKIP — "use your best guess" is an answer too: bound once, and PAIGE is told to choose.
+  const s15 = makeThreadStore(THREADS);
+  const a15 = await askThen(s15, ASK_CHOICE);
+  const skip = await answer(s15, a15.frame?.ask_id, "Use your best guess.", { skipped: true });
+  const claim15 = readAnswerClaim(s15.turns.find((t) => t.role === "user" && t.bundle_ref?.paige_resume)?.bundle_ref?.paige_resume);
+  assert("41.15 skip: the claim records skipped, the objective resumes, and PAIGE is told to pick and say what she picked",
+    skip.status === 200 && claim15?.skipped === true && resumedOf(skip).length === 1 && toldModel(skip).includes("use your best judgement"),
+    JSON.stringify({ status: skip.status, claim15 }));
+
+  // ── 41.16 STUDIO KEEPS ITS QUESTION EXACTLY (two to four options required, its own wording), and its
+  // question is now saved the same way (one record, one seam). Fixture as group 32 drives Studio.
+  const SESSION16 = "5e550000-0000-4000-8000-000000000041";
+  const s16 = makeThreadStore(THREADS);
+  const studioTables16 = {
+    paige_chat_threads: (filters) => s16.threadsTable(filters).map((t) => ({ ...t, studio_session_id: SESSION16, last_image_content_id: null, last_image_anchor_at: null })),
+    paige_subagents: () => [{ name: "Design Studio", system_prompt: "You design pages for this business." }],
+    studio_sessions: () => [{ id: SESSION16, artifact_refs: [], title: "Kestrel launch" }],
+  };
+  const studioScope16 = { paige_subagents: (filters) => (filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio")
+    ? [{ config: { capability_scope: { version: 1, mode: "allowlist", tools: ["ask_choices", "capability_status", "growth_list"] } } }] : []) };
+  const studioAsk = await turn(s16, { toolCall: { name: "ask_choices", args: { prompt: "Which direction?", options: [{ label: "Bold", value: "bold" }, { label: "Calm", value: "calm" }] } }, tables: studioTables16, service: { user_roles: () => [{ role: "admin" }], ...studioScope16 } });
+  const studioFree = await turn(s16, { toolCall: { name: "ask_choices", args: { prompt: "What should it say?" } }, tables: studioTables16, service: { user_roles: () => [{ role: "admin" }], ...studioScope16 } });
+  const studioSaved = s16.turns.filter((t) => t.role === "assistant")[0];
+  assert("41.16 Studio: a two-option question is shown and saved as the same record; a no-option question is still not shown there",
+    choicesOf(studioAsk)?.options?.length === 2 && /^[0-9a-f-]{36}$/.test(choicesOf(studioAsk)?.ask_id ?? "")
+      && readAskRecord(studioSaved?.bundle_ref?.paige_ask)?.ask_id === choicesOf(studioAsk)?.ask_id
+      && !choicesOf(studioFree),
+    JSON.stringify({ studio: choicesOf(studioAsk), free: choicesOf(studioFree), saved: studioSaved?.bundle_ref }));
+
+  // ── 41.17 ONE ASK NEVER ENDS WITH ZERO RESUMES. The answer is claimed, then PAIGE cannot be reached
+  // (the model gateway refuses). The question is asked AGAIN — the same words, need and objective, a
+  // new id that names the one it re-asks, waiting ASK_USER — and the response says so (ASK_REOPENED,
+  // with the new question). Red before this fix (independent verifier, F1): 500, the thread ended on
+  // the claim, and the client's retry was refused "already answered" with nothing having come of it.
+  const s17 = makeThreadStore(THREADS);
+  const a17 = await askThen(s17);
+  const fail17 = await answer(s17, a17.frame?.ask_id, "Start it November 1.", { failStreamCalls: [1] });
+  const again17 = s17.turns.at(-1);
+  const rec17 = readAskRecord(again17?.bundle_ref?.paige_ask);
+  const order17 = s17.turns.map((t) => `${t.role}:${t.bundle_ref?.paige_ask ? "ask" : t.bundle_ref?.paige_resume?.kind ?? "-"}`);
+  assert("41.17 PAIGE not reached after the claim: the SAME question is asked again (new id naming the old, waiting ASK_USER) and the reply says ASK_REOPENED with it",
+    fail17.status >= 400 && bodyJson(fail17)?.code === "ASK_REOPENED" && bodyJson(fail17)?.ask_reopened?.ask_id === rec17?.ask_id
+      && rec17?.ask_id !== a17.frame?.ask_id && rec17?.reopens === a17.frame?.ask_id && rec17?.question === ASK_FREE.args.prompt
+      && rec17?.needs === "the start date" && rec17?.objective === "Setting up Kestrel's onboarding"
+      && again17?.bundle_ref?.turn_state?.state === "ASK_USER" && again17?.bundle_ref?.turn_state?.waiting_on?.kind === "choice"
+      && String(again17?.content).startsWith("I couldn't carry on from your answer, so nothing was done with it yet.") && String(again17?.content).endsWith(ASK_FREE.args.prompt)
+      && JSON.stringify(order17.slice(-3)) === JSON.stringify(["assistant:ask", "user:answer", "assistant:ask"]),
+    JSON.stringify({ status: fail17.status, body: bodyJson(fail17), order17, again: again17 }));
+  const old17 = await answer(s17, a17.frame?.ask_id, "Start it November 1.");
+  assert("41.17b the first question, sent again: refused as re-asked (409 ASK_REOPENED, naming the open one) — never 'already answered', nothing saved, no model call",
+    old17.status === 409 && bodyJson(old17)?.code === "ASK_REOPENED" && bodyJson(old17)?.ask_reopened?.ask_id === rec17?.ask_id
+      && appends(old17).length === 0 && old17.modelEgress.length === 0,
+    JSON.stringify({ status: old17.status, body: bodyJson(old17) }));
+  const ok17 = await answer(s17, rec17?.ask_id, "Start it November 1.");
+  const conts17 = s17.turns.filter((t) => t.role === "assistant" && t.bundle_ref?.turn_state?.resumed?.kind === "answer");
+  assert("41.17c answering the re-asked question resumes the same objective once: one model call, the saved question carried forward, ONE continuation in the thread",
+    ok17.status === 200 && streamedCalls(ok17).length === 1 && resumedOf(ok17).length === 1 && toldModel(ok17).includes("Setting up Kestrel's onboarding")
+      && conts17.length === 1 && readResumeRecord(conts17[0].bundle_ref?.paige_resume)?.from_turn_id === again17?.id,
+    JSON.stringify({ status: ok17.status, conts: conts17.length }));
+  // …the same for a failure that is not the gateway: the claim is written and the request then throws
+  // before PAIGE (here, the re-read after the claim throws → the outer catch), or that re-read fails.
+  for (const [label, opts] of [
+    ["a throw after the claim (outer catch)", (st) => { let reads = 0; return { tables: { paige_chat_turns: (f) => { reads += 1; if (reads === 2) throw new Error("fixture: connection reset"); return st.table(f); } } }; }],
+    ["a failed re-read after the claim", () => { let reads = 0; return { tableErrors: { paige_chat_turns: () => { reads += 1; return reads === 2 ? { message: "fixture: read failed", code: "08006" } : null; } } }; }],
+  ]) {
+    const st = makeThreadStore(THREADS);
+    const a = await askThen(st);
+    const r = await answer(st, a.frame?.ask_id, "Start it November 1.", opts(st));
+    const last = st.turns.at(-1);
+    assert(`41.17d ${label}: the question is asked again, the reply says so, PAIGE was never called`,
+      r.status >= 400 && bodyJson(r)?.code === "ASK_REOPENED" && readAskRecord(last?.bundle_ref?.paige_ask)?.reopens === a.frame?.ask_id
+        && streamedCalls(r).length === 0,
+      JSON.stringify({ status: r.status, body: bodyJson(r), last: last?.bundle_ref }));
+  }
+
+  // ── 41.18 A MESSAGE THAT LANDS BETWEEN THE CHECK AND THE CLAIM (another tab) moved past the question
+  // first: the claim is written but does not directly follow the question, so PAIGE is not called, the
+  // reply is ASK_NOT_OPEN, and the question reads as moved past from then on (never as answered).
+  // Red before this fix (verifier F3): both requests ran, one continuing a question already moved past.
+  const s18 = makeThreadStore(THREADS);
+  const a18 = await askThen(s18);
+  let slipped = false;
+  const race18 = await answer(s18, a18.frame?.ask_id, "Start it November 1.", { rpc: { paige_chat_turn_append: (args) => {
+    if (!slipped && args.p_role === "user" && args.p_bundle_ref?.paige_resume) { slipped = true; s18.seed(THREAD, "user", "Actually, who's on my calendar tomorrow?"); }
+    return s18.append(args);
+  } } });
+  assert("41.18 a message from another tab slips in between the check and the claim: PAIGE is not called, 409 ASK_NOT_OPEN saying the answer is KEPT in the conversation (answer_kept — never 'send it as a new message'), and the question reads as moved past",
+    slipped && race18.status === 409 && bodyJson(race18)?.code === "ASK_NOT_OPEN" && race18.modelEgress.length === 0
+      && bodyJson(race18)?.answer_kept === true && /kept in the conversation/.test(bodyJson(race18)?.reason ?? "") && !/new message|back in the box/.test(bodyJson(race18)?.reason ?? "")
+      && resolveLiveness(s18, a18.frame?.ask_id)?.state === "stale",
+    JSON.stringify({ status: race18.status, body: bodyJson(race18), live: resolveLiveness(s18, a18.frame?.ask_id) }));
+
+  // ── 41.19 A CLAIM WITH NOTHING AFTER IT. Younger than any request can run: PAIGE may still be on it —
+  // said exactly so (ASK_ANSWER_IN_PROGRESS), nothing saved, no second model call. Older (the request
+  // died: a crash, a workspace switch mid-answer): the question is asked again, so it can be answered.
+  const strandedStore = (ageMs) => {
+    const st = makeThreadStore(THREADS);
+    const askId = crypto.randomUUID();
+    st.seed(THREAD, "user", "Set up onboarding for Kestrel.");
+    const q = st.seed(THREAD, "assistant", ASK_FREE.args.prompt, {
+      turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 1, tools: 0, waiting_on: { kind: "choice" } },
+      paige_ask: { v: 1, ask_id: askId, question: ASK_FREE.args.prompt, options: [], multi: false, allow_other: true, needs: "the start date", objective: "Setting up Kestrel's onboarding" },
+    });
+    st.seed(THREAD, "user", "Start it November 1.", { paige_resume: { kind: "answer", key: `answer:${askId}`, from_turn_id: q } }, ageMs === null ? undefined : new Date(Date.now() - ageMs).toISOString());
+    if (ageMs === null) delete st.turns.at(-1).created_at;
+    return { st, askId };
+  };
+  const young = strandedStore(30_000);
+  const young19 = await answer(young.st, young.askId, "Start it November 1.");
+  const undated = strandedStore(null);
+  const undated19 = await answer(undated.st, undated.askId, "Start it November 1.");
+  assert("41.19 a claim with nothing after it, seconds old (or of unknown age): 409 ASK_ANSWER_IN_PROGRESS — said as 'may still be working', with the same 10-minute window the server applies — nothing saved, no model call",
+    [young19, undated19].every((r) => r.status === 409 && bodyJson(r)?.code === "ASK_ANSWER_IN_PROGRESS" && /may still be working/.test(bodyJson(r)?.reason ?? "") && /hasn't replied 10 minutes after you sent it/.test(bodyJson(r)?.reason ?? "")
+      && appends(r).length === 0 && r.modelEgress.length === 0),
+    JSON.stringify([young19, undated19].map((r) => ({ status: r.status, body: bodyJson(r) }))));
+  const dead = strandedStore(11 * 60_000);
+  const dead19 = await answer(dead.st, dead.askId, "Start it November 1.");
+  const deadAgain = readAskRecord(dead.st.turns.at(-1)?.bundle_ref?.paige_ask);
+  assert("41.19b a claim with nothing after it, older than any request can run: the question is asked again (ASK_REOPENED with it), no model call",
+    dead19.status === 409 && bodyJson(dead19)?.code === "ASK_REOPENED" && deadAgain?.reopens === dead.askId && bodyJson(dead19)?.ask_reopened?.ask_id === deadAgain?.ask_id
+      && dead19.modelEgress.length === 0 && appends(dead19, "assistant").length === 1 && appends(dead19, "user").length === 0,
+    JSON.stringify({ status: dead19.status, body: bodyJson(dead19) }));
+  const dead19b = await answer(dead.st, deadAgain?.ask_id, "Start it November 1.");
+  assert("41.19c …and the re-asked question, answered, resumes the objective once",
+    dead19b.status === 200 && resumedOf(dead19b).length === 1 && streamedCalls(dead19b).length === 1,
+    JSON.stringify({ status: dead19b.status }));
+
+  // ── 41.20 THE PERSON'S OTHER WORKSPACE IN THE THREAD'S PLACE AT CLAIM TIME: the append refuses the
+  // thread ("belongs to a different workspace"). Retrying from here cannot change that, so the reply is
+  // ASK_NOT_OPEN — not "try again in a moment" (verifier F6) — and PAIGE is never called.
+  const s20 = makeThreadStore(THREADS);
+  const a20 = await askThen(s20);
+  const moved20 = await answer(s20, a20.frame?.ask_id, "Start it November 1.", { rpc: { paige_chat_turn_append: (args) => args.p_role === "user"
+    ? { data: null, error: { code: "P0001", message: "thread belongs to a different workspace" } } : s20.append(args) } });
+  assert("41.20 the append refuses the thread as another workspace's: 409 ASK_NOT_OPEN (not 503 'try again'), no model call",
+    moved20.status === 409 && bodyJson(moved20)?.code === "ASK_NOT_OPEN" && moved20.modelEgress.length === 0,
+    JSON.stringify({ status: moved20.status, body: bodyJson(moved20) }));
+  // ── 41.17e THE FIRST QUESTION'S ID FOLLOWS THE CHAIN (re-verifier 2, V2-2). s17 now holds: the
+  // question → its claim → the question asked again → ITS answer → PAIGE's continuation. The first id,
+  // sent again, is already answered — never "PAIGE asked again" about a question that is no longer open.
+  const old17e = await answer(s17, a17.frame?.ask_id, "Start it November 1.");
+  assert("41.17e the first question's id, after its re-asked question was answered and continued: 409 ASK_ALREADY_ANSWERED (never ASK_REOPENED), nothing saved, no model call",
+    old17e.status === 409 && bodyJson(old17e)?.code === "ASK_ALREADY_ANSWERED" && !bodyJson(old17e)?.ask_reopened
+      && appends(old17e).length === 0 && old17e.modelEgress.length === 0
+      && resolveLiveness(s17, a17.frame?.ask_id)?.state === "answered",
+    JSON.stringify({ status: old17e.status, body: bodyJson(old17e), live: resolveLiveness(s17, a17.frame?.ask_id) }));
+  // ── 41.17f THE GATEWAY'S OWN REFUSALS (429 rate limit, 402 credits) after the claim are not left with
+  // an answer and nothing after it either: the question is asked again and the status is kept (adopted
+  // from re-verifier 2's VFY2.429 / VFY2.402).
+  for (const status of [429, 402]) {
+    const sg = makeThreadStore(THREADS);
+    const ag = await askThen(sg);
+    const rg = await answer(sg, ag.frame?.ask_id, "Start it November 1.", { failStreamCalls: [1], failStreamStatus: status });
+    const lastg = sg.turns.at(-1);
+    assert(`41.17f gateway ${status} after the claim: the question is asked again (ASK_REOPENED, status ${status} kept), PAIGE never reached`,
+      rg.status === status && bodyJson(rg)?.code === "ASK_REOPENED" && readAskRecord(lastg?.bundle_ref?.paige_ask)?.reopens === ag.frame?.ask_id
+        && bodyJson(rg)?.ask_reopened?.ask_id === readAskRecord(lastg?.bundle_ref?.paige_ask)?.ask_id,
+      JSON.stringify({ status: rg.status, body: bodyJson(rg), last: lastg?.bundle_ref }));
+  }
+
+  // ── 41.19d A STRANDED CLAIM IS RE-ASKED EXACTLY ONCE (re-verifier 2, V2-1). The client now sends a
+  // re-send of a claimed answer WITH its question's id; once the claim is older than any request can run
+  // the question is asked again — and the same id sent again names THAT question, it does not ask a third.
+  const once = strandedStore(11 * 60_000);
+  const once1 = await answer(once.st, once.askId, "Start it November 1.");
+  const onceQ = readAskRecord(once.st.turns.at(-1)?.bundle_ref?.paige_ask);
+  const once2 = await answer(once.st, once.askId, "Start it November 1.");
+  assert("41.19d a stranded claim re-sent twice: asked again ONCE (one assistant turn), the second send names that same question (ASK_REOPENED), no model call either time",
+    once1.status === 409 && bodyJson(once1)?.code === "ASK_REOPENED" && onceQ?.reopens === once.askId
+      && once2.status === 409 && bodyJson(once2)?.code === "ASK_REOPENED" && bodyJson(once2)?.ask_reopened?.ask_id === onceQ?.ask_id
+      && appends(once2).length === 0 && once1.modelEgress.length + once2.modelEgress.length === 0
+      && once.st.turns.filter((t) => readAskRecord(t.bundle_ref?.paige_ask)?.reopens === once.askId).length === 1,
+    JSON.stringify({ once1: bodyJson(once1), once2: bodyJson(once2) }));
+  // ── 41.19e TWO RE-SENDS OF A STRANDED CLAIM AT ONCE (two tabs) can each save the re-asked question —
+  // but neither reaches PAIGE, the first id then names the NEWEST, and only one answer to it ever runs.
+  const pair = strandedStore(11 * 60_000);
+  const pair1 = await answer(pair.st, pair.askId, "Start it November 1.", { concurrent: 2 });
+  const reasks = pair.st.turns.filter((t) => readAskRecord(t.bundle_ref?.paige_ask)?.reopens === pair.askId).map((t) => readAskRecord(t.bundle_ref.paige_ask).ask_id);
+  const named = resolveLiveness(pair.st, pair.askId);
+  const pairAns = await answer(pair.st, reasks.at(-1), "Start it November 1.", { concurrent: 2 });
+  const pairOlder = reasks.length > 1 ? await answer(pair.st, reasks[0], "Start it November 1.") : null;
+  const pairConts = pair.st.turns.filter((t) => t.role === "assistant" && t.bundle_ref?.turn_state?.resumed?.kind === "answer");
+  assert("41.19e two re-sends of a stranded claim at once: no model call, both ASK_REOPENED; the first id names the newest re-ask; answering it twice at once runs ONCE; an older re-ask is refused",
+    pair1.modelEgress.length === 0 && pair1.responses.every((x) => x.status === 409 && JSON.parse(x.bodyText).code === "ASK_REOPENED")
+      && reasks.length >= 1 && reasks.length <= 2 && named?.state === "reopened" && named?.ask?.ask_id === reasks.at(-1)
+      && JSON.stringify(pairAns.responses.map((x) => x.status).sort()) === JSON.stringify([200, 409]) && streamedCalls(pairAns).length === 1
+      && pairConts.length === 1 && (pairOlder === null || (pairOlder.status === 409 && pairOlder.modelEgress.length === 0)),
+    JSON.stringify({ first: pair1.responses.map((x) => [x.status, x.bodyText.slice(0, 60)]), reasks, named, answered: pairAns.responses.map((x) => x.status), older: pairOlder && [pairOlder.status, bodyJson(pairOlder)?.code] }));
+  // ── 41.19f TWO RE-SENDS OF A YOUNG CLAIM AT ONCE (the first request may still be running): both told
+  // "may still be working", nothing saved, PAIGE never called a second time.
+  const youngPair = strandedStore(30_000);
+  const yp = await answer(youngPair.st, youngPair.askId, "Start it November 1.", { concurrent: 2 });
+  assert("41.19f two re-sends of a young claim at once: both 409 ASK_ANSWER_IN_PROGRESS, nothing saved, no model call",
+    yp.responses.every((x) => x.status === 409 && JSON.parse(x.bodyText).code === "ASK_ANSWER_IN_PROGRESS") && yp.modelEgress.length === 0 && youngPair.st.turns.length === 3,
+    JSON.stringify(yp.responses.map((x) => [x.status, x.bodyText.slice(0, 60)])));
+
+  // ── 41.21 A FAILURE INSIDE THE CONTINUATION (PAIGE was reached, a tool then threw) ends in its own
+  // interrupted turn — "I hit a snag…" — and that turn still names the question it continued, so the
+  // record says the answer was carried forward (re-verifier 2, V2-5) and the question reads answered.
+  const unreadable21 = new Proxy({}, { get() { throw new Error("fixture: unreadable error"); }, getPrototypeOf() { throw new Error("fixture: unreadable error"); } });
+  const s21 = makeThreadStore(THREADS);
+  const a21 = await askThen(s21);
+  const r21 = await answer(s21, a21.frame?.ask_id, "Start it November 1.", { toolCall: { name: "integrations_list", args: {} }, rpc: { list_integration_surface: { data: null, error: unreadable21 } } });
+  const snag21 = s21.turns.at(-1);
+  assert("41.21 a throw inside the continuation: the snag turn is saved INTERRUPTED, resumed {kind: answer}, with paige_resume naming the question turn",
+    r21.status === 200 && r21.bodyText.includes("I hit a snag finishing that") && snag21?.role === "assistant" && String(snag21?.content).startsWith("I hit a snag")
+      && snag21?.bundle_ref?.turn_state?.state === "INTERRUPTED" && snag21?.bundle_ref?.turn_state?.resumed?.kind === "answer"
+      && readResumeRecord(snag21?.bundle_ref?.paige_resume)?.from_turn_id === a21.askTurn?.id
+      && resolveLiveness(s21, a21.frame?.ask_id)?.state === "answered",
+    JSON.stringify({ status: r21.status, snag: snag21 }));
+
+  // ── 41.22 A DOCUMENT TURN IS NOT OFFERED THE QUESTION (that path offers tools but runs none, so a
+  // question there could never be shown) — the control is 41.0, the same thread without a file.
+  const s22 = makeThreadStore(THREADS);
+  const r22 = await turn(s22, { document: { fileName: "kestrel.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, text: "Here is Kestrel's agreement." });
+  assert("41.22 a turn carrying a document on a saved thread is not offered ask_choices (other tools still are)",
+    r22.status === 200 && offered(r22).length > 0 && !offered(r22).includes("ask_choices"),
+    JSON.stringify({ status: r22.status, offeredAsk: offered(r22).includes("ask_choices"), n: offered(r22).length }));
+
+  // ── 41.23 THE WORKSPACE CHANGES AFTER THE ANSWER WAS CHECKED AND BEFORE THE CLAIM (a turn carrying
+  // protected evidence runs the pre-model re-check): 409 ACTIVE_ACCOUNT_CHANGED, NO claim written, PAIGE
+  // not called — and the question is still open, so the same answer sent again from A binds once.
+  const MEM23 = [{ memory_type: "user_preference", content: "Kestrel prefers mornings", created_at: new Date().toISOString() }];
+  const evidence23 = { tables: { client_memory: () => MEM23 }, service: { client_memory: () => MEM23 } };
+  const s23 = makeThreadStore(THREADS);
+  const a23 = await askThen(s23);
+  let reads23 = 0;
+  const r23 = await answer(s23, a23.frame?.ask_id, "Start it November 1.", { ...evidence23, rpc: { get_paige_persona_context: () => { reads23 += 1; return PERSONA(reads23 <= 1 ? CALLER_TENANT : OTHER_TENANT).get_paige_persona_context; } } });
+  const live23 = resolveLiveness(s23, a23.frame?.ask_id);
+  const back23 = await answer(s23, a23.frame?.ask_id, "Start it November 1.", evidence23);
+  assert("41.23 the workspace changes between the answer check and the claim: 409 ACTIVE_ACCOUNT_CHANGED, no claim, no model call, the question still open — and answered once from A after",
+    reads23 >= 2 && r23.status === 409 && bodyJson(r23)?.code === "ACTIVE_ACCOUNT_CHANGED" && appends(r23, "user").length === 0 && r23.modelEgress.length === 0
+      && live23?.state === "live" && back23.status === 200 && resumedOf(back23).length === 1 && streamedCalls(back23).length === 1,
+    JSON.stringify({ reads23, status: r23.status, body: bodyJson(r23), live23, back: back23.status }));
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

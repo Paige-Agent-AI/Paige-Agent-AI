@@ -329,3 +329,25 @@ describe("turn view — a resumed approval (C4a)", () => {
     expect([reload.kind, reload.text]).toEqual(["done", "What PAIGE did · 2 steps"]);
   });
 });
+
+describe("C4c — a turn that ended on a question (frames c2 / c3 / c5)", () => {
+  const rows = [{ id: "t", label: "Read the agreement", group: "client" as const, status: "done" as const }];
+  const snap = { outcome: { state: "ASK_USER" as const, mode: "clarify" as const }, rows, elapsedMs: 4000, endCause: "done" as const, source: "live" as const, hasContent: true };
+  it("open: 'Your call', a wait line with the help glyph, announced as a question — no elapsed time", () => {
+    const v = deriveSnapshotView(snap, { awaitingApproval: false, ask: "open" })!;
+    expect([v.kind, v.glyph, v.text, v.elapsed, v.announce]).toEqual(["wait", "help", "Your call", null, "PAIGE has a question for you"]);
+    expect(v.rows).toEqual(rows);
+  });
+  it("answered: what she did before asking, as any finished answer", () => {
+    expect(deriveSnapshotView(snap, { awaitingApproval: false, ask: "answered" })!.text).toBe("What PAIGE did · 1 step");
+    expect(deriveSnapshotView(snap, { awaitingApproval: false })!.text).toBe("What PAIGE did · 1 step");
+  });
+  it("moved past: 'Question not answered' — neutral, never a check", () => {
+    const v = deriveSnapshotView(snap, { awaitingApproval: false, ask: "unanswered" })!;
+    expect([v.kind, v.glyph, v.text]).toEqual(["neutral", "help", "Question not answered"]);
+  });
+  it("the live line settles the same way once the read ends", () => {
+    const v = deriveLiveTurnView({ frame: { v: 1, event: "waiting", state: "ASK_USER", mode: "clarify" }, rows, streaming: false, writing: false, gateOpen: true, startedAt: 0, now: 5000, endCause: "done", elapsedMs: 4000, hasContent: true, awaitingApproval: false, ask: "open" })!;
+    expect(v.text).toBe("Your call");
+  });
+});

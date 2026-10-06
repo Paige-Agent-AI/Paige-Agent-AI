@@ -16,6 +16,7 @@ export default defineConfig({
     { find: /^@\/hooks\/useTenantContext$/, replacement: stubs },
     { find: /^@\/hooks\/useScopedUserId$/, replacement: stubs },
     { find: /^@\/hooks\/usePaigeThreads$/, replacement: stubs },
+    { find: /^@\/hooks\/useChatDocumentUpload$/, replacement: stubs },
     { find: /^@\/lib\/playbook$/, replacement: stubs },
     { find: "@", replacement: path.join(repo, "src") },
   ] },

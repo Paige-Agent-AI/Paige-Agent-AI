@@ -187,3 +187,11 @@ Gate: 84/0.
 - **R5–R7** move chat onto the shared streaming fabric; the gate is already in the loop, so every provider inherits it.
 - **Sol/Astra compatibility gate (from the loop lane):** before Sol becomes primary, replay the INT-332 fixtures against representative Sol output (offer detection, completion-claim detection, step matching, claim correction); same for Astra. Misses feed the semantic replacement, not more patterns.
 - **The INT-332 claim-correction call** is classified operational when R5–R7 remove the legacy labels.
+
+## R2 deploy readback (production, read-only, 2026-10-06)
+- Deploy run 37532499262 for `fc5406999` (#1785): conclusion success, logged "✓ deployed" for the same 39 functions `edge-affected.py` selects, and moved `edge-live` to `fc5406999`.
+- Provider byte readback (`get_edge_function`, sha256 of `claude-models.ts`, `model-allowlist.ts`, `token-pricing.ts`, `openai-models.ts` and each `<slug>/index.ts` against the commit): **35/39 match**.
+- Still stale, each holding the PARENT commit's shared files: content-draft (v98), extract-business-credit-report (v81), generate-outreach-draft (v83), growth-funnel-draft (v81). growth-funnel-draft is three deploys behind and still serves `CLAUDE_REASONING = "claude-sonnet-5"` (the `55c820c5` blob). Their versions did not move this time; the CI log claims all four deployed.
+- The three functions stale after R1 other than growth-funnel-draft (kb-ingest-file, paige-eval, pipeline-suggest) now match.
+- This is another occurrence of INT-320 (deploy reports success, provider serves stale source). Per the owner ruling it is tracked and fixed on its own, not in this lane. The next `claude.ts` deploy (the provider-failure classification PR) redeploys all four; that deploy gets one readback.
+- UNVERIFIED: runtime behaviour (no function was invoked); `openai-responses.ts` is in no bundle, as expected while nothing imports it.

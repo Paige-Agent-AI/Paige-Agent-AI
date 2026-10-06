@@ -71,7 +71,10 @@ export type CommsEmailChatDependencies = {
 };
 export type CommsEmailChatContext = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn };
 type Refusal = "ambiguous" | "unclaimable" | "lookup_failed";
-export type CommsEmailChatResult = { content: Record<string, unknown>; refusal?: Refusal; tokens?: string[] };
+/** `spent`: the approval token this call handed to comms-email-command to redeem. The chat records it
+ *  against the call, so the approval card reports what the call actually did (approval-outcome.ts)
+ *  instead of "Didn't run" for an email that went out. */
+export type CommsEmailChatResult = { content: Record<string, unknown>; refusal?: Refusal; tokens?: string[]; spent?: string };
 
 function refusal(reason: Refusal): CommsEmailChatResult {
   const message = reason === "ambiguous" ? "More than one email approval could apply." : reason === "lookup_failed" ? "The email approval could not be checked." : "The email approval cannot be used in this scope.";
@@ -178,6 +181,8 @@ function readSenders(value: unknown): { connector_id: string; from_address: stri
 }
 
 const MODEL_KEYS = new Set(["contact_id", "subject", "body", "connector_id"]);
+/** Door outcomes that guarantee nothing was dispatched for this operation. */
+const NOT_SENT_OUTCOMES = new Set<unknown>(["refused", "held", "needs_setup", "failed"]);
 
 /** Selection only. comms-email-command alone claims the approval and executes the stored call. */
 export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: CommsEmailChatDependencies): Promise<CommsEmailChatResult> {
@@ -226,11 +231,13 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
 
   let command: CommsEmailCommand;
   let body: Record<string, unknown>;
+  let spent: string | undefined;
   try {
     if (approvedArgs) {
       if (approvedArgs.expected_tenant_id !== ctx.tenantId || typeof approvedArgs.operation_id !== "string" || !UUID.test(approvedArgs.operation_id) || !fingerprint || !FINGERPRINT.test(fingerprint)) return { ...refusal("unclaimable"), tokens };
       command = parseCommsEmailCommand(approvedArgs.command);
       body = { expected_tenant_id: ctx.tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint };
+      spent = [...ctx.approved].find((token) => token.split(":")[0] === fingerprint);
     } else {
       command = parseCommsEmailCommand({ action: COMMS_EMAIL_ACTION, contact_id: modelArgs.contact_id, connector_id: modelArgs.connector_id ?? null, subject: modelArgs.subject, body: modelArgs.body });
       body = { expected_tenant_id: ctx.tenantId, operation_id: await commsEmailOperationId(ctx.tenantId, ctx.userId, command, ctx.turn), command };
@@ -251,34 +258,38 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     const result = data as Record<string, unknown>;
     if (result.outcome === "approval_required" && typeof result.fingerprint === "string" && FINGERPRINT.test(result.fingerprint)) {
       const preview = commsEmailConfirmPreview(result.preview);
-      return { tokens, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint,
+      return { tokens, spent, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint,
         confirm_summary: typeof result.summary === "string" && result.summary ? result.summary : "Approve this email", ...(preview ? { confirm_preview: preview } : {}),
         note: "Show the Needs your OK card. Nothing was sent yet. Do not call this tool again until the person approves." } };
     }
     const safe = commsEmailChatSafeResult(result);
     if (result.ok === true && result.outcome === "provider_accepted") {
-      return { tokens, content: withReplay({ ...safe, success: true, delivery_confirmed: false, note: 'The email service accepted the message. That is not proof it was delivered or read — say "sent (accepted for delivery)", never "they received it" or "delivered".' }) };
+      return { tokens, spent, content: withReplay({ ...safe, success: true, delivery_confirmed: false, note: 'The email service accepted the message. That is not proof it was delivered or read — say "sent (accepted for delivery)", never "they received it" or "delivered".' }) };
     }
     // A door reply with no outcome is "Not sent" only when it is one of the door's own pre-send
     // answers; anything else that lacks an outcome (a runtime/gateway body) stays unconfirmed.
     const preSendRefusal = result.outcome === undefined && typeof result.code === "string" && PRE_SEND_DOOR_CODES.has(result.code);
-    if (preSendRefusal) return { tokens, content: { ...safe, success: false, outcome: "refused", delivery_confirmed: false, note: notSentNote(result.code) } };
+    if (preSendRefusal) return { tokens, spent, content: { ...safe, success: false, outcome: "refused", not_applied: true, delivery_confirmed: false, note: notSentNote(result.code) } };
     if (result.outcome === "outcome_unknown" && result.code === "COMMS_EMAIL_IDENTICAL_IN_FLIGHT") {
       // Not "reconciled": the other send was named, not settled.
       const { reconciled: _notSettled, ...unsettled } = safe;
-      return { tokens, content: { ...unsettled, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: "An identical email to this person is already being sent, so this one was held back. Do not resend. Say it may already have gone out; asking again later will check that send rather than send a second one." } };
+      return { tokens, spent, content: { ...unsettled, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: "An identical email to this person is already being sent, so this one was held back. Do not resend. Say it may already have gone out; asking again later will check that send rather than send a second one." } };
     }
     if (result.outcome === "outcome_unknown" && result.code === "COMMS_EMAIL_TEAMMATE_IN_FLIGHT") {
       // Someone else on the team asked for this exact email and its outcome is not confirmed. It is
       // theirs to settle: asking again here cannot check it, so never promise that.
-      return { tokens, content: { ...safe, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: `A teammate already asked for this exact email to this person, and whether it went out is not confirmed yet. Do not resend. Say it may already have gone out and suggest checking with the teammate who sent it. ${NO_CODES}` } };
+      return { tokens, spent, content: { ...safe, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: `A teammate already asked for this exact email to this person, and whether it went out is not confirmed yet. Do not resend. Say it may already have gone out and suggest checking with the teammate who sent it. ${NO_CODES}` } };
     }
-    if (typeof result.outcome !== "string" || UNCONFIRMED.has(result.outcome)) return { tokens, content: withReplay({ ...safe, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: UNKNOWN_NOTE }) };
+    if (typeof result.outcome !== "string" || UNCONFIRMED.has(result.outcome)) return { tokens, spent, content: withReplay({ ...safe, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: UNKNOWN_NOTE }) };
     if (result.outcome === "sender_choice_required") {
-      return { tokens, content: { ...safe, success: false, senders: readSenders(result.senders), note: "Nothing was sent. More than one business email address can send this. Ask the person which address to send from, then call again with that connector_id." } };
+      return { tokens, spent, content: { ...safe, success: false, senders: readSenders(result.senders), note: "Nothing was sent. More than one business email address can send this. Ask the person which address to send from, then call again with that connector_id." } };
     }
-    return { tokens, content: withReplay({ ...safe, success: false, note: notSentNote(result.reason, result.code) }) };
+    // The door returns these only when nothing was dispatched (refused / held / needs_setup are
+    // answered before any claim; failed is a provider that refused the message), so the card may say
+    // "didn't go through" — never "may have gone through" for an email that cannot have gone.
+    const notApplied = NOT_SENT_OUTCOMES.has(result.outcome) ? { not_applied: true } : {};
+    return { tokens, spent, content: withReplay({ ...safe, success: false, ...notApplied, note: notSentNote(result.reason, result.code) }) };
   } catch {
-    return { tokens, content: { success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: `The email request has no verified response. ${UNKNOWN_NOTE}` } };
+    return { tokens, spent, content: { success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: `The email request has no verified response. ${UNKNOWN_NOTE}` } };
   }
 }

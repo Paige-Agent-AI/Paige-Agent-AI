@@ -9888,6 +9888,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }) } });
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
+          // comms-email-command claims the stored proposal atomically; what it returns is this approval's outcome.
+          if (result.spent) approvalSpend.set(result.spent, tc.id);
           toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
           continue;
         }

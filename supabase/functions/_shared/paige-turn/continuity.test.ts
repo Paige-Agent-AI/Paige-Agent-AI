@@ -9,8 +9,9 @@
 import { assert, assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
 import {
   NO_LONGER_POSSIBLE,
-  COMPLETION_CLAIM,
+  NOTHING_RAN_NOTE,
   offerKind,
+  saysItWasDone,
   acceptedOfferNote,
   CLAIM_CORRECTION,
   ambiguousOfferNote,
@@ -580,22 +581,19 @@ Deno.test("review round 7 + production replay — the kind of step decides how i
     "walk through a specific example", "help you prepare what to ask", "help you formalize a cadence", "put together a quick script you can use"]) {
     assertEquals(offerKind(W(o)), "prose", o);
   }
-  // A reply that claims the act happened is a completion claim; a true answer is not.
-  for (const t of ["Added it to her record.", "Queued, it goes out tomorrow at 9.", "Updated the landing page copy.", "Continuing the import now.",
-    "Sending it over now.", "On it, resending it now.", "Linked! There's nothing else you need to do.", "Done. Dana's already linked."]) {
-    assert(COMPLETION_CLAIM.test(t), t);
-  }
-  for (const t of ["Here it is, warmer:\n\nHi Dana, hope your week is going well.", "This month you billed $12,400 across 9 clients, right now.",
-    "It's under Setup, then Connections, then Calendars.", "Hola Dana, espero que tu semana vaya bien.", "Sure. Want me to start the invoice after?"]) {
-    assert(!COMPLETION_CLAIM.test(t), t);
-  }
+  // The server's line after a held reply is true whatever that reply said.
+  assert(/no tool ran/i.test(NOTHING_RAN_NOTE) && /nothing above was sent, saved or changed/.test(NOTHING_RAN_NOTE));
   // Honest impossibilities end an accepted act; a claimed result beside one does not.
-  for (const t of ["Dana is already linked to that deal, so there's nothing to do.", "That invoice has already been paid, so there's nothing to send.",
-    "That meeting was cancelled, so there's nothing to reschedule.", "Since then the deal has been archived.",
-    "That contact no longer exists in your CRM, so I have nothing to link.", "That deal was deleted, so I've left everything as is."]) {
+  for (const t of ["That meeting was cancelled, so there's nothing to reschedule.", "Since then the deal has been archived.",
+    "That contact no longer exists in your CRM, so I have nothing to link.", "That deal was deleted, so I've left everything as is.",
+    "Looks like Dana already linked it herself.", "Sam already sent it by himself this morning."]) {
     assert(NO_LONGER_POSSIBLE.test(t), t);
   }
-  for (const t of ["Sorted. That deal was merged into Acme, nothing left to do.", "Perfect, that deal was closed as won so it's handled."]) {
+  // Round 8: "already…" with nothing checked and nobody named is not an impossibility — PAIGE offered the step
+  // because it was not done; the turn stays held (a read ends it truthfully).
+  for (const t of ["Sorted. That deal was merged into Acme, nothing left to do.", "Perfect, that deal was closed as won so it's handled.",
+    "Dana is already linked to that deal.", "Good news, that's already linked, nothing to link.", "All good: the invoice was already sent.",
+    "No need, it's already been added."]) {
     assert(!NO_LONGER_POSSIBLE.test(t), t);
   }
   // The live miss: "Ready to archive it? Just say yes…" is one offer, accepted by a yes; an offer followed by
@@ -616,4 +614,34 @@ Deno.test("review round 7 + production replay — the kind of step decides how i
   for (const s of ["Did you turn approvals off? If so I'll run it now.", "Nothing goes out without your approval, so I'll send it without your approval this once."]) {
     assertEquals(unbackedClaim(s, N), "authority", s);
   }
+});
+
+Deno.test("review round 8 + replay — conversational offers are prose; choices before the offer; approvals rules scoped", () => {
+  const W = (s: string) => `Want me to ${s}?`;
+  for (const o of ["Ready to talk pricing strategy?", "Ready to dig into Q3?", "Ready to look at the numbers?"]) assertEquals(offerKind(o), "prose", o);
+  assertEquals(offerKind("Just say yes and we'll move on."), "prose");
+  for (const o of ["forward it to Sam", "unsubscribe her", "waive the late fee", "extend her trial", "rebook her", "share it with her",
+    "loop Sam in", "approve it", "restore the contact", "activate it", "try it once more", "knock out either of those now"]) {
+    assertEquals(offerKind(W(o)), "act", o);
+  }
+  // "Are you ready to…" is the person's own step, not an offer; "It's ready to link." is a statement.
+  for (const t of ["Your calendar is full through March.\n\nAre you ready to raise your prices?", "Are you ready to start the 12-week program with her?"]) {
+    assertEquals(closingOffer(t), null, t);
+  }
+  // A statement opening on "Ready to…" is not a second offer.
+  assertEquals(closingOffer("Ready to send whenever you are. Want me to send it to Dana now?")?.count, 1);
+  // The choice can come before the offer phrase.
+  assert(closingOffer("Can you check her file, or just give me the go-ahead to try it once more?")?.alternatives);
+  // Conditional acts on the approvals answer: only approval SETTINGS plus a write.
+  const N = { cardMinted: false, standingCard: false };
+  for (const s of ["Approvals off on your side? Then I'll just send it.", "Are approvals off? If they are, I'll send it.",
+    "Is your Trust Compass on full auto? If so, I'll send it now."]) assertEquals(unbackedClaim(s, N), "authority", s);
+  for (const s of ["Is the approval card still showing on your side? If not, I can re-send it.", "Want approvals off for reads? If so, I can explain what that changes.",
+    "Would you like approvals required on invoices? If so, I can set that up for you."]) assertEquals(unbackedClaim(s, N), null, s);
+  // The prose-offer line: a reply that reads as done; a true answer does not.
+  for (const t of ["Done, I've moved Dana to Proposal Sent.", "Updated the draft and sent it to Dana.", "I’ve sent it to Dana.", "Forwarded it to Sam.", "Sorted."]) {
+    assert(saysItWasDone(t), t);
+  }
+  for (const t of ["Sorted by value, the top three are Acme, Bolt and Crest.", "Updated version below:", "Here's how it runs: the first email goes out on day 1.",
+    "When you publish the page, it is live at your domain.", "Want to get back to linking Afonso's deal now?"]) assert(!saysItWasDone(t), t);
 });

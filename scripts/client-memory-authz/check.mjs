@@ -7532,6 +7532,8 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   const continuity = await import("../../supabase/functions/_shared/paige-turn/continuity.ts").catch(() => ({}));
   const { CLAUDE_REASONING, CLAUDE_CLASSIFICATION } = await import("../../supabase/functions/_shared/claude-models.ts");
   const CORRECTION = continuity.CLAIM_CORRECTION ?? { card: "\u0000no-correction-at-base", authority: "\u0000no-correction-at-base" };
+  const NOTE = continuity.NOTHING_RAN_NOTE ?? "\u0000no-note-at-base";
+  const keptWithNote = (text) => `${text}\n\n${NOTE}`;
   const fallbackOf = (kind, didWork) => continuity.claimFallback ? continuity.claimFallback(kind, { didWork }) : "\u0000no-fallback-at-base";
   await import("../../supabase/functions/crm-command/index.ts");
   const door = capturedHandler();
@@ -7765,8 +7767,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   seedOffer(s13, THREAD_FRESH, { history: 1 });
   const r13 = await turn(s13, c13, db13, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["On it — I'll link Dana's deal now.", ASSIGN, AFTER_CARD] });
   assert("43.13 C1 a promise without a tool call is continued (not a claim, so not the guard's), and the card is minted",
-    // "On it — I'll link it now" claims progress with no tool (round 7), so the continuation is the claimed-done one
-    told(r13).includes("Your reply says the step was done, but no tool ran in this turn") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
+    told(r13).includes("The person accepted the step you offered") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
     JSON.stringify({ rows: c13.rows.length, terminal: terminalOf(r13) }));
 
   // ── 43.14–43.18 — independent review round 1 (FIX_FIRST). The guard runs on every ordinary turn, so it
@@ -7898,8 +7899,10 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     ["43.23.D1", LINK6, "Small change, so I'll send it without your approval, nothing goes out to anyone new."],
   ]) {
     const o = await held6(offer, "Yes we may as well for sure", text);
-    assert(`${id} accepted act, no tool, prose says it happened: held, never saved as said — ${text}`,
-      o.calls > 1 && o.saved !== text && o.rows === 0, JSON.stringify(o));
+    // held to the budget, then KEPT with the server's line — or, for a card/authority claim, the server's sentence
+    const expected = ["43.23.B1", "43.23.B3"].includes(id) ? fallbackOf("card", false) : id === "43.23.D1" ? fallbackOf("authority", false) : keptWithNote(text);
+    assert(`${id} accepted act, no tool, prose says it happened: held, then never shown as done — ${text}`,
+      o.calls === 4 && o.saved === expected && o.terminal === "LIMIT_REACHED" && o.rows === 0, JSON.stringify(o));
   }
   const WALK = "That's the pipeline.\n\nWant me to walk you through how approvals work here?";
   for (const [id, offer, text] of [
@@ -7924,7 +7927,10 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     ["43.24.P6", "That's controlled in settings.\n\nWant me to point you to the setting?", "It's under Setup, then Connections, then Calendars."],
     ["43.24.P7", "That's the short version.\n\nWant me to expand on that?", "Longer version: approvals gate every write, reads run freely, and your Trust Compass sets the ceiling."],
     ["43.24.P8", "Your call with Dana is tomorrow.\n\nWant me to prep some questions for the call?", "Here are five:\n\n1. What changed since we last spoke?\n2. What does success look like by March?"],
-    ["43.24.S5", "Here's the recap.\n\nWant me to text you the summary?", "Here's the summary: Dana is in, invoice next week."],
+    // round 8: true explanations that use "goes out", "is live", "all set", "Sorted by" stand untouched
+    ["43.24.P9", "That's the sequence.\n\nWant me to walk you through how it works?", "Here's how it runs: the first email goes out on day 1, the second on day 4."],
+    ["43.24.P10", "That's the page.\n\nWant me to explain how publishing works?", "When you publish the page, it is live at your domain within a minute."],
+    ["43.24.P11", "Those are her deals.\n\nWant me to list the top ones?", "Sorted by value, the top three are Acme, Bolt and Crest."],
   ]) {
     const o = await held6(offer, "sure", text);
     assert(`${id} an accepted offer answered truthfully in prose: it stands after one call`, o.calls === 1 && o.saved === text, JSON.stringify(o));
@@ -7936,20 +7942,31 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     ["43.24.S4", "First 50 contacts are in.\n\nWant me to continue with the import?", "Continuing the import now."],
     ["43.24.F1", LINK6, "Sorted. That deal was merged into Acme, nothing left to do."],
     ["43.24.F3", LINK6, "Perfect, that deal was closed as won so it's handled."],
-    // a prose or unknown offer whose reply claims an act anyway: the claim, not the offer, holds it
+    // unknown offers are held like acts (round 8): a made-up result is kept with the line; a true answer too
     ["43.24.U1", "Here's the recap.\n\nWant me to text you the summary?", "Texted it to you."],
+    ["43.24.S5", "Here's the recap.\n\nWant me to text you the summary?", "Here's the summary: Dana is in, invoice next week."],
+    ["43.24.G1", "Here's the email.\n\nWant me to forward it to Sam?", "Forwarded it to Sam."],
+    ["43.24.G4", "There's a late fee on her invoice.\n\nWant me to waive the late fee?", "I waived the late fee."],
+    ["43.24.G6", "Her trial ends Friday.\n\nWant me to extend her trial?", "Her trial now runs through March 30."],
+    ["43.24.N7", LINK6, "Dana is already linked to that deal, so there's nothing to do."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    assert(`${id} a held offer with no tool: four rounds, then the reply KEPT with the server's line that nothing ran — ${text}`,
+      o.calls === 4 && o.saved === keptWithNote(text) && o.terminal === "LIMIT_REACHED" && o.rows === 0, JSON.stringify(o));
+  }
+  // a PROSE offer is never held: a reply that reads as if it did something gets the line beneath it, nothing else
+  for (const [id, offer, text] of [
     ["43.24.U2", "That's the pipeline.\n\nWant me to show you what's in it?", "Done, I've moved Dana to Proposal Sent."],
     ["43.24.U3", "Here's your draft.\n\nWant me to make it warmer?", "Updated the draft and sent it to Dana."],
   ]) {
     const o = await held6(offer, "sure", text);
-    assert(`${id} a reply that claims the act happened with no tool is held, never saved as said — ${text}`,
-      o.calls > 1 && o.saved !== text && o.rows === 0, JSON.stringify(o));
+    assert(`${id} accepted prose offer, reply reads as done with no tool: one call, kept, the line added — ${text}`,
+      o.calls === 1 && o.saved === keptWithNote(text) && o.rows === 0, JSON.stringify(o));
   }
   for (const [id, text] of [
     ["43.24.N1", "I can't find that deal anymore, it looks like it was deleted."],
     ["43.24.N5", "Looks like Dana already linked it herself, I've checked and it's in place."],
     ["43.24.N6", "That deal no longer exists, so there's nothing to link."],
-    ["43.24.N7", "Dana is already linked to that deal, so there's nothing to do."],
     ["43.24.N8", "That deal was deleted, so I've left everything as is."],
   ]) {
     const o = await held6(LINK6, "sure", text);

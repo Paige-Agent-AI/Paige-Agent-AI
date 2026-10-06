@@ -198,6 +198,59 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5h. Independent review — round 8 (`2e29e8f74`) + second production replay: FIX_FIRST, outcome made safe
+
+Round 8 found the same two-list problem inside the round-7 completion list.
+- **True answers were replaced.** "The first email goes out on day 1", "it is live at your domain" and "Sorted by
+  value…" triggered the hold, and the answer was then overwritten.
+- **Made-up results stood.** "Forwarded it to Sam.", "I waived the late fee." and "Her trial now runs through
+  March 30." stood as FINAL, because 56 of 67 act offers classified as unknown, and unknown was not held.
+- **The replay agreed.** Of 12 production replies the completion list matched, 9 were wrong ("is live" in the
+  future tense, "on it" as a preposition, "Good to go?").
+
+**The fix makes the OUTCOME safe in both directions, so no word list decides what the person sees:**
+- **Prose offers are not held.** These are the answer-is-the-reply allowlist, now including conversational offers
+  ("Ready to dig into Q3?", "…and we'll move on").
+- **Act and unknown offers are held** until a tool, a card, ask_choices or a stated impossibility.
+- **When a held offer runs out of rounds, its last reply is KEPT, followed by the server's line:** "No tool ran in
+  this reply, so nothing above was sent, saved or changed." That line is true whatever the reply was. A true answer
+  wrongly held keeps its words, and a made-up result the lists miss is contradicted in the same message. Card and
+  authority claims still get the server's own sentence instead, as before. The old "I wasn't able to complete that
+  request" sentence remains only for turns that are not accepted offers.
+- **On an accepted prose offer**, a reply that reads as if it did something ("Done, I've moved Dana…") gets the same
+  line added beneath it, and nothing else happens. `saysItWasDone` can be broad, because a false match only adds a
+  true line under a true answer.
+- **Impossibility now needs the step's own grounds:**
+  - the target is gone, or changed since the offer;
+  - or someone else did it ("by her", "herself").
+
+  A bare "already linked", with nothing checked, is held (C1–C4).
+- **Other fixes:**
+  - "Are you ready to…" is not an offer.
+  - A "Ready to…" statement is not a second offer.
+  - "…, or just give me the go-ahead" is a choice.
+  - The conditional-approvals rule needs approval settings plus a write act.
+  - Curly apostrophes are normalised.
+  - The replay's missed act verbs were added (activate, run it, try it once more, knock out, forward, waive, extend,
+    rebook, share, loop in, approve, restore).
+- **Recorded, not in scope:** the replay found one made-up progress line on a turn that was not an accepted offer
+  ("Archiving the four workflows now — on it", after a long reply with a screenshot). That is the general C1 path,
+  which reads the person's words, not this offer path. Parked for its own change (§6).
+
+Tests:
+- Harness 43.23/43.24 re-specified to the exact saved text (kept + line, or the claim fallback). Each held case
+  asserts 4 calls and LIMIT_REACHED.
+- New harness cases:
+  - G1/G4/G6: forward, waive, extend.
+  - N7: a bare "already".
+  - P9–P11: true explanations with claim words.
+  - U2/U3: prose offers that get the line.
+- Deno "review round 8 + replay".
+- Mutations:
+  - replace instead of keep: 17 fail;
+  - hold prose offers: 19 fail.
+- Totals: harness 890/0; Deno 22/22; `deno check` gives 10 diagnostics, the same as base.
+
 ### 5g. Independent review — round 7 (`3c1cc34d4`) + production replay: FIX_FIRST, redesigned
 
 Round 7 showed that two exemption regexes could not split prose from act both ways. Round 6's default-act
@@ -394,6 +447,8 @@ session scratchpad). Findings and what changed:
 | — | the guard's false-positive rate on real prose was unmeasured (the reviewer's "biggest evidence gap") | — | measured: 21 hits / 16 false on the first fix, then 6 / 0 false after fixing from it (§5) |
 
 ## 6. Parked / not in this change (with evidence)
+
+- **Made-up progress on a non-offer action turn** (prod replay, 2026-10-06: "Archiving the four workflows now — on it" after a long reply, no tool, cards only two turns later). That is the C1 action-intent path, which reads the person's own words, not INT-332's offer path. It needs the same kept-reply-plus-line treatment applied to C1's exhausted branch. Own change.
 
 - **INT-333, card copy → CRM lane.** `crm-command` `summaryFor` writes `Change deal ${deal_id}'s contact to ${client_ref}`
   for `deal.assign_contact` (and the same `target` pattern for `deal.assign_owner`, `deal.move`, `deal.close`,

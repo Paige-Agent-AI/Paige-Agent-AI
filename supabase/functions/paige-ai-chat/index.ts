@@ -232,7 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
-import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, COMPLETION_CLAIM, NO_LONGER_POSSIBLE, offerKind, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, saysItWasDone, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -9040,8 +9040,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     const offerEligible = callerTier !== "client" && approvedConfirmations.size === 0 && !attachedDocument && !answerBinding;
     const offerAccepted = foreground.offer.kind === "accepted" && offerEligible;
     const offerAmbiguous = foreground.offer.kind === "ambiguous" && offerEligible;
-    // What kind of step was accepted (act / prose / unknown): only an act is held to tool / card / ask_choices /
-    // refusal; on every kind, prose that claims the step happened with no tool is never final (round 7).
+    // What kind of step was accepted (act / prose / unknown). An answer PAIGE offered in prose is not held; any
+    // other accepted step (act or unknown) is held to tool / card / ask_choices / a stated impossibility, and if
+    // it runs out of rounds its last reply is KEPT with the server's line that nothing ran — never silently
+    // replaced, never left standing as if it had happened (review rounds 5–8: no word list decides this).
     const acceptedKind = offerAccepted && foreground.offer.kind === "accepted" ? offerKind(foreground.offer.offer) : null;
     if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
     const substantiveTurn = offerAccepted
@@ -9488,6 +9490,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       answerResume = { askId, turnId: binding.turnId, ask: binding.ask, skipped: binding.skipped };
       aiMessages.push({ role: "system", content: answerTurnNote(answerResume.ask, { skipped: answerResume.skipped }) });
     }
+    // Held = an accepted act or unknown step on a turn that is not resuming an approval or an answer.
+    const heldAccept = acceptedKind !== null && acceptedKind !== "prose" && resumeCalls.length === 0 && !answerResume;
     // INT-332 — PAIGE hears that the person is answering her offer, last, beside their words.
     if (resumeCalls.length === 0 && !answerResume && foreground.offer.kind !== "none" && (offerAccepted || offerAmbiguous)) {
       const reply = String(lastUserMessage?.content ?? "");
@@ -15936,7 +15940,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const isActionIntent = (() => {
         if (callerTier === "client") return false; // client seats' tools are deny-by-default
         // INT-332 — accepting PAIGE's own single offer is a request for that action, in any words.
-        if (offerAccepted && resumeCalls.length === 0 && !answerResume) return true;
+        if (heldAccept) return true;
         const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
         const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
         if (!text || text.length < 3) return false;
@@ -16527,11 +16531,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
-            const acceptedTurn = offerAccepted && resumeCalls.length === 0 && !answerResume;
-            const claimsDone = acceptedTurn && typeof finalAssistantText === "string" && COMPLETION_CLAIM.test(finalAssistantText);
+            const acceptedTurn = heldAccept;
             const proseTerminal = typeof finalAssistantText === "string"
               && (acceptedTurn
-                ? !claimsDone && (acceptedKind !== "act" || PROSE_REFUSAL_RE.test(finalAssistantText) || NO_LONGER_POSSIBLE.test(finalAssistantText))
+                ? (PROSE_REFUSAL_RE.test(finalAssistantText) || NO_LONGER_POSSIBLE.test(finalAssistantText))
                 : (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?")));
             const signalTerminal = totalToolCalls > 0
               || queuedApprovals.length > 0
@@ -16540,10 +16543,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!signalTerminal && !proseTerminal) {
               continuationsUsed += 1;
               convo.push({ role: "assistant", content: finalAssistantText || "" });
-              convo.push({ role: "user", content: claimsDone
-                ? "Your reply says the step was done, but no tool ran in this turn, so nothing happened. If the step changes a record or sends something, call its tool now — when it needs their approval, the tool puts the card in front of them. If it was only an answer, give the answer without saying anything was done. If it cannot be done, say plainly why."
-                : acceptedTurn
-                ? "The person accepted the step you offered, and it has not been done: nothing was called. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
+              convo.push({ role: "user", content: acceptedTurn
+                ? "The person accepted the step you offered, and it has not been done: no tool ran in this turn, so nothing was sent or changed, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 const continuationResponse = await gatewayCompat("anthropic", {
@@ -16607,11 +16608,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId) {
-            const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+            // INT-332 — on a held accepted offer the last reply is kept, followed by the server's line that nothing
+            // ran: true whether that reply was an answer (it stays) or a made-up result (the line contradicts it).
+            const keptReply = heldAccept && typeof finalAssistantText === "string" ? finalAssistantText.trim() : "";
+            const exhausted = keptReply
+              ? `${keptReply}\n\n${NOTHING_RAN_NOTE}`
+              : "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
             finalAssistantText = exhausted;
             turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
+          // INT-332 — an accepted PROSE offer is not held, but a reply that reads as if it did something while no
+          // tool ran gets the server's line beneath it. Only a line is added: the answer itself always stands.
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && !claimAnswered && !studioSessionId
+              && acceptedKind === "prose" && totalToolCalls === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
+              && typeof finalAssistantText === "string" && finalAssistantText.trim() && saysItWasDone(finalAssistantText)) {
+            finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),
             ];
             lastRoundFinished = true;

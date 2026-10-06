@@ -62,7 +62,7 @@ const strip = (s: string) => s.replace(/[\u2018\u2019]/g, "'").replace(MD, "").r
 
 // An offer phrase: PAIGE proposing to do something herself, for the person to accept.
 const OFFER_PHRASE =
-  /\b(?:(?:do you )?want me to|would you like me to|should i|shall i|ready for me to|ok(?:ay)? (?:for me to|if i)|mind if i|can i go ahead|should we|shall we|(?<=^\s*|\byou\s)ready to|say the word|just say (?:yes|go|the word)|say yes|give me the (?:word|nod|go-?ahead))\b/gi;
+  /\b(?:(?:do you )?want me to|would you like me to|should i|shall i|ready for me to|ok(?:ay)? (?:for me to|if i)|mind if i|can i go ahead|should we|shall we|(?<=^\s*)ready to(?=[^.!?]*\?)|say the word|just say (?:yes|go|the word)|say yes|give me the (?:word|nod|go-?ahead))\b/gi;
 // "…, or not?" / "…or anything else?" do not make an offer a choice between actions.
 const NOT_A_CHOICE = /\bor (?:not|no|is there (?:anything|something) else|anything else|something else)\b|\beither way\b|\binstead of\b|\b(?:one|two|three|a minute|a day|a week|an hour|a few|a couple) or (?:two|three|four|so|more)\b|\botherwise,? i'?ll (?:hold|wait|keep|leave)\b/gi;
 // Words that put a second action beside the offered one. Read AFTER the offer phrase in its own
@@ -78,27 +78,25 @@ const LEADS_WITH_ALTERNATIVE = /^(?:or|alternatively|option\s+[a-z0-9]+|either(?
 const GENERIC_OFFER = /^(?:$|[?.!]|go ahead|start|get started|proceed|do (?:it|that|this|them|those|both)|kick (?:it|this|that) off|move forward|get going|take care of (?:it|that|this)|handle (?:it|that|this))/i;
 const LIST_MARKER = /^\s*(?:[-*\u2022]|\d+[.)])\s+/;
 
-// WHAT KIND OF STEP DID PAIGE OFFER? Three answers, because two regexes cannot split prose from act both ways
-// (review rounds 5–7 each moved the misses to phrasings the other list lacked):
-//  · "act"     — a platform step: a known act verb, a card, a destination ("…to her record", "…on the landing
-//                page", "…in Gmail") or an act after it ("…and queue it"). Held to tool / card / ask_choices /
-//                refusal.
+// WHAT KIND OF STEP DID PAIGE OFFER? Three answers:
 //  · "prose"   — the answer IS the reply: explain, summarise, suggest, a draft or rewrite for the person, with no
-//                destination and nothing done after it. Its prose stands.
-//  · "unknown" — neither. Its prose stands too.
-// Whatever the kind, a reply that CLAIMS the step happened ("Added it to her record.", "Queued — it goes out at
-// 9", "Sending it over now") while no tool ran is never final (COMPLETION_CLAIM). That is what keeps a
-// misclassified act from standing as a made-up result, and what lets a misclassified answer stand as written.
+//                destination and nothing done after it. Not held: its prose stands as written.
+//  · "act"     — a platform step: an act after the draft ("…and queue it"), a destination ("…to her record",
+//                "…on the landing page", "…in Gmail"), or a known act verb.
+//  · "unknown" — neither. Held exactly like an act.
+// A held step ends in a tool, a card, an ask_choices question, or a stated impossibility. If it runs out of rounds,
+// the handler KEEPS its last reply and adds NOTHING_RAN_NOTE — true whether that reply was an answer or a made-up
+// result. No word list decides what the person is shown (review rounds 5–8 each found a list wrong both ways).
 const DESTINATION = /\b(?:to|in|into|on|onto|under|from)\s+(?:[\w'-]+\s+){0,3}?(?:record|contact|profile|notes?|deal|task|portal|page|landing page|site|website|sequence|campaign|inbox|gmail|outlook|calendar|settings|automation|workflow|pipeline|crm|knowledge base|folder|file|board|list|queue|approvals?|thread|channel|doc)\b|\b(?:scheduled|recurring|each (?:day|week|monday|morning)|every (?:day|week|monday|morning))\b|\b(?:approval card|approval request|needs your ok|card)\b/i;
-const THEN_ACTS = /\b(?:and|then)\s+(?:then\s+)?(?:re-?send|send|post|re-?publish|publish|schedule|book|queue|email|text (?:her|him|them|it)|get (?:it|that|them) (?:out|over|sent)|fire (?:it|that) off|deliver|share (?:it|that) with|save|attach|log|file|update|add (?:it|that|them) to|put (?:it|that|them) (?:on|in|into)|push|launch|go live|create|set (?:it |that |them )?up|import)\b/i;
+const THEN_ACTS = /\b(?:and|then)\s+(?:then\s+)?(?:re-?send|send|post|re-?publish|publish|schedule|book|queue|email|text (?:her|him|them|it)|get (?:it|that|them) (?:out|over|sent)|fire (?:it|that) off|deliver|share (?:it|that) with|save|attach|log|file|update|add (?:it|that|them) to|put (?:it|that|them) (?:on|in|into)|push|launch|go live|create|set (?:it |that |them )?up|import|go ahead|activate|run (?:it|them))\b/i;
 // The answer is the reply itself.
-const PROSE_LEAD = /^(?:(?:just|first|quickly|briefly)\s+)?(?:walk (?:you|them|her|him|us) through|explain|describe|detail|spell out|lay out|map out|sketch out|break (?:it |that |this |them |those |down )?(?:down)?|summari[sz]e|recap|outline|compare|tell you|go (?:over|through)|run (?:you )?through|unpack|clarify|expand on|elaborate|brainstorm|suggest|recommend|give you|offer (?:you|a few|some)|translate|point you|show you(?: how| what| where| an?)?|help (?:you )?(?:think|write|plan|decide|word|prep|prepare|draft|formali[sz]e|figure|work out|outline|sketch)|walk through|draw (?:it|this|that) out|think (?:it|this|that) through|prep (?:you|some|a few)|list (?:the options|out|a few|some|them)|start (?:with|by) (?:the |a |an )?(?:summary|explain\w*|outlin\w*|overview|recap|breakdown)|move on to (?:the )?next (?:question|point|section|idea|one)|keep going|continue (?:with )?(?:the )?(?:list|explanation|breakdown|draft)|save you (?:some )?time and (?:outline|summari[sz]e|draft|write)|post the summary here|answer (?:that|this|your) question)\b/i;
+const PROSE_LEAD = /^(?:(?:just|first|quickly|briefly)\s+)?(?:walk (?:you|them|her|him|us) through|explain|describe|detail|spell out|lay out|map out|sketch out|break (?:it |that |this |them |those |down )?(?:down)?|summari[sz]e|recap|outline|compare|tell you|go (?:over|through)|run (?:you )?through|unpack|clarify|expand on|elaborate|brainstorm|suggest|recommend|give you|share (?:a few|some|my|the|three|two) (?:ideas|thoughts|options|recommendations?|take|examples?|angles?)|come up with|talk(?: (?:about|through|it over|pricing|strategy|shop))?\b|discuss|chat about|dig into|look (?:at|into|over)|review|move on\b(?! to (?:the )?next (?:contact|deal|lead|client|record|stage))|offer (?:you|a few|some)|translate|point you|show you(?: how| what| where| an?)?|help (?:you )?(?:think|write|plan|decide|word|prep|prepare|draft|formali[sz]e|figure|work out|outline|sketch)|walk through|draw (?:it|this|that) out|think (?:it|this|that) through|prep (?:you|some|a few)|list (?:the options|out|a few|some|them|the (?:top|best|main|key|biggest|first|pros)\b[^?]{0,20})|start (?:with|by) (?:the |a |an )?(?:summary|explain\w*|outlin\w*|overview|recap|breakdown)|move on to (?:the )?next (?:question|point|section|idea|one)|keep going|continue (?:with )?(?:the )?(?:list|explanation|breakdown|draft)|save you (?:some )?time and (?:outline|summari[sz]e|draft|write)|post the summary here|answer (?:that|this|your) question)\b/i;
 // A draft, rewrite or edit OF THE PROSE for the person: "make it warmer", "change the tone", "add a P.S.".
 const PROSE_EDIT = /^(?:make (?:it|this|that|them) (?:\w+er|more \w+|less \w+|shorter|longer|punchier|warmer|friendlier|simpler|clearer)|draft|write(?: up)?|compose|pen|rewrite|reword|rephrase|redraft|tighten|shorten|lengthen|soften|sharpen|polish|proofread|email-proof|mark up|tweak|try (?:another|a different|a new|one more)|redo (?:it|the draft|that)|(?:add|update|change|create|make|put together|fix)\b[^?]{0,40}\b(?:draft|tone|wording|p\.?\s?s\b|subject lines?|ideas|outline|checklist|talking points|version|bullets?|examples?|options|questions|scripts?|templates?|captions?|headlines?|posts?|copy))\b/i;
 const ANSWER_REACHES_OUT = /\bby (?:email|text|sms|message)\b|\b(?:access|permission)\b|\bset(?:ting)? (?:it |that |them )?up\b|\bwhen (?:she|he|they|it|\w+) (?:opens?|repl(?:y|ies)|signs?|pays?|books?|clicks?)\b|\bimport\b|\b(?:in|on|to) (?:her|his|their) (?:portal|record|thread|inbox)\b/i;
 const RECORD_NOUN = /\b(?:agreements?|documents?|docs?|pdfs?|letters?|invoices?|contracts?|proposals?|quotes?|tasks?|deals?|payment links?|bookings?|meetings?|events?|refunds?|reminders?|tags?|stages?|contacts?|leads?|forms?|pages?|automations?|sequences?|campaigns?)\b/i;
 // A verb that only a tool carries out.
-const ACT_LEAD = /^(?:(?:just|now|go ahead and|quickly)\s+)*(?:link|unlink|send|re-?send|add|create|schedule|reschedule|book|move|bump|update|change|set|archive|delete|remove|invite|publish|re-?publish|post|assign|reassign|hand|tag|log|mark|enroll|unenroll|launch|email|text (?!you\b)|message|ping|notify|reach out|follow up|attach|connect|sync|cancel|start|kick off|spin up|file|save|record|note|apply|charge|refund|issue|process|generate|build|close|reopen|merge|convert|rename|import|upload|fire|queue|submit|confirm|finalize|activate|deactivate|turn (?:on|off)|pause|resume|retry|try again|redo|re-?raise|raise|tee up|push|pull the trigger|lock|pop|drop|put|get|take care|handle|clean up|do (?:it|that|this|so|both)|make (?:that|the|this|those|these) changes?|draft|prepare|write|rewrite|put together|reply|respond|list (?:her|him|them|it|this|that) as|run (?:it|that|this|the (?:automation|sequence|workflow|campaign)))\b/i;
+const ACT_LEAD = /^(?:(?:just|now|go ahead and|quickly)\s+)*(?:link|unlink|send|re-?send|add|create|schedule|reschedule|book|move|bump|update|change|set|archive|delete|remove|invite|publish|re-?publish|post|assign|reassign|hand|tag|log|mark|enroll|unenroll|launch|email|text (?!you\b)|message|ping|notify|reach out|follow up|attach|connect|sync|cancel|start|kick off|spin up|file|save|record|note|apply|charge|refund|issue|process|generate|build|close|reopen|merge|convert|rename|import|upload|fire|queue|submit|confirm|finalize|activate|deactivate|turn (?:on|off)|pause|resume|retry|try again|redo|re-?raise|raise|tee up|push|pull the trigger|lock|pop|drop|put|get|take care|handle|clean up|do (?:it|that|this|so|both)|make (?:that|the|this|those|these) changes?|draft|prepare|write|rewrite|put together|reply|respond|activate|run (?:it|that|this)|try (?:it |that |this )?(?:again|once more|one more time)|knock (?:it |that |those |them )?out|test (?:it|that|this)|forward|unsubscribe|waive|fix|nudge|extend|rebook|share|loop|approve|restore|list (?:her|him|them|it|this|that) as|run (?:it|that|this|the (?:automation|sequence|workflow|campaign)))\b/i;
 
 export type OfferKind = "act" | "prose" | "unknown";
 
@@ -109,7 +107,7 @@ export function offerKind(offer: string): OfferKind {
   OFFER_PHRASE.lastIndex = 0;
   const m = OFFER_PHRASE.exec(sentence);
   if (!m) return "unknown";
-  const rest = sentence.slice(m.index + m[0].length).trim().replace(/^(?:and|then)\s+(?:i'?ll|i will)\s+/i, "");
+  const rest = sentence.slice(m.index + m[0].length).trim().replace(/^(?:and|then)\s+(?:i'?ll|i will|we'?ll|we will)\s+/i, "");
   if (THEN_ACTS.test(rest)) return "act";
   // A pure answer ("walk you through…", "show you what's in her pipeline") stays prose wherever it points, unless
   // it reaches outside the reply: by email, access, setting something up, telling you when something happens.
@@ -121,14 +119,26 @@ export function offerKind(offer: string): OfferKind {
   return "unknown";
 }
 
-/** A reply that says the step happened (or is happening) — never final when no tool ran this turn. */
-export const COMPLETION_CLAIM = /\b(?:done|all set|sorted|taken care of|on it|good to go|it'?s handled|that'?s handled|goes out|went out|is (?:now )?live)\b|\bi'?ve (?:just |now |already )?(?:linked|sent|re-?sent|added|created|updated|moved|scheduled|booked|queued|set (?:it |that |this )?up|tagged|enrolled|logged|saved|filed|posted|published|changed|assigned|marked|cancell?ed|fired|submitted|raised|put|attached|converted|merged|refunded|issued|texted|emailed|messaged|pinged|notified|imported|invited|connected|synced|launched|pushed)\b|(?:^|[.!?:]\s+)(?:added|linked|sent|re-?sent|queued|updated|moved|booked|scheduled|tagged|enrolled|posted|published|logged|saved|filed|changed|assigned|marked|created|attached|submitted|texted|emailed|messaged|pinged|notified|imported|archived|cancell?ed|refunded|charged|invited|connected|synced|launched|pushed|set up)\b(?! by)|\b(?:link|send|re-?send|mov|add|creat|updat|schedul|book|queu|tagg|enroll|post|publish|fir|attach|log|sav|submitt|continu|import|start|kick|run|process|sync|archiv|delet|remov|merg|cancel|refund|charg|text|email|messag|ping|notify|notifi|launch|push|setting up|wir|connect|invit)ing\b[^.!?\n]{0,25}\bnow\b|(?:^|[.!?]\s+)(?:\w+ed|sent|done|set)!/i;
+/**
+ * On an accepted PROSE offer (not held), a reply that reads as if it did something — "Done, I've moved Dana…",
+ * "Updated it and sent it to her." — gets NOTHING_RAN_NOTE added, nothing else. A false match only adds a true
+ * line under a true answer, so this list can be broad without costing anyone their answer.
+ */
+export function saysItWasDone(text: string): boolean {
+  return typeof text === "string" && SAYS_DONE.test(strip(text));
+}
+const SAYS_DONE = /\b(?:all set|taken care of|it'?s handled|that'?s handled)\b|(?:^|[.!?:]\s+)(?:done|sorted|all done)(?=\s*[.!,—–-]|\s*$)|\bi'?ve (?:just |now |already |gone ahead and )?(?:linked|sent|re-?sent|added|created|updated|moved|scheduled|booked|queued|set (?:it |that |this )?up|tagged|enrolled|logged|saved|filed|posted|published|changed|assigned|marked|cancell?ed|fired|submitted|raised|attached|converted|merged|refunded|issued|texted|emailed|messaged|pinged|notified|imported|invited|connected|synced|launched|pushed|forwarded|shared|waived|extended|rebooked|unsubscribed|fixed|restored|approved)\b|\bi (?:just |already |went ahead and )?(?:sent|linked|added|moved|updated|forwarded|shared|waived|booked|scheduled|emailed|texted)\b|(?:^|[.!?:]\s+)(?:added|linked|sent|re-?sent|queued|moved|booked|scheduled|tagged|enrolled|posted|published|logged|filed|assigned|attached|submitted|texted|emailed|messaged|pinged|notified|imported|archived|refunded|charged|invited|forwarded|shared|waived|rebooked|unsubscribed|looped|updated|changed|saved|created)\b(?! by| below| above| version| draft below)|\b(?:sent|forwarded|emailed|texted|shared) (?:it|that|them|this) (?:to|over to|with)\b|\b(?:\w+ing)\b[^.!?\n]{0,25}\bnow\b(?![^.!?\n]*\?)/i;
+
+/** The server's line after a held offer's last reply when no tool ran: true in every case. */
+export const NOTHING_RAN_NOTE = "No tool ran in this reply, so nothing above was sent, saved or changed.";
+// A reply that says it is done ("Done.", "Linked!", "Sorted.") cannot also be "the step can no longer be done".
+const DONE_WORDS = /\b(?:done|all set|sorted|it'?s handled|that'?s handled|taken care of)\b|(?:^|[.!?:]\s+)(?:\w+ed|sent|done|set)!/i;
 
 // On an accepted act, prose that says THE STEP ITSELF can no longer be done — the target is gone or changed,
 // or it is already the case — is a terminal answer, unless the same reply claims it just happened (round 6:
 // "Linked! There's nothing else you need to do." and "Done. She's already linked." must not end the turn).
-const STEP_GONE = /\bno longer (?:exists?|there|available|possible|open|active|in (?:the|your) (?:pipeline|system|crm))\b|\b(?:was|were|has been|have been|got)\s+(?:deleted|removed|cancell?ed|merged into|closed out|closed as (?:lost|won))\b|\bthere(?:'s| is| are)\s+no(?: longer(?: a| an)?)?\s+(?:deal|contact|record|task|invoice|meeting|appointment|event|lead|stage|pipeline|card|such|one) (?:by|with|named|called|for|matching|under|left|anymore)\b|\balready (?:been )?(?:linked|sent|added|created|scheduled|booked|moved|paid|cancell?ed|archived)\b|\b(?:herself|himself|themselves) already\b|\bnothing (?:left )?to (?:link|send|add|approve|change|update|reschedule|move|book|refund)\b|\b(?:changed|moved|closed) since (?:i|we) (?:offered|asked|checked|looked)\b|\bsince then\b[^.!?\n]{0,40}\b(?:archived|deleted|closed|cancell?ed|merged)\b/i;
-export const NO_LONGER_POSSIBLE = { test: (text: string) => typeof text === "string" && STEP_GONE.test(strip(text)) && !COMPLETION_CLAIM.test(strip(text)) };
+const STEP_GONE = /\bno longer (?:exists?|there|available|possible|open|active|in (?:the|your) (?:pipeline|system|crm))\b|\b(?:was|were|has been|have been|got)\s+(?:deleted|removed|cancell?ed|merged into|closed out|closed as (?:lost|won))\b|\bthere(?:'s| is| are)\s+no(?: longer(?: a| an)?)?\s+(?:deal|contact|record|task|invoice|meeting|appointment|event|lead|stage|pipeline|card|such|one) (?:by|with|named|called|for|matching|under|left|anymore)\b|\balready (?:been )?(?:linked|sent|added|created|scheduled|booked|moved|paid|cancell?ed|archived)\b[^.!?\n]{0,30}\b(?:by (?:her|him|them|someone|\w+)|herself|himself|themselves|on (?:her|his|their) end|before (?:i|we) (?:could|got))\b|\b(?:herself|himself|themselves) already\b|\b(?:changed|moved|closed) since (?:i|we) (?:offered|asked|checked|looked)\b|\bsince then\b[^.!?\n]{0,40}\b(?:archived|deleted|closed|cancell?ed|merged)\b/i;
+export const NO_LONGER_POSSIBLE = { test: (text: string) => typeof text === "string" && STEP_GONE.test(strip(text)) && !DONE_WORDS.test(strip(text)) };
 
 const sentencesOfParagraph = (p: string) => p.split(/\n+/).flatMap((line) => line.replace(LIST_MARKER, "").split(/(?<=[.!?])\s+/))
   .map((x) => x.trim()).filter(Boolean);
@@ -195,7 +205,9 @@ export function closingOffer(text: string): { offer: string; count: number; alte
       && [x, tail[i + 1] ?? ""].some((p) => p.split(/\n+/).filter((line) => LIST_MARKER.test(line)).length >= 2))
     // any offer in the paragraph before this one counts as a second option (it is not compared with this one)
     || prevOffers > 0
-    || trailingAlternative;
+    || trailingAlternative
+    // the choice can come BEFORE the offer phrase: "Can you check her file, or just give me the go-ahead to try it?"
+    || /\bor\s+(?:just\s+|simply\s+)?$/i.test(sentence.slice(0, first.index));
   return { offer: sentence.slice(0, 400), count, alternatives };
 }
 
@@ -409,7 +421,7 @@ const AUTHORITY_CLAIM = [
 // (prod replay 2026-10-06: 15 of 16 authority hits were the bare adverb in honest replies).
 // Asking whether approvals are on and making the act depend on the answer: "Did you turn approvals off? If so
 // I'll run it now." Read across the question mark, which splits the sentences.
-const CONDITIONAL_ON_APPROVALS = /\bapprov\w*\b[^.!?\n]{0,40}\b(?:on|off|enabled|disabled|required|needed)\b[^.!?\n]{0,20}\?\s*(?:if (?:so|yes|they(?:'re| are)(?: off| on)?|it(?:'s| is)(?: off| on)?|not)|either way)\b[^.!?\n]{0,30}\b(?:i'?ll|i will(?! not)|i can(?!'?t|not)|i could(?!n'?t)|let me)(?![^.!?\n]{0,15}\b(?:hold|wait|leave|ask|check|keep|not|never)\b)/i;
+const CONDITIONAL_ON_APPROVALS = /\b(?:approvals?(?:\s+(?:controls?|settings?|gate))?|trust (?:compass|level|settings?))\b[^.!?\n]{0,30}\b(?:on|off|enabled|disabled|required)\b[^.!?\n]{0,30}\?\s*(?:if (?:so|yes|they(?:'re| are)(?: off| on)?|it(?:'s| is)(?: off| on)?|you (?:have|did))|then)\b[^.!?\n]{0,20}\b(?:i'?ll|i will(?! not)|i can(?!'?t|not)|let me)\s+(?:just\s+|go ahead and\s+)?(?:send|run|publish|post|push|create|link|update|delete|move|launch|execute|do (?:it|that))\b/i;
 // Navigation to the card is not a way around it ("I'll take you directly to the approval card"): that phrase is
 // removed before the sentence is read, so a bypass elsewhere in the same sentence still counts.
 const NAVIGATES = /\b(?:take|link|bring|point|jump|navigate|send)\s+you\s+(?:straight\s+|right\s+)?directly\b[^.!?\n,;]{0,40}|\bdirectly to (?:the|your|that|this) (?:approval card|card|approvals?|needs your ok)\b/gi;

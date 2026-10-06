@@ -72,3 +72,30 @@ Impeccable internal integrated captures identified missing exact payment-review 
 
 ### Reviewed draft delivery checkpoint
 PR #1769 is OPEN/DRAFT at f2a5891b75af60ed3355b15944508c1f48847d03, based on main51e1a629. Independent nonwriter COMPLETE/SHIP and scoped internal Impeccable SHIP cover that candidate. Migration renames to20270595000001/02 are100% unchanged semantics; real PostgreSQL proof passes after renumbering. TypeScript ratchet baseline10/current10 PASS. Payment Requests/LifecycleActions focused11 tests PASS. Seven selected local Windows failures reproduce on unchanged main from its own working directory; this does not attribute all full-suite failures or waive required CI. Required CI is pending. Provider-served, PayPal, authenticated two-tenant, production deployment/persistence and parent-drawer geometry remain UNVERIFIED. Production read-only inventory found zero tenant Stripe bindings and zero PayPal connections; owner sandbox configuration reference requested, no secrets read and no money dispatched.
+
+## Current-main reconciliation — 2026-10-06
+
+This checkpoint supersedes the preceding unmerged/draft status; earlier checkpoints remain historical evidence. Current-main base: `8b7f9757af53ca2966472992a70de43d2bf041cc` (INT-334 Turn Route #1787).
+
+- #1753 commercial terms are canonical; they are not active provider mandates.
+- #1769 merged at `d20b323e9c146f3c763376f90e5721d9f44124a7`; #1779 records delivery at `f640484f8cbf92a950a6ee046e55f37e905cd243`.
+- Production migrations `20270597000001` and `20270597000002` persisted. Reconciliation, command and webhook substrate deployed; Vercel production READY for the delivery. Subsequent main integration check cleared the historical migration-failure residue.
+- Read-only production inventory: zero tenant Stripe bindings, zero provider operations, two invoice payment rows, one invoice, zero commercial agreements. Deployed substrate is not merchant/payment acceptance.
+- Stripe sandbox acceptance is PROOF OWED: controlled TEST merchant onboarding/binding, issued invoice and exact approval, hosted payment, signed event plus account-scoped GET, settlement/allocation, replay, negatives, and authenticated two-tenant UI/Chat/Collections parity.
+- CUA initialization fails at the Windows helper ACL boundary. This is missing authenticated browser proof, not an excuse to stop domain work. No secret or card-data extraction is authorized.
+
+### PayPal salvage disposition
+
+`feat/sales-paypal-parity` at `141a3e1bbf5789d0eb7c033b708d6bc0b59ad8f7` is evidence only. Its PayPal-specific addition is two GET readback files (`paypal-readback.ts`, `paypal-readback.test.ts`) plus a five-line checkpoint. Port only independently validated readback concepts onto fresh main; discard inherited branch history. Never merge or bulk-rebase the stale branch. Current request adapter remains Stripe-only; PayPal seller onboarding/receivability, environment/version binding, hosted request dispatch, authenticated event routing and runtime acceptance remain owed. Platform partner credentials have not been established; absence of tenant rows does not establish absence of platform credentials.
+
+### Remaining bounded sequence
+
+1. Repair Collections' stale register decoder: deployed register basis is `canonical_receipt_allocations`, while the client accepts only `manual_recorded_only`. Reuse canonical allocated-balance validation, preserve manual/provider evidence, export both, and prevent manual corrections from masquerading as provider reversals. No new financial ledger or migration.
+2. Finish commercial package composition over existing invoice/terms/signing records. Existing pure package preview is not a callable complete objective. Preserve shared C4 asks/resumes and constituent Trust decisions. COMMERCIAL-ASSEMBLY-01 authenticated acceptance remains UNVERIFIED; never infer dates, fees or approval.
+3. Prove controlled Stripe TEST acceptance through deployed capabilities when secure merchant setup and authenticated access are available.
+4. Port PayPal readback, then implement missing provider mechanics against the same operation/settlement/allocation contracts. Missing external partner actions are explicit proof debt; continue unblocked work.
+5. Implement due-obligation/receivable lifecycle before provider mandates. Finite installments, open-ended recurring terms, deposit/balance and explicit dates stay distinct.
+6. Operational Collections consumes canonical balances/schedules and canonical Communications. Shared C4d WAIT_WORK must be re-grounded before conversational durable resume; no Sales continuation or scheduler.
+7. Provide bounded Sales snapshot provenance for Cognitive Fabric. UI/Chat/Live/Voice are callers of the same capability; no modality ledger or mutable financial Memory.
+
+Owner action genuinely required later: securely connect a controlled TEST merchant and, if missing, obtain platform PayPal partner/sandbox permissions. No request for credentials in chat and no LIVE-money authorization.

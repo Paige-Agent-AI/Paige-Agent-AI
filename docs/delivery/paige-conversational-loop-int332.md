@@ -198,6 +198,69 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5g. Independent review — round 7 (`3c1cc34d4`) + production replay: FIX_FIRST, redesigned
+
+Round 7 showed that two exemption regexes could not split prose from act both ways. Round 6's default-act
+brought back the BLOCKING-1 overwrite for 45 of 76 ordinary prose offers ("make it warmer", "suggest subject
+lines", "run through the numbers"). Its prose lists exempted 24 act offers with a destination ("add the summary
+to her record", "draft the email and queue it", "update the copy on the landing page"), where a made-up "Added
+it to her record." then stood as FINAL. **The design changed instead of the lists:**
+
+- **The kind of step is three-way** (`offerKind`: act / prose / unknown), decided in this order:
+  1. An act after the draft ("…and queue it") makes it an act.
+  2. A pure-answer verb (explain, suggest, give you, run through, translate, point you…) makes it prose,
+     wherever it points, unless it reaches outside the reply (by email, access, set it up, when she opens it).
+  3. A destination ("to her record", "on the landing page", "in Gmail", "in your Paige settings") makes it an
+     act.
+  4. An edit of prose (make it warmer, change the tone, a draft or script for the person) makes it prose,
+     unless it names a record (invoice, agreement, letter, document, task…).
+  5. A known act verb makes it an act.
+  6. Anything else is unknown.
+- **What the reply CLAIMS decides the rest, for every kind** (`COMPLETION_CLAIM`). A reply that says the step
+  happened or is happening ("Added it…", "Queued — it goes out…", "Sending it over now", "Texted it to you.",
+  "Done", "On it") while no tool ran is never final. It is continued with "your reply says the step was done,
+  but no tool ran…". Only a known act is held further, to tool / card / ask_choices / a stated impossibility.
+  Prose and unknown answers stand as written. So a misclassified act cannot stand as a made-up result, and a
+  misclassified answer is not replaced.
+- **Impossibility** (`NO_LONGER_POSSIBLE`) covers the target gone or changed, or the step already being the
+  case ("already linked/paid", "was cancelled", "since then … archived"). It is void beside a completion claim,
+  but "I've checked / I have nothing to link / I've left it" are no longer vetoes.
+- **Authority:**
+  - The approval-question rule is back to do/does/is/are/have/has. Settings advice ("Should approvals be on for
+    invoices?") is quiet. A missed approval question is harmless because the gate decides when the tool is
+    called, while a false hit replaces a true answer.
+  - A new rule reads a conditional act across the question mark ("Did you turn approvals off? If so I'll run it
+    now.").
+  - The reassurance phrase is removed before the bypass rules read the sentence, as navigation is, so "Nothing
+    goes out without your approval, so I'll send it without your approval this once" is a bypass.
+  - "card is back" needs "approval" (payment cards are quiet).
+- **The production replay** (read-only, 30 days: 180 claim rows and 91 offer rows, every row md5-verified, row
+  data deleted after):
+  - `unbackedClaim` gives 4 card + 1 authority hits, **all TRUE, identical at `2652c1e04`, `b11e40af3` and
+    `3c1cc34d4`**. No row differs. Two more true narrations are hidden by the ±2-minute evidence window
+    (recorded; not a guard defect).
+  - Offer classification fixed from it: "draft the agreement as a document" and "draft that offer letter" are
+    acts; "help you draft/prepare…" and "walk through an example" are prose.
+  - The live miss **"Ready to archive it? Just say yes and I'll pull the trigger."**, whose next turn was a
+    narrated card, is now one accepted offer. "Ready to…" opening a sentence is an offer phrase, and an
+    invitation to reply right after an offer question is the same offer. An offer followed by "Or did you…?"
+    asks which.
+- **Residual, recorded and not tuned:**
+  - A third party's action stated as fact ("Dana was already linked by someone on your team") ends an
+    accepted act as said, as it did at every earlier head. The server cannot verify it, and holding it would
+    hold honest answers.
+  - Seven act phrasings classify as unknown ("text you the summary", "continue with the import"). They are
+    protected by the completion-claim hold, not by the act hold.
+
+Tests:
+- Harness 43.24: 25 assertions. Prose answers stand. Claimed acts are held on act, prose and unknown offers
+  (U1–U3). Impossibilities end the turn.
+- Deno "review round 7 + production replay".
+- Two mutations, each red:
+  - completion hold off: 5 fail;
+  - kind forced to act: 15 fail.
+- Harness 884/0. Deno 21/21. `deno check` 10, identical to base.
+
 ### 5f. Independent review — round 6 (non-author, exact head `b11e40af3`): FIX_FIRST, fixed
 
 Three blocking findings, all introduced by round 5's fixes:

@@ -9,7 +9,8 @@
 import { assert, assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
 import {
   NO_LONGER_POSSIBLE,
-  offerIsAct,
+  COMPLETION_CLAIM,
+  offerKind,
   acceptedOfferNote,
   CLAIM_CORRECTION,
   ambiguousOfferNote,
@@ -378,11 +379,11 @@ Deno.test("review round 5 — only a platform act is held to a tool; over-broad 
   for (const o of ["Want me to send that approval card now so we actually close this loop?", "Want me to link the deal to her contact?",
     "Should I add a follow-up task for Dana due Friday?", "Want me to go ahead?", "Say the word and I'll link it.",
     "Want me to draft the follow-up and send it to her?", "Should I get that over to Dana now?", "Want me to schedule the call for Thursday?"]) {
-    assert(offerIsAct(o), o);
+    assertEquals(offerKind(o), "act", o);
   }
   for (const o of ["Want me to walk you through how approvals work here?", "Want me to draft a short follow-up you can send her?",
     "Want me to break down the numbers?", "Should I explain what each stage means?", "Want me to summarise the thread?"]) {
-    assert(!offerIsAct(o), o);
+    assert(offerKind(o) !== "act", o);
   }
   // "Can no longer be done" ends an accepted act; an ordinary answer does not.
   for (const t of ["That deal no longer exists, so there's nothing to link.", "There's no deal by that name anymore.",
@@ -413,7 +414,7 @@ Deno.test("review round 5 — only a platform act is held to a tool; over-broad 
   }
   // The act note names ask_choices on the first round; the prose note does not ask for a tool.
   assert(acceptedOfferNote("Want me to link it?", "yes").includes("ask_choices"));
-  assert(!acceptedOfferNote("Want me to explain it?", "yes", { act: false }).includes("calling its tool"));
+  assert(!acceptedOfferNote("Want me to explain it?", "yes", { kind: "prose" }).includes("calling its tool"));
 });
 
 Deno.test("review round 6 — every act offer is held by default; only answers in prose are exempt", () => {
@@ -503,7 +504,7 @@ Deno.test("review round 6 — every act offer is held by default; only answers i
  "Want me to draft that up and get it out to her?",
  "Want me to get the ball rolling on that?",
 ];
-  for (const o of acts) assert(offerIsAct(o), o);
+  for (const o of acts) assertEquals(offerKind(o), "act", o);
   // Offers whose answer IS the prose. Read offers (look up, pull up, check) stay held on purpose: the read ends the turn.
   for (const o of ["Want me to walk you through how approvals work here?", "Want me to draft a short follow-up you can send her?",
     "Want me to break down the numbers?", "Should I explain what each stage means?", "Want me to summarise the thread?",
@@ -514,11 +515,11 @@ Deno.test("review round 6 — every act offer is held by default; only answers i
     "Want me to start by explaining the stages?", "Want me to move on to the next question?", "Want me to text you the steps?",
     "Want me to save you some time and outline it?", "Want me to create a checklist you can follow?",
     "Want me to create an outline for the email?", "Want me to list the options?", "Want me to rewrite it shorter?"]) {
-    assert(!offerIsAct(o), o);
+    assert(offerKind(o) !== "act", o);
   }
   // …but a draft that is then sent or saved is an act.
   for (const o of ["Want me to draft the follow-up and send it to her?", "Want me to write up the email and post it?",
-    "Want me to draft the invoice?"]) assert(offerIsAct(o), o);
+    "Want me to draft the invoice?"]) assertEquals(offerKind(o), "act", o);
 
   // A false completion is never "the step can no longer be done".
   for (const t of ["Linked! There's nothing else you need to do.", "Done. Dana's already linked to the Acme deal.",
@@ -544,9 +545,14 @@ Deno.test("review round 6 — every act offer is held by default; only answers i
     "Is approval needed from your client before you send contracts?"]) {
     assertEquals(unbackedClaim(s, N), null, s);
   }
-  for (const s of ["Did you turn approvals off?", "Could you turn approvals off for me?", "Should approvals be on for this?",
-    "Are approvals enabled on your account?", "Are approvals still on?"]) {
+  for (const s of ["Are approvals enabled on your account?", "Are approvals still on?"]) {
     assertEquals(unbackedClaim(s, N), "authority", s);
+  }
+  // Round 7: settings ADVICE is not PAIGE deciding approval. A missed approval question is harmless — the gate
+  // still decides when the tool is called — while a false hit replaces a true answer.
+  for (const s of ["Should approvals be on for invoices?", "Did you turn approvals off for tags last week? I see tags going through without a card.",
+    "Could you turn approvals on for invoices so I can't send them without you?"]) {
+    assertEquals(unbackedClaim(s, N), null, s);
   }
   // A reassurance is exempt only in its exact shape: a bypass beside "nothing…" is still a bypass.
   for (const s of ["I'll send it without your approval, nothing goes out late.", "Nothing is stopping me, so I'll send it without the card.",
@@ -556,5 +562,58 @@ Deno.test("review round 6 — every act offer is held by default; only answers i
   for (const s of ["I'll make sure nothing goes out without your approval.", "I'll send nothing without your approval.",
     "I'll take you directly to the approval card."]) {
     assertEquals(unbackedClaim(s, N), null, s);
+  }
+});
+
+Deno.test("review round 7 + production replay — the kind of step decides how it is held; a claimed act never stands", () => {
+  const W = (s: string) => `Want me to ${s}?`;
+  // Destinations, acts after the draft, and records make it an act whatever the verb.
+  for (const o of ["add the summary to her record", "draft the email and queue it", "update the copy on the landing page",
+    "change the tone of the scheduled email", "write the email and add it to the sequence", "create a task for the follow-up steps",
+    "create the draft in Gmail", "shorten the subject line and resend", "polish the page copy and republish", "answer that in her portal",
+    "draft the actual agreement content for Afonso as a document first", "draft that offer letter for Tashia", "make that change",
+    "draft the invoice", "reply to Dana", "move on to the next contact"]) assertEquals(offerKind(W(o)), "act", o);
+  // Answers in prose, wherever they point.
+  for (const o of ["make it warmer", "suggest a few subject lines", "give you an example", "run through the numbers", "translate it into Spanish",
+    "point you to the setting", "expand on that", "prep some questions for the call", "soften the tone", "try another version",
+    "give you a template", "detail the steps", "describe what it does", "show you what's in her pipeline", "help draft a quick call script",
+    "walk through a specific example", "help you prepare what to ask", "help you formalize a cadence", "put together a quick script you can use"]) {
+    assertEquals(offerKind(W(o)), "prose", o);
+  }
+  // A reply that claims the act happened is a completion claim; a true answer is not.
+  for (const t of ["Added it to her record.", "Queued, it goes out tomorrow at 9.", "Updated the landing page copy.", "Continuing the import now.",
+    "Sending it over now.", "On it, resending it now.", "Linked! There's nothing else you need to do.", "Done. Dana's already linked."]) {
+    assert(COMPLETION_CLAIM.test(t), t);
+  }
+  for (const t of ["Here it is, warmer:\n\nHi Dana, hope your week is going well.", "This month you billed $12,400 across 9 clients, right now.",
+    "It's under Setup, then Connections, then Calendars.", "Hola Dana, espero que tu semana vaya bien.", "Sure. Want me to start the invoice after?"]) {
+    assert(!COMPLETION_CLAIM.test(t), t);
+  }
+  // Honest impossibilities end an accepted act; a claimed result beside one does not.
+  for (const t of ["Dana is already linked to that deal, so there's nothing to do.", "That invoice has already been paid, so there's nothing to send.",
+    "That meeting was cancelled, so there's nothing to reschedule.", "Since then the deal has been archived.",
+    "That contact no longer exists in your CRM, so I have nothing to link.", "That deal was deleted, so I've left everything as is."]) {
+    assert(NO_LONGER_POSSIBLE.test(t), t);
+  }
+  for (const t of ["Sorted. That deal was merged into Acme, nothing left to do.", "Perfect, that deal was closed as won so it's handled."]) {
+    assert(!NO_LONGER_POSSIBLE.test(t), t);
+  }
+  // The live miss: "Ready to archive it? Just say yes…" is one offer, accepted by a yes; an offer followed by
+  // "Or did you…?" asks which.
+  const NOW = Date.parse("2026-10-06T16:00:00Z");
+  const t = (text: string) => [{ role: "user", content: "yes", created_at: "2026-10-06T15:59:00Z" },
+    { role: "assistant", content: text, created_at: "2026-10-06T15:58:00Z", bundle_ref: { turn_state: { v: 1, state: "FINAL" } } }];
+  assertEquals(readForeground(t("Looks clean. Ready to archive it? Just say yes and I'll pull the trigger.") as never, "yes", NOW).offer,
+    { kind: "accepted", offer: "Ready to archive it?" });
+  assertEquals(readForeground(t("Want me to send it? Say the word and it goes.") as never, "yes", NOW).offer.kind, "accepted");
+  assertEquals(readForeground(t("Want me to go ahead and create the deal for him? Or did you want him dropped straight into Proposal?") as never, "yes", NOW).offer.kind, "ambiguous");
+  assertEquals(readForeground(t("I checked his record. It's ready to link. Would you like me to link it now?") as never, "yes", NOW).offer.kind, "accepted");
+  // Settings and payment cards are not claims; a conditional act on the approvals answer is.
+  const N = { cardMinted: false, standingCard: false };
+  for (const s of ["Dana's card is back up and working, so the retry should go through.", "Do approvals need to be on for this? If not, I can't do it anyway."]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+  }
+  for (const s of ["Did you turn approvals off? If so I'll run it now.", "Nothing goes out without your approval, so I'll send it without your approval this once."]) {
+    assertEquals(unbackedClaim(s, N), "authority", s);
   }
 });

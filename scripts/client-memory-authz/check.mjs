@@ -7765,7 +7765,8 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   seedOffer(s13, THREAD_FRESH, { history: 1 });
   const r13 = await turn(s13, c13, db13, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["On it — I'll link Dana's deal now.", ASSIGN, AFTER_CARD] });
   assert("43.13 C1 a promise without a tool call is continued (not a claim, so not the guard's), and the card is minted",
-    told(r13).includes("The person accepted the step you offered") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
+    // "On it — I'll link it now" claims progress with no tool (round 7), so the continuation is the claimed-done one
+    told(r13).includes("Your reply says the step was done, but no tool ran in this turn") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
     JSON.stringify({ rows: c13.rows.length, terminal: terminalOf(r13) }));
 
   // ── 43.14–43.18 — independent review round 1 (FIX_FIRST). The guard runs on every ordinary turn, so it
@@ -7830,7 +7831,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   // ask_choices (ASK_USER); a stated refusal still ends the turn (43.9).
   const s20 = makeThreadStore(THREADS), c20 = makeConfirmStore(), db20 = crmDb();
   seedOffer(s20, THREAD_FRESH, { history: 1 });
-  const r20 = await turn(s20, c20, db20, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["On it. Want me to start the invoice after?", ASSIGN, AFTER_CARD] });
+  const r20 = await turn(s20, c20, db20, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["Sure. Want me to start the invoice after?", ASSIGN, AFTER_CARD] });
   assert("43.20 an accepted offer answered with a prose question is continued to the tool: one card, WAIT_APPROVAL",
     told(r20).includes("The person accepted the step you offered") && c20.rows.length === 1 && terminalOf(r20)?.state === "WAIT_APPROVAL",
     JSON.stringify({ rows: c20.rows.length, terminal: terminalOf(r20) }));
@@ -7908,6 +7909,51 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   ]) {
     const o = await held6(offer, "sure", text);
     assert(`${id} accepted prose offer: the true answer stands after one call`, o.calls === 1 && o.saved === text, JSON.stringify(o));
+  }
+
+  // 43.24 (review round 7) — the step's kind decides how strictly it is held, and what the reply CLAIMS decides
+  // the rest. A prose answer to a prose offer stands; a reply that claims an act happened with no tool never
+  // does; on an accepted act, saying the step can no longer be done ends the turn as said.
+  const x4 = (t) => [t, t, t, t];
+  for (const [id, offer, text] of [
+    ["43.24.P1", "Here's your draft.\n\nWant me to make it warmer?", "Here it is, warmer:\n\nHi Dana, hope your week is going well. Just checking you got the link."],
+    ["43.24.P2", "Here's the email.\n\nWant me to suggest a few subject lines?", "Here are three:\n\n1. Quick check-in\n2. Your next step\n3. Still on for Thursday?"],
+    ["43.24.P3", "That's how tags work.\n\nWant me to give you an example?", "Sure. Say you tag Dana as VIP: every VIP-only sequence then picks her up automatically."],
+    ["43.24.P4", "Revenue looks steady.\n\nWant me to run through the numbers?", "This month you billed $12,400 across 9 clients, up from $10,900 last month."],
+    ["43.24.P5", "Here's the reply.\n\nWant me to translate it into Spanish?", "Hola Dana, espero que tu semana vaya bien."],
+    ["43.24.P6", "That's controlled in settings.\n\nWant me to point you to the setting?", "It's under Setup, then Connections, then Calendars."],
+    ["43.24.P7", "That's the short version.\n\nWant me to expand on that?", "Longer version: approvals gate every write, reads run freely, and your Trust Compass sets the ceiling."],
+    ["43.24.P8", "Your call with Dana is tomorrow.\n\nWant me to prep some questions for the call?", "Here are five:\n\n1. What changed since we last spoke?\n2. What does success look like by March?"],
+    ["43.24.S5", "Here's the recap.\n\nWant me to text you the summary?", "Here's the summary: Dana is in, invoice next week."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    assert(`${id} an accepted offer answered truthfully in prose: it stands after one call`, o.calls === 1 && o.saved === text, JSON.stringify(o));
+  }
+  for (const [id, offer, text] of [
+    ["43.24.S1", "Here's the call summary.\n\nWant me to add the summary to her record?", "Added it to her record."],
+    ["43.24.S2", "Dana went quiet.\n\nWant me to draft the email and queue it?", "Queued, it goes out tomorrow at 9."],
+    ["43.24.S3", "The headline is weak.\n\nWant me to update the copy on the landing page?", "Updated the landing page copy."],
+    ["43.24.S4", "First 50 contacts are in.\n\nWant me to continue with the import?", "Continuing the import now."],
+    ["43.24.F1", LINK6, "Sorted. That deal was merged into Acme, nothing left to do."],
+    ["43.24.F3", LINK6, "Perfect, that deal was closed as won so it's handled."],
+    // a prose or unknown offer whose reply claims an act anyway: the claim, not the offer, holds it
+    ["43.24.U1", "Here's the recap.\n\nWant me to text you the summary?", "Texted it to you."],
+    ["43.24.U2", "That's the pipeline.\n\nWant me to show you what's in it?", "Done, I've moved Dana to Proposal Sent."],
+    ["43.24.U3", "Here's your draft.\n\nWant me to make it warmer?", "Updated the draft and sent it to Dana."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    assert(`${id} a reply that claims the act happened with no tool is held, never saved as said — ${text}`,
+      o.calls > 1 && o.saved !== text && o.rows === 0, JSON.stringify(o));
+  }
+  for (const [id, text] of [
+    ["43.24.N1", "I can't find that deal anymore, it looks like it was deleted."],
+    ["43.24.N5", "Looks like Dana already linked it herself, I've checked and it's in place."],
+    ["43.24.N6", "That deal no longer exists, so there's nothing to link."],
+    ["43.24.N7", "Dana is already linked to that deal, so there's nothing to do."],
+    ["43.24.N8", "That deal was deleted, so I've left everything as is."],
+  ]) {
+    const o = await held6(LINK6, "sure", text);
+    assert(`${id} accepted act that can no longer be done ends as said: ${text}`, o.calls === 1 && o.saved === text, JSON.stringify(o));
   }
 
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and

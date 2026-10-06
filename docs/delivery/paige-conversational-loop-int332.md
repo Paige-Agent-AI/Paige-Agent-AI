@@ -61,23 +61,39 @@ Actor-goal flows (F1–F12, from the order):
 2. **An affirmative continues one foreground offer — not "yes = execute".** `readForeground`
    (`_shared/paige-turn/continuity.ts`) accepts only when PAIGE's immediately preceding turn is FINAL (or predates the turn
    contract), younger than `OFFER_FRESH_MS` (30 min), not a standing wait (WAIT_APPROVAL / ASK_USER / WAIT_WORK, a
-   `paige_confirm` or a `paige_ask`), closes its last paragraph on exactly ONE offer phrase, and the reply is a plain
-   acceptance: short, no question, nothing that declines, defers, hedges or changes it. Two offers or alternatives in the
-   offer → ambiguous → PAIGE is told to ask which. The affirmative is a CLASS (yes / sure / ok / go ahead / let's / may as
-   well / for sure / 👍 …) bounded by structure, not a patch for one sentence.
+   `paige_confirm` or a `paige_ask`), closes on exactly ONE offer, and the reply is a plain acceptance.
+   - **The offer is read across the message's tail** (the closing paragraph and the one before it). Any of these makes it
+     a choice, and PAIGE is told to ask which: a second offer anywhere in the tail; a sentence opening on "Or…",
+     "Alternatively…" or "Option B…"; "or / either / instead / I can also" after the offer phrase or after the offer
+     sentence; or a generic offer ("Want me to go ahead?") whose paragraph-before lays out alternatives. A plan laid out as a
+     list followed by "Want me to start?" stays one offer (a sequence: its first step).
+   - **The acceptance is a whitelist parse, not a word test.** The whole reply must read as acceptance phrases (yes / sure /
+     ok / go ahead / do it / let's / may as well / for sure / why not / no problem / 👍 …) plus fillers (we, um, I mean,
+     PAIGE, now, thanks). Anything left over ("myself", "tomorrow", "got it", "I saw that", "what's the total", "to Dana
+     instead") means it is not a bare yes, and the ordinary path reads it. "ok thanks" needs a strong word to count.
 3. **What acceptance does — and does not.** It routes the turn to the reasoning tier (`substantiveTurn`), counts it as
    action for C1 (`isActionIntent`), and adds one system note naming the offer as the task. It grants nothing: the call
    still goes through `crm-command` (or the general gate), which alone decides whether the act needs a card. Proven:
    a model-asserted `confirm: true` still mints a card and executes nothing (43.12).
-4. **Never narrate a card that does not exist.** `unbackedClaim` flags a reply that says a card is coming, ready, sent,
-   waiting, "you'll see", or "once you click Approve…", when no card was created this turn (`queuedApprovals` /
-   `confirmTrace`) and none is standing from the previous turn. Offers, futures, conditionals, negations and references to
-   a standing card are not claims. A claim is never terminal: C1 feeds a correction back on the reasoning tier, inside the
-   SAME continuation budget (`MAX_CONTINUATIONS` = 3). If it still stands, the server authors the answer ("I haven't put an
-   approval card in front of you — nothing is waiting for your OK yet…") on the wire and in the transcript, and a spent
-   budget records LIMIT_REACHED. The behaviour is fixed, not a sentence banned: the correction tells PAIGE to call the tool.
-5. **Approval authority is the platform's.** The same guard flags PAIGE deciding approval herself ("approvals are off",
-   "run it directly", "without the card", "skip the approval") — never backed, even beside a real card. Standing rule added
+4. **Never narrate a card that does not exist.** `unbackedClaim` reads each clause (sentences split on "—" and ";", so a
+   claim beside a question is still read). It flags an APPROVAL card — named as one ("approval card", "Needs your OK",
+   "approval request") or a card in a sentence about approving — said to be sending, sent, up, out, live, on its way, "you'll
+   see", "here's the card", "Card sent.", "I'll send the approval card now", or "click/hit Approve on the card", when no
+   card was created this turn (`queuedApprovals` / `confirmTrace`). It stays quiet on: payment, contact, outcome, report or
+   choice cards; explanations of how approvals work; offers, conditionals and futures ("Say the word and I'll put it on a
+   card"); negations; and any card from before ("from earlier", "still waiting", "in your Approvals tab", "approved") — and,
+   when the previous turn left a card standing, on anything but a NEW one. A claim is never terminal: C1 feeds a correction
+   back on the reasoning tier inside the SAME continuation budget (`MAX_CONTINUATIONS` = 3). If it still stands, the server
+   answers with `claimFallback`, which claims only what the server knows — "I didn't put a new approval card in front of you
+   in this reply" (never "nothing is waiting", which it has not checked) — and adds "Anything I did in this reply is shown
+   above" when tools ran, so completed work is never hidden. A spent budget with no card records LIMIT_REACHED; a correction
+   that cannot run records INTERRUPTED — except when this turn minted a card, which keeps WAIT_APPROVAL.
+5. **Approval authority is the platform's.** The same guard flags PAIGE deciding approval herself — guessing a setting
+   ("If approvals are OFF…"), asking whether approvals are on, or offering a way around ("I can run it directly", "want me
+   to run it without the card?", "let me skip the approval") — never backed, even beside a real card. It does NOT flag true
+   statements of what happened or how it works ("it ran without a card — tasks don't need one", "approval is not needed to
+   look up contacts", "I ran it directly since it's set to auto"). The correction tells PAIGE to rewrite without the claim,
+   say what she actually did, and never call a tool again for anything that already ran. Standing rule added
    to CRM OPERATOR MODE: "APPROVAL IS NOT YOURS TO DECIDE … decided by the platform when you call its tool (the act's
    risk, the workspace's Trust settings, the person's role, the workspace)". Server truth is unchanged: `crm-command`
    resolves autonomy lane, role and workspace per call.
@@ -94,16 +110,19 @@ Actor-goal flows (F1–F12, from the order):
 | C1 exhausted sentence | the claim fallback and the exhausted sentence both replace `finalChunks` | claim fallback runs first and sets `claimAnswered`; the exhausted branch is skipped for that exit (43.10) |
 | C4a/b approval resume | a "yes" after a card could mint a second proposal | standing card → `standing_wait`, no note (43.4); door returns its live proposal, no second row |
 | C4c ask resume | an answer turn is not an offer acceptance | the foreground read is skipped on `answerBinding`, the note on `answerResume`; group 41 green |
-| Studio / Live / document turns | different loops | the read and the guard are skipped (`!studioSessionId`, `!liveRuntimeScope`, `!attachedDocument`) |
+| Studio / Live turns | different loops | the read and the guard are skipped (`!studioSessionId`, `!liveRuntimeScope`) |
+| document turns | the foreground read is skipped (`!attachedDocument`) | the claim guard DOES run on them (corrected 2026-10-06 after review: the first draft of this table said both were skipped) |
 | client portal seat | tools deny-by-default | `offerAccepted` false for `callerTier === "client"`; the claim guard still applies (a client seat may not narrate a card either) |
 | cost | more reasoning-tier turns | only accepted offers (and claim corrections) — short replies to PAIGE's own offer |
 
 ## 5. Evidence (classes kept separate)
 
-**Automated — handler + real door (`test:client-memory-authz`, group 43, 22 checks):** 836 passed / 0 failed on the
-candidate. **At base** (clean worktree of `d20b323e9` with the same harness): 822 passed / **13 failed — all 13 in group
-43**, every other group green. Controls that must hold on both sides (F5–F9, F11, F12, the `confirm:true` gate) pass at
-base, as they should.
+**Automated — handler + real door (`test:client-memory-authz`, group 43, 27 checks):** 841 passed / 0 failed on the
+candidate. **At base** (clean worktree of `d20b323e9` with the same harness): 825 passed / **16 failed — all in group
+43**, every other group green; the checks that must hold on both sides (F5–F9, F11, F12, the `confirm:true` gate, and the
+three "stay quiet" checks 43.14/43.16/43.17 — base has no guard to misfire) pass at base. **At the first-round head**
+(`47d5e66ba`, clean worktree): 835 / **6 failed — 43.14–43.18, every review finding reproduced through the real handler**,
+plus 43.10 for the fallback's new wording.
 
 | check | proves |
 |---|---|
@@ -120,15 +139,25 @@ base, as they should.
 | 43.11 | E: "approvals are OFF… run it directly" corrected; never reaches the person |
 | 43.12 | E: model-asserted `confirm: true` → card minted, nothing executed |
 | 43.13 | C1: a promise with no claim ("On it — I'll link it now.") still continues to the tool |
+| 43.14 | review 3a: payment-card Sales prose on an ordinary turn — one call, no correction, saved verbatim |
+| 43.15 | review 1: alternatives in separate paragraphs ("Want me to…?\n\nOr should I…?") → asked, nothing proposed |
+| 43.16 | review 2: "Ok I'll do it myself" → not an acceptance: no note, nothing proposed |
+| 43.17 | review 3c: explaining what needs approval → no correction, saved verbatim |
+| 43.18 | review 4: a minted card, then an authority claim whose correction call fails → WAIT_APPROVAL kept, one card, the server's sentence names the work above |
 
-**Mutation (§71.4) — each defect reinstated, full harness run:** drop the tier route → 4 red; claim guard blind → 2 red;
-accepted offer not action intent → 1 red (43.13); staleness ignored → 1 red; alternatives read as one → 1 red; fallback
-removed → 1 red; note never sent → 5 red. Standing-state check removed → harness green (the saved WAIT_APPROVAL turn also
-carries `paige_confirm`, an independent check) and **the unit test F12 red** — caught one layer down.
+**Mutation (§71.4) — each defect reinstated, full harness run (12 mutants, all caught):** drop the tier route → 4 red;
+claim guard blind → 2; accepted offer not action intent → 1 (43.13); staleness ignored → 1; alternatives read as one → 2;
+fallback removed → 2; note never sent → 6; a bare "card" counts as an approval card → 1 (43.14) + unit; a failed correction
+marks INTERRUPTED beside a card → 1 (43.18); acceptance leftovers allowed → 5. Two are caught only one layer down, by the
+unit tests: the standing-state check removed (the saved WAIT_APPROVAL turn also carries `paige_confirm`, an independent
+check) and an alternative alone in the paragraph before a specific offer (the fixture added for it after the first
+mutation run found no test biting).
 
-**Automated — pure (`continuity.test.ts`, Deno, CI step added):** 14 tests over the prod turns verbatim (offer, capability
-prose, narration, bypass, "say the word"): F1–F8, F12, claims and non-claims, notes bounded. Deno resume + continuity
-43/43 under CI's sandbox flags.
+**Automated — pure (`continuity.test.ts`, Deno, CI step added):** 14 tests holding about 150 fixtures — the prod turns
+verbatim (offer, capability prose, narration, bypass, "say the word") and every input from the independent review's
+probes: acceptances and non-acceptances, offers and choices, approval-card claims and the payment/contact/outcome/report
+cards, explanations, earlier cards, authority guesses and true statements. Deno resume + continuity 43/43 under CI's
+sandbox flags.
 
 **Static:** `deno check paige-ai-chat/index.ts` — 10 diagnostics, identical codes to base (1 TS2339, 7 TS2345, 1 TS2740,
 1 TS2769). All 96 `npm run` steps in `ci.yml` pass except `test:deno-ratchet` (147/2: "a missing check tool FAILS") —
@@ -139,6 +168,25 @@ prose, narration, bypass, "say the word"): F1–F8, F12, claims and non-claims, 
 **UNVERIFIED:** how often the REAL model, on the reasoning tier with the note, calls the tool on the first round (the
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
+
+### 5b. Independent review — round 1 (non-author, exact head `47d5e66ba`): FIX_FIRST, fixed
+
+The reviewer reproduced 836/0 and 43/0, then probed the input space the harness did not exercise (scripts kept in the
+session scratchpad). Findings and what changed:
+
+| # | finding | severity | fix |
+|---|---|---|---|
+| 1 | alternatives in separate paragraphs / option blocks / a trailing "Or I can…" read as ONE offer — and "yes" ran the last one | BLOCKING | the offer is read across the tail (§3.2); 43.15 + unit fixtures |
+| 2 | declines, acknowledgements, deferrals and question-less questions read as acceptance ("Ok I'll do it myself", "yes I saw that", "yes, tomorrow", "sure, what's the total") — "yes = execute" over-breadth | BLOCKING | acceptance is a whitelist parse (§3.2); 43.16 + fixtures |
+| 3a | any "card" counted (payment, contact, outcome cards) — would replace true Sales prose | BLOCKING | approval-qualified cards only (§3.4); 43.14 + fixtures |
+| 3b | the fallback said "nothing is waiting for your OK" without reading pending confirmations; earlier cards counted as new | BLOCKING | the fallback claims only this reply; earlier-card references exempt (§3.4) |
+| 3c | true approval statements flagged, even after a write ran; the correction said "call its tool now" (a repeat risk), and the fallback hid completed work | BLOCKING | authority = guessing/asking/offering a way around only; correction forbids re-calling what ran; fallback names work shown above (§3.5); 43.17, 43.18 |
+| 4 | a failed correction beside a minted card recorded INTERRUPTED | SHOULD-FIX | a card this turn keeps WAIT_APPROVAL; 43.18 |
+| 5 | claims beside a "?" and other shapes missed ("Card sent.", "I'll send the approval card now") | SHOULD-FIX | clause reading + the shapes added; fixtures |
+| 6 | the forced-termination closing call is not guarded | SHOULD-FIX | NOT fixed — parked (§6), unchanged honest label |
+| 7 | real acceptances missed ("Go", "sure, why not", "um, yeah", "100%") | SHOULD-FIX | whitelist covers them; fixtures |
+| 8 | the doc said the guard skips document turns; and "a spent budget records LIMIT_REACHED" was not true on a failed call | SHOULD-FIX | §4 corrected; §3.4 states both outcomes |
+| 9–11 | "I can also" read as one offer; an "or" inside one offer's object asks; quoted offer text in the note | NIT | 9 now asks (safe); 10, 11 kept as is, as the reviewer judged them |
 
 ## 6. Parked / not in this change (with evidence)
 

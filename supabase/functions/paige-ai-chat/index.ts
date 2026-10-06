@@ -232,7 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
-import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, CLAIM_FALLBACK, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -16482,8 +16482,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // fails, the server answers truthfully below. Checked before C1's own test: a claimed card is
           // not "a question" just because the same reply also asks one.
           let claimContinued = false;
+          const cardThisTurn = () => queuedApprovals.length > 0 || confirmTrace.length > 0;
           const claim = finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
-            ? unbackedClaim(finalAssistantText, { cardMinted: queuedApprovals.length > 0 || confirmTrace.length > 0, standingCard: foreground.standingCard })
+            ? unbackedClaim(finalAssistantText, { cardMinted: cardThisTurn(), standingCard: foreground.standingCard })
             : null;
           if (claim && continuationsUsed < MAX_CONTINUATIONS) {
             claimContinued = true;
@@ -16500,12 +16501,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
                 continueContinuation = true;
-              } else {
+              } else if (!cardThisTurn()) {
+                // A card minted this turn keeps the turn WAIT_APPROVAL: the card is on screen either way.
                 turnTracker.interrupted();
               }
             } catch (e) {
-              if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
-              else turnTracker.interrupted();
+              if (!cardThisTurn()) {
+                if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
+                else turnTracker.interrupted();
+              }
             }
           }
           if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
@@ -16549,11 +16553,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // waiting for your OK" is the specific truth; a spent budget is still recorded as one.
           let claimAnswered = false;
           if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId) {
-            const stillClaimed = unbackedClaim(finalAssistantText, { cardMinted: queuedApprovals.length > 0 || confirmTrace.length > 0, standingCard: foreground.standingCard });
+            const cardMinted = queuedApprovals.length > 0 || confirmTrace.length > 0;
+            const stillClaimed = unbackedClaim(finalAssistantText, { cardMinted, standingCard: foreground.standingCard });
             if (stillClaimed) {
-              const truthful = CLAIM_FALLBACK[stillClaimed];
+              // Claims only what the server knows: nothing about earlier cards, and never hides work this
+              // turn did (its steps and any card stay on the wire above the sentence).
+              const truthful = claimFallback(stillClaimed, { didWork: totalToolCalls > 0 || cardMinted });
               finalAssistantText = truthful;
-              if (continuationsUsed >= MAX_CONTINUATIONS) turnTracker.budgetStop();
+              if (continuationsUsed >= MAX_CONTINUATIONS && !cardMinted) turnTracker.budgetStop();
               finalChunks = [
                 enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: truthful } }] })}\n\n`),
                 enc.encode("data: [DONE]\n\n"),

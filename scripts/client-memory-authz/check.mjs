@@ -7532,7 +7532,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   const continuity = await import("../../supabase/functions/_shared/paige-turn/continuity.ts").catch(() => ({}));
   const { CLAUDE_REASONING, CLAUDE_CLASSIFICATION } = await import("../../supabase/functions/_shared/claude-models.ts");
   const CORRECTION = continuity.CLAIM_CORRECTION ?? { card: "\u0000no-correction-at-base", authority: "\u0000no-correction-at-base" };
-  const FALLBACK = continuity.CLAIM_FALLBACK ?? { card: "\u0000no-fallback-at-base", authority: "\u0000no-fallback-at-base" };
+  const fallbackOf = (kind, didWork) => continuity.claimFallback ? continuity.claimFallback(kind, { didWork }) : "\u0000no-fallback-at-base";
   await import("../../supabase/functions/crm-command/index.ts");
   const door = capturedHandler();
   assert("43.G the real crm-command handler is the one these checks drive (not the chat's)", door !== handler, "captured the chat handler");
@@ -7614,8 +7614,8 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     for (let i = 0; i < history; i++) store.seed(threadId, i % 2 ? "assistant" : "user", i % 2 ? `Earlier answer ${i}.` : `Earlier question ${i}.`, i % 2 ? FINAL() : null, ago(ageMs + (history - i) * 60_000));
     return store.seed(threadId, "assistant", offer, bundle, ago(ageMs));
   };
-  const turn = (store, confirms, db, { text, threadId = THREAD, script, tenant = CALLER_TENANT, body = {} } = {}) => drive({
-    stream: true, text, streamScript: script,
+  const turn = (store, confirms, db, { text, threadId = THREAD, script, tenant = CALLER_TENANT, body = {}, failStreamCalls = [] } = {}) => drive({
+    stream: true, text, streamScript: script, failStreamCalls,
     extraBody: { threadId, ...body },
     rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), paige_chat_turn_append: (args) => store.append(args) },
     tablesExtra: { paige_chat_turns: store.table, paige_chat_threads: store.threadsTable, client_memory: () => [], paige_pending_confirmations: confirms.table },
@@ -7744,7 +7744,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   const r10 = await turn(s10, c10, db10, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: [NARRATION, NARRATION, NARRATION, NARRATION, NARRATION] });
   const saved10 = savedAssistant(s10, THREAD_FRESH);
   assert("43.10 a card narrated every round never becomes the answer: the server's truthful sentence is on the wire and saved, the turn records its spent budget; nothing proposed",
-    contentOf(r10).includes(FALLBACK.card) && saved10?.content === FALLBACK.card && !contentOf(r10).includes("Sending the approval card now")
+    contentOf(r10).includes(fallbackOf("card", false)) && saved10?.content === fallbackOf("card", false) && !contentOf(r10).includes("Sending the approval card now")
       && terminalOf(r10)?.state === "LIMIT_REACHED" && saved10?.bundle_ref?.turn_state?.state === "LIMIT_REACHED"
       && c10.rows.length === 0 && doorCalls(r10).length === 0,
     JSON.stringify({ wire: contentOf(r10).slice(0, 160), saved: saved10?.content, terminal: terminalOf(r10), savedState: saved10?.bundle_ref?.turn_state?.state }));
@@ -7767,6 +7767,50 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   assert("43.13 C1 a promise without a tool call is continued (not a claim, so not the guard's), and the card is minted",
     told(r13).includes("The requested task is still unresolved") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
     JSON.stringify({ rows: c13.rows.length, terminal: terminalOf(r13) }));
+
+  // ── 43.14–43.18 — independent review round 1 (FIX_FIRST). The guard runs on every ordinary turn, so it
+  // must stay quiet on true prose, and acceptance must stay narrow.
+  // 43.14 a payment card is not an approval card: Sales prose on an ordinary turn stands as said.
+  const s14 = makeThreadStore(THREADS), c14 = makeConfirmStore(), db14 = crmDb();
+  seedOffer(s14, THREAD_FRESH, { history: 1, offer: "Dana's deal is linked." });
+  const PAY = "The invoice is ready — Dana can pay by card or bank transfer. Your Stripe account is up, and card payments are ready.";
+  const r14 = await turn(s14, c14, db14, { text: "How can Dana pay?", threadId: THREAD_FRESH, script: [PAY] });
+  assert("43.14 a payment card is not an approval card: one model call, no correction, saved verbatim",
+    streamed(r14).length === 1 && !told(r14).includes("Correction:") && savedAssistant(s14, THREAD_FRESH)?.content === PAY,
+    JSON.stringify({ calls: streamed(r14).length, saved: savedAssistant(s14, THREAD_FRESH)?.content }));
+  // 43.15 alternatives in separate paragraphs ask which — the yes never runs the last one.
+  const s15 = makeThreadStore(THREADS), c15 = makeConfirmStore(), db15 = crmDb();
+  seedOffer(s15, THREAD_FRESH, { history: 1, offer: "Want me to send the approval card now?\n\nOr should I build her invoice first?" });
+  const r15 = await turn(s15, c15, db15, { text: "yes", threadId: THREAD_FRESH, script: ["Which first — the link card or the invoice?"] });
+  assert("43.15 alternatives across paragraphs: PAIGE is told to ask which; nothing proposed",
+    told(r15).includes("BUT IT NAMED MORE THAN ONE THING") && !told(r15).includes("that accepts it") && c15.rows.length === 0,
+    JSON.stringify({ rows: c15.rows.length }));
+  // 43.16 a decline worded as "ok" is not an acceptance.
+  const s16 = makeThreadStore(THREADS), c16 = makeConfirmStore(), db16 = crmDb();
+  seedOffer(s16, THREAD_FRESH, { history: 1 });
+  const r16 = await turn(s16, c16, db16, { text: "Ok I'll do it myself", threadId: THREAD_FRESH, script: ["Sounds good — it's all yours."] });
+  // (The tier here is the pre-existing literal-word router's — "do it" matches it — not the offer's.)
+  assert("43.16 \"Ok I'll do it myself\" is not read as accepting the offer: no note, nothing proposed",
+    !told(r16).includes("ANSWERING YOUR OFFER") && c16.rows.length === 0 && doorCalls(r16).length === 0,
+    JSON.stringify({ model: modelOf(r16, 0), rows: c16.rows.length }));
+  // 43.17 a true statement about approval is not PAIGE deciding it.
+  const s17 = makeThreadStore(THREADS), c17 = makeConfirmStore(), db17 = crmDb();
+  seedOffer(s17, THREAD_FRESH, { history: 1, offer: "Dana's deal is linked." });
+  const TRUE17 = "Reads are free: approval is not needed to look up contacts. Tasks don't need a card either.";
+  const r17 = await turn(s17, c17, db17, { text: "What needs my approval?", threadId: THREAD_FRESH, script: [TRUE17] });
+  assert("43.17 explaining what needs approval is not an authority claim: no correction, saved verbatim",
+    streamed(r17).length === 1 && savedAssistant(s17, THREAD_FRESH)?.content === TRUE17,
+    JSON.stringify({ calls: streamed(r17).length, saved: savedAssistant(s17, THREAD_FRESH)?.content }));
+  // 43.18 a real card minted, then an authority claim whose correction call FAILS: the turn still ends
+  // WAIT_APPROVAL with its card (never INTERRUPTED), and the server's sentence does not hide the work.
+  const s18 = makeThreadStore(THREADS), c18 = makeConfirmStore(), db18 = crmDb();
+  seedOffer(s18, THREAD_FRESH, { history: 1 });
+  const r18 = await turn(s18, c18, db18, { text: "yes", threadId: THREAD_FRESH, script: [ASSIGN, BYPASS], failStreamCalls: [3] });
+  const saved18 = savedAssistant(s18, THREAD_FRESH);
+  assert("43.18 a failed correction beside a minted card keeps WAIT_APPROVAL and the card; the reply is the server's, naming the work above",
+    terminalOf(r18)?.state === "WAIT_APPROVAL" && saved18?.bundle_ref?.turn_state?.state === "WAIT_APPROVAL" && cardsOf(r18).flat().length === 1
+      && saved18?.content === fallbackOf("authority", true) && c18.rows.length === 1,
+    JSON.stringify({ terminal: terminalOf(r18), saved: saved18?.content, savedState: saved18?.bundle_ref?.turn_state?.state, cards: cardsOf(r18).flat().length }));
 
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.

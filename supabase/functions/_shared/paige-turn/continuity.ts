@@ -65,6 +65,18 @@ const OFFER_PHRASE =
   /\b(?:(?:do you )?want me to|would you like me to|should i|shall i|ready for me to|ok(?:ay)? (?:for me to|if i)|mind if i|can i go ahead|should we|shall we|say the word|just say (?:yes|go|the word))\b/gi;
 // "…, or not?" / "…or anything else?" do not make an offer a choice between actions.
 const NOT_A_CHOICE = /\bor (?:not|no|is there (?:anything|something) else|anything else|something else)\b/gi;
+// Words that put a second action beside the offered one. Read AFTER the offer phrase in its own
+// sentence, and in every sentence of the message's tail around it — a choice laid out in the
+// paragraph before ("Option A… Option B…", "I can send the card or build the invoice") counts too.
+const ALTERNATIVE = /\b(?:or|either|instead|alternatively|otherwise|options?|i can also|or else)\b/i;
+const LEADS_WITH_ALTERNATIVE = /^(?:or|alternatively|otherwise|option\s+[a-z0-9]+|either)\b/i;
+// An offer that names no act of its own ("Want me to go ahead?") takes its act from what came before,
+// so a choice in the paragraph before it is a choice in the offer.
+const GENERIC_OFFER = /^(?:go ahead|start|get started|proceed|do (?:it|that|this|them|those|both)|kick (?:it|this|that) off|move forward|get going|take care of (?:it|that|this))\b/i;
+const LIST_MARKER = /^\s*(?:[-*\u2022]|\d+[.)])\s+/;
+
+const sentencesOfParagraph = (p: string) => p.split(/\n+/).flatMap((line) => line.replace(LIST_MARKER, "").split(/(?<=[.!?])\s+/))
+  .map((x) => x.trim()).filter(Boolean);
 
 /** The offer PAIGE closed her message with, if she closed it with one. */
 export function closingOffer(text: string): { offer: string; count: number; alternatives: boolean } | null {
@@ -72,7 +84,7 @@ export function closingOffer(text: string): { offer: string; count: number; alte
   const paragraphs = text.split(/\n\s*\n/).map((p) => strip(p)).filter(Boolean);
   const last = paragraphs.at(-1);
   if (!last) return null;
-  const sentences = last.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+  const sentences = sentencesOfParagraph(last);
   // The sentence the message ends on as a request to the person: its last question, or a closing
   // "say the word…". One short trailing statement after it ("No rush.") is allowed; more than that,
   // and the message has moved on from its question.
@@ -85,34 +97,76 @@ export function closingOffer(text: string): { offer: string; count: number; alte
   OFFER_PHRASE.lastIndex = 0;
   const first = OFFER_PHRASE.exec(sentence);
   if (!first) return null;
-  // Count offer phrases across the whole closing paragraph: two offers is a choice, not an offer.
-  const count = (last.match(OFFER_PHRASE) ?? []).length;
-  const after = sentence.slice(first.index + first[0].length).replace(NOT_A_CHOICE, "");
-  const alternatives = /\bor\b/i.test(after) || /\beither\b/i.test(after);
+  // THE TAIL: the closing paragraph and the one before it. Two offers anywhere in it is a choice.
+  const previous = paragraphs.length > 1 ? sentencesOfParagraph(paragraphs[paragraphs.length - 2]) : [];
+  const offersIn = (xs: string[]) => xs.reduce((n, x) => n + (x.match(OFFER_PHRASE) ?? []).length, 0);
+  const prevOffers = offersIn(previous);
+  const count = offersIn(sentences) + prevOffers;
+  const rest = sentence.slice(first.index + first[0].length).trim();
+  const noChoiceWords = (x: string) => x.replace(NOT_A_CHOICE, "");
+  const alternatives =
+    // inside the offer itself, after its phrase: "send the card, or build the invoice?"
+    ALTERNATIVE.test(noChoiceWords(rest))
+    // any sentence in the tail that opens on another option: "Or should I…", "Option B: …"
+    || [...previous, ...sentences].some((x) => LEADS_WITH_ALTERNATIVE.test(x))
+    // anything said AFTER the offer that adds another action: "I can also…", "…instead."
+    || sentences.slice(closing + 1).some((x) => ALTERNATIVE.test(noChoiceWords(x)))
+    // a generic offer takes its act from what came before: a choice there is a choice here
+    || (GENERIC_OFFER.test(rest) && [...previous, ...sentences.slice(0, closing)].some((x) => ALTERNATIVE.test(noChoiceWords(x))))
+    // an offer in the paragraph before is a second option only when it differs from this one
+    || prevOffers > 0;
   return { offer: sentence.slice(0, 400), count, alternatives };
 }
 
-// A plain acceptance: short, no question, nothing that declines, defers, hedges or changes the offer.
-const AFFIRM_START =
-  /^(?:yes|yeah|yea|yep|yup|ya|yah|sure|ok(?:ay)?|k|alright|all right|absolutely|definitely|certainly|of course|please|go ahead|go for it|do it|do that|send it|ship it|run it|let'?s|sounds (?:good|great|perfect)|perfect|great|correct|exactly|affirmative|why not|(?:we |i )?(?:may|might) as well|for sure|totally|proceed)\b/;
-const NOT_PLAIN =
-  /\b(?:no|nope|nah|not|don'?t|do not|wait|hold|stop|cancel|later|never|instead|actually|but|except|unless|hmm|rather|change|make it|first)\b/;
-const THANKS = /\b(?:thanks?|thank you|thx|ty)\b/;
-const STRONG_ACCEPT = /^(?:yes|yeah|yep|yup|sure|please|go ahead|do it|absolutely|definitely)\b/;
-const EMOJI_ACCEPT = /^(?:\u{1F44D}|✅|\u{1F44C})+$/u;
+// A PLAIN ACCEPTANCE, read as a whitelist: the whole reply must be made of acceptance phrases and a few
+// fillers — nothing else. Anything left over ("myself", "tomorrow", "got it", "what's the total", "I
+// saw that", "to Dana instead") means it is not a bare yes to the offer; the ordinary path reads it.
+const ACCEPT = [
+  "yes please", "yes sir", "yessir", "yes", "yeah", "yea", "yep", "yup", "ya", "yah",
+  "sure thing", "sure", "okay", "ok", "k", "alright", "all right", "absolutely", "definitely", "certainly",
+  "of course", "please do", "please", "go ahead", "go for it", "go", "do it", "do that", "do this",
+  "send it over", "send it", "ship it", "run it", "let's do it", "let's do that", "let's go", "lets do it",
+  "lets do that", "lets go", "sounds good", "sounds great", "sounds right", "sounds perfect", "that works",
+  "works for me", "perfect", "great", "correct", "exactly", "affirmative", "why not", "we may as well",
+  "may as well", "might as well", "for sure", "totally", "proceed", "bet", "100%", "by all means",
+  "no problem", "no worries", "make it happen", "let's", "lets",
+];
+const STRONG = new Set(["yes please", "yes sir", "yessir", "yes", "yeah", "yep", "yup", "sure", "sure thing", "please", "please do",
+  "go ahead", "go for it", "do it", "absolutely", "definitely"]);
+const FILLER = ["i mean", "uh", "um", "oh", "hey", "paige", "right now", "now", "then", "thanks", "thank you", "thx", "ty", "too", "we", "so"];
+const PHRASES = [...ACCEPT.map((p) => ({ p, accept: true })), ...FILLER.map((p) => ({ p, accept: false }))]
+  .sort((x, y) => y.p.length - x.p.length);
+const EMOJI_ACCEPT = /[\u{1F44D}\u2705\u{1F44C}]/gu;
 
 export function isAffirmativeReply(text: string): boolean {
   if (typeof text !== "string") return false;
   let t = text.trim().toLowerCase();
   if (!t || t.includes("?") || t.length > 120) return false;
-  if (EMOJI_ACCEPT.test(t.replace(/\s+/g, ""))) return true;
-  t = t.replace(/^(?:(?:hey|oh|ok so|so),?\s+)?paige[,!.:\s]+/, "").replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, " ").trim();
-  const words = t.split(/\s+/).filter(Boolean);
-  if (words.length === 0 || words.length > 12) return false;
-  if (!AFFIRM_START.test(t)) return false;
-  if (NOT_PLAIN.test(t)) return false;
-  if (THANKS.test(t) && !STRONG_ACCEPT.test(t)) return false;
-  return true;
+  t = t.replace(EMOJI_ACCEPT, " yes ").replace(/[\u2019\u2018]/g, "'")
+    .replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu, " ")
+    .replace(/[!.,;:\u2014\u2013\u2026"()\-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!t || t.split(" ").length > 12) return false;
+  // Every way of reading the reply as a run of known phrases (backtracking: "yes please do" is "yes please"
+  // + "do"? no — "yes" + "please do"). One complete reading that holds an acceptance is enough.
+  const readings = (rest: string): string[][] => {
+    if (!rest) return [[]];
+    const out: string[][] = [];
+    for (const { p } of PHRASES) {
+      if (rest === p || rest.startsWith(p + " ")) {
+        for (const tail of readings(rest.slice(p.length).trim())) out.push([p, ...tail]);
+      }
+    }
+    return out;
+  };
+  const accepts = new Set(ACCEPT);
+  const thanksWord = /^(?:thanks|thank you|thx|ty)$/;
+  return readings(t).some((parts) => {
+    const seen = parts.filter((p) => accepts.has(p));
+    if (seen.length === 0) return false;
+    // "ok thanks" closes a conversation; "yes, thanks" still accepts.
+    if (parts.some((p) => thanksWord.test(p)) && !seen.some((p) => STRONG.has(p))) return false;
+    return true;
+  });
 }
 
 /**
@@ -162,65 +216,101 @@ export function ambiguousOfferNote(offer: string, reply: string): string {
 }
 
 // ── UNBACKED CLAIMS ────────────────────────────────────────────────────────────────────────────
+//
+// The guard runs on every ordinary chat turn, so it is built to stay QUIET on true sentences: a card is
+// only an APPROVAL card (a payment card, a contact card, an outcome card are not), an explanation of how
+// approvals work claims nothing, a card from earlier is not a new one, and a past fact ("it ran without a
+// card since tasks don't need one") is not PAIGE deciding approval. It flags the shapes that put a card
+// in front of the person that no tool created, and PAIGE guessing a setting or offering to go around one.
 
 export type UnbackedClaim = "card" | "authority";
 
-const CARD_NOUN = /\b(?:approval card|card|needs your ok|approval request)\b/i;
-// Present/perfect claims that a card exists or is arriving now.
-const CARD_CLAIM =
-  /\b(?:sending|putting(?: up)?|staging|queu(?:e|)ing|filing|raising|pulling up|popping up|(?:i'?ve|i have|it'?s|that'?s|has been|have been|just) (?:sent|put|staged|queued|filed|raised|created|added)|here(?:'s| is| comes)|you(?:'ll| will| should) (?:now )?(?:see|get|find)|(?:should|will) (?:now )?(?:appear|show up|pop up)|is (?:now )?(?:up|ready|on its way|waiting(?: for you)?|in front of you|coming)|on (?:its|the) way|coming (?:up|your way))\b/i;
-// "Once you click Approve on the card" asserts the card exists.
-const CLICK_APPROVE = /\b(?:once|when|after) you (?:click|tap|hit|press) (?:the )?["“]?approve\b/i;
-// Offers, futures and conditionals do not claim a card exists.
-const NOT_A_CLAIM =
-  /\?|\b(?:want me to|should i|shall i|would you like|i(?:'ll| will| can| could| would)|if you|say the word|let me know|ready to)\b/i;
-// A sentence that says a card does NOT exist is the truth this guard wants, never a claim.
+// An approval card, by name — or a card in a sentence about approving.
+const APPROVAL_CARD = /\b(?:approval card|approval request|needs your ok)\b/i;
+const CARD_WORD = /\bcards?\b/i;
+const APPROVE_WORD = /\bapprov/i;
+// R1 — a card arriving, present or just done: "Sending the approval card now", "You'll see a Needs your OK
+// card", "The approval request is out".
+const ARRIVING =
+  /\b(?:sending|staging|queu(?:e|)ing|popping up|(?:i'?ve|i have|it'?s|that'?s|has been|have been|just) (?:sent|put|staged|queued|filed|raised|created|teed up)|you(?:'ll| will| should) (?:now )?(?:see|get|find)|(?:should|will) (?:now )?(?:appear|show up|pop up)|is (?:now )?(?:up|ready|out|live|on its way|in front of you|coming)|on (?:its|the) way|coming (?:up|your way)|look for)\b/i;
+// R2 — the card itself named as sent/up/ready: "Card sent.", "I sent the card", "Here's the approval card".
+const CARD_OBJECT = [
+  /^(?:the |your |an? )?(?:approval |needs your ok )?card (?:is |has been |was )?(?:now )?(?:sent|up|live|ready|created|queued|staged|on its way|waiting)\b/i,
+  /\b(?:the|your|this|that|an?)\s+(?:approval\s+|needs your ok\s+)?card (?:is |has been |was )?(?:now )?(?:sent|up|live|ready|created|queued|staged|on its way)\b/i,
+  /\b(?:sent|created|staged|queued|raised|put up|teed up|pulled up)\s+(?:you\s+)?(?:the|a|an|your|that|this)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
+  /\bhere(?:'s| is| comes)\s+(?:the|your|an?)\s+(?:approval card|needs your ok card|approval request|card)\b/i,
+  /\b(?:sending|putting up|staging|queuing|raising)\s+(?:you\s+)?(?:the|a|an|your|that|this)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
+  /\b(?:the|your)\s+(?:approval\s+|needs your ok\s+)?card\s+(?:should|will)\s+(?:now\s+)?(?:appear|show up|pop up)\b/i,
+  /\b(?:put|putting|placed|added)\s+(?:it|this|that|them)\s+on\s+(?:a|an|the)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
+];
+// R3 — telling the person to approve on a card: it says the card is there.
+const APPROVE_ON_CARD = /\b(?:click|tap|hit|press)\s+(?:the\s+)?["\u201c]?approve\b|\bapprove (?:it |this |that )?on the card\b/i;
+// R4 — announcing the card as happening right now: "I'll send the approval card now."
+const ANNOUNCE_NOW =
+  /\b(?:i'?ll|i will|let me|i'?m going to|i am going to)\s+(?:go ahead and\s+)?(?:send|put|stage|raise|create|file|queue|pull up|get)\b[^.!?]{0,60}\b(?:approval card|needs your ok|card)\b[^.!?]{0,30}\b(?:now|right away|immediately)\b|\b(?:now|right away)\b[^.!?]{0,10}\b(?:i'?ll|let me)\s+(?:send|put|stage|raise|create)\b[^.!?]{0,40}\b(?:approval card|needs your ok|card)\b/i;
+// Offers, conditionals and explanations do not claim a card exists — checked before any card shape, so
+// "Say the word and I'll put it on a card" stays an offer.
+const OFFER_OR_CONDITION =
+  /\b(?:want me to|should i|shall i|would you like|do you want|if (?:you|i)|when (?:you|i)|whenever|once (?:you|i) (?:confirm|tell|say|decide|give|send)|say the word|let me know|ready to)\b/i;
+// A future ("I'll…", "I can…") claims nothing unless it announces the card as happening now (ANNOUNCE_NOW).
+const FUTURE = /\bi(?:'ll| will| can| could| would)\b/i;
+// A sentence that says a card does NOT exist is the truth, never a claim.
 const NEGATED = /\b(?:haven'?t|hasn'?t|didn'?t|isn'?t|aren'?t|wasn'?t|no|nothing|not|never)\b/i;
-// A sentence about a card that is already standing from before.
-const EARLIER_CARD = /\b(?:above|earlier|already|still|previous|from before|last (?:one|card)|that card)\b/i;
+// A card from before: from earlier, still waiting, in the approvals list — not a new one.
+const EARLIER_CARD =
+  /\b(?:above|earlier|already|still|previous|previously|yesterday|before|from before|last (?:one|card)|that card|approved|approvals? (?:tab|list|page|queue)|needs your ok list)\b/i;
+const NEW_CARD = /\b(?:new|second|another|next)\b/i;
 
-// PAIGE deciding approval herself, or offering to go around it.
+// PAIGE deciding approval: guessing a setting, asking whether approvals are on, or offering a way around.
 const AUTHORITY_CLAIM = [
-  /\b(?:approvals?|approval (?:controls?|settings?|gate)|trust (?:compass|settings?))\b[^.!?\n]{0,50}\b(?:off|disabled|turned off|switched off|not (?:on|enabled|required|needed))\b/i,
-  /\b(?:run|execute|do|apply|make|push) (?:it|this|that|the (?:link|change|update|action)) directly\b/i,
-  /\bwithout (?:the|a|an|any) (?:approval )?card\b/i,
-  /\bskip(?:ping)? (?:the |your )?(?:approval|card)\b/i,
-  /\b(?:bypass|go around) (?:the |your )?(?:approval|card)\b/i,
+  /\bif (?:your |the )?(?:approvals?|approval (?:controls?|settings?|gate)|trust (?:compass|settings?|level))\b[^.!?\n]{0,40}\b(?:off|disabled|turned off|switched off|not (?:on|enabled|required|needed|turned on))\b/i,
+  /\b(?:do(?:es)?|is|are|have|has)\s+(?:you|your (?:workspace|account|business)|the workspace)\b[^.!?\n]{0,40}\bapprov\w*[^.!?\n]{0,40}\b(?:enabled|on|off|turned on|turned off|set up|required)\b[^.!?\n]*\?/i,
+  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me|i'?m able to)\b[^.!?\n]{0,50}\b(?:directly|without (?:the|a|an|any|your) (?:approval\s+)?(?:card|approval)|without approval)\b/i,
+  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me)\s+(?:just\s+)?(?:skip|bypass|go around|get around)\s+(?:the |your )?(?:approval|card)\b/i,
 ];
 
-const sentencesOf = (text: string) => strip(text).split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter(Boolean);
+const clausesOf = (text: string) => strip(text)
+  .split(/(?<=[.!?])\s+|\n+/)
+  .flatMap((sentence) => sentence.split(/\s+[\u2014\u2013-]\s+|;\s+/))
+  .map((x) => x.trim()).filter(Boolean);
 
 /**
- * A claim in PAIGE's reply that nothing in this turn backs. `cardMinted`: an approval card was
- * created in this turn. `standingCard`: her previous turn left one standing. Authority claims are
- * never backed — approval is the platform's decision, made when the tool is called.
+ * A claim in PAIGE's reply that nothing in this turn backs. `cardMinted`: an approval card was created in
+ * this turn. `standingCard`: her previous turn left one standing. Authority claims are never backed —
+ * approval is the platform's decision, made when the tool is called.
  */
 export function unbackedClaim(text: string, opts: { cardMinted: boolean; standingCard: boolean }): UnbackedClaim | null {
   if (typeof text !== "string" || !text.trim()) return null;
-  const sentences = sentencesOf(text);
+  const sentences = strip(text).split(/(?<=[.!?])\s+|\n+/).map((x) => x.trim()).filter(Boolean);
   if (sentences.some((s) => AUTHORITY_CLAIM.some((re) => re.test(s)))) return "authority";
   if (opts.cardMinted) return null;
-  for (const s of sentences) {
-    if (!CARD_NOUN.test(s)) continue;
-    if (opts.standingCard && EARLIER_CARD.test(s)) continue;
-    if (CLICK_APPROVE.test(s)) {
-      if (opts.standingCard) continue;
-      return "card";
-    }
-    if (NOT_A_CLAIM.test(s) || NEGATED.test(s)) continue;
-    if (CARD_CLAIM.test(s)) return "card";
+  for (const c of clausesOf(text)) {
+    const approvalContext = APPROVAL_CARD.test(c) || (CARD_WORD.test(c) && APPROVE_WORD.test(c));
+    const cardMentioned = APPROVAL_CARD.test(c) || CARD_WORD.test(c);
+    if (!cardMentioned) continue;
+    if (NEGATED.test(c) || EARLIER_CARD.test(c)) continue;
+    if (opts.standingCard && !NEW_CARD.test(c)) continue;
+    if (APPROVE_ON_CARD.test(c) && !/\b(?:if|when|whenever) you\b/i.test(c)) return "card";
+    if (OFFER_OR_CONDITION.test(c)) continue;
+    if (ANNOUNCE_NOW.test(c)) return "card";
+    if (CARD_OBJECT.some((re) => re.test(c))) return "card";
+    if (c.endsWith("?") || FUTURE.test(c)) continue;
+    if (approvalContext && ARRIVING.test(c)) return "card";
   }
   return null;
 }
 
 /** What PAIGE is told, inside the turn, when her reply carried an unbacked claim. */
 export const CLAIM_CORRECTION: Record<UnbackedClaim, string> = {
-  card: "Correction: no approval card was created in this turn, so none is in front of the person. If you meant to propose an action, call its tool now — the platform creates the card when the act needs one. If you are not ready to, say plainly that nothing is waiting for their approval yet, and why. Do not describe a card that does not exist.",
-  authority: "Correction: whether an act needs the person's approval is decided by the platform when you call its tool — from the act's risk, the workspace's Trust settings, the person's role and the workspace — never by you, and never from a setting you guess. Do not offer to skip a card, run something directly, or ask whether approvals are on. If the person wants the act, call its tool now; otherwise say plainly what is and isn't waiting.",
+  card: "Correction: no approval card was created in this turn, so none is in front of the person. If you meant to propose an action, call its tool now — the platform creates the card when the act needs one. If you are not ready to, say plainly that you have not set anything up for their approval in this reply, and why. Do not describe a card that does not exist.",
+  authority: "Correction: whether an act needs the person's approval is decided by the platform when its tool is called — from the act's risk, the workspace's Trust settings, the person's role and the workspace — never by you, and never from a setting you guess. Rewrite your reply without that: do not guess a setting, ask whether approvals are on, or offer to skip a card or run something directly. Say plainly what you actually did in this turn and what is waiting. Do not call a tool again for anything that already ran; if the person still wants an act that has not run, call its tool.",
 };
 
-/** What the person reads when the correction did not take: the server's own truthful answer. */
-export const CLAIM_FALLBACK: Record<UnbackedClaim, string> = {
-  card: "I haven't put an approval card in front of you — nothing is waiting for your OK yet. Ask me again and I'll set it up properly.",
-  authority: "Whether that needs your approval isn't mine to decide — the platform decides when I go to do it, and shows you a card if it needs one. Ask me again and I'll set it up.",
-};
+/** What the person reads when the correction did not take: the server's own answer, which claims only
+ *  what the server knows — nothing about cards from earlier turns, and nothing that hides work done. */
+export function claimFallback(kind: UnbackedClaim, opts: { didWork: boolean }): string {
+  const lead = kind === "card"
+    ? "I didn't put a new approval card in front of you in this reply. Ask me and I'll set it up properly."
+    : "Whether something needs your OK is decided by the platform when I go to do it — not by me, and not by a setting I guess.";
+  return opts.didWork ? `${lead} Anything I did in this reply is shown above.` : lead;
+}

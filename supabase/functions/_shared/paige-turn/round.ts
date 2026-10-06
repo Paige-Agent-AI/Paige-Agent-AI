@@ -111,3 +111,9 @@ export function executableToolCalls(round: ModelRound): RoundToolCall[] {
  * the caller from its own count.)
  */
 export const ROUND_NOT_FINISHED_NOTE = "My last step was cut off before it finished, so I didn't run it. Want me to try again?";
+
+/**
+ * What Live's tools-free closing call is told after a round that never finished: the step did not
+ * run, so the spoken answer may not narrate it as done.
+ */
+export const LIVE_ROUND_NOT_FINISHED_NOTE = "Your last step was cut off before it finished, so it did NOT run. Tell the person plainly that it didn't happen and offer to try again. Never describe it as done.";

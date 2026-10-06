@@ -175,7 +175,7 @@ const sseToolCallReply = (name, args, text = "", id = "toolu_test", ending = "to
         `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
       ] : []),
       `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: text ? 1 : 0, content_block: { type: "tool_use", id, name } })}\n\n`,
-      `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: text ? 1 : 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(args) } })}\n\n`,
+      `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: text ? 1 : 0, delta: { type: "input_json_delta", partial_json: typeof args === "string" ? args : JSON.stringify(args) } })}\n\n`,
       ...(ending === "cut" ? [] : [
         `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: ending } })}\n\n`,
         `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
@@ -303,7 +303,7 @@ globalThis.fetch = async (url, init) => {
         else toolCallOnce = false;
         // `{ batch: [spec, …] }` is ONE round that calls several tools at once (C2b).
         if (Array.isArray(spec.batch)) return sseToolCallsReply(spec.batch, toolRoundText, id);
-        return sseToolCallReply(spec.name, spec.args, toolRoundText, id);
+        return sseToolCallReply(spec.name, spec.args, toolRoundText, id, spec.ending);
       }
       return sseModelReply(scriptedReply);
     }
@@ -3528,7 +3528,7 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   const historyMarker = "Earlier authenticated conversation about this workspace.";
   // `ordinary` drives a Live turn that carries no protected evidence — no tool call, no memory — so its
   // answer streams live rather than being held for the final check (paige-turn, 26.5–26.6).
-  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {}, failStreamCalls = [], breakStreamCalls = {}, ordinary = false } = {}) => {
+  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {}, failStreamCalls = [], breakStreamCalls = {}, ordinary = false, toolEnding = undefined } = {}) => {
     const issued = await proof.issue({ ...scope, ...scopeOverride }, transcript);
     const session = { id: sessionId, tenant_id: issued.scope.tenantId, actor_user_id: issued.scope.actorId,
       thread_id: threadId, context_epoch: issued.scope.epoch, availability: "LIVE", state: "thinking",
@@ -3540,7 +3540,7 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
     const result = await drive({
       text: transcript, stream: true, failStreamCalls, breakStreamCalls,
       extraBody: { threadId, liveRuntimeChallenge: issued.token, ...bodyOverride },
-      toolCall: ordinary ? undefined : { name: "comms_connection_summary", args: {} },
+      toolCall: ordinary ? undefined : { name: "comms_connection_summary", args: {}, ...(toolEnding ? { ending: toolEnding } : {}) },
       replyText: ordinary ? "Your connection is set up." : undefined,
       rpcOverrides: {
         ...(ordinary ? { match_paige_memory: { data: [], error: null } } : {}),
@@ -3640,6 +3640,17 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
       && !brokeWire.includes('"FINAL"') && brokeWire.indexOf('"INTERRUPTED"') < brokeWire.indexOf("paige_live_error")
       && streamedCalls(brokeEarly).length === closingCall,
     JSON.stringify({ status: brokeEarly.status, turns: turnFrames(brokeWire), body: brokeWire.slice(0, 600) }));
+  // 26.9 INT-334 (R7) — a Live tool round that never finished (here: its token limit) runs nothing. The read
+  // tool is never executed, the tools-free closing call is told the step did not run, and the turn ends
+  // INTERRUPTED — never FINAL — however the closing answer reads.
+  const liveCut = await liveDrive({ toolEnding: "max_tokens" });
+  const liveClosing = streamedCalls(liveCut).at(-1);
+  assert("26.9 a Live tool round cut at its token limit runs nothing; the closing call is told the step did not run; the turn ends INTERRUPTED",
+    liveCut.status === 200 && !liveCut.rec.rpc.some((c) => c.name === "tenant_comms_readiness")
+      && !("tools" in (liveClosing ?? {})) && JSON.stringify(liveClosing ?? {}).includes("so it did NOT run")
+      && terminalStates(liveCut.bodyText || liveCut.partialText || "").includes("INTERRUPTED")
+      && !terminalStates(liveCut.bodyText || liveCut.partialText || "").includes("FINAL"),
+    JSON.stringify({ status: liveCut.status, rpc: liveCut.rec.rpc.map((c) => c.name), turns: turnFrames(liveCut.bodyText || liveCut.partialText || ""), calls: streamedCalls(liveCut).length }));
 
   for (const [name, options, reachesAuthority] of [
     ["false authorization", { authority: { data: false, error: null } }, true],
@@ -7873,6 +7884,19 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
           && saved40?.bundle_ref?.turn_state?.state === "INTERRUPTED",
         JSON.stringify({ door: doorCalls(r40).length, rows: c40.rows.length, calls: calls40, saved: saved40?.content, state: saved40?.bundle_ref?.turn_state?.state }));
     }
+  }
+
+  // 43.41 INT-334 (R7) — CUT-OFF ARGUMENTS IN A FINISHED ROUND ARE NEVER RUN AS {}. The CRM door's branch
+  // reads a parse failure as `{}`; the dispatcher now refuses the call before any branch reads it, and the
+  // model is told why (it can resend the call whole). The round itself finished, so the turn continues.
+  {
+    const s41 = makeThreadStore(THREADS), c41 = makeConfirmStore(), db41 = crmDb();
+    seedOffer(s41, THREAD_FRESH, { history: 1 });
+    const r41 = await turn(s41, c41, db41, { text: "Yes we may as well for sure", threadId: THREAD_FRESH,
+      script: [{ name: ASSIGN.name, args: '{"deal_id":"' + ASSIGN.args.deal_id.slice(0, 8) }, "I couldn't finish that step — want me to try again?"] });
+    assert("43.41 a finished round's call with cut-off arguments reaches no door (never run as {}), and the model is told ARGUMENTS_UNPARSEABLE",
+      doorCalls(r41).length === 0 && c41.rows.length === 0 && told(r41).includes("ARGUMENTS_UNPARSEABLE"),
+      JSON.stringify({ door: doorCalls(r41).length, rows: c41.rows.length, told: told(r41).includes("ARGUMENTS_UNPARSEABLE") }));
   }
 
   // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the

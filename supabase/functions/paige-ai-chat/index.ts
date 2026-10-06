@@ -234,7 +234,7 @@ import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
 import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
-import { executableToolCalls, readModelRound, ROUND_NOT_FINISHED_NOTE, wholeArguments } from "../_shared/paige-turn/round.ts";
+import { executableToolCalls, LIVE_ROUND_NOT_FINISHED_NOTE, readModelRound, ROUND_NOT_FINISHED_NOTE, wholeArguments } from "../_shared/paige-turn/round.ts";
 import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, ranNote, saysItWasDone, stepToolDoes, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
@@ -16368,7 +16368,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               console.warn(`[paige] unfinished tool round: ${toolCalls.filter(Boolean).length} call(s) shown, none run (finished=${finished})`);
               lastRoundFinished = false;
               unfinishedRound = true;
-              if (liveRuntimeScope) { liveAnswerPending = true; break; }
+              turnTracker.interrupted(); // sticky: whatever the closing answer does, the turn did not finish its step
+              if (liveRuntimeScope) {
+                // Live answers in its tools-free closing call; it is told the step did not run.
+                convo.push({ role: "system", content: LIVE_ROUND_NOT_FINISHED_NOTE });
+                liveAnswerPending = true;
+                break;
+              }
               const nothingRan = totalToolCalls === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0;
               const note = nothingRan ? `${ROUND_NOT_FINISHED_NOTE} ${NOTHING_RAN_NOTE}` : ROUND_NOT_FINISHED_NOTE;
               finalAssistantText = note;

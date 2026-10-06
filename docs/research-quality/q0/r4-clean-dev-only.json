@@ -1,0 +1,390 @@
+{
+ "r4_clean_dev": [
+  {
+   "id": "F1",
+   "class": "fresh_fact",
+   "stop": "max_hops",
+   "units": 2,
+   "exec": 2,
+   "insuff": 0,
+   "cands": 6,
+   "acc": 6
+  },
+  {
+   "id": "F2",
+   "class": "fresh_fact",
+   "stop": "no_results",
+   "units": 1,
+   "exec": 1,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "F3",
+   "class": "fresh_fact",
+   "stop": "no_results",
+   "units": 2,
+   "exec": 2,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "F4",
+   "class": "fresh_fact",
+   "stop": "max_hops",
+   "units": 1,
+   "exec": 1,
+   "insuff": 0,
+   "cands": 4,
+   "acc": 2
+  },
+  {
+   "id": "M1",
+   "class": "multihop_comparison",
+   "stop": "max_hops",
+   "units": 6,
+   "exec": 6,
+   "insuff": 0,
+   "cands": 15,
+   "acc": 15
+  },
+  {
+   "id": "M2",
+   "class": "multihop_comparison",
+   "stop": "no_results",
+   "units": 3,
+   "exec": 3,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "M3",
+   "class": "multihop_comparison",
+   "stop": "no_results",
+   "units": 0,
+   "exec": 0,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "M4",
+   "class": "multihop_comparison",
+   "stop": "no_results",
+   "units": 3,
+   "exec": 3,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "H1",
+   "class": "high_stakes",
+   "stop": "no_results",
+   "units": 2,
+   "exec": 2,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "H2",
+   "class": "high_stakes",
+   "stop": "no_results",
+   "units": 2,
+   "exec": 2,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "H3",
+   "class": "high_stakes",
+   "stop": "max_hops",
+   "units": 2,
+   "exec": 2,
+   "insuff": 0,
+   "cands": 3,
+   "acc": 3
+  },
+  {
+   "id": "H4",
+   "class": "high_stakes",
+   "stop": "max_hops",
+   "units": 2,
+   "exec": 2,
+   "insuff": 0,
+   "cands": 5,
+   "acc": 5
+  },
+  {
+   "id": "C1",
+   "class": "contested",
+   "stop": "no_results",
+   "units": 3,
+   "exec": 3,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "C2",
+   "class": "contested",
+   "stop": "max_hops",
+   "units": 3,
+   "exec": 3,
+   "insuff": 0,
+   "cands": 3,
+   "acc": 2
+  },
+  {
+   "id": "C3",
+   "class": "contested",
+   "stop": "no_results",
+   "units": 3,
+   "exec": 3,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "C4",
+   "class": "contested",
+   "stop": "no_results",
+   "units": 4,
+   "exec": 4,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "S1",
+   "class": "insufficient",
+   "stop": "no_results",
+   "units": 3,
+   "exec": 3,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "S2",
+   "class": "insufficient",
+   "stop": "no_results",
+   "units": 1,
+   "exec": 1,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "S3",
+   "class": "insufficient",
+   "stop": "no_results",
+   "units": 1,
+   "exec": 1,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "S4",
+   "class": "insufficient",
+   "stop": "no_results",
+   "units": 1,
+   "exec": 1,
+   "insuff": 1,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A1",
+   "class": "abundant_insufficient",
+   "stop": "no_results",
+   "units": 3,
+   "exec": 3,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A2",
+   "class": "abundant_insufficient",
+   "stop": "no_results",
+   "units": 1,
+   "exec": 1,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A3",
+   "class": "abundant_insufficient",
+   "stop": "no_results",
+   "units": 1,
+   "exec": 1,
+   "insuff": 0,
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A4",
+   "class": "abundant_insufficient",
+   "stop": "no_results",
+   "units": 1,
+   "exec": 1,
+   "insuff": 1,
+   "cands": 0,
+   "acc": 0
+  }
+ ],
+ "r3_dev": [
+  {
+   "id": "F1",
+   "class": "fresh_fact",
+   "cands": 15,
+   "acc": 15
+  },
+  {
+   "id": "F2",
+   "class": "fresh_fact",
+   "cands": 11,
+   "acc": 7
+  },
+  {
+   "id": "F3",
+   "class": "fresh_fact",
+   "cands": 11,
+   "acc": 11
+  },
+  {
+   "id": "F4",
+   "class": "fresh_fact",
+   "cands": 9,
+   "acc": 9
+  },
+  {
+   "id": "M1",
+   "class": "multihop_comparison",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "M2",
+   "class": "multihop_comparison",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "M3",
+   "class": "multihop_comparison",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "M4",
+   "class": "multihop_comparison",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "H1",
+   "class": "high_stakes",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "H2",
+   "class": "high_stakes",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "H3",
+   "class": "high_stakes",
+   "cands": 15,
+   "acc": 15
+  },
+  {
+   "id": "H4",
+   "class": "high_stakes",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "C1",
+   "class": "contested",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "C2",
+   "class": "contested",
+   "cands": 12,
+   "acc": 12
+  },
+  {
+   "id": "C3",
+   "class": "contested",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "C4",
+   "class": "contested",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "S1",
+   "class": "insufficient",
+   "cands": 8,
+   "acc": 7
+  },
+  {
+   "id": "S2",
+   "class": "insufficient",
+   "cands": 7,
+   "acc": 7
+  },
+  {
+   "id": "S3",
+   "class": "insufficient",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "S4",
+   "class": "insufficient",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A1",
+   "class": "abundant_insufficient",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A2",
+   "class": "abundant_insufficient",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A3",
+   "class": "abundant_insufficient",
+   "cands": 0,
+   "acc": 0
+  },
+  {
+   "id": "A4",
+   "class": "abundant_insufficient",
+   "cands": 9,
+   "acc": 6
+  }
+ ]
+}

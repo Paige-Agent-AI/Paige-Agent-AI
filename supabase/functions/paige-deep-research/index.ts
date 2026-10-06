@@ -1025,16 +1025,20 @@ async function synthesizeUnit(
     // stop reason is the authority (max_tokens = cut off mid-output); a missing/invalid
     // JSON body after an OK call is treated as truncation-class too (the parse fallback
     // of R4 conflated it with true-empty and threw the work away unreported).
-    const stopReason = (resp as { choices?: Array<{ finish_reason?: string }> })?.choices?.[0]?.finish_reason ?? null;
-    const truncated = stopReason === "max_tokens";
+    const r5resp = resp as { choices?: Array<{ finish_reason?: string }>; paige_stop?: { stop_reason?: string } };
+    const stopReason = r5resp?.paige_stop?.stop_reason ?? r5resp?.choices?.[0]?.finish_reason ?? null;
+    const truncated = stopReason === "max_tokens" || stopReason === "length"; // Anthropic native + OpenAI-compat vocabularies
     const parsed = parseJsonLoose<UnitSynthOut>(llmContent(resp));
     if (!parsed || !Array.isArray(parsed.findings)) {
-      return { findings: [], outcome: truncated ? "truncated" : "truncated", truncated: true } as never;
+      // R5 review: parse-failure after an OK call is truncation-CLASS (the output was
+      // cut or malformed before it could parse) — typed, never a silent empty. The
+      // `truncated` flag itself stays provider-authoritative (may be false here).
+      return { findings: [], outcome: "truncated" } as never;
     }
     if (truncated) {
       // The JSON parsed but the provider says it hit the cap — the tail may be silently
       // missing findings. Keep what parsed, but TYPE the unit so diagnostics can see it.
-      return { ...parsed, outcome: "truncated" } as never;
+      return { ...parsed, outcome: "truncated", truncated: true } as never;
     }
     if (parsed.insufficient === true) return { ...parsed, outcome: "insufficient" } as never;
     if (parsed.findings.length === 0) return { ...parsed, outcome: "insufficient" } as never; // true-empty normalizes to typed insufficiency — never silent
@@ -2219,7 +2223,7 @@ serve(async (req) => {
   const finalStop = (findings.length > 0 || entityProfile)
     ? (stop === "unconfigured" ? "answered" : stop)
     : "no_results";
-  const note = findings.length > 0
+  let note = findings.length > 0
     ? `Verified ${findings.length} finding(s) across ${citable.length} citable source(s).`
     : (entityProfile
         ? "Structured entity profile assembled from cited sources; see entity_profile for the verified intel and its unverified gaps."

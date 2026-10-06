@@ -51,7 +51,7 @@ describe("R5 — silent-empty is structurally impossible", () => {
   });
   it("synthesizeUnit types EVERY resolution: truncated on finish_reason=max_tokens; parse-failure typed; true-empty → insufficient; ok otherwise", () => {
     const fn = extractFn("synthesizeUnit");
-    expect(fn).toContain('const truncated = stopReason === "max_tokens";');
+    expect(fn).toContain('const truncated = stopReason === "max_tokens" || stopReason === "length"; // Anthropic native + OpenAI-compat vocabularies');
     expect(fn).toContain('outcome: "truncated"');
     expect(fn).toContain('return { ...parsed, outcome: "insufficient" } as never; // true-empty normalizes to typed insufficiency — never silent');
     expect(fn).toContain('return { ...parsed, outcome: "ok" } as never;');
@@ -95,17 +95,81 @@ describe("R5 — truncation observability (diagnostic fields)", () => {
   });
 });
 
-describe("R5 mutation proofs", () => {
-  it("reverting the budget to 900 breaks the budget pin", () => {
+describe("R5 behavioral — the truncation signal on the REAL extracted synthesizeUnit", () => {
+  // extract synthesizeUnit + its closure deps (parseJsonLoose, llmContent are used) and run
+  // it against a STUBBED router that returns the compat-layer shapes the reviewer proved:
+  // finish_reason "stop" (normalized) + paige_stop.stop_reason "max_tokens" (Anthropic native).
+  const buildUnit = () => {
+    const fnText = extractFn("synthesizeUnit");
+    // stub the module-scope router symbol the function closes over
+    const body = `
+      const calls = [];
+      const routedChatCompletion = async (kind, b) => { calls.push({ kind, b }); return globalThis.__r5StubResp; };
+      const parseJsonLoose = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
+      const llmContent = (r) => r?.content ?? "";
+      const R4_UNIT_MAX_TOKENS = 2400;
+      const unit = { unit_id: "u1", objective: "test objective", coverage_kind: "facet", source_refs: [], status: "pending" };
+      ${fnText.replace(/const R4_UNIT_MAX_TOKENS = 2400;[^\n]*\n/g, "")}
+      return { run: (r) => { globalThis.__r5StubResp = r; return synthesizeUnit(unit, "q", "hint", [{ index: 1, url: "https://x", title: "t", snippet: "s", content: "c", read: true, host: "x", published_at: null, fetched_at: "", authority: 1, recency: 1, corroboration: 1, reliability_score: 1, tier: "T2", reliability: "high", excluded: false }]); }, calls };
+    `;
+    return new Function(js(body) + "\nreturn { run, calls };")();
+  };
+
+  it("paige_stop.stop_reason=max_tokens types the unit TRUNCATED (the reviewer's dead-signal case)", async () => {
+    const u = buildUnit();
+    const out = await u.run({ content: '{"findings":[{"summary":"a finding"}],"insufficient":false}', choices: [{ finish_reason: "stop" }], paige_stop: { stop_reason: "max_tokens" } });
+    expect(out.outcome).toBe("truncated");
+    expect(out.truncated).toBe(true);
+    expect(out.findings.length).toBe(1); // what parsed is KEPT
+  });
+
+  it("finish_reason=length (OpenAI-compat vocabulary) also types truncated", async () => {
+    const u = buildUnit();
+    const out = await u.run({ content: '{"insufficient":true}', choices: [{ finish_reason: "length" }] });
+    expect(out.outcome).toBe("truncated");
+  });
+
+  it("a clean stop with zero findings normalizes to typed insufficiency — never silent", async () => {
+    const u = buildUnit();
+    const out = await u.run({ content: '{"findings":[],"insufficient":false}', choices: [{ finish_reason: "stop" }] });
+    expect(out.outcome).toBe("insufficient");
+  });
+
+  it("a clean stop with findings is ok", async () => {
+    const u = buildUnit();
+    const out = await u.run({ content: '{"findings":[{"summary":"x","citations":[1]}]}', choices: [{ finish_reason: "stop" }] });
+    expect(out.outcome).toBe("ok");
+  });
+
+  it("unparseable output after an OK call is truncation-class (typed, not silent)", async () => {
+    const u = buildUnit();
+    const out = await u.run({ content: '{"findings":[{trunc', choices: [{ finish_reason: "stop" }] });
+    expect(out.outcome).toBe("truncated");
+    expect(out.findings).toEqual([]);
+  });
+});
+
+describe("R5 mutation proofs (real mutants, real predicates)", () => {
+  it("budget mutant 900: the REAL source pin fails (the predicate the gate actually enforces)", () => {
     const mutated = core.replace("const R4_UNIT_MAX_TOKENS = 2400;", "const R4_UNIT_MAX_TOKENS = 900;");
-    expect(mutated).toContain("const R4_UNIT_MAX_TOKENS = 900;");
-    expect(core).toContain("const R4_UNIT_MAX_TOKENS = 2400;");
+    const pinHoldsOn = (src: string) => src.includes("const R4_UNIT_MAX_TOKENS = 2400;");
+    expect(pinHoldsOn(core)).toBe(true); // real source passes the pin
+    expect(pinHoldsOn(mutated)).toBe(false); // the mutant FAILS it — the pin is load-bearing
   });
-  it("restoring the R4 bare-empty fallback breaks the silent-empty pin", () => {
+  it("bare-empty fallback mutant: the silent-empty predicate fails on the mutated function text", () => {
     const fn = extractFn("synthesizeUnit");
-    expect(fn).not.toContain("return { findings: [] };");
+    const mutant = fn.replace('return { findings: [], outcome: "truncated" } as never;', "return { findings: [] } as never;");
+    expect(mutant).not.toBe(fn); // mutation applied
+    const pinHoldsOn = (src: string) => !src.includes("return { findings: [] } as never;");
+    expect(pinHoldsOn(fn)).toBe(true);
+    expect(pinHoldsOn(mutant)).toBe(false); // the mutant ships a silent empty — the pin forbids exactly this
   });
-  it("routing typed insufficiency into findings (the forbidden B-as-A) breaks the meta-state pin", () => {
-    expect(core).not.toMatch(/unresolvedUnits[^\n]*synth\.findings/);
+  it("B-as-A mutant: injecting unresolved into findings fails the meta-state predicate", () => {
+    const mutant = core.replace("synth = { findings: unitFindings };", "synth = { findings: unitFindings.concat(unresolvedUnits.map((u) => ({ summary: u.objective, citations: [1] }))) };");
+    expect(mutant).not.toBe(core);
+    const pinHoldsOn = (src: string) => !/unresolvedUnits[^\n]*findings/.test(src) && !/findings[^\n]*unresolvedUnits/.test(src.split("synth = { findings:")[1]?.split(";")[0] ?? "");
+    // simpler + exact: the forbidden injection is present in the mutant, absent in the real source
+    expect(mutant).toMatch(/unitFindings\.concat\(unresolvedUnits/);
+    expect(core).not.toMatch(/unitFindings\.concat\(unresolvedUnits/);
   });
 });

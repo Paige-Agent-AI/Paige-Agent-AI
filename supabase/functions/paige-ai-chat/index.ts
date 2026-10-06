@@ -9092,9 +9092,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // switch that lands DURING the extraction fails closed with NO chat provider call — rather
       // than dispatching the prior workspace's aiMessages + Knowledge and only withholding the
       // streamed reply at the close boundary, which is too late (the cross-context egress already
-      // happened). Only deferred (general-document) turns pay this second check, because only they
-      // insert the awaited round-trip; every other turn keeps the pre-egress guard adjacent to the
-      // dispatch, so its single pre-egress check still suffices.
+      // happened). Only deferred (general-document) turns pay this second check here, because only
+      // they insert the awaited round-trip at this point. INT-334 R4: a turn that runs the turn
+      // classifier inserts another awaited round-trip, and re-checks again after it (below, at the
+      // route), so no turn dispatches on a check older than its last awaited provider call.
       if (!(await revalidateTenantKnowledgeScope())) {
         return new Response(
           JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
@@ -9106,11 +9107,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // INT-334 R4 — THE TURN CLASSIFIER, started only AFTER the last pre-egress account check above: its
     // call carries the person's message (and, for an accepted prose step, the step PAIGE offered), so a
     // switched, stale or unresolved account must have 409'd before it can leave (#1255, test:knowledge-scope
-    // 12 / 15.9). It runs only where state leaves the class open, and is collected at the first model call,
-    // so its latency overlaps the resume resolution and prompt assembly below. Bounded
-    // (TURN_CLASSIFY_DEADLINE_MS) and advisory: a timeout, an error or a malformed reply is `null`, and the
-    // route takes its conservative default.
-    const classificationPromise: Promise<TurnClassification | null> = routeNeedsClassifier(turnRouteFacts) && lastUserText.trim()
+    // 12 / 15.9). It runs only where state leaves the class open, and is collected at the first model call.
+    // On most fresh turns little work sits between here and that call, so the classifier adds its own
+    // round-trip to the time to first token, bounded by TURN_CLASSIFY_DEADLINE_MS. It is advisory: a
+    // timeout, an error or a malformed reply is `null`, and the route takes its conservative default.
+    const classifierRuns = routeNeedsClassifier(turnRouteFacts) && !!lastUserText.trim();
+    const classificationPromise: Promise<TurnClassification | null> = classifierRuns
       ? classifyTurn(lastUserText, offerAccepted && foreground.offer.kind === "accepted" ? foreground.offer.offer : null, traceFor("turn-classify"))
       : Promise.resolve(null);
 
@@ -9515,7 +9517,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         ? acceptedOfferNote(foreground.offer.offer, reply, { kind: acceptedKind ?? undefined })
         : ambiguousOfferNote(foreground.offer.offer, reply) });
     }
-    const turnRoute = resolveTurnRoute({ ...turnRouteFacts, classification: await classificationPromise });
+    const turnClassification = await classificationPromise;
+    // #1255 — the classifier was an awaited provider round-trip between the pre-egress account check and
+    // the dispatch below. A switch that lands during it must fail closed BEFORE the Knowledge-carrying
+    // chat call, exactly as after the deferred document extraction (test:knowledge-scope 12b).
+    if (classifierRuns && !(await revalidateTenantKnowledgeScope())) {
+      return new Response(
+        JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const turnRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification });
     const substantiveTurn = turnRoute.cognitive_class !== "cheap";
     console.log(`[paige] route: ${turnRoute.basis}/${turnRoute.intent}/${turnRoute.cognitive_class} tools=${turnRoute.capability.tools} (${turnRoute.reasons.join(",")})`);
     const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {

@@ -18,8 +18,14 @@ import type { TurnClassification } from "./route.ts";
 // The pure gate lives with the classifier's other pure half; chat imports it from here.
 export { routeNeedsClassifier } from "./classify.ts";
 
-/** The classifier's budget. Its latency overlaps the turn's context assembly; past this it is ignored. */
-export const TURN_CLASSIFY_DEADLINE_MS = 2000;
+/**
+ * The classifier's budget. On most fresh turns nothing else is awaited between the classifier's start
+ * and the first model call, so this is added to the time to first token in the worst case. Set from
+ * production traces of comparable small Haiku calls (session-summary, ~200 tokens in / 35 out, 30 days:
+ * p50 840 ms, p90 1.46 s). Past it the classifier is ignored and the route takes its conservative
+ * default (operational, governed tools) — a timeout costs the cheap-tier saving, never correctness.
+ */
+export const TURN_CLASSIFY_DEADLINE_MS = 1200;
 
 export async function classifyTurn(message: string, acceptedStep: string | null, trace?: TraceCtx): Promise<TurnClassification | null> {
   try {

@@ -8007,14 +8007,14 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   // 43.26 (review round 10) — the server's line is only added when nothing but plain reads ran (deep_research
   // saves a run); a yes that restates the offered step accepts it; on a held act a read then an announcement
   // ("I'll link it") is held; a true read answer with a listing head ("Scheduled: …") ends the turn.
-  const turnR10 = (store, confirms, db, { text, threadId = THREAD_FRESH, script, outbound = null, rpc = {} } = {}) => drive({
+  const turnR10 = (store, confirms, db, { text, threadId = THREAD_FRESH, script, outbound = null, rpc = {}, fns = {} } = {}) => drive({
     stream: true, text, streamScript: script, outboundAnswers: outbound,
     extraBody: { threadId },
     rpcOverrides: { ...SEAT(CALLER_TENANT), ...crmRpcs(db), paige_chat_turn_append: (args) => store.append(args), ...rpc },
     tablesExtra: { paige_chat_turns: store.table, paige_chat_threads: store.threadsTable, client_memory: () => [], paige_pending_confirmations: confirms.table },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
     onInsert: mirrorConfirms(confirms),
-    functionsExtra: { "crm-command": realDoor },
+    functionsExtra: { "crm-command": realDoor, ...fns },
   });
   const run26 = async (offer, reply, script, extra = {}) => {
     const st = makeThreadStore(THREADS), cs = makeConfirmStore(), dbx = crmDb();
@@ -8055,10 +8055,26 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
 
   {
     const FAKE11 = "Linked! Dana's deal is now attached to her contact.";
-    const o = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal" } }, FAKE11, FAKE11, FAKE11, FAKE11], { outbound: DR26, rpc: DRRPC26 });
+    const o = await run26(LINK6, "sure", [{ name: "n8n_list_workflows", args: {} }, FAKE11, FAKE11, FAKE11, FAKE11]);
     const STEP_NOT_DONE = continuity.STEP_NOT_DONE_NOTE ?? "\u0000none";
-    assert("43.27.B2 a held act, an unclassified tool (deep_research), then a made-up result: held, kept with \"the step wasn't carried out\"",
+    assert("43.27.B2 a held act, an unclassified tool that cannot do the step (n8n_list_workflows), then a made-up result: held, kept with \"the step wasn't carried out\"",
       o.saved === `${FAKE11}\n\n${STEP_NOT_DONE}` && o.rows === 0, JSON.stringify(o));
+  }
+
+  // 43.28 (review round 12) — ordinary restatements are accepted offers (a made-up "Done" after one is held);
+  // a tool that does the step itself (the page generator) is the step: a true "I've created a draft" ends the turn.
+  {
+    const DONE12 = "Done, I've created the task for Friday.";
+    const p3 = await run26("Dana asked for Friday.\n\nWant me to create a follow-up task for Friday?", "yes create the task", x4(DONE12));
+    assert("43.28.P3 \"yes create the task\" accepts the offer: a made-up \"Done\" is held, kept with the line", p3.saved === keptWithNote(DONE12) && p3.rows === 0, JSON.stringify(p3));
+    const ANN12 = "I'll email her the recap now.";
+    const p1 = await run26("Call went well.\n\nWant me to email Dana the recap?", "yes email her", x4(ANN12));
+    assert("43.28.P1 \"yes email her\" accepts the offer: an announcement with no tool is held, kept with the line", p1.saved === keptWithNote(ANN12) && p1.rows === 0, JSON.stringify(p1));
+    const GP = { name: "growth_page_generate", args: { brief: "Workshop on the 14th" } };
+    const GPF = { "growth-page-draft": { data: { blocks: [{ type: "hero", headline: "Workshop" }], theme_json: null, seo_json: { title: "Workshop" } }, error: null } };
+    const MADE = "I've created a draft of the workshop page, take a look below.";
+    const g3 = await run26("Dana's workshop is on the 14th.\n\nWant me to draft a landing page for the workshop?", "sure", [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: { studio_role_ok: { data: true, error: null } } });
+    assert("43.28.G3 the page generator did the step: \"I've created a draft\" ends the turn, no false line", g3.calls === 2 && g3.saved === MADE && g3.terminal === "FINAL", JSON.stringify(g3));
   }
 
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and

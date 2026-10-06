@@ -258,27 +258,34 @@ export function restatesOffer(reply: string, offer: string): boolean {
   if (!r || r.includes("?") || r.split(" ").length > 10) return false;
   const words = r.replace(/^(?:(?:yes|yeah|yep|yup|sure|ok|okay|perfect|great|please|alright|absolutely|definitely|go ahead and|let'?s|do it and)\s+)+/, "").split(" ").filter(Boolean);
   if (!words.length) return false;
-  const offered = offeredStepWords(offer);
+  let offered = offeredStepWords(offer);
   if (!offered.length) return false;
-  // An offer that sets one thing against another ("…remove Sam and keep Dana", "…not the original") is never
-  // accepted by a restatement: which half the reply names is a correction, not a yes (review round 11).
-  if (offered.some((w) => /^(?:not|keep|except|instead|rather)$/.test(w))) return false;
   const base = (w: string) => w.replace(/^re-/, "re");
   if (base(words[0]) !== base(offered[0])) return false;
-  // The rest follows the offered step IN ORDER; "it/that/this" may stand for its object; a pronoun for a person
-  // counts only when the offer used that same one ("yes text him" never accepts "text her").
-  const STAND_IN = new Set(["it", "that", "this", "those", "these", "them"]);
-  const FILLER = new Set(["now", "please", "then", "too", "up", "over"]);
+  // Only the offered step itself, up to anything set against it or added after it — "not the original",
+  // "instead of the quote", "and keep Dana", "and archive the old one". A reply naming that part is a
+  // correction, not a yes (review rounds 11–12).
+  const cut = offered.findIndex((w, i) => i > 0 && (/^(?:not|except|instead|rather|but)$/.test(w)
+    || (/^(?:and|then)$/.test(w) && SECOND_ACT.test(offered[i + 1] ?? ""))));
+  if (cut > 0) offered = offered.slice(0, cut);
+  const ARTICLES = new Set(["the", "a", "an", "that", "this", "those", "these", "my", "your"]);
+  const OBJECT_STAND_IN = new Set(["it", "them"]);
+  const PERSON = new Set(["her", "him", "them"]);
+  const FILLER = new Set(["now", "please", "then", "too", "up", "over", "go", "ahead", "and"]);
+  const offerPerson = offered.find((w) => w === "her" || w === "him");
   let k = 1;
   for (const w of words.slice(1)) {
-    if (FILLER.has(w)) continue;
+    if (FILLER.has(w) || ARTICLES.has(w)) continue;
     const at = offered.slice(k).findIndex((o) => base(o) === base(w));
     if (at >= 0) { k += at + 1; continue; }
-    if (STAND_IN.has(w) && !(w === "them" && !offered.includes("them"))) continue;
+    // A pronoun may stand for whoever the offer named — but not for a different pronoun it used ("text her" ≠ "him").
+    if (PERSON.has(w) && w !== "them") { if (offerPerson && offerPerson !== w) return false; continue; }
+    if (OBJECT_STAND_IN.has(w)) continue;
     return false;
   }
   return true;
 }
+const SECOND_ACT = /^(?:keep|archive|send|link|move|add|create|delete|remove|update|book|schedule|email|text|tag|enroll|invite|publish|post|build|draft|start|cancel|close|merge|assign|log|file|save|attach|set|mark|refund|charge)$/;
 /** The offered step's words, from its verb on (the offer phrase and "and I'll / go ahead" removed). */
 function offeredStepWords(offer: string): string[] {
   OFFER_PHRASE.lastIndex = 0;

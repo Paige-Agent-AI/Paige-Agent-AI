@@ -198,6 +198,39 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5l. Independent review — round 12 (`910e671e9`): FIX_FIRST, fixed
+
+Round 12 confirmed round 11's B1, S1 and S2 closed. B1 was checked across all 20 named reads plus `web_search`,
+`web_fetch` and `n8n_list_workflows`: every fake "Linked!" is held, with the matching line.
+
+- **BL-1: the strict restatement rejected ordinary replies.** Rejected replies included "yes email her" (to
+  "email Dana…"), "yes create the task" (to "create a follow-up task…") and "yes keep her". These fell to the
+  pre-INT-332 path, where a made-up "Done, I've created the task" stood as final. This was a regression from
+  round 11.
+  - **Fix:**
+    - Articles are interchangeable.
+    - A person pronoun may stand in for whoever the offer named, rejected only against a *different* pronoun the
+      offer used.
+    - A contrast or second act no longer refuses the whole offer. The reply is matched only against the offered
+      step itself, up to "not / except / instead / rather / but" or "and <second act>". So "remove dana" ← "remove
+      Sam … and keep Dana" is still rejected, while "yes send the invoice" ← "send her the invoice instead of the
+      quote" is accepted.
+  - **Tests:** 43.28.P1 and P3, plus the round-12 Deno test. Going back to round 11's matcher fails 2.
+- **BL-2: tools that do the step themselves were not "the step".** `growth_page_generate`, `growth_funnel_generate`,
+  `deep_research`, `draft_marketing_content` and `propose_action` carry out an offered step, but they are not
+  classifier writes. So a true "I've created a draft" was held and given "The step you accepted wasn't carried
+  out" (false), and the generator could be re-invoked.
+  - **Fix:** `STEP_CAPABLE_TOOLS` joins the classifier writes in "the step was done".
+  - **Tests:** 43.28.G3 asserts 2 calls, FINAL, with the reply as written. 43.27.B2 now uses `n8n_list_workflows`,
+    which genuinely cannot do the step. Without the step-capable set, G3 fails.
+- **SHOULD-FIX, done:**
+  - `zapier_list_actions` is off the read list: it can record a Rail event and rotate an expired token.
+  - The accepted-step continuation no longer says "no tool ran" after a read. It now says "nothing that carries it
+    out ran".
+- **NIT, recorded:** `announcesTheStep` misses synonym verbs ("I'll connect" for "link"); this is rare.
+
+Harness 913/0. Deno 25/25. `deno check` 10, identical to base.
+
 ### 5k. Independent review — round 11 (`59d9ff4e3`): FIX_FIRST, fixed
 
 Round 11 confirmed every round-10 finding closed: N4/N4b, the restatements E/E2, N1, and read-then-announce. The

@@ -666,7 +666,7 @@ Deno.test("review round 10 — a yes that restates the step accepts it; listing 
 
 Deno.test("review round 11 — a restatement follows the offered step; only its own verb is an announcement", () => {
   // A different person, a reversed object, or a correction is not a restatement.
-  for (const [r, o] of [["yes text him", "Want me to text her the link?"], ["yes email him", "Want me to email Dana the recap?"],
+  for (const [r, o] of [["yes text him", "Want me to text her the link?"],
     ["remove dana", "Want me to remove Sam from the deal and keep Dana?"], ["delete the original", "Want me to delete her duplicate contact, not the original?"],
     ["yes archive the new one", "Want me to archive the old deal and not the new one?"], ["yes link the contact to the deal", "Want me to link the deal to her contact?"]]) {
     assert(!restatesOffer(r, o), `${r} <- ${o}`);
@@ -681,4 +681,20 @@ Deno.test("review round 11 — a restatement follows the offered step; only its 
     assert(!announcesTheStep(t, LINK), t);
   }
   assert(announcesTheStep("Got it, I'll link it now.", LINK));
+});
+
+Deno.test("review round 12 — ordinary restatements accept; corrections and the part set against the step do not", () => {
+  for (const [r, o] of [["yes email her", "Want me to email Dana the recap?"], ["yes text her", "Want me to text Dana a reminder?"],
+    ["yes move her", "Want me to move Dana to Proposal?"], ["yes move her to proposal", "Want me to move Dana to Proposal?"],
+    ["yes add her to onboarding", "Want me to add Dana to the onboarding pipeline?"], ["yes send her the link", "Want me to send Dana the onboarding link?"],
+    ["yes send it to her", "Want me to send the onboarding link to Dana?"], ["yes create the task", "Want me to create a follow-up task for Friday?"],
+    ["yes keep her", "Want me to keep her in the nurture sequence?"], ["yes send the invoice", "Want me to send her the invoice instead of the quote?"],
+    ["yes go ahead and link it", "Want me to link the deal to her contact?"], ["yes, send it over", "Want me to send the onboarding link to Dana?"]]) {
+    assert(restatesOffer(r, o), `${r} <- ${o}`);
+  }
+  for (const [r, o] of [["yes text him", "Want me to text her the link?"], ["remove dana", "Want me to remove Sam from the deal and keep Dana?"],
+    ["delete the original", "Want me to delete her duplicate contact, not the original?"], ["yes archive the new one", "Want me to archive the old deal and not the new one?"],
+    ["yes move the old one", "Want me to move the deal to Won and archive the old one?"], ["yes send the quote", "Want me to send her the invoice instead of the quote?"]]) {
+    assert(!restatesOffer(r, o), `${r} <- ${o}`);
+  }
 });

@@ -15941,7 +15941,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const NAMED_READ_TOOLS = new Set(["crm_pipeline_summary", "plan_list", "action_list", "action_get", "inbox_list", "integrations_list",
         "automation_list", "automation_triggers_list", "improvement_list", "growth_list", "pipeline_catalogue", "comms_list_numbers",
         "comms_search_numbers", "comms_connection_summary", "comms_registration_status", "presence_who_online", "presence_is_online",
-        "marketplace_browse", "zapier_list_actions", "document_pending_reviews"]);
+        "marketplace_browse", "document_pending_reviews"]);
+      // Tools that carry out a step themselves without being classifier writes: a generated draft, a saved research
+      // run, a filed approval (review round 12). Any of these, a classifier write or a question card = the step ran.
+      const STEP_CAPABLE_TOOLS = new Set(["growth_page_generate", "growth_funnel_generate", "deep_research", "draft_marketing_content", "propose_action", "ask_choices"]);
       let writeAttempts = 0;
       // A write by the classifier (or a question card): what "the step was done" means. Kept separate from the
       // broad count above, which only decides whether the server may say nothing was saved (review round 11).
@@ -16424,7 +16427,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             totalToolCalls += sumToolCost(executed);
             writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !(PLAIN_READ_TOOL.test(n) || NAMED_READ_TOOLS.has(n)); }).length;
-            classifierWrites += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || n === "ask_choices"; }).length;
+            classifierWrites += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || STEP_CAPABLE_TOOLS.has(n); }).length;
             if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
             // What stays at the round's end reads the round as a whole, after the approval rewrite:
@@ -16570,7 +16573,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               convo.push({ role: "user", content: acceptedTurn && acceptedKind === "unknown"
                 ? "The person accepted what you offered. If it changes a record or sends something, nothing has been done yet — call its tool now (when it needs their approval, the tool puts the card in front of them). If it is only an answer, give that answer in full, without saying anything was done."
                 : acceptedTurn
-                ? "The person accepted the step you offered, and it has not been done: no tool ran in this turn, so nothing was sent or changed, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
+                ? "The person accepted the step you offered, and it has not been done: nothing that carries it out ran in this turn, so nothing was sent or changed by it, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 const continuationResponse = await gatewayCompat("anthropic", {

@@ -45,3 +45,14 @@ it('reports an unavailable number rather than exposing a UUID',async()=>{
  h.invoke.mockResolvedValue({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',preview:{remaining_cents:297300}},error:null});
  await render();await click('Prepare review');expect(document.body.textContent).toContain('Invoice number unavailable');expect(document.body.textContent).not.toContain(command.invoice_id);
 });
+
+it('checks an existing payment request using its saved identity and immutable intent',async()=>{
+ const operationId='88888888-8888-4888-8888-888888888888';
+ const payment={action:'invoice.payment_request' as const,invoice_id:command.invoice_id,expected_version:3,provider:'stripe' as const,purpose:'partial' as const,amount_minor:50000};
+ h.invoke.mockResolvedValue({data:{ok:true,outcome:'customer_action_required'},error:null});
+ await act(async()=>{root.render(<InvoiceCommandReview tenantId={tenant} command={payment} operationId={operationId} onComplete={done} onClose={close}/>);await Promise.resolve();});
+ await click('Recover original operation');expect(h.invoke.mock.calls[0][1].body).toEqual({expected_tenant_id:tenant,operation_id:operationId,command:payment});expect(done).toHaveBeenCalledOnce();
+});
+
+it('refuses payment approval when exact customer and merchant facts are missing',async()=>{h.invoke.mockResolvedValue({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',preview:{invoice_number:'INV-1',remaining_cents:350000}},error:null});await act(async()=>{root.render(<InvoiceCommandReview tenantId={tenant} command={{action:'invoice.payment_request',invoice_id:command.invoice_id,expected_version:1,provider:'stripe',purpose:'partial',amount_minor:50000}} onComplete={done} onClose={close}/>);await Promise.resolve();});await click('Prepare review');expect(button('Approve action').disabled).toBe(true);expect(document.body.textContent).toContain('exact customer');});
+it('can close an unknown payment review while retaining recovery identity',async()=>{h.invoke.mockRejectedValue(Error('Network'));await act(async()=>{root.render(<InvoiceCommandReview tenantId={tenant} command={{action:'invoice.payment_request',invoice_id:command.invoice_id,expected_version:1,provider:'stripe',purpose:'partial',amount_minor:50000}} onComplete={done} onClose={close}/>);await Promise.resolve();});await click('Prepare review');await click('Close review');expect(close).toHaveBeenCalledOnce();expect(sessionStorage.length).toBe(1);});

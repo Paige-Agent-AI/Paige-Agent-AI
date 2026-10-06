@@ -1,4 +1,6 @@
+import {parsePaymentRequestIntent} from '../sales-payments/request-command.ts';
 export const SALES_INVOICE_ACTIONS = {
+  "invoice.payment_request": "sales_create_payment_request",
   "invoice.settings_update": "sales_update_invoice_settings",
   "invoice.publish": "sales_publish_invoice",
   "invoice.record_manual_payment": "sales_record_manual_payment",
@@ -23,6 +25,7 @@ export function parseSalesInvoiceCommand(value: unknown): SalesInvoiceCommand {
   const v = value as Record<string, unknown>;
   if (typeof v.action !== "string" || !Object.prototype.hasOwnProperty.call(SALES_INVOICE_ACTIONS, v.action)) return invalid();
   const action = v.action as SalesInvoiceAction;
+  if(action==='invoice.payment_request')return {...parsePaymentRequestIntent(v)};
   if(action==='invoice.settings_update') {
     const settings=v.settings;
     if(Object.keys(v).some(k=>!['action','expected_version','settings'].includes(k))||!Number.isSafeInteger(v.expected_version)||Number(v.expected_version)<0||!settings||typeof settings!=='object'||Array.isArray(settings))return invalid();

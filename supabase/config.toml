@@ -661,3 +661,6 @@ verify_jwt = false
 [functions.sales-invoice-draft-command]
 # JWT-authenticated canonical owner/admin draft act; shared Trust, operation and Rail.
 verify_jwt = true
+
+[functions.sales-payment-reconcile]
+verify_jwt = false # Internal service bearer / canonical cron token is checked in the function.

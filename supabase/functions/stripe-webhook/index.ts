@@ -1,3 +1,5 @@
+import type {SalesPaymentAdmin} from "../_shared/sales-payments/database-port.ts";
+import { routeVerifiedSalesStripeEvent } from "../_shared/sales-payments/stripe-event-adapter.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
@@ -437,6 +439,12 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Sales reconciliation must run after authentication and before the legacy insert-first
+    // dedup gate. Failed allocation returns retryable 503; no event can consume an unpersisted
+    // financial result. No raw event body or provider error enters Sales evidence.
+    const salesEvent=await routeVerifiedSalesStripeEvent(supabaseAdmin as unknown as SalesPaymentAdmin,event,verifiedAccount,Deno.env.get("STRIPE_SECRET_KEY")??"");
+    if(salesEvent.handled)return new Response(JSON.stringify({code:salesEvent.code}),{status:salesEvent.status,headers:{...corsHeaders,"Content-Type":"application/json","Cache-Control":"no-store"}});
 
     // The account's single Stripe endpoint stays the ingress. Route only signed,
     // live Solo events into the dedicated recoverable/atomic lifecycle before the

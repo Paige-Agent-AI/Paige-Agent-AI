@@ -5,9 +5,11 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/functions/_shared/sales-collections/**'
       - 'supabase/functions/_shared/sales-commercial/**'
+      - 'supabase/functions/_shared/sales-payments/**'
       - 'supabase/functions/sales-collection-command/**'
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
+      - 'scripts/sql/sales-provider-operation-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
@@ -15,8 +17,10 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/functions/_shared/sales-collections/**'
       - 'supabase/functions/_shared/sales-commercial/**'
+      - 'supabase/functions/_shared/sales-payments/**'
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
+      - 'scripts/sql/sales-provider-operation-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -49,6 +53,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-commercial-create-proof.mjs "$(command -v psql)" 56347 /var/lib/postgresql/data postgres
+      - name: Provider operation dispatch claims, once-only allocation, tenant isolation and Rail rollback
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
       - name: Preserve Collections SQL proof receipt
         if: always()
         uses: actions/upload-artifact@v4

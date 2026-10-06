@@ -481,8 +481,8 @@
       "rail_mind_memory": "Rail: billing outcome events (no sender/secret). Mind: safe billing-status only (platform-billing-spine-source-contract). Memory: none of card/PII.",
       "status": "PARTIAL",
       "owner": "Money Spine workstream",
-      "dependency": "Live Solo acquisition binding, Stripe-eligible Checkout contract, and receipt-derived welcome lifecycle are deployed; first authorized live Checkout/fulfillment, actual payment-method presentation/welcome delivery, and Billing Portal activation remain proof owed. Connect direct-charge posture and M1 controls remain separate. Sales S1 adds server-owned tenant merchant readback/CAS and provider-neutral contracts; provider execution and verified allocation remain unavailable pending S3/S4. Legacy destination-charge storefront is unchanged.",
-      "next_slice": "Sales S2 canonical commercial assembly and request/read capabilities; S3/S4 tenant-connected direct-charge execution to verified settlement/allocation. No Sales application fee; PAIGE billing separate. Existing platform enrollment proof obligations remain.",
+      "dependency": "Platform acquisition/Billing proof obligations remain separate. Sales S3/S4 implements shared tenant-connected direct-charge hosted requests, GET-only ambiguous-outcome recovery, provider readback and atomic verified allocation into the existing invoice ledger/Rail. Implementation and CI do not establish authenticated provider or production acceptance: those remain PROOF OWED. Each current/future Solo tenant supplies its own merchant binding; no global or owner-account fallback. PayPal parity and production payment acceptance remain outstanding. Legacy destination-charge storefront is unchanged.",
+      "next_slice": "Complete Stripe authenticated sandbox/payment acceptance and PayPal canonical parity before closing S4; then shared recurring lifecycle and conversational Collections under existing Spine/Trust/durable work/Rail. No Sales application fee; PAIGE Billing remains separate. Existing platform enrollment proof obligations remain.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",

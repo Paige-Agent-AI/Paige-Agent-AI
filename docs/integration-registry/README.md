@@ -242,7 +242,7 @@ longer exists).
 | Google Search Console | marketing/public presence | `UNAVAILABLE` | prohibited | platform OAuth + tenant verified-site source and authenticated read proof required |
 | Google Business Profile | marketing/public presence | `UNAVAILABLE` | prohibited | Google project approval + tenant consent/location selection + receipts/readback required |
 | Microsoft 365 / Outlook | productivity/documents | `DEFERRED` | prohibited | not wired; sequenced after Google parity |
-| Stripe | finance/accounting/payments | `PARTIAL` | confirm | §38 Connect direct-charge posture; bind safe billing status |
+| Stripe | finance/accounting/payments | `PARTIAL` | confirm | shared Sales direct-charge request/readback/allocation implemented; authenticated provider/production acceptance and PayPal parity owed; Billing separate |
 | QuickBooks | finance/accounting/payments | `PROOF_OWED` | confirm | catalogue real capability; governed read proof |
 | Plaid | finance/accounting/payments | `PARTIAL` | read | Funding & Coaching Tools package + per-tenant Financial connection; safe-read boundary (§2/§194) |
 | SmartCredit | finance/accounting/payments | `PROOF_OWED` | read | Funding & Coaching Tools package-gated; dormant (0 producers); entitlement+connection fail-closed gate OWED (§2/§194) |

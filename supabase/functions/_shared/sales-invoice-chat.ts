@@ -1,11 +1,13 @@
+import {parseCanonicalPaymentRequestCommand,parsePaymentRequestIntent} from "./sales-payments/request-command.ts";
 import {SALES_COMMERCIAL_OFFERS_TOOL,readCommercialOffers} from './sales-commercial/offers-read.ts';
 import {SALES_DRAFT_TOOLS,SALES_DRAFT_TOOL_NAMES,dispatchCommercialDraftChat} from './sales-commercial/draft-chat.ts';
-import {SALES_INVOICE_READ_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_EMAIL_CAPABILITY,SALES_INVOICE_SETTINGS_CAPABILITY,SALES_INVOICE_PREFERENCES_READ_CAPABILITY} from './paige-spine/domains/sales_invoice.ts';
+import {SALES_INVOICE_READ_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_EMAIL_CAPABILITY,SALES_INVOICE_SETTINGS_CAPABILITY,SALES_INVOICE_PREFERENCES_READ_CAPABILITY,SALES_INVOICE_KIT_BY_ACTION} from './paige-spine/domains/sales_invoice.ts';
 import { parseSalesInvoiceCommand, SALES_INVOICE_ACTIONS, UUID } from './sales-invoice-command/contract.ts';
 import { parseCollectionCommand, COLLECTION_ACTIONS } from './sales-collections/contract.ts';
 import { CRM_APPROVAL_CANDIDATE_LIMIT, resolveCrmApprovedFingerprint } from './crm-command/approval-resolution.ts';
 
 const ACTIONS = {
+  sales_create_payment_request:'invoice.payment_request',
   sales_update_invoice_settings:'invoice.settings_update', sales_publish_invoice: 'invoice.publish', sales_record_manual_payment: 'invoice.record_manual_payment',
   sales_reverse_manual_payment: 'invoice.reverse_manual_payment', sales_void_invoice: 'invoice.void',
   billing_send_invoice: 'invoice.email_send',
@@ -27,6 +29,7 @@ function receiptInput(capability:Parameters<typeof chatInput>[0]):ReturnType<typ
 // No invoice link tool: its human-only endpoint returns a bearer token.
 export const SALES_INVOICE_TOOLS = [
  ...SALES_DRAFT_TOOLS, SALES_COMMERCIAL_OFFERS_TOOL,
+ {type:'function',function:{name:'sales_create_payment_request',description:'With exact canonical approval, create a tenant-owned hosted invoice payment request. Read the issued invoice and current version first. Full amount is server-resolved; partial/deposit requires exact requested minor amount within the outstanding balance. Hosted request is not payment; customer credentials stay with provider. Unknown outcomes require readback of this operation, never a new request. PayPal requires verified seller permission and is unavailable until its adapter is ready.',parameters:chatInput(SALES_INVOICE_KIT_BY_ACTION.sales_create_payment_request)}},
  {type:'function',function:{name:'read_sales_invoice_preferences',description:'Read current tenant invoice preferences and version. This does not change issued invoices.',parameters:SALES_INVOICE_PREFERENCES_READ_CAPABILITY.input}},
  {type:'function',function:{name:'sales_update_invoice_settings',description:'With canonical approval, update future invoice numbering and document preferences at the current settings version. Issued invoices remain unchanged.',parameters:chatInput(SALES_INVOICE_SETTINGS_CAPABILITY)}},
  {type:'function',function:{name:'read_sales_invoice',description:'Read this workspace invoice and manual receipt history. Manual settlement is a record, not a processor charge.',parameters:SALES_INVOICE_READ_CAPABILITY.input}},
@@ -79,7 +82,7 @@ function refusal(reason: Refusal): Result {
 export function salesInvoiceSafeResult(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const source = value as Record<string, unknown>;
-  const keys = ['ok','outcome','code','replayed','provider_receipt_available','delivery_confirmed','operation_id','capability','id','invoice_id','invoice_number','status','amount_total_cents','currency','version','issued_snapshot_version','issued_at','manual_recorded_cents','remaining_cents','settlement','payment_id','reversal_id','receipt_id'];
+  const keys = ['ok','outcome','code','replayed','provider_receipt_available','delivery_confirmed','operation_id','capability','id','invoice_id','invoice_number','status','amount_total_cents','currency','version','issued_snapshot_version','issued_at','manual_recorded_cents','provider_verified_cents','allocated_cents','amount_minor','provider','environment','remaining_cents','settlement','payment_id','reversal_id','receipt_id'];
   const out: Record<string, unknown> = {};
   for (const key of keys) if (source[key] === null || ['string','number','boolean'].includes(typeof source[key])) out[key] = source[key];
   if (source.invoice) out.invoice = salesInvoiceSafeResult(source.invoice);
@@ -96,7 +99,7 @@ export function salesInvoiceSafeResult(value: unknown): Record<string, unknown> 
     out.payments = source.payments.slice(-50).map(p => {
     if (!p || typeof p !== 'object') return {};
     const record = p as Record<string, unknown>;
-    return Object.fromEntries(['id','kind','amount_cents','currency','method','received_at','reverses_payment_id','created_at'].filter(k => record[k] === null || ['string','number','boolean'].includes(typeof record[k])).map(k => [k, record[k]]));
+    return Object.fromEntries(['id','kind','amount_cents','currency','method','received_at','reverses_payment_id','created_at','evidence_kind','provenance','provider','provider_verified_at'].filter(k => record[k] === null || ['string','number','boolean'].includes(typeof record[k])).map(k => [k, record[k]]));
     });
   }
   return out;
@@ -163,7 +166,10 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     const sendArgs={...ctx.args};delete sendArgs.channel;delete sendArgs.record_kind;
     const rawCommand=approvedArgs ? approvedArgs.command : {...sendArgs,action};
     const storedAction=rawCommand&&typeof rawCommand==='object'&&!Array.isArray(rawCommand)?(rawCommand as Record<string,unknown>).action:null;
-    command=typeof storedAction==='string'&&storedAction.startsWith('collection.')?parseCollectionCommand(rawCommand):parseSalesInvoiceCommand(rawCommand);
+    if(approvedArgs&&storedAction==='invoice.payment_request'){
+      const exact=parseCanonicalPaymentRequestCommand(rawCommand);
+      command={...parsePaymentRequestIntent({action:exact.action,invoice_id:exact.invoice_id,expected_version:exact.expected_version,provider:exact.provider,purpose:exact.purpose,...(exact.purpose==='full'?{}:{amount_minor:exact.amount_minor})})};
+    }else command=typeof storedAction==='string'&&storedAction.startsWith('collection.')?parseCollectionCommand(rawCommand):parseSalesInvoiceCommand(rawCommand);
     const policy=command.action.startsWith('collection.')?COLLECTION_ACTIONS[command.action as keyof typeof COLLECTION_ACTIONS]:SALES_INVOICE_ACTIONS[command.action as keyof typeof SALES_INVOICE_ACTIONS];
     if (policy !== ctx.toolName) return { ...refusal('unclaimable'), tokens };
     if (approvedArgs) {
@@ -190,7 +196,11 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     if (action === 'invoice.email_send' || action === 'invoice.sms_send') {
       for (const key of Object.keys(safe)) if (!['ok', 'outcome', 'provider_receipt_available', 'delivery_confirmed', 'replayed'].includes(key)) delete safe[key];
     }
+    if(action==='invoice.payment_request'&&typeof result.payment_url==='string'){
+      try {const u=new URL(result.payment_url);if(u.protocol==='https:'&&u.hostname==='checkout.stripe.com'&&!u.username&&!u.password&&!u.port)safe.payment_url=result.payment_url;}catch { /* Never guess a payment destination. */ }
+    }
     const completed = result.ok === true && (!['invoice.email_send','invoice.sms_send'].includes(action) || result.outcome === 'provider_accepted');
-    return { tokens, spent, content: { ...safe, success: completed, ...(completed ? result.replayed === true ? { note: 'This is the saved result of an earlier operation. Read the invoice again before reporting its current balance or status.' } : {} : { note: 'This call did not establish a completed action. Report the returned outcome; do not retry automatically.' }) } };
+    return { tokens, spent, content: { ...safe, success: completed, ...(action==='invoice.payment_request'?{note:result.outcome==='settled'?'Provider payment is confirmed and allocated. Read the invoice for its current remaining balance.':'Report the payment-request state exactly. This does not establish money received; the customer completes payment on the provider-hosted surface.'}:completed ? result.replayed === true ? { note: 'This is the saved result of an earlier operation. Read the invoice again before reporting its current balance or status.' } : {} : { note: 'This call did not establish a completed action. Report the returned outcome; do not retry automatically.' }) } };
   } catch { return { tokens, spent, content: { success: false, outcome: 'outcome_unknown', ...(['invoice.email_send','invoice.sms_send'].includes(action) ? {} : { operation_id: body.operation_id }), note: 'The invoice request has no verified response. Check the invoice before another action; do not claim success or retry automatically.' } }; }
+
 }

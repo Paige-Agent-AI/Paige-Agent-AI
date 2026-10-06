@@ -839,6 +839,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test
 
+      - name: Sales provider operation, account binding and recovery contract tests
+        if: ${{ !cancelled() }}
+        run: node node_modules/vitest/vitest.mjs run --config supabase/functions/_shared/sales-payments/vitest.config.ts
+
       - name: Invoice delivery authority and transient-link tests
         if: ${{ !cancelled() }}
         run: node node_modules/vitest/vitest.mjs run --config vitest.sales-invoice-delivery.config.ts

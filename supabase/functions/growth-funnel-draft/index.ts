@@ -78,6 +78,7 @@
 //   §19 — one brief in, a real working funnel out — the whole point of this file.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+// The Claude model id resolves through _shared/claude-models.ts, the one place it is chosen (INT-329).
 import { chatCompletionCompat } from "../_shared/claude.ts";
 import { routedChatCompletion } from "../_shared/model-router.ts";
 import { extractJson, str } from "../_shared/growth-blocks.ts";

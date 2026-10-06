@@ -51,6 +51,7 @@ import {
 } from "../_shared/media-provider/credits.ts";
 import { failMediaJob } from "../_shared/media-provider/complete.ts";
 import { linkStudioArtifact } from "../_shared/media-provider/studio-link.ts";
+// Provider result/error types are shared with the model router (_shared/provider-types.ts).
 import { NeedsConfigError } from "../_shared/provider-types.ts";
 import { stableRunId } from "../_shared/capability-record.ts";
 import {

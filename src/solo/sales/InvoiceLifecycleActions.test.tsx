@@ -8,7 +8,7 @@ const h=vi.hoisted(()=>({rpc:vi.fn(),invoke:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:h.rpc,functions:{invoke:h.invoke},auth:{getSession:async()=>({data:{session:{user:{id:'66666666-6666-4666-8666-666666666666'}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}}}));
 const tenant='11111111-1111-4111-8111-111111111111',id='22222222-2222-4222-8222-222222222222';
 let host:HTMLDivElement,root:Root;const changed=vi.fn();
-beforeEach(()=>{sessionStorage.clear();h.rpc.mockReset();h.invoke.mockReset();changed.mockReset();h.rpc.mockImplementation(async(name:string)=>({data:name==='read_sales_invoice'?invoiceLifecycleFixtureRow(id,'issued'):[{id:'77777777-7777-4777-8777-777777777777',provider:'resend',from_address:'business@example.test'}],error:null}));host=document.createElement('div');document.body.append(host);root=createRoot(host);});
+beforeEach(()=>{sessionStorage.clear();h.rpc.mockReset();h.invoke.mockReset();changed.mockReset();h.rpc.mockImplementation(async(name:string)=>({data:name==='read_sales_invoice'?invoiceLifecycleFixtureRow(id,'issued'):name==='list_sales_invoice_payment_operations'?{rows:[]}:[{id:'77777777-7777-4777-8777-777777777777',provider:'resend',from_address:'business@example.test'}],error:null}));host=document.createElement('div');document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();});
 const render=async(canManage=true,version=2)=>act(async()=>{root.render(<InvoiceLifecycleActions tenantId={tenant} invoiceId={id} version={version} canManage={canManage} onChanged={changed}/>);await Promise.resolve();});
 const button=(text:string)=>Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(b=>b.textContent===text)!;
@@ -25,3 +25,5 @@ it('a draft number is assigned on issuance and never described as previously iss
  h.rpc.mockResolvedValue({data:row,error:null});await render();
  expect(host.textContent).toContain('Draft · not issued');expect(host.textContent).toContain('Assigned when issued');expect(host.textContent).not.toContain('Previously issued invoice');expect(host.textContent).not.toContain(row.invoice_number);
 });
+
+it('request-editor abandonment is visible outside the hidden manual editor',async()=>{await render();await click('Request customer payment');await click('Send invoice');const dialog=document.querySelector('[role="alertdialog"]');expect(dialog).not.toBeNull();expect(dialog!.closest('[hidden]')).toBeNull();await click('Continue editing');expect(document.body.textContent).toContain('Prepare payment review');});

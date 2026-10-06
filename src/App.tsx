@@ -53,6 +53,7 @@ import { PlatformUpdateBanner } from "./components/PlatformUpdateBanner";
 // Eagerly load only the public landing + auth pages (likely first-paint)
 import Auth from "./pages/Auth";
 import InvoiceDocument from "./pages/InvoiceDocument";
+import PaymentReturn from "./pages/PaymentReturn";
 const OperatorEntry = lazyWithReload(() => import("@/operator/OperatorEntry"));
 const JoinPlatform = lazyWithReload(() => import("./pages/JoinPlatform"));
 const McpOAuthCallback = lazyWithReload(() => import("./pages/McpOAuthCallback"));
@@ -200,7 +201,7 @@ function SignupRedirect() {
 const RenderFrame = lazyWithReload(() => import("./pages/public/RenderFrame"));
 const isRenderFramePath = (pathname: string) => /^\/render-frame\/?$/i.test(pathname);
 
-const App = () => /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : isRenderFramePath(window.location.pathname) ? (
+const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <PaymentReturn /> : /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : isRenderFramePath(window.location.pathname) ? (
   <React.Suspense fallback={null}><RenderFrame /></React.Suspense>
 ) : (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>

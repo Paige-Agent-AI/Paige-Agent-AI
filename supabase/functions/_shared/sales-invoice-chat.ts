@@ -1,5 +1,6 @@
 import {parseCanonicalPaymentRequestCommand,parsePaymentRequestIntent} from "./sales-payments/request-command.ts";
 import {SALES_COMMERCIAL_OFFERS_TOOL,readCommercialOffers} from './sales-commercial/offers-read.ts';
+import {SALES_COMMERCIAL_PACKAGE_TOOL,readCommercialPackage} from './sales-commercial/package-read.ts';
 import {SALES_DRAFT_TOOLS,SALES_DRAFT_TOOL_NAMES,dispatchCommercialDraftChat} from './sales-commercial/draft-chat.ts';
 import {SALES_INVOICE_READ_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_EMAIL_CAPABILITY,SALES_INVOICE_SETTINGS_CAPABILITY,SALES_INVOICE_PREFERENCES_READ_CAPABILITY,SALES_INVOICE_KIT_BY_ACTION} from './paige-spine/domains/sales_invoice.ts';
 import { parseSalesInvoiceCommand, SALES_INVOICE_ACTIONS, UUID } from './sales-invoice-command/contract.ts';
@@ -28,7 +29,7 @@ function invoiceSendInput(){const input=chatInput(SALES_INVOICE_EMAIL_CAPABILITY
 function receiptInput(capability:Parameters<typeof chatInput>[0]):ReturnType<typeof chatInput>{const input=chatInput(capability);return {...input,properties:{...input.properties,record_kind:{type:'string',enum:['managed','imported'],description:'Use imported only for a recorded historical obligation read from Collections.'},...('currency' in input.properties?{currency:{type:'string',pattern:'^[a-z]{3}$',description:'Exact currency from the canonical obligation; managed invoices support USD.'}}:{})}};}
 // No invoice link tool: its human-only endpoint returns a bearer token.
 export const SALES_INVOICE_TOOLS = [
- ...SALES_DRAFT_TOOLS, SALES_COMMERCIAL_OFFERS_TOOL,
+ ...SALES_DRAFT_TOOLS, SALES_COMMERCIAL_OFFERS_TOOL, SALES_COMMERCIAL_PACKAGE_TOOL,
  {type:'function',function:{name:'sales_create_payment_request',description:'With exact canonical approval, create a tenant-owned hosted invoice payment request. Read the issued invoice and current version first. Full amount is server-resolved; partial/deposit requires exact requested minor amount within the outstanding balance. Hosted request is not payment; customer credentials stay with provider. Unknown outcomes require readback of this operation, never a new request. PayPal requires verified seller permission and is unavailable until its adapter is ready.',parameters:chatInput(SALES_INVOICE_KIT_BY_ACTION.sales_create_payment_request)}},
  {type:'function',function:{name:'read_sales_invoice_preferences',description:'Read current tenant invoice preferences and version. This does not change issued invoices.',parameters:SALES_INVOICE_PREFERENCES_READ_CAPABILITY.input}},
  {type:'function',function:{name:'sales_update_invoice_settings',description:'With canonical approval, update future invoice numbering and document preferences at the current settings version. Issued invoices remain unchanged.',parameters:chatInput(SALES_INVOICE_SETTINGS_CAPABILITY)}},
@@ -111,6 +112,7 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
   if (!ctx.args || typeof ctx.args !== 'object' || Array.isArray(ctx.args) || Object.prototype.hasOwnProperty.call(ctx.args, 'action')) return { content: { success: false, error: 'Invalid invoice request.' } };
   if(SALES_DRAFT_TOOL_NAMES.has(ctx.toolName))return dispatchCommercialDraftChat(ctx,deps,{operationId:salesInvoiceOperationId,safeResult:salesInvoiceSafeResult});
   if(ctx.toolName==='read_sales_commercial_offers')return readCommercialOffers(ctx.tenantId,ctx.args,deps.caller);
+  if(ctx.toolName==='read_sales_commercial_package')return readCommercialPackage(ctx.tenantId,ctx.args,deps.caller);
   if(ctx.toolName==='read_sales_invoice_preferences'){
     if(Object.keys(ctx.args).length)return {content:{success:false,error:'Invalid invoice preferences request.'}};
     try{const reply=await deps.caller.rpc('read_sales_invoice_preferences',{_expected_tenant_id:ctx.tenantId});const p=reply.data as Record<string,unknown>|null;

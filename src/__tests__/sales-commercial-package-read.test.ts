@@ -31,7 +31,7 @@ describe('canonical commercial package caller-JWT read',()=>{
   const rpc=vi.fn().mockRejectedValue(Error('private-secret-marker raw provider payload'));
   const result=await readCommercialPackage(tenant,{invoice_id:invoice},{rpc});expect(result.content.success).toBe(false);expect(JSON.stringify(result)).not.toContain('private-secret-marker');
  });
- it('does not claim a Chat binding or grant package authority',()=>{
-  expect(SALES_COMMERCIAL_PACKAGE_SPINE.chatBinding).toBe('UNAVAILABLE');expect(SALES_COMMERCIAL_PACKAGE_SPINE.action?.approvalAuthority).toBe('none');expect(SALES_COMMERCIAL_PACKAGE_SPINE.action?.chatTool).toBeUndefined();
+ it('declares the bound read without granting package authority',()=>{
+  expect(SALES_COMMERCIAL_PACKAGE_SPINE.chatBinding).toBe('LIVE');expect(SALES_COMMERCIAL_PACKAGE_SPINE.action?.approvalAuthority).toBe('none');expect(SALES_COMMERCIAL_PACKAGE_SPINE.action?.chatTool).toBe('read_sales_commercial_package');
  });
 });

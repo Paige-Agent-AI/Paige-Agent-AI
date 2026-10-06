@@ -7835,6 +7835,44 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     told(r20).includes("The person accepted the step you offered") && c20.rows.length === 1 && terminalOf(r20)?.state === "WAIT_APPROVAL",
     JSON.stringify({ rows: c20.rows.length, terminal: terminalOf(r20) }));
 
+  // 43.21 (review round 5, BLOCKING-1) — an offer to EXPLAIN or DRAFT is fulfilled by the prose itself. It
+  // is not held to a tool: the answer stands as written, after one call, never replaced by the server's
+  // "wasn't able to complete" sentence — whether or not it ends on a follow-up question.
+  const EXPLAIN = "Approvals work like this: anything that writes to your records comes to you as a card first, and reads run freely. Your Trust settings decide how much runs on its own. Want me to open those settings for you?";
+  const EXPLAIN_FLAT = "Approvals work like this: anything that writes to your records comes to you as a card first, and reads run freely.";
+  const DRAFT = "Here's a draft:\n\nSubject: Quick check-in\n\nHi Dana, just checking you got the link. Happy to hop on a call.\n\nWant me to tweak the tone?";
+  for (const [id, offer, answer] of [
+    ["43.21a", "That's the pipeline.\n\nWant me to walk you through how approvals work here?", EXPLAIN],
+    ["43.21b", "That's the pipeline.\n\nWant me to walk you through how approvals work here?", EXPLAIN_FLAT],
+    ["43.21c", "Dana hasn't replied in a week.\n\nWant me to draft a short follow-up you can send her?", DRAFT],
+  ]) {
+    const s21 = makeThreadStore(THREADS), c21 = makeConfirmStore(), db21 = crmDb();
+    seedOffer(s21, THREAD_FRESH, { history: 1, offer });
+    const r21 = await turn(s21, c21, db21, { text: "sure", threadId: THREAD_FRESH, script: [answer, answer, answer, answer] });
+    const saved21 = savedAssistant(s21, THREAD_FRESH);
+    assert(`${id} an accepted offer to explain/draft: the prose answer stands after one call, nothing is replaced`,
+      streamed(r21).length === 1 && saved21?.content === answer && contentOf(r21).includes(answer.slice(0, 40))
+        && told(r21).includes("THE PERSON IS ANSWERING YOUR OFFER") && !told(r21).includes("The person accepted the step you offered")
+        && terminalOf(r21)?.state !== "LIMIT_REACHED" && c21.rows.length === 0,
+      JSON.stringify({ calls: streamed(r21).length, terminal: terminalOf(r21)?.state, saved: String(saved21?.content).slice(0, 80) }));
+  }
+
+  // 43.22 (review round 5, SHOULD-FIX-1) — on an accepted act, saying the step can no longer be done as
+  // offered ends the turn as said: one call, no continuation, the sentence saved.
+  for (const [i, ref] of [
+    "That deal no longer exists, so there's nothing to link.",
+    "There's no deal by that name anymore.",
+    "Unfortunately that deal was deleted, so I'll leave it.",
+    "Looks like Dana already linked it herself, nothing to do.",
+  ].entries()) {
+    const s22 = makeThreadStore(THREADS), c22 = makeConfirmStore(), db22 = crmDb();
+    seedOffer(s22, THREAD_FRESH, { history: 1 });
+    const r22 = await turn(s22, c22, db22, { text: "sure", threadId: THREAD_FRESH, script: [ref, ref, ref, ref] });
+    assert(`43.22.${i + 1} an accepted act that can no longer be done ends as said: ${ref}`,
+      streamed(r22).length === 1 && savedAssistant(s22, THREAD_FRESH)?.content === ref && c22.rows.length === 0,
+      JSON.stringify({ calls: streamed(r22).length, terminal: terminalOf(r22)?.state }));
+  }
+
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.
   const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();

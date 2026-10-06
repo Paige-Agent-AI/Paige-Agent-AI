@@ -8,6 +8,8 @@
 // own turns, verbatim. The handler's IO is driven end to end in scripts/client-memory-authz (group 43).
 import { assert, assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
 import {
+  NO_LONGER_POSSIBLE,
+  offerIsAct,
   acceptedOfferNote,
   CLAIM_CORRECTION,
   ambiguousOfferNote,
@@ -369,4 +371,47 @@ Deno.test("production replay at the round-4 head — ordinary questions are not 
     "Is approval required for this?", "Are approval controls set up in your account?"]) {
     assertEquals(unbackedClaim(s, N), "authority", s);
   }
+});
+
+Deno.test("review round 5 — only a platform act is held to a tool; over-broad authority shapes are quiet", () => {
+  // An offer whose step only a tool can do, vs one the prose itself fulfils.
+  for (const o of ["Want me to send that approval card now so we actually close this loop?", "Want me to link the deal to her contact?",
+    "Should I add a follow-up task for Dana due Friday?", "Want me to go ahead?", "Say the word and I'll link it.",
+    "Want me to draft the follow-up and send it to her?", "Should I get that over to Dana now?", "Want me to schedule the call for Thursday?"]) {
+    assert(offerIsAct(o), o);
+  }
+  for (const o of ["Want me to walk you through how approvals work here?", "Want me to draft a short follow-up you can send her?",
+    "Want me to break down the numbers?", "Should I explain what each stage means?", "Want me to summarise the thread?"]) {
+    assert(!offerIsAct(o), o);
+  }
+  // "Can no longer be done" ends an accepted act; an ordinary answer does not.
+  for (const t of ["That deal no longer exists, so there's nothing to link.", "There's no deal by that name anymore.",
+    "Unfortunately that deal was deleted, so I'll leave it.", "Looks like Dana already linked it herself.",
+    "The record changed since I offered."]) assert(NO_LONGER_POSSIBLE.test(t), t);
+  for (const t of ["On it. Want me to start the invoice after?", "Here's what I found on Dana's deal."]) assert(!NO_LONGER_POSSIBLE.test(t), t);
+
+  const N = { cardMinted: false, standingCard: false };
+  // Narrated waiting cards the replay and review found, with no card minted.
+  for (const s of ["All set: the approval request is waiting for you.", "You've got an approval card waiting for the link."]) {
+    assertEquals(unbackedClaim(s, N), "card", s);
+  }
+  assertEquals(unbackedClaim("You've got an approval card waiting for the link.", { cardMinted: true, standingCard: false }), null);
+  // Ordinary questions near "on/off/set up", reassurances, and navigation are not authority claims.
+  for (const s of ["Do you want to approve it on the card above?", "Have you approved the card yet, or should I hold off?",
+    "Are you happy with the approval card from earlier, or should I set up another?", "Is the approval for Dana's link still on your list?",
+    "I'll make sure nothing goes out without your approval.", "I'll run it by you first, nothing moves without your OK.",
+    "I'll send nothing without your approval.", "I'll take you directly to the approval card.",
+    "I can link you directly to the card above to approve."]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+  }
+  // …while the real ones still read as PAIGE deciding approval.
+  for (const s of ["Are approvals enabled in your workspace?", "Do you have approvals turned on?", "Is approval required for this?",
+    "Does your workspace have approval controls on?", "Are your approvals off right now?", "Is the approval gate turned off for tasks?",
+    "Have you turned approvals off?", "Is your Trust Compass set to auto?", "I can send it without your approval since it's small.",
+    "If approvals are off, I'll run it directly.", "This doesn't need a card, so I'll send it now."]) {
+    assertEquals(unbackedClaim(s, N), "authority", s);
+  }
+  // The act note names ask_choices on the first round; the prose note does not ask for a tool.
+  assert(acceptedOfferNote("Want me to link it?", "yes").includes("ask_choices"));
+  assert(!acceptedOfferNote("Want me to explain it?", "yes", { act: false }).includes("calling its tool"));
 });

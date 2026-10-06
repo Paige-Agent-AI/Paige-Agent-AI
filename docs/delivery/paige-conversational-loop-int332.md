@@ -198,6 +198,40 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5e. Independent review — round 5 (non-author, heads `14f3ccfb1` and `2652c1e04`): FIX_FIRST, fixed
+
+B1 and B2 from round 4 were confirmed closed, with no new execution path, no leak outside eligible turns, and
+`ask_choices` always on offer when a continuation asks for it. One blocking regression from round 4's structural
+rule:
+
+- **BLOCKING-1: true answers were replaced on accepted offers that the prose itself fulfils.** "Want me to walk
+  you through how approvals work?" or "…draft a short follow-up you can send her?" counted as action. The
+  explanation or draft, ending on its natural "Want me to tweak the tone?", was continued three times and then
+  overwritten by the "wasn't able to complete" sentence. At `0470b4cae` the same probes ended FINAL after one
+  call. **Fix:** `offerIsAct` holds an accepted offer to tool / card / `ask_choices` / refusal only when it
+  names a platform act: the offered verb is link, send, add, schedule…, or it is a generic "go ahead" that
+  defers to an act named before it. Every other accepted offer still gets the reasoning tier and a note telling
+  PAIGE to give the answer in full, and its prose stands. 43.21a–c are red with the fix off.
+- **SHOULD-FIX-1: "can no longer be done" phrasings were not terminal.** Examples: "That deal no longer exists",
+  "There's no deal…", "…was deleted", "…already linked". On an accepted act these now end the turn as said
+  (`NO_LONGER_POSSIBLE`). 43.22.1–4 are red with the fix off.
+- **SHOULD-FIX-2: two narrated waiting cards were missed.** "the approval request is waiting for you" and "an
+  approval card waiting…" are now claims when no card was minted. *Not changed:* on an accepted act, a read
+  still counts as acting for C1. The claim guard covers the narration that read-then-prose could carry, and
+  treating reads as non-terminal would stretch honest read-and-answer turns. Recorded.
+- **SHOULD-FIX (authority shapes): over-matches in three rules.** "Do you want to approve it on the card
+  above?", "…or should I set up another?" and "Is the approval for Dana's link still on your list?" no longer
+  count, because the approval-question rule now needs approval itself to carry the state ("approvals enabled",
+  "turned approvals off", "approval required", "Trust Compass set to auto"). The reassurances "nothing goes out
+  without your approval" and "I'll send nothing without…" are not bypasses. "I'll take you directly to the
+  approval card" is navigation, not a way around approval.
+- **NITs:** "would you rather" is not read as an offer, so that turn takes the ordinary path, which is safe and
+  left as is. The first-round note for an act now names `ask_choices`.
+
+Every round-5 probe is a unit or harness assertion: the "review round 5" Deno test and 43.21–43.22. Harness
+850/0. Deno 19/19, with all 232 round-4 fixtures still holding. `deno check` gives 10 diagnostics, identical to
+base.
+
 ### 5d. Independent review — rounds 3 and 4: FIX_FIRST each, fixed
 
 **Round 3** (on `c8881dcb0`) showed that round 2's clause-wide exceptions had regressed it. A condition anywhere

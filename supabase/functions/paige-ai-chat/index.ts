@@ -232,7 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
-import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, NO_LONGER_POSSIBLE, offerIsAct, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -5934,7 +5934,7 @@ BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal req
 
 YOUR OWN WORDS ARE NEVER EVIDENCE — a claim that something happened (created, updated, deleted, archived, restored, sent, enrolled, moved, connected, completed) requires a real result, receipt, or verified readback from a tool call in THIS conversation. Your own words in a PREVIOUS turn are never evidence that the action occurred — if a prior turn claimed something and no tool result or outcome card backs it, treat that claim as unverified and correct course rather than building on it. The test is always: "Is there a machine result in this conversation that proves this happened?" If not, you do not claim it, and you do not treat your earlier claim as proof.
 
-AN ACCEPTED OFFER IS THE TASK — when your last message offered one specific action and the person accepts it ("yes", "sure", "go ahead", "may as well"), carry it out in this turn by calling its tool; when it needs their approval, the tool is what puts the card in front of them. Never say a card is coming, ready, sent or waiting unless a tool in this turn returned one. If you offered more than one thing, ask which before acting.
+AN ACCEPTED OFFER IS THE TASK — when your last message offered one specific action and the person accepts it ("yes", "sure", "go ahead", "may as well"), carry it out in this turn by calling its tool; when it needs their approval, the tool is what puts the card in front of them. If what you offered was an answer — an explanation, a breakdown, a draft for them to use — give it in full instead. Never say a card is coming, ready, sent or waiting unless a tool in this turn returned one. If you offered more than one thing, ask which before acting.
 
 APPROVAL IS NOT YOURS TO DECIDE — whether an act needs the person's approval is decided by the platform when you call its tool (the act's risk, the workspace's Trust settings, the person's role, the workspace). Never guess it from a setting, never ask whether approvals are on, and never offer to skip a card or run something directly. If a card the person expected did not appear, call the tool again rather than describing one.
 
@@ -9040,6 +9040,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     const offerEligible = callerTier !== "client" && approvedConfirmations.size === 0 && !attachedDocument && !answerBinding;
     const offerAccepted = foreground.offer.kind === "accepted" && offerEligible;
     const offerAmbiguous = foreground.offer.kind === "ambiguous" && offerEligible;
+    // Only an accepted PLATFORM ACT is held to tool / card / ask_choices / refusal. An offer to explain or
+    // draft is fulfilled by the prose itself (review round 5).
+    const offerAct = offerAccepted && foreground.offer.kind === "accepted" && offerIsAct(foreground.offer.offer);
     if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
     const substantiveTurn = offerAccepted
       || (!!lastUserMessage && substantiveTurnIntent(String(lastUserMessage.content ?? "")));
@@ -9489,7 +9492,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (resumeCalls.length === 0 && !answerResume && foreground.offer.kind !== "none" && (offerAccepted || offerAmbiguous)) {
       const reply = String(lastUserMessage?.content ?? "");
       aiMessages.push({ role: "system", content: offerAccepted
-        ? acceptedOfferNote(foreground.offer.offer, reply)
+        ? acceptedOfferNote(foreground.offer.offer, reply, { act: offerAct })
         : ambiguousOfferNote(foreground.offer.offer, reply) });
     }
     const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
@@ -15933,7 +15936,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const isActionIntent = (() => {
         if (callerTier === "client") return false; // client seats' tools are deny-by-default
         // INT-332 — accepting PAIGE's own single offer is a request for that action, in any words.
-        if (offerAccepted && resumeCalls.length === 0 && !answerResume) return true;
+        if (offerAct && resumeCalls.length === 0 && !answerResume) return true;
         const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
         const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
         if (!text || text.length < 3) return false;
@@ -16524,10 +16527,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
-            const acceptedTurn = offerAccepted && resumeCalls.length === 0 && !answerResume;
+            const acceptedTurn = offerAct && resumeCalls.length === 0 && !answerResume;
             const proseTerminal = typeof finalAssistantText === "string"
               && (acceptedTurn
-                ? PROSE_REFUSAL_RE.test(finalAssistantText)
+                ? (PROSE_REFUSAL_RE.test(finalAssistantText) || NO_LONGER_POSSIBLE.test(finalAssistantText))
                 : (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?")));
             const signalTerminal = totalToolCalls > 0
               || queuedApprovals.length > 0

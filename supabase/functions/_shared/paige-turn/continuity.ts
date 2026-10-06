@@ -78,6 +78,28 @@ const LEADS_WITH_ALTERNATIVE = /^(?:or|alternatively|option\s+[a-z0-9]+|either(?
 const GENERIC_OFFER = /^(?:$|[?.!]|go ahead|start|get started|proceed|do (?:it|that|this|them|those|both)|kick (?:it|this|that) off|move forward|get going|take care of (?:it|that|this)|handle (?:it|that|this))/i;
 const LIST_MARKER = /^\s*(?:[-*\u2022]|\d+[.)])\s+/;
 
+// An offer whose step is a PLATFORM ACT — something only a tool can do (link, send, add, schedule…). Only
+// those are held to "a tool, a card, a question through ask_choices, or a refusal": an offer to explain, walk
+// through, summarise or draft something in the reply is fulfilled BY the prose, and holding it to a tool
+// replaced true answers with the server's failure sentence (review round 5, BLOCKING-1). A verb not listed
+// here is not an act — the turn then takes the ordinary path, as before INT-332.
+const ACT_VERB = /^(?:(?:and|then)\s+)?(?:i'?ll\s+|i will\s+)?(?:just\s+|go ahead and\s+|now\s+)?(?:link|send|add|create|schedule|reschedule|book|move|update|change|set up|archive|delete|remove|invite|publish|post|assign|tag|log|mark|enroll|launch|email|text|attach|connect|cancel|start|file|save|apply|charge|refund|close|reopen|merge|rename|import|upload|fire off|queue|submit|put (?:it|that|this|them|those|her|him|the \w+) (?:on|in|into)|get (?:it|that|this|them|those|the \w+) (?:over|out|sent|set up|scheduled|booked|added|linked))\b/i;
+const ACT_LATER = /\b(?:and|then)\s+(?:then\s+)?(?:send|link|add|create|schedule|book|publish|post|email|text|move|update|archive|delete|invite|enroll|submit|queue)\b/i;
+
+/** Whether the offer PAIGE closed on names a platform act (see ACT_VERB), or defers to one she named before it. */
+export function offerIsAct(offer: string): boolean {
+  if (typeof offer !== "string") return false;
+  const sentence = strip(offer);
+  OFFER_PHRASE.lastIndex = 0;
+  const m = OFFER_PHRASE.exec(sentence);
+  if (!m) return false;
+  const rest = sentence.slice(m.index + m[0].length).trim();
+  return GENERIC_OFFER.test(rest) || ACT_VERB.test(rest) || ACT_LATER.test(rest);
+}
+
+/** On an accepted act, prose that says the step can no longer be done as offered — a terminal answer. */
+export const NO_LONGER_POSSIBLE = /\bthere(?:'s| is| are)\s+no(?:thing)?\b|\bno longer (?:exists?|there|available|possible|needed)\b|\b(?:was|were|has been|have been|got)\s+(?:deleted|removed|archived|merged)\b|\balready (?:linked|done|sent|added|created|scheduled|booked|set up|in place|there|on (?:it|the|her|his|their))\b|\bnothing (?:left )?to (?:link|do|send|add|approve|change|update)\b|\b(?:changed|moved) since\b/i;
+
 const sentencesOfParagraph = (p: string) => p.split(/\n+/).flatMap((line) => line.replace(LIST_MARKER, "").split(/(?<=[.!?])\s+/))
   .map((x) => x.trim()).filter(Boolean);
 
@@ -216,8 +238,13 @@ export function readForeground(turns: ForegroundTurn[] | null | undefined, reply
 const quote = (s: string, n: number) => s.replace(/[«»]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 
 /** The note PAIGE reads on a turn that accepts her single offer. */
-export function acceptedOfferNote(offer: string, reply: string): string {
-  return `THE PERSON IS ANSWERING YOUR OFFER. Your previous message ended: «${quote(offer, 400)}». They replied: «${quote(reply, 200)}» — that accepts it, so the step you offered is this turn's task. Carry it out now by calling its tool, resolving anything it needs with current reads first. When the step needs their approval, calling the tool is what puts the approval card in front of them; describing a card does not create one, so never say a card is coming, ready or sent unless a tool in this turn returned one. If you offered a sequence, start with its first step. If it can no longer be done as offered — the record changed, the tool refuses, or a fact is missing — say so plainly or ask the one question you need. Their reply approves nothing by itself: the platform decides whether the step needs a card.`;
+export function acceptedOfferNote(offer: string, reply: string, opts: { act?: boolean } = {}): string {
+  const head = `THE PERSON IS ANSWERING YOUR OFFER. Your previous message ended: «${quote(offer, 400)}». They replied: «${quote(reply, 200)}» — that accepts it, so what you offered is this turn's task.`;
+  const never = "Describing an approval card does not create one, so never say a card is coming, ready or sent unless a tool in this turn returned one. Their reply approves nothing by itself: the platform decides whether a step needs a card.";
+  if (opts.act === false) {
+    return `${head} Give it now, in full, in this reply. If part of it needs a record changed or something sent, call that tool. ${never}`;
+  }
+  return `${head} Carry it out now by calling its tool, resolving anything it needs with current reads first. When the step needs their approval, calling the tool is what puts the approval card in front of them. If you offered a sequence, start with its first step. If you need one fact from them first, ask it with ask_choices — a question in prose leaves the step undone. If it can no longer be done as offered — the record changed or the tool refuses — say so plainly. ${never}`;
 }
 
 /** The note PAIGE reads when the offer she closed on named more than one action. */
@@ -251,6 +278,8 @@ const NON_APPROVAL_CARD =
   /\b(?:credit|debit|payment|contact|business|report|lead|gift|loyalty|summary|outcome|choice|proposal|score)\s+cards?\b|\bscorecards?\b|\bcards?\s+(?:on file|ending|number|details|holder|reader|payments?)\b|\bcards?\b[^.!?]{0,30}\bin the\b[^.!?]{0,20}\b(?:column|board|lane|stage)\b|\bcards?\b[^.!?]{0,30}\bto stripe\b|\b(?:pay|paid|paying|charge[ds]?)\s+(?:by|with|via|on)\s+(?:a\s+)?card\b|\bcards?\s+(?:or|and)\s+(?:bank|ach|transfer)\b/i;
 // ASSERTED — the card is there or on its way NOW. A condition does not excuse these.
 const CARD_ASSERTED = [
+  // "the approval request is waiting for you", "You've got an approval card waiting" (round 5)
+  /\b(?:approval (?:card|request)|needs your ok card)s?(?:'s| is| are)?\s+(?:now\s+)?(?:waiting|pending|sitting)\b/i,
   /^(?:the |your |an? )?(?:approval |needs your ok )?card(?:'s| is| has been| was)? (?:now )?(?:sent|up|live|ready|created|queued|staged|on its way|waiting)\b/i,
   /\b(?:the|your|this|that|an?)\s+(?:approval\s+|needs your ok\s+)?card(?:'s| is| has been| was)? (?:now )?(?:sent|up|live|ready|created|queued|staged|on its way)\b/i,
   /\b(?:sent|created|staged|queued|raised|submitted|put up|teed up|pulled up|fired off)\s+(?:over\s+)?(?:you\s+)?(?:the|a|an|your|that|this)\s+(?:(?:new|second|another|next|fresh)\s+)?(?:approval\s+|needs your ok\s+)?(?:card|request)\b/i,
@@ -295,17 +324,18 @@ const HABITUAL = /\b(?:whenever|every time|each time|any ?time|always|for anythi
 // offering a write that goes around the card.
 const SELF = "(?:i can(?!'?t|not)|i could(?!n'?t)|i'?ll|i will(?! not)|i'?d|i would(?!n'?t)|we can(?!'?t|not)|we could(?!n'?t)|we'?ll|want me to|should i|let me|i'?m able to)";
 // "I can't send it without your approval", "I'd never publish without approval" — the truth, not a bypass.
-const NEGATED_ACT = /\b(?:can'?t|cannot|couldn'?t|won'?t|wouldn'?t|never|not|don'?t|doesn'?t)\b/i;
+const NEGATED_ACT = /\b(?:can'?t|cannot|couldn'?t|won'?t|wouldn'?t|never|not|don'?t|doesn'?t)\b|\bnothing (?:goes|moves|runs|gets|is|will|happens|leaves|ships)\b|\b(?:send|publish|do|run|move) nothing\b|\bmake sure nothing\b/i;
 const WRITE_VERB = "(?:send|publish|push|post|run|execute|apply|create|link|update|delete|email|text|launch|move|book|charge|enroll|archive|make|pull the trigger|go ahead)";
 const AUTHORITY_CLAIM = [
   new RegExp(`\\bif (?:your |the )?(?:approvals?|approval (?:controls?|settings?|gate)|trust (?:compass|settings?|level))\\b[^.!?\\n]{0,40}\\b(?:off|disabled|turned off|switched off|not (?:on|enabled|required|needed|turned on))\\b[^.!?\\n]{0,40}(?:\\b${SELF}\\b|\\bjust say\\b|\\bsay the word\\b|\\b(?:running|run|doing|do) it directly\\b)`, "i"),
   new RegExp(`\\b(?:your |the )?approvals? (?:are|is|look|looks|seem|seems)\\s+(?:to be\\s+)?(?:off|disabled|turned off|switched off)\\b[^.!?\\n]{0,30}(?:\\b(?:so|then)\\s+|,\\s*)${SELF}\\b|\\b(?:since|because|as|now that|if you'?ve|if you have)\\b[^.!?\\n]{0,30}\\b(?:approvals?\\b[^.!?\\n]{0,15}\\b(?:off|disabled)|(?:disabled|turned off) (?:your )?approvals?)\\b[^.!?\\n]{0,30}${SELF}\\b`, "i"),
   // deciding a card is not needed, then acting on it: "This doesn't need a card, so I'll send it now."
   new RegExp(`\\b(?:this|that|it)\\s+(?:doesn'?t|does not|won'?t|will not)\\s+need\\s+(?:a|an|the|your|any)\\s+(?:approval card|card|approval|sign[- ]off)\\b[^.!?\\n]{0,20}(?:\\bso\\s+|,\\s*)${SELF}\\b`, "i"),
-  // Asking whether approvals are on. The question must be ABOUT approval: either approval is the subject
-  // ("Are approvals enabled?") or it is named after "you/your workspace" ("Do you have approvals on?").
-  // "What are you working on?" is not (prod replay 2026-10-06: 7 false hits when approval was optional).
-  /\b(?:do(?:es)?|is|are|have|has)\s+(?:(?:you|your (?:workspace|account|business)|the workspace)\b[^.!?\n]{0,40}\bapprov\w*|(?:your |the )?(?:approvals?|approval controls?))\b[^.!?\n]{0,40}\b(?:enabled|on|off|turned on|turned off|set up|required)\b[^.!?\n]*\?/i,
+  // Asking whether approvals are on. Approval itself must carry the state — "approvals enabled", "approval
+  // controls on", "turned approvals off", "approval required", "Trust Compass set to auto" — not merely sit
+  // near "on"/"off"/"set up" ("What are you working on?", "approve it on the card above?", "…or should I
+  // set up another?" are ordinary questions; prod replay + review round 5).
+  /\b(?:do(?:es)?|is|are|have|has)\b[^.!?\n]{0,60}?\b(?:approvals?(?:\s+(?:controls?|settings?|gate|requirements?))?|trust (?:compass|level|settings?))\s+(?:(?:is|are)\s+)?(?:still\s+|currently\s+|even\s+|now\s+)?(?:enabled|disabled|on|off|turned (?:on|off)|switched (?:on|off)|required|needed|set up|set to \w+)\b[^.!?\n]*\?/i,
   new RegExp(`\\b${SELF}\\b[^.!?\\n]{0,60}(?<!\\b(?:the|a|an|this|that|your|his|her|their|my|our)\\s)\\b${WRITE_VERB}\\w*\\b[^.!?\\n]{0,50}\\b(?:without (?:the|a|an|any|your) (?:approval\\s+)?(?:card|approval|ok|sign[- ]off)|without approval|(?:no|without a) card needed|no approval (?:needed|required))\\b`, "i"),
   new RegExp(`\\b${SELF}\\s+(?:just\\s+)?(?:skip|bypass|go around|get around)\\s+(?:the |your )?(?:approvals?|cards?)\\b`, "i"),
 ];
@@ -317,6 +347,7 @@ const DIRECTLY_AROUND_APPROVAL = (s: string) =>
   && /\b(?:approv\w*|card|sign[- ]off)\b/i.test(s)
   && !/\b(?:can'?t|cannot|won'?t|not|never|isn'?t|aren'?t)\b/i.test(s)
   && !new RegExp(`\\b${SELF}\\s+(?:just\\s+)?(?:read|look|see|check|view|pull|query|search|find|access|reach)\\b[^.!?\\n]{0,40}\\bdirectly\\b`, "i").test(s)
+  && !/\b(?:take|link|bring|point|jump|navigate|send)\s+you\s+(?:straight\s+|right\s+)?directly\b|\bdirectly to (?:the|your|that|this) (?:approval card|card|approvals?|needs your ok)\b/i.test(s)
   && !/\b(?:once|after|when|as soon as) you approve\b|\bapprove (?:it|the card|that|this)?\s*(?:and|,)\s*(?:then\s+)?i'?ll\b/i.test(s);
 
 const sentencesOf = (text: string) => strip(text).split(/(?<=[.!?])\s+|\n+/).map((x) => x.trim()).filter(Boolean);

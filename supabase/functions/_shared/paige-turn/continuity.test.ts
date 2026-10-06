@@ -415,3 +415,146 @@ Deno.test("review round 5 — only a platform act is held to a tool; over-broad 
   assert(acceptedOfferNote("Want me to link it?", "yes").includes("ask_choices"));
   assert(!acceptedOfferNote("Want me to explain it?", "yes", { act: false }).includes("calling its tool"));
 });
+
+Deno.test("review round 6 — every act offer is held by default; only answers in prose are exempt", () => {
+  // The independent reviewer's 83 realistic act offers. A miss here is the production strand again.
+  const acts: string[] = [
+ "Want me to send that approval card now so we actually close this loop?",
+ "Want me to get that sent over to her?",
+ "Should I fire that off to Dana?",
+ "Want me to take care of linking it?",
+ "Want me to put the card in front of you?",
+ "Want me to queue it up?",
+ "Want me to set that up for her?",
+ "Want me to go ahead and link them?",
+ "Want me to move the deal to Proposal Sent?",
+ "Want me to move Dana's deal to the next stage?",
+ "Should I create an invoice for $500?",
+ "Want me to enroll her in the onboarding sequence?",
+ "Want me to update her email to dana@acme.com?",
+ "Want me to tag her as VIP?",
+ "Want me to book a meeting with her Thursday at 2?",
+ "Want me to pop that on her record?",
+ "Want me to raise the approval card?",
+ "Want me to tee up the approval card?",
+ "Want me to pull the trigger on that?",
+ "Want me to make that change?",
+ "Want me to make the change for you?",
+ "Want me to set a reminder for Friday?",
+ "Want me to drop a note on her file?",
+ "Want me to put together the invoice and send it?",
+ "Want me to draft the invoice?",
+ "Want me to draft and send the follow-up?",
+ "Want me to write up the follow-up email and send it to her?",
+ "Want me to reach out to Dana?",
+ "Want me to follow up with Dana?",
+ "Want me to ping Dana?",
+ "Want me to message her?",
+ "Want me to notify the team?",
+ "Want me to add her to the pipeline?",
+ "Want me to convert her to a client?",
+ "Want me to close out the deal as won?",
+ "Want me to mark it as won?",
+ "Want me to set her stage to Qualified?",
+ "Want me to bump the deal to Negotiation?",
+ "Want me to reassign it to Sam?",
+ "Want me to hand this to Sam?",
+ "Want me to lock that in?",
+ "Want me to save that to her profile?",
+ "Want me to record that in her notes?",
+ "Want me to note that on her contact?",
+ "Want me to create a task for that?",
+ "Want me to issue the refund?",
+ "Want me to process the refund?",
+ "Want me to send her the payment link?",
+ "Want me to generate the invoice?",
+ "Want me to build the invoice?",
+ "Want me to spin up the campaign?",
+ "Want me to kick off the onboarding sequence?",
+ "Want me to finalize it?",
+ "Want me to confirm the booking?",
+ "Want me to sync it to her calendar?",
+ "Want me to get the card in front of you?",
+ "Want me to get that approval card to you now?",
+ "Shall I go ahead and get it done?",
+ "Should I just do that now?",
+ "Want me to handle the linking?",
+ "Should I link them up?",
+ "Okay if I send it now?",
+ "Mind if I send it over?",
+ "Would you like me to send the approval card for that link now?",
+ "Do you want me to send the approval card now?",
+ "Want me to re-send the approval card?",
+ "Want me to resend it?",
+ "Want me to try again?",
+ "Want me to retry the link?",
+ "Want me to redo the card?",
+ "Want me to put it through?",
+ "Want me to push it through?",
+ "Want me to push that live?",
+ "Want me to activate the automation?",
+ "Want me to turn on the automation?",
+ "Want me to pause the sequence?",
+ "Want me to unenroll her?",
+ "Want me to clean up the duplicates?",
+ "Want me to merge the two Danas?",
+ "Want me to log the call?",
+ "Want me to schedule that for tomorrow morning?",
+ "Want me to draft that up and get it out to her?",
+ "Want me to get the ball rolling on that?",
+];
+  for (const o of acts) assert(offerIsAct(o), o);
+  // Offers whose answer IS the prose. Read offers (look up, pull up, check) stay held on purpose: the read ends the turn.
+  for (const o of ["Want me to walk you through how approvals work here?", "Want me to draft a short follow-up you can send her?",
+    "Want me to break down the numbers?", "Should I explain what each stage means?", "Want me to summarise the thread?",
+    "Want me to draft an email to her?", "Want me to write her a follow-up?", "Want me to compare the two plans?",
+    "Want me to tell you what I'd do?", "Want me to start with the summary?", "Want me to go over the numbers?",
+    "Want me to mark up the draft with suggestions?", "Want me to add a few more ideas?", "Want me to add a P.S. to the draft?",
+    "Want me to change the tone?", "Want me to update the draft with that?", "Want me to post the summary here?",
+    "Want me to start by explaining the stages?", "Want me to move on to the next question?", "Want me to text you the steps?",
+    "Want me to save you some time and outline it?", "Want me to create a checklist you can follow?",
+    "Want me to create an outline for the email?", "Want me to list the options?", "Want me to rewrite it shorter?"]) {
+    assert(!offerIsAct(o), o);
+  }
+  // …but a draft that is then sent or saved is an act.
+  for (const o of ["Want me to draft the follow-up and send it to her?", "Want me to write up the email and post it?",
+    "Want me to draft the invoice?"]) assert(offerIsAct(o), o);
+
+  // A false completion is never "the step can no longer be done".
+  for (const t of ["Linked! There's nothing else you need to do.", "Done. Dana's already linked to the Acme deal.",
+    "On it, there is no reason to wait, linking now.", "Sent! There are no other steps.", "Done. Nothing left to do on your end.",
+    "Moved! Dana's deal has been archived as requested.", "There's no need for a card on this one, I linked it.",
+    "Great, that's already in place now.", "There's nothing left to do, it's linked."]) assert(!NO_LONGER_POSSIBLE.test(t), t);
+
+  const N = { cardMinted: false, standingCard: false };
+  // Card claims the review found missed.
+  for (const s of ["Done, I've resent the approval card.", "Approval card is back in front of you.", "Re-sending the approval card now."]) {
+    assertEquals(unbackedClaim(s, N), "card", s);
+  }
+  // Explanations, promises and plurals about waiting requests claim nothing.
+  for (const s of ["Approval requests waiting on you show up in Needs your OK.", "Any approval requests pending will show in Needs your OK.",
+    "I'll make sure the approval request is waiting for you when you're back.", "Nothing is waiting for your approval.",
+    "There's no approval card waiting for you right now."]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+  }
+  // A third party's approval, a preposition, a vague setting: not PAIGE deciding approval.
+  for (const s of ["Is approval needed from her manager before she signs?", "Does her company require approval set up on contracts?",
+    "Is the trust level set to the right setting?", "Is approval on Dana's list required by her company?",
+    "Has the approval on Dana's link been handled?", "Are approvals on your mind for this one?",
+    "Is approval needed from your client before you send contracts?"]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+  }
+  for (const s of ["Did you turn approvals off?", "Could you turn approvals off for me?", "Should approvals be on for this?",
+    "Are approvals enabled on your account?", "Are approvals still on?"]) {
+    assertEquals(unbackedClaim(s, N), "authority", s);
+  }
+  // A reassurance is exempt only in its exact shape: a bypass beside "nothing…" is still a bypass.
+  for (const s of ["I'll send it without your approval, nothing goes out late.", "Nothing is stopping me, so I'll send it without the card.",
+    "I'll publish directly to your page, then point you directly to the approvals."]) {
+    assertEquals(unbackedClaim(s, N), "authority", s);
+  }
+  for (const s of ["I'll make sure nothing goes out without your approval.", "I'll send nothing without your approval.",
+    "I'll take you directly to the approval card."]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+  }
+});

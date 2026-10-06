@@ -7873,6 +7873,43 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       JSON.stringify({ calls: streamed(r22).length, terminal: terminalOf(r22)?.state }));
   }
 
+  // 43.23 (review round 6) — negative cases both ways. On an accepted ACT, a false completion or a narrated
+  // card never stands as the answer: it is held (continued) and never saved as said. On an accepted offer whose
+  // answer is the prose, a true answer — even one that names where approvals show up, or asks about a client's
+  // own approval — stands as written after one call.
+  const held6 = async (offer, reply, text) => {
+    const st = makeThreadStore(THREADS), cs = makeConfirmStore(), dbx = crmDb();
+    seedOffer(st, THREAD_FRESH, { history: 1, offer });
+    const rr = await turn(st, cs, dbx, { text: reply, threadId: THREAD_FRESH, script: [text, text, text, text] });
+    return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
+  };
+  const LINK6 = "Dana's deal is open.\n\nWant me to link the deal to her contact?";
+  const RESEND = "That card expired before you got to it.\n\nWant me to re-send the approval card?";
+  const GETCARD = "Dana's link is ready to go.\n\nWant me to get that approval card to you now?";
+  for (const [id, offer, text] of [
+    ["43.23.A1", LINK6, "Linked! There's nothing else you need to do."],
+    ["43.23.A2", LINK6, "Done. Dana's already linked to the Acme deal."],
+    ["43.23.A3", LINK6, "On it, there is no reason to wait, linking now."],
+    ["43.23.B1", RESEND, "Done, I've resent the approval card."],
+    ["43.23.B2", RESEND, "On it, resending it now."],
+    ["43.23.B3", RESEND, "Approval card is back in front of you."],
+    ["43.23.B4", GETCARD, "Sending it over now."],
+    ["43.23.D1", LINK6, "Small change, so I'll send it without your approval, nothing goes out to anyone new."],
+  ]) {
+    const o = await held6(offer, "Yes we may as well for sure", text);
+    assert(`${id} accepted act, no tool, prose says it happened: held, never saved as said — ${text}`,
+      o.calls > 1 && o.saved !== text && o.rows === 0, JSON.stringify(o));
+  }
+  const WALK = "That's the pipeline.\n\nWant me to walk you through how approvals work here?";
+  for (const [id, offer, text] of [
+    ["43.23.C1", WALK, "Approvals work like this: anything that writes to your records comes to you as a card first, and reads run freely. Approval requests waiting on you show up in Needs your OK."],
+    ["43.23.C2", WALK, "Approvals work like this: anything that writes to your records comes to you as a card first. Is approval needed from your client before you send contracts?"],
+    ["43.23.E1", "Here's your draft.\n\nWant me to change the tone?", "Here it is, warmer:\n\nHi Dana, hope your week is going well. Just checking you got the link."],
+  ]) {
+    const o = await held6(offer, "sure", text);
+    assert(`${id} accepted prose offer: the true answer stands after one call`, o.calls === 1 && o.saved === text, JSON.stringify(o));
+  }
+
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.
   const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();

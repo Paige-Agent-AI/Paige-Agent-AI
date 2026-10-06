@@ -198,6 +198,44 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5f. Independent review — round 6 (non-author, exact head `b11e40af3`): FIX_FIRST, fixed
+
+Three blocking findings, all introduced by round 5's fixes:
+
+- **B1: a false completion stood as terminal.** `NO_LONGER_POSSIBLE` matched bare "there's no…",
+  "already done/in place" and "nothing to do", so on an accepted act "Linked! There's nothing else you need to
+  do." and "Done. Dana's already linked…" ended FINAL with nothing run. **Fix:** the phrase must say the step
+  itself can no longer be done: the target is gone, someone else already did it, or the record changed since
+  the offer. It is void beside any word of completion or progress ("done", "on it", "I've…", "Linked!",
+  "…ing now").
+- **B2: the production strand came back.** `offerIsAct` was a verb allowlist that missed 53 of 83 realistic
+  act offers, including "re-send the approval card" and "get that approval card to you". **Fix: the default
+  is inverted.** Every accepted offer is a held act unless its answer is the prose: explain, walk through,
+  summarise, compare, outline, list options, a draft or rewrite for the person to use (with nothing sent or
+  saved after it), or an edit of that prose (tone, P.S., more ideas). Read offers stay held, because calling
+  the read is what ends the turn. All 83 are now held, and the claim guard now also reads "I've resent the
+  approval card" and "Approval card is back in front of you" as claims.
+- **B3: true answers could still be replaced.** The round-5 "waiting" shape flagged explanations ("Approval
+  requests waiting on you show up in Needs your OK"), and draft edits ("change the tone") were read as acts.
+  **Fix:** the waiting shape needs one specific card stated as there now, with no modal, no when/once/if, and
+  no "any/every". The prose edits are on the exemption list.
+- **SHOULD-FIX:**
+  - The approval-question rule now needs approval to carry the state of this workspace: no third party
+    ("from her manager", "her company requires"), no preposition ("approval on Dana's list"), and no vague
+    "set to the right setting".
+  - The "nothing…" reassurance is exempt only in its exact shape beside "without your approval/OK", so
+    "…without your approval — nothing goes out late" is a bypass again.
+  - The DIRECTLY navigation exemption removes only the navigation phrase, so a bypass elsewhere in the
+    sentence still counts.
+- **Known, pre-existing, not tuned:** "Once the approval card is waiting, you'll see it in Needs your OK." and
+  "You'll see it in Needs your OK shortly." read as card claims, as they did at `2652c1e04`. "Teeing it up now —
+  you'll get the card in a sec." is not, also unchanged. On an accepted act none of these stands, because the
+  turn is held.
+
+Tests: the reviewer's probes are harness 43.23 (11 assertions; 10 fail against `b11e40af3`, and D1 already
+held there) plus the "review round 6" Deno test (all 83 act offers, 25 prose offers, and every claim and
+authority case above). Harness 861/0. Deno 20/20.
+
 ### 5e. Independent review — round 5 (non-author, heads `14f3ccfb1` and `2652c1e04`): FIX_FIRST, fixed
 
 B1 and B2 from round 4 were confirmed closed, with no new execution path, no leak outside eligible turns, and

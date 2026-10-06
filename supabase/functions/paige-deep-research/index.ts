@@ -867,6 +867,46 @@ async function synthesize(
   }
 }
 
+// ── R6-A — THE COGNITIVE-CLASS CONTRACT (declarations ONLY; no routing here) ──
+// Deep Research is a CAPABILITY consuming the platform Model Fabric (owner routing
+// direction 2026-10-07): this map is DATA each research phase carries into telemetry and
+// (in R6-B, after the shared class seam lands) into class-bearing route requests. It is
+// deliberately NOT a route table: nothing here names a provider or model, nothing here is
+// consumed by pickRoute, and no call site changes behavior because of it.
+type ResearchCognitiveClass = "deterministic" | "cheap" | "operational" | "frontier" | "frozen_evaluator";
+
+const RESEARCH_COGNITIVE_CLASSES: Record<string, ResearchCognitiveClass> = {
+  entity_planner: "deterministic", // planEntityHop/facets — pure code, never an LLM
+  rank_and_validate: "deterministic", // rankSources + validateAndBind + dedupe + typed outcomes
+  hop_query_planner: "cheap", // planHop (extract) — never a frontier model for search queries
+  unit_planner: "cheap", // planSynthesisUnits (extract)
+  unit_synthesis: "operational", // synthesizeUnit — R6-B target Sol via the shared fabric; Astra only via the inert gate below
+  dossier_synthesis: "operational", // entity-mode synthesize (per-field citation gates stay the authority)
+  strategist: "operational", // strategizeBeforeReasoning — Astra is not the strategist
+  retrieval: "deterministic", // Firecrawl search + fetch reads — provider tools, not LLM reasoning
+};
+
+// ── R6-A — the evidence-gated FRONTIER escalation predicate (INERT until R6-B) ──
+// The owner's invariant: frontier is a deliberate, bounded, evidence-backed escalation —
+// Astra is NOT the default definition of Deep Research. These five conditions are the
+// complete, named gate R6-B will consult; nothing in this file calls it today.
+interface EscalationInputs {
+  unitKind: string; // the failing/suffering unit's coverage kind
+  evidenceSufficient: boolean; // sources gathered and read succeeded for this obligation
+  sourceCount: number;
+  priorOutcome: UnitOutcome | null; // the operational attempt's typed outcome
+  ambiguityUnresolved: boolean; // the operational attempt could NOT reconcile the material
+}
+const shouldEscalateToFrontier = (x: EscalationInputs): { escalate: boolean; reason: string | null } => {
+  if (!x.evidenceSufficient || x.sourceCount < 2) return { escalate: false, reason: null }; // no evidence => honest insufficiency, not "try harder"
+  if (x.priorOutcome === "insufficient") return { escalate: false, reason: null }; // typed insufficiency NEVER escalates
+  if (x.priorOutcome === "truncated") return { escalate: true, reason: "typed_truncation_with_sufficient_evidence" };
+  if (x.priorOutcome === "ok" && x.ambiguityUnresolved) return { escalate: true, reason: "hard_reconciliation_unresolved_after_operational_attempt" };
+  return { escalate: false, reason: null };
+};
+// R6-A: the gate exists, is unit-tested, and is called by NOTHING in this file. R6-B arms
+// it at exactly one call site, records the reason, and caps escalation at one per unit.
+
 // ── R4 — DECOMPOSED CLAIM FORMATION (bounded synthesis units) ────────────────
 // The R3-measured defect: the single monolithic doc_draft call returns an EMPTY findings
 // array on 18/27 dev runs — exactly on comparisons, multi-part regulatory, and contested
@@ -988,6 +1028,7 @@ async function synthesizeUnit(
   question: string,
   domainHint: string,
   citable: SourceRec[],
+  cognitiveClass?: string, // R6-A: carried for telemetry; NEVER consulted for routing
 ): Promise<UnitSynthOut | null> {
   const ctx = citable.map((s) => {
     const body = s.content ? `\n${s.content.slice(0, 1500)}` : "";
@@ -1025,7 +1066,13 @@ async function synthesizeUnit(
     // stop reason is the authority (max_tokens = cut off mid-output); a missing/invalid
     // JSON body after an OK call is treated as truncation-class too (the parse fallback
     // of R4 conflated it with true-empty and threw the work away unreported).
-    const r5resp = resp as { choices?: Array<{ finish_reason?: string }>; paige_stop?: { stop_reason?: string } };
+    const r5resp = resp as { choices?: Array<{ finish_reason?: string }>; paige_stop?: { stop_reason?: string }; model?: string; provider?: string };
+    // R6-A telemetry: record what the SHARED ROUTER served (research's readback, not its choice)
+    (unit as { __served_model?: string }).__served_model =
+      typeof r5resp?.model === "string" && r5resp.model
+        ? `${String(r5resp.provider ?? "")}/${r5resp.model}`.replace(/^\//, "")
+        : null;
+    void cognitiveClass; // present for the R6-B class-bearing seam; deliberately unused here
     const stopReason = r5resp?.paige_stop?.stop_reason ?? r5resp?.choices?.[0]?.finish_reason ?? null;
     const truncated = stopReason === "max_tokens" || stopReason === "length"; // Anthropic native + OpenAI-compat vocabularies
     const parsed = parseJsonLoose<UnitSynthOut>(llmContent(resp));
@@ -1115,6 +1162,11 @@ function aggregateUnits(
     unit.status = outcome === "failed" ? "failed" : outcome === "insufficient" ? "insufficient" : "synthesized";
     unitDiagnostics.push({
       unit_id: unit.unit_id, objective: unit.objective.slice(0, 160), coverage_kind: unit.coverage_kind,
+      // R6-A telemetry readback: the SHARED ROUTER's own served-model report for this unit's
+      // synthesis call (provider/model from the routed response) + the declared cognitive
+      // class. Research never picks the model; it records what the fabric served.
+      cognitive_class: RESEARCH_COGNITIVE_CLASSES.unit_synthesis,
+      served_model: (unit as { __served_model?: string }).__served_model ?? null,
       source_refs: unit.source_refs.slice(0, 14),
       synthesis_returned: out !== null, insufficient: outcome === "insufficient",
       truncated: out?.outcome === "truncated",
@@ -2187,7 +2239,7 @@ serve(async (req) => {
         break;
       }
       const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).slice(0, Math.max(0, R4_MAX_SYNTH_CALLS - callsMade));
-      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable); }));
+      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis); }));
       lane.forEach((u, j) => perUnit.push({ unit: u, out: outs[j] }));
     }
     const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);

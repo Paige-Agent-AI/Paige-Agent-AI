@@ -75,10 +75,10 @@ describe("R4 — the synthesis-unit contract", () => {
 });
 
 describe("R4 — bounds (no unbounded retry)", () => {
-  it("hard constants: units ≤ 6, calls ≤ 7, unit tokens ≤ 900, lanes ≤ 3", () => {
+  it("hard constants: units ≤ 6, calls ≤ 7, unit tokens ≤ 2400 (R5 evidence-raised from 900), lanes ≤ 3", () => {
     expect(core).toContain("const R4_MAX_UNITS = 6;");
     expect(core).toContain("const R4_MAX_SYNTH_CALLS = 7;");
-    expect(core).toContain("const R4_UNIT_MAX_TOKENS = 900;");
+    expect(core).toContain("const R4_UNIT_MAX_TOKENS = 2400;"); // R5: 78% of unit calls hit the 900 cap
     expect(core).toContain("const R4_UNIT_CONCURRENCY = 3;");
   });
 

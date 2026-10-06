@@ -881,7 +881,12 @@ async function synthesize(
 // Bounded R4 constants (deliberately tight; the ruling forbids "keep trying until answered").
 const R4_MAX_UNITS = 6; // one overall + up to five coverage obligations
 const R4_MAX_SYNTH_CALLS = 7; // hard call ceiling for the whole run (incl. any fallback)
-const R4_UNIT_MAX_TOKENS = 900; // per-unit output budget (monolithic used 2400)
+// R5: 900→2400 for EVERY unit kind. The Judge-v2 token analysis proved the 900 ceiling
+// binding on 43/55 calls across ALL kinds (median tokens_out = 900 exactly) — the class-C
+// "silent empty" was largely truncation, not refusal. A ceiling is not spend: output only
+// grows as the model actually writes. The 7-call hard ceiling and the phase deadline
+// unchanged, so total work stays bounded.
+const R4_UNIT_MAX_TOKENS = 2400; // per-unit output budget (was 900; R5 evidence-raised)
 const R4_UNIT_CONCURRENCY = 3; // units run in bounded parallel lanes
 
 type UnitCoverageKind =
@@ -900,9 +905,13 @@ interface SynthUnit {
   status: "pending" | "synthesized" | "insufficient" | "failed";
 }
 
+type UnitOutcome = "ok" | "insufficient" | "truncated" | "failed";
+
 interface UnitSynthOut {
   findings: RawFinding[];
-  insufficient?: boolean; // the unit itself concludes its obligation cannot be met
+  insufficient?: boolean; // the unit itself concludes its obligation cannot be met (TYPED — never a fabricated negative finding)
+  outcome?: UnitOutcome; // R5: the normalized state — a successful call may never silently resolve to nothing
+  truncated?: boolean; // R5: the provider stop reason said the output was cut at the cap
 }
 
 // The unit PLANNER: one cheap extraction-tier call that turns the QUESTION (not the search
@@ -1012,12 +1021,31 @@ async function synthesizeUnit(
       temperature: 0.1,
       max_tokens: R4_UNIT_MAX_TOKENS,
     });
+    // R5 — truncation is a first-class outcome, never a silent empty: the provider's own
+    // stop reason is the authority (max_tokens = cut off mid-output); a missing/invalid
+    // JSON body after an OK call is treated as truncation-class too (the parse fallback
+    // of R4 conflated it with true-empty and threw the work away unreported).
+    const r5resp = resp as { choices?: Array<{ finish_reason?: string }>; paige_stop?: { stop_reason?: string } };
+    const stopReason = r5resp?.paige_stop?.stop_reason ?? r5resp?.choices?.[0]?.finish_reason ?? null;
+    const truncated = stopReason === "max_tokens" || stopReason === "length"; // Anthropic native + OpenAI-compat vocabularies
     const parsed = parseJsonLoose<UnitSynthOut>(llmContent(resp));
-    if (!parsed || !Array.isArray(parsed.findings)) return { findings: [] };
-    return parsed;
+    if (!parsed || !Array.isArray(parsed.findings)) {
+      // R5 review: parse-failure after an OK call is truncation-CLASS (the output was
+      // cut or malformed before it could parse) — typed, never a silent empty. The
+      // `truncated` flag itself stays provider-authoritative (may be false here).
+      return { findings: [], outcome: "truncated" } as never;
+    }
+    if (truncated) {
+      // The JSON parsed but the provider says it hit the cap — the tail may be silently
+      // missing findings. Keep what parsed, but TYPE the unit so diagnostics can see it.
+      return { ...parsed, outcome: "truncated", truncated: true } as never;
+    }
+    if (parsed.insufficient === true) return { ...parsed, outcome: "insufficient" } as never;
+    if (parsed.findings.length === 0) return { ...parsed, outcome: "insufficient" } as never; // true-empty normalizes to typed insufficiency — never silent
+    return { ...parsed, outcome: "ok" } as never;
   } catch (e) {
     console.warn(`[paige-deep-research] unit ${unit.unit_id} synthesis error:`, (e as Error)?.message);
-    return null;
+    return null; // transport/throw class — the caller records failed
   }
 }
 
@@ -1081,11 +1109,16 @@ function aggregateUnits(
       }
       if (!merged) { kept.push({ rf, tokens: toks }); aggregated++; }
     }
-    unit.status = out === null ? "failed" : out.insufficient === true ? "insufficient" : "synthesized";
+    // R5: the normalized outcome is the unit's OWN resolution — ok / insufficient /
+    // truncated / failed — and a successful unit may never silently resolve to nothing.
+    const outcome: UnitOutcome = out === null ? "failed" : (out.outcome ?? (out.insufficient === true ? "insufficient" : emitted.length ? "ok" : "insufficient"));
+    unit.status = outcome === "failed" ? "failed" : outcome === "insufficient" ? "insufficient" : "synthesized";
     unitDiagnostics.push({
       unit_id: unit.unit_id, objective: unit.objective.slice(0, 160), coverage_kind: unit.coverage_kind,
       source_refs: unit.source_refs.slice(0, 14),
-      synthesis_returned: out !== null, insufficient: out?.insufficient === true,
+      synthesis_returned: out !== null, insufficient: outcome === "insufficient",
+      truncated: out?.outcome === "truncated",
+      outcome,
       candidates_emitted: emitted.length, aggregated, deduped_away: dedupedAway,
     });
   }
@@ -1979,6 +2012,7 @@ serve(async (req) => {
     candidates: CandidateDiag[]; caps_applied: { candidates_truncated: boolean };
     units?: Array<Record<string, unknown>>;
   } = { v: 1, hops: [], synthesis: { returned: false, candidates: 0 }, candidates: [], caps_applied: { candidates_truncated: false } };
+  let unresolvedUnits: Array<{ objective: string; outcome: string }> = []; // R5: typed meta-state, not findings
   const hopBudget = () => ({ searches, reads, cost_usd_est: Number(costUSD.toFixed(4)), elapsed_ms: Date.now() - t0 });
 
   // ── Bounded PLAN → SEARCH → READ → GAP-CHECK loop (A3) ────────────────────
@@ -2158,6 +2192,13 @@ serve(async (req) => {
     }
     const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);
     dossier.units = unitDiagnostics;
+    // R5 §2/§3B — typed insufficiency at the RESULT layer: units that searched but could
+    // not establish their obligation surface as honest meta-state on coverage (with unit
+    // provenance), NEVER as a fabricated citation-backed negative finding. Grounded
+    // source-positive non-disclosure findings already flow as normal findings with
+    // citations — the validator judges them like any other claim.
+    unresolvedUnits = unitDiagnostics.filter((d) => d.outcome === "insufficient" || d.outcome === "truncated" || d.outcome === "failed")
+      .map((d) => ({ objective: String(d.objective), outcome: String(d.outcome) }));
     synth = { findings: unitFindings };
     // all units failed at the transport level = the monolithic failure class (honest error)
     if (perUnit.length > 0 && perUnit.every((pu) => pu.out === null)) {
@@ -2182,13 +2223,21 @@ serve(async (req) => {
   const finalStop = (findings.length > 0 || entityProfile)
     ? (stop === "unconfigured" ? "answered" : stop)
     : "no_results";
-  const note = findings.length > 0
+  let note = findings.length > 0
     ? `Verified ${findings.length} finding(s) across ${citable.length} citable source(s).`
     : (entityProfile
         ? "Structured entity profile assembled from cited sources; see entity_profile for the verified intel and its unverified gaps."
         : "The model produced no claim that survived source verification. Reporting nothing rather than an unverified fact.");
 
+  // R5 — typed insufficiency rides coverage as meta-state (never through validateAndBind).
+  if (unresolvedUnits.length && findings.length === 0) {
+    // the WHOLE answer is unresolved: keep the honest no-results note, name what was attempted
+    note = `${note} Could not establish: ${unresolvedUnits.slice(0, 3).map((u) => u.objective).join("; ")}.`;
+  }
   const result = buildResult(findings, finalStop, note);
+  if (unresolvedUnits.length) {
+    (result.coverage as Record<string, unknown>).unresolved = unresolvedUnits.slice(0, 8);
+  }
   if (entityProfile) {
     result.entity_profile = entityProfile;
     // Mirror the canonical honesty trail into coverage for consumers that read

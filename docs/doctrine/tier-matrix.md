@@ -334,7 +334,9 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
-### Governed one-to-one business email — `comms.email_send` (INT-328, branch `claude/hopeful-goldberg-p6ind7`; NOT live until merged and its migration is persisted)
+### Governed one-to-one business email — `comms.email_send` (INT-328) — LIVE since 2026-10-06 (#1770 `be0db95`, #1778 `d200055`; migration `20270597000000` persisted on production)
+
+**Shipped reality (2026-10-06, §66).** Solo owner: LIVE and production-verified by an authenticated drive of the synthetic Solo workspace (card → Approve → one send; replay, concurrent approval, expiry, decline, recipient drift, suppression and DND all held). Sub-account and Agency-own-book: same door and seat rule, not separately driven. God / Client / Anonymous refusals: unit- and SQL-proven; anonymous 401 also seen live. *(Earlier heading, kept for the record: "branch `claude/hopeful-goldberg-p6ind7`; NOT live until merged and its migration is persisted".)*
 
 PAIGE may email ONE existing contact from the business's own connected sender, after the person approves the exact email on the Needs-your-OK card (recipient name + address, sending address, subject, body). Door: `comms-email-command`; transport: `send-message` (bound branch); approval: the canonical `paige_pending_confirmations` claim; Rail: `record_capability_run('comms_send_email', …)`. Provider acceptance is reported as "sent (accepted for delivery)", never delivered/received.
 

@@ -232,7 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
-import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, saysItWasDone, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, saysItWasDone, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -15932,7 +15932,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // event machinery. No second runner, no unbounded loop: a hard budget stops it.
       const MAX_CONTINUATIONS = 3;
       let continuationsUsed = 0;
-      // INT-332 — on a held accepted offer a read alone is not the step: count what changes something.
+      // INT-332 — on a held accepted offer a read alone is not the step. `writeAttempts` counts every tool that may
+      // have changed something: a write by the classifier, or ANY tool not plainly named as a read (deep_research
+      // saves a run, previews mint bindings, web tools log events — review round 10). The server's line that nothing
+      // was saved is only ever added when nothing but plain reads ran.
+      const PLAIN_READ_TOOL = /^(?:crm_(?:search|get|list|read)_|get_|list_|search_|lookup_|read_|find_|view_|fetch_|query_|describe_|show_)/;
       let writeAttempts = 0;
       let continuationFailed = false;
       // An unknown step gets one continuation, not three: it may well be an answer (review round 9).
@@ -16411,7 +16415,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             totalToolCalls += sumToolCost(executed);
-            writeAttempts += executed.filter((tc: any) => MUTATING_TOOLS.has(tc?.function?.name) || tc?.function?.name === "ask_choices").length;
+            writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !PLAIN_READ_TOOL.test(n); }).length;
             if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
             // What stays at the round's end reads the round as a whole, after the approval rewrite:
@@ -16545,7 +16549,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ? (PROSE_REFUSAL_RE.test(finalAssistantText) || NO_LONGER_POSSIBLE.test(finalAssistantText))
                 : (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?")));
             // On a held offer a read alone does not end it when the reply then says it did the step ("Linked!").
-            const readThenClaims = acceptedTurn && writeAttempts === 0 && typeof finalAssistantText === "string" && saysItWasDone(finalAssistantText);
+            const readThenClaims = acceptedTurn && writeAttempts === 0 && typeof finalAssistantText === "string"
+              && (saysItWasDone(finalAssistantText) || (acceptedKind === "act" && announcesTheStep(finalAssistantText)));
             const signalTerminal = (totalToolCalls > 0 && !readThenClaims)
               || queuedApprovals.length > 0
               || confirmTrace.length > 0

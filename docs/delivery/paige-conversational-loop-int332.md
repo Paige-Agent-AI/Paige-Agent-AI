@@ -198,6 +198,38 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5j. Independent review — round 10 (`9e54b9f3d`): FIX_FIRST, fixed
+
+All round-9 findings were confirmed closed. The `isActionIntent` change is behaviour-equivalent when no offer was
+accepted. The kept-reply branch never fires on a non-held turn, and wire = saved holds on every new branch,
+protected turns included.
+
+- **B1: the line was false after `deep_research`.** `deep_research` saves a run but is not in `mutatingTools()`.
+  This was a regression from round 9 keying on writes. 44 of 96 declared tools are unclassified, and some of those
+  have side effects: previews mint bindings, web tools log events.
+  - **Fix:** `writeAttempts` now counts every tool not plainly named as a read
+    (`crm_search_|get_|list_|search_|lookup_|read_|find_|view_|fetch_|query_|describe_|show_`), plus every
+    classifier write. The line is added only when nothing but plain reads ran.
+  - Tested by 43.26.N4/N4b; counting writes only fails 2 tests.
+- **B2: a yes that restates the step bypassed INT-332.** "yes link it", "sure, link it", "Yes, make it warmer",
+  "yes text her" skipped the offer path (pre-existing). The ordinary path's verb list missed most of them.
+  - **Fix:** `restatesOffer` accepts a yes whose words are the offered step's own verb first, with nothing new
+    added. "…to Sam instead", "…tomorrow" and "but…" still take the ordinary path. F3's "Link the deal to Afonso
+    now" against a send-card offer is still not a restatement.
+  - Tested by 43.26.E/E2; with the check off, 4 tests fail.
+- **SHOULD-FIX, done:**
+  - `saysItWasDone` no longer reads listing heads ("Scheduled: …", "Updated last on Monday", "Created on March 2")
+    or "pending now" as claims. Its "-ing … now" form is back to an explicit verb list (43.26.N1).
+  - On a held **act**, a read followed by an announcement of the step ("Found Dana — I'll link the deal") is held
+    (`announcesTheStep`). Without it, 43.26.A fails.
+- **Recorded, not changed:**
+  - The no-progress closing call after a forced termination still streams unguarded. This is pre-existing and
+    already parked in §6.
+  - `ask_choices` in a main-chat turn ends the turn before the write count. Its entry there is inert, and the doc
+    wording is corrected here.
+
+Harness 907/0. Deno 23/23. `deno check` gives 10 errors, the same as base.
+
 ### 5i. Independent review — round 9 (`f2357dac6`): FIX_FIRST, fixed
 
 - **B1: a prose offer accepted with "go ahead", "please do" or "do it" lost its answer.** Accepting an offer

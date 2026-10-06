@@ -12,6 +12,8 @@ import {
   NOTHING_RAN_NOTE,
   offerKind,
   saysItWasDone,
+  restatesOffer,
+  announcesTheStep,
   acceptedOfferNote,
   CLAIM_CORRECTION,
   ambiguousOfferNote,
@@ -645,4 +647,19 @@ Deno.test("review round 8 + replay — conversational offers are prose; choices 
   }
   for (const t of ["Sorted by value, the top three are Acme, Bolt and Crest.", "Updated version below:", "Here's how it runs: the first email goes out on day 1.",
     "When you publish the page, it is live at your domain.", "Want to get back to linking Afonso's deal now?"]) assert(!saysItWasDone(t), t);
+});
+
+Deno.test("review round 10 — a yes that restates the step accepts it; listing heads are not claims; announcements", () => {
+  const LINK = "Want me to link the deal to her contact?";
+  for (const r of ["yes link it", "Yes, link it.", "sure, link it", "yes link the deal", "link it", "yes please link it now"]) assert(restatesOffer(r, LINK), r);
+  for (const r of ["yes link it to Sam instead", "link it tomorrow", "no don't link it", "yes but link it later", "yes send it", "Link the deal to Afonso now"]) {
+    assert(!restatesOffer(r, LINK), r);
+  }
+  assert(restatesOffer("Yes, make it warmer", "Want me to make it warmer?"));
+  assert(restatesOffer("sure, resend it", "Want me to re-send the approval card?"));
+  assert(restatesOffer("yes text her", "Want me to text her the link?"));
+  for (const t of ["Scheduled: Thursday 2pm with Dana.", "Updated last on Monday: proposal v2.", "Created on March 2, it has 3 deals.",
+    "Here's what's happening now: two deals are pending now."]) assert(!saysItWasDone(t), t);
+  assert(announcesTheStep("Found Dana, I'll link the deal to her contact."));
+  for (const t of ["I'll keep an eye on it.", "Here are her deals.", "Let me know if you want more."]) assert(!announcesTheStep(t), t);
 });

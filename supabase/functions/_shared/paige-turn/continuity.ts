@@ -127,7 +127,12 @@ export function offerKind(offer: string): OfferKind {
 export function saysItWasDone(text: string): boolean {
   return typeof text === "string" && SAYS_DONE.test(strip(text));
 }
-const SAYS_DONE = /\b(?:all set|taken care of|it'?s handled|that'?s handled)\b|(?:^|[.!?:]\s+)(?:done|sorted|all done)(?=\s*[.!,—–-]|\s*$)|\bi'?ve (?:just |now |already |gone ahead and )?(?:linked|sent|re-?sent|added|created|updated|moved|scheduled|booked|queued|set (?:it |that |this )?up|tagged|enrolled|logged|saved|filed|posted|published|changed|assigned|marked|cancell?ed|fired|submitted|raised|attached|converted|merged|refunded|issued|texted|emailed|messaged|pinged|notified|imported|invited|connected|synced|launched|pushed|forwarded|shared|waived|extended|rebooked|unsubscribed|fixed|restored|approved)\b|\bi (?:just |already |went ahead and )?(?:sent|linked|added|moved|updated|forwarded|shared|waived|booked|scheduled|emailed|texted)\b|(?:^|[.!?:]\s+)(?:added|linked|sent|re-?sent|queued|moved|booked|scheduled|tagged|enrolled|posted|published|logged|filed|assigned|attached|submitted|texted|emailed|messaged|pinged|notified|imported|archived|refunded|charged|invited|forwarded|shared|waived|rebooked|unsubscribed|looped|updated|changed|saved|created)\b(?! by| below| above| version| draft below)|\b(?:sent|forwarded|emailed|texted|shared) (?:it|that|them|this) (?:to|over to|with)\b|\b(?:\w+ing)\b[^.!?\n]{0,25}\bnow\b(?![^.!?\n]*\?)/i;
+const SAYS_DONE = /\b(?:all set|taken care of|it'?s handled|that'?s handled)\b|(?:^|[.!?:]\s+)(?:done|sorted|all done)(?=\s*[.!,—–-]|\s*$)|\bi'?ve (?:just |now |already |gone ahead and )?(?:linked|sent|re-?sent|added|created|updated|moved|scheduled|booked|queued|set (?:it |that |this )?up|tagged|enrolled|logged|saved|filed|posted|published|changed|assigned|marked|cancell?ed|fired|submitted|raised|attached|converted|merged|refunded|issued|texted|emailed|messaged|pinged|notified|imported|invited|connected|synced|launched|pushed|forwarded|shared|waived|extended|rebooked|unsubscribed|fixed|restored|approved)\b|\bi (?:just |already |went ahead and )?(?:sent|linked|added|moved|updated|forwarded|shared|waived|booked|scheduled|emailed|texted)\b|(?:^|[.!?:]\s+)(?:added|linked|sent|re-?sent|queued|moved|booked|scheduled|tagged|enrolled|posted|published|logged|filed|assigned|attached|submitted|texted|emailed|messaged|pinged|notified|imported|archived|refunded|charged|invited|forwarded|shared|waived|rebooked|unsubscribed|looped|updated|changed|saved|created)\b(?! by| below| above| version| draft below|\s*:|\s+(?:last|on|at|in|for|every|each|daily|weekly)\b)|\b(?:sent|forwarded|emailed|texted|shared) (?:it|that|them|this) (?:to|over to|with)\b|\b(?:link|send|re-?send|mov|add|creat|updat|schedul|book|queu|tagg|enroll|post|publish|fir|attach|log|sav|submitt|continu|import|archiv|delet|remov|merg|cancel|refund|charg|text|email|messag|ping|forward|shar|waiv|extend|rebook|unsubscrib|invit|connect|sync|launch|push)ing\b[^.!?\n]{0,25}\bnow\b(?![^.!?\n]*\?)/i;
+
+/** On a held act, a reply that announces the step instead of doing it ("Found Dana — I'll link the deal."). */
+export function announcesTheStep(text: string): boolean {
+  return typeof text === "string" && /\b(?:i'?ll|i will|let me|i'?m going to|i'?m about to)\s+(?:now\s+|go ahead and\s+|just\s+)?(?!keep|let you|need|check back|wait|hold|leave|stay|know|see|think|explain|walk|show|look)\w+/i.test(strip(text));
+}
 
 /** The server's line after a held offer's last reply when nothing was written: true in every case, including a
  * reply that reports something done earlier ("it was already sent on Monday") — it speaks only of this reply. */
@@ -234,6 +239,33 @@ const PHRASES = [...ACCEPT.map((p) => ({ p, accept: true })), ...FILLER.map((p) 
   .sort((x, y) => y.p.length - x.p.length);
 const EMOJI_ACCEPT = /[\u{1F44D}\u2705\u{1F44C}]/gu;
 
+/**
+ * "yes link it", "Yes, make it warmer", "sure, resend it": a yes that only RESTATES the offered step — its own
+ * verb first, nothing added that the offer did not say — accepts it (review round 10: these skipped the offer
+ * path entirely, and the ordinary path's verb list missed most of them). Anything new ("…to Sam instead",
+ * "…tomorrow", "but…") is not a restatement; the ordinary path reads it.
+ */
+export function restatesOffer(reply: string, offer: string): boolean {
+  if (typeof reply !== "string" || typeof offer !== "string") return false;
+  const r = strip(reply).toLowerCase().replace(/[.!,]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!r || r.includes("?") || r.split(" ").length > 10) return false;
+  const words = r.replace(/^(?:(?:yes|yeah|yep|yup|sure|ok|okay|perfect|great|please|alright|absolutely|definitely|go ahead and|let'?s|do it and)\s+)+/, "").split(" ").filter(Boolean);
+  if (!words.length) return false;
+  OFFER_PHRASE.lastIndex = 0;
+  const o = strip(offer).toLowerCase();
+  const m = OFFER_PHRASE.exec(o);
+  if (!m) return false;
+  const offered = o.slice(m.index + m[0].length).replace(/[^a-z0-9' -]+/g, " ").split(/\s+/).filter(Boolean)
+    .filter((w) => !/^(?:and|then|i'?ll|i|will|go|ahead|just|now)$/.test(w));
+  const verb = offered[0];
+  if (!verb) return false;
+  const base = (w: string) => w.replace(/^re-/, "re");
+  if (base(words[0]) !== base(verb)) return false;
+  const FILLER = new Set(["it", "her", "him", "them", "that", "this", "those", "these", "now", "please", "the", "a", "an", "up", "over", "too", "then"]);
+  const offerWords = new Set(offered.map(base));
+  return words.slice(1).every((w) => FILLER.has(w) || offerWords.has(base(w)));
+}
+
 export function isAffirmativeReply(text: string): boolean {
   if (typeof text !== "string") return false;
   let t = text.trim().toLowerCase();
@@ -295,7 +327,7 @@ export function readForeground(turns: ForegroundTurn[] | null | undefined, reply
   if (!fresh) return { offer: { kind: "none", reason: "stale" }, standingCard };
   const closing = closingOffer(typeof prev.content === "string" ? prev.content : "");
   if (!closing) return { offer: { kind: "none", reason: "no_offer" }, standingCard };
-  if (!isAffirmativeReply(reply)) return { offer: { kind: "none", reason: "not_affirmative" }, standingCard };
+  if (!isAffirmativeReply(reply) && !restatesOffer(reply, closing.offer)) return { offer: { kind: "none", reason: "not_affirmative" }, standingCard };
   if (closing.count > 1 || closing.alternatives) return { offer: { kind: "ambiguous", offer: closing.offer }, standingCard };
   return { offer: { kind: "accepted", offer: closing.offer }, standingCard };
 }

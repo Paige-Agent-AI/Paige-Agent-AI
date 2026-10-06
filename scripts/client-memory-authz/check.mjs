@@ -8004,6 +8004,46 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   const ff = await heldWith(LINK6, "sure", [FAKE, FAKE], { failStreamCalls: [2] });
   assert("43.25.F2 the continuation call fails: the reply is still followed by the server's line", ff.saved === keptWithNote(FAKE), JSON.stringify(ff));
 
+  // 43.26 (review round 10) — the server's line is only added when nothing but plain reads ran (deep_research
+  // saves a run); a yes that restates the offered step accepts it; on a held act a read then an announcement
+  // ("I'll link it") is held; a true read answer with a listing head ("Scheduled: …") ends the turn.
+  const turnR10 = (store, confirms, db, { text, threadId = THREAD_FRESH, script, outbound = null, rpc = {} } = {}) => drive({
+    stream: true, text, streamScript: script, outboundAnswers: outbound,
+    extraBody: { threadId },
+    rpcOverrides: { ...SEAT(CALLER_TENANT), ...crmRpcs(db), paige_chat_turn_append: (args) => store.append(args), ...rpc },
+    tablesExtra: { paige_chat_turns: store.table, paige_chat_threads: store.threadsTable, client_memory: () => [], paige_pending_confirmations: confirms.table },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+    onInsert: mirrorConfirms(confirms),
+    functionsExtra: { "crm-command": realDoor },
+  });
+  const run26 = async (offer, reply, script, extra = {}) => {
+    const st = makeThreadStore(THREADS), cs = makeConfirmStore(), dbx = crmDb();
+    seedOffer(st, THREAD_FRESH, { history: 1, offer });
+    const rr = await turnR10(st, cs, dbx, { text: reply, script, ...extra });
+    return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
+  };
+  const DR26 = { "paige-deep-research": { status: 200, body: { run_id: "11111111-1111-4111-8111-111111111111", findings: [{ claim: "Acme's main competitor is Bolt.", source_ids: [1] }], sources: [{ id: 1, url: "https://example.com/a", title: "A" }], coverage: { stop_reason: "complete" } } } };
+  const DRRPC26 = { get_workspace_research_run: { data: { id: "11111111-1111-4111-8111-111111111111" }, error: null } };
+  const SAVEDR26 = "Acme's main competitor is Bolt [1]. I've saved the full report to your Research tab.";
+  for (const [id, offer] of [["43.26.N4", "Acme is a new prospect.\n\nWant me to research Acme's competitors?"], ["43.26.N4b", "Her funnel dropped last week.\n\nWant me to look into that for you?"]]) {
+    const o = await run26(offer, "sure", [{ name: "deep_research", args: { question: "Who are Acme's competitors?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    assert(`${id} deep_research saved a run: the server's line that nothing was saved is never added`, typeof o.saved === "string" && !o.saved.includes(NOTE), JSON.stringify(o));
+  }
+  for (const reply of ["yes link it", "sure, link it", "yes link the deal"]) {
+    const o = await run26(LINK6, reply, x4("Linked! Dana's deal is now attached to her contact."));
+    assert(`43.26.E a yes that restates the offered step ("${reply}") is the accepted offer: held, kept with the line`, o.saved === keptWithNote("Linked! Dana's deal is now attached to her contact.") && o.rows === 0, JSON.stringify(o));
+  }
+  const WARM2 = "Here it is, warmer: Hi Dana, hope your week is going well.";
+  const ew = await run26("Here's your draft.\n\nWant me to make it warmer?", "Yes, make it warmer", x4(WARM2));
+  assert("43.26.E2 \"Yes, make it warmer\" accepts the prose offer: the answer stands after one call", ew.calls === 1 && ew.saved === WARM2, JSON.stringify(ew));
+  const READ10 = { name: "crm_search_contacts", args: { query: "Dana" } };
+  const ANN = "Found Dana, I'll link the deal to her contact.";
+  const an = await run26(LINK6, "sure", [READ10, ANN, ANN, ANN, ANN]);
+  assert("43.26.A on a held act, a read then an announcement is not the step: held, kept with the line", an.saved === keptWithNote(ANN) && an.rows === 0, JSON.stringify(an));
+  const LIST = "Scheduled: Thursday 2pm with Dana, Friday 10am with Sam.";
+  const ls = await run26("Dana has a few open deals.\n\nWant me to pull up her deals?", "sure", [READ10, LIST]);
+  assert("43.26.N1 a read answered with a listing head (\"Scheduled: …\") ends the turn: two calls, no line", ls.calls === 2 && ls.saved === LIST && ls.terminal === "FINAL", JSON.stringify(ls));
+
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.
   const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();

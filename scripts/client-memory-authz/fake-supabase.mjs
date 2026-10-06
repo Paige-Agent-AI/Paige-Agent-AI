@@ -237,7 +237,18 @@ class FakeClient {
     // says" rule as studio_role_ok, so a scenario's owner-memory table is readable through the
     // governed read without scripting the RPC too.
     if (configured === undefined && name === "record_paige_memory") {
-      configured = { data: "owner-memory-row-id", error: null };
+      // STRICT (review P2-5): model the REAL seam's type whitelist so a writer passing a type
+      // the governed contract refuses fails HERE, in the suite, instead of as silent runtime
+      // write-loss (the exact defect this stub once hid). Kept in sync with the migration body.
+      const SEAM_TYPES = new Set(["fact","preference","active_priority","permission_note","known_context",
+        "goal","operating_preference","strategic_context","decision","commitment","correction",
+        "agent_outcome","agent_lesson","summary","session_summary","insight","identity",
+        "milestone_completed","open_loop","report_upload"]);
+      if (!SEAM_TYPES.has(args?.p_memory_type)) {
+        configured = { data: null, error: { code: "22023", message: `PAIGE_MEMORY_TYPE_UNKNOWN: ${args?.p_memory_type}` } };
+      } else {
+        configured = { data: "owner-memory-row-id", error: null };
+      }
     }
     if (configured === undefined && name === "get_paige_memory" && this._kind === "service") {
       // S5: the governed owner read. A scenario that stages owner memory explicitly uses
@@ -254,9 +265,15 @@ class FakeClient {
       // The REAL seam scopes in-body to (p_user_id, p_tenant_id) — reproduce that here. Real
       // paige_owner_memory rows always carry user_id (NOT NULL), so a fixture row without one
       // (e.g. a scenario's operator-briefing rows) is NOT the caller's and never recalls.
+      // Scope both fixture families the way the real seam scopes its table: owner rows by
+      // (user, tenant); the pre-migration client_memory fallback by person + own-rows-only
+      // (client_id NULL, active) — never another subject's rows.
       if (fromOwnerTable) {
         rows = rows.filter((r) => r?.user_id === args?.p_user_id
           && ((r?.tenant_id ?? null) === (args?.p_tenant_id ?? null)));
+      } else {
+        rows = rows.filter((r) => r?.client_user_id === args?.p_user_id
+          && (r?.client_id ?? null) === null && r?.is_active !== false);
       }
       configured = { data: rows, error: null };
     }

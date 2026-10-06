@@ -12,9 +12,9 @@ INSERT INTO public.tenants (id, name, slug, status, account_type, account_number
 VALUES ('a15a5a00-0000-4000-8000-00000000a001', 'S5 Proof Tenant', 's5-proof-tenant', 'active', 'standalone', 990001)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.clients (id, tenant_id, first_name, last_name, email, status)
+INSERT INTO public.clients (id, tenant_id, created_by, first_name, last_name, email, status)
 VALUES ('e15e5e00-0000-4000-8000-00000000e001', 'a15a5a00-0000-4000-8000-00000000a001',
-        'S5', 'Clientrow', 's5-proof-client@paigeagent-test.example', 'active')
+        'c15c5c00-0000-4000-8000-00000000c001', 'S5', 'Clientrow', 's5-proof-client@paigeagent-test.example', 'active')
 ON CONFLICT (id) DO NOTHING;
 
 -- A pre-existing canonical row that MUST NOT be touched by the backfill.
@@ -33,7 +33,7 @@ VALUES
   'c15c5c00-0000-4000-8000-00000000c002', NULL, 'user_preference',
   'S5-ELIGIBLE-PREF-TWO', '{"source":"explicit_signal"}'::jsonb, true),
  ('d15d5d00-0000-4000-8000-00000000d003', 'a15a5a00-0000-4000-8000-00000000a001',
-  'c15c5c00-0000-4000-8000-00000000c001', 'e15e5e00-0000-4000-8000-00000000e001', 'coach_note',
+  'c15c5c00-0000-4000-8000-00000000c001', 'e15e5e00-0000-4000-8000-00000000e001', 'user_preference',
   'S5-CLIENT-SCOPED-STAYS', '{"source":"explicit_signal"}'::jsonb, true);
 
 -- The migration's unique guard.

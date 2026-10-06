@@ -459,7 +459,7 @@ async function drive({
     // What the SERVICE-ROLE client sees: everything, including the foreign client. This is the
     // hazard itself — if the authorization read is made with this client, a foreign id resolves.
     serviceTables: {
-      client_memory: (filters) => (filters.some((f) => f[0] === "gte" && f[1] === "created_at") ? [] : [{ memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString() }]),
+      client_memory: (filters) => (filters.some((f) => f[0] === "gte" && f[1] === "created_at") ? [] : [{ client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString() }]),
       clients: (filters) => {
         const idEq = filters.find((f) => f[0] === "eq" && f[1] === "id")?.[2];
         return idEq ? [{ id: idEq, tenant_id: "99999999-9999-4999-8999-999999999999" }] : [];
@@ -4315,8 +4315,9 @@ console.log("\nclient seat — her answer is read for internal text before a cli
     serviceTablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] },
     tablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] }, ...extra });
   const proposed = await reportDrive();
-  assert("30.34 CONTROL: a report the extraction can read reaches the proposal, after a client memory note is written",
-    frames(proposed).some((f) => f.extraction_proposal) && proposed.rec.inserts.some((i) => i.table === "client_memory")
+  const proposedOwnNote = proposed.rec.rpc.filter((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload");
+  assert("30.34 CONTROL: a report the extraction can read reaches the proposal, after an owner-memory note is written (S5: governed seam)",
+    frames(proposed).some((f) => f.extraction_proposal) && proposedOwnNote.length === 1 && proposedOwnNote[0].args?.p_confirmation_state === "proposed"
       && syncOf(proposed).every((st) => st.awaiting_review === true),
     JSON.stringify({ proposal: frames(proposed).some((f) => f.extraction_proposal), inserts: proposed.rec.inserts.map((i) => i.table), sync: syncOf(proposed) }));
   // A report the extraction reads but validation refuses stops before its first write too.
@@ -4329,8 +4330,9 @@ console.log("\nclient seat — her answer is read for internal text before a cli
     JSON.stringify({ sync: notReportSync, writes: notReport.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
   const stampRefused = await reportDrive({ tableErrorsExtra: { "credit_report_uploads:update": { message: "new row violates check constraint", code: "23514" } } });
   const refusedSync = syncOf(stampRefused);
-  assert("30.35 a sync refused after its client memory note was written tells the uploader it did not finish, never that nothing was added",
-    stampRefused.rec.inserts.some((i) => i.table === "client_memory")
+  const refusedOwnNote = stampRefused.rec.rpc.filter((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload");
+  assert("30.35 a sync refused after its owner-memory note was written tells the uploader it did not finish, never that nothing was added (S5)",
+    refusedOwnNote.length === 1
       && refusedSync.length === 1 && refusedSync[0].success === false && !("step" in refusedSync[0]) && !("write" in refusedSync[0])
       && refusedSync[0].error === SYNC_DID_NOT_FINISH && refusedSync[0].uploader_sentence === true
       && !/credit_report_uploads|check constraint|23514|write_rejected/.test(JSON.stringify(refusedSync))
@@ -7466,7 +7468,7 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
   // ── 41.23 THE WORKSPACE CHANGES AFTER THE ANSWER WAS CHECKED AND BEFORE THE CLAIM (a turn carrying
   // protected evidence runs the pre-model re-check): 409 ACTIVE_ACCOUNT_CHANGED, NO claim written, PAIGE
   // not called — and the question is still open, so the same answer sent again from A binds once.
-  const MEM23 = [{ memory_type: "user_preference", content: "Kestrel prefers mornings", created_at: new Date().toISOString() }];
+  const MEM23 = [{ client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: "Kestrel prefers mornings", created_at: new Date().toISOString() }];
   const evidence23 = { tables: { client_memory: () => MEM23 }, service: { client_memory: () => MEM23 } };
   const s23 = makeThreadStore(THREADS);
   const a23 = await askThen(s23);

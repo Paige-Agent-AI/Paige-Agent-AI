@@ -2124,7 +2124,8 @@ JSON:`;
       // home through the governed read (service-role passes the turn's declared∧validated
       // scope — the same authority the writers stamp under). CLIENT-scoped recall is unchanged.
       // The governed read returns rows with metadata, so confirmation_state travels with each
-      // item — the block builder phrases proposed items as recollection, never fact.
+      // item to FUTURE consumers (the C6 projection's presentation contract decides phrasing);
+      // today's builder renders rows uniformly, which is unchanged from before the cutover.
       const memoryQuery = clientScopeDenied
         ? null
         : scopedClientId
@@ -2227,7 +2228,7 @@ JSON:`;
           // The remembered spans above are sanitized; lead the block with the untrusted-data notice so
           // an embedded directive/tool-call/permission-change is never obeyed. The trusted instruction
           // below still scopes what to honor to tone/length/format PREFERENCES — data, not authority.
-          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
+          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any preference items (tone, length, formats; owner-memory type 'preference', client-memory type 'user_preference') in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
         }
       }
     } catch (err) {
@@ -18319,8 +18320,20 @@ export async function runStructuredExtractionAndSync(
     } else if (ownMemoryScope === null) {
       console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "report_upload" }));
     } else {
-      memoryInsert.tenant_id = ownMemoryScope;
-      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
+      // S5 (review P1-2): the no-client arm's subject is the CALLER's own credit journey —
+      // owner continuity, written to the governed home so the flipped own-arm read can recall
+      // it (the numbers stay canonical in credit_report_uploads; this is the context summary).
+      // Inside writeIfScopeCurrent for the SAME reason every durable write here is: the scope
+      // captured at turn start must still be current at write time, or the write refuses.
+      const governed = await writeIfScopeCurrent("paige_owner_memory", () => supabase.rpc("record_paige_memory", {
+        p_memory_type: "report_upload",
+        p_content: memoryContent,
+        p_metadata: { audience: "owner_personal", source: "structured_extraction", channel: "document" },
+        p_confirmation_state: "proposed",
+        p_user_id: callerUserId,
+        p_tenant_id: ownMemoryScope,
+      }));
+      if (governed !== "ok") remembered = governed;
     }
     if (remembered !== "ok") return stoppedBy(remembered, "client_memory");
 

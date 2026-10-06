@@ -20464,7 +20464,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      forget_paige_memory: { Args: { p_id: string; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: undefined }
+      forget_paige_memory: { Args: { p_id: string; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: boolean }
       get_paige_memory: { Args: { p_memory_types?: string[] | null; p_limit?: number | null; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: { id: string; memory_type: string; content: string; source_thread_id: string | null; metadata: Json | null; created_at: string; updated_at: string }[] }
       get_paige_persona_context: {
         Args: never

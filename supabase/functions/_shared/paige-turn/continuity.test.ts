@@ -15,6 +15,7 @@ import {
   restatesOffer,
   announcesTheStep,
   stepToolDoes,
+  ranNote,
   acceptedOfferNote,
   CLAIM_CORRECTION,
   ambiguousOfferNote,
@@ -734,4 +735,24 @@ Deno.test("review round 14 — step tools by what the step concerns (the plan de
     assert(restatesOffer(r, o), `${r} <- ${o}`);
   }
   for (const [r, o] of [["yes text him", "Want me to text Dana, not Sam?"], ["yes email her", "Want me to email Dana and Sam the recap?"]]) assert(!restatesOffer(r, o), `${r} <- ${o}`);
+});
+
+Deno.test("review round 15 — strict step tools; the plan's send wins; several people in a comms step; ranNote", () => {
+  assert(!stepToolDoes("draft_marketing_content", "Want me to go ahead?", "Here's the draft of Dana's recap: Hi Dana.\n\nI'll email it to Dana. Want me to go ahead?"));
+  assert(!stepToolDoes("growth_page_generate", "Want me to go ahead?", "Your workshop page is drafted.\n\nI'll link it to Dana's contact. Want me to go ahead?"));
+  assert(!stepToolDoes("deep_research", "Want me to go ahead?", "Here's the competitor report on Acme.\n\nI'll email it to Dana. Want me to go ahead?"));
+  assert(!stepToolDoes("growth_page_generate", "Want me to update the landing page copy?"));
+  assert(!stepToolDoes("growth_page_generate", "Want me to save the landing page?"));
+  assert(!stepToolDoes("draft_marketing_content", "Want me to create the draft invoice for Dana?"));
+  assert(!stepToolDoes("deep_research", "Want me to attach the market report to Dana's deal?"));
+  assert(stepToolDoes("growth_page_generate", "Want me to build it?", "Here's the plan for Dana's workshop page: a hero.\n\nWant me to build it?"));
+  assert(stepToolDoes("growth_page_generate", "Want me to go ahead?", "Here's the plan for Dana's workshop page: a hero, the agenda, and a signup form.\n\nWant me to go ahead?"));
+  assert(stepToolDoes("deep_research", "Want me to go ahead?", "I'll pull Acme's pricing and reviews.\n\nWant me to go ahead?"));
+  for (const [r, o] of [["yes email her", "Want me to email the recap to Dana and Sam?"], ["yes send her the deck", "Want me to send the deck to Dana and Sam?"],
+    ["yes email her", "Want me to email Dana, Sam and Priya the recap?"], ["yes text her", "Want me to text Dana & Sam?"]]) {
+    assert(!restatesOffer(r, o), `${r} <- ${o}`);
+  }
+  assert(restatesOffer("yes add her", "Want me to add Dana to Onboarding and Nurture?"));
+  assertEquals(ranNote(["growth_page_generate"]), "In this reply a page draft was generated; nothing was sent and no client record was changed.");
+  assertEquals(ranNote(["n8n_list_workflows"]), "The step you accepted wasn't carried out in this reply.");
 });

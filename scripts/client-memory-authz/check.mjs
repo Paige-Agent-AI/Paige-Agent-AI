@@ -8085,7 +8085,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     const CDR = { studio_role_ok: { data: true, error: null } };
     const EMAILED = "Done, I've emailed Dana the recap.";
     const x6 = await run26(RECAP, "sure", [DMC, EMAILED, EMAILED, EMAILED, EMAILED], { fns: { "content-draft": { data: { channel: "email", drafts: [{ content: "Hi Dana, great call today..." }] }, error: null } }, rpc: CDR });
-    assert("43.29.X6 an email offer, the copy drafted, then \"I've emailed Dana\": held, kept with a true line", x6.saved === `${EMAILED}\n\n${continuity.STEP_NOT_DONE_NOTE}` && x6.rows === 0, JSON.stringify(x6));
+    assert("43.29.X6 an email offer, the copy drafted, then \"I've emailed Dana\": held, kept with a true line", x6.saved === `${EMAILED}\n\n${continuity.ranNote(["draft_marketing_content"])}` && x6.rows === 0, JSON.stringify(x6));
     const x8 = await run26(RECAP, "sure", [DMC, EMAILED, EMAILED, EMAILED, EMAILED], { fns: { "content-draft": { data: { error: "boom" }, error: null } }, rpc: CDR });
     assert("43.29.X8 the drafting tool FAILED, then \"I've emailed Dana\": held, never saved as said", x8.saved !== EMAILED && x8.rows === 0, JSON.stringify(x8));
     const PAGEF = "I've created a draft of the workshop page, take a look below.";
@@ -8095,7 +8095,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     assert("43.29.GF the page generator FAILED, then \"I've created a draft\": not the step, held, never saved as said", gf.saved !== PAGEF && gf.calls > 2, JSON.stringify(gf));
     const FAKE13 = "Linked! Dana's deal is now attached to her contact.";
     const x1 = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal?" } }, FAKE13, FAKE13, FAKE13, FAKE13], { outbound: DR26, rpc: DRRPC26 });
-    assert("43.29.X1 a link offer, research ran, then \"Linked!\": held, kept with \"the step wasn't carried out\"", x1.saved === `${FAKE13}\n\n${continuity.STEP_NOT_DONE_NOTE}`, JSON.stringify(x1));
+    assert("43.29.X1 a link offer, research ran, then \"Linked!\": held, kept with \"the step wasn't carried out\"", x1.saved === `${FAKE13}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(x1));
   }
 
   // 43.30 (review round 14) — a generic or idiomatic offer ("Want me to go ahead?", "get started on the landing
@@ -8117,13 +8117,39 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     assert("43.30.V12 research ran on a generic offer whose plan is research: the answer stands", v12.calls === 2 && v12.saved === SAVEDR26, JSON.stringify(v12));
     const FAKEL = "Linked! Dana's deal is now attached to her contact.";
     const lk = await run26("I'll link Dana's deal to her contact.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Dana?" } }, FAKEL, FAKEL, FAKEL, FAKEL], { outbound: DR26, rpc: DRRPC26 });
-    assert("43.30.L a generic offer whose plan is to LINK, research ran, then \"Linked!\": held, \"the step wasn't carried out\"", lk.saved === `${FAKEL}\n\n${continuity.STEP_NOT_DONE_NOTE}`, JSON.stringify(lk));
+    assert("43.30.L a generic offer whose plan is to LINK, research ran, then \"Linked!\": held, \"the step wasn't carried out\"", lk.saved === `${FAKEL}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(lk));
     const EM = "Done, I've emailed her the recap.";
     const q1 = await run26("Call went well.\n\nWant me to email Dana the recap and move her deal to Proposal?", "yes email her", x4(EM));
     assert("43.30.Q1 \"yes email her\" to a compound offer is accepted: a made-up \"Done\" is held, kept with the line", q1.saved === keptWithNote(EM) && q1.rows === 0, JSON.stringify(q1));
     const AD = "Done, I've added her.";
     const q3 = await run26("Dana is ready.\n\nWant me to add Dana to Onboarding and Nurture?", "yes add her", x4(AD));
     assert("43.30.Q3 \"yes add her\" (\"to Onboarding and Nurture\" are not two people): held, kept with the line", q3.saved === keptWithNote(AD), JSON.stringify(q3));
+  }
+
+  // 43.31 (review round 15) — strict by verb: a draft then "I'll email it — go ahead?" then "Sent!" is held; an
+  // update/create-on-a-record is never a generator's or drafter's step; "build it" after a page plan IS the step;
+  // and when a strict "no" meets a true reply, the server's line names what ran, so it is never false.
+  {
+    const GP = { name: "growth_page_generate", args: { brief: "Workshop on the 14th" } };
+    const GPF = { "growth-page-draft": { data: { blocks: [{ type: "hero", headline: "Workshop" }], theme_json: null, seo_json: { title: "Workshop" } }, error: null } };
+    const CDR = { studio_role_ok: { data: true, error: null } };
+    const DMC = { name: "draft_marketing_content", args: { channel: "email", brief: "Recap" } };
+    const CDF = { "content-draft": { data: { channel: "email", drafts: [{ content: "Hi Dana, great call today..." }] }, error: null } };
+    const SENT = "Sent! Dana has the recap in her inbox.";
+    const d2 = await run26("Here's the draft of Dana's recap: Hi Dana, great call today.\n\nI'll email it to Dana. Want me to go ahead?", "sure", [DMC, SENT, SENT, SENT, SENT], { fns: CDF, rpc: CDR });
+    assert("43.31.D2 a draft, \"I'll email it, go ahead?\", the drafter ran, then \"Sent!\": held, the line says only copy was drafted", d2.saved === `${SENT}\n\n${continuity.ranNote(["draft_marketing_content"])}` && d2.rows === 0, JSON.stringify(d2));
+    const UPD = "Updated! The landing page now shows the 21st.";
+    const u1 = await run26("The date on the page is wrong.\n\nWant me to update the landing page copy?", "sure", [GP, UPD, UPD, UPD, UPD], { fns: GPF, rpc: CDR });
+    assert("43.31.U1 \"update the landing page copy\" with the generator, then \"Updated!\": held, the line says only a draft was generated", u1.saved === `${UPD}\n\n${continuity.ranNote(["growth_page_generate"])}`, JSON.stringify(u1));
+    const INV = "Done, I've created Dana's draft invoice.";
+    const r2 = await run26("Dana agreed to the price.\n\nWant me to create the draft invoice for Dana?", "sure", [DMC, INV, INV, INV, INV], { fns: CDF, rpc: CDR });
+    assert("43.31.R2 a draft INVOICE is a record, not copy: the drafter ran, \"I've created Dana's draft invoice\" is held", r2.saved !== INV, JSON.stringify(r2));
+    const MADE = "I've created a draft of the workshop page, take a look below.";
+    const PLAN = "Here's the plan for Dana's workshop page: a hero, the agenda, and a signup form.\n\n";
+    const b2 = await run26(PLAN + "Want me to build it?", "sure", [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
+    assert("43.31.B2 \"build it\" after a page plan: the generator is the step, the true reply ends the turn", b2.calls === 2 && b2.saved === MADE, JSON.stringify(b2));
+    const m1 = await run26("Dana's workshop is on the 14th.\n\nWant me to move forward with the landing page?", "sure", [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
+    assert("43.31.M1 a strict \"no\" on a true reply: one continuation, and the line says what ran (true)", m1.calls <= 3 && m1.saved === `${MADE}\n\n${continuity.ranNote(["growth_page_generate"])}`, JSON.stringify(m1));
   }
 
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and

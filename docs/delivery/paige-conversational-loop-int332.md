@@ -198,6 +198,44 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5o. Independent review — round 15 (`7def77b8d`): FIX_FIRST, design settled
+
+Round 15 confirmed round 14's B1 and B2 closed, and the production shape held. It also showed the pattern behind
+rounds 13–15: **matching step tools loosely lets a made-up "Sent!" stand; matching them strictly gives a true
+reply a false line.** Round 14's subject matching brought back the draft-then-send hallucination. A draft, then
+"I'll email it to Dana. Want me to go ahead?", then "Sent!" ended FINAL, and so did "update the landing page
+copy" plus the generator plus "Updated!". The send guard in the plan never saw the plan sentence.
+
+**The fix takes away the downside of being strict, instead of tuning the match again:**
+- **`stepToolDoes` is strict by verb again**, using the per-tool lists plus idioms (redo, rework, whip,
+  throw).
+  - A step whose verb sends, links, moves, updates, saves, attaches, adds or removes is never a generator's,
+    research's or drafter's.
+  - Neither is a step that names a record (invoice, task, deal).
+  - A neutral verb ("go ahead", "get started", "turn this into…", "build it") is decided by its own object or the
+    plan sentence just before the offer. A send/link/move in that plan wins.
+- **When a step tool ran successfully but is judged not the step, the server's line names what ran.** For
+  example: **"In this reply a page draft was generated; nothing was sent and no client record was changed."**
+  (`ranNote`). That is true whichever way the judgement went:
+  - a made-up "Sent!" is contradicted by it;
+  - a true "I've created a draft" is confirmed by it.
+- Such a turn gets **one** continuation, not three, so the cost of a strict "no" is one call. That continuation
+  tells PAIGE what ran and that it may say what it produced without calling it again.
+- **Several people (S1).** In a step that reaches people (email, text, send…), names in a list anywhere count as
+  several people: "to Dana and Sam", "Dana, Sam and Priya", "Dana & Sam". Elsewhere ("add Dana to Onboarding and
+  Nurture") only names joined right after the verb count.
+- **Tests:**
+  - 43.31: D2 draft then send, U1 update with the generator, R2 a draft invoice, B2 "build it", M1 a strict "no"
+    on a true reply that gets the true line.
+  - 43.29 and 43.30.L now assert the factual line.
+  - The Deno round-15 test.
+  - Mutations: round 14's loose matcher fails 4; the fixed line fails 6.
+- **Recorded, unchanged:** S3 R1, "research Acme and email Dana the summary", where only research ran, then
+  "I've emailed Dana", ends FINAL at every head. Research is the step's first act and the verb matches. The second
+  act is outside one-step continuity.
+
+Harness 930/0. Deno 28/28. `deno check` gives 10, identical to base.
+
 ### 5n. Independent review — round 14 (`574f80bfd`): FIX_FIRST, fixed
 
 Round 14 confirmed round 13's B1 and S1–S3 closed. C1–C7 and C10 are identical across r12, r13 and r14. The

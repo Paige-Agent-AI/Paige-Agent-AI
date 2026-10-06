@@ -232,7 +232,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
-import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, saysItWasDone, STEP_NOT_DONE_NOTE, stepToolDoes, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
+import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, ranNote, saysItWasDone, stepToolDoes, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
@@ -15951,7 +15951,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       let classifierWrites = 0;
       let continuationFailed = false;
       // An unknown step gets one continuation, not three: it may well be an answer (review round 9).
-      const continuationLimit = acceptedKind === "unknown" && heldAccept ? 1 : MAX_CONTINUATIONS;
+      // Step tools that ran successfully but were not judged to be the offered step: named in the server's line, and
+      // they cut the continuations to one — the model can say so if that WAS the step (review round 15).
+      const stepToolsRan: string[] = [];
+      const continuationLimitFor = () => (acceptedKind === "unknown" && heldAccept) || stepToolsRan.length > 0 ? 1 : MAX_CONTINUATIONS;
       // Action intent is CONSERVATIVE on purpose: imperative mutations the platform actually
       // performs. A question (ending in "?"), a greeting, or a bare statement is a terminal
       // state — the assignment forbids continuing after a genuine question that needs the
@@ -16435,7 +16438,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               let ok = true;
               try { ok = (JSON.parse(String(toolResultContent.get(tc?.id) ?? "{}")) as { success?: unknown })?.success !== false; } catch { /* non-JSON result: not a stated failure */ }
               if (!ok) return false;
-              return !(heldAccept && acceptedKind === "act" && foreground.offer.kind === "accepted") || stepToolDoes(n, foreground.offer.offer, foreground.offer.context ?? "");
+              const isStep = !(heldAccept && acceptedKind === "act" && foreground.offer.kind === "accepted") || stepToolDoes(n, foreground.offer.offer, foreground.offer.context ?? "");
+              if (!isStep) stepToolsRan.push(n);
+              return isStep;
             }).length;
             if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
@@ -16563,7 +16568,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           }
           if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
-              && isActionIntent && continuationsUsed < continuationLimit && !studioSessionId) {
+              && isActionIntent && continuationsUsed < continuationLimitFor() && !studioSessionId) {
             const acceptedTurn = heldAccept;
             const proseTerminal = typeof finalAssistantText === "string"
               && (acceptedTurn
@@ -16579,7 +16584,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!signalTerminal && !proseTerminal) {
               continuationsUsed += 1;
               convo.push({ role: "assistant", content: finalAssistantText || "" });
-              convo.push({ role: "user", content: acceptedTurn && acceptedKind === "unknown"
+              convo.push({ role: "user", content: acceptedTurn && stepToolsRan.length > 0
+                ? `The person accepted the step you offered. This turn ran ${[...new Set(stepToolsRan)].join(", ")}, which is not that step as offered. If what you offered was exactly that and it is done, say what it produced, without calling it again and without claiming anything else was sent or changed. Otherwise call the tool that carries out the step now — when it needs their approval, the tool puts the card in front of them. If it cannot be done, say plainly why.`
+                : acceptedTurn && acceptedKind === "unknown"
                 ? "The person accepted what you offered. If it changes a record or sends something, nothing has been done yet — call its tool now (when it needs their approval, the tool puts the card in front of them). If it is only an answer, give that answer in full, without saying anything was done."
                 : acceptedTurn
                 ? "The person accepted the step you offered, and it has not been done: nothing that carries it out ran in this turn, so nothing was sent or changed by it, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
@@ -16649,9 +16656,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // a question, or a made-up result (the line contradicts it). A read may have run; nothing was written.
           // The line: "nothing was saved" only when nothing but plain reads ran; otherwise, on an act, the narrower
           // truth that the accepted step itself was not carried out; on an unknown step with other tools, no line.
-          const heldNote = writeAttempts === 0 ? NOTHING_RAN_NOTE : acceptedKind === "act" ? STEP_NOT_DONE_NOTE : null;
+          const heldNote = writeAttempts === 0 ? NOTHING_RAN_NOTE : (acceptedKind === "act" || stepToolsRan.length > 0) ? ranNote(stepToolsRan) : null;
           if (finalChunks && !liveRuntimeScope && !forcedTermination && heldAccept && !claimAnswered && heldNote
-              && (continuationsUsed >= continuationLimit || continuationFailed) && classifierWrites === 0
+              && (continuationsUsed >= continuationLimitFor() || continuationFailed) && classifierWrites === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${heldNote}`;

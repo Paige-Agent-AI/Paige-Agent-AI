@@ -269,7 +269,11 @@ export function restatesOffer(reply: string, offer: string): boolean {
   // A singular person pronoun cannot stand for one of several people the offer named ("email Dana and Sam"), nor
   // for someone the offer set aside ("text Dana, not Sam") — that is a narrowing, not a yes (review round 13).
   // Several people = names joined right after the verb ("email Dana and Sam…"); not "to Onboarding and Nurture".
-  const severalNamed = /^[A-Z][a-z]+(?:'s)?$/.test(step.kept[1] ?? "") && /^(?:and|&)$/i.test(step.kept[2] ?? "") && /^[A-Z][a-z]+$/.test(step.kept[3] ?? "");
+  // For a step that reaches people (email, text, send…), names in a list anywhere in it ("to Dana and Sam",
+  // "Dana, Sam and Priya") are several people; elsewhere only names joined right after the verb are.
+  const COMMS = /^(?:email|text|send|message|ping|call|invite|forward|share|remind|notify|nudge|dm)$/i;
+  const severalNamed = (/^[A-Z][a-z]+(?:'s)?$/.test(step.kept[1] ?? "") && /^(?:and|&)$/i.test(step.kept[2] ?? "") && /^[A-Z][a-z]+$/.test(step.kept[3] ?? ""))
+    || (COMMS.test(step.kept[0] ?? "") && /\b[A-Z][a-z]+(?:\s*,\s*[A-Z][a-z]+)*\s*(?:,\s*)?(?:and|&)\s+[A-Z][a-z]+\b/.test(strip(offer)) && step.kept.filter((t) => /^[A-Z][a-z]+$/.test(t)).length >= 2);
   // Set aside = a CONTRAST that removed a name ("text Dana, not Sam") — a second act after "and" removes no one.
   const namedAside = step.contrast && step.removed.some((t) => /^[A-Z][a-z]+$/.test(t));
   let k = 1;
@@ -297,7 +301,7 @@ function offeredStep(offer: string): { kept: string[]; removed: string[]; contra
   const o = strip(offer);
   const m = OFFER_PHRASE.exec(o);
   if (!m) return null;
-  const toks: string[] = [...(o.slice(m.index + m[0].length).match(/[A-Za-z0-9$][A-Za-z0-9'$.-]*|,/g) ?? [])];
+  const toks: string[] = [...(o.slice(m.index + m[0].length).replace(/\s&\s/g, " and ").match(/[A-Za-z0-9$][A-Za-z0-9'$.-]*|,/g) ?? [])];
   while (toks.length && /^(?:and|then|i'?ll|i|will|go|ahead|just|now)$/i.test(toks[0])) toks.shift();
   if (!toks.length || toks[0] === ",") return null;
   const NOT_A_VERB = /^(?:the|a|an|her|his|their|its|my|your|our|this|that|these|those|it|them|him|she|he|they|we|you|i|so|to|for|with|by|on|in|at|of)$/i;
@@ -320,23 +324,59 @@ function offeredStepWords(offer: string): string[] {
 
 /**
  * Whether a tool that carries out steps itself (a page/funnel generator, research, copy drafting, a filed approval,
- * a question card) is THIS offered step. Judged by what the step concerns, not only its verb: a page or funnel step
- * is the generators', a research step research's, a copy step drafting's. A step that SENDS, LINKS or MOVES
- * something is never one of theirs (drafting the copy is not emailing it — review round 13). When the offered verb
- * is generic ("go ahead", "do that", "get started") the plan before the offer decides (review round 14).
+ * a question card) is THIS offered step. STRICT by verb: rounds 13–15 showed a loose match lets "Sent!" stand after
+ * a draft. A step that sends, links, moves, updates or saves is never one of theirs, nor one that names a record
+ * (an invoice, a task). A neutral verb ("go ahead", "get started", "turn this into…") is decided by its own object or
+ * the plan sentence just before the offer — and a send/link/move in that plan wins. When this says no, the handler's
+ * line names what DID run (`ranNote`), so a strict "no" never makes the server say something false.
  */
 export function stepToolDoes(tool: string, offer: string, context = ""): boolean {
   if (tool === "propose_action" || tool === "ask_choices") return true;
   const words = offeredStepWords(offer);
   const verb = words[0] ?? "";
-  const generic = !verb || /^(?:go|do|proceed|start|get|handle|take|run|kick|move forward)$/.test(verb);
-  const step = generic ? `${words.join(" ")} ${strip(context).toLowerCase()}` : words.join(" ");
-  const DELIVERS = /\b(?:send|sending|email|emailing|text|texting|share|post|publish|link|linking|forward|message|notify|invite|book|schedule|move|tag|enroll|assign|archive|delete)\b/;
-  if (generic ? DELIVERS.test(strip(context).toLowerCase().split(/\n/).slice(-2).join(" ")) && !/\b(?:page|landing|funnel|site|website|research|report|competitor|copy|draft)\b/.test(step) : DELIVERS.test(verb)) return false;
-  if (tool === "growth_page_generate" || tool === "growth_funnel_generate") return /\b(?:page|landing|funnel|site|website|lead magnet)\b/.test(step);
-  if (tool === "deep_research") return /^(?:research|look|dig|investigate|find|check|analy[sz]e|compare|study|explore)$/.test(verb) || /\b(?:research|competitors?|report|market|analysis|deep dive|look (?:at|into)|dig into|investigate|analy[sz]e|compare|study|explore)\b/.test(step);
-  if (tool === "draft_marketing_content") return /^(?:draft|write|rewrite|punch|polish|come|tighten|compose)$/.test(verb) || /\b(?:copy|caption|post|newsletter|headline|ad|blurb|draft)\b/.test(step);
+  const DELIVERS = /\b(?:send|sending|email|emailing|text|texting|share|post|publish|link|linking|forward|message|notify|invite|book|schedule|move|tag|enroll|assign|archive|delete|update|save|attach|launch|mark|add|remove|cancel|close|merge|record|log|file)\b/;
+  if (DELIVERS.test(verb)) return false;
+  const RECORD = /\b(?:invoices?|contracts?|tasks?|deals?|contacts?|events?|meetings?|quotes?|proposals?)\b/;
+  if (RECORD.test(words.slice(1).join(" "))) return false;
+  const GEN = /^(?:draft|build|create|make|generate|put|design|mock|spin|redo|rework|whip|throw)$/;
+  const RES = /^(?:research|look|dig|investigate|find|check|analy[sz]e|compare|study|explore)$/;
+  const COPY = /^(?:draft|write|rewrite|punch|polish|come|tighten|compose)$/;
+  const PAGE = /\b(?:page|landing|funnel|site|website|lead magnet)\b/;
+  const RESEARCH = /\b(?:research|competitors?|report|market|analysis|deep dive|pricing|positioning|reviews|look (?:at|into)|dig into|investigate|analy[sz]e|compare)\b/;
+  const COPYN = /\b(?:copy|caption|newsletter|headline|blurb|social post|linkedin post)\b/;
+  const NEUTRAL = !verb || /^(?:go|do|proceed|start|get|handle|take|run|kick|turn|tackle)$/.test(verb);
+  if (!NEUTRAL) {
+    if (tool === "growth_page_generate" || tool === "growth_funnel_generate") return GEN.test(verb);
+    if (tool === "deep_research") return RES.test(verb);
+    if (tool === "draft_marketing_content") return COPY.test(verb);
+    return false;
+  }
+  // The plan sentence(s) just before the offer: the last two sentences of the message that are not the offer.
+  const sentences = strip(context).split(/(?<=[.!?])\s+|\n+/).map((x) => x.trim()).filter(Boolean);
+  const offerAt = sentences.findIndex((x) => x === strip(offer).trim());
+  const plan = (offerAt > 0 ? sentences.slice(Math.max(0, offerAt - 2), offerAt) : offerAt === 0 ? [] : sentences.slice(-2)).join(" ").toLowerCase();
+  if (DELIVERS.test(plan)) return false;
+  const subject = `${words.slice(1).join(" ")} ${plan}`;
+  if (RECORD.test(words.slice(1).join(" "))) return false;
+  if (tool === "growth_page_generate" || tool === "growth_funnel_generate") return PAGE.test(subject);
+  if (tool === "deep_research") return RESEARCH.test(subject);
+  if (tool === "draft_marketing_content") return COPYN.test(subject) || /\bdraft\b/.test(words.slice(1).join(" "));
   return false;
+}
+
+/** What the server can truthfully say ran in a reply whose step tools were not judged to be the offered step. */
+export function ranNote(toolsRan: string[]): string {
+  const said = new Set<string>();
+  for (const t of toolsRan) {
+    if (t === "growth_page_generate") said.add("a page draft was generated");
+    else if (t === "growth_funnel_generate") said.add("a funnel draft was generated");
+    else if (t === "deep_research") said.add("a research run was saved");
+    else if (t === "draft_marketing_content") said.add("copy was drafted");
+  }
+  if (!said.size) return STEP_NOT_DONE_NOTE;
+  const list = [...said];
+  const joined = list.length === 1 ? list[0] : `${list.slice(0, -1).join(", ")} and ${list.at(-1)}`;
+  return `In this reply ${joined}; nothing was sent and no client record was changed.`;
 }
 
 export function isAffirmativeReply(text: string): boolean {
@@ -402,7 +442,7 @@ export function readForeground(turns: ForegroundTurn[] | null | undefined, reply
   if (!closing) return { offer: { kind: "none", reason: "no_offer" }, standingCard };
   if (!isAffirmativeReply(reply) && !restatesOffer(reply, closing.offer)) return { offer: { kind: "none", reason: "not_affirmative" }, standingCard };
   if (closing.count > 1 || closing.alternatives) return { offer: { kind: "ambiguous", offer: closing.offer }, standingCard };
-  // The plan before the offer (its last two paragraphs): what a generic "Want me to go ahead?" refers to.
+  // The end of the message before the offer (last three paragraphs): what a generic "Want me to go ahead?" refers to.
   const context = (typeof prev.content === "string" ? prev.content : "").split(/\n\s*\n/).slice(-3).join("\n\n").slice(-1200);
   return { offer: { kind: "accepted", offer: closing.offer, context }, standingCard };
 }

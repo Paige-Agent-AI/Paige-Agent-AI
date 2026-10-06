@@ -15946,6 +15946,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the honest blockage. The prompt REQUIRES these sentences, so continuing over them
       // pressures the model toward fabrication — each is a legitimate end.
       const PROSE_TERMINAL_RE = /(?:^|[.!?]\s+)(?:which (?:one|pipeline|contact|deal|stage|account)|what(?:'s| is) (?:your|the|their)|do you (?:want|mean|prefer)|should (?:i|we) (?:use|add|create|move|proceed)|are you sure|want me to|would you like|how (?:about|do i|do you))|(?:^|[.!?]\s+|\b)(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact|contacts|pipelines|tools) (?:for|exists|exist|available)|i wasn'?t able to complete)/i;
+      // INT-332 — the refusal / blockage half of PROSE_TERMINAL_RE alone. On a turn that accepts PAIGE's own
+      // single offer, a question in prose is NOT a terminal answer: the person already said yes to that step,
+      // so it ends at the tool (and its card), a stated refusal or blockage, or a question asked with
+      // ask_choices — which ends the turn ASK_USER. A prose question there is how the 2026-10-06 strand stood.
+      const PROSE_REFUSAL_RE = /(?:^|[.!?]\s+|\b)(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact|contacts|pipelines|tools) (?:for|exists|exist|available)|i wasn'?t able to complete)/i;
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
@@ -16519,8 +16524,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           if (!claimContinued && finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
+            const acceptedTurn = offerAccepted && resumeCalls.length === 0 && !answerResume;
             const proseTerminal = typeof finalAssistantText === "string"
-              && (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?"));
+              && (acceptedTurn
+                ? PROSE_REFUSAL_RE.test(finalAssistantText)
+                : (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?")));
             const signalTerminal = totalToolCalls > 0
               || queuedApprovals.length > 0
               || confirmTrace.length > 0
@@ -16528,7 +16536,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!signalTerminal && !proseTerminal) {
               continuationsUsed += 1;
               convo.push({ role: "assistant", content: finalAssistantText || "" });
-              convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
+              convo.push({ role: "user", content: acceptedTurn
+                ? "The person accepted the step you offered, and it has not been done: nothing was called. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
+                : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 const continuationResponse = await gatewayCompat("anthropic", {
                   method: "POST",

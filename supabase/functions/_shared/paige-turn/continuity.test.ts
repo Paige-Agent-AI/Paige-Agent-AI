@@ -18,6 +18,7 @@ import {
   readForeground,
   unbackedClaim,
 } from "./continuity.ts";
+import reviewFixtures from "./continuity.review-fixtures.json" with { type: "json" };
 
 const NOW = Date.parse("2026-10-06T15:25:26Z");
 const at = (msAgo: number) => new Date(NOW - msAgo).toISOString();
@@ -335,4 +336,15 @@ Deno.test("review round 3 — the regressions round 2's broad exceptions caused,
     "Payment options: card or ACH are both enabled.\n\nWant me to send Dana the invoice?"]) {
     assertEquals(readForeground(thread(text), "yes", NOW).offer.kind, "accepted", text);
   }
+});
+
+Deno.test("review round 4 — the independent reviewer's 232 adversarial inputs, each with its expected result", () => {
+  const fns: Record<string, (...a: never[]) => unknown> = { unbackedClaim, isAffirmativeReply, readForeground } as never;
+  const wrong: string[] = [];
+  for (const c of (reviewFixtures as { cases: { fn: string; args: unknown[]; expect: unknown }[] }).cases) {
+    const got = (fns[c.fn] as (...a: unknown[]) => unknown)(...c.args);
+    const value = c.fn === "readForeground" ? (got as { offer: { kind: string } }).offer.kind : got;
+    if (JSON.stringify(value) !== JSON.stringify(c.expect)) wrong.push(`${c.fn} ${JSON.stringify(c.args[0]).slice(0, 120)} → ${JSON.stringify(value)} (expected ${JSON.stringify(c.expect)})`);
+  }
+  assertEquals(wrong, []);
 });

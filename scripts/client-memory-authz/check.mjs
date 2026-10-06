@@ -7765,7 +7765,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   seedOffer(s13, THREAD_FRESH, { history: 1 });
   const r13 = await turn(s13, c13, db13, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["On it — I'll link Dana's deal now.", ASSIGN, AFTER_CARD] });
   assert("43.13 C1 a promise without a tool call is continued (not a claim, so not the guard's), and the card is minted",
-    told(r13).includes("The requested task is still unresolved") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
+    told(r13).includes("The person accepted the step you offered") && !told(r13).includes(CORRECTION.card) && c13.rows.length === 1 && terminalOf(r13)?.state === "WAIT_APPROVAL",
     JSON.stringify({ rows: c13.rows.length, terminal: terminalOf(r13) }));
 
   // ── 43.14–43.18 — independent review round 1 (FIX_FIRST). The guard runs on every ordinary turn, so it
@@ -7823,6 +7823,17 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     terminalOf(r19)?.state !== "INTERRUPTED" && saved19?.bundle_ref?.turn_state?.state !== "INTERRUPTED"
       && saved19?.content === fallbackOf("card", true) && c19.rows.length === 0,
     JSON.stringify({ terminal: terminalOf(r19), savedState: saved19?.bundle_ref?.turn_state?.state, saved: saved19?.content }));
+
+  // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the
+  // person already said yes to the step. Prose that claims no card (so the guard cannot see it) and ends on a
+  // question used to stand as FINAL; it now continues to the tool and the card. A clarification goes through
+  // ask_choices (ASK_USER); a stated refusal still ends the turn (43.9).
+  const s20 = makeThreadStore(THREADS), c20 = makeConfirmStore(), db20 = crmDb();
+  seedOffer(s20, THREAD_FRESH, { history: 1 });
+  const r20 = await turn(s20, c20, db20, { text: "Yes we may as well for sure", threadId: THREAD_FRESH, script: ["On it. Want me to start the invoice after?", ASSIGN, AFTER_CARD] });
+  assert("43.20 an accepted offer answered with a prose question is continued to the tool: one card, WAIT_APPROVAL",
+    told(r20).includes("The person accepted the step you offered") && c20.rows.length === 1 && terminalOf(r20)?.state === "WAIT_APPROVAL",
+    JSON.stringify({ rows: c20.rows.length, terminal: terminalOf(r20) }));
 
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.

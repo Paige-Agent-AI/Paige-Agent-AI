@@ -88,6 +88,12 @@ Actor-goal flows (F1–F12, from the order):
    in this reply" (never "nothing is waiting", which it has not checked) — and adds "Anything I did in this reply is shown
    above" when tools ran, so completed work is never hidden. A spent budget with no card records LIMIT_REACHED; a correction
    that cannot run records INTERRUPTED — except when this turn minted a card, which keeps WAIT_APPROVAL.
+4b. **The structural guarantee for the strand (review round 4).** Wording rules will always have gaps — four
+   review rounds each found new phrasings. So the strand no longer depends on them: on a turn that accepts PAIGE's
+   single offer, a prose QUESTION is not a terminal answer (C1's usual "a question ends the turn" does not apply).
+   Such a turn ends only at the tool (and its card), a stated refusal or blockage (C1's refusal half), or a question
+   asked with `ask_choices`, which ends the turn ASK_USER. Prose with no tool is continued with "The person accepted
+   the step you offered, and it has not been done…". The claim guard remains the second net for every other turn.
 5. **Approval authority is the platform's.** The same guard flags PAIGE deciding approval herself — guessing a setting
    ("If approvals are OFF…"), asking whether approvals are on, or offering a way around ("I can run it directly", "want me
    to run it without the card?", "let me skip the approval") — never backed, even beside a real card. It does NOT flag true
@@ -117,8 +123,8 @@ Actor-goal flows (F1–F12, from the order):
 
 ## 5. Evidence (classes kept separate)
 
-**Automated — handler + real door (`test:client-memory-authz`, group 43, 28 checks):** 842 passed / 0 failed on the
-candidate (841 before 43.19, added in review round 2). **At base** (clean worktree of `d20b323e9` with the same harness): 825 passed / **16 failed — all in group
+**Automated — handler + real door (`test:client-memory-authz`, group 43, 29 checks):** 843 passed / 0 failed on the
+candidate (43.19 added in review round 2, 43.20 in round 4). **At base** (clean worktree of `d20b323e9` with the same harness): 825 passed / **16 failed — all in group
 43**, every other group green; the checks that must hold on both sides (F5–F9, F11, F12, the `confirm:true` gate, and the
 three "stay quiet" checks 43.14/43.16/43.17 — base has no guard to misfire) pass at base. **At the first-round head**
 (`47d5e66ba`, clean worktree): 835 / **6 failed — 43.14–43.18, every review finding reproduced through the real handler**,
@@ -181,6 +187,29 @@ evidence window counts it as backed — recorded, not tuned around.
 **UNVERIFIED:** how often the REAL model, on the reasoning tier with the note, calls the tool on the first round (the
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
+
+### 5d. Independent review — rounds 3 and 4: FIX_FIRST each, fixed
+
+**Round 3** (on `c8881dcb0`) showed that round 2's clause-wide exceptions had regressed it. A condition anywhere
+excused "Sending the approval card now… once you approve", and an invoice/lead/board noun anywhere dropped "Sending the
+card for Dana's invoice now". Every rule became local: assertions are claims whatever follows; only futures and
+announcements are excused by a condition or a question; a non-approval card needs its owning noun beside it.
+
+**Round 4** (on `0470b4cae`) ran 540 inputs against three heads. Two findings were blocking:
+- **B1, the strand through a purpose tail.** "Sending the approval card now so nothing runs until you approve. Want me
+  to start the invoice after?" was excused by a clause-wide negation, and C1 then took the "?" as terminal. Fixed
+  twice over: negation now counts only before the card or as a "…but it failed" tail, and decision 4b makes a prose
+  question non-terminal on an accepted offer (43.20, red with the rule off).
+- **B2, a refusal read as a bypass.** "I can't send it without your approval" matched "i can". The SELF forms now
+  exclude negatives, and a negated act is not a bypass.
+
+Round 4's should-fixes were also fixed: earlier-card words count only beside the card; habitual explanations
+("whenever…", "for anything that…", "is how you…") are quiet; "sending over" and "firing off" are claims; the
+authority misses are covered ("since approvals are off…", "are approvals enabled…?", "This doesn't need a card, so
+I'll…"); a bare "Should I?" after a choice asks which.
+
+The reviewer's own expected-value judgements on its 232 new inputs went from 43 wrong to **0 wrong**, and all 232 are
+now a committed fixture (`continuity.review-fixtures.json`) that the unit tests check one by one.
 
 ### 5c. Independent review — round 2 (non-author, exact head `1176c3bbd`): FIX_FIRST, fixed
 

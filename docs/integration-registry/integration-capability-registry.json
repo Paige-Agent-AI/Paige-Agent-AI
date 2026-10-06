@@ -481,7 +481,7 @@
       "rail_mind_memory": "Rail: billing outcome events (no sender/secret). Mind: safe billing-status only (platform-billing-spine-source-contract). Memory: none of card/PII.",
       "status": "PARTIAL",
       "owner": "Money Spine workstream",
-      "dependency": "Platform acquisition/Billing proof obligations remain separate. Sales S3/S4 implements shared tenant-connected direct-charge hosted requests, GET-only ambiguous-outcome recovery, provider readback and atomic verified allocation into the existing invoice ledger/Rail. Implementation and CI do not establish authenticated provider or production acceptance: those remain PROOF OWED. Each current/future Solo tenant supplies its own merchant binding; no global or owner-account fallback. PayPal parity and production payment acceptance remain outstanding. Legacy destination-charge storefront is unchanged.",
+      "dependency": "Platform acquisition/Billing proof obligations remain separate. Sales S3/S4 implements shared tenant-connected direct-charge hosted requests, GET-only ambiguous-outcome recovery, provider readback and atomic verified allocation into the existing invoice ledger/Rail. PR #1769/#1779 records production persistence and deployment of the substrate. Deployed substrate does not establish authenticated merchant/payment acceptance: that remains PROOF OWED. Each current/future Solo tenant supplies its own merchant binding; no global or owner-account fallback. PayPal parity and production payment acceptance remain outstanding. Legacy destination-charge storefront is unchanged.",
       "next_slice": "Complete Stripe authenticated sandbox/payment acceptance and PayPal canonical parity before closing S4; then shared recurring lifecycle and conversational Collections under existing Spine/Trust/durable work/Rail. No Sales application fee; PAIGE Billing remains separate. Existing platform enrollment proof obligations remain.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -589,7 +589,7 @@
       "rail_mind_memory": "Future canonical Sales execution receipts on Rail; no mutable financial truth in Memory/Mind.",
       "status": "UNAVAILABLE",
       "owner": "Sales execution program INT-311",
-      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. No PayPal adapter or onboarding activation exists.",
+      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. A non-executing GET readback normalizer reuses the canonical payment contract; hosted dispatch, delegated transport and onboarding activation remain unavailable. Deterministic tests do not establish provider acceptance.",
       "next_slice": "Ground partner app access and merchant-integrations permissions; implement the same Sales hosted request to verified settlement/allocation vertical as Stripe.",
       "tier_eligibility": {
         "platform": "eligible",

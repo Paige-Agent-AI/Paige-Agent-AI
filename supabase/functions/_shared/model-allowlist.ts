@@ -14,6 +14,7 @@
 
 import { DoctrineViolation } from "./model-router-gates.ts";
 import { CLAUDE_CLASSIFICATION, CLAUDE_REASONING } from "./claude-models.ts";
+import { OPENAI_CHEAP, OPENAI_FRONTIER, OPENAI_OPERATIONAL } from "./openai-models.ts";
 
 /**
  * Per-provider allowed model ids. Keys are the router's provider slugs. Anything not listed
@@ -34,9 +35,13 @@ export const MODEL_ALLOWLIST: Record<string, string[]> = {
     "claude-opus-4-8",
   ],
 
-  // OpenAI — text-frontier alternative + image. gpt-4o / gpt-4o-mini for chat,
+  // OpenAI — the GPT-6 reasoning family (INT-334; ids DERIVED from openai-models.ts, Responses API via
+  // openai-responses.ts), the legacy gpt-4o pair (Chat Completions client, no live caller), and
   // gpt-image-1 for image generation.
   openai: [
+    OPENAI_CHEAP,
+    OPENAI_OPERATIONAL,
+    OPENAI_FRONTIER,
     "gpt-4o",
     "gpt-4o-mini",
     "gpt-image-1",

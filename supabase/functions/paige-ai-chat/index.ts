@@ -9023,7 +9023,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // alone decides whether the step needs a card. A read that fails is the ordinary path. The same read
     // tells the claim guard (C1, below) whether a card from the previous turn is still standing.
     let foreground: Foreground = { offer: { kind: "none", reason: "no_previous_turn" }, standingCard: false };
-    if (payloadThreadId && !studioSessionId && !liveRuntimeScope && !attachedDocument && !answerBinding && lastUserMessage) {
+    // (Not on an answer turn: its previous turn is PAIGE's question — never an offer or a standing card.)
+    if (payloadThreadId && !studioSessionId && !liveRuntimeScope && !answerBinding && lastUserMessage) {
       try {
         const { data: fgTurns, error: fgError } = await supabaseClient.from("paige_chat_turns")
           .select("role,content,created_at,bundle_ref").eq("thread_id", payloadThreadId)
@@ -9034,8 +9035,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
     }
     // An approval turn carries its own act forward (C4a/C4b); a client seat's tools are deny-by-default.
-    const offerAccepted = foreground.offer.kind === "accepted" && callerTier !== "client" && approvedConfirmations.size === 0;
-    const offerAmbiguous = foreground.offer.kind === "ambiguous" && callerTier !== "client" && approvedConfirmations.size === 0;
+    // A document turn is its own request; the read above still runs on it so the claim guard knows whether a
+    // card is standing from the previous turn.
+    const offerEligible = callerTier !== "client" && approvedConfirmations.size === 0 && !attachedDocument && !answerBinding;
+    const offerAccepted = foreground.offer.kind === "accepted" && offerEligible;
+    const offerAmbiguous = foreground.offer.kind === "ambiguous" && offerEligible;
     if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
     const substantiveTurn = offerAccepted
       || (!!lastUserMessage && substantiveTurnIntent(String(lastUserMessage.content ?? "")));

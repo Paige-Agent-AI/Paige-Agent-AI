@@ -295,3 +295,44 @@ Deno.test("review round 2 — the guard, the offer reader and the acceptance on 
   for (const no of ["no worries", "No problem", "yes 👎", "ok ❌"]) assert(!isAffirmativeReply(no), no);
   for (const yes of ["no worries, go ahead", "no problem — do it"]) assert(isAffirmativeReply(yes), yes);
 });
+
+Deno.test("review round 3 — the regressions round 2's broad exceptions caused, pinned so they cannot return", () => {
+  // BL1: an asserted card is a claim whatever condition follows it.
+  for (const s of ["Sending the approval card now so that once you approve, the link is created.", "Sending the approval card now, once you approve I'll link them.",
+    "The approval card is up and the link goes live once you approve.", "I've put up the approval card so the link only goes live after you approve it.",
+    "I've queued the approval card for you to approve once you've reviewed it.", "Approval card is ready for you after you check the amount.",
+    "Sending the approval card now so you can approve it before I build the invoice.", "I've sent the approval card so nothing goes out until you approve.",
+    // BL2: a card claim that mentions an invoice, a lead, the board or a portal is still a card claim.
+    "Sending the card for Dana's invoice now.", "Sending the card now and then the $2,500 invoice.", "Sending the card now to link Dana's lead to the deal.",
+    "Sending the card now to move Dana on the board.", "I've put Dana's invoice on a card for your approval.", "Here's the card for the $2,500 invoice.",
+    "Card sent for the deal summary.", "The card for Dana's portal access is up — approve it when ready.", "Sending the approval card now for the link, then the invoice."]) {
+    assertEquals(unbackedClaim(s, N), "card", s);
+  }
+  // SF1: write-then-bypass, and the conditional with other tails, are authority claims.
+  for (const s of ["I can draft and send it without approval.", "I can check it and then send it without approval.", "Let me draft it and push it out without approval.",
+    "I can pull the trigger without approval.", "I can review and publish it without the card.", "If approvals are off, I'd run it directly.",
+    "If approvals are off for you, running it directly works — want me to?", "Your approvals are off, so I'll link it now."]) {
+    assertEquals(unbackedClaim(s, N), "authority", s);
+  }
+  // SF2: honest future intent and questions are not claims.
+  for (const s of ["I'll send the approval card as soon as you confirm the amount.", "I'll send the approval card — what amount should it be?",
+    "Next, I'll send the approval card for the link.", "I'll create the approval card for the invoice tomorrow.",
+    "I'll put together the approval card when the amount is final.", "I'll send the approval card for each step as we go.",
+    "Going forward I'll file an approval request for anything over $500.",
+    // SF4: truthful "no card / couldn't" sentences.
+    "No new approval card is up yet.", "I couldn't put up the approval card — the deal changed since I read it.",
+    "I went to put up the approval card and the platform blocked it — the record changed.", "I can't put a card up for this one.",
+    "I can draft the email without approval, but sending it needs your OK.", "I sent the approval card request but it failed.",
+    // round 2's S3 still quiet
+    "Here's the card payment summary for March.", "Here is the card on file for Dana.", "Your card was sent to Stripe for verification.",
+    "I created a card for Dana in the Leads column.", "The approval card will appear once I propose the change — want me to?"]) {
+    assertEquals(unbackedClaim(s, N), null, s);
+  }
+  // SF3: "a few options" in prose is not a choice offered to the person; a list of paths is.
+  for (const text of ["I compared a few options for the venue.\n\nThe Hilton is best value.\n\nWant me to book the Hilton?",
+    "This helps in several ways: it saves time and it keeps Dana informed.\n\nWant me to send the follow-up to Dana?",
+    "Both options are cheaper than last year.\n\nShould I send the renewal to Dana?",
+    "Payment options: card or ACH are both enabled.\n\nWant me to send Dana the invoice?"]) {
+    assertEquals(readForeground(thread(text), "yes", NOW).offer.kind, "accepted", text);
+  }
+});

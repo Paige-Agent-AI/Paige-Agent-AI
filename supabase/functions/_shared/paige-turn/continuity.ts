@@ -116,8 +116,10 @@ export function closingOffer(text: string): { offer: string; count: number; alte
     || sentences.slice(closing + 1).some((x) => ALTERNATIVE.test(noChoiceWords(x)))
     // a generic offer takes its act from what came before: a choice there is a choice here
     || (GENERIC_OFFER.test(rest) && [...previous, ...sentences.slice(0, closing)].some((x) => ALTERNATIVE.test(noChoiceWords(x))))
-    // a tail that lays out several paths — a heading, its list, then the question: three paragraphs back
-    || paragraphs.slice(-3).some((x) => MULTI_PATH.test(x))
+    // a tail that lays out several paths AS A LIST — "Two ways to do this:" with its items in that
+    // paragraph or the next (a bare "a few options" in prose is not a choice offered to the person)
+    || paragraphs.slice(-3).some((x, i, tail) => MULTI_PATH.test(x)
+      && [x, tail[i + 1] ?? ""].some((p) => p.split(/\n+/).filter((line) => LIST_MARKER.test(line)).length >= 2))
     // any offer in the paragraph before this one counts as a second option (it is not compared with this one)
     || prevOffers > 0;
   return { offer: sentence.slice(0, 400), count, alternatives };
@@ -233,75 +235,81 @@ export function ambiguousOfferNote(offer: string, reply: string): string {
 
 export type UnbackedClaim = "card" | "authority";
 
-// An approval card, by name — or a card in a sentence about approving.
+// Every rule below is LOCAL — it looks at the words next to the card, never a word anywhere in the clause —
+// because each clause-wide exception tried in review traded one leak for another (round 3: "once you
+// approve" excused "Sending the approval card now…"; "invoice" anywhere dropped "Sending the card for
+// Dana's invoice now"). Assertions (sending, is up, I've put up) are claims whatever follows them; only a
+// future or an offer can be excused by a condition.
+
+// An approval card, by name; the approvals list; or a card in a sentence about approving.
 const APPROVAL_CARD = /\b(?:approval card|approval request|needs your ok)\b/i;
+const APPROVALS_LIST = /\b(?:approvals?|needs your ok) (?:tab|queue|list|page)\b/i;
 const CARD_WORD = /\bcards?\b/i;
 const APPROVE_WORD = /\bapprov/i;
-// R1 — a card arriving, present or just done: "Sending the approval card now", "You'll see a Needs your OK
-// card", "The approval request is out".
-const ARRIVING =
-  /\b(?:sending|staging|queu(?:e|)ing|popping up|(?:i'?ve|i have|it'?s|that'?s|has been|have been|just) (?:sent|put|staged|queued|filed|raised|created|teed up)|you(?:'ll| will| should) (?:now )?(?:see|get|find)|(?:should|will) (?:now )?(?:appear|show up|pop up)|is (?:now )?(?:up|ready|out|live|on its way|in front of you|coming)|on (?:its|the) way|coming (?:up|your way)|look for)\b/i;
-// R2 — the card itself named as sent/up/ready: "Card sent.", "I sent the card", "Here's the approval card".
-const CARD_OBJECT = [
+// A card some other noun owns, named right next to it.
+const NON_APPROVAL_CARD =
+  /\b(?:credit|debit|payment|contact|business|report|lead|gift|loyalty|summary|outcome|choice|proposal|score)\s+cards?\b|\bscorecards?\b|\bcards?\s+(?:on file|ending|number|details|holder|reader|payments?)\b|\bcards?\b[^.!?]{0,30}\bin the\b[^.!?]{0,20}\b(?:column|board|lane|stage)\b|\bcards?\b[^.!?]{0,30}\bto stripe\b|\b(?:pay|paid|paying|charge[ds]?)\s+(?:by|with|via|on)\s+(?:a\s+)?card\b|\bcards?\s+(?:or|and)\s+(?:bank|ach|transfer)\b/i;
+// ASSERTED — the card is there or on its way NOW. A condition does not excuse these.
+const CARD_ASSERTED = [
   /^(?:the |your |an? )?(?:approval |needs your ok )?card(?:'s| is| has been| was)? (?:now )?(?:sent|up|live|ready|created|queued|staged|on its way|waiting)\b/i,
   /\b(?:the|your|this|that|an?)\s+(?:approval\s+|needs your ok\s+)?card(?:'s| is| has been| was)? (?:now )?(?:sent|up|live|ready|created|queued|staged|on its way)\b/i,
-  /\b(?:sent|created|staged|queued|raised|put up|teed up|pulled up)\s+(?:you\s+)?(?:the|a|an|your|that|this)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
+  /\b(?:sent|created|staged|queued|raised|put up|teed up|pulled up)\s+(?:you\s+)?(?:the|a|an|your|that|this)\s+(?:(?:new|second|another|next|fresh)\s+)?(?:approval\s+|needs your ok\s+)?card\b/i,
   /\bhere(?:'s| is| comes)\s+(?:the|your|an?)\s+(?:approval card|needs your ok card|approval request|card)\b/i,
-  /\b(?:sending|putting up|staging|queuing|raising)\s+(?:you\s+)?(?:the|a|an|your|that|this)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
-  /\b(?:the|your)\s+(?:approval\s+|needs your ok\s+)?card\s+(?:should|will)\s+(?:now\s+)?(?:appear|show up|pop up)\b/i,
+  /\b(?:sending|putting up|staging|queuing|raising)\s+(?:you\s+)?(?:the|a|an|your|that|this|another)\s+(?:(?:new|second|another|next|fresh)\s+)?(?:approval\s+|needs your ok\s+)?card\b/i,
   /\bcard\s+(?:is\s+|'s\s+)?(?:coming|on its way)\s+(?:now|right now|right up|your way)\b/i,
-  /\b(?:put|putting|placed|added)\s+(?:it|this|that|them)\s+on\s+(?:a|an|the)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
+  /\b(?:put|putting|placed|added)\s+[^.!?]{0,30}?\bon\s+(?:a|an|the)\s+(?:approval\s+|needs your ok\s+)?card\b/i,
 ];
-// R3 — telling the person to approve on a card: it says the card is there.
-const APPROVE_ON_CARD = /\b(?:click|tap|hit|press)\s+(?:the\s+)?["\u201c]?approve\b|\bapprove (?:it |this |that )?on the card\b/i;
-// R4 — announcing the card as happening right now: "I'll send the approval card now."
-// (Conditionals are excluded before this runs — "I'll send the approval card once you confirm" is an offer.)
-const ANNOUNCE_NOW =
+// ASSERTED in a sentence about approving: "The card for Dana's portal access is up — approve it when ready."
+const ARRIVING_ASSERTED =
+  /\b(?:popping up|(?:i'?ve|i have|it'?s|that'?s|has been|have been|just) (?:sent|put|staged|queued|filed|raised|created|teed up)|is (?:now )?(?:up|ready|out|live|on its way|in front of you|coming)|on (?:its|the) way|coming (?:up|your way)|look for|incoming|(?:right |just )?below|down below|in your (?:approvals?|needs your ok) (?:tab|queue|list|page))\b/i;
+// FUTURE arrival: "You'll see a card", "The card should appear below". A condition excuses it ("…will appear
+// once I propose the change").
+const FUTURE_ARRIVAL =
+  /\byou(?:'ll| will| should) (?:now )?(?:see|get|find)\b|\b(?:should|will) (?:now )?(?:appear|show up|pop up)\b/i;
+// …and the card itself said to be about to appear: "The card should appear below."
+const CARD_FUTURE = /\b(?:the|your)\s+(?:approval\s+|needs your ok\s+)?card\s+(?:should|will)\s+(?:now\s+)?(?:appear|show up|pop up)\b/i;
+// Telling the person to approve on a card says it is there — unless it explains ("you'll need to hit Approve").
+const APPROVE_ON_CARD = /\b(?:click|tap|hit|press)\s+(?:the\s+)?["“]?approve\b|\bapprove (?:it |this |that )?on the card\b/i;
+const EXPLAINS = /\b(?:if|when|whenever) you\b|\b(?:need|needs|have|has) to\b/i;
+// ANNOUNCED — "I'll send the approval card". A claim only when it is immediate or the sentence ends on the card.
+const ANNOUNCE =
   /\b(?:i'?ll|i will|let me|i'?m going to|i am going to)\s+(?:go ahead and\s+)?(?:send|put|stage|raise|create|file|queue|pull up|get)\b[^.!?]{0,60}\b(?:approval card|needs your ok(?: card)?|approval request)\b/i;
-// Offers, conditionals and explanations do not claim a card exists — checked before any card shape, so
-// "Say the word and I'll put it on a card" stays an offer.
-const OFFER_OR_CONDITION =
-  /\b(?:want me to|should i|shall i|would you like|do you want|if (?:you|i)|when (?:you|i)|whenever|once (?:you|i)|after (?:you|i)|before (?:you|i)|until (?:you|i)|say the word|let me know|ready to)\b/i;
-// A future ("I'll…", "I can…") claims nothing unless it announces the card as happening now (ANNOUNCE_NOW).
-const FUTURE = /\bi(?:'ll| will| can| could| would)\b/i;
-// A sentence that says a card does NOT exist is the truth, never a claim. The negation must govern the card
-// ("didn't put a card", "no card yet", "nothing is waiting") — an aside like "no rush" negates nothing.
-const NEGATED = /\b(?:haven'?t|hasn'?t|didn'?t|don'?t|doesn'?t|isn'?t|aren'?t|wasn'?t|won'?t|never|not yet|no (?:new |approval )?(?:card|cards|approval request)|nothing (?:is |was |has been )?(?:waiting|sent|up|queued|staged|pending)|nothing runs|not (?:sent|up|ready|created|queued|staged|waiting))\b/i;
-// A card some other noun owns — payments, a lead in a column, a portal — is not an approval card, unless the
-// sentence names one ("approval card", "Needs your OK").
-const NON_APPROVAL_CARD = /\b(?:pay|payment|payments|paid|charge|charged|stripe|invoice|on file|credit|debit|wallet|column|board|lead|leads|portal|contact card|business card|report card|scorecard|summary|verification)\b/i;
-// Words that say the card is being created now, so "already"/"approvals tab" in the clause is not "from before".
-const CREATED_NOW = /\b(?:i'?ve|i have|just)\b[^.!?]{0,30}\b(?:put|sent|added|queued|staged|filed|created|placed)\b|\bnow\b/i;
-// A card from before: from earlier, still waiting, in the approvals list — not a new one.
+const IMMEDIATE = /\b(?:now|right now|right away|immediately)\b/i;
+const ENDS_ON_CARD = /\b(?:approval card|needs your ok(?: card)?|approval request)(?:\s+(?:over|across|up))?(?:\s+(?:to you|for you|your way))?\s*[.!]*$/i;
+// Offers never claim; a condition excuses only a future or an announcement.
+const OFFER = /\b(?:want me to|should i|shall i|would you like|do you want|say the word|let me know|ready to|if you(?:'d)? (?:want|like))\b/i;
+const CONDITION = /\b(?:if|when|whenever|once|after|before|until|as soon as) (?:you|i)\b/i;
+// A sentence that says the card is NOT there is the truth: the negation must be about the card or the act.
+const NEGATED = /\b(?:haven'?t|hasn'?t|didn'?t|don'?t|doesn'?t|isn'?t|aren'?t|wasn'?t|won'?t|couldn'?t|can'?t|cannot|unable to|wasn'?t able|tried to|blocked|failed|never|not yet|no (?:new )?(?:approval )?(?:card|cards|request)|nothing (?:is |was |has been )?(?:waiting|sent|up|queued|staged|pending)|nothing runs|not (?:sent|up|ready|created|queued|staged|waiting))\b/i;
+// A card from before is not a new one — unless the clause also says it is being created now.
 const EARLIER_CARD =
   /\b(?:above|earlier|already|still|previous|previously|yesterday|before|from before|last (?:one|card)|that card|approved|approvals? (?:tab|list|page|queue)|needs your ok list)\b/i;
-// The claim is a card arriving now, below, or into the approvals list.
-const ARRIVING_EXTRA = /\b(?:incoming|(?:right |just )?below|down below|in your (?:approvals?|needs your ok) (?:tab|queue|list|page))\b/i;
+const CREATED_NOW = /\b(?:i'?ve|i have|just)\b[^.!?]{0,30}\b(?:put|sent|added|queued|staged|filed|created|placed)\b|\bnow\b/i;
 const NEW_CARD = /\b(?:new|second|another|next)\b/i;
 
-// PAIGE deciding approval: guessing a setting, asking whether approvals are on, or offering a way around.
+// PAIGE deciding approval: guessing a setting that licenses an act, asking whether approvals are on, or
+// offering a write that goes around the card.
+const SELF = "(?:i can|i could|i'?ll|i will|i'?d|i would|we can|we could|we'?ll|want me to|should i|let me|i'?m able to)";
+const WRITE_VERB = "(?:send|publish|push|post|run|execute|apply|create|link|update|delete|email|text|launch|move|book|charge|enroll|archive|make|pull the trigger|go ahead)";
 const AUTHORITY_CLAIM = [
-  // a guessed setting that licenses an act: "If approvals are OFF in your workspace, then I can run this link…"
-  /\bif (?:your |the )?(?:approvals?|approval (?:controls?|settings?|gate)|trust (?:compass|settings?|level))\b[^.!?\n]{0,40}\b(?:off|disabled|turned off|switched off|not (?:on|enabled|required|needed|turned on))\b[^.!?\n]{0,40}\b(?:i can|i could|i'?ll|i will|we can|just say|say the word)\b/i,
+  new RegExp(`\\bif (?:your |the )?(?:approvals?|approval (?:controls?|settings?|gate)|trust (?:compass|settings?|level))\\b[^.!?\\n]{0,40}\\b(?:off|disabled|turned off|switched off|not (?:on|enabled|required|needed|turned on))\\b[^.!?\\n]{0,40}(?:\\b${SELF}\\b|\\bjust say\\b|\\bsay the word\\b|\\b(?:running|run|doing|do) it directly\\b)`, "i"),
+  new RegExp(`\\b(?:your |the )?approvals? (?:are|is) (?:off|disabled|turned off|switched off)\\b[^.!?\\n]{0,30}\\b(?:so|then)\\s+${SELF}\\b`, "i"),
   /\b(?:do(?:es)?|is|are|have|has)\s+(?:you|your (?:workspace|account|business)|the workspace)\b[^.!?\n]{0,40}\bapprov\w*[^.!?\n]{0,40}\b(?:enabled|on|off|turned on|turned off|set up|required)\b[^.!?\n]*\?/i,
-  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me|i'?m able to)\s+(?:just\s+)?(?!(?:look|read|research|search|check|find|view|draft|see|pull|review|summari[sz]e|explain|answer)\b)\w+[^.!?\n]{0,50}\b(?:without (?:the|a|an|any|your) (?:approval\s+)?(?:card|approval)|without approval|(?:no|without a) card needed)\b/i,
-  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me)\s+(?:just\s+)?(?:skip|bypass|go around|get around)\s+(?:the |your )?(?:approval|card)\b/i,
+  new RegExp(`\\b${SELF}\\b[^.!?\\n]{0,60}(?<!\\b(?:the|a|an|this|that|your|his|her|their|my|our)\\s)\\b${WRITE_VERB}\\w*\\b[^.!?\\n]{0,50}\\b(?:without (?:the|a|an|any|your) (?:approval\\s+)?(?:card|approval|ok|sign[- ]off)|without approval|(?:no|without a) card needed)\\b`, "i"),
+  new RegExp(`\\b${SELF}\\s+(?:just\\s+)?(?:skip|bypass|go around|get around)\\s+(?:the |your )?(?:approval|card)\\b`, "i"),
 ];
-
 // "Directly" is ordinary capability talk ("I can query it directly"); it is PAIGE going around approval only
-// in a sentence about the card or approval, offered, and not negated (prod replay 2026-10-06: 15 of 16
-// authority hits were the bare adverb in honest replies).
+// in a sentence about the card or approval, offered, not negated, and not "approve first, then directly"
+// (prod replay 2026-10-06: 15 of 16 authority hits were the bare adverb in honest replies).
 const DIRECTLY_AROUND_APPROVAL = (s: string) =>
-  /\b(?:i can|i could|i'?ll|i will|we can|we could|want me to|should i|let me|i'?m able to)\b[^.!?\n]{0,50}\bdirectly\b/i.test(s)
+  new RegExp(`\\b${SELF}\\b[^.!?\\n]{0,50}\\bdirectly\\b`, "i").test(s)
   && /\b(?:approv\w*|card|sign[- ]off)\b/i.test(s)
   && !/\b(?:can'?t|cannot|won'?t|not|never|isn'?t|aren'?t)\b/i.test(s)
-  // "Approve the card and I'll email it directly" / "once you approve, I'll send it directly" put approval first.
-  && !/\b(?:once|after|when|as soon as) you approve\b|\bapprove (?:it|the card|that|this)?\s*(?:and|,)\s*(?:then\s+)?i'?ll\b|\bafter you approve\b/i.test(s);
+  && !/\b(?:once|after|when|as soon as) you approve\b|\bapprove (?:it|the card|that|this)?\s*(?:and|,)\s*(?:then\s+)?i'?ll\b/i.test(s);
 
-const clausesOf = (text: string) => strip(text)
-  .split(/(?<=[.!?])\s+|\n+/)
-  .flatMap((sentence) => sentence.split(/\s+[\u2014\u2013-]\s+|;\s+|,\s+(?=(?:and|but|then|so)\s)/))
-  .map((x) => x.trim()).filter(Boolean);
+const sentencesOf = (text: string) => strip(text).split(/(?<=[.!?])\s+|\n+/).map((x) => x.trim()).filter(Boolean);
+const clausesOfSentence = (sentence: string) => sentence
+  .split(/\s+[—–-]\s+|;\s+|,\s+(?=(?:and|but|then|so)\s)/).map((x) => x.trim()).filter(Boolean);
 
 /**
  * A claim in PAIGE's reply that nothing in this turn backs. `cardMinted`: an approval card was created in
@@ -310,25 +318,31 @@ const clausesOf = (text: string) => strip(text)
  */
 export function unbackedClaim(text: string, opts: { cardMinted: boolean; standingCard: boolean }): UnbackedClaim | null {
   if (typeof text !== "string" || !text.trim()) return null;
-  const sentences = strip(text).split(/(?<=[.!?])\s+|\n+/).map((x) => x.trim()).filter(Boolean);
+  const sentences = sentencesOf(text);
   if (sentences.some((s) => AUTHORITY_CLAIM.some((re) => re.test(s)) || DIRECTLY_AROUND_APPROVAL(s))) return "authority";
   if (opts.cardMinted) return null;
-  for (const c of clausesOf(text)) {
-    const approvalsList = /\b(?:approvals?|needs your ok) (?:tab|queue|list|page)\b/i.test(c);
-    const approvalContext = APPROVAL_CARD.test(c) || approvalsList || (CARD_WORD.test(c) && APPROVE_WORD.test(c));
-    const cardMentioned = APPROVAL_CARD.test(c) || CARD_WORD.test(c) || approvalsList;
-    if (!cardMentioned) continue;
-    if (NEGATED.test(c)) continue;
-    if (EARLIER_CARD.test(c) && !CREATED_NOW.test(c)) continue;
-    if (!APPROVAL_CARD.test(c) && NON_APPROVAL_CARD.test(c)) continue;
-    if (opts.standingCard && !NEW_CARD.test(c)) continue;
-    // "…you'll need to hit Approve on the card" explains how it will work; it does not say a card is there.
-    if (APPROVE_ON_CARD.test(c) && !/\b(?:if|when|whenever) you\b|\b(?:need|needs|have|has) to\b/i.test(c)) return "card";
-    if (OFFER_OR_CONDITION.test(c)) continue;
-    if (ANNOUNCE_NOW.test(c)) return "card";
-    if (CARD_OBJECT.some((re) => re.test(c))) return "card";
-    if (c.endsWith("?") || FUTURE.test(c)) continue;
-    if (approvalContext && (ARRIVING.test(c) || ARRIVING_EXTRA.test(c))) return "card";
+  for (const sentence of sentences) {
+    const asks = sentence.endsWith("?");
+    const sentenceApproves = APPROVE_WORD.test(sentence);
+    for (const c of clausesOfSentence(sentence)) {
+      const mentioned = APPROVAL_CARD.test(c) || APPROVALS_LIST.test(c) || CARD_WORD.test(c);
+      if (!mentioned) continue;
+      if (NEGATED.test(c)) continue;
+      if (!APPROVAL_CARD.test(c) && NON_APPROVAL_CARD.test(c)) continue;
+      if (EARLIER_CARD.test(c) && !CREATED_NOW.test(c)) continue;
+      if (opts.standingCard && !NEW_CARD.test(c)) continue;
+      if (OFFER.test(c)) continue;
+      const approvalContext = APPROVAL_CARD.test(c) || APPROVALS_LIST.test(c) || (CARD_WORD.test(c) && sentenceApproves);
+      const conditioned = CONDITION.test(c);
+      // Asserted: there now, whatever condition follows.
+      if (CARD_ASSERTED.some((re) => re.test(c))) return "card";
+      if (approvalContext && ARRIVING_ASSERTED.test(c) && !FUTURE_ARRIVAL.test(c)) return "card";
+      if (APPROVE_ON_CARD.test(c) && !EXPLAINS.test(c)) return "card";
+      // Future or announced: excused by a condition or a question.
+      if (conditioned || asks) continue;
+      if (ANNOUNCE.test(c) && (IMMEDIATE.test(c) || ENDS_ON_CARD.test(c))) return "card";
+      if (CARD_FUTURE.test(c) || (approvalContext && FUTURE_ARRIVAL.test(c))) return "card";
+    }
   }
   return null;
 }

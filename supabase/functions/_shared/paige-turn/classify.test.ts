@@ -6,8 +6,8 @@
 // offer's STEP is what is classified; the schema and the prompt name the same closed values as the
 // Turn Route.
 import { assert, assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
-import { CLASSIFY_MAX_CHARS, CLASSIFY_SCHEMA, CLASSIFY_SYSTEM, classifyPrompt, parseClassification } from "./classify.ts";
-import { DIFFICULTIES, IMAGE_NEEDS, RESEARCH_NEEDS, TURN_INTENTS } from "./route.ts";
+import { CLASSIFY_MAX_CHARS, CLASSIFY_SCHEMA, CLASSIFY_SYSTEM, classifyPrompt, parseClassification, routeNeedsClassifier } from "./classify.ts";
+import { DIFFICULTIES, IMAGE_NEEDS, RESEARCH_NEEDS, TURN_INTENTS, type TurnRouteFacts } from "./route.ts";
 
 const GOOD = { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.8 };
 
@@ -56,4 +56,37 @@ Deno.test("the schema and the prompt name exactly the Turn Route's closed values
     assert(CLASSIFY_SYSTEM.includes(`"${v}"`), `the prompt names ${v}`);
   }
   assert(!CLASSIFY_SYSTEM.includes('"clarify"'), "the classifier is never offered clarify");
+});
+
+Deno.test("a go-ahead is labelled act, never converse (a bare 'do it' must not route to the cheap class)", () => {
+  assert(CLASSIFY_SYSTEM.includes("Never agreement to proceed."), "converse excludes agreement to proceed");
+  for (const w of ["do it", "go ahead", "yes please", "send it", "book it"]) assert(CLASSIFY_SYSTEM.includes(`\"${w}`) || CLASSIFY_SYSTEM.includes(`"${w}`), w);
+  const act = CLASSIFY_SYSTEM.split("\n").findIndex((l) => l.trim().startsWith("act "));
+  assert(CLASSIFY_SYSTEM.split("\n")[act + 1].includes("A short go-ahead is act"), "the go-ahead rule sits under act");
+});
+
+Deno.test("the classifier is called only where state leaves the class open", () => {
+  const base: Omit<TurnRouteFacts, "classification"> = {
+    surface: "chat", approvedCard: false, answerBinding: false,
+    foreground: { offer: { kind: "none", reason: "no_offer" }, standingCard: false } as TurnRouteFacts["foreground"],
+    acceptedOfferKind: null, attachments: { document: false, image: false },
+  };
+  const accepted = { offer: { kind: "accepted", offer: "draft the welcome note" }, standingCard: false } as TurnRouteFacts["foreground"];
+  const ambiguous = { offer: { kind: "ambiguous", offer: "send or draft" }, standingCard: false } as TurnRouteFacts["foreground"];
+  const card = { offer: { kind: "none", reason: "standing_wait" }, standingCard: true } as TurnRouteFacts["foreground"];
+  // Called: a fresh chat or Live turn, a reply beside a standing card, an accepted prose step.
+  assert(routeNeedsClassifier(base), "fresh chat");
+  assert(routeNeedsClassifier({ ...base, surface: "live" }), "fresh Live");
+  assert(routeNeedsClassifier({ ...base, foreground: card }), "standing card");
+  assert(routeNeedsClassifier({ ...base, foreground: accepted, acceptedOfferKind: "prose" }), "accepted prose");
+  // Not called: state already decided, or the floor is operational whatever it says.
+  assert(!routeNeedsClassifier({ ...base, approvedCard: true }), "an approval resume makes no classifier call");
+  assert(!routeNeedsClassifier({ ...base, approvedCard: true, foreground: card }), "…even beside a standing card");
+  assert(!routeNeedsClassifier({ ...base, answerBinding: true }), "an answer to PAIGE's question");
+  assert(!routeNeedsClassifier({ ...base, foreground: accepted, acceptedOfferKind: "act" }), "an accepted act");
+  assert(!routeNeedsClassifier({ ...base, foreground: accepted, acceptedOfferKind: "unknown" }), "an accepted unknown step");
+  assert(!routeNeedsClassifier({ ...base, foreground: ambiguous }), "an ambiguous offer");
+  assert(!routeNeedsClassifier({ ...base, surface: "studio" }), "Studio");
+  assert(!routeNeedsClassifier({ ...base, attachments: { document: true, image: false } }), "an attached document");
+  assert(!routeNeedsClassifier({ ...base, attachments: { document: false, image: true } }), "an attached image");
 });

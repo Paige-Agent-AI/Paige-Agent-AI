@@ -72,11 +72,15 @@ const realFetch = globalThis.fetch;
 let embedCount = 0;
 let providerPlan = [];
 let providerCalls = [];
+// INT-334 R4 — the turn classifier's calls, kept apart from `providerCalls` so a check's provider plan
+// and call count stay the model rounds it scripts. Every classifier payload is still egress: checks
+// below prove it never leaves on a switched account and never carries account Knowledge.
+let classifierCalls = [];
 let syncCalls = [];
 let syncThrows = false;
 function embedCalls() { return embedCount; }
 function resetEmbeds() { embedCount = 0; }
-function resetProvider(plan = []) { providerPlan = [...plan]; providerCalls = []; syncCalls = []; }
+function resetProvider(plan = []) { providerPlan = [...plan]; providerCalls = []; classifierCalls = []; syncCalls = []; }
 function anthropicStream(kind = "text") {
   const responseText = kind === "private-text"
     ? "CHILD-PRIVATE-MARKER"
@@ -271,7 +275,17 @@ globalThis.fetch = async (url, init) => {
     });
   }
   if (href === "https://api.anthropic.com/v1/messages") {
-    providerCalls.push(JSON.parse(String(init?.body ?? "{}")));
+    const sent = JSON.parse(String(init?.body ?? "{}"));
+    if (String(sent.system ?? "").startsWith("You label one message sent to PAIGE")) {
+      classifierCalls.push(sent);
+      // An ordinary answer that needs this workspace's records: the route stays operational, as before R4.
+      const label = { intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.9 };
+      return new Response(JSON.stringify({ content: [{ type: "text", text: JSON.stringify(label) }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    providerCalls.push(sent);
     const next = providerPlan.shift() ?? "text";
     // An extraction that parses but FAILS validation, so the `logSyncFailure` path is reached
     // with the full `structured` payload — the write 14b.1/14b.2 are about.
@@ -498,7 +512,7 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
   const kbCall = rec.rpc.find((r) => r.name === "match_tenant_knowledge");
   const memberReads = rec.from.filter((f) => f.table === "tenant_members");
   const telemetry = rec.inserts.find((i) => i.table === "kb_query_telemetry");
-  return { rec, kbCall, memberReads, telemetry, logged, status, embeds: embedCalls(), providerCalls: [...providerCalls], responseText, syncCalls: [...syncCalls] };
+  return { rec, kbCall, memberReads, telemetry, logged, status, embeds: embedCalls(), providerCalls: [...providerCalls], classifierCalls: [...classifierCalls], responseText, syncCalls: [...syncCalls] };
 }
 
 // ── 1 · Multi-membership active-account resolution ───────────────────────────────
@@ -787,6 +801,7 @@ group("active-account changes after retrieval fail closed before provider egress
       provider: ["text"],
     });
     assert(`12 ${label}: no provider request is made`, r.providerCalls.length === 0, `provider calls: ${r.providerCalls.length}`);
+    assert(`12 ${label}: not even the turn classifier egresses`, r.classifierCalls.length === 0, `classifier calls: ${r.classifierCalls.length}`);
     assert(`12 ${label}: no stale telemetry is written`, !r.telemetry, JSON.stringify(r.telemetry?.row ?? null));
     assert(`12 ${label}: the turn fails closed`, r.status === 409, `status ${r.status}`);
   }
@@ -3634,7 +3649,9 @@ group("every provider call files its trace row under the tenant whose evidence i
   );
   assert(
     "23.2 every trace row on a resolved-tenant chat turn is ATTRIBUTED, and to the right job",
-    JSON.stringify(traceRows(chatTurn)) === JSON.stringify(["chat-close:tenant", "chat-tool-loop:tenant", "chat:tenant"]),
+    // INT-334 R4 — a fresh chat turn also runs the turn classifier, after the account is verified, and
+    // its row is attributed to the same tenant like every other call on the turn.
+    JSON.stringify(traceRows(chatTurn)) === JSON.stringify(["chat-close:tenant", "chat-tool-loop:tenant", "chat:tenant", "turn-classify:tenant"]),
     JSON.stringify(traceRows(chatTurn)),
   );
 

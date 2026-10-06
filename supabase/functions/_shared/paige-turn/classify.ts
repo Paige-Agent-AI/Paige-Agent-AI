@@ -8,8 +8,10 @@
 // parser returns null and the route takes its conservative default (operational, governed tools).
 //
 // WHAT THE CLASSIFIER SEES: the person's message, and — when they accepted PAIGE's offer — the
-// offered step itself ("Yes" says nothing about the work; the offer does). Never the thread, the
-// tenant's data, or any instruction to act. Its output is closed enums and a number; no prose it
+// offered step itself ("Yes" says nothing about the work; the offer does). That step is PAIGE's own
+// earlier text and can name a client or a record of this workspace, so the call is made only after the
+// turn's account is verified (chat starts it after the last pre-egress check). Never the rest of the
+// thread, retrieved Knowledge, tool results, or any instruction to act. Its output is closed enums and a number; no prose it
 // writes reaches the person, a tool, the transcript or the Rail.
 //
 // Pure TypeScript; the model call itself is the caller's (paige-ai-chat), through the shared router.
@@ -18,8 +20,10 @@ import {
   DIFFICULTIES,
   IMAGE_NEEDS,
   RESEARCH_NEEDS,
+  resolveTurnRoute,
   TURN_INTENTS,
   type TurnClassification,
+  type TurnRouteFacts,
 } from "./route.ts";
 
 /** The longest message the classifier reads. Longer text is cut; length alone never decides. */
@@ -31,9 +35,11 @@ export const CLASSIFY_SYSTEM = [
   "You label one message sent to PAIGE, an AI operator for a client-based service business.",
   "Return ONLY a JSON object with exactly these keys:",
   `- "intent": one of ${CLASSIFIER_INTENTS.map((i) => `"${i}"`).join(", ")}.`,
-  "    converse = acknowledgement, thanks, small talk, a pause (\"one moment\").",
+  "    converse = acknowledgement, thanks, small talk, a pause (\"one moment\"). Never agreement to proceed.",
   "    answer   = a question to answer or explain.",
   "    act      = a step in the business's systems: create, update, send, schedule, move, invite, log.",
+  "             A short go-ahead is act even when the message alone does not say what (\"do it\",",
+  "             \"go ahead\", \"yes please\", \"send it\", \"book it\", \"sounds good, do that\").",
   "    research = find out about the outside world (companies, people, markets, sources).",
   "    build    = make an asset: page, form, funnel, document, image, email draft.",
   "    choose   = picking among options already offered.",
@@ -102,4 +108,19 @@ export function parseClassification(raw: unknown): TurnClassification | null {
     intent: o.intent, research: o.research, difficulty: o.difficulty, image: o.image,
     needs_workspace_data: o.needs_workspace_data, confidence: o.confidence,
   };
+}
+
+/**
+ * Whether the classifier can change this turn's route at all. Where thread state already fixed the
+ * class and tools (an approval resume, an answer to PAIGE's question, an accepted act, an ambiguous
+ * offer), the call would be spent for nothing.
+ */
+export function routeNeedsClassifier(facts: Omit<TurnRouteFacts, "classification">): boolean {
+  // Studio and an attachment already hold the turn at the operational floor with the governed tools,
+  // and until the frontier class is served by a different model (R7) nothing the classifier says can
+  // change the model: no call, no wait.
+  if (facts.surface === "studio" || facts.attachments?.document || facts.attachments?.image) return false;
+  const basis = resolveTurnRoute({ ...facts, classification: null }).basis;
+  if (basis === "fresh" || basis === "standing_card") return true;
+  return basis === "accepted_offer" && facts.acceptedOfferKind === "prose";
 }

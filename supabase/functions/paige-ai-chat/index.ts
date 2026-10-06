@@ -9039,10 +9039,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // replaced, never left standing as if it had happened (review rounds 5–8: no word list decides this).
     const acceptedKind = offerAccepted && foreground.offer.kind === "accepted" ? offerKind(foreground.offer.offer) : null;
     if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
-    // The route's facts are all server-resolved here; only the classifier is still to come. It runs only
-    // where state leaves the decision open, starts now, and is collected at the first model call, so its
-    // latency overlaps the context assembly below. It is bounded (TURN_CLASSIFY_DEADLINE_MS) and advisory:
-    // a timeout, an error or a malformed reply is `null`, and the route takes its conservative default.
+    // The route's facts are all server-resolved here; only the classifier is still to come (below, after
+    // the last pre-egress account check).
     const lastUserText = typeof lastUserMessage?.content === "string" ? lastUserMessage.content : "";
     const turnRouteFacts: Omit<TurnRouteFacts, "classification"> = {
       surface: studioSessionId ? "studio" : liveRuntimeScope ? "live" : "chat",
@@ -9056,10 +9054,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           || (Array.isArray(turnAttachments) && turnAttachments.some((a: any) => a?.kind === "image")),
       },
     };
-    const classificationPromise: Promise<TurnClassification | null> = routeNeedsClassifier(turnRouteFacts) && lastUserText.trim()
-      ? classifyTurn(lastUserText, offerAccepted && foreground.offer.kind === "accepted" ? foreground.offer.offer : null, traceFor("turn-classify"))
-      : Promise.resolve(null);
-
     if (!(await revalidateTenantKnowledgeScope())) {
       return new Response(
         JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
@@ -9108,6 +9102,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         );
       }
     }
+
+    // INT-334 R4 — THE TURN CLASSIFIER, started only AFTER the last pre-egress account check above: its
+    // call carries the person's message (and, for an accepted prose step, the step PAIGE offered), so a
+    // switched, stale or unresolved account must have 409'd before it can leave (#1255, test:knowledge-scope
+    // 12 / 15.9). It runs only where state leaves the class open, and is collected at the first model call,
+    // so its latency overlaps the resume resolution and prompt assembly below. Bounded
+    // (TURN_CLASSIFY_DEADLINE_MS) and advisory: a timeout, an error or a malformed reply is `null`, and the
+    // route takes its conservative default.
+    const classificationPromise: Promise<TurnClassification | null> = routeNeedsClassifier(turnRouteFacts) && lastUserText.trim()
+      ? classifyTurn(lastUserText, offerAccepted && foreground.offer.kind === "accepted" ? foreground.offer.offer : null, traceFor("turn-classify"))
+      : Promise.resolve(null);
 
     // ── C4a · RESOLVE THE RESUME (docs/delivery/paige-conversational-loop-c4.md) ─────────────────
     // An approval used to mean "Approved — run it." plus a NEW request in which the model had to

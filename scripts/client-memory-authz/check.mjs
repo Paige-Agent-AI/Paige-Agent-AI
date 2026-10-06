@@ -364,6 +364,7 @@ const MEMORY_TEXT = "SECRET-CLIENT-MEMORY-CONTENT";
  * admits `tenant_id IS NULL` to ANY authenticated user — which is exactly why the handler
  * must exclude it), FOREIGN is invisible.
  */
+const NO_CLASSIFICATION = Symbol("no-classification-override");
 async function drive({
   authorization = "Bearer test-jwt",
   clientId,
@@ -425,6 +426,9 @@ async function drive({
   failStreamStatus = 529,
   /** INT-332 — what each streamed model call answers, in order (see the stub). Default none. */
   streamScript = null,
+  // INT-334 R4 — this turn's classifier answer (a label object, or null for a classifier that fails).
+  // Left out, the fake answers as a real classifier would for the message (see the fetch fake).
+  classification = NO_CLASSIFICATION,
 }) {
   // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
   // an admin seat with no resolved workspace (get_paige_persona_context falls back to
@@ -533,7 +537,7 @@ async function drive({
     },
   });
 
-  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, failStreamStatus, breakStreamCalls, throwStreamCalls, streamScript }, async () => {
+  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, failStreamStatus, breakStreamCalls, throwStreamCalls, streamScript, ...(classification !== NO_CLASSIFICATION ? { classification } : {}) }, async () => {
     let status = null, bodyText = "", partialText = "";
     try {
       const res = await handler(new Request("http://local/paige-ai-chat", {
@@ -7652,8 +7656,8 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     for (let i = 0; i < history; i++) store.seed(threadId, i % 2 ? "assistant" : "user", i % 2 ? `Earlier answer ${i}.` : `Earlier question ${i}.`, i % 2 ? FINAL() : null, ago(ageMs + (history - i) * 60_000));
     return store.seed(threadId, "assistant", offer, bundle, ago(ageMs));
   };
-  const turn = (store, confirms, db, { text, threadId = THREAD, script, tenant = CALLER_TENANT, body = {}, failStreamCalls = [] } = {}) => drive({
-    stream: true, text, streamScript: script, failStreamCalls,
+  const turn = (store, confirms, db, { text, threadId = THREAD, script, tenant = CALLER_TENANT, body = {}, failStreamCalls = [], ...classified } = {}) => drive({
+    stream: true, text, streamScript: script, failStreamCalls, ...("classification" in classified ? { classification: classified.classification } : {}),
     extraBody: { threadId, ...body },
     rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), paige_chat_turn_append: (args) => store.append(args) },
     tablesExtra: { paige_chat_turns: store.table, paige_chat_threads: store.threadsTable, client_memory: () => [], paige_pending_confirmations: confirms.table },
@@ -7897,6 +7901,31 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     assert("43.41 a finished round's call with cut-off arguments reaches no door (never run as {}), and the model is told ARGUMENTS_UNPARSEABLE",
       doorCalls(r41).length === 0 && c41.rows.length === 0 && told(r41).includes("ARGUMENTS_UNPARSEABLE"),
       JSON.stringify({ door: doorCalls(r41).length, rows: c41.rows.length, told: told(r41).includes("ARGUMENTS_UNPARSEABLE") }));
+  }
+
+  // 43.42 INT-334 R4 — THE ROUTE, END TO END: state decides first, and the classifier is called only where
+  // state leaves the class open. An approval resume and an accepted act make no classifier call at all; a
+  // fresh acknowledgement is the cheap tier only on a classifier's say-so; a classifier that fails, or one
+  // that reads a bare go-ahead as act, keeps the turn on the reasoning tier.
+  {
+    const classified = (r) => r.modelEgress.filter((b) => b.includes("You label one message sent to PAIGE")).length;
+    assert("43.42a an approval resume makes no classifier call (the stored act runs; no words are routed)",
+      !!r3 && classified(r3) === 0, JSON.stringify({ classifier: r3 ? classified(r3) : "no card" }));
+    assert("43.42b an accepted act makes no classifier call and runs on the reasoning tier",
+      classified(r1) === 0 && modelOf(r1, 0) === CLAUDE_REASONING, JSON.stringify({ classifier: classified(r1), model: modelOf(r1, 0) }));
+    const sTh = makeThreadStore(THREADS), cTh = makeConfirmStore(), dbTh = crmDb();
+    const thanks = await turn(sTh, cTh, dbTh, { text: "thanks", threadId: THREAD_FRESH, script: ["Anytime."] });
+    assert("43.42c a fresh 'thanks' labelled light conversation: one classifier call, the cheap tier",
+      classified(thanks) === 1 && modelOf(thanks, 0) === CLAUDE_CLASSIFICATION, JSON.stringify({ classifier: classified(thanks), model: modelOf(thanks, 0) }));
+    const sF = makeThreadStore(THREADS), cF = makeConfirmStore(), dbF = crmDb();
+    const failed = await turn(sF, cF, dbF, { text: "thanks", threadId: THREAD_FRESH, script: ["Anytime."], classification: null });
+    assert("43.42d the same 'thanks' with a classifier that fails: the conservative route, the reasoning tier",
+      classified(failed) === 1 && modelOf(failed, 0) === CLAUDE_REASONING, JSON.stringify({ classifier: classified(failed), model: modelOf(failed, 0) }));
+    const sD = makeThreadStore(THREADS), cD = makeConfirmStore(), dbD = crmDb();
+    const doIt = await turn(sD, cD, dbD, { text: "do it", threadId: THREAD_FRESH, script: ["What would you like me to do?"],
+      classification: { intent: "act", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.42e a bare 'do it' labelled act never takes the cheap tier, even when trivial",
+      modelOf(doIt, 0) === CLAUDE_REASONING, JSON.stringify({ model: modelOf(doIt, 0) }));
   }
 
   // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the

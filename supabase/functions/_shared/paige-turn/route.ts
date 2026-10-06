@@ -118,7 +118,8 @@ export interface TurnClassification {
 /** Facts the handler has ALREADY resolved server-side. Nothing here comes from the request body. */
 export interface TurnRouteFacts {
   surface: "chat" | "studio" | "live";
-  /** A card approval was verified by fingerprint for this turn (C4a/b). */
+  /** The request carries a card approval for this turn. C4a/b verify it by fingerprint downstream; a
+   *  forged one only skips the classifier and keeps the turn off the cheap class — it grants nothing. */
   approvedCard: boolean;
   /** The reply is bound to PAIGE's standing question (C4c `answerBinding`). */
   answerBinding: boolean;

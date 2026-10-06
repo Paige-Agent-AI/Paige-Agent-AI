@@ -13,21 +13,13 @@
 import { callClaude } from "../claude.ts";
 import type { TraceCtx } from "../llm-trace.ts";
 import { CLASSIFY_SYSTEM, classifyPrompt, parseClassification } from "./classify.ts";
-import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "./route.ts";
+import type { TurnClassification } from "./route.ts";
+
+// The pure gate lives with the classifier's other pure half; chat imports it from here.
+export { routeNeedsClassifier } from "./classify.ts";
 
 /** The classifier's budget. Its latency overlaps the turn's context assembly; past this it is ignored. */
 export const TURN_CLASSIFY_DEADLINE_MS = 2000;
-
-/**
- * Whether the classifier can change this turn's route at all. Where thread state already fixed the
- * class and tools (an approval resume, an answer to PAIGE's question, an accepted act, an ambiguous
- * offer), the call would be spent for nothing.
- */
-export function routeNeedsClassifier(facts: Omit<TurnRouteFacts, "classification">): boolean {
-  const basis = resolveTurnRoute({ ...facts, classification: null }).basis;
-  if (basis === "fresh" || basis === "standing_card") return true;
-  return basis === "accepted_offer" && facts.acceptedOfferKind === "prose";
-}
 
 export async function classifyTurn(message: string, acceptedStep: string | null, trace?: TraceCtx): Promise<TurnClassification | null> {
   try {

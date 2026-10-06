@@ -187,6 +187,38 @@ for (const [name, plan, status] of STAYS) {
 }
 openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
+// ── 3b. WHAT A THROW PROVES (R5a review S1/S4) ───────────────────────────────────────────────
+{
+  // A budget stop is a decision: rethrown, never retried on another provider, never an {ok:false}.
+  const budget = Object.assign(new Error("daily ceiling reached"), { code: "budget_exceeded" });
+  const stop = async () => { throw budget; };
+  let thrown = null; calls = [];
+  try { await fabric.fabricChatStream("operational", BODY, { openaiFetch, anthropicGateway: stop }); } catch (e) { thrown = e; }
+  ok(thrown === budget, "a budget stop on the only candidate is rethrown, never returned as a failure");
+  openaiPlan = { status: 503, type: "server_error" }; thrown = null; calls = [];
+  try { await fabric.fabricChatStream("operational", BODY, { ...ON, openaiFetch, anthropicGateway: stop }); } catch (e) { thrown = e; }
+  ok(thrown === budget, "after a health fallback, a budget stop on the next candidate is still rethrown");
+  openaiPlan = { status: 200 };
+
+  // A missing key is configuration, proven by its own error type.
+  delete ENV.OPENAI_API_KEY;
+  const noKey = await run("operational", ON);
+  ok(noKey.s.attempts[0]?.failure === "auth_config" && served(noKey) === `anthropic:${CLAUDE_REASONING}`,
+    `a missing OpenAI key is auth_config and falls back (${fabric.describeAttempts(noKey.s)})`);
+  ENV.OPENAI_API_KEY = "sk-test-not-a-real-key";
+  delete ENV.ANTHROPIC_API_KEY;
+  const noAnthropic = await run("operational");
+  ok(!noAnthropic.s.ok && noAnthropic.s.attempts.at(-1)?.failure === "auth_config",
+    `a missing Anthropic key is auth_config, not an outage (${fabric.describeAttempts(noAnthropic.s)})`);
+  ENV.ANTHROPIC_API_KEY = "sk-ant-test-not-a-real-key";
+
+  // A throw that proves no provider-health failure (the adapter refused the request shape before any
+  // fetch) is `unknown`: no fallback, and the provider is never contacted.
+  const hosted = await run("operational", ON, { ...BODY, tools: [{ type: "web_search" }] });
+  ok(!hosted.s.ok && hosted.s.attempts.at(-1)?.failure === "unknown" && hosted.calls.length === 0,
+    `a pre-fetch refusal is unknown, never an outage, and nothing is called (${fabric.describeAttempts(hosted.s)})`);
+}
+
 // ── 4. The cheap class never receives tools from chat (route contract), but the fabric does not add any.
 {
   const r = await run("cheap", {}, { messages: BODY.messages });

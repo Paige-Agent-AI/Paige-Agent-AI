@@ -792,12 +792,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 - Boundary: no authenticated Solo drive; no live Resend call (idempotency-key and abort behaviour UNVERIFIED against the provider); migration persisted-apply owed after merge (§32). Follow-ups: delivery webhook projection for ordinary `messages` rows; a person-facing resolve path for Gmail/SMTP `unknown`; route paige-mcp `send_composed_email` / `send_transactional_email` through this door; converge Chat `propose_action` email (`paige_pending_approvals` → `execute-approval`, unbound draft, kept per §58) onto `comms.email_send` so one-to-one email has one approval path (§18); C4b (#1766) resume for the comms door.
 - Evidence: [comms-email-send](evidence/ui-delivery/comms-email-send.md); `docs/brain/decision-log.md` INT-328 row; tier-matrix INT-328 row; Section 10 INT-328 correction.
 
-**2026-10-06 INT-334 R5a: chat's streamed rounds open through the shared Model Fabric; a cheap round carries no tools.**
+**2026-10-06 INT-334 R5a: chat's streamed rounds open through the shared Model Fabric; behaviour with OpenAI off is unchanged.**
 - `_shared/model-fabric.ts` `fabricChatStream`: the Turn Route's class picks candidates in the owner's order (Sol → Sonnet 5.5; Astra → Sonnet 5.5; Luna → open pool → Haiku). Anthropic goes through `gatewayCompat` (budget gate, trace unchanged); OpenAI goes through `responsesStream`. **OpenAI is off for chat** (`OPENAI_CHAT_ENABLED = false`) until the Sol canary meets the release bar, so every round is served by Anthropic exactly as before.
 - Fallback only on a proven provider-health failure before the stream opened (`_shared/provider-failure.ts`; message text never kept; Anthropic's credit-balance 400 is named billing). Never on an invalid request, never once a stream opened, never for a budget stop.
 - Chat's five streamed rounds (entry, loop, claim correction, continuation, close) use it. The claim correction is always operational.
-- A cheap round is offered no tools. A correction or an action-intent continuation lifts the turn to operational with the governed tools.
-- Proof: `test:model-fabric` 75/0; `test:client-memory-authz` 943/0; `test:knowledge-scope` 429/0; Deno 39/0; every CI npm harness exits 0; chat diagnostics 10 → 9. Evidence: [INT-334 evidence, R5a](model-routing/int-334/EVIDENCE.md).
+- Every round keeps the governed tool list. The first head took tools off cheap rounds; the independent review found no rescue on Live, client seats or question-phrased requests, so that moves to R5b with a rescue for every surface.
+- A thrown error is classed by its own type: a missing key is `auth_config` (OpenAI and Anthropic), other pre-fetch throws `unknown` (no fallback).
+- Before `OPENAI_CHAT_ENABLED` turns on: the OpenAI path needs the tenant budget gate, and document turns must be supported or routed to Anthropic.
+- Proof: `test:model-fabric` 80/0; `test:client-memory-authz` 942/0; `test:knowledge-scope` 429/0; Deno 39/0; every CI npm harness exits 0; chat diagnostics 10 → 9. Evidence: [INT-334 evidence, R5a](model-routing/int-334/EVIDENCE.md).
 
 **2026-10-06 INT-334 R4 in production:** merged `53dbf7eb5` (#1789); `paige-ai-chat` v351 is 150/150 byte-identical to it. `turn-classify` latency/timeout rate owed from traffic.
 

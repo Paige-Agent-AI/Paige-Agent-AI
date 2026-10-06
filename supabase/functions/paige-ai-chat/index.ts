@@ -9536,20 +9536,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // the doc-attach path stay on a reasoning-class model, never the cheap one). The fabric picks the
     // provider in the owner's order and falls back only on a proven provider-health failure before the
     // stream opened; tools, approvals and authority are decided below, unchanged.
-    // `let`: a correction or a continuation lifts a cheap turn to operational (below) — once PAIGE is
-    // asked to carry something out, the round is never the cheap class.
-    let roundClass = turnRoute.cognitive_class;
-    // CHEAP NEVER CARRIES TOOLS (the route's contract, now applied): a cheap round is offered no tools,
-    // so a light conversational turn cannot start a tool loop on the cheap model. Every other class keeps
-    // the governed tool list.
-    const roundTools = () => roundClass === "cheap" ? {} : { tools: toolDefs, tool_choice: "auto" as const };
+    // Every round keeps the governed tool list here, the cheap class included. Taking tools off a cheap
+    // round needs a rescue on every surface that can be misread as light conversation (Live, client seats,
+    // a request phrased as a question) — that is R5b's tool narrowing, not this change.
+    const roundClass = turnRoute.cognitive_class;
     const noteFabric = (label: string, s: FabricStream): FabricStream => {
       if (!s.ok || s.attempts.some((a) => a.failure && a.failure !== "skipped_disabled")) console.warn(`[paige] fabric ${label}: ${describeAttempts(s)}`);
       return s;
     };
     const response = resumeCalls.length > 0 ? null : noteFabric("chat", await fabricChatStream(roundClass, {
         messages: liveDecisionMessages(aiMessages),
-        ...roundTools(),
+        tools: toolDefs,
+        tool_choice: "auto",
       }, {
         // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
         // "studio-design-agent" at the Studio-session branch above, which runs before this line.
@@ -16589,7 +16587,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               forcedTermination = true;
               break;
             }
-            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), ...roundTools() }, { trace: traceFor("chat-tool-loop") }));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -16621,7 +16619,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             continuationsUsed += 1;
             convo.push({ role: "assistant", content: finalAssistantText || "" });
             convo.push({ role: "user", content: CLAIM_CORRECTION[claim] });
-            if (roundClass === "cheap") roundClass = "operational";
             try {
               // INT-332 — the claim correction is operational work whatever the turn's own class.
               const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream("operational", { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
@@ -16665,10 +16662,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 : acceptedTurn
                 ? "The person accepted the step you offered, and it has not been done: nothing that carries it out ran in this turn, so nothing was sent or changed by it, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
-              // Asked to carry the request out, the turn is no longer light conversation: the governed tools.
-              if (roundClass === "cheap") roundClass = "operational";
               try {
-                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), ...roundTools() }, { trace: traceFor("chat-continuation") }));
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -16801,7 +16796,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
-            finalStreamResponse = noteFabric("chat-close", await fabricChatStream(roundClass, { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClass, { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME

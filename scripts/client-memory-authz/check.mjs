@@ -7926,22 +7926,13 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       classification: { intent: "act", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
     assert("43.42e a bare 'do it' labelled act never takes the cheap tier, even when trivial",
       modelOf(doIt, 0) === CLAUDE_REASONING, JSON.stringify({ model: modelOf(doIt, 0) }));
-    // INT-334 R5 — CHEAP NEVER CARRIES TOOLS, applied: the cheap round is offered no tools at all, and every
-    // other round keeps the governed list.
+    // INT-334 R5a — the cheap round KEEPS the governed tools. Taking them off needs a rescue on every surface
+    // that can be misread as light conversation (Live, a client seat, a request phrased as a question);
+    // that is R5b's narrowing. Until then a misread costs the cheaper model, never the step.
     const toolsOf = (r, i = 0) => streamed(r)[i]?.tools ?? null;
-    assert("43.42f the cheap round is offered no tools; the reasoning round keeps the governed list",
-      toolsOf(thanks, 0) === null && Array.isArray(toolsOf(failed, 0)) && toolsOf(failed, 0).length > 0,
+    assert("43.42f the cheap round still carries the governed tool list (narrowing is R5b, with its rescue)",
+      Array.isArray(toolsOf(thanks, 0)) && toolsOf(thanks, 0).length > 0 && toolsOf(thanks, 0).length === toolsOf(failed, 0)?.length,
       JSON.stringify({ cheap: toolsOf(thanks, 0)?.length ?? null, reasoning: toolsOf(failed, 0)?.length ?? null }));
-    // A go-ahead the classifier misread as light conversation: the cheap round has no tools, so it can only
-    // answer in prose — and the action-intent continuation then carries the request out on the reasoning
-    // tier with the governed tools. Mislabelling costs a round, never the step.
-    const sM = makeThreadStore(THREADS), cM = makeConfirmStore(), dbM = crmDb();
-    const misread = await turn(sM, cM, dbM, { text: "go ahead and add Dana to the onboarding pipeline", threadId: THREAD_FRESH, script: ["Sure thing.", "On it."],
-      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
-    assert("43.42g a go-ahead misread as conversation: cheap and toolless first, then continued on the reasoning tier WITH the tools",
-      modelOf(misread, 0) === CLAUDE_CLASSIFICATION && toolsOf(misread, 0) === null
-        && modelOf(misread, 1) === CLAUDE_REASONING && Array.isArray(toolsOf(misread, 1)) && toolsOf(misread, 1).length > 0,
-      JSON.stringify({ calls: streamed(misread).map((b) => [b.model, b.tools?.length ?? null]) }));
   }
 
   // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the

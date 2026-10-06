@@ -21,6 +21,7 @@
 // it on is a reviewed one-line change, never an environment toggle nobody can see.
 
 import { gatewayCompat } from "./claude.ts";
+import { NeedsConfigError } from "./provider-types.ts";
 import type { TraceCtx } from "./llm-trace.ts";
 import { OPENAI_EFFORT_BY_CLASS, type OpenAIReasoningClass } from "./openai-models.ts";
 import { responsesStream, type ChatShapeBody } from "./openai-responses.ts";
@@ -61,6 +62,8 @@ export interface FabricOptions {
   /** Test seam: override the enabled set and transports. Never set by production callers. */
   enabled?: { openai?: boolean };
   openaiFetch?: typeof fetch;
+  /** Test seam: the Anthropic gateway. Never set by production callers. */
+  anthropicGateway?: typeof gatewayCompat;
 }
 
 /** The class a streamed round runs on. `deterministic` work calls no model; if it does, it is operational. */
@@ -99,7 +102,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
       } else {
         // The Anthropic path keeps its own budget gate, request shaping and trace (gatewayCompat). A real
         // Claude id resolves to its own tier there (sonnet → reasoning, haiku → classification).
-        const r = await gatewayCompat("anthropic", {
+        const r = await (opts.anthropicGateway ?? gatewayCompat)("anthropic", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...body, model, stream: true, ...(opts.anthropicExtras ?? {}) }),
@@ -113,7 +116,14 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         attempts.push({ provider: c.provider, model, failure: "budget_exceeded" });
         throw e;
       }
-      const failure = classifyProviderFailure({ provider: c.provider, status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" });
+      // What the throw proves, and nothing more: a missing key is configuration; a timeout or a fetch
+      // TypeError is transport; anything else thrown before a response (a refused tool, a model outside
+      // the allow-list) proves no provider-health failure, so it is `unknown` and never falls back.
+      const name = (e as Error)?.name;
+      const failure: ProviderFailureClass = e instanceof NeedsConfigError ? "auth_config"
+        : name === "TimeoutError" || name === "AbortError" ? classifyProviderFailure({ provider: c.provider, status: 0, transport: "timeout" })
+        : e instanceof TypeError ? classifyProviderFailure({ provider: c.provider, status: 0, transport: "network" })
+        : "unknown";
       attempts.push({ provider: c.provider, model, failure, status: 0 });
       last = { ok: false, status: 0, served: null, attempts };
       if (mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) continue;

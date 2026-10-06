@@ -218,19 +218,19 @@ Gate: 84/0.
 
 - **R4 in production:** merged as `53dbf7eb5` (#1789), deploy-edge-functions run 491 success. `paige-ai-chat` v351: 150/150 files byte-identical to `53dbf7eb5`. Source verified; the `turn-classify` latency and timeout rate are measured from traces once there is traffic (owed).
 
-## R5a: chat's streamed rounds open through the shared Model Fabric; a cheap round carries no tools
+## R5a: chat's streamed rounds open through the shared Model Fabric (behaviour with OpenAI off unchanged)
 - **The fabric** (`_shared/model-fabric.ts` `fabricChatStream`): a cognitive class in, one chat-shaped stream out. Candidates come from the Turn Route's `CLASS_POLICY` in the owner's order (operational: Sol → Sonnet 5.5; frontier: Astra → Sonnet 5.5; cheap: Luna → open pool → Haiku). The open pool does not stream, so it is skipped for chat. The Anthropic candidate goes through the real `gatewayCompat` (budget gate, request shaping and trace unchanged); the OpenAI candidate through `responsesStream` (`store:false`, function tools only, the class's effort).
 - **OpenAI stays off for chat.** `OPENAI_CHAT_ENABLED = false` until the controlled Sol canary meets the release bar; turning it on is a reviewed one-line PR, never an environment toggle. With it off, every class is served by Anthropic exactly as before R5: operational and frontier → Sonnet 5.5, cheap → Haiku, and a `deterministic` class that reaches a model → operational.
-- **Fallback is narrow** (route.ts `mayFallback`). The next candidate is tried only when the stream never opened AND the failure is proven health: auth/config, billing, rate limit, model unavailable, outage, or a network throw. Never on an invalid request or an unknown failure (that status reaches chat's existing handling unchanged), never once a stream opened, never for a budget stop (rethrown). Failure classes come from `_shared/provider-failure.ts`: status, error type and code, and recognised phrases only; the message text is never kept. Anthropic's credit-balance 400 is named `billing` (task #5).
+- **Fallback is narrow** (route.ts `mayFallback`). The next candidate is tried only when the stream never opened AND the failure is proven health: auth/config, billing, rate limit, model unavailable, outage, or a network throw. Never on an invalid request or an unknown failure (that status reaches chat's existing handling unchanged), never once a stream opened, never for a budget stop (rethrown). Failure classes come from `_shared/provider-failure.ts`: status, error type and code, and recognised phrases only; the message text is never kept. Anthropic's credit-balance 400 is named `billing` (task #5). A thrown error is classed by its own type: a missing key (`NeedsConfigError`, now also thrown for a missing Anthropic key) is `auth_config`, a timeout or a fetch `TypeError` is transport, and anything else thrown before a response (a refused tool or content shape, a model off the allow-list) is `unknown` and never falls back.
 - **Chat's five streamed rounds** (entry, tool loop, claim correction, continuation, close/Live answer) open through the fabric for the route's class. The claim correction is always `operational` (INT-332). The legacy model labels at those sites are gone; the non-streamed calls are unchanged. Trace tags are unchanged (`chat`, `chat-tool-loop`, `chat-claim-correction`, `chat-continuation`, `chat-close`, `chat-live-answer`). A server log line names the attempts whenever a candidate failed.
-- **Cheap never carries tools, now applied** (review S1 on #1789). A cheap round is offered no tools, so light conversation cannot start a tool loop on the cheap model. A claim correction or an action-intent continuation lifts the turn to operational with the governed tools, so a go-ahead the classifier misreads as conversation costs one round, never the step (43.42g).
+- **Every round keeps the governed tool list, the cheap class included** (43.42f). The first head of this PR took tools off cheap rounds, rescued only by the claim correction and the action-intent continuation. The independent review found neither runs on Live, on a client seat, or for a request phrased as a question, so a misread would have lost the step there. Taking tools off a cheap round therefore moves to R5b, which designs that rescue for every surface.
 - **Review S3 disposition (classifier outside the budget gate):** no change. The budget contract (`router-budget/mod.ts` `enforceBudget`) returns `allow_gated`, not `block`, for the cheap band at the hard ceiling; the classifier is a cheap-band call.
 - **Proof:**
 
   | Check | Result |
   |---|---|
-  | `test:model-fabric` | 75/0 (new) |
-  | `test:client-memory-authz` | 943/0 (+43.42f/g) |
+  | `test:model-fabric` | 80/0 (new) |
+  | `test:client-memory-authz` | 942/0 (43.42f: a cheap round keeps its tools) |
   | `test:knowledge-scope` | 429/0 |
   | Deno `route` + `round` + `classify` + `provider-failure` | 39/0 |
   | Every other CI npm harness | exits 0 |
@@ -243,7 +243,21 @@ Gate: 84/0.
   - Always falling back fails 4.
   - Never falling back fails 16.
   - Dropping the extras or the class effort fails 2.
-  - Always sending tools fails 43.42f/g.
-  - No escalation fails 43.42g.
+  - Returning a budget stop instead of rethrowing it fails 2.
+  - Classing a missing key as an outage fails 1.
 - **Deploy:** `_shared/claude.ts` changes, so the merge redeploys every function that imports it. That includes the four INT-320-stale functions (content-draft, extract-business-credit-report, generate-outreach-draft, growth-funnel-draft); one readback is owed after the deploy.
+- **Independent exact-head review of `d30cd850a` — FIX, fixed:**
+
+  | Finding | Severity | Disposition |
+  |---|---|---|
+  | B1: cheap rounds without tools lose the step on Live, client seats and question-phrased requests, contrary to the records | blocking | Reverted: every round keeps its tools; narrowing and its rescue move to R5b (43.42f pins it) |
+  | S1: the budget-stop rethrow was untested | should | Pinned (fabric-check, via a gateway test seam; returning it instead fails 2) |
+  | S2: the lift to operational before a claim correction was untested | should | Gone with B1 (no lift needed while every round has tools) |
+  | S3: more drift with OpenAI off than stated | should | Gone with B1: with OpenAI off, every round's model and request are as on `main` |
+  | S4: a config failure was labelled an outage | should | Fixed: a missing key is `auth_config` (OpenAI and Anthropic), other pre-fetch throws `unknown` |
+  | S5: OpenAI-path preconditions | should | Recorded below as release-bar items before `OPENAI_CHAT_ENABLED` turns on |
+
+- **Must close before `OPENAI_CHAT_ENABLED` turns on (review S5, added to the R6/R7 release bar):**
+  - **Budget gate:** `responsesStream` has no tenant budget gate; only `gatewayCompat` enforces the daily ceiling. The OpenAI path must apply the same gate.
+  - **Documents:** `toResponsesContent` does not carry a PDF/document part. A document turn on OpenAI is refused before any call (`unknown`, no fallback). Before the flip, a document turn must either be supported or routed to Anthropic.
 - **Carried:** R5b narrows the tool list by the route's capability and domain, and traces tool-definition tokens separately (prompt, cache-write, cache-read and output are already separate columns); context compaction is separate. R6/R7: the Sol canary to the release bar, the flip, Astra, and the classifier onto the cheap class.

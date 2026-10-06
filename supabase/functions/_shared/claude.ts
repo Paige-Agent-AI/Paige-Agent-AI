@@ -16,6 +16,7 @@
 
 import { traceLLMCall, traceAdmin, type TraceCtx } from "./llm-trace.ts";
 import { classifyProviderFailure } from "./provider-failure.ts";
+import { NeedsConfigError } from "./provider-types.ts";
 import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
 // The model ids live in ONE dependency-free home (§18, `claude-models.ts`); this client re-exports
 // them so every existing `import { CLAUDE_REASONING } from "./claude.ts"` keeps working.
@@ -271,7 +272,7 @@ export interface ClaudeResult {
 
 function apiKey(): string {
   const k = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!k) throw new Error("ANTHROPIC_API_KEY is not set");
+  if (!k) throw new NeedsConfigError("anthropic", "ANTHROPIC_API_KEY is not set");
   return k;
 }
 
@@ -855,6 +856,8 @@ export async function gatewayCompat(
     });
     const m = msg.match(/Anthropic (\d{3})/);
     const status = m ? Number(m[1]) : 500;
-    return { ok: false, status, json: async () => ({ error: msg }), text: async () => msg };
+    // A missing key is proven by its own error type, never inferred from the synthetic 500.
+    const failureClass = e instanceof NeedsConfigError ? "auth_config" : undefined;
+    return { ok: false, status, failureClass, json: async () => ({ error: msg }), text: async () => msg };
   }
 }

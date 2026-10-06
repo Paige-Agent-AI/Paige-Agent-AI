@@ -27,7 +27,7 @@
 //
 // EVERY PRE-EXISTING PAIRING KEEPS ITS EXACT PRICE. The provider defaults are the previous numbers
 // unchanged, so every sonnet-priced path — including the §33 visual-critique cost cap, which routes
-// frontier on the Sonnet reasoning tier (`claude-sonnet-5`, now `claude-sonnet-5-5`, same Sonnet row) — computes byte-identically. Only models that were demonstrably
+// frontier on the Sonnet reasoning tier (`claude-sonnet-5`; `claude-sonnet-5-5` matches the same Sonnet row if INT-329 part 2 switches to it) — computes byte-identically. Only models that were demonstrably
 // OVER-priced move, and only downward. The check suite pins this as its own case, so a later edit
 // that quietly reprices an existing pairing fails rather than passing silently.
 

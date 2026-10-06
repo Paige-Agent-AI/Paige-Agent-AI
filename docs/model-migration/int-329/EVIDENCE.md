@@ -27,8 +27,8 @@ The gate drives the real seams under the repo's Node loader, with a recording fa
 
 | Run | Result |
 |---|---|
-| Head, constant `claude-sonnet-5` (part 1) | **65 passed, 0 failed** |
-| Head, constant `claude-sonnet-5-5` (the part-2 state) | **65 passed, 0 failed** |
+| Head, constant `claude-sonnet-5` (part 1) | **67 passed, 0 failed** |
+| Head, constant `claude-sonnet-5-5` (the part-2 state) | **67 passed, 0 failed** |
 | Base seam `66d16b6` (a 63-check version of the gate, plus the data-only `claude-models.ts`; every other line base) | **52 passed, 11 failed** |
 | Earlier cutover-shaped dry run (constant flipped back, nothing else) | 63/0, plus token-pricing 22/0, trace-wiring 20/0, client-memory-authz 813/0, knowledge-scope 423/0 |
 
@@ -64,11 +64,11 @@ The rollback dry run means the documented one-line rollback keeps CI green.
 `deno check` (Deno 2.9):
 - `_shared/claude.ts`, `model-router.ts`, `model-allowlist.ts`: exit 0.
 - `paige-ai-chat`, `paige-deep-research`, `growth-page-draft`: identical pre-existing diagnostics on base and head (10, 3 and 1), all in files this change does not touch.
-- CI's Deno ratchet grades all 39 affected functions on the PR.
+- CI's Deno ratchet grades all 48 affected functions on the PR. The set includes `paige-live-relay`; its redeploy can end a Live session that is open at that moment (pre-launch, no live customers).
 
-## 4. Deployed runtime (preview project `jgcqxruqwqnmzfhnmsbh`, this branch, 2026-10-06 13:09 UTC)
+## 4. Deployed runtime (preview project `jgcqxruqwqnmzfhnmsbh`, commit `ef99e62`, 2026-10-06 13:09 UTC)
 
-The Supabase preview branch deployed this branch's functions, but the preview project has no `ANTHROPIC_API_KEY`, so **no model call happened there**.
+The Supabase preview branch deployed `ef99e62`, the pre-split commit whose constant was `claude-sonnet-5-5`. This is evidence for the failure-trace mechanism, not for the code at the merge head. The preview project has no `ANTHROPIC_API_KEY`, so **no model call happened there**.
 
 One anonymous `paige-public-chat` turn on the synthetic `test-tenant-189-verification` produced:
 - the honest 502 `assistant_unavailable`;
@@ -131,7 +131,7 @@ Once part 1 is on `main`, run it two ways:
    - confirm the null-model rows stop appearing.
 3. The live A/B (`model-ab`), GO under the pre-registered rule. Include a small Deep Research compatibility smoke (dev cases, not the holdout).
 4. Part 2: the one-line flip. Merge it, then verify:
-   - provider-served bundles for `paige-ai-chat`, `paige-deep-research` and a sample of the 39 affected functions;
+   - provider-served bundles for `paige-ai-chat`, `paige-deep-research` and a sample of the 48 affected functions;
    - the first production `claude-sonnet-5-5` trace;
    - one tool round;
    - a non-zero cache read;

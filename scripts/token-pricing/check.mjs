@@ -51,7 +51,7 @@ eq(tokenRate("anthropic", "claude-sonnet-5").in, tokenRate("anthropic", null).in
    "1.7 §33 critique routes claude-sonnet-5; its rate equals the old provider default (cap unmoved)");
 eq(tokenRate("anthropic", "claude-sonnet-5").out, tokenRate("anthropic", null).out,
    "1.8 …on the output rate too");
-// INT-329: the reasoning tier moved to claude-sonnet-5-5. Pricing it by VALUE alone cannot tell "matched
+// INT-329: the reasoning tier may move to claude-sonnet-5-5 (part 2). Pricing it by VALUE alone cannot tell "matched
 // the Sonnet row" from "fell back to the provider default" (both are 0.003/0.015), so the matched row is
 // asserted by name — an unknown-model fallback must never be what prices the live reasoning tier.
 eq(ANTHROPIC_MODEL_PER_1K.find(([needle]) => "claude-sonnet-5-5".includes(needle))?.[0], "sonnet",

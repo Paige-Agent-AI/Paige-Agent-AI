@@ -223,7 +223,7 @@ console.log("4. gatewayCompat — non-streamed, success and failure");
   // A malformed body must come back as a response through the error path — never throw out of it
   // (the trace's model resolution runs inside the catch). Untranslatable → 500; the rest behave as on
   // the base commit (they reach the provider).
-  for (const [label, bodyJson, want] of [["messages object", '{"messages":{"a":1}}', 500], ["messages null", '{"messages":null}', null], ["no messages", '{}', null], ["model a number", '{"model":42,"messages":"x"}', null]]) {
+  for (const [label, bodyJson, want] of [["messages object", '{"messages":{"a":1}}', 500], ["messages null", '{"messages":null}', null], ["no messages", '{}', null], ["model a number", '{"model":42,"messages":"x"}', null], ["body null", 'null', null], ["body a number", '5', null]]) {
     let res = null, threw = null;
     try { res = await claude.gatewayCompat("anthropic", { body: bodyJson }, { agent_id: "check" }); } catch (e) { threw = String(e?.message ?? e); }
     ok(threw === null && res && (want === null || (res.ok === false && res.status === want)),

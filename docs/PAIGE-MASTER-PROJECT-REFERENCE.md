@@ -765,7 +765,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 **2026-10-06 INT-329 (1 of 2): the Claude reasoning tier gets ONE model-id home, truthful traces and a frozen A/B gate. The model stays `claude-sonnet-5` in this part — PR #1772.** The cutover to `claude-sonnet-5-5` is part 2: a one-line PR changing `CLAUDE_REASONING` in `_shared/claude-models.ts`, merged only after the A/B is GO. The split exists because GitHub dispatches a workflow only from the default branch, so the A/B gate must land before the switch it gates.
 - Build identity: release channel `development`. Migrations `NOT_APPLICABLE`.
-- Deploy: a merge redeploys 39 functions. Their request bodies are byte-identical; only trace metadata changes. The merge is held until INT-322's clean R4 Sonnet 5 re-drive is captured, so `paige-deep-research` is not redeployed mid-drive.
+- Deploy: a merge redeploys 48 functions (`edge-affected.py` over the PR's function diff). Their request bodies are byte-identical; only trace metadata changes. The set includes `paige-live-relay`; its redeploy can end a Live session that is open at that moment (pre-launch, no live customers). The INT-322 clean R4 re-drive was captured and merged (#1773) before this merge.
 - Classification: internal-only. No customer version.
 - **Seam:** `claude-models.ts` is the only place a Claude id is chosen. `claude.ts` re-exports it and the allow-list derives from it (superseded and future ids are rejected until they are the constant). `callClaude` degrades a forced `tool_choice` to `auto`, with a warning, on models that reject it (Sonnet 5.5 / Opus 5.5 / Fable 5.1). No live caller sends one.
 - **Trace truth:**
@@ -784,10 +784,10 @@ Reference or any domain ledger; it governs how their facts become release and cu
     - the 2048 default `max_tokens` must absorb thinking;
     - refusals are still unhandled in product behaviour.
 - **Proof:**
-  - `npm run test:reasoning-tier` (in CI) is model-agnostic: 65/0 with the constant at `claude-sonnet-5` AND at `claude-sonnet-5-5`. The base seam fails 11, every one a trace-truth or stop defect.
+  - `npm run test:reasoning-tier` (in CI) is model-agnostic: 67/0 with the constant at `claude-sonnet-5` AND at `claude-sonnet-5-5`. The base seam fails 11, every one a trace-truth or stop defect.
   - 9 request bodies are byte-identical to the frozen base snapshot apart from `model`, and 10 planted defects are each caught.
   - token-pricing 22/0, trace-wiring 20/0, client-memory-authz 813/0, knowledge-scope 423/0, and 8 vitest files 214/214. `deno check` is clean on the changed shared modules, with identical pre-existing diagnostics on four functions.
-  - Preview runtime: a routed failure traced `claude-sonnet-5-5`, not `null` (preview has no Anthropic key, so no model call ran).
+  - Preview runtime, recorded at the pre-split commit `ef99e62` (whose constant was `claude-sonnet-5-5`): a routed failure traced that model, not `null`. The preview has no Anthropic key, so no model call ran. It proves the failure-trace mechanism, not the code at this head.
   - Record: [INT-329 evidence](model-migration/int-329/EVIDENCE.md).
 - **The A/B gate:** `npm run ab:sonnet`, and in the cloud the `model-ab` workflow (dispatch-only, once on `main`). It runs through the real gateway seam with a harness-authored loop, fixtures and a C4-*shaped* transcript. It records stop reasons, refusals, thinking blocks and narration at the transport, uses a pre-registered GO/NO-GO rule, survives stream errors, writes partial results per case, and has spend guards. Verified with `--mock` only.
 - **Owed:**

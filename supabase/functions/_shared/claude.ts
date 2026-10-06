@@ -563,7 +563,7 @@ function buildClaudeRequest(body: OpenAIStyleBody): Record<string, unknown> {
     // (persona + voice + context blocks + tools). Top-level cache_control makes the API
     // cache the prefix and move the breakpoint forward as conversations grow — cache
     // reads bill at 0.1x, which is the single biggest Anthropic-spend lever for the
-    // main chat. Minimum cacheable length (Sonnet 5.5: 512 tokens; Haiku 4.5 higher) is far
+    // main chat. Minimum cacheable length (Sonnet 5: 1024 tokens; Sonnet 5.5: 512) is far
     // exceeded by the assembled chat prompt; prompts below the floor cache silently as no-ops.
     cache_control: { type: "ephemeral" },
   };
@@ -751,7 +751,10 @@ export async function gatewayCompat(
   init: { body?: string; method?: string; headers?: unknown },
   trace?: TraceCtx,
 ): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; json: () => Promise<any>; text: () => Promise<string> }> {
-  const parsed: OpenAIStyleBody & { stream?: boolean } = init?.body ? JSON.parse(init.body) : ({} as any);
+  const raw = init?.body ? JSON.parse(init.body) : {};
+  // A body that parses to a non-object (`null`, a number) is treated as empty so the call fails as a
+  // response through the error path below, never as a throw out of it.
+  const parsed: OpenAIStyleBody & { stream?: boolean } = (raw && typeof raw === "object") ? raw : ({} as any);
   const started = Date.now();
 
   // 0) BUDGET ENFORCEMENT (docs/brain/paige-router-budget-contract.md, #1102/#1105): the chat

@@ -42,6 +42,12 @@ const OUT = arg("--out", MOCK ? path.join(process.env.TMPDIR || "/tmp", "int-329
 // Spend guard: a paid run is bounded and must actually compare two models.
 if (!Number.isInteger(REPS) || REPS < 1 || REPS > 10) { console.error(`sonnet-ab: --reps must be an integer 1–10 (got ${arg("--reps", "")})`); process.exit(2); }
 if (new Set(ARMS).size < 2) { console.error(`sonnet-ab: --arms needs at least two distinct model ids (got ${ARMS.join(",")})`); process.exit(2); }
+// Arms are limited to the known reasoning (Sonnet) ids: the cost columns and the cost rule are priced at
+// Sonnet list prices, so any other model would spend more than stated AND be mis-scored.
+const { KNOWN_REASONING_MODELS } = await import("../../supabase/functions/_shared/claude-models.ts");
+if (ARMS.length > 3 || ARMS.some((a) => !KNOWN_REASONING_MODELS.includes(a))) {
+  console.error(`sonnet-ab: --arms must be 2–3 of ${KNOWN_REASONING_MODELS.join(", ")} (got ${ARMS.join(",")})`); process.exit(2);
+}
 const KEY = process.env.ANTHROPIC_API_KEY || "";
 if (!MOCK && !KEY) {
   console.error("sonnet-ab: ANTHROPIC_API_KEY is not set. This harness spends against PAIGE's own Anthropic org; " +

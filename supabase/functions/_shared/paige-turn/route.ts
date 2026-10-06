@@ -118,7 +118,8 @@ export interface TurnClassification {
 /** Facts the handler has ALREADY resolved server-side. Nothing here comes from the request body. */
 export interface TurnRouteFacts {
   surface: "chat" | "studio" | "live";
-  /** A card approval was verified by fingerprint for this turn (C4a/b). */
+  /** The request carries a card approval for this turn. C4a/b verify it by fingerprint downstream; a
+   *  forged one only skips the classifier and keeps the turn off the cheap class — it grants nothing. */
   approvedCard: boolean;
   /** The reply is bound to PAIGE's standing question (C4c `answerBinding`). */
   answerBinding: boolean;
@@ -237,6 +238,10 @@ export function resolveTurnRoute(facts: TurnRouteFacts): TurnRoute {
     }
   }
 
+  // AN AMBIGUOUS OFFER IS A QUESTION, NEVER AN ACT: PAIGE asks which (ask_choices is a presentation
+  // tool). No classification may widen it to the governed write tools.
+  if (basis === "ambiguous_offer") tools = "read";
+
   // CHEAP NEVER CARRIES TOOLS.
   if (tools !== "none") cls = maxClass(cls, "operational");
 
@@ -313,11 +318,13 @@ const FALLBACK_ON: ReadonlySet<ProviderFailure> = new Set(["auth_config", "billi
  * May the fabric retry this round on the next candidate?
  *  - only for a provider/configuration/transport health failure it recognised;
  *  - never for an invalid request (another provider would get the same broken request) or `unknown`;
- *  - never once the round produced anything executable or anything already delivered to the person,
- *    unless that output is proven not executed (`sideEffectProvenNone`).
+ *  - never once text reached the person — it cannot be unsaid, and a retry would say it twice;
+ *  - never once the round showed a tool call, unless that call is proven not executed
+ *    (`sideEffectProvenNone`).
  */
 export function mayFallback(failure: ProviderFailure | NotFallback, round: { emittedToolCalls: boolean; emittedText: boolean; sideEffectProvenNone: boolean }): boolean {
   if (!FALLBACK_ON.has(failure as ProviderFailure)) return false;
-  if ((round.emittedToolCalls || round.emittedText) && !round.sideEffectProvenNone) return false;
+  if (round.emittedText) return false;
+  if (round.emittedToolCalls && !round.sideEffectProvenNone) return false;
   return true;
 }

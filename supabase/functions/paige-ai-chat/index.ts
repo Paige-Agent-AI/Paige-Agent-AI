@@ -232,7 +232,9 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
-import { executableToolCalls, readModelRound, ROUND_NOT_FINISHED_NOTE, wholeArguments } from "../_shared/paige-turn/round.ts";
+import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
+import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
+import { executableToolCalls, LIVE_ROUND_NOT_FINISHED_NOTE, readModelRound, ROUND_NOT_FINISHED_NOTE, wholeArguments } from "../_shared/paige-turn/round.ts";
 import { acceptedOfferNote, ambiguousOfferNote, CLAIM_CORRECTION, claimFallback, announcesTheStep, NO_LONGER_POSSIBLE, NOTHING_RAN_NOTE, offerKind, ranNote, saysItWasDone, stepToolDoes, readForeground, unbackedClaim, type Foreground, type ForegroundTurn } from "../_shared/paige-turn/continuity.ts";
 import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
@@ -8995,24 +8997,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     const STUDIO_THINKING_ENABLED = false; // HOTFIX: extended-thinking request 400'd the live Studio stream ("chat hit a snag"); disabled pending a real root-cause of the thinking+model interaction (§344). Sonnet lift stays; thinking param is dropped so the call reverts to a plain working stream.
     const paigeThinkingOn = !!studioSessionId && STUDIO_THINKING_ENABLED;
 
-    // #34 — Route SUBSTANTIVE turns to the reasoning tier (the "pro" legacy label ⇒ CLAUDE_REASONING
-    // via tierForLegacyModel) so the mutating tool the cheap Haiku tier was DROPPING actually fires.
-    // The anchoring bug: on "approved — run it" the Haiku tier failed to reliably emit the
-    // document_generate tool_use, so the turn re-asked instead of acting (the 4×-reask loop). The
-    // signal is the LAST user message ONLY (already extracted at line 871) — a pure string test, no
-    // extra LLM/DB call, no new provider, no streaming change (both tiers flow through the same
-    // gatewayCompat → streamAnthropicAsOpenAI). Trivial lookups ("what is X's email") match nothing
-    // here and stay on Haiku (§17 economics preserved).
-    const substantiveTurnIntent = (raw: string): boolean => {
-      const t = (raw || "").toLowerCase().trim();
-      if (!t || t.length > 2000) return false; // a huge paste isn't a terse command
-      // (a) APPROVAL of a queued proposal — the exact #34 failure case.
-      if (/\b(approv(e|ed)|confirm(ed)?|go ahead|do it|run it|send it|ship it|proceed|make it (so|happen)|yes[,.!\s]*(run|do|send|go|proceed|build|create|make|it)|let'?s (do|run|go|build|ship|make)|(sounds |looks )?good[,.!\s]*(run|do|send|go|build|make)|that works[,.!\s]*(run|do|go|build))\b/.test(t)) return true;
-      // (b) explicit CREATE/RUN action request (maps to the substantive tool set: document_generate,
-      //     contact/deal/pipeline moves, growth page/funnel, image, enroll…).
-      if (/\b(creat(e|ing)|build( me| a| an| the)|generat(e|ing)|draft( me| a| an| the)|make me|write me (a|an|the)|set up|schedule|book (a|an|the|this)|enroll|move .* (to|into) .* stage|publish|launch|add (a|an|the|this) (contact|deal|task|meeting|event|pipeline|stage))\b/.test(t)) return true;
-      return false;
-    };
+    // INT-334 R4 — THE TURN ROUTE replaces the #34 `substantiveTurnIntent` regex as the model-selection
+    // authority (_shared/paige-turn/route.ts). Thread state decides first (an approval resume, an answer
+    // to PAIGE's question, an accepted or ambiguous offer, a standing card); a cheap structured classifier
+    // fills in only where state does not decide, and can raise a floor but never lower one. #34's case —
+    // "approved — run it" dropped by the cheap tier — is an approval resume (a stored act, no model) or an
+    // accepted act step (operational), never the cheap class. Until the shared streaming fabric lands
+    // (R5–R7) the route's class maps onto the two legacy labels below: cheap → the classification tier,
+    // everything else → the reasoning tier.
     // INT-332 — THE FOREGROUND OFFER (_shared/paige-turn/continuity.ts). Both gates above and C1's
     // `isActionIntent` read only the person's literal words, so "Yes we may as well for sure" — accepting
     // the one action PAIGE had just offered — counted as neither: the turn went to the cheap tier, which
@@ -9047,9 +9039,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // replaced, never left standing as if it had happened (review rounds 5–8: no word list decides this).
     const acceptedKind = offerAccepted && foreground.offer.kind === "accepted" ? offerKind(foreground.offer.offer) : null;
     if (foreground.offer.kind !== "none") console.log(`[paige] foreground offer: ${foreground.offer.kind}`);
-    const substantiveTurn = offerAccepted
-      || (!!lastUserMessage && substantiveTurnIntent(String(lastUserMessage.content ?? "")));
-
+    // The route's facts are all server-resolved here; only the classifier is still to come (below, after
+    // the last pre-egress account check).
+    const lastUserContent: unknown = lastUserMessage?.content;
+    const lastUserText = typeof lastUserContent === "string" ? lastUserContent : "";
+    const turnRouteFacts: Omit<TurnRouteFacts, "classification"> = {
+      surface: studioSessionId ? "studio" : liveRuntimeScope ? "live" : "chat",
+      approvedCard: approvedConfirmations.size > 0,
+      answerBinding: !!answerBinding,
+      foreground: offerEligible ? foreground : { offer: { kind: "none", reason: "not_affirmative" }, standingCard: foreground.standingCard },
+      acceptedOfferKind: acceptedKind,
+      attachments: {
+        document: !!attachedDocument && !String(attachedDocument.mimeType ?? "").startsWith("image/"),
+        image: (!!attachedDocument && String(attachedDocument.mimeType ?? "").startsWith("image/"))
+          || (Array.isArray(turnAttachments) && turnAttachments.some((a: any) => a?.kind === "image")),
+      },
+    };
     if (!(await revalidateTenantKnowledgeScope())) {
       return new Response(
         JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
@@ -9088,9 +9093,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // switch that lands DURING the extraction fails closed with NO chat provider call — rather
       // than dispatching the prior workspace's aiMessages + Knowledge and only withholding the
       // streamed reply at the close boundary, which is too late (the cross-context egress already
-      // happened). Only deferred (general-document) turns pay this second check, because only they
-      // insert the awaited round-trip; every other turn keeps the pre-egress guard adjacent to the
-      // dispatch, so its single pre-egress check still suffices.
+      // happened). Only deferred (general-document) turns pay this second check here, because only
+      // they insert the awaited round-trip at this point. INT-334 R4: a turn that runs the turn
+      // classifier inserts another awaited round-trip, and re-checks again after it (below, at the
+      // route), so no turn dispatches on a check older than its last awaited provider call.
       if (!(await revalidateTenantKnowledgeScope())) {
         return new Response(
           JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
@@ -9098,6 +9104,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         );
       }
     }
+
+    // INT-334 R4 — THE TURN CLASSIFIER, started only AFTER the last pre-egress account check above: its
+    // call carries the person's message (and, for an accepted prose step, the step PAIGE offered), so a
+    // switched, stale or unresolved account must have 409'd before it can leave (#1255, test:knowledge-scope
+    // 12 / 15.9). It runs only where state leaves the class open, and is collected at the first model call.
+    // On most fresh turns little work sits between here and that call, so the classifier adds its own
+    // round-trip to the time to first token, bounded by TURN_CLASSIFY_DEADLINE_MS. It is advisory: a
+    // timeout, an error or a malformed reply is `null`, and the route takes its conservative default.
+    const classifierRuns = routeNeedsClassifier(turnRouteFacts) && !!lastUserText.trim();
+    const classificationPromise: Promise<TurnClassification | null> = classifierRuns
+      ? classifyTurn(lastUserText, offerAccepted && foreground.offer.kind === "accepted" ? foreground.offer.offer : null, traceFor("turn-classify"))
+      : Promise.resolve(null);
 
     // ── C4a · RESOLVE THE RESUME (docs/delivery/paige-conversational-loop-c4.md) ─────────────────
     // An approval used to mean "Approved — run it." plus a NEW request in which the model had to
@@ -9500,6 +9518,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         ? acceptedOfferNote(foreground.offer.offer, reply, { kind: acceptedKind ?? undefined })
         : ambiguousOfferNote(foreground.offer.offer, reply) });
     }
+    const turnClassification = await classificationPromise;
+    // #1255 — the classifier was an awaited provider round-trip between the pre-egress account check and
+    // the dispatch below. A switch that lands during it must fail closed BEFORE the Knowledge-carrying
+    // chat call, exactly as after the deferred document extraction (test:knowledge-scope 12b).
+    if (classifierRuns && !(await revalidateTenantKnowledgeScope())) {
+      return new Response(
+        JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const turnRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification });
+    const substantiveTurn = turnRoute.cognitive_class !== "cheap";
+    console.log(`[paige] route: ${turnRoute.basis}/${turnRoute.intent}/${turnRoute.cognitive_class} tools=${turnRoute.capability.tools} (${turnRoute.reasons.join(",")})`);
     const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
       method: "POST",
       headers: {
@@ -9508,8 +9539,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       body: JSON.stringify({
         // U2/§14 — the Studio design agent runs on the REASONING tier (pro ⇒ CLAUDE_REASONING) so its
         // extended thinking is a real reasoning model, never Haiku; the doc-attach path already did.
-        // #34 — substantiveTurn adds the reasoning tier for approval/creation intents (see above).
-        model: (studioSessionId || attachedDocument || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
+        // INT-334 R4 — the Turn Route's class picks the tier (Studio and an attached document are route facts).
+        model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
         messages: liveDecisionMessages(aiMessages),
         tools: toolDefs,
         tool_choice: "auto",
@@ -16355,7 +16386,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               console.warn(`[paige] unfinished tool round: ${toolCalls.filter(Boolean).length} call(s) shown, none run (finished=${finished})`);
               lastRoundFinished = false;
               unfinishedRound = true;
-              if (liveRuntimeScope) { liveAnswerPending = true; break; }
+              turnTracker.interrupted(); // sticky: whatever the closing answer does, the turn did not finish its step
+              if (liveRuntimeScope) {
+                // Live answers in its tools-free closing call; it is told the step did not run.
+                convo.push({ role: "system", content: LIVE_ROUND_NOT_FINISHED_NOTE });
+                liveAnswerPending = true;
+                break;
+              }
               const nothingRan = totalToolCalls === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0;
               const note = nothingRan ? `${ROUND_NOT_FINISHED_NOTE} ${NOTHING_RAN_NOTE}` : ROUND_NOT_FINISHED_NOTE;
               finalAssistantText = note;
@@ -16552,7 +16589,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             currentResponse = await gatewayCompat("anthropic", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
             }, traceFor("chat-tool-loop"));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
@@ -16772,7 +16809,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             finalStreamResponse = await gatewayCompat("anthropic", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: convo, stream: true }),
+              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: convo, stream: true }),
             }, traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool

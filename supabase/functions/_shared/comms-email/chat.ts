@@ -35,8 +35,10 @@ export const COMMS_EMAIL_TOOLS = [
   {
     type: "function",
     function: {
-      name: COMMS_EMAIL_TOOL,
-      description: "With approval, send ONE one-to-one business email to ONE existing contact from the business's own email address. First resolve the contact with a contact read; if more than one contact could match the name, ask the person which one — never pick by name. The server picks the contact's email address and the sender; the person sees the exact email on a Needs your OK card before anything goes out. Never for marketing, newsletters, campaigns, invoices, agreements or booking links — those have their own tools. Provider acceptance is not delivery. If the outcome could not be confirmed, never resend.",
+      // A string literal, not COMMS_EMAIL_TOOL: capability-kit-lint binds a tool schema to its
+      // defineCapability() declaration by the literal name it reads here.
+      name: "comms_send_email",
+      description: "With approval, send ONE one-to-one business email to ONE existing contact from the business's own email address. First resolve the contact with a contact read; if more than one contact could match the name, ask the person which one — never pick by name. The server picks the contact's email address and the sender; the person sees the exact email on a Needs your OK card before anything goes out. Never for marketing, newsletters, campaigns, invoices, agreements or booking links — those have their own tools. The email service accepting a message is not delivery. If the outcome could not be confirmed, never resend.",
       parameters: { type: "object", properties: toolProperties, required: [...COMMS_EMAIL_SEND_CAPABILITY.input.required], additionalProperties: false },
     },
   },
@@ -150,14 +152,13 @@ const REASON_NOTES: Record<string, string> = {
   COMMS_EMAIL_FORBIDDEN: "Only a business owner or admin can send email from the business's address.",
   COMMS_EMAIL_AUTHORITY_UNAVAILABLE: "The approval could not be confirmed for this workspace, so nothing was sent. Propose it again.",
   COMMS_EMAIL_PREPARE_REFUSED: "The email could not be prepared for sending, so nothing was sent.",
-  COMMS_EMAIL_REPLAY_UNAVAILABLE: "Earlier sends could not be checked just now, so nothing was sent. It is safe to try again in a moment.",
   COMMS_EMAIL_PARTIES_UNAVAILABLE: "The contact or the sending address could not be read just now, so nothing was sent. It is safe to try again in a moment.",
   COMMS_EMAIL_RECONCILIATION_UNVERIFIED: "Earlier sends of this email could not be checked just now, so nothing was sent. It is safe to try again in a moment.",
   COMMS_EMAIL_DECISION_RECEIPT_FAILED: "The approval record could not be saved, so nothing was sent. It is safe to try again.",
   APPROVAL_STORE_UNAVAILABLE: "Approvals could not be saved or read just now, so nothing was sent. It is safe to try again in a moment.",
   APPROVAL_CYCLE_INVALID: "That approval no longer matches this email, so nothing was sent. Propose it again.",
   APPROVAL_CLAIM_INVALID: "That approval could not be used, so nothing was sent. Propose it again.",
-  SEND_NOT_ADMITTED: "It was approved but not sent, because the sending step did not take it. Nothing went out; it is safe to approve it again.",
+  SEND_NOT_ADMITTED: "It was approved but the sending step did not take it. Nothing went out. The person can ask for it again, which starts a new request.",
 };
 function notSentNote(...keys: unknown[]): string {
   const plain = keys.map((k) => typeof k === "string" ? REASON_NOTES[k] : undefined).find((n) => n);
@@ -256,7 +257,7 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     }
     const safe = commsEmailChatSafeResult(result);
     if (result.ok === true && result.outcome === "provider_accepted") {
-      return { tokens, content: withReplay({ ...safe, success: true, delivery_confirmed: false, note: 'The email provider accepted the message. That is not proof it was delivered or read — say "sent (accepted for delivery)", never "they received it" or "delivered".' }) };
+      return { tokens, content: withReplay({ ...safe, success: true, delivery_confirmed: false, note: 'The email service accepted the message. That is not proof it was delivered or read — say "sent (accepted for delivery)", never "they received it" or "delivered".' }) };
     }
     // A door reply with no outcome is "Not sent" only when it is one of the door's own pre-send
     // answers; anything else that lacks an outcome (a runtime/gateway body) stays unconfirmed.
@@ -266,6 +267,11 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
       // Not "reconciled": the other send was named, not settled.
       const { reconciled: _notSettled, ...unsettled } = safe;
       return { tokens, content: { ...unsettled, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: "An identical email to this person is already being sent, so this one was held back. Do not resend. Say it may already have gone out; asking again later will check that send rather than send a second one." } };
+    }
+    if (result.outcome === "outcome_unknown" && result.code === "COMMS_EMAIL_TEAMMATE_IN_FLIGHT") {
+      // Someone else on the team asked for this exact email and its outcome is not confirmed. It is
+      // theirs to settle: asking again here cannot check it, so never promise that.
+      return { tokens, content: { ...safe, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: `A teammate already asked for this exact email to this person, and whether it went out is not confirmed yet. Do not resend. Say it may already have gone out and suggest checking with the teammate who sent it. ${NO_CODES}` } };
     }
     if (typeof result.outcome !== "string" || UNCONFIRMED.has(result.outcome)) return { tokens, content: withReplay({ ...safe, success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: UNKNOWN_NOTE }) };
     if (result.outcome === "sender_choice_required") {

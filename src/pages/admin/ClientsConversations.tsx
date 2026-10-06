@@ -231,6 +231,13 @@ function MessageBubble({
       status={
         isCall ? voiceStatusPill(m)
         : governed === "sending" ? <StatePill state="pending">{GOVERNED_SEND_COPY.sending.pill}</StatePill>
+        : governed === "not_sent" ? (
+          // Red deepened toward ink: the plain error pill measured 4.21:1 in light at 10px
+          // (render-results.json), the same fix the "Couldn't confirm" pill needed.
+          <StatePill state="error" className="text-[color-mix(in_oklab,hsl(var(--destructive))_62%,hsl(var(--foreground)))]">
+            {GOVERNED_SEND_COPY.not_sent.pill}
+          </StatePill>
+        )
         : governed === "unconfirmed" ? (
           // Amber deepened toward ink: the plain warning pill measured 3.75:1 in light at 10px
           // (render-results.json). The same mix the approval card uses for its unconfirmed note.

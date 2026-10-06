@@ -771,6 +771,26 @@ jobs:
           # values they echo back. It needs no credentials.
           ./scripts/sales/commercial-terms-refusal-proof.sh
 
+      - name: INT-328 comms email — real two-session concurrency proof (throwaway cluster)
+        if: ${{ !cancelled() }}
+        run: |
+          # The governed business email's claim/finalize must hold under REAL concurrent sessions: one
+          # dispatch per operation, one admission per identical content, no "Not sent" over a claimed
+          # send. This stands up its own throwaway Postgres cluster (the same pattern as the two proofs
+          # above), applies the migration verbatim over a local dependency stub, and races separate
+          # psql backends. It needs no credentials and touches no real database. The 81+ assertion
+          # rollback proof (scripts/sql/comms-email-send-proof.sql) needs the production schema, so it
+          # is run against production in BEGIN..ROLLBACK, not here.
+          PGBIN=""
+          for c in /usr/lib/postgresql/*/bin /usr/pgsql-*/bin; do [ -x "$c/initdb" ] && PGBIN="$c"; done
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — no PostgreSQL server binaries. Deliberately NOT skipped: a skipped proof reads exactly like a passing one."; exit 2; }
+          WORK="$(mktemp -d)"; PORT=55461
+          trap '"$PGBIN/pg_ctl" -D "$WORK/d" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
+          "$PGBIN/initdb" -D "$WORK/d" -U p --auth=trust >/dev/null
+          "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
+          for _ in $(seq 1 20); do "$PGBIN/pg_isready" -h 127.0.0.1 -p "$PORT" >/dev/null 2>&1 && break; sleep 0.5; done
+          node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d"
+
       - name: C4a — an approval resumes the same objective (the pure resume model)
         if: ${{ !cancelled() }}
         run: |

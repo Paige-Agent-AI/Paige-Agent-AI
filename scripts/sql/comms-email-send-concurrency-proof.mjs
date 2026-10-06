@@ -206,6 +206,17 @@ scenario('(d-ordered) unclaimed refused arrives while the claimant is in flight:
   assert.equal(sync(database, `SELECT status||'|'||provider_message_id FROM public.messages WHERE id=${msg(6)};`), 'sent|re_race_6');
 });
 
+// (d-claimant) Even the attempt that HOLDS the claim may never record 'refused' afterwards: once a
+// claim exists the email may have gone out, and "Not sent" would invite a resend. Its own session.
+scenario('(d-claimant) the claimant itself cannot record refused after its claim: 42501 NOT_CLAIMED, still dispatching', async () => {
+  asService(`SELECT ${prepareCall({ op: op(20), subject: 'Claimant refusal' })};`);
+  asService(`SELECT ${claimCall(20)};`);
+  const run = await session(`BEGIN;\nSET LOCAL ROLE service_role;\n${selectResult(finalizeCall(20, 'refused', null, 'blocked_suppressed', 1))}\nCOMMIT;\n`, 'comms_email_d_claimant_refused');
+  assert.equal(`${run.sqlstate} ${run.message}`, '42501 COMMS_EMAIL_NOT_CLAIMED', 'claimant refusal after claim: ' + brief([run]));
+  assert.equal(binding(20).state, 'dispatching', 'the claimed row stays dispatching');
+  assert.equal(sync(database, `SELECT status FROM public.messages WHERE id=${msg(20)};`), 'draft', 'never shown as not sent or blocked');
+});
+
 // (g) Two simultaneous RECONCILE claims of one stale dispatching operation (same admission shape as b).
 scenario('(g-db) stale-dispatching reconcile race: re-admitted exactly once, attempts=2', async () => {
   asService(`SELECT ${prepareCall({ op: op(7), subject: 'Reconcile race' })};`);

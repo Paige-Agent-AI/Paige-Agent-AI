@@ -30,8 +30,12 @@
 -- find_comms_email_pending_reconciliation take no actor. They are reachable only by service_role
 -- (comms-email-command and send-message), are keyed by a message id + operation UUID (finalize) or by
 -- the door's own server-resolved tenant (finder), and return no tenant data beyond an operation id.
--- finalize must still record an honest outcome after the actor's seat lapses mid-send, so it does not
--- re-prove the actor; it instead requires the claim's attempt number for any dispatching outcome.
+-- finalize does not re-prove the actor's live workspace; it requires the claim's attempt number for any
+-- dispatching outcome. It DOES record the Rail through record_capability_run, which refuses an actor
+-- with no active membership (CAPABILITY_RUN_FORBIDDEN, 42501) and rolls the whole finalize back. So if
+-- the actor's membership ends mid-send, the outcome CANNOT be recorded: the row stays 'dispatching'
+-- (reported outcome_unknown, never "sent"), and because the binding read re-proves the actor it is not
+-- reconcilable either. Listed with the residuals below; proved in comms-email-send-proof.sql §6d.
 --
 -- HONEST RESIDUALS (§13), recorded here because they are properties of this contract, not bugs it hides:
 --  * Only Resend operations are reconcilable (its Idempotency-Key replays the original send for ~24 h).
@@ -44,6 +48,8 @@
 --    send keeps running after the deadline and MAY still go out while the operation is 'unknown'.
 --  * The approved sender is bound by connector id, provider and from_address only. from_name and
 --    reply_to are read from the connector at send time and can change after approval without refusal.
+--  * An actor whose membership ends while their send is dispatching leaves that operation unrecorded
+--    and unreconcilable (see the §59 note above): it stays unknown until a person reviews it.
 
 CREATE UNIQUE INDEX IF NOT EXISTS messages_comms_email_operation
  ON public.messages ((meta#>>'{comms_email_binding,operation_id}'))
@@ -290,7 +296,9 @@ BEGIN
   'provider_receipt_available',m.provider_message_id IS NOT NULL AND b->>'state'='provider_accepted','delivery_confirmed',false,
   'prepared_at',b->'prepared_at','attempts',coalesce((b->>'attempts')::int,0),'provider',b->>'provider',
   'reconcilable',public._comms_email_reconcilable(b))
-  ||CASE WHEN b->>'state'='refused' AND b->>'outcome_reason' IS NOT NULL THEN jsonb_build_object('reason',b->>'outcome_reason') ELSE '{}'::jsonb END;
+  -- The reason is code-shaped by construction (finalize keeps nothing else), so a failure carries its
+  -- cause to Chat exactly like a refusal does ("safe to ask again" vs "check the email setup").
+  ||CASE WHEN b->>'state' IN ('refused','failed') AND b->>'outcome_reason' IS NOT NULL THEN jsonb_build_object('reason',b->>'outcome_reason') ELSE '{}'::jsonb END;
 END $$;
 
 -- §59 service-only, door-scoped exemption (see header): the tenant is the door's server-resolved one.

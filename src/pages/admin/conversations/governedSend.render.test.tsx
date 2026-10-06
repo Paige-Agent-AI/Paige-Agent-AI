@@ -17,7 +17,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GOVERNED_SEND_COLS, governedSendView, isApprovableDraft } from "./governedSend";
+import { GOVERNED_SEND_COLS, SENDING_WINDOW_MS, governedSendView, isApprovableDraft } from "./governedSend";
 import type { MessageRow } from "./inbox-shared";
 
 const db = vi.hoisted(() => ({
@@ -99,7 +99,8 @@ const message = (over: Record<string, unknown>) => ({
   provider_message_id: null, in_reply_to_provider_id: null, action_id: null, error: null, scheduled_for: null,
   sent_at: null, created_at: NOW, call_duration_seconds: null, recording_url: null, transcript: null,
   clients: { first_name: "Maya", last_name: "Ortiz", entity_name: null, client_contact_methods: client.client_contact_methods },
-  comms_email_operation: null, comms_email_state: null, sales_invoice_operation: null, sales_invoice_state: null,
+  comms_email_operation: null, comms_email_state: null, comms_email_prepared_at: null, comms_email_claimed_at: null,
+  sales_invoice_operation: null, sales_invoice_state: null,
   ...over,
 });
 const thread = {
@@ -187,6 +188,38 @@ describe.each([
     expect(host.textContent).toContain("Not sent");
   });
 
+  it("a send prepared an hour ago that was never handed over reads Not sent — never Sending…", async () => {
+    const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+    db.messages = [message({ created_at: hourAgo, comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: "prepared", comms_email_prepared_at: hourAgo })];
+    db.threads = [thread];
+    const host = await mountInbox(path);
+    expect(host.textContent).not.toContain("Sending…");
+    expect(host.textContent).toContain("Not sent");
+    expect(host.textContent).not.toContain("Paige drafted — awaiting your approval");
+    expect(buttons(host)).not.toContain("Approve & send");
+    expect(buttons(host)).not.toContain("Edit");
+  });
+
+  it("a send handed over 10 minutes ago with no outcome reads Couldn't confirm — don't resend", async () => {
+    const tenMinAgo = new Date(Date.now() - 600_000).toISOString();
+    db.messages = [message({ created_at: tenMinAgo, comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: "dispatching", comms_email_prepared_at: tenMinAgo, comms_email_claimed_at: tenMinAgo })];
+    db.threads = [thread];
+    const host = await mountInbox(path);
+    expect(host.textContent).not.toContain("Sending…");
+    expect(host.querySelector('[data-governed-send="unconfirmed"]')?.textContent).toBe("Couldn't confirm this went out — don't resend.");
+    expect(buttons(host)).not.toContain("Approve & send");
+    expect(buttons(host)).not.toContain("Edit");
+  });
+
+  it("a send handed over seconds ago still reads Sending…", async () => {
+    const justNow = new Date(Date.now() - 5_000).toISOString();
+    db.messages = [message({ comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: "dispatching", comms_email_prepared_at: justNow, comms_email_claimed_at: justNow })];
+    db.threads = [thread];
+    const host = await mountInbox(path);
+    expect(host.textContent).toContain("Sending…");
+    expect(buttons(host)).not.toContain("Approve & send");
+  });
+
   it("an invoice delivery in flight is treated the same way", async () => {
     db.messages = [message({ sales_invoice_operation: "1b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", sales_invoice_state: "dispatching" })];
     db.threads = [thread];
@@ -216,6 +249,65 @@ describe("the one rule, as the draft count and the views read it", () => {
   });
 });
 
+describe("Sending… is time-bound — the clock is injected", () => {
+  const row = (over: Record<string, unknown>) => message(over) as unknown as MessageRow;
+  const T0 = Date.parse("2026-10-05T12:00:00.000Z");
+  const at = (msAgo: number) => new Date(T0 - msAgo).toISOString();
+  const comms = (state: string, preparedAgo: number | null, claimedAgo: number | null, over: Record<string, unknown> = {}) =>
+    row({
+      created_at: at(preparedAgo ?? 0), comms_email_operation: "x", comms_email_state: state,
+      comms_email_prepared_at: preparedAgo === null ? null : at(preparedAgo),
+      comms_email_claimed_at: claimedAgo === null ? null : at(claimedAgo), ...over,
+    });
+
+  it("the select reads the binding's prepared_at and claimed_at (and still nothing else from meta)", () => {
+    expect(GOVERNED_SEND_COLS).toContain("comms_email_prepared_at:meta->comms_email_binding->>prepared_at");
+    expect(GOVERNED_SEND_COLS).toContain("comms_email_claimed_at:meta->comms_email_binding->>claimed_at");
+    expect(GOVERNED_SEND_COLS).not.toMatch(/->>(command|governance|body)/);
+  });
+  it("the window is about two minutes", () => {
+    expect(SENDING_WINDOW_MS).toBe(120_000);
+  });
+  it("dispatching: Sending… only while the claim is fresh, then Couldn't confirm", () => {
+    expect(governedSendView(comms("dispatching", 30_000, 20_000), T0)).toBe("sending");
+    expect(governedSendView(comms("dispatching", 600_000, 119_000), T0)).toBe("sending");
+    expect(governedSendView(comms("dispatching", 600_000, 121_000), T0)).toBe("unconfirmed");
+    expect(governedSendView(comms("dispatching", 3_600_000, 3_600_000), T0)).toBe("unconfirmed");
+    // A claim time that cannot be read falls back to when the row was written.
+    expect(governedSendView(comms("dispatching", 3_600_000, null), T0)).toBe("unconfirmed");
+    expect(governedSendView(comms("dispatching", 30_000, null), T0)).toBe("sending");
+  });
+  it("prepared: Sending… only in the first two minutes, then Not sent (nothing was handed over)", () => {
+    expect(governedSendView(comms("prepared", 10_000, null), T0)).toBe("sending");
+    expect(governedSendView(comms("prepared", 3_600_000, null), T0)).toBe("not_sent");
+    expect(governedSendView(comms("prepared", 121_000, null), T0)).toBe("not_sent");
+  });
+  it("refused or blocked: Not sent; unknown: Couldn't confirm; accepted and failed: settled", () => {
+    expect(governedSendView(comms("refused", 10_000, null, { status: "blocked" }), T0)).toBe("not_sent");
+    expect(governedSendView(comms("refused", 10_000, null), T0)).toBe("not_sent");
+    expect(governedSendView(comms("blocked", 10_000, null), T0)).toBe("not_sent");
+    expect(governedSendView(comms("unknown", 10_000, 5_000), T0)).toBe("unconfirmed");
+    expect(governedSendView(comms("unknown", 3_600_000, 3_600_000), T0)).toBe("unconfirmed");
+    expect(governedSendView(comms("provider_accepted", 3_600_000, 3_600_000, { status: "sent" }), T0)).toBe("settled");
+    expect(governedSendView(comms("failed", 3_600_000, 3_600_000, { status: "failed" }), T0)).toBe("settled");
+  });
+  it("an invoice binding carries no times, so its age is the row's own creation", () => {
+    const inv = (state: string, ago: number) => row({ created_at: at(ago), sales_invoice_operation: "y", sales_invoice_state: state });
+    expect(governedSendView(inv("dispatching", 20_000), T0)).toBe("sending");
+    expect(governedSendView(inv("dispatching", 3_600_000), T0)).toBe("unconfirmed");
+    expect(governedSendView(inv("prepared", 3_600_000), T0)).toBe("not_sent");
+  });
+  it("a binding with no readable state never says Sending… forever", () => {
+    expect(governedSendView(row({ created_at: at(10_000), comms_email_operation: "x" }), T0)).toBe("sending");
+    expect(governedSendView(row({ created_at: at(3_600_000), comms_email_operation: "x" }), T0)).toBe("unconfirmed");
+  });
+  it("no bound row is ever approvable, at any age", () => {
+    for (const state of ["prepared", "dispatching", "unknown", "refused"]) {
+      expect(isApprovableDraft(comms(state, 3_600_000, 3_600_000))).toBe(false);
+    }
+  });
+});
+
 // ── Viewing aid (§00: the owner SEES the state) — needs a build for the compiled tokens. ─────────
 function compiledCss(): string {
   const files = readdirSync("dist/assets").filter((f) => f.endsWith(".css"));
@@ -225,15 +317,19 @@ function compiledCss(): string {
 
 describe("Conversations governed-send render harness", () => {
   it.skipIf(!existsSync("dist/assets"))("writes the light and dark pages", async () => {
+    const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
+    const op = "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d";
     const scenes: Array<{ label: string; note: string; row: Record<string, unknown> }> = [
       { label: "A draft Paige wrote — unchanged", note: "Still the one card that asks for approval, with Approve & send.", row: {} },
-      { label: "An approved email on its way", note: "Approved in chat and handed to the email service. No approve, no edit — it is already going.", row: { comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: "dispatching" } },
-      { label: "An email nobody could confirm", note: "The send was attempted and the outcome never came back. It may have gone out, so it says not to resend.", row: { comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: "unknown" } },
+      { label: "An approved email on its way", note: "Approved in chat and handed to the email service seconds ago. No approve, no edit — it is already going.", row: { created_at: ago(8_000), comms_email_operation: op, comms_email_state: "dispatching", comms_email_prepared_at: ago(8_000), comms_email_claimed_at: ago(6_000) } },
+      { label: "An email nobody could confirm", note: "The send was attempted and the outcome never came back. It may have gone out, so it says not to resend.", row: { comms_email_operation: op, comms_email_state: "unknown" } },
+      { label: "Handed over, no answer for ten minutes", note: "Claimed and handed to the email service, then nothing came back. Sending… stops after two minutes; it may have gone out, so it says not to resend.", row: { created_at: ago(600_000), comms_email_operation: op, comms_email_state: "dispatching", comms_email_prepared_at: ago(600_000), comms_email_claimed_at: ago(598_000) } },
+      { label: "Approved an hour ago, never handed over", note: "Prepared but never claimed, so nothing reached the email service. It reads Not sent — never Sending… forever.", row: { created_at: ago(3_600_000), comms_email_operation: op, comms_email_state: "prepared", comms_email_prepared_at: ago(3_600_000) } },
     ];
     const captured: string[] = [];
     for (const scene of scenes) {
       db.messages = [
-        message({ id: "in-1", direction: "inbound", status: "received", sender: { address: "maya@ortizlandscaping.example", display_name: "Maya Ortiz" }, subject: "Tuesday", body_text: "Could you send over what we agreed on Tuesday?", created_at: new Date(Date.now() - 3600_000).toISOString() }),
+        message({ id: "in-1", direction: "inbound", status: "received", sender: { address: "maya@ortizlandscaping.example", display_name: "Maya Ortiz" }, subject: "Tuesday", body_text: "Could you send over what we agreed on Tuesday?", created_at: new Date(Date.now() - 2 * 3600_000).toISOString() }),
         message(scene.row),
       ];
       db.threads = [thread];

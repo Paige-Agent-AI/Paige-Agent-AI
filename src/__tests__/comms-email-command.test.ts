@@ -17,6 +17,7 @@ import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCa
 const TENANT = "10000000-0000-4000-8000-000000000001";
 const FOREIGN = "10000000-0000-4000-8000-000000000002";
 const ACTOR = "40000000-0000-4000-8000-000000000001";
+const ACTOR_2 = "40000000-0000-4000-8000-000000000002"; // a second admin of the same workspace (a teammate)
 const CONTACT = "30000000-0000-4000-8000-000000000001";
 const FOREIGN_CONTACT = "30000000-0000-4000-8000-000000000002";
 const SENDER = "50000000-0000-4000-8000-000000000001";
@@ -50,10 +51,14 @@ type Setup = {
   readiness?: Partial<CommsEmailReadiness>; sendBehavior?: "accept" | "throw" | "reject" | "not_admitted" | "hang_prepared"; auditFails?: boolean; lane?: string;
   // current_user_tenant_id answers, in order (the last one repeats). Overrides currentTenant.
   tenantSequence?: string[]; approvalStoreFails?: boolean;
+  // Who is signed in (mutable between requests), the profile's active workspace (null = none set),
+  // a replay read that errors, and a finalize that the database refuses.
+  actor?: string; activeTenant?: string | null; readResultFails?: boolean; finalizeFails?: boolean;
 };
 function setup(options: Setup = {}) {
   const tables: Record<string, Row[]> = {
-    tenant_members: [{ tenant_id: TENANT, user_id: ACTOR, role: options.role ?? "owner", status: "active" }],
+    tenant_members: [{ tenant_id: TENANT, user_id: ACTOR, role: options.role ?? "owner", status: "active" }, { tenant_id: TENANT, user_id: ACTOR_2, role: "admin", status: "active" }],
+    profiles: [{ user_id: ACTOR, active_tenant_id: options.activeTenant === undefined ? TENANT : options.activeTenant }, { user_id: ACTOR_2, active_tenant_id: TENANT }],
     clients: options.contacts ?? [
       { id: CONTACT, tenant_id: TENANT, first_name: "Dana", last_name: "Reyes", entity_name: null, client_contact_methods: [{ kind: "email", value: " Dana@Example.test ", label: null, is_primary: true, position: 0 }, { kind: "email", value: "old@example.test", label: null, is_primary: false, position: 1 }] },
       { id: FOREIGN_CONTACT, tenant_id: FOREIGN, first_name: "Other", last_name: "Tenant", client_contact_methods: [{ kind: "email", value: "x@foreign.test", is_primary: true, position: 0 }] },
@@ -93,12 +98,26 @@ function setup(options: Setup = {}) {
   };
   const resultOf = (binding: Row) => ({ ok: binding.state === "provider_accepted", outcome: binding.state, operation_id: binding.operation_id, message_id: binding.message_id,
     provider_receipt_available: binding.state === "provider_accepted", delivery_confirmed: false, provider: binding.provider,
-    reconcilable: binding.provider === "resend" && binding.state === "unknown", ...(binding.outcome_reason ? { reason: binding.outcome_reason } : {}) });
+    reconcilable: binding.provider === "resend" && binding.state === "unknown", ...(binding.outcome_reason && ["refused", "failed"].includes(String(binding.state)) ? { reason: binding.outcome_reason } : {}) });
   const admin = {
     from: builder,
     rpc: async (name: string, args: Row) => {
       calls.push({ name, args });
-      if (name === "read_comms_email_send_result") { const b = bindings.get(String(args._operation_id).toLowerCase()); return { data: b ? resultOf(b) : null, error: null }; }
+      if (name === "read_comms_email_send_result") {
+        if (options.readResultFails) return { data: null, error: { code: "PGRST000", message: "readback down" } };
+        const b = bindings.get(String(args._operation_id).toLowerCase());
+        // The SQL read is tied to the actor: another actor's operation raises, never reads.
+        if (b && b.actor_user_id !== args._actor_user_id) return { data: null, error: { code: "22023", message: "COMMS_EMAIL_REPLAY_MISMATCH" } };
+        return { data: b ? resultOf(b) : null, error: null };
+      }
+      // finalize_comms_email_send, as far as an unclaimed caller can use it: only a still-'prepared'
+      // operation with no claimed attempt may be closed as refused/failed.
+      if (name === "finalize_comms_email_send") {
+        const b = [...bindings.values()].find(x => x.message_id === args._message_id && x.operation_id === args._operation_id);
+        if (options.finalizeFails || !b || b.state !== "prepared" || args._claimed_attempt != null || !["refused", "failed"].includes(String(args._outcome))) return { data: null, error: { code: "42501", message: "COMMS_EMAIL_NOT_CLAIMED" } };
+        b.state = args._outcome; b.outcome_reason = args._reason;
+        return { data: { ok: false, outcome: args._outcome }, error: null };
+      }
       if (name === "find_comms_email_pending_reconciliation") {
         const hit = [...bindings.values()].find(b => b.tenant_id === args._expected_tenant_id && b.recipient === args._recipient && b.content_digest === args._content_digest && ["dispatching", "unknown"].includes(String(b.state)));
         return { data: hit?.operation_id ?? null, error: null };
@@ -125,7 +144,7 @@ function setup(options: Setup = {}) {
     },
   };
   const caller = {
-    auth: { getUser: async () => ({ data: { user: options.authenticated === false ? null : { id: ACTOR } }, error: null }) },
+    auth: { getUser: async () => ({ data: { user: options.authenticated === false ? null : { id: options.actor ?? ACTOR } }, error: null }) },
     rpc: async (name: string) => {
       if (name !== "current_user_tenant_id") return { data: options.lane ?? "auto", error: null };
       const seq = options.tenantSequence;
@@ -429,14 +448,28 @@ describe("comms-email-command: operation ids are case-insensitive (verifier #8)"
 });
 
 describe("comms-email-command: a send the claim did not admit, and the lingering prepared row", () => {
-  it("send-message answered but did not admit the row: 'refused SEND_NOT_ADMITTED', not unknown", async () => {
+  it("send-message answered but did not admit the row: 'refused SEND_NOT_ADMITTED', and the row is closed as refused (x2 #1)", async () => {
     const t = setup({ sendBehavior: "not_admitted" });
     const proposal = await t.request();
     const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
     expect(r.body).toMatchObject({ ok: false, outcome: "refused", reason: "SEND_NOT_ADMITTED", operation_id: OP, delivery_confirmed: false });
+    // Closed by an UNCLAIMED finalize (no attempt number), so it never sits 'prepared' ("Sending…").
+    expect(t.named("finalize_comms_email_send").map(c => c.args)).toEqual([{ _message_id: t.bindings.get(OP)?.message_id, _operation_id: OP, _outcome: "refused", _provider_message_id: null, _reason: "send_not_admitted", _claimed_attempt: null }]);
+    expect(t.bindings.get(OP)).toMatchObject({ state: "refused", outcome_reason: "send_not_admitted" });
+    // The operation is terminal: asking with the same operation replays "not sent", and sends nothing.
+    const replay = await t.request({ approved_fingerprint: proposal.body.fingerprint });
+    expect(replay.body).toMatchObject({ ok: false, outcome: "refused", reason: "SEND_NOT_ADMITTED", replayed: true });
+    expect(t.sends).toHaveLength(1);
+  });
+  it("if the database will not close the row (another attempt claimed it meanwhile), it stays outcome_unknown — never 'Not sent'", async () => {
+    const t = setup({ sendBehavior: "not_admitted", finalizeFails: true });
+    const proposal = await t.request();
+    const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
+    expect(r.body).toMatchObject({ ok: false, outcome: "outcome_unknown" });
+    expect(r.body.reason).toBeUndefined();
     expect(t.bindings.get(OP)?.state).toBe("prepared");
   });
-  it("not admitted because an IDENTICAL email went in flight between prepare and claim: outcome_unknown naming that send, never 'Not sent'", async () => {
+  it("not admitted because an IDENTICAL email went in flight between prepare and claim: outcome_unknown naming that send, never 'Not sent'; this operation is closed", async () => {
     const OTHER_OP = "99999999-9999-4999-8999-999999999999";
     const t = setup({ sendBehavior: "not_admitted" });
     // Between this operation's prepare and its claim, another approved operation with the same
@@ -448,16 +481,20 @@ describe("comms-email-command: a send the claim did not admit, and the lingering
     const proposal = await t.request();
     const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
     expect(r.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: OTHER_OP, delivery_confirmed: false });
-    expect(t.bindings.get(OP)?.state).toBe("prepared");
+    // THIS operation sent nothing and is closed; the in-flight one is untouched.
+    expect(t.bindings.get(OP)).toMatchObject({ state: "refused", outcome_reason: "send_not_admitted" });
+    expect(t.bindings.get(OTHER_OP)?.state).toBe("dispatching");
   });
   it("send-message never answered while the row is still prepared: outcome_unknown (it may still be admitted)", async () => {
     const t = setup({ sendBehavior: "hang_prepared" });
     const proposal = await t.request();
     const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
     expect(r.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" });
+    expect(t.named("finalize_comms_email_send")).toEqual([]);
+    expect(t.bindings.get(OP)?.state).toBe("prepared");
   });
-  it("a lingering prepared row needs a FRESH approval cycle on the SAME operation, then sends exactly once", async () => {
-    const t = setup({ sendBehavior: "not_admitted" });
+  it("a lingering prepared row (the send never answered) needs a FRESH approval cycle on the SAME operation, then sends exactly once", async () => {
+    const t = setup({ sendBehavior: "hang_prepared" });
     const first = await t.request();
     await t.request({ approved_fingerprint: first.body.fingerprint });
     expect(t.bindings.get(OP)?.state).toBe("prepared");
@@ -480,5 +517,50 @@ describe("comms-email-command: a send the claim did not admit, and the lingering
     expect(t.bindings.size).toBe(1);
     expect(t.bindings.get(OP)?.message_id).toBe(messageId);
     expect(t.sends.map(x => x.comms_email_operation_id)).toEqual([OP, OP]);
+  });
+});
+
+describe("comms-email-command: the replay read and the active workspace (x2 #3)", () => {
+  it("a replay read that fails is outcome_unknown, never 'refused' — the operation may already have been sent", async () => {
+    const t = setup({ readResultFails: true });
+    const r = await t.request({ approved_fingerprint: "0123456789abcdef" });
+    expect(r.status).toBe(503);
+    expect(r.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE", delivery_confirmed: false });
+    expect(t.sends).toEqual([]); expect(t.named("prepare_comms_email_send")).toEqual([]);
+  });
+  it("no active workspace on the profile, or a different one, is WORKSPACE_CHANGED before any read — the SQL would refuse every send", async () => {
+    for (const activeTenant of [null, FOREIGN]) {
+      const t = setup({ activeTenant });
+      const r = await t.request();
+      expect(r.status, String(activeTenant)).toBe(409);
+      expect(r.body, String(activeTenant)).toMatchObject({ ok: false, outcome: "refused", code: "WORKSPACE_CHANGED" });
+      expect(t.calls.filter(c => c.name !== "update:paige_pending_confirmations"), String(activeTenant)).toEqual([]);
+      expect(t.sends).toEqual([]);
+    }
+  });
+});
+
+describe("comms-email-command: a teammate's identical email of unknown outcome (x2 #4)", () => {
+  it("is named as a teammate's unconfirmed send: outcome_unknown, nothing prepared, proposed or sent", async () => {
+    const t = setup({ sendBehavior: "throw" });
+    const proposal = await t.request();
+    const first = await t.request({ approved_fingerprint: proposal.body.fingerprint });
+    expect(first.body.outcome).toBe("outcome_unknown");
+    expect(t.bindings.get(OP)?.state).toBe("unknown");
+    const sendsBefore = t.sends.length;
+    // A second admin asks for the very same email in their own turn.
+    t.options.actor = ACTOR_2;
+    const teammate = await t.request({ operation_id: OP_2 });
+    expect(teammate.status).toBe(503);
+    expect(teammate.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_TEAMMATE_IN_FLIGHT", operation_id: OP_2, delivery_confirmed: false });
+    expect(teammate.body).not.toHaveProperty("reconciled_operation_id");
+    expect(t.sends).toHaveLength(sendsBefore);
+    expect(t.named("prepare_comms_email_send")).toHaveLength(1);
+    expect(t.named("insert:paige_pending_confirmations")).toHaveLength(1);
+    expect(t.bindings.has(OP_2)).toBe(false);
+    // The original actor asking again still reconciles their own send.
+    t.options.actor = ACTOR;
+    const own = await t.request({ operation_id: OP_2 });
+    expect(own.body.reconciled_operation_id).toBe(OP);
   });
 });

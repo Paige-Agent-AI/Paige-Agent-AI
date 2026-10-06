@@ -762,6 +762,8 @@
           "a-draft-paige-wrote-unchanged-light.png",
           "an-approved-email-on-its-way-light.png",
           "an-email-nobody-could-confirm-light.png",
+          "handed-over-no-answer-for-ten-minutes-light.png",
+          "approved-an-hour-ago-never-handed-over-light.png",
           "conversations-governed-send-360-light.png",
           "conversations-governed-send-320-light.png"
         ],
@@ -784,8 +786,29 @@
             "ratio": 6.1
           },
           {
+            "label": "status pill",
+            "scene": "Handed over, no answer for ten minutes",
+            "text": "Couldn't confirm",
+            "size": "10px",
+            "ratio": 6.1
+          },
+          {
+            "label": "status pill",
+            "scene": "Approved an hour ago, never handed over",
+            "text": "Not sent",
+            "size": "10px",
+            "ratio": 6.42
+          },
+          {
             "label": "don't-resend line",
             "scene": "An email nobody could confirm",
+            "text": "Couldn't confirm this went out — don't resend.",
+            "size": "11px",
+            "ratio": 14.35
+          },
+          {
+            "label": "don't-resend line",
+            "scene": "Handed over, no answer for ten minutes",
             "text": "Couldn't confirm this went out — don't resend.",
             "size": "11px",
             "ratio": 14.35
@@ -813,6 +836,20 @@
             "pills": [
               "Couldn't confirm"
             ]
+          },
+          {
+            "scene": "Handed over, no answer for ten minutes",
+            "buttons": [],
+            "pills": [
+              "Couldn't confirm"
+            ]
+          },
+          {
+            "scene": "Approved an hour ago, never handed over",
+            "buttons": [],
+            "pills": [
+              "Not sent"
+            ]
           }
         ],
         "at360": {
@@ -830,6 +867,8 @@
           "a-draft-paige-wrote-unchanged-dark.png",
           "an-approved-email-on-its-way-dark.png",
           "an-email-nobody-could-confirm-dark.png",
+          "handed-over-no-answer-for-ten-minutes-dark.png",
+          "approved-an-hour-ago-never-handed-over-dark.png",
           "conversations-governed-send-360-dark.png",
           "conversations-governed-send-320-dark.png"
         ],
@@ -852,8 +891,29 @@
             "ratio": 8.96
           },
           {
+            "label": "status pill",
+            "scene": "Handed over, no answer for ten minutes",
+            "text": "Couldn't confirm",
+            "size": "10px",
+            "ratio": 8.96
+          },
+          {
+            "label": "status pill",
+            "scene": "Approved an hour ago, never handed over",
+            "text": "Not sent",
+            "size": "10px",
+            "ratio": 8.26
+          },
+          {
             "label": "don't-resend line",
             "scene": "An email nobody could confirm",
+            "text": "Couldn't confirm this went out — don't resend.",
+            "size": "11px",
+            "ratio": 15.96
+          },
+          {
+            "label": "don't-resend line",
+            "scene": "Handed over, no answer for ten minutes",
             "text": "Couldn't confirm this went out — don't resend.",
             "size": "11px",
             "ratio": 15.96
@@ -880,6 +940,20 @@
             "buttons": [],
             "pills": [
               "Couldn't confirm"
+            ]
+          },
+          {
+            "scene": "Handed over, no answer for ten minutes",
+            "buttons": [],
+            "pills": [
+              "Couldn't confirm"
+            ]
+          },
+          {
+            "scene": "Approved an hour ago, never handed over",
+            "buttons": [],
+            "pills": [
+              "Not sent"
             ]
           }
         ],

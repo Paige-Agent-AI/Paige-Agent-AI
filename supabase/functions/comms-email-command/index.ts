@@ -21,6 +21,7 @@ const object = (value: unknown): Record<string, unknown> | null => value && type
 // out", which would block the owner from a retry that is safe. `outcome_unknown` is reserved for a
 // moment when a send may have reached the provider (or a prepared send may still be admitted).
 const refusedBeforeDispatch = (status: number, code: string) => response(status, { ok: false, outcome: "refused", code });
+const REPLAY_MISMATCH = "COMMS_EMAIL_REPLAY_MISMATCH";
 const statusOf = (result: Record<string, unknown>) => result.ok === true ? 200 : result.outcome === "outcome_unknown" ? 503 : result.outcome === "sender_choice_required" ? 409 : 422;
 
 Deno.serve(async req => {
@@ -54,10 +55,19 @@ Deno.serve(async req => {
   };
   const { data: member, error: memberError } = await admin.from("tenant_members").select("role,status").eq("tenant_id", tenantId).eq("user_id", user.id).eq("status", "active").maybeSingle();
   if (memberError || !["owner", "admin"].includes(member?.role ?? "")) return response(403, { ok: false, outcome: "refused", code: "COMMS_EMAIL_FORBIDDEN" });
+  // The seat is held in the workspace the person has OPEN, exactly as the SQL (_comms_email_actor)
+  // requires: profiles.active_tenant_id = this tenant. current_user_tenant_id() can fall back to a
+  // membership when none is set, but every prepare/read would then refuse — so say it plainly here
+  // ("reopen the right workspace") instead of a retry that can never succeed.
+  const { data: profile, error: profileError } = await admin.from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
+  if (profileError) return refusedBeforeDispatch(503, "COMMS_EMAIL_AUTHORITY_UNAVAILABLE");
+  if (typeof profile?.active_tenant_id !== "string" || profile.active_tenant_id.toLowerCase() !== tenantId) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
 
   const readResult = async (operationId: string) => {
     const { data, error } = await admin.rpc("read_comms_email_send_result", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: operationId });
-    if (error) throw new Error("comms_email_readback_unavailable");
+    // The read is tied to the actor: an operation that exists but belongs to someone else raises
+    // COMMS_EMAIL_REPLAY_MISMATCH. Keep that one distinguishable; every other failure is opaque.
+    if (error) throw new Error(String(object(error)?.message ?? "").includes(REPLAY_MISMATCH) ? REPLAY_MISMATCH : "comms_email_readback_unavailable");
     return data;
   };
   // Whether send-message ANSWERED (finished) rather than timing out or failing at the gateway. Only
@@ -74,27 +84,31 @@ Deno.serve(async req => {
     } finally { clearTimeout(timer); }
   };
   // send-message answered, but its claim did not admit the row (an identical email is in flight, or
-  // the row no longer matched): the operation is still 'prepared', so nothing went out. That is a
-  // refusal of THIS attempt, not an unknown — and the same operation can be approved again.
+  // the row no longer matched): the operation is still 'prepared', so nothing went out. THIS
+  // operation is closed as refused (an unclaimed finalize: 'prepared', no attempt number), so its row
+  // reads "Not sent" instead of sitting 'prepared' ("Sending…") forever. The person can ask again;
+  // that is a new request. If the database will not close it (another attempt claimed it meanwhile),
+  // nothing is claimed about it: the answer stays outcome_unknown.
   const notAdmitted = async (result: Record<string, unknown>, operationId: string): Promise<Record<string, unknown>> => {
     if (result.outcome !== "outcome_unknown" || !sendAnswered) return result;
     try {
       const after = object(await readResult(operationId));
-      if (after?.outcome !== "prepared") return result;
+      if (after?.outcome !== "prepared" || typeof after.message_id !== "string" || !UUID.test(after.message_id)) return result;
       // The claim also refuses while an IDENTICAL email (same recipient + content) is dispatching or
       // unknown under another operation. This operation sent nothing, but telling the owner "Not sent"
       // would invite a resend of an email that may already have gone out: name that send instead.
-      if (typeof after.message_id === "string") {
-        const b = object(await readBinding(after.message_id));
-        if (b && typeof b.recipient === "string" && typeof b.content_digest === "string") {
-          const { data: pending, error } = await admin.rpc("find_comms_email_pending_reconciliation", { _expected_tenant_id: tenantId, _recipient: b.recipient, _content_digest: b.content_digest });
-          if (error) return result;
-          if (typeof pending === "string" && pending !== operationId) {
-            return { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: pending, operation_id: operationId, delivery_confirmed: false };
-          }
-        }
+      let inFlight: string | null = null;
+      const b = object(await readBinding(after.message_id));
+      if (b && typeof b.recipient === "string" && typeof b.content_digest === "string") {
+        const { data: pending, error } = await admin.rpc("find_comms_email_pending_reconciliation", { _expected_tenant_id: tenantId, _recipient: b.recipient, _content_digest: b.content_digest });
+        if (error) return result;
+        if (typeof pending === "string" && UUID.test(pending) && pending !== operationId) inFlight = pending;
       }
-      return { ok: false, outcome: "refused", reason: "SEND_NOT_ADMITTED", operation_id: operationId, delivery_confirmed: false };
+      const { error: closeError } = await admin.rpc("finalize_comms_email_send", { _message_id: after.message_id, _operation_id: operationId, _outcome: "refused", _provider_message_id: null, _reason: "send_not_admitted", _claimed_attempt: null });
+      if (inFlight) return { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: inFlight, operation_id: operationId, delivery_confirmed: false };
+      if (closeError) return result;
+      const closed = object(await readResult(operationId));
+      return closed?.outcome === "refused" ? commsEmailSafeResult(closed) : result;
     } catch { return result; }
   };
   const readBinding = async (messageId: string) => {
@@ -108,7 +122,9 @@ Deno.serve(async req => {
   // An operation whose provider outcome is unknown is reconciled under its own id, never re-run.
   if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
   let replay: Record<string, unknown> | null;
-  try { replay = object(await readResult(body.operation_id)); } catch { return response(409, { ok: false, outcome: "refused", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
+  // A failed replay read proves nothing about this operation: it may already have been sent on an
+  // earlier attempt. Never "Not sent" — unknown, and no send is attempted.
+  try { replay = object(await readResult(body.operation_id)); } catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
   const preparedRecovery = replay?.outcome === "prepared";
   if (replay && !preparedRecovery) {
     if (replay.outcome === "unknown" || replay.outcome === "dispatching") {
@@ -134,6 +150,12 @@ Deno.serve(async req => {
   const { data: pending, error: pendingError } = await admin.rpc("find_comms_email_pending_reconciliation", { _expected_tenant_id: tenantId, _recipient: parties.recipient, _content_digest: contentDigest });
   if (pendingError) return response(503, { ok: false, outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" });
   if (typeof pending === "string" && UUID.test(pending)) {
+    // The finder searches the whole workspace; the result read is tied to its actor. An identical
+    // unresolved email that a TEAMMATE asked for is theirs to settle: name it, never send, and never
+    // promise that asking again will check it (for this person it cannot).
+    try { await readResult(pending); } catch (error) {
+      if (error instanceof Error && error.message === REPLAY_MISMATCH) return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_TEAMMATE_IN_FLIGHT", operation_id: body.operation_id });
+    }
     const settled = await reconcile(pending);
     return response(statusOf(settled), { ...settled, reconciled_operation_id: pending });
   }

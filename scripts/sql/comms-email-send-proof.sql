@@ -208,7 +208,7 @@ SELECT pg_temp.prep(11,'Failing note','Body eleven.');
 SELECT public.claim_comms_email_send(pg_temp.msg(11),pg_temp.op(11));
 SELECT public.finalize_comms_email_send(pg_temp.msg(11),pg_temp.op(11),'failed',NULL,'Resend 422: invalid from header key=re_secret',1);
 SELECT pg_temp.ok(83, (SELECT status='failed' AND meta#>>'{comms_email_binding,outcome_reason}'='unspecified' FROM public.messages WHERE id=pg_temp.msg(11)), 'provider error prose never enters the binding');
-SELECT pg_temp.ok(84, NOT (public.read_comms_email_send_result('ffffffff-3280-4000-8000-000000000001','aaaaaaaa-3280-4000-8000-000000000001',pg_temp.op(11)) ? 'reason'), 'failed result exposes no reason text');
+SELECT pg_temp.ok(84, public.read_comms_email_send_result('ffffffff-3280-4000-8000-000000000001','aaaaaaaa-3280-4000-8000-000000000001',pg_temp.op(11))->>'reason'='unspecified', 'failed result carries only its code-shaped reason, never the provider prose');
 SELECT pg_temp.prep(12,'Never claimed','Body twelve.');
 SELECT pg_temp.err(85, 'unknown cannot be recorded for an unclaimed send', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(12),pg_temp.op(12),'unknown',NULL,NULL)$q$, '42501', 'COMMS_EMAIL_NOT_CLAIMED');
 
@@ -240,6 +240,33 @@ SELECT pg_temp.ok(109, public.finalize_comms_email_send(pg_temp.msg(32),pg_temp.
 RESET ROLE;
 SELECT pg_temp.ok(110, (SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(30)), 'race: exactly one Rail row (the claimant''s)');
 SELECT pg_temp.ok(86, (SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(10) AND outcome='capability_refused' AND capability_key='comms_send_email'), 'refusal recorded on the Rail');
+
+-- ── 6c. a failed outcome carries its reason; the door closes an unadmitted prepared send ─────
+-- (x2 #2) Chat narrates a failure from its reason ("safe to ask again" vs "check the setup").
+SET LOCAL ROLE service_role;
+SELECT pg_temp.prep(33,'Unverified note','Body thirty-three.');
+SELECT public.finalize_comms_email_send(pg_temp.msg(33),pg_temp.op(33),'failed',NULL,'pre_send_unverified');
+SELECT pg_temp.ok(111, public.read_comms_email_send_result('ffffffff-3280-4000-8000-000000000001','aaaaaaaa-3280-4000-8000-000000000001',pg_temp.op(33))->>'reason'='pre_send_unverified', 'failed result carries its reason code');
+-- (x2 #1) send-message answered but its claim did not admit the row: the door closes it unclaimed.
+SELECT pg_temp.prep(34,'Unadmitted note','Body thirty-four.');
+SELECT pg_temp.ok(112, public.finalize_comms_email_send(pg_temp.msg(34),pg_temp.op(34),'refused',NULL,'send_not_admitted',NULL)->>'outcome'='refused', 'an unadmitted prepared send closes as refused');
+SELECT pg_temp.ok(113, (SELECT status='blocked' AND meta#>>'{comms_email_binding,state}'='refused' FROM public.messages WHERE id=pg_temp.msg(34))
+  AND public.read_comms_email_send_result('ffffffff-3280-4000-8000-000000000001','aaaaaaaa-3280-4000-8000-000000000001',pg_temp.op(34))->>'reason'='send_not_admitted', 'it reads blocked / Not sent with its reason, never prepared');
+
+-- ── 6d. a seat that lapses mid-send: finalize cannot record, and the outcome stays unknown ────
+-- (x1 header) finalize records the Rail through record_capability_run, which refuses an actor with
+-- no active membership; the whole finalize rolls back. The row stays 'dispatching' and, because the
+-- binding read re-proves the actor, it cannot be reconciled either. Honestly unknown, never "sent".
+SELECT pg_temp.prep(35,'Lapsed note','Body thirty-five.',_actor=>'ffffffff-3280-4000-8000-000000000002',_gov=>pg_temp.gov()||'{"actor_user_id":"ffffffff-3280-4000-8000-000000000002"}');
+SELECT pg_temp.ok(114, public.claim_comms_email_send(pg_temp.msg(35),pg_temp.op(35))->'admitted'='true'::jsonb, 'lapsed seat: the send was claimed while the seat was live');
+RESET ROLE;
+UPDATE public.tenant_members SET status='suspended' WHERE user_id='ffffffff-3280-4000-8000-000000000002' AND tenant_id='aaaaaaaa-3280-4000-8000-000000000001';
+SET LOCAL ROLE service_role;
+SELECT pg_temp.err(115, 'lapsed seat: finalize cannot record the outcome', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(35),pg_temp.op(35),'provider_accepted','re_proof_35',NULL,1)$q$, '42501', 'CAPABILITY_RUN_FORBIDDEN');
+SELECT pg_temp.ok(116, pg_temp.st(35)='dispatching' AND (SELECT status='draft' AND provider_message_id IS NULL FROM public.messages WHERE id=pg_temp.msg(35)), 'lapsed seat: the row stays dispatching (unknown), never sent');
+SELECT pg_temp.err(117, 'lapsed seat: the binding read refuses, so it is not reconcilable', $q$SELECT public.read_comms_email_send_binding(pg_temp.msg(35))$q$, '42501', 'COMMS_EMAIL_AUTHORITY_UNAVAILABLE');
+RESET ROLE;
+UPDATE public.tenant_members SET status='active' WHERE user_id='ffffffff-3280-4000-8000-000000000002' AND tenant_id='aaaaaaaa-3280-4000-8000-000000000001';
 
 -- ── 7. browser roles cannot execute; guard trigger rejects end-user writes ─────────────────
 SELECT pg_temp.ok(90, NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.pronamespace='public'::regnamespace

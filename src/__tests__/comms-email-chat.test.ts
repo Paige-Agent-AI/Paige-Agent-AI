@@ -213,12 +213,56 @@ describe('comms.email_send Chat dispatch', () => {
     expect(r.content.reconciled).toBeUndefined();
   });
 
+  it('a send the claim did not take is "Not sent" and never promises approving the same card again (x2 #1)', async () => {
+    const r = await dispatchCommsEmailChat(context, harness([], { ok: false, outcome: 'refused', reason: 'SEND_NOT_ADMITTED' }).deps as never);
+    const note = String(r.content.note);
+    expect(note).toMatch(/^Not sent\./);
+    expect(note).toMatch(/Nothing went out/);
+    expect(note).toMatch(/ask (for it )?again/);
+    expect(note).not.toMatch(/approve it again/i);
+  });
+
+  it('a failed send carries its reason into the plain note (x2 #2)', async () => {
+    const r = await dispatchCommsEmailChat(context, harness([], { ok: false, outcome: 'failed', reason: 'PRE_SEND_UNVERIFIED' }).deps as never);
+    expect(r.content).toMatchObject({ success: false, outcome: 'failed', reason: 'PRE_SEND_UNVERIFIED' });
+    expect(String(r.content.note)).toMatch(/safe to ask again/);
+    expect(String(r.content.note)).not.toMatch(/Do not retry automatically/);
+  });
+
+  it('a replay read that failed is unconfirmed, never "Not sent" (x2 #3)', async () => {
+    const r = await dispatchCommsEmailChat(context, harness([], { ok: false, outcome: 'outcome_unknown', code: 'COMMS_EMAIL_REPLAY_UNAVAILABLE' }).deps as never);
+    expect(r.content).toMatchObject({ success: false, outcome: 'outcome_unknown', delivery_confirmed: false });
+    expect(String(r.content.note)).toMatch(/could not confirm/);
+    expect(String(r.content.note)).not.toMatch(/Not sent|nothing was sent/i);
+  });
+
+  it("a teammate's identical unconfirmed email is named as theirs, never sent and never promised a re-check (x2 #4)", async () => {
+    const r = await dispatchCommsEmailChat(context, harness([], { ok: false, outcome: 'outcome_unknown', code: 'COMMS_EMAIL_TEAMMATE_IN_FLIGHT' }).deps as never);
+    expect(r.content).toMatchObject({ success: false, outcome: 'outcome_unknown', delivery_confirmed: false });
+    const note = String(r.content.note);
+    expect(note).toMatch(/teammate/);
+    expect(note).toMatch(/Do not resend/);
+    expect(note).not.toMatch(/Not sent|will check that send/);
+    expect(note).not.toMatch(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/);
+  });
+
+  it('no model-facing note or tool description says "provider" (x1 copy)', async () => {
+    expect(COMMS_EMAIL_TOOLS[0].function.description).not.toMatch(/provider/i);
+    const replies: unknown[] = [{ ok: true, outcome: 'provider_accepted', delivery_confirmed: false }, { ok: true, outcome: 'provider_accepted', replayed: true },
+      { ok: false, outcome: 'outcome_unknown', code: 'COMMS_EMAIL_RECONCILIATION_REQUIRED' }, { ok: false, outcome: 'failed', reason: 'PROVIDER_REJECTED' }, { ok: false, outcome: 'failed', reason: 'PROVIDER_NOT_ATTEMPTED' }];
+    for (const reply of replies) {
+      const r = await dispatchCommsEmailChat(context, harness([], reply).deps as never);
+      expect(String(r.content.note), JSON.stringify(reply)).not.toMatch(/provider/i);
+    }
+  });
+
   it('every reachable reason has a plain-language note and no note quotes an internal code', async () => {
     const reasons = ['RECIPIENT_EMAIL_MISSING', 'TENANT_EMAIL_SENDER_MISSING', 'EMAIL_PROVIDER_NOT_CONFIGURED', 'EMAIL_RECONNECT_REQUIRED', 'BLOCKED_SUPPRESSED', 'BLOCKED_CLIENT_DND', 'BLOCKED_NO_CONSENT',
       'QUEUED_TENANT_DND', 'QUEUED_QUIET_HOURS', 'RECIPIENT_PREFERENCES_UNVERIFIED', 'EMAIL_READINESS_UNVERIFIED', 'CONTACT_NOT_IN_WORKSPACE', 'RECIPIENT_CHANGED', 'SENDER_CHANGED', 'CONTENT_CHANGED',
       'SEND_NO_LONGER_ELIGIBLE', 'PRE_SEND_UNVERIFIED', 'PROVIDER_REJECTED', 'PROVIDER_NOT_ATTEMPTED', 'UNSPECIFIED', 'WORKSPACE_CHANGED', 'COMMS_EMAIL_RECONCILIATION_REQUIRED',
       'COMMS_EMAIL_INVALID', 'COMMS_EMAIL_AUTHORITY_UNAVAILABLE', 'COMMS_EMAIL_PREPARE_REFUSED', 'SEND_NOT_ADMITTED'];
-    const codes = ['COMMS_EMAIL_COMMAND_INVALID', 'UNAUTHENTICATED', 'METHOD_NOT_ALLOWED', 'COMMS_EMAIL_FORBIDDEN', 'COMMS_EMAIL_REPLAY_UNAVAILABLE', 'COMMS_EMAIL_PARTIES_UNAVAILABLE',
+    // COMMS_EMAIL_REPLAY_UNAVAILABLE is not here: the door answers it outcome_unknown (x2 #3).
+    const codes = ['COMMS_EMAIL_COMMAND_INVALID', 'UNAUTHENTICATED', 'METHOD_NOT_ALLOWED', 'COMMS_EMAIL_FORBIDDEN', 'COMMS_EMAIL_PARTIES_UNAVAILABLE',
       'COMMS_EMAIL_RECONCILIATION_UNVERIFIED', 'APPROVAL_STORE_UNAVAILABLE', 'APPROVAL_CYCLE_INVALID', 'APPROVAL_CLAIM_INVALID', 'COMMS_EMAIL_DECISION_RECEIPT_FAILED'];
     const notes = new Set<string>();
     const fallback = String((await dispatchCommsEmailChat(context, harness([], { ok: false, outcome: 'refused', reason: 'SOMETHING_NEW' }).deps as never)).content.note);

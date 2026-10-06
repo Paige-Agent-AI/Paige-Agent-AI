@@ -181,3 +181,40 @@ This is the INT-320 failure again: a CLI success line with no change at the prov
 - failure and fallback rows with a model;
 - `stop_reason` in metadata.
 
+## 9. Owner ruling (2026-10-06): the A/B requirement is superseded
+
+The plan recorded in §§6–7 required a GO from the frozen Sonnet 5 vs 5.5 A/B before part 2. **The owner has superseded that requirement.** The ruling:
+- retire Sonnet 5 as PAIGE's active reasoning model;
+- move the Anthropic reasoning seam to `claude-sonnet-5-5` without an A/B;
+- not add `PAIGE_ANTHROPIC_AB_KEY`.
+
+The earlier sections stay as written, as the record of the prior plan. The `model-ab` workflow and `npm run ab:sonnet` remain in the repo as optional tools; nothing requires them.
+
+The same ruling makes Sonnet 5.5 one frontier peer in a provider-neutral model fabric, not PAIGE's universal brain. That routing work (INT-334, R2–R12) is separate and does not ride this PR.
+
+### Part 2 (R1): the cutover
+
+The change is one line: `CLAUDE_REASONING = "claude-sonnet-5-5"` in `_shared/claude-models.ts`, plus its comment. Classification (`claude-haiku-4-5`) is unchanged. No other runtime file changes.
+
+Checks at the new value:
+- `test:reasoning-tier`: 67/0.
+- `test:trace-wiring`: 20/0.
+- `test:token-pricing`: 22/0. 5.5 is priced on the explicit Sonnet row; that row's staleness is INT-331.
+
+Known behavioural consequences, from the Sonnet 5.5 migration notes. These are observations, not request failures:
+- Text between tool calls may come back as empty `thinking` blocks, so Chat can go quieter between tool rounds.
+- Thinking blocks are still not passed back between rounds. This is the same as on Sonnet 5, which runs adaptive thinking today without a 400.
+- Effort stays at the API default (`high`), whose levels are recalibrated.
+- Refusals arrive in five `stop_details` categories, now traced, but there is no product fallback yet.
+- Caches are per model, so the first turns after deploy rewrite their cached prefixes.
+
+**Owed after merge** (production evidence, provider-served state over CI logs):
+- every affected function reconciled against provider-served code and version (INT-320);
+- reasoning traces reporting the served Sonnet 5.5 id;
+- Haiku and classification rows unchanged;
+- no capability or tool removed;
+- a non-zero cache read after the cold start;
+- no abnormal 400/429/5xx;
+- refusal and `max_tokens` stop counts;
+- one real tool round.
+

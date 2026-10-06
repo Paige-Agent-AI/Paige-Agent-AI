@@ -14,6 +14,7 @@ import {
   saysItWasDone,
   restatesOffer,
   announcesTheStep,
+  stepToolDoes,
   acceptedOfferNote,
   CLAIM_CORRECTION,
   ambiguousOfferNote,
@@ -697,4 +698,24 @@ Deno.test("review round 12 — ordinary restatements accept; corrections and the
     ["yes move the old one", "Want me to move the deal to Won and archive the old one?"], ["yes send the quote", "Want me to send her the invoice instead of the quote?"]]) {
     assert(!restatesOffer(r, o), `${r} <- ${o}`);
   }
+});
+
+Deno.test("review round 13 — the offered step is cut at a second act or contrast; pronouns never narrow it; step tools match the verb", () => {
+  for (const [r, o] of [["remove dana", "Want me to remove Sam and keep Dana?"], ["yes cancel friday", "Want me to cancel Thursday and keep Friday?"],
+    ["yes update sam", "Want me to update Dana's deal and notify Sam?"], ["yes tag sam", "Want me to tag Dana as VIP and unsubscribe Sam?"],
+    ["yes pause the new one", "Want me to pause the old campaign and launch the new one?"], ["archive the new one", "Want me to archive the old deal, then open a new one?"],
+    ["yes email her", "Want me to email Dana and Sam the recap?"], ["yes text her", "Want me to text Dana and Sam a reminder?"],
+    ["yes text him", "Want me to text Dana, not Sam?"]]) {
+    assert(!restatesOffer(r, o), `${r} <- ${o}`);
+  }
+  for (const [r, o] of [["yes email them", "Want me to email Dana and Sam the recap?"], ["yes move her to proposal", "Want me to move Dana to Proposal?"],
+    ["yes email her", "Want me to email Dana the recap?"], ["yes send the invoice", "Want me to send her the invoice instead of the quote?"]]) {
+    assert(restatesOffer(r, o), `${r} <- ${o}`);
+  }
+  assert(!stepToolDoes("draft_marketing_content", "Want me to email Dana the recap?"));
+  assert(stepToolDoes("draft_marketing_content", "Want me to draft a follow-up email for Dana?"));
+  assert(!stepToolDoes("deep_research", "Want me to link the deal to her contact?"));
+  assert(stepToolDoes("deep_research", "Want me to research Acme's competitors?"));
+  assert(stepToolDoes("growth_page_generate", "Want me to draft a landing page for the workshop?"));
+  assert(stepToolDoes("propose_action", "Want me to link the deal to her contact?"));
 });

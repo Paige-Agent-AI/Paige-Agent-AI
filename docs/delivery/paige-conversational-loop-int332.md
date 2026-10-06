@@ -198,6 +198,43 @@ rounds twice, so this is recorded rather than tuned.
 harness scripts the model; the guard and correction are what make a wrong first round safe). The closing call after a
 forced termination (budget/no-progress) streams directly and is not passed through the claim guard (§6).
 
+### 5m. Independent review — round 13 (`3712350c1`): FIX_FIRST, fixed
+
+Round 13 confirmed round 12's BL-1 and BL-2 closed. C1–C9 are identical to round 12.
+
+- **B1: any step-capable tool counted as "the step", whatever was offered and even when it failed.** "Email Dana
+  the recap?" followed by a successful `draft_marketing_content` and "Done — I've emailed Dana" ended FINAL with
+  nothing sent. That is the draft-versus-send hallucination this hotfix exists for. The same happened when the
+  draft failed, and with research or a generator on a link offer. This was a regression from round 12.
+  - **Fix:** a step-capable tool is THIS step only when its result did not report `success:false` and, on an
+    accepted act, when the offered verb is what the tool does (`stepToolDoes`):
+    - generators: draft / build / create / make…
+    - research: research / look into / dig…
+    - copy drafting: draft / write / rewrite…
+    - `propose_action` and `ask_choices`: any verb.
+  - Otherwise it is a non-step tool, and a claim after it is held with "The step you accepted wasn't carried out
+    in this reply."
+  - **Tests (43.29):**
+    - X6: email offer, draft succeeds.
+    - X8: email offer, draft fails.
+    - X1: link offer, research runs.
+    - GF: page offer, generator fails.
+    - Without the verb match, 2 of these fail; without the success check, 1 fails.
+- **S1/S2: the offered step was cut wrongly.** An "and" in the first three words was dropped, so "remove Sam and
+  keep Dana" lost its cut. The second-act verb list also missed "notify", "launch", "open"…
+  - **Fix (`offeredStep`):**
+    - Only *leading* connectives are dropped.
+    - The step is cut before "not / except / instead / rather / but", and before "and / then / ," when the next
+      word in the original-case offer is a lowercase word that is not an article, pronoun or preposition.
+    - Names stay capitalised, so "email Dana and Sam" remains one step.
+- **S3: a pronoun could narrow the offer to one person.** "Yes email her" was accepted for "email Dana and Sam"
+  and "yes text him" for "text Dana, not Sam". **Fix:** a singular pronoun is rejected when the offer names two
+  people joined by "and" or a comma, or when the cut set a named person aside. "yes email them" still accepts.
+- **Recorded:** "move Dana to Proposal and Sam to Lost" (a second act with no verb) is not cut. This is rare; the
+  card still gates the write.
+
+Harness 917/0. Deno 26/26. `deno check` gives 10 errors, identical to base.
+
 ### 5l. Independent review — round 12 (`910e671e9`): FIX_FIRST, fixed
 
 Round 12 confirmed round 11's B1, S1 and S2 closed. B1 was checked across all 20 named reads plus `web_search`,

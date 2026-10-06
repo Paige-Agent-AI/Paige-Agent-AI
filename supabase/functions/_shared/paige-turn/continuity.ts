@@ -258,42 +258,74 @@ export function restatesOffer(reply: string, offer: string): boolean {
   if (!r || r.includes("?") || r.split(" ").length > 10) return false;
   const words = r.replace(/^(?:(?:yes|yeah|yep|yup|sure|ok|okay|perfect|great|please|alright|absolutely|definitely|go ahead and|let'?s|do it and)\s+)+/, "").split(" ").filter(Boolean);
   if (!words.length) return false;
-  let offered = offeredStepWords(offer);
-  if (!offered.length) return false;
+  const step = offeredStep(offer);
+  if (!step) return false;
+  const offered = step.kept.map((t) => t.toLowerCase());
   const base = (w: string) => w.replace(/^re-/, "re");
   if (base(words[0]) !== base(offered[0])) return false;
-  // Only the offered step itself, up to anything set against it or added after it — "not the original",
-  // "instead of the quote", "and keep Dana", "and archive the old one". A reply naming that part is a
-  // correction, not a yes (review rounds 11–12).
-  const cut = offered.findIndex((w, i) => i > 0 && (/^(?:not|except|instead|rather|but)$/.test(w)
-    || (/^(?:and|then)$/.test(w) && SECOND_ACT.test(offered[i + 1] ?? ""))));
-  if (cut > 0) offered = offered.slice(0, cut);
   const ARTICLES = new Set(["the", "a", "an", "that", "this", "those", "these", "my", "your"]);
-  const OBJECT_STAND_IN = new Set(["it", "them"]);
-  const PERSON = new Set(["her", "him", "them"]);
   const FILLER = new Set(["now", "please", "then", "too", "up", "over", "go", "ahead", "and"]);
   const offerPerson = offered.find((w) => w === "her" || w === "him");
+  // A singular person pronoun cannot stand for one of several people the offer named ("email Dana and Sam"), nor
+  // for someone the offer set aside ("text Dana, not Sam") — that is a narrowing, not a yes (review round 13).
+  const severalNamed = /\b[A-Z][a-z]+(?:'s)?\s+(?:and|,)\s*[A-Z][a-z]+/.test(step.kept.join(" "));
+  const namedAside = step.removed.some((t) => /^[A-Z][a-z]+$/.test(t));
   let k = 1;
   for (const w of words.slice(1)) {
     if (FILLER.has(w) || ARTICLES.has(w)) continue;
     const at = offered.slice(k).findIndex((o) => base(o) === base(w));
     if (at >= 0) { k += at + 1; continue; }
-    // A pronoun may stand for whoever the offer named — but not for a different pronoun it used ("text her" ≠ "him").
-    if (PERSON.has(w) && w !== "them") { if (offerPerson && offerPerson !== w) return false; continue; }
-    if (OBJECT_STAND_IN.has(w)) continue;
+    if (w === "her" || w === "him") {
+      if ((offerPerson && offerPerson !== w) || severalNamed || namedAside) return false;
+      continue;
+    }
+    if (w === "it" || w === "them") continue;
     return false;
   }
   return true;
 }
-const SECOND_ACT = /^(?:keep|archive|send|link|move|add|create|delete|remove|update|book|schedule|email|text|tag|enroll|invite|publish|post|build|draft|start|cancel|close|merge|assign|log|file|save|attach|set|mark|refund|charge)$/;
-/** The offered step's words, from its verb on (the offer phrase and "and I'll / go ahead" removed). */
-function offeredStepWords(offer: string): string[] {
+/**
+ * The offered step's own words, original case, from its verb on — cut before anything set against it ("not…",
+ * "instead…", "but…") or added after it: "and / then / ," followed by a lowercase word that is not an article,
+ * pronoun or possessive ("…and keep Dana", "…, then open a new one"). Names stay capitalised, so "email Dana and
+ * Sam" is one step. `removed` is what the cut took away.
+ */
+function offeredStep(offer: string): { kept: string[]; removed: string[] } | null {
   OFFER_PHRASE.lastIndex = 0;
-  const o = strip(offer).toLowerCase();
+  const o = strip(offer);
   const m = OFFER_PHRASE.exec(o);
-  if (!m) return [];
-  return o.slice(m.index + m[0].length).replace(/[^a-z0-9' -]+/g, " ").split(/\s+/).filter(Boolean)
-    .filter((w, i) => !(i < 3 && /^(?:and|then|i'?ll|i|will|go|ahead|just|now)$/.test(w)));
+  if (!m) return null;
+  const toks: string[] = [...(o.slice(m.index + m[0].length).match(/[A-Za-z0-9$][A-Za-z0-9'$.-]*|,/g) ?? [])];
+  while (toks.length && /^(?:and|then|i'?ll|i|will|go|ahead|just|now)$/i.test(toks[0])) toks.shift();
+  if (!toks.length || toks[0] === ",") return null;
+  const NOT_A_VERB = /^(?:the|a|an|her|his|their|its|my|your|our|this|that|these|those|it|them|him|she|he|they|we|you|i|so|to|for|with|by|on|in|at|of)$/i;
+  let cut = toks.length;
+  for (let i = 1; i < toks.length; i++) {
+    const t = toks[i];
+    if (/^(?:not|except|instead|rather|but)$/i.test(t)) { cut = i; break; }
+    if (/^(?:and|then|,)$/i.test(t)) {
+      const next = toks[i + 1] === "then" || toks[i + 1] === "and" ? toks[i + 2] : toks[i + 1];
+      if (next && /^[a-z]/.test(next) && !NOT_A_VERB.test(next)) { cut = i; break; }
+    }
+  }
+  return { kept: toks.slice(0, cut).filter((t) => t !== ","), removed: toks.slice(cut).filter((t) => t !== ",") };
+}
+function offeredStepWords(offer: string): string[] {
+  return offeredStep(offer)?.kept.map((t) => t.toLowerCase()) ?? [];
+}
+
+/**
+ * Whether a tool that carries out steps itself (a page/funnel generator, research, copy drafting, a filed approval,
+ * a question card) is THIS offered step: on an act, only when the offered verb is what the tool does. Drafting the
+ * copy is not emailing it (review round 13: "email Dana the recap?" → draft → "Done, I've emailed her" stood).
+ */
+export function stepToolDoes(tool: string, offer: string): boolean {
+  if (tool === "propose_action" || tool === "ask_choices") return true;
+  const verb = offeredStepWords(offer)[0] ?? "";
+  if (tool === "growth_page_generate" || tool === "growth_funnel_generate") return /^(?:draft|build|create|make|generate|put|design|mock|spin|set)$/.test(verb);
+  if (tool === "deep_research") return /^(?:research|look|dig|investigate|find|check|analy[sz]e|compare|study|explore)$/.test(verb);
+  if (tool === "draft_marketing_content") return /^(?:draft|write|rewrite|punch|polish|come|tighten|compose)$/.test(verb);
+  return false;
 }
 
 export function isAffirmativeReply(text: string): boolean {

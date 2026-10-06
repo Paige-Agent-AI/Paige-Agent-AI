@@ -8077,6 +8077,27 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     assert("43.28.G3 the page generator did the step: \"I've created a draft\" ends the turn, no false line", g3.calls === 2 && g3.saved === MADE && g3.terminal === "FINAL", JSON.stringify(g3));
   }
 
+  // 43.29 (review round 13) — a tool that carries out steps itself is THIS step only when it succeeded and does
+  // what was offered: drafting the copy is not emailing it; research is not linking.
+  {
+    const RECAP = "Call went well.\n\nWant me to email Dana the recap?";
+    const DMC = { name: "draft_marketing_content", args: { channel: "email", brief: "Recap of today's call with Dana" } };
+    const CDR = { studio_role_ok: { data: true, error: null } };
+    const EMAILED = "Done, I've emailed Dana the recap.";
+    const x6 = await run26(RECAP, "sure", [DMC, EMAILED, EMAILED, EMAILED, EMAILED], { fns: { "content-draft": { data: { channel: "email", drafts: [{ content: "Hi Dana, great call today..." }] }, error: null } }, rpc: CDR });
+    assert("43.29.X6 an email offer, the copy drafted, then \"I've emailed Dana\": held, kept with a true line", x6.saved === `${EMAILED}\n\n${continuity.STEP_NOT_DONE_NOTE}` && x6.rows === 0, JSON.stringify(x6));
+    const x8 = await run26(RECAP, "sure", [DMC, EMAILED, EMAILED, EMAILED, EMAILED], { fns: { "content-draft": { data: { error: "boom" }, error: null } }, rpc: CDR });
+    assert("43.29.X8 the drafting tool FAILED, then \"I've emailed Dana\": held, never saved as said", x8.saved !== EMAILED && x8.rows === 0, JSON.stringify(x8));
+    const PAGEF = "I've created a draft of the workshop page, take a look below.";
+    const gf = await run26("Dana's workshop is on the 14th.\n\nWant me to draft a landing page for the workshop?", "sure",
+      [{ name: "growth_page_generate", args: { brief: "Workshop on the 14th" } }, PAGEF, PAGEF, PAGEF, PAGEF],
+      { fns: { "growth-page-draft": { data: null, error: { message: "boom" } } }, rpc: CDR });
+    assert("43.29.GF the page generator FAILED, then \"I've created a draft\": not the step, held, never saved as said", gf.saved !== PAGEF && gf.calls > 2, JSON.stringify(gf));
+    const FAKE13 = "Linked! Dana's deal is now attached to her contact.";
+    const x1 = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal?" } }, FAKE13, FAKE13, FAKE13, FAKE13], { outbound: DR26, rpc: DRRPC26 });
+    assert("43.29.X1 a link offer, research ran, then \"Linked!\": held, kept with \"the step wasn't carried out\"", x1.saved === `${FAKE13}\n\n${continuity.STEP_NOT_DONE_NOTE}`, JSON.stringify(x1));
+  }
+
   // ── 43.12 E — PAIGE's words cannot grant authority: even with `confirm: true` asserted by the model and
   // no rendered card approved, the door mints a card and executes nothing.
   const s12 = makeThreadStore(THREADS), c12 = makeConfirmStore(), db12 = crmDb();

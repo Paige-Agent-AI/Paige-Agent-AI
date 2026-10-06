@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, commsEmailChatSafeResult, commsEmailConfirmPreview, commsEmailOperationId, dispatchCommsEmailChat } from '../../supabase/functions/_shared/comms-email/chat.ts';
 import { COMMS_EMAIL_SEND_CAPABILITY } from '../../supabase/functions/_shared/paige-spine/domains/comms.ts';
+import { classifySpentApproval } from '../../supabase/functions/_shared/approval-outcome.ts';
 
 // INT-328 — the Chat half of comms.email_send. Exercises the real dispatch module with an injected
 // approval store and an injected comms-email-command transport; no hosted Chat or provider drive.
@@ -84,6 +85,34 @@ describe('comms.email_send Chat dispatch', () => {
     expect(String(result.content.note)).toMatch(/not proof it was delivered/);
     expect(JSON.stringify(result)).not.toContain('private-message');
     expect(result.content).not.toHaveProperty('operation_id');
+  });
+
+  // Production drive 2026-10-06 (SHELL: SOLO): an approved email went out, yet the card reported
+  // "Didn't run · Nothing changed" with "Ask Paige again" — the chat never learned which approval the
+  // call spent. The call now names it, and its result reads the way the card must report it.
+  it('an approved claim names the approval it spent, and its result reads as the card must report it', async () => {
+    const stored = { expected_tenant_id: tenant, operation_id: operation, command, recipient: 'dana@example.test', from_address: 'hello@business.test', content_digest: 'f'.repeat(64) };
+    const cases: [unknown, string][] = [
+      [{ ok: true, outcome: 'provider_accepted', provider_receipt_available: true, delivery_confirmed: false }, 'ran'],
+      [{ ok: false, outcome: 'refused', reason: 'RECIPIENT_CHANGED' }, 'not_run'],
+      [{ ok: false, outcome: 'refused', code: 'WORKSPACE_CHANGED' }, 'not_run'],
+      [{ ok: false, code: 'WORKSPACE_CHANGED' }, 'not_run'],
+      [{ ok: false, outcome: 'failed', reason: 'PROVIDER_REJECTED' }, 'not_run'],
+      [{ ok: false, outcome: 'outcome_unknown', code: 'COMMS_EMAIL_RECONCILIATION_REQUIRED' }, 'unconfirmed'],
+      [{ ok: false, outcome: 'outcome_unknown', code: 'COMMS_EMAIL_IDENTICAL_IN_FLIGHT', reconciled_operation_id: operation }, 'unconfirmed'],
+    ];
+    for (const [reply, reading] of cases) {
+      const h = harness([{ fingerprint, args: stored }], reply);
+      const result = await dispatchCommsEmailChat({ ...context, approved: new Set([fingerprint]) }, h.deps as never);
+      expect(result.spent).toBe(fingerprint);
+      expect(classifySpentApproval(JSON.stringify(result.content)).outcome).toBe(reading);
+    }
+  });
+
+  it('a proposal spends no approval', async () => {
+    const result = await dispatchCommsEmailChat(context, harness().deps as never);
+    expect(result.content).toMatchObject({ needs_confirm: true });
+    expect(result.spent).toBeUndefined();
   });
 
   it('picks the stored proposal for the same contact when several are live', async () => {
@@ -301,11 +330,12 @@ if (branchStart < 0 || branchEnd <= branchStart) throw Error('Actual comms email
 const branch = compile(`return (async()=>{for(const tc of toolCalls){${chatSource.slice(branchStart, branchEnd)}}return toolResults})()`);
 async function chatBranch(cancellationsRecorded: boolean, current = true) {
   const calls: { ctx: Record<string, unknown>; deps: Record<string, unknown> }[] = [];
-  const run = async (ctx: Record<string, unknown>, deps: Record<string, unknown>) => { calls.push({ ctx, deps }); return { content: { success: false, needs_confirm: true }, tokens: [fingerprint], refusal: undefined }; };
+  const run = async (ctx: Record<string, unknown>, deps: Record<string, unknown>) => { calls.push({ ctx, deps }); return { content: { success: true, outcome: 'provider_accepted' }, tokens: [fingerprint], refusal: undefined, spent: fingerprint }; };
+  const approvalSpend = new Map<string, string>();
   const approvalTokenTool = new Map();
-  const bindings = { cancellationsRecorded, revalidateProposalScope: async () => current, COMMS_EMAIL_TOOL_NAMES, toolCalls: [{ id: 'call-1', function: { name: 'comms_send_email', arguments: JSON.stringify(args) } }], toolResults: [], messages: [{ role: 'user', content: 'email Dana' }], personaCtx: { tenant_id: tenant }, user: { id: 'actor' }, approvedConfirmations: new Set([fingerprint]), payloadThreadId: 'thread', dispatchCommsEmailChat: run, supabaseClient: { caller: 'authenticated' }, supabaseUrl: 'test', supabaseServiceKey: 'fixture', createClient: () => ({ from: () => ({ select: () => ({}) }) }), approvalTokenTool, approvalRefusals: new Map() };
+  const bindings = { cancellationsRecorded, revalidateProposalScope: async () => current, COMMS_EMAIL_TOOL_NAMES, toolCalls: [{ id: 'call-1', function: { name: 'comms_send_email', arguments: JSON.stringify(args) } }], toolResults: [], messages: [{ role: 'user', content: 'email Dana' }], personaCtx: { tenant_id: tenant }, user: { id: 'actor' }, approvedConfirmations: new Set([fingerprint]), payloadThreadId: 'thread', dispatchCommsEmailChat: run, supabaseClient: { caller: 'authenticated' }, supabaseUrl: 'test', supabaseServiceKey: 'fixture', createClient: () => ({ from: () => ({ select: () => ({}) }) }), approvalTokenTool, approvalRefusals: new Map(), approvalSpend };
   const results = await new Function(...Object.keys(bindings), branch)(...Object.values(bindings)) as { content: string }[];
-  return { calls, caller: bindings.supabaseClient, approvalTokenTool, result: JSON.parse(results[0].content) };
+  return { calls, caller: bindings.supabaseClient, approvalTokenTool, approvalSpend, result: JSON.parse(results[0].content) };
 }
 describe('actual paige-ai-chat comms email wiring', () => {
   it('an unrecorded decline or a changed workspace sends nothing', async () => {
@@ -321,6 +351,8 @@ describe('actual paige-ai-chat comms email wiring', () => {
     expect(r.calls[0].deps.caller).toBe(r.caller);
     expect(r.calls[0].ctx).toMatchObject({ tenantId: tenant, userId: 'actor', toolName: 'comms_send_email', args, sameToolCalls: 1, turn: { thread_id: 'thread', user_turn_ordinal: 1, user_turn: 'email Dana' } });
     expect(r.approvalTokenTool.get(fingerprint)).toBe('comms_send_email');
+    // The approval the door redeemed is recorded against this call, so the card reports what it did.
+    expect(r.approvalSpend.get(fingerprint)).toBe('call-1');
   });
   it('the card frame carries the validated email preview as paige_confirm.preview', () => {
     const line = chatSource.split('\n').find(l => l.includes('confirmTrace.push({ tool: parsed.tool'));

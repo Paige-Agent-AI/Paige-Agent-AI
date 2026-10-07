@@ -134,7 +134,8 @@ export async function startInteractiveTurn(input: {
   const lifetime = createInteractiveLifetime(execution);
   try { await execution.acquire(); }
   catch (error) {
-    await lifetime.handlerFinished();
+    // An acquisition loser never owns cleanup, even when another request has
+    // the same intent. An uncertain acquire stays held for canonical recovery.
     return { boundary: { ...boundary, proceed: false, code: (error as Error).message, status: 409 }, execution: null, lifetime: null };
   }
   return { boundary, execution, lifetime };
@@ -165,6 +166,7 @@ export function keepInteractiveStreamAlive(source: ReadableStream<Uint8Array>, l
 export function createInteractiveExecution(intent: string, store: InteractiveStore) {
   let stopped = false;
   let released = false;
+  let acquired = false;
   return {
     get superseded() { return stopped; },
     async check() {
@@ -180,7 +182,7 @@ export function createInteractiveExecution(intent: string, store: InteractiveSto
         const state = await store.state();
         if (state.latest !== intent) { stopped = true; throw new InteractiveSuperseded(); }
         if (state.executor === intent) throw new Error("INTERACTIVE_ALREADY_RUNNING");
-        if (await store.acquire()) return;
+        if (await store.acquire()) { acquired = true; return; }
         await new Promise((resolve) => setTimeout(resolve, 100));
       } while (Date.now() < deadline);
       throw new Error("INTERACTIVE_RECONCILIATION_REQUIRED");
@@ -203,7 +205,7 @@ export function createInteractiveExecution(intent: string, store: InteractiveSto
       }
     },
     async release() {
-      if (!released) { await store.release(); released = true; }
+      if (acquired && !released) { await store.release(); released = true; }
     },
   };
 }

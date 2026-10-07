@@ -1,0 +1,66 @@
+# INT-340 shared metric consumer contract
+
+Status: candidate contract in draft PR #1814. Not production acceptance. Settings UI remains local and unmerged. INT-339 signed-in verification and explicit Sales clearance remain pending.
+
+## One measurement seam
+
+Canonical business records → department-owned versioned producer → shared evidence issuer/resolver → Settings, Marketing, Sales, Command Center and PAIGE consumers. Existing `analytics_evidence_reference` remains the ephemeral identity registry; metric values are recomputed from canonical records, not copied into a second warehouse.
+
+The additive authenticated RPC is `issue_analytics_evidence_bundle` with these named arguments:
+
+| Argument | Contract |
+|---|---|
+| `p_metric_key` | Explicit registered department metric key |
+| `p_metric_version` | `1.0.0` |
+| `p_dimensions` | JSON object; current producers require `{}` |
+| `p_range_key` | `week`, `month`, `quarter` or `year` |
+| `p_range_start` | Finite UTC timestamp, inclusive |
+| `p_range_end` | Finite UTC timestamp, exclusive; no future end |
+| `p_account_epoch` | Expected workspace UUID; equality guard, never authority |
+
+The server derives the active workspace from authenticated identity and profile, and requires current active owner/admin membership. Supplying a foreign epoch fails closed. Tenant roles never grant the operator lens. Ordinary members are denied under the current canonical Analytics policy.
+
+The range key labels the explicitly supplied interval. Settings currently requests rolling 7/30/90-day intervals. Sales won/lost date cohorts require UTC-midnight bounds; consumers must honor that producer requirement rather than alter its formula. Current snapshots never imply historical period-end state.
+
+## Result and evidence
+
+Results carry metric key/version, owning department, label, definition, formula, interval/bounds/timezone/semantics, dimensions, typed values/unit, source references, as-of and freshness, coverage counts, exclusions, truth state, caveats, source revision identity, account epoch identity, opaque evidence reference and expiry.
+
+`LIVE` means complete measured coverage under the definition. `PARTIAL` remains visibly incomplete. `UNAVAILABLE` has null values; missing information is never zero. A refused or failed read is a separate read failure, not a successful unavailable metric.
+
+Value shapes currently include counts, decimal strings, distributions, bounded ordered time series and currency-separated minor-unit string totals. Consumers format these results; neither frontend nor LLM computes authoritative KPIs. Currency totals are not combined across currencies.
+
+`resolve_analytics_evidence_reference(p_evidence_ref)` rechecks the actor, current workspace, membership, expiry and source revision. References expire after 15 minutes. Changed source state, workspace changes, membership loss, another actor or expired references are denied. Consumers refresh through the issuer after refusal; they must not fall back to raw tables or unscoped reads.
+
+The existing three-argument Sales funnel issuer and legacy resolver response remain compatible. Department producers remain private, without caller EXECUTE access. Operator Analytics RPCs and routes remain separate.
+
+## Consumer responsibilities
+
+Clear displayed results synchronously on actor/workspace/range changes; discard late responses from the previous scope. Validate the exact requested metric/version, dimensions, interval and epoch before rendering. Show source coverage and evidence on demand. Explain unavailable producers in owner language. Do not persist mutable KPI values in Memory.
+
+Platform Reach owns the single governed metric-read capability, Spine registration and Chat tool integration. Typed Chat and Live Conversation must call that same capability through the authenticated runtime. A model/provider choice grants no extra data authority. Chat/Live proof is still owed; no Settings-only tool or voice calculation path is authorized.
+
+The governed reader must forward the real authenticated caller context to the public RPC. The additive issuer/resolver deny service-role EXECUTE. A service client, caller-supplied tenant override, synthetic JWT subject or fallback raw-table read is not a substitute for that caller context.
+
+Sales owns its 11 producers shipped by #1809 and the Sales Performance experience. Marketing owns its analytics producers and presentation. Settings requests only business-health, operations, team and AI/usage metrics, with Data Health exposing their coverage. Cross-domain summaries link to canonical owners without duplicating calculation systems.
+
+## INT-343 shared-layer impact
+
+| Layer | Analytics impact |
+|---|---|
+| Metric/Evidence Fabric | Primary shared measurement-contract producer/owner |
+| Spine | One governed metric read; registration owned by Platform Reach |
+| Harness | Bounded read, no rival execution envelope |
+| Orchestration | May compose evidence; does not redefine metrics |
+| Trust | Server-derived identity, workspace, membership and role/lens authorization |
+| Rail | Evidence source where relevant; no rewriting execution history |
+| Memory | No changing KPI values stored as owner facts |
+| Business organizational memory | INT-337 remains owner of future shared facts/policies |
+| Knowledge / Second Brain | May supply durable definitions/doctrine; measured state stays canonical |
+| Mind | Consumer for trend/exception reasoning, not metric storage |
+| Agent Intelligence | Future evidence consumer; no self-authorized action |
+| Model / Intelligence Fabric | Reasoning/provider selection confers no Analytics authority |
+
+## Proof still required
+
+Exact-head hosted database and application CI, independent review of changed risk surfaces, production persistence and signed-in positive/negative scope proof, shared governed-reader integration, typed Chat and Live evidence parity, and authenticated Settings acceptance. Synthetic rendering and rollback fixtures do not substitute for these gates.

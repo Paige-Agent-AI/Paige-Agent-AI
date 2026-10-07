@@ -82,6 +82,7 @@ export type SoloSettingsKey =
   | "team"
   | "connections"
   | "integrations"
+  | "analytics"
   | "security-data"
   | "vault"
   | "billing";
@@ -95,6 +96,7 @@ export const SOLO_SETTINGS_DESTINATIONS: ReadonlyArray<{
   { key: "team", label: "Team", truth: "PARTIAL" },
   { key: "connections", label: "Connections", truth: "PARTIAL" },
   { key: "integrations", label: "Integrations", truth: "PARTIAL" },
+  { key: "analytics", label: "Analytics", truth: "PARTIAL" },
   { key: "security-data", label: "Security & data", truth: "PARTIAL" },
   { key: "vault", label: "Vault", truth: "PROPOSED" },
   { key: "billing", label: "Billing", truth: "PARTIAL" },

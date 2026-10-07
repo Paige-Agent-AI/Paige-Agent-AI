@@ -17,6 +17,33 @@ function fixture(): MetricResult {
 }
 
 describe("shared metric consumer boundary", () => {
+  it("accepts bounded recorded diagnostic activity with matching evidence coverage", () => {
+    const result = fixture();
+    result.metric_key = "operations.recorded_workflow_activity";
+    result.truth_state = "PARTIAL"; result.coverage = { state: "partial", candidate_count: 1, contributing_count: 1, excluded_count: 0 };
+    result.range.semantics = "event_timestamp_cohort";
+    result.values = { kind: "diagnostic_events", items: [{ source: "workflow_run", at: "2026-10-07T11:00:00Z", status: "failed", severity: null, retry_count: 2, completed_at: "2026-10-07T11:01:00Z", check_key: null }] };
+    const request = { ...identity, metricKey: result.metric_key };
+    expect(parseMetricResult(result, request, now).values).toEqual(result.values);
+    expect(() => parseMetricResult({ ...result, values: { kind: "count", count: 1 } }, request, now)).toThrow();
+    expect(() => parseMetricResult({ ...result, range: { ...result.range, semantics: "current_snapshot" } }, request, now)).toThrow();
+    result.values.items[0].at = "2026-09-29T11:00:00Z";
+    expect(() => parseMetricResult(result, request, now)).toThrow();
+  });
+  it("refuses raw diagnostic fields, unsupported states and oversized activity", () => {
+    const result = fixture(); result.metric_key = "operations.current_system_exceptions";
+    result.coverage = { state: "complete", candidate_count: 1, contributing_count: 1, excluded_count: 0 };
+    const event = { source: "systems_check", at: "2026-09-29T11:00:00Z", status: "fail", severity: "blocking", retry_count: null, completed_at: null, check_key: "payment_processor_connected" };
+    const request = { ...identity, metricKey: result.metric_key };
+    const value = { ...result, values: { kind: "diagnostic_events", items: [event] } };
+    expect(parseMetricResult(value, request, now).values).toEqual(value.values);
+    for (const unsafe of [{ ...event, error: "private raw detail" }, { ...event, status: "unknown" }, { ...event, severity: null }, { ...event, retry_count: 1 }, { ...event, completed_at: "2026-10-08T11:00:00Z" }, { ...event, at: "2026-09-29T11:00:00" }, { ...event, completed_at: "2026-10-07T11:00:00" }]) {
+      expect(() => parseMetricResult({ ...value, values: { kind: "diagnostic_events", items: [unsafe] } }, request, now)).toThrow();
+    }
+    expect(() => parseMetricResult({ ...value, values: { kind: "diagnostic_events", items: Array(21).fill(event) } }, request, now)).toThrow();
+    expect(() => parseMetricResult({ ...value, coverage: { state: "complete", candidate_count: 2, contributing_count: 2, excluded_count: 0 } }, request, now)).toThrow();
+    expect(() => parseMetricResult({ ...value, range: { ...value.range, semantics: "event_timestamp_cohort" } }, request, now)).toThrow();
+  });
   it("accepts an evidenced current snapshot without inventing historical values", () => {
     expect(parseMetricResult(fixture(), identity, now).range.semantics).toBe("current_snapshot");
   });

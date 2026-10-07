@@ -66,6 +66,9 @@ SELECT pg_temp.require_denied($q$SELECT public._resolve_legacy_analytics_evidenc
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000002',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000002","role":"authenticated"}',true);
 SELECT pg_temp.require_denied($q$SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref') FROM seam_result$q$,'cross actor reference');
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')$q$,'ordinary member denied');
+SELECT pg_temp.require_denied(format('SELECT public.issue_analytics_evidence_bundle(%L,%L,%L::jsonb,%L,now()-interval %L,now(),%L::uuid)',
+ metric,'1.0.0','{}','week','7 days','a3450000-0000-4000-8000-000000000011'),'ordinary member cannot issue diagnostics')
+ FROM (VALUES ('operations.recorded_workflow_activity'),('operations.current_system_exceptions')) approved(metric);
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000003',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000003","role":"authenticated"}',true);
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')$q$,'platform role without seat denied');
 RESET ROLE;
@@ -93,6 +96,15 @@ INSERT INTO public.pipeline_stages(pipeline_id,tenant_id,label,order_index,proba
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 INSERT INTO seam_stateful SELECT 'a',public.issue_analytics_evidence_bundle('team.active_members_current','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011');
+-- Diagnostic proof uses actual fixture source availability, without fabricated activity.
+INSERT INTO seam_stateful SELECT 'a:'||metric,public.issue_analytics_evidence_bundle(metric,'1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')
+ FROM (VALUES ('operations.recorded_workflow_activity'),('operations.current_system_exceptions')) approved(metric);
+SELECT pg_temp.require_true(bundle->>'account_epoch'='a3450000-0000-4000-8000-000000000011'
+ AND ((bundle->>'truth_state'='UNAVAILABLE' AND bundle->'values'='null'::jsonb)
+   OR (bundle->'values'->>'kind'='diagnostic_events' AND jsonb_array_length(bundle#>'{values,items}')<=20))
+ AND public.resolve_analytics_evidence_reference(bundle->>'evidence_ref')=bundle,
+ 'same actor A diagnostic issuance/readback preserves source availability') FROM seam_stateful WHERE label LIKE 'a:%';
+SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('operations.recorded_workflow_activity','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000012')$q$,'diagnostic foreign epoch denied');
 SELECT pg_temp.require_true((SELECT bundle->>'account_epoch'='a3450000-0000-4000-8000-000000000011' AND bundle->'values'->>'count'='2' FROM seam_stateful WHERE label='a'),'actual A positive membership result');
 INSERT INTO seam_stateful SELECT 'legacy',public.issue_analytics_evidence_bundle('sales_funnel.created_deals_by_current_stage','last_30_days','a3450000-0000-4000-8000-000000000011');
 SELECT pg_temp.require_true((SELECT bundle->'bundle'->'metric'->>'id'='sales_funnel.created_deals_by_current_stage' AND public.resolve_analytics_evidence_reference(bundle->>'evidence_ref')=bundle->'bundle' FROM seam_stateful WHERE label='legacy'),'legacy three arg nested response and resolver unchanged');
@@ -108,8 +120,17 @@ UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-00000000001
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 SELECT pg_temp.require_denied($q$SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref') FROM seam_stateful WHERE label='a'$q$,'old A reference after actual switch B');
+SELECT pg_temp.require_denied(format('SELECT public.resolve_analytics_evidence_reference(%L)',bundle->>'evidence_ref'),
+ 'old A diagnostic reference after actual switch B') FROM seam_stateful WHERE label LIKE 'a:%';
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('team.active_members_current','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011')$q$,'stale A epoch after switch B');
 INSERT INTO seam_stateful SELECT 'b',public.issue_analytics_evidence_bundle('team.active_members_current','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000012');
+INSERT INTO seam_stateful SELECT 'b:'||metric,public.issue_analytics_evidence_bundle(metric,'1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000012')
+ FROM (VALUES ('operations.recorded_workflow_activity'),('operations.current_system_exceptions')) approved(metric);
+SELECT pg_temp.require_true(bundle->>'account_epoch'='a3450000-0000-4000-8000-000000000012'
+ AND ((bundle->>'truth_state'='UNAVAILABLE' AND bundle->'values'='null'::jsonb)
+   OR (bundle->'values'->>'kind'='diagnostic_events' AND jsonb_array_length(bundle#>'{values,items}')<=20))
+ AND public.resolve_analytics_evidence_reference(bundle->>'evidence_ref')=bundle,
+ 'same actor B diagnostic issuance/readback preserves source availability') FROM seam_stateful WHERE label LIKE 'b:%';
 SELECT pg_temp.require_true((SELECT bundle->>'account_epoch'='a3450000-0000-4000-8000-000000000012' AND bundle->'values'->>'count'='1' AND public.resolve_analytics_evidence_reference(bundle->>'evidence_ref')=bundle FROM seam_stateful WHERE label='b'),'same actor actual B positive and readback');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
@@ -117,6 +138,11 @@ DELETE FROM public.tenant_members WHERE tenant_id='a3450000-0000-4000-8000-00000
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 SELECT pg_temp.require_denied($q$SELECT public.resolve_analytics_evidence_reference(bundle->>'evidence_ref') FROM seam_stateful WHERE label='b'$q$,'removed seat invalidates already issued reference');
+SELECT pg_temp.require_denied(format('SELECT public.resolve_analytics_evidence_reference(%L)',bundle->>'evidence_ref'),
+ 'removed seat invalidates diagnostic reference') FROM seam_stateful WHERE label LIKE 'b:%';
+SELECT pg_temp.require_denied(format('SELECT public.issue_analytics_evidence_bundle(%L,%L,%L::jsonb,%L,now()-interval %L,now(),%L::uuid)',
+ metric,'1.0.0','{}','week','7 days','a3450000-0000-4000-8000-000000000012'),'removed seat cannot issue diagnostics')
+ FROM (VALUES ('operations.recorded_workflow_activity'),('operations.current_system_exceptions')) approved(metric);
 SELECT pg_temp.require_denied($q$SELECT public.issue_analytics_evidence_bundle('team.active_members_current','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000012')$q$,'removed seat cannot issue');
 RESET ROLE;
 ROLLBACK;

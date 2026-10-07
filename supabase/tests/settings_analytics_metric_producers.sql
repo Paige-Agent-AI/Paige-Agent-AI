@@ -74,12 +74,17 @@ SELECT pg_temp.require_denied($q$SELECT public._settings_analytics_metric_bundle
 INSERT INTO settings_results SELECT metric,pg_temp.settings_bundle(metric) FROM unnest(ARRAY[
  'business.active_clients_current','business.onboarding_current','business.lifecycle_current',
  'team.active_members_current','team.role_distribution_current','operations.workflows_active_current',
- 'operations.recorded_workflow_runs','operations.systems_check_latest','operations.unresolved_findings_current',
+ 'operations.recorded_workflow_runs','operations.recorded_workflow_activity','operations.systems_check_latest','operations.unresolved_findings_current','operations.current_system_exceptions',
  'ai.recorded_model_requests','ai.recorded_model_requests_daily','ai.recorded_tokens','ai.estimated_model_cost','ai.recorded_latency','ai.recorded_browser_calls',
  'business.retention','business.profitability','business.nps','team.performance_scorecards','ai.voice_consumption']) metric;
 SELECT pg_temp.require_true(bundle#>>'{values,count}'='0' AND bundle->>'truth_state'='LIVE','empty current contacts is recorded zero') FROM settings_results WHERE key='business.active_clients_current';
 SELECT pg_temp.require_true(bundle#>>'{values,count}'='2','active members are actual seats') FROM settings_results WHERE key='team.active_members_current';
 SELECT pg_temp.require_true(bundle#>>'{values,count}'='1','workflow registry excludes absent and foreign workflow') FROM settings_results WHERE key='operations.workflows_active_current';
+SELECT pg_temp.require_true(bundle->>'truth_state'='PARTIAL' AND bundle#>'{values,items}'='[]'::jsonb
+ AND bundle#>>'{coverage,contributing_count}'='0','empty workflow activity is partial recorded telemetry, not verified no execution')
+ FROM settings_results WHERE key='operations.recorded_workflow_activity';
+SELECT pg_temp.require_true(bundle->>'truth_state'='UNAVAILABLE' AND bundle->'values'='null'::jsonb,
+ 'no completed full sweep is unavailable, not an empty verified exceptions list') FROM settings_results WHERE key='operations.current_system_exceptions';
 SELECT pg_temp.require_true(bundle#>>'{values,count}'='2' AND bundle->>'truth_state'='PARTIAL','trace excludes foreign working context and remains partial') FROM settings_results WHERE key='ai.recorded_model_requests';
 SELECT pg_temp.require_true(bundle->>'truth_state'='PARTIAL'
  AND (SELECT sum((point->>'value')::integer)=2 AND count(*) BETWEEN 30 AND 31
@@ -101,13 +106,13 @@ SELECT pg_temp.require_invalid($q$SELECT pg_temp.settings_bundle('unknown')$q$,'
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 INSERT INTO public.paige_systems_check_registry(check_id,check_name,domain,severity,data_source,runner_key,remediation_prompt)
- VALUES('settings-proof-check','Synthetic proof check','infrastructure','high','native_seam','settings-proof','Synthetic only');
+ VALUES('settings_proof_check','Synthetic proof check','infrastructure','high','native_seam','settings-proof','Synthetic only');
 INSERT INTO public.paige_systems_check_run(id,tenant_id,scan_flavor,started_at,completed_at,check_count,pass_count,fail_count,selected_runner_keys) VALUES
  ('a3450000-0000-4000-8000-000000000051','a3450000-0000-4000-8000-000000000011','scheduled',now()-interval '2 hours',now()-interval '1 hour',1,0,1,NULL),
  ('a3450000-0000-4000-8000-000000000052','a3450000-0000-4000-8000-000000000011','change_triggered',now()-interval '20 minutes',now()-interval '10 minutes',1,1,0,ARRAY['settings-proof']),
  ('a3450000-0000-4000-8000-000000000053','a3450000-0000-4000-8000-000000000011','scheduled',now()-interval '5 minutes',NULL,0,0,0,NULL);
 INSERT INTO public.paige_systems_check_finding(id,run_id,check_id,tenant_id,status,severity_at_finding,evidence,paige_interpretation,created_at)
- VALUES('a3450000-0000-4000-8000-000000000054','a3450000-0000-4000-8000-000000000051','settings-proof-check',
+ VALUES('a3450000-0000-4000-8000-000000000054','a3450000-0000-4000-8000-000000000051','settings_proof_check',
  'a3450000-0000-4000-8000-000000000011','fail','high','{"private":"synthetic-sensitive-evidence"}','synthetic-sensitive-interpretation',now()-interval '1 hour');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000001"}',true);
@@ -124,6 +129,9 @@ SELECT pg_temp.require_true(pg_temp.settings_bundle('operations.systems_check_la
  AND pg_temp.settings_bundle('operations.systems_check_latest')#>>'{coverage,contributing_count}'='0'
  AND pg_temp.settings_bundle('operations.systems_check_latest')#>>'{coverage,excluded_count}'='1',
  'canonical sweep after as_of makes every candidate excluded and values unavailable');
+SELECT pg_temp.require_true(pg_temp.settings_bundle('operations.current_system_exceptions')->>'truth_state'='UNAVAILABLE'
+ AND pg_temp.settings_bundle('operations.current_system_exceptions')#>>'{coverage,contributing_count}'='0',
+ 'after-as_of exceptions cannot contribute a readable event');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status,lifecycle_stage,onboarding_stage,
@@ -211,6 +219,74 @@ SELECT pg_temp.require_true((SELECT sum((point->>'value')::integer)=0
  'empty daily buckets are zero recorded rows while instrumentation coverage remains partial');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
+-- Diagnostic fixtures: actual registry/run sources, safe fields only, all writes roll back.
+INSERT INTO public.paige_workflow_registry(id,tenant_id,key,label,category,provider) VALUES
+ ('a3450000-0000-4000-8000-000000000071','a3450000-0000-4000-8000-000000000011','settings_diagnostic_a','synthetic-private-label','admin','cron_only'),
+ ('a3450000-0000-4000-8000-000000000072','a3450000-0000-4000-8000-000000000012','settings_diagnostic_b','synthetic-foreign-label','admin','cron_only');
+INSERT INTO public.paige_workflow_runs(id,tenant_id,registry_id,status,triggered_at,completed_at,retry_count,payload,result,error)
+ SELECT ('a3450000-0000-4000-8000-'||lpad((100+g)::text,12,'0'))::uuid,'a3450000-0000-4000-8000-000000000011',
+ 'a3450000-0000-4000-8000-000000000071',CASE WHEN g%2=0 THEN 'failed' ELSE 'succeeded' END,
+ now()-interval '2 minutes'+g*interval '1 second',now()-interval '1 minute',g,
+ '{"secret":"synthetic-private-payload"}','{"secret":"synthetic-private-result"}','synthetic-private-error' FROM generate_series(1,25) g;
+INSERT INTO public.paige_workflow_runs(id,tenant_id,registry_id,status,triggered_at,completed_at,retry_count,updated_at) VALUES
+ ('a3450000-0000-4000-8000-000000000126','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000071','failed',now()-interval '1 minute',now()-interval '2 minutes',26,now()),
+ ('a3450000-0000-4000-8000-000000000127','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000071','running',now()-interval '1 minute',NULL,27,now()+interval '1 day'),
+ ('a3450000-0000-4000-8000-000000000128','a3450000-0000-4000-8000-000000000012','a3450000-0000-4000-8000-000000000072','running',now()-interval '1 minute',NULL,999,now()),
+ ('a3450000-0000-4000-8000-000000000129','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000071','failed',now()-interval '40 days',now()-interval '39 days',29,now());
+INSERT INTO public.paige_systems_check_run(id,tenant_id,scan_flavor,started_at,completed_at,check_count,pass_count,fail_count)
+ VALUES('a3450000-0000-4000-8000-000000000061','a3450000-0000-4000-8000-000000000011','scheduled',now()-interval '1 minute',now()-interval '20 seconds',30,1,26);
+INSERT INTO public.paige_systems_check_finding(id,run_id,check_id,tenant_id,status,severity_at_finding,created_at,evidence,paige_interpretation)
+ SELECT ('a3450000-0000-4000-8000-'||lpad((200+g)::text,12,'0'))::uuid,'a3450000-0000-4000-8000-000000000061',
+ 'settings_proof_check','a3450000-0000-4000-8000-000000000011',CASE WHEN g%2=0 THEN 'fail' ELSE 'error' END,
+ CASE WHEN g=26 THEN 'blocking' ELSE 'high' END,now()-interval '40 seconds'+g*interval '1 millisecond',
+ '{"secret":"synthetic-private-evidence"}','synthetic-private-interpretation' FROM generate_series(1,26) g;
+INSERT INTO public.paige_systems_check_finding(id,run_id,check_id,tenant_id,status,severity_at_finding,created_at) VALUES
+ ('a3450000-0000-4000-8000-000000000227','a3450000-0000-4000-8000-000000000061','settings_proof_check','a3450000-0000-4000-8000-000000000011','skip',NULL,now()-interval '30 seconds'),
+ ('a3450000-0000-4000-8000-000000000228','a3450000-0000-4000-8000-000000000061','settings_proof_check','a3450000-0000-4000-8000-000000000011','pass','low',now()-interval '30 seconds'),
+ ('a3450000-0000-4000-8000-000000000229','a3450000-0000-4000-8000-000000000061','settings_proof_check','a3450000-0000-4000-8000-000000000011','fail',NULL,now()-interval '30 seconds');
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000001"}',true);
+INSERT INTO settings_results VALUES('workflow_diagnostic',pg_temp.settings_bundle('operations.recorded_workflow_activity')),
+ ('system_diagnostic',pg_temp.settings_bundle('operations.current_system_exceptions'));
+SELECT pg_temp.require_true(bundle#>>'{coverage,candidate_count}'='27' AND bundle#>>'{coverage,contributing_count}'='20'
+ AND bundle#>>'{coverage,excluded_count}'='7' AND bundle->>'truth_state'='PARTIAL',
+ 'workflow diagnostics cap safely and exclude invalid completion, future version, out-of-range and foreign rows') FROM settings_results WHERE key='workflow_diagnostic';
+SELECT pg_temp.require_true(bundle#>>'{coverage,candidate_count}'='29' AND bundle#>>'{coverage,contributing_count}'='20'
+ AND bundle#>>'{coverage,excluded_count}'='9' AND bundle->>'truth_state'='PARTIAL',
+ 'system exceptions count cap, skip, unknown severity and missing recorded finding coverage') FROM settings_results WHERE key='system_diagnostic';
+SELECT pg_temp.require_true(jsonb_array_length(bundle#>'{values,items}')=20
+ AND bundle#>'{values,items,0,severity}'='"blocking"'::jsonb,'canonical blocking severity is preserved') FROM settings_results WHERE key='system_diagnostic';
+SELECT pg_temp.require_true((SELECT bool_and((SELECT count(*) FROM jsonb_object_keys(item))=7
+ AND item ?& ARRAY['source','at','status','severity','retry_count','completed_at','check_key']
+ AND (item->>'at')::timestamptz <= (bundle->>'as_of')::timestamptz
+ AND (item->>'completed_at' IS NULL OR ((item->>'completed_at')::timestamptz >= (item->>'at')::timestamptz
+   AND (item->>'completed_at')::timestamptz <= (bundle->>'as_of')::timestamptz)))
+ FROM jsonb_array_elements(bundle#>'{values,items}') item)
+ AND (bundle#>'{values,items}')::text NOT LIKE '%synthetic-private%'
+ AND (bundle#>'{values,items}')::text NOT LIKE '%a3450000%','diagnostics expose exactly bounded safe fields, no payload, errors, names, URL or identities')
+ FROM settings_results WHERE key IN ('workflow_diagnostic','system_diagnostic');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('operations.recorded_workflow_activity','a3450000-0000-4000-8000-000000000012')$q$,'diagnostic event scope cannot broaden into another seated tenant');
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true);
+UPDATE public.paige_workflow_runs SET retry_count=77 WHERE id='a3450000-0000-4000-8000-000000000125';
+UPDATE public.paige_systems_check_finding SET severity_at_finding='low' WHERE id='a3450000-0000-4000-8000-000000000226';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000001"}',true);
+SELECT pg_temp.require_true(bundle->>'source_revision_ref'<>pg_temp.settings_bundle('operations.recorded_workflow_activity')->>'source_revision_ref',
+ 'workflow returned retry quantity binds source revision') FROM settings_results WHERE key='workflow_diagnostic';
+SELECT pg_temp.require_true(bundle->>'source_revision_ref'<>pg_temp.settings_bundle('operations.current_system_exceptions')->>'source_revision_ref',
+ 'current exception returned severity binds source revision') FROM settings_results WHERE key='system_diagnostic';
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true);
+UPDATE public.paige_systems_check_finding SET status='pass',severity_at_finding='low' WHERE run_id='a3450000-0000-4000-8000-000000000061';
+UPDATE public.paige_systems_check_run SET check_count=29,pass_count=29,fail_count=0 WHERE id='a3450000-0000-4000-8000-000000000061';
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000001"}',true);
+SELECT pg_temp.require_true(pg_temp.settings_bundle('operations.current_system_exceptions')->>'truth_state'='LIVE'
+ AND pg_temp.settings_bundle('operations.current_system_exceptions')#>'{values,items}'='[]'::jsonb,
+ 'fully recorded canonical sweep with no exceptions is LIVE empty');
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true);
 UPDATE public.profiles SET active_tenant_id='a3450000-0000-4000-8000-000000000012' WHERE user_id='a3450000-0000-4000-8000-000000000001';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000001"}',true);
@@ -220,14 +296,19 @@ SELECT pg_temp.require_true((pg_temp.settings_bundle('business.onboarding_curren
 SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('team.active_members_current')$q$,'workspace switch invalidates previous tenant scope');
 SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000002"}',true);
 SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('team.active_members_current')$q$,'ordinary member denied');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('operations.recorded_workflow_activity')$q$,'ordinary member diagnostic activity denied');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('operations.current_system_exceptions')$q$,'ordinary member current exception access denied');
 SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000003"}',true);
 SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('team.active_members_current')$q$,'platform role does not replace an explicit admin seat');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('operations.recorded_workflow_activity')$q$,'platform role cannot replace diagnostic admin seat');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 DELETE FROM public.tenant_members WHERE tenant_id='a3450000-0000-4000-8000-000000000012' AND user_id='a3450000-0000-4000-8000-000000000001';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000001"}',true);
 SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('team.active_members_current','a3450000-0000-4000-8000-000000000012')$q$,'removed membership loses visibility immediately');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('operations.recorded_workflow_activity','a3450000-0000-4000-8000-000000000012')$q$,'removed membership loses diagnostic event access');
+SELECT pg_temp.require_denied($q$SELECT pg_temp.settings_bundle('operations.current_system_exceptions','a3450000-0000-4000-8000-000000000012')$q$,'removed membership loses current exception access');
 RESET ROLE;
 SELECT 'PASS: isolated Settings producer assertions' AS verdict;
 ROLLBACK;

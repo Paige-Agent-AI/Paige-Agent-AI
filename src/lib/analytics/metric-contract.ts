@@ -73,6 +73,7 @@ export function parseMetricResult(value: unknown, expected: MetricRequestIdentit
   const fail = (): never => { throw new Error("Measurement could not be verified for this workspace."); };
   if (!record(value) || !record(value.range) || !record(value.dimensions) || !record(value.coverage) || !record(value.freshness)) return fail();
   const c = value.coverage;
+  const range = value.range;
   const dimensions = value.dimensions;
   const stateMatches = (value.truth_state === "LIVE" && c.state === "complete" && c.excluded_count === 0)
     || (value.truth_state === "PARTIAL" && c.state === "partial")
@@ -104,6 +105,6 @@ export function parseMetricResult(value: unknown, expected: MetricRequestIdentit
     || !Array.isArray(value.caveats) || value.caveats.length > 20 || !value.caveats.every(s => text(s, 1200))
     || (value.truth_state !== "UNAVAILABLE" && !validValues(value.values))
     || (record(value.values) && value.values.kind === "series" && Array.isArray(value.values.points)
-      && !value.values.points.every(p => record(p) && Date.parse(String(p.at)) >= Date.parse(String(value.range.start)) && Date.parse(String(p.at)) < Date.parse(String(value.range.end))))) return fail();
+      && !value.values.points.every(p => record(p) && Date.parse(String(p.at)) >= Date.parse(String(range.start)) && Date.parse(String(p.at)) < Date.parse(String(range.end))))) return fail();
   return value as unknown as MetricResult;
 }

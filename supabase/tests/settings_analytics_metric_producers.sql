@@ -22,6 +22,22 @@ INSERT INTO auth.users(id,email) VALUES
  ('a3450000-0000-4000-8000-000000000002','settings-member@example.invalid'),
  ('a3450000-0000-4000-8000-000000000003','settings-operator@example.invalid');
 INSERT INTO public.user_roles(user_id,role) VALUES ('a3450000-0000-4000-8000-000000000003','platform_admin');
+-- Company fixtures require the genuine canonical owner context, not service_role.
+-- A schema-only clone may have no owner: mint a synthetic one through the actual
+-- trusted role grant path. Never alter any existing owner identity or role.
+DO $fixture_owner$ DECLARE fixture_owner_id uuid; BEGIN
+ IF (SELECT count(*) FROM public.user_roles WHERE role='super_admin')>1 THEN
+   RAISE EXCEPTION 'FIXTURE: canonical owner is ambiguous';
+ END IF;
+ SELECT user_id INTO fixture_owner_id FROM public.user_roles WHERE role='super_admin';
+ IF fixture_owner_id IS NULL THEN
+   fixture_owner_id := 'a3450000-0000-4000-8000-000000000004';
+   INSERT INTO auth.users(id,email) VALUES(fixture_owner_id,'settings-fixture-owner@example.invalid');
+   INSERT INTO public.user_roles(user_id,role) VALUES(fixture_owner_id,'super_admin');
+ END IF;
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',fixture_owner_id)::text,true);
+ IF public.is_platform_owner() IS DISTINCT FROM true THEN RAISE EXCEPTION 'FIXTURE: canonical owner guard unavailable';END IF;
+END $fixture_owner$;
 -- System-workspace flag suppresses onboarding dispatch; it does not grant these ordinary seats authority.
 INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,features) VALUES
  ('a3450000-0000-4000-8000-000000000011','settings-proof-a','Settings proof A','active','standalone','STA','{"system_workspace":true}'),

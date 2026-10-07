@@ -798,7 +798,7 @@ jobs:
             supabase/functions/_shared/paige-turn/interactive.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
-          node scripts/int346-acquire-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs

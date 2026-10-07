@@ -56,8 +56,8 @@ describe("the Spine registers the live zapier chat surface", () => {
     expect(spineRegistry).toContain(
       "const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES] as const;",
     );
-    expect(spineRegistry).toContain(
-      "EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => entry.key === capability.key && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority)",
+    expect(spineRegistry.replace(/\s+/g, " ")).toContain(
+      "EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => !!entry.action && entry.key === capability.key && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority)",
     );
   });
 

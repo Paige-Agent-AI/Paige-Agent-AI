@@ -9,6 +9,22 @@ export type StripeMerchantStatus = {
   bindingVersion: number | null; chargesEnabled: boolean; payoutsEnabled: boolean;
   detailsSubmitted: boolean; paymentPermission: boolean; checkedAt: string | null; state: StripeMerchantState;
 };
+type MerchantApproval = {
+  fingerprint: string; summary: string; expiresAt: string;
+  preview: { action: "merchant.start_onboarding"; provider: "stripe"; environment: "test" | "live"; binding_version: number | null };
+};
+type SetupRequest = { expected_tenant_id: string; operation_id: string; command: { action: "merchant.start_onboarding"; provider: "stripe" } };
+function readApproval(value: unknown, status: StripeMerchantStatus, request: SetupRequest): MerchantApproval | null {
+  if (!value || typeof value !== "object") return null;
+  const r = value as Record<string, unknown>; const preview = r.preview as MerchantApproval["preview"] | undefined;
+  if (r.outcome !== "approval_required" || r.tenant_id !== status.tenantId || r.operation_id !== request.operation_id || r.capability !== "sales_start_merchant_onboarding" || typeof r.fingerprint !== "string" ||
+    !/^[a-f0-9]{16}$/.test(r.fingerprint) || typeof r.summary !== "string" || r.summary.length > 1000 ||
+    typeof r.expires_at !== "string" || !(Date.parse(r.expires_at) > Date.now()) || !preview ||
+    Object.keys(preview).sort().join(",") !== "action,binding_version,environment,provider" || preview.action !== "merchant.start_onboarding" || preview.provider !== "stripe" ||
+    preview.environment !== status.environment || preview.binding_version !== status.bindingVersion) return null;
+  return { fingerprint: r.fingerprint, summary: r.summary, expiresAt: r.expires_at,
+    preview: { action: preview.action, provider: preview.provider, environment: preview.environment, binding_version: preview.binding_version } };
+}
 const STATES = new Set<StripeMerchantState>(["not_connected", "setup_incomplete", "restricted", "ready", "unverified", "outcome_unknown"]);
 const empty = (tenantId = ""): StripeMerchantStatus => ({ tenantId, connected: false, canManage: false,
   environment: null, bindingVersion: null, chargesEnabled: false, payoutsEnabled: false,
@@ -54,15 +70,17 @@ export function useStripeMerchant() {
   const scope = `${activeUserId ?? ""}:${activeTenantId ?? ""}:${tenantLoading}`;
   const scopeRef = useRef(scope); const gate = useRef(createSettingsRequestGate());
   const mounted = useRef(false); const busyRef = useRef(false);
+  const operation = useRef<SetupRequest | null>(null);
+  const [approval, setApproval] = useState<MerchantApproval | null>(null);
   const [loaded, setLoaded] = useState<string | null>(null);
   const [status, setStatus] = useState<StripeMerchantStatus>(empty());
   const [loading, setLoading] = useState(true); const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState<string | null>(null);
-  if (scopeRef.current !== scope) { scopeRef.current = scope; gate.current.clear(); busyRef.current = false; }
+  if (scopeRef.current !== scope) { scopeRef.current = scope; gate.current.clear(); busyRef.current = false; operation.current = null; }
 
   const read = useCallback(async (action: "status" | "refresh_status") => {
     if (!mounted.current || scopeRef.current !== scope || tenantLoading || !activeTenantId || busyRef.current) return false;
-    const token = gate.current.begin(); busyRef.current = true; setBusy(true); setMessage(null);
+    const token = gate.current.begin(); busyRef.current = true; setBusy(true); setMessage(null); setApproval(null);
     let parsed: StripeMerchantStatus | null = null;
     try {
       const result = await supabase.functions.invoke("tenant-stripe-connect", { body: { action, expected_tenant_id: activeTenantId } });
@@ -76,7 +94,7 @@ export function useStripeMerchant() {
   }, [activeTenantId, scope, tenantLoading]);
 
   useEffect(() => {
-    mounted.current = true; busyRef.current = false; setLoading(true); setLoaded(null); setStatus(empty());
+    mounted.current = true; busyRef.current = false; setLoading(true); setLoaded(null); setStatus(empty()); setApproval(null);
     if (!tenantLoading && activeTenantId) void read("status");
     else { setLoading(false); setLoaded(scope); }
     const currentGate = gate.current;
@@ -91,26 +109,51 @@ export function useStripeMerchant() {
     return () => clearTimeout(timer);
   }, [status.state, status.checkedAt]);
 
-  const begin = useCallback(async (returnUrl: string) => {
+  const submit = useCallback(async (approve = false) => {
     if (busyRef.current || !mounted.current || scopeRef.current !== scope || loaded !== scope || tenantLoading ||
       !activeTenantId || !status.canManage || !status.environment || status.state === "outcome_unknown" || error) return null;
+    if (approve && (!approval || Date.parse(approval.expiresAt) <= Date.now() || !operation.current)) {
+      setApproval(null); setMessage("This review expired. Request a fresh review before continuing."); return null;
+    }
+    const request = operation.current ?? { expected_tenant_id: activeTenantId, operation_id: crypto.randomUUID(), command: { action: "merchant.start_onboarding" as const, provider: "stripe" as const } };
+    operation.current = request;
     const token = gate.current.begin(); busyRef.current = true; setBusy(true); setMessage(null);
     let url: string | null = null;
+    let response: Record<string, unknown> | null = null;
     try {
       const result = await supabase.functions.invoke("tenant-stripe-connect", {
-        body: { action: "start_onboarding", expected_tenant_id: activeTenantId, return_url: returnUrl, refresh_url: returnUrl },
+        body: { ...request, ...(approve && approval ? { approved_fingerprint: approval.fingerprint } : {}) },
       });
-      if (!result.error && result.data?.tenant_id === activeTenantId && result.data?.provider_environment === status.environment)
-        url = stripeHostedSetupUrl(result.data.url);
+      let data = result.data;
+      if (result.error && "context" in result.error && result.error.context instanceof Response) {
+        try { data = await result.error.context.json(); } catch { data = null; }
+      }
+      if (data && typeof data === "object" && !Array.isArray(data) && data.tenant_id === activeTenantId && data.provider_environment === status.environment) {
+        response = data; if (data.ok === true) url = stripeHostedSetupUrl(data.url);
+      }
     } catch { /* An uncertain request is checked, never automatically repeated. */ }
     if (!mounted.current || scopeRef.current !== scope || !gate.current.isCurrent(token)) return null;
     busyRef.current = false; setBusy(false);
+    const proposed = readApproval(response, status, request);
+    if (proposed && !approve) { setApproval(proposed); return null; }
+    setApproval(null);
+    if (response?.outcome === "refused") {
+      operation.current = null;
+      const observed = readStripeMerchantStatus(response, activeTenantId);
+      if (observed) setStatus(observed);
+      setMessage(response.code === "PROVIDER_CONFIGURATION_REQUIRED" ? "Stripe setup needs platform configuration. Refresh status to check the existing attempt; another account will not be created." : "This setup action was not authorized or its reviewed connection changed. Refresh status before requesting a new review.");
+      return null;
+    }
+    if (url) operation.current = null;
     if (!url) { setStatus(current => ({ ...current, state: "outcome_unknown" }));
       setMessage("Stripe setup could not be confirmed. Refresh status to check the existing attempt before trying again."); }
     return url;
-  }, [activeTenantId, error, loaded, scope, status.canManage, status.environment, status.state, tenantLoading]);
+  }, [activeTenantId, approval, error, loaded, scope, status, tenantLoading]);
   const current = loaded === scope && !tenantLoading;
   return { ...(current ? status : empty(activeTenantId ?? "")), loading: !current || loading,
     error: current && error, busy: current && busy, message: current ? message : null,
-    reload: () => read("status"), refresh: () => read("refresh_status"), begin };
+    approval: current ? approval : null,
+    cancelReview: () => { if (!busyRef.current) { setApproval(null); operation.current = null; } },
+    reload: () => read("status"), refresh: () => read("refresh_status"),
+    begin: (_returnUrl?: string) => submit(false), approve: () => submit(true) };
 }

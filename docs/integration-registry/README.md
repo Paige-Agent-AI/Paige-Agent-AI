@@ -242,7 +242,8 @@ longer exists).
 | Google Search Console | marketing/public presence | `UNAVAILABLE` | prohibited | platform OAuth + tenant verified-site source and authenticated read proof required |
 | Google Business Profile | marketing/public presence | `UNAVAILABLE` | prohibited | Google project approval + tenant consent/location selection + receipts/readback required |
 | Microsoft 365 / Outlook | productivity/documents | `DEFERRED` | prohibited | not wired; sequenced after Google parity |
-| Stripe | finance/accounting/payments | `PARTIAL` | confirm | shared Sales direct-charge substrate deployed (#1769/#1779); authenticated merchant/payment acceptance and PayPal parity owed; Billing separate |
+| Stripe | finance/accounting/payments | `PARTIAL` | confirm | four merchant Spine/Chat declarations reuse governed Express setup/resume and safe reads; authenticated merchant/TEST payment proof owed; deployed direct-charge substrate (#1769/#1779) and Billing remain separate |
+| PayPal | finance/accounting/payments | `UNAVAILABLE` | prohibited | visible disabled Finance tile and non-executing GET readback normalizer; approved partner seller onboarding/delegated transport absent; no connector or payment claim |
 | QuickBooks | finance/accounting/payments | `PROOF_OWED` | confirm | catalogue real capability; governed read proof |
 | Plaid | finance/accounting/payments | `PARTIAL` | read | Funding & Coaching Tools package + per-tenant Financial connection; safe-read boundary (§2/§194) |
 | SmartCredit | finance/accounting/payments | `PROOF_OWED` | read | Funding & Coaching Tools package-gated; dormant (0 producers); entitlement+connection fail-closed gate OWED (§2/§194) |
@@ -265,3 +266,22 @@ longer exists).
 | Custom remote MCP | marketplace/MCP/automation | `PARTIAL` | confirm | encrypted headers and shared form shipped; authenticated proof owed. Incoming-contact binding/drawer merged in #1595; owner/sender proof remains owed. Candidate OAuth correction selects challenge scopes, then resource scopes, otherwise omits scope; never the authorization-server-wide catalogue. Provider acceptance and governed outbound execution remain unproven. See `../evidence/ui-delivery/mcp-oauth-resource-scopes.md` and `../delivery/mcp-contact-binding.md`. |
 | Browserbase | marketplace/MCP/automation | `PROPOSED` | prohibited | Secure Browser bootstrap browser-**worker** runtime (replaceable, behind a provider-neutral internal contract); review 2026-09-07 = **CONDITIONAL GO**, 7 vendor gates before wiring |
 | Paige browser + Firecrawl | marketplace/MCP/automation | `PARTIAL` | draft | G5/read-only egress deployed in #1042; DNS-rebinding + SSRF reconciliation and §32.c authenticated drive remain |
+
+### INT-311 Sales merchant connection boundary
+
+Stripe merchant status/refresh and setup/dashboard handoff use `sales_merchant.status`,
+`sales_merchant.refresh`, `sales_merchant.onboarding_start` and `sales_merchant.portal_link`.
+Their Chat tools are `read_sales_merchant_status`, `read_sales_merchant_refresh`,
+`sales_start_merchant_onboarding` and `sales_create_merchant_login_link`. The existing
+`tenant-stripe-connect` endpoint remains the sole approval consumer under shared high/confirm
+Trust, exact stored proposal binding and capability-run Rail. Current onboarding creates a new
+Stripe Express account; OAuth connection of an existing Stripe account is absent. The human
+finishes secure setup in Integrations. Hosted URLs never enter Chat or Rail; a handoff does not
+prove login completion or merchant readiness. Unknown creation uses bounded GET-only recovery,
+never a fresh creation retry. Local contract tests do not establish authenticated merchant or
+TEST payment acceptance: both remain PROOF OWED. Existing platform Billing and deployed Sales
+direct-charge substrate facts remain separate.
+
+PayPal is visible in the Finance filter with connection disabled and an unavailable explanation.
+Its GET-only readback normalizer is not delegated provider transport. Secure approved partner
+seller onboarding is absent; there is no fake connector, merchant activation or payment capability.

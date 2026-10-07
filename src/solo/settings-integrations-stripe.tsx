@@ -30,6 +30,10 @@ export function StripeMerchantDrawer({ merchant, onClose }: {
     const url = await merchant.begin(`${window.location.origin}${path}`);
     if (url && active.current) { armOAuthReturn(path); window.location.assign(url); }
   };
+  const approve = async () => {
+    const url = await merchant.approve();
+    if (url && active.current) { armOAuthReturn(`${window.location.pathname}?stripe_setup=return`); window.location.assign(url); }
+  };
   const fact = (value: boolean) => merchant.checkedAt ? merchant.state === "unverified" ? "Needs checking" : value ? "Enabled" : "Not enabled" : "Not verified";
   return <div className="ig-layer" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <aside className="ig-panel" ref={panel} role="dialog" aria-modal="true" aria-labelledby="stripe-merchant-title">
@@ -38,6 +42,7 @@ export function StripeMerchantDrawer({ merchant, onClose }: {
       <div className="ig-panel-body" tabIndex={0} aria-label="Stripe merchant setup details">
         <p className="ig-lede">Connect the payment account your business uses to receive customer money.</p>
         {merchant.loading ? <p className="ig-state" role="status">Reading this workspace’s Stripe connection…</p> : <>
+          {!merchant.connected && <p className="ig-note">This setup creates a Stripe Express account for your business. Linking an existing Stripe account is not available yet.</p>}
           <dl className="ig-facts">
             <div><dt>Connection</dt><dd>{stripeMerchantWords[merchant.state]}</dd></div>
             <div><dt>Environment</dt><dd>{merchant.environment === "test" ? "TEST · no real money" : merchant.environment === "live" ? "LIVE · real payments" : "Not verified"}</dd></div>
@@ -55,11 +60,21 @@ export function StripeMerchantDrawer({ merchant, onClose }: {
           {merchant.error ? <p className="ig-error" role="alert">Connection status is unavailable. Nothing is being claimed as ready. Refresh status before continuing.</p>
             : merchant.message && <p className="ig-error" role="alert">{merchant.message}</p>}
           {!merchant.canManage && !merchant.error && <p className="ig-note">Only a workspace owner or admin can manage this merchant connection.</p>}
+          {merchant.approval && <section aria-labelledby="stripe-setup-review-title" aria-live="polite">
+            <h3 id="stripe-setup-review-title">Review Stripe setup</h3>
+            <p className="ig-note">{merchant.approval.summary}</p>
+            <dl className="ig-facts"><div><dt>Provider</dt><dd>Stripe</dd></div>
+              <div><dt>Environment</dt><dd>{merchant.approval.preview.environment === "test" ? "TEST · no real money" : "LIVE · real payments"}</dd></div>
+              <div><dt>Action</dt><dd>Open hosted merchant setup</dd></div></dl>
+            <p className="ig-note">This authorizes this setup action. You will complete the business details on Stripe. It does not authorize a customer payment.</p>
+            <div className="ig-actions"><button type="button" className="ig-btn" data-primary disabled={merchant.busy} onClick={() => void approve()}>Approve Stripe setup</button>
+              <button type="button" className="ig-btn" disabled={merchant.busy} onClick={merchant.cancelReview}>Cancel review</button></div>
+          </section>}
           <div className="ig-actions">
-            {merchant.canManage && <button type="button" className="ig-btn" data-primary
+            {merchant.canManage && !merchant.approval && <button type="button" className="ig-btn" data-primary
               disabled={merchant.busy || merchant.error || !merchant.environment || merchant.state === "outcome_unknown"}
               onClick={() => void begin()}><ExternalLink aria-hidden size={14} />
-              {merchant.busy ? "Checking Stripe…" : `${merchant.connected ? "Continue Stripe setup" : "Connect Stripe"}${merchant.environment ? ` (${merchant.environment.toUpperCase()})` : ""}`}</button>}
+              {merchant.busy ? "Checking Stripe…" : `${merchant.connected ? "Continue Stripe setup" : "Set up Stripe"}${merchant.environment ? ` (${merchant.environment.toUpperCase()})` : ""}`}</button>}
             <button type="button" className="ig-btn" disabled={merchant.busy} onClick={() => void (merchant.canManage ? merchant.refresh() : merchant.reload())}>
               <RefreshCw aria-hidden size={14} />Refresh status</button>
           </div>

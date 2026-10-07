@@ -9,6 +9,7 @@ vi.mock("./data/oauthReturn", () => ({ armOAuthReturn: vi.fn() }));
 const status = (patch = {}) => ({ tenantId: "test-tenant", connected: false, canManage: true, environment: "test", bindingVersion: null,
   chargesEnabled: false, payoutsEnabled: false, detailsSubmitted: false, paymentPermission: false, checkedAt: null,
   state: "not_connected", loading: false, error: false, busy: false, message: null,
+  approval: null, cancelReview: vi.fn(), approve: vi.fn().mockResolvedValue(null),
   reload: vi.fn(), refresh: vi.fn(), begin: vi.fn().mockResolvedValue(null), ...patch }) as ReturnType<typeof useStripeMerchant>;
 async function render(merchant: ReturnType<typeof useStripeMerchant>) {
   const host = document.createElement("div"); document.body.append(host); const root = createRoot(host); const close = vi.fn();
@@ -16,11 +17,19 @@ async function render(merchant: ReturnType<typeof useStripeMerchant>) {
   return { host, close, dispose: async () => { await act(async () => root.unmount()); host.remove(); } };
 }
 describe("Stripe merchant owner experience", () => {
+  it("shows the exact server review without executing before the human approves", async () => {
+    const merchant = status({ approval: { fingerprint: "0123456789abcdef", summary: "Open this workspace’s Stripe TEST setup", expiresAt: new Date(Date.now()+60000).toISOString(), preview: { action: "merchant.start_onboarding", provider: "stripe", environment: "test", binding_version: null } } });
+    const p = await render(merchant);
+    expect(p.host.textContent).toContain("Review Stripe setup"); expect(p.host.textContent).toContain("does not authorize a customer payment");
+    expect(merchant.approve).not.toHaveBeenCalled();
+    await act(async () => Array.from(p.host.querySelectorAll("button")).find(b => b.textContent === "Approve Stripe setup")?.click());
+    expect(merchant.approve).toHaveBeenCalledOnce(); await p.dispose();
+  });
   it("does not navigate after a pending drawer is abandoned", async () => {
     let complete!: (value: string) => void;
     const merchant = status({ begin: vi.fn(() => new Promise<string>(resolve => { complete = resolve; })) });
     const p = await render(merchant); vi.mocked(armOAuthReturn).mockClear();
-    await act(async () => Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Connect Stripe"))?.click());
+    await act(async () => Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Set up Stripe"))?.click());
     await p.dispose(); await act(async () => complete("https://connect.stripe.com/setup/test"));
     expect(armOAuthReturn).not.toHaveBeenCalled();
   });
@@ -37,7 +46,7 @@ describe("Stripe merchant owner experience", () => {
   });
   it("starts only on an explicit owner action", async () => {
     const merchant = status(); const p = await render(merchant); expect(merchant.begin).not.toHaveBeenCalled();
-    await act(async () => (Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Connect Stripe")))?.click());
+    await act(async () => (Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Set up Stripe")))?.click());
     expect(merchant.begin).toHaveBeenCalledOnce(); await p.dispose();
   });
   it("does not claim redirect means connected or settled", async () => {
@@ -46,19 +55,19 @@ describe("Stripe merchant owner experience", () => {
   });
   it("unknown setup cannot start another account", async () => {
     const p = await render(status({ state: "outcome_unknown" }));
-    expect(Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Connect Stripe"))?.disabled).toBe(true);
+    expect(Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Set up Stripe"))?.disabled).toBe(true);
     expect(p.host.textContent).toContain("existing attempt"); await p.dispose();
   });
   it("restricted role cannot manage setup; reads remain available", async () => {
     const merchant = status({ canManage: false }); const p = await render(merchant);
-    expect(p.host.textContent).not.toContain("Connect Stripe (");
+    expect(p.host.textContent).not.toContain("Set up Stripe (");
     await act(async () => Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Refresh status"))?.click());
     expect(merchant.reload).toHaveBeenCalledOnce(); expect(merchant.refresh).not.toHaveBeenCalled(); await p.dispose();
   });
   it("error keeps readiness unclaimed and has a recovery action", async () => {
     const p = await render(status({ error: true, state: "unverified", message: "Refresh to check." }));
     expect(p.host.querySelector('[role="alert"]')?.textContent).toContain("Nothing is being claimed as ready");
-    expect(Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Connect Stripe"))?.disabled).toBe(true); await p.dispose();
+    expect(Array.from(p.host.querySelectorAll("button")).find(b => b.textContent?.includes("Set up Stripe"))?.disabled).toBe(true); await p.dispose();
   });
   it("Escape closes the contextual drawer", async () => {
     const p = await render(status()); await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));

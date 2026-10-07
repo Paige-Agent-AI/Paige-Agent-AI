@@ -99,7 +99,7 @@ Deno.serve(async req=>{
   row={...row,binding_version:saved.data,provider_environment:environment};
   await scope();const current=await admin.from('tenant_stripe_accounts').select('*').eq('tenant_id',tenantId).single();if(current.error||!current.data)throw Error('STORAGE_UNAVAILABLE');
   if(current.data.stripe_account_id!==facts.merchant_id||current.data.provider_environment!==environment||current.data.binding_version!==saved.data)throw Error('BINDING_CHANGED');
-  row=current.data;
+  row=current.data as MerchantRow;
   if(action==='start_onboarding'||action==='login_link'){
    const link=await around('hosted_link',()=>action==='start_onboarding'?stripe.accountLinks.create({account:row!.stripe_account_id!,refresh_url:targets!.refresh_url,return_url:targets!.return_url,type:'account_onboarding'}):stripe.accounts.createLoginLink(row!.stripe_account_id!));
    const hosted=hostedLink(link);stage='receipt';await scope();

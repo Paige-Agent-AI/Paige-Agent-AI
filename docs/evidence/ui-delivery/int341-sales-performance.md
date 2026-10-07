@@ -55,3 +55,13 @@ Vercel PREVIEW READY: dpl_BM2PRPDZ7kqc29ZGkxPcXQHrvskr for the code head. This i
 Local Windows full regression: 9794 passed / 41 failed. A clean current-main baseline reproduced 31 focused failures across platform guard/shell/form/stream contracts; additional timeout-sensitive cases passed focused baseline reruns. Ten TypeScript baseline diagnostics are unchanged on clean current main. These local results do not waive required hosted CI or establish a green full suite. No unrelated product code was changed.
 
 Shared #1814 remains an Analytics-owned development dependency. Its issuer/resolver deployment and signed-in production privacy verification are not established. Sales cannot release those shared files through this PR. No mutation/provider authority is introduced; #1806 remains held.
+
+## Observed production delivery — 2026-10-07
+
+This dated observation supersedes the preceding historical dependency/release-hold state. Analytics supplied the verified #1814 production handoff: shared05/06 persisted, issuer/resolver bodies and ACLs verified, controlled real GoTrue/PostgREST transport/isolation proof passed. Sales reconciled the unchanged approved consumer onto current main; its final14-file diff contained only Sales-owned presentation files.
+
+Reviewed head `7fb3737a061e4cc9a0e5b76dbe8e9e4e51e755a6`: independent non-author COMPLETE/SHIP, focused35PASS and all nine applicable hosted checks SUCCESS, including full659-file/9886-test regression and database-contract. PR #1821 merged `edaf2e75cc69ae0a85b1a871125b2cf8120aa626`. Vercel production `dpl_3iAGiXi4FekKm8WpG6TfsuKkgyju` READY at that exact SHA with canonical paigeagent.ai/app.paigeagent.ai aliases.
+
+Production application and its referenced `SoloEntry-C004XIAU.js` served HTTP200; chart/view/evidence and canonical metric consumer markers verified. `SoloEntry-C1bPU5fU.css` served HTTP200 with Performance styles and reduced-motion rules. These are deployment/served-code proofs, not authenticated chart execution. The earlier synthetic initial/refresh/view/period, keyboard and geometry proofs remain applicable to unchanged product code.
+
+Authenticated owner/admin Performance use, real-data browser refresh/workspace/role negatives and typed Chat/Live reach remain UNVERIFIED/PROOF OWED. Browser helper exited before inspection. No provider action or money movement occurred. Strongest UI delivery state: MERGED + DEPLOYED; INT-341 product acceptance remains open.

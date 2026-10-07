@@ -1,0 +1,9 @@
+{
+  "barsVisible": true,
+  "selectionUpdates": true,
+  "before": "Oct 6 UTC · 13 recorded requests",
+  "after": "Sep 30 UTC · 8 recorded requests",
+  "evidenceUsesUTC": true,
+  "readinessDrilldown": true,
+  "classification": "synthetic local implementation"
+}

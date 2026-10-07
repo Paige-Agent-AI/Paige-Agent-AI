@@ -193,12 +193,16 @@ function extractJson(raw: string): Record<string, unknown> | null {
  * fabricate a pass, §31 — the INVERSE of the visual critic's fail-open-to-SHIP). The single call
  * self-traces to L1 via routedChatCompletion(trace); we wire no second trace (no double-count).
  */
-export async function rubricJudge(input: ScorerInput, trace?: TraceCtx, version: "v1" | "v2" = "v1"): Promise<ScoreResult> {
+export async function rubricJudge(input: ScorerInput, trace?: TraceCtx, version: "v1" | "v2" | "v3" = "v1"): Promise<ScoreResult> {
   // R3 judge repair: v1 keeps its exact original behavior (500-token budget) so the frozen
   // Q0 baseline stays reproducible. v2 raises ONLY the output budget (1600) — the finding-wise
   // entailment audits degraded at 500 — and stamps the scorer name so results are separable.
-  const maxTokens = version === "v2" ? 1600 : 500;
-  const scorerName = version === "v2" ? "rubric_judge_v2" : "rubric_judge";
+  // R6-A G.3 (owner ruling): v3 = the deliberately versioned successor after Sonnet 5's
+  // retirement — same rubric, same 1600-token budget, evaluator pinned by the ROUTE the
+  // served model reports (Sonnet 5.5 via the #1783 seam), scorer name stamped, and NO
+  // dynamic routing / failover of its own: an unavailable evaluator returns null, preserved.
+  const maxTokens = version === "v2" || version === "v3" ? 1600 : 500;
+  const scorerName = version === "v3" ? "rubric_judge_v3" : version === "v2" ? "rubric_judge_v2" : "rubric_judge";
   const rubric = typeof input.rubric === "string" ? input.rubric.trim() : "";
   if (!rubric) {
     return { scorer: scorerName, scorerKind: "llm_judge", score: null, passed: null, status: "needs_config", rationale: "no rubric supplied" };

@@ -25,7 +25,7 @@ MUST_PRESERVE: C0-C4c, INT-336 interruption and batch fencing, INT-338 attachmen
 ACCEPTANCE_CRITERIA: Only scope-bound server issuance enables release; signed-in production handoff and unavailable-evidence refusal must be proven before clearing the hard stop.
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: Canonical transcript, thread executor, service/caller role separation, compare-release and uncertainty brake exercised; attachment and frontend contracts untouched.
-INTERNAL_BUILD_IDENTITY: ec567b020dba2cadd6d44f45d833510452d78541 (grounded main; patch head recorded in PR #1823); deployment=PROOF_OWED(not merged); environment=development; migrations=PROOF_OWED(candidate migration 20270601000005_int346_server_issued_interactive_receipts not applied); edge=PROOF_OWED(candidate paige-ai-chat not deployed); evidence=this record and scripts/int346-database-check.mjs
+INTERNAL_BUILD_IDENTITY: ec567b020dba2cadd6d44f45d833510452d78541 (grounded main; patch head recorded in PR #1823); deployment=PROOF_OWED(not merged); environment=development; migrations=PROOF_OWED(candidate migration 20270601000007_int346_server_issued_interactive_receipts not applied); edge=PROOF_OWED(candidate paige-ai-chat not deployed); evidence=this record and scripts/int346-database-check.mjs
 RELEASE_CHANNEL: development: candidate only; production identity recorded after actual deployment
 RELEASE_CLASSIFICATION: patch: security authority repair
 CUSTOMER_RELEASE_IDENTITY: none: routine repair does not create a named customer release

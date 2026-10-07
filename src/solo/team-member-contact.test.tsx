@@ -117,8 +117,9 @@ describe("Team → how the team reaches a person", () => {
     });
     expect(host.textContent).toContain("Your contact details are saved.");
     // The save button leaves once nothing is unsaved; focus lands on the outcome, not the page.
-    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-    expect(document.activeElement?.textContent).toBe("Your contact details are saved.");
+    await vi.waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("Your contact details are saved.");
+    });
     expect(dirty).toHaveBeenLastCalledWith(false);
   });
 

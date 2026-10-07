@@ -29,7 +29,7 @@ async function cancel(error:unknown=null,current=true){
  const queries:unknown[][]=[];const query:Record<string,unknown>={};
  for(const method of ['update','eq','in','is','not'])query[method]=(...args:unknown[])=>{queries.push([method,...args]);return query};
  query.then=(resolve:(v:unknown)=>unknown)=>Promise.resolve({error}).then(resolve);
- const bindings={fps:['0123456789abcdef'],revalidateProposalScope:async()=>current,selectedConfirmationNonce:async()=>null,supabase:{from:()=>query},personaCtx:{tenant_id:'test-tenant'},user:{id:'test-actor'},payloadThreadId:'test-thread',scopedClientId:null,CRM_COMMAND_TOOL_NAMES:new Set(['crm_create_contact']),SALES_INVOICE_TOOL_NAMES,SALES_COLLECTIONS_TOOL_NAMES,GROWTH_PUBLISH_DOOR_TOOL_NAMES,COMMS_EMAIL_TOOL_NAMES,console:{error:()=>{}}};
+ const bindings={interactive:undefined,fps:['0123456789abcdef'],revalidateProposalScope:async()=>current,selectedConfirmationNonce:async()=>null,supabase:{from:()=>query},personaCtx:{tenant_id:'test-tenant'},user:{id:'test-actor'},payloadThreadId:'test-thread',scopedClientId:null,CRM_COMMAND_TOOL_NAMES:new Set(['crm_create_contact']),SALES_INVOICE_TOOL_NAMES,SALES_COLLECTIONS_TOOL_NAMES,GROWTH_PUBLISH_DOOR_TOOL_NAMES,COMMS_EMAIL_TOOL_NAMES,console:{error:()=>{}}};
  return {recorded:await new Function(...Object.keys(bindings),cancelBody)(...Object.values(bindings)),queries};
 }
 describe('actual Sales Chat cancellation containment',()=>{

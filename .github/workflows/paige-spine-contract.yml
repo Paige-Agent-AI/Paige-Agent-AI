@@ -34,6 +34,7 @@ on:
       - "supabase/tests/record_capability_run_single_overload.sql"
       - "supabase/tests/mcp_tool_catalog_tenant_scope.sql"
       - "supabase/tests/mcp_oauth_refuses_the_rest_facet.sql"
+      - "supabase/tests/s5_owner_memory_backfill.sql"
       - "supabase/migrations/20270412090000_a_tenant_can_read_its_own_tool_catalog.sql"
       - "supabase/migrations/20270411090000_one_record_capability_run_not_two.sql"
       - "scripts/proof/mcp-gateway-endpoint-consent-race.mjs"
@@ -184,6 +185,7 @@ jobs:
       # no-tenant-parameter RPCs, policy shapes). The engine-side lineage logic is pinned by
       # src/__tests__/deep-research-m0-contract.test.ts.
       - run: supabase test db supabase/tests/research_tenant_lineage.sql
+      - run: supabase test db supabase/tests/s5_owner_memory_backfill.sql
         if: ${{ !cancelled() }}
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql

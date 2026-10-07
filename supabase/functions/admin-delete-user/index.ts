@@ -91,12 +91,23 @@ const handler = async (req: Request): Promise<Response> => {
       "credit_utilization_snapshots", "tasks", "documents", "consent_events",
       "notifications", "notification_preferences", "push_subscriptions",
       "push_notification_preferences", "push_notification_log",
-      "legal_acceptances", "client_goals", "client_memory", "client_notes",
+      "legal_acceptances", "client_goals", "client_memory", "paige_owner_memory", "client_notes",
       "communication_preferences", "tenant_members", "coach_clients",
       "broker_profiles", "broker_team_members", "affiliate_profiles",
     ];
+    // S5/P2: two stores key the person by a DIFFERENT column — client_memory by
+    // client_user_id (a bare user_id filter there is a PostgREST 400 swallowed into
+    // cleanup_errors, which the S5 cutover made load-bearing: a deletion must remove BOTH
+    // the canonical owner-memory copy AND the legacy client-memory originals).
+    const columnByTable: Record<string, string> = {
+      client_memory: "client_user_id",
+      paige_owner_memory: "user_id",
+      credit_alerts: "client_id",
+      client_notes: "author_user_id",
+      coach_clients: "client_user_id",
+    };
     for (const t of owned) {
-      await track(`delete ${t}`, admin.from(t).delete().eq("user_id", user_id));
+      await track(`delete ${t}`, admin.from(t).delete().eq(columnByTable[t] ?? "user_id", user_id));
     }
 
     // Delete auth user

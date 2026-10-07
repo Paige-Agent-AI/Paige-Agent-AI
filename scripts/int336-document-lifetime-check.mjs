@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {createInteractiveLifetime,keepInteractiveStreamAlive} from '../supabase/functions/_shared/paige-turn/interactive.ts';
+let settleEffect,released=0,persisted=false;
+const effect=new Promise(resolve=>settleEffect=resolve);
+const life=createInteractiveLifetime({release:async()=>released++});
+const source=new ReadableStream({async pull(c){await effect;persisted=true;c.close()}});
+const wire=keepInteractiveStreamAlive(source,life);
+await wire.cancel();await life.handlerFinished();assert.equal(released,0);assert.equal(persisted,false);
+settleEffect();await new Promise(resolve=>setTimeout(resolve,0));assert.equal(persisted,true);assert.equal(released,1);
+console.log('PASS: consumer Stop/disconnect preserves in-flight effect, drains producer persistence, releases after settlement');

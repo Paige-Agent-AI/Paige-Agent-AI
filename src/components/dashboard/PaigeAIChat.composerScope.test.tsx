@@ -64,16 +64,17 @@ vi.mock("@/hooks/usePaigeThreads", () => ({
   }),
 }));
 vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
-  PaigeLiveConversation: (props: { ensureThread: () => Promise<string>; onVoiceTurn: (text: string, sink: LiveVoiceSink) => Promise<void>; onVoiceInterrupt: () => void }) => {
+  PaigeLiveConversation: (props: { disabled?: boolean; ensureThread: () => Promise<string>; onVoiceTurn: (text: string, sink: LiveVoiceSink) => Promise<void>; onVoiceInterrupt: () => void }) => {
     harness.liveEnsureThread = props.ensureThread;
     harness.liveVoiceTurn = props.onVoiceTurn;
     harness.liveInterrupt = props.onVoiceInterrupt;
-    return null;
+    return <button aria-label="Start Live Conversation" disabled={props.disabled}>Live</button>;
   },
 }));
 
 import { PaigeAIChat } from "./PaigeAIChat";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
+import { supabase } from "@/integrations/supabase/client";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -143,6 +144,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
           fill
           enableHistory
           soloTenantSafety
+          liveConversation={false}
           renderRail={(api) => { harness.rail = api; return null; }}
           {...extra}
         />,
@@ -163,6 +165,60 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
   };
 
   // Ask PAIGE from a surface (src/lib/paigePromptHandoff.ts): the question lands in the composer and
+  it("keeps Live guarded after Stop until canonical settlement, while text remains writable", async () => {
+    let resolveStatus!: (response: Response) => void;
+    const status = new Promise<Response>((resolve) => { resolveStatus = resolve; });
+    const bodies: Array<Record<string, unknown>> = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      bodies.push(body);
+      if (body.interactive?.kind === "status") return status;
+      if (body.interactive?.kind === "stop") return new Response("{}", { status: 200 });
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    }));
+    await render({ liveConversation: true });
+    await type("work first");
+    await act(async () => { send().click(); await settle(); });
+    await act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!.click(); await settle(); });
+    const live = host.querySelector<HTMLButtonElement>('button[aria-label="Start Live Conversation"]')
+      ?? Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent?.includes("Live"));
+    expect(live).toBeDefined();
+    expect(live!.disabled).toBe(true);
+    await type("next thought");
+    expect(textarea().disabled).toBe(false);
+    expect(send().disabled).toBe(false);
+    expect(bodies.filter((body) => (body.interactive as { kind?: string })?.kind === "message")).toHaveLength(1);
+    await act(async () => { resolveStatus(new Response(JSON.stringify({ settled: true }), { status: 200 })); await settle(); });
+    expect(live!.disabled).toBe(false);
+    expect(textarea().value).toBe("next thought");
+  });
+
+  it.each(["preflight", "rejected"] as const)("restores predecessor settlement polling after a %s successor", async (failure) => {
+    let messages = 0;
+    let statuses = 0;
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      if (body.interactive?.kind === "status") {
+        statuses += 1;
+        return new Response(JSON.stringify({ settled: statuses > 1 }), { status: 200 });
+      }
+      messages += 1;
+      if (messages > 1) return new Response(JSON.stringify({ message_accepted: false }), { status: 429 });
+      return successfulStream();
+    }));
+    await render({ liveConversation: true });
+    await type("first instruction");
+    await act(async () => { send().click(); await settle(); });
+    const live = host.querySelector<HTMLButtonElement>('button[aria-label="Start Live Conversation"]')!;
+    expect(live.disabled).toBe(true);
+    if (failure === "preflight") vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({ data: { session: null }, error: null });
+    await type("rejected successor");
+    await act(async () => { send().click(); await settle(); });
+    expect(live.disabled).toBe(false);
+    expect(statuses).toBe(2);
+    expect(textarea().value).toBe("rejected successor");
+  });
+
   // waits for the owner. Nothing is sent on their behalf.
   it("puts a question handed off before the chat mounted into the composer, without sending it", async () => {
     handOffPaigePrompt("How did my leads do this month?");
@@ -191,7 +247,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
   it.each(["http-500", "fetch-rejection"] as const)("does not offer unsafe or inert Live replay after %s", async (failure) => {
     if (failure === "http-500") vi.mocked(fetch).mockResolvedValueOnce(serverFailure());
     else vi.mocked(fetch).mockRejectedValueOnce(new Error("fixture-network-failure"));
-    await render();
+    await render({ liveConversation: true });
     await waitForWritable();
     const sink = { challenge: "test-challenge", proof: vi.fn(), done: vi.fn(), failed: vi.fn() };
     await act(async () => { await harness.liveVoiceTurn!("Keep my spoken question", sink); await settle(); });
@@ -206,7 +262,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
 
   it("honestly refuses offline Live without an inert Retry or request", async () => {
     vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
-    await render();
+    await render({ liveConversation: true });
     await waitForWritable();
     const sink = { challenge: "test-challenge", proof: vi.fn(), done: vi.fn(), failed: vi.fn() };
     await act(async () => { await harness.liveVoiceTurn!("Offline spoken question", sink); await settle(); });
@@ -231,7 +287,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
         return realSetTimeout(fn, delay, ...args);
       }) as typeof window.setTimeout);
       vi.mocked(fetch).mockResolvedValueOnce(response);
-      await render();
+      await render({ liveConversation: true });
       await waitForWritable();
       const sink = { challenge: "test-challenge", proof: vi.fn(), done: vi.fn(), failed: vi.fn() };
       let turn!: Promise<void>;
@@ -290,7 +346,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
       let resolveThread: ((id: string) => void) | null = null;
       harness.ensureThread.mockImplementationOnce(() => new Promise((resolve) => { resolveThread = resolve; }));
 
-      await render(originProps);
+      await render({ ...originProps, liveConversation: true });
       await waitForWritable();
       await type(`origin ${change} draft`);
       const ensureForOrigin = harness.liveEnsureThread!;
@@ -307,7 +363,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
         // A real tenant/user query publishes a new result object for the new scope.
         harness.threads = [...harness.threads];
       }
-      await render(targetProps);
+      await render({ ...targetProps, liveConversation: true });
       await waitForWritable();
       expect(textarea().value).toBe("");
 
@@ -324,7 +380,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
       if (change === "tenant" || change === "effective-user") {
         harness.threads = [...harness.threads];
       }
-      await render(originProps);
+      await render({ ...originProps, liveConversation: true });
       await waitForWritable();
       expect(textarea().value).toBe(`origin ${change} draft`);
     },
@@ -333,7 +389,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
   it("adopts and migrates the Live thread when the complete scope remains unchanged", async () => {
     let resolveThread: ((id: string) => void) | null = null;
     harness.ensureThread.mockImplementationOnce(() => new Promise((resolve) => { resolveThread = resolve; }));
-    await render({ clientId: "client-a", businessMissionId: "mission-a" });
+    await render({ clientId: "client-a", businessMissionId: "mission-a", liveConversation: true });
     await waitForWritable();
     await type("same-scope draft");
     const ensureForOrigin = harness.liveEnsureThread!;
@@ -694,14 +750,14 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
         await Promise.resolve();
       });
       expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(textarea().disabled).toBe(true);
+      expect(textarea().disabled).toBe(!soloTenantSafety);
 
       await act(async () => {
         resolveOrigin?.(streamed("STALE THREAD A"));
         await settle();
       });
       expect(host.textContent).not.toContain("STALE THREAD A");
-      expect(textarea().disabled).toBe(true);
+      expect(textarea().disabled).toBe(!soloTenantSafety);
 
       await act(async () => {
         resolveTarget?.(streamed("FRESH THREAD B"));
@@ -721,11 +777,124 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
         harness.rail!.onSelect("thread-a");
         await settle();
       });
-      expect(textarea().value).toBe("thread A retained draft");
+      expect(textarea().value).toBe(soloTenantSafety ? "" : "thread A retained draft");
     },
   );
 
-  it("rolls back the optimistic user turn on Cancel while retaining the scoped draft", async () => {
+  it("keeps typing passive during Thinking and keeps a newer draft when the answer settles", async () => {
+    let finish: ((response: Response) => void) | undefined;
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) => new Promise<Response>((resolve) => { finish = resolve; }));
+    vi.stubGlobal("fetch", fetchMock);
+    await render();
+    await type("first instruction");
+    await act(async () => { send().click(); await settle(); });
+    const signal = (fetchMock.mock.calls[0]?.[1] as RequestInit | undefined)?.signal;
+    expect(textarea().disabled).toBe(false);
+    expect(textarea().value).toBe("");
+    textarea().focus();
+    await type("my next thought");
+    expect(signal?.aborted).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await act(async () => { finish?.(streamed("current answer finished")); await settle(); });
+    expect(textarea().value).toBe("my next thought");
+    expect(document.activeElement).toBe(textarea());
+  });
+
+  it("Send during Thinking supersedes the existing fence and drops stale bytes", async () => {
+    let finishOld: ((response: Response) => void) | undefined;
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => { finishOld = resolve; }))
+      .mockImplementationOnce(async () => streamed("newest instruction answered"));
+    vi.stubGlobal("fetch", fetchMock);
+    await render();
+    await type("first instruction");
+    await act(async () => { send().click(); await settle(); });
+    const oldInit = fetchMock.mock.calls[0][1] as RequestInit;
+    await type("instead use this instruction");
+    await act(async () => { send().click(); await settle(); });
+    expect(oldInit.signal?.aborted).toBe(true);
+    const oldBody = JSON.parse(String(oldInit.body));
+    const newBody = JSON.parse(String((fetchMock.mock.calls[1][1] as RequestInit).body));
+    expect(newBody.interactive).toEqual({ kind: "message", supersedesIntentId: oldBody.requestIntentId });
+    expect(newBody.threadId).toBe(oldBody.threadId);
+    expect(newBody.approvedConfirmations).toBeUndefined();
+    expect(newBody.resume).toBeUndefined();
+    await act(async () => { finishOld?.(streamed("STALE OLD TAIL")); await settle(); });
+    expect(host.textContent).not.toContain("STALE OLD TAIL");
+    expect(host.textContent).toContain("newest instruction answered");
+    expect(textarea().disabled).toBe(false);
+  });
+
+  it("consumes a submitted draft synchronously so rapid duplicate Enter cannot execute it twice", async () => {
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => streamed("one answer"));
+    vi.stubGlobal("fetch", fetchMock);
+    await render();
+    await type("only once");
+    await act(async () => { send().click(); send().click(); await settle(); });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body));
+    expect(body.messages.filter((m: { role: string }) => m.role === "user")).toHaveLength(1);
+  });
+
+  it("retains the next draft until lazy thread resolution makes the first send canonical", async () => {
+    let resolveThread!: (id: string) => void;
+    harness.ensureThread.mockImplementationOnce(() => new Promise<string>((resolve) => { resolveThread = resolve; }));
+    vi.stubGlobal("fetch", vi.fn(async () => streamed("first answer")));
+    await render();
+    await type("first instruction");
+    await act(async () => { send().click(); await settle(); });
+    await type("next thought");
+    await act(async () => { send().click(); await settle(); });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(textarea().value).toBe("next thought");
+    expect(Array.from(host.querySelectorAll('[data-paige-message-id]')).some((m) => m.textContent?.includes("next thought"))).toBe(false);
+    await act(async () => { resolveThread("thread-created"); await settle(); });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(textarea().value).toBe("next thought");
+  });
+
+  it("keeps an ambiguous HTTP failure truthful and never offers an execution replay", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => serverFailure()));
+    await render(); await type("create the task");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("create the task");
+    expect(host.textContent).toContain("Check what finished before repeating any action");
+    expect(host.textContent).not.toContain("Your message wasn't sent");
+    expect(Array.from(host.querySelectorAll("button")).some((b) => b.textContent === "Retry")).toBe(false);
+    expect(textarea().value).toBe("");
+  });
+
+  it("Stop during lazy thread creation releases submission readiness for a fresh Send", async () => {
+    let resolveThread!: (id: string) => void;
+    harness.ensureThread.mockImplementationOnce(() => new Promise<string>((resolve) => { resolveThread = resolve; }));
+    vi.stubGlobal("fetch", vi.fn(async () => streamed("new instruction answered")));
+    await render(); await type("obsolete instruction");
+    await act(async () => { send().click(); await settle(); });
+    await act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!.click(); await settle(); });
+    expect(textarea().value).toBe("obsolete instruction");
+    expect(fetch).not.toHaveBeenCalled();
+    await type("new instruction");
+    await act(async () => { send().click(); resolveThread("thread-created"); await settle(); });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(host.textContent).toContain("new instruction answered");
+    expect(textarea().disabled).toBe(false);
+  });
+
+  it("a superseded HTTP error body cannot overwrite the newer turn", async () => {
+    let resolveBody!: (body: unknown) => void;
+    const slowError = { ok: false, status: 502, clone: () => ({ json: () => new Promise((resolve) => { resolveBody = resolve; }) }) };
+    const fetchMock = vi.fn().mockResolvedValueOnce(slowError).mockResolvedValueOnce(streamed("current answer"));
+    vi.stubGlobal("fetch", fetchMock);
+    await render(); await type("old instruction");
+    await act(async () => { send().click(); await settle(); });
+    await type("new instruction");
+    await act(async () => { send().click(); await settle(); });
+    await act(async () => { resolveBody({ message_accepted: true }); await settle(); });
+    expect(host.textContent).toContain("current answer");
+    expect(host.textContent).not.toContain("Check what finished before repeating any action");
+  });
+
+  it("Stop preserves the canonical optimistic turn and a next draft without resending work", async () => {
     let originSignal: AbortSignal | undefined;
     const fetchMock = vi.fn()
       .mockImplementationOnce((_url: string, init?: RequestInit) => {
@@ -750,27 +919,25 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    await type("next thought survives Stop");
+    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!;
     await act(async () => {
       cancel.click();
       await settle();
     });
 
     expect(originSignal?.aborted).toBe(true);
-    expect(textarea().value).toBe("cancel-safe prompt");
+    expect(textarea().value).toBe("next thought survives Stop");
     expect(host.textContent?.match(/cancel-safe prompt/g)).toHaveLength(1);
 
-    await act(async () => {
-      send().click();
-      await settle();
-    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(host.textContent?.match(/cancel-safe prompt/g)).toHaveLength(1);
     const retryBody = JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit | undefined)?.body));
-    expect(retryBody.messages.filter((message: { role: string }) => message.role === "user")).toHaveLength(1);
+    expect(retryBody.interactive.kind).toBe("stop");
+    expect(retryBody.interactive.supersedesIntentId).toBe(JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body)).requestIntentId);
   });
 
-  it("migrates a lazy new-chat draft and preserves a newer edit after successful Retry", async () => {
+  it("migrates the thread scope and preserves a newer draft after an ambiguous server failure", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => serverFailure()));
     await render({ clientId: "client-a" });
     await type("original submission");
@@ -778,17 +945,13 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
       send().click();
       await settle();
     });
-    expect(textarea().value).toBe("original submission");
+    expect(textarea().value).toBe("");
     expect(harness.ensureThread).toHaveBeenCalledTimes(1);
 
     await type("newer edit that must survive");
-    vi.stubGlobal("fetch", vi.fn(async () => successfulStream()));
     const retry = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
-      .find((button) => button.textContent === "Retry")!;
-    await act(async () => {
-      retry.click();
-      await settle();
-    });
+      .find((button) => button.textContent === "Retry");
+    expect(retry).toBeUndefined();
 
     expect(textarea().value).toBe("newer edit that must survive");
     expect(host.textContent).not.toContain("Your message wasn't sent");

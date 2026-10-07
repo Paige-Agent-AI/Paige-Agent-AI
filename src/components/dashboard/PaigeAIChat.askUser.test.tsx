@@ -140,7 +140,7 @@ async function mount(extra: Record<string, unknown> = {}) {
   const root = createRoot(host);
   lastRoot = root;
   await act(async () => {
-    root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety {...extra} />);
+    root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} {...extra} />);
     await flush();
   });
   mounted.push(async () => { await act(async () => { root.unmount(); }); host.remove(); });
@@ -486,19 +486,15 @@ describe("C4c — an answer claimed with nothing after it keeps the composer bou
 });
 
 describe("C4c — a connection retry of an answer keeps it the answer (re-verifier 2, N2)", () => {
-  it("a 5xx with no answer code offers Retry, and Retry sends the same words WITH the question's id", async () => {
+  it("an ambiguous 5xx retains the explicit answer binding without offering an execution replay", async () => {
     const bodies = server(asks([], "When should the onboarding start?"), { ok: false as const, status: 500, json: async () => ({ error: "Something went wrong", reason: "Something went wrong on our side." }), clone() { return { json: this.json }; } }, continues());
     const host = await mount();
     await send(host, "Set up onboarding for Kestrel.");
     await send(host, "Start it November 1.");
     expect(bodies[1].resume).toEqual({ kind: "answer", ask_id: ASK_ID });
-    const retry = button(host, /^Retry$/)!;
-    expect(retry).not.toBeNull();
-    await act(async () => { retry.click(); await flush(); });
-    await act(async () => { await flush(); });
-    expect(bodies).toHaveLength(3);
-    expect(bodies[2].resume).toEqual({ kind: "answer", ask_id: ASK_ID });
-    expect(bodies[2].messages.at(-1)!.content).toBe("Start it November 1.");
+    expect(button(host, /^Retry$/)).toBeNull();
+    expect(bodies).toHaveLength(2);
+    expect(host.textContent).toContain("Check what finished before repeating any action");
   });
 });
 

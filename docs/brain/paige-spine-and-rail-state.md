@@ -1,5 +1,11 @@
 # PAIGE Spine & Rail — verified current state
 
+## UPDATE 2026-10-07 — canonical typed-turn supersession (INT-336)
+
+PR #1805 merged as `df2b1ebe161970275bdcf2d26298f197b1c10b55`; migration20270601000000 and paige-ai-chat v355 are deployed. This is a bounded conversation authority correction, not a new Brain, queue, capability executor or durable scheduler. A stable Solo draft remains writable; canonical acceptance and the thread executor serialize typed interactive generations. Dispatched effects settle and canonical terminal receipts persist before executor handoff. Completed effects remain; unknown consequential receipts block new writes pending authoritative reconciliation while reads/chat remain available. Durable work, exact approval fingerprints and explicit ASK_USER bindings retain existing authority.
+
+Source and deployment identity are verified; authenticated production behavior remains UNVERIFIED because browser control cannot start. Automatic uncertainty/crash-held executor recovery is not delivered (#1807). Authority: `docs/delivery/paige-conversational-loop-int336.md` and `docs/evidence/ui-delivery/int336-typed-interruption.md`. This update does not promote unrelated historic claims below.
+
 **Read this before claiming any department is "connected to PAIGE," before adding a Spine capability,
 and before reading anything into an empty Solo activity feed.**
 

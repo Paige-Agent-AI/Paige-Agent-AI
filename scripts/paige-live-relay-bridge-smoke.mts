@@ -127,7 +127,9 @@ const chat = readFileSync(new URL("../supabase/functions/paige-ai-chat/index.ts"
 check("canonical chat consumes challenge before any user-turn write", chat.indexOf('error: claimError') < chat.indexOf('p_role: "user"'));
 check("canonical chat scopes claim to actor tenant thread and epoch", ['.eq("actor_user_id", user.id)', '.eq("thread_id", scope.threadId)', '.eq("context_epoch", scope.epoch)', '.eq("tenant_id", scope.tenantId)'].every((s) => chat.includes(s)));
 check("spoken approval and substitute transcript are rejected", chat.includes('validatedData.approvedConfirmations?.length') && chat.includes('await liveRuntimeDigest(input[0].content) !== scope.transcriptHash'));
-check("proof wraps only final caller-visible SSE, not withheld upstream data", chat.includes('liveOutput(finalStream)') && chat.includes('liveOutput(stream)') && !chat.includes('liveOutput(response.body'));
+// Typed document responses now drain settled effects independently of disconnect;
+// Live still signs the final outward stream (the noninteractive branch is `stream`).
+check("proof wraps only final caller-visible SSE, not withheld upstream data", chat.includes('liveOutput(finalStream)') && chat.includes('liveOutput(interactiveLifetime ? keepInteractiveStreamAlive(stream, interactiveLifetime) : stream)') && !chat.includes('liveOutput(response.body'));
 // Execute the real pure history assignment extracted from the Edge handler;
 // the parser spy proves it rejoins the existing schema rather than bypassing it.
 const historyAssignment = chat.slice(chat.indexOf('const liveHistory ='), chat.indexOf('// Context comes from the verified thread'))

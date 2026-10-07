@@ -25,7 +25,7 @@ MUST_PRESERVE: Billing separation; canonical invoices/payments; direct-charge ze
 ACCEPTANCE_CRITERIA: scoped status/GET refresh, exact approved setup handoff, canonical readback/Rail, stale/foreign/replay refusal and visible truthful recovery
 MOTION_PURPOSE: NONE: no new motion
 PROTECTED_SEAMS: shared pending confirmations/CapabilityKit/Rail; no paige-ai-chat hotfile change; no Sales continuation, ledger or scheduler
-INTERNAL_BUILD_IDENTITY: branch=fix/sales-merchant-spine; base=adc6ae2e17165df40f8af4e4888c84f45da18235; deployment=not deployed; environment=local; migrations=PROOF_OWED(20270601000001 production persistence); edge=PROOF_OWED(tenant-stripe-connect and paige-ai-chat merged versions); evidence=this record
+INTERNAL_BUILD_IDENTITY: branch=fix/sales-merchant-spine; base=adc6ae2e17165df40f8af4e4888c84f45da18235; deployment=not deployed; environment=local; migrations=PROOF_OWED(20270601000007 production persistence); edge=PROOF_OWED(tenant-stripe-connect and paige-ai-chat merged versions); evidence=this record
 RELEASE_CHANNEL: development: implementation candidate; final production identity recorded only after independent verification
 RELEASE_CLASSIFICATION: internal-only: governed merchant foundation with provider acceptance still owed
 CUSTOMER_RELEASE_IDENTITY: none: no authenticated merchant/payment acceptance claim

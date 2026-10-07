@@ -28,7 +28,7 @@ try{
  const chain=['20270547000002_sales_collection_autonomy_catalogue.sql','20270548000000_studio_publish_autonomy_catalogue.sql','20270553000000_sales_invoice_preferences.sql','20270564000000_marketing_email_paige_tools.sql','20270582000000_sales_governed_invoice_draft.sql','20270587000000_sales_governed_commercial_create.sql','20270595000000_marketing_email_series_paige_tools.sql','20270597000001_sales_invoice_provider_operations.sql'];
  for(const name of chain){const src=read(name),match=src.match(/DO \$\$ BEGIN\s*IF to_regprocedure\('public\.(_list_tool_autonomy\w*)\(uuid\)'\) IS NULL THEN\s*ALTER FUNCTION public\.list_tool_autonomy\(uuid\) RENAME TO \1;\s*END IF;\s*END \$\$;/);assert(match,name);run(match[0]+fn(src));}
  const before=run(`SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY tool_key),'[]') FROM list_tool_autonomy('${tenant}') t;`),pending=run('SELECT row_to_json(t) FROM tenant_stripe_accounts t;');
- const migration=read('20270601000001_sales_merchant_tool_catalogue.sql');run(migration);run(migration);
+ const migration=read('20270601000007_sales_merchant_tool_catalogue.sql');run(migration);run(migration);
  eq(`SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY tool_key),'[]') FROM list_tool_autonomy('${tenant}') t WHERE tool_key NOT IN('sales_start_merchant_onboarding','sales_create_merchant_login_link');`,before);
  eq('SELECT row_to_json(t) FROM tenant_stripe_accounts t;',pending);
  eq(`SELECT count(*) FROM list_tool_autonomy('${tenant}') WHERE tool_key IN('sales_start_merchant_onboarding','sales_create_merchant_login_link') AND category='Payments' AND mode='confirm' AND is_default;`,'2');

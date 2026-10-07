@@ -8018,6 +8018,38 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     assert("43.43f an action-intent continuation out of a cheap round runs on the reasoning tier with the governed tools",
       modelOf(cont, 0) === CLAUDE_CLASSIFICATION && modelOf(cont, 1) === CLAUDE_REASONING && namesOf(cont, 1).includes(ASSIGN.name),
       JSON.stringify({ calls: streamed(cont).map((b) => [b.model, b.tools?.length ?? null]) }));
+    // 43.43h — behavioral, client seat: the seat CAN escalate (the round after the signal is
+    // operational with the governed set), and the governed call it then makes is refused BY THE SEAT
+    // GATE (`forbidden_seat`) — the capability never disappears, and never executes either.
+    const sH = makeThreadStore(THREADS), cH = makeConfirmStore(), dbH = crmDb();
+    const seatTurn = (opts) => drive({
+      stream: true, text: "ok great", streamScript: opts.script,
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 },
+      extraBody: { threadId: THREAD_FRESH },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null }, ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
+      tablesExtra: { paige_chat_turns: sH.table, paige_chat_threads: sH.threadsTable, client_memory: () => [], paige_pending_confirmations: cH.table },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+      onInsert: mirrorConfirms(cH),
+      functionsExtra: { "crm-command": realDoor },
+    });
+    const seat = await seatTurn({ script: [{ name: "request_capability", args: {} }, { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, "That action isn't available from a client seat — nothing was changed."] });
+    assert("43.43h a client seat escalates, and the governed call it then makes is refused by the seat gate",
+      modelOf(seat, 0) === CLAUDE_CLASSIFICATION && modelOf(seat, 1) === CLAUDE_REASONING && namesOf(seat, 1).includes(ASSIGN.name)
+        && told(seat).includes("client portal seat") && doorCalls(seat).length === 0 && cH.rows.length === 0,
+      JSON.stringify({ calls: streamed(seat).map((b) => b.model), refused: told(seat).includes("client portal seat"), door: doorCalls(seat).length, cards: cH.rows.length }));
+    // 43.43i — the re-resolution honors the route's own cap at RUNTIME: an ambiguous offer that
+    // signals does NOT get the write set — the person still chooses. (The route unit test pins the
+    // resolver; this pins that the handler's escalation actually goes through it.)
+    const sI = makeThreadStore(THREADS), cI = makeConfirmStore(), dbI = crmDb();
+    seedOffer(sI, THREAD_FRESH, { history: 1, offer: "Two things are open for Dana.\n\nWant me to send the approval card? Or should I draft her invoice first?" });
+    const amb = await turn(sI, cI, dbI, { text: "yes please", threadId: THREAD_FRESH,
+      script: [{ name: "request_capability", args: {} }, "Which would you like first — the approval card, or the invoice draft?"],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43i an ambiguous offer that escalates still carries reads, never the write set — the cap outranks the widening at runtime",
+      modelOf(amb, 0) === CLAUDE_REASONING && namesOf(amb, 0).includes("request_capability") && !namesOf(amb, 0).includes(ASSIGN.name)
+        && modelOf(amb, 1) === CLAUDE_REASONING && namesOf(amb, 1).includes("request_capability") && !namesOf(amb, 1).includes(ASSIGN.name)
+        && cI.rows.length === 0,
+      JSON.stringify({ calls: streamed(amb).map((b) => [b.model, (b.tools ?? []).length]), hasAssign: [namesOf(amb, 0).includes(ASSIGN.name), namesOf(amb, 1).includes(ASSIGN.name)], cards: cI.rows.length }));
     // 43.43g — source-level: the signal's dispatch sits BEFORE the client-seat gate, so a client seat's
     // question can escalate too — and every subsequent governed call still meets that gate.
     const handlerSrc = readFileSync(new URL("../../supabase/functions/paige-ai-chat/index.ts", import.meta.url), "utf8");

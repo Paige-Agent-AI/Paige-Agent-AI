@@ -9093,6 +9093,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // The tool list is final here (Studio scope, funding, marketplace applied above), so "what she is
     // told she can do" and "what she can call" are the same set by construction. Readiness, lanes,
     // authority and the specialist roster are resolved server-side; nothing is taken from the model.
+    // INT-334 R5b: this projects the TURN's full governed list — on a narrowed (none/read) round the
+    // manifest below is a subset until the turn escalates, deliberately: the projection is how the
+    // model discovers a capability it was not offered, and the signal is how it asks for it.
     // Cached for the request: the capability_status tool returns this same projection.
     const n8nReadinessState = (): ReadinessState => {
       if (n8nEvidence?.status !== "available") return "unknown"; // unread ≠ disconnected: never claim setup
@@ -9756,14 +9759,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (turnRoute.capability.tools !== "act") {
       console.log(`[paige] exposure: ${turnRoute.basis}/${turnRoute.capability.tools} — ${turnExposure.offered.length} offered, ${turnExposure.withheld.length} withheld`);
     }
-    let capabilityEscalated = false;
-    /** The manifest and class of the round now in flight — the route's, or operational with the full set once escalated. */
-    const roundTools = (): any[] => (capabilityEscalated ? toolDefs as any[] : turnExposure.offered as any[]);
-    const roundClassNow = (): typeof roundClass => (capabilityEscalated ? "operational" : roundClass);
+    // The escalation RE-RESOLVES THE ROUTE (the same pure resolver, the same facts, plus the
+    // server-observed `capabilityEscalation` fact) — the ONE router decides what an escalated turn
+    // may see and on which class it runs. That re-resolution is what keeps the route's own invariants
+    // true at runtime: an ambiguous offer still ends at a question (the cap outranks the widening),
+    // and a frontier turn keeps its class instead of being flattened to operational.
+    let escalatedRoute: ReturnType<typeof resolveTurnRoute> | null = null;
+    let escalatedTools: any[] | null = null;
+    /** The manifest and class of the round now in flight — the route's, or the re-resolved route's once escalated. */
+    const roundTools = (): any[] => escalatedTools ?? turnExposure.offered as any[];
+    const roundClassNow = (): typeof roundClass => escalatedRoute?.cognitive_class ?? roundClass;
     const escalateTurn = (from: string): boolean => {
-      if (capabilityEscalated) return false;
-      capabilityEscalated = true;
-      console.log(`[paige] route escalated (${from}): operational/act — the turn asked for capability beyond its exposure`);
+      if (escalatedRoute) return false;
+      escalatedRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification, capabilityEscalation: true });
+      escalatedTools = escalatedRoute.capability.tools === "act"
+        ? toolDefs as any[]
+        : exposureFor(toolDefs, escalatedRoute.capability.tools).offered as any[];
+      console.log(`[paige] route escalated (${from}): ${escalatedRoute.cognitive_class}/${escalatedRoute.capability.tools} — the turn asked for capability beyond its exposure`);
       return true;
     };
     const noteFabric = (label: string, s: FabricStream): FabricStream => {

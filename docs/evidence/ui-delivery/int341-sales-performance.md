@@ -3,8 +3,8 @@
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: docs/delivery/sales-performance-ui.md records the affected read, state, drilldown and scope flows.
 PAIGE_UI_DESIGN: PASS: repository entry router and five quality modules applied; existing Solo tokens and Sales destination retained.
-MATERIAL_FLOW_CHANGE: YES: approved chart-led Performance consumer replaces the prior funnel-only presentation.
-FLOW_PROTOTYPE: PASS: owner approval confirmed on 2026-10-07 for automatic rendering, chart transitions and three lenses.
+MATERIAL_FLOW_CHANGE: NO: this follow-up restores the approved read path by preserving the Supabase method receiver; no interaction or visual redesign.
+FLOW_PROTOTYPE: NOT_REQUIRED: receiver repair preserves the owner-approved automatic rendering, chart transitions and three lenses.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner inspects commercial truth and opens its canonical operating record.
 VISUAL_DIRECTION: PASS: approved Commercial pulse, Money and Data health hierarchy; currency lanes, evidence drawer and truthful limitations.
 AUTOMATED_EVIDENCE: PASS: 48 focused shared-parser/consumer/UI checks at the initial integrated boundary; additional final-head checks recorded in delivery packet.
@@ -42,6 +42,10 @@ SOLO_900X1000_PAIGE_CLOSED: PASS: real Solo-shell synthetic host measured withou
 SOLO_900X1000_PAIGE_OPEN: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
 
 ## Review and boundaries
+
+### Post-release receiver regression
+
+The eleven-metric RPC reader detached the authenticated client method. The installed SDK accesses its receiver, so the read failed before transport even for an empty workspace. A receiver-aware regression failed first with the error state; binding the original client method restores the same authenticated request. Generic empty-workspace A/B tests return eleven valid empty metrics and preserve scope switching. Focused Performance/parser tests: 51/51 PASS. The shared owner authorized the identical stage-hook invocation repair: receiver-aware tests failed first (5 failures), then all 14 passed; combined Performance/stage tests pass 50/50. Production release and authenticated owner readback of this repair remain UNVERIFIED until separately established. No formula, permission, provider action or tenant-specific logic changes.
 
 Preliminary non-author review required changes to unavailable metadata, stage evidence expiry and actor fencing. All three were repaired and covered by regression tests. Final code head cc04bff344f5c939d44b786b81a6298988dad119 received independent non-author COMPLETE/SHIP and Impeccable scored-fix SHIP; any later material code requires re-review. Shared issuer is exclusively INT-340-owned; this consumer neither grants access to private producers nor constructs opaque evidence references. Legacy stage evidence exposes its exact independent date bounds.
 

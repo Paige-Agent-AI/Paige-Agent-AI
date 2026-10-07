@@ -17,7 +17,8 @@ const harness = vi.hoisted(() => ({ calls: [] as Array<Promise<RpcResult>>, rpc:
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    rpc: harness.rpc.mockImplementation(() => {
+    rpc: harness.rpc.mockImplementation(function (this: { rpc?: unknown } | undefined) {
+      if (this?.rpc !== harness.rpc) throw new TypeError("Evidence RPC requires its client receiver");
       const call = harness.calls.shift();
       if (!call) throw new Error("No Analytics evidence RPC response queued");
       return call;

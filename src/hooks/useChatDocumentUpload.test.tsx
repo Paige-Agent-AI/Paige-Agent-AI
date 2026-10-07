@@ -68,6 +68,11 @@ describe("INT-338 canonical attachment input", () => {
     expect(upload.attachedDoc?.name).toBe("first.png"); expect(h.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "One attachment at a time" }));
   });
   it("multi-file paste has the same deterministic feedback", async () => { await act(async () => upload.handlePaste(paste([file("first.png"), file("second.png")]))); await flush(); expect(upload.attachedDoc?.name).toBe("first.png"); expect(h.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "One attachment at a time" })); });
+  it("all-invalid multiple inputs explicitly accept none and keep canonical first-file refusal", async () => {
+    await act(async () => upload.handleDrop(drag([file("bad.exe", "application/x-msdownload"), file("big.png", "image/png", 10 * 1024 * 1024 + 1)])));
+    expect(upload.attachedDoc).toBeNull(); expect(h.toast.mock.calls.map(call => call[0].title)).toEqual(["One attachment at a time", "Unsupported file type"]);
+    expect(h.toast.mock.calls[0][0].description).toBe("None of these files can be attached. Choose a supported file up to 10MB.");
+  });
   it("keeps native text drag alone and has clean file enter/leave/drop states", async () => {
     const text = drag([], ["text/plain"]); await act(async () => upload.handleDragOver(text)); expect(text.preventDefault).not.toHaveBeenCalled(); expect(upload.isDragOver).toBe(false);
     await act(async () => upload.handleDragOver(drag())); expect(upload.isDragOver).toBe(true);

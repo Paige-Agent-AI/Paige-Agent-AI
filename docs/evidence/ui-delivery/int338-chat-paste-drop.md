@@ -27,6 +27,13 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full production shell closed-panel state
 SOLO_1024X768_PAIGE_OPEN: PASS: local real-component page capture1024x768/dark; no overflow and input visible. Full authenticated shell remains owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: full production shell closed-panel state unchanged and not driven.
 SOLO_900X1000_PAIGE_OPEN: PASS: local real-component Solo drawer capture900x1000/light; no overflow and input visible. Full authenticated shell remains owed.
+INTERNAL_BUILD_IDENTITY: d3cc2081213c087b668a2c81357ce9174ebc2012; deployment=local-component-harness; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/int338-chat-paste-drop.md
+RELEASE_CHANNEL: development: local native clipboard, real-component and isolated fixture verification; exact candidate identity and hosted deployment recorded in PR closeout.
+RELEASE_CLASSIFICATION: patch: bounded canonical Solo Chat attachment input ergonomics hotfix.
+CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement authorized; authenticated owner feel-check remains owed.
+RELEASE_NOTE_REQUIRED: NO: routine bounded hotfix with no customer announcement; internal release and proof boundaries recorded.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated long-thread production clipboard/drop and actual image model receipt; local component proof cannot promote that claim.
+RELEASE_RECOVERY: position=forward fix or owner-authorized rollback to preceding web build without provider or database changes; reference=docs/delivery/paige-chat-int338.md
 
 ## Scope and collisions
 

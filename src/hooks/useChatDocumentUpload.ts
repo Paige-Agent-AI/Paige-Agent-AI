@@ -217,10 +217,13 @@ export function useChatDocumentUpload({ scopeKey = "unscoped", enabled = true }:
 
   const stageFiles = useCallback((files: File[]) => {
     if (!files.length) return;
-    const first = files.find(file => detectKind(file.type, file.name) && file.size <= MAX_FILE_SIZE) ?? files[0];
-    if (files.length > 1) toast({ title: "One attachment at a time", description: "Only the first supported file within 10MB is selected. Attach the others in separate messages." });
+    const supported = files.find(file => detectKind(file.type, file.name) && file.size <= MAX_FILE_SIZE);
+    const first = supported ?? files[0];
+    if (files.length > 1) toast({ title: "One attachment at a time", description: supported
+      ? "Only the first supported file within 10MB is selected. Attach the others in separate messages."
+      : "None of these files can be attached. Choose a supported file up to 10MB." });
     // A replacement is intentional, but must be communicated instead of silently losing a chip.
-    if (state.scope === owner.current.scope && state.epoch === owner.current.epoch && state.doc && owner.current.enabled) {
+    if (supported && state.scope === owner.current.scope && state.epoch === owner.current.epoch && state.doc && owner.current.enabled) {
       toast({ title: "Replacing attachment", description: `The new file will replace ${state.doc.name} when it is ready.` });
     }
     void processFile(first);

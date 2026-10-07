@@ -132,10 +132,29 @@ INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status,l
  ('a3450000-0000-4000-8000-000000000032','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001','Synthetic','Active','active','client_active','completing_intake',now()-interval '1 day',NULL,NULL),
  ('a3450000-0000-4000-8000-000000000033','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001','Synthetic','Paused','active','client_paused','pre_invite',NULL,NULL,NULL),
  ('a3450000-0000-4000-8000-000000000034','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001','Synthetic','Churned','inactive','client_churned',NULL,NULL,NULL,NULL),
- ('a3450000-0000-4000-8000-000000000035','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001','Synthetic','Merged','active','client_active','completed',now()-interval '1 day','a3450000-0000-4000-8000-000000000032',now()),
+ ('a3450000-0000-4000-8000-000000000035','a3450000-0000-4000-8000-000000000011','a3450000-0000-4000-8000-000000000001','Synthetic','Merged','active','client_active','completed',now()-interval '1 day',NULL,NULL),
  ('a3450000-0000-4000-8000-000000000036','a3450000-0000-4000-8000-000000000012','a3450000-0000-4000-8000-000000000001','Synthetic','Unknown','active','client_active','pre_invite',NULL,NULL,NULL);
+SELECT pg_temp.require_denied($q$UPDATE public.clients SET merged_into_contact_id='a3450000-0000-4000-8000-000000000032',merged_at=now()
+ WHERE id='a3450000-0000-4000-8000-000000000035'$q$,'direct merge lineage cannot forge a merged fixture');
+-- Synthetic lineage setup uses the exact trusted executor context required by the
+-- unchanged guard. This is Analytics fixture preparation, not CRM command acceptance.
+DO $fixture_merge$ BEGIN
+ PERFORM set_config('request.jwt.claims','{"role":"service_role"}',true);
+ IF auth.uid() IS NOT NULL THEN RAISE EXCEPTION 'FIXTURE: lineage setup requires no actor JWT';END IF;
+ PERFORM set_config('app.crm_merge_lineage_write','on',true);
+ UPDATE public.clients SET status='archived',merged_into_contact_id='a3450000-0000-4000-8000-000000000032',merged_at=now(),updated_at=now()
+ WHERE id='a3450000-0000-4000-8000-000000000035' AND tenant_id='a3450000-0000-4000-8000-000000000011';
+ PERFORM set_config('app.crm_merge_lineage_write','',true);
+ PERFORM set_config('request.jwt.claims','{}',true);
+END $fixture_merge$;
+SELECT pg_temp.require_true((SELECT status='archived' AND merged_into_contact_id='a3450000-0000-4000-8000-000000000032'
+ FROM public.clients WHERE id='a3450000-0000-4000-8000-000000000035'),'trusted guarded setup produced the synthetic lineage');
+-- Take the Business snapshot after fixture versions have been written.
+UPDATE settings_fixture_clock SET as_of=clock_timestamp();
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"a3450000-0000-4000-8000-000000000001"}',true);
+-- Refresh the later digest assertion's baseline to the same as_of, not an old request identity.
+UPDATE settings_results SET bundle=pg_temp.settings_bundle(key) WHERE key='ai.recorded_tokens';
 SELECT pg_temp.require_true(pg_temp.settings_bundle('business.active_clients_current')#>>'{values,count}'='1',
  'lead paused churned and merged records do not count as active clients');
 SELECT pg_temp.require_true((SELECT sum((i->>'count')::integer)=3

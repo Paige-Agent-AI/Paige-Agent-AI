@@ -48,4 +48,3 @@ The actual-component harness uses synthetic transport only. Handler tests mock p
 One canonical approval authorizes only the exact merchant act, tenant, environment, binding and provider configuration snapshot. A setup proposal does not authorize invoice/payment or a commercial package. Historical pending creation is never cleared or recreated by this repair.
 
 Impeccable review uses the existing direction and complete setup/recovery experience. Final independent non-author exact-head review and required CI are recorded in the PR before merge. No product/provider acceptance claim is substituted for those states.
-

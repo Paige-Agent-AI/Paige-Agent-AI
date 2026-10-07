@@ -1158,6 +1158,11 @@ serve(async (req) => {
     // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
     if (validatedData.interactive) {
       const interactiveInput = validatedData.interactive;
+      const protocol = await supabase.rpc("paige_chat_interactive_protocol");
+      if (protocol.error || protocol.data?.version !== 2 ||
+          (protocol.data?.active !== true && !["stop", "status"].includes(interactiveInput.kind)))
+        return new Response(JSON.stringify({ code: "INTERACTIVE_PROTOCOL_NOT_READY", message_accepted: false }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "30" } });
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
       const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
@@ -1166,7 +1171,7 @@ serve(async (req) => {
       interactiveReceiptScope = { thread: validatedData.threadId, tenant: thread.tenant_id, intent: validatedData.requestIntentId };
       const userText = [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content;
       const executor = async (operation: string) => {
-        const { data, error } = await supabase.rpc("paige_chat_interactive_executor", {
+        const { data, error } = await supabase.rpc("paige_chat_interactive_executor_v2", {
           p_thread: validatedData.threadId, p_actor: user.id, p_tenant: thread.tenant_id,
           p_intent: validatedData.requestIntentId, p_operation: operation,
         });
@@ -1192,7 +1197,7 @@ serve(async (req) => {
         release: async () => { await executor("release"); },
       });
       const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
-        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin", {
+        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin_v2", {
           p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
           p_supersedes: interactiveInput.supersedesIntentId ?? null,
           p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",

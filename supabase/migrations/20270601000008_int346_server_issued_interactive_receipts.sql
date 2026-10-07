@@ -3,6 +3,49 @@
 -- plain production db push refuses historical timestamps (no --include-all).
 -- Historical JSON is intentionally not promoted to authoritative evidence.
 begin;
+
+-- Expansion stops new legacy admissions, but activation is a separate release
+-- operation after positively verified provider drain. This is release metadata,
+-- not a second work/receipt store. No user or service-role direct table access.
+create table if not exists public.paige_chat_interactive_rollout (
+ singleton boolean primary key default true check(singleton),
+ active boolean not null default false,
+ edge_head text, drain_evidence_sha256 text, activated_at timestamptz
+);
+alter table public.paige_chat_interactive_rollout enable row level security;
+revoke all on public.paige_chat_interactive_rollout from public,anon,authenticated,service_role;
+insert into public.paige_chat_interactive_rollout(singleton) values(true) on conflict do nothing;
+
+create or replace function public.paige_chat_interactive_protocol() returns jsonb
+language sql stable security definer set search_path=public as $$
+ select jsonb_build_object('version',2,'active',active) from public.paige_chat_interactive_rollout where singleton
+$$;
+revoke all on function public.paige_chat_interactive_protocol() from public,anon,authenticated;
+grant execute on function public.paige_chat_interactive_protocol() to service_role;
+
+-- Trusted release operator attests the private, independently checked provider
+-- cessation packet. Neither a timeout, a deployment tag nor empty executor rows
+-- constitutes that packet. The RPC also refuses any still-held canonical claim.
+create or replace function public.paige_chat_interactive_activate(p_edge_head text,p_drain_evidence_sha256 text)
+returns void language plpgsql security definer set search_path=public as $$
+declare r public.paige_chat_interactive_rollout%rowtype;
+begin
+ if p_edge_head !~ '^[0-9a-f]{40}$' or p_drain_evidence_sha256 !~ '^[0-9a-f]{64}$'
+   or p_edge_head is null or p_drain_evidence_sha256 is null then raise exception 'verified release evidence required'; end if;
+ select * into r from public.paige_chat_interactive_rollout where singleton for update;
+ if r.active then
+  if r.edge_head is distinct from p_edge_head or r.drain_evidence_sha256 is distinct from p_drain_evidence_sha256 then
+   raise exception 'activation evidence conflict'; end if;
+  return;
+ end if;
+ lock table public.paige_chat_threads in share row exclusive mode;
+ if exists(select 1 from public.paige_chat_threads where interactive_executor_intent is not null) then
+  raise exception 'INTERACTIVE_DRAIN_REQUIRED'; end if;
+ update public.paige_chat_interactive_rollout set active=true,edge_head=p_edge_head,
+  drain_evidence_sha256=p_drain_evidence_sha256,activated_at=now() where singleton;
+end $$;
+revoke all on function public.paige_chat_interactive_activate(text,text) from public,anon,authenticated;
+grant execute on function public.paige_chat_interactive_activate(text,text) to service_role;
 alter table public.paige_chat_turns
  add column if not exists interactive_intent_id uuid,
  add column if not exists interactive_actor_id uuid,
@@ -86,10 +129,13 @@ $$;
 revoke all on function public.paige_chat_interactive_evidence(uuid,uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function public.paige_chat_interactive_evidence(uuid,uuid,uuid,uuid) to service_role;
 
-create or replace function public.paige_chat_interactive_executor(p_thread uuid,p_actor uuid,p_tenant uuid,
+create or replace function public.paige_chat_interactive_executor_v2(p_thread uuid,p_actor uuid,p_tenant uuid,
  p_intent uuid,p_operation text) returns jsonb language plpgsql security definer set search_path=public as $$
 declare t public.paige_chat_threads%rowtype; acquired boolean:=false; evidence jsonb;
 begin
+ perform 1 from public.paige_chat_interactive_rollout where singleton for share;
+ if p_operation='acquire' and not (select active from public.paige_chat_interactive_rollout where singleton) then
+  raise exception 'INTERACTIVE_PROTOCOL_NOT_READY'; end if;
  if p_actor is null or p_intent is null then raise exception 'interactive identity required' using errcode='42501'; end if;
  select * into t from public.paige_chat_threads where id=p_thread for update;
  if not found or t.caller_user_id is distinct from p_actor or t.tenant_id is distinct from p_tenant then
@@ -111,14 +157,17 @@ begin
  return jsonb_build_object('latest',t.interactive_latest_intent,'executor',t.interactive_executor_intent,
   'acquired',acquired,'terminal',(evidence->>'terminal')::boolean,'stopped',(evidence->>'stopped')::boolean);
 end $$;
-revoke all on function public.paige_chat_interactive_executor(uuid,uuid,uuid,uuid,text) from public,anon,authenticated;
-grant execute on function public.paige_chat_interactive_executor(uuid,uuid,uuid,uuid,text) to service_role;
+revoke all on function public.paige_chat_interactive_executor_v2(uuid,uuid,uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.paige_chat_interactive_executor_v2(uuid,uuid,uuid,uuid,text) to service_role;
 
-create or replace function public.paige_chat_interactive_begin(p_thread uuid,p_intent uuid,p_supersedes uuid,
+create or replace function public.paige_chat_interactive_begin_v2(p_thread uuid,p_intent uuid,p_supersedes uuid,
  p_content text,p_bound_answer boolean default false,p_stop boolean default false)
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare t public.paige_chat_threads%rowtype; turn_id uuid; evidence jsonb;
 begin
+ perform 1 from public.paige_chat_interactive_rollout where singleton for share;
+ if not p_stop and not (select active from public.paige_chat_interactive_rollout where singleton) then
+  raise exception 'INTERACTIVE_PROTOCOL_NOT_READY'; end if;
  if auth.uid() is null then raise exception 'auth required' using errcode='42501'; end if;
  select * into t from public.paige_chat_threads where id=p_thread for update;
  if not found or t.caller_user_id is distinct from auth.uid() or not (
@@ -180,6 +229,46 @@ begin
  update public.paige_chat_threads set interactive_latest_intent=p_intent where id=p_thread;
  return jsonb_build_object('status','accepted','turn_id',case when p_bound_answer then null else turn_id end);
 end $$;
+revoke all on function public.paige_chat_interactive_begin_v2(uuid,uuid,uuid,text,boolean,boolean) from public,anon;
+grant execute on function public.paige_chat_interactive_begin_v2(uuid,uuid,uuid,text,boolean,boolean) to authenticated;
+
+-- Legacy handlers cannot accept/acquire new work after expansion. In DRAINING
+-- only their already-running completion follows the unchanged legacy contract.
+-- This temporary compatibility is explicitly NOT security clearance. No v2 work
+-- may start until authoritative old-runtime cessation is verified and activated.
+create or replace function public.paige_chat_interactive_begin(p_thread uuid,p_intent uuid,p_supersedes uuid,
+ p_content text,p_bound_answer boolean default false,p_stop boolean default false)
+returns jsonb language plpgsql security definer set search_path=public as $$
+begin
+ if p_stop then return public.paige_chat_interactive_begin_v2(p_thread,p_intent,p_supersedes,p_content,p_bound_answer,true); end if;
+ raise exception 'INTERACTIVE_PROTOCOL_REQUIRED';
+end $$;
 revoke all on function public.paige_chat_interactive_begin(uuid,uuid,uuid,text,boolean,boolean) from public,anon;
 grant execute on function public.paige_chat_interactive_begin(uuid,uuid,uuid,text,boolean,boolean) to authenticated;
+
+create or replace function public.paige_chat_interactive_executor(p_thread uuid,p_actor uuid,p_tenant uuid,
+ p_intent uuid,p_operation text) returns jsonb language plpgsql security definer set search_path=public as $$
+declare t public.paige_chat_threads%rowtype; is_active boolean;
+begin
+ select active into is_active from public.paige_chat_interactive_rollout where singleton for share;
+ if p_operation='acquire' then raise exception 'INTERACTIVE_PROTOCOL_REQUIRED'; end if;
+ if is_active or p_operation='state' then
+  return public.paige_chat_interactive_executor_v2(p_thread,p_actor,p_tenant,p_intent,p_operation);
+ end if;
+ if p_operation<>'release' then raise exception 'invalid operation'; end if;
+ if p_actor is null or p_intent is null then raise exception 'interactive identity required' using errcode='42501'; end if;
+ select * into t from public.paige_chat_threads where id=p_thread for update;
+ if not found or t.caller_user_id is distinct from p_actor or t.tenant_id is distinct from p_tenant then
+  raise exception 'thread scope mismatch' using errcode='42501'; end if;
+ if t.interactive_executor_intent=p_intent and not exists(select 1 from public.paige_chat_turns
+   where thread_id=p_thread and role='assistant'
+   and bundle_ref->'interactive'->>'request_intent_id'=p_intent::text
+   and bundle_ref->'turn_state'->>'state' in ('FINAL','WAIT_APPROVAL','WAIT_WORK','ASK_USER','LIMIT_REACHED','INTERRUPTED','WITHHELD','REFUSED')) then
+  raise exception 'INTERACTIVE_RECONCILIATION_REQUIRED'; end if;
+ update public.paige_chat_threads set interactive_executor_intent=null where id=p_thread and interactive_executor_intent=p_intent;
+ return jsonb_build_object('latest',t.interactive_latest_intent,'executor',case when t.interactive_executor_intent=p_intent then null else t.interactive_executor_intent end,'acquired',false);
+end $$;
+revoke all on function public.paige_chat_interactive_executor(uuid,uuid,uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.paige_chat_interactive_executor(uuid,uuid,uuid,uuid,text) to service_role;
+
 commit;

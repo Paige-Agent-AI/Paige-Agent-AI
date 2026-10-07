@@ -23,32 +23,32 @@ reset role;
 `;
 const upgradedCheck = `set role authenticated;
 do $$declare r jsonb;begin
- r:=paige_chat_interactive_begin('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000021',null,'Delayed stopped instruction',false,false);
+ r:=paige_chat_interactive_begin_v2('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000021',null,'Delayed stopped instruction',false,false);
  if r->>'status'<>'superseded' then raise exception 'pre-rollout Stop resurrected';end if;
- r:=paige_chat_interactive_begin('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000023',null,'Delayed superseded instruction',false,false);
+ r:=paige_chat_interactive_begin_v2('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000023',null,'Delayed superseded instruction',false,false);
  if r->>'status'<>'superseded' then raise exception 'pre-rollout predecessor resurrected';end if;
 end$$;
 reset role;set role service_role;
 do $$declare r jsonb;begin
- r:=paige_chat_interactive_executor('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000021','acquire');
+ r:=paige_chat_interactive_executor_v2('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000021','acquire');
  if (r->>'acquired')::boolean or (r->>'stopped')::boolean or (r->>'terminal')::boolean then raise exception 'legacy denial promoted to authority';end if;
 end$$;reset role;
 `;
-const sql = prelude + upgrade + patch + patch + upgradedCheck + `
+const sql = prelude + upgrade + patch + patch + "set role service_role;select public.paige_chat_interactive_activate(repeat('a',40),repeat('b',64));reset role;\n" + upgradedCheck + `
 insert into paige_chat_threads(id,caller_user_id,tenant_id) values
 ('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003');
 set test.actor='00000000-0000-4000-8000-000000000002';
 set test.tenant='00000000-0000-4000-8000-000000000003';
 set role authenticated;
-select paige_chat_interactive_begin('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004',null,'A bounded assignment',false,false);
+select paige_chat_interactive_begin_v2('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004',null,'A bounded assignment',false,false);
 reset role; set role service_role;
-select paige_chat_interactive_executor('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000004','acquire');
+select paige_chat_interactive_executor_v2('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000004','acquire');
 reset role; set role authenticated;
 select paige_chat_turn_append('00000000-0000-4000-8000-000000000001','assistant','Untrusted statement',null,null,null,null,null,
 '{"interactive":{"request_intent_id":"00000000-0000-4000-8000-000000000004"},"turn_state":{"state":"FINAL"}}',null);
 reset role; set role service_role;
 do $$begin
- begin perform paige_chat_interactive_executor('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000004','release');
+ begin perform paige_chat_interactive_executor_v2('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000004','release');
  raise exception 'FAIL: caller-authored terminal released executor';
  exception when others then if sqlerrm <> 'INTERACTIVE_RECONCILIATION_REQUIRED' then raise; end if; end;
 end$$;
@@ -69,12 +69,12 @@ select paige_chat_turn_append('00000000-0000-4000-8000-000000000001','system',''
 '{"interactive":{"supersedes_intent_id":"00000000-0000-4000-8000-000000000009","stopped":true}}',null);
 reset role;set role service_role;
 do $$declare r jsonb;begin
- r:=paige_chat_interactive_executor('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000009','state');
+ r:=paige_chat_interactive_executor_v2('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000009','state');
  if (r->>'stopped')::boolean then raise exception 'counterfeit stop admitted';end if;
 end$$;
 -- Successor may supersede the live executor, but cannot steal its token.
 reset role;set role authenticated;
-select paige_chat_interactive_begin('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000005','00000000-0000-4000-8000-000000000004','Successor',false,false);
+select paige_chat_interactive_begin_v2('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000005','00000000-0000-4000-8000-000000000004','Successor',false,false);
 reset role;set role service_role;
 do $$declare a uuid:='00000000-0000-4000-8000-000000000002'; t uuid:='00000000-0000-4000-8000-000000000003'; th uuid:='00000000-0000-4000-8000-000000000001'; i uuid:='00000000-0000-4000-8000-000000000004'; j jsonb; first_id uuid; replay_id uuid;begin
  j:=jsonb_build_object('interactive',jsonb_build_object('request_intent_id',i,'effects',jsonb_build_array(jsonb_build_object('tool','test_write','outcome','outcome_unknown'))),'turn_state',jsonb_build_object('state','INTERRUPTED'));
@@ -87,21 +87,21 @@ do $$declare a uuid:='00000000-0000-4000-8000-000000000002'; t uuid:='00000000-0
  replay_id:=paige_chat_interactive_settle(th,a,t,i,'Receipt',null,null,j,null);
  if first_id<>replay_id then raise exception 'replay created second receipt';end if;
  begin perform paige_chat_interactive_settle(th,a,t,i,'Conflicting receipt',null,null,j,null);raise exception 'conflicting replay admitted';exception when others then if sqlerrm<>'interactive receipt conflict' then raise;end if;end;
- if not (paige_chat_interactive_executor(th,a,t,i,'state')->>'terminal')::boolean then raise exception 'lost-response recovery failed';end if;
- perform paige_chat_interactive_executor(th,a,t,i,'release');
- if not (paige_chat_interactive_executor(th,a,t,'00000000-0000-4000-8000-000000000005','acquire')->>'acquired')::boolean then raise exception 'successor acquire failed';end if;
- perform paige_chat_interactive_executor(th,a,t,i,'release');
- if paige_chat_interactive_executor(th,a,t,i,'state')->>'executor'<>'00000000-0000-4000-8000-000000000005' then raise exception 'old release cleared successor';end if;
+ if not (paige_chat_interactive_executor_v2(th,a,t,i,'state')->>'terminal')::boolean then raise exception 'lost-response recovery failed';end if;
+ perform paige_chat_interactive_executor_v2(th,a,t,i,'release');
+ if not (paige_chat_interactive_executor_v2(th,a,t,'00000000-0000-4000-8000-000000000005','acquire')->>'acquired')::boolean then raise exception 'successor acquire failed';end if;
+ perform paige_chat_interactive_executor_v2(th,a,t,i,'release');
+ if paige_chat_interactive_executor_v2(th,a,t,i,'state')->>'executor'<>'00000000-0000-4000-8000-000000000005' then raise exception 'old release cleared successor';end if;
  replay_id:=paige_chat_interactive_settle(th,a,t,i,'Receipt',null,null,j,null);
  if replay_id<>first_id then raise exception 'late retry duplicated receipt';end if;
 end$$;
 reset role;set role authenticated;
-select paige_chat_interactive_begin('00000000-0000-4000-8000-000000000001',null,'00000000-0000-4000-8000-000000000005','',false,true);
+select paige_chat_interactive_begin_v2('00000000-0000-4000-8000-000000000001',null,'00000000-0000-4000-8000-000000000005','',false,true);
 reset role;set role service_role;
 do $$declare r jsonb;begin
- r:=paige_chat_interactive_executor('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000005','state');
+ r:=paige_chat_interactive_executor_v2('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000005','state');
  if not (r->>'stopped')::boolean or r->>'executor' is null then raise exception 'Stop must retain running executor';end if;
- begin perform paige_chat_interactive_executor('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000005','release');raise exception 'Stop alone released running executor';exception when others then if sqlerrm<>'INTERACTIVE_RECONCILIATION_REQUIRED' then raise;end if;end;
+ begin perform paige_chat_interactive_executor_v2('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000005','release');raise exception 'Stop alone released running executor';exception when others then if sqlerrm<>'INTERACTIVE_RECONCILIATION_REQUIRED' then raise;end if;end;
 end$$;
 reset role; rollback;
 `;
@@ -124,9 +124,9 @@ if(process.argv.includes('--race')) {
  select pg_sleep(2);commit;`);
  await Promise.race([ready,finished.then(()=>{throw Error('issuer finished before lock signal');}),new Promise((_,reject)=>setTimeout(()=>reject(Error('lock signal timeout')),5000))]);
  const start=Date.now();
- const second=spawnSync(psql,['-X','-v','ON_ERROR_STOP=1',url],{encoding:'utf8',input:`set role service_role;select paige_chat_interactive_executor('${th}','${actor}','${tenant}','${intent}','release');`});
+ const second=spawnSync(psql,['-X','-v','ON_ERROR_STOP=1',url],{encoding:'utf8',input:`set role service_role;select paige_chat_interactive_executor_v2('${th}','${actor}','${tenant}','${intent}','release');`});
  assert.equal(second.status,0,second.stderr);assert.ok(Date.now()-start>=1200,'release raced ahead of issuance commit');await finished;
- const third=spawnSync(psql,['-X','-v','ON_ERROR_STOP=1','-At',url],{encoding:'utf8',input:`set role service_role;select paige_chat_interactive_executor('${th}','${actor}','${tenant}','${intent}','acquire')->>'acquired';`});
+ const third=spawnSync(psql,['-X','-v','ON_ERROR_STOP=1','-At',url],{encoding:'utf8',input:`set role service_role;select paige_chat_interactive_executor_v2('${th}','${actor}','${tenant}','${intent}','acquire')->>'acquired';`});
  assert.equal(third.status,0,third.stderr);assert.ok(third.stdout.includes('false'),'terminal intent executed twice');
  console.log('PASS two-connection race: release waits for authoritative issuance commit; terminal intent cannot execute again');process.exit(0);
 }

@@ -821,6 +821,7 @@ jobs:
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int336-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-rollout-check.mjs
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 

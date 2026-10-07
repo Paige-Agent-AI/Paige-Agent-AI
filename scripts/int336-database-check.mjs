@@ -55,7 +55,9 @@ do $$declare r jsonb;begin
  perform set_config('test.tenant','${a}',false);begin perform paige_chat_interactive_begin('${thread}','${a}',null,'Foreign tenant',false,false);raise exception 'wrong tenant admitted';exception when insufficient_privilege then null;end;
 end$$;
 reset role;rollback;`;
-const proofSql=prelude+canonical.slice(canonical.indexOf('CREATE OR REPLACE FUNCTION'))+'\n'+migration+'\n'+(process.argv.includes('--emit-baseline')?'':issuance)+fixture;
+const activate="set role service_role;select public.paige_chat_interactive_activate(repeat('a',40),repeat('b',64));reset role;\n";
+const protectedFixture=fixture.replaceAll('paige_chat_interactive_begin(', 'paige_chat_interactive_begin_v2(').replaceAll('paige_chat_interactive_executor(', 'paige_chat_interactive_executor_v2(');
+const proofSql=prelude+canonical.slice(canonical.indexOf('CREATE OR REPLACE FUNCTION'))+'\n'+migration+'\n'+(process.argv.includes('--emit-baseline')?'':issuance+activate)+(process.argv.includes('--emit-baseline')?fixture:protectedFixture);
 if(process.argv.includes('--emit-fixture')){process.stdout.write(proofSql);process.exit(0)}
 const run=spawnSync(process.env.PSQL_BIN??'psql',['-X','-v','ON_ERROR_STOP=1',url],{input:proofSql,encoding:'utf8'});
 if(run.status!==0){console.error(run.stderr);process.exit(run.status??1)}

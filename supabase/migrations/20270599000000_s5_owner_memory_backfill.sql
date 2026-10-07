@@ -94,10 +94,10 @@ BEGIN
     -- 20260816120000 and read by _shared/owner-context.ts) — omitting it would make the governed
     -- seam unable to record or supersede a type the platform already stores (peer-gate, §39).
     'summary','session_summary','insight','identity',
-    -- S5 (20270598000000): the no-client writer families this cutover governs - business
+    -- S5 (20270599000000): the no-client writer families this cutover governs - business
     -- milestones and extracted open loops are owner/workspace continuity the platform records.
     'milestone_completed','open_loop',
-    -- S5 (20270598000000): the owner's own credit-report context summary (the no-client arm of
+    -- S5 (20270599000000): the owner's own credit-report context summary (the no-client arm of
     -- the structured-extraction writer; the numbers stay canonical in credit_report_uploads).
     'report_upload'
   ) THEN

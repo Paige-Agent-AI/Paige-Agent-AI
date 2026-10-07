@@ -32,6 +32,12 @@ Affected: initial read, refresh, period/view/currency changes, evidence and dril
 
 The eleven producers from #1809 remain private. Current main does not grant a direct UI caller. Open INT-340 #1814 owns the generic issuance/resolution seam. Sales consumes that exact contract as it lands; no grants or wrapper issuer are added here. Existing funnel issuance remains usable. A missing shared contract is reported as unavailable, never bypassed. Typed Chat/Live and authenticated shared issuance acceptance remain proof owed until observed.
 
+For isolated integration, the Analytics owner authorized composition of #1814 at `a8da2cd7aaa96294f9bf9ee22716fe5d3dfa32ef`. This does not authorize Sales to release the shared issuer independently. PR #1821 remains draft pending parent delivery, reconciliation against current main, exact-head review and required CI.
+
+The consumer uses `parseMetricResult` directly, clears state on actor/workspace/range changes and rejects late responses. Legacy stage evidence retains its own exact visible range; seven-day stage evidence is unavailable because the existing stage issuer does not support that cohort. Eleven period metrics use 7/30/90/365 completed UTC days; current-state metrics remain labelled snapshots. All successfully issued UNAVAILABLE results preserve their metadata instead of being rendered as transport errors.
+
+At the integrated repair boundary, 49 focused tests pass, production build passes and actual React fixture rendering/reload/reduced-motion checks pass at five widths. Preliminary review findings were repaired; final exact-head review, full regression disposition, integrated dock/zoom and authenticated production remain outstanding.
+
 ## Release boundary
 
 Channel: development. Customer release identity: none pending production outcome. New migrations/Edge functions: NOT_APPLICABLE in this consumer slice. Product release evidence will record actual candidate, CI, independent review, merge, Vercel deployment and runtime results. Recovery is a bounded forward fix or restoration of the prior Performance mount; no ledger backfill/provider action.

@@ -103,9 +103,13 @@ export const supabase={
    if(body.expected_tenant_id!==tenant)return ok({error:'forbidden'});
    const merchant = new URLSearchParams(window.location.search).get('merchant') ?? 'empty';
    if(merchant==='error')return fail('fixture-read-refused');
-   if(body.action==='start_onboarding')return ok({error:'fixture-provider-navigation-unavailable'});
    const state=merchant==='empty'?'not_connected':merchant==='unknown'?'outcome_unknown':merchant==='incomplete'?'setup_incomplete':merchant==='restricted'?'restricted':merchant==='stale'?'unverified':'ready';
-   return ok({tenant_id:tenant,can_manage:merchant!=='readonly',connected:!['empty','unknown'].includes(merchant),provider_environment:merchant==='live'?'live':'test',binding_version:['empty','unknown'].includes(merchant)?null:1,charges_enabled:state==='ready',payouts_enabled:state==='ready',details_submitted:state==='ready',sales_payment_permission:state==='ready',checked_at:state==='not_connected'||state==='outcome_unknown'?null:new Date().toISOString(),state});
+   const status={tenant_id:tenant,can_manage:merchant!=='readonly',connected:!['empty','unknown'].includes(merchant),provider_environment:merchant==='live'?'live':'test',binding_version:['empty','unknown'].includes(merchant)?null:1,charges_enabled:state==='ready',payouts_enabled:state==='ready',details_submitted:state==='ready',sales_payment_permission:state==='ready',checked_at:state==='not_connected'||state==='outcome_unknown'?null:new Date().toISOString(),state};
+   if(body.command){
+    if(body.approved_fingerprint)return ok({...status,ok:false,outcome:'refused',code:'FIXTURE_PROVIDER_UNAVAILABLE'});
+    return ok({...status,ok:false,outcome:'approval_required',capability:'sales_start_merchant_onboarding',operation_id:body.operation_id,fingerprint:'0123456789abcdef',summary:'Open this workspace’s Stripe '+status.provider_environment.toUpperCase()+' merchant setup. Customer payments remain separately authorized.',expires_at:new Date(Date.now()+60000).toISOString(),preview:{action:'merchant.start_onboarding',provider:'stripe',environment:status.provider_environment,binding_version:status.binding_version}});
+   }
+   return ok(status);
   }
   if(body.expected_tenant_id!==tenant||mode()==='readonly'||mode()==='refused')return ok({error:'forbidden'});
   if(name==='tenant-mcp-connect'&&body.action==='disconnect'){mcpRows.set(tenant,none());return ok({ok:true});}

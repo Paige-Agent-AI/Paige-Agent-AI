@@ -15960,6 +15960,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         billing_create_invoice: "paige_invoices", billing_send_invoice: "paige_invoices",
         sales_revise_invoice_draft: "paige_invoices",
         sales_update_invoice_settings: "tenants", // canonical tenant brand.invoice_preferences; no client memory target
+        sales_start_merchant_onboarding: "tenants", // tenant merchant connection; no customer/provider secret attribution
+        sales_create_merchant_login_link: "tenants", // tenant-scoped hosted handoff; never customer memory or bearer URL
         sales_create_payment_request: "paige_invoice_provider_operations",
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",

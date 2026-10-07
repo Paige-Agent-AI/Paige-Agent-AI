@@ -130,8 +130,8 @@ export interface TurnRouteFacts {
   attachments: { document: boolean; image: boolean };
   classification: TurnClassification | null;
   /**
-   * R5b — the turn's own model round asked for capability beyond its exposure (the
-   * `request_capability` presentation tool), or a post-loop continuation re-entered the loop to
+   * R5b — the turn's own model round asked for capability beyond its exposure (a finished-round
+   * call to a governed tool outside the round's manifest), or a post-loop continuation re-entered the loop to
    * carry out an action. A server-observed fact about the TURN, never a word the person typed, so
    * it may raise the route where phrase-matching may not. It grants nothing itself: the widened
    * tool list still passes the same gates, and an approved-card turn (deterministic) never sees a

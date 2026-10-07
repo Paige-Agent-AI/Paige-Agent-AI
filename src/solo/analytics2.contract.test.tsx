@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 const analyticsSource = readFileSync(resolve(process.cwd(), "src/solo/analytics2.tsx"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "src/solo/SoloApp.tsx"), "utf8");
 const analyticsCss = readFileSync(resolve(process.cwd(), "src/solo/analytics2.css"), "utf8");
+const salesSource = readFileSync(resolve(process.cwd(), "src/solo/SalesWorkspace.tsx"), "utf8");
+const settingsSource = readFileSync(resolve(process.cwd(), "src/solo/settings.tsx"), "utf8");
 
 describe("Solo Analytics approved workspace contract", () => {
   it("keeps the production truth-recovery prohibitions", () => {
@@ -74,7 +76,11 @@ describe("Solo Analytics approved workspace contract", () => {
   });
 
   it("keeps one shell-owned PAIGE workspace and no local analysis authority", () => {
-    expect(appSource).toContain("analytics:<Analytics2 accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>");
+    expect(appSource).not.toContain("analytics:<Analytics2");
+    expect(appSource).toContain("settings:<SoloSettings openPaige={openPaige}/>");
+    expect(appSource).toContain("soloPaigeWorkspace={<SoloPaigeWorkspace");
+    expect(salesSource).toContain('<Analytics2 accountContext={accountContext} accountEpoch={accountEpoch} openPaige={openPaige} controlledView="money" hideNavigation/>');
+    expect(settingsSource).toContain('tab === "analytics" ? <SoloSettingsAnalytics/>');
     expect(analyticsSource).toContain("openPaige");
     expect(analyticsSource).toContain("Open PAIGE workspace");
     expect(analyticsSource).not.toContain("SoloPaigeWorkspace");
@@ -82,8 +88,9 @@ describe("Solo Analytics approved workspace contract", () => {
     expect(analyticsSource).not.toContain("setTimeout");
   });
 
-  it("gives Analytics one fixed-height shell and intentional internal scroll owners", () => {
-    expect(appSource).toContain("route==='analytics'");
+  it("retires the top-level Analytics host while preserving the embedded Sales lens geometry", () => {
+    expect(appSource).not.toContain("route==='analytics'");
+    expect(appSource).toContain("overflow:full?'hidden':'auto'");
     expect(appSource).toContain("route==='market'");
     expect(analyticsCss).toContain("height:100%;min-height:0;overflow:hidden");
     expect(analyticsCss).toContain(".anr-pane-scroll");

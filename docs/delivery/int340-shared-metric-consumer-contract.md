@@ -64,3 +64,7 @@ Sales owns its 11 producers shipped by #1809 and the Sales Performance experienc
 ## Proof still required
 
 Exact-head hosted database and application CI, independent review of changed risk surfaces, production persistence and signed-in positive/negative scope proof, shared governed-reader integration, typed Chat and Live evidence parity, and authenticated Settings acceptance. Synthetic rendering and rollback fixtures do not substitute for these gates.
+
+## Bounded operating diagnostics
+
+Settings adds operations.recorded_workflow_activity (event timestamp cohort) and operations.current_system_exceptions (current snapshot). Measured values use diagnostic_events with at most 20 items, each containing exactly source, at, status, severity, retry_count, completed_at and check_key. Times are explicitly zoned; source-dependent statuses and canonical severities are preserved. Coverage contributing count equals returned items, and capped/unsafe/missing records remain exclusions. Evidence revisions bind all contributing and excluded facts. Raw source payloads and errors are not part of this read contract.

@@ -8,6 +8,7 @@ export const SETTINGS_METRICS = [
   "business.retention", "business.profitability", "business.nps",
   "operations.systems_check_latest", "operations.unresolved_findings_current",
   "operations.workflows_active_current", "operations.recorded_workflow_runs",
+  "operations.recorded_workflow_activity", "operations.current_system_exceptions",
   "team.active_members_current", "team.role_distribution_current", "team.performance_scorecards",
   "ai.recorded_model_requests", "ai.recorded_model_requests_daily", "ai.recorded_tokens",
   "ai.estimated_model_cost", "ai.recorded_latency", "ai.recorded_browser_calls", "ai.voice_consumption",

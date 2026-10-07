@@ -98,6 +98,11 @@
 .sa-loading>div{display:grid;grid-template-columns:160px 1fr;gap:30px;padding:30px 22px;border-bottom:1px solid var(--pg-line);min-height:110px}
 .sa-loading i,.sa-loading b{display:block;height:22px;background:var(--pg-lift);border-radius:4px;animation:sa-load 1.2s ease-in-out infinite alternate}
 .sa-loading i{width:80%;height:16px}
+.sa-event-ledger{list-style:none;padding:0;margin:0;font-variant-numeric:tabular-nums}
+.sa-event-ledger li{padding:12px 0;border-bottom:1px solid var(--pg-line);overflow-wrap:anywhere}
+.sa-event-ledger li:last-child{border-bottom:0}
+.sa-event-ledger li>div{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sa-event-ledger time,.sa-event-ledger p{display:block;margin:5px 0 0;font-size:12px;color:var(--pg-muted)}
 @keyframes sa-load{to{opacity:.45}}
 @media(prefers-reduced-motion:reduce){.sa-loading i,.sa-loading b{animation:none}}
 @container(max-width:760px){.sa-header{align-items:start;flex-direction:column}.sa-glance-row{grid-template-columns:135px minmax(0,1fr) 56px;gap:14px;padding:17px}.sa-detail-ledger,.sa-health-ledger{grid-template-columns:1fr}}

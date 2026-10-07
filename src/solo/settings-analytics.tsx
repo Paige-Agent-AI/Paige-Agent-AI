@@ -10,7 +10,7 @@ import "./settings-analytics.css";
 
 const sections = [
   { key: "business-health", label: "Business Health", summary: "Client lifecycle and recorded onboarding", primary: "business.lifecycle_current", metrics: ["business.active_clients_current", "business.lifecycle_current", "business.onboarding_current", "business.retention", "business.profitability", "business.nps"] },
-  { key: "operations", label: "Operations", summary: "Systems Check, workflow configuration and recorded executions", primary: "operations.systems_check_latest", metrics: ["operations.systems_check_latest", "operations.unresolved_findings_current", "operations.workflows_active_current", "operations.recorded_workflow_runs"] },
+  { key: "operations", label: "Operations", summary: "Systems Check, workflow configuration and recorded executions", primary: "operations.systems_check_latest", metrics: ["operations.systems_check_latest", "operations.unresolved_findings_current", "operations.workflows_active_current", "operations.recorded_workflow_runs", "operations.recorded_workflow_activity", "operations.current_system_exceptions"] },
   { key: "team", label: "Team", summary: "Active seats, team roles and measurement coverage", primary: "team.role_distribution_current", metrics: ["team.active_members_current", "team.role_distribution_current", "team.performance_scorecards"] },
   { key: "ai-usage", label: "AI & Usage", summary: "Recorded resource consumption, with telemetry limits visible", primary: "ai.recorded_model_requests_daily", metrics: ["ai.recorded_model_requests_daily", "ai.recorded_model_requests", "ai.recorded_tokens", "ai.estimated_model_cost", "ai.recorded_latency", "ai.recorded_browser_calls", "ai.voice_consumption"] },
 ] as const;
@@ -38,6 +38,13 @@ function MetricVisual({ result }: { result: MetricResult }) {
   }
   if (result.values.kind === "series") {
     return <RecordedSeries points={result.values.points}/>;
+  }
+  if (result.values.kind === "diagnostic_events") {
+    return result.values.items.length ? <ol className="sa-event-ledger" aria-label={result.label}>{result.values.items.map((event, index) => <li key={`${event.at}-${index}`}>
+      <div><strong>{event.check_key ? friendly(event.check_key) : "Workflow run"}</strong><span>{friendly(event.status)}{event.severity ? ` · ${friendly(event.severity)}` : ""}</span></div>
+      <time dateTime={event.at}>{evidenceTime(event.at)}</time>
+      <p>{event.completed_at ? `Completed ${evidenceTime(event.completed_at)}` : "Completion not recorded"}{event.retry_count !== null ? ` · ${event.retry_count.toLocaleString()} recorded retries` : ""}</p>
+    </li>)}</ol> : <p className="sa-missing">No matching activity or exceptions are recorded in this measurement. This does not imply complete monitoring; inspect the coverage.</p>;
   }
   return <div className="sa-value"><MetricValue result={result}/><span>{result.unit === "estimated_usd" ? "Estimated, not billed spend" : result.unit === "count" ? "Recorded count" : friendly(result.unit)}</span></div>;
 }

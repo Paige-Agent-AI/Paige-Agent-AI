@@ -50,3 +50,11 @@ This UI slice depends on the versioned metric/evidence foundation. Exact-head ho
 INT-339/#1811 is deployed with postdeployment database privacy assertions PASS. Signed-in transport proof and explicit privacy clearance remain pending. #1806 remains held.
 
 Platform Reach owns the shared governed metric reader and Chat registration. Typed Chat and Live must use the same authenticated metric/evidence call; those integrations and their proof remain owed. No separate Settings Chat calculator or voice path is introduced. The shared consumer contract records the INT-343 layer impacts.
+
+## Operations diagnostics follow-through
+
+The approved Operations detail now includes two evidence-backed diagnostic result families: recent recorded workflow activity and current system exceptions. The server projects at most 20 safe rows, preserving the canonical workflow statuses and Systems Check severity/check key. Raw errors, payloads, prompts, URLs and identities are excluded. Capped and incomplete source coverage remains partial; missing sources remain unavailable. Every returned and excluded versioned fact participates in the evidence revision.
+
+Independent non-author SQL source review passed. Consumer review findings about value-shape/semantics substitution and ambiguous local timestamps were repaired and re-reviewed PASS; 15 parser tests passed after those fixes. The updated contract has 22 Settings keys. Chrome synthetic diagnostic rendering passed all eight required viewport/PAIGE combinations, including visible activity, partial state, named exceptions, navigation reachability, no horizontal overflow and End-key reachability. These are local fixture checks, not authenticated production proof.
+
+The preceding UI head e89c304c passed all 656 full-suite test files, typecheck and build, but the final Solo parity guard found its old navigation snapshot/doctrine. Those records now describe the approved Settings placement and preserve the guard itself. Exact current hosted checks remain required.

@@ -32,3 +32,7 @@ BLOCKER: client fence aborts fetch/UI delivery but paige-ai-chat does not stop m
 
 ## Evidence boundary
 No implementation, CI, merge, deployment or production claim is earned by this packet. Browser CUA initialization failed: trusted Node process exited unexpectedly. Shell sandbox startup failed apply deny-read ACLs; read-only and authorized commands outside sandbox work. Production UI proof remains UNVERIFIED until browser runtime is restored or another supported authenticated path is available.
+
+## Current disposition — 2026-10-07
+
+PR #1805 merged as `df2b1ebe161970275bdcf2d26298f197b1c10b55` after exact-head non-author review and green required CI. Migration, Edge v355 and exact-merge Vercel production deployment verified. Authenticated F1–F14 acceptance remains BLOCKED/UNVERIFIED by browser startup. No DEL inferred; live register confirmation remains owed. INT-338 follows separately. The initial evidence boundary above is historical; current authority is the evidence release section and Master §4.0.

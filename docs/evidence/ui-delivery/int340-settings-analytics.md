@@ -50,7 +50,7 @@ Captures use dev-only synthetic workspace transport/context and real Settings/sh
 
 Non-author reviewer `/root/overview_review` bound UI SHIP to exact product commit 1f853caf206b74ea6f10d439828b9c88f495c31f against foundation aea6518356bed57982b673f6128fe2d607277c42. Findings about transparent chart columns, selected-value disclosure, anonymous readiness chips, UTC labeling and failed-read targeting were repaired and reviewed. Backend contracts and INT-339 deployment assertions are outside that attestation.
 
-The separate foundation PR #1814 owns server production acceptance. INT-339 authenticated production privacy verification passed and explicit Sales clearance was sent on 2026-10-07. The separate #1814 production handoff and authenticated Settings UI acceptance remain pending. No exploit narrative or customer data is included in this record.
+The separate foundation PR #1814 owns server production acceptance. INT-339 authenticated production privacy verification passed and explicit Sales clearance was sent on 2026-10-07. The #1814 production handoff is complete; authenticated Settings UI acceptance remains pending. No exploit narrative or customer data is included in this record.
 
 ## Operations diagnostics follow-through
 

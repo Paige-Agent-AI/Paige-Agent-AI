@@ -50,8 +50,8 @@ Merge SHA: `135e598381a5fd573473c926cb90d5f88548d37e`; production database tag m
 Production migrations: `20270601000003` and `20270601000004`, persisted.
 Vercel production deployment: `dpl_GrUshG4E8z93xPAe8QmTyWQdu6ng`, READY at the merge SHA.
 Independent review, exact-head hosted full application/schema proofs, bounded premerge rollback proof and controlled post-deployment database proof: PASS.
-Signed-in API acceptance: UNVERIFIED; production authentication-hook metadata read returned HTTP 403. Prepared fixtures have not been executed.
-INT-339 PRIVACY BLOCKER NOT CLEARED. No Sales clearance sent. PAIGE read binding remains UNAVAILABLE pending the shared INT-340 / Platform Reach contract.
+Historical pre-clearance status (superseded by the production handoff below): signed-in API acceptance was UNVERIFIED while authentication-hook access was being resolved.
+Historical pre-clearance status (superseded): INT-339 PRIVACY BLOCKER NOT CLEARED; no Sales clearance had yet been sent. PAIGE read binding remains UNAVAILABLE pending the shared INT-340 / Platform Reach contract.
 Shipped Delivery Log: N/A before merge. No DEL, customer version or announcement allocated.
 Recovery: reviewed forward repair through the canonical seams; never restore broader visibility to recover functionality.
 

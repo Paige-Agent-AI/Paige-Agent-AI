@@ -31,6 +31,7 @@ const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
+import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
@@ -9092,6 +9093,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // The tool list is final here (Studio scope, funding, marketplace applied above), so "what she is
     // told she can do" and "what she can call" are the same set by construction. Readiness, lanes,
     // authority and the specialist roster are resolved server-side; nothing is taken from the model.
+    // INT-334 R5b: this projects the TURN's full governed list — on a narrowed (none/read) round the
+    // manifest below is a subset until the turn escalates, deliberately: the projection is how the
+    // model discovers a capability it was not offered, and the signal is how it asks for it.
     // Cached for the request: the capability_status tool returns this same projection.
     const n8nReadinessState = (): ReadinessState => {
       if (n8nEvidence?.status !== "available") return "unknown"; // unread ≠ disconnected: never claim setup
@@ -9739,10 +9743,43 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // the doc-attach path stay on a reasoning-class model, never the cheap one). The fabric picks the
     // provider in the owner's order and falls back only on a proven provider-health failure before the
     // stream opened; tools, approvals and authority are decided below, unchanged.
-    // Every round keeps the governed tool list here, the cheap class included. Taking tools off a cheap
-    // round needs a rescue on every surface that can be misread as light conversation (Live, client seats,
-    // a request phrased as a question) — that is R5b's tool narrowing, not this change.
+    // INT-334 R5b — the route's own capability verdict now narrows what each round may SEE:
+    // `act` carries the full governed set; `read` withholds every mutating tool; `none` offers the
+    // presentation set alone. A narrowed round that discovers work beyond its exposure NAMES the
+    // capability it needs (the system prompt's projection advertises every governed capability),
+    // and that finished-round call — answered at dispatch with a re-route, never executed —
+    // re-resolves the route with the server-observed `capabilityEscalation` fact. The gates, the
+    // approvals and every dispatch check are unchanged: a provider seeing fewer tools is the only
+    // difference until the turn's own model round asks for more.
     const roundClass = turnRoute.cognitive_class;
+    // An approved-card resume executes a stored act with no model before it (the route's `none` is
+    // about THE ACT). Its follow-up rounds narrate the verified readback and answer what comes next:
+    // reads, never fresh writes off one approval — a `none` floor would leave even a lookup unable
+    // to run, and an act floor would offer unrequested mutations. Read is the honest floor.
+    const turnExposure = exposureFor(toolDefs, resumeCalls.length > 0 && turnRoute.capability.tools === "none" ? "read" : turnRoute.capability.tools);
+    if (turnRoute.capability.tools !== "act") {
+      console.log(`[paige] exposure: ${turnRoute.basis}/${turnRoute.capability.tools} — ${turnExposure.offered.length} offered, ${turnExposure.withheld.length} withheld`);
+    }
+    // The escalation RE-RESOLVES THE ROUTE (the same pure resolver, the same facts, plus the
+    // server-observed `capabilityEscalation` fact) — the ONE router decides what an escalated turn
+    // may see and on which class it runs. That re-resolution is what keeps the route's own invariants
+    // true at runtime: an ambiguous offer still ends at a question (the cap outranks the widening),
+    // and a frontier turn keeps its class instead of being flattened to operational.
+    const governedToolNames = new Set((toolDefs as any[]).map((d: any) => d?.function?.name).filter((n: unknown): n is string => typeof n === "string"));
+    let escalatedRoute: ReturnType<typeof resolveTurnRoute> | null = null;
+    let escalatedTools: any[] | null = null;
+    /** The manifest and class of the round now in flight — the route's, or the re-resolved route's once escalated. */
+    const roundTools = (): any[] => escalatedTools ?? turnExposure.offered as any[];
+    const roundClassNow = (): typeof roundClass => escalatedRoute?.cognitive_class ?? roundClass;
+    const escalateTurn = (from: string): boolean => {
+      if (escalatedRoute) return false;
+      escalatedRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification, capabilityEscalation: true });
+      escalatedTools = escalatedRoute.capability.tools === "act"
+        ? toolDefs as any[]
+        : exposureFor(toolDefs, escalatedRoute.capability.tools).offered as any[];
+      console.log(`[paige] route escalated (${from}): ${escalatedRoute.cognitive_class}/${escalatedRoute.capability.tools} — the turn asked for capability beyond its exposure`);
+      return true;
+    };
     const noteFabric = (label: string, s: FabricStream): FabricStream => {
       if (!s.ok || s.attempts.some((a) => a.failure && a.failure !== "skipped_disabled")) console.warn(`[paige] fabric ${label}: ${describeAttempts(s)}`);
       return s;
@@ -9750,7 +9787,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     await interactive?.check();
     const response = resumeCalls.length > 0 ? null : noteFabric("chat", await fabricChatStream(roundClass, {
         messages: liveDecisionMessages(aiMessages),
-        tools: toolDefs,
+        tools: roundTools(),
         tool_choice: "auto",
       }, {
         // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
@@ -9990,6 +10027,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         };
       const toolResults: any[] = [];
       const executed: any[] = [];
+      // R5b — the manifest boundary is enforced ONLY on CHEAP rounds (`cognitive_class === "cheap"`,
+      // whose manifest is necessarily `none`), decided ONCE PER BATCH from the manifest the round
+      // actually saw: the owner's rule is about CHEAP cognition carrying no consequential authority,
+      // and there a discovered call must re-route, never execute. Every other state — a read round
+      // (already operational), an approved card's deterministic or carried-approval turn, a resume —
+      // keeps exactly the dispatch it had before R5b (enforcing the read manifest at dispatch is a
+      // recorded future item, not this slice).
+      const enforceBoundary = turnRoute.cognitive_class === "cheap";
+      const manifestNow = enforceBoundary
+        ? new Set((roundTools() as any[]).map((d: any) => d?.function?.name ?? d?.name).filter((n: unknown): n is string => typeof n === "string"))
+        : null;
+      const governedButNotOffered = manifestNow
+        ? new Set([...governedToolNames].filter((n) => !manifestNow.has(n)))
+        : new Set<string>();
       // ── C2b · MAY THIS CALL BE ANNOUNCED AS RUNNING? ────────────────────────────────────────────
       // Asked at the START point, immediately before dispatch. THE CONTRACT:
       //
@@ -10103,6 +10154,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // send the call again whole. Empty arguments are a tool that takes no input, and pass.
         if (!wholeArguments(tc.function.arguments)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, code: "ARGUMENTS_UNPARSEABLE", error: "This call's arguments were incomplete, so it was not run. Send it again with complete arguments." }) });
+          continue;
+        }
+
+        // ── INT-334 R5b — THE MANIFEST BOUNDARY, AND THE RESCUE IT CARRIES ──────────────────
+        // A finished-round call naming a real governed tool outside THIS round's manifest is the
+        // escalation signal: the model discovered capability beyond its exposure (the capability
+        // projection in the system prompt advertises every governed capability, so the names are
+        // known). Nothing from the escalating round executes — the call is answered with the
+        // re-route, the turn re-resolves its route with the server-observed `capabilityEscalation`
+        // fact, and the loop's NEXT round carries the widened set through the unchanged gates.
+        // This is also the first dispatch-side enforcement of the manifest itself: before R5b a
+        // withheld-but-real tool would simply have run. It sits BEFORE the client-seat gate on
+        // purpose — a client seat's question must be able to escalate too, and every re-issued
+        // call still meets that gate, the autonomy lanes and the approval doors exactly as before.
+        if (governedButNotOffered.has(tc.function.name)) {
+          escalateTurn("attempted call outside the round manifest");
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(notOfferedThisRound()) });
           continue;
         }
 
@@ -16816,7 +16884,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             await interactive?.check();
-            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -16851,7 +16919,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             try {
               await interactive?.check();
               // INT-332 — the claim correction is operational work whatever the turn's own class.
-              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream("operational", { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
+              // R5b — the correction is operational work with the governed tools (43.42g), so the
+              // turn escalates here too: the manifest the correction round was sent and the manifest
+              // its calls are graded against stay the same set.
+              escalateTurn("claim correction");
+              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
               if (correctionResponse.ok) {
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
@@ -16894,7 +16966,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 await interactive?.check();
-                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
+                // R5b — the action-intent continuation carries the step out, so it re-enters on the
+                // operational class with the full set: a cheap misread never keeps the turn's tools
+                // narrowed once the turn is KNOWN to be action work.
+                escalateTurn("action-intent continuation");
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -17028,7 +17104,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
             await interactive?.check();
-            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClass, { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME

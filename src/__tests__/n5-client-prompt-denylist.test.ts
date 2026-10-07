@@ -38,7 +38,8 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     const visit = (node: ts.Node) => { if (found) return; if (predicate(node)) found = node; else ts.forEachChild(node, visit); };
     visit(source); if (!found) throw new Error("Production seam not found"); return found;
   };
-  const js = (body: string) => ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+  // These extracted seams exercise Live, which does not opt into the typed executor.
+  const js = (body: string) => ts.transpileModule(`const interactive=undefined,interactiveSettlement=undefined,interactiveLifetime=undefined;const interactiveEffects=[];class InteractiveSuperseded extends Error {}\n${body}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
   const initializer = (name: string) => (find((n) => ts.isVariableDeclaration(n) && n.name.getText(source) === name) as ts.VariableDeclaration).initializer!.getText(source);
   // paige-turn — the PRODUCTION terminal seam, read out of index.ts (emitTurnTerminal with its
   // exactly-once guard, and emitTurnTerminalBeforeAnswer), closed over a real reducer. So the guard these
@@ -69,9 +70,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(decision).toHaveLength(2);
     expect(decision[1].content).toContain("Do not draft the user-facing answer here");
     expect(messages).toHaveLength(1);
-    const start = code.indexOf('finalStreamResponse = await gatewayCompat');
+    const start = code.indexOf('finalStreamResponse = noteFabric(');
+    expect(start).toBeGreaterThan(-1);
     const closing = code.slice(start, code.indexOf('traceFor(', start));
-    expect(closing.includes('messages: convo, stream: true')).toBe(true);
+    expect(closing.includes('{ messages: convo }')).toBe(true);
     expect(/tools:|tool_choice:/.test(closing)).toBe(false);
   });
   it("does not replay decision-round prose for a verified Live turn", () => {
@@ -288,7 +290,7 @@ describe("paige-turn — the document stream's catch closes the wire with its on
   const js = (body: string) => ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
   const emitDocTurnTerminalSrc = (find((n) => ts.isVariableDeclaration(n) && n.name.getText(source) === "emitDocTurnTerminal") as ts.VariableDeclaration).initializer!.getText(source);
   const caught = find((n) => ts.isCatchClause(n) && n.getText(source).includes("[paige] document stream failed")) as ts.CatchClause;
-  const drive = (alreadySent: boolean, closed = false) => {
+  const drive = async (alreadySent: boolean, closed = false) => {
     const docTurn = createTurnTracker(NO_TOOLS);
     docTurn.roundStarted();
     const wire: string[] = [];
@@ -299,25 +301,25 @@ describe("paige-turn — the document stream's catch closes the wire with its on
       error() { state = "errored"; },
     };
     const logged: string[] = [];
-    new Function("docTurn", "turnFrameLine", "controller", "console", "alreadySent",
-      js(`let docTurnTerminalSent=false;const emitDocTurnTerminal=${emitDocTurnTerminalSrc};if(alreadySent)emitDocTurnTerminal(controller);try{throw new Error('fixture: provider read rejected')}catch(error)${caught.block.getText(source)}`),
+    await new Function("docTurn", "turnFrameLine", "controller", "console", "alreadySent",
+      js(`return (async()=>{const interactive=undefined;class InteractiveSuperseded extends Error {}let docTurnTerminalSent=false;const emitDocTurnTerminal=${emitDocTurnTerminalSrc};if(alreadySent)emitDocTurnTerminal(controller);try{throw new Error('fixture: provider read rejected')}catch(error)${caught.block.getText(source)}})();`),
     )(docTurn, turnFrameLine, controller, { error: (m: string) => logged.push(m) }, alreadySent);
     return { wire, state, docTurn, logged };
   };
-  it("a throw before the release point ends the stream INTERRUPTED, then [DONE], and says why", () => {
-    const r = drive(false);
+  it("a throw before the release point ends the stream INTERRUPTED, then [DONE], and says why", async () => {
+    const r = await drive(false);
     expect(r.wire).toEqual([turnFrameLine({ v: 1, event: "completed", state: "INTERRUPTED", mode: "fast_answer" }), "data: [DONE]\n\n"]);
     expect(r.state).toBe("closed");
     expect(r.docTurn.state).toBe("INTERRUPTED");
     expect(r.logged).toEqual(["[paige] document stream failed:"]);
   });
-  it("a throw after the terminal went out adds no second terminal, and the tracker says INTERRUPTED", () => {
-    const r = drive(true);
+  it("a throw after the terminal went out adds no second terminal, and the tracker says INTERRUPTED", async () => {
+    const r = await drive(true);
     expect(r.wire).toEqual([turnFrameLine({ v: 1, event: "completed", state: "FINAL", mode: "fast_answer" }), "data: [DONE]\n\n"]);
     expect(r.docTurn.state).toBe("INTERRUPTED");
   });
-  it("a stream the client already closed is errored, not left hanging", () => {
-    const r = drive(false, true);
+  it("a stream the client already closed is errored, not left hanging", async () => {
+    const r = await drive(false, true);
     expect(r.wire).toEqual([]);
     expect(r.state).toBe("errored");
   });

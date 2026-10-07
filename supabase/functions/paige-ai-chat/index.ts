@@ -30,6 +30,9 @@ import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
+import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
+import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
+import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
 import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
@@ -758,6 +761,7 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional() }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1002,6 +1006,9 @@ serve(async (req) => {
   // C4c — set once an answer has been claimed and before PAIGE is called (below): an exit on that
   // stretch, the outer catch included, saves the question again instead of stranding the answer.
   let afterAnswerClaimFailure: ((resp: Response) => Promise<Response>) | null = null;
+  let interactive: ReturnType<typeof createInteractiveExecution> | null = null;
+  let interactiveLifetime: ReturnType<typeof createInteractiveLifetime> | null = null;
+  let interactiveSettlement: ReturnType<typeof createInteractiveSettlement> | null = null;
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -1130,6 +1137,95 @@ serve(async (req) => {
       throw error;
     }
 
+    let interactiveUnresolvedEffects: Array<{ tool: string; outcome: string }> = [];
+    let interactiveReceiptScanSaturated = false;
+    // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
+    if (validatedData.interactive) {
+      const interactiveInput = validatedData.interactive;
+      if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
+        return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
+      const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
+        .select("tenant_id").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
+      if (threadError || !thread) throw new Error("INTERACTIVE_SCOPE_UNAVAILABLE");
+      const userText = [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content;
+      const executor = async (operation: string) => {
+        const { data, error } = await supabase.rpc("paige_chat_interactive_executor", {
+          p_thread: validatedData.threadId, p_actor: user.id, p_tenant: thread.tenant_id,
+          p_intent: validatedData.requestIntentId, p_operation: operation,
+        });
+        if (error || !data) throw new Error("INTERACTIVE_AUTHORITY_UNAVAILABLE");
+        return data;
+      };
+      if (validatedData.interactive.kind === "status") {
+        const state = await executor("state");
+        const { data: turns, error } = await supabaseClient.from("paige_chat_turns").select("role,bundle_ref")
+          .eq("thread_id", validatedData.threadId).order("created_at", { ascending: false }).limit(100);
+        if (error) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
+        const target = validatedData.requestIntentId;
+        const terminal = (turns ?? []).some((turn: any) =>
+          (turn.role === "assistant" && turn.bundle_ref?.interactive?.request_intent_id === target &&
+            ["FINAL", "WAIT_APPROVAL", "WAIT_WORK", "ASK_USER", "LIMIT_REACHED", "INTERRUPTED", "WITHHELD", "REFUSED"].includes(turn.bundle_ref?.turn_state?.state)) ||
+          turn.bundle_ref?.interactive?.supersedes_intent_id === target);
+        return new Response(JSON.stringify({ executor_active: state.executor !== null,
+          settled: state.executor === null && terminal }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      // This exact query/fallback/order was driven in the isolated proposed handler.
+      interactiveSettlement = createInteractiveSettlement({
+        owns: async () => (await executor("state")).executor === validatedData.requestIntentId,
+        readback: async () => {
+          const { data, error } = await supabaseClient.from("paige_chat_turns").select("bundle_ref")
+            .eq("thread_id", validatedData.threadId).eq("role", "assistant")
+            .contains("bundle_ref", { interactive: { request_intent_id: validatedData.requestIntentId } }).limit(1).maybeSingle();
+          if (error) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
+          return !!data?.bundle_ref?.turn_state && data.bundle_ref.turn_state.state !== "WORKING";
+        },
+        fallback: async () => await supabaseClient.rpc("paige_chat_turn_append", {
+          p_thread_id: validatedData.threadId, p_role: "assistant",
+          p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
+          p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
+          p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
+            turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
+        }),
+        release: async () => { await executor("release"); },
+      });
+      const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
+        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin", {
+          p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
+          p_supersedes: interactiveInput.supersedesIntentId ?? null,
+          p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
+          p_stop: interactiveInput.kind === "stop",
+        }),
+        store: { state: () => executor("state"), acquire: async () => (await executor("acquire")).acquired === true,
+          release: async () => { await interactiveSettlement!.release(); } },
+      });
+      if (!started.boundary.proceed) return new Response(JSON.stringify(started.boundary), {
+        status: started.boundary.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+      interactive = started.execution;
+      interactiveLifetime = started.lifetime;
+      // Re-read only after the preceding executor has finished its receipts.
+      const { data: history, error: historyError } = await supabaseClient.from("paige_chat_turns")
+        .select("role,content,bundle_ref").eq("thread_id", validatedData.threadId).order("seq", { ascending: false }).limit(49);
+      if (historyError) throw new Error("INTERACTIVE_HISTORY_UNAVAILABLE");
+      // An unknown external effect is a dispatch brake, not a failed action. This scoped
+      // canonical read also covers older receipts outside the bounded model transcript.
+      const { data: unresolved, error: unresolvedError } = await supabaseClient.from("paige_chat_turns")
+        .select("bundle_ref").eq("thread_id", validatedData.threadId)
+        .contains("bundle_ref", { interactive: { effects: [{ outcome: "outcome_unknown" }] } }).limit(100);
+      if (unresolvedError) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
+      interactiveReceiptScanSaturated = (unresolved ?? []).length >= 100;
+      interactiveUnresolvedEffects = (unresolved ?? []).flatMap((turn: any) =>
+        Array.isArray(turn.bundle_ref?.interactive?.effects) ? turn.bundle_ref.interactive.effects.filter((effect: any) =>
+          effect?.outcome === "outcome_unknown" && typeof effect.tool === "string") : []);
+      const rows = (history ?? []).reverse().filter((m: any) =>
+        (m.role === "user" || m.role === "assistant") && m.content &&
+        m.bundle_ref?.interactive?.request_intent_id !== validatedData.requestIntentId);
+      const first = rows.findIndex((m: any) => m.role === "user");
+      const authoritative = rows.slice(first < 0 ? rows.length : first).map((m: any) => ({ role: m.role,
+        content: m.content + (interactiveReceiptContext(m.bundle_ref) ? "\n\n" + interactiveReceiptContext(m.bundle_ref) : ""),
+      }));
+      validatedData.messages = messageSchema.shape.messages.parse([...authoritative, { role: "user", content: userText }]);
+    }
     let liveRuntimeScope: LiveRuntimeScope | null = null;
     let liveProof: ReturnType<typeof createLiveRuntimeProof> | null = null;
     if (validatedData.liveRuntimeChallenge) {
@@ -1261,6 +1357,7 @@ serve(async (req) => {
     // could not run, nothing ran), and it is never what the retirement consumes.
     type DoorPin = { fingerprint: string; toolName: string; tenantId: string; issuedInRequest: string; args: Record<string, unknown>; expiresAt: unknown; selectedAt: string };
     const resumeDoorPin = new Map<string, DoorPin>();
+    const resumePreviewValidation = new Map<string, { command: Record<string, unknown>; idempotency_key: string }>();
     // A door decides its own lane, so a drifted re-emit cannot be "put back on confirm" the way the
     // general gate does it; while this reply carries a door approval forward, any other call to the
     // same door tool is not run ("here": the resumed call ran in this reply; "elsewhere": it could not).
@@ -5701,7 +5798,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     if (payloadThreadId) {
       const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content;
       // An answer's turn is appended once, as its claim, immediately before PAIGE is called (below).
-      if (!answerBinding && typeof latestUserText === "string" && latestUserText.trim()) {
+      if (!interactive && !answerBinding && typeof latestUserText === "string" && latestUserText.trim()) {
         try {
           await supabaseClient.rpc("paige_chat_turn_append", {
             p_thread_id: payloadThreadId, p_role: "user", p_content: latestUserText,
@@ -5879,12 +5976,15 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // The canonical turn RPC accepts empty content; never invent an answer.
       if (!payloadThreadId || (!finalText?.trim() && !meta.bundleRef)) return;
       try {
-        await supabaseClient.rpc("paige_chat_turn_append", {
+        const writeAssistant = async () => await supabaseClient.rpc("paige_chat_turn_append", {
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: finalText,
           p_surfaces_used: meta.surfaces ?? null, p_load_id: null,
           p_model: meta.model ?? "google/gemini-2.5-flash", p_tokens_used: null, p_latency_ms: null,
-          p_bundle_ref: (meta.bundleRef ?? null) as any, p_tool_calls: null,
+          p_bundle_ref: (interactive ? { ...((meta.bundleRef ?? {}) as Record<string, unknown>),
+            interactive: { ...(((meta.bundleRef as any)?.interactive ?? {}) as Record<string, unknown>), request_intent_id: payloadRequestIntentId } }
+            : (meta.bundleRef ?? null)) as any, p_tool_calls: null,
         });
+        if (interactiveSettlement) await interactiveSettlement.persist(writeAssistant); else await writeAssistant();
         try {
           const { data: th } = await supabaseClient.from("paige_chat_threads")
             .select("title, message_count").eq("id", payloadThreadId).maybeSingle();
@@ -5900,7 +6000,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           }
         } catch { /* title is a nicety, never block */ }
         await maybeRefreshSummary(payloadThreadId);
-      } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
+      } catch (e) {
+        console.error("[paige] persist assistant turn failed:", (e as Error)?.message);
+        if (interactive) throw e;
+      }
     };
 
     // === OPERATOR (admin) CONTEXT INJECTION ===
@@ -8107,12 +8210,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         ? row.issued_in_request : null;
     };
     const cancelConfirmations = async (fps: string[]): Promise<boolean> => {
+      await interactive?.check();
       if (fps.length === 0) return true;
       try {
         if (!(await revalidateProposalScope())) return false;
         for (const token of fps) {
           const nonce = await selectedConfirmationNonce(token);
           if (!nonce) continue;
+          await interactive?.check();
           let cancellation = supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id)
@@ -8137,6 +8242,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // approval forward without a model re-emit, so a stale Approve would publish it.)
         const legacyFps = fps.filter((token) => /^[0-9a-f]{16}$/.test(token));
         if (personaCtx?.tenant_id && legacyFps.length > 0) {
+          await interactive?.check();
           const { error: crmCancellationError } = await supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id).eq("tenant_id", personaCtx.tenant_id)
@@ -8161,6 +8267,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     ): Promise<Record<string, unknown> | null> => {
       try {
         if (!cancellationsRecorded || !approvedConfirmations.has(fp) || !(await revalidateProposalScope())) return null;
+        await interactive?.check();
 
         const nonce = await selectedConfirmationNonce(fp, tool);
         if (!nonce) return null;
@@ -9389,7 +9496,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // fingerprinted (confirmFingerprint(tool, args)), so a row whose args no longer hash to its
             // fingerprint is not carried forward.
             if (await confirmFingerprint(row.tool_name, row.args as Record<string, unknown>) !== row.fingerprint) continue;
-            const shape = doorResumeShape(row.tool_name, row.args, doorTenant, catalogs);
+            let shape = doorResumeShape(row.tool_name, row.args, doorTenant, catalogs);
+            let previewValidation: { command: Record<string, unknown>; idempotency_key: string } | null = null;
+            if (!shape && interactive && payloadThreadId && CRM_COMMAND_TOOL_NAMES.has(row.tool_name as any)) {
+              const turns = await readThreadTurns();
+              const suspendedId = findSuspendedTurnId(turns, new Set([fp]));
+              const suspended = turns.find((turn) => turn.id === suspendedId);
+              previewValidation = await selectPinnedPreviewRequest({ tool: row.tool_name, fingerprint: fp,
+                storedArgs: row.args, cards: (suspended?.bundle_ref as any)?.paige_confirm,
+                capabilities: CRM_ACTION_CAPABILITY,
+                subject: (command) => crmApprovalSubject(command.action as any, command as any) });
+              if (previewValidation) {
+                const original = { ...previewValidation.command };
+                delete original.preview_id;
+                shape = doorResumeShape(row.tool_name, { ...row.args, command: original }, doorTenant,
+                  { ...catalogs, crmPreviewActions: new Set<string>() });
+              }
+            }
             if (!shape) continue;
             approvalTokenTool.set(fp, row.tool_name);
             resumeTokenTools.push(fp);
@@ -9415,6 +9538,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               continue;
             }
             const call = buildResumeCall(fp, { tool_name: row.tool_name, args: shape.callArgs });
+            if (previewValidation) resumePreviewValidation.set(call.id, previewValidation);
             resumePin.set(call.id, fp);
             resumeDoorPin.set(call.id, { fingerprint: fp, toolName: row.tool_name, tenantId: doorTenant, issuedInRequest: String((row as StoredDoorRow & { issued_in_request?: unknown }).issued_in_request), args: row.args as Record<string, unknown>, expiresAt: row.expires_at, selectedAt: doorSelectedAt });
             resumeTokens.set(fp, { tool: row.tool_name, state: "pending" });
@@ -9440,6 +9564,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         resumeHandledSubjects.clear();
         resumeHandledTools.clear();
         resumeDoorPin.clear();
+        resumePreviewValidation.clear();
         resumeHandledDoorTools.clear();
         for (const token of resumeTokenTools) approvalTokenTool.delete(token);
         resumeTokenTools.length = 0;
@@ -9536,11 +9661,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // C4c — THE CLAIM, the last thing before PAIGE is called (every workspace check above has passed).
       const binding = answerBinding;
       const askId = binding.ask.ask_id;
+      await interactive?.check();
       const { data: claimTurnId, error: claimError } = await supabaseClient.rpc("paige_chat_turn_append", {
         p_thread_id: payloadThreadId, p_role: "user", p_content: binding.content,
         p_surfaces_used: null, p_load_id: null, p_model: null,
         p_tokens_used: null, p_latency_ms: null,
-        p_bundle_ref: { paige_resume: answerClaim(askId, binding.turnId, binding.skipped) } as any,
+        p_bundle_ref: { paige_resume: answerClaim(askId, binding.turnId, binding.skipped),
+          ...(interactive ? { interactive: { request_intent_id: payloadRequestIntentId,
+            supersedes_intent_id: validatedData.interactive?.supersedesIntentId ?? null } } : {}),
+        } as any,
         p_tool_calls: null,
       });
       if (claimError) {
@@ -9604,31 +9733,32 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       );
     }
     const turnRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification });
-    const substantiveTurn = turnRoute.cognitive_class !== "cheap";
     console.log(`[paige] route: ${turnRoute.basis}/${turnRoute.intent}/${turnRoute.cognitive_class} tools=${turnRoute.capability.tools} (${turnRoute.reasons.join(",")})`);
-    const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // U2/§14 — the Studio design agent runs on the REASONING tier (pro ⇒ CLAUDE_REASONING) so its
-        // extended thinking is a real reasoning model, never Haiku; the doc-attach path already did.
-        // INT-334 R4 — the Turn Route's class picks the tier (Studio and an attached document are route facts).
-        model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
+    // INT-334 R5 — every streamed round opens through the shared model fabric, for the Turn Route's
+    // cognitive class (Studio and an attached document are route facts, so the Studio design agent and
+    // the doc-attach path stay on a reasoning-class model, never the cheap one). The fabric picks the
+    // provider in the owner's order and falls back only on a proven provider-health failure before the
+    // stream opened; tools, approvals and authority are decided below, unchanged.
+    // Every round keeps the governed tool list here, the cheap class included. Taking tools off a cheap
+    // round needs a rescue on every surface that can be misread as light conversation (Live, client seats,
+    // a request phrased as a question) — that is R5b's tool narrowing, not this change.
+    const roundClass = turnRoute.cognitive_class;
+    const noteFabric = (label: string, s: FabricStream): FabricStream => {
+      if (!s.ok || s.attempts.some((a) => a.failure && a.failure !== "skipped_disabled")) console.warn(`[paige] fabric ${label}: ${describeAttempts(s)}`);
+      return s;
+    };
+    await interactive?.check();
+    const response = resumeCalls.length > 0 ? null : noteFabric("chat", await fabricChatStream(roundClass, {
         messages: liveDecisionMessages(aiMessages),
         tools: toolDefs,
         tool_choice: "auto",
-        stream: true,
-        ...(paigeThinkingOn ? { paige_thinking: true } : {}),
-      }),
-    // §18 — the ONE trace idiom, same as every other call site. This was the only stamped site
-    // and it built its context inline; leaving it that way would keep two spellings of the same
-    // thing alive next to each other, and the inline one would silently win here if `traceCtx`
-    // ever gained a field. `traceFor("chat")` is exactly equivalent to what stood here: the
-    // tenant and working context are the same values, and `traceCtx.agent_id` is set to
-    // "studio-design-agent" at the Studio-session branch above, which runs before this line.
-    }, traceFor("chat"));
+      }, {
+        // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
+        // "studio-design-agent" at the Studio-session branch above, which runs before this line.
+        trace: traceFor("chat"),
+        // U2/§14 — the dormant Studio extended-thinking flag rides only to the Anthropic candidate.
+        anthropicExtras: paigeThinkingOn ? { paige_thinking: true } : undefined,
+      }));
 
     if (response && !response.ok) {
       const errorId = crypto.randomUUID();
@@ -9763,7 +9893,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Multi-round agentic loop: consume one streamed round, detect tool
       // calls, execute them, then re-ask WITH tools until a natural stop or a
       // safety bound. consumeRound accumulates one streamed gateway response.
-      const consumeRound = async (resp: Response) => {
+      const consumeRound = async (resp: { body?: ReadableStream<Uint8Array> | null }) => {
         const fullReader = resp.body!.getReader();
         const fullDecoder = new TextDecoder();
         let content = "";
@@ -9812,7 +9942,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch { /* skip */ }
         };
         while (true) {
-          const { done, value } = await fullReader.read();
+          const { done, value } = interactive ? await interactive.read(fullReader) : await fullReader.read();
           if (done) break;
           allChunks.push(value);
           sseBuf += fullDecoder.decode(value, { stream: true });
@@ -9929,6 +10059,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
       };
       for (const [toolIndex, tc] of toolCalls.entries()) {
+        try { await interactive?.check(); }
+        catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
         // Actual dispatch boundary: the account may change after the model round was
         // consumed but before its proposed tools execute. This is asserted PER TOOL, not
@@ -9947,7 +10079,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // the deliberate trade — a side effect that already happened under valid scope is not
         // undone by refusing the ones that would follow under stale scope.
         if (!(await revalidateTenantKnowledgeScope())) {
-          return { toolResults, executed, scopeInvalidated: true };
+          return { toolResults, executed, scopeInvalidated: true, interactiveError: null };
         }
         executed.push(tc);
         // C2b — the per-call FINISH wraps everything from here to the end of the iteration (see the
@@ -9957,6 +10089,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         callerOwnTenantMemo = null;
         const resultsBeforeThisCall = toolResults.length;
         try {
+        if (interactive && MUTATING_TOOLS.has(tc.function.name) &&
+            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool)))) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
+            error: "prior_effect_reconciliation_required",
+            message: "An earlier consequential action has an unknown outcome. Read back and reconcile its authoritative receipt before any further write. It has not been declared failed or retried." }) });
+          continue;
+        }
 
         // INT-334 (R7) — ARGUMENTS THAT DO NOT PARSE ARE NEVER RUN. A provider can cut a call off
         // mid-JSON; several branches below read a parse failure as `{}` and would act on nothing the
@@ -10170,7 +10309,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // with the command and idempotency key the door stored with it (the same body the approved
           // card's own lane sends), so the door reads back a result it already committed under that
           // key before it would claim anything. No lookup, no choosing among approvals.
-          const pinnedRequest = doorPin ? doorPin.args as { command: Record<string, unknown>; idempotency_key: string } : null;
+          const pinnedRequest = doorPin ? resumePreviewValidation.get(tc.id) ?? doorPin.args as { command: Record<string, unknown>; idempotency_key: string } : null;
           if (doorPin) approvedFingerprint = doorPin.fingerprint;
           if (!doorPin && approvedConfirmations.size > 0 && personaCtx?.tenant_id) {
             const gateAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -11010,6 +11149,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // announced on the step trace as `running` now — unless `announceStart` finds that a check
         // inside the dispatch chain will refuse it, or it has no start wording. Its FINISH (the
         // `finally` at the end of this iteration) closes the same row.
+        try { await interactive?.check(); }
+        catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (stepHooks && await announceStart(tc)) stepHooks.start(tc, toolIndex);
 
         if (tc.function.name === "update_client_data") {
@@ -13053,7 +13194,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!tenantId) {
                 result = { success: false, error: "No workspace in context — pick a workspace first." };
               } else {
-                const { data: configured, error: configureError } = await admin.rpc("configure_tenant_pipeline_as_paige", {
+                const { data: configured, error: configureError } = interactive && resumePin.has(tc.id)
+                  ? await supabaseClient.rpc("configure_tenant_pipeline", {
+                    _tenant_id: tenantId, _command: args.command, _idempotency_key: args.idempotency_key, _actor_kind: "human",
+                  }) : await admin.rpc("configure_tenant_pipeline_as_paige", {
                   _tenant_id: tenantId,
                   _requested_by: user.id,
                   _command: args.command,
@@ -15543,7 +15687,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           stepHooks?.finish(tc, toolIndex, toolResults.length > resultsBeforeThisCall ? toolResults[resultsBeforeThisCall] : undefined);
         }
       }
-      return { toolResults, executed, scopeInvalidated: false };
+      return { toolResults, executed, scopeInvalidated: false, interactiveError: null };
       };
 
       // Bounded multi-round agentic loop. Round 0 reuses the first call already
@@ -15971,13 +16115,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // rehydrates evidence through the governed get RPC, so chat and the Research library
       // share one citation identity).
       const researchTrace: Array<Record<string, unknown>> = [];
+      const interactiveEffects: NonNullable<ReturnType<typeof interactiveEffect>>[] = [];
       // One authorization-neutral projection for success AND interrupted Live
       // history. Never persist the live CRM readback, locator or contact payload.
       const assistantTurnMetadata = () => ({
         surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length)
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length)
           ? {
               approval_queued: queuedApprovals,
+              ...(interactiveEffects.length ? { interactive: { request_intent_id: payloadRequestIntentId,
+                effects: interactiveEffects.slice(0, 20) } } : {}),
               paige_confirm: confirmTrace,
               paige_crm_result: crmResultTrace.map((result) => ({
                 action: result.action,
@@ -16383,6 +16530,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           console.error("[paige] approval outcome frame not sent", JSON.stringify({ correlation_id: requestNonce, message: (e as { message?: string })?.message ?? String(e) }));
         }
       };
+      interactiveLifetime?.transferToStream();
       const finalStream = new ReadableStream({
         async start(controller) {
          // paige-turn — the first frame of the stream, ahead of the compaction card and everything else.
@@ -16440,7 +16588,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!resumedRound) turnTracker.roundStarted();
             const { content, toolCalls, allChunks, hasToolCall, finished, runnable } = resumedRound
               ? { ...resumedRound, runnable: true } // a server-built resume round: the stored, approved act
-              : await consumeRound(currentResponse as Response);
+              : await consumeRound(currentResponse!);
             lastRoundFinished = finished;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
@@ -16551,7 +16699,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // wire; `finishedSteps` keeps each call's describeStep answer for the rail label below.
             const finishedSteps = new Map<any, ReturnType<typeof describeStep>>();
             const toolStepHooks = createToolStepHooks(controller, round, continuationsUsed, finishedSteps);
-            const { toolResults, executed, scopeInvalidated } = await executeToolCalls(askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls, queuedApprovals, toolStepHooks);
+            const { toolResults, executed, scopeInvalidated, interactiveError } = await executeToolCalls(askAlongside ? toolCalls.filter((tc: any) => tc !== chooseTc) : toolCalls, queuedApprovals, toolStepHooks);
             // An approved call its card will report as "couldn't confirm" tells the model the same,
             // before the model reads it, so Paige never says "that failed" beside a card that says
             // check first (approval-outcome.ts).
@@ -16606,6 +16754,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 let ok = true;
                 try {
                   const parsed = JSON.parse(res?.content ?? "{}");
+                  if (interactive) {
+                    const effect = interactiveEffect(String(tc.function?.name ?? ""), parsed);
+                    if (effect) interactiveEffects.push(effect);
+                  }
                   ok = parsed?.success !== false;
                   // Capture a pending confirmation so the client renders an approve card.
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
@@ -16657,17 +16809,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // content can emit" rather than merely usually so.
             markLateRetrievalProtected(executed, toolResults, TOOL_RESULT_IS_RECEIPT);
             convo.push(...toolResults);
+            // Observe/audit/persist prior tool truth before terminating a partial batch.
+            if (interactiveError) throw interactiveError;
             if (overCap || overTime || lastRound) { turnTracker.budgetStop(); forcedTermination = true; break; }
             if (!(await revalidateTenantKnowledgeScope())) {
               tenantKnowledgeScopeInvalidated = true;
               forcedTermination = true;
               break;
             }
-            currentResponse = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-            }, traceFor("chat-tool-loop"));
+            await interactive?.check();
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -16700,11 +16851,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             convo.push({ role: "assistant", content: finalAssistantText || "" });
             convo.push({ role: "user", content: CLAIM_CORRECTION[claim] });
             try {
-              const correctionResponse = await gatewayCompat("anthropic", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ model: "google/gemini-2.5-pro", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-              }, traceFor("chat-claim-correction"));
+              await interactive?.check();
+              // INT-332 — the claim correction is operational work whatever the turn's own class.
+              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream("operational", { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
               if (correctionResponse.ok) {
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
@@ -16746,11 +16895,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ? "The person accepted the step you offered, and it has not been done: nothing that carries it out ran in this turn, so nothing was sent or changed by it, whatever your reply said. Carry it out now by calling its tool — when it needs their approval, the tool puts the card in front of them. If you need one fact from them first, ask it with ask_choices; a question in prose leaves the step undone. If it cannot be done, say plainly why."
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
-                const continuationResponse = await gatewayCompat("anthropic", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-                }, traceFor("chat-continuation"));
+                await interactive?.check();
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -16875,7 +17021,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Text keeps its natural-round replay. Live streams the final answer
           // only from this tools-free call, AFTER the governed tool decision.
           // Protected turns still use emitContent's hold and final scope check.
-          let finalStreamResponse: Response | null = null;
+          let finalStreamResponse: FabricStream | null = null;
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             if (!(await revalidateTenantKnowledgeScope())) {
               tenantKnowledgeScopeInvalidated = true;
@@ -16883,11 +17029,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
-            finalStreamResponse = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: convo, stream: true }),
-            }, traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"));
+            await interactive?.check();
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClass, { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME
@@ -17076,6 +17219,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the first delta.content, so this is a lightweight explicit confirmation, not a dependency.
           controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
           if (finalChunks) {
+            await interactive?.check();
             for (const c of finalChunks) emitContent(controller, c);
           } else if (finalStreamResponse?.ok && finalStreamResponse.body) {
             const up = finalStreamResponse.body.getReader();
@@ -17121,7 +17265,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             };
             try {
               while (!liveRuntimeScope || !finalStreamDone) {
-                const { done, value } = await up.read();
+                const { done, value } = interactive ? await interactive.read(up) : await up.read();
                 if (done) break;
                 if (!liveRuntimeScope) {
                   if (answerStarted) emitContent(controller, value); else heldLead.push(value);
@@ -17236,6 +17380,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           //
           // On an ordinary turn `heldContent` is empty — the reply already streamed live — so
           // the release is a no-op and behaviour is byte-identical to before this rule.
+          await interactive?.check();
           const finalCheckHeld = await revalidateTenantKnowledgeScope();
           if (!finalCheckHeld) {
             // Redundant today — the `return` below means nothing would flush anyway — and kept
@@ -17285,9 +17430,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch { /* client already gone */ }
             if (payloadThreadId) {
               try {
-                const p = persistAssistantTurn(withheld, withTurnRecord(withheld, { bundleRef: null }));
+                const p = persistAssistantTurn(withheld, withTurnRecord(withheld, interactive ? assistantTurnMetadata() : { bundleRef: null }));
                 // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-                if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+                if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
               } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
             }
             return;
@@ -17314,10 +17459,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             try {
               const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-              if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+              if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
             } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
           }
          } catch (e) {
+           if (e instanceof InteractiveSuperseded || interactive?.superseded) {
+             turnTracker.interrupted();
+             discardContent();
+             const interruptedText = "Response interrupted by your newer instruction. Completed work remains saved.";
+             await persistAssistantTurn(interruptedText, withTurnRecord(interruptedText, assistantTurnMetadata()));
+             emitTurnTerminal(controller, "interrupted");
+             return;
+           }
            // Nothing more will come: the terminal (INTERRUPTED, unless already sent) precedes the
            // approval outcome, the Live error frame and the snag sentence alike.
            emitTurnTerminal(controller, "interrupted");
@@ -17358,12 +17511,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            // question with no assistant reply — symmetry with the in-band fallback.
            if (payloadThreadId) {
              try {
-               const p = persistAssistantTurn(snag, withTurnRecord(snag, { surfaces: [], bundleRef: null }));
+               const p = persistAssistantTurn(snag, withTurnRecord(snag, interactive ? assistantTurnMetadata() : { surfaces: [], bundleRef: null }));
                // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-               if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+               if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
              } catch (pe) { console.error("[paige] persist snag fallback failed:", (pe as Error)?.message); }
            }
          } finally {
+           await interactiveLifetime?.streamFinished();
            try { controller.close(); } catch { /* already closed */ }
          }
         },
@@ -17373,7 +17527,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
     // With document: intercept stream to accumulate response, then trigger background sync
     // Never null here: a resume turn (the only one without a first call) is never a document turn.
-    const reader = (response as Response).body!.getReader();
+    const reader = response!.body!.getReader();
     const decoder = new TextDecoder();
     let fullAssistantResponse = "";
     // Leftover-line buffer across pulls: a `data:` record split over two reads
@@ -17414,6 +17568,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     const docTurn = createTurnTracker(turnClassifiers);
     docTurn.roundStarted();
     let docTurnTerminalSent = false;
+    let docTurnRecorded = false;
     const emitDocTurnTerminal = (controller: ReadableStreamDefaultController, outcome?: "interrupted") => {
       docTurn.naturalStop(); // the one round answered (or is answering); an exit below may still end it
       if (outcome === "interrupted") docTurn.interrupted();
@@ -17450,7 +17605,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
        // as written (the close-out persists before its last steps, so a throw after it leaves whatever
        // state it recorded), and a throw before the close writes no record at all.
        try {
-        const { done, value } = await reader.read();
+        const { done, value } = interactive ? await interactive.read(reader) : await reader.read();
         if (done) {
           if (!(await revalidateTenantKnowledgeScope())) {
             pendingTenantKbTelemetry = null;
@@ -17629,6 +17784,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           //
           // Returns `true` immediately, with no RPC, on any turn that retrieved no Knowledge, so
           // this costs nothing on the ordinary path.
+          await interactive?.check();
           const scopeHeldAtClose = await revalidateTenantKnowledgeScope();
           // The record follows the close decision before anything durable is written below — and an
           // answer the provider never finished is INTERRUPTED, on the wire at release and in the record.
@@ -17725,7 +17881,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             docTurn.naturalStop();
             const p = persistAssistantTurn(fullAssistantResponse, attachTurnRecord(docTurn, fullAssistantResponse, { bundleRef: null }));
             // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-            if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+            if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+            docTurnRecorded = true;
           }
 
           if (holdProtectedContent && !sentWritingPhase) {
@@ -17801,6 +17958,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // Keep the pull loop advancing without exposing buffered provider bytes.
         if (holdProtectedContent) controller.enqueue(new Uint8Array());
        } catch (error) {
+        if ((error instanceof InteractiveSuperseded || interactive?.superseded) && !docTurnRecorded) {
+          docTurn.interrupted();
+          const interruptedText = "Response interrupted. Completed work remains saved.";
+          await persistAssistantTurn(interruptedText, attachTurnRecord(docTurn, interruptedText, { bundleRef: null }));
+          docTurnRecorded = true;
+        }
         console.error("[paige] document stream failed:", (error as Error)?.message);
         // Nothing held is released here: a protected turn's buffered frames are simply dropped.
         try { emitDocTurnTerminal(controller, "interrupted"); } catch { /* the stream is already closed */ }
@@ -17814,7 +17977,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       },
     });
 
-    return new Response(liveOutput(stream), {
+    return new Response(liveOutput(interactiveLifetime ? keepInteractiveStreamAlive(stream, interactiveLifetime) : stream), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
@@ -17823,12 +17986,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // #587 — the outer catch returns a STRUCTURED reason-class, never a bare "An error occurred", so
     // the client always has a real reason to show. `error` is kept (= reason) for any legacy consumer.
     const outerStructured = structuredChatError(500, { message: error instanceof Error ? error.message : "" });
-    const outer = new Response(JSON.stringify({ ...outerStructured, error: outerStructured.reason, errorId }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const outer = new Response(JSON.stringify({ ...outerStructured, error: outerStructured.reason, errorId,
+      ...(interactive ? { message_accepted: true } : {}),
+    }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     // C4c — a throw between an answer's claim and PAIGE asks the question again rather than strand it.
     if (afterAnswerClaimFailure) {
       try { return await afterAnswerClaimFailure(outer); } catch { /* the plain failure stands */ }
     }
     return outer;
+  } finally {
+    await interactiveLifetime?.handlerFinished();
   }
 });
 

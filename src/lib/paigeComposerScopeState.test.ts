@@ -9,8 +9,10 @@ import {
   initialComposerConversation,
   moveComposerDraft,
   readComposerDraft,
+  restoreComposerDraft,
   resolveComposerScopeState,
   shouldClearComposerDraft,
+  takeComposerDraft,
   transitionComposerConversation,
   writeComposerDraft,
   type ComposerConversationState,
@@ -208,13 +210,33 @@ describe("ComposerScopeState transition table", () => {
       visibleConversationId: "thread-created",
     },
     {
-      name: "a ready conversation is non-writable while a send or retry is in flight",
-      input: baseInput({ busy: true }),
+      name: "a stable Solo conversation remains writable while PAIGE works",
+      input: baseInput({ busy: true, allowWhileBusy: true }),
       status: "ready-thread",
-      writable: false,
+      writable: true,
       visibleConversationId: "thread-a",
     },
   ];
+
+  it("consumes once and never restores over a newer draft, even one typed then cleared", () => {
+    const handle = resolveComposerScopeState(baseInput()).writableHandle!;
+    writeComposerDraft(handle, "submitted");
+    const taken = takeComposerDraft(handle);
+    expect(taken.text).toBe("submitted");
+    expect(readComposerDraft(handle)).toBe("");
+    writeComposerDraft(handle, "newer thought");
+    expect(restoreComposerDraft(handle, taken)).toBe(false);
+    clearComposerDraft(handle);
+    expect(restoreComposerDraft(handle, taken)).toBe(false);
+  });
+
+  it("restores a refused send only when its consumed draft slot remains untouched", () => {
+    const handle = resolveComposerScopeState(baseInput()).writableHandle!;
+    writeComposerDraft(handle, "refused");
+    const taken = takeComposerDraft(handle);
+    expect(restoreComposerDraft(handle, taken)).toBe(true);
+    expect(readComposerDraft(handle)).toBe("refused");
+  });
 
   it.each(cases)("$name", ({ input, status, writable, visibleConversationId }) => {
     const state = resolveComposerScopeState(input);

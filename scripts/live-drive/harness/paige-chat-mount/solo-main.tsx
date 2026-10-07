@@ -236,7 +236,7 @@ document.head.append(css);
 
 function Harness() {
   const chat = layout === "drawer"
-    ? <PaigeAIChat hideHeader fill enableHistory liveConversation={false} renderRail={() => null} />
+    ? <PaigeAIChat hideHeader fill enableHistory soloTenantSafety={params.get("attachment") === "1"} liveConversation={false} renderRail={() => null} />
     : <PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} renderRail={() => null}
         greeting="What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve." />;
   return (
@@ -244,7 +244,7 @@ function Harness() {
       <MemoryRouter initialEntries={["/solo/3855/paige"]}>
         <div data-pg={theme} data-tenant-shell className="h-page">
           <div className="h-cap" data-harness-cap>
-            {layout === "drawer" ? "PAIGE open (docked panel, no Solo safety props)" : "PAIGE workspace (Solo page)"} · {scenario}{resume ? " · approval carried forward by the server" : ""}{hold !== null ? ` · held at ${hold}` : ""}{followHold !== null ? ` · follow-up held at ${followHold}` : ""} · {theme}
+            {layout === "drawer" ? params.get("attachment") === "1" ? "PAIGE open (Solo docked panel)" : "PAIGE open (docked panel, no Solo safety props)" : "PAIGE workspace (Solo page)"} · {scenario}{resume ? " · approval carried forward by the server" : ""}{hold !== null ? ` · held at ${hold}` : ""}{followHold !== null ? ` · follow-up held at ${followHold}` : ""} · {theme}
           </div>
           <div className="h-body">
             {layout === "drawer" ? (<><div className="h-work">Workspace content (illustrative)</div><aside className="h-drawer">{chat}</aside></>) : <div className="h-full">{chat}</div>}

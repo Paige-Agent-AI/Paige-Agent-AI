@@ -286,7 +286,9 @@ console.log("comms-purchase-number safety smoke\n");
   // Anchor on the EXECUTABLE line that opens the gate, not on a comment banner: an earlier
   // "AUTONOMY GATE WIRING" comment elsewhere in the file made an indexOf on the banner match
   // the wrong place and fail this check against correct code.
-  const gateAt = chat.indexOf("MUTATING_TOOLS.has(tc.function.name)");
+  // The preceding typed-interruption uncertainty brake also checks MUTATING_TOOLS;
+  // anchor this invariant to the existing autonomy gate, not that stricter brake.
+  const gateAt = chat.indexOf("if (MUTATING_TOOLS.has(tc.function.name) && !CRM_COMMAND_TOOL_NAMES.has(tc.function.name as any)) {");
   check("the buy path calls it", guardAt > 0);
   check("  and refuses BEFORE the autonomy gate, so `auto` cannot route around it",
     guardAt > 0 && gateAt > 0 && guardAt < gateAt, `guard@${guardAt} gate@${gateAt}`);

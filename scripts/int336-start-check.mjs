@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {startInteractiveTurn} from '../supabase/functions/_shared/paige-turn/interactive.ts';
+let latest='b',executor=null,releases=0,begins=0;
+const store={state:async()=>({latest,executor}),acquire:async()=>{if(latest!=='b'||executor)return false;executor='b';return true},release:async()=>{releases++;if(executor==='b')executor=null}};
+const start=await startInteractiveTurn({intent:'b',begin:async()=>{begins++;return {data:{status:'accepted',turn_id:'canonical-b'},error:null}},store});
+assert.equal(begins,1);assert.equal(start.boundary.message_accepted,true);assert.equal(executor,'b');
+await start.lifetime.handlerFinished();assert.equal(executor,null);assert.equal(releases,1);
+const duplicate=await startInteractiveTurn({intent:'b',begin:async()=>({data:{status:'duplicate'},error:null}),store});
+assert.equal(duplicate.execution,null);assert.equal(duplicate.boundary.message_accepted,true);assert.equal(releases,1);
+const lost=await startInteractiveTurn({intent:'b',begin:async()=>({data:null,error:Error('lost')}),store});
+assert.equal(lost.execution,null);assert.equal(lost.boundary.message_accepted,true);
+latest='c';const old=await startInteractiveTurn({intent:'b',begin:async()=>({data:{status:'accepted',turn_id:'b'},error:null}),store});
+assert.equal(old.boundary.code,'INTERACTIVE_SUPERSEDED');assert.equal(old.boundary.message_accepted,true);assert.equal(executor,null);
+console.log('PASS: acceptance-to-executor lifecycle, canonical message retained on later supersession, replay never executes, transport unknown never retries');

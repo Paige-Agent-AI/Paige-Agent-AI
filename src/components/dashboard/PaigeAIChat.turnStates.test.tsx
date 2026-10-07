@@ -137,7 +137,7 @@ async function mount(extra: Record<string, unknown> = {}) {
   const root = createRoot(host);
   lastRoot = root;
   await act(async () => {
-    root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety {...extra} />);
+    root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} {...extra} />);
     await flush();
   });
   mounted.push(async () => { await act(async () => { root.unmount(); }); host.remove(); });
@@ -309,12 +309,12 @@ describe("C3a — proof (2)/(3): a tool-backed answer evolves in place from real
 });
 
 describe("C3a — Stop", () => {
-  it("says Stopped by you, keeps the started step as stopped, focuses the footer, and puts the question back", async () => {
+  it("says Stopped by you, keeps the started step as stopped, focuses the footer, and keeps the composer free for the next thought", async () => {
     const hold = deferred();
     server(body([turn("started", "WORKING", "pending"), step("a", 1, "Looked through your contacts", "done"), step("b", 2, "Reviewing your pipeline", "running"), hold.promise, say("late"), DONE]));
     const host = await mount();
     await ask(host, "who is quiet");
-    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!;
     await act(async () => { cancel.click(); await flush(); });
     const node = lastLine(host)!;
     expect(lineText(node)).toBe("Stopped by you");
@@ -323,9 +323,9 @@ describe("C3a — Stop", () => {
     // §13 — Stop ends the read, not the work; and the rollback already put the question back, so
     // the footer says so and offers no "Ask again" that would do nothing new.
     expect(foot.querySelector("p")!.textContent).toBe(
-      "Stopped showing this answer. PAIGE may still finish work that had already started. Your question is back in the message box.",
+      "Stopped showing this answer. PAIGE may still finish work that had already started.",
     );
-    expect(Array.from(foot.querySelectorAll("button")).map((b) => b.textContent)).toEqual(["See what finished"]);
+    expect(Array.from(foot.querySelectorAll("button")).map((b) => b.textContent)).toEqual(["See what finished", "Ask again"]);
     expect(document.activeElement).toBe(foot);
     const see = Array.from(foot.querySelectorAll("button")).find((b) => b.textContent === "See what finished")!;
     await act(async () => { see.click(); });
@@ -335,7 +335,7 @@ describe("C3a — Stop", () => {
     ]);
     // The old jargon notice is gone; its truth is in the footer.
     expect(host.textContent).not.toContain("Response stream cancelled locally");
-    expect(host.querySelector("textarea")!.value).toBe("who is quiet");
+    expect(host.querySelector("textarea")!.value).toBe("");
     await act(async () => { hold.resolve(); await flush(); });
     expect(host.textContent).not.toContain("late");
   });
@@ -343,7 +343,7 @@ describe("C3a — Stop", () => {
   it("a Live voice interruption stops the read the same way but never moves keyboard focus", async () => {
     const hold = deferred();
     server(body([turn("started", "WORKING", "pending"), step("a", 1, "Reviewing your pipeline", "running"), hold.promise, DONE]));
-    const host = await mount();
+    const host = await mount({ liveConversation: true });
     await ask(host, "who is quiet");
     // Where focus is during a Live session (the Live controls live outside the transcript).
     const liveControl = document.createElement("button");
@@ -368,7 +368,7 @@ describe("C3a — a workspace switch mid-answer", () => {
     expect(lineText(lastLine(host))).toBe("Reviewing your pipeline");
     harness.tenant = `account-switched-${Math.random().toString(36).slice(2)}`;
     await act(async () => {
-      lastRoot!.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety />);
+      lastRoot!.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} />);
       await flush();
     });
     await act(async () => { await flush(); });
@@ -674,7 +674,7 @@ describe("C4a — a resumed approval is one answer, live and on reload", () => {
     await ask(host, "send the renewal");
     const approve = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => /Approve/.test(b.textContent ?? ""))!;
     await act(async () => { approve.click(); await flush(); });
-    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!;
     await act(async () => { cancel.click(); await flush(); });
     expect(lines(host)).toHaveLength(1);
     const line = lines(host)[0];

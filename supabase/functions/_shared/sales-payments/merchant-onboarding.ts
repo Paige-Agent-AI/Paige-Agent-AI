@@ -17,7 +17,7 @@ export function returnTarget(raw:unknown,workspace:string|null,origins:string[])
  const url=new URL(typeof raw==='string'?raw:'');
  if(url.protocol!=='https:'||url.username||url.password||url.hash||url.port||!origins.includes(url.origin))throw new Error('RETURN_URL_INVALID');
  if(workspace){if(!/^[0-9]+$/.test(workspace)||url.pathname!==`/solo/${workspace}/settings/integrations`||url.search!=='?stripe_setup=return')throw new Error('RETURN_URL_INVALID');}
- else if(url.pathname!=='/admin/setup/general'||url.search)throw new Error('RETURN_URL_INVALID');
+ else throw new Error('RETURN_URL_INVALID');
  return url.href;
 }
 export async function deadline<T>(work:Promise<T>,ms=10000):Promise<T>{let timer:ReturnType<typeof setTimeout>;try{return await Promise.race([work,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('PROVIDER_OUTCOME_UNKNOWN')),ms);})]);}finally{clearTimeout(timer!);}}
@@ -49,20 +49,20 @@ export async function resolveOnboarding(row:MerchantRow,dispatch:boolean,port:On
 
 
 
-/** Admission precedes reservation/provider work; the omitted scope is legacy-only. */
+/** New onboarding targets the current Solo route and always binds explicit workspace intent. */
 export function admitMerchantRequest(body:Record<string,unknown>,activeTenant:string):boolean {
  if(body.expected_tenant_id!==undefined){if(body.expected_tenant_id!==activeTenant)throw new Error('WORKSPACE_CHANGED');return true;}
- if(body.action==='start_onboarding'){
-  for(const raw of [body.return_url,body.refresh_url]){
-   let url:URL;try{url=new URL(typeof raw==='string'?raw:'');}catch{throw new Error('EXPECTED_TENANT_REQUIRED');}
-   if(url.pathname!=='/admin/setup/general'||url.search||url.hash)throw new Error('EXPECTED_TENANT_REQUIRED');
-  }
- }
+ if(body.action==='start_onboarding')throw new Error('EXPECTED_TENANT_REQUIRED');
  return false;
 }
-
 /** Explicit refresh reconciles pending creation using GET only; it never claims dispatch. */
 export async function recoverPendingMerchant(action:string,row:MerchantRow|null,port:OnboardingPort):Promise<MerchantRow|null>{
  if(action!=='refresh_status'||!row?.onboarding_id||row.stripe_account_id)return row;
  return resolveOnboarding(row,false,port);
+}
+
+/** Treat SDK/network response as untrusted; never expose a missing/non-string provider link. */
+export function hostedLink(response:unknown):string {
+ if(!response||typeof response!=='object'||!('url' in response)||typeof response.url!=='string')throw new Error('PROVIDER_LINK_UNVERIFIED');
+ return hostedUrl(response.url);
 }

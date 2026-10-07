@@ -2,7 +2,7 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import Stripe from 'https://esm.sh/stripe@17.5.0?target=deno';
 import {readStripeMerchant} from '../_shared/sales-payments/merchant.ts';
-import {merchantStatus,returnTarget,hostedUrl,deadline,resolveOnboarding,recoverPendingMerchant,admitMerchantRequest,type MerchantRow} from '../_shared/sales-payments/merchant-onboarding.ts';
+import {merchantStatus,returnTarget,hostedLink,deadline,resolveOnboarding,recoverPendingMerchant,admitMerchantRequest,type MerchantRow} from '../_shared/sales-payments/merchant-onboarding.ts';
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'};
 const json=(status:number,body:unknown)=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json'}});
 Deno.serve(async req=>{
@@ -20,8 +20,7 @@ Deno.serve(async req=>{
   const profile=await admin.from('profiles').select('active_tenant_id').eq('user_id',actor).maybeSingle();
   if(profile.error||!profile.data?.active_tenant_id)return json(403,{error:'workspace_unavailable'});
   tenantId=profile.data.active_tenant_id;
-  let solo:boolean;
-  try{solo=admitMerchantRequest(body,tenantId!);}catch(error){return json(error instanceof Error&&error.message==='WORKSPACE_CHANGED'?409:400,{error:error instanceof Error&&error.message==='WORKSPACE_CHANGED'?'workspace_changed':'expected_tenant_required'});}
+  try{admitMerchantRequest(body,tenantId!);}catch(error){return json(error instanceof Error&&error.message==='WORKSPACE_CHANGED'?409:400,{error:error instanceof Error&&error.message==='WORKSPACE_CHANGED'?'workspace_changed':'expected_tenant_required'});}
   const scope=async()=>{
    const result=await admin.rpc('_sales_invoice_actor',{_actor:actor,_tenant:tenantId});if(result.error)throw new Error('WORKSPACE_CHANGED');
    if(row){const current=await admin.from('tenant_stripe_accounts').select('stripe_account_id,provider_environment,binding_version').eq('tenant_id',tenantId).single();if(current.error||current.data.stripe_account_id!==row.stripe_account_id||current.data.provider_environment!==row.provider_environment||current.data.binding_version!==row.binding_version)throw new Error('BINDING_CHANGED');}
@@ -41,7 +40,7 @@ Deno.serve(async req=>{
   if(action==='start_onboarding'){
    const origins=['https://paigeagent.ai','https://app.paigeagent.ai'];
    const configured=Deno.env.get('PUBLIC_SITE_URL');if(configured){const configuredUrl=new URL(configured);if(configuredUrl.protocol==='https:'&&(configuredUrl.hostname==='paigeagent.ai'||configuredUrl.hostname.endsWith('.paigeagent.ai')))origins.push(configuredUrl.origin);}
-   const workspace=solo?String(tenant.data.account_number):null;
+   const workspace=String(tenant.data.account_number);
    let returnUrl:string,refreshUrl:string;try{returnUrl=returnTarget(body.return_url,workspace,origins);refreshUrl=returnTarget(body.refresh_url??body.return_url,workspace,origins);}catch{return json(400,{error:'return_url_invalid'});}
    if(!row?.stripe_account_id){
     const reserved=await admin.rpc('reserve_sales_merchant_onboarding',{_actor_user_id:actor,_expected_tenant_id:tenantId,_environment:environment,_operation_id:crypto.randomUUID(),_claim:crypto.randomUUID()});
@@ -60,7 +59,7 @@ Deno.serve(async req=>{
    if(row!.provider_environment!==environment)throw new Error('PROVIDER_ENVIRONMENT_UNVERIFIED');
    await around(()=>readStripeMerchant({tenant_id:tenantId!,provider:'stripe',merchant_id:row!.stripe_account_id!,environment:environment!,version:row!.binding_version},{environment:environment!,retrieveAccount:id=>stripe.accounts.retrieve(id)},Date.now));
    const link=await around(()=>stripe.accountLinks.create({account:row!.stripe_account_id!,refresh_url:refreshUrl,return_url:returnUrl,type:'account_onboarding'}));
-   return json(200,{...output(),url:hostedUrl(link.url)});
+   return json(200,{...output(),url:hostedLink(link)});
   }
   row=await recoverPendingMerchant(String(action),row,{
    scope,
@@ -76,7 +75,7 @@ Deno.serve(async req=>{
   const facts=await around(()=>readStripeMerchant({tenant_id:tenantId!,provider:'stripe',merchant_id:row!.stripe_account_id!,environment:(row!.provider_environment??environment) as 'test'|'live',version:row!.binding_version},{environment:environment!,retrieveAccount:async id=>{const found=await stripe.accounts.retrieve(id);if('deleted' in found&&found.deleted)return {id:found.id,deleted:true};account=found as Stripe.Account;return account;}},Date.now));
   if(action==='login_link'){
    if(row.provider_environment!==environment)throw new Error('PROVIDER_ENVIRONMENT_UNVERIFIED');
-   const link=await around(()=>stripe.accounts.createLoginLink(row!.stripe_account_id!));return json(200,{...output(),url:hostedUrl(link.url)});
+   const link=await around(()=>stripe.accounts.createLoginLink(row!.stripe_account_id!));return json(200,{...output(),url:hostedLink(link)});
   }
   const acct=account as Stripe.Account|null;if(!acct)throw new Error('PROVIDER_UNAVAILABLE');
   const saved=await admin.rpc('record_sales_merchant_onboarding_readback',{_actor_user_id:actor,_expected_tenant_id:tenantId,_merchant_id:facts.merchant_id,_expected_version:row.binding_version,_environment:environment,_charges_enabled:facts.charges_enabled,_payouts_enabled:facts.payouts_enabled,_details_submitted:facts.details_submitted,_payment_permission:facts.payment_permission,_country:acct.country??null,_currency:acct.default_currency??null,_requirements:acct.requirements??null});

@@ -25,7 +25,7 @@ MUST_PRESERVE: Settings Billing separation, legacy reachable setup caller, exist
 ACCEPTANCE_CRITERIA: owner can inspect environment and last provider check, start/continue hosted setup, return and refresh; wrong tenant/actor/binding/environment refuses; unknown creation reconciles without blind dispatch
 MOTION_PURPOSE: NONE: no new animation; existing drawer behavior retained
 PROTECTED_SEAMS: active tenant/user context and Settings request gate tested; existing merchant actor/service/Rail SQL exercised; Chat/Turn Route/C4/INT-335 untouched
-INTERNAL_BUILD_IDENTITY: branch=feat/sales-merchant-onboarding; base=6b6bef5091507e5b7946984506e75cfb3ebd5401; deployment=not deployed; environment=local; migrations=PROOF_OWED(20270600000000 production persistence); edge=PROOF_OWED(tenant-stripe-connect exact merged deployment); evidence=this record
+INTERNAL_BUILD_IDENTITY: branch=feat/sales-merchant-onboarding; base=f6f9e3842d20f993ccbe6a45ad163930f58e7f63; deployment=not deployed; environment=local; migrations=PROOF_OWED(20270600000000 production persistence); edge=PROOF_OWED(tenant-stripe-connect exact merged deployment); evidence=this record
 RELEASE_CHANNEL: development: local implementation candidate; production identity is not observed
 RELEASE_CLASSIFICATION: internal-only: merchant entry and recovery foundation without authenticated payment acceptance
 CUSTOMER_RELEASE_IDENTITY: none: authenticated merchant/payment acceptance remains proof owed
@@ -57,6 +57,9 @@ Primary exits: close/Escape restores opener and prevents late navigation; worksp
 
 Local checks are automated/rendered/synthetic only. PostgreSQL proof uses real actor/service guards, existing Rail and concurrent reservations, including receipt-failure rollback; it is not production/provider acceptance.
 
-Independent backend review found legacy return-route mismatch and disabled-reason readiness mismatch; both repaired and independently rechecked PASS. Historical Setup caller compatibility is preserved, but current routing does not prove it remains reachable. Impeccable review found uncertain retry, abandonment navigation, stale/malformed facts and permission copy; repaired with tests and final review pending. Detector exit zero with no findings. Final non-author exact-head review pending. No production/acceptance claim yet.
+Independent backend review found legacy return-route mismatch and disabled-reason readiness mismatch; both repaired and independently rechecked PASS. Fresh router inspection proves historical SetupGeneral/Storefront onboarding is not mounted; new onboarding requires the canonical Solo return and explicit workspace intent. Noncreating legacy reads remain actor-bound. Impeccable review found uncertain retry, abandonment navigation, stale/malformed facts and permission copy; repaired with tests and final review pending. Detector exit zero with no findings. Final non-author exact-head review pending. No production/acceptance claim yet.
 
 Impeccable upstream: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md
+
+## CI repair boundary
+Completed c60 CI was RED: seven adjacent n8n status-read assertions, two Deno unknown-link diagnostics, exact-signature ACL parsing and retired outbound admin URLs. No gate was disabled. Status assertions now admit only tenant-scoped Stripe/Zapier status reads; provider links validate unknown response shape; ACL statements are explicit for each signature; onboarding only returns to canonical Solo. Main f6f9e3842d20f993ccbe6a45ad163930f58e7f63 is merged into this candidate. Fresh exact-head CI and non-author review are required after repairs.

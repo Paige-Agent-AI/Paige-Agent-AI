@@ -49,8 +49,12 @@ BEGIN
  PERFORM public.record_capability_run(_expected_tenant_id,_actor_user_id,'sales_merchant_readback','capability_succeeded',gen_random_uuid(),NULL);
  RETURN version;
 END $$;
-REVOKE ALL ON FUNCTION public.reserve_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid),public.persist_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid,bigint,text),public.record_sales_merchant_onboarding_readback(uuid,uuid,text,bigint,text,boolean,boolean,boolean,boolean,text,text,jsonb) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.reserve_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid),public.persist_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid,bigint,text),public.record_sales_merchant_onboarding_readback(uuid,uuid,text,bigint,text,boolean,boolean,boolean,boolean,text,text,jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.reserve_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.persist_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid,bigint,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.record_sales_merchant_onboarding_readback(uuid,uuid,text,bigint,text,boolean,boolean,boolean,boolean,text,text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.reserve_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.persist_sales_merchant_onboarding(uuid,uuid,text,uuid,uuid,bigint,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.record_sales_merchant_onboarding_readback(uuid,uuid,text,bigint,text,boolean,boolean,boolean,boolean,text,text,jsonb) TO service_role;
 CREATE OR REPLACE FUNCTION public.record_sales_stripe_readback(
   _tenant_id uuid, _merchant_id text, _expected_version bigint, _environment text,
   _charges_enabled boolean, _payouts_enabled boolean, _details_submitted boolean,
@@ -80,4 +84,6 @@ BEGIN
     sales_readback_at=clock_timestamp() WHERE tenant_id=_tenant_id RETURNING binding_version INTO r.binding_version;
   RETURN r.binding_version;
 END $$;
+REVOKE ALL ON FUNCTION public.record_sales_stripe_readback(uuid,text,bigint,text,boolean,boolean,boolean,boolean,text,text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.record_sales_stripe_readback(uuid,text,bigint,text,boolean,boolean,boolean,boolean,text,text,jsonb) TO service_role;
 COMMIT;

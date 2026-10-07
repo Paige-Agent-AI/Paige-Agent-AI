@@ -14,6 +14,8 @@ The new entry reuses Solo Settings Integrations. `status` reads scoped stored fa
 
 Migration version `20270600000000` was selected above main `20270599000000` and open PR #1801 `20270599000001`, subject to fresh collision check at push. It extends existing merchant binding, no financial history backfill or balance mutation.
 
+Fresh main reconciliation: `f6f9e3842d20f993ccbe6a45ad163930f58e7f63` merged before CI repairs. Its Memory migration is independent of this merchant binding.
+
 ## Required capability-routing answers
 
 1. User job: connect business-owned merchant account, inspect TEST/LIVE and current payment readiness, recover incomplete/unknown setup.
@@ -38,7 +40,8 @@ Migration version `20270600000000` was selected above main `20270599000000` and 
 
 ## Checks and reproducibility
 
-- UI: `node node_modules/vitest/vitest.mjs run src/solo/data/useStripeMerchant.test.tsx src/solo/settings-integrations-stripe.test.tsx src/solo/settings-integrations.test.tsx` — 77 PASS.
+- UI: `node node_modules/vitest/vitest.mjs run src/solo/data/useStripeMerchant.test.tsx src/solo/settings-integrations-stripe.test.tsx src/solo/settings-integrations.test.tsx` — 77 PASS initially; widened post-CI integration regression (all five Integrations test files plus merchant hook): 234 PASS.
+- Post-CI repairs: 262 payment-contract tests, 20 real PostgreSQL checks, exact-signature ACL guard and user-facing URL guard PASS. Deno and full regression remain exact-head CI proof owed.
 - Payment contracts: `node node_modules/vitest/vitest.mjs run --config supabase/functions/_shared/sales-payments/vitest.config.ts`.
 - Real PostgreSQL: `node scripts/sql/sales-merchant-onboarding-proof.mjs` — disposable own local cluster with real actor/service/Rail guards and concurrent reservations; never production credentials.
 - Geometry/interaction: Vite config `scripts/live-drive/harness/integrations-mount/vite.config.ts`, then `node scripts/live-drive/sales-merchant-drive.mjs` — 29 cases, actual components with synthetic transport. Committed artifacts under `docs/evidence/ui-delivery/sales-merchant-onboarding/`.

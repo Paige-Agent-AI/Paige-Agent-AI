@@ -32,21 +32,21 @@ describe('status truth across new and legacy merchants',()=>{
  it('treats future readback as unverified',()=>expect(merchantStatus(tenant,row,true,'test',Date.parse('2026-10-06T11:59:59Z')).state).toBe('unverified'));
  it('exposes completion before permitted charges truthfully',()=>expect(merchantStatus(tenant,{...row,details_submitted:false},true,'test',Date.parse('2026-10-06T12:00:01Z')).state).toBe('setup_incomplete'));
  it('needs fresh provider card capability permission',()=>expect(merchantStatus(tenant,{...row,sales_payment_permission:false},true,'test',Date.parse('2026-10-06T12:00:01Z')).state).toBe('restricted'));
- it('allows trusted exact legacy storefront only',()=>expect(returnTarget('https://paigeagent.ai/admin/setup/general',null,['https://paigeagent.ai'])).toBe('https://paigeagent.ai/admin/setup/general'));
+ it('does not allow a return target without server workspace identity',()=>expect(()=>returnTarget('https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return',null,['https://paigeagent.ai'])).toThrow('RETURN_URL_INVALID'));
 });
 
 import {admitMerchantRequest} from './merchant-onboarding.ts';
 describe('endpoint admission',()=>{
- const legacy={action:'start_onboarding',return_url:'https://paigeagent.ai/admin/setup/general',refresh_url:'https://paigeagent.ai/admin/setup/general'};
- it('preserves the real StorefrontPanel pathname request without expected tenant',()=>expect(admitMerchantRequest(legacy,tenant)).toBe(false));
- it('requires scope for new Solo onboarding before any reservation',()=>expect(()=>admitMerchantRequest({...legacy,return_url:'https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return'},tenant)).toThrow('EXPECTED_TENANT_REQUIRED'));
- it('refuses a foreign expected workspace before provider work',()=>expect(()=>admitMerchantRequest({...legacy,expected_tenant_id:'foreign'},tenant)).toThrow('WORKSPACE_CHANGED'));
- it('accepts explicit matching workspace identity',()=>expect(admitMerchantRequest({...legacy,expected_tenant_id:tenant},tenant)).toBe(true));
- it.each([{return_url:undefined},{refresh_url:undefined},{return_url:'https://paigeagent.ai/admin/setup/general?token=secret'},{return_url:'https://paigeagent.ai/workspace/storefront'},{refresh_url:'https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return'}])('refuses malformed legacy omission %j',patch=>expect(()=>admitMerchantRequest({...legacy,...patch},tenant)).toThrow('EXPECTED_TENANT_REQUIRED'));
+ const request={action:'start_onboarding',return_url:'https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return',refresh_url:'https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return'};
+ it('does not admit onboarding without explicit expected tenant',()=>expect(()=>admitMerchantRequest(request,tenant)).toThrow('EXPECTED_TENANT_REQUIRED'));
+ it('requires scope for new Solo onboarding before any reservation',()=>expect(()=>admitMerchantRequest({...request,return_url:'https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return'},tenant)).toThrow('EXPECTED_TENANT_REQUIRED'));
+ it('refuses a foreign expected workspace before provider work',()=>expect(()=>admitMerchantRequest({...request,expected_tenant_id:'foreign'},tenant)).toThrow('WORKSPACE_CHANGED'));
+ it('accepts explicit matching workspace identity',()=>expect(admitMerchantRequest({...request,expected_tenant_id:tenant},tenant)).toBe(true));
+ it.each([{return_url:undefined},{refresh_url:undefined},{return_url:'https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return?token=secret'},{return_url:'https://paigeagent.ai/workspace/storefront'},{refresh_url:'https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return'}])('refuses unscoped onboarding %j',patch=>expect(()=>admitMerchantRequest({...request,...patch},tenant)).toThrow('EXPECTED_TENANT_REQUIRED'));
  it.each(['status','refresh_status','login_link'])('retains original auth-bound %s omission',action=>expect(admitMerchantRequest({action},tenant)).toBe(false));
  it('a disabled fresh provider account cannot be ready',()=>expect(merchantStatus(tenant,{...row,requirements:{disabled_reason:'requirements.past_due'}},true,'test',Date.parse('2026-10-06T12:00:01Z'))).toMatchObject({state:'restricted',recovery_reason:'MERCHANT_PAYMENTS_RESTRICTED'}));
  it('never exposes internal disabled reason or requirements',()=>expect(JSON.stringify(merchantStatus(tenant,{...row,requirements:{disabled_reason:'private-marker'}},true,'test',Date.parse('2026-10-06T12:00:01Z')))).not.toContain('private-marker'));
- it('validates legacy trusted host after admission',()=>expect(()=>returnTarget('https://evil.test/admin/setup/general',null,['https://paigeagent.ai'])).toThrow('RETURN_URL_INVALID'));
+ it('rejects an untrusted return host',()=>expect(()=>returnTarget('https://evil.test/solo/1/settings/integrations?stripe_setup=return',null,['https://paigeagent.ai'])).toThrow('RETURN_URL_INVALID'));
 });
 
 import {recoverPendingMerchant} from './merchant-onboarding.ts';
@@ -56,4 +56,10 @@ describe('explicit refresh reconciliation route',()=>{
  it.each(['status','login_link','start_onboarding'])('%s does not execute refresh recovery',async action=>{const p=port();expect(await recoverPendingMerchant(action,pending,p.adapter)).toEqual(pending);expect(p.calls).toEqual([]);});
  it('refresh on existing merchant leaves saved binding unchanged',async()=>{const p=port();expect(await recoverPendingMerchant('refresh_status',row,p.adapter)).toEqual(row);expect(p.calls).toEqual([]);});
  it('refresh lookup failure never dispatches creation or persists',async()=>{const p=port();p.adapter.list=async()=>{throw Error('provider timeout');};await expect(recoverPendingMerchant('refresh_status',pending,p.adapter)).rejects.toThrow('provider timeout');expect(p.calls).not.toContain('POST');expect(p.calls).not.toContain('persist+receipt');});
+});
+
+import {hostedLink} from './merchant-onboarding.ts';
+describe('hosted response boundary',()=>{
+ it.each([null,undefined,{},{url:42},'https://connect.stripe.com/setup'])('refuses malformed provider response %j',response=>expect(()=>hostedLink(response)).toThrow('PROVIDER_LINK_UNVERIFIED'));
+ it('validates the URL within a provider response',()=>expect(hostedLink({url:'https://connect.stripe.com/setup'})).toBe('https://connect.stripe.com/setup'));
 });

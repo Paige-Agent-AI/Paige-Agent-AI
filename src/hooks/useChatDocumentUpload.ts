@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, type Dispatch, type SetStateAction } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -21,7 +21,8 @@ function detectKind(mime: string, name: string): AttachedDocKind | null {
   if (ACCEPTED_MIME_BY_KIND.pdf.includes(mime)) return "pdf";
   if (ACCEPTED_MIME_BY_KIND.image.includes(mime)) return "image";
   if (ACCEPTED_MIME_BY_KIND.docx.includes(mime)) return "docx";
-  // Some browsers report empty mime for DOCX
+  // Extension fallback is for missing/generic browser MIME, never an explicit unsupported type.
+  if (mime && mime !== "application/octet-stream") return null;
   if (/\.docx$/i.test(name)) return "docx";
   if (/\.pdf$/i.test(name)) return "pdf";
   if (/\.(jpe?g|png|webp)$/i.test(name)) return "image";
@@ -68,15 +69,73 @@ async function extractDocxText(file: File): Promise<string> {
   return text.length > MAX_DOCX_TEXT_CHARS ? text.slice(0, MAX_DOCX_TEXT_CHARS) : text;
 }
 
-export function useChatDocumentUpload() {
-  const [attachedDoc, setAttachedDoc] = useState<AttachedDocument | null>(null);
-  const [isProcessingFile, setIsProcessingFile] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
+export interface ChatDocumentUploadOptions {
+  /** Complete composer identity, including the requested conversation. null fails closed. */
+  scopeKey?: string | null;
+  enabled?: boolean;
+}
+
+function transferFiles(data: DataTransfer): File[] {
+  // Browsers can expose one payload in both lists. Prefer files, then fall back to real items.
+  const files = Array.from(data.files ?? []);
+  if (files.length) return files;
+  return Array.from(data.items ?? []).filter(item => item.kind === "file")
+    .map(item => item.getAsFile()).filter((file): file is File => file !== null);
+}
+
+function hasFileDrag(data: DataTransfer): boolean {
+  return Array.from(data.types ?? []).includes("Files")
+    || Array.from(data.items ?? []).some(item => item.kind === "file");
+}
+
+function documentMime(file: File, kind: AttachedDocKind): string {
+  if (file.type && file.type !== "application/octet-stream") return file.type === "image/jpg" ? "image/jpeg" : file.type;
+  if (kind === "pdf") return "application/pdf";
+  if (kind === "docx") return ACCEPTED_MIME_BY_KIND.docx[0];
+  return /\.jpe?g$/i.test(file.name) ? "image/jpeg" : /\.webp$/i.test(file.name) ? "image/webp" : "image/png";
+}
+
+export function useChatDocumentUpload({ scopeKey = "unscoped", enabled = true }: ChatDocumentUploadOptions = {}) {
+  const [state, setState] = useState<{ scope: string | null; epoch: number; doc: AttachedDocument | null; processing: boolean; drag: boolean }>({ scope: scopeKey, epoch: 0, doc: null, processing: false, drag: false });
+  const owner = useRef({ scope: scopeKey, epoch: 0, generation: 0, enabled, mounted: true, processing: false });
+  // Fence during render, before scope-switch effects or a late promise can deliver. Epoch prevents ABA.
+  if (owner.current.scope !== scopeKey) {
+    owner.current.scope = scopeKey;
+    owner.current.epoch += 1;
+    owner.current.generation += 1;
+    owner.current.processing = false;
+  }
+  owner.current.enabled = enabled;
+  const scopeEpoch = owner.current.epoch;
+  useEffect(() => {
+    setState({ scope: scopeKey, epoch: scopeEpoch, doc: null, processing: false, drag: false });
+  }, [scopeKey, scopeEpoch]);
+  useEffect(() => {
+    const lifetime = owner.current;
+    lifetime.mounted = true;
+    return () => { lifetime.mounted = false; lifetime.generation += 1; };
+  }, []);
+  const visible = state.scope === scopeKey && state.epoch === scopeEpoch && scopeKey !== null;
+  const attachedDoc = visible ? state.doc : null;
+  const isProcessingFile = visible && state.processing;
+  const isDragOver = visible && enabled && state.drag;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const processFile = useCallback(
     async (file: File) => {
+      const current = owner.current;
+      if (!current.mounted || !current.enabled || current.scope === null) {
+        toast({ title: "Attachment not ready", description: "Wait for this conversation to be ready, then attach your file." });
+        return;
+      }
+      const scope = current.scope;
+      const epoch = current.epoch;
+      const generation = ++current.generation;
+      const accepted = () => owner.current.mounted && owner.current.scope === scope
+        && owner.current.epoch === epoch && owner.current.generation === generation;
+      current.processing = false;
+      setState(prev => ({ scope, epoch, doc: prev.scope === scope && prev.epoch === epoch ? prev.doc : null, processing: false, drag: false }));
       const kind = detectKind(file.type, file.name);
       if (!kind) {
         toast({
@@ -96,10 +155,13 @@ export function useChatDocumentUpload() {
         return;
       }
 
-      setIsProcessingFile(true);
+      current.processing = true;
+      setState(prev => ({ scope, epoch, doc: prev.scope === scope && prev.epoch === epoch ? prev.doc : null, processing: true, drag: false }));
       try {
+        let document: AttachedDocument;
         if (kind === "docx") {
           const textContent = await extractDocxText(file);
+          if (!accepted()) return;
           if (!textContent) {
             toast({
               title: "Could not read DOCX",
@@ -109,29 +171,33 @@ export function useChatDocumentUpload() {
             });
             return;
           }
-          setAttachedDoc({
+          document = {
             file,
             name: file.name,
             kind,
-            mimeType: file.type ||
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            mimeType: documentMime(file, kind),
             size: file.size,
             base64: "",
             textContent,
-          });
+          };
         } else {
           const base64 = await fileToBase64(file);
-          setAttachedDoc({
+          if (!accepted()) return;
+          document = {
             file,
             name: file.name,
             kind,
-            mimeType:
-              file.type || (kind === "pdf" ? "application/pdf" : "image/png"),
+            mimeType: documentMime(file, kind),
             size: file.size,
             base64,
-          });
+          };
         }
+        setState(prev => {
+          if (!accepted()) return prev;
+          return { scope, epoch, doc: document, processing: false, drag: false };
+        });
       } catch (err) {
+        if (!accepted()) return;
         console.error("File processing failed:", err);
         toast({
           title: "Error reading file",
@@ -140,49 +206,91 @@ export function useChatDocumentUpload() {
           variant: "destructive",
         });
       } finally {
-        setIsProcessingFile(false);
+        if (accepted()) {
+          owner.current.processing = false;
+          setState(prev => accepted() ? { ...prev, processing: false } : prev);
+        }
       }
     },
     [toast],
   );
 
+  const stageFiles = useCallback((files: File[]) => {
+    if (!files.length) return;
+    const first = files.find(file => detectKind(file.type, file.name) && file.size <= MAX_FILE_SIZE) ?? files[0];
+    if (files.length > 1) toast({ title: "One attachment at a time", description: "Only the first supported file within 10MB is selected. Attach the others in separate messages." });
+    // A replacement is intentional, but must be communicated instead of silently losing a chip.
+    if (state.scope === owner.current.scope && state.epoch === owner.current.epoch && state.doc && owner.current.enabled) {
+      toast({ title: "Replacing attachment", description: `The new file will replace ${state.doc.name} when it is ready.` });
+    }
+    void processFile(first);
+  }, [processFile, state.doc, state.scope, state.epoch, toast]);
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) processFile(file);
+      stageFiles(Array.from(e.target.files ?? []));
       if (e.target) e.target.value = "";
     },
-    [processFile],
+    [stageFiles],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (!hasFileDrag(e.dataTransfer)) return;
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(true);
+    e.dataTransfer.dropEffect = owner.current.enabled && owner.current.scope !== null ? "copy" : "none";
+    const { scope, epoch } = owner.current;
+    setState(prev => ({ scope, epoch, doc: prev.scope === scope && prev.epoch === epoch ? prev.doc : null, processing: owner.current.processing, drag: true }));
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (e.relatedTarget instanceof Node && e.currentTarget.contains(e.relatedTarget)) return;
     e.preventDefault();
     e.stopPropagation();
-    setIsDragOver(false);
+    setState(prev => ({ ...prev, drag: false }));
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
+      if (!hasFileDrag(e.dataTransfer) && !e.dataTransfer.files?.length) return;
       e.preventDefault();
       e.stopPropagation();
-      setIsDragOver(false);
-      const file = e.dataTransfer.files[0];
-      if (file) processFile(file);
+      setState(prev => ({ ...prev, drag: false }));
+      stageFiles(transferFiles(e.dataTransfer));
     },
-    [processFile],
+    [stageFiles],
   );
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const files = transferFiles(e.clipboardData);
+    if (!files.length) return; // Native text/URL/HTML insertion, no URL fetching.
+    e.preventDefault(); // Actual file payload wins over its accompanying text representation.
+    stageFiles(files);
+  }, [stageFiles]);
+
+  const clearDrag = useCallback(() => setState(prev => ({ ...prev, drag: false })), []);
+  const preventFileNavigation = useCallback((e: React.DragEvent) => {
+    if (!hasFileDrag(e.dataTransfer) && !e.dataTransfer.files?.length) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "none";
+    clearDrag();
+    if (e.type === "drop") toast({ title: "Drop on the message box", description: "Drop your file directly onto the composer to attach it." });
+  }, [clearDrag, toast]);
+
+  const setAttachedDoc: Dispatch<SetStateAction<AttachedDocument | null>> = useCallback(value => {
+    owner.current.generation += 1;
+    owner.current.processing = false;
+    const scope = owner.current.scope;
+    const epoch = owner.current.epoch;
+    setState(prev => ({ scope, epoch, doc: typeof value === "function" ? value(prev.scope === scope && prev.epoch === epoch ? prev.doc : null) : value, processing: false, drag: false }));
+  }, []);
 
   const removeAttachment = useCallback(() => {
     setAttachedDoc(null);
-  }, []);
+  }, [setAttachedDoc]);
 
   const openFilePicker = useCallback(() => {
+    if (!owner.current.enabled || owner.current.scope === null) return;
     fileInputRef.current?.click();
   }, []);
 
@@ -196,6 +304,10 @@ export function useChatDocumentUpload() {
     handleDragOver,
     handleDragLeave,
     handleDrop,
+    handlePaste,
+    clearDrag,
+    preventFileNavigation,
+    processingFileNow: () => owner.current.processing,
     removeAttachment,
     openFilePicker,
     setAttachedDoc,

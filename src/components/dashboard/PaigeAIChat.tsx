@@ -527,23 +527,6 @@ const PaigeAIChatInner = ({
   const [latestAnnouncement, setLatestAnnouncement] = useState("");
   const { toast } = useToast();
 
-  // Document attachment (#480) — PDF/image/DOCX. Shared hook (§18 one home): docx
-  // is extracted to text client-side, pdf/image ride as base64; 10MB cap. In-session
-  // only (no turn-persistence of the attachment), matching PaigeChat.
-  const {
-    attachedDoc,
-    isProcessingFile,
-    isDragOver,
-    fileInputRef,
-    acceptString,
-    handleFileSelect,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    removeAttachment,
-    openFilePicker,
-    setAttachedDoc,
-  } = useChatDocumentUpload();
   // ── Multi-chat history (#94) — owner "Your Paige" only (enableHistory). ──
   const scopedUserId = useScopedUserId();
   const { activeTenantId, activeTenant } = useTenantContext();
@@ -664,9 +647,6 @@ const PaigeAIChatInner = ({
   // The composer accepts writes only once its scope is writable; until then a question waits.
   const composerWritable = Boolean(draft.writableHandle);
   useEffect(() => composerWritable ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt))) : undefined, [composerWritable, setInput]);
-  // A deployment reload must never discard an unsent prompt, attachment, or
-  // response currently arriving from Paige.
-  useBeforeUnloadGuard(input.trim().length > 0 || attachedDoc !== null || isProcessingFile || isLoading);
   const dictationEpoch = requestScopeEpoch;
   const dictationDeliveryEpoch = `${dictationEpoch}:${dictationGeneration}`;
   const [dictationActivity, setDictationActivity] = useState({
@@ -675,6 +655,18 @@ const PaigeAIChatInner = ({
   });
   const dictationActive =
     dictationActivity.epoch === dictationEpoch && dictationActivity.active;
+  // INT-338: all input mechanisms use one processor and the draft's complete requested scope.
+  // Working alone does not close attachment input; file preparation never sends a turn.
+  const {
+    attachedDoc, isProcessingFile, isDragOver, fileInputRef, acceptString,
+    handleFileSelect, handleDragOver, handleDragLeave, handleDrop, handlePaste,
+    removeAttachment, openFilePicker, setAttachedDoc, clearDrag, preventFileNavigation,
+    processingFileNow,
+  } = useChatDocumentUpload({
+    scopeKey: requestScopeHandle ? requestScopeEpoch : null,
+    enabled: composerScope.writable && !dictationActive && !submissionPreflightRef.current,
+  });
+  useBeforeUnloadGuard(input.trim().length > 0 || attachedDoc !== null || isProcessingFile || isLoading);
   const handleDictationActivity = useCallback((active: boolean) => {
     setDictationActivity({ epoch: dictationEpoch, active });
   }, [dictationEpoch]);
@@ -2152,13 +2144,12 @@ const PaigeAIChatInner = ({
    *  longer opens it. Absent on every ordinary turn. */
   const handleSend = async (overrideText?: string, approvedFingerprints?: string[], declinedFingerprints?: string[], voiceSink?: LiveVoiceSink, opts?: { answer?: { askId: string; skipped: boolean } }) => {
     const originDraft = composerScope.writableHandle;
-    if (dictationActive || !originDraft) { voiceSink?.failed(); return; }
+    if (dictationActive || !originDraft || (overrideText === undefined && (isProcessingFile || processingFileNow?.()))) { voiceSink?.failed(); return; }
     const text = (overrideText ?? (soloTenantSafety ? readComposerDraft(originDraft) : input)).trim();
     // Allow a send with text OR an attachment alone (#480). An override (confirm
     // card Approve/Deny) never carries a doc, so snapshot only on a real compose.
     const currentDoc = overrideText === undefined ? attachedDoc : null;
     if ((!text && !currentDoc) || !composerScope.writable) { voiceSink?.failed(); return; }
-    if (soloTenantSafety && currentDoc && isLoading) return;
     // Until caller/thread resolution completes there is no canonical turn to interrupt.
     // Leave the next draft untouched; once dispatched, Send can supersede immediately.
     if (soloTenantSafety && submissionPreflightRef.current && !approvedFingerprints?.length) return;
@@ -2543,7 +2534,7 @@ const PaigeAIChatInner = ({
         ? `${traceDepartments} ${traceDepartments === 1 ? "department" : "departments"} worked on this`
         : `${visibleSteps.length} ${visibleSteps.length === 1 ? "step" : "steps"} so far`;
   const composerBlocked = !composerScope.writable;
-  const composerSendBlocked = composerBlocked || dictationActive
+  const composerSendBlocked = composerBlocked || dictationActive || isProcessingFile
     || (soloTenantSafety && submissionPreflightRef.current);
   const stopInteractiveButton = soloTenantSafety && isLoading ? (
     <Button type="button" variant="outline" size="icon" aria-label="Stop PAIGE response"
@@ -2587,7 +2578,9 @@ const PaigeAIChatInner = ({
         const el = e.target; el.style.height = "auto";
         el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
       }}
+      onPaste={handlePaste}
       onKeyDown={(e) => {
+        if (e.key === "Escape") clearDrag?.();
         // IME composition: don't hijack Enter/nav while composing (N3).
         if (e.nativeEvent.isComposing) return;
         // Slash palette open → arrows/enter/escape drive the menu.
@@ -2622,15 +2615,14 @@ const PaigeAIChatInner = ({
     />
   );
 
-  /* Attach a document (#480) — ghost icon, never gold (Send owns the gold act, §11).
-     Guarded while a reply is streaming. */
+  /* The paperclip stages a file, including while PAIGE works. Send alone commits it. */
   const attachButton = (
     <Button
       onClick={openFilePicker}
       variant="ghost"
       size="icon"
       aria-label="Attach a document"
-      disabled={composerBlocked || isLoading}
+      disabled={composerBlocked || dictationActive || submissionPreflightRef.current}
       title="Attach a PDF, image, or Word document"
       className={cd ? "h-[27px] w-[27px] rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted" : undefined}
     >
@@ -2963,7 +2955,8 @@ const PaigeAIChatInner = ({
   };
 
   return (
-    <div data-solo-chat-engine={soloTenantSafety ? "true" : undefined} className={fill ? "w-full h-full" : `max-w-4xl mx-auto w-full ${hideHeader ? "h-full" : "h-[calc(100vh-4rem)]"}`}>
+    <div data-solo-chat-engine={soloTenantSafety ? "true" : undefined} className={fill ? "w-full h-full" : `max-w-4xl mx-auto w-full ${hideHeader ? "h-full" : "h-[calc(100vh-4rem)]"}`}
+      onDragOver={preventFileNavigation} onDrop={preventFileNavigation}>
       <div className={enableHistory ? (cd ? "flex h-full min-h-0 gap-3.5" : "flex h-full min-h-0 gap-4 px-3 pt-3 md:px-4") : "flex flex-col h-full"}>
         {/* History rail. The caller may draw its own (the operator console draws
             Claude Design's) — it gets the SAME live threads and the SAME handlers,
@@ -2988,9 +2981,6 @@ const PaigeAIChatInner = ({
             ))}
         <div
           className={enableHistory ? "flex flex-col h-full min-w-0 flex-1" : "contents"}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
         >
         {!hideHeader && (
           <div className="mb-6">
@@ -3022,18 +3012,6 @@ const PaigeAIChatInner = ({
             cd ? "rounded-[14px] shadow-none" : "shadow-card",
           )}
         >
-          {/* Drop target overlay (#480) — tokened, theme-aware, motion-safe. Solid indigo frame
-              (no dashed "upload-widget" tell, §25); gold stays reserved for the send act (§11/§23).
-              Drag handlers live on the wrapper above so a drop on the header can't escape to the
-              browser (they catch child drops via bubbling). */}
-          {isDragOver && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none animate-in fade-in duration-150 motion-reduce:animate-none">
-              <div className="rounded-xl border-2 border-primary bg-card px-6 py-4 text-center shadow-lg">
-                <p className="text-sm font-medium text-primary">Drop file here</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">PDF, image, or Word document · up to 10MB</p>
-              </div>
-            </div>
-          )}
           {typeof conversationHeader === "function" ? conversationHeader(railApi) : conversationHeader}
           {focusBanner}
           <div className="relative flex min-h-0 flex-1 flex-col">
@@ -3564,6 +3542,9 @@ const PaigeAIChatInner = ({
                 />
               </div>
             )}
+            <div role="status" aria-live="polite" className={isProcessingFile ? "mb-2 px-1 text-xs text-muted-foreground" : "sr-only"}>
+              {isProcessingFile ? "Preparing attachment…" : attachedDoc ? `${attachedDoc.name} attached` : ""}
+            </div>
             {/* Composer + slash palette + inline voice. The palette anchors above the
                 input in both chromes and focus never leaves the Textarea. */}
             <div
@@ -3577,7 +3558,15 @@ const PaigeAIChatInner = ({
                   : "flex items-end gap-2",
               )}
               data-solo-composer={soloTenantSafety ? "true" : undefined}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
+              {isDragOver && (
+                <div role="status" className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border-2 border-primary bg-card/95 text-sm font-medium text-foreground">
+                  Drop to attach
+                </div>
+              )}
               <SlashCommandMenu
                 open={slashOpen}
                 items={filteredCommands}

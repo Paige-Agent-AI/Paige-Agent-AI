@@ -25,12 +25,12 @@ MUST_PRESERVE: Solo Sales navigation, canonical server formulas, shared evidence
 ACCEPTANCE_CRITERIA: automatic chart reads and truthful figures, scope isolation, valid evidence disclosures, accessible transitions and canonical drilldowns.
 MOTION_PURPOSE: bounded draw-in communicates newly read chart geometry; reduced-motion removes animations.
 PROTECTED_SEAMS: read scope/expiry/actor/range fencing tested; no mutation, approval, billing, provider, scheduling, Memory, Chat or Live changes.
-INTERNAL_BUILD_IDENTITY: development candidate; deployment=none; environment=local; migrations=NOT_APPLICABLE for Sales consumer; edge=NOT_APPLICABLE; evidence=this record
+INTERNAL_BUILD_IDENTITY: 8f664bdaa145fabbd2c5f98d88c425166b440359; deployment=local-component-harness; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/int341-sales-performance.md
 RELEASE_CHANNEL: development: pinned shared dependency is not production availability.
-RELEASE_CLASSIFICATION: enhancement: approved Sales Performance presentation over shipped producers.
+RELEASE_CLASSIFICATION: internal-only: development candidate; customer release classification remains pending final delivery.
 CUSTOMER_RELEASE_IDENTITY: none: production release not yet completed.
-RELEASE_NOTE_REQUIRED: yes: owner-visible Performance improvement after verified release.
-RELEASE_TRUTH_BOUNDARY: implementation/test/render evidence only; shared issuance and authenticated production PROOF OWED.
+RELEASE_NOTE_REQUIRED: NO: development candidate; any customer announcement belongs to final verified release.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: shared issuance and authenticated production; implementation/test/render evidence cannot promote those claims.
 RELEASE_RECOVERY: position=bounded forward fix or restore prior Performance mount; reference=docs/delivery/sales-performance-ui.md
 SOLO_1536X770_PAIGE_CLOSED: PASS: isolated production-component fixture measured without document overflow; canonical shell still UNVERIFIED.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: integrated dock geometry pending.

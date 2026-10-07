@@ -1,8 +1,43 @@
 # INT-336 typed Chat — verification record
 
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: docs/delivery/paige-conversational-loop-int336.md records F1–F14, scope, authority and exits.
+PAIGE_UI_DESIGN: PASS: repository skill and its five Experience-Quality modules, vendor guidance and accessibility checklist read before implementation; routing recorded in docs/delivery/paige-conversational-loop-int336.md.
+MATERIAL_FLOW_CHANGE: YES: stable typed input remains editable during work; Send supersedes canonical interactive generation.
+FLOW_PROTOTYPE: WAIVED: owner-decision=2026-10-06 INT-336 owner approval; reason=Owner approved the editable Thinking interaction with separate Stop and Send supersession and explicitly waived further prototype review.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner prepares and sends the newest context while PAIGE works, using the canonical composer.
+VISUAL_DIRECTION: PASS: incumbent composer geometry/tokens retained; gold Send and separate restrained Stop; no modal interruption confirmation.
+AUTOMATED_EVIDENCE: PASS: composer 45 tests and stream/turn presentation 65 tests; native handler preview/pipeline and two-tool interruption fixtures; commands and limits recorded below.
+STATIC_EVIDENCE: PASS: targeted ESLint, definer ACL lint and origin/main-to-head regression lint passed; TypeScript ratchet retains ten-error baseline.
+RENDERED_EVIDENCE: PASS: scripts/int336-render-check.mjs with real component at four Solo sizes and 390x844; local dark screenshots at work/render-check/1366x768.png and work/render-check/390x844.png.
+BEHAVIORAL_EVIDENCE: PASS: component streams prove passive typing, Send abort/stale tail fence, rapid dedupe, safe draft recovery, keyboard and exact scope checks; native handler fixtures prove receipt-preserving serialization.
+AUTHENTICATED_RUNTIME: UNVERIFIED: Windows deny-read ACL failure prevents trusted browser-control startup and access to authenticated production Solo account.
+KEYBOARD_FOCUS: PASS: local real-component drive preserves caret while typing, Enter sends, Shift+Enter adds newline; component tests cover Stop and settlement focus.
+ZOOM_REFLOW: UNVERIFIED: local harness proves responsive geometry at 390x844 and four required viewports; physical keyboard and browser zoom drive are inaccessible through failed browser control.
+REDUCED_MOTION: UNVERIFIED: existing reduced-motion scroll branch is unchanged; browser preference drive is inaccessible through failed browser control.
+STATE_COVERAGE: PASS: tests cover first lazy thread, hydration/scope refusal, working, supersession, Stop, transport uncertainty, explicit rejection, draft retention, exact approvals and explicit answers.
+TRUTHFUL_STATE_LABELS: PASS: interruption retains completed effect receipts; uncertainty stays outcome_unknown, never false failure or automatic replay; production completion is not claimed.
+SOLO_UI: YES: canonical PaigeAIChat Solo composer; authenticated full-shell geometry remains inaccessible.
+UNVERIFIED: authenticated owner long-thread interaction, deployed migration/edge/frontend, physical mobile keyboard, four full-shell open/closed variants and known-good tenant; browser control startup failed Windows ACL setup.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: full-shell authenticated browser control failed Windows ACL setup; standalone Chat harness is not closed-shell proof.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: local Chat harness passes 1536x770 geometry; authenticated full-shell browser control failed Windows ACL setup.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: full-shell authenticated browser control failed Windows ACL setup; standalone Chat harness is not closed-shell proof.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: local Chat harness passes 1366x768 geometry; authenticated full-shell browser control failed Windows ACL setup.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full-shell authenticated browser control failed Windows ACL setup; standalone Chat harness is not closed-shell proof.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: local Chat harness passes 1024x768 geometry; authenticated full-shell browser control failed Windows ACL setup.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: full-shell authenticated browser control failed Windows ACL setup; standalone Chat harness is not closed-shell proof.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: local Chat harness passes 900x1000 geometry; authenticated full-shell browser control failed Windows ACL setup.
+INTERNAL_BUILD_IDENTITY: 8f307480ffbe7770db01024b92b0242a66585d56; deployment=local-component-harness; environment=development; migrations=PROOF_OWED(20270601000000_int336_interactive_thread_fence live deployment); edge=PROOF_OWED(paige-ai-chat live deployment); evidence=docs/evidence/ui-delivery/int336-typed-interruption.md
+RELEASE_CHANNEL: development: local component and isolated handler verification; production release is gated on exact-head CI/review.
+RELEASE_CLASSIFICATION: patch: bounded typed-conversation interruptibility correction under INT-336.
+CUSTOMER_RELEASE_IDENTITY: none: no customer version allocated before verified delivery and live register check.
+RELEASE_NOTE_REQUIRED: YES: Solo owners can type and redirect during work; uncertain consequential actions require reconciliation before new writes.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated Solo interruption, production deployment and long existing thread acceptance are blocked by browser-control startup failure.
+RELEASE_RECOVERY: position=forward fix canonical receipt/lease integrity and preserve schema/receipts on frontend rollback without replaying uncertain effects; reference=docs/delivery/paige-conversational-loop-int336.md
+
 SHELL: SOLO. Parent INT-304. FLOW-BY-FLOW: APPLIED. IMPECCABLE: APPLIED.
 Owner interaction approval and explicit prototype waiver: 2026-10-06.
-Status: independent affected-surface review PASS; exact-head gates and release pending; **NOT SHIPPED**.
+Status: error-path receipt repair passes affected re-review; updated exact-head gates underway; **NOT SHIPPED**.
 
 ## Contract and routing
 
@@ -52,3 +87,5 @@ Owner requested a subsequent clipboard-image and drag-and-drop attachment hotfix
 ## Release and truth
 
 No PR, merge SHA, deployment or production acceptance yet. No shipped-log entry, release version or DEL allocation. The controlling owner brief grants merge/live authority when evidence is sound; current integrity findings prohibit release. Scope remains a hotfix, separate from C4d/C4e/C5.
+
+Draft PR: https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1805. Initial exact-head review caught error/withheld persistence dropping effect metadata. Both paths repaired and reviewed; independent actual-handler test verifies unknown write survives generic error and a distinct successor cannot dispatch another write. Gateway-failure variant also passes. Initial CI's two new Deno narrowing errors were corrected without assertions; local handler Deno check retains the existing ten diagnostics. Structured evidence attestation now passes. Updated exact-head CI/review and deployment remain release gates.

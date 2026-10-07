@@ -801,6 +801,8 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
+          INT336_ERROR_KIND=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
           INT336_UNKNOWN_TOOL=plan_create node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           INT336_UNKNOWN_TOOL=plan_list node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-long-settlement-check.mjs

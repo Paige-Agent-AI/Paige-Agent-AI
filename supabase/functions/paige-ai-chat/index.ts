@@ -1140,6 +1140,7 @@ serve(async (req) => {
     let interactiveReceiptScanSaturated = false;
     // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
     if (validatedData.interactive) {
+      const interactiveInput = validatedData.interactive;
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
       const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
@@ -1189,9 +1190,9 @@ serve(async (req) => {
       const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
         begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin", {
           p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
-          p_supersedes: validatedData.interactive.supersedesIntentId ?? null,
+          p_supersedes: interactiveInput.supersedesIntentId ?? null,
           p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
-          p_stop: validatedData.interactive.kind === "stop",
+          p_stop: interactiveInput.kind === "stop",
         }),
         store: { state: () => executor("state"), acquire: async () => (await executor("acquire")).acquired === true,
           release: async () => { await interactiveSettlement!.release(); } },
@@ -17441,7 +17442,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch { /* client already gone */ }
             if (payloadThreadId) {
               try {
-                const p = persistAssistantTurn(withheld, withTurnRecord(withheld, { bundleRef: null }));
+                const p = persistAssistantTurn(withheld, withTurnRecord(withheld, interactive ? assistantTurnMetadata() : { bundleRef: null }));
                 // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
                 if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
               } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
@@ -17522,7 +17523,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            // question with no assistant reply — symmetry with the in-band fallback.
            if (payloadThreadId) {
              try {
-               const p = persistAssistantTurn(snag, withTurnRecord(snag, { surfaces: [], bundleRef: null }));
+               const p = persistAssistantTurn(snag, withTurnRecord(snag, interactive ? assistantTurnMetadata() : { surfaces: [], bundleRef: null }));
                // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
                if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
              } catch (pe) { console.error("[paige] persist snag fallback failed:", (pe as Error)?.message); }

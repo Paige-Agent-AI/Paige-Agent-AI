@@ -37,6 +37,3 @@ try{
  deny(scoped+persist,/40001/);deny(scoped+`UPDATE tenant_stripe_accounts SET onboarding_claim=gen_random_uuid();`,/22023/);deny(scoped+`UPDATE tenant_stripe_accounts SET stripe_account_id='acct_other';`,/22023/);
  console.log(`PASS ${checks} PostgreSQL integrity assertions; real actor/service guards, real Rail functions, canonical reservation/CAS, wrong roles/tenant/environment/claim, duplicate claim, version advance, immutable binding, receipt failure rollback. Synthetic local identities only.`);
 }finally{command('pg_ctl.exe',['-D',cluster,'-m','fast','-w','stop'],'',true);}
-
-
-

@@ -81,7 +81,3 @@ BEGIN
   RETURN r.binding_version;
 END $$;
 COMMIT;
-
-
-
-

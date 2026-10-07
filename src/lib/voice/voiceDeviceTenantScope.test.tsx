@@ -15,6 +15,8 @@ const harness = vi.hoisted(() => ({
   registerGate: null as null | (() => void),
   holdMint: false,
   mintGate: null as null | (() => void),
+  holdConnect: false,
+  connectGate: null as null | (() => void),
   mints: 0,
   devices: [] as Array<{ token: string; destroyed: boolean; instance: unknown }>,
 }));
@@ -74,6 +76,11 @@ vi.mock("@twilio/voice-sdk", () => {
     }
     async connect() {
       this.lastCall = new FakeCall();
+      if (harness.holdConnect) {
+        await new Promise<void>((resolve) => {
+          harness.connectGate = resolve;
+        });
+      }
       return this.lastCall;
     }
     updateToken() { /* not exercised here */ }
@@ -114,6 +121,8 @@ beforeEach(() => {
   harness.registerGate = null;
   harness.holdMint = false;
   harness.mintGate = null;
+  harness.holdConnect = false;
+  harness.connectGate = null;
   harness.mints = 0;
   harness.devices = [];
   latestVoice = null;
@@ -272,7 +281,18 @@ describe("VoiceDeviceProvider workspace-scope teardown (INT-345)", () => {
   });
 
   it("paints no state when the mint resolves AFTER the workspace switched (late needs_config)", async () => {
-    harness.holdMint = true;
+    // The held mint must resolve NEEDS_CONFIG — a token payload would let the
+    // old head's post-register guard clean up and this test would pass there
+    // too (vacuous). needs_config paints immediately with no Device, so only
+    // the tenant guard can stop it landing under workspace B.
+    const invoke = (await import("@/integrations/supabase/client")).supabase.functions
+      .invoke as unknown as { mockImplementationOnce: (fn: () => Promise<unknown>) => void };
+    invoke.mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => {
+        harness.mintGate = resolve;
+      });
+      return { data: { needs_config: true, error: "calling_not_configured", message: "A-late-copy" }, error: null };
+    });
     await renderProvider();
     await act(async () => {
       latestVoice?.warmUp();
@@ -289,9 +309,57 @@ describe("VoiceDeviceProvider workspace-scope teardown (INT-345)", () => {
     await act(async () => {
       harness.mintGate?.();
     });
-    // The late mint's outcome belongs to tenant A — B's surface stays idle.
+    // The late mint's outcome belongs to tenant A — B's surface stays idle and
+    // no Device was ever constructed.
     expect(latestVoice?.status).toBe("idle");
     expect(latestVoice?.reason).toBeNull();
+    expect(harness.devices).toHaveLength(0);
+  });
+
+  it("ends and unwires a call whose connect resolves AFTER the workspace switched", async () => {
+    await renderProvider();
+    await act(async () => {
+      latestVoice?.warmUp();
+    });
+    const device = harness.devices[0].instance as unknown as {
+      lastCall: { handlers: Record<string, () => void>; disconnected: boolean } | null;
+    };
+
+    // Fire the dial WITHOUT awaiting it — connect is held pending, so the
+    // call promise cannot settle until the gate opens below.
+    harness.holdConnect = true;
+    let callPending: Promise<void> | undefined;
+    act(() => {
+      callPending = latestVoice?.call("+15550001111");
+    });
+    await act(async () => {});
+    expect(latestVoice?.status).toBe("connecting");
+    const lateCall = device.lastCall;
+    expect(lateCall).not.toBeNull();
+
+    // Switch while the connect is in flight — the teardown destroys the Device.
+    await act(async () => {
+      harness.tenantId = "tenant-b";
+      await renderProvider();
+    });
+    expect(latestVoice?.status).toBe("idle");
+
+    // The connect now resolves under tenant B: the call belongs to tenant A's
+    // identity — it is disconnected and NEVER wired into B's surface.
+    await act(async () => {
+      harness.connectGate?.();
+      await callPending;
+    });
+    expect(lateCall?.disconnected).toBe(true);
+    expect(latestVoice?.status).toBe("idle");
+    expect(latestVoice?.activeCall).toBeNull();
+
+    // No liar state even if the stale call later fires accept.
+    await act(async () => {
+      lateCall?.handlers.accept?.();
+    });
+    expect(latestVoice?.status).toBe("idle");
+    expect(latestVoice?.activeCall).toBeNull();
   });
 
   it("keeps the Device when the tenant context merely resolves (no switch yet, nothing booted)", async () => {

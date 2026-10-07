@@ -413,6 +413,10 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       });
 
       device.on("error", (err: TwilioError.TwilioError) => {
+        // INT-345 — a late error from a Device that is no longer current (torn
+        // down by a workspace switch, or replaced by a re-boot) must not paint
+        // or clear state under a workspace that never owned it.
+        if (deviceRef.current !== device) return;
         const preserveConnectedCall = !!callRef.current && callAcceptedRef.current;
         const expired = discardExpiredVoiceDevice(
           err,
@@ -661,8 +665,17 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       safeSet(setActiveCall, { number, startedAt: Date.now(), callSid: null });
       try {
         const outbound = await device.connect({ params: { To: number } });
+        // INT-345 — the connect await is a tenant resume point too: if the
+        // workspace switched while connecting, this call belongs to the OLD
+        // tenant identity — end it, wire nothing, paint nothing under the new
+        // workspace (the switch effect owns the reset).
+        if (tenantRef.current !== callTenant) {
+          try { outbound.disconnect(); } catch { /* already gone */ }
+          return;
+        }
         wireCall(outbound, number);
       } catch (error) {
+        if (tenantRef.current !== callTenant) return;
         const discarded = discardExpiredVoiceDevice(error, device, deviceRef);
         safeSet(setStatus, !discarded && deviceRef.current ? "ready" : "error");
         safeSet(setReason, providerCallErrorMessage(error));

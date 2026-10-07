@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {createInteractiveSettlement} from '../supabase/functions/_shared/paige-turn/interactive.ts';
+let exists=false,releases=0,fallbacks=0,writes=0;
+const fixture=()=>createInteractiveSettlement({owns:async()=>true,readback:async()=>exists,fallback:async()=>{fallbacks++;exists=true;return {error:null}},release:async()=>releases++});
+let s=fixture();await s.release();assert.equal(fallbacks,1);assert.equal(releases,1);
+exists=false;releases=0;s=fixture();await s.persist(async()=>{writes++;exists=true;return {error:Error('lost response')}});await s.persist(async()=>{writes++;return {error:null}});await s.release();assert.equal(writes,1);assert.equal(releases,1);
+exists=false;releases=0;s=fixture();await assert.rejects(s.persist(async()=>({error:Error('store unavailable')})));await assert.rejects(s.release(),/RECONCILIATION_REQUIRED/);assert.equal(releases,0);
+exists=false;s=fixture();await assert.rejects(s.persist(async()=>{throw Error('transport')}));await assert.rejects(s.release(),/RECONCILIATION_REQUIRED/);assert.equal(releases,0);
+exists=true;await s.release();assert.equal(releases,1,'canonical operational repair readback permits same release');
+console.log('PASS: early fallback, lost-response readback, no duplicate receipt, returned/thrown persistence failure holds, canonical repair releases');

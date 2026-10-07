@@ -4,7 +4,7 @@ import { StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Clock, Paperclip, X, ArrowDown, ArrowRight, Hand, CircleHelp } from "lucide-react";
+import { Send, Square, Loader2, Clock, Paperclip, X, ArrowDown, ArrowRight, Hand, CircleHelp } from "lucide-react";
 import { Link, useInRouterContext } from "react-router-dom";
 import { PaigeResearchCard, type PaigeResearchResult } from "@/components/paige/chat/PaigeResearchCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,12 +88,15 @@ import {
   initialComposerConversation,
   moveComposerDraft,
   readComposerDraft,
+  restoreComposerDraft,
   resolveComposerScopeState,
   shouldClearComposerDraft,
+  takeComposerDraft,
   transitionComposerConversation,
   useComposerDraft,
   type ComposerConversationState,
   type ComposerDraftHandle,
+  type ComposerDraftSubmission,
   type ComposerConversationIntent,
   type ComposerRequestTicket,
 } from "@/lib/paigeComposerScopeState";
@@ -433,6 +436,8 @@ const PaigeAIChatInner = ({
   const [messages, setMessages] = useState<Message[]>([
     mkMsg({ role: "assistant", content: greeting ?? "Hey, how can I help?" }),
   ]);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
   const [dictationGeneration, setDictationGeneration] = useState(0);
   const [slashActive, setSlashActive] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -599,6 +604,13 @@ const PaigeAIChatInner = ({
   const [traceOpen, setTraceOpen] = useState(false);
   const openingGreeting = greeting ?? "Hey, how can I help?";
   const requestFenceRef = useRef(createComposerRequestFence());
+  const interactiveRequestRef = useRef<{ intentId: string; threadId: string | null; handle: ComposerDraftHandle } | null>(null);
+  const creatingThreadRef = useRef<{ epoch: string; promise: Promise<string> } | null>(null);
+  const submissionPreflightRef = useRef(false);
+  const undispatchedDraftRef = useRef<{ intentId: string; handle: ComposerDraftHandle; submission: ComposerDraftSubmission } | null>(null);
+  const documentRequestActiveRef = useRef(false);
+  const [interactiveAuthorityPending, setInteractiveAuthorityPending] = useState(false);
+  const authorityPollRef = useRef<{ generation: number; timer?: number }>({ generation: 0 });
   // === THE TURN'S SCOPE, AS ONE VALUE (§9, purpose clause 2) ===
   // Draft storage, writability, request delivery, busy ownership, dictation and retry all use this
   // complete identity: workspace, effective user, focused client and focused Business Mission.
@@ -640,6 +652,7 @@ const PaigeAIChatInner = ({
     displayedIdentity: displayedDraftIdentityRef.current,
     conversation: requestedConversation,
     busy: isLoading,
+    allowWhileBusy: soloTenantSafety,
   });
   const composerScopeRef = useRef(composerScope);
   composerScopeRef.current = composerScope;
@@ -710,13 +723,15 @@ const PaigeAIChatInner = ({
   // discarded otherwise. A notice about a scope nobody is leaving is not a notice.
   const pendingScopeNoticeRef = useRef<{ epoch: string; text: string } | null>(null);
   const acceptedEpochRef = useRef<string>(scopeEpoch);
+  const submissionGenerationRef = useRef(0);
+  const attachmentSubmissionRef = useRef<AttachedDocument | null>(null);
   const dictationGenerationRef = useRef(0);
   const [cancelled, setCancelled] = useState(false);
   // `server` joins `offline` and `timeout` because all three are the same thing to the person:
   // the turn did not happen and trying again is worth doing. A 4xx is NOT in this set — a request
   // the server refused on its merits will be refused identically on a retry, and offering one
   // would be a button that cannot work (§70).
-  const [connectionIssue, setConnectionIssue] = useState<"offline" | "timeout" | "server" | "live-interrupted" | null>(null);
+  const [connectionIssue, setConnectionIssue] = useState<"offline" | "timeout" | "server" | "interactive-unconfirmed" | "live-interrupted" | null>(null);
   const retryTurnRef = useRef<{
     base: Message[];
     rollback: Message[];
@@ -769,6 +784,10 @@ const PaigeAIChatInner = ({
     return true;
   }, []);
   const abortActiveRequest = useCallback(() => {
+    undispatchedDraftRef.current = null;
+    submissionPreflightRef.current = false;
+    documentRequestActiveRef.current = false;
+    submissionGenerationRef.current += 1;
     if (requestFenceRef.current.invalidate()) setIsLoading(false);
     // The stopped read will never close a step it started, so none is left spinning.
     setSteps(settleOpenSteps);
@@ -778,9 +797,71 @@ const PaigeAIChatInner = ({
     setStreamedLiveCard(null);
   }, []);
 
+  const refreshInteractiveAuthority = useCallback(() => {
+    if (!enableHistory || !liveConversation) return;
+    const target = interactiveRequestRef.current;
+    if (!target?.threadId) return;
+    const generation = ++authorityPollRef.current.generation;
+    window.clearTimeout(authorityPollRef.current.timer);
+    const current = () => generation === authorityPollRef.current.generation
+      && interactiveRequestRef.current?.intentId === target.intentId
+      && composerDraftHandlesMatch(target.handle, requestScopeRef.current.handle);
+    const poll = async () => {
+      if (!current()) return;
+      let settled = false;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!current() || !session) return;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ threadId: target.threadId, requestIntentId: target.intentId,
+            messages: [{ role: "user", content: "Status" }], interactive: { kind: "status" } }),
+        });
+        if (response.ok) settled = (await response.json()).settled === true;
+      } catch { /* Unknown settlement keeps Live guarded; text remains available. */ }
+      if (!current()) return;
+      if (settled) setInteractiveAuthorityPending(false);
+      else authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, 1000);
+    };
+    void poll();
+  }, [enableHistory, liveConversation]);
+  useEffect(() => () => {
+    authorityPollRef.current.generation += 1;
+    window.clearTimeout(authorityPollRef.current.timer);
+  }, []);
+  useEffect(() => {
+    const target = interactiveRequestRef.current;
+    if (target && !composerDraftHandlesMatch(target.handle, requestScopeRef.current.handle)) {
+      authorityPollRef.current.generation += 1;
+      window.clearTimeout(authorityPollRef.current.timer);
+      setInteractiveAuthorityPending(false);
+    }
+  }, [requestScopeEpoch]);
+
   const cancelSoloRequest = useCallback((opts?: { fromVoice?: boolean }) => {
     if (!soloTenantSafety) return;
+    const undispatched = !opts?.fromVoice ? undispatchedDraftRef.current : null;
+    if (undispatched && composerDraftHandlesMatch(undispatched.handle, requestScopeRef.current.handle)) {
+      restoreComposerDraft(undispatched.handle, undispatched.submission);
+    }
     const cancelledTurn = retryTurnRef.current;
+    const interactive = !opts?.fromVoice ? interactiveRequestRef.current : null;
+    if (interactive?.threadId) {
+      void (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ threadId: interactive.threadId, requestIntentId: interactive.intentId,
+            messages: [{ role: "user", content: "Stop" }],
+            interactive: { kind: "stop", supersedesIntentId: interactive.intentId } }),
+        });
+        if (!response.ok) throw new Error("stop_unconfirmed");
+        if (interactiveRequestRef.current?.intentId === interactive.intentId) refreshInteractiveAuthority();
+      })().catch(() => toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }));
+    }
     // C3a — the answer's line says "Stopped by you" and keeps the step that had started, marked as
     // possibly still finishing. Settled BEFORE the abort, which would otherwise drop that step.
     // A Live voice interruption stops the read too, but never moves keyboard focus.
@@ -789,11 +870,11 @@ const PaigeAIChatInner = ({
     // A decision is never rolled back: an approval may already have reached Paige and run, and
     // putting its card back would offer a second Approve for something that may be done. Its
     // outcome card stays and, with no report, says it couldn't confirm.
-    if (cancelledTurn && !cancelledTurn.live && !cancelledTurn.decision) setMessages(cancelledTurn.rollback);
-    if (cancelledTurn?.live || cancelledTurn?.decision) retryTurnRef.current = null;
+    if (!interactive && cancelledTurn && !cancelledTurn.live && !cancelledTurn.decision) setMessages(cancelledTurn.rollback);
+    if (interactive || cancelledTurn?.live || cancelledTurn?.decision) retryTurnRef.current = null;
     setCancelled(true);
     setConnectionIssue(null);
-  }, [abortActiveRequest, settleLiveTurn, soloTenantSafety]);
+  }, [abortActiveRequest, refreshInteractiveAuthority, settleLiveTurn, soloTenantSafety, toast]);
 
   const syncTranscriptPosition = useCallback(() => {
     transcriptScrollRef.current?.handleScroll();
@@ -838,6 +919,9 @@ const PaigeAIChatInner = ({
     if (acceptedEpochRef.current === scopeEpoch) return;
     const leavingEpoch = acceptedEpochRef.current;
     acceptedEpochRef.current = scopeEpoch;
+    submissionPreflightRef.current = false;
+    documentRequestActiveRef.current = false;
+    submissionGenerationRef.current += 1;
     displayedDraftIdentityRef.current = createComposerScopeIdentity({
       tenantId: platform ? "platform" : activeTenantId,
       userId: scopedUserId,
@@ -1335,6 +1419,7 @@ const PaigeAIChatInner = ({
     /** C4c — this message answers PAIGE's open question (the server binds it to that question once).
      *  `card`: the answer was a choice (or the skip) made on her question's card, not typed words. */
     answer?: { askId: string; skipped: boolean; card?: boolean },
+    submittedDraft?: ComposerDraftSubmission,
   ) => {
     if (soloTenantSafety && !activeTenantId) return;
     // Solo: this turn carries a decision; an approval's outcome card answers for it (see below).
@@ -1343,11 +1428,21 @@ const PaigeAIChatInner = ({
     const requestHandle = originDraft ?? composerScopeRef.current.writableHandle;
     const requestScope = requestScopeRef.current;
     if (!requestHandle || !composerDraftHandlesMatch(requestHandle, requestScope.handle)) return;
+    undispatchedDraftRef.current = submittedDraft ? { intentId: requestIntentId, handle: requestHandle, submission: submittedDraft } : null;
     let requestTicket = requestFenceRef.current.begin(requestHandle, requestScope.epoch);
+    const priorInteractive = interactiveRequestRef.current;
+    const typedInteractive = soloTenantSafety && !voiceSink;
+    const supersedesIntentId = typedInteractive && priorInteractive
+      && composerDraftHandlesMatch(priorInteractive.handle, requestHandle) ? priorInteractive.intentId : undefined;
+    // Keep the last dispatched authority through local session/thread preflight.
+    if (!typedInteractive) interactiveRequestRef.current = null;
     // Deliberately NOT stored on the retry: an approval is for one call at one moment. Replaying it
     // on a network retry would re-approve whatever the model emits the second time, which is the
     // exact substitution the fingerprint exists to prevent.
     let persistedDraft = originDraft;
+    const restoreSubmittedDraft = () => {
+      if (submittedDraft && persistedDraft && ticketAccepted(requestTicket)) restoreComposerDraft(persistedDraft, submittedDraft);
+    };
     retryTurnRef.current = {
       base,
       rollback,
@@ -1368,6 +1463,8 @@ const PaigeAIChatInner = ({
         retryTurnRef.current = null;
       }
       setConnectionIssue("offline");
+      restoreSubmittedDraft();
+      submissionPreflightRef.current = false;
       return;
     }
     const newMessages = base;
@@ -1403,11 +1500,13 @@ const PaigeAIChatInner = ({
       } else {
         // A decline has no outcome card, so it keeps the notice — but never a Retry: resending
         // the words without the decision would skip nothing.
-        if (decisionTurn) retryTurnRef.current = null;
-        setConnectionIssue("timeout");
+        if (decisionTurn || typedInteractive) retryTurnRef.current = null;
+        setConnectionIssue(typedInteractive && !decisionTurn ? "interactive-unconfirmed" : "timeout");
       }
     }, PAIGE_INTERACTIVE_TURN_BUDGET_MS) : null;
     let liveRequestDispatched = false;
+    let typedRequestDispatched = false;
+    let typedRequestRejected = false;
     // THE CARD THAT ANSWERS FOR AN APPROVAL (owner-approved recovery design, 2026-09-26). It is on
     // screen the moment Approve is pressed, saying Running…, and it settles when the server reports
     // what became of each action. Until then — and if the report never comes — it can only say it
@@ -1422,6 +1521,7 @@ const PaigeAIChatInner = ({
       if (!ticketAccepted(requestTicket)) return;
       
       if (!session) {
+        restoreSubmittedDraft();
         toast({
           title: "Authentication Error",
           description: "Please sign in to use Paige AI.",
@@ -1438,7 +1538,11 @@ const PaigeAIChatInner = ({
       if (enableHistory) {
         try {
           if (!threadId) {
-            threadId = await threadsApi.ensureThread(userText);
+            const creating = creatingThreadRef.current;
+            const pending = creating?.epoch === requestScope.epoch ? creating.promise : threadsApi.ensureThread(userText);
+            creatingThreadRef.current = { epoch: requestScope.epoch, promise: pending };
+            try { threadId = await pending; }
+            finally { if (creatingThreadRef.current?.promise === pending) creatingThreadRef.current = null; }
             if (!ticketAccepted(requestTicket)) return;
             const threadRequestScope = {
               handle: { ...requestTicket.scopeHandle, conversationId: threadId },
@@ -1455,6 +1559,7 @@ const PaigeAIChatInner = ({
               const threadDraft = { ...persistedDraft, conversationId: threadId };
               moveComposerDraft(persistedDraft, threadDraft);
               persistedDraft = threadDraft;
+              if (undispatchedDraftRef.current?.intentId === requestIntentId) undispatchedDraftRef.current.handle = threadDraft;
               if (retryTurnRef.current) {
                 retryTurnRef.current = {
                   ...retryTurnRef.current,
@@ -1468,10 +1573,14 @@ const PaigeAIChatInner = ({
             applyConversationEvent({ type: "lazy-thread-created", id: threadId });
             transcriptScrollRef.current?.adoptContext([transcriptContextPrefix, threadId].join(":"));
             setActiveThreadId(threadId);
+            if (typedInteractive && interactiveRequestRef.current?.intentId === requestIntentId) {
+              interactiveRequestRef.current = { intentId: requestIntentId, threadId, handle: threadRequestScope.handle };
+            }
           }
           setStreamingThreadId(threadId);
         } catch (e) {
           if (!ticketAccepted(requestTicket)) return;
+          restoreSubmittedDraft();
           console.error("[PaigeAIChat] ensureThread failed:", e);
           toast({ title: "Couldn't start that chat", description: "Give it another try in a moment.", variant: "destructive" });
           setMessages(rollback);
@@ -1481,9 +1590,18 @@ const PaigeAIChatInner = ({
       }
 
       liveRequestDispatched = Boolean(voiceSink);
+      typedRequestDispatched = typedInteractive;
+      if (undispatchedDraftRef.current?.intentId === requestIntentId) undispatchedDraftRef.current = null;
+      if (typedInteractive) {
+        interactiveRequestRef.current = { intentId: requestIntentId, threadId, handle: persistedDraft ?? requestHandle };
+        authorityPollRef.current.generation += 1;
+        window.clearTimeout(authorityPollRef.current.timer);
+        setInteractiveAuthorityPending(true);
+      }
       // From here the approval may reach Paige and run, so no failure below may put the card back
       // or say the message wasn't sent.
       approvalDispatched = Boolean(outcomeThisTurn);
+      submissionPreflightRef.current = false;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`,
         {
@@ -1497,12 +1615,13 @@ const PaigeAIChatInner = ({
             // server refuses an empty message and that turn stays on screen (approvalOutcome.ts).
             // C3a's display-only fields (an answer's `turnSnapshot` and reloaded `confirmReceipt`, a
             // decision turn's `decision`) never ride the wire: what is sent is the shape it was before C3.
-            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.map(({ turnSnapshot: _view, confirmReceipt: _receipt, decision: _decided, ask: _ask, answer: _answer, ...m }) =>
+            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.filter((m) => m.role !== "assistant" || m.content.trim() !== "" || m.approvalOutcome).map(({ turnSnapshot: _view, confirmReceipt: _receipt, decision: _decided, ask: _ask, answer: _answer, ...m }) =>
               m.role === "assistant" && m.content.trim() === "" && m.approvalOutcome
                 ? { ...m, content: approvalOutcomeTranscript(m.approvalOutcome) } : m),
             ...(voiceSink ? { liveRuntimeChallenge: voiceSink.challenge } : {}),
             ...(threadId ? { threadId } : {}),
             requestIntentId,
+            ...(typedInteractive ? { interactive: { kind: "message", ...(supersedesIntentId ? { supersedesIntentId } : {}) } } : {}),
             ...(clientId ? { clientId } : {}),
             ...(clientContext ? { clientContext } : {}),
             ...(surfaceContext ? { surfaceContext } : {}),
@@ -1564,7 +1683,8 @@ const PaigeAIChatInner = ({
             // KEPT in the conversation (another message reached PAIGE first) is in the transcript the
             // re-read below draws, so it leaves the composer — sending it again would only repeat it.
             const kept = refusal?.answer_kept === true;
-            if (kept && persistedDraft && shouldClearComposerDraft({ terminalDone: true, currentDraft: readComposerDraft(persistedDraft), submittedText: userText })) {
+            if (!kept) restoreSubmittedDraft();
+            if (kept && !submittedDraft && persistedDraft && shouldClearComposerDraft({ terminalDone: true, currentDraft: readComposerDraft(persistedDraft), submittedText: userText })) {
               clearComposerDraft(persistedDraft);
             }
             const where = kept || answer.card ? "" : " Your message is back in the box.";
@@ -1583,6 +1703,19 @@ const PaigeAIChatInner = ({
             return;
           }
         }
+        if (typedInteractive && !decisionTurn) {
+          const refusal = await response.clone().json().catch(() => null);
+          if (!ticketAccepted(requestTicket)) return;
+          if (refusal?.message_accepted !== false) {
+            retryTurnRef.current = null;
+            setConnectionIssue("interactive-unconfirmed");
+            setStreamingThreadId(null);
+            if (enableHistory) threadsApi.onTurnPersisted();
+            return;
+          }
+          typedRequestRejected = true;
+        }
+        restoreSubmittedDraft();
         if (response.status === 429) {
           toast({
             title: "Rate Limit Reached",
@@ -1862,13 +1995,14 @@ const PaigeAIChatInner = ({
         if (voiceSink) {
           voiceSink.failed();
           retryTurnRef.current = null;
-        } else setMessages(rollback);
+        } else if (typedInteractive) retryTurnRef.current = null;
+        else setMessages(rollback);
         releaseRequestBusy(requestTicket);
         setStreamingThreadId(null);
-        setConnectionIssue(voiceSink ? "live-interrupted" : "server");
+        setConnectionIssue(voiceSink ? "live-interrupted" : typedInteractive ? "interactive-unconfirmed" : "server");
         return;
       }
-      if (persistedDraft && shouldClearComposerDraft({
+      if (!submittedDraft && persistedDraft && shouldClearComposerDraft({
         terminalDone: streamDone,
         currentDraft: readComposerDraft(persistedDraft),
         submittedText: userText,
@@ -1889,6 +2023,16 @@ const PaigeAIChatInner = ({
       }
     } catch (error) {
       if (!ticketAccepted(requestTicket)) return;
+      if (!typedRequestDispatched) restoreSubmittedDraft();
+      if (typedRequestDispatched && !approvalDispatched) {
+        // The canonical turn or an effect may have committed before the connection failed.
+        // Keep the accepted-looking transcript and require readback instead of offering a replay.
+        retryTurnRef.current = null;
+        setConnectionIssue("interactive-unconfirmed");
+        setStreamingThreadId(null);
+        if (enableHistory) threadsApi.onTurnPersisted();
+        return;
+      }
       if (liveRequestDispatched && voiceSink) {
         voiceSink.failed();
         retryTurnRef.current = null;
@@ -1926,6 +2070,14 @@ const PaigeAIChatInner = ({
       if (decisionTurn) retryTurnRef.current = null;
       if (soloTenantSafety) setConnectionIssue("server");
     } finally {
+      if (undispatchedDraftRef.current?.intentId === requestIntentId) undispatchedDraftRef.current = null;
+      if (typedInteractive && ticketAccepted(requestTicket)) {
+        if (typedRequestRejected) interactiveRequestRef.current = priorInteractive;
+        if (interactiveRequestRef.current?.threadId) refreshInteractiveAuthority();
+        else if (!typedRequestDispatched || typedRequestRejected) setInteractiveAuthorityPending(false);
+      }
+      if (ticketAccepted(requestTicket)) submissionPreflightRef.current = false;
+      if (doc && ticketAccepted(requestTicket)) documentRequestActiveRef.current = false;
       // C2 — the no-stuck-working safety net: the fence release is idempotent (it checks
       // the ticket first), so calling it here catches any exit path that missed it. Without
       // this, an unexpected exception between the specific handlers leaves the working
@@ -2001,11 +2153,20 @@ const PaigeAIChatInner = ({
   const handleSend = async (overrideText?: string, approvedFingerprints?: string[], declinedFingerprints?: string[], voiceSink?: LiveVoiceSink, opts?: { answer?: { askId: string; skipped: boolean } }) => {
     const originDraft = composerScope.writableHandle;
     if (dictationActive || !originDraft) { voiceSink?.failed(); return; }
-    const text = (overrideText ?? input).trim();
+    const text = (overrideText ?? (soloTenantSafety ? readComposerDraft(originDraft) : input)).trim();
     // Allow a send with text OR an attachment alone (#480). An override (confirm
     // card Approve/Deny) never carries a doc, so snapshot only on a real compose.
     const currentDoc = overrideText === undefined ? attachedDoc : null;
     if ((!text && !currentDoc) || !composerScope.writable) { voiceSink?.failed(); return; }
+    if (soloTenantSafety && currentDoc && isLoading) return;
+    // Until caller/thread resolution completes there is no canonical turn to interrupt.
+    // Leave the next draft untouched; once dispatched, Send can supersede immediately.
+    if (soloTenantSafety && submissionPreflightRef.current && !approvedFingerprints?.length) return;
+    if (currentDoc && attachmentSubmissionRef.current === currentDoc) return;
+    if (currentDoc) attachmentSubmissionRef.current = currentDoc;
+    const submissionGeneration = ++submissionGenerationRef.current;
+    const submissionCurrent = () => submissionGenerationRef.current === submissionGeneration
+      && composerDraftHandlesMatch(originDraft, composerScopeRef.current.writableHandle);
     let voiceSettled = false;
     const trackedVoiceSink: LiveVoiceSink | undefined = voiceSink && {
       challenge: voiceSink.challenge,
@@ -2017,7 +2178,28 @@ const PaigeAIChatInner = ({
     // the composer. A delayed provider final can never become the next draft.
     dictationGenerationRef.current += 1;
     setDictationGeneration(dictationGenerationRef.current);
-    const rollback = messages;
+    const priorTurn = liveTurnRef.current;
+    const interruptedSnapshot = soloTenantSafety && priorTurn?.streaming ? {
+      outcome: priorTurn.frame ? { state: "INTERRUPTED" as const, mode: priorTurn.frame.mode } : null,
+      rows: settleTurnRows(priorTurn.rows, "cancelled"),
+      elapsedMs: Date.now() - priorTurn.startedAt,
+      endCause: "cancelled" as const,
+      source: "live" as const,
+      hasContent: false,
+      ...(priorTurn.resumed ? { resumed: true } : {}),
+    } : null;
+    const rollback: Message[] = interruptedSnapshot && priorTurn
+      ? messagesRef.current.map((m) => m.id === priorTurn.assistantId ? {
+          ...m, turnSnapshot: { ...interruptedSnapshot, hasContent: m.content.trim() !== "" },
+          ...(m.approvalOutcome && !m.approvalOutcome.reported ? { approvalOutcome: { ...m.approvalOutcome, dropped: true } } : {}),
+        } : m)
+      : messagesRef.current;
+    if (interruptedSnapshot && priorTurn && !rollback.some((m) => m.id === priorTurn.assistantId)) {
+      rollback.push({ id: priorTurn.assistantId, ts: priorTurn.startedAt, role: "assistant", content: "", turnSnapshot: interruptedSnapshot });
+    }
+    if (interruptedSnapshot) settleLiveTurn("cancelled", undefined, { stopFocus: false });
+    const submittedDraft = soloTenantSafety && overrideText === undefined && !voiceSink
+      ? takeComposerDraft(originDraft) : undefined;
     let userContent = text || (currentDoc ? `Analyze this document: ${currentDoc.name}` : "");
     // C4c — is this message the ANSWER to PAIGE's open question? Only when it says so: a choice or a
     // skip on the question's own card, or words typed while the composer is answering it (the person
@@ -2044,7 +2226,7 @@ const PaigeAIChatInner = ({
     // confirmations are stripped from the model turn's echo: there is nothing left to re-dispatch.
     const executedOutcomes: Array<{ fingerprint: string; summary: string; tool: string; outcome: "ran" | "not_run" | "unconfirmed"; note?: string; reproposed?: { fingerprint: string; summary: string } }> = [];
     let echoFingerprints = approvedFingerprints ? [...approvedFingerprints] : undefined;
-    if (echoFingerprints?.length) {
+    if (echoFingerprints?.length && !soloTenantSafety) {
       const actionable = new Map<string, { command: Record<string, unknown>; idempotency_key: string; summary: string; tool: string }>();
       for (const m of messages) {
         for (const c of m.confirm ?? []) {
@@ -2054,6 +2236,7 @@ const PaigeAIChatInner = ({
         }
       }
       for (const [fingerprint, item] of actionable) {
+        if (!submissionCurrent()) return;
         let body: Record<string, unknown> = {};
         let transportFailed = false;
         let errorPresent = false;
@@ -2119,7 +2302,7 @@ const PaigeAIChatInner = ({
     // click a replay (the door returns the cached result; the action runs once), and an expired
     // row refuses honestly. A typed "yes" never reaches this path: it reads only the approved
     // card fingerprints. The chat handler is untouched (Knowledge #1615 owns that seam).
-    if (echoFingerprints?.length) {
+    if (echoFingerprints?.length && !soloTenantSafety) {
       const pipelineItems: Array<{ fingerprint: string; summary: string; tool: string }> = [];
       for (const m of messages) {
         for (const c of m.confirm ?? []) {
@@ -2148,6 +2331,7 @@ const PaigeAIChatInner = ({
             .is("consumed_at" as never, null as never)
             .maybeSingle() as unknown as Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
           const { data: row, error: rowError } = await rowPromise;
+          if (!submissionCurrent()) return;
           const stored = row && typeof row === "object" ? row as { args?: Record<string, unknown>; tenant_id?: string; expires_at?: string } : null;
           const argsObj = stored && typeof stored.args === "object" && stored.args !== null ? stored.args as Record<string, unknown> : null;
           const expired = !stored?.expires_at || new Date(String(stored.expires_at)).getTime() <= Date.now();
@@ -2229,7 +2413,7 @@ const PaigeAIChatInner = ({
         confirmDecision: decision && !reproposedAny ? decision : undefined,
         ...(executedStamp && soloTenantSafety ? { approvalOutcome: executedStamp } : {}),
       };
-    }) : messages;
+    }) : rollback;
     const base = [
       ...shown,
       mkMsg({
@@ -2243,8 +2427,17 @@ const PaigeAIChatInner = ({
         ...(answer ? { answer } : {}),
       }),
     ];
+    if (!submissionCurrent()) {
+      // A dispatched governed command settles independently. Read it back; never let its
+      // older conversational continuation overtake a newer instruction or another scope.
+      if (enableHistory) threadsApi.onTurnPersisted();
+      return;
+    }
+    if (soloTenantSafety) submissionPreflightRef.current = true;
+    if (currentDoc) documentRequestActiveRef.current = true;
     if (askedAt >= 0 && (decision === "declined" || (decision && !soloTenantSafety))) decisionFocusRef.current = messages[askedAt].id;
     setMessages(base);
+    messagesRef.current = base;
     if (currentDoc) setAttachedDoc(null);
     // Once the stored proposal has EXECUTED, the rollback snapshot is the post-decision state:
     // a later stream failure may not resurrect the live Approve button for an action that
@@ -2262,6 +2455,7 @@ const PaigeAIChatInner = ({
       trackedVoiceSink,
       undefined,
       answer && opts?.answer ? { ...answer, card: true } : answer,
+      submittedDraft,
     );
     if (trackedVoiceSink && !voiceSettled) trackedVoiceSink.failed();
   };
@@ -2349,7 +2543,14 @@ const PaigeAIChatInner = ({
         ? `${traceDepartments} ${traceDepartments === 1 ? "department" : "departments"} worked on this`
         : `${visibleSteps.length} ${visibleSteps.length === 1 ? "step" : "steps"} so far`;
   const composerBlocked = !composerScope.writable;
-  const composerSendBlocked = composerBlocked || dictationActive;
+  const composerSendBlocked = composerBlocked || dictationActive
+    || (soloTenantSafety && submissionPreflightRef.current);
+  const stopInteractiveButton = soloTenantSafety && isLoading ? (
+    <Button type="button" variant="outline" size="icon" aria-label="Stop PAIGE response"
+      title="Stop the current response" onClick={() => cancelSoloRequest()}>
+      <Square className="h-4 w-4" aria-hidden />
+    </Button>
+  ) : null;
   // ── C4c — PAIGE's open question (frames c2 / c3 / c5) ─────────────────────────────────────────
   // A question is OPEN while it is the last thing in the conversation and nothing is being read.
   // While it is open the composer answers it — it says so, and "Ask something else instead" turns
@@ -2377,6 +2578,7 @@ const PaigeAIChatInner = ({
   const composerTextarea = (
     <Textarea
       ref={inputRef}
+      aria-label="Message PAIGE"
       value={input}
       rows={1}
       onChange={(e) => {
@@ -2413,7 +2615,7 @@ const PaigeAIChatInner = ({
           // Inside CD's frame the input carries no border of its own.
           ? "min-h-[2.25rem] min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-[13px] leading-[1.5] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
           : soloTenantSafety
-            ? "min-h-[3.25rem] w-full border-0 bg-transparent px-0 py-0 text-[13px] leading-[1.55] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            ? "min-h-[3.25rem] w-full border-0 bg-transparent px-0 py-0 text-base sm:text-[13px] leading-[1.55] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             : "min-h-[2.5rem] flex-1",
       )}
       disabled={composerBlocked}
@@ -2428,7 +2630,7 @@ const PaigeAIChatInner = ({
       variant="ghost"
       size="icon"
       aria-label="Attach a document"
-      disabled={composerBlocked}
+      disabled={composerBlocked || isLoading}
       title="Attach a PDF, image, or Word document"
       className={cd ? "h-[27px] w-[27px] rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted" : undefined}
     >
@@ -2460,7 +2662,7 @@ const PaigeAIChatInner = ({
         if (!captured || !acceptComposerDelivery(captured, composerScopeRef.current)) return;
         toast({ title: "Voice typing", description: msg, variant: "destructive" });
       }}
-      disabled={composerBlocked}
+      disabled={composerBlocked || isLoading}
     />
   );
 
@@ -2518,7 +2720,7 @@ const PaigeAIChatInner = ({
 
   const liveConversationButton = soloTenantSafety && enableHistory && liveConversation ? (
     <PaigeLiveConversation
-      disabled={composerBlocked || dictationActive}
+      disabled={composerBlocked || dictationActive || isLoading || interactiveAuthorityPending}
       contextEpoch={scopeEpoch}
       threadId={activeThreadId}
       ensureThread={ensureLiveThread}
@@ -3208,8 +3410,8 @@ const PaigeAIChatInner = ({
             )}
             {soloTenantSafety && connectionIssue && (
               <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-                <span>{connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
-                {connectionIssue !== "live-interrupted" && retryTurnRef.current && !retryTurnRef.current.live && <Button type="button" variant="outline" size="sm" disabled={!composerScope.writable || dictationActive} onClick={handleConnectionRetry}>Retry</Button>}
+                <span>{connectionIssue === "interactive-unconfirmed" ? "The connection ended before PAIGE confirmed the result. Your message may have reached the conversation. Check what finished before repeating any action." : connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
+                {connectionIssue !== "live-interrupted" && connectionIssue !== "interactive-unconfirmed" && retryTurnRef.current && !retryTurnRef.current.live && <Button type="button" variant="outline" size="sm" disabled={!composerScope.writable || dictationActive} onClick={handleConnectionRetry}>Retry</Button>}
               </div>
             )}
             </div>
@@ -3420,22 +3622,21 @@ const PaigeAIChatInner = ({
                     </span>
                     {clearComposerButton}
                     {micButton}
+                    {stopInteractiveButton}
                     <Button
-                      onClick={() => (soloTenantSafety && isLoading ? cancelSoloRequest() : handleSend())}
-                      disabled={soloTenantSafety ? (!isLoading && (composerSendBlocked || (!input.trim() && !attachedDoc))) : composerSendBlocked || (!input.trim() && !attachedDoc)}
+                      onClick={() => handleSend()}
+                      disabled={composerSendBlocked || (!input.trim() && !attachedDoc)}
                       variant="gold"
                       size="sm"
-                      aria-label={soloTenantSafety && isLoading ? "Cancel PAIGE response" : "Send message"}
+                      aria-label="Send message"
                       className="h-[29px] flex-none gap-1.5 rounded-[9px] px-3.5 text-[12px] font-semibold"
                     >
                       {isLoading && !soloTenantSafety ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden />
-                      ) : isLoading ? (
-                        <span aria-hidden className="text-[10px] leading-none">■</span>
                       ) : (
                         <span aria-hidden className="text-[10px] leading-none">↑</span>
                       )}
-                      {soloTenantSafety && isLoading ? "Cancel" : "Send"}
+                      Send
                     </Button>
                   </div>
                 </>
@@ -3473,15 +3674,16 @@ const PaigeAIChatInner = ({
                     {liveConversationButton}
                     {attachButton}
                     {clearComposerButton}
+                    {stopInteractiveButton}
                     <Button
-                      onClick={() => (isLoading ? cancelSoloRequest() : handleSend())}
-                      disabled={!isLoading && (composerSendBlocked || (!input.trim() && !attachedDoc))}
+                      onClick={() => handleSend()}
+                      disabled={composerSendBlocked || (!input.trim() && !attachedDoc)}
                       variant="gold"
                       size="icon"
-                      aria-label={isLoading ? "Cancel PAIGE response" : "Send message"}
+                      aria-label="Send message"
                       className="ml-auto flex-none"
                     >
-                      {isLoading ? <span aria-hidden>■</span> : <Send className="h-4 w-4" aria-hidden />}
+                      <Send className="h-4 w-4" aria-hidden />
                     </Button>
                   </div>
                 </>
@@ -3491,14 +3693,15 @@ const PaigeAIChatInner = ({
                   {attachButton}
                   {clearComposerButton}
                   {micButton}
+                  {stopInteractiveButton}
                   <Button
-                    onClick={() => (soloTenantSafety && isLoading ? cancelSoloRequest() : handleSend())}
-                    disabled={soloTenantSafety ? (!isLoading && (composerSendBlocked || (!input.trim() && !attachedDoc))) : composerSendBlocked || (!input.trim() && !attachedDoc)}
+                    onClick={() => handleSend()}
+                    disabled={composerSendBlocked || (!input.trim() && !attachedDoc)}
                     variant="gold"
                     size="icon"
-                    aria-label={soloTenantSafety && isLoading ? "Cancel PAIGE response" : "Send message"}
+                    aria-label="Send message"
                   >
-                    {isLoading && !soloTenantSafety ? <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" /> : isLoading ? <span aria-hidden>■</span> : <Send className="w-4 h-4" />}
+                    {isLoading && !soloTenantSafety ? <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </>
               )}

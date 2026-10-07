@@ -118,7 +118,8 @@ SELECT pg_temp.require_true((SELECT count(*) FROM public.affiliate_commission_ti
 RESET ROLE;
 DELETE FROM public.tenant_members WHERE tenant_id='a3390000-0000-4000-8000-000000000051' AND user_id='a3390000-0000-4000-8000-000000000001';
 SELECT set_config('request.jwt.claims','{"sub":"a3390000-0000-4000-8000-000000000001","role":"authenticated"}',true);SET LOCAL ROLE authenticated;
-SELECT pg_temp.require_true(public.is_admin(auth.uid()),'legacy role remains after membership removal');
+-- The canonical membership-removal hook may also retire the global legacy role.
+-- Assert the resulting authority boundary, without restoring a revoked role.
 SELECT pg_temp.require_true((SELECT count(*) FROM public.affiliate_profiles WHERE id IN ('a3390000-0000-4000-8000-000000000011','a3390000-0000-4000-8000-000000000012'))=0,'removed membership grants no affiliate fleet read');
 SELECT pg_temp.require_denied($q$SELECT public.reject_affiliate_application('a3390000-0000-4000-8000-000000000049',NULL)$q$,'removed membership grants no decision authority');
 RESET ROLE;

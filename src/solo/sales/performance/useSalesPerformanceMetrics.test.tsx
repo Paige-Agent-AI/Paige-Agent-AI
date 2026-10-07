@@ -17,6 +17,18 @@ beforeEach(()=>{rpc.mockReset();host=document.createElement("div");document.body
 afterEach(()=>{act(()=>root.unmount());host.remove();});
 async function render(epoch:string|null,range:"month"|"week"="month") { await act(async()=>{root.render(<Probe epoch={epoch} range={range}/>);}); }
 describe("Sales shared metric consumer",()=>{
+  it("preserves the Supabase client receiver for every metric RPC, including empty workspaces",async()=>{
+    rpc.mockImplementation(async function(this: { rpc?: unknown } | undefined,_name,args){
+      if(this?.rpc!==rpc)throw new TypeError("RPC requires its client receiver");
+      const result=response(args);
+      result.values=result.values.kind==="count"?{kind:"count",count:0}:{kind:"currency_totals",by_currency:[],breakdown:[]};
+      result.coverage={state:"complete",candidate_count:0,contributing_count:0,excluded_count:0};
+      return {data:result,error:null};
+    });
+    await render(A);expect(host.textContent).toContain("ready:11");
+    await render(B);expect(host.textContent).toContain("ready:11");
+    expect(rpc).toHaveBeenCalledTimes(22);
+  });
   it("issues eleven exact authenticated reads automatically on mount and fresh mount",async()=>{
     rpc.mockImplementation(async(_name,args)=>({data:response(args),error:null}));
     await render(A);expect(rpc).toHaveBeenCalledTimes(11);expect(host.textContent).toContain("ready:11");

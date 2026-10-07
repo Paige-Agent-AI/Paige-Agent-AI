@@ -31,6 +31,7 @@ const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
+import { exposureFor, REQUEST_CAPABILITY_NAME, requestCapabilityResult } from "../_shared/paige-turn/exposure.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
@@ -9739,10 +9740,32 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // the doc-attach path stay on a reasoning-class model, never the cheap one). The fabric picks the
     // provider in the owner's order and falls back only on a proven provider-health failure before the
     // stream opened; tools, approvals and authority are decided below, unchanged.
-    // Every round keeps the governed tool list here, the cheap class included. Taking tools off a cheap
-    // round needs a rescue on every surface that can be misread as light conversation (Live, client seats,
-    // a request phrased as a question) — that is R5b's tool narrowing, not this change.
+    // INT-334 R5b — the route's own capability verdict now narrows what each round may SEE:
+    // `act` carries the full governed set; `read` withholds every mutating tool; `none` offers the
+    // presentation set alone. A narrowed round that discovers work beyond its exposure calls the
+    // `request_capability` signal (a presentation tool, dispatched below), which re-resolves the
+    // route with the server-observed `capabilityEscalation` fact — the rescue contract. The gates,
+    // the approvals and every dispatch check are unchanged: a provider seeing fewer tools is the
+    // only difference until the turn itself asks for more.
     const roundClass = turnRoute.cognitive_class;
+    // An approved-card resume executes a stored act with no model before it (the route's `none` is
+    // about THE ACT). Its follow-up rounds narrate the verified readback and answer what comes next:
+    // reads, never fresh writes off one approval — a `none` floor would leave even a lookup unable
+    // to run, and an act floor would offer unrequested mutations. Read is the honest floor.
+    const turnExposure = exposureFor(toolDefs, resumeCalls.length > 0 && turnRoute.capability.tools === "none" ? "read" : turnRoute.capability.tools);
+    if (turnRoute.capability.tools !== "act") {
+      console.log(`[paige] exposure: ${turnRoute.basis}/${turnRoute.capability.tools} — ${turnExposure.offered.length} offered, ${turnExposure.withheld.length} withheld`);
+    }
+    let capabilityEscalated = false;
+    /** The manifest and class of the round now in flight — the route's, or operational with the full set once escalated. */
+    const roundTools = (): any[] => (capabilityEscalated ? toolDefs as any[] : turnExposure.offered as any[]);
+    const roundClassNow = (): typeof roundClass => (capabilityEscalated ? "operational" : roundClass);
+    const escalateTurn = (from: string): boolean => {
+      if (capabilityEscalated) return false;
+      capabilityEscalated = true;
+      console.log(`[paige] route escalated (${from}): operational/act — the turn asked for capability beyond its exposure`);
+      return true;
+    };
     const noteFabric = (label: string, s: FabricStream): FabricStream => {
       if (!s.ok || s.attempts.some((a) => a.failure && a.failure !== "skipped_disabled")) console.warn(`[paige] fabric ${label}: ${describeAttempts(s)}`);
       return s;
@@ -9750,7 +9773,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     await interactive?.check();
     const response = resumeCalls.length > 0 ? null : noteFabric("chat", await fabricChatStream(roundClass, {
         messages: liveDecisionMessages(aiMessages),
-        tools: toolDefs,
+        tools: roundTools(),
         tool_choice: "auto",
       }, {
         // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
@@ -10103,6 +10126,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // send the call again whole. Empty arguments are a tool that takes no input, and pass.
         if (!wholeArguments(tc.function.arguments)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, code: "ARGUMENTS_UNPARSEABLE", error: "This call's arguments were incomplete, so it was not run. Send it again with complete arguments." }) });
+          continue;
+        }
+
+        // ── INT-334 R5b — THE CAPABILITY ESCALATION SIGNAL (presentation; executes nothing) ──
+        // A `none`/`read` round's one structural way out: the model itself declares the turn needs
+        // capability beyond its exposure, and the re-route is the WHOLE effect. No word the person
+        // typed is read here; the fact is server-observed (a finished-round call to a presentation
+        // tool). It runs BEFORE the client-seat gate on purpose — a client seat's question must be
+        // able to escalate too — and grants nothing: every later call in this turn still passes the
+        // seat gate, the autonomy lanes, the risk gates and the approval doors exactly as before.
+        if (tc.function.name === REQUEST_CAPABILITY_NAME) {
+          const first = escalateTurn("request_capability");
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(requestCapabilityResult(first ? "granted" : "already_granted")) });
           continue;
         }
 
@@ -16816,7 +16852,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             await interactive?.check();
-            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -16894,7 +16930,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 await interactive?.check();
-                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
+                // R5b — the action-intent continuation carries the step out, so it re-enters on the
+                // operational class with the full set: a cheap misread never keeps the turn's tools
+                // narrowed once the turn is KNOWN to be action work.
+                escalateTurn("action-intent continuation");
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";

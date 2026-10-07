@@ -853,6 +853,7 @@ jobs:
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/route.test.ts supabase/functions/_shared/paige-turn/round.test.ts \
             supabase/functions/_shared/paige-turn/classify.test.ts \
+            supabase/functions/_shared/paige-turn/exposure.test.ts \
             supabase/functions/_shared/provider-failure.test.ts
           # The same gate through BOTH real stream converters (Anthropic and OpenAI), provider-native events.
           npm run -s test:round-gate

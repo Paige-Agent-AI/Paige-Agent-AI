@@ -14,6 +14,7 @@
  * Run: node --import ./scripts/client-memory-authz/register.mjs scripts/client-memory-authz/check.mjs
  */
 
+import { readFileSync } from "node:fs";
 import { AsyncLocalStorage } from "node:async_hooks";
 const modelTurnState = new AsyncLocalStorage();
 
@@ -1504,7 +1505,9 @@ const mirrorConfirms = (st) => (t, row) => {
 // thing standing between "no violations" and "no evidence" — the two are indistinguishable without
 // it, and a mutation that deleted the whole injection left this green.
 {
-  const seen = await drive({ clientId: OWN, stream: true });
+  // INT-334 R5b: the section reads the gated set from the wire — the turn must carry the full
+  // manifest (an unclassified turn routes act), not the narrowed read set.
+  const seen = await drive({ clientId: OWN, stream: true, classification: null });
   const wire = seen.modelEgress
     .map((b) => (typeof b === "string" ? b : JSON.stringify(b)))
     .join("\n")
@@ -3860,7 +3863,7 @@ console.log("\nteam tools — the approval card, the tool descriptions and the r
     set_solo_team_member_permission: { data: null, error: null },
   };
   const teamDrive = (store, name, args, body = {}) => drive({
-    stream: true, extraBody: { threadId: THREAD, ...body },
+    stream: true, extraBody: { threadId: THREAD, ...body }, classification: null,
     toolCall: { name, args: { member_user_id: MEMBER, ...args } },
     rpcOverrides: TEAM_RPC,
     tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
@@ -4009,7 +4012,7 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
   // Propose, approve, and let the approved turn end in a scripted answer.
   const store = makeConfirmStore();
   const turn = (args, body, replyText) => drive({
-    stream: true, extraBody: { threadId: THREAD, ...body },
+    stream: true, extraBody: { threadId: THREAD, ...body }, classification: null,
     toolCall: { name: "team_set_work_profile", args }, rpcOverrides: RPC,
     tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
     onInsert: mirrorConfirms(store), replyText,
@@ -4037,6 +4040,11 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
   const leaky = await approvedTurn(LEAKY);
   const sent = sentOf(leaky);
   const vocabulary = deriveInternalVocabulary(sent);
+  // INT-334 R5b — a deterministic resume's narration rounds carry the READ manifest (no mutating
+  // defs), so the executed act's own name now reaches the model through the tool RESULT in the
+  // conversation instead of the manifest. It is the one name this turn provably ran; add it so the
+  // leak scan still treats a mention of it as derived, not internal.
+  vocabulary.toolNames.add("team_set_work_profile");
   const leakyReply = replyOf(leaky);
 
   assert("29.0 the approved turn ran, the scripted answer reached the person verbatim, and the vocabulary came from the real request (guards this section)",
@@ -4930,7 +4938,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     tablesExtra: studioTables(),
   });
   const mainDrive = (toolCall, extraRpc = {}, roles = [{ role: "admin" }], functionsExtra = {}) => drive({
-    stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra,
+    stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra, classification: null,
     rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...PAGE_ROW, ...extraRpc },
     serviceTablesExtra: { user_roles: () => roles, ...SCOPE_ROW },
     tablesExtra: { paige_chat_threads: () => [{ studio_session_id: null, summary: null }] },
@@ -5262,7 +5270,7 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
 
   // A — a Solo owner who is ALSO a platform operator, describing the roadmap in their own workspace.
   const solo = await drive({
-    stream: true, rpcOverrides: SOLO_OWNER, serviceTablesExtra: ownerMemory,
+    stream: true, rpcOverrides: SOLO_OWNER, serviceTablesExtra: ownerMemory, classification: null,
     text: "We're building Sales and Marketing inside you right now.",
   });
   const soloSys = sysPlain(solo);
@@ -7933,13 +7941,16 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       classification: { intent: "act", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
     assert("43.42e a bare 'do it' labelled act never takes the cheap tier, even when trivial",
       modelOf(doIt, 0) === CLAUDE_REASONING, JSON.stringify({ model: modelOf(doIt, 0) }));
-    // INT-334 R5a — the cheap round KEEPS the governed tools. Taking them off needs a rescue on every surface
-    // that can be misread as light conversation (Live, a client seat, a request phrased as a question);
-    // that is R5b's narrowing. Until then a misread costs the cheaper model, never the step.
+    // INT-334 R5b — the cheap round now carries the PRESENTATION set alone: the escalation signal
+    // (plus ask_choices where a surface offers it), never a governed tool. The governed list stays
+    // on the reasoning tier; the rescue for a misread cheap turn is the signal (43.43).
     const toolsOf = (r, i = 0) => streamed(r)[i]?.tools ?? null;
-    assert("43.42f the cheap round still carries the governed tool list (narrowing is R5b, with its rescue)",
-      Array.isArray(toolsOf(thanks, 0)) && toolsOf(thanks, 0).length > 0 && toolsOf(thanks, 0).length === toolsOf(failed, 0)?.length,
-      JSON.stringify({ cheap: toolsOf(thanks, 0)?.length ?? null, reasoning: toolsOf(failed, 0)?.length ?? null }));
+    const namesOf = (r, i = 0) => (toolsOf(r, i) ?? []).map((t) => t?.function?.name ?? t?.name).filter(Boolean);
+    assert("43.42f the cheap round carries the presentation set alone — the escalation signal, no governed tool",
+      Array.isArray(toolsOf(thanks, 0)) && namesOf(thanks, 0).includes("request_capability")
+        && namesOf(thanks, 0).every((n) => n === "request_capability" || n === "ask_choices")
+        && namesOf(failed, 0).length > namesOf(thanks, 0).length && namesOf(failed, 0).includes("crm_command_run") !== true,
+      JSON.stringify({ cheap: namesOf(thanks, 0), reasoningCount: namesOf(failed, 0).length }));
     // INT-332 — a claim correction is operational work whatever the turn's own class: a cheap turn that
     // narrates a card it never minted is corrected on the reasoning tier, with the governed tools.
     const sC = makeThreadStore(THREADS), cC = makeConfirmStore(), dbC = crmDb();
@@ -7949,6 +7960,72 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       modelOf(cheapClaim, 0) === CLAUDE_CLASSIFICATION && told(cheapClaim).includes(CORRECTION.card)
         && modelOf(cheapClaim, 1) === CLAUDE_REASONING && Array.isArray(toolsOf(cheapClaim, 1)) && toolsOf(cheapClaim, 1).length > 0,
       JSON.stringify({ calls: streamed(cheapClaim).map((b) => [b.model, b.tools?.length ?? null]), corrected: told(cheapClaim).includes(CORRECTION.card) }));
+
+    // ── INT-334 R5b: the narrowing + the rescue. A cheap or read-only round never silently loses the
+    // objective: it carries the `request_capability` signal, whose dispatch re-routes the SAME turn on
+    // the operational class with the full governed set — and every widened call still passes the same
+    // gates (the door, the card, the autonomy lanes). Cheap classification can neither make a
+    // legitimate action disappear nor grant execution authority.
+    // 43.43a — the rescue: a misread cheap turn escalates and the card still comes from the door.
+    const sA = makeThreadStore(THREADS), cA = makeConfirmStore(), dbA = crmDb();
+    const rescued = await turn(sA, cA, dbA, { text: "ok great", threadId: THREAD_FRESH,
+      script: [{ name: "request_capability", args: {} }, { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43a a cheap round that asks for capability re-routes to the reasoning tier with the governed tools",
+      modelOf(rescued, 0) === CLAUDE_CLASSIFICATION && namesOf(rescued, 0).includes("request_capability")
+        && modelOf(rescued, 1) === CLAUDE_REASONING && namesOf(rescued, 1).includes(ASSIGN.name)
+        && told(rescued).includes("gates still decide"),
+      JSON.stringify({ calls: streamed(rescued).map((b) => [b.model, b.tools?.length ?? null]) }));
+    assert("43.43b the escalated act still goes through the door and mints the approval card — the rescue grants no authority",
+      doorCalls(rescued).length === 1 && cA.rows.length === 1 && cA.rows[0].tool_name === ASSIGN.name
+        && terminalOf(rescued)?.state === "WAIT_APPROVAL" && dbA.executions.length === 0,
+      JSON.stringify({ door: doorCalls(rescued).length, rows: cA.rows.map((r) => r.tool_name), terminal: terminalOf(rescued)?.state, executions: dbA.executions.length }));
+    // 43.43c — read exposure: a workspace-data answer keeps lookups, withholds writes, carries the signal.
+    const sR = makeThreadStore(THREADS), cR = makeConfirmStore(), dbR = crmDb();
+    const lookup = await turn(sR, cR, dbR, { text: "what do we have for Dana?", threadId: THREAD_FRESH,
+      script: [{ name: "crm_search_contacts", args: { query: "Dana" } }, "Dana Reyes — Retainer, Enrolled."],
+      classification: { intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.9 } });
+    const lookupNames = namesOf(lookup, 0);
+    assert("43.43c a read turn keeps its lookups, withholds every mutating tool, and carries the signal",
+      modelOf(lookup, 0) === CLAUDE_REASONING && lookupNames.includes("crm_search_contacts")
+        && lookupNames.includes("request_capability") && !lookupNames.includes(ASSIGN.name) && !lookupNames.includes("crm_create_contact"),
+      JSON.stringify({ model: modelOf(lookup, 0), kept: lookupNames.length, hasAssign: lookupNames.includes(ASSIGN.name) }));
+    // 43.43d — bounded: a second signal on the escalated turn is answered, never a third model round.
+    const sD2 = makeThreadStore(THREADS), cD2 = makeConfirmStore(), dbD2 = crmDb();
+    const twice = await turn(sD2, cD2, dbD2, { text: "ok great", threadId: THREAD_FRESH,
+      script: [{ name: "request_capability", args: {} }, { name: "request_capability", args: {} }, { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    // The bound is layered: the once-per-turn flag answers a repeat in-band, and the loop's signature
+    // dedupe (a second IDENTICAL call) ends the turn truthfully at its limit instead of looping. The
+    // escalate flag alone would let a vary-args repeat spin; the dedupe closes that.
+    assert("43.43d a repeated signal cannot loop the turn — the signature dedupe ends it truthfully at its limit",
+      streamed(twice).length === 3 && terminalOf(twice)?.state === "LIMIT_REACHED" && !cardsOf(twice).length,
+      JSON.stringify({ rounds: streamed(twice).length, terminal: terminalOf(twice)?.state }));
+    // 43.43e — a refusal in prose on a cheap round stays terminal: the narrowing adds no loop.
+    const sE = makeThreadStore(THREADS), cE = makeConfirmStore(), dbE = crmDb();
+    const refused = await turn(sE, cE, dbE, { text: "ok great", threadId: THREAD_FRESH, script: ["I can't do that from here."],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43e a stated refusal on a narrowed cheap round is terminal — exactly one model call",
+      streamed(refused).length === 1 && modelOf(refused, 0) === CLAUDE_CLASSIFICATION,
+      JSON.stringify({ rounds: streamed(refused).length }));
+    // 43.43f — the action-intent continuation escalates too: a C1-continued cheap misread re-enters on
+    // the reasoning tier with the governed tools (the latent R5a-era gap: roundClass stayed cheap).
+    const sF2 = makeThreadStore(THREADS), cF2 = makeConfirmStore(), dbF2 = crmDb();
+    seedOffer(sF2, THREAD_FRESH, { history: 1 });
+    const cont = await turn(sF2, cF2, dbF2, { text: "please add Dana to the deal", threadId: THREAD_FRESH,
+      script: ["Sure, considered it done.", { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43f an action-intent continuation out of a cheap round runs on the reasoning tier with the governed tools",
+      modelOf(cont, 0) === CLAUDE_CLASSIFICATION && modelOf(cont, 1) === CLAUDE_REASONING && namesOf(cont, 1).includes(ASSIGN.name),
+      JSON.stringify({ calls: streamed(cont).map((b) => [b.model, b.tools?.length ?? null]) }));
+    // 43.43g — source-level: the signal's dispatch sits BEFORE the client-seat gate, so a client seat's
+    // question can escalate too — and every subsequent governed call still meets that gate.
+    const handlerSrc = readFileSync(new URL("../../supabase/functions/paige-ai-chat/index.ts", import.meta.url), "utf8");
+    const signalIdx = handlerSrc.indexOf('tc.function.name === REQUEST_CAPABILITY_NAME');
+    const seatIdx = handlerSrc.indexOf("CLIENT-SEAT GATE");
+    assert("43.43g the signal dispatches before the client-seat gate (the rescue works on every seat)",
+      signalIdx > -1 && seatIdx > -1 && signalIdx < seatIdx,
+      JSON.stringify({ signalIdx, seatIdx }));
   }
 
   // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the

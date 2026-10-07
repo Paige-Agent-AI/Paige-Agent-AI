@@ -88,7 +88,16 @@ export function validateSpineRegistry(capabilities: readonly SpineCapability[]):
     if (capability.action) {
       const action = capability.action;
       if (!SPINE_ACTION_CLASSIFICATIONS.includes(action.classification)) findings.push(`${capability.key}: unsupported action classification ${action.classification}`);
-      if (!SERVER_SYMBOL_PATTERN.test(action.executor) && !(action.executor === "edge.tenant-stripe-connect" && MERCHANT_SPINE_CAPABILITIES.some(entry => entry.key === capability.key && entry.action?.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority)) && !(action.executor === "edge.paige-ai-chat" && EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => entry.key === capability.key && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority))) findings.push(`${capability.key}: action executor must be an exact public server symbol`);
+      const merchantExecutor = action.executor === "edge.tenant-stripe-connect"
+        && MERCHANT_SPINE_CAPABILITIES.some(entry => !!entry.action && entry.key === capability.key
+          && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification
+          && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority);
+      const chatExecutor = action.executor === "edge.paige-ai-chat"
+        && EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => !!entry.action && entry.key === capability.key
+          && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification
+          && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority);
+      if (!SERVER_SYMBOL_PATTERN.test(action.executor) && !merchantExecutor && !chatExecutor)
+        findings.push(`${capability.key}: action executor must be an exact public server symbol`);
       if (MUTATING.has(action.classification)) {
         if (action.approvalAuthority !== "chat-canonical") findings.push(`${capability.key}: mutating actions require chat-canonical approval authority`);
         if (capability.chatBinding !== "LIVE") findings.push(`${capability.key}: mutating actions require a LIVE Chat binding`);

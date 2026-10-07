@@ -37,7 +37,7 @@ RELEASE_RECOVERY: position=forward fix canonical receipt/lease integrity and pre
 
 SHELL: SOLO. Parent INT-304. FLOW-BY-FLOW: APPLIED. IMPECCABLE: APPLIED.
 Owner interaction approval and explicit prototype waiver: 2026-10-06.
-Status: error-path receipt repair passes affected re-review; updated exact-head gates underway; **NOT SHIPPED**.
+Status: exact-head independent code review PASS at badbf7b6e52510666869573a510f59cfed8a7906; required CI underway; **NOT SHIPPED**.
 
 ## Contract and routing
 
@@ -62,10 +62,10 @@ Portfolio: Conversational Loop / Chat Experience. Existing canonical Chat/thread
 | F1 passive typing | component + real rendered harness PASS | authenticated long thread |
 | F2 Send while Thinking | component client-fence PASS | integrated server + production |
 | F3 rapid follow-ups | same-draft dedupe + preflight draft retention PASS | multiple accepted generations/server effects |
-| F4 before tool | client interrupted placeholder | persisted interruption/reload |
-| F5 after read | server review in progress | integrated read receipt |
-| F6 completed write | material review finding under repair | completed receipt + successor context |
-| F7 unknown external effect | no blind client Retry; server review under repair | unknown receipt/readback/no duplicate |
+| F4 before tool | canonical interruption and Stop tombstone fixtures PASS | authenticated interruption/reload |
+| F5 after read | closed safe read receipt projection PASS | authenticated read receipt |
+| F6 completed write | actual two-tool handler preserves first write and prevents second PASS | authenticated completed receipt + successor context |
+| F7 unknown external effect | actual handler error/gateway uncertainty receipts and successor write brake PASS | authenticated reconciliation; automated repair parked |
 | F8 approval | existing focused approval tests PASS | slow dispatched approval + successor |
 | F9 ASK_USER | explicit binding focused tests PASS | integrated canonical bound-answer claim |
 | F10 durable work | no durable cancellation introduced in patch | authenticated background job |
@@ -76,7 +76,7 @@ Portfolio: Conversational Loop / Chat Experience. Existing canonical Chat/thread
 
 ## Independent review
 
-Non-author `integrity_review` attacked frontend and server. Initial FAIL findings covered replay ambiguity, stale approval continuation, pre-dispatch phantom turns, attachment duplicate consumption, abort cleanup, stale HTTP body, partial tool result loss, premature executor-wait exit and ignored persistence errors. Later findings covered Live settlement polling recovery and Stop-before-dispatch draft loss. All affected fixes received read-only re-review; final affected-surface verdict PASS. Exact-head independent review, automatic Codex review and CI remain release gates.
+Non-author `integrity_review` attacked frontend and server. Initial FAIL findings covered replay ambiguity, stale approval continuation, pre-dispatch phantom turns, attachment duplicate consumption, abort cleanup, stale HTTP body, partial tool result loss, premature executor-wait exit and ignored persistence errors. Later findings covered Live settlement polling recovery, Stop-before-dispatch draft loss and generic/withheld error receipt loss. All affected fixes received read-only re-review; exact-head verdict PASS at badbf7b6e52510666869573a510f59cfed8a7906. Required CI remains the merge gate. AGENTS.md and the controlling owner brief explicitly make Codex optional, with any received findings dispositioned.
 
 ## Parked recovery debt
 
@@ -86,6 +86,8 @@ Owner requested a subsequent clipboard-image and drag-and-drop attachment hotfix
 
 ## Release and truth
 
-No PR, merge SHA, deployment or production acceptance yet. No shipped-log entry, release version or DEL allocation. The controlling owner brief grants merge/live authority when evidence is sound; current integrity findings prohibit release. Scope remains a hotfix, separate from C4d/C4e/C5.
+PR #1805 exists and is ready for review; no merge SHA, production deployment or production acceptance yet. No shipped-log entry, release version or DEL allocation. The controlling owner brief grants merge/live authority when evidence is sound; required CI remains underway. Scope remains a hotfix, separate from C4d/C4e/C5.
 
 Draft PR: https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1805. Initial exact-head review caught error/withheld persistence dropping effect metadata. Both paths repaired and reviewed; independent actual-handler test verifies unknown write survives generic error and a distinct successor cannot dispatch another write. Gateway-failure variant also passes. Initial CI's two new Deno narrowing errors were corrected without assertions; local handler Deno check retains the existing ten diagnostics. Structured evidence attestation now passes. Updated exact-head CI/review and deployment remain release gates.
+
+Final local checks: production build PASS (2m50s, existing Zod annotation/large-chunk warnings); frontend TypeScript ratchet ten baseline/ten current; Deno pure tests five passed; focused composer 45, stream/turn 65, ASK_USER25, approval16 and shared scope33 passed. Final render drive passes all six viewport/populated scenarios under work/render-check-final, with no overflow and preserved focus/draft. Main refreshed to 1137f9f80 (S5 docs-only closeout; no hotfix code overlap). Isolated harness port uses 5214 to avoid another lane's 5213.

@@ -34,6 +34,3 @@ assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED');
 assert.equal(receipts[0].bundle_ref.interactive.effects[0].record_refs[0].id,id(7));
 assert.equal(executor,null,'settled receipt precedes token release');
 console.log('PASS actual handler two-tool batch: first native write truth preserved, second not dispatched, no next model, interrupted canonical receipt precedes release');
-
-
-

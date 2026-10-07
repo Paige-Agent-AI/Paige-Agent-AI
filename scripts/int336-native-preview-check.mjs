@@ -25,5 +25,3 @@ assert.equal(calls.length,1,wire);
 assert.deepEqual(calls[0].options.body,{command,idempotency_key:'exact-native-key',approved_fingerprint:fp});
 assert.equal(calls[0].client,'jwt');assert.equal(executor,null);
 console.log('PASS actual native CRM preview resume: stored authority fingerprint/key, exact canonical card validation command, caller JWT, serialized executor');
-
-

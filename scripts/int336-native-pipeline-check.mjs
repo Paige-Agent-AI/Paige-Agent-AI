@@ -25,8 +25,3 @@ assert.equal(calls.length,1,JSON.stringify(receipts));
 assert.deepEqual(calls[0].args,{_tenant_id:tenant,_command:command,_idempotency_key:'exact-native-key',_actor_kind:'human'});
 assert.equal(calls[0].client,'jwt');assert.equal(executor,null);
 assert.equal(rec.rpc.some(c=>c.name==='configure_tenant_pipeline_as_paige'),false); console.log('PASS actual pinned pipeline resume: exact scoped card/key, caller JWT human actor, no ordinary autonomous RPC, serialized executor');
-
-
-
-
-

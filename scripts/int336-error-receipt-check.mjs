@@ -34,10 +34,3 @@ assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED');
 assert.equal(receipts[0].bundle_ref.interactive.effects[0].outcome,'outcome_unknown'); assert.equal(receipts[0].bundle_ref.interactive.effects[0].record_refs[0].id,id(7));
 assert.equal(executor,null,'settled receipt precedes token release');
 successor=true; modelCalls=0; const before=rec.rpc.filter(c=>c.name==='plan_create').length; const next=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Create another plan'}],threadId:thread,requestIntentId:id(20),interactive:{kind:'message'}})})); await next.text(); assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,before,'persisted unknown write brakes successor'); console.log('PASS actual unknown write then loop failure preserves canonical uncertainty and brakes successor write');
-
-
-
-
-
-
-

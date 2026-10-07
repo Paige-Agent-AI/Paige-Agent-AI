@@ -3,8 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { buildLaunchOptions, resolvePlaywright } from './live-drive/live-drive.mjs';
 const out = path.resolve(process.argv[2] ?? '../render-check');
+const port = Number(process.env.INT336_RENDER_PORT ?? 5214);
 fs.mkdirSync(out, { recursive: true });
-const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'scripts/live-drive/harness/paige-chat-mount/solo.vite.config.ts'], { stdio: ['ignore', 'pipe', 'pipe'] });
+const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'scripts/live-drive/harness/paige-chat-mount/solo.vite.config.ts', '--port', String(port)], { stdio: ['ignore', 'pipe', 'pipe'] });
 const results = [];
 let browser;
 try {
@@ -13,7 +14,7 @@ try {
   browser = await chromium.launch(buildLaunchOptions());
   for (const [width, height, scenario = 'normal'] of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844],[1366,768,'reload']]) {
     const page = await browser.newPage({ viewport: { width, height } });
-    await page.goto(`http://127.0.0.1:5213/solo.html?scenario=${scenario}&hold=4&layout=page&theme=dark`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.goto(`http://127.0.0.1:${port}/solo.html?scenario=${scenario}&hold=4&layout=page&theme=dark`, { waitUntil: 'domcontentloaded', timeout: 90000 });
     const input = page.getByRole('textbox', { name: 'Message PAIGE' });
     await input.waitFor();
     if (scenario === 'reload') await page.waitForFunction(() => document.querySelectorAll('[data-paige-message-id]').length >= 7);

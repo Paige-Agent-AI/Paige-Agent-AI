@@ -1,265 +1,46 @@
-# deploy-migrations — keep the PROD database schema in lockstep with `main`.
-#
-# WHY THIS EXISTS (task #415): migrations merge to main but do NOT auto-apply to
-# prod. .github/workflows/ has ci.yml (lint/typecheck/build), migration-lint.yml
-# (LINTS added migrations, never applies), deploy-edge-functions.yml (deploys edge
-# fns), security-audit.yml — NONE runs `supabase db push`. The Supabase GitHub
-# integration only builds PREVIEW branches (project mzlvuqqpqckwxbkicvyr) and its
-# Preview Migrations task FAILS on the known #275 realtime.messages ownership error,
-# so prod silently drifts behind main (1c-vi 20260722010000 + 1c-viii-a
-# 20260722160000 were 2 behind until applied by hand this session). This closes the
-# gap exactly the way deploy-edge-functions.yml closed the edge-fn gap: on every push
-# to main that touches supabase/migrations/**, apply — idempotently — every migration
-# prod hasn't recorded yet, then record the applied commit as a moving `db-live` tag.
-#
-# SETUP (one-time, owner):
-#   - SUPABASE_ACCESS_TOKEN  — ALREADY set (deploy-edge-functions.yml uses it). §24.
-#   - SUPABASE_DB_PASSWORD   — NEW REQUIRED SECRET. The prod database password
-#     (Supabase dashboard → Project Settings → Database → Connection string / reset
-#     password). `supabase db push` needs it to open the migration connection; the
-#     access token alone is not enough. Add it in
-#     Settings → Secrets and variables → Actions → New repository secret.
-#     UNTIL IT IS SET, the first migration-bearing merge FAILS LOUDLY here (never a
-#     silent skip) — so add it BEFORE the next migration lands on main.
-#   - SUPABASE_PROJECT_ID    — OPTIONAL. If unset, the prod ref is read from
-#     supabase/config.toml (project_id = "xygzykjyynhzqytbqnzu"), matching the edge
-#     precedent. Set it only to override that.
-#
-# HONEST CAVEATS (§13 — do not pretend these away):
-#   - IDEMPOTENCY IS THE AUTHOR'S JOB, NOT THE LINTER'S. `db push` does NOT wrap a
-#     multi-statement migration file in one transaction — DDL auto-commits. If
-#     statement 3 of 5 throws, statements 1-2 stay committed but the file is NOT
-#     recorded in schema_migrations, so the next run re-runs the WHOLE file from
-#     statement 1. That only self-heals if every statement is idempotent
-#     (IF NOT EXISTS / CREATE OR REPLACE / DROP-guarded). lint_migrations.py checks
-#     seed-injection patterns (PATTERN 1/2/3) — it does NOT enforce idempotency.
-#     A non-idempotent migration that fails midway leaves prod half-migrated AND
-#     wedges every later deploy behind it. This is the SAME risk the old hand-apply
-#     carried, now with a loud red run + an auto-filed issue (see the failure step)
-#     instead of silent drift. Author migrations idempotently.
-#   - ONLY NEWER MIGRATIONS ARE APPLIED — a plain `db push`, never `--include-all`
-#     (owner ruling, 2026-09-29). A migration file OLDER than production's newest
-#     recorded version is refused: the push fails before applying anything ("Found
-#     local migration files to be inserted before the last migration on remote
-#     database"), the run goes red and an issue is filed. Such a file must be renamed
-#     to a version newer than production's newest, reviewed, and merged again.
-#   - #275 ON A FRESH REBUILD. `db push` connects as the role SUPABASE_DB_PASSWORD
-#     authenticates (typically `postgres`), which does NOT own `realtime.messages`.
-#     On the current prod DB the realtime RLS migration is already RECORDED, so
-#     `db push` never re-runs it — fine. But on any fresh-DB rebuild / reset history,
-#     replaying the chain WILL re-execute `ALTER TABLE realtime.messages ENABLE
-#     ROW LEVEL SECURITY` and can hit 42501 'must be owner'. Making that migration
-#     ownership-safe (DO-block / has_table_privilege guard) is tracked as #350/#275 —
-#     a hard dependency for fresh rebuilds, out of scope for this catch-up pipeline.
-#   - CONNECTION (first-run watch-item). GitHub-hosted runners are IPv4-only and the
-#     direct DB endpoint is IPv6-only; recent CLIs route `db push` through the IPv4
-#     session pooler by default. This path has never run here — watch the FIRST live
-#     run for a connection timeout and pin a known-good CLI version if it regresses.
-name: deploy-migrations
-
+# Temporary branch-only audit. Never merge this replacement workflow.
+name: INT-339 read-only authentication readiness
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "supabase/migrations/**"
-
-# Never run two prod schema pushes at once; let an in-flight push finish rather than
-# cancel it mid-apply (a cancelled `db push` could leave the chain half-applied).
-concurrency:
-  group: deploy-migrations
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  # GATE: re-run the SAME lint the PR ran (migration-lint.yml is a pull_request check
-  # and has no push context on main), so the deploy job can `needs:` it and can never
-  # push an unlinted migration even on a direct/admin push. Self-contained ordering —
-  # not a race against a separate workflow.
-  lint:
+  auth-readiness:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # need history to diff before..after
-
-      - name: Collect changed migrations
-        id: changed
-        run: |
-          before="${{ github.event.before }}"
-          after="${{ github.sha }}"
-          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
-            before="$(git rev-parse "${after}^" 2>/dev/null || echo "$after")"
-          fi
-          git diff --name-only --diff-filter=AMR "$before" "$after" -- 'supabase/migrations/*.sql' \
-            | tee changed_migrations.txt
-          echo "count=$(grep -c . changed_migrations.txt || true)" >> "$GITHUB_OUTPUT"
-
-      - name: Lint changed migrations
-        if: steps.changed.outputs.count != '0'
-        run: |
-          xargs -a changed_migrations.txt python3 .github/scripts/lint_migrations.py
-
-      # Two files sharing a version means production applies only one of them (2026-10-04: #1679 and
-      # #1680 both merged 20270539000000 and Migration A never ran). Checked here, before the push,
-      # so a duplicate on main blocks the deploy with its name instead of a bare CLI failure.
-      - name: Migration version collision guard
-        run: BASE_REF=HEAD node scripts/ci/migration-version-collision-lint.mjs
-
-      - name: No migration changes
-        if: steps.changed.outputs.count == '0'
-        run: echo "No added/modified migrations in this push — nothing to lint."
-
-  deploy:
-    needs: lint # runs ONLY after the lint gate passes (§32 ordering guarantee)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # to move the `db-live` tag that records what's applied
-      issues: write # to auto-file an issue if a prod apply FAILS (anti-silent-failure)
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          # PINNED, not `latest`. `latest` is resolved over the network on every run, and
-          # that lookup is rate-limited: on 2026-09-05 this job died 20s in with
-          #   Failed to resolve latest Supabase CLI release: rate limit exceeded
-          # before it had touched the database at all. The merge looked complete, the
-          # migration was not on prod, and it took a re-run to notice -- the §32.a
-          # merged-but-never-applied shape, caused by nothing in our own code.
-          #
-          # 2.116.0 is what `latest` resolved to when this was pinned, so this is the
-          # version already running, minus the lookup. Bump it deliberately.
-          version: 2.116.0
-
-      - name: Push migrations to prod
+      - name: Read sanitized production Auth readiness
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
-          set -euo pipefail
-          if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
-            echo "::error::SUPABASE_ACCESS_TOKEN secret is not set — cannot push migrations."
-            echo "::error::It is already used by deploy-edge-functions.yml; add it in Settings → Secrets and variables → Actions."
-            exit 1
-          fi
-          if [ -z "${SUPABASE_DB_PASSWORD:-}" ]; then
-            echo "::error::SUPABASE_DB_PASSWORD secret is not set — cannot open the prod migration connection."
-            echo "::error::Add the prod DB password (Project Settings → Database) as a repo secret. See this workflow's header."
-            exit 1
-          fi
-          # Prod ref: explicit secret override, else read from config.toml (edge precedent).
-          ref="${SUPABASE_PROJECT_ID:-}"
-          if [ -z "$ref" ]; then
-            ref="$(sed -n 's/^project_id = "\(.*\)"/\1/p' supabase/config.toml | head -1)"
-          fi
-          if [ -z "$ref" ]; then echo "::error::could not resolve prod project ref"; exit 1; fi
-          echo "Linking prod project $ref"
-          # `link` reads SUPABASE_ACCESS_TOKEN + SUPABASE_DB_PASSWORD from the env.
-          supabase link --project-ref "$ref"
-          supabase migration list --linked
-          echo "::group::supabase db push (idempotent — already-recorded migrations are skipped)"
-          # `db push` queries supabase_migrations.schema_migrations and applies ONLY
-          # versions not yet recorded AND newer than production's newest, in order;
-          # it refuses the whole push if any unrecorded file is older. Re-running with
-          # nothing new is a no-op.
-          supabase db push
-          echo "::endgroup::"
-
-      - name: Verify prod is caught up (PERSISTED, not just ran — §32)
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-        run: |
-          set -euo pipefail
-          # Every local migration version must now be present in the REMOTE
-          # schema_migrations list — proves the push PERSISTED, not merely executed.
-          #
-          # `supabase migration list --linked` prints PIPE-DELIMITED columns:
-          #     Local          | Remote         | Time (UTC)
-          #    ----------------|----------------|--------------------
-          #     20260722010000 | 20260722010000 | 2026-07-22 01:00:00
-          #     20260722160000 |                | 2026-07-22 16:00:00   <- LOCAL AHEAD
-          # A row is "prod behind" when the Local column carries a 14-digit version
-          # but the Remote column does NOT. We split on '|' (NOT whitespace — the '|'
-          # would otherwise BE a field and the emptiness test would never fire, a
-          # guaranteed false pass) and match the 14-digit version per column, so the
-          # check is immune to header/border/leading-blank line variation.
-          supabase migration list --linked | tee migration_status.txt
-          # Guard against a VACUOUS pass: an empty/garbled `migration list` (0 rows) would
-          # make the awk `exit bad+0` return 0 = 'caught up' with nothing actually verified —
-          # the schema twin of a green build over a blank render. Require at least one
-          # 14-digit version in the output before trusting the drift check (§32).
-          if ! grep -Eq '[0-9]{14}' migration_status.txt; then
-            echo "::error::supabase migration list produced no migration versions — cannot verify persistence (vacuous check refused)."
-            cat migration_status.txt
-            exit 1
-          fi
-          if awk -F'|' '{ if ($1 ~ /[0-9]{14}/ && $2 !~ /[0-9]{14}/) bad=1 } END { exit bad+0 }' migration_status.txt; then
-            echo "✓ prod schema_migrations is caught up with the repo (every local version is recorded remotely)"
-          else
-            echo "::error::prod is still behind — a local migration is NOT recorded remotely after push."
-            cat migration_status.txt
-            exit 1
-          fi
-
-      - name: Record applied commit
-        if: success()
-        run: |
-          # `db-live` points at the last commit whose migrations are applied+persisted
-          # in prod — the sibling of `edge-live`. A cheap `db-live..HEAD` git diff
-          # (mirror of /edge-drift) shows any migration ahead of prod.
-          git tag -f db-live "${{ github.sha }}"
-          git push -f origin db-live
-
-      - name: Alert on failed prod apply (never let drift go silent — §13/§32)
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // The whole premise of #415 is that migration drift goes UNNOTICED. A red
-            // run in the Actions tab is not enough — file a tracking issue so a failed
-            // prod apply cannot itself become the new silent failure.
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const title = `🚨 prod migration deploy FAILED (${context.sha.slice(0, 7)})`;
-            const body = [
-              `The \`deploy-migrations\` workflow failed applying migrations to prod.`,
-              `Prod schema may now be BEHIND \`main\` — verify and fix before more migrations merge (a wedged chain blocks all later deploys).`,
-              ``,
-              `- Commit: ${context.sha}`,
-              `- Run: ${runUrl}`,
-              ``,
-              `First checks: is \`SUPABASE_DB_PASSWORD\` set? did a non-idempotent migration half-apply (see this workflow's header)? did the pooler connection time out?`,
-              `If the log says "Found local migration files to be inserted before the last migration on remote database": a migration numbered below production's newest was refused and NOTHING was applied. Rename that file to a version newer than production's newest and merge it again. Never rerun with \`--include-all\` (owner ruling, 2026-09-29), whatever the CLI suggests.`,
-            ].join('\n');
-            // DEDUP: a wedged chain fails on EVERY later migration merge. Don't spam a new
-            // issue each time — if an open incident issue already exists, comment on it; only
-            // open a fresh one when there is none.
-            const existing = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'migrations,incident',
-              per_page: 5,
-            });
-            const open = existing.data.find((i) => !i.pull_request);
-            if (open) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: open.number,
-                body: `Another prod migration deploy failed.\n\n${body}`,
-              });
-            } else {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title,
-                body,
-                labels: ['ci', 'migrations', 'incident'],
-              });
-            }
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+          url = 'https://api.supabase.com/v1/projects/xygzykjyynhzqytbqnzu/config/auth'
+          request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + os.environ['SUPABASE_ACCESS_TOKEN']})
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, fp, code, msg, headers, newurl):
+                  return None
+          opener = urllib.request.build_opener(NoRedirect)
+          try:
+              with opener.open(request, timeout=30) as response:
+                  config = json.load(response)
+          except urllib.error.HTTPError as error:
+              print('AUTH_CONFIG_HTTP_STATUS=' + str(error.code))
+              raise SystemExit(1)
+          except Exception:
+              print('AUTH_CONFIG_READ_FAILED')
+              raise SystemExit(1)
+          print('AUTH_CONFIG_READ=PASS')
+          for key in sorted(config):
+              if (key.startswith('hook_') and key.endswith('_enabled')) or key in ('external_email_enabled', 'disable_signup'):
+                  value = config[key]
+                  if type(value) is not bool:
+                      print('AUTH_CONFIG_BOOLEAN_SHAPE_INVALID')
+                      raise SystemExit(1)
+                  print(key + '=' + str(value).lower())
+          for key in sorted(config):
+              if key.startswith('hook_') and key.endswith('_uri'):
+                  value = config[key]
+                  kind = 'EMPTY' if not value else 'POSTGRES' if value.startswith('pg-functions://') else 'HTTPS' if value.startswith('https://') else 'OTHER'
+                  print(key + '_kind=' + kind)
+          PY

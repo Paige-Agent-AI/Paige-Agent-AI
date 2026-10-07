@@ -2144,7 +2144,8 @@ const PaigeAIChatInner = ({
    *  longer opens it. Absent on every ordinary turn. */
   const handleSend = async (overrideText?: string, approvedFingerprints?: string[], declinedFingerprints?: string[], voiceSink?: LiveVoiceSink, opts?: { answer?: { askId: string; skipped: boolean } }) => {
     const originDraft = composerScope.writableHandle;
-    if (dictationActive || !originDraft || (overrideText === undefined && (isProcessingFile || processingFileNow?.()))) { voiceSink?.failed(); return; }
+    if (dictationActive || !originDraft) { voiceSink?.failed(); return; }
+    if (overrideText === undefined && (isProcessingFile || processingFileNow?.())) { voiceSink?.failed(); return; }
     const text = (overrideText ?? (soloTenantSafety ? readComposerDraft(originDraft) : input)).trim();
     // Allow a send with text OR an attachment alone (#480). An override (confirm
     // card Approve/Deny) never carries a doc, so snapshot only on a real compose.

@@ -98,7 +98,7 @@ harness drive against a reproduced shell is the third class and is never the fou
 ## Known coverage gaps (§13 — stated, not papered over)
 
 - `solo-locked-surfaces-drive.mjs` drives `clients`, `growth` and `compass`. **Command Center
-  (`home`), Analytics and Mind are named by the policy but are not in that drive's surface
+  (`home`) and Mind are named by the policy but are not in that drive's surface
   list.** Their form-fitting behaviour rests on the CSS clip and its source-contract test, not
   on a rendered-geometry drive.
 - The actual `SoloApp` wrapper, Shift+Space and independent per-surface Home-key pathways

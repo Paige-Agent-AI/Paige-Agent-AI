@@ -13,7 +13,28 @@ if (baseline.status !== 0) throw Error(baseline.stderr);
 const prelude = baseline.stdout.slice(0,baseline.stdout.indexOf("insert into paige_chat_threads(id,caller_user_id,tenant_id)values"));
 const migration = fs.readdirSync(migrationDir).find(f=>f.endsWith('_int346_server_issued_interactive_receipts.sql'));
 const patch = migration ? fs.readFileSync(path.join(migrationDir,migration),'utf8').replace(/^begin;\r?$/mg,'').replace(/^commit;\r?$/mg,'') : '';
-const sql = prelude + patch + patch + `
+const upgrade = `
+insert into paige_chat_threads(id,caller_user_id,tenant_id) values
+('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003');
+set test.actor='00000000-0000-4000-8000-000000000002';set test.tenant='00000000-0000-4000-8000-000000000003';set role authenticated;
+select paige_chat_interactive_begin('00000000-0000-4000-8000-000000000020',null,'00000000-0000-4000-8000-000000000021','',false,true);
+select paige_chat_interactive_begin('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000022','00000000-0000-4000-8000-000000000023','Newer instruction',false,false);
+reset role;
+`;
+const upgradedCheck = `set role authenticated;
+do $$declare r jsonb;begin
+ r:=paige_chat_interactive_begin('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000021',null,'Delayed stopped instruction',false,false);
+ if r->>'status'<>'superseded' then raise exception 'pre-rollout Stop resurrected';end if;
+ r:=paige_chat_interactive_begin('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000023',null,'Delayed superseded instruction',false,false);
+ if r->>'status'<>'superseded' then raise exception 'pre-rollout predecessor resurrected';end if;
+end$$;
+reset role;set role service_role;
+do $$declare r jsonb;begin
+ r:=paige_chat_interactive_executor('00000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000021','acquire');
+ if (r->>'acquired')::boolean or (r->>'stopped')::boolean or (r->>'terminal')::boolean then raise exception 'legacy denial promoted to authority';end if;
+end$$;reset role;
+`;
+const sql = prelude + upgrade + patch + patch + upgradedCheck + `
 insert into paige_chat_threads(id,caller_user_id,tenant_id) values
 ('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003');
 set test.actor='00000000-0000-4000-8000-000000000002';

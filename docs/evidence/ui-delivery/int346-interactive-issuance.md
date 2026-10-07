@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: restores the existing terminal-evidence authority cont
 FLOW_PROTOTYPE: NOT_REQUIRED: security-boundary repair within the shipped conversation and interruption flow
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner gives an assignment; server settlement preserves safe conversation handoff
 VISUAL_DIRECTION: PASS: incumbent Solo Chat design; no frontend, layout, copy, styling or motion edits
-AUTOMATED_EVIDENCE: PASS: isolated native int346 authority matrix and two-connection race; existing int336 database, handler, unknown-error, interrupted-batch and both pinned approval-resume checks
+AUTOMATED_EVIDENCE: PASS: isolated native int346 authority matrix and two-connection race; existing int336 database, handler, uncertain-write error, interrupted-batch and both pinned approval-resume checks
 STATIC_EVIDENCE: PASS: migration lint and both SECURITY DEFINER ACL lints; handler imported and executed by focused checks
 RENDERED_EVIDENCE: UNVERIFIED: authenticated browser and Computer Use runtimes exit before inspection; no rendered proof claimed
 BEHAVIORAL_EVIDENCE: PASS: actual handler against recorded doubles and actual SQL against isolated PostgreSQL; production behavior remains unverified
@@ -25,12 +25,12 @@ MUST_PRESERVE: C0-C4c, INT-336 interruption and batch fencing, INT-338 attachmen
 ACCEPTANCE_CRITERIA: Only scope-bound server issuance enables release; signed-in production handoff and unavailable-evidence refusal must be proven before clearing the hard stop.
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: Canonical transcript, thread executor, service/caller role separation, compare-release and uncertainty brake exercised; attachment and frontend contracts untouched.
-INTERNAL_BUILD_IDENTITY: candidate commit recorded in PR; deployment=UNVERIFIED; environment=development; migrations=UNVERIFIED(20270601000005_int346_server_issued_interactive_receipts); edge=UNVERIFIED(paige-ai-chat); evidence=this record and scripts/int346-database-check.mjs
+INTERNAL_BUILD_IDENTITY: ec567b020dba2cadd6d44f45d833510452d78541 (grounded main; patch head recorded in PR #1823); deployment=PROOF_OWED(not merged); environment=development; migrations=PROOF_OWED(candidate migration 20270601000005_int346_server_issued_interactive_receipts not applied); edge=PROOF_OWED(candidate paige-ai-chat not deployed); evidence=this record and scripts/int346-database-check.mjs
 RELEASE_CHANNEL: development: candidate only; production identity recorded after actual deployment
 RELEASE_CLASSIFICATION: patch: security authority repair
 CUSTOMER_RELEASE_IDENTITY: none: routine repair does not create a named customer release
 RELEASE_NOTE_REQUIRED: no: no customer announcement; private finding details stay private
-RELEASE_TRUTH_BOUNDARY: PARTIAL workspace; security production and authenticated owner acceptance PROOF OWED
+RELEASE_TRUTH_BOUNDARY: PARTIAL: workspace; security production and authenticated owner acceptance PROOF OWED
 RELEASE_RECOVERY: position=forward-fix; reference=scope-bound settlement remains fail-closed; never restore untrusted terminal acceptance
 
 ## Scope, routing and collisions
@@ -46,3 +46,7 @@ Protected transcript fields are written only through canonical server functions.
 Historical JSON is not promoted. Legacy history may conservatively deny replay but never permits settlement. Genuine conversation settlement also does not assert that a business action succeeded: existing unknown-effect dispatch containment is retained and tested. No duplicate external execution was demonstrated in the original finding.
 
 Migration was created with Supabase CLI then renumbered after the repository's future-version tail because the production pipeline uses plain db push and refuses historical timestamps. Recheck tail and version collisions immediately before merge. Production persistence, deployed function identity, authenticated denial/control and owner acceptance must be recorded separately after observation. This record authorizes none of those claims by itself.
+
+## Review repair and base refresh
+
+Independent non-author security review of 4ec1b7765e7c00eb11baa304e5b71a1c9e476295 found a Stop/supersession upgrade regression. Conservative legacy supersession replay denial is restored without granting settlement/status authority. The native matrix now creates genuine baseline Stop and predecessor tombstones before applying the repair, then proves they remain refused. Final exact-head recheck follows the combined repair and rebase onto main ec567b020dba2cadd6d44f45d833510452d78541 (#1820 shipped). Browser/Computer Use access remains unavailable before inspection. The initial broad sandboxed Vitest run was abandoned after repeated initialization failures; a bounded run diagnosed a denied temporary-file rename and passed9/9 outside that sandbox. Full bounded-worker regression and hosted checks are required independently.

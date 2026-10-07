@@ -139,6 +139,12 @@ begin
  if p_intent is null then raise exception 'intent required'; end if;
  evidence:=public.paige_chat_interactive_evidence(p_thread,auth.uid(),t.tenant_id,p_intent);
  if (evidence->>'stopped')::boolean then return jsonb_build_object('status','superseded'); end if;
+ -- Pre-rollout Stop/supersession must still deny delayed replay. Legacy JSON is
+ -- conservative denial only: it never establishes settlement, release or status.
+ if exists(select 1 from public.paige_chat_turns where thread_id=p_thread
+  and bundle_ref->'interactive'->>'supersedes_intent_id'=p_intent::text) then
+  return jsonb_build_object('status','superseded');
+ end if;
  if t.interactive_latest_intent=p_intent or exists(select 1 from public.paige_chat_turns
   where thread_id=p_thread and (interactive_intent_id=p_intent
    or bundle_ref->'interactive'->>'request_intent_id'=p_intent::text)) then

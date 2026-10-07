@@ -79,7 +79,8 @@ describe("Solo Analytics approved workspace contract", () => {
     expect(appSource).not.toContain("analytics:<Analytics2");
     expect(appSource).toContain("settings:<SoloSettings openPaige={openPaige}/>");
     expect(appSource).toContain("soloPaigeWorkspace={<SoloPaigeWorkspace");
-    expect(salesSource).toContain('<Analytics2 accountContext={accountContext} accountEpoch={accountEpoch} openPaige={openPaige} controlledView="money" hideNavigation/>');
+    expect(salesSource).toContain('<SalesPerformanceWorkspace epoch={accountEpoch} onNavigate={destination => open(destination.tab, destination.query)}/>');
+    expect(salesSource).not.toContain('<Analytics2');
     expect(settingsSource).toContain('tab === "analytics" ? <SoloSettingsAnalytics/>');
     expect(analyticsSource).toContain("openPaige");
     expect(analyticsSource).toContain("Open PAIGE workspace");

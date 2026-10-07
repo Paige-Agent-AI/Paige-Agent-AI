@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',ANTHROPIC_API_KEY:'test-key'})[k]??''}};
+globalThis.fetch=async(url,opts)=>{
+ if(!String(url).includes('api.anthropic.com'))return new Response('{}',{status:503});
+ const b=JSON.parse(opts.body);
+ if(b.system?.startsWith('You label one message sent to PAIGE'))return Response.json({content:[{type:'text',text:JSON.stringify({intent:'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.9})}],usage:{input_tokens:1,output_tokens:1}});
+ return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Saved."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
+};
+const fake=await import('./knowledge-scope/fake-supabase.mjs');
+await import('../supabase/functions/paige-ai-chat/index.ts');
+const {capturedHandler}=await import('./knowledge-scope/stub-serve.mjs');
+const {confirmFingerprint}=await import('../supabase/functions/_shared/confirm-fingerprint.ts');
+const {crmApprovalSubject}=await import('../supabase/functions/_shared/crm-command/catalog.ts');
+const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const actor=id(1),tenant=id(2),thread=id(3),intent=id(4),tool='crm_delete_deal';
+const command={action:'deal.delete',deal_id:id(7),expected_version:4};
+const stored={command:{action:command.action,preview_id:id(8)},idempotency_key:'exact-native-key',approval_subject:await crmApprovalSubject(command.action,command)};
+const fp=await confirmFingerprint(tool,stored);let executor=null;const receipts=[];
+const card={tool,fingerprint:fp,command,idempotency_key:stored.idempotency_key};
+const door={tool_name:tool,args:stored,fingerprint:fp,issued_in_request:id(9),server_issued_at:new Date().toISOString(),expires_at:new Date(Date.now()+3600000).toISOString(),consumed_at:null};
+const rec=fake.setScenario({authUser:{id:actor},tables:{profiles:[{active_tenant_id:tenant}],tenant_members:[{tenant_id:tenant,role:'owner',status:'active'}],paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:actor}],paige_pending_confirmations:[door],paige_chat_turns:filters=>filters.some(f=>f[0]==='contains')?receipts:[{id:id(10),role:'user',content:'Delete the exact deal'},{id:id(11),role:'assistant',content:'Approval is needed.',bundle_ref:{paige_confirm:[card],turn_state:{state:'WAIT_APPROVAL'}}},...receipts]},functions:{'crm-command':{data:{ok:true,outcome:'succeeded',receipt_recorded:true},error:null}},rpcs:{check_rate_limit:{data:true,error:null},current_user_tenant_id:{data:tenant,error:null},is_tenant_admin_as:{data:true,error:null},agency_can_manage_child:{data:false,error:null},get_actor_access:{data:{tier:'tenant'},error:null},get_paige_persona_context:{data:[{tenant_id:tenant}],error:null},paige_chat_interactive_begin:{data:{status:'accepted',turn_id:id(5)},error:null},paige_chat_interactive_executor:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release')executor=null;return {data:{latest:intent,executor,acquired:true},error:null};},paige_chat_turn_append:a=>{receipts.push({role:a.p_role,content:a.p_content,bundle_ref:a.p_bundle_ref});return {data:id(12),error:null};}}});
+const res=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Approve exact card'}],threadId:thread,requestIntentId:intent,interactive:{kind:'message'},approvedConfirmations:[fp]})}));
+const wire=await res.text();const calls=rec.functions.filter(c=>c.name==='crm-command');
+assert.equal(calls.length,1,wire);
+assert.deepEqual(calls[0].options.body,{command,idempotency_key:'exact-native-key',approved_fingerprint:fp});
+assert.equal(calls[0].client,'jwt');assert.equal(executor,null);
+console.log('PASS actual native CRM preview resume: stored authority fingerprint/key, exact canonical card validation command, caller JWT, serialized executor');
+
+

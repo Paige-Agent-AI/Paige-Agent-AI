@@ -31,7 +31,7 @@ const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
-import { exposureFor, REQUEST_CAPABILITY_NAME, requestCapabilityResult } from "../_shared/paige-turn/exposure.ts";
+import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
@@ -9745,11 +9745,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // stream opened; tools, approvals and authority are decided below, unchanged.
     // INT-334 R5b — the route's own capability verdict now narrows what each round may SEE:
     // `act` carries the full governed set; `read` withholds every mutating tool; `none` offers the
-    // presentation set alone. A narrowed round that discovers work beyond its exposure calls the
-    // `request_capability` signal (a presentation tool, dispatched below), which re-resolves the
-    // route with the server-observed `capabilityEscalation` fact — the rescue contract. The gates,
-    // the approvals and every dispatch check are unchanged: a provider seeing fewer tools is the
-    // only difference until the turn itself asks for more.
+    // presentation set alone. A narrowed round that discovers work beyond its exposure NAMES the
+    // capability it needs (the system prompt's projection advertises every governed capability),
+    // and that finished-round call — answered at dispatch with a re-route, never executed —
+    // re-resolves the route with the server-observed `capabilityEscalation` fact. The gates, the
+    // approvals and every dispatch check are unchanged: a provider seeing fewer tools is the only
+    // difference until the turn's own model round asks for more.
     const roundClass = turnRoute.cognitive_class;
     // An approved-card resume executes a stored act with no model before it (the route's `none` is
     // about THE ACT). Its follow-up rounds narrate the verified readback and answer what comes next:
@@ -9764,6 +9765,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // may see and on which class it runs. That re-resolution is what keeps the route's own invariants
     // true at runtime: an ambiguous offer still ends at a question (the cap outranks the widening),
     // and a frontier turn keeps its class instead of being flattened to operational.
+    const governedToolNames = new Set((toolDefs as any[]).map((d: any) => d?.function?.name).filter((n: unknown): n is string => typeof n === "string"));
     let escalatedRoute: ReturnType<typeof resolveTurnRoute> | null = null;
     let escalatedTools: any[] | null = null;
     /** The manifest and class of the round now in flight — the route's, or the re-resolved route's once escalated. */
@@ -10025,6 +10027,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         };
       const toolResults: any[] = [];
       const executed: any[] = [];
+      // R5b — the manifest boundary is enforced ONLY on CHEAP rounds (`cognitive_class === "cheap"`,
+      // whose manifest is necessarily `none`), decided ONCE PER BATCH from the manifest the round
+      // actually saw: the owner's rule is about CHEAP cognition carrying no consequential authority,
+      // and there a discovered call must re-route, never execute. Every other state — a read round
+      // (already operational), an approved card's deterministic or carried-approval turn, a resume —
+      // keeps exactly the dispatch it had before R5b (enforcing the read manifest at dispatch is a
+      // recorded future item, not this slice).
+      const enforceBoundary = turnRoute.cognitive_class === "cheap";
+      const manifestNow = enforceBoundary
+        ? new Set((roundTools() as any[]).map((d: any) => d?.function?.name ?? d?.name).filter((n: unknown): n is string => typeof n === "string"))
+        : null;
+      const governedButNotOffered = manifestNow
+        ? new Set([...governedToolNames].filter((n) => !manifestNow.has(n)))
+        : new Set<string>();
       // ── C2b · MAY THIS CALL BE ANNOUNCED AS RUNNING? ────────────────────────────────────────────
       // Asked at the START point, immediately before dispatch. THE CONTRACT:
       //
@@ -10141,16 +10157,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           continue;
         }
 
-        // ── INT-334 R5b — THE CAPABILITY ESCALATION SIGNAL (presentation; executes nothing) ──
-        // A `none`/`read` round's one structural way out: the model itself declares the turn needs
-        // capability beyond its exposure, and the re-route is the WHOLE effect. No word the person
-        // typed is read here; the fact is server-observed (a finished-round call to a presentation
-        // tool). It runs BEFORE the client-seat gate on purpose — a client seat's question must be
-        // able to escalate too — and grants nothing: every later call in this turn still passes the
-        // seat gate, the autonomy lanes, the risk gates and the approval doors exactly as before.
-        if (tc.function.name === REQUEST_CAPABILITY_NAME) {
-          const first = escalateTurn("request_capability");
-          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(requestCapabilityResult(first ? "granted" : "already_granted")) });
+        // ── INT-334 R5b — THE MANIFEST BOUNDARY, AND THE RESCUE IT CARRIES ──────────────────
+        // A finished-round call naming a real governed tool outside THIS round's manifest is the
+        // escalation signal: the model discovered capability beyond its exposure (the capability
+        // projection in the system prompt advertises every governed capability, so the names are
+        // known). Nothing from the escalating round executes — the call is answered with the
+        // re-route, the turn re-resolves its route with the server-observed `capabilityEscalation`
+        // fact, and the loop's NEXT round carries the widened set through the unchanged gates.
+        // This is also the first dispatch-side enforcement of the manifest itself: before R5b a
+        // withheld-but-real tool would simply have run. It sits BEFORE the client-seat gate on
+        // purpose — a client seat's question must be able to escalate too, and every re-issued
+        // call still meets that gate, the autonomy lanes and the approval doors exactly as before.
+        if (governedButNotOffered.has(tc.function.name)) {
+          escalateTurn("attempted call outside the round manifest");
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(notOfferedThisRound()) });
           continue;
         }
 

@@ -315,6 +315,45 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   ok(!("provider" in REQ("operational", "x")) && !("model" in REQ("operational", "x")),
     "C6 the request carries no provider or model field to hardcode");
 
+  // C8 — the OPENAI leg's trace row carries the consumer's job identity too (never the adapter's "chat").
+  {
+    const rec8 = recorder();
+    const before8 = rec8.inserts.filter((i) => i.table === "paige_llm_trace").length;
+    await seamRun(REQ("operational", "research_unit_synthesis"), { ...ON, trace: { tenant_id: "tenant-seam8", agent_id: "fabric-check-seam" } });
+    const rows8 = rec8.inserts.filter((i) => i.table === "paige_llm_trace").slice(before8);
+    ok(rows8.length === 1 && rows8[0].row?.job_kind === "research_unit_synthesis" && rows8[0].row?.provider === "openai",
+      `C8 the OpenAI-served leg traces the consumer's job identity (${rows8[0]?.row?.job_kind})`);
+  }
+
+  // C9 — a FAILED Anthropic leg leaves the same evidence a successful one does.
+  {
+    const rec9 = recorder();
+    const before9 = rec9.inserts.filter((i) => i.table === "paige_llm_trace").length;
+    anthropicPlan = { status: 503, type: "overloaded_error" };
+    await seamRun(REQ("operational", "research_unit_synthesis"), { trace: { tenant_id: "tenant-seam9", agent_id: "fabric-check-seam" } });
+    anthropicPlan = { status: 200 };
+    const rows9 = rec9.inserts.filter((i) => i.table === "paige_llm_trace").slice(before9);
+    ok(rows9.length === 1 && rows9[0].row?.status === "error" && rows9[0].row?.job_kind === "research_unit_synthesis"
+      && rows9[0].row?.error_class === "provider_outage",
+      `C9 a failed Anthropic leg writes one attributed error trace row (${rows9[0]?.row?.error_class})`);
+  }
+
+  // C10 — transport failures are the streaming fabric's provider_outage: fallback-eligible.
+  {
+    const realFetch = globalThis.fetch;
+    anthropicPlan = { status: 200 };
+    let anthropicThrew = false;
+    globalThis.fetch = async (url, init) => {
+      if (String(url).startsWith("https://api.anthropic.com/")) { anthropicThrew = true; throw Object.assign(new Error("connection reset"), { name: "TypeError" }); }
+      return realFetch(url, init);
+    };
+    calls.length = 0;
+    const t = await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { openaiFetch });
+    globalThis.fetch = realFetch;
+    ok(t.route.attempts.some((a) => a.failure === "provider_outage") && anthropicThrew,
+      `C10 a transport throw on the Anthropic leg classifies provider_outage (${t.route.attempts.map((a) => a.failure).join(",")})`);
+  }
+
   // C7 — telemetry: the anthropic leg writes exactly one trace row carrying the consumer's job kind.
   const rec0 = recorder();
   const before = rec0.inserts.filter((i) => i.table === "paige_llm_trace").length;

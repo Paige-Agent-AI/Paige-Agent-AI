@@ -307,10 +307,6 @@ function emitTrace(trace: TraceCtx | undefined, row: {
   });
 }
 
-async function failureDetail(resp: Response): Promise<string> {
-  return (await failureOf(resp)).detail;
-}
-
 /** The failure, read once: a short detail for the trace, and the class the provider's response proves. */
 async function failureOf(resp: Response): Promise<{ detail: string; failureClass: ProviderFailureClass }> {
   let e: any = null;

@@ -157,10 +157,11 @@ const MERCHANT_PATHS = [CHAT,'supabase/functions/_shared/sales-invoice-chat.ts',
 export function parseMerchantActions(declarations) {
   const body=declarations.match(/export const MERCHANT_KIT_BY_TOOL\s*=\s*\{([\s\S]*?)\}\s*as const;/)?.[1];
   if(!body)return [];
-  const entries=[...body.matchAll(/\b([a-z0-9_]+):make\('([a-z0-9_]+)','sales_merchant\.([a-z_]+)','merchant\.([a-z_]+)'\)/g)];
+  const entries=[...body.matchAll(/\b([a-z0-9_]+):(MERCHANT_ONBOARDING_CAPABILITY|MERCHANT_PORTAL_CAPABILITY)/g)];
   if(entries.length!==2||entries.map(m=>m[0]).join(',')!==body.replace(/\s/g,''))return [];
-  const expected={sales_start_merchant_onboarding:['onboarding_start','start_onboarding'],sales_create_merchant_login_link:['portal_link','login_link']};
-  if(entries.some(m=>m[1]!==m[2]||!expected[m[1]]||m[3]!==expected[m[1]][0]||m[4]!==expected[m[1]][1])||new Set(entries.map(m=>m[1])).size!==2)return [];
+  const expected={sales_start_merchant_onboarding:'MERCHANT_ONBOARDING_CAPABILITY',sales_create_merchant_login_link:'MERCHANT_PORTAL_CAPABILITY'};
+  if(entries.some(m=>expected[m[1]]!==m[2])||new Set(entries.map(m=>m[1])).size!==2)return [];
+  if(entries.some(m=>!declarations.includes(`governance:{actionRiskKey:'${m[1]}',risk:'high',approval:'confirm'`)))return [];
   return entries.map(m=>m[1]);
 }
 export function salesMerchantDoorBound(chat, aggregate, adapter, edge, admission, declarations, decision) {
@@ -183,7 +184,7 @@ export function salesMerchantDoorBound(chat, aggregate, adapter, edge, admission
     && /from\s*['"]\.\/merchant-capability\.ts['"]/.test(admission)
     && admission.includes('decideDeclaredCapability(MERCHANT_KIT_BY_TOOL[tool],')
     && admission.includes('await port.claim(tool,req.approved_fingerprint)')
-    && declarations.includes("governance:{actionRiskKey:tool,risk:'high',approval:'confirm'")
+    && actions.every(tool=>declarations.includes(`governance:{actionRiskKey:'${tool}',risk:'high',approval:'confirm'`))
     && highGate.includes('classifyAction(key) !== declaration.governance.risk')
     && highGate.includes("declaration.governance.risk !== 'high'")
     && highGate.includes('return decideGovernedExecution(input);');

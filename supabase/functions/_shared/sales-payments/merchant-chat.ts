@@ -1,15 +1,19 @@
-import {MERCHANT_KIT_BY_TOOL,MERCHANT_TOOL_ACTIONS} from './merchant-capability.ts';
+import {MERCHANT_KIT_BY_TOOL,MERCHANT_TOOL_ACTIONS,MERCHANT_STATUS_READ_CAPABILITY,MERCHANT_REFRESH_READ_CAPABILITY} from './merchant-capability.ts';
 import {parseMerchantRequest,MERCHANT_SUMMARIES} from './merchant-command.ts';
 import {UUID,FINGERPRINT} from '../sales-invoice-command/contract.ts';
 import type {Context,Dependencies,Result} from '../sales-invoice-chat.ts';
 const object=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const tools=['read_sales_merchant_status','read_sales_merchant_refresh','sales_start_merchant_onboarding','sales_create_merchant_login_link'] as const;
 export const SALES_MERCHANT_TOOL_NAMES=new Set<string>(tools);
-export const SALES_MERCHANT_TOOLS=tools.map(name=>{
- const declaration=MERCHANT_KIT_BY_TOOL[name as keyof typeof MERCHANT_KIT_BY_TOOL];
- const properties=declaration?Object.fromEntries(Object.entries(declaration.input.properties).filter(([k])=>k!=='action')):{provider:{type:'string',enum:['stripe']}};
- return {type:'function' as const,function:{name,description:name.startsWith('read_')?'Read this workspace Stripe merchant status through its shared connection door. A status read does not complete human setup.':'Prepare governed Stripe merchant setup or resume with canonical approval. The human must open Settings / Integrations to complete secure provider setup. Never claim this tool completes login or makes the account ready.',parameters:{type:'object',properties,required:[],additionalProperties:false}}};
-});
+const writeInput=(declaration:typeof MERCHANT_KIT_BY_TOOL[keyof typeof MERCHANT_KIT_BY_TOOL])=>({type:'object',properties:Object.fromEntries(Object.entries(declaration.input.properties).filter(([k])=>k!=='action')),required:[],additionalProperties:false});
+const readDescription='Read this workspace Stripe merchant status through its shared connection door. A status read does not complete human setup.';
+const writeDescription='Prepare governed Stripe merchant setup or resume with canonical approval. The human must open Settings / Integrations to complete secure provider setup. Never claim this tool completes login or makes the account ready.';
+export const SALES_MERCHANT_TOOLS=[
+ {type:'function' as const,function:{name:'read_sales_merchant_status',description:readDescription,parameters:MERCHANT_STATUS_READ_CAPABILITY.input}},
+ {type:'function' as const,function:{name:'read_sales_merchant_refresh',description:readDescription,parameters:MERCHANT_REFRESH_READ_CAPABILITY.input}},
+ {type:'function' as const,function:{name:'sales_start_merchant_onboarding',description:writeDescription,parameters:writeInput(MERCHANT_KIT_BY_TOOL.sales_start_merchant_onboarding)}},
+ {type:'function' as const,function:{name:'sales_create_merchant_login_link',description:writeDescription,parameters:writeInput(MERCHANT_KIT_BY_TOOL.sales_create_merchant_login_link)}},
+];
 /** Closed status facts only. Hosted URLs, account IDs, free text and credentials never enter Chat. */
 export function merchantChatSafeResult(value:unknown,now=Date.now()):Record<string,unknown>{
  if(!object(value))return {};const out:Record<string,unknown>={};

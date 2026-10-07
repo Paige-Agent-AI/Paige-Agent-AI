@@ -13,10 +13,12 @@ export const SALES_COMMERCIAL_PACKAGE_READ=defineCapability({
 });
 export const SALES_COMMERCIAL_PACKAGE_SPINE:SpineCapability={
  key:'sales_invoice.commercial_package_read',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',readiness:'none',
- action:{classification:'read',executor:'public.read_sales_commercial_package',riskPolicyKey:'read_only',approvalAuthority:'none',idempotency:'Authenticated same-tenant source references and current versions; read receipt only.'},
+ action:{classification:'read',executor:'public.read_sales_commercial_package',chatTool:'read_sales_commercial_package',riskPolicyKey:'read_only',approvalAuthority:'none',idempotency:'Authenticated same-tenant source references and current versions; read receipt only.'},
  outcome:{kinds:['needs_input','conflict','refused','failed'],projector:'public.read_sales_commercial_package',railVisibility:'Safe read receipt without documents, signing tokens or financial payload.'},
- chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+ chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
 };
+// Bound dispatch is not authenticated acceptance or authority to execute constituent acts.
+export const SALES_COMMERCIAL_PACKAGE_TOOL={type:'function' as const,function:{name:'read_sales_commercial_package',description:'Read an existing canonical invoice package: frozen offer facts, signing agreement state, commercial terms, schedule, source versions and canonical balance. Resolve the exact invoice first. Missing fields and conflicts are facts to clarify, not permission to invent dates, fees, taxes or signed terms. A read never approves, publishes, sends, creates a subscription or collects payment. Keep signing records distinct from commercial terms; do not display internal IDs as invoice numbers.',parameters:SALES_COMMERCIAL_PACKAGE_READ.input}};
 
 const object=(v:unknown):v is Record<string,unknown>=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const only=(v:Record<string,unknown>,keys:string[])=>Object.keys(v).every(k=>keys.includes(k));
@@ -66,7 +68,7 @@ function boundedProjection(r:Record<string,unknown>,invoiceId:string):boolean {
 }
 
 /** Caller-JWT RPC only. This seam grants no approval and never uses a service-role reader.
- * Chat/C4 integration remains unbound; the domain does not hand-wire a second tool path.
+ * The existing Sales domain dispatcher consumes this read; C4 remains the shared resume owner.
  */
 export async function readCommercialPackage(tenant:string|null,args:Record<string,unknown>,caller:{rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>}):Promise<{content:Record<string,unknown>}> {
  const refused=()=>({content:{success:false,error:'Commercial package unavailable in this workspace.'}});

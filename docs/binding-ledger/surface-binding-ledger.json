@@ -870,7 +870,7 @@
       "surface": "Settings -> Integrations (n8n, MCP, automations)",
       "group": "settings",
       "tier_scope": ["solo"],
-      "owner_component": "src/solo/settings-integrations.tsx (settings.tsx:1774); useN8nConnection/useMcpConnection/useSoloAutomations",
+      "owner_component": "src/solo/settings-integrations.tsx (settings.tsx:1774); useN8nConnection/useMcpConnection/useSoloAutomations; StripeMerchantDrawer/useStripeMerchant reuse tenant-stripe-connect and tenant_stripe_accounts",
       "canonical_source": "n8n + MCP connection tables; automation rules; Spine read get_n8n_spine_readiness; n8n management executor edge.paige-ai-chat",
       "chain": {
         "canonical_source": {"status": "real"},

@@ -47,7 +47,7 @@ describe("the working indicator is truthful", () => {
     // (idempotent via the fence check), catching any exit path that missed it.
     const lastFinally = ui.lastIndexOf("} finally {");
     expect(lastFinally).toBeGreaterThan(0);
-    const finallyBlock = ui.slice(lastFinally, lastFinally + 600);
+    const finallyBlock = ui.slice(lastFinally, ui.indexOf("// However the read ended", lastFinally));
     expect(finallyBlock).toContain("releaseRequestBusy(requestTicket)");
   });
 
@@ -56,7 +56,8 @@ describe("the working indicator is truthful", () => {
   });
 
   it("abortActiveRequest clears the loading state", () => {
-    expect(ui).toMatch(/abortActiveRequest[\s\S]{0,200}setIsLoading\(false\)/);
+    const abort = ui.slice(ui.indexOf("const abortActiveRequest ="), ui.indexOf("const refreshInteractiveAuthority ="));
+    expect(abort).toContain("if (requestFenceRef.current.invalidate()) setIsLoading(false);");
   });
 });
 

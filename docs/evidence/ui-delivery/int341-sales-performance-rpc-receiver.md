@@ -11,17 +11,17 @@ AUTOMATED_EVIDENCE: PASS: 48 focused shared-parser/consumer/UI checks at the ini
 STATIC_EVIDENCE: PASS: production build passed; focused lint passed; ten pre-existing non-Sales type diagnostics require baseline disposition before merge.
 RENDERED_EVIDENCE: PASS: actual React component, synthetic fixtures, five widths 1536/1366/1024/900/390; no document horizontal overflow in the isolated harness. This is not authenticated shell proof.
 BEHAVIORAL_EVIDENCE: PASS: isolated component refresh renders six stage bars; Money renders ten currency-separated bars; reduced-motion computed animation is none at each tested width.
-AUTHENTICATED_RUNTIME: UNVERIFIED: final authenticated two-workspace owner/admin reads await deployed shared issuance and Sales consumer.
+AUTHENTICATED_RUNTIME: UNVERIFIED: shared issuance and the prior Sales consumer are deployed; authenticated owner/admin browser proof of this repair remains owed.
 KEYBOARD_FOCUS: PASS: component tests exercise keyboard chart disclosure, focus recovery and stale scope closure.
 ZOOM_REFLOW: UNVERIFIED: final integrated shell zoom observation remains owed.
 REDUCED_MOTION: PASS: real browser CSS animation names are none under reduced-motion across all five fixture widths.
 STATE_COVERAGE: PASS: automated loading/error/denied/unavailable, expiry, reissue, workspace/actor changes and retry contracts; production runtime proof separate.
 TRUTHFUL_STATE_LABELS: PASS: null unavailable values retain evidence; issued amounts, current balance and recorded receipts remain distinct; partial future metrics have named missing producers.
 SOLO_UI: YES: canonical Sales Performance, identical for current and future Solo tenants.
-UNVERIFIED: authenticated production, browser zoom and shared Chat/Live capability access.
+UNVERIFIED: authenticated repair readback, browser zoom and shared Chat/Live capability access.
 OWNER_INTENT: approved immersive charts render on load/refresh/view/period changes over canonical server metrics.
 MUST_NOT_HAPPEN: no invented numbers, mixed-currency totals, historical snapshots inferred from current rows, private producer grants or payment release.
-MUST_PRESERVE: Solo Sales navigation, canonical server formulas, shared evidence ownership, source classes and held PR #1806.
+MUST_PRESERVE: Solo Sales navigation, canonical server formulas, shared evidence ownership, source classes and separate merchant/payment acceptance boundaries.
 ACCEPTANCE_CRITERIA: automatic chart reads and truthful figures, scope isolation, valid evidence disclosures, accessible transitions and canonical drilldowns.
 MOTION_PURPOSE: bounded draw-in communicates newly read chart geometry; reduced-motion removes animations.
 PROTECTED_SEAMS: read scope/expiry/actor/range fencing tested; no mutation, approval, billing, provider, scheduling, Memory, Chat or Live changes.

@@ -225,18 +225,6 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
-    slug: "analytics", key: "analytics", label: "Analytics", group: "main",
-    // Source: src/solo/analytics2.tsx.
-    subtabs: [
-      { slug: "brief", key: "brief", label: "Brief" },
-      { slug: "money", key: "money", label: "Sales funnel" },
-      { slug: "profitability", key: "profit", label: "Revenue & profit" },
-      { slug: "retention", key: "ret", label: "Retention" },
-      { slug: "market-watch", key: "mkt", label: "Acquisition" },
-      { slug: "decisions", key: "dec", label: "Decisions" },
-    ],
-  },
-  {
     slug: "marketplace", key: "market", label: "Marketplace", group: "platform",
     // Source: src/solo/marketplace.tsx — FOUR only. Curated + Publish are agency-only
     // (a Solo tenant consumes the marketplace, it does not curate or publish to a book).
@@ -256,6 +244,14 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "team", key: "team", label: "Team" },
       { slug: "connections", key: "connections", label: "Connections" },
       { slug: "integrations", key: "integrations", label: "Integrations" },
+      { slug: "analytics", key: "analytics", label: "Analytics", subtabs: [
+        { slug: "overview", key: "overview", label: "Overview" },
+        { slug: "business-health", key: "business-health", label: "Business Health" },
+        { slug: "operations", key: "operations", label: "Operations" },
+        { slug: "team", key: "team", label: "Team" },
+        { slug: "ai-usage", key: "ai-usage", label: "AI & Usage" },
+        { slug: "data-health", key: "data-health", label: "Data Health" },
+      ] },
       { slug: "security-data", key: "security-data", label: "Security & data" },
       { slug: "vault", key: "vault", label: "Vault" },
       { slug: "billing", key: "billing", label: "Billing" },

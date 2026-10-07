@@ -38,7 +38,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { Bell, Blocks, Building2, CircleDollarSign, FileLock2, Link2, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, Blocks, Building2, CircleDollarSign, FileLock2, Link2, ShieldCheck, Users } from "lucide-react";
 import { SoloSettings } from "@/solo/settings";
 import { SOLO_SETTINGS_DESTINATIONS } from "@/solo/settings-contract";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
@@ -106,7 +106,7 @@ document.documentElement.classList.toggle("dark", theme === "dark");
  */
 const SETTINGS_ICONS = {
   setup: Building2, team: Users, connections: Link2, integrations: Blocks,
-  notifications: Bell, "security-data": ShieldCheck, vault: FileLock2, billing: CircleDollarSign,
+  analytics: BarChart3, "security-data": ShieldCheck, vault: FileLock2, billing: CircleDollarSign,
 };
 
 function Shell() {

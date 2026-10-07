@@ -50,7 +50,11 @@ Merge SHA: `135e598381a5fd573473c926cb90d5f88548d37e`; production database tag m
 Production migrations: `20270601000003` and `20270601000004`, persisted.
 Vercel production deployment: `dpl_GrUshG4E8z93xPAe8QmTyWQdu6ng`, READY at the merge SHA.
 Independent review, exact-head hosted full application/schema proofs, bounded premerge rollback proof and controlled post-deployment database proof: PASS.
-Signed-in API acceptance: UNVERIFIED; production authentication-hook metadata read returned HTTP 403. Prepared fixtures have not been executed.
-INT-339 PRIVACY BLOCKER NOT CLEARED. No Sales clearance sent. PAIGE read binding remains UNAVAILABLE pending the shared INT-340 / Platform Reach contract.
+Historical pre-clearance status (superseded by the production handoff below): signed-in API acceptance was UNVERIFIED while authentication-hook access was being resolved.
+Historical pre-clearance status (superseded): INT-339 PRIVACY BLOCKER NOT CLEARED; no Sales clearance had yet been sent. PAIGE read binding remains UNAVAILABLE pending the shared INT-340 / Platform Reach contract.
 Shipped Delivery Log: N/A before merge. No DEL, customer version or announcement allocated.
 Recovery: reviewed forward repair through the canonical seams; never restore broader visibility to recover functionality.
+
+## Production foundation handoff — 2026-10-07
+
+INT-339 PRIVACY BLOCKER CLEARED remains closed. Shared foundation PR #1814 merged as 27ea26556f6e3ce68741567ebc18208d913dcb34. Vercel production dpl_FWZvX1JiQofXk4NKDxRUHzBGNqMC is READY with production aliases. Supabase migrations 20270601000005/06 are persisted; deployment run 37693903137 succeeded and db-live matches the merge SHA. Independent catalog readback confirms committed function bodies and authorization ACLs. Controlled authenticated GoTrue/PostgREST proof passed all 33 metric issuer/parser/resolver cases and scope/membership negatives; synthetic fixture cleanup absence passed. Sales received the direct production handoff for #1821. Authenticated Settings browser UI, typed Chat and Live acceptance remain separate and are not inferred from this foundation proof.

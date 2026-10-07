@@ -160,7 +160,6 @@ const SOLO_SHELL_DESTINATIONS: TenantShellDestination[] = [
   { id: "campaigns", label: "Marketing", href: "", icon: Megaphone, aliases: [] },
   { id: "sales", label: "Sales", href: "", icon: ChartNoAxesCombined, aliases: [] },
   { id: "marketplace", label: "Marketplace", href: "", icon: Store, aliases: [] },
-  { id: "analytics", label: "Analytics", href: "", icon: BarChart3, aliases: [] },
   {
     id: "settings",
     label: "Settings",

@@ -69,6 +69,7 @@ export const SETTINGS_VISIBLE_SCROLL_DESTINATIONS: ReadonlySet<string> = new Set
   "setup",
   "connections",
   "integrations",
+  "analytics", // INT-340 owner-approved Settings child, 2026-10-07.
 ]);
 
 /**

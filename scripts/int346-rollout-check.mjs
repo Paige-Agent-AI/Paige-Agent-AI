@@ -56,7 +56,16 @@ end $$;
 select paige_chat_interactive_settle('${th}','${a}','${t}','${next}','Issued answer',null,null,
  '{"interactive":{"request_intent_id":"${next}"},"turn_state":{"state":"FINAL"}}',null);
 select paige_chat_interactive_executor_v2('${th}','${a}','${t}','${next}','release');
-reset role;rollback;
+reset role;delete from public.paige_chat_interactive_rollout;
+set role authenticated;
+do $$begin
+ begin perform paige_chat_interactive_begin_v2('${th}','${next}',null,'Missing release metadata',false,false);raise exception 'missing protocol accepted';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
+end $$;reset role;set role service_role;
+do $$begin
+ begin perform paige_chat_interactive_executor_v2('${th}','${a}','${t}','${next}','acquire');raise exception 'missing protocol acquired';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
+ begin perform paige_chat_interactive_activate(repeat('a',40),repeat('b',64));raise exception 'missing protocol activated';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
+ begin perform paige_chat_interactive_executor('${th}','${a}','${t}','${next}','release');raise exception 'missing protocol used compatibility';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
+end $$;reset role;rollback;
 `;
 const out=spawnSync(process.env.PSQL_BIN??'psql',['-X','-v','ON_ERROR_STOP=1',url],{input:sql,encoding:'utf8'});
 if(out.status!==0){console.error(out.stderr);process.exit(out.status??1);}

@@ -33,6 +33,7 @@ begin
  if p_edge_head !~ '^[0-9a-f]{40}$' or p_drain_evidence_sha256 !~ '^[0-9a-f]{64}$'
    or p_edge_head is null or p_drain_evidence_sha256 is null then raise exception 'verified release evidence required'; end if;
  select * into r from public.paige_chat_interactive_rollout where singleton for update;
+ if not found then raise exception 'INTERACTIVE_PROTOCOL_NOT_READY'; end if;
  if r.active then
   if r.edge_head is distinct from p_edge_head or r.drain_evidence_sha256 is distinct from p_drain_evidence_sha256 then
    raise exception 'activation evidence conflict'; end if;
@@ -134,7 +135,7 @@ create or replace function public.paige_chat_interactive_executor_v2(p_thread uu
 declare t public.paige_chat_threads%rowtype; acquired boolean:=false; evidence jsonb;
 begin
  perform 1 from public.paige_chat_interactive_rollout where singleton for share;
- if p_operation='acquire' and not (select active from public.paige_chat_interactive_rollout where singleton) then
+ if p_operation='acquire' and not coalesce((select active from public.paige_chat_interactive_rollout where singleton),false) then
   raise exception 'INTERACTIVE_PROTOCOL_NOT_READY'; end if;
  if p_actor is null or p_intent is null then raise exception 'interactive identity required' using errcode='42501'; end if;
  select * into t from public.paige_chat_threads where id=p_thread for update;
@@ -166,7 +167,7 @@ returns jsonb language plpgsql security definer set search_path=public as $$
 declare t public.paige_chat_threads%rowtype; turn_id uuid; evidence jsonb;
 begin
  perform 1 from public.paige_chat_interactive_rollout where singleton for share;
- if not p_stop and not (select active from public.paige_chat_interactive_rollout where singleton) then
+ if not p_stop and not coalesce((select active from public.paige_chat_interactive_rollout where singleton),false) then
   raise exception 'INTERACTIVE_PROTOCOL_NOT_READY'; end if;
  if auth.uid() is null then raise exception 'auth required' using errcode='42501'; end if;
  select * into t from public.paige_chat_threads where id=p_thread for update;
@@ -251,6 +252,7 @@ create or replace function public.paige_chat_interactive_executor(p_thread uuid,
 declare t public.paige_chat_threads%rowtype; is_active boolean;
 begin
  select active into is_active from public.paige_chat_interactive_rollout where singleton for share;
+ if not found then raise exception 'INTERACTIVE_PROTOCOL_NOT_READY'; end if;
  if p_operation='acquire' then raise exception 'INTERACTIVE_PROTOCOL_REQUIRED'; end if;
  if is_active or p_operation='state' then
   return public.paige_chat_interactive_executor_v2(p_thread,p_actor,p_tenant,p_intent,p_operation);

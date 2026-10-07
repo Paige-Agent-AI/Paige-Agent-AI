@@ -46,6 +46,45 @@ Within an authorized bounded assignment, the engineering agent owns choices thro
 
 **Fix own-lane material defects. Route and PARK unrelated defects** with concise safe evidence and correct owner; continue safe work. Real source-level file overlap should be negotiated by the actual owners; do not invent department conflicts merely because features share the AI COO vision.
 
+## Operating mandate: PAIGE performs the full COO job
+
+**The user outcome is a BUSINESS OPERATING OUTCOME, not a Chat turn or a feature demonstration.** The COO translates the founder/CEO's strategy into action, builds a resource/capacity-aware execution plan, aligns marketing, sales, client delivery, finance, people and systems, spots cross-domain delivery and financial risk, prioritizes and escalates decisions, manages stakeholders, and closes the loop on commitments. PAIGE must continually understand how work, cash and customer obligations flow across domains.
+
+**COO duty cycle:** understand owner goal/mission and constraints → source-backed department operating snapshot → cross-domain bottlenecks/risks and competing priorities → plan/decision with accountable owner, budget and due date → orchestrated specialist/human work → permission/approval through canonical Trust → execution through existing Spine/Harness/Orchestration → Rail receipts and authoritative external readback → observed business effect, updated plan and next operating review. No one chat answer, static KPI grid or generic automation qualifies as completing this cycle without supporting source and execution evidence.
+
+For service businesses, follow the chain **strategy → Marketing demand → Sales pipeline/terms → delivery commitments/fulfillment and staffing → receivable/collections → customer results/retention → revised business plan**. When PAIGE can only observe or prepare an action, say so. Do not claim that she has performed, followed up or delivered economic results unless proved.
+
+**COO-oriented gap escalation:** If PAIGE cannot perform any step in this cycle, identify the exact gap and its effect on owner decisions: source visibility, canonical goal/target, domain read/snapshot, event/hand-off, actor/permission, budget/approval, actual execution, receipt, follow-up, or business-result attribution. Report whether it BLOCKS THE CURRENT TASK, is FUTURE COO CAPABILITY DEBT, or is a genuine SAFETY HARD STOP. Name evidence state, actual domain owner, smallest valid future handoff and approval requirement. Do NOT silently redesign or build missing backend because a gap was discovered.
+
+This is grounded in the owner's Google Doc `What a COO wants to know immediately` (source → analysis → next actions), `Complete COO Platform Roadmap` (COO brief and operating rhythm), and third-party COO role analysis:
+- McKinsey, [COO Excellence: The next generation of leadership](https://www.mckinsey.com/capabilities/operations/our-insights/coo-excellence-the-next-generation-of-leadership) (2026).
+- McKinsey, [Delivering the strategy: The COO agenda](https://www.mckinsey.com/capabilities/operations/our-insights/delivering-the-strategy-the-coo-agenda).
+- Bennett/Miles, [Second in Command: The Misunderstood Role of the COO](https://hbr.org/2006/05/second-in-command-the-misunderstood-role-of-the-chief-operating-officer) (2006).
+These supply role context, not new product scope; latest explicit owner priorities still govern engineering.
+
+## Shared intelligence and operating fabric — distinct owners, one platform
+
+| Shared component | Owns | Does not own |
+|---|---|---|
+| **Operating/Cognitive Fabric** (F1 [#1790](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1790), `docs/brain/paige-operating-fabric-contract.md`) | Tenant-safe, period-aware `DomainSnapshot` → `BusinessOperatingSnapshot`, source/coverage/availability and bounded cross-domain projection over existing domain reads | Domain KPIs, unauthorized data access, causal claim fabrication, model choice, approval/execution, memory or alternative database |
+| **Model/Intelligence Fabric** (INT-334) | Cognitive class, model/provider decision, budgets/quality/telemetry and controlled canaries | Tenant authorization, business-record truth, action approval or second execution path |
+| **Metric/Evidence Fabric** | Canonical domain-issued measures, definitions, source reference, coverage, revision, periods/currencies for UI, snapshots and PAIGE | Competing issuer per department, fabricated rollups or arbitrary LLM calculations |
+| **Agent Intelligence** | Cross-domain trajectory evaluations, regression evidence, improvement proposals and verified business-effect analysis via existing Rail/receipts | Unilateral changes to production governance, independent action engine or Solo tenant engineering control panel |
+
+Other layers remain distinct: **canonical domain records** are business truth; **Spine** declares executable/readable capabilities; **Harness** bounds work; **Orchestration** sequences work; **Trust** authorizes it; **Rail** proves it; **Events** distribute state change; **Memory** carries owner continuity; **Knowledge/Second Brain** holds governed reusable knowledge; **Mind** projects current context; **Chat/Live** are user entry modes, not separate business engines.
+
+**At current grounding:** Operating Fabric F1 #1790 is an OPEN, UNMERGED pure contract/seam, not a live `business_review` path. A PR/review/map cannot be promoted to deployment. The Model Fabric INT-334 and Agent Intelligence program are different lane owners with independent delivery states. Always re-ground before claiming runtime behavior.
+
+## Two linked contracts on EVERY agent assignment
+
+**1. Dedicated lane:** precise domain/screen/route; approved UI or backend goal; canonical records it creates/reads/writes; API/Spine capability; actual owner and excluded shared-layer modifications; required deliverable; tests and acceptance.
+
+**2. COO platform integration:** what owner goal this lane advances; upstream records/events/people; downstream recipients; exact cross-department handoffs; identity/scope; Operating Snapshot read exposure; Metric/Evidence; Orchestration/Harness/Spine/Trust/Rail; budget/approvals; receipts/authoritative readback; Memory/Knowledge/Mind implications; Chat/Live modality parity where actually available; Agent Intelligence outcome evidence; shared-layer owner for each unsupported seam.
+
+**Each agent must report:** `DEDICATED LANE | COO BUSINESS OUTCOME | UPSTREAM INPUTS | DOWNSTREAM HANDOFFS | OPERATING FABRIC / METRIC VISIBILITY | AUTHORITY / EXECUTION / RECEIPT | PROVEN / MISSING | GAP OWNER & NEXT STEP | UI-FORWARD CURRENT PRIORITY | RELEASE EVIDENCE`.
+
+This is a *contract and gap inventory*, not a fabricated claim that all paths already work, and not an added approval checkpoint. When the owner's current task is UI-FIRST, ship the approved safe UI with honest unsupported states, document downstream COO gaps, park follow-up backend work outside scope and keep safe delivery moving.
+
 ## Mandatory new-agent pre-edit declaration
 
 Every new engineering handoff MUST state, before modifying code:

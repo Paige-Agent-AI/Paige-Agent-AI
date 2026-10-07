@@ -167,7 +167,7 @@ returns jsonb language plpgsql security definer set search_path=public as $$
 declare t public.paige_chat_threads%rowtype; turn_id uuid; evidence jsonb;
 begin
  perform 1 from public.paige_chat_interactive_rollout where singleton for share;
- if not p_stop and not coalesce((select active from public.paige_chat_interactive_rollout where singleton),false) then
+ if p_stop is not true and not coalesce((select active from public.paige_chat_interactive_rollout where singleton),false) then
   raise exception 'INTERACTIVE_PROTOCOL_NOT_READY'; end if;
  if auth.uid() is null then raise exception 'auth required' using errcode='42501'; end if;
  select * into t from public.paige_chat_threads where id=p_thread for update;

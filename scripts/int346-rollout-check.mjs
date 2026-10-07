@@ -23,6 +23,7 @@ do $$begin
  begin perform paige_chat_interactive_activate(repeat('a',40),repeat('b',64));raise exception 'caller activated';exception when insufficient_privilege then null;end;
  begin perform paige_chat_interactive_begin('${th}','${next}',null,'Old new request',false,false);raise exception 'legacy accepted';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_REQUIRED' then raise;end if;end;
  begin perform paige_chat_interactive_begin_v2('${th}','${next}',null,'New during drain',false,false);raise exception 'new accepted during drain';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
+ begin perform paige_chat_interactive_begin_v2('${th}','${next}',null,'New during drain',null,false);raise exception 'new accepted during drain';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
 end $$;reset role;set role service_role;
 do $$begin
  if (paige_chat_interactive_protocol()->>'active')::boolean then raise exception 'migration activated itself';end if;
@@ -60,6 +61,7 @@ reset role;delete from public.paige_chat_interactive_rollout;
 set role authenticated;
 do $$begin
  begin perform paige_chat_interactive_begin_v2('${th}','${next}',null,'Missing release metadata',false,false);raise exception 'missing protocol accepted';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
+ begin perform paige_chat_interactive_begin_v2('${th}','${next}',null,'Missing release metadata',null,false);raise exception 'missing protocol accepted';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;
 end $$;reset role;set role service_role;
 do $$begin
  begin perform paige_chat_interactive_executor_v2('${th}','${a}','${t}','${next}','acquire');raise exception 'missing protocol acquired';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_NOT_READY' then raise;end if;end;

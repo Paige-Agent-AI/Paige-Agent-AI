@@ -18,7 +18,7 @@ REDUCED_MOTION: PASS: real browser CSS animation names are none under reduced-mo
 STATE_COVERAGE: PASS: automated loading/error/denied/unavailable, expiry, reissue, workspace/actor changes and retry contracts; production runtime proof separate.
 TRUTHFUL_STATE_LABELS: PASS: null unavailable values retain evidence; issued amounts, current balance and recorded receipts remain distinct; partial future metrics have named missing producers.
 SOLO_UI: YES: canonical Sales Performance, identical for current and future Solo tenants.
-UNVERIFIED: authenticated production, final integrated PAIGE-open geometry, zoom and shared Chat/Live capability access.
+UNVERIFIED: authenticated production, browser zoom and shared Chat/Live capability access.
 OWNER_INTENT: approved immersive charts render on load/refresh/view/period changes over canonical server metrics.
 MUST_NOT_HAPPEN: no invented numbers, mixed-currency totals, historical snapshots inferred from current rows, private producer grants or payment release.
 MUST_PRESERVE: Solo Sales navigation, canonical server formulas, shared evidence ownership, source classes and held PR #1806.
@@ -32,15 +32,26 @@ CUSTOMER_RELEASE_IDENTITY: none: production release not yet completed.
 RELEASE_NOTE_REQUIRED: NO: development candidate; any customer announcement belongs to final verified release.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: shared issuance and authenticated production; implementation/test/render evidence cannot promote those claims.
 RELEASE_RECOVERY: position=bounded forward fix or restore prior Performance mount; reference=docs/delivery/sales-performance-ui.md
-SOLO_1536X770_PAIGE_CLOSED: PASS: isolated production-component fixture measured without document overflow; canonical shell still UNVERIFIED.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: integrated dock geometry pending.
-SOLO_1366X768_PAIGE_CLOSED: PASS: isolated production-component fixture measured without document overflow; canonical shell still UNVERIFIED.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: integrated dock geometry pending.
-SOLO_1024X768_PAIGE_CLOSED: PASS: isolated production-component fixture measured without document overflow; canonical shell still UNVERIFIED.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: integrated dock geometry pending.
-SOLO_900X1000_PAIGE_CLOSED: PASS: isolated production-component fixture measured without document overflow; canonical shell still UNVERIFIED.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: integrated dock geometry pending.
+SOLO_1536X770_PAIGE_CLOSED: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
+SOLO_1536X770_PAIGE_OPEN: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
+SOLO_1366X768_PAIGE_CLOSED: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
+SOLO_1366X768_PAIGE_OPEN: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
+SOLO_1024X768_PAIGE_CLOSED: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
+SOLO_1024X768_PAIGE_OPEN: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
+SOLO_900X1000_PAIGE_CLOSED: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
+SOLO_900X1000_PAIGE_OPEN: PASS: real Solo-shell synthetic host measured without document overflow; authenticated runtime remains UNVERIFIED.
 
 ## Review and boundaries
 
-Preliminary non-author review required changes to unavailable metadata, stage evidence expiry and actor fencing. All three were repaired and covered by regression tests. Final exact-head review remains required. Shared issuer is exclusively INT-340-owned; this consumer neither grants access to private producers nor constructs opaque evidence references. Legacy stage evidence exposes its exact independent date bounds.
+Preliminary non-author review required changes to unavailable metadata, stage evidence expiry and actor fencing. All three were repaired and covered by regression tests. Final code head cc04bff344f5c939d44b786b81a6298988dad119 received independent non-author COMPLETE/SHIP and Impeccable scored-fix SHIP; any later material code requires re-review. Shared issuer is exclusively INT-340-owned; this consumer neither grants access to private producers nor constructs opaque evidence references. Legacy stage evidence exposes its exact independent date bounds.
+
+
+## Candidate verification
+
+Code head: cc04bff344f5c939d44b786b81a6298988dad119. Focused consumer/shared-parser suite: 50/50 PASS. Independent reviewer rerun: 35/35 PASS. Real Solo-shell synthetic fixture at 1536×770, 1366×768, 1024×768, 900×1000 and 390×844: no document horizontal overflow; all three lenses reachable; refresh charts automatic; reduced-motion animations disabled; source inspector Enter/Escape focus return passes. The dock body is deliberately inert: this is host geometry and interaction evidence, not authenticated PAIGE execution.
+
+Vercel PREVIEW READY: dpl_BM2PRPDZ7kqc29ZGkxPcXQHrvskr for the code head. This is not production deployment. Required hosted CI, current-main reconciliation after the shared dependency lands, authenticated production tenant/role negatives and production readback remain release gates.
+
+Local Windows full regression: 9794 passed / 41 failed. A clean current-main baseline reproduced 31 focused failures across platform guard/shell/form/stream contracts; additional timeout-sensitive cases passed focused baseline reruns. Ten TypeScript baseline diagnostics are unchanged on clean current main. These local results do not waive required hosted CI or establish a green full suite. No unrelated product code was changed.
+
+Shared #1814 remains an Analytics-owned development dependency. Its issuer/resolver deployment and signed-in production privacy verification are not established. Sales cannot release those shared files through this PR. No mutation/provider authority is introduced; #1806 remains held.

@@ -78,10 +78,18 @@ RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
 CREATE TEMP TABLE seam_stateful(label text PRIMARY KEY,bundle jsonb);
 GRANT SELECT,INSERT ON seam_stateful TO authenticated;
-INSERT INTO public.pipelines(id,tenant_id,name,is_default) VALUES
- ('a3450000-0000-4000-8000-000000000051','a3450000-0000-4000-8000-000000000011','Legacy proof',true);
-INSERT INTO public.pipeline_stages(id,pipeline_id,tenant_id,label,order_index,probability,stage_type) VALUES
- ('a3450000-0000-4000-8000-000000000052','a3450000-0000-4000-8000-000000000051','a3450000-0000-4000-8000-000000000011','Recorded stage',1,10,'open');
+CREATE TEMP TABLE seam_pipeline_fixture(label text PRIMARY KEY,pipeline_id uuid NOT NULL);
+-- The real actor supplies creation provenance; identity remains server-generated.
+-- Privileged isolated fixture setup still invokes every production trigger.
+SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),
+ set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+WITH generated AS (
+ INSERT INTO public.pipelines(tenant_id,name,is_default) VALUES
+ ('a3450000-0000-4000-8000-000000000011','Legacy proof',true) RETURNING id
+) INSERT INTO seam_pipeline_fixture(label,pipeline_id) SELECT 'legacy',id FROM generated;
+INSERT INTO public.pipeline_stages(pipeline_id,tenant_id,label,order_index,probability,stage_type)
+ SELECT pipeline_id,'a3450000-0000-4000-8000-000000000011','Recorded stage',1,10,'open'
+ FROM seam_pipeline_fixture WHERE label='legacy';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 INSERT INTO seam_stateful SELECT 'a',public.issue_analytics_evidence_bundle('team.active_members_current','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011');

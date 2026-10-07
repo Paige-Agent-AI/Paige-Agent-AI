@@ -1,6 +1,6 @@
 # INT-339 / INT-340 foundation
 
-Classification: internal-only. Channel: development. Production unchanged.
+Classification: internal-only. Channel: development. Privacy repair deployed; Settings navigation remains unchanged.
 
 SHELL: SOLO. FLOW-BY-FLOW: APPLIED. IMPECCABLE: APPLIED.
 Independent non-author security review: REQUIRED.
@@ -18,7 +18,7 @@ This slice addresses the **confirmed Analytics privacy/isolation defect**. Detai
 7. Jobs/events: no new scheduler or durable job.
 8. Proof: independent review, synthetic PostgreSQL authorization/storage assertions, collection regressions, exact-head hosted checks, then controlled production verification. An aggregate is not an execution receipt; no Rail history is rewritten.
 9. Binding Ledger: existing `analytics` row remains UNAVAILABLE for PAIGE binding. Prototype approval changes no runtime availability claim. No visible navigation change in this slice.
-10. Acceptance: authenticated transport and production persistence are PROOF OWED. Local fixture success alone cannot clear INT-339.
+10. Acceptance: production persistence and controlled deployed database assertions PASS. Authenticated transport remains PROOF OWED. Local fixture success alone cannot clear INT-339.
 
 ## Shared-layer impact (INT-343)
 
@@ -45,6 +45,12 @@ INT-339 remains OPEN until the fixing candidate is merged, deployed and producti
 
 Hosted SQL assertions run in the active PAIGE Spine database-contract job after the existing production-grant reconciliation and candidate migration application. Its production baseline read is schema/roles only; synthetic writes target the isolated local stack and roll back. The disabled premerge workflow remains untouched under #574. Failed setup or assertions cannot establish acceptance.
 
-Merge SHA, deployment identity, production acceptance: NOT_YET_AVAILABLE.
+Privacy fixing PR: #1811. Reviewed release head: `1cf0814497f085a8381c15244b4fa752f3122429`.
+Merge SHA: `135e598381a5fd573473c926cb90d5f88548d37e`; production database tag matches.
+Production migrations: `20270601000003` and `20270601000004`, persisted.
+Vercel production deployment: `dpl_GrUshG4E8z93xPAe8QmTyWQdu6ng`, READY at the merge SHA.
+Independent review, exact-head hosted full application/schema proofs, bounded premerge rollback proof and controlled post-deployment database proof: PASS.
+Signed-in API acceptance: UNVERIFIED; production authentication-hook metadata read returned HTTP 403. Prepared fixtures have not been executed.
+INT-339 PRIVACY BLOCKER NOT CLEARED. No Sales clearance sent. PAIGE read binding remains UNAVAILABLE pending the shared INT-340 / Platform Reach contract.
 Shipped Delivery Log: N/A before merge. No DEL, customer version or announcement allocated.
 Recovery: reviewed forward repair through the canonical seams; never restore broader visibility to recover functionality.

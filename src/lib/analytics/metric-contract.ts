@@ -43,7 +43,7 @@ export interface MetricRequestIdentity {
 }
 
 const record = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
-const text = (v: unknown, n: number): v is string => typeof v === "string" && v.trim().length > 0 && v.length <= n && !/[\u0000-\u001f]/.test(v);
+const text = (v: unknown, n: number): v is string => typeof v === "string" && v.trim().length > 0 && v.length <= n && Array.from(v).every(character => character.charCodeAt(0) > 31);
 const count = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0;
 const timestamp = (v: unknown): v is string => typeof v === "string" && Number.isFinite(Date.parse(v));
 const decimal = (v: unknown): v is string => typeof v === "string" && v.length <= 64 && /^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(v);
@@ -102,6 +102,8 @@ export function parseMetricResult(value: unknown, expected: MetricRequestIdentit
     || !value.exclusions.every(e => record(e) && text(e.reason, 160) && count(e.count))
     || value.exclusions.reduce((n, e) => n + e.count, 0) !== c.excluded_count
     || !Array.isArray(value.caveats) || value.caveats.length > 20 || !value.caveats.every(s => text(s, 1200))
-    || (value.truth_state !== "UNAVAILABLE" && !validValues(value.values))) return fail();
+    || (value.truth_state !== "UNAVAILABLE" && !validValues(value.values))
+    || (record(value.values) && value.values.kind === "series" && Array.isArray(value.values.points)
+      && !value.values.points.every(p => record(p) && Date.parse(String(p.at)) >= Date.parse(String(value.range.start)) && Date.parse(String(p.at)) < Date.parse(String(value.range.end))))) return fail();
   return value as unknown as MetricResult;
 }

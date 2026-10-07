@@ -72,4 +72,10 @@ describe("shared metric consumer boundary", () => {
     const result = fixture(); result.range.start = "2026-08-01T12:00:00Z"; result.range.end = "2026-08-08T12:00:00Z";
     expect(() => parseMetricResult(result, identity, now)).toThrow();
   });
+  it("refuses trend points outside the evidenced interval", () => {
+    const result = fixture(); result.values = { kind: "series", points: [{ at: result.range.end, value: 4 }] };
+    expect(() => parseMetricResult(result, identity, now)).toThrow();
+    result.values = { kind: "series", points: [{ at: result.range.start, value: 4 }] };
+    expect(parseMetricResult(result, identity, now).values).toEqual(result.values);
+  });
 });

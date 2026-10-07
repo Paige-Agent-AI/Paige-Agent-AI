@@ -70,9 +70,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(decision).toHaveLength(2);
     expect(decision[1].content).toContain("Do not draft the user-facing answer here");
     expect(messages).toHaveLength(1);
-    const start = code.indexOf('finalStreamResponse = await gatewayCompat');
+    const start = code.indexOf('finalStreamResponse = noteFabric(');
+    expect(start).toBeGreaterThan(-1);
     const closing = code.slice(start, code.indexOf('traceFor(', start));
-    expect(closing.includes('messages: convo, stream: true')).toBe(true);
+    expect(closing.includes('{ messages: convo }')).toBe(true);
     expect(/tools:|tool_choice:/.test(closing)).toBe(false);
   });
   it("does not replay decision-round prose for a verified Live turn", () => {

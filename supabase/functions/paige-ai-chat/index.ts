@@ -30,6 +30,7 @@ import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
+import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
@@ -9732,32 +9733,32 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       );
     }
     const turnRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification });
-    const substantiveTurn = turnRoute.cognitive_class !== "cheap";
     console.log(`[paige] route: ${turnRoute.basis}/${turnRoute.intent}/${turnRoute.cognitive_class} tools=${turnRoute.capability.tools} (${turnRoute.reasons.join(",")})`);
+    // INT-334 R5 — every streamed round opens through the shared model fabric, for the Turn Route's
+    // cognitive class (Studio and an attached document are route facts, so the Studio design agent and
+    // the doc-attach path stay on a reasoning-class model, never the cheap one). The fabric picks the
+    // provider in the owner's order and falls back only on a proven provider-health failure before the
+    // stream opened; tools, approvals and authority are decided below, unchanged.
+    // Every round keeps the governed tool list here, the cheap class included. Taking tools off a cheap
+    // round needs a rescue on every surface that can be misread as light conversation (Live, client seats,
+    // a request phrased as a question) — that is R5b's tool narrowing, not this change.
+    const roundClass = turnRoute.cognitive_class;
+    const noteFabric = (label: string, s: FabricStream): FabricStream => {
+      if (!s.ok || s.attempts.some((a) => a.failure && a.failure !== "skipped_disabled")) console.warn(`[paige] fabric ${label}: ${describeAttempts(s)}`);
+      return s;
+    };
     await interactive?.check();
-    const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // U2/§14 — the Studio design agent runs on the REASONING tier (pro ⇒ CLAUDE_REASONING) so its
-        // extended thinking is a real reasoning model, never Haiku; the doc-attach path already did.
-        // INT-334 R4 — the Turn Route's class picks the tier (Studio and an attached document are route facts).
-        model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
+    const response = resumeCalls.length > 0 ? null : noteFabric("chat", await fabricChatStream(roundClass, {
         messages: liveDecisionMessages(aiMessages),
         tools: toolDefs,
         tool_choice: "auto",
-        stream: true,
-        ...(paigeThinkingOn ? { paige_thinking: true } : {}),
-      }),
-    // §18 — the ONE trace idiom, same as every other call site. This was the only stamped site
-    // and it built its context inline; leaving it that way would keep two spellings of the same
-    // thing alive next to each other, and the inline one would silently win here if `traceCtx`
-    // ever gained a field. `traceFor("chat")` is exactly equivalent to what stood here: the
-    // tenant and working context are the same values, and `traceCtx.agent_id` is set to
-    // "studio-design-agent" at the Studio-session branch above, which runs before this line.
-    }, traceFor("chat"));
+      }, {
+        // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
+        // "studio-design-agent" at the Studio-session branch above, which runs before this line.
+        trace: traceFor("chat"),
+        // U2/§14 — the dormant Studio extended-thinking flag rides only to the Anthropic candidate.
+        anthropicExtras: paigeThinkingOn ? { paige_thinking: true } : undefined,
+      }));
 
     if (response && !response.ok) {
       const errorId = crypto.randomUUID();
@@ -9892,7 +9893,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Multi-round agentic loop: consume one streamed round, detect tool
       // calls, execute them, then re-ask WITH tools until a natural stop or a
       // safety bound. consumeRound accumulates one streamed gateway response.
-      const consumeRound = async (resp: Response) => {
+      const consumeRound = async (resp: { body?: ReadableStream<Uint8Array> | null }) => {
         const fullReader = resp.body!.getReader();
         const fullDecoder = new TextDecoder();
         let content = "";
@@ -16585,7 +16586,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!resumedRound) turnTracker.roundStarted();
             const { content, toolCalls, allChunks, hasToolCall, finished, runnable } = resumedRound
               ? { ...resumedRound, runnable: true } // a server-built resume round: the stored, approved act
-              : await consumeRound(currentResponse as Response);
+              : await consumeRound(currentResponse!);
             lastRoundFinished = finished;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
@@ -16815,11 +16816,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             await interactive?.check();
-            currentResponse = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-            }, traceFor("chat-tool-loop"));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -16853,11 +16850,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             convo.push({ role: "user", content: CLAIM_CORRECTION[claim] });
             try {
               await interactive?.check();
-              const correctionResponse = await gatewayCompat("anthropic", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ model: "google/gemini-2.5-pro", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-              }, traceFor("chat-claim-correction"));
+              // INT-332 — the claim correction is operational work whatever the turn's own class.
+              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream("operational", { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
               if (correctionResponse.ok) {
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
@@ -16900,11 +16894,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 await interactive?.check();
-                const continuationResponse = await gatewayCompat("anthropic", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-                }, traceFor("chat-continuation"));
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClass, { messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -17029,7 +17019,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Text keeps its natural-round replay. Live streams the final answer
           // only from this tools-free call, AFTER the governed tool decision.
           // Protected turns still use emitContent's hold and final scope check.
-          let finalStreamResponse: Response | null = null;
+          let finalStreamResponse: FabricStream | null = null;
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             if (!(await revalidateTenantKnowledgeScope())) {
               tenantKnowledgeScopeInvalidated = true;
@@ -17038,11 +17028,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
             await interactive?.check();
-            finalStreamResponse = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: convo, stream: true }),
-            }, traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"));
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClass, { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME
@@ -17539,7 +17525,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
     // With document: intercept stream to accumulate response, then trigger background sync
     // Never null here: a resume turn (the only one without a first call) is never a document turn.
-    const reader = (response as Response).body!.getReader();
+    const reader = response!.body!.getReader();
     const decoder = new TextDecoder();
     let fullAssistantResponse = "";
     // Leftover-line buffer across pulls: a `data:` record split over two reads

@@ -7933,6 +7933,22 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       classification: { intent: "act", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
     assert("43.42e a bare 'do it' labelled act never takes the cheap tier, even when trivial",
       modelOf(doIt, 0) === CLAUDE_REASONING, JSON.stringify({ model: modelOf(doIt, 0) }));
+    // INT-334 R5a — the cheap round KEEPS the governed tools. Taking them off needs a rescue on every surface
+    // that can be misread as light conversation (Live, a client seat, a request phrased as a question);
+    // that is R5b's narrowing. Until then a misread costs the cheaper model, never the step.
+    const toolsOf = (r, i = 0) => streamed(r)[i]?.tools ?? null;
+    assert("43.42f the cheap round still carries the governed tool list (narrowing is R5b, with its rescue)",
+      Array.isArray(toolsOf(thanks, 0)) && toolsOf(thanks, 0).length > 0 && toolsOf(thanks, 0).length === toolsOf(failed, 0)?.length,
+      JSON.stringify({ cheap: toolsOf(thanks, 0)?.length ?? null, reasoning: toolsOf(failed, 0)?.length ?? null }));
+    // INT-332 — a claim correction is operational work whatever the turn's own class: a cheap turn that
+    // narrates a card it never minted is corrected on the reasoning tier, with the governed tools.
+    const sC = makeThreadStore(THREADS), cC = makeConfirmStore(), dbC = crmDb();
+    const cheapClaim = await turn(sC, cC, dbC, { text: "ok great", threadId: THREAD_FRESH, script: [NARRATION, "Sorry — I haven't set anything up yet."],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.42g a cheap turn's claim correction runs on the reasoning tier with the governed tools",
+      modelOf(cheapClaim, 0) === CLAUDE_CLASSIFICATION && told(cheapClaim).includes(CORRECTION.card)
+        && modelOf(cheapClaim, 1) === CLAUDE_REASONING && Array.isArray(toolsOf(cheapClaim, 1)) && toolsOf(cheapClaim, 1).length > 0,
+      JSON.stringify({ calls: streamed(cheapClaim).map((b) => [b.model, b.tools?.length ?? null]), corrected: told(cheapClaim).includes(CORRECTION.card) }));
   }
 
   // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the

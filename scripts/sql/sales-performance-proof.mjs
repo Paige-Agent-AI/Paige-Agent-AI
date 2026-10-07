@@ -125,6 +125,11 @@ eq(get('sales.opportunities.open_current').values.count,6);
 eq(get('sales.opportunities.won_current_close_date').values.count,1);
 eq(get('sales.opportunities.won_current_close_date').coverage.excluded_count,1);
 eq(get('sales.opportunities.lost_current_close_date').values.count,1);
+for(const key of ['sales.opportunities.won_current_close_date','sales.opportunities.lost_current_close_date']) {
+ denied(scope()+metric(key).replace('2026-10-01Z','2026-10-01T12:00Z').replace('2026-11-01Z','2026-10-02T12:00Z'),'22023');
+ denied(scope()+metric(key).replace('2026-10-01Z','2026-10-01T12:00Z').replace('2026-11-01Z','2026-10-01T18:00Z'),'22023');
+}
+eq(run(`SELECT position('CROSS JOIN LATERAL public._sales_invoice_balance_rows(_expected_tenant_id,(row.value->>''id'')::uuid)' in pg_get_functiondef('public.list_sales_collection_register(uuid,text,integer,jsonb)'::regprocedure))>0;`),'t');
 const pipelineResult=get('sales.pipeline.open_value');eq(amount(pipelineResult),'100000');eq(amount(pipelineResult,'eur'),'50000');eq(pipelineResult.coverage.excluded_count,3);eq(pipelineResult.truth_state,'PARTIAL');
 const issued=get('sales.invoices.issued_amount');eq(amount(issued),'380000');eq(amount(issued,'eur'),'100000');eq(get('sales.invoices.issued_count').values.count,3);
 eq(issued.exclusions.find(x=>x.reason==='voided_invoice')?.count,1);

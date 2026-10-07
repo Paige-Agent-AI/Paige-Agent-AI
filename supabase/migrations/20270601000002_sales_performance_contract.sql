@@ -51,7 +51,7 @@ BEGIN
   SELECT coalesce(jsonb_agg(row.value||jsonb_build_object('manual_recorded_cents',b.manual_minor,'provider_verified_cents',b.provider_minor,
    'remaining_cents',b.remaining_minor,'collection_required',b.remaining_minor>0 AND row.value->>'status' IN ('issued','recorded')) ORDER BY row.ordinality),'[]'::jsonb)
   INTO rows FROM jsonb_array_elements(result->'rows') WITH ORDINALITY row(value,ordinality)
-  JOIN public._sales_invoice_balance_rows(_expected_tenant_id) b ON b.invoice_id=(row.value->>'id')::uuid;
+  CROSS JOIN LATERAL public._sales_invoice_balance_rows(_expected_tenant_id,(row.value->>'id')::uuid) b;
  ELSE
   SELECT coalesce(jsonb_agg(row.value||CASE WHEN p.evidence_kind='provider_verified' THEN jsonb_build_object('provenance','provider_verified','provider',p.provider) ELSE '{}'::jsonb END ORDER BY row.ordinality),'[]'::jsonb)
   INTO rows FROM jsonb_array_elements(result->'rows') WITH ORDINALITY row(value,ordinality)
@@ -92,6 +92,11 @@ BEGIN
   OR p_range_start>=p_range_end OR p_range_end>p_as_of OR p_range_end-p_range_start>interval '10 years'
   OR p_dimensions IS NULL OR jsonb_typeof(p_dimensions)<>'object' OR octet_length(p_dimensions::text)>500 THEN
   RAISE EXCEPTION USING ERRCODE='22023',MESSAGE='SALES_METRIC_CONTRACT_INVALID';
+ END IF;
+ IF p_metric_key IN ('sales.opportunities.won_current_close_date','sales.opportunities.lost_current_close_date')
+  AND (p_range_start<>date_trunc('day',p_range_start AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+   OR p_range_end<>date_trunc('day',p_range_end AT TIME ZONE 'UTC') AT TIME ZONE 'UTC') THEN
+  RAISE EXCEPTION USING ERRCODE='22023',MESSAGE='SALES_METRIC_DATE_RANGE_REQUIRES_UTC_MIDNIGHT';
  END IF;
  IF EXISTS(SELECT 1 FROM jsonb_object_keys(p_dimensions) k WHERE k NOT IN ('pipeline_id','stage_id'))
   OR (p_dimensions<>'{}'::jsonb AND p_metric_key NOT LIKE 'sales.opportunities.%' AND p_metric_key<>'sales.pipeline.open_value') THEN

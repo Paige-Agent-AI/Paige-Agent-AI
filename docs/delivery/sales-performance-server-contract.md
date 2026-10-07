@@ -16,7 +16,7 @@ Migration `20270601000002_sales_performance_contract.sql` was created by the ins
 
 Defense in depth rechecks auth.uid, current workspace, profile active workspace, active owner/admin membership, non-deleted/non-banned user and eligible tenant lifecycle. Platform-owner standing alone grants no finance read. No tenant authority is taken from URLs or record labels.
 
-Only version 1.0.0 and the eleven keys below are admitted. Finite ordered half-open ranges are bounded to ten years, with end <= as_of. Pipeline/stage dimensions are UUIDs, validated within the tenant and against each other. Unknown dimensions, invoice/payment IDs and provider filters refuse. Non-opportunity metrics admit no dimensions in this first version.
+Only version 1.0.0 and the eleven keys below are admitted. Finite ordered half-open ranges are bounded to ten years, with end <= as_of. Won/lost close-date metrics require UTC-midnight boundaries and reject noon or sub-day ranges; timestamp metrics retain exact instant boundaries. Pipeline/stage dimensions are UUIDs, validated within the tenant and against each other. Unknown dimensions, invoice/payment IDs and provider filters refuse. Non-opportunity metrics admit no dimensions in this first version.
 
 ## Exact metric definitions — version 1.0.0
 

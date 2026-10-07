@@ -61,7 +61,9 @@ export function classifyVoiceReadiness(
       ok: false,
       code: "calling_number_needs_verification",
       reason_code: "multiple_active_primary_numbers",
-      message: "More than one number is set as this workspace's calling number. Choose one in Settings → Communications.",
+      // Defensive branch (a per-tenant partial unique index normally makes this
+      // unreachable): the fix is a data correction, not a user-facing control.
+      message: "More than one number is marked as this workspace's calling number. Contact support so we can fix which one is used.",
     };
   }
   const primary = primaryNumbers[0];

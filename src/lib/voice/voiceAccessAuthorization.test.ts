@@ -98,7 +98,9 @@ describe("INT-345 voice readiness fixtures (generic states, no identifiers)", ()
       ok: false,
       reason_code: "multiple_active_primary_numbers",
     });
-    expect(verdict.message).toContain("Settings");
+    // Unreachable in practice (per-tenant partial unique index) — the honest
+    // remedy is a platform-side data correction, never a self-service control.
+    expect(verdict.message).toContain("support");
   });
 
   it("Fixture B3 — primary bound to a different subaccount", () => {

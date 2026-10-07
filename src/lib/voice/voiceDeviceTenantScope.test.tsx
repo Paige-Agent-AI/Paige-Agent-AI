@@ -13,6 +13,8 @@ const harness = vi.hoisted(() => ({
   tenantId: "tenant-a",
   holdRegister: false,
   registerGate: null as null | (() => void),
+  holdMint: false,
+  mintGate: null as null | (() => void),
   mints: 0,
   devices: [] as Array<{ token: string; destroyed: boolean; instance: unknown }>,
 }));
@@ -26,6 +28,11 @@ vi.mock("@/integrations/supabase/client", () => ({
     functions: {
       invoke: vi.fn(async () => {
         harness.mints += 1;
+        if (harness.holdMint) {
+          await new Promise<void>((resolve) => {
+            harness.mintGate = resolve;
+          });
+        }
         return { data: { token: `synthetic-token-${harness.mints}` }, error: null };
       }),
     },
@@ -105,6 +112,8 @@ beforeEach(() => {
   harness.tenantId = "tenant-a";
   harness.holdRegister = false;
   harness.registerGate = null;
+  harness.holdMint = false;
+  harness.mintGate = null;
   harness.mints = 0;
   harness.devices = [];
   latestVoice = null;
@@ -235,6 +244,54 @@ describe("VoiceDeviceProvider workspace-scope teardown (INT-345)", () => {
     expect(harness.devices[0].destroyed).toBe(true);
     expect(latestVoice?.status).toBe("idle");
     expect(latestVoice?.activeCall).toBeNull();
+  });
+
+  it("clears a needs_config surface (old tenant's copy) on tenant switch — no refs exist to destroy", async () => {
+    // Workspace A resolves needs_config (no Device is ever constructed).
+    const invoke = (await import("@/integrations/supabase/client")).supabase.functions
+      .invoke as unknown as { mockImplementationOnce: (fn: () => Promise<unknown>) => void };
+    invoke.mockImplementationOnce(async () => ({
+      data: { needs_config: true, error: "calling_not_configured", message: "A-copy" },
+      error: null,
+    }));
+    await renderProvider();
+    await act(async () => {
+      latestVoice?.warmUp();
+    });
+    expect(latestVoice?.status).toBe("needs_config");
+    expect(latestVoice?.reason).toBe("A-copy");
+
+    // Switch with zero refs held — the old tenant's readiness copy must NOT
+    // survive into workspace B's surface.
+    await act(async () => {
+      harness.tenantId = "tenant-b";
+      await renderProvider();
+    });
+    expect(latestVoice?.status).toBe("idle");
+    expect(latestVoice?.reason).toBeNull();
+  });
+
+  it("paints no state when the mint resolves AFTER the workspace switched (late needs_config)", async () => {
+    harness.holdMint = true;
+    await renderProvider();
+    await act(async () => {
+      latestVoice?.warmUp();
+    });
+    expect(latestVoice?.status).toBe("connecting");
+
+    // Switch while the mint is in flight, then release it.
+    await act(async () => {
+      harness.tenantId = "tenant-b";
+      await renderProvider();
+    });
+    expect(latestVoice?.status).toBe("idle");
+
+    await act(async () => {
+      harness.mintGate?.();
+    });
+    // The late mint's outcome belongs to tenant A — B's surface stays idle.
+    expect(latestVoice?.status).toBe("idle");
+    expect(latestVoice?.reason).toBeNull();
   });
 
   it("keeps the Device when the tenant context merely resolves (no switch yet, nothing booted)", async () => {

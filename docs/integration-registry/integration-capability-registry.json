@@ -469,7 +469,7 @@
         "Stripe API (platform)",
         "Connect (direct-charge on tenant account) — future"
       ],
-      "safe_readable_context": "Safe billing-status fields per the platform-billing source contract; never card data or raw payloads.",
+      "safe_readable_context": "Safe platform billing-status fields remain separate from tenant Sales merchant readiness. Solo Settings Integrations reads a closed tenant-scoped projection of merchant environment, binding version, provider-checked charges/payouts/details/payment permission and freshness; never secrets, raw requirements or card data.",
       "allowed_writes_external_effects": "Platform charges/subscriptions (Paige-held). §38: Paige is NEVER merchant-of-record for a tenant->client charge and never holds tenant funds — those run on the tenant's own rails (prohibited lane).",
       "authority_lane": [
         "read",

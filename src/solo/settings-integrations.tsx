@@ -14,6 +14,8 @@ import { useN8nOAuth, n8nMcpStateWords, type N8nReadiness } from "./data/useN8nO
 import { useMcpConnection } from "./data/useMcpConnection";
 import { useMcpCapabilities } from "./data/useMcpCapabilities";
 import { useZapierApi, readZapierApi, zapierApiWords, type ZapierApiReadiness } from "./data/useZapierApi";
+import { useStripeMerchant, stripeMerchantWords } from "./data/useStripeMerchant";
+import { StripeMerchantDrawer } from "./settings-integrations-stripe";
 import { supabase } from "@/integrations/supabase/client";
 import { armOAuthReturn } from "./data/oauthReturn";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -171,8 +173,8 @@ const PROVIDERS: ReadonlyArray<ProviderRow> = [
     note: "" },
   { id: "quickbooks", name: "QuickBooks", kind: "Financial tools", filter: "financial", connectable: false,
     note: "The sync seams exist, but nothing yet proves a connection belongs to this workspace, so no setup is offered." },
-  { id: "stripe", name: "Stripe Connect", kind: "Commerce", filter: "financial", connectable: false,
-    note: "Payout records exist at the platform level. They do not show that this workspace is connected, so nothing is claimed." },
+  { id: "stripe", name: "Stripe Connect", kind: "Commerce", filter: "financial", connectable: true,
+    note: "Connect the account your business uses to receive customer payments." },
   { id: "docusign", name: "DocuSign", kind: "Documents", filter: "documents", connectable: false,
     note: "The signature seams are older than the tenant-safe rules this surface follows, so setup is not offered yet." },
   { id: "apollo", name: "Apollo", kind: "Client data", filter: "client-data", connectable: false,
@@ -831,6 +833,7 @@ export function SoloIntegrationsView() {
   const api = useN8nConnection();
   const oauth = useN8nOAuth();
   const social = useSocialConnections();
+  const stripe = useStripeMerchant();
   /** One instance, read twice: the Automation group renders these tiles and the filter bar counts
    *  them. A chip that promises a number the wall below it does not show is a lie (§13). */
   const gw = useMcpGateway();
@@ -858,6 +861,16 @@ export function SoloIntegrationsView() {
     }
   }, [location.pathname, location.search, navigate, activeTenantId, tenantLoading, scopeKey]);
   useEffect(() => { setOpen(null); setSocialOpen(null); }, [scopeKey, tenantLoading]);
+  useEffect(() => {
+    if (tenantLoading || !activeTenantId) return;
+    const params = new URLSearchParams(location.search);
+    if (!params.has("stripe_setup")) return;
+    params.delete("stripe_setup");
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+    const row = PROVIDERS.find(candidate => candidate.id === "stripe");
+    if (row) setOpen({ row, scope: scopeKey });
+    // A return URL only opens the receipt. It never changes readiness or dispatches another attempt.
+  }, [location.pathname, location.search, navigate, activeTenantId, tenantLoading, scopeKey]);
   useEffect(() => {
     if (tenantLoading || !activeTenantId) return;
     const params = new URLSearchParams(location.search);
@@ -967,7 +980,10 @@ export function SoloIntegrationsView() {
             </> : row.id === "mcp" ? <>
               <span className="ig-n8n-tile-state"><span>API connection</span><N8nStateLabel value={status.zapierApiError||!status.zapierApi?{account:"Status unavailable",tone:"neutral"}:{account:zapierApiWords(status.zapierApi.state),tone:status.zapierApi.state==="connected"?"ok":status.zapierApi.state==="not_connected"?"neutral":"warn"}}/></span>
               <span className="ig-n8n-tile-state"><span>Paige tools (MCP)</span><N8nStateLabel value={status.mcpError?{account:"Status unavailable",tone:"neutral"}:live}/></span>
-            </> : <span className="ig-card-state" data-tone="neutral"><i aria-hidden />Not available</span>}
+            </> : row.id === "stripe" ? <span className="ig-card-state" data-tone={stripe.state === "ready" ? "ok" : "neutral"}>
+              <i aria-hidden />{stripe.loading ? "Checking connection…" : stripe.error ? "Status unavailable" : stripeMerchantWords[stripe.state]}
+              {stripe.environment && ` · ${stripe.environment.toUpperCase()}`}
+            </span> : <span className="ig-card-state" data-tone="neutral"><i aria-hidden />Not available</span>}
           </span>
         </button>
       </li>
@@ -1006,7 +1022,9 @@ export function SoloIntegrationsView() {
         </section>)}
       </>}
     </>}
-    {open && !tenantLoading && open.scope === scopeKey && <ProviderPanel initialMcp={open.initialMcp} m={oauth} a={api} key={`${scopeKey}:${open.row.id}`} row={open.row} onClose={() => setOpen(null)} onChanged={status.retry} />}
+    {open && !tenantLoading && open.scope === scopeKey && (open.row.id === "stripe"
+      ? <StripeMerchantDrawer key={`${scopeKey}:stripe`} merchant={stripe} onClose={() => setOpen(null)} />
+      : <ProviderPanel initialMcp={open.initialMcp} m={oauth} a={api} key={`${scopeKey}:${open.row.id}`} row={open.row} onClose={() => setOpen(null)} onChanged={status.retry} />)}
     {socialOpen && !tenantLoading && socialOpen.scope === scopeKey && <SocialDrawer social={social} platform={socialOpen.platform} key={`${scopeKey}:social:${socialOpen.platform.key}`} onClose={() => setSocialOpen(null)} />}
   </div>;
 }

@@ -2,6 +2,24 @@
 
 These instructions apply to Codex, Claude, and every other implementation agent working in this repository.
 
+## Mandatory Owner North Star and current-priority grounding (FIRST — every agent startup)
+
+**Binding owner directive.** BEFORE engineering or coordinator handoff, read [the repo Owner North Star and Mandatory Agent Startup Charter](docs/doctrine/paige-owner-north-star-agent-startup.md), the [Google Drive Owner North Star Charter](https://docs.google.com/document/d/1_SiMeU2ZJT4IDamfDZ2REmC5UoVJSgij0P1x4HDpcTw/edit) and [Google Drive Coordinator Bootstrap Standard](https://docs.google.com/document/d/1lwc1RX5MgEF0JgAHlIQH8jLFh0laff1ptsSUN0OXtSE/edit) if connected. A lack of Google access does NOT allow ignoring the checked-in owner's rules; report unverified external sources if they matter.
+
+**No self-directed reprioritization.** The owner's latest explicit request and previously approved design control **WHAT** to deliver, WHERE in the product, and WHAT is out of scope. Roadmap order, engineering preference, coordinator suggestions and inferred backend dependencies do not supersede the owner's direct objective. Do not turn a UI-first request into an unasked backend program.
+
+**Product/visible UI North Star:** one governed AI COO platform, Solo-first, not disconnected tools. Every assignment MUST declare `SHELL: SOLO` (unless another is explicitly granted), excluded `PLATFORM_OPERATOR`, domain, exact route, current owner priority, approved design and acceptance. ONE canonical Solo shell across all eligible tenants with role/permission/data-driven differences only; Platform Operator is a distinct administrative shell.
+
+**Current owner UI-first release order:** Get existing approved production UI working NOW in three distinct homes:
+- **Sales → Performance:** Sales commercial KPIs, pipeline, invoicing, receivables, recorded payments and approved interactive charts, auto-rendering on refresh and view/period changes.
+- **Marketing → Analytics:** Marketing-specific leads/source/UTM, campaign, channel, acquisition and content outcomes. Preserve the owner-approved nine-tab Marketing baseline unless the owner approves a material new IA.
+- **Settings → Analytics:** General business/operating analytics **directly below Integrations**, before Security & data, with Overview, Business Health, Operations, Team, AI & Usage, Data Health. No duplicate top-level Solo Analytics; do not duplicate Sales/Marketing.
+Use existing safe canonical reads; show honest `LIVE/PARTIAL/UNAVAILABLE` instead of fabricated customer/provider facts. Future COO backend/Chat/Live expansion is a separate owner-directed phase, not a UI launch pretext. Preserve genuine security hard stops for the affected unsafe path.
+
+**Agent independence:** Once scope and release authority are granted, own the non-destructive implementation through independent NON-AUTHOR review, required exact-head CI, merge into live main, and authorized production verification without routine coordinator permission loops. Fix in-scope defects; record/route/**PARK unrelated defects** and continue safe work. Do not create backend schemas or new shared engines for UI convenience, reset production, move money, bypass tenant authority, or invent a second app/shell.
+
+**Mandatory startup summary before first code edit:** `OWNER OBJECTIVE | PRIORITY | NORTH STAR | SHELL & OUT-OF-SCOPE | EXACT DOMAIN/ROUTE | CURRENT APPROVED DESIGN | AVAILABLE DATA/TRUTH | SHARED OWNERS/ACTUAL COLLISIONS | EXECUTION AUTHORITY | PARKING/HARD STOP | VISIBLE ACCEPTANCE`. This is a briefing, not a new approval checkpoint.
+
 ## Mandatory routing
 
 1. Every software assignment starts by reading the installed Flow-by-Flow skill completely and following every routed reference.

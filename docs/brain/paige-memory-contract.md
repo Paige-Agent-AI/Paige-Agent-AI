@@ -18,9 +18,22 @@ CALLABLE SEAM over them, not a new table:
 
 - **Workspace memory** → `public.paige_owner_memory`, `(tenant_id, user_id)`-scoped; operator (God)
   rows are tenant-less (`tenant_id IS NULL`, read via the `is_platform_owner()` RLS branch). The §8
-  Owner-Ops sibling of `client_memory`.
+  Owner-Ops sibling of `client_memory`. **S5 (2026-10-07, #1788/#1801): this is the CANONICAL home
+  for the owner's own no-client continuity** — preferences, session summaries, business milestones,
+  extracted facts, and the owner's own credit-report context summary all write here through the
+  governed seam (always `proposed`, with `metadata.audience` marking `owner_personal` vs
+  `business_organizational`), and owner recall reads `get_paige_memory`. The no-client chat writers
+  no longer touch `client_memory`; the no-client semantic-search arm is retired (owner-memory
+  semantic recall belongs to the C6 projection). The 11 real legacy preference rows were migrated
+  with original timestamps/provenance (`metadata.legacy_source_id`, unique-indexed) and their
+  originals soft-retired. Deletion paths (`admin-delete-user`, `process-data-deletion`) wipe BOTH
+  homes. A workspace-shared business audience does NOT exist yet — `audience` metadata describes
+  intent, it grants nothing (INT-337, separately owned).
 - **Client memory** → `public.client_memory` (Client-Experience team; tenant derived via
-  `clients.tenant_id`, RESTRICTIVE). Governance complete; **not touched by Release C.**
+  `clients.tenant_id`, RESTRICTIVE). Holds CLIENT-relationship memory only: anything whose semantic
+  subject is a client/contact (coach notes, client milestones, client-scoped report uploads,
+  lender/funding/dispute facts). **S5 moved the owner's OWN no-client writes OUT of this table**;
+  client-scoped writers are unchanged.
 - **Conversation memory** → `paige_owner_memory` via `memory_type ∈ {decision, commitment,
   correction}`. **Never raw transcript** — the per-thread rolling summary stays in
   `paige_chat_threads.summary`.
@@ -28,7 +41,10 @@ CALLABLE SEAM over them, not a new table:
   task outcomes + lessons ONLY — never hidden reasoning or an unrestricted scratchpad.
 
 `paige_owner_memory.memory_type` is OPEN VOCAB (no DB CHECK) by design (§10 config-as-data); the
-governed seam enumerates the allowed types so the store cannot become a raw event dump.
+governed seam enumerates the allowed types so the store cannot become a raw event dump. S5 extended
+that enumeration with the owner-continuity kinds the platform's writers emit:
+`milestone_completed`, `open_loop`, `report_upload` (plus the pre-existing
+`preference`/`session_summary` etc.).
 
 ## The governed seam (the §10 callable contract — migration `20261223000000`)
 
@@ -123,6 +139,25 @@ bypasses the vocab + correction + confirmation discipline; prefer the seam.
   `process-data-deletion` (self-serve `forget` ships now). `match_paige_owner_memory`'s NULL-tenant `=`
   filter is a documented latent trap for a future operator semantic-recall path (a DIFFERENT function /
   owner-memory audience — separate handoff, not folded into the R3a client-memory slice).
+
+- **S5 AUDIENCE CUTOVER — SHIPPED + PRODUCTION VERIFIED (2026-10-07; #1788 merge `2c225d06`,
+  #1801 merge `f6f9e384`; migrations `20270599000000` backfill + `20270599000001` retire, both
+  applied):** the owner's own no-client memory lives in `paige_owner_memory` via the governed seam
+  (all writes `proposed`, audience-tagged; `declared∧validated` scope authority per INT-326).
+  Backfill proof: rerun-inserts-0 (unique partial index on `metadata->>'legacy_source_id'`; pgTAP
+  `supabase/tests/s5_owner_memory_backfill.sql`), 11 rows / 3 humans / 2 tenants migrated with
+  exact content/scope/timestamps, pre-existing rows unchanged by checksum. Production readback:
+  11 migrated active (all proposed, 0 duplicates), 18 canonical active total, 0 active legacy
+  rows with a live twin, all 12 historical explicit-signal source rows inactive (the 12th was
+  already inactive with no twin and was correctly not migrated), no hard delete. Authenticated
+  production drive 6/6 (canonical-only write, governed-read recall, workspace isolation with
+  honest workspace-relative absence, client-in-focus unchanged, client-memory surface free of
+  owner preferences, correction reflects immediately). Two independent review rounds on #1788
+  (2 P1 + 6 P2, all fixed — the seam-whitelist gap they caught is now in-suite enforced via the
+  harness fake) and one clean review on #1801. Owner two-workspace feel-check: ACCEPTANCE OWED
+  (no engineering owed). Open boundaries, separately owned: INT-337 (workspace-shared business
+  audience — the seam is strictly per-person today) and INT-070 (privacy deletion processor
+  lifecycle; S5 closed only the store-coverage half).
 
 **Cross-references:** §7 (memory is the moat) · §8 (Owner-Ops vs Client audiences) · §9/§51 (tenant
 isolation) · §10 (callable seam) · §18 (one home) · §59 (in-body caller scope) · §26 (voyage-3 @1024,

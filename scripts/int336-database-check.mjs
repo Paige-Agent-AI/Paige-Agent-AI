@@ -5,6 +5,8 @@ const parsed=new URL(url);if(!['localhost','127.0.0.1','[::1]'].includes(parsed.
 const root=path.resolve(import.meta.dirname,'..');
 const canonical=fs.readFileSync(path.join(root,'supabase/migrations/20261020100000_chat_turn_append_tenant_scope.sql'),'utf8');
 const migration=fs.readFileSync(path.join(root,'supabase/migrations/20270601000000_int336_interactive_thread_fence.sql'),'utf8');
+const issuanceFile=fs.readdirSync(path.join(root,'supabase/migrations')).find(f=>f.endsWith('_int346_server_issued_interactive_receipts.sql'));
+const issuance=issuanceFile?fs.readFileSync(path.join(root,'supabase/migrations',issuanceFile),'utf8').replace(/^begin;\r?$/mg,'').replace(/^commit;\r?$/mg,''):'';
 const prelude=`begin;
 do $$begin if to_regclass('public.paige_chat_threads') is not null then raise exception 'Use an empty isolated database';end if;
  if not exists(select 1 from pg_roles where rolname='authenticated')then create role authenticated;end if;
@@ -38,7 +40,8 @@ do $$declare r jsonb;begin
 end$$;
 reset role;set role authenticated;
 do $$declare r jsonb;begin r:=paige_chat_interactive_begin('${thread}','${b}','${a}','Newest text',false,false);if r->>'status'<>'duplicate'then raise exception 'running intent restarted';end if;end$$;
-select paige_chat_turn_append('${thread}','assistant','Interrupted after readback',null,null,null,null,null,
+reset role;set role service_role;
+select paige_chat_interactive_settle('${thread}','${actor}','${tenant}','${b}','Interrupted after readback',null,null,
  '{"interactive":{"request_intent_id":"${b}","effects":[{"tool":"comms_send_email","outcome":"outcome_unknown"}]},"turn_state":{"v":1,"state":"INTERRUPTED","mode":"action","tools":1,"rounds":1}}'::jsonb,null);
 reset role;set role service_role;
 select paige_chat_interactive_executor('${thread}','${actor}','${tenant}','${a}','release');
@@ -52,7 +55,7 @@ do $$declare r jsonb;begin
  perform set_config('test.tenant','${a}',false);begin perform paige_chat_interactive_begin('${thread}','${a}',null,'Foreign tenant',false,false);raise exception 'wrong tenant admitted';exception when insufficient_privilege then null;end;
 end$$;
 reset role;rollback;`;
-const proofSql=prelude+canonical.slice(canonical.indexOf('CREATE OR REPLACE FUNCTION'))+'\n'+migration+fixture;
+const proofSql=prelude+canonical.slice(canonical.indexOf('CREATE OR REPLACE FUNCTION'))+'\n'+migration+'\n'+(process.argv.includes('--emit-baseline')?'':issuance)+fixture;
 if(process.argv.includes('--emit-fixture')){process.stdout.write(proofSql);process.exit(0)}
 const run=spawnSync(process.env.PSQL_BIN??'psql',['-X','-v','ON_ERROR_STOP=1',url],{input:proofSql,encoding:'utf8'});
 if(run.status!==0){console.error(run.stderr);process.exit(run.status??1)}

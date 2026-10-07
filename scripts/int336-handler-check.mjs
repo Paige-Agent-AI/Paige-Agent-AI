@@ -13,17 +13,25 @@ const rec=scenario(status);const res=await capturedHandler()(req({interactive:{k
 const json=await res.json();assert.equal(json.code,'INTERACTIVE_'+status.toUpperCase());assert.equal(json.message_accepted,status==='duplicate');assert.equal(rec.rpc.some(x=>x.name==='paige_chat_interactive_executor'),false);
 assert.equal(rec.rpc.find(x=>x.name==='paige_chat_interactive_begin').client,'jwt');
 }
-const rec=scenario('accepted',{tables:{paige_chat_turns:[{role:'user',content:'Newest context',bundle_ref:{interactive:{request_intent_id:intent}}}]},rpcs:{paige_chat_interactive_executor:args=>({data:{latest:intent,executor:args.p_operation==='state'?null:intent,acquired:true},error:null})}});
+const rec=scenario('accepted',{tables:{paige_chat_turns:[{role:'user',content:'Newest context',bundle_ref:{interactive:{request_intent_id:intent}}}]},rpcs:{paige_chat_interactive_settle:{data:id(8),error:null},paige_chat_interactive_executor:args=>({data:{latest:intent,executor:args.p_operation==='state'?null:intent,acquired:true},error:null})}});
 const res=await capturedHandler()(req({clientId:id(7)})); await res.text();
 assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_interactive_executor'&&x.args.p_operation==='acquire').length,1);
 assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_interactive_executor'&&x.args.p_operation==='release').length,1);
 assert.ok(rec.from.find(x=>x.table==='paige_chat_turns'));
 assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_turn_append'&&x.args.p_role==='user').length,0);
 for(const proof of [null,{role:'assistant',bundle_ref:{interactive:{request_intent_id:intent},turn_state:{state:'INTERRUPTED'}}},{role:'system',bundle_ref:{interactive:{supersedes_intent_id:intent,stopped:true}}}]){
-const statusRec=scenario('accepted',{tables:{paige_chat_turns:proof?[proof]:[]},rpcs:{paige_chat_interactive_executor:{data:{latest:null,executor:null},error:null}}});
+const statusRec=scenario('accepted',{tables:{paige_chat_turns:proof?[proof]:[]},rpcs:{paige_chat_interactive_executor:{data:{latest:null,executor:null,terminal:false,stopped:false},error:null}}});
 const statusRes=await capturedHandler()(req({interactive:{kind:'status'}}));
-assert.deepEqual(await statusRes.json(),{executor_active:false,settled:!!proof});
+assert.deepEqual(await statusRes.json(),{executor_active:false,settled:false});
 assert.equal(statusRec.rpc.some(x=>x.name==='paige_chat_interactive_begin'||x.name==='paige_chat_turn_append'),false);
 assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor').every(x=>x.args.p_operation==='state'),true);
+}
+for (const evidence of [{terminal:true,stopped:false},{terminal:false,stopped:true}]) {
+ for (const executor of [null,intent]) {
+ const statusRec=scenario('accepted',{rpcs:{paige_chat_interactive_executor:{data:{latest:null,executor,...evidence},error:null}}});
+ const response=await capturedHandler()(req({interactive:{kind:'status'}}));
+ assert.deepEqual(await response.json(),{executor_active:executor!==null,settled:executor===null});
+ assert.equal(statusRec.from.some(c=>c.table==='paige_chat_turns'),false,'status must use canonical authority, not JSON');
+ }
 }
 console.log('PASS real handler: stop/replay/status scope, canonical settlement, JWT begin, service executor, authoritative history, early-exit token release, no second user append');

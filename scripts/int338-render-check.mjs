@@ -1,0 +1,63 @@
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { buildLaunchOptions, resolvePlaywright } from './live-drive/live-drive.mjs';
+const out = path.resolve(process.argv[2] ?? '../int338-render');
+fs.mkdirSync(out, { recursive: true });
+const port = 5215;
+const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'scripts/live-drive/harness/paige-chat-mount/attachment.vite.config.ts'], { stdio: ['ignore', 'pipe', 'pipe'] });
+const results = [];
+let browser;
+try {
+  await new Promise((resolve, reject) => { let log = ''; const timer = setTimeout(() => reject(new Error(log)), 60000); vite.stdout.on('data', d => { log += d; if (log.includes('ready in')) { clearTimeout(timer); resolve(); } }); vite.stderr.on('data', d => log += d); vite.on('exit', c => reject(new Error(`Vite ${c}: ${log}`))); });
+  const { chromium } = await resolvePlaywright();
+  browser = await chromium.launch(buildLaunchOptions());
+  for (const [width, height, layout, theme] of [[1536,770,'page','dark'],[1366,768,'drawer','light'],[1024,768,'page','dark'],[900,1000,'drawer','light'],[390,844,'page','dark']]) {
+    const context = await browser.newContext({ viewport: { width, height }, permissions: ['clipboard-read', 'clipboard-write'] });
+    const page = await context.newPage();
+    page.on('pageerror', error => console.log('Harness page error:', error.message));
+    await page.goto(`http://127.0.0.1:${port}/solo.html?attachment=1&scenario=normal&hold=4&followHold=4&layout=${layout}&theme=${theme}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    const input = page.getByRole('textbox', { name: 'Message PAIGE' }); await input.waitFor();
+    await input.focus();
+    await page.evaluate(() => navigator.clipboard.writeText('Native pasted contract language'));
+    await input.press('Control+V');
+    await page.waitForFunction(() => document.querySelector('textarea').value === 'Native pasted contract language');
+    await page.waitForFunction(() => !document.querySelector('button[aria-label="Send message"]').disabled);
+    await input.press('Enter'); await page.getByRole('button', { name: 'Stop PAIGE response' }).waitFor();
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32;
+      const context = canvas.getContext('2d'); context.fillStyle = '#2468ac'; context.fillRect(0, 0, 32, 32);
+      const png = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    });
+    await input.press('Control+V');
+    await page.getByRole('button', { name: /Remove .*attachment|Remove attachment/ }).waitFor();
+    const beforeSend = await page.evaluate(() => window.__c3.requests.filter(b => b.interactive?.kind === 'message').length);
+    if (beforeSend !== 1) throw new Error('Paste auto-sent');
+    await input.fill('What is in this screenshot?');
+    const measured = await page.evaluate(() => { const t = document.querySelector('textarea'); const r = t.getBoundingClientRect(); return { editable: !t.disabled, focused: document.activeElement === t, value: t.value, fontSize: getComputedStyle(t).fontSize, overflow: document.documentElement.scrollWidth > innerWidth, inputVisible: r.top >= 0 && r.bottom <= innerHeight }; });
+    if (!measured.editable || !measured.focused || measured.overflow || !measured.inputVisible) throw new Error(JSON.stringify(measured));
+    await page.evaluate(() => { const n = document.createElement('div'); n.textContent = 'INT-338 real component / local file input — NOT authenticated production'; n.style.cssText = 'position:fixed;top:0;left:0;background:black;color:white;z-index:99999;font:12px sans-serif'; document.body.append(n); });
+    await page.screenshot({ path: path.join(out, `${width}x${height}-${layout}-paste.png`) });
+    await input.press('Enter'); await input.fill('Next draft');
+    await page.waitForFunction(() => !document.querySelector('[role="status"]')?.textContent?.includes('Preparing attachment'));
+    await page.waitForFunction(() => window.__c3.requests.filter(b => b.interactive?.kind === 'message').length === 2);
+    const submitted = await page.evaluate(() => window.__c3.requests.filter(b => b.interactive?.kind === 'message'));
+    if (submitted.length !== 2 || !submitted[1].document?.base64 || submitted[1].interactive.supersedesIntentId !== submitted[0].requestIntentId) throw new Error('Attachment supersession missing or duplicated');
+    const dt = await page.evaluateHandle(() => { const d = new DataTransfer(); d.items.add(new File(['%PDF-1.4 test'], 'Document.pdf', { type: 'application/pdf' })); return d; });
+    const composer = page.locator('[data-solo-composer="true"]');
+    await composer.dispatchEvent('dragover', { dataTransfer: dt });
+    await page.getByText('Drop to attach', { exact: true }).waitFor();
+    await page.screenshot({ path: path.join(out, `${width}x${height}-${layout}-drag.png`) });
+    await composer.dispatchEvent('drop', { dataTransfer: dt });
+    await page.getByText('Document.pdf', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Stop PAIGE response' }).click();
+    if (await input.inputValue() !== 'Next draft' || !await page.getByText('Document.pdf', { exact: true }).isVisible()) throw new Error('Stop lost draft/attachment');
+    await page.getByRole('button', { name: /Remove .*attachment|Remove attachment/ }).click();
+    if (await input.inputValue() !== 'Next draft') throw new Error('Remove lost text');
+    results.push({ width, height, layout, theme, measured, pasteAutoSend: false, submittedMessages: submitted.length, documentMessages: submitted.filter(b => b.document).length, stopRetainedDraftAndFile: true });
+    await context.close();
+  }
+  fs.writeFileSync(path.join(out, 'results.json'), JSON.stringify(results, null, 2));
+  console.log('PASS: native clipboard text/image, real hook, busy Send supersession, drop, Stop retention, focus and geometry', results);
+} finally { if (browser) await browser.close(); vite.kill(); }

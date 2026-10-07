@@ -46,3 +46,13 @@ Commands: vitest hook/composer/scope/stream/ASK_USER/document/approval/turn/lega
 ## Review and limitations
 
 Non-author integrity_review performed preimplementation risk review and authored no changes. Final exact-head review and required CI must complete before merge; their exact results belong in the PR/closeout. Production deployment identifiers are recorded only after observed readback. Multi-file support and unsupported formats remain outside scope.
+
+## Verified release closeout — 2026-10-07
+
+INT-338 parent INT-304; Solo input UX hotfix. Product PR #1813 merged as `d1762a654cf9cb511be3138c777799c891094af4`, reviewed candidate `e8d42b4829280016508b173b458aa4880961f6f6`. Base3daf4360 reconciled with current main135e598381 (INT-339 Analytics, no Chat collision).
+
+Independent non-author integrity_review completed PASS on final head. Original29 tests8 PASS/21 FAIL →29 PASS; expanded attachment46/46 PASS, final focused+protected dictation52/52 PASS. Full CI653 files/9787 tests PASS. All five required workflows SUCCESS: general CI37659138154, Spine37659138080, migration-lint37659138104, UI evidence37659138178, Security37659138219. Two CI compatibility repairs preserved assertions: typed test fixtures; restored literal dictation guard plus adjacent equivalent file-processing guard. No guard exemption.
+
+Production Vercel `dpl_G6DJAEb6KxY5aZgYzQe6wG8TQNnU` READY at exact merge SHA; production target, app.paigeagent.ai/paigeagent.ai aliases. Public app serves `/assets/PaigeAIChat-TtyqMhTL.js` (SHA256 da5067a52a082129cd65733bd50602d2813e8db8d4041c14036da84e3e7f868d) with Drop to attach, Preparing attachment and handlePaste. Shared hook is delivered in `/assets/anchoredTranscriptScroll-DjMLJlP1.js` (SHA256 c0b8c849ce0c33d8c75bf084e166eb5685b0c172bd4c7e410f66b6124b4d39c9), with one-attachment/refused-multiple feedback and getAsFile. No migration or Edge deployment required.
+
+Strongest state: **MERGED + DEPLOYED — AUTHENTICATED OWNER FEEL-CHECK OWED**. Trusted browser retry exited before any tab/account inspection. Five local component/native-browser variants and public assets are not authenticated acceptance. Long existing owner conversation, real PAIGE image response, signed-in full-shell open/closed matrix across two tenants, zoom and physical keyboard/touch remain UNVERIFIED. Automated comment4209708560 correctly identified this gap; its merge-blocking interpretation was declined under explicit owner release authority despite helper failure, with the gap retained. No customer announcement/version. DEL allocation remains pending live-register access; no next ID inferred. Multi-file/media expansion and #1807 remain separate.

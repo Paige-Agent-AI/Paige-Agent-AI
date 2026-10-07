@@ -47,7 +47,7 @@ All rendered figures are synthetic fixtures in a dev-only harness, not customer 
 
 This UI slice depends on the versioned metric/evidence foundation. Exact-head hosted CI, authenticated owner/admin positive proof, member/foreign-scope negatives, full copied-link/back-forward checks in the authenticated Solo app, production persistence and owner-account verification remain owed.
 
-INT-339/#1811 is deployed with postdeployment database privacy assertions PASS. Signed-in transport proof and explicit privacy clearance remain pending. #1806 remains held.
+INT-339/#1811 is deployed. Controlled authenticated production GoTrue/PostgREST privacy verification passed on 2026-10-07 with exact synthetic cleanup confirmed. INT-339 PRIVACY BLOCKER CLEARED was sent directly to Sales. #1806 may resume its own release gates; this does not constitute the separate #1814 production shared-contract handoff or authenticated Settings UI acceptance.
 
 Platform Reach owns the shared governed metric reader and Chat registration. Typed Chat and Live must use the same authenticated metric/evidence call; those integrations and their proof remain owed. No separate Settings Chat calculator or voice path is introduced. The shared consumer contract records the INT-343 layer impacts.
 

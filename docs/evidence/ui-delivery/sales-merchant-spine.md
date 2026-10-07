@@ -25,7 +25,7 @@ MUST_PRESERVE: Billing separation; canonical invoices/payments; direct-charge ze
 ACCEPTANCE_CRITERIA: scoped status/GET refresh, exact approved setup handoff, canonical readback/Rail, stale/foreign/replay refusal and visible truthful recovery
 MOTION_PURPOSE: NONE: no new motion
 PROTECTED_SEAMS: shared pending confirmations/CapabilityKit/Rail; no paige-ai-chat hotfile change; no Sales continuation, ledger or scheduler
-INTERNAL_BUILD_IDENTITY: branch=fix/sales-merchant-spine; base=adc6ae2e17165df40f8af4e4888c84f45da18235; deployment=not deployed; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(tenant-stripe-connect and paige-ai-chat merged versions); evidence=this record
+INTERNAL_BUILD_IDENTITY: branch=fix/sales-merchant-spine; base=adc6ae2e17165df40f8af4e4888c84f45da18235; deployment=not deployed; environment=local; migrations=PROOF_OWED(20270601000001 production persistence); edge=PROOF_OWED(tenant-stripe-connect and paige-ai-chat merged versions); evidence=this record
 RELEASE_CHANNEL: development: implementation candidate; final production identity recorded only after independent verification
 RELEASE_CLASSIFICATION: internal-only: governed merchant foundation with provider acceptance still owed
 CUSTOMER_RELEASE_IDENTITY: none: no authenticated merchant/payment acceptance claim
@@ -48,3 +48,4 @@ The actual-component harness uses synthetic transport only. Handler tests mock p
 One canonical approval authorizes only the exact merchant act, tenant, environment, binding and provider configuration snapshot. A setup proposal does not authorize invoice/payment or a commercial package. Historical pending creation is never cleared or recreated by this repair.
 
 Impeccable review uses the existing direction and complete setup/recovery experience. Final independent non-author exact-head review and required CI are recorded in the PR before merge. No product/provider acceptance claim is substituted for those states.
+

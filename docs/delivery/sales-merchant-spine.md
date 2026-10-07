@@ -30,3 +30,5 @@ Owner authorization covers implementation/review/merge/deploy of this bounded fl
 ## Evidence
 
 Implementation, automated, rendered, exact-head review, merged, deployed and authenticated acceptance are recorded separately in the UI evidence and PR. No completion or provider-readiness claim is made by this work packet.
+
+Catalogue repair: migration 20270601000001 extends the existing list_tool_autonomy function with the two merchant actions, preserving prior admission and settings. No new table or authority store. Receipt-coverage declarations bind both actions to existing canonical recordCapabilityRun. Required CI and independent exact-head review remain release gates.

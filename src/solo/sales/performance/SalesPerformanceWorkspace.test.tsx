@@ -1,0 +1,22 @@
+import React, { act } from "react";
+import { createRoot } from "react-dom/client";
+import { expect, it, vi } from "vitest";
+const mocks=vi.hoisted(()=>({listener:()=>{},removeQueries:vi.fn(),mounts:0,actor:"first"}));
+vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{onAuthStateChange:(listener:()=>void)=>{mocks.listener=listener;return{data:{subscription:{unsubscribe:()=>{}}}};}}}}));
+vi.mock("@tanstack/react-query",()=>({useQueryClient:()=>({removeQueries:mocks.removeQueries})}));
+vi.mock("./useSalesPerformanceMetrics",()=>({useSalesPerformanceMetrics:()=>({metrics:[],phase:"ready",retry:()=>{},unavailableKeys:{}})}));
+vi.mock("../../data/useAnalyticsEvidence",()=>({useAnalyticsEvidence:()=>{const[actor]=React.useState(()=>{mocks.mounts++;return mocks.actor;});return{bundle:{actor},loading:false,isError:false,retry:()=>{}};}}));
+vi.mock("./SalesPerformance",()=>({SalesPerformance:({stageFunnel}:{stageFunnel:{actor:string}})=><output>{stageFunnel.actor}</output>}));
+import { SalesPerformanceWorkspace } from "./SalesPerformanceWorkspace";
+(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT=true;
+it("remounts the legacy stage consumer and removes actor-bound caches on same-workspace auth change",async()=>{
+ const host=document.createElement("div");document.body.append(host);const root=createRoot(host);
+ await act(async()=>root.render(<SalesPerformanceWorkspace epoch="test-workspace" onNavigate={()=>{}}/>));
+ expect(host.textContent).toBe("first");mocks.actor="second";await act(async()=>mocks.listener());
+ expect(host.textContent).toBe("second");expect(mocks.mounts).toBe(2);
+ const predicate=mocks.removeQueries.mock.calls[0][0].predicate;
+ expect(predicate({queryKey:["analytics-evidence","metric","month","test-workspace"]})).toBe(true);
+ expect(predicate({queryKey:["analytics-evidence-revalidation","metric","month","test-workspace","ref"]})).toBe(true);
+ expect(predicate({queryKey:["analytics-evidence","metric","month","other-workspace"]})).toBe(false);
+ act(()=>root.unmount());host.remove();
+});

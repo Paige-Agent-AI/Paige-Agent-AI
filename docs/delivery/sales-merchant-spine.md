@@ -32,3 +32,11 @@ Owner authorization covers implementation/review/merge/deploy of this bounded fl
 Implementation, automated, rendered, exact-head review, merged, deployed and authenticated acceptance are recorded separately in the UI evidence and PR. No completion or provider-readiness claim is made by this work packet.
 
 Catalogue repair: migration 20270601000007 extends the existing list_tool_autonomy function with the two merchant actions, preserving prior admission and settings. No new table or authority store. Receipt-coverage declarations bind both actions to existing canonical recordCapabilityRun. Required CI and independent exact-head review remain release gates.
+
+## Resumed release candidate — 2026-10-07
+
+Analytics supplied explicit INT-339 privacy clearance. This clears the external hold only; merchant/provider acceptance remains separate. Fresh-main composition at e14b276811b9c9aa2321963746ee55743dd0be9b received independent non-author COMPLETE/SHIP: 143 focused UI/Chat checks, 319 provider-neutral payment/merchant checks, 18 catalogue and 20 merchant concurrency/integrity PostgreSQL assertions passed. No provider POST or money movement occurred.
+
+Production already persisted later migrations while the candidate was held. The unpersisted merchant catalogue migration was therefore renamed from version01 to version07, with identical SQL and atomic references. Exact-head affected-surface review at 6e8803a8856662a1c201cb6515996b20b1577261: COMPLETE/SHIP. The renamed local catalogue proof passed all18 assertions. Shared migrations05/06 must persist before07 promotion; no include-all or production ledger repair is permitted.
+
+The existing disposable PR preview retained the old version01 and refused the renamed candidate. The development-only reset hit a provider shared-memory limit; the disposable branch was removed so the existing GitHub integration can rebuild it cleanly. Production was not reset or modified. Fresh exact-head hosted CI and actual production migration/Edge/Vercel readback remain mandatory. Authenticated merchant setup, seller readiness and TEST settlement remain UNVERIFIED; this release does not initiate onboarding or activate a merchant.

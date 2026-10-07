@@ -30,10 +30,11 @@ CALLABLE SEAM over them, not a new table:
   homes. A workspace-shared business audience does NOT exist yet — `audience` metadata describes
   intent, it grants nothing (INT-337, separately owned).
 - **Client memory** → `public.client_memory` (Client-Experience team; tenant derived via
-  `clients.tenant_id`, RESTRICTIVE). Holds CLIENT-relationship memory only: anything whose semantic
-  subject is a client/contact (coach notes, client milestones, client-scoped report uploads,
-  lender/funding/dispute facts). **S5 moved the owner's OWN no-client writes OUT of this table**;
-  client-scoped writers are unchanged.
+  `clients.tenant_id`, RESTRICTIVE). Governance complete; not touched by Release C. Holds
+  CLIENT-relationship memory only: anything whose semantic subject is a client/contact (coach
+  notes, client milestones, client-scoped report uploads, lender/funding/dispute facts). **S5
+  moved the owner's OWN no-client writes OUT of this table**; client-scoped writers are
+  unchanged.
 - **Conversation memory** → `paige_owner_memory` via `memory_type ∈ {decision, commitment,
   correction}`. **Never raw transcript** — the per-thread rolling summary stays in
   `paige_chat_threads.summary`.

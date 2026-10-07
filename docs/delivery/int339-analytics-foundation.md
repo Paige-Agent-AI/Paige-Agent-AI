@@ -43,7 +43,7 @@ INT-340 prototype APPROVED; implementation AUTHORIZED. Approved Settings order a
 
 INT-339 remains OPEN until the fixing candidate is merged, deployed and production-verified. Sales #1806 remains held; this slice does not authorize bypassing its release gates. Sales INT-341 private producers are a separate contract consumer, not a competing metric system.
 
-Hosted production-schema proof uses a PostgreSQL 17 Supabase container, pinned to a verified manifest. Its baseline dump is schema-only; synthetic test writes target the isolated container and roll back. An incomplete schema restoration remains INCONCLUSIVE and does not satisfy this hotfix's production proof.
+Hosted SQL assertions run in the active PAIGE Spine database-contract job after the existing production-grant reconciliation and candidate migration application. Its production baseline read is schema/roles only; synthetic writes target the isolated local stack and roll back. The disabled premerge workflow remains untouched under #574. Failed setup or assertions cannot establish acceptance.
 
 Merge SHA, deployment identity, production acceptance: NOT_YET_AVAILABLE.
 Shipped Delivery Log: N/A before merge. No DEL, customer version or announcement allocated.

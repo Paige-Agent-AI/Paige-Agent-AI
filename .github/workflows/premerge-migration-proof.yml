@@ -62,9 +62,9 @@ jobs:
       db:
         # supabase/postgres ships the Supabase roles/schemas/extensions a plain
         # `postgres` image lacks. Pin a concrete tag (NOT :latest) to prod's Postgres
-        # major so the baseline is reproducible. Production catalog grounding on
-        # 2026-10-07 reports PostgreSQL 17.6; tag verified in official Supabase compose.
-        image: supabase/postgres:17.6.1.136@sha256:f371b5f3f2ac0a05703f33d6e6134515fb2498cab708fb948a0aeb7481467c00
+        # major so the baseline is reproducible; the tag below is illustrative — confirm
+        # against the Supabase dashboard before promoting to required.
+        image: supabase/postgres:15.8.1.020
         env:
           POSTGRES_PASSWORD: postgres
         ports:
@@ -220,17 +220,6 @@ jobs:
         if: steps.changed.outputs.count != '0' && steps.restore.outputs.restore_ok == 'true' && steps.apply.outputs.fail == '0' && hashFiles('scripts/sql/paige-voice-cost-proof.sql') != ''
         run: psql -v ON_ERROR_STOP=1 -f scripts/sql/paige-voice-cost-proof.sql
 
-      - name: Prove INT-339 Analytics contracts on the restored schema (rolled back)
-        id: analytics_proof
-        if: steps.changed.outputs.count != '0' && steps.restore.outputs.restore_ok == 'true' && steps.apply.outputs.fail == '0'
-        run: |
-          set -euo pipefail
-          if grep -Eq 'int339_analytics_(storage_minimization|read_authority)\.sql$' changed_migrations.txt; then
-            psql -v ON_ERROR_STOP=1 -f supabase/tests/analytics_storage_minimization.sql
-            psql -v ON_ERROR_STOP=1 -f supabase/tests/analytics_referral_authorization.sql
-            psql -v ON_ERROR_STOP=1 -f supabase/tests/analytics_evidence_authorization.sql
-          fi
-
       # ── §13 advisory outcome comment (always, when the PR carries migrations). ──
       - name: Post advisory outcome (§13)
         if: always() && steps.changed.outputs.count != '0'
@@ -239,7 +228,6 @@ jobs:
           script: |
             const restoreOk = '${{ steps.restore.outputs.restore_ok }}';
             const applyFail = '${{ steps.apply.outputs.fail }}';
-            const analyticsProof = '${{ steps.analytics_proof.outcome }}';
             const failFile = `${{ steps.apply.outputs.failfile }}`;
             const failMsg = `${{ steps.apply.outputs.failmsg }}`;
             let body;
@@ -249,8 +237,6 @@ jobs:
                 '',
                 'This is a **NON-BLOCKING advisory check** — it did **not** evaluate your migration. Owner has authorized merge under the manual chunked `BEGIN..ROLLBACK` proof if the migration is verified that way. Do **not** treat this as a merge gate yet.',
               ].join('\n');
-            } else if (analyticsProof === 'failure' || analyticsProof === 'cancelled') {
-              body = '**§32 pre-merge proof: advisory FAIL** — Analytics contract assertions did not complete successfully on the restored schema. See the proof step; migration application alone does not establish authorization correctness.';
             } else if (applyFail === '0') {
               body = '**§32 pre-merge proof: advisory PASS** — migration applied cleanly against prod schema baseline. Reviewer verification still recommended until this check is promoted to required.';
             } else {

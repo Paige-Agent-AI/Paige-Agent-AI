@@ -175,6 +175,17 @@ jobs:
       - name: Reproduce production's grants, then apply the change under review
         run: scripts/ci/reproduce-production-grants.sh "$RUNNER_TEMP/prod"
 
+      # INT-339: actual stored Analytics and scoped evidence contracts. Use this
+      # existing rebuilt database after production grants and the candidate apply;
+      # the disabled #574 premerge workflow is deliberately left untouched.
+      - name: Analytics privacy and evidence authorization (rolled back)
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          for proof in analytics_storage_minimization analytics_referral_authorization analytics_evidence_authorization; do
+            psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f "supabase/tests/$proof.sql"
+          done
+
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql

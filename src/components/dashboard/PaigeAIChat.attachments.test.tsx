@@ -15,7 +15,7 @@ const harness = vi.hoisted(() => ({
   liveVoiceTurn: null as ((text: string, sink: LiveVoiceSink) => Promise<void>) | null,
   liveInterrupt: null as (() => void) | null,
   ensureThread: vi.fn(async () => "thread-created"),
-  loadTurns: vi.fn(async () => [] as Array<{ role: string; content: string }>),
+  loadTurns: vi.fn(async () => [] as Array<{ id?: string; role: string; content: string; bundle_ref?: unknown }>),
 }));
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
@@ -160,7 +160,7 @@ describe("INT-338 real composer attachment integration", () => {
   };
   const remove = () => host.querySelector<HTMLButtonElement>('button[aria-label="Remove attachment"]');
   it.each(["paste", "drop"] as const)("%s during Thinking stages once and Send supersedes with one document", async route => {
-    const bodies: Array<any> = []; const controllers: ReadableStreamDefaultController<Uint8Array>[] = []; const signals: AbortSignal[] = [];
+    const bodies: Array<{ requestIntentId: string; interactive: { kind: string; supersedesIntentId?: string }; document?: { base64: string } }> = []; const controllers: ReadableStreamDefaultController<Uint8Array>[] = []; const signals: AbortSignal[] = [];
     vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
       const b = JSON.parse(String(init.body)); if (b.interactive?.kind !== "message") return new Response(JSON.stringify({ settled: true }));
       bodies.push(b); signals.push(init.signal as AbortSignal);
@@ -221,7 +221,7 @@ describe("INT-338 real composer attachment integration", () => {
   it.each(["paste", "drop"] as const)("%s beside ASK_USER remains a new message without answer or approval authority", async route => {
     harness.loadTurns.mockResolvedValue([
       { role: "user", content: "Plan onboarding" },
-      { id: "question", role: "assistant", content: "When should it start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 1, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a", question: "When should it start?", options: [], multi: false, allow_other: true, needs: "date", objective: null } } } as any,
+      { id: "question", role: "assistant", content: "When should it start?", bundle_ref: { turn_state: { v: 1, state: "ASK_USER", mode: "clarify", rounds: 1, tools: 0, waiting_on: { kind: "choice" } }, paige_ask: { v: 1, ask_id: "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a", question: "When should it start?", options: [], multi: false, allow_other: true, needs: "date", objective: null } } },
     ]);
     await render({ activeThreadId: "standing-question" }); await waitForWritable();
     await stage(file(), route); await type("Read this first");

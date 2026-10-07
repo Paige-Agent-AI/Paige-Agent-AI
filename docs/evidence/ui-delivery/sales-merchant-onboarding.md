@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: dev-only actual-component mount scripts/live-drive/harness
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: workspace owner/admin connects the account their business uses to receive customer payments
 VISUAL_DIRECTION: PASS: incumbent Solo Integrations contextual drawer and ig-* styles; no navigation redesign or new visual identity
 AUTOMATED_EVIDENCE: PASS: 77 focused UI tests; 256 payment tests including 50 merchant tests; 20 real PostgreSQL assertions in disposable local cluster; uncertain start regression failed first (one failure, nine passes), then repaired
-STATIC_EVIDENCE: PASS: TypeScript ratchet zero new diagnostics (baseline/current 10), production build PASS, migration-version and definer-function lint PASS, diff-check PASS; exact-head required CI remains pending
+STATIC_EVIDENCE: PASS: TypeScript ratchet zero new diagnostics (baseline/current 10), production build PASS, migration-version and definer-function lint PASS, final candidate diff-check PASS
 RENDERED_EVIDENCE: PASS: 29 local actual-component cases; committed sales-merchant-onboarding/results.json and viewport/state PNGs; synthetic transport, not real merchant data
 BEHAVIORAL_EVIDENCE: PASS: dev-only drive opens actual drawer, measures bounds/overflow and closes with Escape; unit tests cover explicit start/refresh, permission, safe projection and stale-workspace response refusal
 AUTHENTICATED_RUNTIME: UNVERIFIED: no authenticated owner onboarding or Stripe TEST merchant/payment has been executed
@@ -25,13 +25,13 @@ MUST_PRESERVE: Settings Billing separation, legacy reachable setup caller, exist
 ACCEPTANCE_CRITERIA: owner can inspect environment and last provider check, start/continue hosted setup, return and refresh; wrong tenant/actor/binding/environment refuses; unknown creation reconciles without blind dispatch
 MOTION_PURPOSE: NONE: no new animation; existing drawer behavior retained
 PROTECTED_SEAMS: active tenant/user context and Settings request gate tested; existing merchant actor/service/Rail SQL exercised; Chat/Turn Route/C4/INT-335 untouched
-INTERNAL_BUILD_IDENTITY: branch=feat/sales-merchant-onboarding; base=6b6bef5091507e5b7946984506e75cfb3ebd5401; deployment=UNVERIFIED; environment=local; migrations=NOT_APPLIED_PRODUCTION(20270600000000); edge=NOT_DEPLOYED(tenant-stripe-connect); evidence=this record
-RELEASE_CHANNEL: internal: implementation candidate, production delivery pending exact-head review and required CI
-RELEASE_CLASSIFICATION: partial foundation: merchant entry and recovery substrate, not provider payment acceptance
+INTERNAL_BUILD_IDENTITY: branch=feat/sales-merchant-onboarding; base=6b6bef5091507e5b7946984506e75cfb3ebd5401; deployment=not deployed; environment=local; migrations=PROOF_OWED(20270600000000 production persistence); edge=PROOF_OWED(tenant-stripe-connect exact merged deployment); evidence=this record
+RELEASE_CHANNEL: development: local implementation candidate; production identity is not observed
+RELEASE_CLASSIFICATION: internal-only: merchant entry and recovery foundation without authenticated payment acceptance
 CUSTOMER_RELEASE_IDENTITY: none: authenticated merchant/payment acceptance remains proof owed
 RELEASE_NOTE_REQUIRED: no: no accepted customer release yet
-RELEASE_TRUTH_BOUNDARY: PARTIAL implementation; authenticated/provider execution PROOF OWED; package authority OPEN in INT-335
-RELEASE_RECOVERY: position=forward fix preferred; retain canonical pending reservation identity rather than delete/retry unknown merchant creation; reference=flow packet below
+RELEASE_TRUTH_BOUNDARY: PARTIAL: merchant entry implementation; authenticated/provider execution PROOF OWED; package authority OPEN in INT-335
+RELEASE_RECOVERY: position=forward fix retaining canonical reservation identity rather than blind account recreation; reference=docs/delivery/sales-merchant-onboarding.md
 SOLO_1536X770_PAIGE_CLOSED: PASS: local synthetic transport, 1536-light-closed.png and 1536-dark-closed.png
 SOLO_1536X770_PAIGE_OPEN: PASS: local synthetic transport, 1536-light-open.png and 1536-dark-open.png
 SOLO_1366X768_PAIGE_CLOSED: PASS: local synthetic transport, 1366-light-closed.png and 1366-dark-closed.png

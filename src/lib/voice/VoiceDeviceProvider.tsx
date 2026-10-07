@@ -302,6 +302,48 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const bootingRef = useRef<Promise<Device | null> | null>(null);
   const mountedRef = useRef(true);
 
+  // INT-345 — the workspace the current Device lifecycle belongs to. The token,
+  // the `${tenantId}.${userId}` identity, the caller ID, and any live call are
+  // all scoped to the tenant they were minted under (§9). `activeTenantId` is
+  // read through this ref inside async boots so a mid-boot switch is detected
+  // when the boot completes.
+  const tenantRef = useRef<string | null>(activeTenantId);
+  tenantRef.current = activeTenantId;
+  const lastTenantRef = useRef<string | null>(activeTenantId);
+
+  // INT-345 — workspace-scope teardown. A switch that does NOT reload the app
+  // (the in-shell sub-account switch) must not carry the previous tenant's
+  // registered Device into the new workspace: no token reuse, no stale caller
+  // identity, no cross-tenant inbound/call state, no grace-held transcript
+  // topic from the old workspace. Everything tears down to the idle surface;
+  // the next warmUp boots fresh under the new tenant.
+  useEffect(() => {
+    if (lastTenantRef.current === activeTenantId) return;
+    lastTenantRef.current = activeTenantId;
+    if (
+      !deviceRef.current && !bootingRef.current && !callRef.current &&
+      !incomingRef.current && !expiredDeviceRef.current
+    ) {
+      return;
+    }
+    try { callRef.current?.disconnect(); } catch { /* already gone */ }
+    try { incomingRef.current?.reject(); } catch { /* already gone */ }
+    try { deviceRef.current?.destroy(); } catch { /* already gone */ }
+    destroyDeferredVoiceDevice(expiredDeviceRef);
+    deviceRef.current = null;
+    callRef.current = null;
+    incomingRef.current = null;
+    callAcceptedRef.current = false;
+    callStartingRef.current = false;
+    clearGraceTimer();
+    setSubscribedTopic(null);
+    setActiveCall(null);
+    setIncomingCall(null);
+    setMuted(false);
+    setReason(null);
+    setStatus("idle");
+  }, [activeTenantId, clearGraceTimer]);
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -321,6 +363,11 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
     const boot = (async (): Promise<Device | null> => {
       safeSet(setStatus, "connecting");
       safeSet(setReason, null);
+
+      // INT-345 — the workspace this boot is FOR. Captured before any await; a
+      // boot that completes after a switch must never register the old tenant's
+      // freshly-minted Device under the new workspace.
+      const bootTenant = tenantRef.current;
 
       const minted = await mintToken();
       if (minted.kind === "needs_config") {
@@ -476,6 +523,18 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       } catch {
         safeSet(setStatus, "error");
         safeSet(setReason, "Couldn't register for calling. Try again in a moment.");
+        return null;
+      }
+
+      // INT-345 — mid-boot workspace switch: this Device was minted for the
+      // previous tenant. The switch effect may already have torn it down; if the
+      // switch landed while register() was pending it is destroyed HERE instead.
+      // Either way it is never retained under the new workspace. "registered"
+      // may have fired mid-await — reset so the surface never claims ready with
+      // no retained Device.
+      if (tenantRef.current !== bootTenant) {
+        try { device.destroy(); } catch { /* already gone */ }
+        safeSet(setStatus, "idle");
         return null;
       }
 

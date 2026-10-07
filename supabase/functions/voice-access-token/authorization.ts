@@ -11,9 +11,29 @@ export function hasTenantVoiceAuthority(input: {
     ["owner", "admin"].includes(input.membershipRole ?? "");
 }
 
+/**
+ * INT-345 — the exact, repairable reason a calling number failed readiness.
+ * Each code maps to ONE canonical next step so the dialer can tell the owner
+ * what to do instead of collapsing five repairable states into one string.
+ * `no_active_primary_number`, `multiple_active_primary_numbers`, and
+ * `primary_number_voice_capability_unconfirmed` are self-service in
+ * Settings → Communications; the other two need platform-side repair.
+ */
+export type VoiceReadinessReasonCode =
+  | "no_active_primary_number"
+  | "multiple_active_primary_numbers"
+  | "primary_number_under_different_subaccount"
+  | "primary_number_missing_provider_binding"
+  | "primary_number_voice_capability_unconfirmed";
+
 export type VoiceReadiness =
   | { ok: true }
-  | { ok: false; code: "calling_not_configured" | "calling_number_needs_verification"; message: string };
+  | {
+    ok: false;
+    code: "calling_not_configured" | "calling_number_needs_verification";
+    reason_code?: VoiceReadinessReasonCode;
+    message: string;
+  };
 
 export function classifyVoiceReadiness(
   subaccount: { id?: string; active?: boolean; status?: string } | null,
@@ -26,17 +46,47 @@ export function classifyVoiceReadiness(
   if (!subaccount || subaccount.active !== true || subaccount.status !== "active") {
     return { ok: false, code: "calling_not_configured", message: "Calling is not configured for this workspace." };
   }
-  const primary = primaryNumbers?.length === 1 ? primaryNumbers[0] : null;
-  if (
-    !primary ||
-    primary.subaccount_id !== subaccount.id ||
-    !primary.twilio_sid ||
-    primary.capabilities?.voice !== true
-  ) {
+  // Exactly one active primary is the contract. Zero or many are both broken
+  // invariants, each with its own honest repair path.
+  if (!primaryNumbers || primaryNumbers.length === 0) {
     return {
       ok: false,
       code: "calling_number_needs_verification",
-      message: "Your calling number needs verification.",
+      reason_code: "no_active_primary_number",
+      message: "This workspace doesn't have a calling number yet. Choose or buy one in Settings → Communications, then browser calling turns on.",
+    };
+  }
+  if (primaryNumbers.length > 1) {
+    return {
+      ok: false,
+      code: "calling_number_needs_verification",
+      reason_code: "multiple_active_primary_numbers",
+      message: "More than one number is set as this workspace's calling number. Choose one in Settings → Communications.",
+    };
+  }
+  const primary = primaryNumbers[0];
+  if (primary.subaccount_id !== subaccount.id) {
+    return {
+      ok: false,
+      code: "calling_number_needs_verification",
+      reason_code: "primary_number_under_different_subaccount",
+      message: "This workspace's calling number is linked to another calling account. Contact support so we can relink it.",
+    };
+  }
+  if (!primary.twilio_sid) {
+    return {
+      ok: false,
+      code: "calling_number_needs_verification",
+      reason_code: "primary_number_missing_provider_binding",
+      message: "This workspace's calling number isn't fully connected yet. Contact support so we can finish the connection.",
+    };
+  }
+  if (primary.capabilities?.voice !== true) {
+    return {
+      ok: false,
+      code: "calling_number_needs_verification",
+      reason_code: "primary_number_voice_capability_unconfirmed",
+      message: "The number set as this workspace's calling number can't make calls. Choose a number marked for calls in Settings → Communications.",
     };
   }
   return { ok: true };

@@ -41,3 +41,7 @@ At the integrated repair boundary, 49 focused tests pass, production build passe
 ## Release boundary
 
 Channel: development. Customer release identity: none pending production outcome. New migrations/Edge functions: NOT_APPLICABLE in this consumer slice. Product release evidence will record actual candidate, CI, independent review, merge, Vercel deployment and runtime results. Recovery is a bounded forward fix or restoration of the prior Performance mount; no ledger backfill/provider action.
+
+## Final visual repair and fixture verification
+
+The production consumer now inherits Solo typography and neutral surface tokens, uses explicit semantic chart-color fallbacks, preserves selected-lens contrast and gives the portalled evidence drawer the active Solo theme. A light-theme portal regression guards that inheritance. Fifty focused consumer/shared-parser checks pass. Keyboard Enter opens source evidence and Escape restores focus to the initiating control at five fixture widths. These are synthetic browser interaction checks, not authenticated tenant acceptance. Shared production issuance and authenticated owner/admin/foreign-tenant readback remain proof owed.

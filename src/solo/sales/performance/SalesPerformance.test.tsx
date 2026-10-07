@@ -18,6 +18,13 @@ const metric = (key: string, amounts?: {currency:string;amount_minor:string;reco
 const props = (patch: Partial<SalesPerformanceProps> = {}): SalesPerformanceProps => ({metrics:[],phase:"ready",range:"month",workspaceEpoch:"workspace-a",onRangeChange:vi.fn(),onRetry:vi.fn(),onNavigate:vi.fn(),...patch});
 const funnel:AnalyticsEvidenceBundle={metric:{id:"sales_funnel.created_deals_by_current_stage",version:"1.0.0",label:"Current stages",definition:"Created-period current-stage cohort",formula:"Server stage count"},range:{key:"last_30_days",start:"2026-09-01T00:00:00Z",end:"2026-10-01T00:00:00Z"},source_references:[],contributing_record_count:4,coverage:{state:"complete",candidate_count:4,contributing_count:4,excluded_count:0},exclusions:[],freshness:{queried_at:"2026-10-07T12:00:00Z",source_updated_through:null},truth_state:"LIVE",account_epoch_ref:"test-epoch",source_revision_ref:"test-stage-revision",reference_expires_at:new Date(Date.now()+86_400_000).toISOString(),values:{kind:"sales_funnel_stages",pipeline_label:null,stages:[{stage_key:"test-stage",label:"Proposal",stage_type:"open",order:1,count:4}]},caveats:[]};
 describe("Sales Performance canonical presentation",()=>{
+  it("carries the current Solo theme into the portalled evidence drawer",()=>{
+    host.setAttribute("data-pg","light");
+    mount(props({metrics:[metric("sales.opportunities.created")]}));
+    click("Inspect opportunities created");
+    expect(document.querySelector('[role="dialog"]')?.getAttribute("data-pg")).toBe("light");
+    expect(document.querySelector('[role="dialog"]')?.classList.contains("paige-solo")).toBe(true);
+  });
   it("renders supplied currency figures independently without a combined total",()=>{
     mount(props({metrics:[metric("sales.pipeline.open_value",[{currency:"USD",amount_minor:"18400000",record_count:3},{currency:"EUR",amount_minor:"2800000",record_count:2}])]}));
     expect(host.textContent).toContain("$184,000.00");

@@ -4,9 +4,19 @@ import { describe, expect, it } from "vitest";
 import {
   classifyVoiceReadiness,
   hasTenantVoiceAuthority,
+  type VoiceReadiness,
 } from "../../../supabase/functions/voice-access-token/authorization";
 
 const read = (p: string) => readFileSync(resolve(process.cwd(), p), "utf8");
+
+// Type-level narrowing helper for the not-ok arm of the readiness union.
+// Structural ("message" in) — truthiness on v.ok does not narrow under the
+// non-strict app tsconfig, where the discriminant widens to boolean.
+type NotOkVoiceReadiness = Extract<VoiceReadiness, { ok: false }>;
+const notOk = (v: VoiceReadiness): NotOkVoiceReadiness => {
+  if (!("message" in v)) throw new Error("expected a not-ready verdict");
+  return v as NotOkVoiceReadiness;
+};
 
 // ── INT-345 failure-first fixtures ─────────────────────────────────────────────
 // Synthetic, identifier-free fixtures reproducing the three generic production
@@ -41,7 +51,7 @@ describe("tenant Voice authorization", () => {
   });
 
   it("fails closed with actionable readiness states", () => {
-    expect(classifyVoiceReadiness(null, null)).toMatchObject({ ok: false, code: "calling_not_configured" });
+    expect(notOk(classifyVoiceReadiness(null, null))).toMatchObject({ ok: false, code: "calling_not_configured" });
     expect(classifyVoiceReadiness(
       { id: "sub-a", active: true, status: "active" },
       [{ subaccount_id: "sub-b", twilio_sid: "PN", capabilities: { voice: true } }],
@@ -59,18 +69,18 @@ describe("INT-345 voice readiness fixtures (generic states, no identifiers)", ()
   });
 
   it("Fixture C — NOT CONFIGURED: no active canonical subaccount row", () => {
-    expect(classifyVoiceReadiness(null, null)).toMatchObject({
+    expect(notOk(classifyVoiceReadiness(null, null))).toMatchObject({
       ok: false,
       code: "calling_not_configured",
     });
-    expect(classifyVoiceReadiness({ id: "sub-a", active: false, status: "pending" }, null))
+    expect(notOk(classifyVoiceReadiness({ id: "sub-a", active: false, status: "pending" }, null)))
       .toMatchObject({ ok: false, code: "calling_not_configured" });
-    expect(classifyVoiceReadiness({ id: "sub-a", active: true, status: "suspended" }, null))
+    expect(notOk(classifyVoiceReadiness({ id: "sub-a", active: true, status: "suspended" }, null)))
       .toMatchObject({ ok: false, code: "calling_not_configured" });
   });
 
   it("Fixture B1 — active subaccount, zero active primary numbers", () => {
-    const verdict = classifyVoiceReadiness(ACTIVE_SUB, []);
+    const verdict = notOk(classifyVoiceReadiness(ACTIVE_SUB, []));
     expect(verdict).toMatchObject({
       ok: false,
       code: "calling_number_needs_verification",
@@ -80,10 +90,10 @@ describe("INT-345 voice readiness fixtures (generic states, no identifiers)", ()
   });
 
   it("Fixture B2 — more than one active primary", () => {
-    const verdict = classifyVoiceReadiness(ACTIVE_SUB, [
+    const verdict = notOk(classifyVoiceReadiness(ACTIVE_SUB, [
       { ...QUALIFIED_PRIMARY[0], twilio_sid: "PN-synthetic-1" },
       { ...QUALIFIED_PRIMARY[0], twilio_sid: "PN-synthetic-2" },
-    ]);
+    ]));
     expect(verdict).toMatchObject({
       ok: false,
       reason_code: "multiple_active_primary_numbers",
@@ -92,11 +102,11 @@ describe("INT-345 voice readiness fixtures (generic states, no identifiers)", ()
   });
 
   it("Fixture B3 — primary bound to a different subaccount", () => {
-    const verdict = classifyVoiceReadiness(ACTIVE_SUB, [{
+    const verdict = notOk(classifyVoiceReadiness(ACTIVE_SUB, [{
       subaccount_id: "sub-other",
       twilio_sid: "PN-synthetic-1",
       capabilities: { voice: true },
-    }]);
+    }]));
     expect(verdict).toMatchObject({
       ok: false,
       reason_code: "primary_number_under_different_subaccount",
@@ -104,11 +114,11 @@ describe("INT-345 voice readiness fixtures (generic states, no identifiers)", ()
   });
 
   it("Fixture B4 — primary missing its provider binding (SID)", () => {
-    const verdict = classifyVoiceReadiness(ACTIVE_SUB, [{
+    const verdict = notOk(classifyVoiceReadiness(ACTIVE_SUB, [{
       subaccount_id: "sub-a",
       twilio_sid: null,
       capabilities: { voice: true },
-    }]);
+    }]));
     expect(verdict).toMatchObject({
       ok: false,
       reason_code: "primary_number_missing_provider_binding",
@@ -116,11 +126,11 @@ describe("INT-345 voice readiness fixtures (generic states, no identifiers)", ()
   });
 
   it("Fixture B5 — primary without confirmed voice capability", () => {
-    const verdict = classifyVoiceReadiness(ACTIVE_SUB, [{
+    const verdict = notOk(classifyVoiceReadiness(ACTIVE_SUB, [{
       subaccount_id: "sub-a",
       twilio_sid: "PN-synthetic-1",
       capabilities: { voice: false },
-    }]);
+    }]));
     expect(verdict).toMatchObject({
       ok: false,
       reason_code: "primary_number_voice_capability_unconfirmed",
@@ -130,11 +140,11 @@ describe("INT-345 voice readiness fixtures (generic states, no identifiers)", ()
 
   it("every needs_verification state is distinguishable — five reason codes, no collapse", () => {
     const codes = new Set([
-      classifyVoiceReadiness(ACTIVE_SUB, [])?.reason_code,
-      classifyVoiceReadiness(ACTIVE_SUB, [QUALIFIED_PRIMARY[0], { ...QUALIFIED_PRIMARY[0], twilio_sid: "PN2" }])?.reason_code,
-      classifyVoiceReadiness(ACTIVE_SUB, [{ ...QUALIFIED_PRIMARY[0], subaccount_id: "sub-other" }])?.reason_code,
-      classifyVoiceReadiness(ACTIVE_SUB, [{ ...QUALIFIED_PRIMARY[0], twilio_sid: null }])?.reason_code,
-      classifyVoiceReadiness(ACTIVE_SUB, [{ ...QUALIFIED_PRIMARY[0], capabilities: { voice: false } }])?.reason_code,
+      notOk(classifyVoiceReadiness(ACTIVE_SUB, [])).reason_code,
+      notOk(classifyVoiceReadiness(ACTIVE_SUB, [QUALIFIED_PRIMARY[0], { ...QUALIFIED_PRIMARY[0], twilio_sid: "PN2" }])).reason_code,
+      notOk(classifyVoiceReadiness(ACTIVE_SUB, [{ ...QUALIFIED_PRIMARY[0], subaccount_id: "sub-other" }])).reason_code,
+      notOk(classifyVoiceReadiness(ACTIVE_SUB, [{ ...QUALIFIED_PRIMARY[0], twilio_sid: null }])).reason_code,
+      notOk(classifyVoiceReadiness(ACTIVE_SUB, [{ ...QUALIFIED_PRIMARY[0], capabilities: { voice: false } }])).reason_code,
     ]);
     expect(codes).toEqual(new Set([
       "no_active_primary_number",
@@ -158,7 +168,7 @@ describe("INT-345 platform standing never widens another workspace's provider co
       membershipStatus: null,
       membershipRole: null,
     })).toBe(true);
-    expect(classifyVoiceReadiness(null, null).code).toBe("calling_not_configured");
+    expect(notOk(classifyVoiceReadiness(null, null)).code).toBe("calling_not_configured");
   });
 
   it("pins the edge composition: readiness inputs are scoped to the JWT-resolved tenant and never consult caller standing", () => {

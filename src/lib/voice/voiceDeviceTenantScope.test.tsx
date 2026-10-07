@@ -172,9 +172,8 @@ describe("VoiceDeviceProvider workspace-scope teardown (INT-345)", () => {
     harness.holdRegister = true;
     await renderProvider();
 
-    let bootPromise: Promise<unknown> | null = null;
     await act(async () => {
-      bootPromise = latestVoice?.warmUp() ?? null;
+      latestVoice?.warmUp();
     });
 
     // Register is held pending; switch the workspace while the boot is in flight.
@@ -186,7 +185,6 @@ describe("VoiceDeviceProvider workspace-scope teardown (INT-345)", () => {
     // Release the held registration — the boot finishes AFTER the switch.
     await act(async () => {
       harness.registerGate?.();
-      await bootPromise;
     });
 
     // The late Device was minted for tenant A and must be destroyed, never kept.

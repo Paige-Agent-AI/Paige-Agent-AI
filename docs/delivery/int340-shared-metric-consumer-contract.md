@@ -1,6 +1,6 @@
 # INT-340 shared metric consumer contract
 
-Status: candidate contract in draft PR #1814. Not production acceptance. Settings UI remains local and unmerged. INT-339 signed-in verification and explicit Sales clearance remain pending.
+Status: candidate contract in draft PR #1814. Not production acceptance. Settings UI remains local and unmerged. INT-339 authenticated production privacy verification passed and explicit Sales clearance was sent on 2026-10-07. The separate #1814 production handoff and authenticated Settings UI acceptance remain pending.
 
 ## One measurement seam
 

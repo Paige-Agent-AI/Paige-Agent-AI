@@ -1,10 +1,20 @@
 /** Shared consumer contract. Definitions, calculations and authority stay on the server. */
 export type MetricTruth = "LIVE" | "PARTIAL" | "UNAVAILABLE";
+export type DiagnosticEvent = {
+  source: "workflow_run" | "systems_check";
+  at: string;
+  status: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "fail" | "error";
+  severity: "blocking" | "high" | "medium" | "low" | null;
+  retry_count: number | null;
+  completed_at: string | null;
+  check_key: string | null;
+};
 export type MetricValues =
   | { kind: "count"; count: number }
   | { kind: "decimal"; value: string }
   | { kind: "distribution"; items: Array<{ key: string; label: string; count: number }> }
   | { kind: "series"; points: Array<{ at: string; value: number | null }> }
+  | { kind: "diagnostic_events"; items: DiagnosticEvent[] }
   | { kind: "currency_totals"; by_currency: Array<{ currency: string; amount_minor: string; record_count: number }>; breakdown: Array<{ currency: string; source: string; amount_minor: string; record_count: number }> };
 
 export interface MetricResult {
@@ -46,6 +56,7 @@ const record = (v: unknown): v is Record<string, unknown> => typeof v === "objec
 const text = (v: unknown, n: number): v is string => typeof v === "string" && v.trim().length > 0 && v.length <= n && Array.from(v).every(character => character.charCodeAt(0) > 31);
 const count = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0;
 const timestamp = (v: unknown): v is string => typeof v === "string" && Number.isFinite(Date.parse(v));
+const zonedTimestamp = (v: unknown): v is string => timestamp(v) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(v);
 const decimal = (v: unknown): v is string => typeof v === "string" && v.length <= 64 && /^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(v);
 const ref = (v: unknown, prefix: string) => typeof v === "string" && new RegExp(`^${prefix}_[0-9a-f]{64}$`).test(v);
 
@@ -53,6 +64,17 @@ function validValues(v: unknown): v is MetricValues {
   if (!record(v)) return false;
   if (v.kind === "count") return count(v.count);
   if (v.kind === "decimal") return decimal(v.value);
+  if (v.kind === "diagnostic_events") return Object.keys(v).every(k => ["kind", "items"].includes(k))
+    && Array.isArray(v.items) && v.items.length <= 20
+    && v.items.every(i => record(i) && Object.keys(i).length === 7
+      && Object.keys(i).every(k => ["source", "at", "status", "severity", "retry_count", "completed_at", "check_key"].includes(k))
+      && zonedTimestamp(i.at) && (i.completed_at === null || (zonedTimestamp(i.completed_at) && Date.parse(i.completed_at) >= Date.parse(i.at)))
+      && (i.source === "workflow_run"
+        ? ["queued", "running", "succeeded", "failed", "cancelled"].includes(String(i.status)) && i.severity === null && i.check_key === null && (i.retry_count === null || count(i.retry_count))
+        : i.source === "systems_check" && ["fail", "error"].includes(String(i.status)) && i.retry_count === null
+          && typeof i.check_key === "string" && /^[a-z][a-z0-9_]{0,79}$/.test(i.check_key)
+          && ["blocking", "high", "medium", "low"].includes(String(i.severity))))
+    && v.items.every((i, n, all) => n === 0 || Date.parse(i.at) <= Date.parse(all[n - 1].at));
   if (v.kind === "distribution") return Array.isArray(v.items) && v.items.length <= 100
     && v.items.every(i => record(i) && text(i.key, 80) && text(i.label, 120) && count(i.count))
     && new Set(v.items.map(i => i.key)).size === v.items.length;
@@ -106,5 +128,18 @@ export function parseMetricResult(value: unknown, expected: MetricRequestIdentit
     || (value.truth_state !== "UNAVAILABLE" && !validValues(value.values))
     || (record(value.values) && value.values.kind === "series" && Array.isArray(value.values.points)
       && !value.values.points.every(p => record(p) && Date.parse(String(p.at)) >= Date.parse(String(range.start)) && Date.parse(String(p.at)) < Date.parse(String(range.end))))) return fail();
+  const diagnosticKey = ["operations.recorded_workflow_activity", "operations.current_system_exceptions"].includes(expected.metricKey);
+  if (diagnosticKey && (range.semantics !== (expected.metricKey === "operations.recorded_workflow_activity" ? "event_timestamp_cohort" : "current_snapshot")
+    || (value.truth_state !== "UNAVAILABLE" && (!record(value.values) || value.values.kind !== "diagnostic_events")))) return fail();
+  if (record(value.values) && value.values.kind === "diagnostic_events") {
+    const events = value.values.items as DiagnosticEvent[];
+    const workflow = expected.metricKey === "operations.recorded_workflow_activity";
+    if ((!workflow && expected.metricKey !== "operations.current_system_exceptions")
+      || c.contributing_count !== events.length
+      || !events.every(e => e.source === (workflow ? "workflow_run" : "systems_check")
+        && Date.parse(e.at) <= Date.parse(String(value.as_of))
+        && (e.completed_at === null || Date.parse(e.completed_at) <= Date.parse(String(value.as_of)))
+        && (!workflow || (Date.parse(e.at) >= Date.parse(String(range.start)) && Date.parse(e.at) < Date.parse(String(range.end)))))) return fail();
+  }
   return value as unknown as MetricResult;
 }

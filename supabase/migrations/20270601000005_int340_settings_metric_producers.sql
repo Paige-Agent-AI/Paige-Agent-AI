@@ -108,15 +108,25 @@ BEGIN
         ORDER BY n8n_workflow_id),'[]'::jsonb) FROM public.tenant_workflows WHERE tenant_id=$1$sql$
         INTO facts USING p_tenant_id,p_as_of;
     END IF;
-  WHEN 'operations.recorded_workflow_runs' THEN
+  WHEN 'operations.recorded_workflow_runs','operations.recorded_workflow_activity' THEN
     source_name := 'public.paige_workflow_runs';
     definition := 'Recorded workflow runs by their recorded execution status in the requested UTC interval.';
     formula := 'Count tenant-owned runs with triggered_at >= start AND triggered_at < end, bounded by as_of.';
     caveats := jsonb_build_array('Recorded workflow runs are not all provider executions or proof of business outcomes.');
+    IF p_metric_id='operations.recorded_workflow_activity' THEN
+      truth := 'PARTIAL';
+      definition := 'Up to 20 newest recorded tenant workflow runs, with recorded status and timing only.';
+      formula := 'Tenant-owned runs in [start,end), updated no later than as_of, newest triggered_at then id; bounded safe diagnostic projection.';
+      caveats := caveats || jsonb_build_array('Recorded activity is partial telemetry, not a complete provider execution history.',
+        'Queued and running are not successful outcomes; failed is a recorded execution status, not an inferred error diagnosis.');
+    END IF;
     IF pg_catalog.to_regclass(source_name) IS NOT NULL THEN
       source_present := true;
       EXECUTE $sql$SELECT COALESCE(jsonb_agg(jsonb_build_object('id',id,'version',updated_at,
-        'at',triggered_at,'status',status,'eligible',updated_at <= $4) ORDER BY id),'[]'::jsonb)
+        'at',triggered_at,'status',status,'retry_count',retry_count,'completed_at',completed_at,
+        'eligible',updated_at <= $4 AND status IN ('queued','running','succeeded','failed','cancelled')
+          AND (retry_count IS NULL OR retry_count >= 0)
+          AND (completed_at IS NULL OR (isfinite(completed_at) AND completed_at >= triggered_at AND completed_at <= $4))) ORDER BY id),'[]'::jsonb)
         FROM public.paige_workflow_runs WHERE tenant_id=$1 AND triggered_at >= $2 AND triggered_at < $3$sql$
         INTO facts USING p_tenant_id,p_range_start,p_range_end,p_as_of;
     END IF;
@@ -167,10 +177,14 @@ BEGIN
         WHERE tenant_id=$1 AND called_at >= $2 AND called_at < $3$sql$
         INTO facts USING p_tenant_id,p_range_start,p_range_end,p_as_of;
     END IF;
-  WHEN 'operations.systems_check_latest','operations.unresolved_findings_current' THEN
+  WHEN 'operations.systems_check_latest','operations.unresolved_findings_current','operations.current_system_exceptions' THEN
     source_name := 'public.systems_check_snapshot'; current_snapshot := true;
     definition := 'Safe status counts from the canonical latest completed full tenant Systems Check sweep.';
     formula := 'Reuse systems_check_snapshot(tenant); unresolved counts only fail findings with resolved_at absent.';
+    IF p_metric_id='operations.current_system_exceptions' THEN
+      definition := 'Up to 20 newest unresolved fail findings and failed-to-run error findings from the canonical latest completed full tenant sweep.';
+      formula := 'Reuse systems_check_snapshot(tenant); select unresolved fail/error records, bound by as_of, newest created_at then id; no targeted or unfinished scan substitution.';
+    END IF;
     IF pg_catalog.to_regprocedure('public.systems_check_snapshot(text)') IS NOT NULL THEN
       source_present := true;
       snapshot := public.systems_check_snapshot('tenant');
@@ -178,19 +192,32 @@ BEGIN
         'completed_at',snapshot#>'{run,completed_at}','check_count',snapshot#>'{run,check_count}',
         'pass_count',snapshot#>'{run,pass_count}','fail_count',snapshot#>'{run,fail_count}');
       SELECT COALESCE(jsonb_agg(jsonb_build_object('id',f->>'id','version',f->>'created_at',
-        'status',f->>'status','severity',f->>'severity_at_finding','resolved_at',f->>'resolved_at',
+        'at',f->>'created_at','status',f->>'status','severity',f->>'severity_at_finding','resolved_at',f->>'resolved_at','check_key',f->>'check_id',
+        'completed_at',snapshot#>>'{run,completed_at}',
         'eligible',(f->>'created_at')::timestamptz <= p_as_of AND
           CASE WHEN p_metric_id='operations.unresolved_findings_current'
-            THEN f->>'status'='fail' AND f->>'resolved_at' IS NULL ELSE true END)
+            THEN f->>'status'='fail' AND f->>'resolved_at' IS NULL
+          WHEN p_metric_id='operations.current_system_exceptions'
+            THEN f->>'status' IN ('fail','error') AND f->>'resolved_at' IS NULL
+              AND f->>'severity_at_finding' IN ('blocking','high','medium','low')
+              AND f->>'check_id' ~ '^[a-z][a-z0-9_]{0,79}$'
+              AND isfinite((f->>'created_at')::timestamptz)
+              AND (snapshot#>>'{run,completed_at}')::timestamptz >= (f->>'created_at')::timestamptz ELSE true END)
         ORDER BY f->>'id'),'[]'::jsonb) INTO facts
         FROM jsonb_array_elements(COALESCE(snapshot->'findings','[]'::jsonb)) f;
       IF snapshot->'run' IS NULL OR snapshot->'run'='null'::jsonb THEN
         unavailable_reason := 'No completed full tenant sweep is recorded.';
       ELSIF (snapshot#>>'{run,completed_at}')::timestamptz > p_as_of THEN
         unavailable_reason := 'The canonical latest sweep completed after as_of; historical sweep reconstruction is unavailable.';
+      ELSIF NOT isfinite((snapshot#>>'{run,completed_at}')::timestamptz) THEN
+        unavailable_reason := 'The canonical sweep completion timestamp is not finite.';
       END IF;
       caveats := jsonb_build_array('A completed sweep is a recorded reading, not a claim that every check passed.',
         'Deferred skips and failed-to-run errors remain distinct; findings from targeted or unfinished scans are not substituted.');
+      IF p_metric_id='operations.current_system_exceptions' THEN
+        caveats := caveats || jsonb_build_array('Only recorded unresolved fail/error findings are shown; missing findings and deferred skips are excluded, not verified passes.',
+          'Canonical blocking/high/medium/low severity is retained; missing or unrecognized severity is excluded with unknown coverage.');
+      END IF;
     END IF;
   WHEN 'business.retention','business.profitability','business.nps','team.performance_scorecards','ai.voice_consumption' THEN
     definition := 'No supported canonical measurement producer.'; formula := 'Unavailable; no derived or inferred value.';
@@ -204,6 +231,26 @@ BEGIN
   SELECT count(*),count(*) FILTER (WHERE (f->>'eligible')::boolean),
     max((f->>'version')::timestamptz)
     INTO candidate_count,contributing_count,through_at FROM jsonb_array_elements(facts) f;
+  IF p_metric_id IN ('operations.recorded_workflow_activity','operations.current_system_exceptions') THEN
+    IF p_metric_id='operations.current_system_exceptions' THEN
+      SELECT count(*) FILTER(WHERE (f->>'status' IN ('fail','error') AND f->>'resolved_at' IS NULL)
+          OR f->>'status'='skip' OR f->>'status' IS NULL OR f->>'status' NOT IN ('pass','fail','error','skip'))
+        + greatest(COALESCE((safe_run->>'check_count')::bigint,0)-count(*),0)
+        INTO candidate_count FROM jsonb_array_elements(facts) f;
+    END IF;
+    SELECT COALESCE(jsonb_agg(jsonb_build_object(
+      'source',CASE WHEN p_metric_id='operations.recorded_workflow_activity' THEN 'workflow_run' ELSE 'systems_check' END,
+      'at',(f->>'at')::timestamptz,'status',f->>'status',
+      'check_key',CASE WHEN p_metric_id='operations.current_system_exceptions' THEN f->>'check_key' ELSE NULL END,
+      'severity',CASE WHEN p_metric_id='operations.current_system_exceptions' THEN
+        f->>'severity' ELSE NULL END,
+      'retry_count',CASE WHEN p_metric_id='operations.recorded_workflow_activity' THEN (f->>'retry_count')::integer ELSE NULL END,
+      'completed_at',(f->>'completed_at')::timestamptz) ORDER BY (f->>'at')::timestamptz DESC,f->>'id' DESC),'[]'::jsonb)
+      INTO items FROM (SELECT f FROM jsonb_array_elements(facts) f WHERE (f->>'eligible')::boolean
+        ORDER BY (f->>'at')::timestamptz DESC,f->>'id' DESC LIMIT 20) limited;
+    contributing_count := jsonb_array_length(items);
+    caveats := caveats || jsonb_build_array('Projection is capped at 20 newest safe records; records beyond the cap remain in coverage and the source revision.');
+  END IF;
   excluded_count := candidate_count-contributing_count;
   IF safe_run IS NOT NULL THEN
     through_at := greatest(through_at,(safe_run->>'completed_at')::timestamptz);
@@ -220,7 +267,9 @@ BEGIN
     caveats := caveats || jsonb_build_array(unavailable_reason);
   ELSE
     IF excluded_count > 0 THEN truth := 'PARTIAL'; END IF;
-    IF p_metric_id='ai.recorded_model_requests_daily' THEN
+    IF p_metric_id IN ('operations.recorded_workflow_activity','operations.current_system_exceptions') THEN
+      values_json := jsonb_build_object('kind','diagnostic_events','items',items);
+    ELSIF p_metric_id='ai.recorded_model_requests_daily' THEN
       SELECT jsonb_build_object('kind','series','points',COALESCE(jsonb_agg(
         jsonb_build_object('at',greatest(bucket_at,p_range_start),'value',n) ORDER BY bucket_at),'[]'::jsonb))
         INTO values_json FROM (
@@ -261,7 +310,7 @@ BEGIN
     'end',to_char(p_range_end AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
     'as_of',to_char(p_as_of AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
     'dimensions',p_dimensions,'source',source_name,'source_present',source_present,
-    'facts',facts,'canonical_run',safe_run,'unavailable_reason',unavailable_reason)::text,'UTF8'),'sha256'),'hex');
+    'facts',facts,'canonical_run',safe_run,'safe_projection',values_json,'unavailable_reason',unavailable_reason)::text,'UTF8'),'sha256'),'hex');
   RETURN jsonb_build_object(
     'metric_key',p_metric_id,'metric_version',p_metric_version,
     'owner_department',CASE WHEN p_metric_id LIKE 'business.%' THEN 'client_experience'
@@ -274,6 +323,8 @@ BEGIN
       WHEN 'operations.unresolved_findings_current' THEN 'Unresolved findings in latest sweep'
       WHEN 'operations.workflows_active_current' THEN 'Recorded active workflows'
       WHEN 'operations.recorded_workflow_runs' THEN 'Recorded workflow runs'
+      WHEN 'operations.recorded_workflow_activity' THEN 'Recent recorded workflow activity'
+      WHEN 'operations.current_system_exceptions' THEN 'Current recorded system exceptions'
       WHEN 'team.active_members_current' THEN 'Active team seats'
       WHEN 'team.role_distribution_current' THEN 'Active team roles'
       WHEN 'ai.recorded_model_requests' THEN 'Recorded model requests'
@@ -293,7 +344,10 @@ BEGIN
     'as_of',p_as_of,
     'coverage',jsonb_build_object('state',CASE truth WHEN 'LIVE' THEN 'complete' WHEN 'PARTIAL' THEN 'partial' ELSE 'unavailable' END,
       'candidate_count',candidate_count,'contributing_count',contributing_count,'excluded_count',excluded_count),
-    'exclusions',jsonb_build_array(jsonb_build_object('reason','Out-of-scope context, ineligible current state, version after as_of, or unknown supported quantity.','count',excluded_count)),
+    'exclusions',jsonb_build_array(jsonb_build_object('reason',CASE WHEN p_metric_id='operations.current_system_exceptions'
+      THEN 'Not an unresolved exception, deferred skip, missing recorded finding, unsafe version, or beyond 20 newest items.'
+      WHEN p_metric_id='operations.recorded_workflow_activity' THEN 'Unsafe recorded status/timing/retry quantity, version after as_of, or beyond 20 newest items.'
+      ELSE 'Out-of-scope context, ineligible current state, version after as_of, or unknown supported quantity.' END,'count',excluded_count)),
     'freshness',jsonb_build_object('queried_at',p_as_of,'source_updated_through',through_at),
     'account_epoch',p_tenant_id,
     'truth_state',truth,'account_epoch_ref','ae_v1_'||encode(extensions.digest(convert_to(p_tenant_id::text,'UTF8'),'sha256'),'hex'),

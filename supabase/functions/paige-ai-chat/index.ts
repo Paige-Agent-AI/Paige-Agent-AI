@@ -1616,14 +1616,18 @@ JSON:`;
         );
       }
 
-      // Insert session summary memory (with embedding). INT-326 write rule: resolve the turn's
-      // declared∧validated scope BEFORE the paid embed — a no-client turn that established no
-      // workspace persists NO tenant memory and buys no embedding for it.
+      // Insert session summary memory. INT-326 write rule: resolve the turn's declared∧validated
+      // scope BEFORE any paid embed — a no-client turn that established no workspace persists NO
+      // memory and buys no embedding for it.
+      //
+      // S5 AUDIENCE SPLIT (owner ruling, semantic test "whose continuity does this serve?"):
+      // a summary of the caller's OWN session is OWNER/WORKSPACE continuity → the governed
+      // owner-memory seam (record_paige_memory, confirmation 'proposed' — machine-extracted is a
+      // candidate, never confirmed). A summary of a CLIENT-scoped session is client-experience
+      // context → client_memory, unchanged. No embedding on the owner arm: semantic owner-memory
+      // recall is the C6 projection's to build; nothing reads those vectors today.
       if (!skipScopedMemoryWrites && summaryContent.trim()) {
-        const ownSummaryScope = scopedClientId ? undefined : await memoryWorkspaceScope();
-        if (ownSummaryScope === null) {
-          console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "session_summary" }));
-        } else {
+        if (scopedClientId) {
           const summaryEmbedding = await embedText(summaryContent.trim());
           const memoryInsert: any = {
             client_user_id: scopedClientId || user.id,
@@ -1633,9 +1637,22 @@ JSON:`;
             embedding: summaryEmbedding,
             metadata: { channel: "text" },
           };
-          if (scopedClientId) memoryInsert.client_id = scopedClientId;
-          else memoryInsert.tenant_id = ownSummaryScope;
+          memoryInsert.client_id = scopedClientId;
           await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
+        } else {
+          const ownSummaryScope = await memoryWorkspaceScope();
+          if (ownSummaryScope === null) {
+            console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "session_summary" }));
+          } else {
+            await recordWrite("paige_owner_memory:turn", supabase.rpc("record_paige_memory", {
+              p_memory_type: "session_summary",
+              p_content: summaryContent.trim(),
+              p_metadata: { audience: "owner_personal", channel: "text", source: "session_summary", ...(rawData.sessionId ? { legacy_session_id: String(rawData.sessionId) } : {}) },
+              p_confirmation_state: "proposed",
+              p_user_id: user.id,
+              p_tenant_id: ownSummaryScope,
+            }));
+          }
         }
       }
 
@@ -1654,26 +1671,42 @@ JSON:`;
             business_phone_established: "Client mentioned establishing a dedicated business phone line",
             business_bank_opened: "Client mentioned opening a business bank account",
           };
+          // S5 audience split: a milestone spoken in the caller's OWN session is the owner's
+          // business milestone (owner-framed copy); one from a client-scoped session stays the
+          // client's. Same semantic test as the summary writer above.
+          const subject = scopedClientId ? "Client" : "The owner";
 
           // INT-326 write rule (see session_summary): resolve the scope ONCE before the loop so a
-          // no-scope turn skips every milestone embed and write, not just the insert.
+          // no-scope turn skips every milestone write, not just the insert.
           const ownMilestoneScope = scopedClientId ? undefined : await memoryWorkspaceScope();
           if (ownMilestoneScope === null) {
             console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "milestone_completed" }));
           }
           for (const m of milestones) {
-            if (labelMap[m] && ownMilestoneScope !== null) {
-              const emb = await embedText(labelMap[m]);
+            if (!labelMap[m]) continue;
+            const milestoneCopy = labelMap[m].replace("Client mentioned", `${subject} mentioned`);
+            if (scopedClientId) {
+              const emb = await embedText(milestoneCopy);
               const milestoneMemory: any = {
-                client_user_id: scopedClientId || user.id,
+                client_user_id: scopedClientId,
                 memory_type: "milestone_completed",
-                content: labelMap[m],
+                content: milestoneCopy,
                 source_session_id: rawData.sessionId || null,
                 embedding: emb,
               };
-              if (scopedClientId) milestoneMemory.client_id = scopedClientId;
-              else milestoneMemory.tenant_id = ownMilestoneScope;
+              milestoneMemory.client_id = scopedClientId;
               await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
+            } else if (ownMilestoneScope !== null && ownMilestoneScope !== undefined) {
+              await recordWrite("paige_owner_memory:milestone", supabase.rpc("record_paige_memory", {
+                p_memory_type: "milestone_completed",
+                p_content: milestoneCopy,
+                // 5-class audience: business entity milestones are ORGANIZATIONAL facts (shared-
+                // audience mechanics are a returned scope gap; person-scope is unchanged today).
+                p_metadata: { audience: "business_organizational", channel: "text", source: "session_summary" },
+                p_confirmation_state: "proposed",
+                p_user_id: user.id,
+                p_tenant_id: ownMilestoneScope,
+              }));
             }
           }
         } catch (err) {
@@ -1704,8 +1737,12 @@ JSON:`;
             commitments: "commitment",
             open_loops: "open_loop",
           };
+          // S5: the canonical type an extracted fact lands as in owner memory. An owner
+          // preference is 'preference' — the destination home's vocabulary (mirrors the legacy
+          // backfill's mapping); commitments and open loops keep their governed names.
+          const ownerType: Record<string, string> = { user_preference: "preference" };
           // INT-326 write rule (see session_summary): resolve the scope ONCE before the loops so a
-          // no-scope turn skips every fact embed and write, not just the insert.
+          // no-scope turn skips every fact write, not just the insert.
           const ownFactScope = scopedClientId ? undefined : await memoryWorkspaceScope();
           if (ownFactScope === null) {
             console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "fact_extraction" }));
@@ -1714,18 +1751,28 @@ JSON:`;
             for (const p of facts[list] ?? []) {
               if (typeof p !== "string" || !p.trim()) continue;
               if (ownFactScope === null) continue;
-              const emb = await embedText(p.trim());
-              const factMemory: any = {
-                client_user_id: scopedClientId || user.id,
-                memory_type: memoryType,
-                content: p.trim(),
-                source_session_id: rawData.sessionId || null,
-                embedding: emb,
-                metadata: { channel: "text", source: "auto_extracted" },
-              };
-              if (scopedClientId) factMemory.client_id = scopedClientId;
-              else factMemory.tenant_id = ownFactScope;
-              await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
+              if (scopedClientId) {
+                const emb = await embedText(p.trim());
+                const factMemory: any = {
+                  client_user_id: scopedClientId,
+                  memory_type: memoryType,
+                  content: p.trim(),
+                  source_session_id: rawData.sessionId || null,
+                  embedding: emb,
+                  metadata: { channel: "text", source: "auto_extracted" },
+                };
+                factMemory.client_id = scopedClientId;
+                await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
+              } else if (ownFactScope !== undefined) {
+                await recordWrite(`paige_owner_memory:${memoryType}`, supabase.rpc("record_paige_memory", {
+                  p_memory_type: ownerType[memoryType] ?? memoryType,
+                  p_content: p.trim(),
+                  p_metadata: { audience: "owner_personal", channel: "text", source: "auto_extracted" },
+                  p_confirmation_state: "proposed",
+                  p_user_id: user.id,
+                  p_tenant_id: ownFactScope,
+                }));
+              }
             }
           }
         } catch (err) {
@@ -2076,18 +2123,29 @@ JSON:`;
       const ownMemoryAllowed = !clientScopeDenied && !scopedClientId && memoryTurnTenant !== null;
       // Refused client context does NO memory work at all: the block below is skipped entirely,
       // so there is no recent read, no semantic embedding, and no match_paige_memory call.
+      // S5 read flip: OWNER/WORKSPACE continuity is recalled from the canonical owner-memory
+      // home through the governed read (service-role passes the turn's declared∧validated
+      // scope — the same authority the writers stamp under). CLIENT-scoped recall is unchanged.
+      // The governed read returns rows with metadata, so confirmation_state travels with each
+      // item to FUTURE consumers (the C6 projection's presentation contract decides phrasing);
+      // today's builder renders rows uniformly, which is unchanged from before the cutover.
       const memoryQuery = clientScopeDenied
         ? null
         : scopedClientId
         ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_id", scopedClientId).eq("is_active", true).order("created_at", { ascending: false }).limit(15)
         : ownMemoryAllowed
-        ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", user.id).eq("tenant_id", memoryTurnTenant).is("client_id", null).eq("is_active", true).order("created_at", { ascending: false }).limit(15)
+        ? supabase.rpc("get_paige_memory", {
+            p_memory_types: null,
+            p_limit: 15,
+            p_user_id: user.id,
+            p_tenant_id: memoryTurnTenant,
+          })
         : null;
 
       // Embed the latest user message so we can retrieve semantically-relevant
       // memories in parallel with the recent-memory pull.
       const lastUserContent = lastUserMessage?.content?.slice(0, 4000) || "";
-      const semanticPromise = (lastUserContent && (scopedClientId !== null || ownMemoryAllowed))
+      const semanticPromise = (lastUserContent && scopedClientId !== null)
         ? embedText(lastUserContent).then(async (queryEmbedding) => {
             if (!queryEmbedding) return [] as any[];
             const { data, error } = await supabase.rpc("match_paige_memory", {
@@ -2098,10 +2156,11 @@ JSON:`;
               _match_threshold: 0.7,
               _memory_count: 5,
               _message_count: 3,
-              // The person's own recall is read in this workspace only. A focused client turn passes
-              // null: its rows are keyed on the client (whose own tenant pins them), and the user
-              // branch has nothing to match there — every row a client turn writes carries client_id.
-              _target_tenant_id: scopedClientId ? null : memoryTurnTenant,
+              // A focused client turn passes null: its rows are keyed on the client (whose own
+              // tenant pins them), and the user branch has nothing to match there — every row a
+              // client turn writes carries client_id. (The no-client OWNER arm no longer calls
+              // this: owner continuity lives in owner memory, S5.)
+              _target_tenant_id: null,
             });
             if (error) {
               console.error("match_paige_memory error:", error);
@@ -2123,8 +2182,9 @@ JSON:`;
         // Always-on: surface user_preference at the top so Paige respects communication style.
         // Recent operational events follow.
         const priorityOrder: Record<string, number> = {
-          user_preference: 0, report_upload: 1, funding_secured: 2, dispute_generated: 3,
+          preference: 0, user_preference: 0, report_upload: 1, funding_secured: 2, dispute_generated: 3,
           milestone_completed: 4, lender_researched: 5, coach_note: 6, session_summary: 7,
+          commitment: 8, open_loop: 9,
         };
         const sorted = [...memories].sort((a, b) => (priorityOrder[a.memory_type] || 99) - (priorityOrder[b.memory_type] || 99));
 
@@ -2171,7 +2231,7 @@ JSON:`;
           // The remembered spans above are sanitized; lead the block with the untrusted-data notice so
           // an embedded directive/tool-call/permission-change is never obeyed. The trusted instruction
           // below still scopes what to honor to tone/length/format PREFERENCES — data, not authority.
-          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
+          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any preference items (tone, length, formats; owner-memory type 'preference', client-memory type 'user_preference') in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
         }
       }
     } catch (err) {
@@ -2288,36 +2348,51 @@ JSON:`;
           // suppressed the same one in workspace B for a week. A client turn keys on the client.
           // With no workspace there is nothing to compare against (the insert below is refused by
           // the database with MEMORY_TENANT_UNRESOLVED, exactly as before), so no probe is made.
+          // S5 audience split: an explicit preference stated in the caller's OWN workspace is
+          // OWNER continuity → the governed seam as a 'preference' (proposed); one captured in a
+          // client-scoped conversation is that CLIENT's preference → client_memory, unchanged.
+          // The 7-day de-dupe probe follows its writer: owner preferences probe owner memory.
           const dedupeTenant = scopedClientId ? null : await memoryWorkspaceScope();
+          const dedupeContent = lastUserMessage!.content.trim();
           const dedupeProbe = scopedClientId
             ? supabase.from("client_memory").select("id").eq("client_id", scopedClientId)
-            : dedupeTenant
-            ? supabase.from("client_memory").select("id").eq("client_user_id", targetUserId).eq("tenant_id", dedupeTenant).is("client_id", null)
-            : null;
-          const { data: dup } = dedupeProbe
-            ? await dedupeProbe
               .eq("memory_type", "user_preference")
-              .eq("content", lastUserMessage!.content.trim())
+              .eq("content", dedupeContent)
               .gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString())
-              .limit(1)
-              .maybeSingle()
-            : { data: null };
+              .limit(1).maybeSingle()
+            : dedupeTenant
+            ? supabase.from("paige_owner_memory").select("id").eq("user_id", targetUserId).eq("tenant_id", dedupeTenant)
+              .eq("memory_type", "preference")
+              .eq("content", dedupeContent)
+              .gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString())
+              .limit(1).maybeSingle()
+            : null;
+          const { data: dup } = dedupeProbe ? await dedupeProbe : { data: null };
           // INT-326 write rule: with no established workspace the whole write is skipped HERE —
-          // before the paid embed, not by waiting for the database's MEMORY_TENANT_UNRESOLVED
-          // refusal. A turn that cannot name its workspace persists no tenant memory.
-          if (!dup && (scopedClientId || dedupeTenant)) {
-            const emb = await embedText(lastUserMessage!.content);
+          // before any paid embed. A turn that cannot name its workspace persists no memory.
+          if (dup) {
+            // already remembered in this workspace within the window
+          } else if (scopedClientId) {
+            const emb = await embedText(dedupeContent);
             const row: any = {
               client_user_id: targetUserId,
               memory_type: "user_preference",
-              content: lastUserMessage!.content.trim(),
+              content: dedupeContent,
               embedding: emb,
               metadata: { source: "explicit_signal", channel: "text" },
             };
-            if (scopedClientId) row.client_id = scopedClientId;
-            else row.tenant_id = dedupeTenant;
+            row.client_id = scopedClientId;
             await recordWrite("client_memory:extracted", supabase.from("client_memory").insert(row));
-          } else if (!dup && !scopedClientId) {
+          } else if (dedupeTenant) {
+            await recordWrite("paige_owner_memory:explicit_signal", supabase.rpc("record_paige_memory", {
+              p_memory_type: "preference",
+              p_content: dedupeContent,
+              p_metadata: { audience: "owner_personal", source: "explicit_signal", channel: "text" },
+              p_confirmation_state: "proposed",
+              p_user_id: targetUserId,
+              p_tenant_id: dedupeTenant,
+            }));
+          } else {
             console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "explicit_signal" }));
           }
         }
@@ -18322,10 +18397,22 @@ export async function runStructuredExtractionAndSync(
     } else if (ownMemoryScope === null) {
       console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "report_upload" }));
     } else {
-      memoryInsert.tenant_id = ownMemoryScope;
-      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
+      // S5 (review P1-2): the no-client arm's subject is the CALLER's own credit journey —
+      // owner continuity, written to the governed home so the flipped own-arm read can recall
+      // it (the numbers stay canonical in credit_report_uploads; this is the context summary).
+      // Inside writeIfScopeCurrent for the SAME reason every durable write here is: the scope
+      // captured at turn start must still be current at write time, or the write refuses.
+      const governed = await writeIfScopeCurrent("paige_owner_memory", () => supabase.rpc("record_paige_memory", {
+        p_memory_type: "report_upload",
+        p_content: memoryContent,
+        p_metadata: { audience: "owner_personal", source: "structured_extraction", channel: "document" },
+        p_confirmation_state: "proposed",
+        p_user_id: callerUserId,
+        p_tenant_id: ownMemoryScope,
+      }));
+      if (governed !== "ok") remembered = governed;
     }
-    if (remembered !== "ok") return stoppedBy(remembered, "client_memory");
+    if (remembered !== "ok") return stoppedBy(remembered, clientId ? "client_memory" : "paige_owner_memory");
 
     // Step 5: stamp the upload row. THIS IS THE DOCUMENT'S OWN RECORD, not a profile field, so it
     // is written without asking — the person uploaded this file and this row is what became of it.

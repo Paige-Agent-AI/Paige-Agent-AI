@@ -45,6 +45,33 @@ describe("canonical Stripe merchant safe projection", () => {
 });
 
 describe("merchant scope and deliberate actions", () => {
+  it("uses the governed command door and redeems only the exact server proposal", async () => {
+    const p = await mount();
+    const preview = { action: "merchant.start_onboarding", provider: "stripe", environment: "test", binding_version: 2 };
+    invoke.mockImplementationOnce(async (_name, { body }) => ({ data: { ...ready(), ok: false, outcome: "approval_required", capability: "sales_start_merchant_onboarding", operation_id: body.operation_id, fingerprint: "0123456789abcdef", summary: "Continue Stripe TEST setup", expires_at: new Date(Date.now() + 60000).toISOString(), preview }, error: null }));
+    await act(async () => { expect(await merchant.begin()).toBeNull(); });
+    const request = invoke.mock.calls.at(-1)?.[1].body;
+    expect(request.command).toEqual({ action: "merchant.start_onboarding", provider: "stripe" });
+    expect(request.operation_id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(request.approved_fingerprint).toBeUndefined();
+    expect(merchant.state).toBe("ready");
+    expect(merchant.approval?.preview).toEqual(preview);
+    invoke.mockResolvedValueOnce({ data: { ...ready(), ok: true, url: "https://connect.stripe.com/setup/test" }, error: null });
+    await act(async () => { expect(await merchant.approve()).toContain("connect.stripe.com"); });
+    expect(invoke.mock.calls.at(-1)?.[1].body).toEqual({ ...request, approved_fingerprint: "0123456789abcdef" });
+    expect(merchant.approval).toBeNull(); await p.close();
+  });
+  it("refuses foreign or changed-environment approval without presenting it", async () => {
+    const p = await mount();
+    invoke.mockResolvedValueOnce({ data: { ...ready(), outcome: "approval_required", fingerprint: "0123456789abcdef", summary: "wrong", expires_at: new Date(Date.now()+60000).toISOString(), preview: { action: "merchant.start_onboarding", provider: "stripe", environment: "live", binding_version: 2 } }, error: null });
+    await act(async () => { await merchant.begin(); });
+    expect(merchant.approval).toBeNull(); expect(merchant.state).toBe("outcome_unknown"); await p.close();
+  });
+  it("definitive refusal does not fabricate an uncertain provider dispatch", async () => {
+    const p = await mount(); invoke.mockResolvedValueOnce({ data: { ...ready(), outcome: "refused", code: "AUTHORITY_REFUSED", ok: false }, error: null });
+    await act(async () => { await merchant.begin(); });
+    expect(merchant.state).toBe("ready"); expect(merchant.approval).toBeNull(); expect(merchant.message).toContain("not authorized"); await p.close();
+  });
   it("blocks another start after uncertain response until explicit reconciliation", async () => {
     const p = await mount(); invoke.mockResolvedValue({ data: null, error: { message: "timeout" } });
     await act(async () => { await merchant.begin("https://paigeagent.ai/solo/1/settings/integrations?stripe_setup=return"); });

@@ -151,6 +151,43 @@ export function salesDraftDoorBound(chat, salesChat, draftChat, door, admission,
     && admission.includes('decideDeclaredOrdinaryCapability(declaration,')
     && ordinaryDeclaredGateBound(decision);
 }
+
+const MERCHANT_PATHS = [CHAT,'supabase/functions/_shared/sales-invoice-chat.ts','supabase/functions/_shared/sales-payments/merchant-chat.ts','supabase/functions/tenant-stripe-connect/index.ts','supabase/functions/_shared/sales-payments/merchant-admission.ts','supabase/functions/_shared/sales-payments/merchant-capability.ts','supabase/functions/_shared/capability-kit/decision.ts'];
+/** Closed current merchant declarations, counted only when their real Chat and edge bind them. */
+export function parseMerchantActions(declarations) {
+  const body=declarations.match(/export const MERCHANT_KIT_BY_TOOL\s*=\s*\{([\s\S]*?)\}\s*as const;/)?.[1];
+  if(!body)return [];
+  const entries=[...body.matchAll(/\b([a-z0-9_]+):make\('([a-z0-9_]+)','sales_merchant\.([a-z_]+)','merchant\.([a-z_]+)'\)/g)];
+  if(entries.length!==2||entries.map(m=>m[0]).join(',')!==body.replace(/\s/g,''))return [];
+  const expected={sales_start_merchant_onboarding:['onboarding_start','start_onboarding'],sales_create_merchant_login_link:['portal_link','login_link']};
+  if(entries.some(m=>m[1]!==m[2]||!expected[m[1]]||m[3]!==expected[m[1]][0]||m[4]!==expected[m[1]][1])||new Set(entries.map(m=>m[1])).size!==2)return [];
+  return entries.map(m=>m[1]);
+}
+export function salesMerchantDoorBound(chat, aggregate, adapter, edge, admission, declarations, decision) {
+  const actions=parseMerchantActions(declarations);
+  const highGate=decision.split('export function decideDeclaredCapability(')[1]?.split('export function decideDeclaredOrdinaryCapability(')[0]??'';
+  return actions.length===2
+    && /import\s*\{[^}]*SALES_INVOICE_TOOLS[^}]*dispatchSalesInvoiceChat[^}]*\}\s*from\s*['"]\.\.\/_shared\/sales-invoice-chat\.ts['"]/.test(chat)
+    && chat.includes('toolDefs.push(...SALES_INVOICE_TOOLS')
+    && chat.includes('SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name) ? dispatchSalesCollectionsChat : dispatchSalesInvoiceChat')
+    && chat.includes('await dispatchSales({')
+    && /import\s*\{[^}]*SALES_MERCHANT_TOOLS[^}]*dispatchMerchantChat[^}]*\}\s*from\s*['"]\.\/sales-payments\/merchant-chat\.ts['"]/.test(aggregate)
+    && aggregate.includes('...SALES_MERCHANT_TOOLS')
+    && aggregate.includes('if(SALES_MERCHANT_TOOL_NAMES.has(ctx.toolName))return dispatchMerchantChat(ctx,deps,')
+    && /from\s*['"]\.\/merchant-capability\.ts['"]/.test(adapter)
+    && actions.every(tool=>adapter.includes(`'${tool}'`))
+    && adapter.includes("deps.caller.functions.invoke('tenant-stripe-connect',{body})")
+    && /import\s*\{[^}]*admitMerchantCommand[^}]*\}\s*from\s*['"]\.\.\/_shared\/sales-payments\/merchant-admission\.ts['"]/.test(edge)
+    && edge.includes('await admitMerchantCommand(body,context,')
+    && /import\s*\{\s*decideDeclaredCapability\s*\}\s*from\s*['"]\.\.\/capability-kit\/decision\.ts['"]/.test(admission)
+    && /from\s*['"]\.\/merchant-capability\.ts['"]/.test(admission)
+    && admission.includes('decideDeclaredCapability(MERCHANT_KIT_BY_TOOL[tool],')
+    && admission.includes('await port.claim(tool,req.approved_fingerprint)')
+    && declarations.includes("governance:{actionRiskKey:tool,risk:'high',approval:'confirm'")
+    && highGate.includes('classifyAction(key) !== declaration.governance.risk')
+    && highGate.includes("declaration.governance.risk !== 'high'")
+    && highGate.includes('return decideGovernedExecution(input);');
+}
 export function parseExemptions(src) {
   const at = src.indexOf("const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([");
   if (at < 0) return null;
@@ -236,6 +273,16 @@ function selfTest() {
     verbSourceMatches: true,
   };
   let bad = 0;
+  const merchantSources=MERCHANT_PATHS.map(path=>fs.readFileSync(path,'utf8'));
+  bad += ok('merchant declarations discovered through mounted Chat and canonical edge gate',salesMerchantDoorBound(...merchantSources));
+  for(const [index,token]of [[0,'toolDefs.push(...SALES_INVOICE_TOOLS'],[1,'...SALES_MERCHANT_TOOLS'],[1,'return dispatchMerchantChat(ctx,deps,'],[2,"invoke('tenant-stripe-connect'"],[3,'await admitMerchantCommand(body,context,'],[4,'decideDeclaredCapability(MERCHANT_KIT_BY_TOOL[tool],'],[4,'await port.claim(tool,req.approved_fingerprint)'],[5,"risk:'high'"],[6,'classifyAction(key) !== declaration.governance.risk']]){
+    if(!merchantSources[index].includes(token))throw Error(`merchant negative target absent: ${token}`);
+    const broken=[...merchantSources];broken[index]=broken[index].replace(token,'BROKEN_BINDING');
+    bad += ok(`merchant discovery refuses broken binding ${token}`,!salesMerchantDoorBound(...broken));
+  }
+  const unknownMerchant=merchantSources[5].replaceAll('sales_create_merchant_login_link','sales_create_unknown_merchant_link');
+  bad += ok('unknown merchant key is not discovered',parseMerchantActions(unknownMerchant).length===0);
+  bad += ok('unknown merchant declaration cannot preserve a ghost classification',!salesMerchantDoorBound(...merchantSources.map((s,i)=>i===5?unknownMerchant:s)));
   const draftSources = [CHAT,'supabase/functions/_shared/sales-invoice-chat.ts','supabase/functions/_shared/sales-commercial/draft-chat.ts','supabase/functions/sales-invoice-draft-command/index.ts','supabase/functions/_shared/sales-commercial/draft-admission.ts','supabase/functions/_shared/capability-kit/decision.ts'].map(path=>fs.readFileSync(path,'utf8'));
   bad += ok('draft guard follows the real declaration/dispatch/shared-gate chain',salesDraftDoorBound(...draftSources));
   for (const [index,token] of [[0,'...SALES_INVOICE_TOOLS'],[1,'...SALES_DRAFT_TOOLS'],[1,'dispatchCommercialDraftChat(ctx,deps,'],[2,"functions.invoke('sales-invoice-draft-command'"],[3,'await admitCommercialDraft('],[4,"from '../capability-kit/decision.ts'"],[4,'decideDeclaredOrdinaryCapability(declaration,'],[5,"declaration.providerBinding.kind !== 'internal'"],[5,"declaration.governance.risk !== 'ordinary'"]]) {
@@ -439,6 +486,14 @@ const governedEdgeActions = [
   ...CONTACT_SCOPED_EDGE_HANDLERS.flatMap((path) => parseCapabilityConstants(fs.readFileSync(path, "utf8"))),
 ];
 const requiredClassifications = [];
+const merchantDeclarations='supabase/functions/_shared/sales-payments/merchant-capability.ts';
+if(fs.existsSync(merchantDeclarations)){
+  const sources=MERCHANT_PATHS.map(path=>fs.readFileSync(path,'utf8'));
+  if(!salesMerchantDoorBound(...sources))throw Error('Sales merchant declaration lost its mounted Chat/shared-governance binding');
+  const keys=parseMerchantActions(sources[5]);
+  importedTools.push(...keys);
+  requiredClassifications.push(...keys);
+}
 // The ordinary draft door uses the same shared gate; the high-only Kit adapter is not widened.
 // Follow its real Chat import/dispatch and declaration, rather than exempting a new policy key.
 const draftDoor = 'supabase/functions/sales-invoice-draft-command/index.ts';

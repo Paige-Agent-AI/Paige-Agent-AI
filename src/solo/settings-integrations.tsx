@@ -88,7 +88,7 @@ function sanitizeMcpByProvider(value: unknown): Partial<Record<"n8n" | "zapier",
   return out;
 }
 
-type ProviderIdentity = "n8n" | "zapier" | "mcp" | "quickbooks" | "stripe" | "docusign" | "apollo" | "plaid" | "api";
+type ProviderIdentity = "n8n" | "zapier" | "mcp" | "quickbooks" | "stripe" | "paypal" | "docusign" | "apollo" | "plaid" | "api";
 type CatalogueCategory = "all" | "social" | "marketing" | "automation" | "financial" | "documents" | "client-data" | "developer";
 
 
@@ -175,6 +175,8 @@ const PROVIDERS: ReadonlyArray<ProviderRow> = [
     note: "The sync seams exist, but nothing yet proves a connection belongs to this workspace, so no setup is offered." },
   { id: "stripe", name: "Stripe Connect", kind: "Commerce", filter: "financial", connectable: true,
     note: "Connect the account your business uses to receive customer payments." },
+  { id: "paypal", name: "PayPal", kind: "Commerce", filter: "financial", connectable: false,
+    note: "PayPal customer payments require the platform’s approved seller-onboarding connection. That connection is not available yet. Your business will connect its own PayPal account here once secure seller authorization is enabled." },
   { id: "docusign", name: "DocuSign", kind: "Documents", filter: "documents", connectable: false,
     note: "The signature seams are older than the tenant-safe rules this surface follows, so setup is not offered yet." },
   { id: "apollo", name: "Apollo", kind: "Client data", filter: "client-data", connectable: false,

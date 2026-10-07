@@ -44,4 +44,12 @@ Channel: development. Customer release identity: none pending production outcome
 
 ## Final visual repair and fixture verification
 
+## Post-release RPC receiver repair
+
+An owner runtime screenshot exposed the failed-read state. The shared Solo consumer detached the Supabase RPC method, losing the client receiver required by the actual SDK (`this.rest.rpc`). The fix binds the existing method to the existing authenticated client; it adds no issuer, metric formula, authorization path or tenant-specific branch.
+
+Flow-by-Flow affected flows: initial load/reload, period changes, empty and populated metric results, account switching and retry. Existing scope/actor fences, evidence validation, truthful failed-read behavior, source classes and currency separation remain unchanged. Impeccable clarity/empty-state contract is preserved: no data is a valid zero result; a failed read is never zero. No layout or design change requires another prototype.
+
+Failing-first receiver-aware regression reproduced `error:0:none` with valid empty responses. After the repair, generic A/B empty-workspace reads succeed through all eleven metrics and account switching; the focused consumer/parser suite passes 51 checks. Independent review found the identical receiver defect in the shared stage evidence hook. Its owning lane authorized the same bounded invocation repair, with no issuer/resolver/authority changes. Receiver-aware stage tests failed first (5 failures / 9 passes), then all 14 passed after binding; the combined Performance/stage suite passes 50 checks. This is synthetic SDK-contract evidence, not authenticated production browser acceptance. No customer data or real account identifier is included in fixtures. Exact-head review/CI and production deployment are required before the repair is called shipped.
+
 The production consumer now inherits Solo typography and neutral surface tokens, uses explicit semantic chart-color fallbacks, preserves selected-lens contrast and gives the portalled evidence drawer the active Solo theme. A light-theme portal regression guards that inheritance. Fifty focused consumer/shared-parser checks pass. Keyboard Enter opens source evidence and Escape restores focus to the initiating control at five fixture widths. These are synthetic browser interaction checks, not authenticated tenant acceptance. Shared production issuance and authenticated owner/admin/foreign-tenant readback remain proof owed.

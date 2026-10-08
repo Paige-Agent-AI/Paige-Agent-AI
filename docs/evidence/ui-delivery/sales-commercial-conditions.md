@@ -33,7 +33,7 @@ MUST_PRESERVE: Canonical invoice writer, issued facts, Collections balance, Trus
 ACCEPTANCE_CRITERIA: Explicit conditions survive canonical save/readback; stale recorded annotations refuse after line changes; foreign relationships refuse; historical signed economics remain unknown.
 MOTION_PURPOSE: NONE: no motion changes.
 PROTECTED_SEAMS: Chat routing, C4, signing engine, payment executors, UI components and Performance untouched.
-INTERNAL_BUILD_IDENTITY: supporting=360f50a71f4bdc3e5c1140029425ec3457ff553d; candidate=exact PR head; deployment=not observed; environment=development; migration=20270601000009; evidence=this record
+INTERNAL_BUILD_IDENTITY: supporting=360f50a71f4bdc3e5c1140029425ec3457ff553d; candidate=exact PR head; deployment=not deployed; environment=development; migrations=PROOF_OWED(20270601000009 production persistence unverified); edge=PROOF_OWED(paige-ai-chat exact merged shared modules unverified); evidence=this record
 RELEASE_CHANNEL: development: production persistence and deployment not yet observed.
 RELEASE_CLASSIFICATION: internal-only: bounded commercial condition contract, not full commercial acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated owner outcome not accepted.

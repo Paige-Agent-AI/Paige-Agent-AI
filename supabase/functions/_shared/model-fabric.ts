@@ -20,11 +20,12 @@
 // OPENAI IS OFF FOR CHAT until the controlled Sol canary passes (`OPENAI_CHAT_ENABLED` below). Turning
 // it on is a reviewed one-line change, never an environment toggle nobody can see.
 
-import { gatewayCompat } from "./claude.ts";
+import { chatCompletionCompat, gatewayCompat, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
-import type { TraceCtx } from "./llm-trace.ts";
+import { traceAdmin, traceLLMCall, type TraceCtx } from "./llm-trace.ts";
+import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
 import { OPENAI_EFFORT_BY_CLASS, type OpenAIReasoningClass } from "./openai-models.ts";
-import { responsesStream, type ChatShapeBody } from "./openai-responses.ts";
+import { responsesCompletion, responsesStream, type ChatShapeBody } from "./openai-responses.ts";
 import { classifyProviderFailure, PROVIDER_FAILURE_CLASSES, type ProviderFailureClass } from "./provider-failure.ts";
 import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, type RouteCandidate } from "./paige-turn/route.ts";
 
@@ -145,4 +146,238 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
 /** One line for the server log: which candidate served, and why any before it did not. Closed values only. */
 export function describeAttempts(s: FabricStream): string {
   return s.attempts.map((a) => `${a.provider}:${a.model}${a.failure ? `(${a.failure})` : "(served)"}`).join(" → ");
+}
+
+// ── INT-334: THE CLASS-BEARING CONSUMER SEAM (non-streaming) ───────────────────────────────────────
+//
+// The shared contract an approved consumer uses to request reasoning WITHOUT naming a provider or a
+// model (R6A-RETURN §D): a cognitive class and the consumer's own job identity in, one chat-shaped
+// completion out, and the SERVED ROUTE on the response so the consumer can persist what ran without
+// becoming the router. `routedChatCompletion` (by JobKind) keeps serving every existing caller
+// unchanged; nothing is migrated by this seam — Deep Research adopts it in its own lane (R6-B), and
+// later COO operating intelligence the same way. One policy (CLASS_POLICY), one fallback rule
+// (mayFallback), one failure classifier — no second route table.
+//
+// WHAT THE SEAM DOES NOT OWN: business data, business authorization, execution policy, the
+// Operating/Cognitive Fabric. A class is not authority (the owner's binding rule); the consumer's
+// own gates decide everything their work touches.
+//
+// OPENAI follows the same posture as chat: candidates are skipped while OPENAI_CHAT_ENABLED is
+// false, so today every class is served by Anthropic exactly as routedChatCompletion's tiers serve
+// it (operational/frontier → the reasoning tier, cheap → the classification tier). The budget gate
+// runs on EVERY candidate including the OpenAI path (R5a's release bar item, built in here from the
+// start), and a budget stop is terminal — never a reason to try another provider.
+
+/** The classes a consumer may request. `deterministic` is code and is never a model call. */
+export type ConsumerCognitiveClass = Exclude<CognitiveClass, "deterministic">;
+
+/** A consumer job identity: snake_case, stable, named by the consumer's own declaration. */
+const JOB_IDENTITY = /^[a-z][a-z0-9_]{2,63}$/;
+
+export interface FabricCompletionRequest extends ChatShapeBody {
+  cognitive_class: ConsumerCognitiveClass;
+  /** The consumer's own job identity (e.g. `research_unit_synthesis`) — recorded on the trace and the route. */
+  job: string;
+}
+
+/** Why the route came out as it did. A closed set; the per-attempt detail rides `attempts`. */
+export type FabricRouteReason =
+  | "served_primary"      // the class's first usable candidate served
+  | "served_fallback"     // a later candidate served after a proven provider-health failure
+  | "pinned_served"       // the pinned route served (the judge carve-out: no policy, no fallback)
+  | "pinned_failed"       // the pinned route failed; nothing else was tried, by design
+  | "failed";             // every usable candidate failed; the last closed failure class is on the result
+
+export interface FabricCompletionRoute {
+  requested_class: ConsumerCognitiveClass;
+  job: string;
+  served: { provider: FabricProvider; model: string } | null;
+  fallback: boolean;
+  reason: FabricRouteReason;
+  attempts: FabricAttempt[];
+}
+
+export interface FabricCompletionResult {
+  ok: boolean;
+  route: FabricCompletionRoute;
+  /** Chat-shaped (choices[0].message, model, usage, paige_stop) — the shape consumers already parse. */
+  response?: Record<string, unknown>;
+  /** The closed failure class of the last failed attempt; provider text is never kept. */
+  error?: { failure: ProviderFailureClass | "budget_exceeded" };
+}
+
+export interface FabricCompletionOpts {
+  trace?: TraceCtx;
+  /**
+   * The judge carve-out (R6A-RETURN D.5): ONE pinned candidate, no class policy, NO fallback —
+   * a longitudinal instrument must not inherit dynamic routing. Pinning grants nothing and is
+   * Anthropic-only by construction (the frozen instrument's provider).
+   */
+  pinned?: { tier: ClaudeTier };
+  /** Test seams: the enabled set and the OpenAI transport. Never set by production callers. */
+  enabled?: { openai?: boolean };
+  openaiFetch?: typeof fetch;
+}
+
+function budgetDb(): BudgetDb | null {
+  // The ONE memoized service client every other budget enforcer shares (llm-trace's admin) —
+  // never a second client per isolate.
+  return traceAdmin() as unknown as BudgetDb;
+}
+
+/**
+ * One non-streaming completion for a cognitive class. `request` carries WHAT kind of thinking the
+ * job needs and the job's own identity; the fabric alone decides who serves it. Budget stops throw
+ * (terminal, like every other fabric entry point); a failed call never keeps provider text.
+ */
+export async function fabricCompletion(
+  request: FabricCompletionRequest,
+  opts: FabricCompletionOpts = {},
+): Promise<FabricCompletionResult> {
+  const started = Date.now();
+  const cls = request.cognitive_class;
+  const klass = streamingClass(cls);
+  if (!JOB_IDENTITY.test(request.job)) throw new Error("fabricCompletion: job must be a snake_case job identity");
+  const enabled = { openai: opts.enabled?.openai ?? OPENAI_CHAT_ENABLED };
+  const attempts: FabricAttempt[] = [];
+  let gateHitForTrace: { budget: Record<string, unknown> } | null = null;
+  const route = (served: FabricCompletionRoute["served"], reason: FabricRouteReason, fallback: boolean): FabricCompletionRoute =>
+    ({ requested_class: cls, job: request.job, served, fallback, reason, attempts });
+
+  // THE PINNED ROUTE: one Anthropic candidate, no policy, no fallback, no dynamic class routing.
+  let use: RouteCandidate[];
+  if (opts.pinned) {
+    use = [{ provider: "anthropic", model: opts.pinned.tier === "reasoning" ? CLAUDE_REASONING : "claude-classification" }];
+  } else {
+    const c = candidatesFor(klass, enabled);
+    use = c.use;
+    for (const sk of c.skipped) attempts.push({ provider: sk.provider, model: sk.model ?? "", failure: "skipped_disabled" });
+  }
+
+  // The budget band the class rides. Frontier spend is the reasoning band today; pricing semantics
+  // belong to INT-331 and are not changed here. A PINNED route pays for the tier it runs, whatever
+  // class the instrument declared (a pinned judge on the reasoning tier is reasoning-band spend).
+  const band = opts.pinned
+    ? (opts.pinned.tier === "reasoning" ? "reasoning" : "cheap")
+    : klass === "cheap" ? "cheap" : "reasoning";
+
+  let last: FabricCompletionResult = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false) };
+
+  for (const c of use) {
+    // BUDGET GATE — every candidate, both providers. A stop is a decision, never retried elsewhere.
+    if (opts.trace?.tenant_id) {
+      const db = budgetDb();
+      if (db) {
+        const ceiling = await resolveCeiling(db, opts.trace.tenant_id);
+        const accrued = await accruedSpendToday(db, opts.trace.tenant_id);
+        if (accrued == null) {
+          console.warn("[fabric-completion] budget accrual unknown; call proceeds ungated (budget_accrual_unknown)");
+        } else {
+          const d = enforceBudget({ accrued_usd: accrued, ceiling_usd: ceiling, band });
+          const gateHits = d.gate
+            ? { budget: { level: d.gate.replace("budget_", ""), accrued_usd: d.accrued_usd, ceiling_usd: d.ceiling_usd, band: d.band } }
+            : null;
+          if (d.decision === "block") {
+            attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
+            traceLLMCall({ ...(opts.trace ?? {}), provider: "router_budget", model: null,
+              job_kind: request.job, modality: "text", status: "error",
+              latency_ms: Date.now() - started, input: request.messages, output: null,
+              error_class: "budget_exceeded", error_message: new BudgetExceeded(d.ceiling_usd, d.accrued_usd).message,
+              doctrine_gate_hits: gateHits,
+              metadata: { caller_function: opts.trace.agent_id } });
+            throw new BudgetExceeded(d.ceiling_usd, d.accrued_usd);
+          }
+          gateHitForTrace = gateHits;
+        }
+      }
+    }
+
+    const anthropicTier: ClaudeTier | null = c.provider === "anthropic" ? (c.model === CLAUDE_REASONING ? "reasoning" : "classification") : null;
+    try {
+      const resp: Record<string, unknown> = c.provider === "openai"
+        // The trace carries the CONSUMER's job identity, never the adapter's "chat" default; the
+        // OpenAI leg self-traces through responsesCompletion under this context.
+        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
+        : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace);
+      const servedModel = typeof resp.model === "string" && resp.model
+        ? resp.model
+        : c.provider === "anthropic"
+          ? resolvedClaudeModel(request as unknown as Parameters<typeof resolvedClaudeModel>[0], anthropicTier as ClaudeTier)
+          : (c.model as string);
+      attempts.push({ provider: c.provider, model: servedModel });
+      const failedBefore = attempts.some((a) => a.failure && a.failure !== "skipped_disabled");
+      return {
+        ok: true,
+        response: resp,
+        route: route(
+          { provider: c.provider, model: servedModel },
+          opts.pinned ? "pinned_served" : failedBefore ? "served_fallback" : "served_primary",
+          failedBefore,
+        ),
+      };
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === "budget_exceeded") {
+        attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
+        throw e;
+      }
+      const err = e as { name?: string; status?: number; failureClass?: string };
+      const proven = PROVIDER_FAILURE_CLASSES.includes(err.failureClass as ProviderFailureClass) ? err.failureClass as ProviderFailureClass : undefined;
+      // Transport throws carry no status: a timeout or a broken connection is the streaming
+      // fabric's `provider_outage` (fallback-eligible) — the 2026-10-06 outage class — never `unknown`.
+      const failure: ProviderFailureClass = e instanceof NeedsConfigError ? "auth_config"
+        : (proven
+          ?? (err.name === "TimeoutError" || err.name === "AbortError" ? classifyProviderFailure({ provider: c.provider, status: 0, transport: "timeout" })
+          : (e instanceof TypeError || err.name === "TypeError") ? classifyProviderFailure({ provider: c.provider, status: 0, transport: "network" })
+          : classifyProviderFailure({ provider: c.provider, status: typeof err.status === "number" ? err.status : 0 })));
+      attempts.push({ provider: c.provider, model: c.model ?? "", failure, status: typeof err.status === "number" ? err.status : 0 });
+      last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure } };
+      if (opts.pinned) return last; // a pinned route never moves — the instrument stays comparable
+      if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) return last;
+    }
+  }
+  return last;
+}
+
+/**
+ * The Anthropic candidate for non-streaming calls: `chatCompletionCompat` (the same translation the
+ * routed path uses) under the seam's OWN budget-checked trace row — the compat layer itself never
+ * traces, so this is the single trace layer for this leg (the OpenAI leg self-traces through
+ * responsesCompletion; neither double-counts).
+ */
+async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: string, trace?: TraceCtx, gateHits?: { budget: Record<string, unknown> } | null): Promise<Record<string, unknown>> {
+  const started = Date.now();
+  const shaped = body as unknown as Parameters<typeof chatCompletionCompat>[0];
+  try {
+    const resp = await chatCompletionCompat(shaped, tier);
+    const usage = (resp as { usage?: { prompt_tokens?: number; completion_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number } })?.usage ?? {};
+    traceLLMCall({
+      ...(trace ?? {}), provider: "anthropic",
+      model: (resp as { model?: string })?.model ?? resolvedClaudeModel(shaped, tier),
+      job_kind: job, modality: "text", tier, status: "success",
+      tokens_in: usage.prompt_tokens ?? null,
+      tokens_out: usage.completion_tokens ?? null,
+      cache_read_input_tokens: usage.cache_read_input_tokens ?? null,
+      cache_creation_input_tokens: usage.cache_creation_input_tokens ?? null,
+      latency_ms: Date.now() - started,
+      input: body.messages, output: (resp as { choices?: { message?: { content?: unknown } }[] })?.choices?.[0]?.message?.content ?? null,
+      doctrine_gate_hits: gateHits ?? null,
+      metadata: { caller_function: trace?.agent_id },
+    });
+    return resp as Record<string, unknown>;
+  } catch (e) {
+    // A failed leg leaves the SAME evidence a successful one does — every peer entry point traces
+    // its errors; a zero-trace failure path is exactly the row the fleet error-rate needs.
+    const err = e as { status?: number; failureClass?: string };
+    traceLLMCall({
+      ...(trace ?? {}), provider: "anthropic",
+      model: resolvedClaudeModel(shaped, tier),
+      job_kind: job, modality: "text", tier, status: "error",
+      latency_ms: Date.now() - started,
+      input: body.messages, output: null,
+      error_class: PROVIDER_FAILURE_CLASSES.includes(err.failureClass as ProviderFailureClass) ? err.failureClass : "error",
+      error_message: (e as Error)?.name ?? "error",
+      metadata: { caller_function: trace?.agent_id },
+    });
+    throw e;
+  }
 }

@@ -325,7 +325,11 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
 
     if (!resp.ok) {
       const detail = await anthropicFailureDiagnostic(resp);
-      throw new Error(`Anthropic ${resp.status}: ${detail}`);
+      // INT-334 — carry the closed failure class (and the status) ON the throw, so the fabric's
+      // consumer seam can classify a failed non-stream leg without parsing the message text.
+      const parsed = (() => { try { return JSON.parse(detail) as { failure_class?: string }; } catch { return null; } })();
+      throw Object.assign(new Error(`Anthropic ${resp.status}: ${detail}`),
+        { status: resp.status, failureClass: parsed?.failure_class });
     }
     const data = await resp.json();
     const blocks: unknown[] = Array.isArray(data?.content) ? data.content : [];

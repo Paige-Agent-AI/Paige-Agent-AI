@@ -36,6 +36,67 @@ import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, ty
  */
 export const OPENAI_CHAT_ENABLED = false;
 
+// ── THE SOL CANARY COHORT GATE (#canary-readiness) ────────────────────────────────────────────────
+//
+// The master flag above stays the one-line reviewed flip; beneath it, a canary is admitted ONLY for
+// an explicitly listed tenant cohort AND (by default) ONLY for the operational class — the Sol
+// evaluation. Both gates are OFF by default: no cohort env → nobody, ever, whatever the master flag
+// says. Rollback is either gate: clear the cohort env, or flip the master flag back. The values are
+// read per call (never cached) so a canary can be emptied without a deploy.
+//
+//   OPENAI_CANARY_TENANTS  comma-separated tenant uuids (default: unset → NOBODY)
+//   OPENAI_CANARY_CLASSES  comma list from cheap|operational|frontier (default: "operational")
+
+const CANARY_TENANTS_ENV = "OPENAI_CANARY_TENANTS";
+const CANARY_CLASSES_ENV = "OPENAI_CANARY_CLASSES";
+const CANARY_CLASS_SET = new Set(["cheap", "operational", "frontier"]);
+
+function fabricEnv(name: string): string | undefined {
+  const d = (globalThis as { Deno?: { env?: { get?: (n: string) => string | undefined } } }).Deno;
+  return d?.env?.get?.(name) ?? undefined;
+}
+
+function csvEnv(name: string): string[] {
+  const raw = fabricEnv(name);
+  return raw ? raw.split(",").map((x) => x.trim()).filter(Boolean) : [];
+}
+
+/** The canary cohort as read at call time (uuid strings, lowercase). Empty = nobody. */
+export function openAiCanaryTenants(): string[] {
+  return csvEnv(CANARY_TENANTS_ENV).map((t) => t.toLowerCase());
+}
+
+/**
+ * The classes the canary admits OpenAI candidates for. Default: operational only (the Sol
+ * evaluation). A SET value with ZERO valid tokens (a pure typo) falls back to this same default —
+ * never wider — and the cohort/master gates still bound everything.
+ */
+export function openAiCanaryClasses(): string[] {
+  const listed = csvEnv(CANARY_CLASSES_ENV).map((c) => c.toLowerCase()).filter((c) => CANARY_CLASS_SET.has(c));
+  return listed.length ? listed : ["operational"];
+}
+
+/**
+ * Does the COHORT admit the OpenAI candidate for this caller and class? (The master flag is checked
+ * separately, so the cohort rule is independently testable while the flag stays a reviewed const.)
+ * A null/absent or malformed tenant id (platform/system calls) is never admitted — a canary never
+ * rides unattributed traffic.
+ */
+export function openAiCohortAdmits(tenantId: string | null | undefined, cls: CognitiveClass): boolean {
+  if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) return false;
+  if (!openAiCanaryTenants().includes(tenantId.toLowerCase())) return false;
+  return openAiCanaryClasses().includes(streamingClass(cls));
+}
+
+/**
+ * Is the OpenAI candidate ADMITTED for this caller and class? The controlled-canary rule: the
+ * master flag AND the tenant cohort AND the class scope must all admit it. With the master flag
+ * false (today), nothing is admitted whatever the environment says.
+ */
+export function openAiAdmitted(tenantId: string | null | undefined, cls: CognitiveClass): boolean {
+  return OPENAI_CHAT_ENABLED && openAiCohortAdmits(tenantId, cls);
+}
+
 /** Providers that can serve a streamed, tool-bearing chat round today. The open pool does not stream. */
 const STREAMING_PROVIDERS: ReadonlySet<FabricProvider> = new Set(["openai", "anthropic"]);
 
@@ -137,7 +198,7 @@ async function fabricBudgetGate(
 }
 
 export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody & { tool_choice?: unknown }, opts: FabricOptions = {}): Promise<FabricStream> {
-  const enabled = { openai: opts.enabled?.openai ?? OPENAI_CHAT_ENABLED };
+  const enabled = { openai: opts.enabled?.openai ?? openAiAdmitted(opts.trace?.tenant_id, cls) };
   const { use, skipped } = candidatesFor(cls, enabled);
   const attempts: FabricAttempt[] = skipped.map((c) => ({ provider: c.provider, model: c.model ?? "", failure: "skipped_disabled" as const }));
   let last: FabricStream = { ok: false, status: 0, served: null, attempts };
@@ -330,7 +391,7 @@ export async function fabricCompletion(
   const cls = request.cognitive_class;
   const klass = streamingClass(cls);
   if (!JOB_IDENTITY.test(request.job)) throw new Error("fabricCompletion: job must be a snake_case job identity");
-  const enabled = { openai: opts.enabled?.openai ?? OPENAI_CHAT_ENABLED };
+  const enabled = { openai: opts.enabled?.openai ?? openAiAdmitted(opts.trace?.tenant_id, cls) };
   const attempts: FabricAttempt[] = [];
   let gateHitForTrace: { budget: Record<string, unknown> } | null = null;
   const route = (served: FabricCompletionRoute["served"], reason: FabricRouteReason, fallback: boolean): FabricCompletionRoute =>

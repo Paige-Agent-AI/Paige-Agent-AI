@@ -88,6 +88,32 @@ npx tsc --noEmit -p tsconfig.app.json 2>&1 \
 The goal is zero. Do **not** add entries to whitelist a new error — the shrink-only guard will fail the PR.
 
 ## Known follow-ups (Lane F)
+
+### Unit-test transport isolation and failure attribution (#1486)
+
+The root Vitest configuration uses `https://unit-test.invalid` and a test-only key.
+Its setup blocks default `fetch` and `WebSocket` calls before test imports. A caught
+transport error still fails the suite; supply an explicit double at the dependency
+that the named test exercises. Do not return successful empty data from a global
+transport fallback. Tests of network consumers keep their own recorded doubles.
+
+The existing `ci / verify` Test step retains its failing exit code and writes Vitest
+JSON. Its appended diagnostic step emits `unit-failure-attribution.json`, uploaded
+under `unit-failure-attribution-<run id>-<attempt>`. It records executed checkout,
+workflow and candidate SHAs separately, plus run identity,
+totals, failing file/test, and `UNIT_NETWORK_ESCAPE` (Release/CI isolation ownership)
+or `TEST_FAILURE_UNCLASSIFIED` (owning test lane). Missing or malformed evidence is
+`EVIDENCE_UNAVAILABLE`, never a passing result. Raw exception messages, request
+URLs, headers, and bodies are omitted from this diagnostic artifact.
+
+This artifact explains this unit-test leg only. It does not diagnose container,
+runner, provider, deployment, database, or product failures by guesswork. Compare
+the exact candidate result with a clean-main run and inspect the failing test before
+assigning a product regression or nondeterminism label. Historical failed runs
+remain failed; a later passing attempt supplies additional evidence.
+
+Verification commands: `node --test scripts/ci/__tests__/unit-network-guard.test.mjs
+scripts/ci/__tests__/unit-failure-attribution.test.mjs` and the root `npm run test`.
 - Commit a lockfile (or move CI to `bun install --frozen-lockfile`) for reproducible installs +
   cache — CI uses `npm install` today because the canonical lockfile is `bun.lockb` (task #379).
 - Drive the tsc baseline to zero.

@@ -18,7 +18,7 @@ REDUCED_MOTION: UNVERIFIED: final browser preference acceptance pending; existin
 STATE_COVERAGE: PASS: scope change, expiry, source refusal/reissue, permission loss, network failure, offline/reconnect, late replies, drawer invalidation tested.
 TRUTHFUL_STATE_LABELS: PASS: issuer42501 explicit permission; resolver42501 ambiguous then same-identity issuer recheck; no zero or cached LIVE fallback; five unsupported sources UNAVAILABLE.
 SOLO_UI: YES: one canonical Settings Analytics consumer, no account-specific branch.
-UNVERIFIED: authenticated corrected production UI, native zoom, keyboard and new rendered matrix; Chat/Live remains separate #1837 PROOF OWED.
+UNVERIFIED: authenticated corrected production UI, native zoom, keyboard and reduced motion; Chat/Live remains separate #1837 PROOF OWED.
 OWNER_INTENT: Complete already-approved Settings Analytics with trustworthy evidence, explicit permissions, accessibility and honest22 metric coverage.
 MUST_NOT_HAPPEN: expired/revoked values displayed as current; wrong-scope response restored; missing measurement becomes zero; duplicate metric calculation or new Chat/voice warehouse.
 MUST_PRESERVE: approved placement, six destinations, header refinement, formulas, server authorization, Marketing/Sales ownership, Operator and other-tier routes, one Solo shell.

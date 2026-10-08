@@ -66,3 +66,24 @@ for (const variant of ['success','foreign-tenant','foreign-actor','stale-version
  assert.equal(statusRec.rpc.filter(x=>['read_pipeline_metadata_original','get_pipeline_catalogue','current_user_tenant_id'].includes(x.name)).every(x=>x.client==='jwt'),true);
 }
 console.log('PASS original-operation status: DRAINING readback, foreign tenant/actor, stale/missing evidence, no writes/providers/releases, caller-bound authority');
+
+for (const valid of [true,false]) {
+ const work=id(30),workIntent=id(31),artifact=id(32);
+ const observation={workId:work,threadId:thread,intentId:intent,workIntentId:workIntent,tenantId:tenant,actorId:actor,state:'succeeded',version:3,recoveryState:'observed',approvalState:'unavailable',cancelled:false,artifactVerified:true,artifactRef:artifact};
+ const statusRec=scenario('accepted',{rpcs:{
+   paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+   current_user_tenant_id:{data:tenant,error:null},
+   read_paige_durable_observation:{data:valid?observation:null,error:null},
+   paige_chat_interactive_executor_v2:{data:{executor:intent,terminal:true},error:null},
+ }});
+ const response=await capturedHandler()(req({interactive:{kind:'status',workId:work}}));
+ const body=await response.json();
+ assert.equal(body.executor_active,true);assert.equal(body.settled,false);
+ const {tenantId,actorId,...safe}=observation;
+ assert.deepEqual(body.durable_work,valid?safe:null);
+ assert.equal(statusRec.inserts.length,0);assert.equal(statusRec.functions.length,0);
+ assert.equal(statusRec.rpc.some(x=>/begin_v2|settle|turn_append|transition|prepare|submit|claim/.test(x.name)),false);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2').every(x=>x.args.p_operation==='state'),true);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='read_paige_durable_observation').every(x=>x.client==='jwt'),true);
+}
+console.log('PASS durable observation status: caller-bound read during DRAINING, no consumption/activation/release');

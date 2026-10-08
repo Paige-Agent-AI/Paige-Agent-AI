@@ -145,6 +145,19 @@ Full-repository migration replay, persisted apply, first-capability receipt corr
 disconnect/resume, and authenticated owner readback remain `PROOF OWED`. Until those pass, the
 platform has one governed envelope in code but may not claim durable long-form work is `LIVE`.
 
+## 2026-10-08 conversation-bound observation
+
+`read_paige_durable_observation(thread, intent, work)` is an authenticated-only, stable read with
+empty search path. It revalidates current actor, tenant, membership, owned active thread and latest
+intent, then the protected original terminal's exact work reference. Its bounded projection is
+consumed by the existing interactive status branch; raw brief, source content and authority are
+not returned. Document's derived work intent is preserved rather than equated to request intent.
+Canonical completion/artifact lineage is required for verified success; Research results lacking
+work linkage cannot qualify. Missing or contradictory evidence remains unavailable or unverified.
+This read cannot transition, dispatch, consume a completion, settle an executor or grant approval.
+INT-346 DRAINING and the successor-write brake remain mandatory. Rollback fixture and handler-double
+proof is distinct from production persistence and authenticated Solo acceptance.
+
 ## 4. Collision assessment
 
 - Extends Master §3 Harness responsibility #5 (durable work); owns no Brain/Spine/Rail/registry fact.

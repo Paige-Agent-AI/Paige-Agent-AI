@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { validateStoredReadBindings } from "./c0b-stored-read-binding.mjs";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join, resolve } from "node:path";
@@ -11,7 +12,7 @@ const chatGuardPath = join(root, "scripts/ci/chat-tool-registry-lint.mjs");
 const actionRiskPath = join(root, "supabase/functions/_shared/action-risk.ts");
 
 // Owner-approved SQL-plus-TypeScript extension. Public SQL symbols keep the original
-// migration check. Only this exact mounted n8n adapter can prove the two TS symbols.
+// migration check. Non-SQL bindings require an exact mounted adapter or stored-read AST proof.
 const chatSourcePath = join(root, "supabase/functions/paige-ai-chat/index.ts");
 // C0a ("ADMIN IS A TENANT ROLE"): the owner/admin role gate routes through ONE shared set in
 // _shared/workspace-authority.ts instead of an inline `tc.function.name === "<tool>"` list. A tool
@@ -252,13 +253,23 @@ function provenTypeScriptSymbol(capability,role,symbol){
   return false;
 }
 
+const storedReadProof = validateStoredReadBindings(readFileSync(chatSourcePath, "utf8"), readFileSync(join(root, "supabase/functions/_shared/credit-extraction-payload.ts"), "utf8"));
+function provenStoredReadSymbol(capability, role, symbol) {
+  const spec = storedReadProof.tools.get(capability.action?.chatTool);
+  return !storedReadProof.findings.length && !!spec && capability.key === spec.key
+    && role === "executor" && symbol === "edge.paige-ai-chat"
+    && capability.action.classification === "read" && capability.action.riskPolicyKey === "read_only"
+    && capability.action.approvalAuthority === "none" && capability.action.seatAuthority === spec.seatAuthority
+    && capability.selfDescribe === spec.selfDescribe && capability.readiness === "none";
+}
+
 function lint(capabilities, sql, chatGuard, classifyAction, proof = null) {
   const findings = validateSpineRegistry(capabilities);
   for (const capability of capabilities) {
     const symbols = [["adapter",capability.evidence?.adapter], ["executor",capability.action?.executor], ["projector",capability.outcome?.projector]].filter(([,symbol])=>!!symbol);
     for (const [role,symbol] of symbols) {
       // Never bypass a public SQL symbol, even on a verified TS capability.
-      if (!symbol.startsWith("public.") && (provenTypeScriptSymbol(capability,role,symbol)||provenMerchantSymbol(capability,role,symbol))) continue;
+      if (!symbol.startsWith("public.") && (provenTypeScriptSymbol(capability,role,symbol)||provenMerchantSymbol(capability,role,symbol)||provenStoredReadSymbol(capability,role,symbol))) continue;
       const bare = symbol.replace(/^public\./, "");
       if (!new RegExp(`create\\s+or\\s+replace\\s+function\\s+public\\.${bare}\\s*\\(`, "i").test(sql)) findings.push(`${capability.key}: registered server symbol is absent from migration history: ${symbol}`);
     }
@@ -349,6 +360,17 @@ if (process.argv.includes("--self-test")) {
   for(const [label,capability]of [['missing SQL',{...native,outcome:{...native.outcome,projector:'public.missing_sql_projector'}}],['unknown TS',{...native,outcome:{...native.outcome,projector:'other.project'}}],['unregistered TS',{...native,key:'integrations.unknown'}]]){
     if(!lint([capability],migrations,'supabase/functions/_shared/paige-spine/registry.ts',()=> 'high',tsProof).length){console.error(`symbol negative failed: ${label}`);process.exit(1);}
   }
+  const stored = PAIGE_SPINE_CAPABILITIES.find(c => c.key === "automations.list");
+  if (!stored || !provenStoredReadSymbol(stored, "executor", "edge.paige-ai-chat")) { console.error("stored-read positive binding failed"); process.exit(1); }
+  for (const changed of [
+    { ...stored, key: "automations.unknown" },
+    { ...stored, selfDescribe: !stored.selfDescribe },
+    { ...stored, action: { ...stored.action, seatAuthority: "workspace-admin" } },
+    { ...stored, action: { ...stored.action, classification: "mutate" } },
+    { ...stored, action: { ...stored.action, riskPolicyKey: "high" } },
+    { ...stored, action: { ...stored.action, approvalAuthority: "chat-canonical" } },
+  ]) if (provenStoredReadSymbol(changed, "executor", "edge.paige-ai-chat")) { console.error("stored-read metadata mutation bypassed proof"); process.exit(1); }
+  if (provenStoredReadSymbol(stored, "projector", "edge.paige-ai-chat") || provenStoredReadSymbol(stored, "executor", "public.fake")) { console.error("stored-read symbol mutation bypassed proof"); process.exit(1); }
   console.log("PAIGE Spine registry lint self-test: PASS (SQL + exact TS AST bindings)"); process.exit(0);
 }
 
@@ -358,6 +380,6 @@ if (existsSync(actionRiskPath)) {
   const policy = await import(pathToFileURL(actionRiskPath).href);
   classifyAction = typeof policy.classifyAction === "function" ? policy.classifyAction : null;
 }
-const findings = [...tsProof.findings,...zapierProof.findings,...merchantProof.findings,...lint(PAIGE_SPINE_CAPABILITIES, migrations, chatGuard, classifyAction)];
+const findings = [...storedReadProof.findings,...tsProof.findings,...zapierProof.findings,...merchantProof.findings,...lint(PAIGE_SPINE_CAPABILITIES, migrations, chatGuard, classifyAction)];
 if (findings.length) { console.error("PAIGE Spine registry lint: FAIL"); for (const finding of findings) console.error(`- ${finding}`); process.exit(1); }
 console.log(`PAIGE Spine registry lint: PASS (${PAIGE_SPINE_CAPABILITIES.length} capability)`);

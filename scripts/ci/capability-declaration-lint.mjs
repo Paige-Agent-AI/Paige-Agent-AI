@@ -338,21 +338,25 @@ export function ratchet(undeclared, baseline) {
 }
 
 /**
- * Rules 4–6 — PAIGE can discover every capability (C0a). Pure, so the self-test drives it directly.
+ * Discovery (C0a/C0b). Pure, so the self-test drives it directly. missingAuthority
+ * grandfathers only pre-existing Chat registrations; every new registration names
+ * its actual seat gate, and a converged/deleted key must leave that baseline.
  *   baselineTools   : tools in capability-declaration-baseline.json (undeclared by the Spine)
  *   legacyKeys      : tools in the legacy classification
  *   spineCaps       : Spine capabilities ({ key, readiness?, action?: { chatTool? } })
  *   chatTools       : the resolved model surface
  *   readinessKnown  : the closed readiness-resolver ids
- *   baseline        : { readinessUndeclared: string[], deadChatBindings: string[] }
+ *   baseline        : { readinessUndeclared: string[], deadChatBindings: string[], missingAuthority: string[] }
  */
 export function discoveryFindings({ baselineTools, legacyKeys, spineCaps, chatTools, readinessKnown, baseline }) {
   const base = new Set(baselineTools), legacy = new Set(legacyKeys);
   const readyBase = new Set(baseline.readinessUndeclared ?? []);
   const deadBase = new Set(baseline.deadChatBindings ?? []);
+  const authorityBase = new Set(baseline.missingAuthority ?? []);
   const withTool = spineCaps.filter((c) => c?.action?.chatTool);
   const missingReadiness = withTool.filter((c) => c.readiness === undefined).map((c) => c.key);
   const dead = withTool.filter((c) => !chatTools.has(c.action.chatTool)).map((c) => c.action.chatTool);
+  const missingAuthority = withTool.filter((c) => c.action.seatAuthority === undefined).map((c) => c.key);
   return {
     legacyMissing: [...base].filter((t) => !legacy.has(t)).sort(),
     legacyExtra: [...legacy].filter((t) => !base.has(t)).sort(),
@@ -361,14 +365,18 @@ export function discoveryFindings({ baselineTools, legacyKeys, spineCaps, chatTo
     readinessStale: [...readyBase].filter((k) => !missingReadiness.includes(k)).sort(),
     deadNew: dead.filter((t) => !deadBase.has(t)).sort(),
     deadStale: [...deadBase].filter((t) => !dead.includes(t)).sort(),
+    authorityNew: missingAuthority.filter((k) => !authorityBase.has(k)).sort(),
+    authorityStale: [...authorityBase].filter((k) => !missingAuthority.includes(k)).sort(),
+    authorityUnknown: withTool.filter((c) => c.action.seatAuthority !== undefined
+      && !["member", "workspace-admin", "door-seat"].includes(c.action.seatAuthority)).map((c) => c.key).sort(),
   };
 }
 
 /**
  * Rules 7–8 — the projection's ROLE axis cannot drift from the dispatch gates (C0a, verifier finding).
- * Role is not yet on the Spine registration (a C0b prerequisite), so the one admin-tool set in
- * _shared/workspace-authority.ts is what both the gates and the projection read. Two things could make
- * them disagree, and both are caught here:
+ * Explicit Spine seat declarations join the conservative legacy sets in
+ * _shared/workspace-authority.ts; both gates and projection still read that shared
+ * seam. Declaration/gate disagreement and the existing two gate pins are checked:
  *   7. a legacy row's `workspaceAdmin` says something other than requiresWorkspaceAdmin(tool);
  *   8. a dispatch site gates on authorityAdmits(...) for a tool the shared set does not name — a new
  *      inline role gate the projection would describe as available. Every `tc.function.name === "x"`
@@ -379,7 +387,7 @@ export function discoveryFindings({ baselineTools, legacyKeys, spineCaps, chatTo
  *   handlerSource : paige-ai-chat/index.ts
  *   pinnedSites   : number (capability-discovery-baseline.json authorityGateSites)
  */
-export function authorityFindings({ legacy, requiresAdmin, handlerSource, pinnedSites }) {
+export function authorityFindings({ legacy, requiresAdmin, handlerSource, pinnedSites, spineCaps = [] }) {
   const legacyMismatch = Object.entries(legacy)
     .filter(([tool, row]) => row?.workspaceAdmin !== requiresAdmin(tool))
     .map(([tool, row]) => `${tool} (row says ${row?.workspaceAdmin}, gate says ${requiresAdmin(tool)})`).sort();
@@ -395,6 +403,9 @@ export function authorityFindings({ legacy, requiresAdmin, handlerSource, pinned
   }
   return {
     legacyMismatch,
+    declarationMismatch: spineCaps.filter((cap) => cap.action?.chatTool && cap.action.seatAuthority !== undefined)
+      .filter((cap) => (cap.action.seatAuthority !== "member") !== requiresAdmin(cap.action.chatTool))
+      .map((cap) => `${cap.key} (${cap.action.chatTool}: declaration ${cap.action.seatAuthority} disagrees with effective gate)`).sort(),
     ungated: [...ungated].sort(),
     sitesGrew: sites.length > pinnedSites ? [`${sites.length} gate sites, ${pinnedSites} pinned`] : [],
     sitesShrank: sites.length < pinnedSites ? [`${sites.length} gate sites, ${pinnedSites} pinned`] : [],
@@ -496,7 +507,7 @@ if (process.argv.includes("--self-test")) {
     baselineTools: ["legacy_a"], legacyKeys: ["legacy_a"],
     spineCaps: [{ key: "d.ready", readiness: "none", action: { chatTool: "t_ready" } }, { key: "d.old", action: { chatTool: "t_old" } }],
     chatTools: new Set(["t_ready", "t_old", "legacy_a"]), readinessKnown: ["none", "n8n_connection"],
-    baseline: { readinessUndeclared: ["d.old"], deadChatBindings: [] },
+    baseline: { readinessUndeclared: ["d.old"], deadChatBindings: [], missingAuthority: ["d.ready", "d.old"] },
     ...over,
   });
   const clean4 = disc();
@@ -529,6 +540,18 @@ if (process.argv.includes("--self-test")) {
     requiresAdmin: (t) => adminSet.has(t), handlerSource: handler, pinnedSites: 1, ...over,
   });
   const clean = auth();
+  const missingSeat = discoveryFindings({ baselineTools: [], legacyKeys: [],
+    spineCaps: [{ key: "fake.new_read", readiness: "none", action: { chatTool: "fake_read" } }],
+    chatTools: new Set(["fake_read"]), readinessKnown: ["none"], baseline: { missingAuthority: [] } });
+  ok("authority: a new registration lacking seat metadata fails", missingSeat.authorityNew?.includes("fake.new_read"));
+  const removedSeat = discoveryFindings({ baselineTools: [], legacyKeys: [], spineCaps: [],
+    chatTools: new Set(), readinessKnown: ["none"], baseline: { missingAuthority: ["fake.old_read"] } });
+  ok("authority: deleted or converged grandfather metadata shrinks the baseline", removedSeat.authorityStale?.includes("fake.old_read"));
+  ok("authority: an explicit member declaration cannot downgrade an existing admin gate",
+    auth({ spineCaps: [{ key: "team.invite", action: { chatTool: "team_invite_member", seatAuthority: "member" } }] }).declarationMismatch.length === 1);
+  ok("authority: invalid seat metadata fails closed",
+    discoveryFindings({ baselineTools: [], legacyKeys: [], spineCaps: [{ key: "fake.new", readiness: "none", action: { chatTool: "fake_read", seatAuthority: "everyone" } }],
+      chatTools: new Set(["fake_read"]), readinessKnown: ["none"], baseline: {} }).authorityUnknown.includes("fake.new"));
   ok("authority: a consistent set is clean", !clean.legacyMismatch.length && !clean.ungated.length && !clean.sitesGrew.length && !clean.sitesShrank.length);
   ok("authority: a legacy row that disagrees with the gate fails",
     auth({ legacy: { web_search: { workspaceAdmin: true } } }).legacyMismatch.length === 1);
@@ -763,6 +786,11 @@ if (r.declared.length || r.softened.length) {
     d.deadNew, "Emit the tool, or delete the dead binding. Do not baseline it.");
   say("stale dead-binding baseline entr(ies):",
     d.deadStale, "Delete them from capability-discovery-baseline.json in this PR.");
+  say("NEW Spine Chat registration(s) without seat authority:",
+    d.authorityNew, "Declare action.seatAuthority from the EXISTING gate. Do not expand missingAuthority in the baseline.");
+  say("stale missing-authority baseline entr(ies):",
+    d.authorityStale, "Delete converged or removed keys from missingAuthority in this PR.");
+  say("unknown Spine seat authority:", d.authorityUnknown, "Use member, workspace-admin or door-seat; metadata never grants a seat.");
 }
 
 // Rules 7–8 — the role axis (C0a).
@@ -776,6 +804,7 @@ if (r.declared.length || r.softened.length) {
     requiresAdmin: (tool) => requiresWorkspaceAdmin(tool, new Set()),
     handlerSource: source,
     pinnedSites: discBase.authorityGateSites,
+    spineCaps: PAIGE_SPINE_CAPABILITIES,
   });
   const say = (title, list, remedy) => {
     if (!list.length) return;
@@ -786,6 +815,8 @@ if (r.declared.length || r.softened.length) {
   };
   say("legacy row(s) whose workspaceAdmin disagrees with the dispatch gate:",
     a.legacyMismatch, "Set the row to what requiresWorkspaceAdmin() answers (_shared/workspace-authority.ts is the gate).");
+  say("registered authority declaration(s) disagreeing with the effective gate:",
+    a.declarationMismatch, "Preserve the existing gate; a member declaration cannot weaken an existing admin gate.");
   say("tool(s) gated on workspace authority at dispatch but NOT in the shared admin set — the projection would offer them to a member:",
     a.ungated, "Add the tool to OWNER_OPS_BRANCH_TOOLS or OUT_OF_BRANCH_ADMIN_TOOLS in _shared/workspace-authority.ts.");
   say("NEW authorityAdmits gate site(s) in paige-ai-chat:",

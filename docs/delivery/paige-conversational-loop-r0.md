@@ -1,5 +1,34 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-08 C0b existing-capability convergence and durable status consumption
+
+The next candidate consumes conversation-bound durable observations in the incumbent status
+path, with no execution/resume authority. See the C4 record and durable-job contract for exact
+binding, artifact lineage and failing-first race evidence. Document's derived work intent is
+preserved; Research requires canonical work-linked sources and results rather than inference.
+
+C0b converges existing Planning/action-bus and stored-state reads into Spine. Existing Chat
+emission, caller-JWT execution, role admission, readiness and discovery visibility are preserved.
+Declarations carry explicit seat authority; old gates remain conservative fallbacks. Existing
+declaration omissions are recorded additively in the incumbent discovery baseline, while new
+missing or weakened seat declarations fail lint. `action_get` remains excluded from self-description.
+Inline stored reads point to their existing Edge handler, not a newly invented public executor.
+AST proof binds the actual dispatch branch, unshadowed caller-JWT factory, allowed read methods,
+scope pins and closed projections; write/provider/client-substitution mutants fail.
+
+Current batch: nineteen existing tools converged; domain debt72→53, declaration baseline80→61.
+The five existing Planning writers retain ordinary risk, canonical Chat approval, member Chat
+admission and their narrower RPC rules; update remains hidden. Their declarations explicitly
+record absent create deduplication and update/rearming retry limits, rather than inventing safety.
+Planning declarations RED9→GREEN9; combined registration/projection proof84 tests and native
+binding mutation proof13 tests PASS. Declaration self-test39 PASS; actual188 surface/127 declared/
+61 baseline/zero disagreements and registry134 PASS, including the registry mutation self-test.
+Metadata `chatBinding: LIVE` records an existing callable seam; maturity remains PARTIAL and does
+not establish signed-in acceptance. This work changes no department implementation or activation.
+Merge, migration persistence, deployment, production readback and authenticated acceptance remain
+separate pending evidence states for this candidate. Original C4 effectful runtime and owner-reserved
+C5 D2 remain gated, and five-source C6 coverage is not claimed complete.
+
 ## 2026-10-08 safe runtime composition — C4 observation and C6 eligible memory
 
 The existing authenticated interactive status branch now optionally observes the original Pipeline

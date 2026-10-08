@@ -49,10 +49,18 @@ import { SALES_INVOICE_CAPABILITIES } from "./domains/sales_invoice.ts";
 import { MERCHANT_SPINE_CAPABILITIES } from "../sales-payments/merchant-capability.ts";
 import { SALES_COLLECTION_CAPABILITIES } from "./domains/sales_collections.ts";
 import { EMAIL_CAMPAIGN_CAPABILITIES } from "./domains/email_campaigns.ts";
+import { PLANNING_WRITE_CAPABILITIES } from "./domains/planning_writes.ts";
+import { PLANNING_READ_CAPABILITIES } from "./domains/planning.ts";
+import { ACTION_BUS_READ_CAPABILITIES } from "./domains/action_bus.ts";
+import { AUTOMATION_READ_CAPABILITIES } from "./domains/automations.ts";
+import { DOCUMENT_REVIEW_READ_CAPABILITIES } from "./domains/research_knowledge.ts";
+import { CRM_CLIENT_READ_CAPABILITIES } from "./domains/crm_clients.ts";
+import { PLATFORM_META_READ_CAPABILITIES } from "./domains/platform_meta.ts";
+import { TEAM_READ_CAPABILITIES } from "./domains/team_reads.ts";
 
 import { isReadinessResolverId } from "../paige-capability-status/readiness.ts";
 
-export const PAIGE_SPINE_CAPABILITIES = [PIPELINE_DEAL_STAGE_EVIDENCE, BUSINESS_CONTEXT_READINESS, TEAM_AUTHORITY, SOCIAL_PRESENCE, N8N_CONNECTION_READINESS, ...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...BUSINESS_MISSION_CAPABILITIES, ...CAMPAIGN_BRIEF_CAPABILITIES, ...CALENDAR_PRESET_CAPABILITIES, ...CALENDAR_LINK_CAPABILITIES, ...AGREEMENT_CAPABILITIES, ...LONG_FORM_CAPABILITIES, ...GROWTH_FORM_CAPABILITIES, ...GROWTH_PAGE_CAPABILITIES, ...GROWTH_FUNNEL_CAPABILITIES, ...MARKETING_CONTENT_CAPABILITIES, ...SALES_INVOICE_CAPABILITIES, ...MERCHANT_SPINE_CAPABILITIES, ...SALES_COLLECTION_CAPABILITIES, ...EMAIL_CAMPAIGN_CAPABILITIES, COMMS_MESSAGES_READ, COMMS_EMAIL_SEND, INTEGRATIONS_LIST, INTEGRATIONS_HEALTH, CONTACT_EVENT_STATUS, ...PIPELINE_CRM_ACTIONS, ...CONTACT_CRM_ACTIONS] as const;
+export const PAIGE_SPINE_CAPABILITIES = [PIPELINE_DEAL_STAGE_EVIDENCE, BUSINESS_CONTEXT_READINESS, TEAM_AUTHORITY, SOCIAL_PRESENCE, N8N_CONNECTION_READINESS, ...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...BUSINESS_MISSION_CAPABILITIES, ...CAMPAIGN_BRIEF_CAPABILITIES, ...CALENDAR_PRESET_CAPABILITIES, ...CALENDAR_LINK_CAPABILITIES, ...AGREEMENT_CAPABILITIES, ...LONG_FORM_CAPABILITIES, ...GROWTH_FORM_CAPABILITIES, ...GROWTH_PAGE_CAPABILITIES, ...GROWTH_FUNNEL_CAPABILITIES, ...MARKETING_CONTENT_CAPABILITIES, ...SALES_INVOICE_CAPABILITIES, ...MERCHANT_SPINE_CAPABILITIES, ...SALES_COLLECTION_CAPABILITIES, ...EMAIL_CAMPAIGN_CAPABILITIES, ...PLANNING_READ_CAPABILITIES, ...PLANNING_WRITE_CAPABILITIES, ...ACTION_BUS_READ_CAPABILITIES, ...AUTOMATION_READ_CAPABILITIES, ...DOCUMENT_REVIEW_READ_CAPABILITIES, ...CRM_CLIENT_READ_CAPABILITIES, ...PLATFORM_META_READ_CAPABILITIES, ...TEAM_READ_CAPABILITIES, COMMS_MESSAGES_READ, COMMS_EMAIL_SEND, INTEGRATIONS_LIST, INTEGRATIONS_HEALTH, CONTACT_EVENT_STATUS, ...PIPELINE_CRM_ACTIONS, ...CONTACT_CRM_ACTIONS] as const;
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
 const SERVER_SYMBOL_PATTERN = /^public\.[a-z][a-z0-9_]*$/;
@@ -61,9 +69,9 @@ const MUTATING = new Set(["mutate", "external_effect"]);
 
 // The edge chat executor exception: `edge.paige-ai-chat` is not a public server symbol, so a
 // capability may claim it ONLY by being a declared entry of one of the edge-executor domains
-// (n8n management, then zapier management — same guarantee: the entry's chatTool, classification,
-// risk policy, and approval authority must match the declared action field-for-field).
-const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES] as const;
+// (management adapters and verified stored-state reads). The entry's chatTool, classification,
+// risk policy, and approval authority must match the declaration; CI also proves the actual binding.
+const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...AUTOMATION_READ_CAPABILITIES, ...DOCUMENT_REVIEW_READ_CAPABILITIES, ...CRM_CLIENT_READ_CAPABILITIES.filter(cap => cap.action.executor === "edge.paige-ai-chat"), ...PLATFORM_META_READ_CAPABILITIES] as const;
 
 export function validateSpineRegistry(capabilities: readonly SpineCapability[]): string[] {
   const findings: string[] = [];
@@ -87,6 +95,8 @@ export function validateSpineRegistry(capabilities: readonly SpineCapability[]):
     }
     if (capability.action) {
       const action = capability.action;
+      if (action.seatAuthority !== undefined && !["member", "workspace-admin", "door-seat"].includes(action.seatAuthority))
+        findings.push(`${capability.key}: unsupported seat authority ${String(action.seatAuthority)}`);
       if (!SPINE_ACTION_CLASSIFICATIONS.includes(action.classification)) findings.push(`${capability.key}: unsupported action classification ${action.classification}`);
       const merchantExecutor = action.executor === "edge.tenant-stripe-connect"
         && MERCHANT_SPINE_CAPABILITIES.some(entry => !!entry.action && entry.key === capability.key

@@ -10,7 +10,7 @@ Status: PLAN ONLY. No live Twilio creation, no production backfill, no number pu
 
 For each target workspace, the plan runs DETECTION FIRST — an existing provider resource must be ADOPTED, never duplicated:
 1. `tenant_twilio_subaccounts` row exists? → skip (idempotent no-op).
-2. Twilio console already holds a subaccount whose friendly name matches the tenant's provisioning convention (`paige-tenant-<short-tenant-hash>`)? → adopt via the EXISTING `adopt` map in `provision-tenant-twilio` (verify the friendly-name convention against the three live rows before relying on it).
+2. Twilio console already holds a subaccount whose friendly name matches the provisioner's convention (`Paige — ${tenant name}` / `Paige tenant ${tenantId}` — supabase/functions/provision-tenant-twilio/index.ts)? → adopt via the EXISTING `adopt` map in `provision-tenant-twilio` (confirm the exact live friendly names against the three existing rows before relying on the pattern).
 3. Neither → create (the only genuinely new provider state).
 
 Detection is read-only against Twilio (list-subaccounts) — read authorization is covered by normal engineering authority; it has NOT been run.

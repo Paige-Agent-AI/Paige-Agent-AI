@@ -10,7 +10,7 @@ A COO's operating intelligence for a workspace capability answers four questions
 |---|---|---|
 | **What can this workspace do?** | `voice-access-token` readiness (READY / number-needs-setup / not-configured) with five exact reason codes (INT-345) | LIVE with #1819 — the single canonical verdict |
 | **Why can't it call?** | `reason_code` — no number chosen / number not calls-capable / number mislinked / binding incomplete / no calling account | LIVE with #1819 |
-| **What should the owner do? | Settings → Communications: buy a number + "Send from this" (self-service reasons); contact support (platform-side reasons); K-3 "Set up calling" for the account-connection step (DESIGN, owner-approval pending) | PARTIAL — the account-connection step has no user action yet (K-3) |
+| **What should the owner do? | buy a number in Settings → Registration ("Find a number") + "Send from this" in Settings → Communications (self-service reasons); contact support (platform-side reasons); K-3 "Set up calling" for the account-connection step (DESIGN, owner-approval pending) | PARTIAL — the account-connection step has no user action yet (K-3) |
 | **What evidence confirms resolution? | Re-run the readiness verdict → READY (determinate, immediate); K-4 readback protocol for the account step | PARTIAL — end-to-end readback defined in the K-4 plan, not yet executable |
 
 ## 2. Where PAIGE (the agent) should read this

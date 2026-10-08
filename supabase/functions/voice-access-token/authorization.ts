@@ -53,9 +53,11 @@ export function classifyVoiceReadiness(
       ok: false,
       code: "calling_number_needs_verification",
       reason_code: "no_active_primary_number",
-      // Buying a number alone does NOT make it the calling number: the owner
-      // must also pick it with "Send from this" (the only writer of is_primary).
-      message: "This workspace hasn't chosen a calling number yet. In Settings → Communications, buy a number and select \"Send from this\" to make it the calling number.",
+      // The buy step lives in Settings → Registration ("Find a number");
+      // "Send from this" (the only writer of is_primary) lives in Settings →
+      // Communications. Buying alone does NOT make a number the calling number
+      // — the copy names both steps in their real places.
+      message: "This workspace hasn't chosen a calling number yet. Buy a number in Settings → Registration, then select \"Send from this\" on it in Settings → Communications.",
     };
   }
   if (primaryNumbers.length > 1) {
@@ -90,7 +92,7 @@ export function classifyVoiceReadiness(
       ok: false,
       code: "calling_number_needs_verification",
       reason_code: "primary_number_voice_capability_unconfirmed",
-      message: "The number set as this workspace's calling number can't make calls. In Settings → Communications, select \"Send from this\" on a number marked for calls.",
+      message: "The number set as this workspace's calling number can't make calls. Buy a number marked for calls in Settings → Registration, then select \"Send from this\" on it in Settings → Communications.",
     };
   }
   return { ok: true };

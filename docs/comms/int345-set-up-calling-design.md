@@ -5,7 +5,7 @@ Owner instruction (2026-10-07): deliberate, authorized, idempotent setup using P
 
 ## 1. The user flow (the material interaction)
 
-**Entry:** Solo → Settings → Communications → "Business phone" card. Today the panel shows the honest dead end ("This business can't buy a number yet. … Once provisioning is complete…"). K-3 replaces the dead end with a state machine:
+**Entry:** Solo → Settings → Registration → "Find a number" panel (where today's honest dead end lives: "This business can't buy a number yet. … Once provisioning is complete…"), with the result surface also visible on the Communications tab ("Number on this business" + "Send from this"). K-3 replaces the dead end with a state machine: K-3 replaces the dead end with a state machine:
 
 ```
 [Calling setup card]

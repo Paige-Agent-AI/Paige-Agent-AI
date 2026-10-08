@@ -177,7 +177,7 @@ shrinks the target — it names the gap between present proof and the full opera
 | Settings → Vault | `INTENTIONALLY_ISOLATED` | Only OCR/DLP-inspected reviewed facts become eligible knowledge; raw docs never cross | Phase 2 owner/admin foundation + quarantined intake shipped (#986); raw docs/credentials never cross | Phase 7: OCR/DLP-inspected promotion of reviewed facts |
 | Settings → Billing | `PARTIAL` | Paige drives a real billing action within the §38 boundary, on confirmation | safe status source contract shipped, not injected; secrets isolated | Phase 8 bind safe status only |
 | Settings → Security & data | `INTENTIONALLY_ISOLATED` | Posture controls perform the real governed change (or are plainly read-only) | autonomy authority is non-Chat (§67/§68) | none as a write binding |
-| Analytics | `UNAVAILABLE` | A real analytics finding drives an owner-approved action, verified | needs SCR-2 + SCR-3; strongest existing authorization semantics | Phase 8; reference consumer for SCR-2 |
+| Settings → Analytics (six views) | `UNAVAILABLE` | A real analytics finding drives an owner-approved action, verified | Shared issuer/resolver; 22 per-reading LIVE/PARTIAL/UNAVAILABLE keys, five unsupported producers; PAIGE binding not proven | #1837 Chat/Live governed read PROOF OWED; existing Mind restrictions retained |
 | Marketplace | `UNAVAILABLE` | Paige installs a marketplace item whose entitlement is verified | the most blocked; SCR-1/2/3 | bind safe install-state only |
 | Operator / Platform | `UNAVAILABLE` (out of Solo scope) | _Out of Solo scope_ — intentionally separate, tenant-less tree | intentionally separate tree, tenant-less | out of scope; no subaccount/operator work without release |
 

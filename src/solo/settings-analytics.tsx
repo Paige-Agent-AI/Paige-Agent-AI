@@ -94,7 +94,7 @@ export function SoloSettingsAnalytics() {
   const { account = "", "*": splat = "" } = useParams();
   const view = settingsAnalyticsView(splat);
   const range = analyticsRangeKey(location.search);
-  const { reads, loading, refresh, scope } = useSettingsAnalytics(range);
+  const { reads, loading, permissionDenied, refresh, scope } = useSettingsAnalytics(range);
   const heading = useRef<HTMLHeadingElement>(null);
   const [previousView, setPreviousView] = useState(view);
   const base = `/solo/${encodeURIComponent(account)}/settings/analytics`;
@@ -116,7 +116,7 @@ export function SoloSettingsAnalytics() {
     <header className="sa-header"><p>Your operating health, resource use and confidence in the numbers.</p><div className="sa-actions"><label>Range<select value={range} onChange={e => navigate(`${base}/${view}?range=${e.target.value}`)}><option value="week">Last 7 days</option><option value="month">Last 30 days</option><option value="quarter">Last 90 days</option></select></label><button onClick={refresh} disabled={loading} aria-label="Refresh measurements"><RefreshCw size={16}/>Refresh</button></div></header>
     <nav className="sa-nav" aria-label="Analytics views">{SETTINGS_ANALYTICS_VIEWS.map(v => <Link key={v.key} to={`${base}/${v.key}?range=${range}`} aria-current={v.key === view ? "page" : undefined}>{v.label}</Link>)}</nav>
     <h2 id="sa-title" ref={heading} tabIndex={-1}>{SETTINGS_ANALYTICS_VIEWS.find(v => v.key === view)?.label}</h2>
-    {loading ? <div className="sa-loading" role="status"><span className="sr-only">Loading measurements for the active workspace</span>{[0, 1, 2, 3, 4].map(n => <div key={n}><i/><b/></div>)}</div> : view === "overview" ? <>
+    {permissionDenied ? <div className="sa-missing" role="status"><h3>Analytics access is not permitted</h3><p>These workspace measurements require an active owner or admin membership. Ask your workspace owner to review your access. Refresh after your permissions change.</p></div> : loading ? <div className="sa-loading" role="status"><span className="sr-only">Loading measurements for the active workspace</span>{[0, 1, 2, 3, 4].map(n => <div key={n}><i/><b/></div>)}</div> : view === "overview" ? <>
       <div className="sa-glance">{sections.map(s => <article className="sa-glance-row" key={s.key}><div><h3>{s.label}</h3><Truth read={reads[s.primary]}/><p>{s.summary}</p></div><div>{reads[s.primary]?.result ? <OverviewVisual category={s.key} result={reads[s.primary]!.result!}/> : <p className="sa-missing">Measurement read failed</p>}</div><Link to={`${base}/${s.key}?range=${range}`}>Inspect<ArrowUpRight size={14}/></Link></article>)}
       <article className="sa-glance-row"><div><h3>Data Health</h3><p>Coverage and source trust</p></div><div className="sa-coverage-cells">{SETTINGS_METRICS.map(k => <Link key={k} to={`${base}/data-health?range=${range}#metric-${k.replace(/\./g, "-")}`} className={`sa-cell--${reads[k]?.result?.truth_state.toLowerCase() ?? "failed"}`}><span>{reads[k]?.result?.label ?? friendly(k.split(".")[1])}</span><b>{reads[k]?.result?.truth_state ?? "Read failed"}</b></Link>)}</div><Link to={`${base}/data-health?range=${range}`}>Inspect<ArrowUpRight size={14}/></Link></article></div>
       <section className="sa-attention"><h3>Measurement needs attention</h3><p>{problems.length.toLocaleString()} measurements are incomplete, unavailable or could not be read. Inspect their evidence before relying on them.</p><Link to={`${base}/data-health?range=${range}`}>Review coverage</Link></section>

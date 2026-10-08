@@ -664,3 +664,5 @@ verify_jwt = true
 
 [functions.sales-payment-reconcile]
 verify_jwt = false # Internal service bearer / canonical cron token is checked in the function.
+[functions.paige-pipeline-outcome]
+verify_jwt = true

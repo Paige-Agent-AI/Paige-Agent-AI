@@ -1,5 +1,92 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+## 2026-10-08 independent safe slice — #1807 readback and C4d/C4e foundation
+
+**Implementation candidate; review/CI/merge/deployment pending.** INT-346 #1823 is accepted merged
+at `c43eeec244967b4711dbfe44b7bc8802755fb460`; DRAINING and security clearance UNVERIFIED remain.
+This change does not activate or alter that protocol. Internal foundation patch, staged backend
+channel; no customer version, name, announcement or visible flow change.
+
+### Routing and shared-platform contract
+
+1. Owner outcome: independently check whether an exact Pipeline metadata action actually applied,
+   without repeating it. This is the business-action-to-evidence seam for the shared COO architecture.
+2. Domain: Pipeline owns canonical metadata/operation semantics; Harness/Conversational Loop owns
+   the readback adapter and durable-context foundations. No Sales, Marketing or Operator edits.
+3. Shared layer: existing canonical Pipeline command ledger and protected INT-346 transcript;
+   C4d uses the existing `paige_durable_work` internal envelope and C4 resume architecture.
+4. Spine discovery: automatic Pipeline metadata reconciliation and continuation remain UNAVAILABLE
+   as callable Chat/Live/specialist bindings. The new read endpoint does not invent a model tool.
+5. Provider requirement: internal canonical database records; no new connection, Integration Registry
+   provider or external operation. Research provider execution/adoption is unchanged.
+6. Risk: read_only, no mutation verb or new approval/budget/autonomy lane. Existing Trust and one
+   approval gate remain controlling; projections never confer consequential authority.
+7. Jobs/events: no scheduler or event producer added. Durable continuation contracts consume the
+   existing envelope only; no wake, claim, cancellation write or new receipt store.
+8. Proof: exact tenant/actor/operation/hash plus current Pipeline UUID/reference/version/metadata.
+   Missing, conflicting, newer or insufficient evidence stays unknown. No Rail/receipt is issued.
+9. Surface: existing `campaigns.pipeline` / PAIGE workspace ledger states do not change. No UI change.
+10. Acceptance: synthetic deterministic and real localhost PostgreSQL proofs establish code behavior
+    only. Legitimate signed-in Solo acceptance remains UNVERIFIED, never inferred from service fixtures.
+
+### Implemented code
+
+`read_pipeline_metadata_original` resolves only the signed-in actor's currently selected tenant,
+owned thread, protected original intent and exact server-issued consumed Pipeline approval row.
+One protected approval observation must reference that exact token. It derives command/key and
+PostgreSQL `md5(command::jsonb::text)` independently of the operation receipt; legacy client JSON,
+foreign scope and contradictory token observations resolve unavailable. This authenticated read-only
+RPC grants no execution authority. Migration `20270601000010` follows verified main/production 09
+and active-PR collision checks.
+
+`paige-pipeline-outcome` validates a real user through `getUser`, derives actor/tenant server-side,
+accepts only thread/intent/effect UUID references, bounds input and returns a bounded no-store result.
+Its shared adapter revalidates scope around canonical operation/catalogue reads and independently
+re-resolves the original command after them. Exact atomic success plus exact current metadata gives
+confirmed_success; lost responses/missing receipts/conflict/stale version give outcome_unknown.
+It does not settle, release, retry, continue a model turn or change admission.
+
+The internal observation projection distinguishes authoritative refusal before dispatch and explicit
+non-application from unknown. It is not an authentication boundary: request booleans cannot establish
+authority. The metadata writer persists no canonical failed receipt, so timeout/absence/unchanged rows
+never produce confirmed_failure. Runtime failure/refusal integration still needs a canonical protected
+producer; this endpoint currently returns only verified success or unknown.
+
+C4d's pure continuation contract pins canonical work/actor/tenant/thread/intent/epoch/capability/kind
+and original objective, revalidates authorization/budget/capability context and denies approval-pending,
+interruptions, supersession, replay, unknown and unverified terminal state. C4e adds exact research
+work/run/source/citation lineage, rejecting duplicate source indices even when excluded rows appear
+first. Returned eligibility is context-only, never dispatch or atomic continuation permission.
+
+### Executed local proof
+
+- Pipeline observation missing implementation: 16 failing-first tests; implementation: 16 PASS.
+- Read adapter: behavioral RED then GREEN; concurrent original-command replacement: 1 RED / 14 PASS,
+  repaired to 15 PASS. Canonical resolver: 2 RED / 13 PASS, repaired 15 PASS.
+- Actual shared endpoint handler: 10 RED / 1 PASS, repaired and expanded 13 PASS (auth rejection,
+  body authority forgery, missing effect, malformed/oversized input and real adapter success path).
+- Durable/research deny-all stubs: 4 RED / 38 PASS; implementation 42 PASS. Independent review found
+  excluded-first duplicate citation ambiguity; added regression RED 1 / 17 PASS, repaired to 44 PASS.
+- Native PostgreSQL negative control omitted the new RPC and failed at its first real call; migration
+  then PASS: PostgreSQL command hash, exact identities, replay, switched actor/tenant, unissued/unspent
+  proposals, conflicting observations, forged legacy JSON, role ACL and unchanged DRAINING/executor.
+  This runs in the required CI native database step, not just a structural test.
+
+### Remaining integration gaps and ownership
+
+Conversational Loop: consume readback inside the original objective and perform governed settlement
+only after INT-346 clearance. Durable continuation: canonical authorized server adapter and existing
+atomic consumption/recovery/cancellation seams still need runtime adoption; no fixture boolean is
+fresh authorization. Deep Research currently omits `research_runs.work_id` in its producer; this
+assignment owns canonical durable adoption, original budget/approval preservation and verified result
+delivery. Shared Chat/Live/specialist discovery/context and authenticated modality acceptance remain
+owed; no independent chat-specific orchestration was added. Provider Operations #1822 and Platform
+Identity/QA #1832 retain their external handoffs; neither is polled or bypassed by this slice.
+
+Next authorized slice: complete canonical failure/refusal observation producers and non-activating
+Deep Research durable adoption, preserving the same protected outcome/continuation contract. Gated
+executor settlement and consequential resume stay unavailable until trusted release clearance.
+
 Owner order (Antonio Cook, 2026-10-05, binding): WAIT_APPROVAL, ASK_USER and WAIT_WORK are three
 reasons ONE objective paused — not three workflow systems. A resume keeps the thread, the objective,
 the active workspace and its scope, the prior tool/result state, the exact pending dependency, the

@@ -208,6 +208,9 @@ export interface FabricCompletionResult {
 
 export interface FabricCompletionOpts {
   trace?: TraceCtx;
+  /** A caller deadline. Threads to the Anthropic leg's fetch; the OpenAI leg is bounded by the
+   * caller's own race until the OpenAI-path slice adds native cancellation there. */
+  signal?: AbortSignal;
   /**
    * The judge carve-out (R6A-RETURN D.5): ONE pinned candidate, no class policy, NO fallback —
    * a longitudinal instrument must not inherit dynamic routing. Pinning grants nothing and is
@@ -297,8 +300,8 @@ export async function fabricCompletion(
       const resp: Record<string, unknown> = c.provider === "openai"
         // The trace carries the CONSUMER's job identity, never the adapter's "chat" default; the
         // OpenAI leg self-traces through responsesCompletion under this context.
-        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
-        : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace);
+        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
+        : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace, opts.signal);
       const servedModel = typeof resp.model === "string" && resp.model
         ? resp.model
         : c.provider === "anthropic"
@@ -344,16 +347,18 @@ export async function fabricCompletion(
  * traces, so this is the single trace layer for this leg (the OpenAI leg self-traces through
  * responsesCompletion; neither double-counts).
  */
-async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: string, trace?: TraceCtx, gateHits?: { budget: Record<string, unknown> } | null): Promise<Record<string, unknown>> {
+async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: string, trace?: TraceCtx, gateHits?: { budget: Record<string, unknown> } | null, signal?: AbortSignal): Promise<Record<string, unknown>> {
   const started = Date.now();
   const shaped = body as unknown as Parameters<typeof chatCompletionCompat>[0];
   try {
-    const resp = await chatCompletionCompat(shaped, tier);
+    const resp = await chatCompletionCompat(shaped, tier, signal);
     const usage = (resp as { usage?: { prompt_tokens?: number; completion_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number } })?.usage ?? {};
     traceLLMCall({
       ...(trace ?? {}), provider: "anthropic",
       model: (resp as { model?: string })?.model ?? resolvedClaudeModel(shaped, tier),
-      job_kind: job, modality: "text", tier, status: "success",
+      // The CALLER's own trace tag wins when set (an adopter keeps its trace-history job_kind);
+      // the request's job identity is the default.
+      job_kind: trace?.job_kind ?? job, modality: "text", tier, status: "success",
       tokens_in: usage.prompt_tokens ?? null,
       tokens_out: usage.completion_tokens ?? null,
       cache_read_input_tokens: usage.cache_read_input_tokens ?? null,
@@ -371,7 +376,7 @@ async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: s
     traceLLMCall({
       ...(trace ?? {}), provider: "anthropic",
       model: resolvedClaudeModel(shaped, tier),
-      job_kind: job, modality: "text", tier, status: "error",
+      job_kind: trace?.job_kind ?? job, modality: "text", tier, status: "error",
       latency_ms: Date.now() - started,
       input: body.messages, output: null,
       error_class: PROVIDER_FAILURE_CLASSES.includes(err.failureClass as ProviderFailureClass) ? err.failureClass : "error",

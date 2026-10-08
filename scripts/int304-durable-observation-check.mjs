@@ -2,7 +2,7 @@
 import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';
 const url=process.env.INT336_DATABASE_URL;if(!url)throw Error('INT336_DATABASE_URL required');const parsed=new URL(url);if(parsed.hostname!=='127.0.0.1'||!/^\/int336_test/.test(parsed.pathname))throw Error('isolated localhost fixture required');
 const root=path.resolve(import.meta.dirname,'..');const read=p=>fs.readFileSync(path.join(root,p),'utf8');let schema=read('scripts/proof/paige-durable-work-concurrency.mjs').match(/const fixtureSchema = `([\s\S]*?)`;/)?.[1];if(!schema)throw Error('fixture missing');schema=schema.replace(/create role (\w+)([^;]*);/g,(_,n,o)=>`do $$begin if not exists(select 1 from pg_roles where rolname='${n}')then create role ${n}${o};end if;end$$;`);
-let migration=read('supabase/migrations/20270601000012_int304_durable_observation.sql');
+let migration=read('supabase/migrations/20270601000014_int304_durable_observation.sql');
 if(process.env.OBSERVATION_MUTATION==='artifact') migration=migration.replace(' recovery:=', " verified:=w.status='succeeded'; recovery:=");
 const sql=`begin;${schema}
 create function auth.role()returns text language sql stable as $$select current_setting('request.jwt.claim.role',true)$$;

@@ -4,6 +4,8 @@
 
 Exact-head CI rejected an observation-only retired coach role exemption. Migration12 now uses the current Document owner/admin permissions established by the canonical retirement migration; native permission controls failed first and pass34/34 after repair. No title-authority exemption or required-check waiver was added. Two incumbent MCP tests now assert actual registry membership and validation instead of a closed three-domain source string, retaining field-for-field checks and adding forged-tool/class/risk/approval rejection controls;24 tests PASS. Fresh non-author review and exact-head CI are required on the repaired composition before merge.
 
+Fresh main f2fc41666178c60c2a1c639548f71043a22b556c adds the separately owned metric read. Registry composition retains both registrations and declares only its incumbent tenant/member Chat seat, fixing an actual missing-authority lint failure without editing Analytics implementation or extending the issuer permission. The issuer retains its narrower owner-grantable permission. Combined metric/registration/MCP tests54 PASS and actual Chat status handler PASS; all hosted checks and non-author review must be repeated on this fresh composition.
+
 ## 2026-10-08 durable observation in the canonical authenticated status consumer
 
 This candidate adds read-only `interactive.workId` observation to the existing status branch.

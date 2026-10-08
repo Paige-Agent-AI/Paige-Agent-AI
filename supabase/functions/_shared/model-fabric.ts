@@ -214,8 +214,12 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
     const failure = opened.failureClass ?? "unknown";
     attempts.push({ provider: c.provider, model, failure, status: opened.status });
     last = { ok: false, status: opened.status, served: null, attempts };
-    // The stream never opened, so nothing was shown and nothing can have run.
-    if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) return last;
+    // The stream never opened, so nothing was shown and nothing can have run. The projected route
+    // is replaced by the served-null failure route so a reused ctx carries no stale "served by X".
+    if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) {
+      if (opts.trace) opts.trace.fabric_route = { requested_class: cls, job: opts.trace.job_kind ?? "chat", served_provider: null, served_model: null, fallback: attempts.some((a) => a.failure && a.failure !== "skipped_disabled"), reason: "failed" };
+      return last;
+    }
   }
   // #1856 — nothing served: the failure route rides the ctx for whatever is observed next (this
   // also clears any projected served route — served_* are null here); the attempt detail is in the
@@ -368,6 +372,7 @@ export async function fabricCompletion(
         gateHitForTrace = decision.gateHits;
       } catch (e) {
         attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
+        clearRoute();
         throw e;
       }
     }

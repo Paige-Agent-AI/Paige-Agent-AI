@@ -2,8 +2,30 @@
 
 ## 2026-10-08 C4e preparation-only durable adoption
 
-**Implementation candidate; review/CI/merge/deployment pending. Runtime activation and authenticated
-acceptance UNVERIFIED.** This is a service-only preparation seam on the existing Harness envelope,
+**Preparation implementation MERGED; migration PERSISTED. Runtime activation, authenticated Solo
+acceptance, owner acceptance and INT-346 security clearance remain UNVERIFIED.**
+PR #1862, exact reviewed head `71d293d6bc46f98c235f8f40dd657386b4991d05`, merged as
+`e633b13651b6916120cf7f7cf96dbe19eca2ee44` after composition on fresh main
+`ccc3ee995a9bdfe906a433ac7b3e186282efbb77`. Independent non-author SHIP:
+PR comment `6067296062`. All 11 hosted checks SUCCESS, including Supabase Preview job
+`113488834668`. Verify run `37828630182`, job `113488568415`: 674 files / 10156 tests,
+Sales 319, invoice 69 and native C4e 37 checks PASS. Database-contract run `37828630259`,
+job `113487888587` SUCCESS. Migration deployment run `37830974520`, lint job
+`113495916629` and deployment job `113496082375` SUCCESS.
+
+Production read-only verification found migration `20270601000011` persisted; function body MD5
+`f80f0a582a4bb921888326ac374bb1f3` matches merged source, SECURITY DEFINER with empty search path,
+service execute true and authenticated/anonymous execute false. `interactive_active=false` remains.
+Vercel `dpl_CqRciNpVdiLZQr2gbSX83dX5jjaV` READY at the exact merge. Production channel,
+internal preparation patch; no customer version or announcement. Edge deployment NOT_APPLICABLE;
+no worker, UI or runtime activation. Recovery must preserve blocked preparation and immutable identity;
+use a reviewed forward migration rather than promote stored audit snapshots into permission.
+
+QA handoff #1832 is NOT READY: its owner must provision the approved synthetic account and inject
+credentials into the existing runner. No secret search is authorized. Provider-cessation proof #1822
+is separate; deployment or a blocked prepared envelope does not establish that clearance.
+
+This is a service-only preparation seam on the existing Harness envelope,
 not a research scheduler, worker, approval engine, model router or receipt system.
 
 Owner outcome: preserve the original research assignment and canonical durable identity so a future

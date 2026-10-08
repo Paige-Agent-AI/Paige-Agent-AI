@@ -12,8 +12,8 @@ STATIC_EVIDENCE: PASS: binding-ledger validator passed; source review confirms o
 RENDERED_EVIDENCE: PASS: int340-analytics-trust/checks.json and eight Chrome screenshots; actual-component synthetic Settings harness, not authenticated.
 BEHAVIORAL_EVIDENCE: PASS: mounted real UI test removes an open portaled evidence drawer on invalidation and preserves six navigation links in explicit permission state.
 AUTHENTICATED_RUNTIME: UNVERIFIED: corrected consumer is not deployed yet; prepared controlled Chrome proof must be independently reviewed and executed after deployment.
-KEYBOARD_FOCUS: UNVERIFIED: final deployed keyboard/Escape restoration acceptance pending; selected heading and evidence Sheet semantics preserved.
-ZOOM_REFLOW: UNVERIFIED: real browser zoom200/400 acceptance pending; CSS zoom is not browser zoom proof.
+KEYBOARD_FOCUS: UNVERIFIED: corrected production consumer is not deployed; final authenticated keyboard/Escape acceptance tracked by https://github.com/Paige-Agent-AI/Paige-Agent-AI/issues/1836.
+ZOOM_REFLOW: UNVERIFIED: corrected production consumer is not deployed; actual Chrome zoom200/400 acceptance tracked by https://github.com/Paige-Agent-AI/Paige-Agent-AI/issues/1836; CSS scaling does not establish browser zoom.
 REDUCED_MOTION: UNVERIFIED: final browser preference acceptance pending; existing skeleton reduced-motion rule retained.
 STATE_COVERAGE: PASS: scope change, expiry, source refusal/reissue, permission loss, network failure, offline/reconnect, late replies, drawer invalidation tested.
 TRUTHFUL_STATE_LABELS: PASS: issuer42501 explicit permission; resolver42501 ambiguous then same-identity issuer recheck; no zero or cached LIVE fallback; five unsupported sources UNAVAILABLE.

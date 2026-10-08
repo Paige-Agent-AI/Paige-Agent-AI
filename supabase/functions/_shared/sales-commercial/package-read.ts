@@ -1,6 +1,8 @@
 import {defineCapability,objectInputSchema,ownerGrantablePermission} from '../capability-kit/mod.ts';
 import type {SpineCapability} from '../paige-spine/contracts.ts';
 import {UUID} from '../sales-invoice-command/contract.ts';
+import {parseCollectionTerms} from '../sales-collections/contract.ts';
+import {previewCollectionSchedule} from '../sales-collections/model.ts';
 
 export const SALES_COMMERCIAL_PACKAGE_READ=defineCapability({
  identity:{id:'sales_invoice.commercial_package_read',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Read canonical invoice, signing agreement and recorded commercial terms together. Missing facts remain explicit; no package approval or execution.'},
@@ -18,7 +20,7 @@ export const SALES_COMMERCIAL_PACKAGE_SPINE:SpineCapability={
  chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
 };
 // Bound dispatch is not authenticated acceptance or authority to execute constituent acts.
-export const SALES_COMMERCIAL_PACKAGE_TOOL={type:'function' as const,function:{name:'read_sales_commercial_package',description:'Read an existing canonical invoice package: frozen offer facts, signing agreement state, commercial terms, schedule, source versions and canonical balance. Resolve the exact invoice first. Missing fields and conflicts are facts to clarify, not permission to invent dates, fees, taxes or signed terms. A read never approves, publishes, sends, creates a subscription or collects payment. Keep signing records distinct from commercial terms; do not display internal IDs as invoice numbers.',parameters:SALES_COMMERCIAL_PACKAGE_READ.input}};
+export const SALES_COMMERCIAL_PACKAGE_TOOL={type:'function' as const,function:{name:'read_sales_commercial_package',description:'Read an existing canonical invoice package: frozen offer facts, signing agreement state, commercial terms, recorded principal schedule preview, source versions and canonical balance. Schedule rows are recorded due amounts, not proof that an installment was paid or permission for autopay. Resolve the exact invoice first. Missing fields and conflicts are facts to clarify, not permission to invent dates, fees, taxes or signed terms. A read never approves, publishes, sends, creates a subscription or collects payment. Keep signing records distinct from commercial terms; do not display internal IDs as invoice numbers.',parameters:SALES_COMMERCIAL_PACKAGE_READ.input}};
 
 const object=(v:unknown):v is Record<string,unknown>=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const only=(v:Record<string,unknown>,keys:string[])=>Object.keys(v).every(k=>keys.includes(k));
@@ -67,6 +69,31 @@ function boundedProjection(r:Record<string,unknown>,invoiceId:string):boolean {
   &&codes(r.missing_fields)&&r.missing_fields.includes('tax_and_fee_treatment')&&codes(r.conflicts);
 }
 
+/** Expand only the authenticated RPC's recorded principal schedule through the same
+ * parser/calculator used by manual Collections. Its projection omits tax/fee policy;
+ * parser defaults are never exposed as agreed zero fees. This is not an obligation
+ * ledger, mandate, signing compatibility finding or per-installment payment state.
+ */
+function recordedSchedulePreview(r:Record<string,unknown>) {
+ const t=r.commercial_terms;
+ if(!object(t)||t.schedule===null)return null;
+ if(!object(t.schedule)||!object(r.invoice))throw Error('INVALID_CANONICAL_SCHEDULE');
+ const terms=parseCollectionTerms({schema_version:1,...t.schedule});
+ const staleTerms=(t.amount_minor!==null&&t.amount_minor!==terms.total_cents)
+  ||(t.currency!==null&&t.currency!==terms.currency);
+ const conflicts=r.conflicts as string[];
+ if(staleTerms&&!conflicts.includes('recorded_terms_stale'))throw Error('INVALID_CANONICAL_SCHEDULE');
+ if(r.invoice.currency!==terms.currency&&!conflicts.includes('invoice_terms_conflict'))throw Error('INVALID_CANONICAL_SCHEDULE');
+ // Preserve the canonical reader's explanation of stale/conflicting records.
+ // Never present their schedule as a resolved commercial package.
+ if(conflicts.length>0)return null;
+ const preview=previewCollectionSchedule(terms,24);
+ return {schema_version:1,basis:'recorded_principal_schedule',
+  commercial_terms_status:t.status,source:{commercial_terms_id:t.id,commercial_terms_version:t.version,
+   commercial_terms_updated_at:t.updated_at,invoice_id:r.invoice.id,invoice_version:r.invoice.version},
+  ...preview};
+}
+
 /** Caller-JWT RPC only. This seam grants no approval and never uses a service-role reader.
  * The existing Sales domain dispatcher consumes this read; C4 remains the shared resume owner.
  */
@@ -86,6 +113,6 @@ export async function readCommercialPackage(tenant:string|null,args:Record<strin
   // sending a future raw row/document/authority field into a model consumer.
   const keys=['schema_version','tenant_id','invoice','offers','agreement','commercial_terms','missing_fields','conflicts','authority','execution','state','receipt_id'];
   if(Object.keys(r).some(k=>!keys.includes(k))||!boundedProjection(r,args.invoice_id))return refused();
-  return {content:{success:true,...r}};
+  return {content:{success:true,...r,schedule_preview:recordedSchedulePreview(r)}};
  }catch{return refused();}
 }

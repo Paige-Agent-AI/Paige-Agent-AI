@@ -902,7 +902,7 @@ jobs:
 
       - name: Test
         if: ${{ !cancelled() }}
-        run: npm run test
+        run: npm run test -- --reporter=default --reporter=json --outputFile=unit-results.json
 
       - name: Sales provider operation, account binding and recovery contract tests
         if: ${{ !cancelled() }}
@@ -1121,6 +1121,26 @@ jobs:
       - name: Public form intake (only the platform's origins, no bots, only the form's own fields)
         if: ${{ !cancelled() }}
         run: npm run test:growth-intake
+
+      # Add diagnostics to this gate; its original exit code remains authoritative.
+      # Append steps so historical failing-step ordinals retain their meaning.
+      - name: Unit isolation and failure attribution contract
+        if: ${{ !cancelled() }}
+        run: node --test scripts/ci/__tests__/unit-network-guard.test.mjs scripts/ci/__tests__/unit-failure-attribution.test.mjs
+
+      - name: Attribute unit failures (diagnostic evidence)
+        if: ${{ always() }}
+        env:
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/ci/unit-failure-attribution.mjs unit-results.json unit-failure-attribution.json
+
+      - name: Upload unit failure attribution
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-failure-attribution-${{ github.run_id }}-${{ github.run_attempt }}
+          path: unit-failure-attribution.json
+          if-no-files-found: error
 
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real

@@ -69,7 +69,11 @@ globalThis.fetch = async (url, init) => {
     if (anthropicPlan.status !== 200) return errorResponse(anthropicPlan.status, anthropicPlan.type, anthropicPlan.message);
     if (req.stream !== true) {
       const model = req.model && String(req.model).includes("haiku") ? "claude-haiku-4-5-served" : "claude-sonnet-5-5-served";
-      return new Response(JSON.stringify({ id: "msg_ns", model, content: [{ type: "text", text: "synthesis" }], stop_reason: "end_turn", usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
+      const isClassifier = typeof req.system === "string" && req.system.includes("You label one message sent to PAIGE");
+      const text = isClassifier
+        ? JSON.stringify({ intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 })
+        : "synthesis";
+      return new Response(JSON.stringify({ id: "msg_ns", model, content: [{ type: "text", text }], stop_reason: "end_turn", usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
     }
     return new Response(sse(ANTHROPIC_TOOL_ROUND), { status: 200, headers: { "content-type": "text/event-stream" } });
   }
@@ -361,6 +365,100 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const rows = rec0.inserts.filter((i) => i.table === "paige_llm_trace").slice(before);
   ok(rows.length === 1 && rows[0].row?.job_kind === "research_unit_synthesis" && rows[0].row?.provider === "anthropic",
     `C7 one attributed trace row carries the consumer's job identity (${rows.length} rows)`);
+}
+
+
+// ── D. THE CLASSIFIER THROUGH THE FABRIC (#1844) — the first production consumer of the seam ────
+// classifyTurn now opens through fabricCompletion({cheap, turn_classify}): same wire, same 1.2 s
+// deadline, same conservative null, and — new, on the owner's order — the tenant budget gate covers
+// it (R4's S3 gap), with the router's established ungated-on-unreadable-accrual policy preserved.
+{
+  const { classifyTurn, TURN_CLASSIFY_DEADLINE_MS } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
+  const CLASSIFY_TRACE = { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a1", agent_id: "paige-ai-chat", job_kind: "turn-classify" };
+
+  // D1 — routing parity: the cheap class serves Anthropic's cheap tier, the classifier's own shape
+  // rides the wire, the route records the fabric job, and the TRACE keeps the caller's tag.
+  setScenario({});
+  calls.length = 0;
+  const recD = recorder();
+  const beforeD = recD.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  const cls = await classifyTurn("thanks so much", null, CLASSIFY_TRACE);
+  const d1row = recD.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeD).at(-1)?.row;
+  ok(cls !== null && typeof cls.confidence === "number",
+    `D1 the classifier answers through the fabric (intent ${cls?.intent})`);
+  ok(calls.length === 1 && calls[0].provider === "anthropic" && String(calls[0].req.model).includes("haiku"),
+    `D1 the cheap class serves the cheap tier — provider parity (${calls[0]?.req?.model})`);
+  ok(calls[0].req.system?.includes("You label one message sent to PAIGE") && calls[0].req.max_tokens === 120 && calls[0].req.temperature === 0,
+    "D1 the classifier's own shape rides the wire (system, 120 tokens, temperature 0)");
+  ok(d1row?.job_kind === "turn-classify" && d1row?.provider === "anthropic",
+    `D1 the trace keeps the caller's job_kind tag (${d1row?.job_kind}) — no trace-history break`);
+
+  // D2 — the known ceiling, under the ESTABLISHED contract: the classifier is a CHEAP-band call,
+  // and the budget contract deliberately allows gated continuation for the cheap band at the hard
+  // ceiling (the R5a review's S3 disposition, unchanged by order of the owner). The pin: the call
+  // proceeds, the gate hit is RECORDED on the attributed row, and nothing throws into the turn.
+  // (A hard stop at the ceiling for the classifier would be a material budget-failure change —
+  // owner determination, not this slice. The reasoning-band stop itself is pinned at C4.)
+  setScenario({ tables: {
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_5a4a3a2a-0000-4000-8000-00000000c1a2", value: { ceiling_usd: 1 } }],
+    paige_llm_trace: [{ tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a2", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
+  } });
+  calls.length = 0;
+  const recD2 = recorder();
+  const beforeD2 = recD2.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  const overCeiling = await classifyTurn("thanks so much", null, { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a2", agent_id: "paige-ai-chat", job_kind: "turn-classify" });
+  const gateRows = recD2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeD2);
+  ok(overCeiling !== null && calls.length === 1,
+    `D2 over a known ceiling the cheap-band classifier continues UNDER the established contract (answered=${overCeiling !== null})`);
+  ok(gateRows.length === 1 && gateRows[0].row?.doctrine_gate_hits?.budget != null && gateRows[0].row?.job_kind === "turn-classify",
+    `D2 the gate hit is recorded on the attributed row (rows=${gateRows.length}, hit=${JSON.stringify(gateRows[0]?.row?.doctrine_gate_hits)})`);
+
+  // D3 — the established ungated-on-unreadable-accrual policy is PRESERVED: a table the budget read
+  // cannot complete proceeds ungated but loud (the classifier still serves).
+  setScenario({ tables: {
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_5a4a3a2a-0000-4000-8000-00000000c1a3", value: { ceiling_usd: 1 } }],
+  }, tableErrors: { paige_llm_trace: { message: "read failed", code: "XX001" } } });
+  calls.length = 0;
+  const ungated = await classifyTurn("thanks so much", null, CLASSIFY_TRACE);
+  ok(ungated !== null && calls.length === 1,
+    "D3 accrual that cannot be read proceeds ungated — the router's established policy, unchanged");
+
+  // D4 — the 1.2 s deadline: a transport slower than the bound is abandoned and the conservative
+  // null returns (the fetch is aborted through the seam's signal).
+  setScenario({});
+  const realFetchD = globalThis.fetch;
+  let observedSignal = null;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).startsWith("https://api.anthropic.com/")) {
+      observedSignal = init?.signal ?? null;
+      await new Promise((resolve, reject) => {
+        const t = setTimeout(resolve, TURN_CLASSIFY_DEADLINE_MS + 1500);
+        observedSignal?.addEventListener("abort", () => { clearTimeout(t); const e = new Error("aborted"); e.name = "AbortError"; reject(e); }, { once: true });
+      });
+      return new Response(JSON.stringify({ id: "m", model: "claude-haiku-4-5", content: [{ type: "text", text: "{}" }], usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    return realFetchD(url, init);
+  };
+  const t0 = Date.now();
+  const slow = await classifyTurn("thanks so much", null, CLASSIFY_TRACE);
+  const elapsed = Date.now() - t0;
+  globalThis.fetch = realFetchD;
+  ok(slow === null && elapsed < TURN_CLASSIFY_DEADLINE_MS + 400,
+    `D4 a slow provider is abandoned at the deadline (${elapsed}ms, conservative null)`);
+  ok(observedSignal instanceof AbortSignal,
+    "D4 the deadline threads to the provider fetch as a real abort signal");
+
+  // D5 — the seam's caller-tag rule (generic): a caller's trace.job_kind beats the request job.
+  const tagRun = await fabric.fabricCompletion(
+    { cognitive_class: "cheap", job: "turn_classify", messages: [{ role: "user", content: "x" }] },
+    { openaiFetch, trace: { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a5", agent_id: "a", job_kind: "my_own_tag" } },
+  );
+  void tagRun;
+  const tagRows = recorder().inserts.filter((i) => i.table === "paige_llm_trace" && i.row?.tenant_id === "5a4a3a2a-0000-4000-8000-00000000c1a5");
+  ok(tagRows.length === 1 && tagRows[0].row?.job_kind === "my_own_tag",
+    `D5 a caller's own trace job_kind wins over the request's (rows=${tagRows.length}, kind=${tagRows[0]?.row?.job_kind}, ok=${tagRun.ok}, err=${tagRun.error?.failure})`);
+
+  setScenario({});
 }
 
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);

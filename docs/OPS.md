@@ -99,7 +99,8 @@ transport fallback. Tests of network consumers keep their own recorded doubles.
 
 The existing `ci / verify` Test step retains its failing exit code and writes Vitest
 JSON. Its appended diagnostic step emits `unit-failure-attribution.json`, uploaded
-under `unit-failure-attribution-<run id>-<attempt>`. It records commit/run identity,
+under `unit-failure-attribution-<run id>-<attempt>`. It records executed checkout,
+workflow and candidate SHAs separately, plus run identity,
 totals, failing file/test, and `UNIT_NETWORK_ESCAPE` (Release/CI isolation ownership)
 or `TEST_FAILURE_UNCLASSIFIED` (owning test lane). Missing or malformed evidence is
 `EVIDENCE_UNAVAILABLE`, never a passing result. Raw exception messages, request

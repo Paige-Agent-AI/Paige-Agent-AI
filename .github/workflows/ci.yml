@@ -1132,8 +1132,10 @@ jobs:
       - name: Attribute unit failures (diagnostic evidence)
         if: ${{ always() }}
         env:
-          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node scripts/ci/unit-failure-attribution.mjs unit-results.json unit-failure-attribution.json
+          CI_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          export CI_EXECUTED_SHA="$(git rev-parse HEAD)"
+          node scripts/ci/unit-failure-attribution.mjs unit-results.json unit-failure-attribution.json
 
       - name: Upload unit failure attribution
         if: ${{ always() }}

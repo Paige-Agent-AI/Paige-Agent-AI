@@ -52,6 +52,15 @@ vi.mock("@/integrations/supabase/client", async (importOriginal) => {
   };
 });
 vi.mock("@/components/admin/AdminBridgeBell", () => ({ AdminBridgeBell: () => null }));
+// Preserve the real Campaigns launcher; its backend records are outside shell ownership.
+vi.mock("@/solo/useSoloCampaigns", () => ({
+  useSoloCampaigns: () => ({
+    tenantId: "tenant-42", phase: "ready", campaigns: [], artifacts: [], submissions: [], drafts: [],
+    pipelineWorkspace: { canManage: false, canArchiveFolders: false, folders: [], pipelines: [], stages: [], deals: [], automationRules: [] },
+    retry: vi.fn(),
+    pipelineAction: async () => { throw new Error("Unexpected pipeline mutation in shell ownership proof"); },
+  }),
+}));
 // Keep the real Studio navigation while its independently tested media seam is unavailable.
 vi.mock("@/solo/useMediaJobs", () => ({
   useMediaJobs: () => ({

@@ -550,4 +550,3 @@ export function validateIncumbentDeclarations(capabilities,proof){
  for(const capability of capabilities){const spec=CONTRACTS[capability.action?.chatTool];if(spec&&(!proof.tools.has(capability.action.chatTool)||!matchesIncumbentDeclaration(capability,spec)))findings.push(`${capability.key}: incumbent metadata must match reviewed source contract`);}
  return findings;
 }
-

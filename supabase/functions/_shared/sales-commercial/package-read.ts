@@ -3,6 +3,7 @@ import type {SpineCapability} from '../paige-spine/contracts.ts';
 import {UUID} from '../sales-invoice-command/contract.ts';
 import {parseCollectionTerms} from '../sales-collections/contract.ts';
 import {previewCollectionSchedule} from '../sales-collections/model.ts';
+import {parseCommercialConditions} from './conditions.ts';
 
 export const SALES_COMMERCIAL_PACKAGE_READ=defineCapability({
  identity:{id:'sales_invoice.commercial_package_read',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Read canonical invoice, signing agreement and recorded commercial terms together. Missing facts remain explicit; no package approval or execution.'},
@@ -66,7 +67,7 @@ function boundedProjection(r:Record<string,unknown>,invoiceId:string):boolean {
  }
  return Array.isArray(r.offers)&&r.offers.length<=50&&r.offers.every(o=>object(o)&&only(o,['id','price_id','unit_minor','currency','quantity','price_basis'])
   &&id(o.id)&&id(o.price_id)&&minor(o.unit_minor)&&positive(o.quantity)&&o.currency===i.currency&&o.price_basis==='frozen_invoice_catalog_facts')
-  &&codes(r.missing_fields)&&r.missing_fields.includes('tax_and_fee_treatment')&&codes(r.conflicts);
+  &&codes(r.missing_fields)&&codes(r.conflicts);
 }
 
 /** Expand only the authenticated RPC's recorded principal schedule through the same
@@ -111,8 +112,17 @@ export async function readCommercialPackage(tenant:string|null,args:Record<strin
     ||r.authority!=='not_evaluated'||r.execution!=='not_started'||!['needs_input','conflict'].includes(String(r.state)))return refused();
   // The database is the canonical allowlisted projector. Refuse extensions rather than
   // sending a future raw row/document/authority field into a model consumer.
-  const keys=['schema_version','tenant_id','invoice','offers','agreement','commercial_terms','missing_fields','conflicts','authority','execution','state','receipt_id'];
+  const keys=['schema_version','tenant_id','invoice','offers','agreement','commercial_terms','commercial_conditions','compatibility','missing_fields','conflicts','authority','execution','state','receipt_id'];
   if(Object.keys(r).some(k=>!keys.includes(k))||!boundedProjection(r,args.invoice_id))return refused();
+  const conditions=parseCommercialConditions(r.commercial_conditions);
+  const unresolved=conditions===null||conditions.tax.state==='unknown'||conditions.fees.state==='unknown';
+  if(unresolved&&!(r.missing_fields as string[]).includes('tax_and_fee_treatment'))return refused();
+  if('compatibility' in r){const c=r.compatibility;
+   if(!object(c)||!only(c,['basis','signed_economics'])||c.basis!=='canonical_relationship_and_invoice_source_version'
+    ||!['unverified_no_frozen_commercial_snapshot','not_signed'].includes(String(c.signed_economics)))return refused();
+   if(object(r.agreement)&&r.agreement.status==='completed'
+    &&(c.signed_economics!=='unverified_no_frozen_commercial_snapshot'||!(r.missing_fields as string[]).includes('signed_terms_compatibility')))return refused();
+  }
   return {content:{success:true,...r,schedule_preview:recordedSchedulePreview(r)}};
  }catch{return refused();}
 }

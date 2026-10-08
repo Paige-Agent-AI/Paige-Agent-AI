@@ -111,6 +111,19 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 literalProperty(gov, "risk") === "read_only" && literalProperty(gov, "approval") === "none" &&
                 operation) {
               if(/^public\.read_[a-z0-9_]+$/.test(operation))readTools.set(operation.slice(7), owner.name.text);
+              else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)==='supabase/functions/_shared/analytics-metrics/read.ts'){
+                // The existing issuer is deliberately not renamed or duplicated to satisfy a
+                // read_* naming heuristic. Admit this exact read tuple and schema only when
+                // the actual caller-JWT door and resolver are bound; never clear risk debt.
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                const chat=resolver.sourceFile(path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'))?.text??'';
+                if(identity&&literalProperty(identity,'id')==='analytics.metric_read'&&owner.name.text==='BUSINESS_METRIC_READ'
+                  && sourceFile.text.includes("caller.rpc('issue_analytics_evidence_bundle'")
+                  && sourceFile.text.includes("caller.rpc('resolve_analytics_evidence_reference'")
+                  && sourceFile.text.includes("caller.rpc('current_user_tenant_id')")
+                  && chat.includes('toolDefs.push(...BUSINESS_METRIC_TOOLS)')
+                  && chat.includes('readBusinessMetric(supabaseClient,'))readTools.set('read_business_metric',owner.name.text);
+              }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 const id=identity&&literalProperty(identity,'id');
@@ -1137,6 +1150,25 @@ function runSelfTest() {
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }
   const readAst=ts.createSourceFile(declarationFile,readSource,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const metricPath=path.join(ROOT,'supabase/functions/_shared/analytics-metrics/read.ts');
+  const metricSource=readSource.replace('READ_CAP','BUSINESS_METRIC_READ').replace('public.read_probe','public.issue_analytics_evidence_bundle').replace('effect:"read"','identity:{id:"analytics.metric_read"},effect:"read"')
+    + `;caller.rpc('issue_analytics_evidence_bundle');caller.rpc('resolve_analytics_evidence_reference');caller.rpc('current_user_tenant_id');`;
+  const metricTool=readTool.replace('READ_CAP','BUSINESS_METRIC_READ').replace('read_probe','read_business_metric');
+  const metricChat='toolDefs.push(...BUSINESS_METRIC_TOOLS);readBusinessMetric(supabaseClient, scope, input);';
+  for(const [name,source,chat,file,expected] of [
+    ['metric exact existing read door',metricSource,metricChat,metricPath,false],
+    ['metric wrong declaration',metricSource.replace('analytics.metric_read','analytics.other'),metricChat,metricPath,true],
+    ['metric missing resolver',metricSource.replace('resolve_analytics_evidence_reference','other'),metricChat,metricPath,true],
+    ['metric missing scope',metricSource.replace('current_user_tenant_id','other'),metricChat,metricPath,true],
+    ['metric missing caller JWT binding',metricSource,metricChat.replace('supabaseClient','admin'),metricPath,true],
+    ['metric wrong source path',metricSource,metricChat,declarationFile,true],
+    ['metric mutation cannot clear',metricSource.replace('effect:"read"','effect:"mutation"'),metricChat,metricPath,true],
+  ]){
+    const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:ts.createSourceFile(p,chat,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS)});
+    const found=scanSource(metricTool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
   const readNames=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>readAst});
   if(readNames.riskKeys.size || scanSource(readTool,"src/read-probe.ts",{declaredReadTools:readNames.readTools,riskPolicy:new Map([["read_probe","high"]])}).every(item=>item.rule!=="direct-tool-definition")){failed++;console.error("  FAIL read declaration cleared a classified mutation");}else console.log("  ok   read declaration never clears risk debt or classified mutation");
   // A cast must not hide an incomplete declaration from the strict rule. Before the shared

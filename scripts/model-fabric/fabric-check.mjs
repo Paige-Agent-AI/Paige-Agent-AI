@@ -759,7 +759,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   delete ENV.OPENAI_CANARY_TENANTS;
 
   // G4 — the gate reads env PER CALL: emptying the cohort takes effect on the next call (rollback
-  // without a deploy), and the cohort-tenant route telemetry stays truthful throughout.
+  // without a deploy). (The cohort tenant's truthful route telemetry is pinned by G3's assertions.)
   ok(fabric.openAiCanaryTenants().length === 0, "G4 clearing the cohort env empties admission immediately (rollback is an env clear, no deploy)");
 }
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);

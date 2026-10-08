@@ -66,7 +66,11 @@ export function openAiCanaryTenants(): string[] {
   return csvEnv(CANARY_TENANTS_ENV).map((t) => t.toLowerCase());
 }
 
-/** The classes the canary admits OpenAI candidates for. Default: operational only (the Sol evaluation). */
+/**
+ * The classes the canary admits OpenAI candidates for. Default: operational only (the Sol
+ * evaluation). A SET value with ZERO valid tokens (a pure typo) falls back to this same default —
+ * never wider — and the cohort/master gates still bound everything.
+ */
 export function openAiCanaryClasses(): string[] {
   const listed = csvEnv(CANARY_CLASSES_ENV).map((c) => c.toLowerCase()).filter((c) => CANARY_CLASS_SET.has(c));
   return listed.length ? listed : ["operational"];

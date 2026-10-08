@@ -62,6 +62,15 @@ vi.mock("@/solo/useMediaJobs", () => ({
     refreshCapabilities: vi.fn(), isJobRow: () => false,
   }),
 }));
+vi.mock("@/solo/studio/studio-data", async (original) => ({
+  ...(await original<typeof import("@/solo/studio/studio-data")>()),
+  listSessions: async () => [],
+  loadBrand: async () => ({
+    floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
+    name: null, logoUrl: null,
+  }),
+  createSession: async () => { throw new Error("Unexpected Studio mutation in shell ownership proof"); },
+}));
 vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () => null }));
 vi.mock("@/components/ui/paige", () => ({
   AgentPresenceProvider: ({ children }: { children: React.ReactNode }) => children,

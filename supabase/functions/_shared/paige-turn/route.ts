@@ -91,7 +91,7 @@ export const ROUTE_REASONS = [
   "approved_card", "answers_question", "accepted_offer_act", "accepted_offer_prose", "ambiguous_offer",
   "standing_card", "studio_surface", "attached_document", "attached_image", "unclassified_default",
   "low_confidence", "trivial_no_data", "needs_workspace_data", "intent_act", "intent_build",
-  "intent_research", "hard_difficulty", "image_generate", "image_find",
+  "intent_research", "hard_difficulty", "image_generate", "image_find", "capability_escalation",
 ] as const;
 export type RouteReason = (typeof ROUTE_REASONS)[number];
 
@@ -129,6 +129,15 @@ export interface TurnRouteFacts {
   acceptedOfferKind: OfferKind | null;
   attachments: { document: boolean; image: boolean };
   classification: TurnClassification | null;
+  /**
+   * R5b — the turn's own model round asked for capability beyond its exposure (a finished-round
+   * call to a governed tool outside the round's manifest), or a post-loop continuation re-entered the loop to
+   * carry out an action. A server-observed fact about the TURN, never a word the person typed, so
+   * it may raise the route where phrase-matching may not. It grants nothing itself: the widened
+   * tool list still passes the same gates, and an approved-card turn (deterministic) never sees a
+   * model at all.
+   */
+  capabilityEscalation?: boolean;
 }
 
 export interface TurnRoute {
@@ -236,6 +245,17 @@ export function resolveTurnRoute(facts: TurnRouteFacts): TurnRoute {
     } else {
       cls = maxClass(cls, "operational");
     }
+  }
+
+  // 4. ESCALATION (R5b) — the turn's own round asked for capability beyond its exposure, or a
+  // continuation re-entered the loop to carry out an action. This is the rescue contract: a cheap
+  // or read-only round never silently loses the objective. It runs BEFORE the ambiguous-offer cap
+  // so an unmade choice still ends at a question — escalation may widen what the model may SEE,
+  // never the person's right to choose.
+  if (facts.capabilityEscalation) {
+    tools = maxTools(tools, "act");
+    cls = maxClass(cls, "operational");
+    reasons.push("capability_escalation");
   }
 
   // AN AMBIGUOUS OFFER IS A QUESTION, NEVER AN ACT: PAIGE asks which (ask_choices is a presentation

@@ -307,10 +307,6 @@ function emitTrace(trace: TraceCtx | undefined, row: {
   });
 }
 
-async function failureDetail(resp: Response): Promise<string> {
-  return (await failureOf(resp)).detail;
-}
-
 /** The failure, read once: a short detail for the trace, and the class the provider's response proves. */
 async function failureOf(resp: Response): Promise<{ detail: string; failureClass: ProviderFailureClass }> {
   let e: any = null;
@@ -343,9 +339,12 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
     throw e;
   }
   if (!resp.ok) {
-    const detail = await failureDetail(resp);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: detail });
-    throw new Error(`OpenAI ${resp.status}: ${detail}`);
+    // failureOf reads the body ONCE: the trace's short detail and the fabric's closed class.
+    const f = await failureOf(resp);
+    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail });
+    // INT-334 — carry the closed failure class (and the status) ON the throw, so the fabric's
+    // consumer seam can classify a failed non-stream leg without parsing the message text.
+    throw Object.assign(new Error(`OpenAI ${resp.status}: ${f.detail}`), { status: resp.status, failureClass: f.failureClass });
   }
   let data: any;
   try {

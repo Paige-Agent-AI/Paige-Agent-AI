@@ -28,7 +28,7 @@ describe("tenant Command Center shell routing", () => {
     expect(TENANT_SHELL_DESTINATIONS.some(({ label }) => label === "Fleet")).toBe(false);
   });
 
-  it("gives Solo the approved seven durable work homes without a top-level Studio", () => {
+  it("gives Solo six durable work homes with Analytics inside Settings", () => {
     const destinations = tenantShellDestinationsForPath("/solo/42/command-center", "standalone");
 
     expect(destinations.map(({ label }) => label)).toEqual([
@@ -37,7 +37,6 @@ describe("tenant Command Center shell routing", () => {
       "Marketing",
       "Sales",
       "Marketplace",
-      "Analytics",
       "Settings",
     ]);
     expect(destinations.map(({ id, href }) => [id, href])).toEqual([
@@ -46,7 +45,6 @@ describe("tenant Command Center shell routing", () => {
       ["campaigns", "/solo/42/growth"],
       ["sales", "/solo/42/sales"],
       ["marketplace", "/solo/42/marketplace"],
-      ["analytics", "/solo/42/analytics"],
       ["settings", "/solo/42/settings"],
     ]);
     expect(destinations.some(({ label }) => label === "Studio")).toBe(false);
@@ -196,10 +194,10 @@ describe("tenant Command Center shell routing", () => {
       label: "Marketplace",
       href: "/solo/42/marketplace",
     });
-    expect(resolveTenantShellDestination("/solo/42/analytics", "standalone")).toMatchObject({
-      id: "analytics",
-      label: "Analytics",
-      href: "/solo/42/analytics",
+    expect(resolveTenantShellDestination("/solo/42/settings/analytics/overview", "standalone")).toMatchObject({
+      id: "settings",
+      label: "Settings",
+      href: "/solo/42/settings",
     });
   });
 

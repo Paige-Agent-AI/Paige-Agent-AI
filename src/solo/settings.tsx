@@ -56,6 +56,7 @@ import { settingsScrollOwner, SETTINGS_SCROLLBAR_SHOWN, settingsDestinationShows
 import { CalendarsView } from "./connections-calendars";
 import { SoloBusinessContextSetup } from "./SoloBusinessContextSetup";
 import { SoloBillingView } from "./settings-billing";
+import { SoloSettingsAnalytics } from "./settings-analytics";
 import "./settings.css";
 
 function OrthogonalConnectionState({ accountLabel, healthLabel, tone }: { accountLabel: string; healthLabel: string; tone: ConnectionStateTone }) {
@@ -1667,7 +1668,7 @@ export function SoloSettings(props: { openPaige?: () => void } = {}) {
 
 function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
   const [tab] = useSubtabRoute("solo", "settings", "setup");
-  const tabs=[['setup','Setup'],['team','Team'],['connections','Connections'],['integrations','Integrations'],['security-data','Security & data'],['vault','Vault'],['billing','Billing']];
+  const tabs=[['setup','Setup'],['team','Team'],['connections','Connections'],['integrations','Integrations'],['analytics','Analytics'],['security-data','Security & data'],['vault','Vault'],['billing','Billing']];
   const location = useLocation();
   const params = useParams();
   const account = params.account ?? "";
@@ -1797,7 +1798,7 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
     resetSettingsScroll();
   }, [tab, segment, resetSettingsScroll]);
   const current = SOLO_SETTINGS_DESTINATIONS.find(item => item.key === tab) ?? SOLO_SETTINGS_DESTINATIONS[0];
-  const view = tab === "team" ? <TeamView openPaige={openPaige}/> : tab === "connections" ? <ConnectionsView initialSegment={segment} onSegmentChange={resetSettingsScroll}/> : tab === "integrations" ? <SoloIntegrationsView/> : tab === "security-data" ? <SecurityView/> : tab === "vault" ? <VaultView openPaige={openPaige}/> : tab === "billing" ? <SoloBillingView/> : <SoloBusinessContextSetup account={account} openPaige={openPaige}/>;
+  const view = tab === "team" ? <TeamView openPaige={openPaige}/> : tab === "connections" ? <ConnectionsView initialSegment={segment} onSegmentChange={resetSettingsScroll}/> : tab === "integrations" ? <SoloIntegrationsView/> : tab === "analytics" ? <SoloSettingsAnalytics/> : tab === "security-data" ? <SecurityView/> : tab === "vault" ? <VaultView openPaige={openPaige}/> : tab === "billing" ? <SoloBillingView/> : <SoloBusinessContextSetup account={account} openPaige={openPaige}/>;
   return <div ref={rootRef} className={`solo-settings${tab === "vault" ? " solo-settings--vault" : ""}`}>
     {/* Connections and Integrations each carry their own in-surface header (the sub-tab
         row below), so the shared page-head would print the word a second time under a
@@ -1805,7 +1806,7 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
         the actual tools should be using (owner ruling 2026-09-22; connections hot-fix
         2026-09-13). The other settings tabs have no internal subnav, so the page-head
         remains their sole heading. */}
-    {tab !== "vault" && tab !== "setup" && tab !== "connections" && tab !== "integrations" && <header className="ss-page-head"><div><span>Solo settings</span><h1>{current.label}</h1><p>{current.key === "setup" ? "The owner-confirmed business truth Paige may use to understand and support this workspace." : current.key === "integrations" ? "External tools, bridges, and safe configuration handoffs." : "Account configuration with honest runtime boundaries."}</p></div><Truth value={current.truth}/></header>}
+    {tab !== "vault" && tab !== "setup" && tab !== "connections" && tab !== "integrations" && tab !== "analytics" && <header className="ss-page-head"><div><span>Solo settings</span><h1>{current.label}</h1><p>{current.key === "setup" ? "The owner-confirmed business truth Paige may use to understand and support this workspace." : current.key === "integrations" ? "External tools, bridges, and safe configuration handoffs." : "Account configuration with honest runtime boundaries."}</p></div><Truth value={current.truth}/></header>}
     {entry && <div className="ss-return"><span>Opened from {entry.origin === "calendar" ? "Calendar" : "Conversations"}</span>{entry.returnTo ? <Link to={entry.returnTo}>Return to {entry.origin === "calendar" ? "Calendar" : "Conversations"}</Link> : <span>Return address rejected</span>}</div>}
     {current.key === "setup" && <SettingsMoveNotice key={account}/>}
     <div className="ss-content" data-settings-tab={tab} data-tab-count={tabs.length}>{view}</div>

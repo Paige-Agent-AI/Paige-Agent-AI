@@ -19,7 +19,7 @@
  *
  * No network: fetch is a recording fake per provider. Run: `npm run test:model-fabric`.
  */
-import { setScenario } from "../client-memory-authz/fake-supabase.mjs";
+import { setScenario, recorder } from "../client-memory-authz/fake-supabase.mjs";
 
 const ENV = {
   ANTHROPIC_API_KEY: "sk-ant-test-not-a-real-key",
@@ -67,6 +67,10 @@ globalThis.fetch = async (url, init) => {
     const req = JSON.parse(init.body);
     calls.push({ provider: "anthropic", req });
     if (anthropicPlan.status !== 200) return errorResponse(anthropicPlan.status, anthropicPlan.type, anthropicPlan.message);
+    if (req.stream !== true) {
+      const model = req.model && String(req.model).includes("haiku") ? "claude-haiku-4-5-served" : "claude-sonnet-5-5-served";
+      return new Response(JSON.stringify({ id: "msg_ns", model, content: [{ type: "text", text: "synthesis" }], stop_reason: "end_turn", usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
+    }
     return new Response(sse(ANTHROPIC_TOOL_ROUND), { status: 200, headers: { "content-type": "text/event-stream" } });
   }
   throw new Error(`fabric-check: unexpected network call to ${u}`);
@@ -77,6 +81,9 @@ const openaiFetch = async (url, init) => {
   if (openaiPlan.throws) throw Object.assign(new Error("connection reset"), { name: "TypeError" });
   if (openaiPlan.status !== 200) {
     return new Response(JSON.stringify({ error: { type: openaiPlan.type, code: openaiPlan.code ?? null, message: "redacted" } }), { status: openaiPlan.status, headers: { "content-type": "application/json" } });
+  }
+  if (req.stream !== true) {
+    return new Response(JSON.stringify({ id: "resp_ns", model: req.model, status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: "synthesis" }] }], usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
   }
   return new Response(sse(openaiToolRound(`${req.model}-2026-09-30`)), { status: 200, headers: { "content-type": "text/event-stream" } });
 };
@@ -223,6 +230,137 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 {
   const r = await run("cheap", {}, { messages: BODY.messages });
   ok(!("tools" in r.calls[0].req), "the fabric adds no tools to a tools-free body");
+}
+
+
+// ── C. THE CLASS-BEARING CONSUMER SEAM (fabricCompletion) — R6A-RETURN D, non-streaming ───────
+// A consumer names a cognitive class and its OWN job identity; the fabric alone picks the provider
+// and model; the served route rides the response; the judge carve-out pins. Existing routed callers
+// are untouched (nothing in production calls this yet — Deep Research adopts it in its own lane).
+{
+  anthropicPlan = { status: 200 };
+  openaiPlan = { status: 200 };
+  const seamRun = async (request, opts = {}) => {
+    calls.length = 0;
+    const r = await fabric.fabricCompletion(request, { openaiFetch, ...opts });
+    return { r, calls };
+  };
+  const REQ = (cls, job) => ({ cognitive_class: cls, job, messages: [{ role: "system", content: "consumer" }, { role: "user", content: "synthesize the evidence" }] });
+
+  // C1 — with OpenAI off, every class is served by Anthropic's own tier for it, exactly like the
+  // routed path's tiers, and the response is chat-shaped with the route attached.
+  const cheap = await seamRun(REQ("cheap", "research_hop_planner"));
+  ok(cheap.r.ok && cheap.r.route.served?.provider === "anthropic" && String(cheap.r.route.served?.model).includes("haiku")
+    && cheap.r.route.reason === "served_primary" && cheap.r.route.fallback === false,
+    `C1 cheap class serves Anthropic's cheap tier (${cheap.r.route.served?.model})`);
+  ok(cheap.r.response?.choices?.[0]?.message?.content === "synthesis" && typeof cheap.r.response?.usage?.prompt_tokens === "number",
+    "C1 the result is chat-shaped with usage");
+  const op = await seamRun(REQ("operational", "research_unit_synthesis"));
+  ok(op.r.ok && op.r.route.served?.provider === "anthropic" && String(op.r.route.served?.model).includes("sonnet")
+    && op.r.route.job === "research_unit_synthesis" && op.r.route.requested_class === "operational",
+    `C1 operational class serves the reasoning tier (${op.r.route.served?.model}) — the consumer named no provider`);
+  const fr = await seamRun(REQ("frontier", "research_difficult_reconciliation"));
+  ok(fr.r.ok && String(fr.r.route.served?.model).includes("sonnet"), "C1 frontier class serves the reasoning tier while OpenAI is off");
+
+  // C2 — with OpenAI enabled (test seam), the class's first candidate serves with its effort.
+  const sol = await seamRun(REQ("operational", "research_unit_synthesis"), ON);
+  ok(sol.r.ok && sol.r.route.served?.provider === "openai" && sol.r.route.served?.model === "gpt-6.1-sol"
+    && sol.calls.length === 1 && sol.calls[0].req.model === "gpt-6.1-sol" && sol.calls[0].req.store === false
+    && sol.calls[0].req.reasoning?.effort === "medium",
+    "C2 operational serves Sol with the class effort, store:false, and no Anthropic call");
+  const luna = await seamRun(REQ("cheap", "research_hop_planner"), ON);
+  ok(luna.r.route.served?.model === "gpt-6-luna" && luna.calls[0].req.reasoning?.effort === "none", "C2 cheap serves Luna");
+
+  // C3 — narrow fallback: a proven health failure moves once; invalid_request never moves.
+  openaiPlan = { status: 401, type: "authentication_error" };
+  const fb = await seamRun(REQ("operational", "research_unit_synthesis"), ON);
+  ok(fb.r.ok && fb.r.route.served?.provider === "anthropic" && fb.r.route.reason === "served_fallback" && fb.r.route.fallback === true
+    && fb.r.route.attempts[0]?.failure === "auth_config",
+    "C3 a 401 falls back to Sonnet and the route records why");
+  openaiPlan = { status: 400, type: "invalid_request_error" };
+  const bad = await seamRun(REQ("operational", "research_unit_synthesis"), ON);
+  ok(!bad.r.ok && bad.r.error?.failure === "invalid_request" && bad.calls.length === 1,
+    "C3 an invalid request never moves — the other provider would get the same broken request");
+  openaiPlan = { status: 200 };
+
+  // C4 — the budget gate runs on the seam's own candidates, and a stop is terminal (never falls over).
+  setScenario({ tables: {
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_tenant-seam", value: { ceiling_usd: 1 } }],
+    paige_llm_trace: [{ tenant_id: "tenant-seam", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
+  } });
+  const traceSeam = { tenant_id: "tenant-seam", agent_id: "fabric-check-seam" };
+  let threw = null;
+  calls.length = 0;
+  try { await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { openaiFetch, trace: traceSeam }); } catch (e) { threw = e; }
+  ok(threw?.code === "budget_exceeded" && calls.length === 0,
+    "C4 a budget stop throws before any provider call and never tries another");
+  setScenario({});
+
+  // C5 — the judge carve-out: a pinned route ignores the class policy and never falls back.
+  const pinOk = await seamRun(REQ("cheap", "rubric_judge_v3"), { ...ON, pinned: { tier: "reasoning" } });
+  ok(pinOk.r.ok && pinOk.r.route.served?.provider === "anthropic" && String(pinOk.r.route.served?.model).includes("sonnet")
+    && pinOk.r.route.reason === "pinned_served" && pinOk.calls.length === 1 && pinOk.calls[0].provider === "anthropic",
+    "C5 a pinned route serves Anthropic whatever the class or the enabled set says");
+  anthropicPlan = { status: 503, type: "overloaded_error" };
+  const pinFail = await seamRun(REQ("operational", "rubric_judge_v3"), { ...ON, pinned: { tier: "reasoning" } });
+  ok(!pinFail.r.ok && pinFail.r.route.reason === "pinned_failed" && pinFail.r.error?.failure === "provider_outage"
+    && pinFail.calls.length === 1,
+    "C5 a pinned route fails without moving — the instrument stays comparable");
+  anthropicPlan = { status: 200 };
+
+  // C6 — the request contract: no provider or model field exists to set, and the job identity is validated.
+  let badJob = null;
+  try { await fabric.fabricCompletion({ ...REQ("operational", "Not A Job") }, { openaiFetch }); } catch (e) { badJob = e; }
+  ok(badJob instanceof Error && /job/.test(badJob.message), "C6 a malformed job identity is refused");
+  ok(!("provider" in REQ("operational", "x")) && !("model" in REQ("operational", "x")),
+    "C6 the request carries no provider or model field to hardcode");
+
+  // C8 — the OPENAI leg's trace row carries the consumer's job identity too (never the adapter's "chat").
+  {
+    const rec8 = recorder();
+    const before8 = rec8.inserts.filter((i) => i.table === "paige_llm_trace").length;
+    await seamRun(REQ("operational", "research_unit_synthesis"), { ...ON, trace: { tenant_id: "tenant-seam8", agent_id: "fabric-check-seam" } });
+    const rows8 = rec8.inserts.filter((i) => i.table === "paige_llm_trace").slice(before8);
+    ok(rows8.length === 1 && rows8[0].row?.job_kind === "research_unit_synthesis" && rows8[0].row?.provider === "openai",
+      `C8 the OpenAI-served leg traces the consumer's job identity (${rows8[0]?.row?.job_kind})`);
+  }
+
+  // C9 — a FAILED Anthropic leg leaves the same evidence a successful one does.
+  {
+    const rec9 = recorder();
+    const before9 = rec9.inserts.filter((i) => i.table === "paige_llm_trace").length;
+    anthropicPlan = { status: 503, type: "overloaded_error" };
+    await seamRun(REQ("operational", "research_unit_synthesis"), { trace: { tenant_id: "tenant-seam9", agent_id: "fabric-check-seam" } });
+    anthropicPlan = { status: 200 };
+    const rows9 = rec9.inserts.filter((i) => i.table === "paige_llm_trace").slice(before9);
+    ok(rows9.length === 1 && rows9[0].row?.status === "error" && rows9[0].row?.job_kind === "research_unit_synthesis"
+      && rows9[0].row?.error_class === "provider_outage" && rows9[0].row?.error_message === "Error",
+      `C9 a failed Anthropic leg writes one attributed error trace row, name-only message (${rows9[0]?.row?.error_class}/${rows9[0]?.row?.error_message})`);
+  }
+
+  // C10 — transport failures are the streaming fabric's provider_outage: fallback-eligible.
+  {
+    const realFetch = globalThis.fetch;
+    anthropicPlan = { status: 200 };
+    let anthropicThrew = false;
+    globalThis.fetch = async (url, init) => {
+      if (String(url).startsWith("https://api.anthropic.com/")) { anthropicThrew = true; throw Object.assign(new Error("connection reset"), { name: "TypeError" }); }
+      return realFetch(url, init);
+    };
+    calls.length = 0;
+    const t = await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { openaiFetch });
+    globalThis.fetch = realFetch;
+    ok(t.route.attempts.some((a) => a.failure === "provider_outage") && anthropicThrew,
+      `C10 a transport throw on the Anthropic leg classifies provider_outage (${t.route.attempts.map((a) => a.failure).join(",")})`);
+  }
+
+  // C7 — telemetry: the anthropic leg writes exactly one trace row carrying the consumer's job kind.
+  const rec0 = recorder();
+  const before = rec0.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await seamRun(REQ("operational", "research_unit_synthesis"), { trace: { tenant_id: "tenant-seam2", agent_id: "fabric-check-seam" } });
+  const rows = rec0.inserts.filter((i) => i.table === "paige_llm_trace").slice(before);
+  ok(rows.length === 1 && rows[0].row?.job_kind === "research_unit_synthesis" && rows[0].row?.provider === "anthropic",
+    `C7 one attributed trace row carries the consumer's job identity (${rows.length} rows)`);
 }
 
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);

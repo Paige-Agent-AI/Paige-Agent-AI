@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: NOT_APPLICABLE: no controls, focus or keyboard code changed; inc
 ZOOM_REFLOW: UNVERIFIED: no new layout change; fresh dynamic specialist-label overflow drive not captured.
 REDUCED_MOTION: NOT_APPLICABLE: no motion added or changed.
 STATE_COVERAGE: PASS: missing/ambiguous specialist labels fall back generically, failure and dispatch differ from success; owner candidates/error data excluded; unknown outcome never settles executor; workspace-change projection cleared.
-TRUTHFUL_STATE_LABELS: PASS: actual synchronous result drives completion, durable acceptance says dispatch; unknown operation remains unknown; foundation does not imply C4/C5/C6 complete.
+TRUTHFUL_STATE_LABELS: PASS: src/__tests__/specialist-step-label.test.ts verifies synchronous success versus durable dispatch; scripts/int336-handler-check.mjs verifies conservative outcome classification and held ownership; these foundations do not establish full C4/C5/C6 completion.
 SOLO_UI: YES: canonical Solo Chat step wording affected indirectly; no shell changes.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no fresh composition render captured.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no fresh composition render captured.

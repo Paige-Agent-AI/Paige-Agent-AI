@@ -1,6 +1,6 @@
 # INT-340 shared metric consumer contract
 
-Status: shared contract production-verified through merged PR #1814. Settings UI remains separately unmerged. INT-339 authenticated production privacy verification passed and explicit Sales clearance was sent on 2026-10-07. The #1814 production handoff is complete; authenticated Settings UI acceptance remains pending.
+Status: shared contract production-verified through merged PR #1814. The six-view Settings UI subsequently shipped in #1818; redundant heading removal shipped in #1828. INT-339 authenticated production privacy clearance remains closed. Post-merge evidence-lifecycle, permission and full accessibility acceptance are tracked by #1836; the shared governed Chat/Live reader remains separately owned by Platform Reach in #1837.
 
 ## One measurement seam
 
@@ -63,7 +63,15 @@ Sales owns its 11 producers shipped by #1809 and the Sales Performance experienc
 
 ## Proof still required
 
-Exact-head hosted database and application CI, independent review of changed risk surfaces, production persistence and signed-in positive/negative scope proof, shared governed-reader integration, typed Chat and Live evidence parity, and authenticated Settings acceptance. Synthetic rendering and rollback fixtures do not substitute for these gates.
+For #1836, the corrected consumer still requires exact-head CI/review, deployment and authenticated lifecycle/accessibility acceptance. For #1837, shared governed-reader integration and typed Chat/Live evidence parity remain owed to Platform Reach. Earlier foundation and Settings production proofs are historical evidence, not acceptance of either remaining change. Synthetic rendering and rollback fixtures do not substitute for these gates.
+
+## Evidence lifecycle and permission guidance — #1836 / #1837
+
+Consumers must clear displayed values and any open evidence disclosure before revalidating, on scope changes, and on loss of connectivity. Check reference expiry before rendering; periodically resolve current evidence and resolve again on foreground/visibility recovery. Discard late responses from older actors, workspaces or request generations. Do not display a cached `LIVE` result while authorization or freshness is uncertain.
+
+A resolver `42501` may mean changed source state, revocation, expiry or lost authorization. It does not by itself prove the actor lacks permission. Retry only through the canonical issuer with the original metric/version, dimensions, workspace epoch and captured time bounds. An issuer `42501` is an explicit permission refusal: clear all measurements and present a truthful permission state. A transport, server or parser failure remains a read failure; it never authorizes a broader query or turns missing measurements into zero. User-requested Refresh may start a new rolling range, while automatic revalidation preserves the captured interval.
+
+Platform Reach should consume `src/lib/analytics/metric-contract.ts` for request/result validation and `docs/delivery/int340-metric-coverage.md` for the exact 22 Settings definitions, source coverage, exclusions and unsupported producer owners. Reuse the same authenticated issuer/resolver and opaque evidence identity in typed Chat and Live. UI lifecycle tests are consumer proof, not evidence that #1837 is integrated.
 
 ## Bounded operating diagnostics
 

@@ -1132,14 +1132,14 @@
         "prohibited": "Never expose metric definitions/formulas/exclusion reasons or the source refs.",
         "completion_criterion": "A real analytics finding drives a Paige-prepared, owner-approved action on the owning surface with a verified result — not a static dashboard (needs SCR-2 + SCR-3)."
       },
-      "surface": "Analytics",
+      "surface": "Settings → Analytics (Overview, Business Health, Operations, Team, AI & Usage, Data Health)",
       "group": "analytics",
       "tier_scope": ["solo"],
-      "owner_component": "src/solo/analytics2.tsx:254",
-      "canonical_source": "issue_analytics_evidence_bundle + resolve_analytics_evidence_reference (money tab only live); 5 tabs static",
+      "owner_component": "src/solo/settings-analytics.tsx + src/solo/data/useSettingsAnalytics.ts",
+      "canonical_source": "Shared issue_analytics_evidence_bundle seven-argument overload + resolve_analytics_evidence_reference(text), migration06 dispatcher and migration05 private Settings producer; 22 keys documented in docs/delivery/int340-metric-coverage.md",
       "chain": {
-        "canonical_source": {"status": "partial", "note": "only the money (Sales funnel) tab is live; the other five are static 'Not proved'"},
-        "tenant_scope": {"status": "server_resolved", "note": "the lens binds BOTH actor and account and refuses when the passed account epoch differs from the caller's active tenant"},
+        "canonical_source": {"status": "partial", "note": "22 Settings keys have explicit producer semantics; readiness is per reading LIVE/PARTIAL/UNAVAILABLE. Retention, profitability, NPS, team scorecards and actual voice consumption remain UNAVAILABLE. This is source coverage, not Chat/Live acceptance."},
+        "tenant_scope": {"status": "server_resolved", "note": "Shared issuer/resolver revalidate active profile, actor, explicit active owner/admin seat, lifecycle, tenant epoch, expiry/revocation and recomputed source digest; platform role without tenant seat is denied on the new seam."},
         "safe_context": {"status": "eligible", "note": "the authorization/freshness/expiry/coverage semantics are Mind-shaped — the hard half — but subject type and unbounded counts fail the contract"},
         "authority": {"status": "none"},
         "governed_write": {"status": "none"},
@@ -1150,11 +1150,11 @@
       },
       "prohibited_context": ["pipeline/stage labels", "metric label/definition/formula", "caveats", "exclusion reasons", "account epoch reference", "evidence/source-revision refs", "source table names"],
       "state": "UNAVAILABLE",
-      "state_reason": "No Paige binding built. But its lens already ships the authorization/freshness/expiry/coverage semantics a Mind lens needs — name Analytics the reference consumer when SCR-2 is raised (recording that SCR-3 is also required for the counts).",
+      "state_reason": "Settings Analytics is the six-view read consumer of the shared evidence seam; source readiness does not establish a PAIGE binding. #1837 Chat/Live acceptance is PROOF OWED; retain UNAVAILABLE here until both modalities prove the authorized resolver pathway. Existing Mind subject/count restrictions remain unresolved.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
-      "next_slice": "Phase 8: bind only what is safe, AFTER SCR-2 + SCR-3. Reference consumer for the SCR-2 request.",
-      "sources": ["docs/architecture/paige-mind-integration-matrix.md#analytics", "docs/product/interactive-analytics-ui-spec.md"]
+      "next_slice": "#1837: prove shared resolver consumption through Chat and Live, with safe bounded context and account/member/source-change denial. PROOF OWED; do not infer LIVE from Settings rendering or producer presence. Bind only after the existing SCR-2/SCR-3 requirements are satisfied.",
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#analytics", "docs/product/interactive-analytics-ui-spec.md", "docs/delivery/int340-metric-coverage.md", "supabase/migrations/20270601000005_int340_settings_metric_producers.sql", "supabase/migrations/20270601000006_int340_shared_metric_evidence.sql"]
     },
     {
       "id": "marketplace",

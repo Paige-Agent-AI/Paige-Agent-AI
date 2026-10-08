@@ -1,5 +1,9 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+## Required-CI correction before release
+
+Exact-head CI rejected an observation-only retired coach role exemption. Migration12 now uses the current Document owner/admin permissions established by the canonical retirement migration; native permission controls failed first and pass34/34 after repair. No title-authority exemption or required-check waiver was added. Two incumbent MCP tests now assert actual registry membership and validation instead of a closed three-domain source string, retaining field-for-field checks and adding forged-tool/class/risk/approval rejection controls;24 tests PASS. Fresh non-author review and exact-head CI are required on the repaired composition before merge.
+
 ## 2026-10-08 durable observation in the canonical authenticated status consumer
 
 This candidate adds read-only `interactive.workId` observation to the existing status branch.

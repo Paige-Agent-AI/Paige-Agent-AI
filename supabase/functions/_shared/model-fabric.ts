@@ -283,7 +283,7 @@ export async function fabricCompletion(
           if (d.decision === "block") {
             attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
             traceLLMCall({ ...(opts.trace ?? {}), provider: "router_budget", model: null,
-              job_kind: request.job, modality: "text", status: "error",
+              job_kind: opts.trace?.job_kind ?? request.job, modality: "text", status: "error",
               latency_ms: Date.now() - started, input: request.messages, output: null,
               error_class: "budget_exceeded", error_message: new BudgetExceeded(d.ceiling_usd, d.accrued_usd).message,
               doctrine_gate_hits: gateHits,
@@ -379,7 +379,7 @@ async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: s
       job_kind: trace?.job_kind ?? job, modality: "text", tier, status: "error",
       latency_ms: Date.now() - started,
       input: body.messages, output: null,
-      error_class: PROVIDER_FAILURE_CLASSES.includes(err.failureClass as ProviderFailureClass) ? err.failureClass : "error",
+      error_class: PROVIDER_FAILURE_CLASSES.includes(err.failureClass as ProviderFailureClass) ? err.failureClass : ((e as Error)?.name ?? "error"),
       error_message: (e as Error)?.name ?? "error",
       metadata: { caller_function: trace?.agent_id },
     });

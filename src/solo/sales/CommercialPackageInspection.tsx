@@ -1,0 +1,22 @@
+import React from 'react';
+import {supabase} from '@/integrations/supabase/client';
+import {readCommercialPackage} from '../../../supabase/functions/_shared/sales-commercial/package-projection';
+
+const record=(v:unknown):Record<string,unknown>=>v!==null&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:{};
+const explain=(code:string)=>({tax_and_fee_treatment:'Record tax and fee treatment in the draft.',signed_terms_compatibility:'Signed commercial economics are not frozen in the agreement record; compatibility remains unverified.',agreement_source_version:'Reopen the draft and select the current agreement version.',agreement_version_mismatch:'The agreement changed after this draft was saved. Review the current agreement and revise the draft.',agreement_offer_conflict:'The agreement and selected offer differ. Resolve the commercial terms before proceeding.',commercial_terms_inactive:'Commercial terms are inactive. Review their status in Terms & Agreements.'}[code]??`Review ${code.replace(/_/g,' ')} in the canonical Sales record.`);
+
+/** Read-only consumer of the same caller-JWT package capability used by PAIGE. */
+export function CommercialPackageInspection({tenantId,invoiceId,version}:{tenantId:string;invoiceId:string;version:number}) {
+ const [request,setRequest]=React.useState(0),[result,setResult]=React.useState<{scope:string;content:Record<string,unknown>}|null>(null);
+ const scope=`${tenantId}:${invoiceId}:${version}`;
+ React.useEffect(()=>{setResult(null);if(!request)return;let current=true;void readCommercialPackage(tenantId,{invoice_id:invoiceId},supabase).then(({content})=>{if(current)setResult({scope,content})});return()=>{current=false};},[scope,request,tenantId,invoiceId]);
+ const content=result?.scope===scope?result.content:null, invoice=record(content?.invoice),agreement=record(content?.agreement),terms=record(content?.commercial_terms),preview=record(content?.schedule_preview),conditions=record(content?.commercial_conditions);
+ const money=(v:unknown)=>typeof v==='number'?new Intl.NumberFormat('en-US',{style:'currency',currency:typeof invoice.currency==='string'?invoice.currency.toUpperCase():'USD'}).format(v/100):'Not recorded';
+ return <section aria-label="Commercial package inspection" className="sb-paper"><button type="button" className="btn" onClick={()=>setRequest(n=>n+1)}>{request?'Refresh commercial package':'Inspect commercial package'}</button>{request>0&&(!content?<p role="status">Reading canonical commercial package…</p>:content.success!==true?<p role="alert">Commercial package could not be read in this workspace. Check access and retry.</p>:<>
+ <dl><dt>Contract principal</dt><dd>{money(invoice.obligation_total_minor)}</dd><dt>Deposit / initial obligation</dt><dd>{money(invoice.due_now_minor)}</dd><dt>Remaining scheduled principal</dt><dd>{money(invoice.remaining_scheduled_minor)}</dd><dt>Canonical outstanding balance</dt><dd>{money(invoice.outstanding_minor)}</dd><dt>Agreement</dt><dd>{agreement.status?`${String(agreement.status)} · version ${String(agreement.version)}`:'Not linked'}</dd><dt>Commercial terms</dt><dd>{terms.status?`${String(terms.status)} · version ${String(terms.version)}`:'Not linked'}</dd></dl>
+ <dl>{(['tax','fees'] as const).map(key=>{const treatment=record(conditions[key]);return <React.Fragment key={key}><dt>{key==='tax'?'Tax':'Fees'}</dt><dd>{treatment.state==='not_applicable'?'Not applicable':treatment.state==='recorded'?'Recorded · included in invoice lines':'Unknown · information missing'}{typeof treatment.source==='string'&&<p>Source: {treatment.source}</p>}{typeof treatment.policy==='string'&&<p>Policy: {treatment.policy}</p>}</dd></React.Fragment>})}</dl>
+ {Array.isArray(preview.rows)&&<><h4>Recorded obligations · not collected payments</h4><ol>{preview.rows.map((row,index)=>{const r=record(row);return <li key={index}>{String(r.due_date)} · {money(r.amount_cents)}</li>})}</ol>{preview.has_more===true&&<p>Additional recorded obligations are available in Collections.</p>}</>}
+ {(['conflicts','missing_fields'] as const).map(key=>Array.isArray(content[key])&&content[key].length>0?<div key={key}><h4>{key==='conflicts'?'Resolve conflicts':'Information still needed'}</h4><ul>{(content[key] as string[]).map(code=><li key={code}>{explain(code)}</li>)}</ul></div>:null)}
+ <p>Inspection does not approve, publish, send or collect. Each next action retains its own authorization.</p>
+ </>)}</section>;
+}

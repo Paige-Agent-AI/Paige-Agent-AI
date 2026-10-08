@@ -111,7 +111,7 @@ export function normalizeInvoiceSnapshot(value: unknown, expectedTotal: number):
 /** A deliberate edit resolves Catalog amounts again; an unknown retry uses the original request instead. */
 export function snapshotEditInput(snapshot: InvoiceSnapshot): InvoiceSnapshotInput {
   const { agreement_snapshot: _agreement, total_minor: _total, due_now_minor: _due, remainder_minor: _remainder, ...input } = snapshot;
-  return { ...input, billing_address: input.billing_address ? { ...input.billing_address } : null,
+  return { ...input, ...(input.commercial_conditions ? { commercial_conditions: structuredClone(input.commercial_conditions) } : {}), billing_address: input.billing_address ? { ...input.billing_address } : null,
     payment_method_intents: [...input.payment_method_intents], delivery_channel_intents: [...input.delivery_channel_intents],
     items: snapshot.items.map(({ price_snapshot: _price, ...line }) => ({ ...line, unit_minor: line.price_id === null ? line.unit_minor : null })) };
 }

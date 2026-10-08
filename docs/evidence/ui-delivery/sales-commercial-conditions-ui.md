@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: PASS: policy focus and Tab navigation, review heading focus and 
 ZOOM_REFLOW: UNVERIFIED: measured viewport reflow passed; actual browser 200-percent zoom and assistive-technology drive remain separate proof owed.
 REDUCED_MOTION: PASS: browser drive uses reducedMotion=reduce; no new motion or animation added.
 STATE_COVERAGE: PASS: unknown, not applicable, recorded included charges, invalid/duplicate/over-line input, stale annotation, readonly/locked review, refused/unknown recovery, tenant switch, permission loss and issued refusal.
-TRUTHFUL_STATE_LABELS: PASS: unknown is unresolved rather than zero; recorded charges are included; schedule rows are obligations rather than payments; read grants no approval; historical signed economics remain unverified.
+TRUTHFUL_STATE_LABELS: PASS: InvoiceCommercialConditions tests and CommercialPackageInspection tests verify honest treatment, included charges, obligation labels and absence of execution authority; signed-economics limitation is visibly retained.
 SOLO_UI: YES: same canonical Solo implementation for every eligible tenant; generic synthetic fixtures only.
 SOLO_1536X770_PAIGE_CLOSED: PASS: measured editor bounds and synthetic functional flow in both themes.
 SOLO_1536X770_PAIGE_OPEN: PASS: wide open dock measured with synthetic functional flow in both themes.
@@ -35,7 +35,7 @@ MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: Draft and package contracts consumed; pure package reader moved unchanged for browser-safe import. Shared Chat routing, C4, approvals, signing, payment execution and Performance formulas unchanged.
 INTERNAL_BUILD_IDENTITY: supporting=d85d5e607ae924646bf48420b214e643c47b1dd6; deployment=local-Solo-invoice-harness; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/sales-commercial-conditions-ui.md and assets/sales-commercial-conditions/rendered-proof.json
 RELEASE_CHANNEL: development: local implementation and rendered verification; exact-head CI/review precede production release.
-RELEASE_CLASSIFICATION: incremental: completion of the incumbent commercial entry and inspection interface.
+RELEASE_CLASSIFICATION: patch: completion of the incumbent commercial entry and inspection interface.
 CUSTOMER_RELEASE_IDENTITY: none: no separate public version or customer announcement assigned.
 RELEASE_NOTE_REQUIRED: no: bounded existing workflow completion; program records carry truthful release state.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: functional local interface and canonical consumer proof; authenticated owner/provider acceptance owed.

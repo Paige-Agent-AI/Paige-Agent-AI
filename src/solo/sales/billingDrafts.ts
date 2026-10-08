@@ -58,7 +58,7 @@ export function billingDraftFailure(error: RpcResult['error']): DraftResult<neve
     'Invoice and commercial terms initial obligation disagree':'The deposit amount or due date differs from the payment plan. Review the invoice and the first scheduled obligation.',
     'Invalid commercial terms reference':'The selected commercial terms reference is invalid. Refresh and select the current plan again.',
   };
-  if ((error?.code === '22023' || error?.code === '40001') && error.message && Object.hasOwn(termsRefusals,error.message))
+  if ((error?.code === '22023' || error?.code === '40001') && error.message && Object.prototype.hasOwnProperty.call(termsRefusals,error.message))
     return {ok:false,outcome:'refused',message:termsRefusals[error.message]};
   if (error?.code && (/^PA/.test(error.code) || ['42501', '22023', '22P02', '22007', '22008', '40001', '23505'].includes(error.code))) {
     return { ok: false, outcome: 'refused', message: error.code === '40001' ? 'This draft changed. Reopen its current version before saving.' : 'The draft was refused. Check workspace, access and billing details.' };

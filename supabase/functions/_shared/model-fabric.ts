@@ -105,7 +105,8 @@ async function fabricBudgetGate(
   requestJob: string,
   trace: TraceCtx | undefined,
   started: number,
-  traceCtxCarrier?: TraceCtx,
+  traceCtxCarrier: TraceCtx | undefined,
+  input?: unknown,
 ): Promise<FabricBudgetDecision> {
   const db = budgetDb();
   if (!db) return { blocked: false, gateHits: null };
@@ -126,7 +127,7 @@ async function fabricBudgetGate(
   if (d.decision === "block") {
     traceLLMCall({ ...(trace ?? {}), provider: "router_budget", model: null,
       job_kind: trace?.job_kind ?? requestJob, modality: "text", status: "error",
-      latency_ms: Date.now() - started, input: null, output: null,
+      latency_ms: Date.now() - started, input: input ?? null, output: null,
       error_class: "budget_exceeded", error_message: new BudgetExceeded(d.ceiling_usd, d.accrued_usd).message,
       doctrine_gate_hits: gateHits,
       metadata: { caller_function: trace?.agent_id } });
@@ -159,7 +160,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         // Anthropic leg (chat is reasoning-band work, the contract's own classification). A block
         // throws before any transport moves and never falls back to the next candidate.
         if (opts.trace?.tenant_id) {
-          await fabricBudgetGate(opts.trace.tenant_id, "reasoning", "chat", opts.trace, Date.now(), opts.trace);
+          await fabricBudgetGate(opts.trace.tenant_id, "reasoning", "chat", opts.trace, Date.now(), opts.trace, body.messages);
         }
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
         opened = await responsesStream(body, { model, effort, fetchImpl: opts.openaiFetch }, opts.trace);
@@ -339,7 +340,7 @@ export async function fabricCompletion(
     }
     if (opts.trace?.tenant_id) {
       try {
-        const decision = await fabricBudgetGate(opts.trace.tenant_id, band, request.job, opts.trace, started, undefined);
+        const decision = await fabricBudgetGate(opts.trace.tenant_id, band, request.job, opts.trace, started, undefined, request.messages);
         gateHitForTrace = decision.gateHits;
       } catch (e) {
         attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });

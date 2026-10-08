@@ -554,6 +554,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     });
     throw new Error("unreachable");
   };
+  calls.length = 0;
   const sigE6 = AbortSignal.timeout(150);
   const abortedRun = await fabric.fabricCompletion(
     { cognitive_class: "operational", job: "turn_classify", messages: STREAM_BODY.messages },

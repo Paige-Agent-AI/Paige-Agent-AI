@@ -222,6 +222,9 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
   if (opts.trace) {
     opts.trace.fabric_route = { requested_class: cls, job: opts.trace.job_kind ?? "chat", served_provider: null, served_model: null, fallback: attempts.some((a) => a.failure && a.failure !== "skipped_disabled"), reason: "failed" };
   }
+  // #1856 — nothing served: clear the projected route from the caller's ctx so a reused ctx can
+  // never carry a stale "served by X" route into a later row.
+  if (opts.trace) opts.trace.fabric_route = null;
   return last;
 }
 
@@ -485,7 +488,7 @@ async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: s
       input: body.messages, output: null,
       error_class: PROVIDER_FAILURE_CLASSES.includes(err.failureClass as ProviderFailureClass) ? err.failureClass : ((e as Error)?.name ?? "error"),
       error_message: (e as Error)?.name ?? "error",
-      fabric_route: route ? { ...route, served_provider: null, served_model: null, reason: "failed" } : null,
+      fabric_route: route ? { ...route, served_provider: null, served_model: null, reason: route.reason === "pinned_served" ? "pinned_failed" : "failed" } : null,
       metadata: { caller_function: trace?.agent_id },
     });
     throw e;

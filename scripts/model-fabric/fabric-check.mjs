@@ -633,6 +633,20 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   ok(routeOf(f3).route_reason === "pinned_served" && routeOf(f3).route_served_provider === "anthropic",
     `F3 a pinned route records pinned_served (${JSON.stringify(routeOf(f3))})`);
 
+  // F3b — a pinned leg's failure records pinned_failed on its error row (the frozen-instrument
+  // forensic row says PINNED, distinguishing it from an unpinned failure).
+  anthropicPlan = { status: 503, type: "overloaded_error" };
+  const recF3b = recorder();
+  const beforeF3b = recF3b.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await fabric.fabricCompletion(
+    { cognitive_class: "cheap", job: "rubric_judge_v3", messages: [{ role: "user", content: "x" }] },
+    { openaiFetch, pinned: { tier: "reasoning" }, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f3b", agent_id: "fabric-check" } },
+  );
+  anthropicPlan = { status: 200 };
+  const f3b = recF3b.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF3b).at(-1)?.row;
+  ok(f3b?.status === "error" && routeOf(f3b).route_reason === "pinned_failed" && routeOf(f3b).route_served_provider === undefined,
+    `F3b a pinned leg's error row records pinned_failed with no served keys (${JSON.stringify(routeOf(f3b))})`);
+
   // F4 — a failed seam call: the error row carries reason=failed and NO served keys.
   anthropicPlan = { status: 503, type: "overloaded_error" };
   const recF4 = recorder();

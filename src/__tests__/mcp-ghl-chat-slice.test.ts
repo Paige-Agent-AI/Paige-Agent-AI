@@ -21,6 +21,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
+import { PAIGE_SPINE_CAPABILITIES, validateSpineRegistry } from "../../supabase/functions/_shared/paige-spine/registry.ts";
+import { GHL_MANAGEMENT_CAPABILITIES } from "../../supabase/functions/_shared/paige-spine/domains/ghl_management.ts";
 
 const root = join(__dirname, "..", "..");
 const domain = readFileSync(join(root, "supabase/functions/_shared/paige-spine/domains/ghl_management.ts"), "utf8");
@@ -33,7 +35,8 @@ const actionRisk = readFileSync(join(root, "supabase/functions/_shared/action-ri
 describe("the GHL Spine domain is declared from the real catalogue", () => {
   it("the registry composes the ghl management domain", () => {
     expect(registry).toContain("...GHL_MANAGEMENT_CAPABILITIES");
-    expect(registry).toContain("[...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES]");
+    expect(GHL_MANAGEMENT_CAPABILITIES.every(cap => PAIGE_SPINE_CAPABILITIES.includes(cap))).toBe(true);
+    expect(validateSpineRegistry(GHL_MANAGEMENT_CAPABILITIES)).toEqual([]);
   });
 
   it("list is read-only; run is an external effect behind chat-canonical propose-first", () => {

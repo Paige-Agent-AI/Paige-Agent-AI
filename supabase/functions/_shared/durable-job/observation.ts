@@ -26,4 +26,3 @@ export async function readDurableObservation(reference:DurableObservationReferen
   return {workId:pin.workId,threadId:pin.threadId,intentId:pin.intentId,workIntentId:r.workIntentId,state:r.state as string,version:r.version as number,recoveryState:r.recoveryState as string,approvalState:'unavailable' as const,cancelled:r.state==='cancelled',artifactVerified:r.artifactVerified,artifactRef:r.artifactVerified&&uuid(r.artifactRef)?r.artifactRef:null};
  }catch{return null;}
 }
-

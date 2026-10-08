@@ -10,6 +10,14 @@ create function pg_temp.observe()returns jsonb language sql as $$select read_pai
 set local role authenticated;
 select pg_temp.check_obs('exact original and distinct domain intent',(pg_temp.observe()->>'workIntentId')='00000000-0000-4000-8000-000000000006');
 select pg_temp.check_obs('repeat read stable',pg_temp.observe()=pg_temp.observe());
+reset role;update tenant_members set role='admin';set local role authenticated;
+select pg_temp.check_obs('current admin permission reads',pg_temp.observe() is not null);
+reset role;update tenant_members set role='member';set local role authenticated;
+select pg_temp.check_obs('revoked admin permission refuses',pg_temp.observe() is null);
+reset role;update tenant_members set role='coach';set local role authenticated;
+select pg_temp.check_obs('retired title cannot restore permission',pg_temp.observe() is null);
+reset role;update tenant_members set role='owner';set local role authenticated;
+select pg_temp.check_obs('current owner permission reads',pg_temp.observe() is not null);
 select set_config('test.tenant','00000000-0000-4000-8000-000000000009',true);
 select pg_temp.check_obs('switched tenant',pg_temp.observe() is null);
 select set_config('test.tenant','00000000-0000-4000-8000-000000000002',true),set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000009',true);

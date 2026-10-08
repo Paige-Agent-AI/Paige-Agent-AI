@@ -149,7 +149,10 @@ platform has one governed envelope in code but may not claim durable long-form w
 
 `read_paige_durable_observation(thread, intent, work)` is an authenticated-only, stable read with
 empty search path. It revalidates current actor, tenant, membership, owned active thread and latest
-intent, then the protected original terminal's exact work reference. Its bounded projection is
+intent, then the protected original terminal's exact work reference. Document observations use
+the current active owner/admin permission retained by the canonical title-role retirement;
+an initiating actor, descriptive title or historical authority snapshot cannot restore revoked
+permission. Research's existing active owner/admin restriction is unchanged. Its bounded projection is
 consumed by the existing interactive status branch; raw brief, source content and authority are
 not returned. Document's derived work intent is preserved rather than equated to request intent.
 Canonical completion/artifact lineage is required for verified success; Research results lacking

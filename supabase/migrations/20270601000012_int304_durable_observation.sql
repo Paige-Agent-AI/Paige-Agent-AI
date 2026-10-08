@@ -10,7 +10,9 @@ begin
  select * into w from public.paige_durable_work where id=_work and thread_id=_thread and tenant_id=tenant and initiating_user_id=actor;
  if not found then return null; end if;
  if not ((w.capability_key='document_generate' and w.work_kind='document_authoring') or (w.capability_key='deep_research' and w.work_kind='research')) then return null; end if;
- if not(public.has_tenant_role(actor,tenant,'owner') or public.has_tenant_role(actor,tenant,'admin') or (w.capability_key='document_generate' and public.has_tenant_role(actor,tenant,'coach'))) then return null; end if;
+ -- Matches Document's owner/admin permission after the canonical title-role retirement.
+ -- An initiating actor or a historical authority snapshot is not current permission.
+ if not(public.has_tenant_role(actor,tenant,'owner') or public.has_tenant_role(actor,tenant,'admin')) then return null; end if;
  -- Original chat intent and domain work intent are deliberately distinct for documents.
  select count(*),bool_and(e->>'outcome'='durable_accepted' and e->>'tool'=w.capability_key) into matched,accepted from public.paige_chat_turns r cross join lateral jsonb_array_elements(case when jsonb_typeof(r.bundle_ref->'interactive'->'effects')='array' then r.bundle_ref->'interactive'->'effects' else '[]'::jsonb end) e where r.thread_id=_thread and r.role='assistant' and r.interactive_intent_id=_intent and r.interactive_actor_id=actor and r.interactive_tenant_id=tenant and r.interactive_terminal_state is not null and e->>'work_id'=_work::text;
  if matched<>1 or accepted is distinct from true then return null; end if;
@@ -42,4 +44,3 @@ begin
 end $$;
 revoke all on function public.read_paige_durable_observation(uuid,uuid,uuid) from public,anon,service_role;
 grant execute on function public.read_paige_durable_observation(uuid,uuid,uuid) to authenticated;
-

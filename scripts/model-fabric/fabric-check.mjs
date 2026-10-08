@@ -703,5 +703,64 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   setScenario({});
 }
 
+
+// ── G. THE SOL CANARY COHORT GATE (readiness; no activation) ────────────────────────────────────
+// Admission is DOUBLE-GATED and off by default: the reviewed master flag (a code const, false
+// today) AND a per-tenant cohort env AND a class scope (default: operational only). These pins are
+// deterministic and no-spend: no provider is contacted for an admitted candidate in this section.
+{
+  const COHORT_TENANT = "9a7d0000-0000-4000-8000-0000000000a1";
+  const OTHER_TENANT = "9a7d0000-0000-4000-8000-0000000000b2";
+
+  // G1 — the master flag is authoritative: with a FULL cohort env set, nothing is admitted.
+  ENV.OPENAI_CANARY_TENANTS = COHORT_TENANT;
+  ok(fabric.openAiAdmitted(COHORT_TENANT, "operational") === false,
+    "G1 the master flag (false today) admits nobody, whatever the cohort env says");
+  ok(fabric.OPENAI_CHAT_ENABLED === false, "G1 the master flag is a code const, not an environment toggle");
+
+  // G2 — the cohort rule itself (the half beneath the master flag).
+  const admits = (t, c) => fabric.openAiCohortAdmits(t, c);
+  ok(admits(COHORT_TENANT, "operational") === true, "G2 a cohort tenant is admitted for the operational class");
+  ok(admits(COHORT_TENANT, "cheap") === false && admits(COHORT_TENANT, "frontier") === false,
+    "G2 the default scope is operational ONLY — cheap and frontier stay on the incumbent path");
+  ok(admits(OTHER_TENANT, "operational") === false, "G2 a tenant outside the cohort is never admitted");
+  ok(admits(null, "operational") === false && admits(undefined, "operational") === false,
+    "G2 unattributed traffic (no tenant id) is never admitted");
+  ok(admits("not-a-uuid", "operational") === false, "G2 a malformed tenant id is never admitted");
+  ok(admits(COHORT_TENANT.toUpperCase(), "operational") === true, "G2 the cohort match is case-insensitive");
+  ENV.OPENAI_CANARY_CLASSES = "operational,cheap";
+  ok(admits(COHORT_TENANT, "cheap") === true, "G2 an explicit class scope can widen to cheap (a reviewed canary decision)");
+  ENV.OPENAI_CANARY_CLASSES = "garbage,frontier";
+  ok(admits(COHORT_TENANT, "operational") === false && admits(COHORT_TENANT, "frontier") === true,
+    "G2 an explicit scope REPLACES the default (unknown class tokens are ignored)");
+  delete ENV.OPENAI_CANARY_CLASSES;
+  delete ENV.OPENAI_CANARY_TENANTS;
+  ok(admits(COHORT_TENANT, "operational") === false, "G2 with no cohort env, nobody is admitted (off by default)");
+
+  // G3 — end to end through BOTH fabrics: the call sites consult the gate; with the master flag
+  // false the cohort tenant still serves from the incumbent provider and OpenAI is never contacted.
+  setScenario({});
+  anthropicPlan = { status: 200 };
+  openaiPlan = { status: 200 };
+  ENV.OPENAI_CANARY_TENANTS = COHORT_TENANT;
+  calls.length = 0;
+  const cohortStream = await fabric.fabricChatStream("operational", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
+    { openaiFetch, trace: { tenant_id: COHORT_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
+  const readerG = cohortStream.body?.getReader();
+  while (readerG && !(await readerG.read()).done) { /* drain */ }
+  ok(cohortStream.ok && cohortStream.served?.provider === "anthropic" && calls.every((c) => c.provider === "anthropic"),
+    `G3 with the master flag off, the cohort tenant still serves from the incumbent (${cohortStream.served?.provider})`);
+  const cohortCompletion = await fabric.fabricCompletion(
+    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
+    { openaiFetch, trace: { tenant_id: COHORT_TENANT, agent_id: "fabric-check" } });
+  ok(cohortCompletion.ok && cohortCompletion.route.served?.provider === "anthropic"
+    && cohortCompletion.route.attempts.some((a) => a.provider === "openai" && a.failure === "skipped_disabled"),
+    "G3 the completion seam skips the OpenAI candidate for the cohort tenant too (recorded, not silent)");
+  delete ENV.OPENAI_CANARY_TENANTS;
+
+  // G4 — the gate reads env PER CALL: emptying the cohort takes effect on the next call (rollback
+  // without a deploy), and the cohort-tenant route telemetry stays truthful throughout.
+  ok(fabric.openAiCanaryTenants().length === 0, "G4 clearing the cohort env empties admission immediately (rollback is an env clear, no deploy)");
+}
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

@@ -166,6 +166,10 @@ Deno.serve(async (req) => {
     return json({
       needs_config: true,
       error: readiness.code,
+      // INT-345: the exact repairable reason (e.g. no number yet vs. a number that
+      // can't make calls) rides alongside the coarse code so the surface can point
+      // at the canonical next step instead of one collapsed string.
+      reason_code: readiness.reason_code ?? null,
       message: readiness.message,
     });
   }

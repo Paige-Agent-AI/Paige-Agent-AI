@@ -2715,7 +2715,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     // staged there (client_memory only serves the CLIENT arm now).
     rpcExtras: {
       current_user_tenant_id: { data: CHILD, error: null },
-      get_paige_memory: { data: [{ id: "pom-1", memory_type: "report_upload", content: "Credit report analyzed (consumer). Scores: EQ 712, EX 705, TU 698. PRIVATE-MEMORY-MARKER", source_thread_id: null, metadata: { audience: "owner_personal", confirmation_state: "proposed" }, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }], error: null },
+      get_paige_memory: { data: [{ id: "pom-1", memory_type: "report_upload", content: "Credit report analyzed (consumer). Scores: EQ 712, EX 705, TU 698. PRIVATE-MEMORY-MARKER", source_thread_id: null, metadata: { audience: "owner_personal", confirmation_state: "confirmed" }, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }], error: null },
     },
     tableExtras: {
       client_memory: () => [{
@@ -2756,6 +2756,17 @@ group("safety-first streaming: the sources the first enumeration missed");
     "21.l a failed final check withholds a reply grounded in persisted memory",
     !memAtGate.responseText.includes("CHILD-PRIVATE-MARKER"),
     memAtGate.responseText.slice(0, 300),
+  );
+  const proposedMemory = structuredClone(memoryOpts.rpcExtras.get_paige_memory);
+  proposedMemory.data[0].metadata.confirmation_state = "proposed";
+  const candidateOnly = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...memoryOpts,
+    rpcExtras: { ...memoryOpts.rpcExtras, get_paige_memory: proposedMemory },
+  });
+  assert(
+    "21.l C6 — proposed owner memory never enters the model's task context",
+    !candidateOnly.providerCalls.some((c) => JSON.stringify(c).includes("PRIVATE-MEMORY-MARKER")),
+    JSON.stringify(candidateOnly.providerCalls).slice(0, 200),
   );
 
   // 21.m — THE FUNDING TENANT'S CLIENT FILE. Under `fundingEnabled`, `buildUserContext` reads the

@@ -421,7 +421,12 @@ type LooseContentBlock = {
   url?: string;
   data?: string;
 };
-function messagesCarryDocument(messages: OaiMessage[]): boolean {
+/**
+ * Does this message list carry a document block (#587)? Exported for the Model Fabric, which
+ * routes document-bearing turns to the document-capable provider instead of an adapter that
+ * would have to refuse them (INT-334 #1850).
+ */
+export function messagesCarryDocument(messages: OaiMessage[]): boolean {
   if (!Array.isArray(messages)) return false; // a malformed body must never throw from a trace path
   for (const m of messages) {
     const c = m?.content;

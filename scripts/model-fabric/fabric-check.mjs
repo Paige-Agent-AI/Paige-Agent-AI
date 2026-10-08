@@ -289,7 +289,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
   // C4 — the budget gate runs on the seam's own candidates, and a stop is terminal (never falls over).
   setScenario({ tables: {
-    admin_app_settings: [{ key: "llm_budget_daily_usd__t_tenant-seam", value: { ceiling_usd: 1 } }],
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_tenant-seam", value: 1 }],
     paige_llm_trace: [{ tenant_id: "tenant-seam", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
   } });
   const traceSeam = { tenant_id: "tenant-seam", agent_id: "fabric-check-seam" };
@@ -400,7 +400,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   // (A hard stop at the ceiling for the classifier would be a material budget-failure change —
   // owner determination, not this slice. The reasoning-band stop itself is pinned at C4.)
   setScenario({ tables: {
-    admin_app_settings: [{ key: "llm_budget_daily_usd__t_5a4a3a2a-0000-4000-8000-00000000c1a2", value: { ceiling_usd: 1 } }],
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_5a4a3a2a-0000-4000-8000-00000000c1a2", value: 1 }],
     paige_llm_trace: [{ tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a2", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
   } });
   calls.length = 0;
@@ -459,6 +459,112 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     `D5 a caller's own trace job_kind wins over the request's (rows=${tagRows.length}, kind=${tagRows[0]?.row?.job_kind}, ok=${tagRun.ok}, err=${tagRun.error?.failure})`);
 
   setScenario({});
+}
+
+
+// ── E. #1850: streaming budget, document turns, whole-operation cancellation ────────────────────
+{
+  const STREAM_BODY = { messages: [{ role: "user", content: "stream this" }], tools: [TOOL], tool_choice: "auto" };
+  const streamRun = async (cls, opts = {}, body = STREAM_BODY) => {
+    calls.length = 0;
+    anthropicPlan = { status: 200 };
+    openaiPlan = { status: 200 };
+    const stream = await fabric.fabricChatStream(cls, body, { openaiFetch, ...opts });
+    const reader = stream.body?.getReader();
+    while (reader && !(await reader.read()).done) { /* drain */ }
+    return { stream, calls };
+  };
+
+  // E1 — the streaming OpenAI leg sits under the canonical budget gate: a reasoning-band block
+  // throws BEFORE any transport moves, is traced, and NEVER falls back to Anthropic.
+  setScenario({ tables: {
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_6e5a0000-0000-4000-8000-0000000000e1", value: 1 }],
+    paige_llm_trace: [{ tenant_id: "6e5a0000-0000-4000-8000-0000000000e1", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
+  } });
+  const recE1 = recorder();
+  const beforeE1 = recE1.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  let threwE1 = null;
+  calls.length = 0;
+  try { await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e1", agent_id: "fabric-check" } }); } catch (e) { threwE1 = e; }
+  const e1rows = recE1.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeE1);
+  ok(threwE1?.code === "budget_exceeded" && calls.length === 0,
+    `E1 a streaming block throws before any transport and never falls back (threw=${threwE1?.code}, calls=${calls.length})`);
+  ok(e1rows.length === 1 && e1rows[0].row?.provider === "router_budget" && e1rows[0].row?.error_class === "budget_exceeded",
+    "E1 the streaming block is auditable (one attributed router_budget row)");
+
+  // E2 — a soft-gate zone streams AND the hit rides the drained stream's own trace row.
+  setScenario({ tables: {
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_6e5a0000-0000-4000-8000-0000000000e2", value: 10 }],
+    paige_llm_trace: [{ tenant_id: "6e5a0000-0000-4000-8000-0000000000e2", cost_estimate_usd: 9, created_at: new Date().toISOString() }],
+  } });
+  const recE2 = recorder();
+  const beforeE2 = recE2.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  const soft = await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e2", agent_id: "fabric-check", job_kind: "chat" } });
+  const softRows = recE2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeE2);
+  ok(soft.stream.ok && soft.calls[0]?.provider === "openai",
+    "E2 a soft-gate zone streams on the class's candidate");
+  ok(softRows.some((r) => r.row?.provider === "openai" && r.row?.doctrine_gate_hits?.budget?.level === "soft"),
+    `E2 the gate hit rides the drained stream's own trace row (${softRows.map((r) => `${r.row?.provider}:${JSON.stringify(r.row?.doctrine_gate_hits)}`).join(",")})`);
+
+  // E3 — unknown accrual: the established ungated-but-loud policy, on the streaming leg too.
+  setScenario({ tables: {}, tableErrors: { paige_llm_trace: { message: "read failed", code: "XX001" } } });
+  const unknown = await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e3", agent_id: "fabric-check" } });
+  ok(unknown.stream.ok && unknown.calls[0]?.provider === "openai",
+    "E3 unreadable accrual proceeds ungated on the streaming leg (policy unchanged)");
+
+  // E4 — document turns never reach the OpenAI adapter: the document-capable provider serves.
+  setScenario({});
+  const DOC_BODY = { messages: [{ role: "user", content: [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: "JVBERi0" } }, { type: "text", text: "read this" }] }], tools: [TOOL], tool_choice: "auto" };
+  const docStream = await streamRun("operational", { ...ON }, DOC_BODY);
+  ok(docStream.stream.ok && docStream.calls.length === 1 && docStream.calls[0].provider === "anthropic"
+    && docStream.stream.attempts.some((a) => a.failure === "unsupported_document"),
+    `E4 a document turn streams from the document-capable provider; the OpenAI candidate is skipped, never asked (${fabric.describeAttempts(docStream.stream)})`);
+  const docCompletion = await fabric.fabricCompletion({ cognitive_class: "operational", job: "research_dossier_synthesis", ...DOC_BODY }, { ...ON, openaiFetch });
+  ok(docCompletion.ok && docCompletion.route.served?.provider === "anthropic"
+    && docCompletion.route.attempts.some((a) => a.failure === "unsupported_document"),
+    "E4 the completion seam skips the OpenAI candidate for a document turn too");
+
+  // E5 — the classifier's whole operation is bounded: a budget read that outlives the deadline
+  // dispatches NOTHING after the classifier has timed out.
+  const { classifyTurn, TURN_CLASSIFY_DEADLINE_MS } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
+  setScenario({ tables: {
+    paige_llm_trace: async () => { await new Promise((r) => setTimeout(r, TURN_CLASSIFY_DEADLINE_MS + 2000)); return []; },
+  } });
+  calls.length = 0;
+  const tE5 = Date.now();
+  const timedOut = await classifyTurn("thanks so much", null, { tenant_id: "6e5a0000-0000-4000-8000-0000000000e5", agent_id: "fabric-check", job_kind: "turn-classify" });
+  const e5elapsed = Date.now() - tE5;
+  ok(timedOut === null && e5elapsed < TURN_CLASSIFY_DEADLINE_MS + 400,
+    `E5 the classifier returns its conservative null inside the deadline while the gate read still hangs (${e5elapsed}ms)`);
+  await new Promise((r) => setTimeout(r, TURN_CLASSIFY_DEADLINE_MS + 1200));
+  ok(calls.length === 0,
+    `E5 after the delayed read resolves, NO provider was dispatched (calls=${calls.length}) — the timeout cancelled the operation, not just the waiting`);
+
+  // E6 — real cancellation of the dormant OpenAI transport: the fetch receives the signal, aborts,
+  // and an aborted leg never falls back.
+  setScenario({});
+  const realFetchE = globalThis.fetch;
+  let openaiSignalSeen = null;
+  const slowOpenai = async (url, init) => {
+    if (!String(url).includes("openai")) return realFetchE(url, init);
+    openaiSignalSeen = init?.signal ?? null;
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(resolve, 5000);
+      openaiSignalSeen?.addEventListener("abort", () => { clearTimeout(t); const e = new Error("aborted"); e.name = "AbortError"; reject(e); }, { once: true });
+    });
+    throw new Error("unreachable");
+  };
+  const sigE6 = AbortSignal.timeout(150);
+  const abortedRun = await fabric.fabricCompletion(
+    { cognitive_class: "operational", job: "turn_classify", messages: STREAM_BODY.messages },
+    { enabled: { openai: true }, openaiFetch: slowOpenai, signal: sigE6 },
+  );
+  ok(openaiSignalSeen instanceof AbortSignal && abortedRun.error?.failure === "aborted"
+    && !abortedRun.route.served && calls.filter((c) => c.provider === "anthropic").length === 0,
+    `E6 the OpenAI fetch receives the deadline signal, aborts for real, and never falls back (${abortedRun.error?.failure})`);
+
+  setScenario({});
+  globalThis.fetch = realFetchE;
 }
 
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);

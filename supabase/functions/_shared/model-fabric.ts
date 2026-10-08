@@ -20,7 +20,7 @@
 // OPENAI IS OFF FOR CHAT until the controlled Sol canary passes (`OPENAI_CHAT_ENABLED` below). Turning
 // it on is a reviewed one-line change, never an environment toggle nobody can see.
 
-import { chatCompletionCompat, gatewayCompat, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
+import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
 import { traceAdmin, traceLLMCall, type TraceCtx } from "./llm-trace.ts";
 import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
@@ -43,7 +43,7 @@ export interface FabricAttempt {
   provider: FabricProvider;
   model: string;
   /** Present when this candidate did not serve the round. */
-  failure?: ProviderFailureClass | "budget_exceeded" | "skipped_disabled";
+  failure?: ProviderFailureClass | "budget_exceeded" | "skipped_disabled" | "unsupported_document" | "aborted";
   status?: number;
 }
 
@@ -86,6 +86,55 @@ export function candidatesFor(cls: CognitiveClass, enabled: { openai: boolean })
  * Open one streamed chat round for a cognitive class. `body` is PAIGE's chat shape (messages, tools,
  * tool_choice). Returns the first stream a candidate opened, or the last failure.
  */
+// ── THE SHARED BUDGET GATE (both fabrics, every provider) ─────────────────────────────────────────
+//
+// One gate for the streaming and the non-streaming fabric: read the ceiling (cached) and today's
+// accrual, decide under the router's OWN contract, and never change its policies — accrual that
+// cannot be read proceeds UNGATED but LOUD; `allow_gated` (the cheap band at a hard ceiling)
+// proceeds WITH the hit recorded; only a `block` stops the call, terminally, traced, and it never
+// becomes a reason to try another provider.
+
+interface FabricBudgetDecision {
+  blocked: false;
+  gateHits: { budget: Record<string, unknown> } | null;
+}
+
+async function fabricBudgetGate(
+  tenantId: string,
+  band: "cheap" | "reasoning" | "sensitive",
+  requestJob: string,
+  trace: TraceCtx | undefined,
+  started: number,
+  traceCtxCarrier?: TraceCtx,
+): Promise<FabricBudgetDecision> {
+  const db = budgetDb();
+  if (!db) return { blocked: false, gateHits: null };
+  const ceiling = await resolveCeiling(db, tenantId);
+  const accrued = await accruedSpendToday(db, tenantId);
+  if (accrued == null) {
+    console.warn("[fabric] budget accrual unknown; call proceeds ungated (budget_accrual_unknown)");
+    return { blocked: false, gateHits: null };
+  }
+  const d = enforceBudget({ accrued_usd: accrued, ceiling_usd: ceiling, band });
+  const gateHits = d.gate
+    ? { budget: { level: d.gate.replace("budget_", ""), accrued_usd: d.accrued_usd, ceiling_usd: d.ceiling_usd, band: d.band } }
+    : null;
+  if (gateHits && traceCtxCarrier) {
+    // The hit rides the ctx so the serving trace writer (streamed or not) records it via its spread.
+    traceCtxCarrier.doctrine_gate_hits = gateHits;
+  }
+  if (d.decision === "block") {
+    traceLLMCall({ ...(trace ?? {}), provider: "router_budget", model: null,
+      job_kind: trace?.job_kind ?? requestJob, modality: "text", status: "error",
+      latency_ms: Date.now() - started, input: null, output: null,
+      error_class: "budget_exceeded", error_message: new BudgetExceeded(d.ceiling_usd, d.accrued_usd).message,
+      doctrine_gate_hits: gateHits,
+      metadata: { caller_function: trace?.agent_id } });
+    throw new BudgetExceeded(d.ceiling_usd, d.accrued_usd);
+  }
+  return { blocked: false, gateHits };
+}
+
 export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody & { tool_choice?: unknown }, opts: FabricOptions = {}): Promise<FabricStream> {
   const enabled = { openai: opts.enabled?.openai ?? OPENAI_CHAT_ENABLED };
   const { use, skipped } = candidatesFor(cls, enabled);
@@ -98,6 +147,20 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
     let opened: { ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: ProviderFailureClass };
     try {
       if (c.provider === "openai") {
+        // #1850 — DOCUMENT TURNS go to the document-capable provider: the OpenAI adapter refuses
+        // document parts by design (never a silent omission), so the fabric skips the candidate
+        // before the key is read and Anthropic (document-capable, #587) serves the round.
+        if (messagesCarryDocument(body.messages as never)) {
+          attempts.push({ provider: "openai", model, failure: "unsupported_document" });
+          last = { ok: false, status: 0, served: null, attempts };
+          continue;
+        }
+        // #1850 — the streaming OpenAI leg sits under the SAME canonical budget gate as the
+        // Anthropic leg (chat is reasoning-band work, the contract's own classification). A block
+        // throws before any transport moves and never falls back to the next candidate.
+        if (opts.trace?.tenant_id) {
+          await fabricBudgetGate(opts.trace.tenant_id, "reasoning", "chat", opts.trace, Date.now(), opts.trace);
+        }
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
         opened = await responsesStream(body, { model, effort, fetchImpl: opts.openaiFetch }, opts.trace);
       } else {
@@ -203,7 +266,7 @@ export interface FabricCompletionResult {
   /** Chat-shaped (choices[0].message, model, usage, paige_stop) — the shape consumers already parse. */
   response?: Record<string, unknown>;
   /** The closed failure class of the last failed attempt; provider text is never kept. */
-  error?: { failure: ProviderFailureClass | "budget_exceeded" };
+  error?: { failure: ProviderFailureClass | "budget_exceeded" | "unsupported_document" | "aborted" };
 }
 
 export interface FabricCompletionOpts {
@@ -267,32 +330,33 @@ export async function fabricCompletion(
   let last: FabricCompletionResult = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false) };
 
   for (const c of use) {
-    // BUDGET GATE — every candidate, both providers. A stop is a decision, never retried elsewhere.
+    // BUDGET GATE — every candidate, both providers, the ONE shared gate. A stop is a decision,
+    // never retried elsewhere; a caller deadline that fired while the gate read was in flight
+    // aborts the call BEFORE any provider is dispatched (#1850's cancellation proof).
+    if (opts.signal?.aborted) {
+      attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+      return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
+    }
     if (opts.trace?.tenant_id) {
-      const db = budgetDb();
-      if (db) {
-        const ceiling = await resolveCeiling(db, opts.trace.tenant_id);
-        const accrued = await accruedSpendToday(db, opts.trace.tenant_id);
-        if (accrued == null) {
-          console.warn("[fabric-completion] budget accrual unknown; call proceeds ungated (budget_accrual_unknown)");
-        } else {
-          const d = enforceBudget({ accrued_usd: accrued, ceiling_usd: ceiling, band });
-          const gateHits = d.gate
-            ? { budget: { level: d.gate.replace("budget_", ""), accrued_usd: d.accrued_usd, ceiling_usd: d.ceiling_usd, band: d.band } }
-            : null;
-          if (d.decision === "block") {
-            attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
-            traceLLMCall({ ...(opts.trace ?? {}), provider: "router_budget", model: null,
-              job_kind: opts.trace?.job_kind ?? request.job, modality: "text", status: "error",
-              latency_ms: Date.now() - started, input: request.messages, output: null,
-              error_class: "budget_exceeded", error_message: new BudgetExceeded(d.ceiling_usd, d.accrued_usd).message,
-              doctrine_gate_hits: gateHits,
-              metadata: { caller_function: opts.trace.agent_id } });
-            throw new BudgetExceeded(d.ceiling_usd, d.accrued_usd);
-          }
-          gateHitForTrace = gateHits;
-        }
+      try {
+        const decision = await fabricBudgetGate(opts.trace.tenant_id, band, request.job, opts.trace, started, undefined);
+        gateHitForTrace = decision.gateHits;
+      } catch (e) {
+        attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
+        throw e;
       }
+    }
+    if (opts.signal?.aborted) {
+      attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+      return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
+    }
+    // #1850 — document turns never reach the OpenAI adapter (it refuses document parts by design;
+    // the refusal stays as defense in depth). The document-capable provider serves them instead.
+    if (c.provider === "openai" && messagesCarryDocument(request.messages as never)) {
+      attempts.push({ provider: "openai", model: c.model ?? "", failure: "unsupported_document" });
+      last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "unsupported_document" } };
+      if (opts.pinned) return last;
+      continue;
     }
 
     const anthropicTier: ClaudeTier | null = c.provider === "anthropic" ? (c.model === CLAUDE_REASONING ? "reasoning" : "classification") : null;
@@ -300,7 +364,7 @@ export async function fabricCompletion(
       const resp: Record<string, unknown> = c.provider === "openai"
         // The trace carries the CONSUMER's job identity, never the adapter's "chat" default; the
         // OpenAI leg self-traces through responsesCompletion under this context.
-        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
+        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.signal ? (u, i) => (opts.openaiFetch ?? fetch)(u, { ...i, signal: opts.signal }) : opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
         : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace, opts.signal);
       const servedModel = typeof resp.model === "string" && resp.model
         ? resp.model
@@ -334,6 +398,13 @@ export async function fabricCompletion(
           : classifyProviderFailure({ provider: c.provider, status: typeof err.status === "number" ? err.status : 0 })));
       attempts.push({ provider: c.provider, model: c.model ?? "", failure, status: typeof err.status === "number" ? err.status : 0 });
       last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure } };
+      // A caller deadline that fired mid-flight is terminal: no fallback either — nothing may be
+      // dispatched after the caller's window, whatever the failure would otherwise allow.
+      if (opts.signal?.aborted) {
+        last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
+        attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+        return last;
+      }
       if (opts.pinned) return last; // a pinned route never moves — the instrument stays comparable
       if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) return last;
     }

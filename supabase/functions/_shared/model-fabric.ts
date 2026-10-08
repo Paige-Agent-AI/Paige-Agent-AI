@@ -192,6 +192,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
       // A budget stop is a decision, not a provider failure: it is never retried elsewhere.
       if ((e as { code?: unknown })?.code === "budget_exceeded") {
         attempts.push({ provider: c.provider, model, failure: "budget_exceeded" });
+        if (opts.trace) opts.trace.fabric_route = null;
         throw e;
       }
       // What the throw proves, and nothing more: a missing key is configuration; a timeout or a fetch
@@ -205,6 +206,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
       attempts.push({ provider: c.provider, model, failure, status: 0 });
       last = { ok: false, status: 0, served: null, attempts };
       if (mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) continue;
+      if (opts.trace) opts.trace.fabric_route = { requested_class: cls, job: opts.trace.job_kind ?? "chat", served_provider: null, served_model: null, fallback: attempts.some((a) => a.failure && a.failure !== "skipped_disabled"), reason: "failed" };
       return last;
     }
     if (opened.ok && opened.body) {

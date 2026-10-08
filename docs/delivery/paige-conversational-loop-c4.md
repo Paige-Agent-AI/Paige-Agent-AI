@@ -2,7 +2,7 @@
 
 ## Required-CI correction before release
 
-Required Supabase Preview failed after collision renumbering because this PR’s disposable, data-free preview retained the earlier unmerged migration12. Its function body was an older candidate, so no byte-identical history rename was asserted. The owned preview branch was reset through the official branch API to shared migration11; current Sales13 and observation14 must then apply through the integration and pass the required check. Production schema and migration history were not changed by this preview repair.
+Required Supabase Preview failed after collision renumbering because this PR’s disposable, data-free preview retained the earlier unmerged migration12. Its function body was an older candidate, so no byte-identical history rename was asserted. A reset of the owned preview branch to shared migration11 was requested through the official branch API; completion/readback remain pending. Current Sales13 and observation14 must then apply through the integration and pass the required check. Production schema and migration history were not changed by this preview repair.
 
 Fresh main163cca44c6994aac72c136cc6b19ec7835e24673 and production migration history both contain the separately owned Sales migration13. The unmerged observation migration is therefore renumbered14 before release; its SQL is unchanged. Initial12 was never merged or applied to production. No out-of-order deployment or production migration-history rewrite is permitted. Both existing delivery rows are preserved during fresh-main reconciliation.
 

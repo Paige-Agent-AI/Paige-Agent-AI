@@ -1,5 +1,5 @@
 /** Invoice-only persisted facts. Processor/method/channel values are intent, never eligibility or dispatch authority. */
-import {parseCommercialConditions,validateCommercialConditionLines,type CommercialConditions} from '../../../supabase/functions/_shared/sales-commercial/conditions';
+import {parseCommercialConditions,validateCommercialConditionLines,type CommercialConditions} from '../../../supabase/functions/_shared/sales-commercial/conditions.ts';
 export type InvoiceAddress = { line1: string | null; line2: string | null; city: string | null; region: string | null; postal_code: string | null; country: string | null };
 export type InvoiceItemInput = { price_id: string | null; item: string; description?: string | null; unit_minor: number | null; quantity: number };
 export type InvoiceItemSnapshot = Omit<InvoiceItemInput, 'unit_minor'> & { unit_minor: number; price_snapshot: Record<string, unknown> | null };

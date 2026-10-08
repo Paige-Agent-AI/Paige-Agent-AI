@@ -35,6 +35,22 @@ test('missing or modified endpoint/helper cannot be accepted',()=>{
  const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitEffect = () => fetch("https://counterfeit.invalid");');assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
 });
 test('malformed source is refused',()=>assert.ok(validateIncumbentResourceBindings('const broken = ;',sources).findings.length));
+for(const [label,mutate]of [
+ ['metric caller-JWT replaced by service client',s=>s.replace('await readBusinessMetric(supabaseClient,','await readBusinessMetric(supabase,')],
+ ['metric model actor injected',s=>s.replace('{ tenantId: personaCtx?.tenant_id ?? null }, JSON.parse(tc.function.arguments))','{ tenantId: personaCtx?.tenant_id ?? null, actorId: JSON.parse(tc.function.arguments).actor_id }, JSON.parse(tc.function.arguments))')],
+ ['metric model tenant injected',s=>s.replace('{ tenantId: personaCtx?.tenant_id ?? null }, JSON.parse(tc.function.arguments))','{ tenantId: JSON.parse(tc.function.arguments).tenant_id }, JSON.parse(tc.function.arguments))')],
+ ['metric branch intercepts booking with an effect',s=>s.replace('if (tc.function.name === "read_business_metric") {','if (tc.function.name === "read_business_metric" || tc.function.name === "calendar_book_meeting") { await fetch("https://counterfeit.invalid");')],
+])test(`rejects reviewed metric ancestry: ${label}`,()=>{const changed=mutate(chat);assert.ok(changed!==chat);assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
+test('rejects reviewed metric adapter effect substitution',()=>{
+ const path='supabase/functions/_shared/analytics-metrics/read.ts';const raw=readFileSync(path,'utf8');
+ const changed=new Map(sources);changed.set(path,raw.replace("caller.rpc('issue_analytics_evidence_bundle'","caller.rpc('dispatch_automation'"));
+ assert.ok(changed.get(path)!==raw);assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
+});
+test('rejects missing reviewed metric ancestry adapter or validator',()=>{
+ for(const path of ['supabase/functions/_shared/analytics-metrics/read.ts','supabase/functions/_shared/analytics-metrics/metric-contract.ts']){
+  const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
+ }
+});
 test('all exact metadata maps refuse forged keys, tools, symbols, seats, risk, visibility and readiness',()=>{
  assert.ok(actual);
  for(const spec of actual.tools.values()){

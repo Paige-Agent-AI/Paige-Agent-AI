@@ -2,10 +2,25 @@
 
 ## 2026-10-08 independent safe slice — #1807 readback and C4d/C4e foundation
 
-**Implementation candidate; review/CI/merge/deployment pending.** INT-346 #1823 is accepted merged
+**Read-only implementation MERGED/DEPLOYED; authenticated acceptance UNVERIFIED.**
+PR #1859 merged as `af5df1c8a2a6da336dffc4c2d045e1b56ade2c29`; independent non-author SHIP on
+`44eec75c462c710cf86c0d0d3fc87bbeadbf19ec`, base `d85d5e607ae924646bf48420b214e643c47b1dd6`.
+All 11 hosted checks and both Vercel statuses SUCCESS. CI run `37824303704`, verify job
+`113473151128`: 672 files / 10138 tests PASS, plus Sales 319 and invoice 69; build, TypeScript,
+new Edge Deno check and the new native PostgreSQL read-only proof PASS. Database-contract run
+`37824303663`, job `113473025856` SUCCESS. Independent review: PR comment `6066418468`.
+Migration deployment `37825798813` and Edge deployment `37825798702` SUCCESS; migration 10 persisted.
+Production endpoint ACTIVE v1, JWT verification true, bundle
+`135d900501ce930577d57b761613669794d00e637defcc72434baa4b642db33f`; all five deployed files match
+merged source. Function body MD5 `aa45019746eeb0d313091f81a1e959e1` matches; authenticated execute
+true, anon/service execute false, empty search path, stable read-only function. Unauthenticated POST
+401 is gateway refusal only, not signed-in acceptance. Vercel `dpl_J6kfitq9nW498zD3UmP5Q8JAFpUA`
+READY at exact product merge. C4d/C4e pure foundations are merged; no runtime consumer is deployed.
+
+INT-346 #1823 is accepted merged
 at `c43eeec244967b4711dbfe44b7bc8802755fb460`; DRAINING and security clearance UNVERIFIED remain.
-This change does not activate or alter that protocol. Internal foundation patch, staged backend
-channel; no customer version, name, announcement or visible flow change.
+This change does not activate or alter that protocol. Production read-only foundation patch;
+interactive execution stays staged DRAINING. No customer version, name, announcement or visible flow change.
 
 ### Routing and shared-platform contract
 

@@ -54,9 +54,9 @@ describe('explicit commercial conditions', () => {
     expect(lines).toEqual([{ unit_minor: 350000, quantity: 1 }]);
   });
   it.each([
-    [{ unit_minor: 499, quantity: 1 }], [], [{ unit_minor: -1, quantity: 1 }],
-    [{ unit_minor: 500, quantity: 1.5 }], [{ unit_minor: 2147483647, quantity: 1001 }],
-  ])('rejects charges outside resolved valid invoice lines %#', lines => {
+    { lines: [{ unit_minor: 499, quantity: 1 }] }, { lines: [] }, { lines: [{ unit_minor: -1, quantity: 1 }] },
+    { lines: [{ unit_minor: 500, quantity: 1.5 }] }, { lines: [{ unit_minor: 2147483647, quantity: 1001 }] },
+  ])('rejects charges outside resolved valid invoice lines %#', ({ lines }) => {
     expect(() => validateCommercialConditionLines(parseCommercialConditions({ ...conditions(), tax: recorded() }), lines)).toThrow('INVALID_COMMERCIAL_CONDITION_LINES');
   });
   it('checks combined tax and fee declarations against each line, including quantity', () => {

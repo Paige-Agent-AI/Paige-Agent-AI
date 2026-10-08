@@ -1,0 +1,61 @@
+{
+  "harness": "voice-mount",
+  "renders": [
+    {
+      "state": "not_configured",
+      "theme": "dark",
+      "file": "not_configured-dark.png",
+      "copyOk": true,
+      "expect": "Calling is not configured for this workspace.",
+      "sheetWidth": 340,
+      "md5": "ea8beff50791"
+    },
+    {
+      "state": "no_primary",
+      "theme": "dark",
+      "file": "no_primary-dark.png",
+      "copyOk": true,
+      "expect": "Send from this",
+      "sheetWidth": 340,
+      "md5": "6f740211f04d"
+    },
+    {
+      "state": "multiple_primary",
+      "theme": "dark",
+      "file": "multiple_primary-dark.png",
+      "copyOk": true,
+      "expect": "Contact support",
+      "sheetWidth": 340,
+      "md5": "25b0f1eefae5"
+    },
+    {
+      "state": "wrong_subaccount",
+      "theme": "dark",
+      "file": "wrong_subaccount-dark.png",
+      "copyOk": true,
+      "expect": "Contact support",
+      "sheetWidth": 340,
+      "md5": "eed598b4f2c7"
+    },
+    {
+      "state": "missing_binding",
+      "theme": "dark",
+      "file": "missing_binding-dark.png",
+      "copyOk": true,
+      "expect": "Contact support",
+      "sheetWidth": 340,
+      "md5": "4114ace59fbd"
+    },
+    {
+      "state": "no_voice",
+      "theme": "dark",
+      "file": "no_voice-dark.png",
+      "copyOk": true,
+      "expect": "marked for calls",
+      "sheetWidth": 340,
+      "md5": "9541a78e243a"
+    }
+  ],
+  "failures": [],
+  "distinctCaptures": 6
+}

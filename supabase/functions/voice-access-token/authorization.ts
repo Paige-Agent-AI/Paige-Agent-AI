@@ -53,7 +53,9 @@ export function classifyVoiceReadiness(
       ok: false,
       code: "calling_number_needs_verification",
       reason_code: "no_active_primary_number",
-      message: "This workspace doesn't have a calling number yet. Choose or buy one in Settings → Communications, then browser calling turns on.",
+      // Buying a number alone does NOT make it the calling number: the owner
+      // must also pick it with "Send from this" (the only writer of is_primary).
+      message: "This workspace hasn't chosen a calling number yet. In Settings → Communications, buy a number and select \"Send from this\" to make it the calling number.",
     };
   }
   if (primaryNumbers.length > 1) {
@@ -88,7 +90,7 @@ export function classifyVoiceReadiness(
       ok: false,
       code: "calling_number_needs_verification",
       reason_code: "primary_number_voice_capability_unconfirmed",
-      message: "The number set as this workspace's calling number can't make calls. Choose a number marked for calls in Settings → Communications.",
+      message: "The number set as this workspace's calling number can't make calls. In Settings → Communications, select \"Send from this\" on a number marked for calls.",
     };
   }
   return { ok: true };

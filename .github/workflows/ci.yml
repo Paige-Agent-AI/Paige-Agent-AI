@@ -798,6 +798,7 @@ jobs:
             supabase/functions/_shared/paige-turn/interactive.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
@@ -819,6 +820,10 @@ jobs:
           "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int336-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-rollout-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 
       - name: C4a/C4b — an approval resumes the same objective (the pure resume model)
         if: ${{ !cancelled() }}

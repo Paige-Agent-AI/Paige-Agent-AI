@@ -1,5 +1,27 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-08 safe runtime composition — C4 observation and C6 eligible memory
+
+The existing authenticated interactive status branch now optionally observes the original Pipeline
+effect through the reviewed caller-bound canonical resolver/readers. The six deterministic status
+tests failed three assertions against legacy behavior and pass after enrichment; real-handler
+controls cover DRAINING, held executors, foreign tenant/actor, stale versions, missing receipts,
+revoked permissions and forged effects with zero writes, provider calls or executor releases.
+Executor settlement remains solely canonical and independent of outcome observation.
+
+C6's owner-memory ORIENT projection now admits explicit confirmed knowledge only. Candidate,
+corrected, retired and unclassified rows and data accompanying read errors are excluded. Original
+source identity/time and captured server scope remain typed; the existing workspace fence clears
+both prompt and typed data. Owner preference priority preserves its zero value; client recall and
+automatic proposed writes are unchanged. Actual-handler RED: 953 passed/3 failed, priority RED:
+957 passed/1 failed; final GREEN: 958 passed/0 failed. Adapter/context tests: 24 passed, strict types
+passed. This does not implement or claim all five C6 source integrations.
+
+This candidate is independently safe while INT-346 drains, but does not complete #1807 automatic
+settlement, C4d/C4e effectful continuation, authenticated C4f acceptance or the original C0a–C6
+program. Review/exact-head CI/merge/deployment are recorded as they occur. Signed-in Solo and owner
+acceptance remain UNVERIFIED. The broader C5 D2 authority decision remains reserved to the owner.
+
 **What this is.** The R0 grounding return for the owner handoff of 2026‑10‑04 ("PAIGE Progressive
 Conversational Turn Experience" + "dynamic capability awareness"). Grounding and architecture only —
 **no runtime code changes in this PR.** It is a delivery record over the canonical homes (Spine
@@ -650,3 +672,11 @@ Each slice is independently shippable, mounts on existing seams, and is pre‑la
 - **Production read‑only:** 626 turns / 17 threads / 59 confirmations / 33 enabled sub‑agents in 30
   days; LLM latency percentiles; 0 `deep-research` sub‑agent invocations.
 - **Automated / runtime / authenticated:** none — this is R0; nothing was changed or driven.
+
+### C5 bounded composition implementation — 2026-10-08
+
+Current engineering candidate implements dynamic specialist step labels using the existing tenant-scoped roster, now retaining canonical slug beside rail_display_name. The manifest already consumed the live scoped roster; this slice does not rebuild discovery. Chat START and FINISH use a request-local resolver, replacing the three-entry hard-coded label table. Only the safe roster name labels the specialist; unknown, ambiguous or unsafe names fall back to generic wording. Finish distinguishes synchronous response, refusal, unconfirmed response and accepted LangGraph dispatch. No parallel execution, provider route, risk, approval or role authority changes.
+
+Failure-first behavioral evidence: dynamic-name assertion failed with generic wording (exit 1). GREEN: 8 new specialist-label cases plus 9 existing step-start cases passed, 17/17. Strict helper/test TypeScript and diff whitespace checks passed. Existing extraction test now injects the actual shared helper rather than the retired hard-coded table. Independent review, full Edge/CI, fresh rendered composition, authenticated orchestration and production acceptance remain PROOF OWED; historical C3 evidence cannot prove this candidate.
+
+Flow Prototype is not required for this bounded copy/data correction: it retains the approved C3 step interaction and introduces no material goal, choice, state, exit, control or layout. Impeccable clarity checks preserve concise truthful labels and incumbent presentation; its local detector package was unavailable, so detector/finish review is not claimed. Evidence stays in docs/evidence/ui-delivery/c3-living-response.md. D2 is still owner-reserved; approval-free tool-less consulting and parallel consults remain outside this implementation.

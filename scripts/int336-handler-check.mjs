@@ -42,3 +42,27 @@ for (const evidence of [{terminal:true,stopped:false},{terminal:false,stopped:tr
  }
 }
 console.log('PASS real handler: stop/replay/status scope, canonical settlement, JWT begin, service executor, authoritative history, early-exit token release, no second user append');
+
+// Original-operation observations are reads even while the execution protocol drains.
+const effect=id(20),pipeline=id(21);
+const original={tenantId:tenant,actorId:actor,actorKind:'human',idempotencyKey:'original-op',commandHash:'a'.repeat(32),command:{type:'update-pipeline',pipelineId:pipeline,expectedVersion:2,name:'Updated',description:null}};
+const receipt={tenant_id:tenant,actor_user_id:actor,actor_kind:'human',idempotency_key:'original-op',command_hash:original.commandHash,result:{ok:true,outcome:'updated',pipeline_id:pipeline}};
+for (const variant of ['success','foreign-tenant','foreign-actor','stale-version','missing-original','unavailable-read','revoked-permission','forged-effect']) {
+ const statusRec=scenario('accepted',{tables:{pipeline_command_results:variant==='unavailable-read'?[]:[receipt]},rpcs:{
+   paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+   current_user_tenant_id:{data:variant==='foreign-tenant'?id(99):tenant,error:null},
+   read_pipeline_metadata_original:args=>({data:variant==='missing-original'||args._effect!==effect?null:{...original,actorId:variant==='foreign-actor'?id(99):actor},error:variant==='revoked-permission'?{message:'denied'}:null}),
+   get_pipeline_catalogue:{data:{items:[{id:pipeline,version:variant==='stale-version'?4:3,name:'Updated',description:null}]},error:null},
+   paige_chat_interactive_executor_v2:{data:{executor:intent,terminal:true},error:null},
+ }});
+ const response=await capturedHandler()(req({interactive:{kind:'status',pipelineEffectId:variant==='forged-effect'?id(99):effect}}));
+ assert.equal(response.status,200);
+ assert.equal(response.headers.get('cache-control'),'no-store');
+ assert.deepEqual(await response.json(),{executor_active:true,settled:false,original_operation:variant==='success'?{outcome:'confirmed_success',verified_readback:true,pipeline_id:pipeline,version:3}:{outcome:'outcome_unknown',verified_readback:false}});
+ assert.equal(statusRec.inserts.length,0);
+ assert.equal(statusRec.functions.length,0);
+ assert.equal(statusRec.rpc.some(x=>/begin_v2|settle|turn_append/.test(x.name)),false);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2').every(x=>x.args.p_operation==='state'),true);
+ assert.equal(statusRec.rpc.filter(x=>['read_pipeline_metadata_original','get_pipeline_catalogue','current_user_tenant_id'].includes(x.name)).every(x=>x.client==='jwt'),true);
+}
+console.log('PASS original-operation status: DRAINING readback, foreign tenant/actor, stale/missing evidence, no writes/providers/releases, caller-bound authority');

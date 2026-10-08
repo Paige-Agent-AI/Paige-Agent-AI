@@ -22,7 +22,7 @@
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
-import { traceAdmin, traceLLMCall, type TraceCtx } from "./llm-trace.ts";
+import { traceAdmin, traceLLMCall, type FabricRouteTelemetry, type TraceCtx } from "./llm-trace.ts";
 import { accruedSpendToday, BudgetExceeded, enforceBudget, resolveCeiling, type BudgetDb } from "./router-budget/mod.ts";
 import { OPENAI_EFFORT_BY_CLASS, type OpenAIReasoningClass } from "./openai-models.ts";
 import { responsesCompletion, responsesStream, type ChatShapeBody } from "./openai-responses.ts";
@@ -146,6 +146,19 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
   for (const c of use) {
     const model = c.model as string;
     let opened: { ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: ProviderFailureClass };
+    // #1856 — the projected route rides the ctx BEFORE the leg: the Anthropic gateway copies the ctx
+    // at call time, so the attach must precede the dispatch; on open-success the projection is exact.
+    if (opts.trace) {
+      const failedBefore = attempts.some((a) => a.failure && a.failure !== "skipped_disabled");
+      opts.trace.fabric_route = {
+        requested_class: cls,
+        job: opts.trace.job_kind ?? "chat",
+        served_provider: c.provider,
+        served_model: model,
+        fallback: failedBefore,
+        reason: failedBefore ? "served_fallback" : "served_primary",
+      };
+    }
     try {
       if (c.provider === "openai") {
         // #1850 — DOCUMENT TURNS go to the document-capable provider: the OpenAI adapter refuses
@@ -179,6 +192,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
       // A budget stop is a decision, not a provider failure: it is never retried elsewhere.
       if ((e as { code?: unknown })?.code === "budget_exceeded") {
         attempts.push({ provider: c.provider, model, failure: "budget_exceeded" });
+        if (opts.trace) opts.trace.fabric_route = null;
         throw e;
       }
       // What the throw proves, and nothing more: a missing key is configuration; a timeout or a fetch
@@ -192,6 +206,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
       attempts.push({ provider: c.provider, model, failure, status: 0 });
       last = { ok: false, status: 0, served: null, attempts };
       if (mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) continue;
+      if (opts.trace) opts.trace.fabric_route = { requested_class: cls, job: opts.trace.job_kind ?? "chat", served_provider: null, served_model: null, fallback: attempts.some((a) => a.failure && a.failure !== "skipped_disabled"), reason: "failed" };
       return last;
     }
     if (opened.ok && opened.body) {
@@ -201,8 +216,18 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
     const failure = opened.failureClass ?? "unknown";
     attempts.push({ provider: c.provider, model, failure, status: opened.status });
     last = { ok: false, status: opened.status, served: null, attempts };
-    // The stream never opened, so nothing was shown and nothing can have run.
-    if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) return last;
+    // The stream never opened, so nothing was shown and nothing can have run. The projected route
+    // is replaced by the served-null failure route so a reused ctx carries no stale "served by X".
+    if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) {
+      if (opts.trace) opts.trace.fabric_route = { requested_class: cls, job: opts.trace.job_kind ?? "chat", served_provider: null, served_model: null, fallback: attempts.some((a) => a.failure && a.failure !== "skipped_disabled"), reason: "failed" };
+      return last;
+    }
+  }
+  // #1856 — nothing served: the failure route rides the ctx for whatever is observed next (this
+  // also clears any projected served route — served_* are null here); the attempt detail is in the
+  // warn line below (closed values only).
+  if (opts.trace) {
+    opts.trace.fabric_route = { requested_class: cls, job: opts.trace.job_kind ?? "chat", served_provider: null, served_model: null, fallback: attempts.some((a) => a.failure && a.failure !== "skipped_disabled"), reason: "failed" };
   }
   return last;
 }
@@ -329,6 +354,10 @@ export async function fabricCompletion(
     : klass === "cheap" ? "cheap" : "reasoning";
 
   let last: FabricCompletionResult = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false) };
+  // #1856 — every failure exit clears the projected route from the caller's ctx: a reused ctx can
+  // never carry a stale "served by X" route into a later row (the success paths overwrite it with
+  // the exact route, so only failures need the explicit clear).
+  const clearRoute = () => { if (opts.trace) opts.trace.fabric_route = null; };
 
   for (const c of use) {
     // BUDGET GATE — every candidate, both providers, the ONE shared gate. A stop is a decision,
@@ -336,6 +365,7 @@ export async function fabricCompletion(
     // aborts the call BEFORE any provider is dispatched (#1850's cancellation proof).
     if (opts.signal?.aborted) {
       attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+      clearRoute();
       return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
     }
     if (opts.trace?.tenant_id) {
@@ -344,11 +374,13 @@ export async function fabricCompletion(
         gateHitForTrace = decision.gateHits;
       } catch (e) {
         attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
+        clearRoute();
         throw e;
       }
     }
     if (opts.signal?.aborted) {
       attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+      clearRoute();
       return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
     }
     // #1850 — document turns never reach the OpenAI adapter (it refuses document parts by design;
@@ -356,17 +388,30 @@ export async function fabricCompletion(
     if (c.provider === "openai" && messagesCarryDocument(request.messages as never)) {
       attempts.push({ provider: "openai", model: c.model ?? "", failure: "unsupported_document" });
       last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "unsupported_document" } };
-      if (opts.pinned) return last;
+      if (opts.pinned) { clearRoute(); return last; }
       continue;
     }
 
     const anthropicTier: ClaudeTier | null = c.provider === "anthropic" ? (c.model === CLAUDE_REASONING ? "reasoning" : "classification") : null;
+    // #1856 — the projected route rides the ctx BEFORE the leg, so the leg's own trace row (the
+    // OpenAI self-trace, or the streamed drain) carries it via its spread; the seam's Anthropic rows
+    // set it explicitly (success and error) where the exact reason is known.
+    const failedBefore = attempts.some((a) => a.failure && a.failure !== "skipped_disabled");
+    const projectedRoute: FabricRouteTelemetry = {
+      requested_class: cls,
+      job: opts.trace?.job_kind ?? request.job,
+      served_provider: c.provider,
+      served_model: c.model ?? "",
+      fallback: failedBefore,
+      reason: opts.pinned ? "pinned_served" : failedBefore ? "served_fallback" : "served_primary",
+    };
+    if (opts.trace) opts.trace.fabric_route = projectedRoute;
     try {
       const resp: Record<string, unknown> = c.provider === "openai"
         // The trace carries the CONSUMER's job identity, never the adapter's "chat" default; the
         // OpenAI leg self-traces through responsesCompletion under this context.
         ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.signal ? (u, i) => (opts.openaiFetch ?? fetch)(u, { ...i, signal: opts.signal }) : opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: opts.trace.job_kind ?? request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
-        : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace, opts.signal);
+        : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace, opts.signal, projectedRoute);
       const servedModel = typeof resp.model === "string" && resp.model
         ? resp.model
         : c.provider === "anthropic"
@@ -386,6 +431,7 @@ export async function fabricCompletion(
     } catch (e) {
       if ((e as { code?: unknown })?.code === "budget_exceeded") {
         attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
+        clearRoute();
         throw e;
       }
       const err = e as { name?: string; status?: number; failureClass?: string };
@@ -404,12 +450,14 @@ export async function fabricCompletion(
       if (opts.signal?.aborted) {
         last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
         attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+        clearRoute();
         return last;
       }
-      if (opts.pinned) return last; // a pinned route never moves — the instrument stays comparable
-      if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) return last;
+      if (opts.pinned) { clearRoute(); return last; } // a pinned route never moves — the instrument stays comparable
+      if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) { clearRoute(); return last; }
     }
   }
+  clearRoute();
   return last;
 }
 
@@ -419,7 +467,7 @@ export async function fabricCompletion(
  * traces, so this is the single trace layer for this leg (the OpenAI leg self-traces through
  * responsesCompletion; neither double-counts).
  */
-async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: string, trace?: TraceCtx, gateHits?: { budget: Record<string, unknown> } | null, signal?: AbortSignal): Promise<Record<string, unknown>> {
+async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: string, trace?: TraceCtx, gateHits?: { budget: Record<string, unknown> } | null, signal?: AbortSignal, route?: FabricRouteTelemetry): Promise<Record<string, unknown>> {
   const started = Date.now();
   const shaped = body as unknown as Parameters<typeof chatCompletionCompat>[0];
   try {
@@ -438,6 +486,7 @@ async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: s
       latency_ms: Date.now() - started,
       input: body.messages, output: (resp as { choices?: { message?: { content?: unknown } }[] })?.choices?.[0]?.message?.content ?? null,
       doctrine_gate_hits: gateHits ?? null,
+      fabric_route: route ?? null,
       metadata: { caller_function: trace?.agent_id },
     });
     return resp as Record<string, unknown>;
@@ -453,6 +502,7 @@ async function callAnthropicTraced(body: ChatShapeBody, tier: ClaudeTier, job: s
       input: body.messages, output: null,
       error_class: PROVIDER_FAILURE_CLASSES.includes(err.failureClass as ProviderFailureClass) ? err.failureClass : ((e as Error)?.name ?? "error"),
       error_message: (e as Error)?.name ?? "error",
+      fabric_route: route ? { ...route, served_provider: null, served_model: null, reason: route.reason === "pinned_served" ? "pinned_failed" : "failed" } : null,
       metadata: { caller_function: trace?.agent_id },
     });
     throw e;

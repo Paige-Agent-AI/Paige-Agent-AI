@@ -568,5 +568,140 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   globalThis.fetch = realFetchE;
 }
 
+
+// ── F. #1856: SERVED-ROUTE TELEMETRY on the existing trace ledger ───────────────────────────────
+// Every fabric-served call's row carries, as allowlisted metadata SCALARS: what class was asked
+// for, the job identity, who served, whether a fallback occurred, and the closed reason. No new
+// ledger, no new table, no object metadata (the allowlist's scalars-only rule stands).
+{
+  const routeOf = (row) => row?.metadata ?? {};
+  const CLOSED_REASON = /^(served_primary|served_fallback|pinned_served|pinned_failed|failed)$/;
+  const CLOSED_CLASS = /^(cheap|operational|frontier|deterministic)$/;
+
+  // F1 — the completion seam's served rows carry the full route, both providers.
+  setScenario({});
+  anthropicPlan = { status: 200 };
+  openaiPlan = { status: 200 };
+  const recF = recorder();
+  const beforeF = recF.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await fabric.fabricCompletion(
+    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
+    { openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f1", agent_id: "fabric-check" } },
+  );
+  const f1 = recF.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF).at(-1)?.row;
+  const f1r = routeOf(f1);
+  ok(f1r.route_requested_class === "operational" && f1r.route_job === "research_unit_synthesis"
+    && f1r.route_served_provider === "anthropic" && typeof f1r.route_served_model === "string" && f1r.route_served_model.includes("sonnet")
+    && f1r.route_fallback === false && f1r.route_reason === "served_primary",
+    `F1 the served Anthropic row carries the route (${JSON.stringify(f1r)})`);
+
+  const recF1b = recorder();
+  const beforeF1b = recF1b.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await fabric.fabricCompletion(
+    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
+    { ...ON, openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f1b", agent_id: "fabric-check" } },
+  );
+  const f1b = recF1b.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF1b).at(-1)?.row;
+  const f1br = routeOf(f1b);
+  ok(f1b?.provider === "openai" && f1br.route_served_provider === "openai" && f1br.route_served_model === "gpt-6.1-sol"
+    && f1br.route_requested_class === "operational" && f1br.route_reason === "served_primary",
+    `F1 the served OpenAI row carries the route too (${JSON.stringify(f1br)})`);
+
+  // F2 — a fallback records fallback=true and served_fallback on the row that served.
+  openaiPlan = { status: 401, type: "authentication_error" };
+  const recF2 = recorder();
+  const beforeF2 = recF2.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  const fbRun = await fabric.fabricCompletion(
+    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
+    { ...ON, openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f2", agent_id: "fabric-check" } },
+  );
+  const f2rows = recF2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF2);
+  const f2served = f2rows.filter((r) => r.row?.status === "success").at(-1)?.row;
+  ok(fbRun.route.fallback === true && f2served && routeOf(f2served).route_reason === "served_fallback"
+    && routeOf(f2served).route_fallback === true && routeOf(f2served).route_served_provider === "anthropic",
+    `F2 a fallback's served row records served_fallback + fallback=true (${JSON.stringify(routeOf(f2served))})`);
+  openaiPlan = { status: 200 };
+
+  // F3 — the judge pin records pinned_served.
+  const recF3 = recorder();
+  const beforeF3 = recF3.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await fabric.fabricCompletion(
+    { cognitive_class: "cheap", job: "rubric_judge_v3", messages: [{ role: "user", content: "x" }] },
+    { ...ON, openaiFetch, pinned: { tier: "reasoning" }, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f3", agent_id: "fabric-check" } },
+  );
+  const f3 = recF3.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF3).at(-1)?.row;
+  ok(routeOf(f3).route_reason === "pinned_served" && routeOf(f3).route_served_provider === "anthropic",
+    `F3 a pinned route records pinned_served (${JSON.stringify(routeOf(f3))})`);
+
+  // F3b — a pinned leg's failure records pinned_failed on its error row (the frozen-instrument
+  // forensic row says PINNED, distinguishing it from an unpinned failure).
+  anthropicPlan = { status: 503, type: "overloaded_error" };
+  const recF3b = recorder();
+  const beforeF3b = recF3b.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await fabric.fabricCompletion(
+    { cognitive_class: "cheap", job: "rubric_judge_v3", messages: [{ role: "user", content: "x" }] },
+    { openaiFetch, pinned: { tier: "reasoning" }, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f3b", agent_id: "fabric-check" } },
+  );
+  anthropicPlan = { status: 200 };
+  const f3b = recF3b.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF3b).at(-1)?.row;
+  ok(f3b?.status === "error" && routeOf(f3b).route_reason === "pinned_failed" && routeOf(f3b).route_served_provider === undefined,
+    `F3b a pinned leg's error row records pinned_failed with no served keys (${JSON.stringify(routeOf(f3b))})`);
+
+  // F4 — a failed seam call: the error row carries reason=failed and NO served keys.
+  anthropicPlan = { status: 503, type: "overloaded_error" };
+  const recF4 = recorder();
+  const beforeF4 = recF4.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await fabric.fabricCompletion(
+    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
+    { openaiFetch, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f4", agent_id: "fabric-check" } },
+  );
+  anthropicPlan = { status: 200 };
+  const f4 = recF4.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF4).at(-1)?.row;
+  const f4r = routeOf(f4);
+  ok(f4?.status === "error" && f4r.route_reason === "failed" && f4r.route_served_provider === undefined
+    && f4r.route_served_model === undefined && f4r.route_requested_class === "operational",
+    `F4 a failed call's error row records failed with no served keys (${JSON.stringify(f4r)})`);
+
+  // F5 — the STREAMED rows carry the route on both legs (drain rows, via the ctx spread).
+  const STREAM_F5 = { messages: [{ role: "user", content: "stream this" }], tools: [TOOL], tool_choice: "auto" };
+  const drain = async (cls, opts, body = STREAM_F5) => {
+    const rec = recorder();
+    const before = rec.inserts.filter((i) => i.table === "paige_llm_trace").length;
+    const stream = await fabric.fabricChatStream(cls, body, { openaiFetch, ...opts });
+    const reader = stream.body?.getReader();
+    while (reader && !(await reader.read()).done) { /* drain */ }
+    return rec.inserts.filter((i) => i.table === "paige_llm_trace").slice(before).at(-1)?.row;
+  };
+  const anthRow = await drain("operational", { trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f5a", agent_id: "fabric-check", job_kind: "chat-tool-loop" } });
+  const ar = routeOf(anthRow);
+  ok(ar.route_served_provider === "anthropic" && ar.route_requested_class === "operational"
+    && ar.route_job === "chat-tool-loop" && ar.route_reason === "served_primary" && ar.route_fallback === false,
+    `F5 the streamed Anthropic drain row carries the route with the caller's job tag (${JSON.stringify(ar)})`);
+  const oaiRow = await drain("operational", { ...ON, trace: { tenant_id: "8f6c0000-0000-4000-8000-0000000000f5b", agent_id: "fabric-check", job_kind: "chat" } });
+  const orr = routeOf(oaiRow);
+  ok(oaiRow?.provider === "openai" && orr.route_served_provider === "openai" && orr.route_served_model === "gpt-6.1-sol"
+    && orr.route_requested_class === "operational" && orr.route_reason === "served_primary",
+    `F5 the streamed OpenAI drain row carries the route too (${JSON.stringify(orr)})`);
+
+  // F6 — the classifier's rows carry the route automatically (cheap, turn_classify).
+  const { classifyTurn } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
+  const recF6 = recorder();
+  const beforeF6 = recF6.inserts.filter((i) => i.table === "paige_llm_trace").length;
+  await classifyTurn("thanks so much", null, { tenant_id: "8f6c0000-0000-4000-8000-0000000000f6", agent_id: "paige-ai-chat", job_kind: "turn-classify" });
+  const f6 = recF6.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeF6).at(-1)?.row;
+  const f6r = routeOf(f6);
+  ok(f6r.route_requested_class === "cheap" && f6r.route_job === "turn-classify"
+    && String(f6r.route_served_model).includes("haiku") && f6r.route_reason === "served_primary",
+    `F6 the classifier's row carries its route automatically (${JSON.stringify(f6r)})`);
+
+  // F7 — privacy: every route value is a closed code or an id; nothing free-text.
+  const allRouteRows = recorder().inserts.filter((i) => i.table === "paige_llm_trace").map((i) => i.row?.metadata).filter((m) => m && "route_reason" in m);
+  ok(allRouteRows.length >= 5 && allRouteRows.every((m) => CLOSED_REASON.test(m.route_reason) && CLOSED_CLASS.test(m.route_requested_class)
+    && typeof m.route_fallback === "boolean" && !/[^\w.:/-]/.test(String(m.route_job))),
+    `F7 every recorded route value is a closed code or an id (${allRouteRows.length} rows checked)`);
+
+  setScenario({});
+}
+
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

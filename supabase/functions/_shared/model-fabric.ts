@@ -34,7 +34,13 @@ import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, ty
  * (the OpenAI candidates are skipped). Flipped only after the controlled Sol canary passes, in its own
  * reviewed PR — the release bar is in docs/model-routing/int-334/EVIDENCE.md.
  */
-export const OPENAI_CHAT_ENABLED = false;
+// OWNER DIRECTIVE (2026-10-08): OpenAI is PAIGE's preferred PRIMARY provider — Luna first for
+// cheap, Sol first for operational, Astra first for frontier; Anthropic Sonnet 5.5 the
+// operational/frontier fallback; the open pool + Haiku remain the cheap fallbacks. The prior
+// `false` was the temporary release posture, preserved historically below. Activation is staged by
+// the cohort gate (validation cohort first, then the production cutover PR lifts it) and remains
+// class-scoped (operational only until each class's own validation passes).
+export const OPENAI_CHAT_ENABLED = true;
 
 // ── THE SOL CANARY COHORT GATE (#canary-readiness) ────────────────────────────────────────────────
 //
@@ -48,6 +54,12 @@ export const OPENAI_CHAT_ENABLED = false;
 //   OPENAI_CANARY_CLASSES  comma list from cheap|operational|frontier (default: "operational")
 
 const CANARY_TENANTS_ENV = "OPENAI_CANARY_TENANTS";
+/**
+ * The RELEASE-VALIDATION cohort: while no env cohort is set, admission is restricted to the
+ * platform's synthetic QA Solo tenant (the controlled-proof principal) so the owner-directed flip
+ * can be validated against real Sol routing before the production cutover PR lifts the restriction.
+ */
+const DEFAULT_CANARY_TENANTS: readonly string[] = ["7e700000-0000-0000-0000-000000000007"];
 const CANARY_CLASSES_ENV = "OPENAI_CANARY_CLASSES";
 const CANARY_CLASS_SET = new Set(["cheap", "operational", "frontier"]);
 
@@ -61,9 +73,12 @@ function csvEnv(name: string): string[] {
   return raw ? raw.split(",").map((x) => x.trim()).filter(Boolean) : [];
 }
 
-/** The canary cohort as read at call time (uuid strings, lowercase). Empty = nobody. */
+/** The canary cohort as read at call time (uuid strings, lowercase): the env list, or the
+ *  release-validation cohort when unset. An explicitly SET EMPTY value admits nobody (kill switch). */
 export function openAiCanaryTenants(): string[] {
-  return csvEnv(CANARY_TENANTS_ENV).map((t) => t.toLowerCase());
+  const raw = fabricEnv(CANARY_TENANTS_ENV);
+  if (raw !== undefined) return raw.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+  return [...DEFAULT_CANARY_TENANTS];
 }
 
 /**

@@ -1,5 +1,32 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## Continued original C0b convergence — incumbent adapters only
+
+This candidate registers existing CRM, Pipeline, Team, Calendar, business-profile, Research,
+Communications, specialist, Funding and Studio adapters without changing their implementations.
+Existing risk, canonical approval, current seat, readiness and hidden-tool visibility remain the
+contract. Recording a callable adapter is not authenticated customer acceptance. Provider calls,
+cache writes, transcript persistence, expiring archive tokens, proposal staging and partial outcomes
+are described explicitly; no new retry guarantee, receipt, provider route or execution authority is
+introduced. Frozen legacy-to-Spine projection regressions compare current seats and autonomy lanes.
+
+Routing remains the existing Harness/Spine/Orchestration/Trust/Rail path: Conversational Loop owns
+registration and result consumption; each department retains artifact/provider production. The
+same declarations support the shared capability interface rather than a second conversation
+framework. The existing read-only authenticated acceptance runner is prepared, not executed.
+Its genuine session and caller/tenant checks do not activate or settle a held executor.
+
+Four exact registration contracts remain intentionally unreduced: automation_set_grant and
+ automation_set_state are owner_only and cannot be declared as Chat actions by the existing guard;
+ document_generate retains the explicit Studio auto-lane mismatch recorded in long_form.ts.
+propose_action also persists only a pending operator decision and intentionally skips preconfirmation; the current Spine mutation contract cannot represent that producer without duplicating approval. Its eventual send retains the separately governed execute-approval/send-message path.
+No risk/type/approval expansion or guard exemption is used to erase that debt. Deep Research's
+incumbent Chat branch still calls its synchronous provider endpoint; the canonical durable
+preparation contract is available separately. The conversational preparation/dispatch/resume
+handoff remains unimplemented and gated, with Research retaining its provider/result production.
+INT-346 clearance, C4f signed-in acceptance and C5 D2 are separate from this metadata delivery.
+
+
 ## 2026-10-08 C0b existing-capability convergence and durable status consumption
 
 The next candidate consumes conversation-bound durable observations in the incumbent status

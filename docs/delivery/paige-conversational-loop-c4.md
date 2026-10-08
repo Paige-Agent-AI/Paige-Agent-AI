@@ -1,5 +1,28 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+## 2026-10-08 authenticated read-acceptance driver preparation
+
+`scripts/proof/int304-authenticated-observation.mjs <explicit-QA-fixture.json>` uses the existing
+synthetic `PROOF_EMAIL`/`PROOF_PASSWORD`/`PROOF_ANON_KEY` injection pattern (existing `LIVE_DRIVE`
+email/password names also accepted). Identity/QA owns provisioning and approved secure injection;
+this runner searches no secret stores and creates no account, thread, intent, operation or artifact.
+Without an explicit fixture it reports BLOCKED before credential/environment or network use.
+
+The fixture contains only pinned actorId, tenantId and a bounded list of existing thread/intent
+and effect/work references, named expected observations and expected held-executor state. It grants
+no permission. A genuine session is minted with the public key on the fixed canonical project;
+service keys/tokens are rejected. Server user/current-tenant reads surround every status-only
+request, and each case is reread. Session logout is local to this fresh proof session. Neither
+activation nor executor admission, release, retry, effect dispatch or fixture mutation is called.
+Output contains bounded case states, not passwords, tokens, account email or raw business payloads.
+
+Eleven recording-double controls PASS, covering actor/tenant drift, service keys/sessions, uncertainty,
+unavailable durable evidence, replay reads and held ownership. The returned-service-token control failed first (an unauthorized logout request), then passed after validation before token assignment. These are driver regressions, not
+authenticated production proof. A production PASS of unavailable-only cases establishes only those
+negative read contracts; positive authoritative outcomes/artifacts require their own fixture cases.
+The driver always reports Solo UI and security clearance UNVERIFIED and continuation NOT_RUN.
+It cannot establish C4f Chat/Live acceptance or waive INT-346. No production drive occurred here.
+
 ## 2026-10-08 durable observation in the canonical authenticated status consumer
 
 This candidate adds read-only `interactive.workId` observation to the existing status branch.

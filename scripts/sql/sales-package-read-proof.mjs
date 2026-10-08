@@ -33,11 +33,11 @@ try {
  CREATE FUNCTION current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.workspace',true),'')::uuid$$;
  CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
  CREATE TABLE tenants(id uuid PRIMARY KEY,status text);CREATE TABLE profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid,full_name text);
- CREATE TABLE tenant_members(tenant_id uuid,user_id uuid,status text,role text);CREATE TABLE clients(id uuid PRIMARY KEY,tenant_id uuid);
+ CREATE TABLE tenant_members(tenant_id uuid,user_id uuid,status text,role text);CREATE TABLE clients(id uuid PRIMARY KEY,tenant_id uuid,entity_name text,entity_type text,first_name text,last_name text);
  CREATE TABLE tenant_products(id uuid PRIMARY KEY,tenant_id uuid);
  CREATE TABLE paige_invoices(id uuid PRIMARY KEY,tenant_id uuid,contact_id uuid,invoice_number text,status text,amount_total_cents integer,currency text,
- billing_draft_version bigint,billing_draft jsonb,billing_lifecycle_version bigint,billing_issued_snapshot_version bigint,billing_issued_at timestamptz,billing_issued_by uuid,billing_document jsonb,billing_document_digest text,due_date date);
- CREATE TABLE paige_invoice_payments(id uuid PRIMARY KEY,tenant_id uuid,invoice_id uuid,actor_user_id uuid,kind text,amount_cents integer,currency text,method text,received_at timestamptz,created_at timestamptz DEFAULT now(),reverses_payment_id uuid,import_provenance jsonb,evidence_kind text,provider text,provider_verified_at timestamptz);
+ billing_draft_version bigint,billing_draft jsonb,billing_lifecycle_version bigint,billing_issued_snapshot_version bigint,billing_issued_at timestamptz,billing_issued_by uuid,billing_document jsonb,billing_document_digest text,due_date date,billing_import_version bigint,billing_import_provenance jsonb,created_at timestamptz DEFAULT now());
+ CREATE TABLE paige_invoice_payments(id uuid PRIMARY KEY,tenant_id uuid,invoice_id uuid,actor_user_id uuid,kind text,amount_cents integer,currency text,method text,received_at timestamptz,created_at timestamptz DEFAULT now(),reverses_payment_id uuid,import_provenance jsonb,evidence_kind text,provider text,provider_environment text,provider_verified_at timestamptz,reference text,notes text,reason text);
  CREATE TABLE paige_agreements(id uuid PRIMARY KEY,tenant_id uuid,contact_id uuid,offer_id uuid,commercial_terms_id uuid,version integer,status text,body_source text,content_sha256 text,content_storage_key text,sealed_sha256 text,sealed_storage_key text,expires_at timestamptz);
  CREATE TABLE tenant_client_agreements(id uuid PRIMARY KEY,tenant_id uuid,contact_id uuid,offer_id uuid,status text,agreed_amount_minor bigint,agreed_currency text,collection_terms jsonb,collection_terms_version bigint,updated_at timestamptz DEFAULT now());
  CREATE TABLE paige_workspace_events(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,actor_id uuid,source_kind text,source_id uuid,source_revision bigint,outcome text,occurred_at timestamptz DEFAULT clock_timestamp(),actor_agent_slug text,actor_agent_label text,capability_key text,UNIQUE(tenant_id,source_kind,source_id,source_revision,outcome));
@@ -46,7 +46,7 @@ try {
  INSERT INTO auth.users(id) VALUES('${actor}'),('${otherActor}');INSERT INTO tenants VALUES('${tenant}','active'),('${foreign}','active');
  INSERT INTO profiles VALUES('${actor}','${tenant}','Fixture owner'),('${otherActor}','${foreign}','Other owner');
  INSERT INTO tenant_members VALUES('${tenant}','${actor}','active','owner'),('${foreign}','${otherActor}','active','owner');
- INSERT INTO clients VALUES('${client}','${tenant}'),('${otherClient}','${foreign}');INSERT INTO tenant_products VALUES('${offer}','${tenant}');
+ INSERT INTO clients(id,tenant_id) VALUES('${client}','${tenant}'),('${otherClient}','${foreign}');INSERT INTO tenant_products VALUES('${offer}','${tenant}');
  INSERT INTO paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,billing_draft_version,billing_draft,billing_lifecycle_version,billing_issued_snapshot_version,due_date)
  VALUES('${invoice}','${tenant}','${client}','INV-1','issued',350000,'USD',1,${literal(draft)},2,1,'2026-10-15');
  INSERT INTO paige_invoice_payments(id,tenant_id,invoice_id,kind,amount_cents,currency,method,evidence_kind,provider,provider_verified_at)
@@ -57,6 +57,17 @@ try {
  const lifecycle=read('supabase/migrations/20270543000000_sales_invoice_lifecycle.sql');
  run(extract(lifecycle,'_sales_invoice_actor')+extract(lifecycle,'_sales_invoice_read').replace('public._sales_invoice_read(','public._sales_invoice_read_before_provider('));
  run(extract(read('supabase/migrations/20270597000001_sales_invoice_provider_operations.sql'),'_sales_invoice_read'));
+ const collections=read('supabase/migrations/20270547000000_sales_collections.sql');
+ const nameStart=collections.indexOf('CREATE OR REPLACE FUNCTION public._sales_collection_client_name(');
+ run(collections.slice(nameStart,collections.indexOf('$$;',nameStart)+3));
+ run(collections.slice(collections.indexOf('CREATE TABLE IF NOT EXISTS public.paige_sales_export_snapshots('),collections.indexOf('CREATE OR REPLACE FUNCTION public.list_sales_collection_register(')));
+ run(extract(collections,'list_sales_collection_register').replace('public.list_sales_collection_register(','public._list_sales_collection_register_before_provider('));
+ const balanceOwner=read('supabase/migrations/20270601000002_sales_performance_contract.sql');
+ const balanceStart=balanceOwner.indexOf('CREATE OR REPLACE FUNCTION public._sales_invoice_balance_rows(');
+ run(balanceOwner.slice(balanceStart,balanceOwner.indexOf('$$;',balanceStart)+3));
+ run(extract(balanceOwner,'_sales_invoice_read')+extract(balanceOwner,'list_sales_collection_register'));
+ run('REVOKE ALL ON FUNCTION list_sales_collection_register(uuid,text,integer,jsonb) FROM PUBLIC,anon;GRANT EXECUTE ON FUNCTION list_sales_collection_register(uuid,text,integer,jsonb) TO authenticated;');
+ assert.equal(run("SELECT position('_sales_invoice_balance_rows' in pg_get_functiondef('public._sales_invoice_read(uuid,uuid,integer)'::regprocedure))>0;"),'t');checks++;
  run(extract(read('supabase/migrations/20270547000000_sales_collections.sql'),'_sales_collection_validate_terms'));
  const rail12=read('supabase/migrations/20261212000000_paige_can_show_her_work.sql'),rail20=read('supabase/migrations/20261220000000_an_act_that_landed_but_was_not_recorded.sql');
  run(extract(rail20,'_workspace_event_display')+extract(rail12,'_record_workspace_rail_event')+extract(rail20,'record_capability_run'));
@@ -89,5 +100,25 @@ try {
  const before=Number(run('SELECT count(*) FROM paige_workspace_events;'));
  denied(`BEGIN;ALTER TABLE paige_workspace_events ADD CONSTRAINT proof_receipt_failure CHECK(false) NOT VALID;`+scope+call(),'23514');
  assert.equal(Number(run('SELECT count(*) FROM paige_workspace_events;')),before);assert.equal(run('SELECT count(*) FROM paige_invoice_payments;'),'1');checks+=2;
- console.log(`PASS ${checks} real PostgreSQL package checks: canonical bridge, arithmetic/source facts, provider balance, owner/tenant isolation, missing/conflict truth, reload, redaction and Rail rollback. Authenticated application acceptance remains UNVERIFIED.`);
+ // Direct synthetic ledger seeds test read conservation only, not writer authority or provider acceptance.
+ const agree=(remaining,manual,provider)=>{
+   const packageRead=get();
+   const invoiceRead=JSON.parse(run(`SELECT _sales_invoice_read('${tenant}','${invoice}',50);`).split(/\r?\n/).find(x=>x.startsWith('{')));
+   const register=JSON.parse(run(scope+`SELECT list_sales_collection_register('${tenant}','invoice',50,NULL);`).split(/\r?\n/).find(x=>x.startsWith('{')));
+   const collection=register.rows.find(row=>row.id===invoice);
+   for(const value of [packageRead.invoice.outstanding_minor,invoiceRead.remaining_cents,collection.remaining_cents])assert.equal(value,remaining);
+   assert.equal(packageRead.invoice.manual_recorded_minor,manual);assert.equal(invoiceRead.manual_recorded_cents,manual);assert.equal(collection.manual_recorded_cents,manual);
+   assert.equal(packageRead.invoice.provider_verified_minor,provider);assert.equal(invoiceRead.provider_verified_cents,provider);assert.equal(collection.provider_verified_cents,provider);
+   assert.equal(collection.collection_required,remaining>0);assert.equal(register.balance_basis,'canonical_receipt_allocations');checks+=11;
+ };
+ agree(300000,0,50000);
+ run(`DELETE FROM paige_invoice_payments;`);agree(350000,0,0);
+ const receipt=randomUUID(),full=randomUUID();
+ run(`INSERT INTO paige_invoice_payments(id,tenant_id,invoice_id,kind,amount_cents,currency,evidence_kind,method) VALUES('${receipt}','${tenant}','${invoice}','receipt',50000,'usd','manual_recorded','other');`);agree(300000,50000,0);
+ run(`INSERT INTO paige_invoice_payments(id,tenant_id,invoice_id,kind,amount_cents,currency,evidence_kind,reverses_payment_id) VALUES(gen_random_uuid(),'${tenant}','${invoice}','reversal',50000,'usd','manual_recorded','${receipt}');`);agree(350000,0,0);
+ run(`INSERT INTO paige_invoice_payments(id,tenant_id,invoice_id,kind,amount_cents,currency,evidence_kind) VALUES('${full}','${tenant}','${invoice}','receipt',350000,'usd','manual_recorded');`);agree(0,350000,0);
+ run(`INSERT INTO paige_invoice_payments(id,tenant_id,invoice_id,kind,amount_cents,currency,evidence_kind,reverses_payment_id) VALUES(gen_random_uuid(),'${tenant}','${invoice}','reversal',350000,'usd','manual_recorded','${full}');`);agree(350000,0,0);
+ denied(`SET test.actor='${otherActor}';SET test.workspace='${foreign}';SET ROLE authenticated;SELECT list_sales_collection_register('${tenant}','invoice',50,NULL);`);
+ denied(`BEGIN;UPDATE tenant_members SET role='member' WHERE user_id='${actor}';`+scope+call());
+ console.log(`PASS ${checks} real PostgreSQL package checks: canonical bridge, current single balance owner, invoice/package/Collections conservation, synthetic partial receipts/reversals/stop-resume, evidence-class separation, owner/tenant isolation, missing/conflict truth, reload, redaction and Rail rollback. Authenticated application and actual provider acceptance remain UNVERIFIED.`);
 }finally{database='postgres';run(`DROP DATABASE ${db} WITH (FORCE);`);}

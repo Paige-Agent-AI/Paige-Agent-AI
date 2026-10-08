@@ -1,5 +1,9 @@
 # Codebase Map — shipped surface area (routes · components · edge functions · gates · integrations)
 
+## INT-340 / #1837 conversational Metric/Evidence binding
+
+`_shared/analytics-metrics/read.ts` declares the single `analytics.metric_read` / `read_business_metric` capability. `paige-ai-chat` binds it after existing runtime gates using the real caller-JWT client; Live reaches the same handler. The canonical issuer/resolver and shared pure validator own values, scope and evidence. The frontend validator import reexports the same implementation. Current-turn evidence uses `paige-context/mod.ts`, without extending Pipeline Mind signals or persisting metrics as Memory. Source wiring is not authenticated acceptance. Exact integration/proof boundaries: `docs/delivery/int340-conversational-metric-read.md`.
+
 > **Route topology correction — 2026-09-06:** the legacy privileged router and page described in
 > historical sections below are retired. Current product entry lives in `src/App.tsx`; tenant shells are
 > account-addressed under `/solo/{account}`, `/business/{account}`, and `/agency/{account}`; platform

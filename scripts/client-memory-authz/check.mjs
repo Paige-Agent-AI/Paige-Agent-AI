@@ -3544,8 +3544,8 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   const historyMarker = "Earlier authenticated conversation about this workspace.";
   // `ordinary` drives a Live turn that carries no protected evidence — no tool call, no memory — so its
   // answer streams live rather than being held for the final check (paige-turn, 26.5–26.6).
-  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {}, failStreamCalls = [], breakStreamCalls = {}, ordinary = false, toolEnding = undefined } = {}) => {
-    const issued = await proof.issue({ ...scope, ...scopeOverride }, transcript);
+  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {}, failStreamCalls = [], breakStreamCalls = {}, ordinary = false, toolEnding = undefined, readTool, rpcExtras = {}, spokenText = transcript } = {}) => {
+    const issued = await proof.issue({ ...scope, ...scopeOverride }, spokenText);
     const session = { id: sessionId, tenant_id: issued.scope.tenantId, actor_user_id: issued.scope.actorId,
       thread_id: threadId, context_epoch: issued.scope.epoch, availability: "LIVE", state: "thinking",
       provider_session_ref: `runtime:${await liveRuntimeDigest(issued.token)}` };
@@ -3554,9 +3554,9 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
     const matches = (row, filters) => filters.every(([op, key, value]) =>
       op === "eq" ? row[key] === value : op === "in" ? value.includes(row[key]) : true);
     const result = await drive({
-      text: transcript, stream: true, failStreamCalls, breakStreamCalls,
+      text: spokenText, stream: true, failStreamCalls, breakStreamCalls,
       extraBody: { threadId, liveRuntimeChallenge: issued.token, ...bodyOverride },
-      toolCall: ordinary ? undefined : { name: "comms_connection_summary", args: {}, ...(toolEnding ? { ending: toolEnding } : {}) },
+      toolCall: ordinary ? undefined : readTool ?? { name: "comms_connection_summary", args: {}, ...(toolEnding ? { ending: toolEnding } : {}) },
       replyText: ordinary ? "Your connection is set up." : undefined,
       rpcOverrides: {
         ...(ordinary ? { match_paige_memory: { data: [], error: null } } : {}),
@@ -3566,6 +3566,7 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
           playbook_slug: null, funding_enabled: false, brand: null }], error: null },
         tenant_comms_readiness: { data: { can_send_sms: false, blocked_reason: null, number: "absent", number_e164: null, a2p: "absent" }, error: null },
         list_tool_autonomy: { data: [], error: null },
+        ...rpcExtras,
       },
       tablesExtra: {
         ...(ordinary ? { client_memory: () => [] } : {}),
@@ -3612,6 +3613,19 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   assert("26.4 admitted response carries valid signed output through completion for the issued scope",
     output.some((frame) => frame?.kind === "done") && output.every((frame) => frame && sameLiveRuntimeScope(frame.scope, authorized.issued.scope)),
     JSON.stringify({ status: authorized.status, outputKinds: output.map((frame) => frame?.kind), logged: authorized.logged }));
+
+  // #1837 adopts this existing signed admission harness, never a voice-specific metric reader.
+  for (const deny of [false, true]) {
+    let metric;
+    const liveMetric = await liveDrive({ spokenText: 'What do customers currently owe us?',
+      readTool: { name: 'read_business_metric', args: { metric_key: 'sales.receivables.outstanding_current', period: 'this_month' } },
+      rpcExtras: { issue_analytics_evidence_bundle: input => { metric = conversationalMetricFixture(input); return { data: metric, error: null }; },
+        resolve_analytics_evidence_reference: () => deny ? { data: null, error: { code: '42501' } } : { data: metric, error: null } },
+    });
+    const reads = liveMetric.rec.rpc.filter(r => ['issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference'].includes(r.name));
+    assert(`1837.Live ${deny ? 'denied' : 'authorized'} measurement uses identical caller-JWT issuer and resolver`, liveMetric.status === 200 && reads.length === 2 && reads.every(r => r.client === 'jwt'));
+    assert(`1837.Live ${deny ? 'refusal excludes values' : 'evidence reaches shared reasoning'}`, deny ? liveMetric.modelEgress.every(b => !b.includes('125050')) : liveMetric.modelEgress.some(b => b.includes('125050') && b.includes('current_snapshot') && b.includes('aneb_v1_')));
+  }
 
   // paige-turn — WHERE A LIVE TURN'S TERMINAL GOES. A Live answer streams from the tools-free closing
   // call, so on an ORDINARY turn (nothing held) its terminal waits for the first answer line actually
@@ -9373,6 +9387,45 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     opBrief.modelEgress.some((b) => b.includes(OP_TENANTLESS))
       && opBrief.modelEgress.every((b) => !b.includes(OP_TENANTROW)),
     JSON.stringify({ egress: opBrief.modelEgress.length }));
+}
+
+function conversationalMetricFixture(input, mutate = () => {}) {
+    const at = new Date().toISOString();
+    const m = { metric_key: input.p_metric_key, metric_version: '1.0.0', owner_department: 'sales', label: 'Outstanding receivables', definition: 'Current canonical recorded invoice balance.', formula: 'Canonical invoice balance by currency.',
+      range: { key: input.p_range_key, start: input.p_range_start, end: input.p_range_end, bounds: '[start,end)', timezone: 'UTC', semantics: 'current_snapshot' }, dimensions: {},
+      values: { kind: 'currency_totals', by_currency: [{ currency: 'usd', amount_minor: '125050', record_count: 2 }], breakdown: [] }, unit: 'currency_minor', source_refs: ['public.paige_invoices'], as_of: at, freshness: { queried_at: at, source_updated_through: null },
+      coverage: { state: 'complete', candidate_count: 2, contributing_count: 2, excluded_count: 0 }, exclusions: [], truth_state: 'LIVE', caveats: ['Recorded balance is not provider settlement evidence.'],
+      source_revision_ref: 'sr_v1_' + 'a'.repeat(64), account_epoch: CALLER_TENANT, account_epoch_ref: 'ae_v1_' + 'b'.repeat(64), evidence_ref: 'aneb_v1_' + 'c'.repeat(64), reference_expires_at: new Date(Date.now() + 900000).toISOString(), private_customer_data: 'NEVER_PROJECT_THIS' };
+    mutate(m); return m;
+}
+console.log('\nINT-340 / #1837 — one governed conversational metric read');
+{
+  const metricKey = 'sales.receivables.outstanding_current';
+  async function metricDrive({ mutate, resolveError, tier = 'tenant', args = { metric_key: metricKey, period: 'this_month' } } = {}) {
+    let issued;
+    return drive({ stream: true, text: 'How much do customers currently owe us, and what does that number mean?', toolCall: { name: 'read_business_metric', args },
+      rpcOverrides: { studio_role_ok: { data: true, error: null }, get_actor_access: { data: { tier }, error: null },
+        issue_analytics_evidence_bundle: input => { issued = conversationalMetricFixture(input, mutate); return { data: issued, error: null }; },
+        resolve_analytics_evidence_reference: () => resolveError ? { data: null, error: { code: resolveError } } : { data: issued, error: null },
+      } });
+  }
+  const healthy = await metricDrive();
+  const evidenceReads = healthy.rec.rpc.filter(r => ['issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference'].includes(r.name));
+  assert('1837.1 actual Chat handler issues and resolves only as caller JWT', evidenceReads.length === 2 && evidenceReads.every(r => r.client === 'jwt' && r.authorization === 'Bearer test-jwt'));
+  assert('1837.2 verified money, current basis, caveat and evidence reach the next model round', healthy.modelEgress.some(b => b.includes('125050') && b.includes('current_snapshot') && b.includes('not provider settlement') && b.includes('aneb_v1_')));
+  assert('1837.3 extra producer content and private authority markers never reach the model', healthy.modelEgress.every(b => !b.includes('NEVER_PROJECT_THIS') && !b.includes('account_epoch_ref')));
+  assert('1837.4 measurement read writes no business-action receipt or changing KPI Memory', !healthy.rec.rpc.some(r => r.name === 'record_capability_run' || (r.name === 'record_paige_memory' && String(r.args?.p_content).includes('125050'))));
+  for (const [label, options] of [
+    ['removed membership', { resolveError: '42501' }], ['missing evidence', { resolveError: 'P0002' }],
+    ['expired evidence', { mutate: m => { m.reference_expires_at = new Date(Date.now() - 1000).toISOString(); } }],
+    ['foreign workspace result', { mutate: m => { m.account_epoch = OTHER_TENANT; } }],
+    ['foreign request identifier', { args: { metric_key: metricKey, tenant_id: OTHER_TENANT } }],
+    ['client seat', { tier: 'client' }], ['operator lens', { tier: 'god' }], ['agency lens', { tier: 'agency' }],
+  ]) {
+    const denied = await metricDrive(options);
+    assert(`1837.5 ${label} cannot supply monetary claims`, denied.modelEgress.every(b => !b.includes('125050')));
+    if (options.resolveError) assert(`1837.6 ${label} does not reissue or use service-role fallback`, denied.rec.rpc.filter(r => r.name === 'issue_analytics_evidence_bundle').length === 1 && denied.rec.rpc.filter(r => r.name === 'resolve_analytics_evidence_reference').every(r => r.client === 'jwt'));
+  }
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

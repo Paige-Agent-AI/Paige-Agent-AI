@@ -1129,7 +1129,7 @@
         "draft": "Interpret analytics, recommend actions, and model scenarios.",
         "auto": "Within the owner's standing delegated policy, trigger a pre-approved analytics-driven action on its owning surface (e.g. pause spend on a flagged campaign) within that surface's caps and stop conditions — the action executes and is Rail-logged there. Analytics itself performs no write (chain governed_write=none), so it routes to the owning surface rather than executing here — deliberately not marked consequential.",
         "confirm": "An analytics-driven change routes to its owning surface's confirm gate.",
-        "prohibited": "Never expose metric definitions/formulas/exclusion reasons or the source refs.",
+        "prohibited": "Never expose raw customer records, actor/workspace identifiers, secrets or unvalidated producer payloads. Authorized current-turn metric definitions, source periods, coverage and opaque evidence references are permitted by the 2026-10-08 owner ruling; Pipeline Mind signal constraints remain separate.",
         "completion_criterion": "A real analytics finding drives a Paige-prepared, owner-approved action on the owning surface with a verified result — not a static dashboard (needs SCR-2 + SCR-3)."
       },
       "surface": "Settings → Analytics (Overview, Business Health, Operations, Team, AI & Usage, Data Health)",
@@ -1140,7 +1140,7 @@
       "chain": {
         "canonical_source": {"status": "partial", "note": "22 Settings keys have explicit producer semantics; readiness is per reading LIVE/PARTIAL/UNAVAILABLE. Retention, profitability, NPS, team scorecards and actual voice consumption remain UNAVAILABLE. This is source coverage, not Chat/Live acceptance."},
         "tenant_scope": {"status": "server_resolved", "note": "Shared issuer/resolver revalidate active profile, actor, explicit active owner/admin seat, lifecycle, tenant epoch, expiry/revocation and recomputed source digest; platform role without tenant seat is denied on the new seam."},
-        "safe_context": {"status": "eligible", "note": "the authorization/freshness/expiry/coverage semantics are Mind-shaped — the hard half — but subject type and unbounded counts fail the contract"},
+        "safe_context": {"status": "eligible", "note": "#1837 uses the existing ContextSourceResult interface for closed, size-bounded current-turn metric interpretation after caller-JWT issuer/resolver verification. It does not generalize client-only Pipeline SpineSignal/Mind retrieval or implement Fabric snapshot composition."},
         "authority": {"status": "none"},
         "governed_write": {"status": "none"},
         "verified_outcome": {"status": "none"},
@@ -1148,12 +1148,12 @@
         "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2 (non-client subject) AND C3 (unbounded counts); needs SCR-2 AND SCR-3 — 'the cheapest to unblock'"},
         "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": ["pipeline/stage labels", "metric label/definition/formula", "caveats", "exclusion reasons", "account epoch reference", "evidence/source-revision refs", "source table names"],
-      "state": "UNAVAILABLE",
-      "state_reason": "Settings Analytics is the six-view read consumer of the shared evidence seam; source readiness does not establish a PAIGE binding. #1837 Chat/Live acceptance is PROOF OWED; retain UNAVAILABLE here until both modalities prove the authorized resolver pathway. Existing Mind subject/count restrictions remain unresolved.",
+      "prohibited_context": ["raw customer/source records", "actor/workspace identifiers", "account epoch reference", "provider secrets", "unvalidated producer fields", "changing KPI values promoted to durable Memory"],
+      "state": "PARTIAL",
+      "state_reason": "Settings Analytics remains complete. #1837 registers analytics.metric_read and binds read_business_metric to the actual caller-JWT issuer/resolver in the shared Chat/Live handler; closed current-turn context preserves measurement truth and evidence. Authenticated natural-language Chat/Live acceptance remains PROOF OWED, not inferred from tests or prior Settings acceptance. Pipeline Mind subject/count restrictions and Fabric composition remain separately owned.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
-      "next_slice": "#1837: prove shared resolver consumption through Chat and Live, with safe bounded context and account/member/source-change denial. PROOF OWED; do not infer LIVE from Settings rendering or producer presence. Bind only after the existing SCR-2/SCR-3 requirements are satisfied.",
+      "next_slice": "#1837: exact-head review/CI, deployment readback and authenticated Chat/Live proof through approved QA access. Current-turn context uses the existing generic source interface; Pipeline Mind SCR-2/SCR-3 are not bypassed or claimed complete.",
       "sources": ["docs/architecture/paige-mind-integration-matrix.md#analytics", "docs/product/interactive-analytics-ui-spec.md", "docs/delivery/int340-metric-coverage.md", "supabase/migrations/20270601000005_int340_settings_metric_producers.sql", "supabase/migrations/20270601000006_int340_shared_metric_evidence.sql"]
     },
     {

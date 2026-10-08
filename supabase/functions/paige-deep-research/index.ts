@@ -14,9 +14,13 @@
 //   • search  → POST ${SUPABASE_URL}/functions/v1/paige-web-search   (Firecrawl; honours its
 //               own `configured:false` path — we propagate it, never fabricate).
 //   • read    → POST ${SUPABASE_URL}/functions/v1/fetch-url-content  (SSRF-guarded fetch).
-//   • models  → _shared/model-router.ts routedChatCompletion(jobKind):
-//               "extract" (PLAN/GAP-CHECK, cheap) · "score" (tie-breaks, cheap) ·
-//               "doc_draft" (the ONE final synthesis → Claude reasoning tier = CLAUDE_REASONING).
+//   • models  → ./fabric.ts researchCompletion(phase, declared class, body, ctx) — the
+//               R6-B consumer adapter. DORMANT: while RESEARCH_FABRIC_ENABLED is false it
+//               forwards byte-parity to _shared/model-router.ts routedChatCompletion(jobKind)
+//               — "extract" (PLAN/GAP-CHECK/unit planning, cheap) · "doc_draft" (unit
+//               synthesis + entity dossier → Claude reasoning tier). Enabled, it rides the
+//               shared Model Fabric class seam (fabricCompletion, INT-334) and projects the
+//               served-route evidence into dossier telemetry. Research never names a provider.
 //
 // Persistence is via the SERVICE-ROLE client into research_runs + research_sources —
 // the service role is the write boundary. (CORRECTION 2026-10-03, M0: this header used to
@@ -36,7 +40,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { routedChatCompletion } from "../_shared/model-router.ts";
+import { researchCompletion, type RunRequestCtx } from "./fabric.ts";
 import { strategizeBeforeReasoning } from "../_shared/reasoning/strategize.ts";
 
 const corsHeaders = {
@@ -474,6 +478,7 @@ async function planHop(
   hop: number,
   evidence: Array<{ index: number; title: string; snippet: string }>,
   strategyHint = "", // §34 L4: optional pre-reasoning steer, appended like domainHint (hop-0, non-degraded only)
+  ctx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
 ): Promise<PlanOut> {
   const sys =
     "You are a research planner. Break a research goal into orthogonal, specific web-search " +
@@ -493,12 +498,12 @@ async function planHop(
     `HOP: ${hop}\n\nEVIDENCE SO FAR:\n${evidenceBlock}`;
 
   try {
-    const resp = await routedChatCompletion("extract", {
+    const { resp } = await researchCompletion("hop_query_planner", RESEARCH_COGNITIVE_CLASSES.hop_query_planner, {
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       response_format: { type: "json_object" },
       temperature: 0.2,
       max_tokens: 700,
-    });
+    }, ctx);
     const parsed = parseJsonLoose<PlanOut>(llmContent(resp));
     if (!parsed) return { done: false, queries: hop === 0 ? [question] : [] };
     const queries = Array.isArray(parsed.queries)
@@ -792,6 +797,7 @@ async function synthesize(
   domainHint: string,
   citable: SourceRec[],
   entityTarget: EntityTarget | null,
+  runCtx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
 ): Promise<SynthOut | null> {
   // Sources passed exactly as subagent-financial-research's `[n] title\nsnippet\nurl` block,
   // generalised: include the fetched body excerpt when we have it.
@@ -852,15 +858,17 @@ async function synthesize(
     (entityTarget ? " Also emit the atomic dossier records per the rules above." : "");
 
   try {
-    const resp = await routedChatCompletion("doc_draft", {
+    const { resp, route } = await researchCompletion("dossier_synthesis", RESEARCH_COGNITIVE_CLASSES.dossier_synthesis, {
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       response_format: { type: "json_object" },
       temperature: 0.1,
       max_tokens: entityTarget ? 3200 : 2400,
-    });
+    }, runCtx);
     const parsed = parseJsonLoose<SynthOut>(llmContent(resp));
     if (!parsed || !Array.isArray(parsed.findings)) return { findings: [] };
-    return parsed;
+    // R6-B: the fabric's closed served-route evidence rides the result for dossier telemetry
+    // (null on the dormant flag-off path — exactly the pre-R6-B diagnostics).
+    return route ? ({ ...parsed, __served_route: route } as SynthOut) : parsed;
   } catch (e) {
     console.warn("[paige-deep-research] synthesis error:", (e as Error)?.message);
     return null;
@@ -961,6 +969,7 @@ async function planSynthesisUnits(
   question: string,
   domainHint: string,
   citable: SourceRec[],
+  runCtx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
 ): Promise<SynthUnit[]> {
   const titles = citable.slice(0, 14).map((s) => `[${s.index}] ${s.title}`).join("\n");
   const sys =
@@ -985,12 +994,12 @@ async function planSynthesisUnits(
     (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
     `\nGATHERED SOURCE TITLES (context only — units follow the QUESTION, not these titles):\n${titles}`;
   try {
-    const resp = await routedChatCompletion("extract", {
+    const { resp } = await researchCompletion("unit_planner", RESEARCH_COGNITIVE_CLASSES.unit_planner, {
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       response_format: { type: "json_object" },
       temperature: 0.2,
       max_tokens: 700,
-    });
+    }, runCtx);
     const parsed = parseJsonLoose<{ units?: Array<{ objective?: string; coverage_kind?: string }> }>(llmContent(resp));
     const kinds = new Set(["overall", "side", "relation", "facet", "position", "insufficiency"]);
     const units: SynthUnit[] = [];
@@ -1029,6 +1038,7 @@ async function synthesizeUnit(
   domainHint: string,
   citable: SourceRec[],
   cognitiveClass?: string, // R6-A: carried for telemetry; NEVER consulted for routing
+  runCtx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
 ): Promise<UnitSynthOut | null> {
   const ctx = citable.map((s) => {
     const body = s.content ? `\n${s.content.slice(0, 1500)}` : "";
@@ -1056,12 +1066,12 @@ async function synthesizeUnit(
     (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
     `\nSOURCES:\n${ctx}\n\nWrite grounded findings for THIS obligation only. Every finding MUST carry at least one [n] citation.`;
   try {
-    const resp = await routedChatCompletion("doc_draft", {
+    const { resp, route } = await researchCompletion("unit_synthesis", cognitiveClass ?? RESEARCH_COGNITIVE_CLASSES.unit_synthesis, {
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       response_format: { type: "json_object" },
       temperature: 0.1,
       max_tokens: R4_UNIT_MAX_TOKENS,
-    });
+    }, runCtx);
     // R5 — truncation is a first-class outcome, never a silent empty: the provider's own
     // stop reason is the authority (max_tokens = cut off mid-output); a missing/invalid
     // JSON body after an OK call is treated as truncation-class too (the parse fallback
@@ -1072,7 +1082,9 @@ async function synthesizeUnit(
       typeof r5resp?.model === "string" && r5resp.model
         ? r5resp.model
         : null;
-    void cognitiveClass; // present for the R6-B class-bearing seam; deliberately unused here
+    // R6-B telemetry: the fabric's CLOSED served-route projection (null on the dormant
+    // flag-off path — diagnostics keep exactly the pre-R6-B shape until activation).
+    (unit as { __served_route?: unknown }).__served_route = route;
     const stopReason = r5resp?.paige_stop?.stop_reason ?? r5resp?.choices?.[0]?.finish_reason ?? null;
     const truncated = stopReason === "max_tokens" || stopReason === "length"; // Anthropic native + OpenAI-compat vocabularies
     const parsed = parseJsonLoose<UnitSynthOut>(llmContent(resp));
@@ -1167,6 +1179,13 @@ function aggregateUnits(
       // class. Research never picks the model; it records what the fabric served.
       cognitive_class: RESEARCH_COGNITIVE_CLASSES.unit_synthesis,
       served_model: (unit as { __served_model?: string | null }).__served_model ?? null,
+      // R6-B: the fabric's closed served-route projection (class carrier, served provider/
+      // model as the FABRIC reported them, fallback flag, closed reason). NULL while the
+      // fabric path is dormant — the key itself ships now (one additive null-valued field on
+      // these structured records so post-activation rows differ only in VALUE, never in
+      // shape); dossier.synthesis.served_route below is the sparse-object form (absent until
+      // truthy) — the two forms are deliberately different record styles, not drift.
+      served_route: (unit as { __served_route?: unknown }).__served_route ?? null,
       source_refs: unit.source_refs.slice(0, 14),
       synthesis_returned: out !== null, insufficient: outcome === "insufficient",
       truncated: out?.outcome === "truncated",
@@ -2060,12 +2079,16 @@ serve(async (req) => {
   // ── R3 — the inspectable dossier (diagnostics ONLY; nothing downstream reads it) ──
   // Bounded by the engine's own hop/query/read caps plus explicit candidate caps below.
   const dossier: {
-    v: 1; hops: Array<Record<string, unknown>>; synthesis: { returned: boolean; candidates: number };
+    v: 1; hops: Array<Record<string, unknown>>; synthesis: { returned: boolean; candidates: number; served_route?: unknown };
     candidates: CandidateDiag[]; caps_applied: { candidates_truncated: boolean };
     units?: Array<Record<string, unknown>>;
   } = { v: 1, hops: [], synthesis: { returned: false, candidates: 0 }, candidates: [], caps_applied: { candidates_truncated: false } };
   let unresolvedUnits: Array<{ objective: string; outcome: string }> = []; // R5: typed meta-state, not findings
   const hopBudget = () => ({ searches, reads, cost_usd_est: Number(costUSD.toFixed(4)), elapsed_ms: Date.now() - t0 });
+  // R6-B: the SERVER-resolved run context every model phase threads to the consumer adapter.
+  // resolvedTenantId is the M0 honest-degrade context (JWT-pinned or active-tenant; NULL stays
+  // NULL — the adapter never invents a tenant); runId correlates the fabric's trace rows.
+  const fabricCtx: RunRequestCtx = { tenantId: resolvedTenantId, runId };
 
   // ── Bounded PLAN → SEARCH → READ → GAP-CHECK loop (A3) ────────────────────
   outer:
@@ -2101,7 +2124,7 @@ serve(async (req) => {
             ? `\nKEY SUB-GOALS:\n${strategy.decomposition.slice(0, 3).map((d) => `- ${d}`).join("\n")}`
             : "")
         : "";
-      const plan = await planHop(question, domainHint, hop, evidence, strategyHint);
+      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx);
       if (plan.done && hop > 0) { stop = "answered"; break; }
       queries = plan.queries.slice(0, BND.MAX_QUERIES_PER_HOP);
       if (queries.length === 0) {
@@ -2214,15 +2237,19 @@ serve(async (req) => {
   // single specialized call by design — entity profiles are already atomic per field).
   let synth: SynthOut;
   if (entityTarget) {
-    const mono = await synthesize(question, domainHint, citable, entityTarget);
+    const mono = await synthesize(question, domainHint, citable, entityTarget, fabricCtx);
     if (!mono) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
       if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
       return json(result);
     }
+    // R6-B: the fabric's closed served-route projection on the dossier record (absent on
+    // the dormant flag-off path).
+    const monoRoute = (mono as { __served_route?: unknown }).__served_route;
+    if (monoRoute) dossier.synthesis.served_route = monoRoute;
     synth = mono;
   } else {
-    const units = await planSynthesisUnits(question, domainHint, citable);
+    const units = await planSynthesisUnits(question, domainHint, citable, fabricCtx);
     for (const u of units) u.source_refs = citable.slice(0, 14).map((x) => x.index);
     costUSD += COST.cheapLLM; // the unit planner's extract call
     // bounded lanes: R4_UNIT_CONCURRENCY at a time, hard call ceiling R4_MAX_SYNTH_CALLS
@@ -2239,7 +2266,7 @@ serve(async (req) => {
         break;
       }
       const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).slice(0, Math.max(0, R4_MAX_SYNTH_CALLS - callsMade));
-      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis); }));
+      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis, fabricCtx); }));
       lane.forEach((u, j) => perUnit.push({ unit: u, out: outs[j] }));
     }
     const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);

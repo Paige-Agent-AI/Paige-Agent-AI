@@ -101,13 +101,15 @@ describe("R5 behavioral — the truncation signal on the REAL extracted synthesi
   // finish_reason "stop" (normalized) + paige_stop.stop_reason "max_tokens" (Anthropic native).
   const buildUnit = () => {
     const fnText = extractFn("synthesizeUnit");
-    // stub the module-scope router symbol the function closes over
+    // stub the module-scope adapter symbol the function closes over (R6-B: the call now rides
+    // researchCompletion; the flag-off adapter forwards to routedChatCompletion unchanged)
     const body = `
       const calls = [];
-      const routedChatCompletion = async (kind, b) => { calls.push({ kind, b }); return globalThis.__r5StubResp; };
+      const researchCompletion = async (phase, cls, b) => { calls.push({ phase, cls, b }); return { resp: globalThis.__r5StubResp, route: null }; };
       const parseJsonLoose = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
       const llmContent = (r) => r?.content ?? "";
       const R4_UNIT_MAX_TOKENS = 2400;
+      const RESEARCH_COGNITIVE_CLASSES = { unit_synthesis: "operational" };
       const unit = { unit_id: "u1", objective: "test objective", coverage_kind: "facet", source_refs: [], status: "pending" };
       ${fnText.replace(/const R4_UNIT_MAX_TOKENS = 2400;[^\n]*\n/g, "")}
       return { run: (r) => { globalThis.__r5StubResp = r; return synthesizeUnit(unit, "q", "hint", [{ index: 1, url: "https://x", title: "t", snippet: "s", content: "c", read: true, host: "x", published_at: null, fetched_at: "", authority: 1, recency: 1, corroboration: 1, reliability_score: 1, tier: "T2", reliability: "high", excluded: false }]); }, calls };

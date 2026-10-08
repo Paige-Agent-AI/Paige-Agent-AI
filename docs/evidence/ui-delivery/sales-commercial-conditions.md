@@ -33,8 +33,8 @@ MUST_PRESERVE: Canonical invoice writer, issued facts, Collections balance, Trus
 ACCEPTANCE_CRITERIA: Explicit conditions survive canonical save/readback; stale recorded annotations refuse after line changes; foreign relationships refuse; historical signed economics remain unknown.
 MOTION_PURPOSE: NONE: no motion changes.
 PROTECTED_SEAMS: Chat routing, C4, signing engine, payment executors, UI components and Performance untouched.
-INTERNAL_BUILD_IDENTITY: supporting=360f50a71f4bdc3e5c1140029425ec3457ff553d; candidate=exact PR head; deployment=not deployed; environment=development; migrations=PROOF_OWED(20270601000009 production persistence unverified); edge=PROOF_OWED(paige-ai-chat exact merged shared modules unverified); evidence=this record
-RELEASE_CHANNEL: development: production persistence and deployment not yet observed.
+INTERNAL_BUILD_IDENTITY: supporting=9cba7e2544a4625cf5c4e5a98a46b8e524233ee0; candidate=bebbe18d8ed36464f13240365a1522724ae0b724; deployment=dpl_DRjYBGQagaN9M5q2qrhenxuuTcJv at 1da3839f5a2829d02b2d3749b7ff66cbc58db9ed; environment=production; migrations=PASS(20270601000009 persisted); edge=PASS(paige-ai-chat v362, sales-invoice-command v47, sales-invoice-draft-command v18 exact changed modules); evidence=this record and docs/delivery/sales-commercial-conditions.md
+RELEASE_CHANNEL: production: bounded contract persisted/deployed; authenticated acceptance remains owed.
 RELEASE_CLASSIFICATION: internal-only: bounded commercial condition contract, not full commercial acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated owner outcome not accepted.
 RELEASE_NOTE_REQUIRED: no: no customer announcement.

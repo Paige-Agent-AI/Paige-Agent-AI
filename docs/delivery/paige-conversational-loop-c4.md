@@ -1,5 +1,67 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+## 2026-10-08 C4e preparation-only durable adoption
+
+**Preparation implementation MERGED; migration PERSISTED. Runtime activation, authenticated Solo
+acceptance, owner acceptance and INT-346 security clearance remain UNVERIFIED.**
+PR #1862, exact reviewed head `71d293d6bc46f98c235f8f40dd657386b4991d05`, merged as
+`e633b13651b6916120cf7f7cf96dbe19eca2ee44` after composition on fresh main
+`ccc3ee995a9bdfe906a433ac7b3e186282efbb77`. Independent non-author SHIP:
+PR comment `6067296062`. All 11 hosted checks SUCCESS, including Supabase Preview job
+`113488834668`. Verify run `37828630182`, job `113488568415`: 674 files / 10156 tests,
+Sales 319, invoice 69 and native C4e 37 checks PASS. Database-contract run `37828630259`,
+job `113487888587` SUCCESS. Migration deployment run `37830974520`, lint job
+`113495916629` and deployment job `113496082375` SUCCESS.
+
+Production read-only verification found migration `20270601000011` persisted; function body MD5
+`f80f0a582a4bb921888326ac374bb1f3` matches merged source, SECURITY DEFINER with empty search path,
+service execute true and authenticated/anonymous execute false. `interactive_active=false` remains.
+Vercel `dpl_CqRciNpVdiLZQr2gbSX83dX5jjaV` READY at the exact merge. Production channel,
+internal preparation patch; no customer version or announcement. Edge deployment NOT_APPLICABLE;
+no worker, UI or runtime activation. Recovery must preserve blocked preparation and immutable identity;
+use a reviewed forward migration rather than promote stored audit snapshots into permission.
+
+QA handoff #1832 is NOT READY: its owner must provision the approved synthetic account and inject
+credentials into the existing runner. No secret search is authorized. Provider-cessation proof #1822
+is separate; deployment or a blocked prepared envelope does not establish that clearance.
+
+This is a service-only preparation seam on the existing Harness envelope,
+not a research scheduler, worker, approval engine, model router or receipt system.
+
+Owner outcome: preserve the original research assignment and canonical durable identity so a future
+authorized continuation can finish it in the original conversation. Shared Harness/Conversational
+Loop owns preparation; Deep Research retains its existing provider/results architecture. The existing
+`deep_research` tool's durable/Spine continuation binding remains UNAVAILABLE; no new model tool or
+surface-ledger state is declared. Provider connections are not used. This performs an internal
+reversible work-metadata write, not a provider effect; no new mutation approval channel is added.
+Authority/budget/approval context is an audit snapshot and must be revalidated before any later
+dispatch. Existing Trust/approval/budget controls remain mandatory. Signed-in/provider acceptance is
+owed; fixtures establish persistence semantics only.
+
+`prepare_paige_research_work` validates a bounded original question/options payload, preserves
+tenant/actor/thread/intent/scope epoch and canonical authority snapshot, then uses the existing
+`create_paige_durable_work` and `transition_paige_durable_work` inside one transaction. New work is
+blocked with `research_execution_not_enabled` before commit. Exact retries return the same work ID;
+changed payload/scope/authority conflicts, revoked membership/archive scope and dispatched/terminal
+replays fail closed. The payload uses the existing immutable request fields. Browser execution is
+denied; the private dispatch key is not returned. No wake, cron, provider request, fake research run,
+success receipt, conversation resume or executor activation is added.
+
+Local baseline without the preparation RPC failed at the actual call. The completed migration passed
+37 real PostgreSQL checks in an empty localhost rollback fixture: identity/objective pinning, exact
+replay, changed inputs/scope/budget snapshot, foreign actor/tenant/thread, removed membership,
+archived conversation, immutable payload, terminal/dispatched replay, browser denial, one blocked
+envelope and zero results/dispatch. The native runner is in the required CI database step.
+Migration 11 was CLI-created and follows verified main/production 10; active future-tail PR migration
+lists contained no collision. SQL authority linters and script syntax passed.
+
+Runtime follow-through remains gated: a genuine server consumer must freshly resolve authority,
+approval/capability/budget, dispatch using canonical ownership, bind actual `research_runs.work_id`,
+verify run/source persistence and consume continuation exactly once. Current document recovery
+excludes research and is not repurposed. Original inline findings/citations and saved Research library
+remain governed by the approved R2b design (`docs/evidence/ui-delivery/e-deep-research-r2b-inline.md`)
+and the frozen C3 turn prototype. No visible interaction or design changes are made here.
+
 ## 2026-10-08 independent safe slice — #1807 readback and C4d/C4e foundation
 
 **Read-only implementation MERGED/DEPLOYED; authenticated acceptance UNVERIFIED.**

@@ -297,7 +297,7 @@ export async function fabricCompletion(
       const resp: Record<string, unknown> = c.provider === "openai"
         // The trace carries the CONSUMER's job identity, never the adapter's "chat" default; the
         // OpenAI leg self-traces through responsesCompletion under this context.
-        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: request.job } : undefined)
+        ? await responsesCompletion(request, { model: c.model as string, effort: OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass], fetchImpl: opts.openaiFetch }, opts.trace ? { ...opts.trace, job_kind: request.job, ...(gateHitForTrace ? { doctrine_gate_hits: gateHitForTrace } : {}) } : undefined)
         : await callAnthropicTraced(request, anthropicTier as ClaudeTier, request.job, opts.trace, gateHitForTrace);
       const servedModel = typeof resp.model === "string" && resp.model
         ? resp.model

@@ -334,8 +334,8 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     anthropicPlan = { status: 200 };
     const rows9 = rec9.inserts.filter((i) => i.table === "paige_llm_trace").slice(before9);
     ok(rows9.length === 1 && rows9[0].row?.status === "error" && rows9[0].row?.job_kind === "research_unit_synthesis"
-      && rows9[0].row?.error_class === "provider_outage",
-      `C9 a failed Anthropic leg writes one attributed error trace row (${rows9[0]?.row?.error_class})`);
+      && rows9[0].row?.error_class === "provider_outage" && rows9[0].row?.error_message === "Error",
+      `C9 a failed Anthropic leg writes one attributed error trace row, name-only message (${rows9[0]?.row?.error_class}/${rows9[0]?.row?.error_message})`);
   }
 
   // C10 — transport failures are the streaming fabric's provider_outage: fallback-eligible.

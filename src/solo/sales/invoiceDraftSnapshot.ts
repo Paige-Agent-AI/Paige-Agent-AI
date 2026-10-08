@@ -1,4 +1,5 @@
 /** Invoice-only persisted facts. Processor/method/channel values are intent, never eligibility or dispatch authority. */
+import {parseCommercialConditions,validateCommercialConditionLines,type CommercialConditions} from '../../../supabase/functions/_shared/sales-commercial/conditions';
 export type InvoiceAddress = { line1: string | null; line2: string | null; city: string | null; region: string | null; postal_code: string | null; country: string | null };
 export type InvoiceItemInput = { price_id: string | null; item: string; description?: string | null; unit_minor: number | null; quantity: number };
 export type InvoiceItemSnapshot = Omit<InvoiceItemInput, 'unit_minor'> & { unit_minor: number; price_snapshot: Record<string, unknown> | null };
@@ -7,6 +8,8 @@ export type InvoiceSnapshotInput = {
   kind: 'one_time' | 'deposit' | 'recurring'; deposit_basis_points: number | null; currency: 'usd'; cadence: 'monthly' | null;
   /** Version3 exact deposits only; version2 never admits this field. */
   deposit_minor?: number;
+  /** Included recorded invoice-line charges; absence is unknown, never implicit zero. */
+  commercial_conditions?: CommercialConditions;
   recipient_email: string | null; recipient_phone: string | null; email_source_method_id: string | null; phone_source_method_id: string | null;
   billing_address: InvoiceAddress | null; agreement_id: string | null; processor_intent: string | null; payment_method_intents: string[];
   delivery_channel_intents: ('email' | 'sms')[]; due_date: string | null; memo: string | null;
@@ -43,7 +46,7 @@ export function aggregateInvoiceItems(items: readonly Pick<InvoiceItemSnapshot, 
 
 function readVersioned(value: Record<string, unknown>, expectedTotal: number): InvoiceSnapshot | null {
   const exact=value.schema_version===3;
-  if (!only(value, [...inputKeys, ...(exact?['deposit_minor']:[]), 'agreement_snapshot', 'total_minor', 'due_now_minor', 'remainder_minor'])
+  if (!only(value, [...inputKeys, ...(exact?['deposit_minor']:[]), 'commercial_conditions', 'agreement_snapshot', 'total_minor', 'due_now_minor', 'remainder_minor'])
     || (value.schema_version !== 2 && !exact) || typeof value.client_id !== 'string' || !uuid.test(value.client_id)
     || !['one_time', 'deposit', 'recurring'].includes(String(value.kind)) || value.currency !== 'usd'
     || (value.kind === 'recurring' ? value.cadence !== 'monthly' : value.cadence !== null)
@@ -79,6 +82,7 @@ function readVersioned(value: Record<string, unknown>, expectedTotal: number): I
         || (value.kind === 'recurring' ? line.price_snapshot.billing_interval !== 'month' || line.price_snapshot.interval_count !== 1 : line.price_snapshot.billing_interval !== 'one_time'))) return null;
   }
   try {
+    if('commercial_conditions' in value){const conditions=parseCommercialConditions(value.commercial_conditions);if(!conditions)return null;validateCommercialConditionLines(conditions,value.items as InvoiceItemSnapshot[]);}
     const amounts = aggregateInvoiceItems(value.items as InvoiceItemSnapshot[], value.kind === 'deposit' && !exact ? Number(value.deposit_basis_points) : undefined,
       exact ? Number(value.deposit_minor) : undefined);
     if (amounts.totalMinor !== expectedTotal || value.total_minor !== amounts.totalMinor || value.due_now_minor !== amounts.dueNowMinor || value.remainder_minor !== amounts.remainderMinor) return null;

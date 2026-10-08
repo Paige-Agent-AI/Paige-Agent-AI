@@ -15,6 +15,13 @@ const snapshot: InvoiceSnapshot = {
   total_minor: 2999, due_now_minor: 750, remainder_minor: 2249,
 };
 describe('versioned invoice-only snapshots', () => {
+  it('preserves recorded included charge treatment on reload/edit without adding it to principal',()=>{
+    const conditions={schema_version:1 as const,tax:{state:'recorded' as const,charges:[{line_index:0,amount_minor:100,currency:'usd' as const}],source:'Recorded invoice line',policy:'Included amount'},fees:{state:'not_applicable' as const,charges:[],source:'Commercial terms',policy:'No additional fee'}};
+    const saved={...snapshot,commercial_conditions:conditions};
+    expect(normalizeInvoiceSnapshot(saved,2999)).toEqual(saved);
+    expect(snapshotEditInput(saved).commercial_conditions).toEqual(conditions);
+    expect(normalizeInvoiceSnapshot({...saved,commercial_conditions:{...conditions,tax:{...conditions.tax,charges:[{line_index:0,amount_minor:2000,currency:'usd'}]}}},2999)).toBeNull();
+  });
   it('sums checked line integers and rounds one deposit on the whole obligation', () => {
     expect(aggregateInvoiceItems(snapshot.items, 2500)).toEqual({ totalMinor: 2999, dueNowMinor: 750, remainderMinor: 2249 });
     expect(() => aggregateInvoiceItems([{ ...item, unit_minor: 2147483647 }])).toThrow();

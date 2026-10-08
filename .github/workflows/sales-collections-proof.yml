@@ -11,6 +11,7 @@ on:
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
       - 'scripts/sql/sales-package-read-proof.mjs'
+      - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
@@ -25,6 +26,7 @@ on:
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
       - 'scripts/sql/sales-package-read-proof.mjs'
+      - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
@@ -67,6 +69,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-package-read-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+      - name: Commercial conditions, exact agreement compatibility and canonical writer replay
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-commercial-conditions-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
       - name: Preserve Collections SQL proof receipt
         if: always()
         uses: actions/upload-artifact@v4

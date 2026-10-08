@@ -11,6 +11,30 @@ function scheduledFixture():Record<string,unknown>{
 }
 const readFixture=(data:Record<string,unknown>)=>readCommercialPackage(tenant,{invoice_id:invoice},{rpc:vi.fn().mockResolvedValue({data,error:null})});
 describe('canonical commercial package caller-JWT read',()=>{
+ it('reads explicitly recorded no-additional-charge conditions without manufacturing missing tax treatment',async()=>{
+  const data:Record<string,unknown>=fixture();data.missing_fields=[];
+  data.commercial_conditions={schema_version:1,tax:{state:'not_applicable',charges:[],source:'Recorded commercial terms',policy:'No additional tax'},fees:{state:'not_applicable',charges:[],source:'Recorded commercial terms',policy:'No additional fees'}};
+  data.compatibility={basis:'canonical_relationship_and_invoice_source_version',signed_economics:'not_signed'};
+  expect((await readFixture(data)).content).toMatchObject({success:true,commercial_conditions:data.commercial_conditions,authority:'not_evaluated',execution:'not_started'});
+ });
+ it('refuses disappearance of unknown treatment rather than assuming zero',async()=>{
+  const data:Record<string,unknown>=fixture();data.missing_fields=[];
+  expect((await readFixture(data)).content.success).toBe(false);
+ });
+ it('keeps historical signed economics unresolved even when identities and current totals agree',async()=>{
+  const data=scheduledFixture();data.missing_fields=['tax_and_fee_treatment','signed_terms_compatibility'];
+  data.compatibility={basis:'canonical_relationship_and_invoice_source_version',signed_economics:'unverified_no_frozen_commercial_snapshot'};
+  expect((await readFixture(data)).content).toMatchObject({success:true,compatibility:data.compatibility});
+  (data.compatibility as Record<string,unknown>).signed_economics='compatible';
+  expect((await readFixture(data)).content.success).toBe(false);
+ });
+ it('cannot hide signed compatibility debt or add reusable package authority',async()=>{
+  const data=scheduledFixture();data.compatibility={basis:'canonical_relationship_and_invoice_source_version',signed_economics:'unverified_no_frozen_commercial_snapshot'};
+  expect((await readFixture(data)).content.success).toBe(false);
+  data.missing_fields=['tax_and_fee_treatment','signed_terms_compatibility'];
+  (data.compatibility as Record<string,unknown>).approved=true;
+  expect((await readFixture(data)).content.success).toBe(false);
+ });
  it('expands the recorded deposit and ten installments with source identity, without allocating per installment or granting authority',async()=>{
   const result=(await readFixture(scheduledFixture())).content;
   expect(result).toMatchObject({success:true,state:'needs_input',missing_fields:['tax_and_fee_treatment'],authority:'not_evaluated',execution:'not_started',schedule_preview:{schema_version:1,basis:'recorded_principal_schedule',source:{commercial_terms_version:3,invoice_version:2},amount_basis:'total',has_more:false}});

@@ -3,6 +3,12 @@ import {parseCommercialDraftCommand} from '../../supabase/functions/_shared/sale
 const client='33333333-3333-4333-8333-333333333333',invoice='44444444-4444-4444-8444-444444444444';
 const draft=()=>({schema_version:3,client_id:client,items:[{price_id:null,item:'Commercial service',unit_minor:350000,quantity:1}],kind:'deposit',deposit_basis_points:null,deposit_minor:50000,currency:'usd',cadence:null,recipient_email:'client@example.test',recipient_phone:null,email_source_method_id:null,phone_source_method_id:null,billing_address:null,agreement_id:null,processor_intent:null,payment_method_intents:[],delivery_channel_intents:['email'],due_date:'2026-11-01',memo:null});
 describe('bounded conversational draft command boundary',()=>{
+ it('carries exact recorded condition facts through the existing approval-bound draft, without defaulting unknowns',()=>{
+  const commercial_conditions={schema_version:1,tax:{state:'unknown',charges:[],source:null,policy:null},fees:{state:'not_applicable',charges:[],source:'Recorded terms',policy:'No additional fees'}};
+  expect(parseCommercialDraftCommand({action:'invoice.draft_create',draft:{...draft(),commercial_conditions}}).draft.commercial_conditions).toEqual(commercial_conditions);
+  expect(()=>parseCommercialDraftCommand({action:'invoice.draft_create',draft:{...draft(),commercial_conditions:null}})).toThrow();
+  expect(()=>parseCommercialDraftCommand({action:'invoice.draft_create',draft:{...draft(),commercial_conditions:{...commercial_conditions,approved:true}}})).toThrow();
+ });
  it('preserves exact intent without calculating a second balance or issuing/sending',()=>{const input={action:'invoice.draft_create',draft:draft()};const result=parseCommercialDraftCommand(input);expect(result).toEqual(input);expect(result.draft).not.toBe(input.draft);expect(result.draft).not.toHaveProperty('due_now_minor');expect(result).not.toHaveProperty('invoice_id')});
  it('requires current identity/version for draft revision',()=>expect(parseCommercialDraftCommand({action:'invoice.draft_revise',invoice_id:invoice,expected_version:1,draft:draft()})).toMatchObject({invoice_id:invoice,expected_version:1}));
  it.each([{approved:true},{confirm:true},{tenant_id:client},{actor_id:client},{operation_id:invoice},{invoice_id:invoice},{send:true},{card_number:'unsafe'},{cvv:'unsafe'}])('rejects model authority/provider/identity fields %j',patch=>expect(()=>parseCommercialDraftCommand({action:'invoice.draft_create',draft:draft(),...patch})).toThrow());

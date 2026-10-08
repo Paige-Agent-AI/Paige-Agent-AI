@@ -164,7 +164,7 @@ try {
  denied(saveReference(),'22023');
  assert.equal(catalogPackage.commercial_terms,null);checks++;
  const beforeSigning=run('SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM paige_agreements a;');
- const referenceMigration=read('supabase/migrations/20270601000012_sales_invoice_terms_reference.sql');
+ const referenceMigration=read('supabase/migrations/20270601000013_sales_invoice_terms_reference.sql');
  run(referenceMigration);run(referenceMigration);
  const parseResult=sql=>JSON.parse(run(sql).split(/\r?\n/).find(x=>x.startsWith('{')));
  const linked=parseResult(saveReference());

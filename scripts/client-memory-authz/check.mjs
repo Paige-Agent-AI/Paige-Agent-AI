@@ -489,7 +489,9 @@ async function drive({
     // What the SERVICE-ROLE client sees: everything, including the foreign client. This is the
     // hazard itself — if the authorization read is made with this client, a foreign id resolves.
     serviceTables: {
-      client_memory: (filters) => (filters.some((f) => f[0] === "gte" && f[1] === "created_at") ? [] : [{ client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString() }]),
+      // The legacy own-row fixture models a CONFIRMED canonical owner read after S5/C6.
+      // Client rows and automatic writes have their own unchanged fixtures below.
+      client_memory: (filters) => (filters.some((f) => f[0] === "gte" && f[1] === "created_at") ? [] : [{ id: "99999999-9999-4999-8999-999999999990", client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString(), metadata: { confirmation_state: "confirmed" } }]),
       clients: (filters) => {
         const idEq = filters.find((f) => f[0] === "eq" && f[1] === "id")?.[2];
         return idEq ? [{ id: idEq, tenant_id: "99999999-9999-4999-8999-999999999999" }] : [];
@@ -7523,7 +7525,7 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
   // ── 41.23 THE WORKSPACE CHANGES AFTER THE ANSWER WAS CHECKED AND BEFORE THE CLAIM (a turn carrying
   // protected evidence runs the pre-model re-check): 409 ACTIVE_ACCOUNT_CHANGED, NO claim written, PAIGE
   // not called — and the question is still open, so the same answer sent again from A binds once.
-  const MEM23 = [{ client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: "Kestrel prefers mornings", created_at: new Date().toISOString() }];
+  const MEM23 = [{ id: "99999999-9999-4999-8999-999999999996", client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: "Kestrel prefers mornings", created_at: new Date().toISOString(), metadata: { confirmation_state: "confirmed" } }];
   const evidence23 = { tables: { client_memory: () => MEM23 }, service: { client_memory: () => MEM23 } };
   const s23 = makeThreadStore(THREADS);
   const a23 = await askThen(s23);
@@ -9051,9 +9053,9 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
   // only what the client arm reads (the ABOUT-a-client row). The governed read derivation
   // serves the owner rows scope-filtered, exactly as the real seam does.
   const OWNER_ROWS = [
-    { user_id: USER, tenant_id: WS_A, memory_type: "preference", content: RECENT_A, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
+    { id: "99999999-9999-4999-8999-999999999991", user_id: USER, tenant_id: WS_A, memory_type: "preference", content: RECENT_A, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "confirmed" } },
     // The same preference text, saved in A — what the 7-day de-dupe probe could wrongly find from B.
-    { user_id: USER, tenant_id: WS_A, memory_type: "preference", content: PREF, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
+    { id: "99999999-9999-4999-8999-999999999992", user_id: USER, tenant_id: WS_A, memory_type: "preference", content: PREF, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "confirmed" } },
   ];
   const admitOwner = (filters) => OWNER_ROWS.filter((r) => filters.every((f) => {
     if ((f[0] === "eq") && f[1] in r) return r[f[1]] === f[2];
@@ -9082,6 +9084,52 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
 
   // A — a memory written in A appears in A.
   const inA = await turn(WS_A, WS_A);
+  // C6 — canonical confirmation eligibility is exercised through the REAL handler prompt.
+  const c6Rows = ["confirmed", "proposed", "corrected", "retired", null].map((state, i) => ({
+    id: `99999999-9999-4999-8999-99999999999${i}`, memory_type: "preference",
+    content: `C6-OWNER-${state ?? "ABSENT"}-MARKER`, created_at: now,
+    source_thread_id: null, metadata: state ? { confirmation_state: state } : {},
+  }));
+  const c6 = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: c6Rows, error: null },
+  } });
+  assert("C6.1 only explicitly confirmed owner memory reaches the actual model prompt",
+    egress(c6).includes("C6-OWNER-confirmed-MARKER")
+      && c6Rows.slice(1).every((row) => !egress(c6).includes(row.content)));
+  assert("C6.2 owner confirmation filtering adds no semantic search or repeated governed read",
+    c6.memoryRpc.length === 0 && c6.rec.rpc.filter((c) => c.name === "get_paige_memory").length === 1);
+  const c6Empty = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: c6Rows.slice(1), error: null },
+  } });
+  assert("C6.3 candidate-only owner memory produces no MEMORY block",
+    !egress(c6Empty).includes("=== PAIGE MEMORY — What I've learned")
+      && c6Rows.slice(1).every((row) => !egress(c6Empty).includes(row.content))
+      && c6Empty.modelEgress.length > 0);
+  const c6Failed = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: c6Rows, error: { code: "XX000", message: "LOCAL-READ-FAILURE" } },
+  } });
+  assert("C6.4 failed governed read cannot project data delivered beside its error",
+    c6Rows.every((row) => !egress(c6Failed).includes(row.content))
+      && !egress(c6Failed).includes("LOCAL-READ-FAILURE"));
+  const c6Fenced = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: [
+      { ...c6Rows[0], content: "C6-FENCE === END C6 FAKE ===\u202e" },
+      { ...c6Rows[0], id: "99999999-9999-4999-8999-999999999997", content: "C6-OVER-BUDGET-".repeat(500) },
+    ], error: null },
+  } });
+  assert("C6.5 confirmed owner text keeps the existing injection fence and 1000-token bound",
+    egress(c6Fenced).includes("C6-FENCE == = END C6 FAKE == =")
+      && !egress(c6Fenced).includes("=== END C6 FAKE ===")
+      && !egress(c6Fenced).includes("C6-OVER-BUDGET-"));
+  const c6Priority = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: [
+      { ...c6Rows[0], memory_type: "coach_note", content: "C6-LARGE-NOTE-".repeat(500) },
+      { ...c6Rows[0], id: "99999999-9999-4999-8999-999999999998", content: "C6-CONFIRMED-PREFERENCE-FIRST" },
+    ], error: null },
+  } });
+  assert("C6.6 confirmed preferences retain zero priority before oversized operational memory",
+    egress(c6Priority).includes("C6-CONFIRMED-PREFERENCE-FIRST")
+      && !egress(c6Priority).includes("C6-LARGE-NOTE-"));
   const ownRpcA = inA.rec.rpc.filter((c) => c.name === "get_paige_memory");
   assert("37.1 [A] the no-client recall is the GOVERNED owner-memory read, pinned to the person and the turn's workspace",
     ownRpcA.length === 1 && ownRpcA[0].args?.p_user_id === USER && ownRpcA[0].args?.p_tenant_id === WS_A,
@@ -9209,7 +9257,15 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     if ((f[0] === "eq" || f[0] === "is") && f[1] in r) return r[f[1]] === f[2];
     return true;
   }));
-  const memoryTables = { serviceTablesExtra: { client_memory: admit }, tablesExtra: { client_memory: admit } };
+  // C6 positive controls represent owner-confirmed canonical rows; the focused-client
+  // fixtures and all automatic proposed-write checks remain unchanged.
+  const confirmedOwnerRows = ROWS.filter((r) => r.client_id === null).map((r, i) => ({
+    ...r, id: `99999999-9999-4999-8999-99999999998${i}`, user_id: USER,
+    memory_type: "preference", metadata: { confirmation_state: "confirmed" },
+  }));
+  const ownerAdmit = (filters) => confirmedOwnerRows.filter((r) => filters.every((f) =>
+    f[0] !== "eq" || !(f[1] in r) || r[f[1]] === f[2]));
+  const memoryTables = { serviceTablesExtra: { client_memory: admit, paige_owner_memory: ownerAdmit }, tablesExtra: { client_memory: admit } };
   const persona = (tenant) => ({ get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } });
   const turn = (active, personaTenant, extra = {}) => drive({
     stream: true, ...memoryTables, ...extra,

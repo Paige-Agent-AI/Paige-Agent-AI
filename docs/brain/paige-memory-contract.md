@@ -69,9 +69,12 @@ A durable row with `confirmation_state='proposed'` is a **candidate**, not eligi
 It may be displayed with provenance for review or correction, but the Runtime Harness must not
 assemble it into task context as a confirmed fact. Only an authorized, scoped projection that
 enforces the owner-confirmed eligibility rule may promote durable knowledge into runtime context.
-That confirmed-only projection and its runtime integration are currently `UNAVAILABLE`; the
-existing write/read seam and its returned confirmation metadata do not prove filtering. Proof
-becomes owed only after an implementation exists. This clarifies eligibility without changing the
+The 2026-10-08 Conversational Loop composition implements a confirmed-only projection on the
+existing owner-memory Chat read. It excludes proposed/corrected/retired/unclassified rows and
+failed-read data, retains canonical provenance and captured server scope, and clears typed context
+on the existing workspace-change fence. Local adapter tests (24) and the actual-handler harness
+(958 assertions) pass; merge/deployment/authenticated Solo acceptance remain owed at this candidate.
+The existing write/read seam and its metadata alone do not prove filtering. This clarifies eligibility without changing the
 established store or seam and does not authorize chat auto-write, raw transcript ingestion, or a
 second Memory system. Canonical Harness decision:
 `docs/PAIGE-MASTER-PROJECT-REFERENCE.md` Section 3.

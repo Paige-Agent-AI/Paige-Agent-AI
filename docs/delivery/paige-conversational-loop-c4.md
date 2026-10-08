@@ -1,5 +1,42 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+## 2026-10-08 original-operation observation in the existing status path
+
+Implementation in progress on `codex/int304-continuation-runtime`, based on main
+`a97bb5c3af4f53d29d93b799359f1afcafa821c4`. This is an observation consumer, not automatic
+settlement or C4d/C4e runtime completion. Merge, deployment and authenticated acceptance are owed.
+
+Pre-edit routing: (1) the owner wants PAIGE to verify the original Pipeline operation;
+(2) Conversational Loop owns this status consumer, Pipeline owns its records;
+(3) the existing authenticated interactive status path consumes the reviewed canonical readers;
+(4) the original protected card/intent resolver and existing catalogue/operation ledger remain the
+callable seams, with no new capability or execution binding;
+(5) no provider connection or model call is used;
+(6) fresh caller, current tenant, owned thread, original actor/intent/effect and current admin permission
+are required by the existing resolver;
+(7) no job, event, scheduler, receipt or retry is created;
+(8) exact receipt hash and business-record version establish readback, contradictory evidence stays unknown;
+(9) existing Solo status polling retains its executor semantics, with no UI/layout change;
+(10) handler doubles and deterministic regressions prove code behavior, not authenticated production acceptance.
+
+An optional UUID `interactive.pipelineEffectId` references the existing server-issued operation;
+it supplies no command, tenant, actor or permission. Status requests can read while DRAINING.
+`original_operation` is separate from `executor_active` and `settled`; executor state is reread
+after awaited observations. No observation releases ownership, issues a terminal receipt, retries,
+activates execution or relaxes the `outcome_unknown` successor-write brake. Responses are no-store.
+Ordinary status requests preserve their prior response shape.
+
+Failing-first: extracted legacy status behavior failed three of six behavioral assertions, then all
+six passed after enrichment. The actual loaded handler proves DRAINING successful readback with a held
+executor, foreign tenant/actor, stale version, absent original and missing receipt, without inserts,
+provider calls, admission, append, settlement or release. Resolver/catalogue calls are caller JWT-bound.
+Existing canonical readback tests retain actor-switch, stale-intent, concurrent observation and replay
+coverage. Revoked-permission and forged-effect handler controls are included in the final regression.
+
+Runtime continuation and automatic settlement remain gated by INT-346. This consumer does not turn
+the historical closure of #1807 into completion. Provider cessation (#1822), synthetic authenticated
+Solo access (#1832), and C5 consultation authority D2 remain with their existing owners.
+
 ## 2026-10-08 C4e preparation-only durable adoption
 
 **Preparation implementation MERGED; migration PERSISTED. Runtime activation, authenticated Solo

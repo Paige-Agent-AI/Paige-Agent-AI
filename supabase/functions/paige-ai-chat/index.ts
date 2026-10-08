@@ -34,6 +34,9 @@ import { describeAttempts, fabricChatStream, type FabricStream } from "../_share
 import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
+import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
+import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
+import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
 import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
@@ -195,6 +198,8 @@ import { PAIGE_PERSONA_CORE } from "../_shared/paige-persona/core.ts";
 // below. NO-OP (returns null) for anyone but a seeded platform operator (the tenant-less God account).
 import { loadOwnerContextBlock } from "../_shared/owner-context.ts";
 import { buildTenantTeamContextBlock } from "../_shared/team-context.ts";
+import { resolveOwnerMemoryContext, type OwnerMemoryContext } from "../_shared/paige-context/owner-memory.ts";
+import { contextDegraded, contextUnavailable, type ContextSourceResult } from "../_shared/paige-context/mod.ts";
 import { TITLE_WORD } from "../_shared/team-vocabulary.ts";
 import {
   fenceUploadedFileText,
@@ -234,6 +239,7 @@ import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
 import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
+import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
@@ -283,11 +289,6 @@ const corsHeaders = {
 // server (§11); every branch — including the default — returns human copy in §3 voice.
 // Returns null to DROP a step (policy-gated rejections and non-work stubs) so a gated call
 // never renders as a scary failure and the trace never advertises work not performed.
-const SUBAGENT_FRIENDLY: Record<string, string> = {
-  "email-composer": "your email specialist",
-  "content-writer": "your content specialist",
-  "research-analyst": "your research specialist",
-};
 /**
  * Does this tool result REPORT A FAILURE? The one reading a step's FINISH uses — its wording here in
  * describeStep and its `done` / `error` status in the step hooks — so the two cannot disagree. Tools
@@ -305,6 +306,7 @@ function toolResultReportsFailure(out: any): boolean {
 function describeStep(
   tc: any,
   res: any,
+  specialists: readonly SpecialistStepIdentity[] = [],
 ): { label: string; group: "owner" | "client" | "shared"; detail?: string } | null {
   const name: string = tc?.function?.name ?? "";
   let args: any = {};
@@ -559,8 +561,7 @@ function describeStep(
     }
     case "delegate_to_subagent": {
       const slug = args?.slug ?? args?.subagent ?? "";
-      const who = SUBAGENT_FRIENDLY[slug] ?? "a specialist";
-      return { label: `Bringing in ${who}`, group: "shared" };
+      return { label: specialistStepLabel(slug, specialists, res == null ? null : out), group: "shared" };
     }
     case "list_subagents": return { label: "Finding the right specialist", group: "shared" };
     // Research (shared)
@@ -762,7 +763,7 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
-  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional() }).optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional() }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1179,9 +1180,26 @@ serve(async (req) => {
         return data;
       };
       if (validatedData.interactive.kind === "status") {
-        const state = await executor("state");
-        return new Response(JSON.stringify({ executor_active: state.executor !== null,
-          settled: state.executor === null && (state.terminal === true || state.stopped === true) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const effectId = validatedData.interactive.pipelineEffectId;
+        const readers = effectId ? createPipelineCanonicalReaders({
+          caller: supabaseClient, service: supabase,
+          revalidateScope: async (binding) => {
+            const original = await supabaseClient.rpc("read_pipeline_metadata_original", {
+              _thread: binding.threadId, _intent: binding.intentId, _effect: binding.effectId,
+            });
+            return !original.error && original.data?.tenantId === binding.tenantId &&
+              original.data?.actorId === binding.actorId;
+          },
+        }) : undefined;
+        const status = await readInteractiveOutcomeStatus({
+          state: () => executor("state"),
+          ...(effectId && readers ? { readOutcome: () => readPipelineMetadataOutcome({
+            threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
+            effectId, tenantId: thread.tenant_id, actorId: user.id,
+          }, readers) } : {}),
+        });
+        return new Response(JSON.stringify(status), { headers: { ...corsHeaders,
+          "Content-Type": "application/json", "Cache-Control": "no-store" } });
       }
       // This exact query/fallback/order was driven in the isolated proposed handler.
       interactiveSettlement = createInteractiveSettlement({
@@ -2208,6 +2226,7 @@ JSON:`;
     // `memoryScopeTenantId` records the workspace the memory was read in; the turn's own workspace is
     // pinned later (persona read), and a block read in a different one is dropped there.
     let memoryScopeTenantId: string | null = null;
+    let ownerMemoryContext: ContextSourceResult<OwnerMemoryContext> = { ...contextUnavailable("owner_memory_scope_unavailable"), data: null };
     try {
       // The workspace sample is needed on EVERY memory-reading turn, client turns included: the
       // race guard after the persona read compares it with the turn's workspace, and a client turn
@@ -2231,9 +2250,12 @@ JSON:`;
       // S5 read flip: OWNER/WORKSPACE continuity is recalled from the canonical owner-memory
       // home through the governed read (service-role passes the turn's declared∧validated
       // scope — the same authority the writers stamp under). CLIENT-scoped recall is unchanged.
-      // The governed read returns rows with metadata, so confirmation_state travels with each
-      // item to FUTURE consumers (the C6 projection's presentation contract decides phrasing);
-      // today's builder renders rows uniformly, which is unchanged from before the cutover.
+      // C6: pin the server-derived read binding before awaiting the governed read. Its rows
+      // carry confirmation/provenance but no tenant/actor columns; metadata grants no scope.
+      const ownerMemoryReadScope = {
+        actorId: user.id, tenantId: memoryTurnTenant,
+        focusedClientId: scopedClientId, denied: clientScopeDenied,
+      };
       const memoryQuery = clientScopeDenied
         ? null
         : scopedClientId
@@ -2281,7 +2303,17 @@ JSON:`;
         memoryTenantSample,
       ]);
       memoryScopeTenantId = sampledTenant;
-      const memories = (memoryResult as any)?.data ?? null;
+      // Client recall keeps its existing projection. Only owner recall admits explicitly
+      // confirmed canonical rows; candidates and a failed read never become task knowledge.
+      if (!scopedClientId) {
+        ownerMemoryContext = resolveOwnerMemoryContext(ownerMemoryReadScope, memoryResult as any);
+        if (ownerMemoryContext.status === "degraded") {
+          console.error("[paige] owner memory context degraded", ownerMemoryContext.reason);
+        }
+      }
+      const memories = scopedClientId
+        ? (memoryResult as any)?.data ?? null
+        : ownerMemoryContext.data?.memories ?? null;
 
       if (memories && memories.length > 0) {
         // Always-on: surface user_preference at the top so Paige respects communication style.
@@ -2291,7 +2323,11 @@ JSON:`;
           milestone_completed: 4, lender_researched: 5, coach_note: 6, session_summary: 7,
           commitment: 8, open_loop: 9,
         };
-        const sorted = [...memories].sort((a, b) => (priorityOrder[a.memory_type] || 99) - (priorityOrder[b.memory_type] || 99));
+        // Owner preferences have priority zero; preserve it instead of treating it as absent.
+        // The client arm keeps its existing ordering contract in this bounded C6 slice.
+        const memoryPriority = (type: string) => scopedClientId
+          ? (priorityOrder[type] || 99) : (priorityOrder[type] ?? 99);
+        const sorted = [...memories].sort((a, b) => memoryPriority(a.memory_type) - memoryPriority(b.memory_type));
 
         let tokenEstimate = 0;
         const included: string[] = [];
@@ -2340,6 +2376,7 @@ JSON:`;
         }
       }
     } catch (err) {
+      if (!scopedClientId && !clientScopeDenied) ownerMemoryContext = contextDegraded("owner_memory_read_failed");
       console.error("Error loading client memory:", err);
     }
 
@@ -2577,6 +2614,7 @@ JSON:`;
         memory_tenant_id: memoryScopeTenantId, turn_tenant_id: personaCtx.tenant_id ?? null,
       }));
       memoryBlock = "";
+      ownerMemoryContext = { ...contextUnavailable("owner_memory_scope_changed"), data: null };
     }
 
     // THE THREAD MUST BELONG TO THIS TURN'S WORKSPACE (§9, owner addition 2026-10-05). Every later use
@@ -9111,6 +9149,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (mcp === "consent_in_progress" || mcp === "provider_unavailable") return "unknown";
       return "not_ready"; // not configured, needs OAuth, disabled, cancelled, refused, failed, expired
     };
+    let specialistStepRoster: SpecialistStepIdentity[] = [];
+    const describeScopedStep = (tc: any, res: any) => describeStep(tc, res, specialistStepRoster);
     const loadSpecialists = async (): Promise<SpecialistSummary[]> => {
       const tenantId = personaCtx?.tenant_id ?? null;
       // A uuid before it touches a PostgREST filter (§9) — the same guard the orchestrator applies.
@@ -9122,15 +9162,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // marks an internal build-crew seat (migration 20261201000800), and `name` is an internal
         // register — so it is never the fallback.
         const { data, error } = await supabase.from("paige_subagents")
-          .select("rail_display_name, domain, name, description, system_prompt")
+          .select("slug, rail_display_name, domain, name, description, system_prompt")
           .eq("enabled", true)
           .not("rail_display_name", "is", null)
           .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`);
         if (error || !Array.isArray(data)) return [];
-        return data
+        const visible = data
           .filter((r: any) => typeof r.rail_display_name === "string" && r.rail_display_name.trim())
           .filter((r: any) => personaCtx?.funding_enabled === true || !looksLikeFinanceAgent(r))
-          .map((r: any) => ({ name: String(r.rail_display_name).trim(), domain: r.domain ?? null }));
+          .map((r: any) => ({ slug: r.slug, name: String(r.rail_display_name).trim(), domain: r.domain ?? null }));
+        specialistStepRoster = visible.filter((r: any) => typeof r.slug === "string").map((r: any) => ({ slug: r.slug, displayName: r.name }));
+        return visible;
       } catch { return []; }
     };
     type CapabilityProjection = { rows: ReturnType<typeof projectCapabilities>; specialists: SpecialistSummary[] };
@@ -9169,6 +9211,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         && (r.availability === "live" || r.availability === "needs_approval"));
       return { rows, specialists: canDelegate ? specialists : [] };
     })());
+    if (!capabilityManifestEligible) await loadSpecialists();
     if (capabilityManifestEligible) {
       try {
         const projection = await gatherCapabilityProjection();
@@ -10081,7 +10124,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try {
           // `any`, as everywhere in this dispatch: the door sets are typed by their own literal names.
           const name = tc?.function?.name ?? "";
-          if (!describeStepStart(tc, describeStep)) return false;
+          if (!describeStepStart(tc, describeScopedStep)) return false;
           if (CRM_COMMAND_TOOL_NAMES.has(name) || GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(name)
               || SALES_INVOICE_TOOL_NAMES.has(name) || SALES_COLLECTIONS_TOOL_NAMES.has(name)
               || COMMS_EMAIL_TOOL_NAMES.has(name)) return false;
@@ -16394,7 +16437,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         return {
           start: (tc, toolIndex) => {
             try {
-              const s = describeStepStart(tc, describeStep);
+              const s = describeStepStart(tc, describeScopedStep);
               if (!s) return;
               const st = { id: stepId(tc, toolIndex), round, seq: ++stepSeq, kind: "action" as const, label: s.label, group: s.group,
                 status: "running" as const, ts: Date.now() - startedAt };
@@ -16418,8 +16461,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // `done` / `error` from the SAME reading describeStep's wording uses (`toolResultReportsFailure`),
               // so a result that reports failure in any of the shapes tools use never closes `done`.
               let ok = true;
-              try { ok = !toolResultReportsFailure(JSON.parse(res?.content ?? "{}")); } catch { /* keep ok */ }
-              const derived = describeStep(tc, res);
+              try { const result = JSON.parse(res?.content ?? "{}"); ok = !toolResultReportsFailure(result); if (tc?.function?.name === "delegate_to_subagent") ok = ok && (result?.ok === true || result?.success === true); } catch { if (tc?.function?.name === "delegate_to_subagent") ok = false; }
+              const derived = describeScopedStep(tc, res);
               finishedSteps.set(tc, derived);
               if (!derived) {
                 // Not rendered (a gated or stub result). A START already on screen is taken back.
@@ -16868,7 +16911,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 auditWriteForTool(tc, res);
                 // The label the step finished with (the approval rewrite above adds only fields
                 // describeStep does not read, so asking again would give the same answer).
-                const derived = finishedSteps.has(tc) ? finishedSteps.get(tc) : describeStep(tc, res);
+                const derived = finishedSteps.has(tc) ? finishedSteps.get(tc) : describeScopedStep(tc, res);
                 if (!derived) continue; // gated/stub calls dropped (never render as failure)
                 // Mirror a successful client-scoped mutation onto the rail (§8) —
                 // fire-and-forget, guarded, and only on real success (ok === true).

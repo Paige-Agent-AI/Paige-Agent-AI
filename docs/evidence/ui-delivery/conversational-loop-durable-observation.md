@@ -19,13 +19,13 @@ STATE_COVERAGE: PASS: foreign actor/tenant, stale intent, archive, permission re
 TRUTHFUL_STATE_LABELS: PASS: verified artifact lineage is an observation, not dispatch or continuation permission; tests preserve unavailable approval authority and canonical settlement ownership.
 SOLO_UI: NO: no rendered Solo component changes; server status and model-facing declaration contracts only.
 UNVERIFIED: exact-head release gates, merge, migration persistence, Edge deployment, authenticated acceptance, effectful continuation and original-program completion remain separate states.
-INTERNAL_BUILD_IDENTITY: codex/int304-durable-observation; deployment=local-candidate; environment=development; migrations=20270601000012; edge=PROOF_OWED(paige-ai-chat-source-deployment); evidence=docs/delivery/paige-conversational-loop-c4.md
+INTERNAL_BUILD_IDENTITY: f3dd999d03a17cd27884b861d7dd8f8c62d867de; deployment=local-candidate; environment=development; migrations=PROOF_OWED(20270601000012); edge=PROOF_OWED(paige-ai-chat-source-deployment); evidence=docs/delivery/paige-conversational-loop-c4.md
 RELEASE_CHANNEL: development: non-activating observation and metadata candidate.
 RELEASE_CLASSIFICATION: internal-only: no customer program-completion claim.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement.
 RELEASE_NOTE_REQUIRED: NO: internal safe observation correction and declaration convergence.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: automated/native proof, not signed-in acceptance.
-RELEASE_RECOVERY: position=remove consumer references before reverting observation function; preserve DRAINING and existing unknown-effect brake; reference=docs/delivery/paige-conversational-loop-c4.md
+RELEASE_RECOVERY: position=Reviewed source revert removes consumer references before observation-function retirement and retains the inactive protocol and successor-write brake; reference=docs/delivery/paige-conversational-loop-c4.md
 
 The function is authenticated-only and stable; its output is bounded. Document and Research retain
 their own artifact production. No second work engine, receipt store, model router or approval

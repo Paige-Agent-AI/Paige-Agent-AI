@@ -24,3 +24,4 @@ export const supabase={
 };
 
 export function useTenantContext(){return {activeTenantId:tenantId,accountContextLoading:false};}
+export function useOptionalTenantContext(){return useTenantContext();}

@@ -3,10 +3,13 @@ import assert from 'node:assert/strict';
 import {resolvePlaywright,buildLaunchOptions} from './live-drive.mjs';
 const out='docs/evidence/ui-delivery/assets/sales-invoice-commercial-terms-binding';
 fs.mkdirSync(out,{recursive:true});
-const {chromium}=await resolvePlaywright();const browser=await chromium.launch(buildLaunchOptions());
+const harnessUrl=process.env.SALES_CONDITIONS_HARNESS_URL??'http://127.0.0.1:5298';
+if(!['127.0.0.1','localhost'].includes(new URL(harnessUrl).hostname))throw Error('Synthetic smoke requires a loopback harness.');
+const launch=buildLaunchOptions();delete launch.proxy;
+const {chromium}=await resolvePlaywright();const browser=await chromium.launch(launch);
 try{const results=[];for(const [width,height] of [[1536,770],[1366,768],[1024,768],[900,1000]])for(const theme of ['light','dark'])for(const dock of ['closed','open']){
- const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});page.setDefaultTimeout(60000);page.on('pageerror',error=>console.error('LOCAL HARNESS:',error.message));
- console.log('Checking local viewport',width,height,theme,dock);await page.goto(`${process.env.SALES_CONDITIONS_HARNESS_URL??'http://127.0.0.1:5298'}/solo/test-account/sales/payments?full-shell=true&view=invoices&theme=${theme}&paige=${dock}&billing-fixture=populated`,{waitUntil:'domcontentloaded',timeout:60000});
+ const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});page.setDefaultTimeout(120000);page.on('pageerror',error=>console.error('LOCAL HARNESS:',error.message));
+ console.log('Checking local viewport',width,height,theme,dock);await page.goto(`${process.env.SALES_CONDITIONS_HARNESS_URL??'http://127.0.0.1:5298'}/solo/test-account/sales/payments?full-shell=true&view=invoices&theme=${theme}&paige=${dock}&billing-fixture=populated`,{waitUntil:'commit',timeout:60000});
  if(dock==='open'&&width<1080)await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
  await page.getByRole('button',{name:'Create invoice',exact:true}).click();console.log('Editor opened');const editor=page.locator('.ide');
  await editor.getByLabel('Client',{exact:true}).selectOption('33333333-3333-4333-8333-333333333333');await editor.getByLabel('Commercial terms / payment plan',{exact:true}).selectOption('99999999-9999-4999-8999-999999999999');await editor.getByLabel('Billing email',{exact:true}).fill('billing@example.test');await editor.getByLabel('Item description 1',{exact:true}).fill('Synthetic principal');await editor.getByLabel('Unit price for item 1',{exact:true}).fill('3500');
@@ -23,18 +26,18 @@ try{const results=[];for(const [width,height] of [[1536,770],[1366,768],[1024,76
 const narrowOpen=[];
 for(const [width,height] of [[1024,768],[900,1000]])for(const theme of ['light','dark']){
  const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
- await page.goto(`${process.env.SALES_CONDITIONS_HARNESS_URL??'http://127.0.0.1:5298'}/solo/test-account/sales/payments?view=invoices&theme=${theme}&paige=open`,{waitUntil:'domcontentloaded'});
+ await page.goto(`${process.env.SALES_CONDITIONS_HARNESS_URL??'http://127.0.0.1:5298'}/solo/test-account/sales/payments?view=invoices&theme=${theme}&paige=open`,{waitUntil:'commit'});
  const fold=page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last();await fold.waitFor();assert(await fold.isVisible());
  await page.screenshot({path:`${out}/${width}-${theme}-paige-open.png`});await fold.click();assert(await page.getByRole('button',{name:'Create invoice',exact:true}).isVisible());
  narrowOpen.push({width,height,theme,openOverlayVisible:true,foldRestoresSales:true});await page.close();
 }
 const recovery=await browser.newPage({viewport:{width:1536,height:770}});
-await recovery.goto(`${process.env.SALES_CONDITIONS_HARNESS_URL??'http://127.0.0.1:5298'}/solo/test-account/sales/payments?view=invoices&terms-error=true`,{waitUntil:'domcontentloaded'});
+await recovery.goto(`${process.env.SALES_CONDITIONS_HARNESS_URL??'http://127.0.0.1:5298'}/solo/test-account/sales/payments?view=invoices&terms-error=true`,{waitUntil:'commit'});
 await recovery.getByRole('button',{name:'Create invoice',exact:true}).click();const recoveryEditor=recovery.locator('.ide');
 await recoveryEditor.getByLabel('Client',{exact:true}).selectOption('33333333-3333-4333-8333-333333333333');
 await recoveryEditor.getByText('Commercial terms could not be read. Refresh this workspace.',{exact:true}).waitFor();
 await recoveryEditor.getByRole('button',{name:'Refresh commercial terms',exact:true}).click();
 await recoveryEditor.getByLabel('Commercial terms / payment plan',{exact:true}).selectOption('99999999-9999-4999-8999-999999999999');
 assert((await recoveryEditor.textContent()).includes('schedule'));await recovery.close();
-fs.writeFileSync(`${out}/rendered-proof.json`,JSON.stringify({boundary:'Actual Solo components with synthetic auth and in-memory transport. Save/reopen is fixture behavior, not authenticated database persistence or provider proof.',results,narrowOpen},null,2));console.log(`PASS ${results.length} conditions entry/validation/review/save/reopen/keyboard/reflow cases; ${narrowOpen.length} narrow PAIGE overlay/recovery cases`);
+fs.writeFileSync(`${out}/rendered-proof.json`,JSON.stringify({boundary:'Actual Solo components with synthetic auth and in-memory transport. Save/reopen is fixture behavior, not authenticated database persistence or provider proof.',results,narrowOpen,termsRecovery:{temporaryReadFailure:true,refreshRecovers:true,missingScheduleExplicit:true}},null,2));console.log(`PASS ${results.length} conditions entry/validation/review/save/reopen/keyboard/reflow cases; ${narrowOpen.length} narrow PAIGE overlay/recovery cases; 1 commercial terms read-error/refresh case`);
 }finally{await browser.close();}

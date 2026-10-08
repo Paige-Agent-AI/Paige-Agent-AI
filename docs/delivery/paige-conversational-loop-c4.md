@@ -2,6 +2,8 @@
 
 ## Required-CI correction before release
 
+Required Supabase Preview failed after collision renumbering because this PR’s disposable, data-free preview retained the earlier unmerged migration12. Its function body was an older candidate, so no byte-identical history rename was asserted. The owned preview branch was reset through the official branch API to shared migration11; current Sales13 and observation14 must then apply through the integration and pass the required check. Production schema and migration history were not changed by this preview repair.
+
 Fresh main163cca44c6994aac72c136cc6b19ec7835e24673 and production migration history both contain the separately owned Sales migration13. The unmerged observation migration is therefore renumbered14 before release; its SQL is unchanged. Initial12 was never merged or applied to production. No out-of-order deployment or production migration-history rewrite is permitted. Both existing delivery rows are preserved during fresh-main reconciliation.
 
 Exact-head CI rejected an observation-only retired coach role exemption. The initially reserved migration12, now collision-free migration14, uses the current Document owner/admin permissions established by the canonical retirement migration; native permission controls failed first and pass34/34 after repair. No title-authority exemption or required-check waiver was added. Two incumbent MCP tests now assert actual registry membership and validation instead of a closed three-domain source string, retaining field-for-field checks and adding forged-tool/class/risk/approval rejection controls;24 tests PASS. Fresh non-author review and exact-head CI are required on the repaired composition before merge.

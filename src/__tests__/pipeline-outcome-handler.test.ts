@@ -4,7 +4,7 @@ import { createPipelineOutcomeHandler } from '../../supabase/functions/_shared/p
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const input = { threadId: id(1), intentId: id(2), effectId: id(3) };
 function setup(user: { id: string } | null = { id: id(4) }) {
- const caller = { auth: { getUser: vi.fn(async () => ({ data: { user }, error: null })) }, rpc: vi.fn(async (name: string) => ({ data: name === 'current_user_tenant_id' ? id(5) : null, error: null })) };
+ const caller = { auth: { getUser: vi.fn(async () => ({ data: { user }, error: null })) }, rpc: vi.fn(async (name: string): Promise<{ data: unknown; error: unknown }> => ({ data: name === 'current_user_tenant_id' ? id(5) : null, error: null })) };
  const clients = { caller: vi.fn(() => caller), service: vi.fn(() => ({ from: vi.fn(() => { throw Error('no unbound operation reads'); }) })) };
  return { caller, clients, handle: createPipelineOutcomeHandler(clients) };
 }

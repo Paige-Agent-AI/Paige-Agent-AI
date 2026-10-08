@@ -1,8 +1,7 @@
 import type { PipelineReadbackBinding, PipelineReadbackDependencies } from './pipeline-metadata-readback.ts';
 
 type ReadResult = { data: unknown; error: unknown };
-interface Query extends PromiseLike<ReadResult> {
-  select(columns: string): Query;
+interface Query {
   eq(column: string, value: string): Query;
   maybeSingle(): PromiseLike<ReadResult>;
 }
@@ -10,7 +9,9 @@ export interface PipelineCanonicalCaller {
   auth: { getUser(): PromiseLike<{ data: { user: { id: string } | null }; error: unknown }> };
   rpc(name: string, args?: Record<string, unknown>): PromiseLike<ReadResult>;
 }
-export interface PipelineCanonicalService { from(table: string): Query }
+// Keep the SDK's deeply generic select result opaque at the client boundary;
+// only the known post-select read methods below are needed, never writes.
+export interface PipelineCanonicalService { from(table: string): { select(columns: string): unknown } }
 
 /** Read-only server readers. Original command authority and PostgreSQL hash are
  * derived by the caller-bound SQL resolver, never copied from an operation
@@ -55,8 +56,9 @@ export function createPipelineCanonicalReaders(input: {
       } catch { return null; }
     },
     async readOperation(request) {
-      const result = await input.service.from('pipeline_command_results')
-        .select('tenant_id,idempotency_key,command_hash,actor_user_id,actor_kind,result')
+      const selected = input.service.from('pipeline_command_results')
+        .select('tenant_id,idempotency_key,command_hash,actor_user_id,actor_kind,result');
+      const result = await (selected as Query)
         .eq('tenant_id', request.tenantId).eq('idempotency_key', request.idempotencyKey)
         .eq('actor_user_id', request.actorId).eq('actor_kind', request.actorKind).maybeSingle();
       if (result.error) throw new Error('PIPELINE_OPERATION_READ_UNAVAILABLE');

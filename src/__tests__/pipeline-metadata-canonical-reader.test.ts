@@ -5,7 +5,7 @@ import { readPipelineMetadataOutcome } from '../../supabase/functions/_shared/pi
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const binding = { actorId: id(1), tenantId: id(2), threadId: id(3), intentId: id(4), effectId: id(5) };
 function setup(actor = binding.actorId, tenant = binding.tenantId) {
-  const caller = { auth: { getUser: vi.fn(async () => ({ data: { user: { id: actor } }, error: null })) }, rpc: vi.fn(async (name: string) => ({ data: name === 'current_user_tenant_id' ? tenant : { items: [] }, error: null })) };
+  const caller = { auth: { getUser: vi.fn(async () => ({ data: { user: { id: actor } }, error: null })) }, rpc: vi.fn(async (name: string): Promise<{ data: unknown; error: unknown }> => ({ data: name === 'current_user_tenant_id' ? tenant : { items: [] }, error: null })) };
   const service = { from: vi.fn(() => { throw Error('must not read an unbound operation'); }) };
   const revalidateScope = vi.fn(async () => true);
   return { caller, service, revalidateScope, readers: createPipelineCanonicalReaders({ caller, service, revalidateScope }) };

@@ -42,4 +42,3 @@ begin
 end $$;
 revoke all on function public.read_paige_durable_observation(uuid,uuid,uuid) from public,anon,service_role;
 grant execute on function public.read_paige_durable_observation(uuid,uuid,uuid) to authenticated;
-

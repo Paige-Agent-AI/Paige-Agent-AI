@@ -19,6 +19,3 @@ ${migration}
 ${read('supabase/tests/int304_durable_observation.sql')}
 rollback;`;
 const result=spawnSync(process.env.PSQL_BIN??'psql',['-X','--no-password','-v','ON_ERROR_STOP=1',url],{input:sql,encoding:'utf8',timeout:45000,windowsHide:true});if(result.status!==0){console.error(result.stderr);process.exit(1)}console.log((result.stdout+'\n'+result.stderr).split('\n').filter(l=>l.includes('OBSERVATION_PROOF')).join('\n'));
-
-
-

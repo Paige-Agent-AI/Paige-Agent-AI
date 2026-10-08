@@ -21,6 +21,7 @@ const treatment:NestedInputSchema={type:'object',additionalProperties:false,prop
  charges:{type:'array',maxItems:10,items:{type:'object',additionalProperties:false,properties:{line_index:{type:'integer',minimum:0,maximum:49},amount_minor:{type:'integer',minimum:1,maximum:2147483647},currency:{type:'string',enum:['usd']}},required:['line_index','amount_minor','currency']}},
  },required:['state','source','policy','charges']};
 const draft:NestedInputSchema={type:'object',properties:{...common,deposit_minor:{type:'integer',minimum:1,maximum:2147483647},
+ commercial_terms_reference:{type:'object',additionalProperties:false,properties:{id:{type:'string',format:'uuid'},version:{type:'integer',minimum:0}},required:['id','version']},
  commercial_conditions:{type:'object',additionalProperties:false,properties:{schema_version:{type:'integer',minimum:1,maximum:1},tax:treatment,fees:treatment},required:['schema_version','tax','fees']}},required:Object.keys(common),additionalProperties:false};
 export const SALES_DRAFT_CREATE=defineCapability({
   identity:{id:'sales_invoice.draft_create',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Save and read back an unissued canonical invoice draft. No publication, delivery, mandate or payment.'},

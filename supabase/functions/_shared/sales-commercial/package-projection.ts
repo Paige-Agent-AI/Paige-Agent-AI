@@ -2,6 +2,7 @@ import {UUID} from '../sales-collections/primitives.ts';
 import {parseCollectionTerms} from '../sales-collections/contract.ts';
 import {previewCollectionSchedule} from '../sales-collections/model.ts';
 import {parseCommercialConditions} from './conditions.ts';
+import {parseCommercialTermsReference} from './terms-reference.ts';
 const object=(v:unknown):v is Record<string,unknown>=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const only=(v:Record<string,unknown>,keys:string[])=>Object.keys(v).every(k=>keys.includes(k));
 const id=(v:unknown)=>typeof v==='string'&&UUID.test(v);
@@ -11,7 +12,7 @@ const date=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v);
 const codes=(v:unknown):v is string[]=>Array.isArray(v)&&v.length<=30&&v.every(x=>typeof x==='string'&&/^[a-z_]{1,100}$/.test(x));
 function boundedProjection(r:Record<string,unknown>,invoiceId:string):boolean {
  const i=r.invoice,a=r.agreement,t=r.commercial_terms;
- if(!object(i)||!only(i,['id','client_id','status','version','draft_version','issued_snapshot_version','obligation_total_minor','due_now_minor','remaining_scheduled_minor','currency','receivable_total_minor','allocated_minor','manual_recorded_minor','provider_verified_minor','outstanding_minor','due_date','delivery_channels'])
+ if(!object(i)||!only(i,['id','client_id','status','version','draft_version','issued_snapshot_version','obligation_total_minor','due_now_minor','remaining_scheduled_minor','currency','receivable_total_minor','allocated_minor','manual_recorded_minor','provider_verified_minor','outstanding_minor','due_date','delivery_channels','commercial_terms_reference'])
   ||i.id!==invoiceId||!id(i.client_id)||!positive(i.version)||!positive(i.draft_version)
   ||!(i.issued_snapshot_version===null||positive(i.issued_snapshot_version))||!['draft','issued','sent','void'].includes(String(i.status))
   ||typeof i.currency!=='string'||!/^[a-z]{3}$/.test(i.currency)
@@ -26,13 +27,21 @@ function boundedProjection(r:Record<string,unknown>,invoiceId:string):boolean {
   ||!['draft','sent','viewed','partially_signed','completed','declined','voided','expired'].includes(String(a.status))
   ||!['tenant_upload','paige_draft','tenant_template'].includes(String(a.body_source))
   ||!['include_existing_signed_document','unsigned_canonical_agreement','unavailable'].includes(String(a.treatment))))return false;
+ let reference:ReturnType<typeof parseCommercialTermsReference>|null=null;
+ if('commercial_terms_reference' in i){try{reference=parseCommercialTermsReference(i.commercial_terms_reference);}catch{return false;}}
+ if(reference&&t===null)return false;
  if(t!==null){
-  if(!object(t)||!object(a)||t.id!==a.commercial_terms_id||!only(t,['id','version','updated_at','status','offer_id','amount_minor','currency','record_owner','schedule'])
+  if(!object(t)||!only(t,['id','version','updated_at','status','offer_id','amount_minor','currency','record_owner','schedule'])
    ||!id(t.id)||!Number.isSafeInteger(t.version)||Number(t.version)<0||t.record_owner!=='commercial_collection_terms'
    ||!(t.offer_id===null||id(t.offer_id))||!(t.amount_minor===null||minor(t.amount_minor))
    ||!(t.currency===null||typeof t.currency==='string'&&/^[a-z]{3}$/.test(t.currency))
    ||!['draft','active','paused','completed','cancelled'].includes(String(t.status))
    ||typeof t.updated_at!=='string'||t.updated_at.length>50||!Number.isFinite(Date.parse(t.updated_at)))return false;
+  if(reference){
+   if(reference.id!==t.id||!codes(r.conflicts))return false;
+   if(reference.version!==t.version&&!r.conflicts.includes('commercial_terms_version_changed'))return false;
+   if(object(a)&&a.commercial_terms_id!==null&&a.commercial_terms_id!==t.id&&!r.conflicts.includes('agreement_commercial_terms_conflict'))return false;
+  }else if(!object(a)||t.id!==a.commercial_terms_id)return false;
   if(t.schedule!==null){const s=t.schedule;
    if(!object(s)||!only(s,['kind','total_cents','currency','cadence','anchor_date','count','end_date','deposit_cents','dates'])
     ||!['full','installment','recurring','deposit','milestone','custom'].includes(String(s.kind))

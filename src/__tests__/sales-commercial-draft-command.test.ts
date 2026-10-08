@@ -3,6 +3,16 @@ import {parseCommercialDraftCommand} from '../../supabase/functions/_shared/sale
 const client='33333333-3333-4333-8333-333333333333',invoice='44444444-4444-4444-8444-444444444444';
 const draft=()=>({schema_version:3,client_id:client,items:[{price_id:null,item:'Commercial service',unit_minor:350000,quantity:1}],kind:'deposit',deposit_basis_points:null,deposit_minor:50000,currency:'usd',cadence:null,recipient_email:'client@example.test',recipient_phone:null,email_source_method_id:null,phone_source_method_id:null,billing_address:null,agreement_id:null,processor_intent:null,payment_method_intents:[],delivery_channel_intents:['email'],due_date:'2026-11-01',memo:null});
 describe('bounded conversational draft command boundary',()=>{
+ it('binds existing canonical commercial terms independently of the signing document without granting authority',()=>{
+  const commercial_terms_reference={id:'55555555-5555-4555-8555-555555555555',version:0};
+  const input={action:'invoice.draft_create',draft:{...draft(),commercial_terms_reference}};
+  const parsed=parseCommercialDraftCommand(input);
+  expect(parsed).toEqual(input);
+  expect(parsed.draft.commercial_terms_reference).not.toBe(commercial_terms_reference);
+  expect(parsed.draft.agreement_id).toBeNull();
+  for(const bad of [null,{id:client,version:-1},{id:client,version:1.2},{id:'invented',version:1},{id:client,version:1,approved:true},{id:client,version:1,amount_minor:350000}])
+   expect(()=>parseCommercialDraftCommand({action:'invoice.draft_create',draft:{...draft(),commercial_terms_reference:bad}})).toThrow();
+ });
  it('carries exact recorded condition facts through the existing approval-bound draft, without defaulting unknowns',()=>{
   const commercial_conditions={schema_version:1,tax:{state:'unknown',charges:[],source:null,policy:null},fees:{state:'not_applicable',charges:[],source:'Recorded terms',policy:'No additional fees'}};
   expect(parseCommercialDraftCommand({action:'invoice.draft_create',draft:{...draft(),commercial_conditions}}).draft.commercial_conditions).toEqual(commercial_conditions);

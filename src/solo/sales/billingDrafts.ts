@@ -50,6 +50,16 @@ export function readBillingDraft(value: unknown, expectedTenant: string): Billin
 
 export function billingDraftFailure(error: RpcResult['error']): DraftResult<never> {
   if (error?.code === '42883' || error?.code === 'PGRST202') return { ok: false, outcome: 'unavailable', message: 'Billing draft storage is unavailable in this environment.' };
+  const termsRefusals: Record<string,string> = {
+    'Commercial terms version changed':'The payment plan changed. Refresh commercial terms and explicitly review its current version before saving.',
+    'Commercial terms inactive':'The selected payment plan is cancelled or completed. Choose an eligible current plan.',
+    'Invoice and commercial terms economics disagree':'Invoice principal or currency does not match the selected commercial terms. Review both records before saving.',
+    'Invoice and commercial terms offer disagree':'The invoice offer does not match the selected commercial terms. Choose the matching canonical offer or plan.',
+    'Invoice and commercial terms initial obligation disagree':'The deposit amount or due date differs from the payment plan. Review the invoice and the first scheduled obligation.',
+    'Invalid commercial terms reference':'The selected commercial terms reference is invalid. Refresh and select the current plan again.',
+  };
+  if ((error?.code === '22023' || error?.code === '40001') && error.message && Object.hasOwn(termsRefusals,error.message))
+    return {ok:false,outcome:'refused',message:termsRefusals[error.message]};
   if (error?.code && (/^PA/.test(error.code) || ['42501', '22023', '22P02', '22007', '22008', '40001', '23505'].includes(error.code))) {
     return { ok: false, outcome: 'refused', message: error.code === '40001' ? 'This draft changed. Reopen its current version before saving.' : 'The draft was refused. Check workspace, access and billing details.' };
   }

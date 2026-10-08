@@ -193,8 +193,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
   });
   it("writes a receipt-only assistant turn without inventing spoken text", async () => {
     const writes: unknown[] = [];
-    const make = new Function("payloadThreadId", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
-    const persist = make("thread", { rpc: async (_name: string, args: unknown) => { writes.push(args); }, from() { throw Error("no title in fixture"); } }, async () => {}, { error() {} });
+    const client = { rpc: async (_name: string, args: unknown) => { writes.push(args); return { data: null, error: null }; }, from() { throw Error("no title in fixture"); } };
+    const append = new Function("supabaseClient", "interactiveReceiptScope", "supabase", "user", "z", js(`return ${initializer("appendAssistant")};`))(client, null, null, null, null);
+    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
+    const persist = make("thread", append, client, async () => {}, { error() {} });
     const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
     await persist("", { bundleRef });
     expect(writes).toHaveLength(1);

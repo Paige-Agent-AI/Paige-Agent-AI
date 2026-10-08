@@ -1036,6 +1036,21 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
+    const appendAssistant = async (args: Record<string, any>) => {
+      if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
+      const scope = interactiveReceiptScope;
+      if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
+      const result = await supabase.rpc("paige_chat_interactive_settle", {
+        p_thread: scope.thread, p_actor: user.id, p_tenant: scope.tenant, p_intent: scope.intent,
+        p_content: args.p_content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
+        p_bundle_ref: { ...(args.p_bundle_ref ?? {}), interactive: {
+          ...(args.p_bundle_ref?.interactive ?? {}), request_intent_id: scope.intent,
+        } }, p_tool_calls: args.p_tool_calls,
+      });
+      return { ...result, error: result.error ?? (z.string().uuid().safeParse(result.data).success
+        ? null : new Error("INTERACTIVE_PERSISTENCE_UNCONFIRMED")) };
+    };
 
     // === ONE trace context for the whole turn (§34 observability, §9 attribution) ===
     // Every `gatewayCompat` call in this handler writes a `paige_llm_trace` row fire-and-forget,
@@ -1143,14 +1158,20 @@ serve(async (req) => {
     // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
     if (validatedData.interactive) {
       const interactiveInput = validatedData.interactive;
+      const protocol = await supabase.rpc("paige_chat_interactive_protocol");
+      if (protocol.error || protocol.data?.version !== 2 ||
+          (protocol.data?.active !== true && !["stop", "status"].includes(interactiveInput.kind)))
+        return new Response(JSON.stringify({ code: "INTERACTIVE_PROTOCOL_NOT_READY", message_accepted: false }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "30" } });
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
       const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
         .select("tenant_id").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
       if (threadError || !thread) throw new Error("INTERACTIVE_SCOPE_UNAVAILABLE");
+      interactiveReceiptScope = { thread: validatedData.threadId, tenant: thread.tenant_id, intent: validatedData.requestIntentId };
       const userText = [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content;
       const executor = async (operation: string) => {
-        const { data, error } = await supabase.rpc("paige_chat_interactive_executor", {
+        const { data, error } = await supabase.rpc("paige_chat_interactive_executor_v2", {
           p_thread: validatedData.threadId, p_actor: user.id, p_tenant: thread.tenant_id,
           p_intent: validatedData.requestIntentId, p_operation: operation,
         });
@@ -1159,28 +1180,14 @@ serve(async (req) => {
       };
       if (validatedData.interactive.kind === "status") {
         const state = await executor("state");
-        const { data: turns, error } = await supabaseClient.from("paige_chat_turns").select("role,bundle_ref")
-          .eq("thread_id", validatedData.threadId).order("created_at", { ascending: false }).limit(100);
-        if (error) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
-        const target = validatedData.requestIntentId;
-        const terminal = (turns ?? []).some((turn: any) =>
-          (turn.role === "assistant" && turn.bundle_ref?.interactive?.request_intent_id === target &&
-            ["FINAL", "WAIT_APPROVAL", "WAIT_WORK", "ASK_USER", "LIMIT_REACHED", "INTERRUPTED", "WITHHELD", "REFUSED"].includes(turn.bundle_ref?.turn_state?.state)) ||
-          turn.bundle_ref?.interactive?.supersedes_intent_id === target);
         return new Response(JSON.stringify({ executor_active: state.executor !== null,
-          settled: state.executor === null && terminal }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          settled: state.executor === null && (state.terminal === true || state.stopped === true) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // This exact query/fallback/order was driven in the isolated proposed handler.
       interactiveSettlement = createInteractiveSettlement({
         owns: async () => (await executor("state")).executor === validatedData.requestIntentId,
-        readback: async () => {
-          const { data, error } = await supabaseClient.from("paige_chat_turns").select("bundle_ref")
-            .eq("thread_id", validatedData.threadId).eq("role", "assistant")
-            .contains("bundle_ref", { interactive: { request_intent_id: validatedData.requestIntentId } }).limit(1).maybeSingle();
-          if (error) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
-          return !!data?.bundle_ref?.turn_state && data.bundle_ref.turn_state.state !== "WORKING";
-        },
-        fallback: async () => await supabaseClient.rpc("paige_chat_turn_append", {
+        readback: async () => (await executor("state")).terminal === true,
+        fallback: async () => await appendAssistant({
           p_thread_id: validatedData.threadId, p_role: "assistant",
           p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
           p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
@@ -1190,7 +1197,7 @@ serve(async (req) => {
         release: async () => { await executor("release"); },
       });
       const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
-        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin", {
+        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin_v2", {
           p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
           p_supersedes: interactiveInput.supersedesIntentId ?? null,
           p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
@@ -5741,7 +5748,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       if (!payloadThreadId) return null;
       try {
         const again = reopenAsk(ask, crypto.randomUUID());
-        const { error } = await supabaseClient.rpc("paige_chat_turn_append", {
+        const { error } = await appendAssistant({
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: again.content,
           p_surfaces_used: null, p_load_id: null, p_model: null,
           p_tokens_used: null, p_latency_ms: null,
@@ -5977,7 +5984,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // The canonical turn RPC accepts empty content; never invent an answer.
       if (!payloadThreadId || (!finalText?.trim() && !meta.bundleRef)) return;
       try {
-        const writeAssistant = async () => await supabaseClient.rpc("paige_chat_turn_append", {
+        const writeAssistant = async () => await appendAssistant({
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: finalText,
           p_surfaces_used: meta.surfaces ?? null, p_load_id: null,
           p_model: meta.model ?? "google/gemini-2.5-flash", p_tokens_used: null, p_latency_ms: null,

@@ -184,6 +184,17 @@ try {
  parseResult(`BEGIN;UPDATE tenant_client_agreements SET collection_terms=${literal(typedDeposit)} WHERE id='${terms}';`+fresh());checks++;
  const typedDrift={...typedDeposit,deposit_cents:70000,dates:[{...rows[0],amount_cents:70000},{...rows[1],amount_cents:280000}]};
  denied(`BEGIN;UPDATE tenant_client_agreements SET collection_terms=${literal(typedDrift)} WHERE id='${terms}';`+fresh(),'22023');
+ // Supported deposit binding kinds are explicit custom or typed deposit only.
+ for(const incompatible of [
+  {...schedule,kind:'installment',cadence:'monthly',count:10,dates:[]},
+  {...schedule,kind:'full',cadence:'monthly',count:1,dates:[]},
+  {...schedule,kind:'milestone'},
+  {...schedule,kind:'recurring',cadence:'monthly',count:10,dates:[]}
+ ]){
+  const change=`UPDATE tenant_client_agreements SET collection_terms=${literal(incompatible)} WHERE id='${terms}';`;
+  denied('BEGIN;'+change+fresh(),'22023');
+  const refused=parseResult('BEGIN;'+change+scope+call(tenant,referenceInvoice));assert(refused.conflicts.includes('invoice_terms_conflict'));assert.equal(refused.commercial_terms.schedule,null);checks+=2;
+ }
  const driftSchedule={...schedule,dates:schedule.dates.map((row,index)=>({...row,amount_cents:index===0?70000:index===1?10000:row.amount_cents}))};
  const driftSql=`UPDATE tenant_client_agreements SET collection_terms=${literal(driftSchedule)} WHERE id='${terms}';`;
  denied('BEGIN;'+driftSql+fresh(),'22023');

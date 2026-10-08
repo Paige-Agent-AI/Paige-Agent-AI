@@ -47,6 +47,10 @@ export interface TraceCtx {
    *  itemization, DISTINCT from tenant_id (the persona-context attribution). Soft ref, coerced to null
    *  if non-uuid. Optional: a site that doesn't set it writes null (default), never a fabricated id. */
   working_context_tenant_id?: string | null;
+  /** Budget-gate hits the ENFORCING layer (router/gateway/fabric) attaches to the ctx so whichever
+   *  writer records the call (streamed or not) carries the hit via its spread. Declared here so the
+   *  fabric's gate can set it without a cast (gatewayCompat historically attached it undeclared). */
+  doctrine_gate_hits?: unknown;
 }
 
 /** Provenance stamp — bump when the estimator/scrubber/schema changes so a reader knows what produced a row. */

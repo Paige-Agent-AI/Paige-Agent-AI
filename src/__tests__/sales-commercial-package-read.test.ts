@@ -11,6 +11,30 @@ function scheduledFixture():Record<string,unknown>{
 }
 const readFixture=(data:Record<string,unknown>)=>readCommercialPackage(tenant,{invoice_id:invoice},{rpc:vi.fn().mockResolvedValue({data,error:null})});
 describe('canonical commercial package caller-JWT read',()=>{
+ it('reads invoice-bound terms and their exact schedule independently of a missing signing link',async()=>{
+  const data=scheduledFixture();data.agreement=null;
+  Object.assign(data.invoice as object,{commercial_terms_reference:{id:'40000000-0000-0000-0000-000000000001',version:3}});
+  data.missing_fields=['tax_and_fee_treatment','agreement_or_document'];
+  const result=(await readFixture(data)).content;
+  expect(result).toMatchObject({success:true,agreement:null,commercial_terms:{version:3},authority:'not_evaluated',execution:'not_started'});
+  expect((result.schedule_preview as {rows:{amount_cents:number}[]}).rows.map(row=>row.amount_cents)).toEqual([50000,...Array(10).fill(30000)]);
+ });
+ it('keeps changed version and conflicting signing links explicit without presenting a resolved schedule',async()=>{
+  const data=scheduledFixture();Object.assign(data.invoice as object,{commercial_terms_reference:{id:'40000000-0000-0000-0000-000000000001',version:2}});
+  (data.agreement as Record<string,unknown>).commercial_terms_id='40000000-0000-0000-0000-000000000002';
+  data.state='conflict';data.conflicts=['commercial_terms_version_changed','agreement_commercial_terms_conflict'];
+  expect((await readFixture(data)).content).toMatchObject({success:true,state:'conflict',conflicts:data.conflicts,schedule_preview:null});
+  data.conflicts=['commercial_terms_version_changed'];expect((await readFixture(data)).content.success).toBe(false);
+ });
+ it.each(['reference_identity','reference_version','reference_authority','unlinked_legacy'])('refuses inconsistent invoice terms source: %s',async kind=>{
+  const data=scheduledFixture();data.agreement=null;
+  const reference:Record<string,unknown>={id:'40000000-0000-0000-0000-000000000001',version:3};
+  if(kind==='reference_identity')reference.id='40000000-0000-0000-0000-000000000002';
+  if(kind==='reference_version')reference.version=2;
+  if(kind==='reference_authority')reference.approved=true;
+  if(kind!=='unlinked_legacy')Object.assign(data.invoice as object,{commercial_terms_reference:reference});
+  expect((await readFixture(data)).content.success).toBe(false);
+ });
  it('reads explicitly recorded no-additional-charge conditions without manufacturing missing tax treatment',async()=>{
   const data:Record<string,unknown>=fixture();data.missing_fields=[];
   data.commercial_conditions={schema_version:1,tax:{state:'not_applicable',charges:[],source:'Recorded commercial terms',policy:'No additional tax'},fees:{state:'not_applicable',charges:[],source:'Recorded commercial terms',policy:'No additional fees'}};

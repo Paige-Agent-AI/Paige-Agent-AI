@@ -17,8 +17,8 @@
 // a budget stop. A provider being chosen grants nothing: tools, approvals and authority are decided
 // downstream, unchanged.
 //
-// OPENAI IS OFF FOR CHAT until the controlled Sol canary passes (`OPENAI_CHAT_ENABLED` below). Turning
-// it on is a reviewed one-line change, never an environment toggle nobody can see.
+// OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, staged by the cohort
+// gate (validation cohort first) and class-scoped (operational only until each class validates).
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
@@ -30,9 +30,8 @@ import { classifyProviderFailure, PROVIDER_FAILURE_CLASSES, type ProviderFailure
 import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, type RouteCandidate } from "./paige-turn/route.ts";
 
 /**
- * The Sol cutover switch. While false, chat's streamed rounds are served by Anthropic exactly as before
- * (the OpenAI candidates are skipped). Flipped only after the controlled Sol canary passes, in its own
- * reviewed PR — the release bar is in docs/model-routing/int-334/EVIDENCE.md.
+ * The owner-directed primary switch (ON since the 2026-10-08 directive; the historical temporary
+ * OFF state and its release bar are preserved in docs/model-routing/int-334/EVIDENCE.md).
  */
 // OWNER DIRECTIVE (2026-10-08): OpenAI is PAIGE's preferred PRIMARY provider — Luna first for
 // cheap, Sol first for operational, Astra first for frontier; Anthropic Sonnet 5.5 the
@@ -42,16 +41,21 @@ import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, ty
 // class-scoped (operational only until each class's own validation passes).
 export const OPENAI_CHAT_ENABLED = true;
 
-// ── THE SOL CANARY COHORT GATE (#canary-readiness) ────────────────────────────────────────────────
+// ── THE COHORT GATE under the owner-directed flag ────────────────────────────────────────────────
 //
-// The master flag above stays the one-line reviewed flip; beneath it, a canary is admitted ONLY for
-// an explicitly listed tenant cohort AND (by default) ONLY for the operational class — the Sol
-// evaluation. Both gates are OFF by default: no cohort env → nobody, ever, whatever the master flag
-// says. Rollback is either gate: clear the cohort env, or flip the master flag back. The values are
-// read per call (never cached) so a canary can be emptied without a deploy.
+// Admission = the master flag AND a tenant cohort AND the class scope (operational only until each
+// class's own validation). While no cohort env is set, the cohort is the RELEASE-VALIDATION default
+// (the synthetic QA tenant below); the production cutover PR lifts that to production-wide.
 //
-//   OPENAI_CANARY_TENANTS  comma-separated tenant uuids (default: unset → NOBODY)
+//   OPENAI_CANARY_TENANTS  comma-separated tenant uuids. UNSET → the validation default cohort.
+//                          SET (any value, INCLUDING EMPTY) → replaces the default: an explicit
+//                          list restricts (staged rollout); an EMPTY value admits NOBODY — the
+//                          no-deploy kill switch. NOTE: clearing/unsetting the env does NOT stop
+//                          admission — it RESTORES the default cohort. The kill switch is setting
+//                          the env to an empty value, or flipping the master flag (a deploy).
 //   OPENAI_CANARY_CLASSES  comma list from cheap|operational|frontier (default: "operational")
+//
+// The values are read per call (never cached) so both controls act on the next call.
 
 const CANARY_TENANTS_ENV = "OPENAI_CANARY_TENANTS";
 /**
@@ -105,8 +109,7 @@ export function openAiCohortAdmits(tenantId: string | null | undefined, cls: Cog
 
 /**
  * Is the OpenAI candidate ADMITTED for this caller and class? The controlled-canary rule: the
- * master flag AND the tenant cohort AND the class scope must all admit it. With the master flag
- * false (today), nothing is admitted whatever the environment says.
+ * master flag AND the tenant cohort AND the class scope must all admit it.
  */
 export function openAiAdmitted(tenantId: string | null | undefined, cls: CognitiveClass): boolean {
   return OPENAI_CHAT_ENABLED && openAiCohortAdmits(tenantId, cls);

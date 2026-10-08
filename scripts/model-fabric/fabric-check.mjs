@@ -4,7 +4,7 @@
  * `fabricChatStream` takes a cognitive class and opens one chat-shaped stream: Anthropic through the
  * real `gatewayCompat` (request shaping, tier resolution), OpenAI through the real `responsesStream`.
  * What this pins:
- *  - OFF BY DEFAULT: while `OPENAI_CHAT_ENABLED` is false, no class ever reaches OpenAI; each class is
+ *  - ADMISSION-GATED: OpenAI serves only cohort-admitted tenants in the class scope; each class is
  *    served by the Anthropic model the owner's order names (operational/frontier → Sonnet 5.5, cheap →
  *    Haiku), and a `deterministic` class that reaches a model is served as operational.
  *  - THE ORDER: with OpenAI enabled, Sol serves operational, Astra frontier, Luna cheap — Anthropic is
@@ -726,8 +726,12 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   ok(admits(OTHER_TENANT, "operational") === false, "G2 a tenant outside the cohort is never admitted");
   ok(admits(null, "operational") === false && admits("not-a-uuid", "operational") === false,
     "G2 unattributed and malformed tenants are never admitted");
+  ok(admits(VALIDATION_TENANT.toUpperCase(), "operational") === true, "G2 the cohort match is case-insensitive");
   ENV.OPENAI_CANARY_CLASSES = "operational,cheap";
   ok(admits(VALIDATION_TENANT, "cheap") === true, "G2 an explicit class scope can widen (a reviewed decision)");
+  ENV.OPENAI_CANARY_CLASSES = "garbage,frontier";
+  ok(admits(VALIDATION_TENANT, "operational") === false && admits(VALIDATION_TENANT, "frontier") === true,
+    "G2 an explicit scope REPLACES the default (unknown class tokens ignored, never wider)");
   delete ENV.OPENAI_CANARY_CLASSES;
 
   setScenario({});

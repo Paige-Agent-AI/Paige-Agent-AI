@@ -6,7 +6,7 @@ import { CRM_ACTION_CAPABILITY, CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
-import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric } from '../_shared/analytics-metrics/read.ts';
+import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
@@ -11277,7 +11277,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (tc.function.name === "read_business_metric") {
           // Same finished-round, scope, cancellation and read-only Harness gates as every tool above.
           // The caller-JWT client is mandatory; service-role issuer access is deliberately revoked.
-          const result = callerTier === "tenant"
+          const result: MetricReadOutcome = callerTier === "tenant"
             ? await readBusinessMetric(supabaseClient, { tenantId: personaCtx?.tenant_id ?? null }, JSON.parse(tc.function.arguments))
             : { status: "refused", message: "This measurement capability is available only in the authorized Solo workspace lens. No values were read." };
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ status: result.status, message: result.message, context: metricReadContext(result) }) });

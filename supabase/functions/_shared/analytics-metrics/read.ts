@@ -57,7 +57,10 @@ const needsInput = (): MetricReadOutcome => ({ status: 'needs_input', message: '
 /** Existing bounded ContextSource interface; no Mind signal/schema generalization or snapshot composer. */
 export function metricReadContext(result: MetricReadOutcome): ContextSourceResult<Projection> {
   if (result.status === 'available' && result.metric) return contextAvailable(result.metric);
-  return result.status === 'unavailable' ? contextDegraded('metric_evidence_not_verified') : contextUnavailable(result.status === 'refused' ? 'metric_read_refused' : 'metric_request_incomplete');
+  if (result.status === 'unavailable') return contextDegraded<Projection>('metric_evidence_not_verified');
+  // Reproject the shared empty result so its generic null parameter does not
+  // become a covariant Projection constraint in Deno's strict type checker.
+  return { ...contextUnavailable(result.status === 'refused' ? 'metric_read_refused' : 'metric_request_incomplete'), data: null };
 }
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const stamp = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(v) && Number.isFinite(Date.parse(v));

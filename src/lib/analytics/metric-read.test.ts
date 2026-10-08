@@ -4,21 +4,23 @@ import { metricReadContext, readBusinessMetric } from '../../../supabase/functio
 const tenant = 'a3400000-0000-4000-8000-000000000011';
 const now = Date.parse('2026-10-08T12:00:00Z');
 const args = { metric_key: 'team.active_members_current', period: 'last_7_days' };
-function harness(change: (result: any) => void = () => {}, denied = false, switched = false, resolve: (result: any) => void = () => {}) {
-  const calls: Array<{ name: string; args: any }> = [];
-  let result: any;
+type Fixture = Record<string, unknown> & { coverage: Record<string, unknown> };
+function harness(change: (result: Fixture) => void = () => {}, denied = false, switched = false, resolve: (result: Fixture) => void = () => {}) {
+  const calls: Array<{ name: string; args: Record<string, unknown> | undefined }> = [];
+  let result: Fixture | undefined;
   let scopes = 0;
-  const caller = { rpc: async (name: string, input?: any) => {
+  const caller = { rpc: async (name: string, input?: Record<string, unknown>) => {
     calls.push({ name, args: input });
     if (name === 'current_user_tenant_id') return { data: switched && ++scopes > 1 ? 'foreign' : tenant, error: null };
     if (denied) return { data: null, error: { code: '42501', message: 'private denial detail' } };
     if (name === 'issue_analytics_evidence_bundle') {
+      if (!input) throw new Error('Fixture issuer requires request arguments');
       result = { metric_key: input.p_metric_key, metric_version: '1.0.0', owner_department: 'people_talent', label: 'Active members', definition: 'Active workspace memberships now.', formula: 'COUNT(active memberships)',
         range: { key: input.p_range_key, start: input.p_range_start, end: input.p_range_end, bounds: '[start,end)', timezone: 'UTC', semantics: 'current_snapshot' }, dimensions: {}, values: { kind: 'count', count: 4 }, unit: 'count', source_refs: ['public.tenant_members'], as_of: new Date(now).toISOString(), freshness: { queried_at: new Date(now).toISOString(), source_updated_through: null }, coverage: { state: 'complete', candidate_count: 4, contributing_count: 4, excluded_count: 0 }, exclusions: [], truth_state: 'LIVE', caveats: [], source_revision_ref: 'sr_v1_' + 'a'.repeat(64), account_epoch: tenant, account_epoch_ref: 'ae_v1_' + 'b'.repeat(64), evidence_ref: 'aneb_v1_' + 'c'.repeat(64), reference_expires_at: new Date(now + 900000).toISOString(), private_payload: 'must not reach model' };
       change(result);
     }
     const returned = structuredClone(result);
-    if (name === 'resolve_analytics_evidence_reference') resolve(returned);
+    if (name === 'resolve_analytics_evidence_reference' && returned) resolve(returned);
     return { data: returned, error: null };
   } };
   return { calls, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };

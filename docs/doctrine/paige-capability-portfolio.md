@@ -106,7 +106,7 @@ is itself the finding.
 | 9 | **Vault** | `Settings -> Vault` **`INTENTIONALLY_ISOLATED`** | Solo Settings | **Isolation is the contract** — content must not enter Paige/Mind/Memory | Ledger row (isolation_note required) | Proof of *non-reach*: the isolation holds. Do not "complete" this into Paige access |
 | 10 | **Marketplace + integrations** | Marketplace `UNAVAILABLE` ("most blocked") · `Settings -> Integrations` `PARTIAL` · `Settings -> Connections` `UNAVAILABLE` | Marketplace / Integrations | Registry; MCP door; tier eligibility (§60/§61) | **Integration Registry (mandatory)**; ledger rows; Spine (`integrations.*`, 15 keys) | Install→chat-reachable→metered, with the provider entry updated in the same commit |
 | 11 | **Billing + usage** | `Settings -> Billing` **`PARTIAL`**; public Solo Beta acquisition **`PARTIAL`**; Billing P0 authenticated owner setup **FAIL** (brain README) | Billing | Stripe (`PARTIAL`); §38 money boundary; M1 metering | Ledger rows; Integration Registry; `../brain/config-registry.md`; §4.0 | Authenticated owner setup and test-provider Solo enrollment succeeding — and **M1**: `paige_llm_trace → platform_metered_events` |
-| 12 | **Analytics + intelligence** | `Analytics` **`UNAVAILABLE`** | Analytics | Read adapter over canonical records; Mind boundary | Ledger row; Spine (**no `analytics.*` key**) | A real figure traced to its canonical source — never a fixture, never an estimate shown as fact |
+| 12 | **Analytics + intelligence** | `Settings → Analytics` **`PARTIAL`** for PAIGE binding; completed Settings UI remains separate | Analytics / Platform Reach | Canonical issuer/resolver; bounded current-turn context; Mind signal boundary preserved | Ledger row; Spine (`analytics.metric_read`); #1837 | A real figure traced to canonical evidence through authenticated Chat/Live — automated wiring is not production acceptance |
 | 13 | **Communications** | `Clients -> Conversations` `UNAVAILABLE`; operator SMS works, **tenant SMS hard-blocked** | Comms | Twilio (`PARTIAL`); A2P registration; approval gate | Ledger row; Integration Registry; Spine (`comms.messages_read`) | A tenant-scoped send with a provider receipt and a Rail outcome (R8) |
 | 14 | **Team / people** | `Settings -> Team / Roles & Access` **`PROOF_OWED`** | Solo Settings | Role stores; §53 operator tiers; §51 tier matrix | Ledger row; Spine (`team.authority`); `../brain/roles-permissions.md`; **tier matrix (§66)** | Authenticated role change proven across tiers — including a tier you did not build on (§51) |
 | 15 | **Platform Operator · Agency · future scale** | `Operator / Platform console` **`UNAVAILABLE`** (intentionally separate) | Platform Operator | §9/§53 seam; §57 God-tier source of truth; §60/§61 tier framework | Ledger row; tier matrix; `../architecture/platform-operator-tenant-200.md` | Operator action proven without crossing the tenant seam; §57 derivation intact |
@@ -152,7 +152,7 @@ settings.integrations = PARTIAL
 settings.vault = INTENTIONALLY_ISOLATED
 settings.billing = PARTIAL
 settings.security-data = INTENTIONALLY_ISOLATED
-analytics = UNAVAILABLE
+analytics = PARTIAL
 marketplace = UNAVAILABLE
 operator.platform = PARTIAL
 platform.promotional-solo-access = PARTIAL

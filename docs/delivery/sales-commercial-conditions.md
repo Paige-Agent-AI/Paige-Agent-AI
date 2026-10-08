@@ -25,7 +25,11 @@ Agreement identity, lifecycle, document availability and invoice-captured source
 
 ## Current proof state
 
-LOCAL IMPLEMENTATION COMPLETE. 120 focused tests and 55 real PostgreSQL checks pass. Independent exact-head review, hosted CI, merge, deployment and production readback NOT YET OBSERVED. Authenticated manual acceptance UNVERIFIED. Stripe TEST merchant/provider acceptance UNVERIFIED. No money moved.
+BOUNDED SERVER CONTRACT MERGED + DEPLOYED / PRODUCTION SOURCE READBACK PASS. Product PR #1846, reviewed head `bebbe18d8ed36464f13240365a1522724ae0b724`, merge `1da3839f5a2829d02b2d3749b7ff66cbc58db9ed`. Independent non-author review COMPLETE / SHIP; 120 focused tests and 55 real PostgreSQL checks PASS. All 11 hosted checks SUCCESS; verify job `113123756761` reports 10005 tests across 665 files PASS, build/typecheck/Deno ratchet PASS. The local Windows rerun's 33 failure names all reproduce on clean baseline; no hosted gate was waived.
+
+Production migration `20270601000009` persisted. Migration workflow `37720517237` and Edge workflow `37720517228` SUCCESS. Stored helper/writer/package contract markers and private/authenticated ACLs independently read back; a synthetic read-only explicit not-applicable validation succeeded without a business mutation. Production `paige-ai-chat` ACTIVE v362, `sales-invoice-command` ACTIVE v47, and `sales-invoice-draft-command` ACTIVE v18; all changed modules present in their respective bundles exactly match merged source. Vercel production `dpl_DRjYBGQagaN9M5q2qrhenxuuTcJv` READY at the exact merge SHA.
+
+Authenticated manual acceptance UNVERIFIED; condition-entry controls are not delivered by this contract slice. Historical signed-economic compatibility remains UNVERIFIED pending Agreements-owned frozen evidence. Stripe TEST merchant/provider acceptance UNVERIFIED: zero TEST bindings and zero provider operations observed. Consequential Chat rollout remains `active=false` / DRAINING. #1843 and Commercial Golden Path 1 remain open. No money moved.
 
 ## Implemented behavior
 

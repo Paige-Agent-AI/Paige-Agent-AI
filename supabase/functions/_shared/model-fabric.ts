@@ -217,14 +217,12 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
     // The stream never opened, so nothing was shown and nothing can have run.
     if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) return last;
   }
-  // #1856 — nothing served: the failure route rides the ctx for whatever is observed next; the
-  // attempt detail is already in the warn line below (closed values only).
+  // #1856 — nothing served: the failure route rides the ctx for whatever is observed next (this
+  // also clears any projected served route — served_* are null here); the attempt detail is in the
+  // warn line below (closed values only).
   if (opts.trace) {
     opts.trace.fabric_route = { requested_class: cls, job: opts.trace.job_kind ?? "chat", served_provider: null, served_model: null, fallback: attempts.some((a) => a.failure && a.failure !== "skipped_disabled"), reason: "failed" };
   }
-  // #1856 — nothing served: clear the projected route from the caller's ctx so a reused ctx can
-  // never carry a stale "served by X" route into a later row.
-  if (opts.trace) opts.trace.fabric_route = null;
   return last;
 }
 
@@ -350,6 +348,10 @@ export async function fabricCompletion(
     : klass === "cheap" ? "cheap" : "reasoning";
 
   let last: FabricCompletionResult = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false) };
+  // #1856 — every failure exit clears the projected route from the caller's ctx: a reused ctx can
+  // never carry a stale "served by X" route into a later row (the success paths overwrite it with
+  // the exact route, so only failures need the explicit clear).
+  const clearRoute = () => { if (opts.trace) opts.trace.fabric_route = null; };
 
   for (const c of use) {
     // BUDGET GATE — every candidate, both providers, the ONE shared gate. A stop is a decision,
@@ -357,6 +359,7 @@ export async function fabricCompletion(
     // aborts the call BEFORE any provider is dispatched (#1850's cancellation proof).
     if (opts.signal?.aborted) {
       attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+      clearRoute();
       return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
     }
     if (opts.trace?.tenant_id) {
@@ -370,6 +373,7 @@ export async function fabricCompletion(
     }
     if (opts.signal?.aborted) {
       attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+      clearRoute();
       return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
     }
     // #1850 — document turns never reach the OpenAI adapter (it refuses document parts by design;
@@ -377,7 +381,7 @@ export async function fabricCompletion(
     if (c.provider === "openai" && messagesCarryDocument(request.messages as never)) {
       attempts.push({ provider: "openai", model: c.model ?? "", failure: "unsupported_document" });
       last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "unsupported_document" } };
-      if (opts.pinned) return last;
+      if (opts.pinned) { clearRoute(); return last; }
       continue;
     }
 
@@ -420,6 +424,7 @@ export async function fabricCompletion(
     } catch (e) {
       if ((e as { code?: unknown })?.code === "budget_exceeded") {
         attempts.push({ provider: c.provider, model: c.model ?? "", failure: "budget_exceeded" });
+        clearRoute();
         throw e;
       }
       const err = e as { name?: string; status?: number; failureClass?: string };
@@ -438,12 +443,14 @@ export async function fabricCompletion(
       if (opts.signal?.aborted) {
         last = { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure: "aborted" } };
         attempts.push({ provider: c.provider, model: c.model ?? "", failure: "aborted", status: 0 });
+        clearRoute();
         return last;
       }
-      if (opts.pinned) return last; // a pinned route never moves — the instrument stays comparable
-      if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) return last;
+      if (opts.pinned) { clearRoute(); return last; } // a pinned route never moves — the instrument stays comparable
+      if (!mayFallback(failure, { emittedToolCalls: false, emittedText: false, sideEffectProvenNone: true })) { clearRoute(); return last; }
     }
   }
+  clearRoute();
   return last;
 }
 

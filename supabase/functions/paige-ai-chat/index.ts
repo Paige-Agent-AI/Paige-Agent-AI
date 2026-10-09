@@ -216,6 +216,7 @@ import { buildTeamAuthorityBlock } from "../_shared/paige-spine/domains/teamAuth
 import { buildSocialPresenceBlock } from "../_shared/paige-spine/domains/socialPresenceChatEvidence.ts";
 import { loadN8nReadinessForChat, renderN8nReadinessForChat } from "../_shared/paige-spine/domains/n8nChatEvidence.ts";
 import { loadIntegrationsMindEvidence, renderIntegrationsMindEvidence } from "../_shared/paige-spine/domains/integrationsMindEvidence.ts";
+import { loadResearchHistoryContext, renderResearchHistoryContext } from "../_shared/research-history-context.ts";
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
@@ -5455,6 +5456,18 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const integrationsMind = personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
     const integrationsMindBlock = integrationsMind && integrationsMind.status === "recorded" ? renderIntegrationsMindEvidence(integrationsMind) : "";
 
+    // Original C6: bounded prior Research metadata from its existing caller-JWT
+    // workspace read. This is historical reference data, never findings or proof
+    // of this objective's completion. Client and Operator seats receive no read.
+    const researchHistory = personaCtx.tenant_id && callerTier === "tenant"
+      ? await loadResearchHistoryContext(supabaseClient, { actorId: user.id, tenantId: personaCtx.tenant_id })
+      : null;
+    const researchHistoryBlock = researchHistory?.status === "degraded"
+      ? "PRIOR RECORDED RESEARCH UNAVAILABLE: This turn could not verify prior research in the active workspace. Do not infer that no prior research exists, invent findings, or use this missing context as permission to execute or resume work. Mention the limitation only when it matters to the objective."
+      : researchHistory ? renderResearchHistoryContext(researchHistory) : "";
+    // The fixed degraded notice carries no workspace facts; actual history does.
+    if (researchHistory?.status === "available" && researchHistoryBlock) markProtectedLate("research_history_context");
+
     // C0a — the capability block holds its place in the prompt here (after the context blocks, before
     // the operating core) but is FILLED later, once the tool surface for this turn is final (Studio
     // scope, funding, marketplace): what PAIGE is told she can do is projected from exactly the tools
@@ -5533,6 +5546,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(businessMissionContextBlock ? [{ role: "system", content: businessMissionContextBlock }] : []),
       ...(n8nReadinessBlock ? [{ role: "system", content: n8nReadinessBlock }] : []),
       ...(integrationsMindBlock ? [{ role: "system", content: integrationsMindBlock }] : []),
+      ...(researchHistoryBlock ? [{ role: "system", content: researchHistoryBlock }] : []),
       ...(spineEvidenceBlock ? [{ role: "system", content: spineEvidenceBlock }] : []),
       // Capability status sits LAST among the context blocks, right before the operating core, so
       // "what can you do here?" is answered from the live, workspace-resolved manifest that OVERRIDES

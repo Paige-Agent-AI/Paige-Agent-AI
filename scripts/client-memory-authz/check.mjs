@@ -9428,5 +9428,41 @@ console.log('\nINT-340 / #1837 — one governed conversational metric read');
   }
 }
 
+console.log('\nC6 — bounded recorded Research history in original ORIENT context');
+{
+  const marker = 'C6-RESEARCH-HISTORY-MARKER';
+  const row = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', question: marker,
+    domain: 'business', caller: 'chat', stop_reason: 'answered', configured: true,
+    is_dossier: false, source_count: 2, created_at: new Date(Date.now() - 60000).toISOString() };
+  const run = (data, error = null, tier = 'tenant') => drive({ stream: true,
+    text: 'What prior research can help with this objective?',
+    rpcOverrides: { studio_role_ok: { data: true, error: null }, get_actor_access: { data: { tier }, error: null },
+      list_workspace_research: { data, error } },
+    tablesExtra: { tenants: [{ id: CALLER_TENANT, status: 'active' }] } });
+  const found = await run([row]);
+  assert('C6.R1 actual model context receives historical research title and date',
+    found.modelEgress.some(b => b.includes(marker) && b.includes(row.created_at)));
+  assert('C6.R2 existing bounded Research RPC runs only as caller JWT',
+    found.rec.rpc.filter(r => r.name === 'list_workspace_research').length === 2
+      && found.rec.rpc.filter(r => r.name === 'list_workspace_research').every(r => r.client === 'jwt' && r.args._limit === 3 && r.args._offset === 0));
+  assert('C6.R3 historical metadata supplies no provider dispatch, result fetch or receipt',
+    !found.rec.rpc.some(r => /get_workspace_research_run|record_capability_run|prepare_paige_research_work/.test(r.name))
+      && !found.outboundCalls.some(c => String(c.url ?? c).includes('paige-deep-research')));
+  for (const [name, data, error, tier] of [
+    ['empty', [], null, 'tenant'], ['unavailable', [row], { code: '42501' }, 'tenant'],
+    ['malformed', [{ ...row, source_count: -1 }], null, 'tenant'],
+    ['raw findings', [{ ...row, findings: [{ text: 'NEVER-ACCEPT-FINDINGS' }] }], null, 'tenant'],
+    ['future timestamp', [{ ...row, created_at: new Date(Date.now() + 3600000).toISOString() }], null, 'tenant'],
+    ['client seat', [row], null, 'client'],
+    ['operator seat', [row], null, 'god'],
+  ]) {
+    const refused = await run(data, error, tier);
+    assert(`C6.R4 ${name} cannot supply historical Research claims`, refused.modelEgress.every(b => !b.includes(marker)));
+    if (tier === 'client') assert('C6.R5 client seat performs no Research history read', !refused.rec.rpc.some(r => r.name === 'list_workspace_research'));
+    if (tier === 'god') assert('C6.R6 operator seat performs no Research history read', !refused.rec.rpc.some(r => r.name === 'list_workspace_research'));
+    if (error) assert('C6.R7 unavailable history is explicit without claiming an empty workspace',
+      refused.modelEgress.some(b => b.includes('PRIOR RECORDED RESEARCH UNAVAILABLE') && b.includes('Do not infer that no prior research exists')));
+  }
+}
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

@@ -1,5 +1,13 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## Original C6: prior recorded Research metadata in ORIENT
+
+The existing caller-JWT `list_workspace_research(3,0)` now supplies a bounded historical metadata source to the existing tenant Chat context. It retains the canonical workspace-wide member/agency/admin standing of `current_user_tenant_id`; fresh caller, current workspace and active caller-RLS tenant checks surround two consistent canonical reads. No initiating-actor-only permission is invented over the existing Research workspace read.
+
+At most three quoted, sanitized titles/dates and recorded labels cross into ORIENT with the shared untrusted-data notice and protected-content hold. These are prior stored metadata, not findings, source verification, current objective completion or permission to dispatch/resume. Empty history supplies no metadata. Failed or revoked reads retain a typed degraded result and an explicit fixed availability notice. Client and Operator seats perform no history read. Research owns the producer, result/citation eligibility and durable linkage; this change does not alter them or generalize Pipeline/Integrations Mind.
+
+Failing-first metadata-source stub RED10/34 then GREEN38/38; loaded actual handler missing-wiring RED984 PASS/2 FAIL then GREEN986/0. Independent preliminary review requested explicit degraded-notice and Operator no-read controls. That run exposed three unchanged C2 streaming regressions (986 PASS/3 FAIL): a fixed unavailable notice incorrectly triggered private-evidence holds. The guard now holds only actual available metadata; final actual-handler GREEN989/0 preserves the existing streaming assertions. Strict adapter types and diff checks pass. Fresh-main composition, independent NON-AUTHOR final-head review, required CI, deployment/readback and genuine authenticated acceptance remain separate gates. Existing INT-304/R0 owns this integration; no new program record, architecture or provider lane is created. INT-346 remains DRAINING; effectful C4d/C4e, C4f authenticated acceptance, owner-reserved C5 D2 and broader five-source C6 acceptance are not claimed complete.
+
 ## Continued original C0b convergence — incumbent adapters only
 
 Required CI initially rejected modifying the previous release’s attestation: this gate requires a newly added evidence record. The historical durable-observation record is restored from main; the mandatory current attestation is docs/evidence/ui-delivery/conversational-loop-incumbent-capabilities.md, within existing INT-304. No new program record or check waiver.

@@ -15,6 +15,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
+import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { COMMS_MAILBOX_ORGANIZE_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
 import { COMMS_MAILBOX_ORGANIZE_TOOL, parseOrganizeCommand, unsubscribeHttpsTarget, UUID, type OrganizeCommand } from "../_shared/inbox-intelligence/organize.ts";
 import { decideContentRead, hasOrganizeScope } from "../_shared/inbox-intelligence/policy.ts";
@@ -240,6 +241,15 @@ Deno.serve(async req => {
     _actor_user_id: user.id, _provider_result: { status: providerCall.status },
   });
   if (mirrorError) return response(503, { ok: false, outcome: "outcome_unknown", code: "MAILBOX_MIRROR_UNAVAILABLE", note: "The mailbox changed but the record could not be written. Proposing it again re-checks the same message." });
+
+  // The Rail receipt the capability declares: every executed organize act is
+  // answerable. recordCapabilityRun is the canonical recorder (redaction built in);
+  // a receipt failure never blocks the applied result — it is logged loudly.
+  await recordCapabilityRun(admin as never, {
+    tenantId, actorId: user.id, capabilityKey: COMMS_MAILBOX_ORGANIZE_TOOL,
+    outcome: "capability_succeeded",
+    detail: { kind: command.kind, message_id: command.message_id, ...(command.kind === "label" || command.kind === "unlabel" ? { label: command.label } : {}), approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting" },
+  });
 
   const undo: Record<string, string> = { archive: "unarchive", unarchive: "archive", trash: "untrash", untrash: "trash", label: "unlabel", unlabel: "label", unsubscribe_propose: "unsubscribe_send" };
   return response(200, {

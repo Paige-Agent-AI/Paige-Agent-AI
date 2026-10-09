@@ -287,9 +287,14 @@ Deno.serve(async (req) => {
       if (purpose === "inbox") {
         const { data: existingMailbox } = await admin
           .from("channel_connectors")
-          .select("mailbox_class")
+          .select("mailbox_class,mailbox_owner_user_id")
           .eq("id", ownRow.id)
           .maybeSingle();
+        if (existingMailbox?.mailbox_class === "personal" && existingMailbox.mailbox_owner_user_id !== user.id) {
+          return new Response(JSON.stringify({ error: "gmail_already_personal_to_another_user", detail: "This address is already a teammate's private inbox. One mailbox belongs to one person — it cannot be re-owned from a different account." }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         if (existingMailbox?.mailbox_class === "shared_support") {
           return new Response(JSON.stringify({ error: "gmail_shared_connector_conflict", detail: "This address is the workspace's shared support mailbox. Connecting it as a personal inbox would hide it from the rest of the team — connect a different address, or ask the workspace owner to move the shared mailbox first." }), {
             status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },

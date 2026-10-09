@@ -27,7 +27,7 @@ const batch = [
 
 describe("C0b canonical read declaration convergence", () => {
   it("preserves authority across every known registered and legacy Chat tool", () => {
-    const outsideBefore = new Set(`list_subagents delegate_to_subagent forge_subagent propose_action read_email_campaigns read_email_campaign_audience email_campaign_draft email_campaign_request_approval read_email_series email_series_draft email_series_request_approval`.split(" "));
+    const outsideBefore = new Set(`list_subagents delegate_to_subagent forge_subagent propose_action read_email_campaigns read_email_campaign_audience email_campaign_draft email_campaign_request_approval read_email_series email_series_draft email_series_request_approval gmail_organize`.split(" "));
     const known = new Set([...Object.keys(LEGACY_CAPABILITIES), ...PAIGE_SPINE_CAPABILITIES.map((c) => c.action?.chatTool).filter((t): t is string => !!t), ...batch.map(([tool]) => tool)]);
     for (const tool of known) expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
   });

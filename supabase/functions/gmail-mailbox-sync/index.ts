@@ -230,10 +230,14 @@ async function syncOneConnector(connector: ConnectorRow): Promise<Record<string,
     lastHistoryId = historyId ? Number(historyId) : lastHistoryId;
     // A batch with insert failures records 'partial' — an 'ok' initial sync that
     // landed nothing would permanently disable the initial-sync retry path.
+    // Initial completes when the window landed (a single deterministically-failing
+    // envelope must not pin the connector in full-window retries every tick — the
+    // stuck row surfaces as partial + insert_failures_N for a person to look at).
     const status = failedInserts > 0 ? "partial" : "ok";
+    const initialCompleted = inserted > 0 || failedInserts === 0;
     await admin.rpc("record_mailbox_sync_outcome", {
       _connector_id: connector.id, _status: status, _error: failedInserts > 0 ? `insert_failures_${failedInserts}` : null, _history_id: failedInserts > 0 ? null : lastHistoryId,
-      _initial_completed: failedInserts === 0, _last_message_date: failedInserts > 0 ? null : latestInternalDate(collected),
+      _initial_completed: initialCompleted, _last_message_date: failedInserts > 0 ? null : latestInternalDate(collected),
     });
     return { outcome: "initial_sync", inserted, classified, failed_inserts: failedInserts };
   }
@@ -281,10 +285,13 @@ async function syncOneConnector(connector: ConnectorRow): Promise<Record<string,
     }
   }
 
+  // A failed insert must not advance the history cursor past messages that never
+  // landed: null keeps the STORED (pre-walk) cursor — the record RPC coalesces — so
+  // the next tick re-walks the same window (23505 dedupe absorbs what did land).
   await admin.rpc("record_mailbox_sync_outcome", {
     _connector_id: connector.id, _status: failedInserts > 0 ? "partial" : "ok",
     _error: failedInserts > 0 ? `insert_failures_${failedInserts}` : null,
-    _history_id: lastHistoryId, _initial_completed: true, _last_message_date: null,
+    _history_id: failedInserts > 0 ? null : lastHistoryId, _initial_completed: true, _last_message_date: null,
   });
   return { outcome: "incremental", inserted, classified, soft_marked: softMarked, failed_inserts: failedInserts };
 }

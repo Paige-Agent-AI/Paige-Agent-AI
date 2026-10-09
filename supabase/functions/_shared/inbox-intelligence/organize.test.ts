@@ -41,6 +41,8 @@ Deno.test("unsubscribe: accepts only https one-click targets, refusing http/mail
   assertEquals(unsubscribeHttpsTarget("https://127.0.0.1/u"), null);
   assertEquals(unsubscribeHttpsTarget("https://192.168.1.5/u"), null);
   assertEquals(unsubscribeHttpsTarget("https://172.16.9.9/u"), null);
+  assertEquals(unsubscribeHttpsTarget("https://172.20.0.5/u"), null);
+  assertEquals(unsubscribeHttpsTarget("https://172.29.1.1/u"), null);
   assertEquals(unsubscribeHttpsTarget("https://169.254.1.1/u"), null);
   assertEquals(UNSUBSCRIBE_HTTPS_RE.test("https://news.vendor.test/u/abc"), true);
   assertEquals(UNSUBSCRIBE_HTTPS_RE.test("http://news.vendor.test/u/abc"), false);

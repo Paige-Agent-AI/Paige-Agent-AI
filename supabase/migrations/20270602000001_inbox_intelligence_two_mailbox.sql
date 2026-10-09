@@ -80,7 +80,7 @@ create policy messages_select on public.messages
     public.is_platform_owner()
     or (
       tenant_id = public.current_user_tenant_id()
-      and public.has_any_role(auth.uid(), array['admin','coach'])
+      and public.has_any_role(auth.uid(), array['admin'])
       and (
         connector_id is null
         or not exists (
@@ -103,7 +103,7 @@ create policy messages_update on public.messages
     public.is_platform_owner()
     or (
       tenant_id = public.current_user_tenant_id()
-      and public.has_any_role(auth.uid(), array['admin','coach'])
+      and public.has_any_role(auth.uid(), array['admin'])
       and (
         connector_id is null
         or not exists (
@@ -122,7 +122,7 @@ create policy messages_update on public.messages
     public.is_platform_owner()
     or (
       tenant_id = public.current_user_tenant_id()
-      and public.has_any_role(auth.uid(), array['admin','coach'])
+      and public.has_any_role(auth.uid(), array['admin'])
       and (
         connector_id is null
         or not exists (
@@ -170,7 +170,7 @@ create policy message_labels_select on public.message_labels
     public.is_platform_owner()
     or (
       tenant_id = public.current_user_tenant_id()
-      and public.has_any_role(auth.uid(), array['admin','coach'])
+      and public.has_any_role(auth.uid(), array['admin'])
       and (
         mailbox_class <> 'personal'
         or mailbox_owner_user_id = auth.uid()
@@ -214,7 +214,7 @@ create policy message_classifications_select on public.message_classifications
     public.is_platform_owner()
     or (
       tenant_id = public.current_user_tenant_id()
-      and public.has_any_role(auth.uid(), array['admin','coach'])
+      and public.has_any_role(auth.uid(), array['admin'])
       and (
         mailbox_class <> 'personal'
         or mailbox_owner_user_id = auth.uid()
@@ -268,7 +268,7 @@ create policy support_cases_select on public.support_cases
   for select using (
     public.is_platform_owner()
     or (tenant_id = public.current_user_tenant_id()
-        and public.has_any_role(auth.uid(), array['admin','coach']))
+        and public.has_any_role(auth.uid(), array['admin']))
   );
 
 drop policy if exists support_cases_service_all on public.support_cases;
@@ -306,7 +306,7 @@ create policy mailbox_sync_state_select on public.mailbox_sync_state
     public.is_platform_owner()
     or (
       tenant_id = public.current_user_tenant_id()
-      and public.has_any_role(auth.uid(), array['admin','coach'])
+      and public.has_any_role(auth.uid(), array['admin'])
       and (
         mailbox_class <> 'personal'
         or exists (
@@ -425,7 +425,7 @@ begin
       end if;
     end if;
   else
-    if not public.has_any_role(auth.uid(), array['admin','coach']) and not public.is_platform_owner() then
+    if not public.has_any_role(auth.uid(), array['admin']) and not public.is_platform_owner() then
       return jsonb_build_object('ok', false, 'code', 'WORKSPACE_ROLE_REQUIRED');
     end if;
   end if;
@@ -1012,3 +1012,34 @@ select cron.schedule(
     );
   $$
 );
+
+-- -----------------------------------------------------------------------------
+-- 17. Trust catalogue admission (#1140): the one new governed tool the operator
+--     can see and turn off (the sales_merchant catalogue pattern — rename the
+--     incumbent, forward its rows, add the new row; no existing setting changes).
+-- -----------------------------------------------------------------------------
+DO $$ BEGIN
+ IF to_regprocedure('public._list_tool_autonomy_before_inbox_intelligence(uuid)') IS NULL THEN
+  ALTER FUNCTION public.list_tool_autonomy(uuid) RENAME TO _list_tool_autonomy_before_inbox_intelligence;
+ END IF;
+END $$;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_inbox_intelligence(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_inbox_intelligence(uuid) FROM service_role;
+
+CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid DEFAULT NULL)
+RETURNS TABLE(tool_key text,label text,category text,mode text,is_default boolean,updated_at timestamptz)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE tenant uuid;
+BEGIN
+ RETURN QUERY SELECT * FROM public._list_tool_autonomy_before_inbox_intelligence(_tenant_id);
+ IF auth.uid() IS NOT NULL THEN
+  tenant:=public.current_user_tenant_id();
+  IF public.is_platform_owner() AND _tenant_id IS NOT NULL THEN tenant:=_tenant_id; END IF;
+ ELSE tenant:=_tenant_id; END IF;
+ RETURN QUERY WITH catalog(tool_key,label,category) AS (VALUES
+  ('gmail_organize','Organize a connected Gmail mailbox','Communications')
+ ) SELECT c.tool_key,c.label,c.category,coalesce(a.mode,'confirm'),a.mode IS NULL,a.updated_at
+ FROM catalog c LEFT JOIN public.tenant_tool_autonomy a ON a.tenant_id=tenant AND a.tool_key=c.tool_key;
+END $$;
+REVOKE ALL ON FUNCTION public.list_tool_autonomy(uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.list_tool_autonomy(uuid) TO authenticated,service_role;

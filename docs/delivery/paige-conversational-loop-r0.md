@@ -2,6 +2,8 @@
 
 ## Continued original C0b convergence — incumbent adapters only
 
+Required CI initially rejected modifying the previous release’s attestation: this gate requires a newly added evidence record. The historical durable-observation record is restored from main; the mandatory current attestation is docs/evidence/ui-delivery/conversational-loop-incumbent-capabilities.md, within existing INT-304. No new program record or check waiver.
+
 This candidate registers existing CRM, Pipeline, Team, Calendar, business-profile, Research,
 Communications, specialist, Funding and Studio adapters without changing their implementations.
 Existing risk, canonical approval, current seat, readiness and hidden-tool visibility remain the

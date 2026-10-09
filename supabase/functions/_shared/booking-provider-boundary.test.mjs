@@ -7,10 +7,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 const base = new URL('../', import.meta.url);
 function source(name) { return (process.env.BOUNDARY_TEST_BASELINE ? execFileSync('git',['show',`${process.env.BOUNDARY_TEST_BASELINE}:supabase/functions/${name}/index.ts`],{encoding:'utf8'}) : readFileSync(new URL(`${name}/index.ts`, base),'utf8')).replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,''); }
-function harness(name, allowed, {providerOk=true,remindChannel='email'}={}) {
+function harness(name, allowed, {providerOk=true,remindChannel='email',calendarTenant='tenant'}={}) {
  const writes=[], effects=[], scopes=[]; let planFired=false;
  const booking={id:'booking',tenant_id:'tenant',calendar_id:'calendar',host_user_id:'host',guest_email:'guest@example.test',guest_name:'Guest',status:'scheduled',start_at:new Date(Date.now()-120*60000).toISOString(),end_at:new Date(Date.now()-90*60000).toISOString(),timezone:'UTC',manage_token_version:0};
- const calendar={id:'calendar',tenant_id:'tenant',title:'Session',notify_config:{followup_guest:true,followup_offset_min:1}};
+ const calendar={id:'calendar',tenant_id:calendarTenant,title:'Session',notify_config:{followup_guest:true,followup_offset_min:1}};
  const reminder={id:'reminder',tenant_id:'tenant',title:'Title',summary:'Summary',assigned_to_user_id:'host',remind_channel:remindChannel,metadata:{keep:true}};
  const data={internal_bookings:[booking],calendars:[calendar],tenants:[{id:'tenant',name:'Brand'}],plan_items:[reminder],tenant_invite_tokens:[{id:'invite',tenant_id:'tenant',expires_at:'2099-01-01',email:'guest@example.test',kind:'consumer'}]};
  const admin={rpc:async(name,args)=>{ if(name==='comms_provider_execution_allowed'){scopes.push(args);if(allowed==='throw')throw Error('database unavailable');return allowed==='error'?{data:true,error:{message:'unavailable'}}:{data:allowed,error:null};}return {data:name==='verify_cron_token'?true:null,error:null};}, auth:{admin:{getUserById:async()=>({data:{user:{email:'host@example.test'}}})}},from(table){let mutation=null;const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve({data:mutation?null:(table==='plan_items'&&planFired?[]:(data[table]||[])),error:null});if(prop==='maybeSingle'||prop==='single')return async()=>{if(table==='plan_items'&&mutation){if(planFired)return {data:null,error:null};planFired=true;}return {data:mutation?{id:'reminder'}:(data[table]?.[0]??null),error:null};};return (...args)=>{if(['insert','update','delete'].includes(prop)){mutation=prop;writes.push({table,kind:prop,payload:args[0]});}return query;};}});return query;}};
@@ -62,4 +62,11 @@ for(const channel of ['email','in_app'])test(`plan-reminder ${channel}: a claime
  const second=await (await h.run({})).json();
  assert.equal(first.in_app,1);assert.equal(second.in_app,0);assert.equal(second.scanned,0);assert.equal(h.effects.length,0);
  assert.equal(h.writes.filter(w=>w.table==='notifications').length,1);assert.equal(h.scopes.length,channel==='email'?1:0);
+});
+
+for(const calendarTenant of [null,42,{},[]])test(`scheduled booking malformed tenant (${JSON.stringify(calendarTenant)}) fails closed`,async()=>{
+ const h=harness('process-booking-notifications',false,{calendarTenant});
+ const out=await (await h.run({})).json();
+ assert.equal(h.scopes.length,0);assert.equal(out.blocked,1);assert.equal(h.effects.length,0);
+ assert.equal(h.writes.some(w=>w.table==='booking_notifications_sent'),false);
 });

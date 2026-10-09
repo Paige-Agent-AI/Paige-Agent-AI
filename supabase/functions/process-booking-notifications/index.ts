@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
   for (const b of bookings) {
     const cal = calById.get(b.calendar_id as string);
     if (!cal) continue;
-    if (!(await commsProviderExecutionAllowed(admin, { tenantId: cal.tenant_id }))) {
+    if (!(await commsProviderExecutionAllowed(admin, { tenantId: typeof cal.tenant_id === "string" ? cal.tenant_id : null }))) {
       const { data: current } = await admin.from("internal_bookings").select("reminder_state").eq("id", b.id).maybeSingle();
       const { error } = await admin.from("internal_bookings").update({
         reminder_state: { ...((current?.reminder_state as Record<string, unknown>) ?? {}), provider_execution: "blocked", reason: "COMMS_PROVIDER_EXECUTION_DISABLED" },

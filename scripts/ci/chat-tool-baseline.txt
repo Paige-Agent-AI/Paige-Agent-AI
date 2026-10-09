@@ -34,6 +34,7 @@ comms_name_number
 comms_registration_status
 comms_search_numbers
 comms_set_primary_number
+comms_setup_calling
 content_save
 crm_add_note
 crm_assign_coach

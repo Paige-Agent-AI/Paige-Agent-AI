@@ -361,6 +361,8 @@ function describeStep(
       return { label: failed ? "Couldn't read your registration" : "Checked your carrier registration", group: "owner" };
     case "comms_draft_registration":
       return { label: failed ? "Couldn't draft your registration" : "Drafted your carrier registration", group: "owner" };
+    case "comms_setup_calling":
+      return { label: failed ? "Didn't finish connecting calling" : "Connected this workspace's calling account", group: "owner" };
   }
 
   switch (name) {
@@ -7813,6 +7815,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           {
             type: "function",
             function: {
+              name: "comms_setup_calling",
+              description: "Admin only. CONNECT this workspace's calling account — the one-time setup that makes browser calling possible. Free and idempotent: it creates no charge and buys no number, and it decides nothing about which number to use. Propose it when comms_connection_summary shows calling.account is 'absent' and the operator wants calling. It connects the account only — buying a number (Settings/Registration or comms_buy_number) and choosing it with \"Send from this\" (comms_set_primary_number) stay separate owner actions, and calling is READY only after a voice-capable number is chosen.",
+              parameters: {
+                type: "object",
+                properties: {},
+                required: []
+              }
+            }
+          },
+          {
+            type: "function",
+            function: {
               name: "comms_name_number",
               description: "Admin only. Name or rename one of this business's numbers — 'Intake line', 'Billing', 'Front desk'. Pass an empty string to clear the name. Get the id from comms_list_numbers. This changes a label only; it never changes which number the business sends from.",
               parameters: {
@@ -8420,6 +8434,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       update_client_data: "saving details to a client's file",
       delegate_to_subagent: "handing work to one of her specialists",
       comms_buy_number: "buying a phone number",
+      comms_setup_calling: "connecting this workspace's calling account",
       comms_name_number: "renaming a phone number",
       comms_set_primary_number: "changing which number you send from",
       comms_draft_registration: "drafting your carrier registration",
@@ -8672,6 +8687,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             ? `${buy} Its listed price is $${(cents / 100).toFixed(2)}/month, which the platform currently covers — the business isn't billed for it, but buy it deliberately: a duplicate or unused number is a real waste.`
             : `${buy} You've passed an unquoted amount, so this will be refused — run a search first so the real monthly price can be shown.`;
         }
+        case "comms_setup_calling":
+          // The sentence must say what it does NOT do (buy/choose a number) — an approval
+          // that reads as "turn on calling" would mislead the operator about what is
+          // actually being authorized: the account connection only.
+          return `Connect this workspace's calling account. Free, one-time, and idempotent — it buys no number and changes no number; choosing the number this business calls from stays a separate step ("Send from this").`;
         case "comms_name_number":
           return String(a?.friendly_name ?? "").trim()
             ? `Label that number "${a.friendly_name}".`
@@ -12611,6 +12631,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   sms: { usable: r.can_send_sms === true, blocked_reason: r.blocked_reason ?? null },
                 },
                 number: { state: r.number ?? "absent", e164: r.number_e164 ?? null },
+                // INT-345: the CALLING verdict, verbatim from the readiness resolver —
+                // the same four facts the dialer and Settings render, so "why can't my
+                // business make calls" is answered from the one canonical record.
+                calling: (r.calling && typeof r.calling === "object") ? r.calling : null,
                 registration: r.a2p ?? "absent",
                 permitted_actions: permitted,
                 // The two ceilings on what may be offered, said plainly so they are not inferred.
@@ -12741,6 +12765,36 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ...(rec.code === "twilio_purchase_missing_sid"
                     ? { money_already_spent: true, phone_number: rec.phone_number ?? args.phone_number }
                     : {}),
+                };
+            } else if (tc.function.name === "comms_setup_calling") {
+              // The GOVERNED setup seam — same caller-JWT authority pattern as the purchase:
+              // the edge derives the tenant and re-checks admin/owner standing server-side.
+              // A 200 is not success either: `outcome` names what happened, and
+              // `blocked_needs_config` (master creds absent) is an honest refusal, not a failure.
+              if (!crmTenantId) {
+                toolResults.push({
+                  tool_call_id: tc.id,
+                  role: "tool",
+                  content: JSON.stringify({ success: false, error: "tenant_not_resolved" }),
+                });
+                continue;
+              }
+              const { data: d, error: e } = await supabaseClient.functions.invoke("comms-setup-calling", {
+                body: {},
+              });
+              const rec = await readInvokeBody(e, d);
+              const ok = rec.outcome === "provisioned" || rec.outcome === "adopted" || rec.outcome === "skipped_existing";
+              // Named fields, not a spread (the record carries provider identifiers).
+              result = ok
+                ? {
+                  success: true,
+                  outcome: rec.outcome,
+                  calling: rec.calling ?? null,
+                }
+                : {
+                  success: false,
+                  error: rec.error ?? rec.outcome ?? "setup_failed",
+                  steps: rec.steps ?? null,
                 };
             } else if (tc.function.name === "comms_name_number") {
               const { data: d, error: e } = await supabaseClient.rpc("tenant_phone_number_rename", {
@@ -15954,6 +16008,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         comms_name_number: "tenant_phone_numbers",
         comms_set_primary_number: "tenant_phone_numbers",
         comms_draft_registration: "tenant_a2p_registrations",
+        comms_setup_calling: "tenant_twilio_subaccounts",
         pipeline_configure: "pipelines",
         propose_business_brief_update: "tenants",
         // 2026-09-12 repair — the evaluation loop + social publish, newly classified (action-risk.ts).

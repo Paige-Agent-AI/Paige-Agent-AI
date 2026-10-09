@@ -80,6 +80,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["crm_delete_task", "high", "destroys a task with nothing left to restore it from"],
   ["comms_buy_number", "high", "commits the tenant to a recurring charge on a provider account"],
   ["comms_set_primary_number", "high", "changes the number every client sees when the tenant contacts them"],
+  // INT-345 K-3: free and idempotent, but it creates provider resources outside the
+  // platform — the rendered approval card, and autonomy clamps at confirm.
+  ["comms_setup_calling", "high", "connects the workspace's calling account on the provider (free, idempotent, deliberate)"],
   ["n8n_delete_workflow", "high", "permanently deletes an automation"],
   ["plan_remove_item", "high", "cancels a milestone, task or reminder"],
 

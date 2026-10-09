@@ -73,6 +73,10 @@ project_id = "xygzykjyynhzqytbqnzu"
   # JWT-gated; self-gates on is_platform_owner() from the caller's JWT (§9).
   [functions.provision-tenant-twilio]
     verify_jwt = true
+  # INT-345 K-3: governed tenant calling setup — JWT-gated, self-gates in-function on
+  # admin|is_platform_owner() and derives the tenant from the caller JWT (§9).
+  [functions.comms-setup-calling]
+    verify_jwt = true
   # Comms C-2s-B: number marketplace. Both JWT-gated — each self-gates in-function on
   # admin/coach|is_platform_owner() and derives the tenant from the caller JWT
   # (current_user_tenant_id()), never the body (§9). They authenticate as the tenant's

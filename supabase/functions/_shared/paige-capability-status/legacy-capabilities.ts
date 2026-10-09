@@ -56,6 +56,7 @@ export const LEGACY_CAPABILITIES: Readonly<Record<string, LegacyCapabilityRow>> 
   comms_name_number: { domain: "communications", effect: "mutate", selfDescribe: false, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
   comms_registration_status: { domain: "communications", effect: "read", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
   comms_search_numbers: { domain: "communications", effect: "read", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
+  comms_setup_calling: { domain: "communications", effect: "external_effect", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
   comms_set_primary_number: { domain: "communications", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
   author_event_kind: { domain: "crm_clients", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: false },
   crm_add_note: { domain: "crm_clients", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },

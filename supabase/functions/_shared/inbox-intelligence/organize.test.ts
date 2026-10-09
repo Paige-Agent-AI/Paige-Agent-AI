@@ -1,58 +1,46 @@
 // #1140 two-mailbox pilot — the organize command contract: reversible by
 // construction, approval-gated for every Gmail-side write, unsubscribe only to
-// the address the message itself recorded.
-import { describe, expect, it } from "vitest";
+// the address the message itself recorded. Deno-native (the ci.yml deno test step).
+import { assertThrows } from "https://deno.land/std@0.190.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
 import { organizeRequiresApproval, organizeIsReversible, parseOrganizeCommand, undoKindFor, UNSUBSCRIBE_HTTPS_RE, unsubscribeHttpsTarget } from "./organize.ts";
 
 const M = "60000000-0000-4000-8000-000000000001";
 
-describe("parseOrganizeCommand — closed union, strict fields", () => {
-  it("parses each reversible kind", () => {
-    expect(parseOrganizeCommand({ kind: "label", message_id: M, label: "needs-reply" })).toEqual({ kind: "label", message_id: M, label: "needs-reply" });
-    expect(parseOrganizeCommand({ kind: "archive", message_id: M })).toEqual({ kind: "archive", message_id: M });
-    expect(parseOrganizeCommand({ kind: "unarchive", message_id: M })).toEqual({ kind: "unarchive", message_id: M });
-    expect(parseOrganizeCommand({ kind: "trash", message_id: M })).toEqual({ kind: "trash", message_id: M });
-    expect(parseOrganizeCommand({ kind: "untrash", message_id: M })).toEqual({ kind: "untrash", message_id: M });
-  });
-
-  it("refuses unknown kinds, extra keys, bad ids, bad labels", () => {
-    expect(() => parseOrganizeCommand({ kind: "delete", message_id: M })).toThrow();
-    expect(() => parseOrganizeCommand({ kind: "archive", message_id: M, permanent: true })).toThrow();
-    expect(() => parseOrganizeCommand({ kind: "archive", message_id: "not-a-uuid" })).toThrow();
-    expect(() => parseOrganizeCommand({ kind: "label", message_id: M, label: "Bad Label!" })).toThrow();
-    expect(() => parseOrganizeCommand({ kind: "label", message_id: M })).toThrow();
-  });
+Deno.test("organize parse: parses each reversible kind", () => {
+  assertEquals(parseOrganizeCommand({ kind: "label", message_id: M, label: "needs-reply" }), { kind: "label", message_id: M, label: "needs-reply" });
+  assertEquals(parseOrganizeCommand({ kind: "archive", message_id: M }), { kind: "archive", message_id: M });
+  assertEquals(parseOrganizeCommand({ kind: "unarchive", message_id: M }), { kind: "unarchive", message_id: M });
+  assertEquals(parseOrganizeCommand({ kind: "trash", message_id: M }), { kind: "trash", message_id: M });
+  assertEquals(parseOrganizeCommand({ kind: "untrash", message_id: M }), { kind: "untrash", message_id: M });
 });
 
-describe("reversibility + approval", () => {
-  it("every organize kind has an undo kind (never a one-way door)", () => {
-    expect(undoKindFor("archive")).toBe("unarchive");
-    expect(undoKindFor("unarchive")).toBe("archive");
-    expect(undoKindFor("trash")).toBe("untrash");
-    expect(undoKindFor("untrash")).toBe("trash");
-    expect(undoKindFor("label")).toBe("unlabel");
-    expect(undoKindFor("unlabel")).toBe("label");
-    for (const kind of ["label", "unlabel", "archive", "unarchive", "trash", "untrash"] as const) {
-      expect(organizeIsReversible(kind)).toBe(true);
-    }
-  });
-
-  it("Gmail-side writes require the canonical approval; undo of a just-approved act rides the same approval window", () => {
-    expect(organizeRequiresApproval("label")).toBe(true);
-    expect(organizeRequiresApproval("archive")).toBe(true);
-    expect(organizeRequiresApproval("trash")).toBe(true);
-    expect(organizeRequiresApproval("unarchive")).toBe(true);
-    expect(organizeRequiresApproval("untrash")).toBe(true);
-  });
+Deno.test("organize parse: refuses unknown kinds, extra keys, bad ids, bad labels", () => {
+  assertThrows(() => parseOrganizeCommand({ kind: "delete", message_id: M }), TypeError, "MAILBOX_COMMAND_INVALID");
+  assertThrows(() => parseOrganizeCommand({ kind: "archive", message_id: M, permanent: true }), TypeError, "MAILBOX_COMMAND_INVALID");
+  assertThrows(() => parseOrganizeCommand({ kind: "archive", message_id: "not-a-uuid" }), TypeError, "MAILBOX_COMMAND_INVALID");
+  assertThrows(() => parseOrganizeCommand({ kind: "label", message_id: M, label: "Bad Label!" }), TypeError, "MAILBOX_COMMAND_INVALID");
+  assertThrows(() => parseOrganizeCommand({ kind: "label", message_id: M }), TypeError, "MAILBOX_COMMAND_INVALID");
 });
 
-describe("unsubscribe target safety", () => {
-  it("accepts only https one-click URLs (RFC 8058 shape), refusing http/mailto/javascript and hosts withuserinfo tricks", () => {
-    expect(UNSUBSCRIBE_HTTPS_RE.test("https://news.vendor.test/u/abc")).toBe(true);
-    expect(UNSUBSCRIBE_HTTPS_RE.test("http://news.vendor.test/u/abc")).toBe(false);
-    expect(UNSUBSCRIBE_HTTPS_RE.test("mailto:unsub@vendor.test")).toBe(false);
-    expect(UNSUBSCRIBE_HTTPS_RE.test("javascript:alert(1)")).toBe(false);
-    expect(UNSUBSCRIBE_HTTPS_RE.test("https://user:pass@evil.test/u")).toBe(false);
-    expect(unsubscribeHttpsTarget("https://evil.test/u?x=" + "a".repeat(2500))).toBeNull();
-  });
+Deno.test("organize: every kind is reversible and has an exact undo kind", () => {
+  assertEquals(undoKindFor("archive"), "unarchive");
+  assertEquals(undoKindFor("unarchive"), "archive");
+  assertEquals(undoKindFor("trash"), "untrash");
+  assertEquals(undoKindFor("untrash"), "trash");
+  assertEquals(undoKindFor("label"), "unlabel");
+  assertEquals(undoKindFor("unlabel"), "label");
+  for (const kind of ["label", "unlabel", "archive", "unarchive", "trash", "untrash", "unsubscribe_propose", "unsubscribe_send"] as const) {
+    assertEquals(organizeIsReversible(kind), true);
+    assertEquals(organizeRequiresApproval(kind), true);
+  }
+});
+
+Deno.test("unsubscribe: accepts only https one-click targets, refusing http/mailto/javascript/userinfo/oversize", () => {
+  assertEquals(UNSUBSCRIBE_HTTPS_RE.test("https://news.vendor.test/u/abc"), true);
+  assertEquals(UNSUBSCRIBE_HTTPS_RE.test("http://news.vendor.test/u/abc"), false);
+  assertEquals(UNSUBSCRIBE_HTTPS_RE.test("mailto:unsub@vendor.test"), false);
+  assertEquals(UNSUBSCRIBE_HTTPS_RE.test("javascript:alert(1)"), false);
+  assertEquals(UNSUBSCRIBE_HTTPS_RE.test("https://user:pass@evil.test/u"), false);
+  assertEquals(unsubscribeHttpsTarget("https://evil.test/u?x=" + "a".repeat(2500)), null);
 });

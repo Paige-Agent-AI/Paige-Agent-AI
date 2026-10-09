@@ -44,7 +44,7 @@ SOLO_UI: NO: no src/solo, tenant-shell, growth or public-site path changed; the 
 UNVERIFIED: the authenticated chat drives on production, the live Gmail consent round-trip, the cron tick's first real sync, and the door's provider round-trip — all owed to the post-deploy acceptance the PR names; blocked on the owner-side Google console activation noted in the PR body
 
 <!-- RELEASE_GOVERNANCE_POLICY — read docs/doctrine/release-governance-and-customer-update-policy.md -->
-INTERNAL_BUILD_IDENTITY: 7e85978eb19ad588584aa61baba28e9e4192d3a3; deployment=none-pre-merge; environment=development; migrations=APPLIED(20270602000001_inbox_intelligence_two_mailbox); edge=PROOF_OWED(edge-deploy-on-merge-gmail-mailbox-sync-and-comms-mailbox-command-plus-touched); evidence=inbox-intelligence-suites-and-lints
+INTERNAL_BUILD_IDENTITY: 7e85978eb19ad588584aa61baba28e9e4192d3a3; deployment=none-pre-merge; environment=development; migrations=APPLIED(20270602000201_inbox_intelligence_two_mailbox); edge=PROOF_OWED(edge-deploy-on-merge-gmail-mailbox-sync-and-comms-mailbox-command-plus-touched); evidence=inbox-intelligence-suites-and-lints
 RELEASE_CHANNEL: development: code on branch inbox-intelligence-two-mailbox; migrations and edge functions deploy to production on merge via the standing workflows
 RELEASE_CLASSIFICATION: internal-only: a new governed capability substrate with no customer-visible screen change; activation needs owner-side Google console work and consent
 CUSTOMER_RELEASE_IDENTITY: none: no owner-decided customer release; the capability is dormant until a mailbox is connected

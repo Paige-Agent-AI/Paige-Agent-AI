@@ -33,7 +33,4 @@ export interface LegacyCapabilityRow extends LegacyDeclarationLike {
 
 export const LEGACY_CAPABILITIES: Readonly<Record<string, LegacyCapabilityRow>> = Object.freeze({
   propose_action: { domain: "action_bus", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
-  // INT-345 K-3: the governed calling-setup act (main retired the bulk of the legacy
-  // rows; this one is newly live, not legacy residue).
-  comms_setup_calling: { domain: "communications", effect: "external_effect", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
 });

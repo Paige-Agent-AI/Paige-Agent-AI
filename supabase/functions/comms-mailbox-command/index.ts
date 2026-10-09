@@ -16,6 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import { COMMS_MAILBOX_ORGANIZE_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
 import { COMMS_MAILBOX_ORGANIZE_TOOL, organizeIsReversible, parseOrganizeCommand, unsubscribeHttpsTarget, UUID, type OrganizeCommand } from "../_shared/inbox-intelligence/organize.ts";
 import { decideContentRead, hasOrganizeScope } from "../_shared/inbox-intelligence/policy.ts";
@@ -70,6 +71,11 @@ Deno.serve(async req => {
     const { data, error } = await caller.rpc("current_user_tenant_id");
     return !error && data === tenantId;
   };
+  // Canonical server provider floor (QA #1832): no mailbox write, token use, or
+  // provider round for a restricted tenant — before the seat check, approval read,
+  // or any network call.
+  if (!await commsProviderExecutionAllowed(admin as never, { tenantId, actorUserId: user.id })) return refused(403, COMMS_PROVIDER_EXECUTION_DISABLED);
+
   const { data: member } = await admin.from("tenant_members").select("role,status").eq("tenant_id", tenantId).eq("user_id", user.id).eq("status", "active").maybeSingle();
   if (!["owner", "admin"].includes(member?.role ?? "")) return refused(403, "MAILBOX_FORBIDDEN", "Only a business owner or admin can organize the connected mailbox.");
   const { data: profile, error: profileError } = await admin.from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();

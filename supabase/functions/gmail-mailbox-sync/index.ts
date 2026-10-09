@@ -22,6 +22,7 @@
 // door's job (comms-mailbox-command). A classifier failure never drops mail — the
 // message lands first, classification is best-effort after it.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { classifyAndRecordMessage, type ClassifyAdmin } from "../_shared/inbox-intelligence/classify-message.ts";
 
 import { classifyHistoryEvents, gmailHistoryIsExpired, normalizeGmailMessage, planInitialSync, type GmailMessageEnvelope } from "../_shared/inbox-intelligence/sync.ts";
@@ -85,6 +86,10 @@ Deno.serve(async req => {
   const report: Record<string, unknown>[] = [];
   for (const connector of (connectors ?? []) as ConnectorRow[]) {
     if (!connector.credentials_vault_ref || !hasReadScope(connector) || !connector.inbound_address) continue;
+    // Canonical server provider floor (QA #1832): a restricted tenant's mailbox is
+    // skipped before ANY Google round — the read engine performs no provider call,
+    // no token use, for a synthetic/restricted workspace.
+    if (!await commsProviderExecutionAllowed(admin as never, { tenantId: connector.tenant_id })) continue;
     try {
       const outcome = await syncOneConnector(connector);
       report.push({ connector_id: connector.id, mailbox_class: connector.mailbox_class, ...outcome });

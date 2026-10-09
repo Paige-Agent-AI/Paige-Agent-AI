@@ -1,5 +1,128 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## Final C0b owner-only model exposure correction
+
+The existing owner-only gate never permits automation_set_grant or automation_set_state from
+Chat: auto clamps to confirm, confirm refuses before fingerprint/approval redemption, and off
+refuses before dispatch. Both obsolete model schemas are retired. Exactly thirty schema lines
+are removed; owner Settings, catalogue, backend dispatchers, labels and classifications remain
+unchanged. Injected or historical calls remain denied. The original eight non-vacuous exposure
+checks failed before the deletion (1005 PASS/8 FAIL) and the completed handler passes1013/0.
+Focused document/resource tests pass29; declaration census is187 surfaced/186 declared/1 legacy/
+0 disagreements, with94 retained inline model declarations.
+
+The policy guard initially failed two stale-definition checks. It now recognizes only these two
+retained owner-only denials after validating the actual policy import, unconditional clamp,
+off brake, early owner-only continue and later retained dispatcher. Re-exposure, missing denial,
+classification downgrade and changed control bindings fail. The existing policy and all owner
+surfaces are retained, not deleted or weakened. Five new frozen-source controls cover re-exposure,
+clamp, refusal and policy downgrade; only twenty-eight verified context fingerprints change.
+The one remaining legacy registration is the Operator pending-decision producer propose_action;
+Operator is outside this Solo assignment and its approval authority is not reinterpreted.
+
+## Final incumbent document registration correction
+
+Current-source tests first failed on the missing document submission descriptor and discovery
+parity. The completed metadata-only correction passes twenty-nine focused tests, strict adapter
+types and six source mutations covering caller receiver, intent, thread, raw payload and Studio
+authority. The declaration guard reports189 surfaced/186 declared/3 legacy/0 disagreements.
+This release now registers fifty-eight incumbent tools. The canonical long_form outcome remains
+unchanged; same-intent submission may wake an existing worker, and neither submission nor a lost
+response proves artifact completion or an exactly-once external effect. No runtime dispatch or
+permission changes are included. Final composition review, exact-head CI, merge, deployment and
+authenticated acceptance remain separate release gates.
+
+## Original C6: prior recorded Research metadata in ORIENT
+
+The remaining Agent Intelligence source contract stays with its existing owner. Current
+PlatformIntelligence consumes operator-only fleet metrics and trace-tail; trace-tail also writes
+an audit row. Solo Sub-Agents supplies inventory, not advice. Existing prompt memory has no
+surface-owned projection of dated, attributable workspace advice with evidence eligibility.
+Those interfaces are not substituted for tenant ORIENT. Generalized Mind and Research findings
+also retain their existing source-owner contracts; no parallel intelligence projection is added.
+
+The existing caller-JWT `list_workspace_research(3,0)` now supplies a bounded historical metadata source to the existing tenant Chat context. It retains the canonical workspace-wide member/agency/admin standing of `current_user_tenant_id`; fresh caller, current workspace and active caller-RLS tenant checks surround two consistent canonical reads. No initiating-actor-only permission is invented over the existing Research workspace read.
+
+At most three quoted, sanitized titles/dates and recorded labels cross into ORIENT with the shared untrusted-data notice and protected-content hold. These are prior stored metadata, not findings, source verification, current objective completion or permission to dispatch/resume. Empty history supplies no metadata. Failed or revoked reads retain a typed degraded result and an explicit fixed availability notice. Client and Operator seats perform no history read. Research owns the producer, result/citation eligibility and durable linkage; this change does not alter them or generalize Pipeline/Integrations Mind.
+
+Failing-first metadata-source stub RED10/34 then GREEN38/38; loaded actual handler missing-wiring RED984 PASS/2 FAIL then GREEN986/0. Independent preliminary review requested explicit degraded-notice and Operator no-read controls. That run exposed three unchanged C2 streaming regressions (986 PASS/3 FAIL): a fixed unavailable notice incorrectly triggered private-evidence holds. The guard now holds only actual available metadata; final actual-handler GREEN989/0 preserves the existing streaming assertions. Strict adapter types and diff checks pass. Fresh-main composition, independent NON-AUTHOR final-head review, required CI, deployment/readback and genuine authenticated acceptance remain separate gates. Existing INT-304/R0 owns this integration; no new program record, architecture or provider lane is created. INT-346 remains DRAINING; effectful C4d/C4e, C4f authenticated acceptance, owner-reserved C5 D2 and broader five-source C6 acceptance are not claimed complete.
+## 2026-10-09 original-operation discovery release
+
+PR #1878 merged as `35fbb19aa8892862f8dfd5c34325fcf8565141c7`, reviewed head `e3873d6a5e83953cd43c92c34be15035e171b446`. Independent NON-AUTHOR SHIP, all eleven exact-head checks and both Vercel statuses passed against fresh main `2f9e6e36`. Ordinary status now derives the original governed Pipeline effect from protected terminal/card lineage and independently reads its authoritative outcome. A late authorization change withholds the result; ownership is never settled or released by an observation.
+
+Migration15 and its stable, authenticated-only function ACL/body are verified in production (body MD5 `018249f6c56b7ce701d0aa59672b55f1`). Migration deployment run `37871845445` and Edge run `37871845364` succeeded. Chat v374 retains JWT verification; three changed deployed source hashes match the reviewed tree. Vercel production `dpl_26VJxZNT4LXTXm6xQrKazeCDvCpx` is READY at the exact merge. Full source hashes and test evidence are recorded in PR #1878 comments `6072492010`, `6072506824`, `6072628980`, `6072653986`.
+
+Rollout `active=false`, `activated_at=null`: INT-346 remains DRAINING. Authenticated Solo/Live acceptance and owner acceptance remain UNVERIFIED. This does not complete #1807 automatic settlement, effectful C4d/C4e continuation or the original program.
+
+## Continued original C0b convergence — incumbent adapters only
+
+The final safe composition also includes the original C6 historical Research context integration above, within this same release candidate. Incoming Model Fabric/read-only status ancestry and the new context source are verified with narrowly updated context fingerprints; all incumbent metadata and original dependency pins are retained. The source suite now passes147 controls, with eleven prepared authenticated-driver controls,38 Research metadata units and989 loaded-handler checks. Genuine source-helper mutation and streaming failures were repaired without widening executor authority. Final immutable review, hosted CI, merge, deployment/readback and authenticated acceptance remain distinct release gates.
+
+Required CI initially rejected modifying the previous release’s attestation: this gate requires a newly added evidence record. The historical durable-observation record is restored from main; the mandatory current attestation is docs/evidence/ui-delivery/conversational-loop-incumbent-capabilities.md, within existing INT-304. No new program record or check waiver.
+
+This candidate registers existing CRM, Pipeline, Team, Calendar, business-profile, Research,
+Communications, specialist, Funding and Studio adapters without changing their implementations.
+Existing risk, canonical approval, current seat, readiness and hidden-tool visibility remain the
+contract. Recording a callable adapter is not authenticated customer acceptance. Provider calls,
+cache writes, transcript persistence, expiring archive tokens, proposal staging and partial outcomes
+are described explicitly; no new retry guarantee, receipt, provider route or execution authority is
+introduced. Frozen legacy-to-Spine projection regressions compare current seats and autonomy lanes.
+
+Routing remains the existing Harness/Spine/Orchestration/Trust/Rail path: Conversational Loop owns
+registration and result consumption; each department retains artifact/provider production. The
+same declarations support the shared capability interface rather than a second conversation
+framework. The existing read-only authenticated acceptance runner is prepared, not executed.
+Its genuine session and caller/tenant checks do not activate or settle a held executor.
+
+The initial fifty-seven-registration candidate retained four legacy contracts. Current-source
+verification corrected one stale historical explanation: document_generate is excluded from
+Studio's tool scope, absent from its auto list and explicitly refused by its handler. Its existing
+caller-JWT document submission can therefore be registered without changing approval or dispatch.
+The additional descriptor retains the Research/Knowledge discovery category and leaves the
+canonical long_form durable outcome row unchanged. At that intermediate head three exact
+contracts remained unreduced. The two owner_only automation setters are now retired from model
+exposure as described above, while their refusal policy and owner surfaces remain intact;
+propose_action also persists only a pending operator decision and intentionally skips preconfirmation; the current Spine mutation contract cannot represent that producer without duplicating approval. Its eventual send retains the separately governed execute-approval/send-message path.
+No risk/type/approval expansion or guard exemption is used to erase that debt. Deep Research's
+incumbent Chat branch still calls its synchronous provider endpoint; the canonical durable
+preparation contract is available separately. The conversational preparation/dispatch/resume
+handoff remains unimplemented and gated, with Research retaining its provider/result production.
+INT-346 clearance, C4f signed-in acceptance and C5 D2 are separate from this metadata delivery.
+
+Fresh composition with main163cca44 and reviewed observation14 passes127 source-contract controls plus11 authenticated-driver doubles (138 total), fourteen affected unit suites147 tests, four existing projection/continuation suites124 tests, actual conversational memory/approval/interruption/Metrics handler976 tests, declaration189/185/4/0, registry192 and strict adapter types. The independent exact65c06c7b1 review is SHIP after EOF whitespace repair; the subsequent c022895b6 merge adds only reviewed Preview recovery evidence from the observation release. Hosted exact-head CI, merge, deployment and authenticated acceptance remain owed.
+
+
+## 2026-10-08 C0b existing-capability convergence and durable status consumption
+
+This nineteen-registration/read-only observation slice shipped in PR #1874 at main6e1fbb6cc38a525fd4bf02ae50664b68d1be6996. Independent SHIP and exact-head required CI passed; migration14, reviewed function ACL/body and four changed Edge module sources are verified in production, Vercel READY. Rollout active=false/activated_at=null; INT-346 remains DRAINING. Authenticated acceptance and effectful continuation are UNVERIFIED. The candidate wording below records its original bounded implementation, not a claim of complete runtime continuation.
+
+The next candidate consumes conversation-bound durable observations in the incumbent status
+path, with no execution/resume authority. See the C4 record and durable-job contract for exact
+binding, artifact lineage and failing-first race evidence. Document's derived work intent is
+preserved; Research requires canonical work-linked sources and results rather than inference.
+
+C0b converges existing Planning/action-bus and stored-state reads into Spine. Existing Chat
+emission, caller-JWT execution, role admission, readiness and discovery visibility are preserved.
+Declarations carry explicit seat authority; old gates remain conservative fallbacks. Existing
+declaration omissions are recorded additively in the incumbent discovery baseline, while new
+missing or weakened seat declarations fail lint. `action_get` remains excluded from self-description.
+Inline stored reads point to their existing Edge handler, not a newly invented public executor.
+AST proof binds the actual dispatch branch, unshadowed caller-JWT factory, allowed read methods,
+scope pins and closed projections; write/provider/client-substitution mutants fail.
+
+Current batch: nineteen existing tools converged; domain debt72→53, declaration baseline80→61.
+The five existing Planning writers retain ordinary risk, canonical Chat approval, member Chat
+admission and their narrower RPC rules; update remains hidden. Their declarations explicitly
+record absent create deduplication and update/rearming retry limits, rather than inventing safety.
+Planning declarations RED9→GREEN9; combined registration/projection proof84 tests and native
+binding mutation proof13 tests PASS. Declaration self-test39 PASS; actual188 surface/127 declared/
+61 baseline/zero disagreements and registry134 PASS, including the registry mutation self-test.
+Metadata `chatBinding: LIVE` records an existing callable seam; maturity remains PARTIAL and does
+not establish signed-in acceptance. This work changes no department implementation or activation.
+Merge, migration persistence, deployment, production readback and authenticated acceptance remain
+separate pending evidence states for this candidate. Original C4 effectful runtime and owner-reserved
+C5 D2 remain gated, and five-source C6 coverage is not claimed complete.
+
 ## 2026-10-08 safe runtime composition — C4 observation and C6 eligible memory
 
 The existing authenticated interactive status branch now optionally observes the original Pipeline

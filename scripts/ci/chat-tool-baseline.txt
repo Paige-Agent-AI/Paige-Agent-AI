@@ -22,8 +22,6 @@ ask_choices
 author_event_kind
 automation_draft
 automation_list
-automation_set_grant
-automation_set_state
 automation_triggers_list
 calendar_book_meeting
 comms_buy_number

@@ -17,8 +17,8 @@
 // a budget stop. A provider being chosen grants nothing: tools, approvals and authority are decided
 // downstream, unchanged.
 //
-// OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, staged by the cohort
-// gate (validation cohort first) and class-scoped (operational only until each class validates).
+// OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, admission is
+// production-wide under the class scope (operational; the env stages or kills).
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
@@ -30,8 +30,8 @@ import { classifyProviderFailure, PROVIDER_FAILURE_CLASSES, type ProviderFailure
 import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, type RouteCandidate } from "./paige-turn/route.ts";
 
 /**
- * The owner-directed primary switch (ON since the 2026-10-08 directive; the historical temporary
- * OFF state and its release bar are preserved in docs/model-routing/int-334/EVIDENCE.md).
+ * The owner-directed primary switch (ON since the 2026-10-08 directive; the validation staging and
+ * the historical temporary OFF state are preserved in docs/model-routing/int-334/EVIDENCE.md).
  */
 // OWNER DIRECTIVE (2026-10-08): OpenAI is PAIGE's preferred PRIMARY provider — Luna first for
 // cheap, Sol first for operational, Astra first for frontier; Anthropic Sonnet 5.5 the
@@ -43,27 +43,27 @@ export const OPENAI_CHAT_ENABLED = true;
 
 // ── THE COHORT GATE under the owner-directed flag ────────────────────────────────────────────────
 //
-// Admission = the master flag AND a tenant cohort AND the class scope (operational only until each
-// class's own validation). While no cohort env is set, the cohort is the RELEASE-VALIDATION default
-// (the synthetic QA tenant below); the production cutover PR lifts that to production-wide.
+// Admission = the master flag AND the class scope AND (since the cutover) any well-formed tenant —
+// PRODUCTION-WIDE for the in-scope classes. The env is the staged control:
 //
-//   OPENAI_CANARY_TENANTS  comma-separated tenant uuids. UNSET → the validation default cohort.
-//                          SET (any value, INCLUDING EMPTY) → replaces the default: an explicit
-//                          list restricts (staged rollout); an EMPTY value admits NOBODY — the
-//                          no-deploy kill switch. NOTE: clearing/unsetting the env does NOT stop
-//                          admission — it RESTORES the default cohort. The kill switch is setting
-//                          the env to an empty value, or flipping the master flag (a deploy).
+//   OPENAI_CANARY_TENANTS  UNSET → production-wide (the cutover default). SET to a comma-separated
+//                          tenant list → restricts to it (staged rollout). SET to an EMPTY value →
+//                          admits NOBODY — the no-deploy kill switch. NOTE: clearing/unsetting the
+//                          env does NOT stop admission — it RESTORES production-wide. The kill
+//                          switch is setting the env to an empty value, or flipping the flag (a deploy).
 //   OPENAI_CANARY_CLASSES  comma list from cheap|operational|frontier (default: "operational")
 //
 // The values are read per call (never cached) so both controls act on the next call.
 
 const CANARY_TENANTS_ENV = "OPENAI_CANARY_TENANTS";
 /**
- * The RELEASE-VALIDATION cohort: while no env cohort is set, admission is restricted to the
- * platform's synthetic QA Solo tenant (the controlled-proof principal) so the owner-directed flip
- * can be validated against real Sol routing before the production cutover PR lifts the restriction.
+ * The CUTOVER (owner directive, 2026-10-08): admission is PRODUCTION-WIDE — every well-formed
+ * tenant, in the class scope (operational only until each class's own validation). The synthetic
+ * QA validation cohort was the temporary pre-cutover default; the live validation drive passed
+ * (real Sol routing, tool rounds, budget stop, telemetry — EVIDENCE.md) and this is its lifting.
+ * The env remains the staged control: an explicit list restricts; an explicit empty value is the
+ * kill switch.
  */
-const DEFAULT_CANARY_TENANTS: readonly string[] = ["7e700000-0000-0000-0000-000000000007"];
 const CANARY_CLASSES_ENV = "OPENAI_CANARY_CLASSES";
 const CANARY_CLASS_SET = new Set(["cheap", "operational", "frontier"]);
 
@@ -77,12 +77,12 @@ function csvEnv(name: string): string[] {
   return raw ? raw.split(",").map((x) => x.trim()).filter(Boolean) : [];
 }
 
-/** The canary cohort as read at call time (uuid strings, lowercase): the env list, or the
- *  release-validation cohort when unset. An explicitly SET EMPTY value admits nobody (kill switch). */
-export function openAiCanaryTenants(): string[] {
+/** The staged cohort as read at call time: NULL = production-wide (the cutover default); a set
+ *  list (lowercased) restricts to it; an explicitly SET EMPTY value admits nobody (kill switch). */
+export function openAiCanaryTenants(): string[] | null {
   const raw = fabricEnv(CANARY_TENANTS_ENV);
-  if (raw !== undefined) return raw.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
-  return [...DEFAULT_CANARY_TENANTS];
+  if (raw === undefined) return null;
+  return raw.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
 }
 
 /**
@@ -103,7 +103,8 @@ export function openAiCanaryClasses(): string[] {
  */
 export function openAiCohortAdmits(tenantId: string | null | undefined, cls: CognitiveClass): boolean {
   if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) return false;
-  if (!openAiCanaryTenants().includes(tenantId.toLowerCase())) return false;
+  const cohort = openAiCanaryTenants();
+  if (cohort !== null && !cohort.includes(tenantId.toLowerCase())) return false;
   return openAiCanaryClasses().includes(streamingClass(cls));
 }
 

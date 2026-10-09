@@ -1,0 +1,16 @@
+// @vitest-environment node
+import {it,expect,vi} from 'vitest';
+import {readDurableObservation} from '../../supabase/functions/_shared/durable-job/observation';
+const id=(n:number)=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const ref={threadId:id(1),intentId:id(2),workId:id(3)};
+const row={...ref,workIntentId:id(6),actorId:id(4),tenantId:id(5),state:'claimed',version:1,artifactVerified:false,recoveryState:'observed',eligibleForExecution:true};
+function setup(){return {auth:{getUser:vi.fn(async()=>({data:{user:{id:id(4)}},error:null}))},rpc:vi.fn(async(name:string):Promise<{data:unknown,error:unknown}>=>({data:name==='current_user_tenant_id'?id(5):row,error:null}))};}
+ it('observes distinct domain intent without execution eligibility',async()=>{const c=setup();const r=await readDurableObservation(ref,c);expect(r?.workIntentId).toBe(id(6));expect(r).not.toHaveProperty('eligibleForExecution');});
+ it('fails closed on forged request fields',async()=>{const c=setup();expect(await readDurableObservation({...ref,actorId:id(4)} as typeof ref,c)).toBeNull();expect(c.rpc).not.toHaveBeenCalled();});
+ it('requires genuine caller authentication',async()=>{const c=setup();c.auth.getUser.mockRejectedValue(Error('no user'));expect(await readDurableObservation(ref,c)).toBeNull();});
+ it('fails closed on switched tenant',async()=>{const c=setup();let reads=0;c.rpc.mockImplementation(async name=>({data:name==='current_user_tenant_id'?(reads++?id(9):id(5)):row,error:null}));expect(await readDurableObservation(ref,c)).toBeNull();});
+ it.each([{...row,actorId:id(9)},{...row,intentId:id(9)},null,{...row,state:'invented'}])('rejects unavailable/foreign observation',async data=>{const c=setup();c.rpc.mockImplementation(async name=>({data:name==='current_user_tenant_id'?id(5):data,error:null}));expect(await readDurableObservation(ref,c)).toBeNull();});
+it.each(['role revocation','latest intent replacement','thread archival'])('fails closed after concurrent %s',async()=>{const c=setup();let reads=0;c.rpc.mockImplementation(async name=>({data:name==='current_user_tenant_id'?id(5):(reads++?null:row),error:null}));expect(await readDurableObservation(ref,c)).toBeNull();});
+it.each([{version:2},{workIntentId:id(9)},{state:'failed'},{recoveryState:'reconciliation_required'}])('rejects concurrent observation changes %j',async change=>{const c=setup();let reads=0;c.rpc.mockImplementation(async name=>({data:name==='current_user_tenant_id'?id(5):(reads++?{...row,...change}:row),error:null}));expect(await readDurableObservation(ref,c)).toBeNull();});
+it.each([{artifactVerified:false,artifactRef:null},{artifactRef:id(9)}])('rejects concurrent artifact mutation %j',async change=>{const c=setup();const initial={...row,state:'succeeded',artifactVerified:true,artifactRef:id(8)};let reads=0;c.rpc.mockImplementation(async name=>({data:name==='current_user_tenant_id'?id(5):(reads++?{...initial,...change}:initial),error:null}));expect(await readDurableObservation(ref,c)).toBeNull();});
+it('rejects final canonical read error',async()=>{const c=setup();let reads=0;c.rpc.mockImplementation(async name=>name==='current_user_tenant_id'?{data:id(5),error:null}:reads++?{data:row,error:Error('read failed')}:{data:row,error:null});expect(await readDurableObservation(ref,c)).toBeNull();});

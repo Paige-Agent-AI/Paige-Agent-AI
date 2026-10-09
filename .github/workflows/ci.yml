@@ -791,6 +791,11 @@ jobs:
           for _ in $(seq 1 20); do "$PGBIN/pg_isready" -h 127.0.0.1 -p "$PORT" >/dev/null 2>&1 && break; sleep 0.5; done
           node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d"
 
+      - name: C0b — incumbent adapter authority bindings
+        run: |
+          node --test scripts/ci/c0b-*.test.mjs
+          node --test scripts/proof/int304-authenticated-observation.test.mjs
+
       - name: INT-336 — typed supersession and canonical settlement
         if: ${{ !cancelled() }}
         run: |
@@ -823,7 +828,9 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-rollout-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/c4e-research-preparation-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-durable-observation-check.mjs
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 

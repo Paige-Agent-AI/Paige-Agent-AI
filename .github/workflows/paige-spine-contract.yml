@@ -94,6 +94,7 @@ on:
       - "src/solo/paigeClientScope.ts"
       - "src/solo/paigeClientScope.test.ts"
       - "scripts/ci/paige-spine-registry-lint.mjs"
+      - "scripts/ci/c0b-*.mjs"
       - "scripts/ci/chat-tool-registry-lint.mjs"
       - "scripts/proof/paige-spine-local-proof.sql"
       # Everything the database-contract job runs must trigger it (18 files it ran were missing).

@@ -244,6 +244,13 @@ Deno.serve(async (req) => {
     //    express the partial-index + tenant WHERE the SQL trigger uses, so we do it
     //    explicitly: (1) reconnect our OWN row if present; (2) else honestly reject a
     //    cross-tenant collision; (3) else insert. ──
+    //    #1140: a purpose=inbox consent is the PERSONAL mailbox policy — the granting
+    //    user is bound as the mailbox owner and the scopes Google actually granted are
+    //    recorded, so read/organize gates refuse by column when consent narrows.
+    const purpose = parsed.p === "inbox" ? "inbox" : "send";
+    const grantedScopes: string[] = typeof tokenJson.scope === "string"
+      ? tokenJson.scope.split(" ").filter((scope: string) => scope.startsWith("https://"))
+      : [];
     const connectorFields = {
       channel_type: "email",
       provider: "gmail",
@@ -255,6 +262,11 @@ Deno.serve(async (req) => {
       credentials_vault_ref: ref,
       status: "active",
       active: true,
+      ...(purpose === "inbox" ? {
+        mailbox_class: "personal" as const,
+        mailbox_owner_user_id: user.id,
+        mailbox_scopes: grantedScopes,
+      } : {}),
     };
 
     // (1) Our tenant's existing Gmail connector for this address → reconnect (update).
@@ -268,6 +280,28 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (ownRow?.id) {
+      // #1140: an inbox consent must NEVER silently privatize a connector that is
+      // currently the tenant's SHARED support mailbox — every other staff seat would
+      // lose the shared history the moment the row flips to personal. Reconnecting
+      // one's own personal mailbox (already personal) stays allowed.
+      if (purpose === "inbox") {
+        const { data: existingMailbox } = await admin
+          .from("channel_connectors")
+          .select("mailbox_class,mailbox_owner_user_id")
+          .eq("id", ownRow.id)
+          .maybeSingle();
+        if (existingMailbox?.mailbox_class === "personal" && existingMailbox.mailbox_owner_user_id !== user.id) {
+          return new Response(JSON.stringify({ error: "gmail_already_personal_to_another_user", detail: "This address is already a teammate's private inbox. One mailbox belongs to one person — it cannot be re-owned from a different account." }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (existingMailbox?.mailbox_class === "shared_support") {
+          return new Response(JSON.stringify({ error: "gmail_shared_connector_conflict", detail: "This address is the workspace's shared support mailbox. Connecting it as a personal inbox would hide it from the rest of the team — connect a different address, or ask the workspace owner to move the shared mailbox first." }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       const { error: updErr } = await admin
         .from("channel_connectors")
         .update({ ...connectorFields, updated_at: new Date().toISOString() })
@@ -347,8 +381,11 @@ Deno.serve(async (req) => {
         provider: "gmail",
         reconnected: Boolean(ownRow?.id),
         // The scope actually granted, so the record cannot later be read as
-        // broader than it was. This connection asks to SEND only.
-        scope: "gmail.send",
+        // broader than it was. The send flow asks to SEND only; the #1140 inbox
+        // consent records the read/organize set Google actually returned.
+        scope: purpose === "inbox" ? (grantedScopes.join(" ") || "gmail.modify gmail.labels") : "gmail.send",
+        purpose,
+        mailbox_class: purpose === "inbox" ? "personal" : "shared_support",
       },
     });
     if (auditErr) console.error("[gmail-oauth-callback] audit write failed:", auditErr.message);

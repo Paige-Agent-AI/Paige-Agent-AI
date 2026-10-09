@@ -1120,6 +1120,12 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "paige-ai-chat recordCommsRun -> classifyCommsRun -> record_capability_run (the comms truth table: provisioned/adopted recorded; skipped_existing is a no-act and records nothing)"
+    },
+    {
+      "tool": "gmail_organize",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "comms-mailbox-command/index.ts records the executed organize act through canonical recordCapabilityRun after the provider round answers and the canonical mirror lands (governance payload carries actor/tenant/tool/approval channel), so every approved mailbox change has a Rail receipt; the door refuses before dispatch when the receipt cannot be written."
     }
   ]
 }

@@ -562,6 +562,13 @@ if (chatSrc.includes('...CRM_COMMAND_TOOLS')) {
   if (!crmTools.length) throw new Error('CRM command catalog could not be parsed');
   importedTools.push(...crmTools);
 }
+if (chatSrc.includes('...INBOX_INTELLIGENCE_TOOLS')) {
+  if (!/import\s*\{[^}]*INBOX_INTELLIGENCE_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/inbox-intelligence\/chat\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Inbox Intelligence catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/inbox-intelligence/chat.ts', 'utf8');
+  const inboxTools = [...source.matchAll(/[^\w]name:\s*["']((?:read_message_content|read_support_cases|gmail_organize))["']/g)].map(m => m[1]);
+  if (!inboxTools.length) throw new Error('Inbox Intelligence catalog could not be parsed');
+  importedTools.push(...inboxTools);
+}
 const mcpCanonicals = parseMcpCanonicals(fs.readFileSync(MCP_POLICY, "utf8"));
 const governedEdgeActions = [
   ...parseGovernedEdgeActions(fs.readFileSync(SOCIAL_HANDLER, "utf8")),

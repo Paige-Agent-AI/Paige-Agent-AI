@@ -786,6 +786,20 @@ jobs:
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts
+          # Inbox Intelligence (#1140 two-mailbox pilot): the pure policy/classify/sync/organize
+          # contracts. Same deny-all sandbox; the modules under test are pure by design.
+          deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/inbox-intelligence/policy.test.ts \
+            supabase/functions/_shared/inbox-intelligence/classify.test.ts \
+            supabase/functions/_shared/inbox-intelligence/sync.test.ts \
+            supabase/functions/_shared/inbox-intelligence/organize.test.ts
+          # Owner addendum 6088460092: source-level boundary tests read the door's real
+          # source, so this one line grants read (repo tree only); every other deny stays.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
+          # The two-mailbox pilot's edge functions must at least TYPE-check.
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/gmail-mailbox-sync/index.ts \
+            supabase/functions/comms-mailbox-command/index.ts
           # The edge functions must at least TYPE-check; none is exercised by the tests above.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/sign-agreement/index.ts \

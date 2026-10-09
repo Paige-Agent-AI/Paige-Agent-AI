@@ -9,6 +9,7 @@ import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCol
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
+import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxIntelligenceChat, dispatchOrganizeChat } from '../_shared/inbox-intelligence/chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
@@ -8056,6 +8057,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_METRIC_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
+    // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
+    // execute caller-scoped RPCs; gmail_organize executes only through comms-mailbox-command.
+    toolDefs.push(...INBOX_INTELLIGENCE_TOOLS as any);
     // Marketing email (E2b): read campaigns and their audience, write drafts, file one for the owner's
     // approval. Governed by the general gate below; PAIGE has no approve or send tool.
     toolDefs.push(...EMAIL_CAMPAIGN_TOOLS as any);
@@ -10344,6 +10348,50 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
           // comms-email-command claims the stored proposal atomically; what it returns is this approval's outcome.
+          if (result.spent) approvalSpend.set(result.spent, tc.id);
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
+          continue;
+        }
+
+        // ── INBOX INTELLIGENCE, direct verbs (#1140 two-mailbox pilot) ─────────
+        // read_message_content / read_support_cases execute caller-scoped RPCs the
+        // same way inbox_list does: the server derives the tenant from the JWT (§59)
+        // and the mailbox policy (private vs shared, active consent) is enforced in
+        // SQL, not by the model or this handler.
+        if (INBOX_INTELLIGENCE_TOOL_NAMES.has(tc.function.name) && tc.function.name !== 'gmail_organize') {
+          let inboxArgs: Record<string, unknown> = {};
+          try { inboxArgs = JSON.parse(tc.function.arguments || '{}'); } catch { inboxArgs = {}; }
+          const result = await dispatchInboxIntelligenceChat(tc.function.name, inboxArgs, {
+            caller: { rpc: async (name: string, args: Record<string, unknown>) => supabaseClient.rpc(name, args as never) as never },
+          });
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content ?? result) });
+          continue;
+        }
+
+        // ── INBOX INTELLIGENCE, the organize door (#1140) ─────────────────────
+        // gmail_organize redeems through comms-mailbox-command — the same placement
+        // rule as the email door above: after scope/seat guards, before the legacy
+        // Chat gate (which must not also gate it), and the chat files no receipt
+        // (the door records it through record_capability_run).
+        if (tc.function.name === 'gmail_organize') {
+          if (!cancellationsRecorded || !(await revalidateProposalScope())) {
+            toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify({
+              success: false, not_applied: true, error: 'confirmation_context_unavailable',
+              message: 'The workspace or declined approval could not be verified. The mailbox was not changed. Reopen the workspace and retry; do not use another tool to bypass this refusal.',
+            }) });
+            continue;
+          }
+          let organizeArgs: Record<string, unknown> = {};
+          try { organizeArgs = JSON.parse(tc.function.arguments || '{}'); } catch { organizeArgs = {}; }
+          const userTurnsO = messages.filter((message: any) => message?.role === 'user');
+          const result = await dispatchOrganizeChat({
+            tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
+            args: organizeArgs, approved: approvedConfirmations,
+            turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurnsO.length, user_turn: userTurnsO[userTurnsO.length - 1]?.content ?? null },
+          }, { caller: supabaseClient, admin: { from: (name: string) => ({
+            select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as never,
+          }) } });
+          for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.spent) approvalSpend.set(result.spent, tc.id);
           toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
           continue;
@@ -15938,6 +15986,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Values that are deliberately NOT tables are declared as such in that guard, not left to be
       // guessed from context.
       const WRITE_TARGET: Record<string, string> = {
+        gmail_organize: "messages",
         agreement_draft: "paige_agreements", agreement_send: "paige_agreements",
         crm_create_contact: "clients", crm_update_contact: "clients",
         crm_archive_contact: "clients", crm_restore_contact: "clients",

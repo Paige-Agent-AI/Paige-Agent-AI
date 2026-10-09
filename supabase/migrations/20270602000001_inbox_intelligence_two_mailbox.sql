@@ -54,8 +54,9 @@ begin
   if new.mailbox_class = 'personal' and new.mailbox_owner_user_id is null then
     raise exception 'PERSONAL_MAILBOX_REQUIRES_OWNER';
   end if;
-  -- Never silently orphan an existing personal mailbox.
-  if new.mailbox_class <> 'personal' and old.mailbox_class = 'personal'
+  -- Never silently orphan an existing personal mailbox (UPDATE only: OLD is
+  -- unassigned on INSERT and would raise).
+  if tg_op = 'UPDATE' and new.mailbox_class <> 'personal' and old.mailbox_class = 'personal'
      and new.mailbox_owner_user_id is distinct from old.mailbox_owner_user_id then
     new.mailbox_owner_user_id := old.mailbox_owner_user_id;
   end if;
@@ -399,34 +400,35 @@ security definer
 set search_path = public
 as $$
 declare
-  m record;
-  c record;
+  msg record;
+  conn_class text;
+  conn_owner uuid;
+  conn_status text;
+  conn_active boolean;
   v_tenant uuid := public.current_user_tenant_id();
 begin
-  select m.* into m from public.messages m where m.id = p_message_id;
+  select msg.* into msg from public.messages msg where msg.id = p_message_id;
   if not found then return null; end if;
-  if m.tenant_id is distinct from v_tenant then return null; end if;
+  if msg.tenant_id is distinct from v_tenant then return null; end if;
 
-  if m.connector_id is null then
+  if msg.connector_id is null then
     -- A row with no connector was never a synced mailbox message; staff may read it.
-    select 'shared_support'::text, null::uuid, 'active'::text, true into c.mailbox_class, c.mailbox_owner_user_id, c.status, c.active;
+    conn_class := 'shared_support'; conn_owner := null; conn_status := 'active'; conn_active := true;
   else
     select cc.mailbox_class, cc.mailbox_owner_user_id, cc.status, cc.active
-      into c
-      from public.channel_connectors cc where cc.id = m.connector_id;
+      into conn_class, conn_owner, conn_status, conn_active
+      from public.channel_connectors cc where cc.id = msg.connector_id;
     if not found then return null; end if;
   end if;
 
   -- Revoked or disconnected consent refuses the read, fail-closed.
-  if c.status <> 'active' or c.active is not true then
+  if conn_status <> 'active' or conn_active is not true then
     return jsonb_build_object('ok', false, 'code', 'MAILBOX_INACTIVE');
   end if;
 
-  if c.mailbox_class = 'personal' then
-    if c.mailbox_owner_user_id is null or c.mailbox_owner_user_id <> auth.uid() then
-      if public.is_platform_owner() then
-        null; -- platform owner, existing posture
-      else
+  if conn_class = 'personal' then
+    if conn_owner is null or conn_owner <> auth.uid() then
+      if not public.is_platform_owner() then
         return jsonb_build_object('ok', false, 'code', 'PERSONAL_MAILBOX_NOT_OWNER');
       end if;
     end if;
@@ -438,29 +440,29 @@ begin
 
   return jsonb_build_object(
     'ok', true,
-    'id', m.id,
-    'direction', m.direction,
-    'channel', m.channel_type,
-    'mailbox_class', c.mailbox_class,
-    'subject', m.subject,
-    'status', m.status,
-    'contact_id', m.contact_id,
-    'thread_key', m.thread_key,
-    'sender', m.sender,
-    'body_text', left(m.body_text, 8000),
-    'body_truncated', coalesce(length(m.body_text), 0) > 8000,
+    'id', msg.id,
+    'direction', msg.direction,
+    'channel', msg.channel_type,
+    'mailbox_class', conn_class,
+    'subject', msg.subject,
+    'status', msg.status,
+    'contact_id', msg.contact_id,
+    'thread_key', msg.thread_key,
+    'sender', msg.sender,
+    'body_text', left(msg.body_text, 8000),
+    'body_truncated', coalesce(length(msg.body_text), 0) > 8000,
     'labels', coalesce((
       select jsonb_agg(jsonb_build_object('label', l.label, 'source', l.source) order by l.label)
-      from public.message_labels l where l.message_id = m.id
+      from public.message_labels l where l.message_id = msg.id
     ), '[]'::jsonb),
     'classification', (
       select jsonb_build_object('intent', k.intent, 'confidence', k.confidence,
                                 'risk_tier', k.risk_tier, 'summary', k.summary, 'decided_at', k.decided_at)
-      from public.message_classifications k where k.message_id = m.id
+      from public.message_classifications k where k.message_id = msg.id
     ),
-    'unsubscribe', m.meta ? 'list_unsubscribe',
-    'sent_at', m.sent_at,
-    'created_at', m.created_at
+    'unsubscribe', msg.meta ? 'list_unsubscribe',
+    'sent_at', msg.sent_at,
+    'created_at', msg.created_at
   );
 end;
 $$;
@@ -689,37 +691,37 @@ security definer
 set search_path = public
 as $$
 declare
-  m record;
-  c record;
+  msg record;
+  conn record;
   v_case public.support_cases%rowtype;
 begin
-  select m.* into m from public.messages m where m.id = _message_id;
+  select msg.* into msg from public.messages msg where msg.id = _message_id;
   if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
 
-  select cc.id, cc.tenant_id, cc.mailbox_class into c
-    from public.channel_connectors cc where cc.id = m.connector_id;
+  select cc.id, cc.tenant_id, cc.mailbox_class into conn
+    from public.channel_connectors cc where cc.id = msg.connector_id;
   if not found then return jsonb_build_object('ok', false, 'code', 'CONNECTOR_NOT_FOUND'); end if;
 
   -- Personal mailboxes NEVER open support cases: the private/shared boundary is
   -- enforced by the engine itself, not by caller discipline.
-  if c.mailbox_class = 'personal' then
+  if conn.mailbox_class = 'personal' then
     return jsonb_build_object('ok', true, 'mailbox_class', 'personal', 'case_opened', false);
   end if;
 
   select * into v_case from public.support_cases
-   where tenant_id = c.tenant_id and connector_id = c.id and thread_key = m.thread_key;
+   where tenant_id = conn.tenant_id and connector_id = conn.id and thread_key = msg.thread_key;
 
   if v_case.id is null then
     insert into public.support_cases (tenant_id, connector_id, thread_key, contact_id, status, last_inbound_at)
-    values (c.tenant_id, c.id, m.thread_key, m.contact_id, 'awaiting_owner', m.sent_at)
+    values (conn.tenant_id, conn.id, msg.thread_key, msg.contact_id, 'awaiting_owner', msg.sent_at)
     returning * into v_case;
   else
     -- The customer replied: any pending follow-up is cancelled, never re-armed
     -- without new inbound (no duplicate chasing, no automated loops).
     update public.support_cases
        set status = case when v_case.status in ('resolved','closed') then 'open' else 'awaiting_owner' end,
-           last_inbound_at = m.sent_at,
-           contact_id = coalesce(v_case.contact_id, m.contact_id),
+           last_inbound_at = msg.sent_at,
+           contact_id = coalesce(v_case.contact_id, msg.contact_id),
            next_followup_at = null,
            followup_cancelled_at = case when v_case.next_followup_at is not null then now() else v_case.followup_cancelled_at end,
            updated_at = now()
@@ -746,36 +748,36 @@ security definer
 set search_path = public
 as $$
 declare
-  m record;
-  c record;
+  msg record;
+  conn record;
   v_risk text;
 begin
-  select m.* into m from public.messages m where m.id = _message_id;
+  select msg.* into msg from public.messages msg where msg.id = _message_id;
   if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
 
-  select cc.tenant_id, cc.mailbox_class into c
-    from public.channel_connectors cc where cc.id = m.connector_id;
+  select cc.tenant_id, cc.mailbox_class into conn
+    from public.channel_connectors cc where cc.id = msg.connector_id;
   if not found then return jsonb_build_object('ok', false, 'code', 'CONNECTOR_NOT_FOUND'); end if;
 
   v_risk := case when _intent in ('billing','refund','account_access','security','legal') then 'elevated' else 'routine' end;
 
   insert into public.message_classifications (tenant_id, message_id, mailbox_class, intent, confidence, risk_tier, summary, model_route)
-  values (c.tenant_id, _message_id, c.mailbox_class, _intent,
+  values (conn.tenant_id, _message_id, conn.mailbox_class, _intent,
           least(greatest(coalesce(_confidence, 0), 0), 1), v_risk,
           left(_summary, 280), coalesce(_model_route, '{}'::jsonb))
   on conflict (message_id) do update
     set intent = excluded.intent, confidence = excluded.confidence, risk_tier = excluded.risk_tier,
         summary = excluded.summary, model_route = excluded.model_route, decided_at = now();
 
-  if c.mailbox_class = 'shared_support' then
+  if conn.mailbox_class = 'shared_support' then
     update public.support_cases s
        set last_intent = _intent, last_risk_tier = v_risk, updated_at = now()
-     where s.tenant_id = c.tenant_id and s.connector_id = m.connector_id and s.thread_key = m.thread_key;
+     where s.tenant_id = conn.tenant_id and s.connector_id = msg.connector_id and s.thread_key = msg.thread_key;
   end if;
 
   if _labels is not null then
     insert into public.message_labels (tenant_id, message_id, label, source)
-    select c.tenant_id, _message_id, l::text, 'auto'
+    select conn.tenant_id, _message_id, l::text, 'auto'
       from jsonb_array_elements_text(_labels) l
     on conflict (message_id, label) do nothing;
   end if;
@@ -825,19 +827,20 @@ security definer
 set search_path = public
 as $$
 declare
-  m record;
+  msg record;
+  v_case_id uuid;
 begin
-  select m.* into m from public.messages m where m.id = _message_id;
+  select msg.* into msg from public.messages msg where msg.id = _message_id;
   if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
 
   update public.support_cases s
      set status = 'awaiting_customer',
-         last_outbound_at = m.sent_at,
+         last_outbound_at = msg.sent_at,
          next_followup_at = null,
          updated_at = now()
-   where s.tenant_id = m.tenant_id and s.connector_id = m.connector_id and s.thread_key = m.thread_key
-     and m.connector_id is not null
-   returning s.id into m.id;
+   where s.tenant_id = msg.tenant_id and s.connector_id = msg.connector_id and s.thread_key = msg.thread_key
+     and msg.connector_id is not null
+   returning s.id into v_case_id;
   if not found then return jsonb_build_object('ok', true, 'case_updated', false); end if;
   return jsonb_build_object('ok', true, 'case_updated', true);
 end;
@@ -870,15 +873,15 @@ security definer
 set search_path = public
 as $$
 declare
-  m record;
+  msg record;
 begin
-  select m.* into m from public.messages m where m.id = _message_id;
+  select msg.* into msg from public.messages msg where msg.id = _message_id;
   if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
 
   if _kind in ('label','unlabel') then
     if _kind = 'label' then
       insert into public.message_labels (tenant_id, message_id, label, source, applied_by)
-      values (m.tenant_id, _message_id, _label, 'paige', _actor_user_id)
+      values (msg.tenant_id, _message_id, _label, 'paige', _actor_user_id)
       on conflict (message_id, label) do update
         set source = excluded.source, applied_by = excluded.applied_by
         where public.message_labels.source = 'auto';

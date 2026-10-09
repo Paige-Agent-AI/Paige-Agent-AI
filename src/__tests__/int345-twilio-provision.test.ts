@@ -21,6 +21,8 @@ function adminStub(overrides?: {
   existingRow?: unknown;
   insertError?: { code?: string; message: string } | null;
   vaultError?: unknown;
+  providerAllowed?: unknown;
+  boundaryError?: unknown;
 }) {
   const calls = { insert: [] as unknown[], vault: [] as unknown[] };
   const chain: Chain = {
@@ -42,6 +44,9 @@ function adminStub(overrides?: {
       return chain;
     },
     rpc: async (fn: string, args: unknown) => {
+      if (fn === "comms_provider_execution_allowed") {
+        return { data: overrides && "providerAllowed" in overrides ? overrides.providerAllowed : true, error: overrides?.boundaryError ?? null };
+      }
       if (fn === "write_channel_secret") {
         calls.vault.push(args);
         if (overrides?.vaultError) return { data: null, error: overrides.vaultError };
@@ -60,6 +65,24 @@ beforeEach(() => {
 });
 
 describe("provisionTenantTwilio — the one core (INT-345 K-3)", () => {
+  it.each([
+    { providerAllowed: false },
+    { providerAllowed: null },
+    { providerAllowed: "true" },
+    { providerAllowed: true, boundaryError: { message: "unavailable" } },
+  ])("refuses restricted or unavailable boundary before any provider/Vault work: %j", async overrides => {
+    const { admin, calls } = adminStub(overrides);
+    const r = await provisionTenantTwilio(admin, { tenantId: "synthetic", tenantName: "QA" });
+    expect(r.outcome).toBe("failed");
+    expect(r.error).toBe("COMMS_PROVIDER_EXECUTION_DISABLED");
+    expect(twilio.masterCreds).not.toHaveBeenCalled();
+    expect(twilio.createSubaccount).not.toHaveBeenCalled();
+    expect(twilio.createSubaccountApiKey).not.toHaveBeenCalled();
+    expect(twilio.ensureTwimlApp).not.toHaveBeenCalled();
+    expect(calls.insert).toHaveLength(0);
+    expect(calls.vault).toHaveLength(0);
+  });
+
   it("skips a tenant that already has a row — no provider call, no write", async () => {
     const { admin, calls } = adminStub({ existingRow: { twilio_subaccount_sid: "ACexisting", api_key_sid: "SKx", twiml_app_sid: "APx" } });
     const r = await provisionTenantTwilio(admin, { tenantId: "t-1", tenantName: "One" });

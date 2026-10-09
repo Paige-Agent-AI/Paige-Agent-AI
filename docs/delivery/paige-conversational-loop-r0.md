@@ -31,7 +31,7 @@ Fresh composition with main163cca44 and reviewed observation14 passes127 source-
 
 ## 2026-10-08 C0b existing-capability convergence and durable status consumption
 
-This nineteen-registration/read-only observation slice shipped in PR #1874 at main6e1fbb6cc38a525fd4bf02ae50664b68d1be6996. Independent SHIP and exact-head required CI passed; migration14, reviewed function ACL/body and four changed Edge module sources are verified in production, Vercel READY. DRAINING remains false/activated_at null; authenticated acceptance and effectful continuation are UNVERIFIED. The candidate wording below records its original bounded implementation, not a claim of complete runtime continuation.
+This nineteen-registration/read-only observation slice shipped in PR #1874 at main6e1fbb6cc38a525fd4bf02ae50664b68d1be6996. Independent SHIP and exact-head required CI passed; migration14, reviewed function ACL/body and four changed Edge module sources are verified in production, Vercel READY. Rollout active=false/activated_at=null; INT-346 remains DRAINING. Authenticated acceptance and effectful continuation are UNVERIFIED. The candidate wording below records its original bounded implementation, not a claim of complete runtime continuation.
 
 The next candidate consumes conversation-bound durable observations in the incumbent status
 path, with no execution/resume authority. See the C4 record and durable-job contract for exact

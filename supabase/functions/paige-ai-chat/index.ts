@@ -37,6 +37,7 @@ import { createInteractiveExecution, createInteractiveLifetime, createInteractiv
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
+import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discovery.ts";
 import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
 import { readDurableObservation } from "../_shared/durable-job/observation.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
@@ -1183,27 +1184,39 @@ serve(async (req) => {
         return data;
       };
       if (validatedData.interactive.kind === "status") {
-        const effectId = validatedData.interactive.pipelineEffectId;
-        const readers = effectId ? createPipelineCanonicalReaders({
-          caller: supabaseClient, service: supabase,
-          revalidateScope: async (binding) => {
-            const original = await supabaseClient.rpc("read_pipeline_metadata_original", {
-              _thread: binding.threadId, _intent: binding.intentId, _effect: binding.effectId,
-            });
-            return !original.error && original.data?.tenantId === binding.tenantId &&
-              original.data?.actorId === binding.actorId;
-          },
-        }) : undefined;
+        const originalScope = { threadId: validatedData.threadId!,
+          intentId: validatedData.requestIntentId!, tenantId: thread.tenant_id, actorId: user.id };
         const status = await readInteractiveOutcomeStatus({
           state: () => executor("state"),
           ...(validatedData.interactive.workId ? { readWork: () => readDurableObservation({
             threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
             workId: validatedData.interactive!.workId!,
           }, supabaseClient) } : {}),
-          ...(effectId && readers ? { readOutcome: () => readPipelineMetadataOutcome({
-            threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
-            effectId, tenantId: thread.tenant_id, actorId: user.id,
-          }, readers) } : {}),
+          readOutcome: async () => {
+            const effectId = validatedData.interactive!.pipelineEffectId ??
+              await findPipelineOriginalEffect(originalScope, supabaseClient);
+            // No authoritative original reference means no outcome assertion.
+            if (!effectId) return undefined;
+            const readers = createPipelineCanonicalReaders({
+              caller: supabaseClient, service: supabase,
+              revalidateScope: async (binding) => {
+                const original = await supabaseClient.rpc("read_pipeline_metadata_original", {
+                  _thread: binding.threadId, _intent: binding.intentId, _effect: binding.effectId,
+                });
+                return !original.error && original.data?.tenantId === binding.tenantId &&
+                  original.data?.actorId === binding.actorId;
+              },
+            });
+            const observation = await readPipelineMetadataOutcome({ ...originalScope, effectId }, readers);
+            // Automatic selection also requires fresh current-conversation authority
+            // after the business-record awaits. Historical explicit-id readback retains
+            // its existing original-operation contract and grants no continuation.
+            if (!validatedData.interactive!.pipelineEffectId &&
+              await findPipelineOriginalEffect(originalScope, supabaseClient) !== effectId) {
+              return { outcome: "outcome_unknown", verified_readback: false };
+            }
+            return observation;
+          },
         });
         return new Response(JSON.stringify(status), { headers: { ...corsHeaders,
           "Content-Type": "application/json", "Cache-Control": "no-store" } });

@@ -8022,36 +8022,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
-          {
-            type: "function",
-            function: {
-              name: "automation_set_grant",
-              description: "Change how much of one process the operator lets you handle alone: 'auto' (run it without asking), 'confirm' (draft it and wait for their yes), or 'off'. This is THEIR decision about YOUR autonomy, so it always needs their explicit say-so first. Report back what the process will ACTUALLY do afterwards — the answer can be more restrictive than what they asked for, and if it is you say so plainly rather than letting them believe it's running unattended.",
-              parameters: {
-                type: "object",
-                properties: {
-                  automation_id: { type: "string", description: "Which process, from automation_list." },
-                  lane: { type: "string", enum: ["auto", "confirm", "off"], description: "How much they're letting you do on your own." }
-                },
-                required: ["automation_id", "lane"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "automation_set_state",
-              description: "Turn a process on ('live'), pause it, or put it back to a draft. Pausing keeps it exactly as it is; it just stops running.",
-              parameters: {
-                type: "object",
-                properties: {
-                  automation_id: { type: "string", description: "Which process, from automation_list." },
-                  state: { type: "string", enum: ["live", "paused", "draft"], description: "live runs it, paused keeps but stops it, draft returns it to being edited." }
-                },
-                required: ["automation_id", "state"]
-              }
-            }
-          },
     ];
 
     // CRM/Pipeline mutations are declared by the single shared command catalogue. Remove the

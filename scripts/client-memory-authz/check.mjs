@@ -1685,6 +1685,35 @@ const mirrorConfirms = (st) => (t, row) => {
     };
   }
 
+  // C0b retirement: owner Settings decisions remain classified and refused, but
+  // the model must not be offered schemas it cannot execute at any approval.
+  for (const lane of [null, "auto", "confirm", "off"]) {
+    for (const name of ["automation_set_grant", "automation_set_state"]) {
+      const store = processStore();
+      const reply = await drive({
+        stream: true,
+        text: "please do it",
+        classification: { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: false, confidence: 0.9 },
+        toolCall: { name, args: { automation_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", lane: "auto", state: "live", confirm: true } },
+        rpcOverrides: {
+          get_actor_access: { data: { tier: "tenant" }, error: null },
+          ...store.__rpc,
+          ...(lane === null ? {} : { resolve_tool_autonomy: { data: lane, error: null } }),
+        },
+        tablesExtra: store,
+      });
+      const requests = reply.modelEgress.map(body => JSON.parse(body));
+      const offered = requests.flatMap(request => Array.isArray(request.tools) ? request.tools : []);
+      assert(`C0b owner-only ${name}/${lane || "default"}: model egress is exercised`,
+        offered.some(tool => tool.name === "automation_draft"), JSON.stringify(offered.map(tool => tool.name)));
+      assert(`C0b owner-only ${name}/${lane || "default"}: never advertised`,
+        !offered.some(tool => tool.name === "automation_set_grant" || tool.name === "automation_set_state"), JSON.stringify(offered.map(tool => tool.name)));
+      assert(`C0b owner-only ${name}/${lane || "default"}: injected call cannot update or propose`,
+        !reply.rec.inserts.some(row => row.table === "paige_automations" && row.update)
+          && !reply.rec.inserts.some(row => row.table === "paige_pending_confirmations" && row.row && row.row.tool_name === name),
+        JSON.stringify(reply.rec.inserts.filter(row => row.table === "paige_automations" || row.table === "paige_pending_confirmations")));
+    }
+  }
   // A CLIENT-PORTAL SEAT CANNOT AUTHOR PROCESSES, and that is checked first because the harness
   // caller is one by default — driving with a focused client is what surfaced it. Automations are
   // an operator capability (§51/§60); a client being able to arm work inside someone's workspace

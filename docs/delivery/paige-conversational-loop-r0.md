@@ -1,5 +1,25 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## Final C0b owner-only model exposure correction
+
+The existing owner-only gate never permits automation_set_grant or automation_set_state from
+Chat: auto clamps to confirm, confirm refuses before fingerprint/approval redemption, and off
+refuses before dispatch. Both obsolete model schemas are retired. Exactly thirty schema lines
+are removed; owner Settings, catalogue, backend dispatchers, labels and classifications remain
+unchanged. Injected or historical calls remain denied. The original eight non-vacuous exposure
+checks failed before the deletion (1005 PASS/8 FAIL) and the completed handler passes1013/0.
+Focused document/resource tests pass29; declaration census is187 surfaced/186 declared/1 legacy/
+0 disagreements, with94 retained inline model declarations.
+
+The policy guard initially failed two stale-definition checks. It now recognizes only these two
+retained owner-only denials after validating the actual policy import, unconditional clamp,
+off brake, early owner-only continue and later retained dispatcher. Re-exposure, missing denial,
+classification downgrade and changed control bindings fail. The existing policy and all owner
+surfaces are retained, not deleted or weakened. Five new frozen-source controls cover re-exposure,
+clamp, refusal and policy downgrade; only twenty-eight verified context fingerprints change.
+The one remaining legacy registration is the Operator pending-decision producer propose_action;
+Operator is outside this Solo assignment and its approval authority is not reinterpreted.
+
 ## Final incumbent document registration correction
 
 Current-source tests first failed on the missing document submission descriptor and discovery
@@ -59,9 +79,9 @@ verification corrected one stale historical explanation: document_generate is ex
 Studio's tool scope, absent from its auto list and explicitly refused by its handler. Its existing
 caller-JWT document submission can therefore be registered without changing approval or dispatch.
 The additional descriptor retains the Research/Knowledge discovery category and leaves the
-canonical long_form durable outcome row unchanged. Three exact contracts remain unreduced:
-automation_set_grant and automation_set_state are owner_only and cannot be declared as Chat
-actions by the existing guard;
+canonical long_form durable outcome row unchanged. At that intermediate head three exact
+contracts remained unreduced. The two owner_only automation setters are now retired from model
+exposure as described above, while their refusal policy and owner surfaces remain intact;
 propose_action also persists only a pending operator decision and intentionally skips preconfirmation; the current Spine mutation contract cannot represent that producer without duplicating approval. Its eventual send retains the separately governed execute-approval/send-message path.
 No risk/type/approval expansion or guard exemption is used to erase that debt. Deep Research's
 incumbent Chat branch still calls its synchronous provider endpoint; the canonical durable

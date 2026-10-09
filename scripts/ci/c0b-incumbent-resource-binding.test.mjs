@@ -107,3 +107,11 @@ for(const [label,from,to]of [
 ])test(`rejects Research helper ${label}`,()=>{const path='supabase/functions/_shared/research-history-context.ts',raw=readFileSync(path,'utf8'),changed=raw.replace(from,to);assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});
 
 test('rejects Research context degraded data fabrication',()=>{const path='supabase/functions/_shared/paige-context/mod.ts',raw=readFileSync(path,'utf8'),changed=raw.replace('return { status: "degraded", reason, data: null };','return { status: "available", data: {runs:[{question:"forged"}]} };');assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});
+
+for(const [label,from,to]of [
+ ['grant re-exposed','name: "automation_list"','name: "automation_set_grant"'],
+ ['state re-exposed','name: "automation_list"','name: "automation_set_state"'],
+ ['risk clamp bypassed','clampLaneByRisk(autoMode as "auto" | "confirm" | "off", tc.function.name)','autoMode'],
+ ['owner refusal removed','if (risk === "owner_only") {','if (false) {'],
+])test(`rejects retired owner automation ${label}`,()=>{const changed=chat.replace(from,to);assert.notEqual(changed,chat);assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
+test('rejects retired automation owner-only classification downgrade',()=>{const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace('["automation_set_grant", "owner_only"','["automation_set_grant", "ordinary"');assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});

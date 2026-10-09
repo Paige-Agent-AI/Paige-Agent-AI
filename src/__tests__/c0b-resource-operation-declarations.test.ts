@@ -44,7 +44,7 @@ describe("C0b incumbent resource operations", () => {
   it("does not reinterpret owner-only automation setters", () => {
     for(const tool of ["automation_set_grant","automation_set_state"]) {
       expect(C0B_RESOURCE_OPERATION_CAPABILITIES.some(c=>c.action?.chatTool===tool)).toBe(false);
-      expect(LEGACY_CAPABILITIES[tool]).toBeDefined();
+      expect(LEGACY_CAPABILITIES[tool]).toBeUndefined();
     }
     expect(classifyAction("automation_set_grant")).toBe("owner_only");
     expect(classifyAction("automation_set_state")).toBe("owner_only");

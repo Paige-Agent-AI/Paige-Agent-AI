@@ -33,6 +33,4 @@ export interface LegacyCapabilityRow extends LegacyDeclarationLike {
 
 export const LEGACY_CAPABILITIES: Readonly<Record<string, LegacyCapabilityRow>> = Object.freeze({
   propose_action: { domain: "action_bus", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
-  automation_set_grant: { domain: "automations", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: false },
-  automation_set_state: { domain: "automations", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: false },
 });

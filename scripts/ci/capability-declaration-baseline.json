@@ -1,13 +1,5 @@
 [
   {
-    "tool": "automation_set_grant",
-    "kind": "mutating"
-  },
-  {
-    "tool": "automation_set_state",
-    "kind": "mutating"
-  },
-  {
     "tool": "propose_action",
     "kind": "read"
   }

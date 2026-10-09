@@ -18,12 +18,12 @@
 -- repairable number states, null unless applicable) — the same vocabulary the
 -- dialer already renders.
 --
--- BYTE-IDENTICAL OUTSIDE THE ADDITION: the body is the 20261160000000 definer
--- verbatim except (a) v_sub additionally selects id/twilio_subaccount_sid/
--- twiml_app_sid (needed to evaluate the subaccount-match invariant and report
--- app state), (b) one new aggregate select over active primary numbers, and
--- (c) the new 'calling' key inserted after 'subaccount'. Every existing key,
--- predicate, ordering and comment is untouched.
+-- BASE: the 20261221000000 definer (the LAST before this one — the provenance keys
+-- business_provenance and the resolver-derived business booleans are preserved
+-- byte-for-byte), with exactly four deltas: the retired-role gate form 20270504000000
+-- applied in place, v_sub's three extra selected columns, the v_call aggregate +
+-- verdict block, and the new 'calling' key. Every existing key, predicate, ordering
+-- and comment outside those deltas is untouched.
 
 create or replace function public.tenant_comms_readiness()
 returns jsonb
@@ -39,8 +39,7 @@ declare
   v_a2p           record;
   v_consent_count int := 0;
   v_suppressed    int := 0;
-  v_brand         jsonb;
-  v_legal         record;
+  v_identity      jsonb := '{}'::jsonb;
   v_sms_total     int := 0;
   v_sms_failed    int := 0;
   v_sms_delivered int := 0;
@@ -50,8 +49,8 @@ declare
   v_billing       record;
   v_metered_30d   int := 0;
   v_call          record;
-  v_call_reason   text;
   v_call_code     text;
+  v_call_reason   text;
 begin
   -- CALLER SCOPE ENFORCED IN-BODY (§59). This is SECURITY DEFINER because it
   -- reads tenant_twilio_subaccounts, which authenticated no longer holds a
@@ -63,9 +62,8 @@ begin
   if v_tenant is null then
     raise exception 'COMMS_READINESS_NO_TENANT' using errcode = '42501';
   end if;
-  -- NOTE: the LIVE body's gate is the RETIRED-ROLE form — 20270504000000 edited
-  --  array['admin','coach'] to array['admin'] in place. This re-emit keeps that form
-  --  (re-emitting from the pre-retirement migration text would resurrect the read).
+  -- NOTE: the LIVE gate is the RETIRED-ROLE form (20270504000000 edited
+  --  array['admin','coach'] to array['admin'] in place after 20261221000000).
   if not (public.is_platform_operator()
           or public.has_any_role(auth.uid(), array['admin'])) then
     raise exception 'COMMS_READINESS_FORBIDDEN' using errcode = '42501';
@@ -76,8 +74,6 @@ begin
   -- authenticate — the creds resolver reads `status` and never uses it. Reporting
   -- "connected" from status alone would let a row with a null api_key_sid render
   -- "Ready to text" while every send returns twilio_subaccount_api_key_missing.
-  -- (INT-345: id/twilio_subaccount_sid/twiml_app_sid additionally selected for the
-  --  calling block's subaccount-match + app-state invariants.)
   select id, tenant_id, status, active, twilio_subaccount_sid, twiml_app_sid,
          (twilio_subaccount_sid is not null
           and auth_token_vault_ref is not null
@@ -157,17 +153,17 @@ begin
     from public.paige_suppressions
    where tenant_id = v_tenant and channel = 'sms';
 
-  select brand into v_brand from public.tenants where id = v_tenant;
-
-  -- Setup's OWN record, which is where the current save path
-  -- (save_solo_setup_context -> save_solo_setup_identity, 20261046000000) actually writes these
-  -- fields. Reading only tenants.brand told Mogul Maker Academy its website and business phone
-  -- were missing while both sat in Setup -- the same wrong-pointer defect 20261112000000 fixed for
-  -- the Systems Check runners and PAIGE's brief, in a consumer that was never in that sweep.
-  select legal_business_name, website_url, support_phone
-    into v_legal
-    from public.tenant_legal_profile
-   where tenant_id = v_tenant;
+  -- THE ONE canonical resolver, replacing this function's own coalesce over tenants.brand and
+  -- tenant_legal_profile. Those two raw reads were how this reader could answer the same question
+  -- differently from get_business_context_readiness for the same workspace; now neither reader
+  -- derives identity, they both read it. Aggregated into jsonb here because it is rendered as
+  -- jsonb below.
+  select coalesce(jsonb_object_agg(r.fact_key, jsonb_build_object(
+           'state', r.state, 'source', r.source, 'as_of', r.as_of, 'next_action', r.next_action)),
+         '{}'::jsonb)
+    into v_identity
+    from public.business_identity_readiness(v_tenant) r
+   where r.fact_key in ('business_name','website','business_phone');
 
   -- Delivery signal, read from real message rows. This is NOT a claim about
   -- webhook registration — it reports only what the message ledger shows.
@@ -271,19 +267,22 @@ begin
                                                    else 'configured' end),
     'number',         case when v_num.phone_number is null then 'absent' else 'assigned' end,
     'number_e164',    v_num.phone_number,
-    -- SETUP FIRST, legacy brand second. These three are PRESENCE booleans -- "is there a business
-    -- phone on file at all" -- not provenance claims, which is why a legacy tenants.brand value is
-    -- an honest fallback here even though get_business_context_readiness deliberately refuses one.
-    -- That contract reports WHERE a value came from, so it cannot call a legacy value
-    -- owner_confirmed without inventing a provenance; this one only reports THAT a value exists,
-    -- and a legacy value genuinely does exist. Measured across all 13 tenants on production
-    -- 2026-09-03: this flips Mogul Maker Academy false->true on all three and changes NOTHING for
-    -- any other tenant -- zero regressions, and it does not pre-empt the still-open owner decision
-    -- about the two workspaces whose values live only in legacy brand.
+    -- FACT A -- "is there a value on file at all". UNCHANGED in meaning and, measured across all
+    -- 14 production tenants, unchanged in value for every one of them: the states below are exactly
+    -- the ones that mean a value exists, including invalid_format (a malformed phone IS a phone on
+    -- file, which is what this boolean has always said). What changes is only that they are read
+    -- from the canonical resolver instead of re-derived here.
     'business',       jsonb_build_object(
-                        'has_name',    coalesce(nullif(v_legal.legal_business_name,''), nullif(v_brand->>'business_name',''), nullif(v_brand->>'name','')) is not null,
-                        'has_website', coalesce(nullif(v_legal.website_url,''), nullif(v_brand->>'website','')) is not null,
-                        'has_phone',   coalesce(nullif(v_legal.support_phone,''), nullif(v_brand->>'business_phone','')) is not null),
+                        'has_name',    public.business_identity_value_present(v_identity -> 'business_name' ->> 'state'),
+                        'has_website', public.business_identity_value_present(v_identity -> 'website' ->> 'state'),
+                        'has_phone',   public.business_identity_value_present(v_identity -> 'business_phone' ->> 'state')),
+    -- FACT B -- "and where did it come from". This is the half the boolean could never express, and
+    -- its absence is why this reader and get_business_context_readiness contradicted each other for
+    -- two real workspaces: a value present only in the legacy brand record read here as an
+    -- indistinguishable `true`, exactly like an owner-confirmed one -- and so did a FAILED read.
+    -- A consumer can now tell those three apart, and both readers now report the same state, source
+    -- and freshness for the same workspace because they read the same resolver.
+    'business_provenance', v_identity,
     'a2p',            case when v_a2p.status is null then 'absent'
                            when v_a2p.status = 'approved' then 'approved'
                            when v_a2p.submitted_at is not null then 'submitted'
@@ -326,10 +325,5 @@ begin
 end;
 $$;
 
--- Grants restated from the 20261002000000 posture (readiness is an authenticated +
--- service read; the in-body scope guard is the authority, not the grant).
 revoke all on function public.tenant_comms_readiness() from public, anon;
 grant execute on function public.tenant_comms_readiness() to authenticated, service_role;
-
-comment on function public.tenant_comms_readiness() is
-  'Canonical comms readiness record: SMS send-path truth + business presence + the INT-345 calling verdict (account / number_assigned / primary_selected / ready + classifier reason codes). SECURITY DEFINER by necessity (credential table reads); caller scope enforced in-body.';

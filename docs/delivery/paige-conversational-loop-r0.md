@@ -17,6 +17,8 @@ Rollout `active=false`, `activated_at=null`: INT-346 remains DRAINING. Authentic
 
 ## Continued original C0b convergence — incumbent adapters only
 
+The final safe composition also includes the original C6 historical Research context integration above, within this same release candidate. Incoming Model Fabric/read-only status ancestry and the new context source are verified with narrowly updated context fingerprints; all incumbent metadata and original dependency pins are retained. The source suite now passes147 controls, with eleven prepared authenticated-driver controls,38 Research metadata units and989 loaded-handler checks. Genuine source-helper mutation and streaming failures were repaired without widening executor authority. Final immutable review, hosted CI, merge, deployment/readback and authenticated acceptance remain distinct release gates.
+
 Required CI initially rejected modifying the previous release’s attestation: this gate requires a newly added evidence record. The historical durable-observation record is restored from main; the mandatory current attestation is docs/evidence/ui-delivery/conversational-loop-incumbent-capabilities.md, within existing INT-304. No new program record or check waiver.
 
 This candidate registers existing CRM, Pipeline, Team, Calendar, business-profile, Research,

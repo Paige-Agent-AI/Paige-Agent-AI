@@ -27,7 +27,7 @@ function rows(value: unknown, now: number): ResearchHistoryRow[] | null {
  if (!Array.isArray(value) || value.length>3) return null;
  const seen = new Set<string>(); const output: ResearchHistoryRow[] = [];let previous = Infinity;
  for (const r of value) {
-  if (!object(r) || Object.keys(r).length!==KEYS.length || KEYS.some(k=>!Object.hasOwn(r,k))) return null;
+  if (!object(r) || Object.keys(r).length!==KEYS.length || KEYS.some(k=>!Object.prototype.hasOwnProperty.call(r,k))) return null;
   const created = timestamp(r.created_at);
   if (typeof r.id!=='string' || !UUID.test(r.id) || seen.has(r.id.toLowerCase()) || typeof r.question!=='string' || !r.question.trim() || r.question.length>8000 ||
       ['domain','caller','stop_reason'].some(k=>r[k]!==null && (typeof r[k]!=='string' || (r[k] as string).length>128)) ||

@@ -528,7 +528,7 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/pipeline-original-discovery.ts": "4c55fee76bc2622a0b57b33282276f36aa3a8552725168c45ab1b2774b7e7fa9",
  "supabase/functions/_shared/paige-turn/outcome-status.ts": "2efe3c91386d47e475cfc38e69b97a542a9286f3d09ec853d4c6a126e64075f8",
  // Historical Research context and its pure status-result constructors.
- "supabase/functions/_shared/research-history-context.ts": "56dfb368dcd0078993bea50c2ab256f53300b98f47135b43bce37d5cf3429cc1",
+ "supabase/functions/_shared/research-history-context.ts": "fa64f9d267b6f2196ae7ff754ef2660a918bcd6da79698700acbfc05222685b2",
  "supabase/functions/_shared/paige-context/mod.ts": "56fb44fcb3c78d6cf3a221290550b57694be6eb99e8eda608e610ddfc65dd6a8",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {

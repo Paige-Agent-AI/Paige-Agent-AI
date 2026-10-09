@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Comms C-2v — Voice Access Token mint (#140 Slice A1). JWT-gated; a tenant admin
 // (or the platform owner) requests a SHORT-lived Twilio Voice Access Token so their
 // browser can register with Twilio and place/receive calls billed to the tenant's OWN
@@ -136,6 +137,10 @@ Deno.serve(async (req) => {
     membershipRole: typeof membership?.role === "string" ? membership.role : null,
   })) {
     return json({ error: "forbidden", message: "You don't have permission to place calls for this workspace." }, 403);
+  }
+
+  if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) {
+    return json({ error: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
   }
 
   // Voice readiness is stricter than “a token can be signed.” The caller ID

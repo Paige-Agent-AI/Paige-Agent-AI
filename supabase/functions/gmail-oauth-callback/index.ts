@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 // Exchanges the Gmail OAuth authorization code for tokens, stores the refresh token
 // in VAULT (never a column, never a log), and provisions the tenant's Gmail
 // channel_connectors row so send-message can send as this address (#141b).
@@ -151,6 +152,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Resolve the tenant SERVER-SIDE from the state's user id (§9 — never body).
+    // `admin` (service-role) was created above for the has_role gate; reuse it.
+    //
+    // This used to read `profiles.tenant_id` keyed on `profiles.id`. That column
+    // does not exist and that key is a surrogate, so it returned null for every
+    // user and this endpoint could never succeed — see `_shared/tenant-for-user.ts`.
+    // `parsed.w` is the workspace the person was standing in, carried inside the
+    // SIGNED state, and it is honoured only after an active-membership check.
+    // (`t` is already the state's timestamp — see the expiry check above.)
+    const resolved = await resolveTenantForUser(admin, parsed.u, parsed.w ?? null);
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return new Response(JSON.stringify({ error: "no_tenant_for_user", detail: resolved.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Store the refresh token ONLY in Vault (§9/§34) — never a column, never a log. ──
+    if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) {
+      return new Response(JSON.stringify({ error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const redirectUri = `${gmailRedirectOrigin(String(origin))}/auth/gmail/callback`;
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -201,25 +225,6 @@ Deno.serve(async (req) => {
     const gmailAddr = googleEmail.toLowerCase();
     const accountId = googleSub ?? gmailAddr;
 
-    // Resolve the tenant SERVER-SIDE from the state's user id (§9 — never body).
-    // `admin` (service-role) was created above for the has_role gate; reuse it.
-    //
-    // This used to read `profiles.tenant_id` keyed on `profiles.id`. That column
-    // does not exist and that key is a surrogate, so it returned null for every
-    // user and this endpoint could never succeed — see `_shared/tenant-for-user.ts`.
-    // `parsed.w` is the workspace the person was standing in, carried inside the
-    // SIGNED state, and it is honoured only after an active-membership check.
-    // (`t` is already the state's timestamp — see the expiry check above.)
-    const resolved = await resolveTenantForUser(admin, parsed.u, parsed.w ?? null);
-    const tenantId = resolved.tenantId;
-    if (!tenantId) {
-      return new Response(JSON.stringify({ error: "no_tenant_for_user", detail: resolved.error }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── Store the refresh token ONLY in Vault (§9/§34) — never a column, never a log. ──
     const ref = gmailVaultRef(tenantId, accountId);
     const { error: vaultErr } = await admin.rpc("write_channel_secret", {
       _ref: ref,

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
@@ -49,6 +50,7 @@ Deno.serve(async req => {
 
   const { data: tenantId, error: tenantError } = await caller.rpc("current_user_tenant_id");
   if (tenantError || typeof tenantId !== "string" || tenantId !== body.expected_tenant_id) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
+  if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return refusedBeforeDispatch(403, COMMS_PROVIDER_EXECUTION_DISABLED);
   const stillCurrent = async () => {
     const { data, error } = await caller.rpc("current_user_tenant_id");
     return !error && data === tenantId;

@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from '../_shared/comms-provider-boundary.ts'
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -162,6 +163,9 @@ Deno.serve(async (req) => {
     })
   }
   if (authority.kind === 'user') {
+    if (!await commsProviderExecutionAllowed(adminClient(), { actorUserId: authority.userId, recipientEmail: authority.recipientEmail })) {
+      return new Response(JSON.stringify({ success: false, sent: false, error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
     // A person never chooses where the mail goes (beyond what their policy allows), who it claims
     // to be from, where replies land, or whose brand it wears.
     recipientEmail = authority.recipientEmail
@@ -220,6 +224,10 @@ Deno.serve(async (req) => {
         _error_code: /^[a-z0-9_]{1,80}$/i.test(code) ? code : 'welcome_delivery_failed',
         _ambiguous: ambiguous,
       })
+    }
+    if (!await commsProviderExecutionAllowed(admin, { tenantId: claim.tenant_id, recipientEmail: claim.recipient_email })) {
+      await failClaim('comms_provider_execution_disabled')
+      return new Response(JSON.stringify({ success: false, sent: false, error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
     const template = TEMPLATES['solo-beta-welcome']
     const publicSite = (Deno.env.get('PUBLIC_SITE_URL') ?? 'https://paigeagent.ai').replace(/\/$/, '')
@@ -417,6 +425,9 @@ Deno.serve(async (req) => {
 
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  if (!await commsProviderExecutionAllowed(supabase, { tenantId, actorUserId: recipientUserId, recipientEmail: recipientEmail || effectiveRecipient })) {
+    return new Response(JSON.stringify({ success: false, sent: false, error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
 
   // 1b. Affiliate-program preference gate.
   // Only enforced when caller passed recipientUserId (e.g., approved/conversion/paid/monthly).

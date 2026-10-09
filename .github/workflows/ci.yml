@@ -37,6 +37,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  comms-provider-boundary:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Controlled actual Communications handlers and strict server floor
+        run: >-
+          node --test
+          supabase/functions/_shared/comms-provider-boundary.test.ts
+          supabase/functions/_shared/comms-email-provider-boundary.test.mjs
+          supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
+          supabase/functions/_shared/booking-provider-boundary.test.mjs
+      - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
+      - name: Communications executor coverage includes subsequently introduced mailbox paths
+        run: node scripts/ci/comms-provider-boundary-wiring.mjs
   verify:
     runs-on: ubuntu-latest
     steps:

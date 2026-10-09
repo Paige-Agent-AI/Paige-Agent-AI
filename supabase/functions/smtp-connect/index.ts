@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Connects a tenant's OWN generic SMTP server so send-message can send outbound email
 // through it (provider='smtp', #141c). The tenant enters host/port/username/password/from;
 // this function SSRF-guards the host/port, does an honest reachability handshake, stores
@@ -147,22 +148,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── SSRF/port allowlist gate BEFORE any socket (§9). ──
-    const guard = await assertHostAllowed(host, portNum);
-    if (!guard.ok) {
-      return new Response(JSON.stringify({ error: guard.error ?? "smtp_host_not_allowed" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── Honest reachability handshake (§13) — do NOT vault/provision on failure. ──
-    const probeErr = await reachabilityProbe(host, portNum, secure);
-    if (probeErr) {
-      return new Response(JSON.stringify({ error: "smtp_host_unreachable", detail: probeErr }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // ── Resolve the tenant SERVER-SIDE from the caller's user id (§9 — never body). ──
     // Was `profiles.tenant_id` keyed on `profiles.id`: a non-existent column read
     // with a surrogate key, so every caller got `no_tenant_for_user`. See
@@ -184,6 +169,28 @@ Deno.serve(async (req) => {
     }
 
     // ── Store {user,pass} ONLY in Vault as a JSON blob (§9/§34) — never a column, never a log. ──
+    if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) {
+      return new Response(JSON.stringify({ error: "COMMS_PROVIDER_EXECUTION_DISABLED" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── SSRF/port allowlist gate BEFORE any socket (§9). ──
+    const guard = await assertHostAllowed(host, portNum);
+    if (!guard.ok) {
+      return new Response(JSON.stringify({ error: guard.error ?? "smtp_host_not_allowed" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Honest reachability handshake (§13) — do NOT vault/provision on failure. ──
+    const probeErr = await reachabilityProbe(host, portNum, secure);
+    if (probeErr) {
+      return new Response(JSON.stringify({ error: "smtp_host_unreachable", detail: probeErr }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ref = smtpVaultRef(tenantId);
     const { error: vaultErr } = await admin.rpc("write_channel_secret", {
       _ref: ref,

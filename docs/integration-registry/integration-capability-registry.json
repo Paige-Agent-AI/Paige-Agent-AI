@@ -1247,6 +1247,11 @@
       },
       "code_anchors": [
         {
+          "path": "supabase/functions/_shared/comms-provider-boundary.ts",
+          "role": "fail_closed_containment",
+          "note": "QA #1832 protected synthetic identity/tenant provider refusal floor; grants no provider authority. Merge/deployed proof remains owed until release closeout; ordinary provider maturity and authenticated proof are unchanged."
+        },
+        {
           "path": "supabase/functions/_shared/twilio.ts",
           "role": "provider_adapter",
           "note": "Twilio-specific API adapter."
@@ -1417,6 +1422,11 @@
         "next_slice": "Per-tenant sending-identity wiring + send receipt on the Rail."
       },
       "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/comms-provider-boundary.ts",
+          "role": "fail_closed_containment",
+          "note": "QA #1832 protected synthetic identity/tenant provider refusal floor; grants no provider authority. Merge/deployed proof remains owed until release closeout; ordinary provider maturity and authenticated proof are unchanged."
+        },
         {
           "path": "supabase/functions/_shared/email/providers.ts",
           "role": "provider_adapter",

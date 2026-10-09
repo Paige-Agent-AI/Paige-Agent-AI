@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 // Starts Google OAuth for a tenant's Gmail SENDING connection (#141b).
 // Returns { authorization_url } for the client to redirect to, or an honest
 // { error: "gmail_oauth_not_configured" } degrade when the OAuth client isn't set.
@@ -139,6 +140,9 @@ Deno.serve(async (req) => {
     // their mailbox to whichever workspace ranked first, not the one they were
     // looking at. `w`, not `t`: `t` is already this state's timestamp.
     const { data: activeTenant } = await supa.rpc("current_user_tenant_id");
+    if (!await commsProviderExecutionAllowed(admin, { tenantId: typeof activeTenant === "string" ? activeTenant : null, actorUserId: user.id })) {
+      return new Response(JSON.stringify({ error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const state = await signState({
       u: user.id,

@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Disconnects the caller's tenant Gmail connector (#141b). Idempotent.
 //
 // §18 clone of google-calendar-disconnect, adapted to the comms rail:
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
     try {
       const { data: secret } = await admin.rpc("read_channel_secret", { _ref: row.credentials_vault_ref });
       const refreshToken = typeof secret === "string" ? secret : "";
-      if (refreshToken) {
+      if (refreshToken && await commsProviderExecutionAllowed(admin, { tenantId: callerTenant, actorUserId: user.id })) {
         await fetch("https://oauth2.googleapis.com/revoke", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },

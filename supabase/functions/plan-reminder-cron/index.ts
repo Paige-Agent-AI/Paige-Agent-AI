@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Planning reminder runner. Invoked by pg_cron every minute (guarded by a
 // shared token). Finds due plan_items of type 'reminder' that haven't fired,
 // and delivers them so a reminder Paige "set" actually lands — an in-app ping
@@ -113,7 +114,7 @@ Deno.serve(async (req) => {
     return email;
   }
 
-  let claimed = 0, inApp = 0, emailed = 0, teamFanned = 0;
+  let claimed = 0, inApp = 0, emailed = 0, teamFanned = 0, emailBlocked = 0;
   const failures: { id: string; error: string }[] = [];
 
   for (const r of due ?? []) {
@@ -185,6 +186,16 @@ Deno.serve(async (req) => {
 
       // Email channel additionally sends a branded note to each recipient.
       if (channel === "email") {
+        if (!(await commsProviderExecutionAllowed(admin, { tenantId: r.tenant_id }))) {
+          // Internal delivery has landed; retain the claim and never retry email.
+          // This records external refusal without cancelling the internal reminder.
+          const { error } = await admin.from("plan_items").update({
+            metadata: { ...((r as any).metadata || {}), provider_execution: "blocked", reason: "COMMS_PROVIDER_EXECUTION_DISABLED" },
+          }).eq("id", r.id);
+          emailBlocked++;
+          failures.push({ id: r.id as string, error: error ? "blocked state persistence failed" : "COMMS_PROVIDER_EXECUTION_DISABLED" });
+          continue;
+        }
         const brand = await brandFor(r.tenant_id as string);
         const html = shell(brand.name, brand.accent, title, summary || "This is your reminder.", "");
         for (const uid of recipients) {
@@ -207,7 +218,7 @@ Deno.serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ ok: true, scanned: (due ?? []).length, claimed, in_app: inApp, emailed, team_fanned: teamFanned, failed: failures.length, failures }),
+    JSON.stringify({ ok: true, scanned: (due ?? []).length, claimed, in_app: inApp, emailed, email_blocked: emailBlocked, team_fanned: teamFanned, failed: failures.length, failures }),
     { headers: { "Content-Type": "application/json" } },
   );
 });

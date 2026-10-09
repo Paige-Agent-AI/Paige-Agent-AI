@@ -15,6 +15,7 @@
 // To restore real email verification later: wire Auth SMTP (Resend), drop the
 // email_confirm flag, and let auth.signUp send the confirmation link again.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -223,7 +224,7 @@ Deno.serve(async (req) => {
 
   // Sign-up email — the platform welcome, sent through Resend. Fire-and-forget.
   // Skipped for a client-invite signup (they got the tenant's branded invite).
-  if (!suppressWelcome) {
+  if (!suppressWelcome && await commsProviderExecutionAllowed(admin, { actorUserId: data.user?.id ?? null, recipientEmail: email })) {
     await sendWelcome(email, (fullName ?? "").split(/\s+/)[0] ?? "");
   }
 

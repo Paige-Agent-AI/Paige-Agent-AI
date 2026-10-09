@@ -115,6 +115,7 @@ let scenario;
 globalThis.__smoke = {
   get calls() { return calls; },
   rpc(name) {
+    if (name === "comms_provider_execution_allowed") return { data: scenario.providerAllowed !== false };
     if (name === "is_platform_owner") return { data: false };
     if (name === "has_role") return { data: true };          // admin
     if (name === "current_user_tenant_id") return { data: "tenant-1" };
@@ -176,6 +177,13 @@ const buy = async (body, sc = {}) => {
 };
 
 console.log("comms-purchase-number safety smoke\n");
+
+{
+  const r = await buy({ phone_number: "+14045550101", agreed_monthly_cents: 120 }, { providerAllowed: false });
+  check("restricted workspace cannot purchase", r.status === 403 && r.body.error === "COMMS_PROVIDER_EXECUTION_DISABLED");
+  check("restricted workspace makes zero paid calls", calls.purchases.length === 0);
+  check("restricted workspace writes no number or spent audit", calls.inserts.length === 0 && calls.audits.length === 0);
+}
 
 /* 1 ── The happy path still works, and is what everything else is measured against. */
 {

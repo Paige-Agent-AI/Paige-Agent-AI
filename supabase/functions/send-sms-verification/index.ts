@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Generates a 6-digit code, stores HASHED in sms_verifications, sends plaintext via Twilio.
 // Rate-limited: max 3 sends per phone per hour.
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -61,6 +62,9 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  if (!await commsProviderExecutionAllowed(supabase, { actorUserId: userId })) {
+    return new Response(JSON.stringify({ error: 'COMMS_PROVIDER_EXECUTION_DISABLED' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
 
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const { count } = await supabase

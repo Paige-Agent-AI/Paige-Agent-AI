@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 // Tenant EMAIL sender-domain management (Resend).
 //
 // Verbs: list | add | refresh | set_default | remove   (the Resend sender-domain registry)
@@ -75,6 +76,7 @@ Deno.serve(async (req) => {
     return json({ error: decision.error }, decision.status);
   }
   const tenantId = decision.tenantId;
+  if (verb !== "list" && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return json({ error: COMMS_PROVIDER_EXECUTION_DISABLED }, 403);
 
   /**
    * Evidence that a real change happened to what this business sends email FROM.

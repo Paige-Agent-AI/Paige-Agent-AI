@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Scheduled-send worker: booking reminders + post-meeting follow-ups.
 // Invoked by pg_cron every ~5 min (guarded by a shared token). Reads each
 // calendar-backed booking's notify_config, and for every due reminder offset
@@ -146,6 +147,7 @@ Deno.serve(async (req) => {
     .from("internal_bookings")
     .select("id, guest_email, guest_phone, guest_name, title, start_at, end_at, timezone, location_type, location_value, status, calendar_id, collective_group_id, manage_token_version, appointment_type, host_user_id")
     .not("calendar_id", "is", null)
+    .or("reminder_state->>provider_execution.is.null,reminder_state->>provider_execution.neq.blocked")
     .neq("status", "cancelled")
     .neq("status", "no_show")
     .gte("start_at", new Date(now - 2 * DAY).toISOString())
@@ -224,10 +226,20 @@ Deno.serve(async (req) => {
 
   // Truthful, per-channel counters — an SMS send is reported separately from an
   // email send, and each counts only on an actual provider acceptance (§13).
-  let reminders = 0, smsReminders = 0, followups = 0;
+  let reminders = 0, smsReminders = 0, followups = 0, blocked = 0;
+  const blockedPersistenceFailures: string[] = [];
   for (const b of bookings) {
     const cal = calById.get(b.calendar_id as string);
     if (!cal) continue;
+    if (!(await commsProviderExecutionAllowed(admin, { tenantId: cal.tenant_id }))) {
+      const { data: current } = await admin.from("internal_bookings").select("reminder_state").eq("id", b.id).maybeSingle();
+      const { error } = await admin.from("internal_bookings").update({
+        reminder_state: { ...((current?.reminder_state as Record<string, unknown>) ?? {}), provider_execution: "blocked", reason: "COMMS_PROVIDER_EXECUTION_DISABLED" },
+      }).eq("id", b.id);
+      if (error) blockedPersistenceFailures.push(b.id as string);
+      blocked++;
+      continue; // No send claim, dispatch or executable notification write.
+    }
     const email = String(b.guest_email ?? "");
     const phone = String(b.guest_phone ?? "");
     if (!email && !phone) continue; // nobody reachable on any channel
@@ -326,7 +338,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, scanned: bookings.length, reminders, smsReminders, followups }), {
+  return new Response(JSON.stringify({ ok: true, scanned: bookings.length, reminders, smsReminders, followups, blocked, blocked_persistence_failures: blockedPersistenceFailures }), {
     headers: { "Content-Type": "application/json" },
   });
 });

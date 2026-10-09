@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "./comms-provider-boundary.ts";
 // INT-345 K-3 — the ONE per-tenant Twilio provisioning core (§18: one home).
 //
 // Extracted VERBATIM from provision-tenant-twilio's loop so the governed tenant
@@ -92,6 +93,9 @@ export async function provisionTenantTwilio(
   const base = { tenant_id: tenantId, name: tenantName ?? null };
 
   // §13: master creds must exist BEFORE we touch anything.
+  if (!await commsProviderExecutionAllowed(admin, { tenantId })) {
+    return { ...base, outcome: "failed", steps, error: "COMMS_PROVIDER_EXECUTION_DISABLED" };
+  }
   if (!masterCreds()) {
     return { ...base, outcome: "blocked_needs_config", steps, error: "twilio_master_not_configured" };
   }

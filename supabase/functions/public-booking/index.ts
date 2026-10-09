@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Native booking engine — public availability + appointment creation.
 // Anon-callable (verify_jwt=false); all writes go through the service role after
 // server-side validation, so the public never touches tables directly.
@@ -872,6 +873,9 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
+      if (!(await commsProviderExecutionAllowed(admin, { tenantId: host.tenant_id }))) {
+        return json({ ok: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
+      }
       // Per-IP throttle for the expensive write path, in ADDITION to the
       // per-host (and per-calendar class) caps below — this bounds an attacker
       // spraying bookings across many slugs/hosts from one IP, which those

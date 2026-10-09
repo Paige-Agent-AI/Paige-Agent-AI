@@ -191,7 +191,7 @@ export const COMMS_MESSAGE_CONTENT_READ = {
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
     chatTool: "read_message_content",
-    seatAuthority: "member",
+    seatAuthority: "workspace-admin",
   },
   outcome: {
     kinds: ["current"],
@@ -219,7 +219,7 @@ export const COMMS_SUPPORT_CASES_READ = {
   readiness: "none",
   evidence: {
     signalKinds: ["comms.support_case"],
-    adapter: "public.list_support_cases",
+    adapter: "public.read_support_cases",
     audience: "owner_internal",
     freshness: "live read of support_cases plus each thread's latest subject on every call",
     staleAfterDays: 1,
@@ -242,11 +242,11 @@ export const COMMS_SUPPORT_CASES_READ = {
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
     chatTool: "read_support_cases",
-    seatAuthority: "member",
+    seatAuthority: "workspace-admin",
   },
   outcome: {
     kinds: ["current"],
-    projector: "public.list_support_cases",
+    projector: "public.read_support_cases",
     railVisibility: "owner_internal",
   },
   chatBinding: "PARTIAL",
@@ -286,6 +286,9 @@ export const COMMS_MAILBOX_ORGANIZE = {
     railVisibility: "owner_internal",
   },
   chatBinding: "LIVE",
+  // LIVE = the Chat wiring exists and the door is the one execution path (the registry's
+  // requirement for mutating capabilities). The authenticated end-to-end drive is still
+  // owed post-deploy and is named in the delivery evidence; maturity PARTIAL carries it.
   mindBinding: "UNAVAILABLE",
   sharedPrimitiveChange: "NONE",
   maturity: "PARTIAL",

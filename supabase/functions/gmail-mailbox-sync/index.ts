@@ -22,8 +22,8 @@
 // door's job (comms-mailbox-command). A classifier failure never drops mail — the
 // message lands first, classification is best-effort after it.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { routedChatCompletion } from "../_shared/model-router.ts";
-import { autoLabelsFor, buildClassifyPrompt, parseClassificationReply } from "../_shared/inbox-intelligence/classify.ts";
+import { classifyAndRecordMessage, type ClassifyAdmin } from "../_shared/inbox-intelligence/classify-message.ts";
+
 import { classifyHistoryEvents, gmailHistoryIsExpired, normalizeGmailMessage, planInitialSync, type GmailMessageEnvelope } from "../_shared/inbox-intelligence/sync.ts";
 import { GMAIL_SCOPE_MODIFY, GMAIL_SCOPE_READ_ONLY, hasReadScope } from "../_shared/inbox-intelligence/policy.ts";
 
@@ -101,8 +101,49 @@ Deno.serve(async req => {
     followups = typeof scheduled === "number" ? scheduled : 0;
   } catch { /* the tick stays green; the next tick retries */ }
 
-  return json(200, { ok: true, mailboxes: report.length, followups_scheduled: followups, report });
+  // Classification backfill: messages that landed but were never classified (a
+  // deduped insert skip, a classifier failure, or the Resend inbound path before
+  // it gained its own classify call). Bounded to recent rows; failures leave them
+  // for the next tick — the promise "the next tick may retry" is true HERE.
+  let backfilled = 0;
+  try {
+    backfilled = await classifyBackfill();
+  } catch { /* best-effort by contract */ }
+
+  return json(200, { ok: true, mailboxes: report.length, followups_scheduled: followups, classification_backfill: backfilled, report });
 });
+
+/**
+ * Classify recent inbound messages that have no classification row. Service-role
+ * only, bounded (100), runs after the per-connector syncs each tick.
+ */
+async function classifyBackfill(): Promise<number> {
+  const { data: pending, error } = await admin.from("messages")
+    .select("id,tenant_id,connector_id,subject,body_text,sender,meta")
+    .eq("direction", "inbound")
+    .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+    .not("connector_id", "is", null)
+    .limit(100);
+  if (error || !pending?.length) return 0;
+  let count = 0;
+  for (const message of pending as Record<string, unknown>[]) {
+    const { data: existing } = await admin.from("message_classifications").select("id").eq("message_id", message.id).maybeSingle();
+    if (existing?.id) continue;
+    const { data: connectorRow } = await admin.from("channel_connectors")
+      .select("mailbox_class").eq("id", message.connector_id as string).maybeSingle();
+    if (!connectorRow) continue;
+    const recorded = await classifyAndRecordMessage({
+      admin: admin as unknown as ClassifyAdmin,
+      messageId: message.id as string,
+      mailboxClass: connectorRow.mailbox_class === "personal" ? "personal" : "shared_support",
+      subject: (message.subject as string | null) ?? null,
+      fromAddress: ((message.sender as { address?: string } | null)?.address) ?? null,
+      snippet: ((message.body_text as string | null) ?? "").slice(0, 4000),
+    });
+    if (recorded) count += 1;
+  }
+  return count;
+}
 
 async function accessTokenFor(refreshRef: string): Promise<string | null> {
   const { data: refreshToken, error } = await admin.rpc("read_channel_secret", { _ref: refreshRef });
@@ -130,26 +171,30 @@ async function syncOneConnector(connector: ConnectorRow): Promise<Record<string,
   const { data: state } = await admin.from("mailbox_sync_state").select("*").eq("connector_id", connector.id).maybeSingle();
   const mailbox = { tenantId: connector.tenant_id, connectorId: connector.id, ownerAddress: connector.inbound_address!.toLowerCase() };
 
-  let inserted = 0, softMarked = 0, classified = 0;
+  let inserted = 0, softMarked = 0, classified = 0, failedInserts = 0;
   let lastHistoryId: number | null = typeof state?.last_history_id === "number" ? state.last_history_id : null;
 
   const insertMessages = async (envelopes: GmailMessageEnvelope[]) => {
     for (const envelope of envelopes.slice(0, 200)) {
       const normalized = normalizeGmailMessage(envelope, mailbox);
       const { error } = await admin.from("messages").insert({
-        tenant_id: normalized.tenant_id, connector_id: normalized.connector_id, thread_key: normalized.thread_key,
+        tenant_id: normalized.tenant_id, connector_id: normalized.connector_id, channel_type: normalized.channel_type, thread_key: normalized.thread_key,
         direction: normalized.direction, status: normalized.status, sender: normalized.sender, recipients: normalized.recipients,
         subject: normalized.subject, body_text: normalized.body_text, provider_message_id: normalized.provider_message_id,
         meta: normalized.meta, sent_at: normalized.sent_at,
       });
-      // A duplicate provider_message_id is the idempotency contract holding: skip.
-      if (error && String(error?.code) !== "23505") continue;
-      if (!error) {
-        inserted += 1;
-        if (normalized.direction === "inbound") {
-          await runInboundIntelligence(connector, normalized, envelope);
-          classified += 1;
-        }
+      if (error) {
+        // A duplicate provider_message_id is the idempotency contract holding: skip.
+        // ANY other failure is COUNTED — a batch with failures must never record a
+        // green 'ok' sync that silently landed nothing.
+        if (String(error?.code) === "23505") continue;
+        failedInserts += 1;
+        continue;
+      }
+      inserted += 1;
+      if (normalized.direction === "inbound") {
+        await runInboundIntelligence(connector, normalized, envelope);
+        classified += 1;
       }
     }
   };
@@ -183,11 +228,14 @@ async function syncOneConnector(connector: ConnectorRow): Promise<Record<string,
     const profile = await gmailFetch(accessToken, "/profile");
     const historyId = (profile.body as { historyId?: string } | null)?.historyId;
     lastHistoryId = historyId ? Number(historyId) : lastHistoryId;
+    // A batch with insert failures records 'partial' — an 'ok' initial sync that
+    // landed nothing would permanently disable the initial-sync retry path.
+    const status = failedInserts > 0 ? "partial" : "ok";
     await admin.rpc("record_mailbox_sync_outcome", {
-      _connector_id: connector.id, _status: "ok", _error: null, _history_id: lastHistoryId,
-      _initial_completed: true, _last_message_date: latestInternalDate(collected),
+      _connector_id: connector.id, _status: status, _error: failedInserts > 0 ? `insert_failures_${failedInserts}` : null, _history_id: failedInserts > 0 ? null : lastHistoryId,
+      _initial_completed: failedInserts === 0, _last_message_date: failedInserts > 0 ? null : latestInternalDate(collected),
     });
-    return { outcome: "initial_sync", inserted, classified };
+    return { outcome: "initial_sync", inserted, classified, failed_inserts: failedInserts };
   }
 
   // ── Incremental history sync ──
@@ -206,8 +254,10 @@ async function syncOneConnector(connector: ConnectorRow): Promise<Record<string,
       }
       await insertMessages(envelopes);
       for (const id of plan2.toMarkRemoved) {
-        // SOFT mark only: the canonical row keeps the thread's truthful history.
-        await admin.from("messages").update({ meta: { gmail_removed_at: new Date().toISOString() } }).eq("tenant_id", connector.tenant_id).eq("connector_id", connector.id).eq("provider_message_id", id);
+        // SOFT mark only, MERGING into meta (the service RPC): a whole-column
+        // update would destroy the recorded List-Unsubscribe target and Gmail
+        // metadata the thread's truthful history depends on.
+        await admin.rpc("mark_message_removed_by_provider", { _tenant_id: connector.tenant_id, _connector_id: connector.id, _provider_message_id: id });
         softMarked += 1;
       }
       lastHistoryId = profileHistoryId || lastHistoryId;
@@ -232,10 +282,11 @@ async function syncOneConnector(connector: ConnectorRow): Promise<Record<string,
   }
 
   await admin.rpc("record_mailbox_sync_outcome", {
-    _connector_id: connector.id, _status: "ok", _error: null, _history_id: lastHistoryId,
-    _initial_completed: true, _last_message_date: null,
+    _connector_id: connector.id, _status: failedInserts > 0 ? "partial" : "ok",
+    _error: failedInserts > 0 ? `insert_failures_${failedInserts}` : null,
+    _history_id: lastHistoryId, _initial_completed: true, _last_message_date: null,
   });
-  return { outcome: "incremental", inserted, classified, soft_marked: softMarked };
+  return { outcome: "incremental", inserted, classified, soft_marked: softMarked, failed_inserts: failedInserts };
 }
 
 function latestInternalDate(envelopes: GmailMessageEnvelope[]): string | null {
@@ -247,10 +298,9 @@ function latestInternalDate(envelopes: GmailMessageEnvelope[]): string | null {
  * The ONE inbound intelligence engine both mailbox paths share. Runs AFTER the
  * message row exists: the row is resolved by provider id, the shared-engine RPC
  * runs (case upsert + follow-up cancellation — a no-op by construction on
- * personal mailboxes), then classification through the model router's cheap
- * band (the Model Intelligence Fabric's classify lane — never a direct provider
- * selection). A classifier failure leaves the message landed and unclassified —
- * honest, never dropped.
+ * personal mailboxes), then classification through the shared classify helper
+ * (model router classify lane). A classifier failure leaves the message landed
+ * and unclassified — the tick's backfill sweep retries it on a later run.
  */
 async function runInboundIntelligence(connector: ConnectorRow, normalized: { provider_message_id: string; subject: string | null; sender: { address: string | null } }, envelope: GmailMessageEnvelope): Promise<void> {
   try {
@@ -259,26 +309,13 @@ async function runInboundIntelligence(connector: ConnectorRow, normalized: { pro
 
     await admin.rpc("record_inbound_message_intelligence", { _message_id: messageRow.id });
 
-    const prompt = buildClassifyPrompt({
+    await classifyAndRecordMessage({
+      admin: admin as unknown as ClassifyAdmin,
+      messageId: messageRow.id,
       mailboxClass: connector.mailbox_class === "personal" ? "personal" : "shared_support",
       subject: normalized.subject,
       fromAddress: normalized.sender?.address ?? null,
       snippet: envelope.snippet ?? "",
-    });
-    const reply = await routedChatCompletion("classify", {
-      messages: [
-        { role: "system", content: prompt.system },
-        { role: "user", content: prompt.user },
-      ],
-      max_tokens: 200,
-      response_format: { type: "json_object" },
-    });
-    const text = (reply as { choices?: { message?: { content?: unknown } }[] } | null)?.choices?.[0]?.message?.content;
-    const outcome = parseClassificationReply(text);
-    if (!outcome) return; // unclassified stays landed; the next tick may retry
-    await admin.rpc("apply_message_classification", {
-      _message_id: messageRow.id, _intent: outcome.intent, _confidence: outcome.confidence,
-      _summary: outcome.summary, _model_route: { job_kind: "classify" }, _labels: JSON.stringify(autoLabelsFor(outcome.intent, normalized.sender?.address ?? null)),
     });
   } catch {
     // Classification is best-effort by contract; the message itself already landed.

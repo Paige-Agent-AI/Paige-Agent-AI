@@ -260,6 +260,15 @@ Deno.serve(async req => {
     approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting",
     approved_fingerprint: decision.audit.laneEffective === "confirm" ? body.approved_fingerprint : null,
     decision_receipt_recorded: true };
+  // #1140: a governed send that the provider accepted moves the thread's support
+  // case (if any) to awaiting_customer and clears its pending follow-up — the
+  // bounded no-chase rule. Best-effort and NEVER blocking: a failure here changes
+  // nothing about the send's own result, which the readback below still owns.
+  const settleSupportCase = async (settled: Record<string, unknown>) => {
+    if (settled.ok !== true || typeof settled.message_id !== "string" || !UUID.test(settled.message_id)) return;
+    try { await admin.rpc("mark_support_case_outbound", { _message_id: settled.message_id }); } catch { /* next inbound re-syncs the case */ }
+  };
+
   const result = await executeCommsEmailSend({ actorUserId: user.id, tenantId, operationId: stored.operationId, stored, governance }, {
     stillCurrent, readResult, send, readBinding,
     resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }),
@@ -267,5 +276,6 @@ Deno.serve(async req => {
     prepare: async args => { const { data, error } = await admin.rpc("prepare_comms_email_send", args); return { data, error }; },
   });
   const settled = await notAdmitted(result, stored.operationId);
+  await settleSupportCase(settled);
   return response(statusOf(settled), { ...settled, capability: COMMS_EMAIL_TOOL });
 });

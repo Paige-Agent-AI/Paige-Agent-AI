@@ -149,6 +149,11 @@ create table if not exists public.message_labels (
   label       text not null check (label ~ '^[a-z0-9][a-z0-9-]{0,31}$'),
   source      text not null default 'paige' check (source in ('auto','owner','paige')),
   applied_by  uuid references auth.users(id) on delete set null,
+  -- Denormalized mailbox policy: the policy reads the row's OWN columns, never a
+  -- subquery through messages (messages RLS hides the personal rows a non-owner
+  -- would need to see for the old predicate to refuse them).
+  mailbox_class         text not null default 'shared_support' check (mailbox_class in ('personal','shared_support')),
+  mailbox_owner_user_id uuid references auth.users(id) on delete set null,
   created_at  timestamptz not null default now(),
   unique (message_id, label)
 );
@@ -167,15 +172,8 @@ create policy message_labels_select on public.message_labels
       tenant_id = public.current_user_tenant_id()
       and public.has_any_role(auth.uid(), array['admin','coach'])
       and (
-        not exists (
-          select 1 from public.messages m join public.channel_connectors c on c.id = m.connector_id
-          where m.id = message_labels.message_id and c.mailbox_class = 'personal'
-        )
-        or exists (
-          select 1 from public.messages m join public.channel_connectors c on c.id = m.connector_id
-          where m.id = message_labels.message_id
-            and c.mailbox_class = 'personal' and c.mailbox_owner_user_id = auth.uid()
-        )
+        mailbox_class <> 'personal'
+        or mailbox_owner_user_id = auth.uid()
       )
     )
   );
@@ -195,6 +193,7 @@ create table if not exists public.message_classifications (
   tenant_id      uuid not null references public.tenants(id) on delete cascade,
   message_id     uuid not null references public.messages(id) on delete cascade,
   mailbox_class  text not null check (mailbox_class in ('personal','shared_support')),
+  mailbox_owner_user_id uuid references auth.users(id) on delete set null,
   intent         text not null,
   confidence     numeric not null check (confidence >= 0 and confidence <= 1),
   risk_tier      text not null check (risk_tier in ('routine','elevated')),
@@ -217,15 +216,8 @@ create policy message_classifications_select on public.message_classifications
       tenant_id = public.current_user_tenant_id()
       and public.has_any_role(auth.uid(), array['admin','coach'])
       and (
-        not exists (
-          select 1 from public.messages m join public.channel_connectors c on c.id = m.connector_id
-          where m.id = message_classifications.message_id and c.mailbox_class = 'personal'
-        )
-        or exists (
-          select 1 from public.messages m join public.channel_connectors c on c.id = m.connector_id
-          where m.id = message_classifications.message_id
-            and c.mailbox_class = 'personal' and c.mailbox_owner_user_id = auth.uid()
-        )
+        mailbox_class <> 'personal'
+        or mailbox_owner_user_id = auth.uid()
       )
     )
   );
@@ -514,8 +506,9 @@ begin
   delete from public.message_labels
    where message_id = p_message_id and label = p_label and source = 'auto';
 
-  insert into public.message_labels (tenant_id, message_id, label, source, applied_by)
-  values (v_tenant, p_message_id, p_label, p_source, auth.uid())
+  insert into public.message_labels (tenant_id, message_id, label, source, applied_by, mailbox_class, mailbox_owner_user_id)
+  values (v_tenant, p_message_id, p_label, p_source, auth.uid(),
+          coalesce(v_connector.mailbox_class, 'shared_support'), v_connector.mailbox_owner_user_id)
   on conflict (message_id, label) do update
     set source = excluded.source, applied_by = excluded.applied_by
   where public.message_labels.source = 'auto' and excluded.source in ('owner','paige');
@@ -708,26 +701,22 @@ begin
     return jsonb_build_object('ok', true, 'mailbox_class', 'personal', 'case_opened', false);
   end if;
 
-  select * into v_case from public.support_cases
-   where tenant_id = conn.tenant_id and connector_id = conn.id and thread_key = msg.thread_key;
-
-  if v_case.id is null then
-    insert into public.support_cases (tenant_id, connector_id, thread_key, contact_id, status, last_inbound_at)
-    values (conn.tenant_id, conn.id, msg.thread_key, msg.contact_id, 'awaiting_owner', msg.sent_at)
-    returning * into v_case;
-  else
-    -- The customer replied: any pending follow-up is cancelled, never re-armed
-    -- without new inbound (no duplicate chasing, no automated loops).
-    update public.support_cases
-       set status = case when v_case.status in ('resolved','closed') then 'open' else 'awaiting_owner' end,
-           last_inbound_at = msg.sent_at,
-           contact_id = coalesce(v_case.contact_id, msg.contact_id),
-           next_followup_at = null,
-           followup_cancelled_at = case when v_case.next_followup_at is not null then now() else v_case.followup_cancelled_at end,
-           updated_at = now()
-     where id = v_case.id
-     returning * into v_case;
-  end if;
+  -- ONE race-free upsert (webhook retries and near-simultaneous customer mails
+  -- both land here; SELECT-then-INSERT would lose one side's state).
+  -- The customer replied: any pending follow-up is cancelled NOW; a LATER inbound
+  -- re-arms the thread because refresh_support_followups compares cancelled_at
+  -- against last_inbound_at (new inbound outranks an old cancellation).
+  insert into public.support_cases (tenant_id, connector_id, thread_key, contact_id, status, last_inbound_at)
+  values (conn.tenant_id, conn.id, msg.thread_key, msg.contact_id, 'awaiting_owner', msg.sent_at)
+  on conflict (tenant_id, connector_id, thread_key) do update
+    set status = case when public.support_cases.status in ('resolved','closed') then 'open' else 'awaiting_owner' end,
+        last_inbound_at = excluded.last_inbound_at,
+        contact_id = coalesce(public.support_cases.contact_id, excluded.contact_id),
+        next_followup_at = null,
+        followup_cancelled_at = case when public.support_cases.next_followup_at is not null then now()
+                                     else public.support_cases.followup_cancelled_at end,
+        updated_at = now()
+  returning * into v_case;
 
   return jsonb_build_object('ok', true, 'mailbox_class', 'shared_support',
                             'case_id', v_case.id, 'case_opened', true);
@@ -761,8 +750,8 @@ begin
 
   v_risk := case when _intent in ('billing','refund','account_access','security','legal') then 'elevated' else 'routine' end;
 
-  insert into public.message_classifications (tenant_id, message_id, mailbox_class, intent, confidence, risk_tier, summary, model_route)
-  values (conn.tenant_id, _message_id, conn.mailbox_class, _intent,
+  insert into public.message_classifications (tenant_id, message_id, mailbox_class, mailbox_owner_user_id, intent, confidence, risk_tier, summary, model_route)
+  values (conn.tenant_id, _message_id, conn.mailbox_class, conn.mailbox_owner_user_id, _intent,
           least(greatest(coalesce(_confidence, 0), 0), 1), v_risk,
           left(_summary, 280), coalesce(_model_route, '{}'::jsonb))
   on conflict (message_id) do update
@@ -776,8 +765,8 @@ begin
   end if;
 
   if _labels is not null then
-    insert into public.message_labels (tenant_id, message_id, label, source)
-    select conn.tenant_id, _message_id, l::text, 'auto'
+    insert into public.message_labels (tenant_id, message_id, label, source, mailbox_class, mailbox_owner_user_id)
+    select conn.tenant_id, _message_id, l::text, 'auto', conn.mailbox_class, conn.mailbox_owner_user_id
       from jsonb_array_elements_text(_labels) l
     on conflict (message_id, label) do nothing;
   end if;
@@ -808,7 +797,7 @@ begin
            updated_at = now()
      where s.status in ('open','awaiting_owner')
        and s.next_followup_at is null
-       and s.followup_cancelled_at is null
+       and (s.followup_cancelled_at is null or s.followup_cancelled_at < s.last_inbound_at)
        and s.followup_count < 5
        and s.last_inbound_at < now() - make_interval(hours => _stale_after_hours)
     returning 1
@@ -880,8 +869,10 @@ begin
 
   if _kind in ('label','unlabel') then
     if _kind = 'label' then
-      insert into public.message_labels (tenant_id, message_id, label, source, applied_by)
-      values (msg.tenant_id, _message_id, _label, 'paige', _actor_user_id)
+      insert into public.message_labels (tenant_id, message_id, label, source, applied_by, mailbox_class, mailbox_owner_user_id)
+      values (msg.tenant_id, _message_id, _label, 'paige', _actor_user_id,
+              coalesce((select cc.mailbox_class from public.channel_connectors cc where cc.id = msg.connector_id), 'shared_support'),
+              (select cc.mailbox_owner_user_id from public.channel_connectors cc where cc.id = msg.connector_id))
       on conflict (message_id, label) do update
         set source = excluded.source, applied_by = excluded.applied_by
         where public.message_labels.source = 'auto';
@@ -965,3 +956,59 @@ $$;
 
 revoke all on function public.record_mailbox_sync_outcome(uuid, text, text, bigint, boolean, timestamptz) from public, anon, authenticated;
 grant execute on function public.record_mailbox_sync_outcome(uuid, text, text, bigint, boolean, timestamptz) to service_role;
+
+-- -----------------------------------------------------------------------------
+-- 15. mark_message_removed_by_provider — SOFT removal that MERGES into meta
+--     (a whole-column update would destroy the recorded List-Unsubscribe target
+--     and Gmail metadata the thread's truthful history depends on).
+-- -----------------------------------------------------------------------------
+create or replace function public.mark_message_removed_by_provider(
+  _tenant_id uuid,
+  _connector_id uuid,
+  _provider_message_id text
+)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  with updated as (
+    update public.messages
+       set meta = coalesce(meta, '{}'::jsonb) || jsonb_build_object('gmail_removed_at', now()),
+           updated_at = now()
+     where tenant_id = _tenant_id
+       and connector_id = _connector_id
+       and provider_message_id = _provider_message_id
+    returning 1
+  )
+  select exists(select 1 from updated);
+$$;
+
+revoke all on function public.mark_message_removed_by_provider(uuid, uuid, text) from public, anon, authenticated;
+grant execute on function public.mark_message_removed_by_provider(uuid, uuid, text) to service_role;
+
+-- -----------------------------------------------------------------------------
+-- 16. The sync engine's cron schedule (the comms-scheduled-drain pattern:
+--     vaulted cron token header, unschedule-if-exists, five-minute cadence).
+-- -----------------------------------------------------------------------------
+do $$
+begin
+  if exists (select 1 from cron.job where jobname = 'gmail-mailbox-sync') then
+    perform cron.unschedule('gmail-mailbox-sync');
+  end if;
+end $$;
+
+select cron.schedule(
+  'gmail-mailbox-sync',
+  '*/5 * * * *',
+  $$
+    select net.http_post(
+      url     := 'https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/gmail-mailbox-sync',
+      headers := jsonb_build_object(
+                   'Content-Type', 'application/json',
+                   'x-cron-token', public.cron_token_header()
+                 ),
+      body    := '{}'::jsonb
+    );
+  $$
+);

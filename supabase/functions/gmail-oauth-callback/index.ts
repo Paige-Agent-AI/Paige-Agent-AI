@@ -280,6 +280,23 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (ownRow?.id) {
+      // #1140: an inbox consent must NEVER silently privatize a connector that is
+      // currently the tenant's SHARED support mailbox — every other staff seat would
+      // lose the shared history the moment the row flips to personal. Reconnecting
+      // one's own personal mailbox (already personal) stays allowed.
+      if (purpose === "inbox") {
+        const { data: existingMailbox } = await admin
+          .from("channel_connectors")
+          .select("mailbox_class")
+          .eq("id", ownRow.id)
+          .maybeSingle();
+        if (existingMailbox?.mailbox_class === "shared_support") {
+          return new Response(JSON.stringify({ error: "gmail_shared_connector_conflict", detail: "This address is the workspace's shared support mailbox. Connecting it as a personal inbox would hide it from the rest of the team — connect a different address, or ask the workspace owner to move the shared mailbox first." }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       const { error: updErr } = await admin
         .from("channel_connectors")
         .update({ ...connectorFields, updated_at: new Date().toISOString() })

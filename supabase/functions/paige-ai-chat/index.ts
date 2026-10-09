@@ -10354,7 +10354,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
 
         // ── INBOX INTELLIGENCE, direct verbs (#1140 two-mailbox pilot) ─────────
-        // read_message_content / inbox_label / read_support_cases execute caller-scoped RPCs the
+        // read_message_content / read_support_cases execute caller-scoped RPCs the
         // same way inbox_list does: the server derives the tenant from the JWT (§59)
         // and the mailbox policy (private vs shared, active consent) is enforced in
         // SQL, not by the model or this handler.

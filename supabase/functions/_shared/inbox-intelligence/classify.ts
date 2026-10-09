@@ -100,8 +100,9 @@ export function parseClassificationReply(raw: unknown): ClassificationOutcome | 
 /**
  * The bounded auto-label derivation: intent slug labels, plus needs-reply only
  * for reply-worthy intents from real senders (no automated loops on no-reply
- * addresses). Owner labels always beat these (apply_message_label replaces
- * auto rows), which is the spam-misclassification recovery path.
+ * addresses). Owner/paige labels always beat these rows in apply_message_label's
+ * conflict rule — the spam-misclassification recovery path is a person correcting
+ * the label (the apply/remove label RPCs), never the auto writer overwriting back.
  */
 export function autoLabelsFor(intent: ClassificationIntent, fromAddress: string | null = null): string[] {
   const labels = new Set<string>([intent]);

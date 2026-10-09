@@ -25,6 +25,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
+import { classifyAndRecordMessage, type ClassifyAdmin } from "../_shared/inbox-intelligence/classify-message.ts";
 import {
   getInboundAdapter,
   registerInboundAdapter,
@@ -400,6 +401,26 @@ Deno.serve(async (req) => {
     await admin.rpc("record_inbound_message_intelligence", { _message_id: messageId });
   } catch (intelErr) {
     console.warn("[handle-inbound-email] intelligence_engine_deferred", (intelErr as Error)?.message);
+  }
+  // Classification rides the SAME shared helper the Gmail sync uses (the classify
+  // lane of the model router): the shared support mailbox gets intent + risk tier
+  // + auto labels exactly like the personal one. Best-effort and non-blocking —
+  // the sync tick's backfill sweep retries what fails here.
+  try {
+    const { data: connectorRow } = await admin.from("channel_connectors")
+      .select("mailbox_class").eq("id", connector.id).maybeSingle();
+    if (connectorRow?.mailbox_class) {
+      await classifyAndRecordMessage({
+        admin: admin as unknown as ClassifyAdmin,
+        messageId,
+        mailboxClass: connectorRow.mailbox_class === "personal" ? "personal" : "shared_support",
+        subject: (msg.subject as string | null) ?? null,
+        fromAddress: (msg.sender?.address as string | null) ?? null,
+        snippet: ((msg.body_text as string | null) ?? "").slice(0, 4000),
+      });
+    }
+  } catch (classifyErr) {
+    console.warn("[handle-inbound-email] classification_deferred", (classifyErr as Error)?.message);
   }
 
   // -- 6. File the comms-draft-reply action (§8 action bus). ----------------------

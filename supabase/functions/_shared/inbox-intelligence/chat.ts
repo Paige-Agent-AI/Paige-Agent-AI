@@ -131,9 +131,10 @@ export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: Organ
   } catch {
     return { content: { success: false, error: "Invalid mailbox request. kind is one of label, unlabel, archive, unarchive, trash, untrash, unsubscribe_propose, unsubscribe_send; message_id is a message id from inbox_list; label is a slug." } };
   }
-  if (command.kind === "unsubscribe_send") {
-    return { content: { success: false, not_applied: true, error: "Send the proposal first (unsubscribe_propose); the one-click target is read from the message's own List-Unsubscribe header on the server, never from the request." } };
-  }
+  // unsubscribe_send rides the same approval as every other kind; the door reads the
+  // one-click target from the message's own recorded List-Unsubscribe header (never the
+  // request) and shows its host on the card. Proposing first (unsubscribe_propose) is how
+  // the person sees the target before approving the send.
 
   let body: Record<string, unknown>;
   let spent: string | undefined;
@@ -149,9 +150,13 @@ export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: Organ
       if (reply.error) return { content: { success: false, error: "The approval could not be checked. Nothing was changed." } };
       const rows = reply.data ?? [];
       // Match on the STORED command exactly — the approved card is for that message and kind.
+      // jsonb does not preserve key order: compare the PARSED commands, never raw
+      // stringify of the stored args (the door re-parses for exactly this reason).
       const match = rows.find((row: { fingerprint?: unknown; args?: unknown }) => {
         const stored = row.args && typeof row.args === "object" ? (row.args as Record<string, unknown>).command : null;
-        return stored ? JSON.stringify(stored) === JSON.stringify(command) : false;
+        if (!stored) return false;
+        try { return JSON.stringify(parseOrganizeCommand(stored)) === JSON.stringify(command); }
+        catch { return false; }
       });
       const token = match ? [...ctx.approved].find((t) => t.split(":")[0] === match.fingerprint) : undefined;
       if (!match || !token) {

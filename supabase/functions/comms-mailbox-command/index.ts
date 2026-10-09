@@ -183,7 +183,8 @@ Deno.serve(async req => {
   if (!tokenRes.ok || !tokenJson?.access_token) return response(502, { ok: false, outcome: "refused", code: "MAILBOX_TOKEN_REFRESH_FAILED", note: "The mailbox connection could not be authorized just now; nothing was changed." });
   const authHeaders = { Authorization: `Bearer ${tokenJson.access_token}`, "Content-Type": "application/json" };
 
-  // ONE provider call per approved command, chosen by kind. There is no delete.
+  // The provider round the kind needs (label kinds first ensure the named Gmail
+  // label exists via labels.list + labels.create). There is no delete path here.
   let providerCall: { status: number; body: unknown } | null = null;
   try {
     if (command.kind === "archive" || command.kind === "unarchive" || command.kind === "label" || command.kind === "unlabel") {

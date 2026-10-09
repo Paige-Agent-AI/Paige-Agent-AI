@@ -77,5 +77,12 @@ export const UNSUBSCRIBE_HTTPS_RE = /^https:\/\/[a-z0-9.-]+(?::\d{1,5})?(?:\/[^\
 
 export function unsubscribeHttpsTarget(url: string | null | undefined): string | null {
   if (typeof url !== "string" || url.length > 2048 || !UNSUBSCRIBE_HTTPS_RE.test(url) || url.includes("@")) return null;
+  // No loopback, literal private, or link-local hosts: the door runs on shared edge
+  // infrastructure and the one-click POST is a server-side request.
+  let host: string;
+  try { host = new URL(url).hostname.toLowerCase(); } catch { return null; }
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal")) return null;
+  if (/^(?:127.|10.|192.168.|169.254.|0.)/.test(host)) return null;
+  if (/^172.(?:1[6-9]|2d|3[01])./.test(host)) return null;
   return url;
 }

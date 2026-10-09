@@ -67,3 +67,11 @@ describe('authenticated status outcome enrichment', () => {
     await expect(readInteractiveOutcomeStatus({ state: async () => { throw Error('authority unavailable'); } })).rejects.toThrow('authority unavailable');
   });
 });
+
+describe('automatic lookup preserves ordinary status and ownership',()=>{
+ it('omits an absent original observation and still rereads executor authority',async()=>{
+  const state=vi.fn().mockResolvedValueOnce({executor:null,terminal:true}).mockResolvedValueOnce({executor:'held',terminal:true});
+  expect(await readInteractiveOutcomeStatus({state,readOutcome:async()=>undefined})).toEqual({executor_active:true,settled:false});
+  expect(state).toHaveBeenCalledTimes(2);
+ });
+});

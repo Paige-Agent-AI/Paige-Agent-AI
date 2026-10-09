@@ -88,6 +88,10 @@ INSERT INTO public.user_roles (user_id, role) VALUES
   ('c1000000-0000-0000-0000-000000007001', 'admin')
 ON CONFLICT (user_id, role) DO NOTHING; -- the signup trigger may have seeded a role already
 
+-- Provisioning fixtures run as the SERVICE ROLE (the guard's trusted writer): a
+-- JWT-bearing session (even claims '{}') is refused by design — rows are created by
+-- provisioning, not by a tenant.
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
 -- Bystander subaccount (gives the WrongSub fixture a DIFFERENT subaccount to point at).
 INSERT INTO public.tenant_twilio_subaccounts
   (tenant_id, twilio_subaccount_sid, api_key_sid, auth_token_vault_ref, friendly_name, status, active)
@@ -141,6 +145,9 @@ VALUES
   ('c1000000-0000-0000-0000-000000006111', '+15550000006', NULL,
    '{"voice": false}'::jsonb, 'active', true,
    (SELECT id FROM public.tenant_twilio_subaccounts WHERE tenant_id = 'c1000000-0000-0000-0000-000000006111'), 'marketplace', now());
+
+-- Back to the caller-shaped (empty) claims for the read assertions.
+SELECT set_config('request.jwt.claims', '{}', true);
 
 -- Helper: act as a fixture user and read the calling block.
 CREATE OR REPLACE FUNCTION pg_temp.as_calling(p_user uuid, p_key text)

@@ -23,15 +23,17 @@ Deno.test("organize parse: refuses unknown kinds, extra keys, bad ids, bad label
   assertThrows(() => parseOrganizeCommand({ kind: "label", message_id: M }), TypeError, "MAILBOX_COMMAND_INVALID");
 });
 
-Deno.test("organize: every kind is reversible and has an exact undo kind", () => {
+Deno.test("organize: the MAILBOX kinds are reversible with exact undos; approval is required for every kind", () => {
   assertEquals(undoKindFor("archive"), "unarchive");
   assertEquals(undoKindFor("unarchive"), "archive");
   assertEquals(undoKindFor("trash"), "untrash");
   assertEquals(undoKindFor("untrash"), "trash");
   assertEquals(undoKindFor("label"), "unlabel");
   assertEquals(undoKindFor("unlabel"), "label");
-  for (const kind of ["label", "unlabel", "archive", "unarchive", "trash", "untrash", "unsubscribe_propose", "unsubscribe_send"] as const) {
+  for (const kind of ["label", "unlabel", "archive", "unarchive", "trash", "untrash"] as const) {
     assertEquals(organizeIsReversible(kind), true);
+  }
+  for (const kind of ["label", "unlabel", "archive", "unarchive", "trash", "untrash", "unsubscribe_propose", "unsubscribe_send"] as const) {
     assertEquals(organizeRequiresApproval(kind), true);
   }
 });
@@ -50,4 +52,24 @@ Deno.test("unsubscribe: accepts only https one-click targets, refusing http/mail
   assertEquals(UNSUBSCRIBE_HTTPS_RE.test("javascript:alert(1)"), false);
   assertEquals(UNSUBSCRIBE_HTTPS_RE.test("https://user:pass@evil.test/u"), false);
   assertEquals(unsubscribeHttpsTarget("https://evil.test/u?x=" + "a".repeat(2500)), null);
+});
+
+// ── Owner addendum 6088460092: truthful unsubscribe semantics ──────────────────
+// Failing-first: written against the pre-correction organize.ts (which claims
+// every kind reversible and falls through to "unlabel" for the unsubscribe kinds).
+
+Deno.test("unsubscribe kinds are NOT reversible (a delivered one-click request has no inverse)", () => {
+  assertEquals(organizeIsReversible("label"), true);
+  assertEquals(organizeIsReversible("archive"), true);
+  assertEquals(organizeIsReversible("trash"), true);
+  assertEquals(organizeIsReversible("unlabel"), true);
+  assertEquals(organizeIsReversible("unarchive"), true);
+  assertEquals(organizeIsReversible("untrash"), true);
+  assertEquals(organizeIsReversible("unsubscribe_propose"), false);
+  assertEquals(organizeIsReversible("unsubscribe_send"), false);
+});
+
+Deno.test("unsubscribe kinds have NO undo kind (undo of a proposal must never SEND)", () => {
+  assertEquals(undoKindFor("unsubscribe_propose"), null);
+  assertEquals(undoKindFor("unsubscribe_send"), null);
 });

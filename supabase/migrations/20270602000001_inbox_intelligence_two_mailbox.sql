@@ -564,12 +564,21 @@ create or replace function public.read_support_cases(
   p_include_followups boolean default false
 )
 returns jsonb
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
-  select coalesce(jsonb_agg(t), '[]'::jsonb) from (
+begin
+  -- Authorization contract (owner adjudication 6088433197 item 2): support cases
+  -- carry per-thread subjects and intents — the SAME admin-only gate the table's
+  -- own RLS enforces. A plain tenant member is refused explicitly, not merely
+  -- chat-seat-restricted; direct authenticated RPC access cannot widen it.
+  if not public.is_platform_owner()
+     and not public.has_any_role(auth.uid(), array['admin']) then
+    return jsonb_build_object('ok', false, 'code', 'WORKSPACE_ROLE_REQUIRED');
+  end if;
+  return coalesce(jsonb_agg(t), '[]'::jsonb) from (
     select jsonb_build_object(
              'id', s.id,
              'thread_key', s.thread_key,
@@ -600,6 +609,7 @@ as $$
     order by s.next_followup_at nulls last, s.last_inbound_at desc nulls last
     limit 50
   ) s;
+end;
 $$;
 
 revoke all on function public.read_support_cases(text, boolean) from public, anon;
@@ -1048,3 +1058,32 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.list_tool_autonomy(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.list_tool_autonomy(uuid) TO authenticated,service_role;
+
+-- -----------------------------------------------------------------------------
+-- 18. QA #1832 — the synthetic-workspace no-provider-execution boundary helper.
+--     The Identity lane sets tenants.features['qa_no_provider_execution']='true'
+--     at synthetic-QA provisioning; every tenant-scoped provider rail refuses
+--     dispatch for such tenants (fail-closed at the marker: an ACTIVE managed
+--     connector, a queued row, a retry, or a marketing release cannot bypass it).
+--     Ordinary tenants answer false and are byte-for-byte unchanged. Unknown
+--     tenant -> false (the marker is the boundary, not tenant existence).
+-- -----------------------------------------------------------------------------
+create or replace function public.tenant_blocks_provider_execution(p_tenant uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select (t.features ->> 'qa_no_provider_execution') = 'true'
+       from public.tenants t where t.id = p_tenant),
+    false
+  );
+$$;
+
+revoke all on function public.tenant_blocks_provider_execution(uuid) from public, anon, authenticated;
+grant execute on function public.tenant_blocks_provider_execution(uuid) to service_role;
+
+comment on function public.tenant_blocks_provider_execution(uuid) is
+  'QA #1832: true only for synthetic QA workspaces flagged features.qa_no_provider_execution — the server-side fail-closed no-provider-execution boundary every tenant-scoped provider rail consults before dispatch.';

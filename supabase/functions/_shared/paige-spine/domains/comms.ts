@@ -300,10 +300,10 @@ export const COMMS_MAILBOX_ORGANIZE = {
  * re-parses the STORED command with that parser before anything runs.
  */
 export const COMMS_MAILBOX_ORGANIZE_CAPABILITY = defineCapability({
-  identity: { id: "comms.gmail_organize", version: 1, domain: "comms", owner: "comms", humanSurface: "/solo/:account/clients/conversations", description: "Organize one synced Gmail mailbox message reversibly — label, archive, trash, their undos, or a proposed unsubscribe. Never a permanent deletion; every provider-side write needs the person's approval." },
+  identity: { id: "comms.gmail_organize", version: 1, domain: "comms", owner: "comms", humanSurface: "/solo/:account/clients/conversations", description: "Organize one synced Gmail mailbox message reversibly — label, archive, trash, their undos, or a proposed unsubscribe (the person sends the one-click request themselves — Paige never sends it). Never a permanent deletion; the mailbox kinds are reversible and the unsubscribe kinds are not presented as undoable." },
   input: objectInputSchema({
     properties: {
-      kind: { type: "string", enum: ["label", "unlabel", "archive", "unarchive", "trash", "untrash", "unsubscribe_propose", "unsubscribe_send"] },
+      kind: { type: "string", enum: ["label", "unlabel", "archive", "unarchive", "trash", "untrash", "unsubscribe_propose"] },
       message_id: { type: "string", format: "uuid" },
       label: { anyOf: [{ type: "string", pattern: "^[a-z0-9][a-z0-9-]{0,31}$" }, { type: "null" }] },
     },
@@ -351,5 +351,30 @@ export const COMMS_SUPPORT_CASES_READ_KIT = defineCapability({
   providerBinding: { kind: "internal", operation: "public.read_support_cases", connectionResolver: null },
   idempotency: { mode: "not_applicable" },
   receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+
+/**
+ * INT-345 K-3 — the governed calling-setup act's Capability Kit declaration.
+ * The chat door binds the action-risk key comms_setup_calling (high → confirm) to
+ * this declaration; it is not a second dispatcher. The executor is the dedicated
+ * seam edge, tenant/actor server-derived (§59), and the effect is the one-time,
+ * free, idempotent connection of the workspace's calling account — never a number
+ * purchase or a primary selection.
+ */
+export const COMMS_SETUP_CALLING_CAPABILITY = defineCapability({
+  identity: { id: "comms.setup_calling", version: 1, domain: "comms", owner: "comms", humanSurface: "/solo/:account/settings/registration", description: "Connect this workspace's calling account (one-time, free, idempotent). Buys no number and selects no primary; calling is READY only after the owner's Send-from-this choice." },
+  input: objectInputSchema({
+    properties: {
+      dry_run: { type: "boolean" },
+    },
+    required: [],
+  }),
+  effect: "external_effect",
+  governance: { actionRiskKey: "comms_setup_calling", risk: "high", approval: "confirm", requiredPermission: ownerGrantablePermission("comms.setup_calling.execute") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user", revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "edge.comms-setup-calling", connectionResolver: null },
+  idempotency: { mode: "required", key: "Server actor + tenant; the provisioning core is idempotent per step (existing row → skip; 23505 → skip; Vault upsert by name; TwiML ensure idempotent). skipped_existing performs no act.", readback: "public.tenant_comms_readiness() -> calling", replay: "reconcile_then_return" }, receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
   outcome: { projector: "capability-record" },
 });

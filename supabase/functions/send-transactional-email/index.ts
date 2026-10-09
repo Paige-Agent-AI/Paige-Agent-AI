@@ -1,5 +1,6 @@
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from '../_shared/comms-provider-boundary.ts'
 import * as React from 'npm:react@18.3.1'
+import { providerExecutionBlocked, QA_BOUNDARY_REFUSAL_NOTE, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
@@ -267,6 +268,18 @@ Deno.serve(async (req) => {
       await failClaim(suppressionError ? 'suppression_check_failed' : 'recipient_suppressed')
       return new Response(JSON.stringify({ error: 'welcome_delivery_blocked' }), {
         status: suppressionError ? 503 : 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // QA #1832: the synthetic-workspace no-provider-execution boundary. A tenant
+    // resolved for this send (caller-supplied or recipient-derived) that carries the
+    // qa_no_provider_execution marker fails the delivery claim and refuses BEFORE the
+    // provider call — no email, no spend, no credential use. Ordinary tenants unchanged.
+    if (tenantId && await providerExecutionBlocked(admin as never, tenantId)) {
+      await failClaim('qa_no_provider_execution')
+      return new Response(JSON.stringify({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }

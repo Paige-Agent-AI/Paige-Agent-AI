@@ -44,6 +44,7 @@ import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 import { parseDeliveryBinding, renderTransientInvoiceLink, renderTransientInvoiceText, type DeliveryBinding } from "../_shared/sales-invoice-delivery/binding.ts";
 import { mintSignerToken, sha256Hex } from "../_shared/agreements/token.ts";
+import { providerExecutionBlocked, QA_BOUNDARY_REFUSAL_NOTE, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -947,6 +948,27 @@ Deno.serve(async (req) => {
   // legit queued row's connector shares that tenant — so a mismatch is correctly rejected.
   if (connectorRow && tenantId && connectorRow.tenant_id !== tenantId) {
     return new Response(JSON.stringify({ error: "forbidden_cross_tenant_connector" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // ── QA #1832: the synthetic-workspace no-provider-execution boundary ──────────
+  // Server-side, fail-closed at the marker (tenants.features.qa_no_provider_execution):
+  // a synthetic QA workspace cannot cause a real provider effect through ANY path that
+  // enters this ONE rail — direct sends, the governed comms-email executor, marketing
+  // dispatch, the scheduled drainer's queued releases, and every retry that re-enters.
+  // A queued synthetic row TERMINALIZES (failed) instead of requeueing forever. An
+  // existing draft/provisioned connector does not bypass: the refusal precedes every
+  // provider call below. Ordinary tenants answer false and are unchanged.
+  if (tenantId && await providerExecutionBlocked(admin as never, tenantId)) {
+    if (isInternal && body.message_id && draftRow?.status === "queued") {
+      return await terminalizeScheduledRelease(QA_NO_PROVIDER_EXECUTION_CODE);
+    }
+    if (body.message_id && draftRow && draftRow.status !== "failed") {
+      await admin.from("messages").update({ status: "failed", error: QA_NO_PROVIDER_EXECUTION_CODE })
+        .eq("id", body.message_id).eq("tenant_id", tenantId);
+    }
+    return new Response(JSON.stringify({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }), {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

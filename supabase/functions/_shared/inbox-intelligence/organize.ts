@@ -43,12 +43,17 @@ export function parseOrganizeCommand(value: unknown): OrganizeCommand {
   return { kind, message_id: messageId };
 }
 
-/** Every kind is reversible: each has an inverse in the same union. */
+/**
+ * Owner addendum 6088460092 — TRUTHFUL reversibility. The mailbox-state kinds
+ * each have an exact inverse. The unsubscribe kinds do NOT: a delivered one-click
+ * request has no valid inverse (re-subscribing is the person's own act, not an
+ * undo), and "undoing" a proposal must never send anything.
+ */
 export function organizeIsReversible(kind: OrganizeKind): boolean {
-  return true;
+  return kind !== "unsubscribe_propose" && kind !== "unsubscribe_send";
 }
 
-export function undoKindFor(kind: OrganizeKind): "unlabel" | "label" | "unarchive" | "archive" | "untrash" | "trash" {
+export function undoKindFor(kind: OrganizeKind): "unlabel" | "label" | "unarchive" | "archive" | "untrash" | "trash" | null {
   switch (kind) {
     case "archive": return "unarchive";
     case "unarchive": return "archive";
@@ -56,10 +61,9 @@ export function undoKindFor(kind: OrganizeKind): "unlabel" | "label" | "unarchiv
     case "untrash": return "trash";
     case "label": return "unlabel";
     case "unlabel": return "label";
+    case "unsubscribe_propose": return null;
+    case "unsubscribe_send": return null;
   }
-  // unsubscribe_propose/unsubscribe_send carry no mailbox state change that needs an inverse
-  // beyond not sending; reaching here is impossible (kind is exhaustive above).
-  return "unlabel";
 }
 
 /** Every provider-side organization write goes through the canonical approval —

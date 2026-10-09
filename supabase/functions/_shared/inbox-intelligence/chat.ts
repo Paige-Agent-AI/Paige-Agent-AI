@@ -35,7 +35,7 @@ export const INBOX_INTELLIGENCE_TOOLS = [
       // A string literal, not COMMS_MAILBOX_ORGANIZE_TOOL: capability-kit-lint binds a tool
       // schema to its defineCapability() declaration by the literal name it reads here.
       name: "gmail_organize",
-      description: "With approval, organize ONE synced Gmail mailbox message REVERSIBLY: label, unlabel, archive, unarchive, trash, or untrash it, or propose unsubscribing from its mailing list. Every kind has an exact undo. There is no permanent delete — not expressible. The person sees the exact message and action on a Needs your OK card before the real mailbox changes. Trash moves to Gmail's Trash (30-day recovery), never deletion. Unsubscribe sends only to the one-click address the message itself declared.",
+      description: "With approval, organize ONE synced Gmail mailbox message: label, unlabel, archive, unarchive, trash, or untrash it (each has an exact undo), or propose unsubscribing from its mailing list (no undo — the target is recorded and shown; the person sends the one-click request from their own mail client; automatic sending is disabled). There is no permanent delete — not expressible. The person sees the exact message and action on a Needs your OK card before the real mailbox changes. Trash moves to Gmail's Trash (30-day recovery), never deletion.",
       parameters: {
         type: "object",
         properties: {
@@ -87,6 +87,9 @@ export async function dispatchInboxIntelligenceChat(
       p_include_followups: args.followups_only === true,
     });
     if (error) return { success: false, error: "The support cases could not be read just now." };
+    if (data && typeof data === "object" && !Array.isArray(data) && (data as Record<string, unknown>).ok === false) {
+      return { success: false, not_applied: true, error: "Support cases need this workspace's owner or an admin seat — a plain member seat cannot read them." };
+    }
     const cases = Array.isArray(data) ? data : [];
     return { success: true, count: cases.length, cases };
   }

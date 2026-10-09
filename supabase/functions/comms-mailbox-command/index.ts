@@ -17,7 +17,7 @@ import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { COMMS_MAILBOX_ORGANIZE_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
-import { COMMS_MAILBOX_ORGANIZE_TOOL, parseOrganizeCommand, unsubscribeHttpsTarget, UUID, type OrganizeCommand } from "../_shared/inbox-intelligence/organize.ts";
+import { COMMS_MAILBOX_ORGANIZE_TOOL, organizeIsReversible, parseOrganizeCommand, unsubscribeHttpsTarget, UUID, type OrganizeCommand } from "../_shared/inbox-intelligence/organize.ts";
 import { decideContentRead, hasOrganizeScope } from "../_shared/inbox-intelligence/policy.ts";
 
 const headers = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Content-Type": "application/json", "Cache-Control": "no-store" };
@@ -52,6 +52,15 @@ Deno.serve(async req => {
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id)) throw new TypeError("INVALID_SCOPE");
     if (parsed.approved_fingerprint !== undefined && (typeof parsed.approved_fingerprint !== "string" || !/^[0-9a-f]{16}$/.test(parsed.approved_fingerprint))) throw new TypeError("INVALID_FINGERPRINT");
     command = parseOrganizeCommand(parsed.command);
+    // Owner addendum 6088460092 — automatic one-click unsubscribe execution is
+    // DISABLED until a reviewed egress boundary (URL/DNS/redirect policy) exists.
+    // This refuses BEFORE any approval is read or claimed, and this door performs
+    // NO fetch of an email-supplied URL on any path. The truthful manual flow:
+    // unsubscribe_propose records and shows the target; the person's own mail
+    // client sends the one-click request.
+    if (command.kind === "unsubscribe_send") {
+      return refused(410, "UNSUBSCRIBE_AUTO_SEND_DISABLED", "Automatic unsubscribe sending is disabled until a reviewed safe-transport boundary exists. Propose the unsubscribe (unsubscribe_propose) and the person sends the one-click request from their own mail client. Nothing was sent.");
+    }
     body = { ...parsed, expected_tenant_id: parsed.expected_tenant_id.toLowerCase() } as typeof body;
   } catch { return refused(400, "MAILBOX_COMMAND_INVALID"); }
 
@@ -102,17 +111,20 @@ Deno.serve(async req => {
   // Unsubscribe targets come ONLY from the message's own recorded header.
   const recorded = object(object(messageRow.meta)?.list_unsubscribe);
   const httpsTarget = unsubscribeHttpsTarget(typeof recorded?.https === "string" ? recorded.https : null);
-  if ((command.kind === "unsubscribe_propose" || command.kind === "unsubscribe_send") && !httpsTarget) {
+  if (command.kind === "unsubscribe_propose" && !httpsTarget) {
     return refused(422, "UNSUBSCRIBE_TARGET_ABSENT", "This message did not carry a usable one-click unsubscribe target, so there is nothing safe to send.");
   }
 
   const requestArgs: Record<string, unknown> = { expected_tenant_id: tenantId, command, message_subject: messageRow.subject ?? "(no subject)", mailbox_address: connector.inbound_address };
   const summary = `Gmail ${KIND_SUMMARY[command.kind] ?? command.kind}${command.kind === "label" || command.kind === "unlabel" ? ` "${command.label}"` : ""} on "${(messageRow.subject ?? "(no subject)").slice(0, 80)}"`;
+  // Owner addendum 6088460092: reversibility is TRUTHFUL per kind — the unsubscribe
+  // kinds are never presented as reversible (a delivered one-click request has no
+  // inverse; a proposal's dismissal is not an undo command).
   const preview = {
     kind: "mailbox_organize", mailbox: connector.inbound_address, message_subject: (messageRow.subject ?? "(no subject)").slice(0, 120),
     action: KIND_SUMMARY[command.kind] ?? command.kind, ...(command.kind === "label" || command.kind === "unlabel" ? { label: command.label } : {}),
     ...(httpsTarget && command.kind.startsWith("unsubscribe") ? { unsubscribe_target_host: new URL(httpsTarget).host } : {}),
-    reversible: true,
+    reversible: organizeIsReversible(command.kind),
   };
 
   // The canonical gate + the atomic single-use redemption of one server-issued proposal.
@@ -218,10 +230,11 @@ Deno.serve(async req => {
       providerCall = { status: res.status, body: await res.json().catch(() => null) };
     } else if (command.kind === "unsubscribe_propose") {
       providerCall = { status: 200, body: { proposed: true } }; // no provider write: the proposal is the record
-    } else if (command.kind === "unsubscribe_send") {
-      const res = await fetch(httpsTarget!, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "List-Unsubscribe": "One-Click" }, body: "List-Unsubscribe=One-Click" });
-      providerCall = { status: res.status, body: await res.text().then(() => null).catch(() => null) };
     }
+    // unsubscribe_send is DELIBERATELY ABSENT: automatic one-click execution is
+    // DISABLED (owner addendum 6088460092). The refusal below is the only truthful
+    // answer, and it runs BEFORE any provider round: no external fetch of an
+    // email-supplied URL exists anywhere in this door.
   } catch {
     providerCall = null;
   }
@@ -251,16 +264,17 @@ Deno.serve(async req => {
     detail: { kind: command.kind, message_id: command.message_id, ...(command.kind === "label" || command.kind === "unlabel" ? { label: command.label } : {}), approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting" },
   });
 
-  const undo: Record<string, string> = { archive: "unarchive", unarchive: "archive", trash: "untrash", untrash: "trash", label: "unlabel", unlabel: "label", unsubscribe_propose: "unsubscribe_send" };
+  const undo: Record<string, string> = { archive: "unarchive", unarchive: "archive", trash: "untrash", untrash: "trash", label: "unlabel", unlabel: "label" };
   return response(200, {
     ok: true, outcome: "applied", capability: COMMS_MAILBOX_ORGANIZE_TOOL,
     kind: command.kind, message_id: command.message_id,
     ...(command.kind === "label" || command.kind === "unlabel" ? { label: command.label } : {}),
     undo_kind: undo[command.kind] ?? null,
-    ...(command.kind === "unsubscribe_send" ? { unsubscribed: true } : {}),
     ...(command.kind === "unsubscribe_propose" && httpsTarget ? { unsubscribe_target_host: new URL(httpsTarget).host } : {}),
     note: command.kind === "trash"
       ? "Moved to Gmail's Trash, where it stays recoverable for 30 days. Never called a deletion."
-      : "Applied exactly as approved.",
+      : command.kind === "unsubscribe_propose"
+        ? "The unsubscribe target is recorded and shown to the person; the one-click request itself is sent by the person from their own mail client, never by Paige."
+        : "Applied exactly as approved.",
   });
 });

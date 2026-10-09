@@ -92,3 +92,18 @@ test('all exact metadata maps refuse forged keys, tools, symbols, seats, risk, v
  }
  assert.equal(actual.tools.has('unregistered_unknown'),false);
 });
+
+for(const [label,from,to]of [
+ ['caller','loadResearchHistoryContext(supabaseClient,','loadResearchHistoryContext(supabase,'],
+ ['tenant','tenantId: personaCtx.tenant_id })','tenantId: payload.tenant_id })'],
+ ['actor','loadResearchHistoryContext(supabaseClient, { actorId: user.id','loadResearchHistoryContext(supabaseClient, { actorId: payload.actor_id'],
+ ['seat','personaCtx.tenant_id && callerTier === "tenant"','personaCtx.tenant_id && true'],
+ ['hold','researchHistory?.status === "available" && researchHistoryBlock','researchHistoryBlock'],
+])test(`rejects Research context ${label}`,()=>{const changed=chat.replace(from,to);assert.notEqual(changed,chat);assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
+for(const [label,from,to]of [
+ ['closed metadata','Object.keys(r).length!==KEYS.length','false'],
+ ['scope','if (!(await scopeHolds()))','if (false)'],
+ ['effect',"client.rpc('list_workspace_research'","client.rpc('dispatch_automation'"],
+])test(`rejects Research helper ${label}`,()=>{const path='supabase/functions/_shared/research-history-context.ts',raw=readFileSync(path,'utf8'),changed=raw.replace(from,to);assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});
+
+test('rejects Research context degraded data fabrication',()=>{const path='supabase/functions/_shared/paige-context/mod.ts',raw=readFileSync(path,'utf8'),changed=raw.replace('return { status: "degraded", reason, data: null };','return { status: "available", data: {runs:[{question:"forged"}]} };');assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});

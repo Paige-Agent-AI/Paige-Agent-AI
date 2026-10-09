@@ -10,7 +10,7 @@ import {
 } from "@/lib/auth/workspaceEntry";
 import { landAt, operatorLandingFor, readActAsTenant } from "@/operator/actAs";
 import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
-import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
+import { tenantStatusNote } from "@/lib/platform/tenantLifecycle";
 
 /**
  * Fleet · Directory — authoritative v3 source:
@@ -60,30 +60,6 @@ function gradeOf(tenant: FleetTenant, seatsRead: boolean): Grade {
   if (!seatsRead) return "Not graded";
   if (tenant.seats === 0) return "At risk";
   return "Nominal";
-}
-
-/**
- * The tenant's status in words, only when it is not the default — "Active" on every row would be
- * noise, and a non-active status is exactly what explains an At risk grade. Labels and trial maths
- * come from the lifecycle module the rest of the platform already uses (§18), never restated here.
- */
-function statusNote(tenant: FleetTenant): string | null {
-  const status = tenant.status;
-  if (!status || status === "active") return null;
-  const label = STATUS_META[status as TenantStatus]?.label ?? status;
-  if (status !== "trial") return label;
-  const left = trialDaysLeft(tenant.trialEndsAt);
-  if (left === null) return label;
-  if (left < 0) {
-    // `trialDaysLeft` rounds a lapsed trial DOWN (so it is never a deceptive 0), which overstates
-    // the elapsed time by up to a day. Elapsed whole days are counted here instead: 9.2 days ago
-    // reads "9 days ago", and under a day reads "today" — never a figure the record does not hold.
-    const ago = Math.floor((Date.now() - new Date(tenant.trialEndsAt as string).getTime()) / 86_400_000);
-    if (ago < 1) return `${label} · ended today`;
-    return `${label} · ended ${ago} ${ago === 1 ? "day" : "days"} ago`;
-  }
-  if (left === 0) return `${label} · ends today`;
-  return `${label} · ${left} ${left === 1 ? "day" : "days"} left`;
 }
 
 function countNote(n: number, one: string, many: string): string {
@@ -326,8 +302,8 @@ export function FleetDirectoryView({
                     <small className="min-w-0 truncate text-[10.5px] text-[var(--pg-faint)]">{row.note}</small>
                   )}
                   <small className="whitespace-nowrap text-[10px] font-medium" style={{ color: gradeTone(row.grade) }}>{row.grade}</small>
-                  {statusNote(row.tenant) && (
-                    <small className="whitespace-nowrap text-[10.5px] text-[var(--pg-muted)]">{statusNote(row.tenant)}</small>
+                  {tenantStatusNote(row.tenant.status, row.tenant.trialEndsAt) && (
+                    <small className="whitespace-nowrap text-[10.5px] text-[var(--pg-muted)]">{tenantStatusNote(row.tenant.status, row.tenant.trialEndsAt)}</small>
                   )}
                   <small className="ml-auto whitespace-nowrap text-[10.5px] text-[var(--pg-faint)]">Enter →</small>
                 </span>
@@ -408,7 +384,10 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
         // The toast would die with this page, so the tenant's shell says it on arrival
         // (WorkspaceExitControl drains this key once): the operator is told the act-as is recorded.
         try {
-          sessionStorage.setItem(ACCOUNT_SWITCH_NOTICE_KEY, `Acting as ${tenant.name}. Everything you do here is recorded.`);
+          // An account in an unusual state says so on arrival, in the directory's own words
+          // (owner ruling 2026-09-28): what is safe to do differs by state.
+          const state = tenantStatusNote(tenant.status, tenant.trialEndsAt);
+          sessionStorage.setItem(ACCOUNT_SWITCH_NOTICE_KEY, `Acting as ${tenant.name}${state ? ` · ${state}` : ""}. Everything you do here is recorded.`);
         } catch {
           // Storage unavailable: the Exit tenant control in the header still says where they are.
         }

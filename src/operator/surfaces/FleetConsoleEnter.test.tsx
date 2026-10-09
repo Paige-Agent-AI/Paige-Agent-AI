@@ -257,4 +257,17 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
       "Acting as Solo Co. Everything you do here is recorded.",
     );
   });
+
+  // Owner ruling 2026-09-28: an operator may enter an account in any state, and the arrival says
+  // which, in the Fleet directory's own words.
+  it("names a canceled account's state on arrival", async () => {
+    h.fleet = [row({ id: "solo", name: "Solo Co", status: "canceled" })];
+    sessionStorage.clear();
+    const enter = await render();
+    await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(h.enter).toHaveBeenCalledWith("solo");
+    expect(sessionStorage.getItem("paige.accountSwitch.notice")).toBe(
+      "Acting as Solo Co · Canceled. Everything you do here is recorded.",
+    );
+  });
 });

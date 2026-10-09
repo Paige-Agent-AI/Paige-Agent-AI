@@ -217,3 +217,27 @@ export async function expireTrial(tenantId: string): Promise<void> {
   await writeTenant(tenantId, { trial_ends_at: past });
   await logTenantAction("tenant.trial_expire", tenantId, { trial_ends_at: past });
 }
+
+/**
+ * A tenant's status in words, only when it is not the default — "Active" on every row would be
+ * noise, and a non-active status is exactly what explains an At risk grade. Labels and trial maths
+ * live here, in the lifecycle module (§18): the Fleet directory, the act-as arrival notice and the
+ * operator's in-shell state label all read this one function, so they can never disagree.
+ */
+export function tenantStatusNote(status: string | null | undefined, trialEndsAt?: string | null): string | null {
+  if (!status || status === "active") return null;
+  const label = STATUS_META[status as TenantStatus]?.label ?? status;
+  if (status !== "trial") return label;
+  const left = trialDaysLeft(trialEndsAt);
+  if (left === null) return label;
+  if (left < 0) {
+    // `trialDaysLeft` rounds a lapsed trial DOWN (so it is never a deceptive 0), which overstates
+    // the elapsed time by up to a day. Elapsed whole days are counted here instead: 9.2 days ago
+    // reads "9 days ago", and under a day reads "today" — never a figure the record does not hold.
+    const ago = Math.floor((Date.now() - new Date(trialEndsAt as string).getTime()) / 86_400_000);
+    if (ago < 1) return `${label} · ended today`;
+    return `${label} · ended ${ago} ${ago === 1 ? "day" : "days"} ago`;
+  }
+  if (left === 0) return `${label} · ends today`;
+  return `${label} · ${left} ${left === 1 ? "day" : "days"} left`;
+}

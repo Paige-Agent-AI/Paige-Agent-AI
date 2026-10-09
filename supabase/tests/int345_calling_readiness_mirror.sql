@@ -85,7 +85,8 @@ INSERT INTO public.user_roles (user_id, role) VALUES
   ('c1000000-0000-0000-0000-000000004001', 'admin'),
   ('c1000000-0000-0000-0000-000000005001', 'admin'),
   ('c1000000-0000-0000-0000-000000006001', 'admin'),
-  ('c1000000-0000-0000-0000-000000007001', 'admin');
+  ('c1000000-0000-0000-0000-000000007001', 'admin')
+ON CONFLICT (user_id, role) DO NOTHING; -- the signup trigger may have seeded a role already
 
 -- Bystander subaccount (gives the WrongSub fixture a DIFFERENT subaccount to point at).
 INSERT INTO public.tenant_twilio_subaccounts

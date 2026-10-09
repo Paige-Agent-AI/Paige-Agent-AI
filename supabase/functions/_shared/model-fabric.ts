@@ -17,8 +17,8 @@
 // a budget stop. A provider being chosen grants nothing: tools, approvals and authority are decided
 // downstream, unchanged.
 //
-// OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, staged by the cohort
-// gate (validation cohort first) and class-scoped (operational only until each class validates).
+// OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, admission is
+// production-wide under the class scope (operational; the env stages or kills).
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
@@ -30,8 +30,8 @@ import { classifyProviderFailure, PROVIDER_FAILURE_CLASSES, type ProviderFailure
 import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, type RouteCandidate } from "./paige-turn/route.ts";
 
 /**
- * The owner-directed primary switch (ON since the 2026-10-08 directive; the historical temporary
- * OFF state and its release bar are preserved in docs/model-routing/int-334/EVIDENCE.md).
+ * The owner-directed primary switch (ON since the 2026-10-08 directive; the validation staging and
+ * the historical temporary OFF state are preserved in docs/model-routing/int-334/EVIDENCE.md).
  */
 // OWNER DIRECTIVE (2026-10-08): OpenAI is PAIGE's preferred PRIMARY provider — Luna first for
 // cheap, Sol first for operational, Astra first for frontier; Anthropic Sonnet 5.5 the

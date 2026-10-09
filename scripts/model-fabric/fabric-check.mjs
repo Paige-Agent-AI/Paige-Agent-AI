@@ -768,9 +768,9 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   ok(opCompletion.ok && opCompletion.route.served?.provider === "openai" && opCompletion.route.served?.model === "gpt-6.1-sol",
     "G3 the completion seam serves Sol first for any tenant's operational job");
 
-  ENV.OPENAI_CANARY_TENANTS = OTHER_TENANT;
+  ENV.OPENAI_CANARY_TENANTS = OTHER_TENANT.toUpperCase();
   ok(fabric.openAiCanaryTenants() !== null && admits(ANY_TENANT, "operational") === false && admits(OTHER_TENANT, "operational") === true,
-    "G4 a set env cohort RESTRICTS to it (staged rollout)");
+    "G4 a set env cohort RESTRICTS to it, case-insensitively (staged rollout)");
   ENV.OPENAI_CANARY_TENANTS = "";
   ok(fabric.openAiCanaryTenants() !== null && fabric.openAiCanaryTenants().length === 0 && admits(ANY_TENANT, "operational") === false,
     "G4 an explicitly EMPTY cohort admits NOBODY — the kill switch, effective on the next call (no deploy)");

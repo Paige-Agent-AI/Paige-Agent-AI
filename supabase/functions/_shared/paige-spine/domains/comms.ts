@@ -148,7 +148,11 @@ export const COMMS_SETUP_CALLING_CAPABILITY = defineCapability({
   availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "unavailable"] },
   providerBinding: { kind: "internal", operation: "edge.comms-setup-calling", connectionResolver: null },
   idempotency: { mode: "required", key: "Server actor + tenant; the provisioning core is idempotent per step (existing row → skip; 23505 → skip; Vault upsert by name; TwiML ensure idempotent). skipped_existing performs no act.", readback: "public.tenant_comms_readiness() -> calling", replay: "reconcile_then_return" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
 
+/**
  * #1140 two-mailbox pilot — the separately-authorized CONTENT read. comms.messages_read
  * stays envelope-only by construction; bodies flow only through this capability's
  * executor (public.read_message_content), which enforces the mailbox policy in SQL:
@@ -160,6 +164,7 @@ export const COMMS_MESSAGE_CONTENT_READ = {
   domain: "comms",
   owner: "comms",
   humanSurface: "/solo/:account/clients/conversations",
+  readiness: "none",
   evidence: {
     signalKinds: ["comms.message_content"],
     adapter: "public.read_message_content",
@@ -185,7 +190,7 @@ export const COMMS_MESSAGE_CONTENT_READ = {
     idempotency: "read-only projection; no rows are written",
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
-    chatTool: "message_read",
+    chatTool: "read_message_content",
   },
   outcome: {
     kinds: ["current"],
@@ -201,37 +206,6 @@ export const COMMS_MESSAGE_CONTENT_READ = {
 } as const satisfies SpineCapability;
 
 /**
- * #1140 — canonical labels on the unified inbox (#1140's label system). A workspace
- * mutation, not an external effect: it writes message_labels only, it is reversible
- * (remove_message_label is the exact inverse), and the personal-mailbox predicate
- * applies server-side. Owner-sourced labels beat auto labels — the spam-misclassification
- * recovery path is a person correcting a label, and the auto writer may never overwrite it.
- */
-export const COMMS_MESSAGE_LABEL = {
-  key: "comms.message_label",
-  domain: "comms",
-  owner: "comms",
-  humanSurface: "/solo/:account/clients/conversations",
-  action: {
-    classification: "mutate",
-    executor: "public.apply_message_label",
-    chatTool: "inbox_label",
-    idempotency: "unique (message_id, label); re-applying the same label is a no-op; an owner/paige application replaces an auto row, never the reverse",
-    riskPolicyKey: "ordinary",
-    approvalAuthority: "none",
-  },
-  outcome: {
-    kinds: ["applied", "removed", "refused"],
-    projector: "public.read_message_content",
-    railVisibility: "owner_internal",
-  },
-  chatBinding: "PARTIAL",
-  mindBinding: "UNAVAILABLE",
-  sharedPrimitiveChange: "NONE",
-  maturity: "PARTIAL",
-} as const satisfies SpineCapability;
-
-/**
  * #1140 — the shared-support mailbox's case list: open cases, their classification
  * tier, and pending follow-ups. Read-only, tenant-scoped, shared_support connectors
  * only (the engine never opens cases on personal mailboxes).
@@ -241,6 +215,7 @@ export const COMMS_SUPPORT_CASES_READ = {
   domain: "comms",
   owner: "comms",
   humanSurface: "/solo/:account/clients/conversations",
+  readiness: "none",
   evidence: {
     signalKinds: ["comms.support_case"],
     adapter: "public.list_support_cases",
@@ -261,11 +236,11 @@ export const COMMS_SUPPORT_CASES_READ = {
   },
   action: {
     classification: "read",
-    executor: "public.list_support_cases",
+    executor: "public.read_support_cases",
     idempotency: "read-only projection; no rows are written",
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
-    chatTool: "support_cases",
+    chatTool: "read_support_cases",
   },
   outcome: {
     kinds: ["current"],
@@ -307,7 +282,7 @@ export const COMMS_MAILBOX_ORGANIZE = {
     projector: "public.read_message_content",
     railVisibility: "owner_internal",
   },
-  chatBinding: "PARTIAL",
+  chatBinding: "LIVE",
   mindBinding: "UNAVAILABLE",
   sharedPrimitiveChange: "NONE",
   maturity: "PARTIAL",
@@ -334,6 +309,41 @@ export const COMMS_MAILBOX_ORGANIZE_CAPABILITY = defineCapability({
   availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "not_for_tier", "unavailable"] },
   providerBinding: { kind: "internal", operation: "public.record_mailbox_organize", connectionResolver: null },
   idempotency: { mode: "required", key: "Server actor + tenant + message + kind + label. Provider modify/trash calls are idempotent state transitions; an unknown provider result is reported, never blindly retried as a new approval.", readback: "public.read_message_content", replay: "return_recorded_result" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+
+
+/**
+ * The read Kit declarations the capability-kit lint's read construction clears:
+ * effect read + actionRiskKey null + read_only + none + a public.read_* executor whose
+ * name pins the tool, with the tool schema bound to THIS declaration's .input.
+ */
+export const COMMS_MESSAGE_CONTENT_READ_KIT = defineCapability({
+  identity: { id: "comms.message_content_read", version: 1, domain: "comms", owner: "comms", humanSurface: "/solo/:account/clients/conversations", description: "Read one inbox message's envelope, bounded plain-text body, canonical labels and classification, after the mailbox policy admits the caller." },
+  input: objectInputSchema({ properties: {
+    message_id: { type: "string", format: "uuid", description: "The message id from inbox_list or a support case." },
+  }, required: ["message_id"] }),
+  effect: "read", governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("comms.message_content_read.execute") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user", revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "not_for_tier", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "public.read_message_content", connectionResolver: null },
+  idempotency: { mode: "not_applicable" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+
+export const COMMS_SUPPORT_CASES_READ_KIT = defineCapability({
+  identity: { id: "comms.support_cases_read", version: 1, domain: "comms", owner: "comms", humanSurface: "/solo/:account/clients/conversations", description: "List the shared-support mailbox's cases — status, risk tier, last activity, pending follow-ups." },
+  input: objectInputSchema({ properties: {
+    status: { type: "string", enum: ["open", "awaiting_owner", "drafted", "sent", "awaiting_customer", "resolved", "closed"], description: "Filter to one status." },
+    followups_only: { type: "boolean", description: "True to list only cases with a pending follow-up." },
+  }, required: [] }),
+  effect: "read", governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("comms.support_cases_read.execute") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user", revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "not_for_tier", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "public.read_support_cases", connectionResolver: null },
+  idempotency: { mode: "not_applicable" },
   receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
   outcome: { projector: "capability-record" },
 });

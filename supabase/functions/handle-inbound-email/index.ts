@@ -390,6 +390,18 @@ Deno.serve(async (req) => {
   }
   const messageId = inserted!.id as string;
 
+  // -- 5b. The ONE shared inbound-intelligence engine (#1140 two-mailbox pilot). ----------
+  // Both inbound paths (Resend here, the Gmail sync for a shared connector) call the same
+  // service RPC: shared_support connectors get case upsert + follow-up cancellation; personal
+  // connectors are refused-by-construction inside it (no cases ever open on a private mailbox).
+  // Best-effort and NON-BLOCKING: a failure here must never drop or delay the inbound row that
+  // already landed — the next sync tick re-runs the classification side of the engine.
+  try {
+    await admin.rpc("record_inbound_message_intelligence", { _message_id: messageId });
+  } catch (intelErr) {
+    console.warn("[handle-inbound-email] intelligence_engine_deferred", (intelErr as Error)?.message);
+  }
+
   // -- 6. File the comms-draft-reply action (§8 action bus). ----------------------
   // tenant_id is set EXPLICITLY here — paige_actions has NO tenant-deriving trigger
   // and its column is NOT NULL. Client Experience files -> Owner Ops drafts ->

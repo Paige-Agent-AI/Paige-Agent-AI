@@ -564,7 +564,7 @@ grant execute on function public.remove_message_label(uuid, text) to authenticat
 -- -----------------------------------------------------------------------------
 -- 10. Support case reads + follow-up verbs (tenant staff)
 -- -----------------------------------------------------------------------------
-create or replace function public.list_support_cases(
+create or replace function public.read_support_cases(
   p_status text default null,
   p_include_followups boolean default false
 )
@@ -607,8 +607,8 @@ as $$
   ) s;
 $$;
 
-revoke all on function public.list_support_cases(text, boolean) from public, anon;
-grant execute on function public.list_support_cases(text, boolean) to authenticated;
+revoke all on function public.read_support_cases(text, boolean) from public, anon;
+grant execute on function public.read_support_cases(text, boolean) to authenticated;
 
 create or replace function public.cancel_support_followup(
   p_case_id uuid,

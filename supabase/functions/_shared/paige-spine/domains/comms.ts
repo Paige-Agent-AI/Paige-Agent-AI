@@ -125,3 +125,29 @@ export const COMMS_EMAIL_SEND_CAPABILITY = defineCapability({
   receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
   outcome: { projector: "capability-record" },
 });
+
+/**
+ * INT-345 K-3 — the governed calling-setup act's Capability Kit declaration.
+ * The chat door binds the action-risk key comms_setup_calling (high → confirm) to
+ * this declaration; it is not a second dispatcher. The executor is the dedicated
+ * seam edge, tenant/actor server-derived (§59), and the effect is the one-time,
+ * free, idempotent connection of the workspace's calling account — never a number
+ * purchase or a primary selection.
+ */
+export const COMMS_SETUP_CALLING_CAPABILITY = defineCapability({
+  identity: { id: "comms.setup_calling", version: 1, domain: "comms", owner: "comms", humanSurface: "/solo/:account/settings/registration", description: "Connect this workspace's calling account (one-time, free, idempotent). Buys no number and selects no primary; calling is READY only after the owner's Send-from-this choice." },
+  input: objectInputSchema({
+    properties: {
+      dry_run: { type: "boolean" },
+    },
+    required: [],
+  }),
+  effect: "external_effect",
+  governance: { actionRiskKey: "comms_setup_calling", risk: "high", approval: "confirm", requiredPermission: ownerGrantablePermission("comms.setup_calling.execute") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user", revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "edge.comms-setup-calling", connectionResolver: null },
+  idempotency: { mode: "required", key: "Server actor + tenant; the provisioning core is idempotent per step (existing row → skip; 23505 → skip; Vault upsert by name; TwiML ensure idempotent). skipped_existing performs no act.", readback: "public.tenant_comms_readiness() -> calling", replay: "reconcile_then_return" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});

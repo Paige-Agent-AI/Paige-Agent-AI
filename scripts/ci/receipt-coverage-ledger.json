@@ -1114,6 +1114,12 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "tenant-stripe-connect/index.ts records the exact admitted portal-link act through canonical recordCapabilityRun before releasing the hosted URL, with tenant/actor/operation identity and closed result facts. merchant-endpoint.test.ts proves single-use approval and unrecorded failure behavior; canonical fresh merchant readback persists through the existing Rail RPC."
+    },
+    {
+      "tool": "comms_setup_calling",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat recordCommsRun -> classifyCommsRun -> record_capability_run (the comms truth table: provisioned/adopted recorded; skipped_existing is a no-act and records nothing)"
     }
   ]
 }

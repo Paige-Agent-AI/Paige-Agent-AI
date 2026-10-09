@@ -45,3 +45,13 @@ Every step is resumable; no slice can leave a state a re-run cannot classify. Th
 ## 6. What is deliberately out of scope
 
 Number purchases (opt-in paid), primary selection (user's "Send from this"), inbound VoiceUrl stamping (Voice-lane owner-gated item 8), A2P/TrustHub (its own lane), and any change to the READY contract itself.
+
+---
+
+## PROCEDURE ADDENDUM (post-authorization, 2026-10-08)
+
+Authorized: the exact ten-workspace standalone census ONLY (revalidated 2026-10-08 read-only: 10 subaccount-less standalones, unchanged; the unprovisioned agency/sub_account rows are OUTSIDE scope and untouched).
+
+Tooling shipped with K-3: `twilio-inspect-subaccounts` (super-admin gated, READ-ONLY) — provider-side inventory cross-checked against DB rows; unmatched = orphan candidates for ADOPTION before any creation. This is the "independently inspect Twilio's actual existing subaccounts" step as a first-class operation.
+
+Execution mechanics (for the procedure review): the privileged operator runs `provision-tenant-twilio` (super-admin JWT) with `dry_run:true` + the explicit `tenant_ids` allowlist, then live batches of ≤3 with the readback below after each batch. Expected spend $0; any charge or identity uncertainty stops that operation specifically. Readback per tenant: row exists (status/active/api_key_sid/vault-ref-by-name/twiml_app_sid or pending), `twilio-inspect-subaccounts` shows the binding matched, and the caller-visible flip: `tenant_comms_readiness().calling` from `calling_not_configured` → `calling_number_needs_verification` with reason `no_active_primary_number` (the honest "buy + Send from this next" state). Numbers are NEVER purchased or selected by the reconciliation.

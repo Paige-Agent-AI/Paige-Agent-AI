@@ -86,6 +86,15 @@ interface TenantSubaccountRow {
 // Core request primitive
 // -----------------------------------------------------------------------------
 
+
+// Deno-in-vitest guard (house pattern): edge runtime reads env through Deno.env; a
+// vitest/app-tsc import of this module resolves the same reads to undefined instead
+// of failing to typecheck. Behavior in the edge runtime is byte-identical.
+const denoEnv = (globalThis as unknown as { Deno?: { env?: { get?: (k: string) => string | undefined } } })
+  .Deno?.env?.get
+  ?.bind((globalThis as unknown as { Deno: { env: { get: (k: string) => string | undefined } } }).Deno.env)
+  ?? ((): string | undefined => undefined);
+
 const TWILIO_API_HOST = "https://api.twilio.com";
 const MAX_ERROR_BODY = 400; // cap echoed error bodies (belt-and-suspenders on secrets)
 
@@ -272,16 +281,16 @@ export async function twilioJsonRequest<T = Record<string, unknown>>(
  * change is safe across environments. Prod uses the API Key path.
  */
 export function masterCreds(): TwilioCreds | null {
-  const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+  const accountSid = denoEnv("TWILIO_ACCOUNT_SID") ?? "";
   if (!accountSid) return null;
-  const apiKeySid = Deno.env.get("TWILIO_API_KEY_SID") ?? "";
-  const apiKeySecret = Deno.env.get("TWILIO_API_KEY_SECRET") ?? "";
+  const apiKeySid = denoEnv("TWILIO_API_KEY_SID") ?? "";
+  const apiKeySecret = denoEnv("TWILIO_API_KEY_SECRET") ?? "";
   if (apiKeySid && apiKeySecret) {
     // Preferred: API Key auth. username = SK…, password = secret, path account = AC….
     return { accountSid, authToken: apiKeySecret, apiKeySid };
   }
   // Legacy fallback: master Auth Token (username = account SID). Prod does NOT carry this.
-  const legacyToken = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+  const legacyToken = denoEnv("TWILIO_AUTH_TOKEN") ?? "";
   if (legacyToken) return { accountSid, authToken: legacyToken };
   return null;
 }
@@ -406,6 +415,27 @@ export async function resolveTwilioCreds(
  * depend on it. Instead it mints a subaccount-scoped API Key via createSubaccountApiKey()
  * and vaults THAT secret. Returns needs_config when master creds are unset.
  */
+/**
+ * INT-345 K-4 — READ-ONLY subaccount inventory under the master account (the
+ * orphan-inspection step of the authorized reconciliation: which subaccounts
+ * exist at Twilio, and which of them have no DB row). GET only; no writes, no
+ * secrets. Returns needs_config when master creds are unset.
+ */
+export async function listSubaccounts(): Promise<TwilioResult> {
+  const master = masterCreds();
+  if (!master) {
+    return { ok: false, status: 0, error: "twilio_master_not_configured", data: null, needs_config: true };
+  }
+  return await twilioRequest(
+    master.accountSid,
+    master.authToken,
+    "/2010-04-01/Accounts.json?PageSize=400",
+    "GET",
+    undefined,
+    master.apiKeySid,
+  );
+}
+
 export async function createSubaccount(friendlyName: string): Promise<TwilioResult> {
   const master = masterCreds();
   if (!master) {
@@ -723,11 +753,11 @@ function clampVoiceTtl(requested?: number): number {
  * re-point every app. Overridable via VOICE_TWIML_URL for non-default deployments.
  */
 export function voiceTwimlUrl(secret?: string | null): string | null {
-  const explicit = Deno.env.get("VOICE_TWIML_URL");
+  const explicit = denoEnv("VOICE_TWIML_URL");
   const baseUrl = explicit && explicit.length > 0
     ? explicit
     : (() => {
-      const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+      const base = (denoEnv("SUPABASE_URL") ?? "").replace(/\/$/, "");
       return base ? `${base}/functions/v1/voice-twiml` : null;
     })();
   if (!baseUrl) return null;
@@ -1142,7 +1172,7 @@ export async function mintOperatorVoiceAccessToken(
 
   // The MASTER-account TwiML Application the outgoing VoiceGrant references. Env-provided (there is
   // no master subaccount row to persist a minted app on). needs_config when unset (§13 — owed secret).
-  const applicationSid = Deno.env.get("TWILIO_OPERATOR_TWIML_APP_SID") ?? "";
+  const applicationSid = denoEnv("TWILIO_OPERATOR_TWIML_APP_SID") ?? "";
   if (!applicationSid) {
     return { ok: false, status: 0, error: "operator_twiml_app_not_configured", data: null, needs_config: true };
   }

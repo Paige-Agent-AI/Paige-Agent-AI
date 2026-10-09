@@ -56,6 +56,7 @@ export const OWNER_OPS_BRANCH_TOOLS: ReadonlySet<string> = new Set([
   "crm_search_contacts", "crm_get_contact_summary", "crm_list_deals", "crm_list_tasks", "crm_pipeline_summary",
   "comms_connection_summary", "comms_list_numbers", "comms_search_numbers", "comms_buy_number", "comms_name_number",
   "comms_set_primary_number", "comms_registration_status", "comms_draft_registration",
+  "comms_setup_calling",
 ]);
 
 /**

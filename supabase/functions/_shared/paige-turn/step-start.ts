@@ -30,6 +30,7 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   comms_list_numbers: "Checking your business numbers",
   comms_search_numbers: "Searching available numbers",
   comms_buy_number: "Buying that number",
+  comms_setup_calling: "Connecting this workspace's calling account",
   comms_name_number: "Renaming a number",
   comms_set_primary_number: "Changing which number you send from",
   comms_registration_status: "Checking your carrier registration",

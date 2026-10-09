@@ -56,3 +56,15 @@ Every failure names the step and the next action; no state collapses to "contact
 - **S3 (agent):** PAIGE tool surface for the same action, default `confirm` (Trust Compass knob fronts the real classified action).
 - **S4 ( Systems Check):** the "Business phone and SMS" row learns `calling_account: connected` as a distinct step from `number: assigned` (today it conflates them).
 - **Provider execution stays OFF until the owner authorizes the live leg** (K-4 authorization covers the same core).
+
+---
+
+## SHIPPED STATE (K-3 implementation, 2026-10-08)
+
+The design above is implemented on branch int345-k3 with the owner's four decisions applied:
+- **Visibility:** Settings → Registration → CallingSetupCard (owner/admin button; member read-only).
+- **Conversational:** `comms_setup_calling` — governed high-risk action (rendered approval card, autonomy clamped at confirm), same seam, same authority, Rail receipt.
+- **Pricing:** setup is free (no charge path exists in the seam); purchases keep their existing price-confirm flow untouched.
+- **Rollout:** one shared surface for every Solo workspace; no flags, no forks.
+
+Implementation deltas from the design: the governed adapter is the edge `comms-setup-calling` (not an RPC) mirroring comms-purchase-number's authority pattern; the readback rides `tenant_comms_readiness()`'s new `calling` block (the four facts + classifier reason codes, pgTAP-pinned); the core lives in `_shared/twilio-provision.ts` and the backfill is its thin caller. PAIGE's "why can't we call" answer ships in `comms_connection_summary` (the same record). Systems Check splits account/number/voice in evidence + interpretation.

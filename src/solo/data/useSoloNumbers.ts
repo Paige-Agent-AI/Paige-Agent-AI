@@ -105,6 +105,28 @@ export interface SoloNumbersData {
   rename: (id: string, friendlyName: string) => Promise<{ ok: boolean; error: string | null }>;
   /** Chooses which number this business calls and texts FROM. */
   setPrimary: (id: string) => Promise<{ ok: boolean; error: string | null }>;
+  /**
+   * INT-345 K-3: connects this workspace's calling account through the governed
+   * seam (comms-setup-calling). Free, idempotent, and it buys/chooses NO number —
+   * the four facts stay four facts. Never called except from a person's click.
+   */
+  setupCalling: () => Promise<SetupCallingOutcome>;
+}
+
+/** The governed setup seam's answer — the exact outcome plus the canonical calling readback. */
+export interface SetupCallingOutcome {
+  ok: boolean;
+  /** provisioned | adopted | skipped_existing | failed | blocked_needs_config */
+  outcome: string;
+  message: string | null;
+  /** The four calling facts from tenant_comms_readiness, when the seam re-read them. */
+  calling: {
+    ready: boolean;
+    account: string;
+    number_assigned: boolean;
+    primary_selected: boolean;
+    reason_code: string | null;
+  } | null;
 }
 
 function asRecord(v: unknown): Record<string, unknown> {
@@ -364,6 +386,36 @@ export function useSoloNumbers(): SoloNumbersData {
     [runNumberRpc],
   );
 
+  const setupCalling = useCallback(async (): Promise<SetupCallingOutcome> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("comms-setup-calling", { body: {} });
+      if (error) {
+        // Non-2xx (a real failure). The invoke error carries no body we can trust.
+        return { ok: false, outcome: "failed", message: "Calling setup couldn't reach the platform. Try again in a moment.", calling: null };
+      }
+      const rec = (data ?? {}) as Record<string, unknown>;
+      const outcome = typeof rec.outcome === "string" ? rec.outcome : "failed";
+      const ok = outcome === "provisioned" || outcome === "adopted" || outcome === "skipped_existing";
+      const callingRec = (rec.calling && typeof rec.calling === "object") ? rec.calling as Record<string, unknown> : null;
+      return {
+        ok,
+        outcome,
+        message: typeof rec.message === "string" ? rec.message : null,
+        calling: callingRec
+          ? {
+            ready: callingRec.ready === true,
+            account: String(callingRec.account ?? "absent"),
+            number_assigned: callingRec.number_assigned === true,
+            primary_selected: callingRec.primary_selected === true,
+            reason_code: typeof callingRec.reason_code === "string" ? callingRec.reason_code : null,
+          }
+          : null,
+      };
+    } catch {
+      return { ok: false, outcome: "failed", message: "Calling setup couldn't reach the platform. Try again in a moment.", calling: null };
+    }
+  }, []);
+
   return useMemo(() => ({
     loading: loading || tenantLoading,
     error,
@@ -372,6 +424,6 @@ export function useSoloNumbers(): SoloNumbersData {
     // list whenever the server legitimately resolved a different one.
     owned: loadedTenantId ? owned : [],
     canManage: loadedTenantId ? canManage : false,
-    refresh, search, purchase, rename, setPrimary,
-  }), [loading, tenantLoading, loadedTenantId, error, owned, canManage, refresh, search, purchase, rename, setPrimary]);
+    refresh, search, purchase, rename, setPrimary, setupCalling,
+  }), [loading, tenantLoading, loadedTenantId, error, owned, canManage, refresh, search, purchase, rename, setPrimary, setupCalling]);
 }

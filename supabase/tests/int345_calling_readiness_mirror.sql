@@ -77,7 +77,7 @@ ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id
 -- The resolver's gate: is_platform_operator OR has_any_role(uid,[admin,coach]) — the
 -- owner seat alone does NOT satisfy it (it checks user_roles). Seed a plain admin role
 -- per scenario caller (no-JWT postgres context; claims cleared per §53 discipline).
-PERFORM set_config('request.jwt.claims', NULL, true); -- NULL, not '': the credential guard casts the setting to jsonb and '' is not valid JSON
+SELECT set_config('request.jwt.claims', NULL, true); -- NULL, not '': the credential guard casts the setting to jsonb and '' is not valid JSON
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('c1000000-0000-0000-0000-000000002001', 'admin'),
   ('c1000000-0000-0000-0000-000000001001', 'admin'),
@@ -199,7 +199,7 @@ SELECT has(public.tenant_comms_readiness(), 'can_send_sms', 'existing can_send_s
 SELECT has(public.tenant_comms_readiness(), 'subaccount', 'existing subaccount key preserved');
 SELECT has(public.tenant_comms_readiness(), 'calling', 'the new calling key present');
 SELECT performs_ok('SELECT public.tenant_comms_readiness()', 400, 'readiness stays fast (<400ms)');
-PERFORM set_config('request.jwt.claims', NULL, true); -- NULL, not '': the credential guard casts the setting to jsonb and '' is not valid JSON
+SELECT set_config('request.jwt.claims', NULL, true); -- NULL, not '': the credential guard casts the setting to jsonb and '' is not valid JSON
 
 SELECT * FROM finish();
 ROLLBACK;

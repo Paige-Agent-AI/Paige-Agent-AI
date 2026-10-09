@@ -170,6 +170,7 @@ Deno.serve(async req => {
       if (error instanceof Error && error.message === REPLAY_MISMATCH) return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_TEAMMATE_IN_FLIGHT", operation_id: body.operation_id });
     }
     const settled = await reconcile(pending);
+    await settleSupportCase(settled);
     return response(statusOf(settled), { ...settled, reconciled_operation_id: pending });
   }
 

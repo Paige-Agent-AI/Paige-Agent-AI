@@ -277,7 +277,7 @@ export const COMMS_MAILBOX_ORGANIZE = {
     chatTool: "gmail_organize",
     riskPolicyKey: "high",
     approvalAuthority: "chat-canonical",
-    seatAuthority: "workspace-admin",
+    seatAuthority: "door-seat",
     idempotency: "Applying the same organization twice is the same mailbox state (idempotent provider calls); each approved execution records the canonical mirror and its undo window under the actor + tenant + message + kind + label digest. Unsubscribe sends once per recorded target.",
   },
   outcome: {

@@ -822,6 +822,10 @@ begin
   select msg.* into msg from public.messages msg where msg.id = _message_id;
   if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
 
+  -- Recency guard: only the LATEST word settles the case. A replayed settle of an
+  -- older send must never outrank a newer customer reply (the inbound path cancels
+  -- the follow-up and reopens the case; flipping it back here would misreport who
+  -- owes the reply and suppress the one bounded follow-up).
   update public.support_cases s
      set status = 'awaiting_customer',
          last_outbound_at = msg.sent_at,
@@ -829,6 +833,7 @@ begin
          updated_at = now()
    where s.tenant_id = msg.tenant_id and s.connector_id = msg.connector_id and s.thread_key = msg.thread_key
      and msg.connector_id is not null
+     and (s.last_inbound_at is null or s.last_inbound_at <= msg.sent_at)
    returning s.id into v_case_id;
   if not found then return jsonb_build_object('ok', true, 'case_updated', false); end if;
   return jsonb_build_object('ok', true, 'case_updated', true);

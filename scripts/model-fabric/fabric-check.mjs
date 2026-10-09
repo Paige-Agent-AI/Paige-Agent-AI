@@ -582,6 +582,10 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const CLOSED_CLASS = /^(cheap|operational|frontier|deterministic)$/;
 
   // F1 — the completion seam's served rows carry the full route, both providers.
+  // (The F-series pins the ANTHROPIC leg's row shapes under the kill switch — the OpenAI leg's
+  // shapes are pinned by the C-series with the enabled seam. Under the cutover default these
+  // operational calls would serve Sol; the empty cohort forces the incumbent for these pins.)
+  ENV.OPENAI_CANARY_TENANTS = "";
   setScenario({});
   anthropicPlan = { status: 200 };
   openaiPlan = { status: 200 };
@@ -697,6 +701,8 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     && String(f6r.route_served_model).includes("haiku") && f6r.route_reason === "served_primary",
     `F6 the classifier's row carries its route automatically (${JSON.stringify(f6r)})`);
 
+  delete ENV.OPENAI_CANARY_TENANTS;
+
   // F7 — privacy: every route value is a closed code or an id; nothing free-text.
   const allRouteRows = recorder().inserts.filter((i) => i.table === "paige_llm_trace").map((i) => i.row?.metadata).filter((m) => m && "route_reason" in m);
   ok(allRouteRows.length >= 5 && allRouteRows.every((m) => CLOSED_REASON.test(m.route_reason) && CLOSED_CLASS.test(m.route_requested_class)
@@ -707,30 +713,28 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 }
 
 
-// ── G. THE COHORT GATE under the owner-directed flag (validation posture) ────────────────────────
-// The master flag is ON (2026-10-08 directive). Admission = cohort AND class scope; the DEFAULT
-// cohort (env unset) is the release-validation synthetic tenant until the cutover PR lifts it.
-// Deterministic and no-spend: the OpenAI legs run against the harness recording fake.
+// ── G. THE CUTOVER: production-wide admission, class-scoped, env-staged ─────────────────────────
+// The owner-directed flag is ON and admission is PRODUCTION-WIDE (the live validation drive passed
+// — EVIDENCE.md). The class scope stays operational only; the env is the staged control (a set list
+// restricts; an explicitly EMPTY value is the kill switch). No-spend: the OpenAI legs here run
+// against the harness recording fake.
 {
-  const VALIDATION_TENANT = "7e700000-0000-0000-0000-000000000007";
-  const OTHER_TENANT = "9a7d0000-0000-4000-8000-0000000000b2";
+  const ANY_TENANT = "9a7d0000-0000-4000-8000-0000000000b2";
+  const OTHER_TENANT = "8b5c0000-0000-4000-8000-0000000000c3";
 
   ok(fabric.OPENAI_CHAT_ENABLED === true, "G1 the owner-directed master flag is ON");
-  ok(JSON.stringify(fabric.openAiCanaryTenants()) === JSON.stringify([VALIDATION_TENANT]),
-    `G1 with no env cohort, admission is the release-validation cohort (${JSON.stringify(fabric.openAiCanaryTenants())})`);
+  ok(fabric.openAiCanaryTenants() === null, "G1 with no env cohort, admission is PRODUCTION-WIDE (null = all)");
 
   const admits = (t, c) => fabric.openAiCohortAdmits(t, c);
-  ok(admits(VALIDATION_TENANT, "operational") === true, "G2 the validation tenant is admitted for operational");
-  ok(admits(VALIDATION_TENANT, "cheap") === false && admits(VALIDATION_TENANT, "frontier") === false,
+  ok(admits(ANY_TENANT, "operational") === true, "G2 ANY well-formed tenant is admitted for operational");
+  ok(admits(ANY_TENANT, "cheap") === false && admits(ANY_TENANT, "frontier") === false,
     "G2 the scope is operational ONLY — cheap and frontier stay on the incumbent path until their own validation");
-  ok(admits(OTHER_TENANT, "operational") === false, "G2 a tenant outside the cohort is never admitted");
   ok(admits(null, "operational") === false && admits("not-a-uuid", "operational") === false,
     "G2 unattributed and malformed tenants are never admitted");
-  ok(admits(VALIDATION_TENANT.toUpperCase(), "operational") === true, "G2 the cohort match is case-insensitive");
   ENV.OPENAI_CANARY_CLASSES = "operational,cheap";
-  ok(admits(VALIDATION_TENANT, "cheap") === true, "G2 an explicit class scope can widen (a reviewed decision)");
+  ok(admits(ANY_TENANT, "cheap") === true, "G2 an explicit class scope can widen (a reviewed decision)");
   ENV.OPENAI_CANARY_CLASSES = "garbage,frontier";
-  ok(admits(VALIDATION_TENANT, "operational") === false && admits(VALIDATION_TENANT, "frontier") === true,
+  ok(admits(ANY_TENANT, "operational") === false && admits(ANY_TENANT, "frontier") === true,
     "G2 an explicit scope REPLACES the default (unknown class tokens ignored, never wider)");
   delete ENV.OPENAI_CANARY_CLASSES;
 
@@ -738,41 +742,41 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   anthropicPlan = { status: 200 };
   openaiPlan = { status: 200 };
   calls.length = 0;
-  const valStream = await fabric.fabricChatStream("operational", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
-    { openaiFetch, trace: { tenant_id: VALIDATION_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
-  const readerG = valStream.body?.getReader();
+  const anyStream = await fabric.fabricChatStream("operational", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
+    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
+  const readerG = anyStream.body?.getReader();
   while (readerG && !(await readerG.read()).done) { /* drain */ }
-  ok(valStream.ok && valStream.served?.provider === "openai" && valStream.served?.model === "gpt-6.1-sol"
+  ok(anyStream.ok && anyStream.served?.provider === "openai" && anyStream.served?.model === "gpt-6.1-sol"
     && calls.every((c) => c.provider === "openai"),
-    `G3 the validation tenant's operational round serves Sol first (${valStream.served?.provider}:${valStream.served?.model})`);
+    `G3 ANY tenant's operational round serves Sol first (${anyStream.served?.provider}:${anyStream.served?.model})`);
   calls.length = 0;
-  const otherStream = await fabric.fabricChatStream("operational", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
-    { openaiFetch, trace: { tenant_id: OTHER_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
-  const readerO = otherStream.body?.getReader();
-  while (readerO && !(await readerO.read()).done) { /* drain */ }
-  ok(otherStream.ok && otherStream.served?.provider === "anthropic" && calls.every((c) => c.provider === "anthropic")
-    && otherStream.attempts.some((a) => a.provider === "openai" && a.failure === "skipped_disabled"),
-    `G3 a non-cohort tenant still serves from the incumbent, OpenAI skipped-and-recorded (${otherStream.served?.provider})`);
-  const valCompletion = await fabric.fabricCompletion(
-    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, trace: { tenant_id: VALIDATION_TENANT, agent_id: "fabric-check" } });
-  ok(valCompletion.ok && valCompletion.route.served?.provider === "openai" && valCompletion.route.served?.model === "gpt-6.1-sol",
-    "G3 the completion seam admits the validation tenant too (Sol first)");
+  const unattributed = await fabric.fabricChatStream("operational", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
+    { openaiFetch, trace: { agent_id: "fabric-check", job_kind: "chat" } });
+  const readerU = unattributed.body?.getReader();
+  while (readerU && !(await readerU.read()).done) { /* drain */ }
+  ok(unattributed.ok && unattributed.served?.provider === "anthropic" && calls.every((c) => c.provider === "anthropic"),
+    "G3 unattributed traffic still serves from the incumbent (never admitted)");
   const cheapCompletion = await fabric.fabricCompletion(
     { cognitive_class: "cheap", job: "turn_classify", messages: [{ role: "user", content: "x" }] },
-    { openaiFetch, trace: { tenant_id: VALIDATION_TENANT, agent_id: "fabric-check" } });
+    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
   ok(cheapCompletion.route.served?.provider === "anthropic" && String(cheapCompletion.route.served?.model).includes("haiku")
     && cheapCompletion.route.attempts.some((a) => a.provider === "openai" && a.failure === "skipped_disabled"),
     "G3 the CLASSIFIER stays on Haiku — cheap is not admitted until its own validation");
+  const opCompletion = await fabric.fabricCompletion(
+    { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
+    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
+  ok(opCompletion.ok && opCompletion.route.served?.provider === "openai" && opCompletion.route.served?.model === "gpt-6.1-sol",
+    "G3 the completion seam serves Sol first for any tenant's operational job");
 
-  ENV.OPENAI_CANARY_TENANTS = OTHER_TENANT;
-  ok(admits(VALIDATION_TENANT, "operational") === false && admits(OTHER_TENANT, "operational") === true,
-    "G4 a set env cohort REPLACES the validation default");
+  ENV.OPENAI_CANARY_TENANTS = OTHER_TENANT.toUpperCase();
+  ok(fabric.openAiCanaryTenants() !== null && admits(ANY_TENANT, "operational") === false && admits(OTHER_TENANT, "operational") === true,
+    "G4 a set env cohort RESTRICTS to it, case-insensitively (staged rollout)");
   ENV.OPENAI_CANARY_TENANTS = "";
-  ok(fabric.openAiCanaryTenants().length === 0 && admits(VALIDATION_TENANT, "operational") === false,
-    "G4 an explicitly EMPTY cohort admits nobody — the kill switch, effective on the next call (no deploy)");
+  ok(fabric.openAiCanaryTenants() !== null && fabric.openAiCanaryTenants().length === 0 && admits(ANY_TENANT, "operational") === false,
+    "G4 an explicitly EMPTY cohort admits NOBODY — the kill switch, effective on the next call (no deploy)");
   delete ENV.OPENAI_CANARY_TENANTS;
-  ok(admits(VALIDATION_TENANT, "operational") === true, "G4 clearing the env restores the validation default");
+  ok(fabric.openAiCanaryTenants() === null && admits(ANY_TENANT, "operational") === true,
+    "G4 clearing the env RESTORES production-wide (unsetting is NOT the kill switch)");
 
   setScenario({});
 }

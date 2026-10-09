@@ -13,6 +13,7 @@ const worker = readFileSync("supabase/functions/paige-document-worker/index.ts",
 const submission = readFileSync('supabase/migrations/20270418000000_paige_durable_document_work.sql','utf8');
 const retiredRoles = readFileSync('supabase/migrations/20270504000000_retire_title_role_from_functions.sql','utf8');
 const baseline = JSON.parse(readFileSync('scripts/ci/capability-declaration-baseline.json','utf8')) as Array<{tool:string}>;
+const replaceEvery = (text:string,from:string,to:string) => text.split(from).join(to);
 const walk=(node:ts.Node,predicate:(n:ts.Node)=>boolean):ts.Node[]=>{const out:ts.Node[]=[];const visit=(n:ts.Node)=>{if(predicate(n))out.push(n);ts.forEachChild(n,visit);};visit(node);return out;};
 const print=(n:ts.Node)=>ts.createPrinter({removeComments:true}).printNode(ts.EmitHint.Unspecified,n,n.getSourceFile()).replace(/\s/g,'');
 function sourceBinding(text:string):boolean {
@@ -59,12 +60,12 @@ describe("durable long-form Chat reach", () => {
     expect(chat).toContain('"content_save", "document_generate", "generate_image"');
   });
   it.each([
-    (s:string)=>s.replaceAll('_intent_id: documentIntentId','_intent_id: args.intent_id'),
-    (s:string)=>s.replaceAll('_thread_id: payloadThreadId','_thread_id: args.thread_id'),
-    (s:string)=>s.replaceAll('_request_payload: validatedBrief.value','_request_payload: args'),
-    (s:string)=>s.replaceAll('supabaseClient.rpc(\n                      "submit_paige_document_work"','supabase.rpc(\n                      "submit_paige_document_work"'),
-    (s:string)=>s.replaceAll('"generate_image", "content_save",\n            "growth_page_save"','"generate_image", "content_save", "document_generate",\n            "growth_page_save"'),
-    (s:string)=>s.replaceAll('if (studioSessionId) {\n                await recordDocumentSubmissionOutcome','if (false) {\n                await recordDocumentSubmissionOutcome'),
+    (s:string)=>replaceEvery(s,'_intent_id: documentIntentId','_intent_id: args.intent_id'),
+    (s:string)=>replaceEvery(s,'_thread_id: payloadThreadId','_thread_id: args.thread_id'),
+    (s:string)=>replaceEvery(s,'_request_payload: validatedBrief.value','_request_payload: args'),
+    (s:string)=>replaceEvery(s,'supabaseClient.rpc(\n                      "submit_paige_document_work"','supabase.rpc(\n                      "submit_paige_document_work"'),
+    (s:string)=>replaceEvery(s,'"generate_image", "content_save",\n            "growth_page_save"','"generate_image", "content_save", "document_generate",\n            "growth_page_save"'),
+    (s:string)=>replaceEvery(s,'if (studioSessionId) {\n                await recordDocumentSubmissionOutcome','if (false) {\n                await recordDocumentSubmissionOutcome'),
   ])('rejects source mutation of caller/args/Studio authority',mutate=>{const changed=mutate(chat);expect(changed).not.toBe(chat);expect(sourceBinding(changed)).toBe(false);});
   it('preserves incumbent discovery for member/admin and confirm/auto/off',()=>{
     const cap=getSpineCapability('research_knowledge.document_generate')!;

@@ -8,14 +8,6 @@
     "kind": "mutating"
   },
   {
-    "tool": "action_get",
-    "kind": "read"
-  },
-  {
-    "tool": "action_list",
-    "kind": "read"
-  },
-  {
     "tool": "ask_choices",
     "kind": "read"
   },
@@ -28,20 +20,12 @@
     "kind": "mutating"
   },
   {
-    "tool": "automation_list",
-    "kind": "read"
-  },
-  {
     "tool": "automation_set_grant",
     "kind": "mutating"
   },
   {
     "tool": "automation_set_state",
     "kind": "mutating"
-  },
-  {
-    "tool": "automation_triggers_list",
-    "kind": "read"
   },
   {
     "tool": "calendar_book_meeting",
@@ -104,15 +88,7 @@
     "kind": "read"
   },
   {
-    "tool": "crm_list_documents",
-    "kind": "read"
-  },
-  {
     "tool": "crm_list_tasks",
-    "kind": "read"
-  },
-  {
-    "tool": "crm_list_team",
     "kind": "read"
   },
   {
@@ -136,14 +112,6 @@
     "kind": "mutating"
   },
   {
-    "tool": "document_pending_reviews",
-    "kind": "read"
-  },
-  {
-    "tool": "document_resume_review",
-    "kind": "read"
-  },
-  {
     "tool": "draft_marketing_content",
     "kind": "read"
   },
@@ -154,10 +122,6 @@
   {
     "tool": "generate_image",
     "kind": "mutating"
-  },
-  {
-    "tool": "get_client_rail",
-    "kind": "read"
   },
   {
     "tool": "get_current_rates",
@@ -180,16 +144,8 @@
     "kind": "mutating"
   },
   {
-    "tool": "improvement_list",
-    "kind": "read"
-  },
-  {
     "tool": "improvement_propose",
     "kind": "mutating"
-  },
-  {
-    "tool": "list_event_kinds",
-    "kind": "read"
   },
   {
     "tool": "list_subagents",
@@ -224,40 +180,8 @@
     "kind": "read"
   },
   {
-    "tool": "plan_add_milestone",
-    "kind": "mutating"
-  },
-  {
-    "tool": "plan_assign_task",
-    "kind": "mutating"
-  },
-  {
-    "tool": "plan_create",
-    "kind": "mutating"
-  },
-  {
-    "tool": "plan_list",
-    "kind": "read"
-  },
-  {
     "tool": "plan_remove_item",
     "kind": "mutating"
-  },
-  {
-    "tool": "plan_set_reminder",
-    "kind": "mutating"
-  },
-  {
-    "tool": "plan_update_item",
-    "kind": "mutating"
-  },
-  {
-    "tool": "presence_is_online",
-    "kind": "read"
-  },
-  {
-    "tool": "presence_who_online",
-    "kind": "read"
   },
   {
     "tool": "propose_action",

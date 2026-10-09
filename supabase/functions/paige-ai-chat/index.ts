@@ -38,6 +38,7 @@ import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-ap
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
 import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
+import { readDurableObservation } from "../_shared/durable-job/observation.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
 import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
@@ -764,7 +765,7 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
-  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional() }).optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional() }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1194,6 +1195,10 @@ serve(async (req) => {
         }) : undefined;
         const status = await readInteractiveOutcomeStatus({
           state: () => executor("state"),
+          ...(validatedData.interactive.workId ? { readWork: () => readDurableObservation({
+            threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
+            workId: validatedData.interactive!.workId!,
+          }, supabaseClient) } : {}),
           ...(effectId && readers ? { readOutcome: () => readPipelineMetadataOutcome({
             threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
             effectId, tenantId: thread.tenant_id, actorId: user.id,

@@ -1,10 +1,61 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+## Required-CI correction before release
+
+Required Supabase Preview failed after collision renumbering because this PR’s disposable, data-free preview retained the earlier unmerged migration12. Its function body was an older candidate, so no byte-identical history rename was asserted. The official reset request did not remove obsolete12. The database connector repair returned Invalid or expired requestState, and the official CLI repair was denied login-role access; neither established a successful repair. The owned, data-free PR preview was then deleted through the official branch API for clean integration recreation. Recreation, current Sales13 and observation14 application, source readback and the required check remain pending. Production schema and migration history were not changed by this preview repair.
+
+Fresh main163cca44c6994aac72c136cc6b19ec7835e24673 and production migration history both contain the separately owned Sales migration13. The unmerged observation migration is therefore renumbered14 before release; its SQL is unchanged. Initial12 was never merged or applied to production. No out-of-order deployment or production migration-history rewrite is permitted. Both existing delivery rows are preserved during fresh-main reconciliation.
+
+Exact-head CI rejected an observation-only retired coach role exemption. The initially reserved migration12, now collision-free migration14, uses the current Document owner/admin permissions established by the canonical retirement migration; native permission controls failed first and pass34/34 after repair. No title-authority exemption or required-check waiver was added. Two incumbent MCP tests now assert actual registry membership and validation instead of a closed three-domain source string, retaining field-for-field checks and adding forged-tool/class/risk/approval rejection controls;24 tests PASS. Fresh non-author review and exact-head CI are required on the repaired composition before merge.
+
+Fresh main f2fc41666178c60c2a1c639548f71043a22b556c adds the separately owned metric read. Registry composition retains both registrations and declares only its incumbent tenant/member Chat seat, fixing an actual missing-authority lint failure without editing Analytics implementation or extending the issuer permission. The issuer retains its narrower owner-grantable permission. Combined metric/registration/MCP tests54 PASS and actual Chat status handler PASS; all hosted checks and non-author review must be repeated on this fresh composition.
+
+## 2026-10-08 durable observation in the canonical authenticated status consumer
+
+This candidate adds read-only `interactive.workId` observation to the existing status branch.
+It creates no scheduler, worker, receipt, approval or continuation executor. Ten routing answers:
+(1) preserve the original conversation's durable identity; (2) Conversational Loop owns consumption,
+Document/Research own artifact production; (3) reuse `paige_durable_work` and protected Chat turns;
+(4) authenticated `read_paige_durable_observation` is an observation seam only; (5) no provider/model
+call; (6) current JWT actor, tenant, owned thread, latest intent and current seat are revalidated;
+(7) no dispatch, transition, wake, retry or settlement; (8) terminal lineage and canonical artifacts
+are checked without returning raw payloads; (9) incumbent status presentation remains unchanged;
+(10) rollback PostgreSQL and actual-handler doubles prove behavior, not production authentication.
+
+The caller supplies only UUID references. Document work uses its existing derived domain intent;
+the original protected assistant turn binds that work to the conversational intent. Research uses
+the same envelope and requires an exact work-linked canonical result. Legacy Research runs without
+`work_id` remain unavailable. Missing, stale, foreign or contradictory evidence grants no authority.
+Pending approval authority is unavailable; a cancelled or expired work record cannot authorize
+resumption. `durable_work` is separate from executor settlement; executor state is reread after all
+awaited observations. Neither observation nor a verified artifact releases the execution lock.
+
+Failing-first: the two new status assertions failed against the original six-test helper, then
+eight passed after integration; combined-observation/concurrent-authority controls bring status
+coverage to ten tests. Independent review identified stale readback and numeric Research findings:
+ten new adapter race controls failed first, then eighteen adapter tests passed after a final
+caller-bound canonical reread; the numeric-finding native control also failed first. All thirty
+native checks pass, and the artifact-success bypass mutant is rejected. Actual loaded-handler regressions
+exercise DRAINING and caller-JWT-only durable reads with no provider call, insert, preparation,
+dispatch, receipt append, state transition, admission or release. Native rollback tests exercise
+the real migration against an isolated dependency schema, including artifact-success mutants.
+Final immutable-head review, required hosted CI, merge, deployment and production readback remain pending.
+Authenticated Solo acceptance, automatic reconciliation and consequential C4d/C4e continuation
+remain UNVERIFIED. This is an independently safe consumer, not completion of runtime continuation.
+
 ## 2026-10-08 original-operation observation in the existing status path
 
-Implementation in progress on `codex/int304-continuation-runtime`, based on main
-`a97bb5c3af4f53d29d93b799359f1afcafa821c4`. This is an observation consumer, not automatic
-settlement or C4d/C4e runtime completion. Merge, deployment and authenticated acceptance are owed.
+PR #1871 merged as `466a33dd33ae59d3a6c5d170355c0447f3d13068`, exact reviewed head
+`33021e46039a44b89e209a9713986ed6106856b7`, fresh base
+`539ed407acb7ff23ad6bd53ec64c3017f6bdc506`. Independent NON-AUTHOR SHIP (`6069967618`);
+nine check runs and both Vercel statuses SUCCESS. Verify `37850825613`/`113563131252`,
+database-contract `37850825583`/`113563009319`. Production Edge workflow
+`37852543308`/`113568823842` SUCCESS, Chat version369/verify_jwt=true; returned source for Chat
+and the three new helpers matches normalized SHA256 of reviewed source. Exact-SHA Vercel
+`dpl_7VM4mygKKgZ5sCSJazjEJJfoavxT` production READY. Production rollout active=false,
+activated_at=null. Readback record: PR comment `6070188351`.
+This is an observation consumer, not automatic settlement or C4d/C4e runtime completion.
+Authenticated acceptance, fresh specialist rendering and security clearance remain UNVERIFIED.
 
 Pre-edit routing: (1) the owner wants PAIGE to verify the original Pipeline operation;
 (2) Conversational Loop owns this status consumer, Pipeline owns its records;

@@ -1,6 +1,5 @@
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from '../_shared/comms-provider-boundary.ts'
 import * as React from 'npm:react@18.3.1'
-import { providerExecutionBlocked, QA_BOUNDARY_REFUSAL_NOTE, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
@@ -268,18 +267,6 @@ Deno.serve(async (req) => {
       await failClaim(suppressionError ? 'suppression_check_failed' : 'recipient_suppressed')
       return new Response(JSON.stringify({ error: 'welcome_delivery_blocked' }), {
         status: suppressionError ? 503 : 409,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // QA #1832: the synthetic-workspace no-provider-execution boundary. A tenant
-    // resolved for this send (caller-supplied or recipient-derived) that carries the
-    // qa_no_provider_execution marker fails the delivery claim and refuses BEFORE the
-    // provider call — no email, no spend, no credential use. Ordinary tenants unchanged.
-    if (tenantId && await providerExecutionBlocked(admin as never, tenantId)) {
-      await failClaim('qa_no_provider_execution')
-      return new Response(JSON.stringify({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }), {
-        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -726,18 +713,6 @@ Deno.serve(async (req) => {
     idempotency_key: idempotencyKey,
     metadata: { from: resolvedFrom, reply_to: resolvedReplyTo },
   })
-
-  // QA #1832: the synthetic-workspace no-provider-execution boundary — GENERAL
-  // template path. The tenant is resolved above (caller-supplied or recipient-
-  // derived); a synthetic QA workspace's marker refuses BEFORE the real send and
-  // logs the refusal in the send log. Ordinary tenants answer false and are
-  // unchanged. (The solo-beta welcome branch carries its own earlier gate.)
-  if (tenantId && await providerExecutionBlocked(supabase as never, tenantId)) {
-    await supabase.from('email_send_log').update({ status: 'failed', error_message: QA_NO_PROVIDER_EXECUTION_CODE }).eq('message_id', messageId)
-    return new Response(JSON.stringify({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }), {
-      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
 
   if (!RESEND_API_KEY) {
     await supabase.from('email_send_log').update({ status: 'failed', error_message: 'RESEND_API_KEY not set' }).eq('message_id', messageId)

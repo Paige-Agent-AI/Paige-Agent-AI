@@ -33,7 +33,6 @@ import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundar
 //      returns the real error, never a fabricated number/SID. needs_config when the
 //      tenant has no subaccount.
 import { stampedWebhookUrls } from "../_shared/twilio-webhook-auth.ts";
-import { providerExecutionBlocked, QA_BOUNDARY_REFUSAL_NOTE, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { purchaseNumber, resolveTwilioCreds, type SupabaseAdminLike } from "../_shared/twilio.ts";
 
@@ -127,10 +126,6 @@ Deno.serve(async (req) => {
   }
 
   const { data: tenantId } = await userClient.rpc("current_user_tenant_id");
-    // QA #1832: a synthetic QA workspace cannot incur real provider spend.
-    if (tenantId && await providerExecutionBlocked(admin as never, tenantId)) {
-      return json({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }, 403);
-    }
   if (!tenantId || typeof tenantId !== "string") {
     return json({ needs_config: true, error: "tenant_not_resolved" });
   }

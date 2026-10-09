@@ -61,13 +61,40 @@ Deno.test("boundary: send-message enforces the block before any provider dispatc
   assert(gateIndex !== -1 && resendIndex !== -1 && gateIndex < resendIndex, "the gate must precede the provider call");
 });
 
-Deno.test("boundary: send-transactional-email enforces the block before its Resend call", async () => {
+Deno.test("boundary: send-transactional-email enforces the block before EVERY Resend call", async () => {
   const source = await readSource("supabase/functions/send-transactional-email/index.ts");
   assert(source.includes("providerExecutionBlocked"), "send-transactional-email must call the boundary");
   assert(source.includes("QA_NO_PROVIDER_EXECUTION"), "the truthful refusal code must be present");
-  const gateIndex = source.indexOf("providerExecutionBlocked");
-  const resendIndex = source.indexOf("api.resend.com");
-  assert(gateIndex !== -1 && resendIndex !== -1 && gateIndex < resendIndex, "the gate must precede the provider call");
+  // NON-VACUOUS: every provider call site must be preceded by a gate on the general
+  // path, not merely the first (the import line also matches a bare indexOf — so the
+  // gate search starts AFTER the import, and the provider search walks ALL sites).
+  const importEnd = source.indexOf("provider-boundary.ts");
+  const providerSites = [...source.matchAll(/api.resend.com/g)].map((m) => m.index);
+  assert(providerSites.length >= 2, "both Resend call sites must exist (welcome branch + general path)");
+  for (const site of providerSites) {
+    const gates = [...source.slice(importEnd, site).matchAll(/providerExecutionBlocked\(/g)];
+    assert(gates.length >= 1, `a Resend call at offset ${site} has no boundary gate before it`);
+  }
+});
+
+Deno.test("boundary: the tenant-branded and carrier rails carry the gate before their provider calls", async () => {
+  for (const rel of [
+    "supabase/functions/send-portal-invite/index.ts",
+    "supabase/functions/comms-purchase-number/index.ts",
+    "supabase/functions/comms-setup-calling/index.ts",
+    "supabase/functions/comms-a2p-register/index.ts",
+    "supabase/functions/comms-a2p-submit/index.ts",
+  ]) {
+    const source = await readSource(rel);
+    assert(source.includes("providerExecutionBlocked"), rel + " must call the boundary");
+    assert(source.includes("QA_NO_PROVIDER_EXECUTION_CODE"), rel + " must carry the truthful refusal");
+    const importEnd = source.indexOf("provider-boundary.ts");
+    const providerSites = [...source.matchAll(/api\.resend\.com|api\.twilio\.com/g)].map((m) => m.index);
+    for (const site of providerSites) {
+      assert([...source.slice(importEnd, site).matchAll(/providerExecutionBlocked\(/g)].length >= 1,
+        rel + ": a provider call at offset " + site + " has no gate before it");
+    }
+  }
 });
 
 Deno.test("boundary: the SQL helper is fail-closed at the marker and defaults open otherwise", async () => {

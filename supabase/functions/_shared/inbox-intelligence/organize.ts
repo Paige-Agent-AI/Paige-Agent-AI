@@ -86,6 +86,9 @@ export function unsubscribeHttpsTarget(url: string | null | undefined): string |
   let host: string;
   try { host = new URL(url).hostname.toLowerCase(); } catch { return null; }
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal")) return null;
+  // Numeric-only hosts (decimal/hex IPv4 shorthands like 2130706433) are rejected:
+  // a host that is all digits and dots is an address literal, not a name.
+  if (/^[0-9.]+$/.test(host)) return null;
   if (/^(?:127.|10.|192.168.|169.254.|0.)/.test(host)) return null;
   if (/^172.(?:1[6-9]|2[0-9]|3[01])./.test(host)) return null;
   return url;

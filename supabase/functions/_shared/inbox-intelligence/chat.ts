@@ -134,10 +134,9 @@ export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: Organ
   } catch {
     return { content: { success: false, error: "Invalid mailbox request. kind is one of label, unlabel, archive, unarchive, trash, untrash, unsubscribe_propose, unsubscribe_send; message_id is a message id from inbox_list; label is a slug." } };
   }
-  // unsubscribe_send rides the same approval as every other kind; the door reads the
-  // one-click target from the message's own recorded List-Unsubscribe header (never the
-  // request) and shows its host on the card. Proposing first (unsubscribe_propose) is how
-  // the person sees the target before approving the send.
+  // unsubscribe_send is DISABLED (owner addendum 6088460092): the door refuses it before
+  // any approval read. The model surface advertises only unsubscribe_propose — the
+  // truthful manual flow (the person's own mail client sends the one-click request).
 
   let body: Record<string, unknown>;
   let spent: string | undefined;
@@ -195,7 +194,9 @@ export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: Organ
     const safe = organizeSafeResult(result);
     if (result.ok === true && result.outcome === "applied") {
       return { tokens, spent, content: { ...safe, success: true, undo: typeof result.undo_kind === "string" ? result.undo_kind : null,
-        note: "The mailbox was changed exactly as approved. Every kind is reversible — ask and the exact undo runs through the same approval." } };
+        note: command.kind === "unsubscribe_propose"
+          ? "The unsubscribe target is recorded and shown. There is no undo — the person sends the one-click request from their own mail client; automatic sending is disabled."
+          : "The mailbox was changed exactly as approved. This kind is reversible — ask and the exact undo runs through the same approval." } };
     }
     if (typeof result.outcome !== "string") return { tokens, spent, content: { ...safe, success: false, outcome: "outcome_unknown",
       note: "The mailbox request has no verified response. Do not assume it applied; proposing it again re-checks the same message rather than acting twice." } };

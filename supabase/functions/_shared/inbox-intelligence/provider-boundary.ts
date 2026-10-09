@@ -11,10 +11,15 @@
 // the assignment forbids; the marker is the fail-closed element, not a DB blip.
 // Ordinary tenants (marker false/absent) are byte-for-byte unchanged.
 //
-// Enforced at: send-message (the ONE unified rail — direct sends, the governed
-// comms-email executor, marketing dispatch, the scheduled drainer's releases, and
-// every retry that re-enters it) and send-transactional-email (tenant flows:
-// invites, welcome, booking, notifications). Pure module: no Deno imports.
+// Enforced at EVERY tenant-scoped provider-effect rail, before any provider call:
+// send-message (the ONE unified rail — direct sends, the governed comms-email
+// executor, marketing dispatch, the scheduled drainer's releases, and every retry
+// that re-enters it), send-transactional-email (BOTH its paths: the general
+// template flow and the solo-beta welcome branch), send-portal-invite (tenant-
+// branded invites), and the carrier rails comms-purchase-number, comms-setup-
+// calling, comms-a2p-register and comms-a2p-submit (real Twilio spend/credential
+// effects). Operator SMS/voice paths are user-scoped platform rails a synthetic
+// workspace cannot originate. Pure module: no Deno imports.
 
 export const QA_NO_PROVIDER_EXECUTION_CODE = "QA_NO_PROVIDER_EXECUTION";
 

@@ -727,6 +727,18 @@ Deno.serve(async (req) => {
     metadata: { from: resolvedFrom, reply_to: resolvedReplyTo },
   })
 
+  // QA #1832: the synthetic-workspace no-provider-execution boundary — GENERAL
+  // template path. The tenant is resolved above (caller-supplied or recipient-
+  // derived); a synthetic QA workspace's marker refuses BEFORE the real send and
+  // logs the refusal in the send log. Ordinary tenants answer false and are
+  // unchanged. (The solo-beta welcome branch carries its own earlier gate.)
+  if (tenantId && await providerExecutionBlocked(supabase as never, tenantId)) {
+    await supabase.from('email_send_log').update({ status: 'failed', error_message: QA_NO_PROVIDER_EXECUTION_CODE }).eq('message_id', messageId)
+    return new Response(JSON.stringify({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }), {
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
   if (!RESEND_API_KEY) {
     await supabase.from('email_send_log').update({ status: 'failed', error_message: 'RESEND_API_KEY not set' }).eq('message_id', messageId)
     return new Response(JSON.stringify({ error: 'email_provider_unconfigured' }), {

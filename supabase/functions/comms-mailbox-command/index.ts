@@ -28,7 +28,7 @@ const refused = (status: number, code: string, note?: string) => response(status
 const KIND_SUMMARY: Record<string, string> = {
   label: "add a label", unlabel: "remove a label", archive: "archive", unarchive: "unarchive",
   trash: "move to Trash (recoverable)", untrash: "restore from Trash",
-  unsubscribe_propose: "unsubscribe from this mailing list", unsubscribe_send: "send the unsubscribe request",
+  unsubscribe_propose: "record the unsubscribe target for the owner (no send; automatic sending is disabled)",
 };
 
 Deno.serve(async req => {

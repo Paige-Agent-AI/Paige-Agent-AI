@@ -436,7 +436,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // send_btf_template_email, send_transactional_email, send_composed_email
   ["comms_send_email", "high", "puts an email in a real person's inbox"],
   // #1140 two-mailbox pilot: reversible mailbox organization on the canonical mirror vs the real mailbox.
-  ["gmail_organize", "high", "changes a real Gmail mailbox (labels, archive, trash, unsubscribe) — external and visible to the mailbox owner, so it needs the rendered approval card; every kind is reversible and permanent deletion is not expressible"],
+  ["gmail_organize", "high", "changes a real Gmail mailbox (labels, archive, trash, unsubscribe) — external and visible to the mailbox owner, so it needs the rendered approval card; the mailbox kinds are reversible, an unsubscribe proposal has no undo and its automatic sending is disabled, and permanent deletion is not expressible"],
   // cancel_workflow_run
   ["workflow_cancel_run", "high", "acts on the operator's provider account to stop a run"],
   // register_workflow

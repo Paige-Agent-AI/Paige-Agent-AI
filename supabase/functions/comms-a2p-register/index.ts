@@ -1,5 +1,6 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { providerExecutionBlocked, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 import { resolveTwilioCreds, twilioJsonRequest, twilioRequest, masterCreds, type TwilioCreds } from "../_shared/twilio.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
@@ -47,6 +48,15 @@ async function context(req: Request, body: Record<string, unknown>): Promise<Con
     return fail(409, "WORKSPACE_CHANGED", "Your workspace changed. Reopen registration and try again.");
   }
   const admin = createClient(url, serviceKey);
+
+  // QA #1832: a synthetic QA workspace cannot drive real carrier registration
+  // effects (fail-closed at the marker, before any provider call).
+  {
+    const { data: tenantId, error: tenantError } = await client.rpc("current_user_tenant_id");
+    if (!tenantError && tenantId && await providerExecutionBlocked(admin as never, tenantId)) {
+      return fail(403, QA_NO_PROVIDER_EXECUTION_CODE, "This is a synthetic QA workspace: real provider effects are disabled on the server.");
+    }
+  }
   const { data: canManage } = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
   const { data: platformOwner } = await client.rpc("is_platform_owner");
   if (canManage !== true && platformOwner !== true) return fail(403, "FORBIDDEN", "Workspace owner or administrator access required.");

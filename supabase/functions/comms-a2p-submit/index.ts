@@ -72,6 +72,7 @@
 //  §2  the copy is coaching-generic by construction (produced by comms-a2p-draft, §2). This function
 //      does not add finance wording.
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { providerExecutionBlocked, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -206,6 +207,10 @@ Deno.serve(async (req: Request) => {
       // owner still passes via is_platform_owner() even if their only role is super_admin.
       const { data: ownerFlag } = await authed.rpc("is_platform_owner");
       const { data: resolved, error: tErr } = await authed.rpc("current_user_tenant_id");
+      // QA #1832: a synthetic QA workspace cannot submit real carrier campaigns.
+      if (!tErr && resolved && await providerExecutionBlocked(admin as never, resolved)) {
+        return new Response(JSON.stringify({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: "This is a synthetic QA workspace: real provider effects are disabled on the server." }), { status: 403, headers: jsonHeaders });
+      }
       if (tErr) {
         console.error("comms-a2p-submit: tenant resolve failed:", tErr);
         return fail(500, "INTERNAL", `Could not resolve your workspace: ${tErr.message}`);

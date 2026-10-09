@@ -27,6 +27,7 @@
 //  §34  No secret ever leaves the Vault write. The receipt carries steps and
 //      identifiers (SK/SIDs), never the API-key secret.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { providerExecutionBlocked, QA_BOUNDARY_REFUSAL_NOTE, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 import { provisionTenantTwilio } from "../_shared/twilio-provision.ts";
 import type { SupabaseAdminLike } from "../_shared/twilio.ts";
 
@@ -87,6 +88,12 @@ Deno.serve(async (req) => {
   // Service-role client for ALL writes (§9: the INSERT trigger must see
   // current_user_tenant_id()=null so the EXPLICIT tenant_id is honored).
   const admin = createClient(supabaseUrl, serviceKey);
+
+  // QA #1832: a synthetic QA workspace cannot drive real provider account setup
+  // (fail-closed at the marker, before any provider call below).
+  if (tenantId && await providerExecutionBlocked(admin as never, tenantId)) {
+    return json({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }, 403);
+  }
 
   const { data: tenantRow } = await admin
     .from("tenants")

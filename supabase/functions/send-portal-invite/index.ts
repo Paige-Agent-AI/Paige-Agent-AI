@@ -9,6 +9,7 @@ import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundar
 // to the address that token was bound to at mint time (create_tenant_invite_token,
 // admin-gated) — a token holder cannot spray arbitrary recipients.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { providerExecutionBlocked, QA_BOUNDARY_REFUSAL_NOTE, QA_NO_PROVIDER_EXECUTION_CODE } from "../_shared/inbox-intelligence/provider-boundary.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -143,6 +144,12 @@ Deno.serve(async (req) => {
   // floors unset colors to the platform tokens (#150C31 / #EBB94C) — never a
   // one-off hex — and returns the child's OWN name as tenant_name.
   const { data: brandRows } = await admin.rpc("resolve_tenant_brand", { _tenant_id: tok.tenant_id });
+    // QA #1832: a synthetic QA workspace's portal invite must not cause a real send.
+    if (await providerExecutionBlocked(admin as never, tok.tenant_id)) {
+      return new Response(JSON.stringify({ error: QA_NO_PROVIDER_EXECUTION_CODE, note: QA_BOUNDARY_REFUSAL_NOTE }), {
+        status: 403, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
   const rb = (Array.isArray(brandRows) ? brandRows[0] : brandRows) as
     | { tenant_name?: string; primary_color?: string; logo_url?: string | null }
     | null;

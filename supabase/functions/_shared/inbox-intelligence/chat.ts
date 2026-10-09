@@ -148,6 +148,7 @@ export async function dispatchInboxIntelligenceChat(
 type ApprovalQuery = {
   eq(key: string, value: unknown): ApprovalQuery; in(key: string, values: string[]): ApprovalQuery;
   is(key: string, value: null): ApprovalQuery;
+  not(key: string, operator: string, value: null): ApprovalQuery;
   gt(key: string, value: string): ApprovalQuery; limit(value: number): PromiseLike<{ data: { fingerprint?: unknown; args?: unknown }[] | null; error: unknown }>;
 };
 export type OrganizeChatDependencies = {
@@ -168,9 +169,10 @@ function organizeSafeResult(value: unknown): Record<string, unknown> {
 }
 
 /** gmail_organize — selection only; the door claims the approval and executes. */
-export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: OrganizeChatDependencies): Promise<Record<string, unknown>> {
-  if (ctx.toolName !== COMMS_MAILBOX_ORGANIZE_TOOL) return { success: false, error: "Mailbox action unavailable." };
-  if (!ctx.tenantId || !UUID.test(ctx.tenantId)) return { success: false, error: "Workspace unavailable." };
+export type OrganizeChatResult = { tokens?: string[]; spent?: string; content: Record<string, unknown> };
+export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: OrganizeChatDependencies): Promise<OrganizeChatResult> {
+  if (ctx.toolName !== COMMS_MAILBOX_ORGANIZE_TOOL) return { content: { success: false, error: "Mailbox action unavailable." } };
+  if (!ctx.tenantId || !UUID.test(ctx.tenantId)) return { content: { success: false, error: "Workspace unavailable." } };
 
   // Unsubscribe one-click target, when the model passes one, must be the
   // server-recorded https target — never a request-authored URL.
@@ -178,10 +180,10 @@ export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: Organ
   try {
     command = parseOrganizeCommand(ctx.args) as unknown as Record<string, unknown>;
   } catch {
-    return { success: false, error: "Invalid mailbox request. kind is one of label, unlabel, archive, unarchive, trash, untrash, unsubscribe_propose, unsubscribe_send; message_id is a message id from inbox_list; label is a slug." };
+    return { content: { success: false, error: "Invalid mailbox request. kind is one of label, unlabel, archive, unarchive, trash, untrash, unsubscribe_propose, unsubscribe_send; message_id is a message id from inbox_list; label is a slug." } };
   }
   if (command.kind === "unsubscribe_send") {
-    return { success: false, not_applied: true, error: "Send the proposal first (unsubscribe_propose); the one-click target is read from the message's own List-Unsubscribe header on the server, never from the request." };
+    return { content: { success: false, not_applied: true, error: "Send the proposal first (unsubscribe_propose); the one-click target is read from the message's own List-Unsubscribe header on the server, never from the request." } };
   }
 
   let body: Record<string, unknown>;
@@ -195,21 +197,21 @@ export async function dispatchOrganizeChat(ctx: OrganizeChatContext, deps: Organ
         .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
         .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
         .gt("expires_at", new Date().toISOString()).limit(10);
-      if (reply.error) return { success: false, error: "The approval could not be checked. Nothing was changed." };
+      if (reply.error) return { content: { success: false, error: "The approval could not be checked. Nothing was changed." } };
       const rows = reply.data ?? [];
       // Match on the STORED command exactly — the approved card is for that message and kind.
-      const match = rows.find((row) => {
+      const match = rows.find((row: { fingerprint?: unknown; args?: unknown }) => {
         const stored = row.args && typeof row.args === "object" ? (row.args as Record<string, unknown>).command : null;
-        return stored && JSON.stringify(stored) === JSON.stringify(command);
+        return stored ? JSON.stringify(stored) === JSON.stringify(command) : false;
       });
       const token = match ? [...ctx.approved].find((t) => t.split(":")[0] === match.fingerprint) : undefined;
       if (!match || !token) {
-        return { success: false, error: "That approval no longer matches this mailbox action. Propose it again so the person approves the exact message and action.", tokens };
+        return { tokens, content: { success: false, error: "That approval no longer matches this mailbox action. Propose it again so the person approves the exact message and action." } };
       }
       body = { expected_tenant_id: ctx.tenantId, command, approved_fingerprint: match.fingerprint };
       spent = token;
     } catch {
-      return { success: false, error: "The approval could not be checked. Nothing was changed." };
+      return { content: { success: false, error: "The approval could not be checked. Nothing was changed." } };
     }
   } else {
     body = { expected_tenant_id: ctx.tenantId, command };

@@ -70,8 +70,22 @@ Deno.serve(async (req) => {
   type SubRow = { tenant_id: string; twilio_subaccount_sid: string; friendly_name: string | null; status: string; active: boolean; api_key_sid: string | null; twiml_app_sid: string | null };
   const bySid = new Map<string, SubRow>((rows ?? []).map((r: SubRow) => [r.twilio_subaccount_sid, r]));
 
+  const master = masterCreds();
   const inventory = accounts.map((a) => {
     const sid = String(a.sid ?? "");
+    // The listing includes the MASTER account itself — it is not an orphan candidate.
+    if (master && sid === master.accountSid) {
+      return {
+        subaccount_sid: sid,
+        friendly_name: typeof a.friendly_name === "string" ? a.friendly_name : null,
+        provider_status: typeof a.status === "string" ? a.status : null,
+        binding: "master_account",
+        tenant_id: null,
+        row_status: null,
+        has_api_key: null,
+        has_twiml_app: null,
+      };
+    }
     const row: SubRow | undefined = bySid.get(sid);
     return {
       subaccount_sid: sid,
@@ -92,6 +106,9 @@ Deno.serve(async (req) => {
     provider_count: inventory.length,
     matched: inventory.filter((i) => i.binding === "matched").length,
     unmatched: inventory.filter((i) => i.binding === "unmatched").length,
+    // Honest bound: the listing page holds 400 — at the cap the inventory may be
+    // truncated and the unmatched count is a FLOOR, not a total (round-3 P3).
+    possibly_truncated: accounts.length >= 400,
     // No secrets, no auth tokens — identifiers and states only (§13/§34).
     inventory,
   });

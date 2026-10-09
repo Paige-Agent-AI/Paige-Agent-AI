@@ -799,7 +799,7 @@ function ConnectionsView({ initialSegment, onSegmentChange }: { initialSegment?:
       <PhoneSetupPanel
         numbers={numbers}
         onPurchased={readiness.retry}
-        calling={r?.calling ?? null}
+        calling={r === undefined || r === null ? undefined : (r.calling ?? null)}
         onCallingChanged={readiness.retry}
       />
 

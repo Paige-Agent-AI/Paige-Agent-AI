@@ -101,7 +101,7 @@ begin
   select count(*)                                              as n_primary,
          count(*) filter (where pn.subaccount_id = v_sub.id)  as n_on_subaccount,
          count(*) filter (where pn.twilio_sid is not null)     as n_provider_bound,
-         count(*) filter (where pn.capabilities->>'voice' = 'true') as n_voice_capable,
+         count(*) filter (where pn.capabilities->'voice' = 'true'::jsonb) as n_voice_capable,
          (array_agg(pn.phone_number order by pn.purchased_at nulls first))[1] as primary_e164
     into v_call
     from public.tenant_phone_numbers pn

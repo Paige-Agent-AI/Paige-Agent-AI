@@ -30,6 +30,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { provisionTenantTwilio } from "../_shared/twilio-provision.ts";
 import type { SupabaseAdminLike } from "../_shared/twilio.ts";
 
+// RAIL: the CHAT path is the one recorder (recordCommsRun → classifyCommsRun), exactly
+// like every sibling comms act — a Settings-click act writes no capability_run, same
+// as a Settings purchase. The edge never self-records (round-3 P1: a hand-rolled
+// outcome here wrote "connected" for blocked/no-op runs and doubled the chat receipt).
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -67,7 +72,9 @@ Deno.serve(async (req) => {
   // OR an admin of THIS tenant — the same gate comms-purchase-number enforces.
   const { data: isOwner } = await userClient.rpc("is_platform_owner");
   if (isOwner !== true) {
-    const { data: isAdmin } = await userClient.rpc("has_role", { _role: "admin" });
+    // Both parameters, exactly like comms-purchase-number's gate — has_role has no
+    // defaults; omitting _user_id finds no signature and always denies (round-3 P1).
+    const { data: isAdmin } = await userClient.rpc("has_role", { _user_id: user.id, _role: "admin" });
     if (isAdmin !== true) {
       return json({ error: "forbidden", message: "You don't have permission to set up calling for this workspace." }, 403);
     }
@@ -104,27 +111,6 @@ Deno.serve(async (req) => {
       const rec = readiness as { calling?: Record<string, unknown> };
       calling = rec.calling ?? null;
     }
-  }
-
-  // ── Rail receipt (§34): steps + identifiers, never the secret. The skipped
-  //    idempotent re-run still records — "already set up" is a real outcome the
-  //    owner should see on the rail; dry runs never touch the rail.
-  if (!dryRun) {
-    const { recordCapabilityRun } = await import("../_shared/capability-record.ts");
-    await recordCapabilityRun(admin, {
-      tenantId,
-      actorId: user.id,
-      capabilityKey: "comms_setup_calling",
-      outcome: result.outcome === "failed" ? "capability_failed" : "capability_succeeded",
-      detail: {
-        outcome: result.outcome,
-        steps: result.steps,
-        subaccount_sid: result.subaccount_sid ?? null,
-        api_key_sid: result.api_key_sid ?? null,
-        twiml_app_sid: result.twiml_app_sid ?? null,
-        calling_ready: calling ? calling.ready : null,
-      },
-    });
   }
 
   if (result.outcome === "blocked_needs_config") {

@@ -1,5 +1,7 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+PR #1878 read-only original discovery is MERGED (`35fbb19aa8892862f8dfd5c34325fcf8565141c7`), DEPLOYED and production catalog/source readback PASS. Independent SHIP on `e3873d6a5` and eleven required exact-head checks passed. Migration15/function body/ACL, Chat v374 changed sources and exact-merge Vercel READY are verified; full evidence is in R0's original-operation discovery release entry and PR #1878. Rollout remains inactive/DRAINING. Genuine signed-in Solo/Live and owner acceptance remain UNVERIFIED; automatic settlement and consequential continuation remain disabled. The candidate and failing-first notes below preserve the implementation history.
+
 ## 2026-10-08 authenticated read-acceptance driver preparation
 
 `scripts/proof/int304-authenticated-observation.mjs <explicit-QA-fixture.json>` uses the existing

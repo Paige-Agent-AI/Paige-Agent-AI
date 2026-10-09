@@ -52,6 +52,23 @@ test('rejects missing reviewed metric ancestry adapter or validator',()=>{
  }
 });
 for(const [label,mutate]of [
+ ['discovery caller replaced by service client',s=>s.replace('await findPipelineOriginalEffect(originalScope, supabaseClient);','await findPipelineOriginalEffect(originalScope, supabase);')],
+ ['original actor replaced by client input',s=>s.replace('tenantId: thread.tenant_id, actorId: user.id };','tenantId: thread.tenant_id, actorId: rawData.actor_id };')],
+ ['original tenant replaced by client input',s=>s.replace('tenantId: thread.tenant_id, actorId: user.id };','tenantId: rawData.tenant_id, actorId: user.id };')],
+ ['automatic discovery final revalidation bypassed',s=>s.replace('await findPipelineOriginalEffect(originalScope, supabaseClient) !== effectId','false')],
+ ['status state read changed to executor release',s=>s.replace('state: () => executor("state"),','state: () => executor("release"),')],
+])test(`rejects reviewed Pipeline status context: ${label}`,()=>{
+ const changed=mutate(chat);assert.ok(changed!==chat,'fixture must mutate actual reviewed status source');
+ assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);
+});
+for(const [label,path,mutate]of [
+ ['original discovery delegates to an effect','supabase/functions/_shared/pipeline-original-discovery.ts',s=>s.replace("caller.rpc('find_pipeline_metadata_original_effect',args)","caller.rpc('configure_tenant_pipeline_as_paige',args)")],
+ ['status observation fabricates settlement','supabase/functions/_shared/paige-turn/outcome-status.ts',s=>s.replace('settled: state.executor === null && (state.terminal === true || state.stopped === true)','settled: true')],
+])test(`rejects reviewed Pipeline status helper: ${label}`,()=>{
+ const raw=readFileSync(path,'utf8'),changed=mutate(raw);assert.ok(changed!==raw);
+ const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);
+});
+for(const [label,mutate]of [
  ['unattributed or malformed tenant admitted',s=>s.replace('if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) return false;','if (false) return false;')],
  ['explicit empty cohort kill switch bypassed',s=>s.replace('if (cohort !== null && !cohort.includes(tenantId.toLowerCase())) return false;','if (false) return false;')],
  ['default class scope widened',s=>s.replace('return listed.length ? listed : ["operational"];','return listed.length ? listed : ["cheap", "operational", "frontier"];')],

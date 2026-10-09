@@ -1,5 +1,13 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-09 original-operation discovery release
+
+PR #1878 merged as `35fbb19aa8892862f8dfd5c34325fcf8565141c7`, reviewed head `e3873d6a5e83953cd43c92c34be15035e171b446`. Independent NON-AUTHOR SHIP, all eleven exact-head checks and both Vercel statuses passed against fresh main `2f9e6e36`. Ordinary status now derives the original governed Pipeline effect from protected terminal/card lineage and independently reads its authoritative outcome. A late authorization change withholds the result; ownership is never settled or released by an observation.
+
+Migration15 and its stable, authenticated-only function ACL/body are verified in production (body MD5 `018249f6c56b7ce701d0aa59672b55f1`). Migration deployment run `37871845445` and Edge run `37871845364` succeeded. Chat v374 retains JWT verification; three changed deployed source hashes match the reviewed tree. Vercel production `dpl_26VJxZNT4LXTXm6xQrKazeCDvCpx` is READY at the exact merge. Full source hashes and test evidence are recorded in PR #1878 comments `6072492010`, `6072506824`, `6072628980`, `6072653986`.
+
+Rollout `active=false`, `activated_at=null`: INT-346 remains DRAINING. Authenticated Solo/Live acceptance and owner acceptance remain UNVERIFIED. This does not complete #1807 automatic settlement, effectful C4d/C4e continuation or the original program.
+
 ## Continued original C0b convergence — incumbent adapters only
 
 Required CI initially rejected modifying the previous release’s attestation: this gate requires a newly added evidence record. The historical durable-observation record is restored from main; the mandatory current attestation is docs/evidence/ui-delivery/conversational-loop-incumbent-capabilities.md, within existing INT-304. No new program record or check waiver.

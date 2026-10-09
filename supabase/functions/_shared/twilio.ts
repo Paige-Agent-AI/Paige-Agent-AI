@@ -415,6 +415,27 @@ export async function resolveTwilioCreds(
  * depend on it. Instead it mints a subaccount-scoped API Key via createSubaccountApiKey()
  * and vaults THAT secret. Returns needs_config when master creds are unset.
  */
+/**
+ * INT-345 K-4 — READ-ONLY subaccount inventory under the master account (the
+ * orphan-inspection step of the authorized reconciliation: which subaccounts
+ * exist at Twilio, and which of them have no DB row). GET only; no writes, no
+ * secrets. Returns needs_config when master creds are unset.
+ */
+export async function listSubaccounts(): Promise<TwilioResult> {
+  const master = masterCreds();
+  if (!master) {
+    return { ok: false, status: 0, error: "twilio_master_not_configured", data: null, needs_config: true };
+  }
+  return await twilioRequest(
+    master.accountSid,
+    master.authToken,
+    "/2010-04-01/Accounts.json?PageSize=400",
+    "GET",
+    undefined,
+    master.apiKeySid,
+  );
+}
+
 export async function createSubaccount(friendlyName: string): Promise<TwilioResult> {
   const master = masterCreds();
   if (!master) {

@@ -77,6 +77,10 @@ project_id = "xygzykjyynhzqytbqnzu"
   # admin|is_platform_owner() and derives the tenant from the caller JWT (§9).
   [functions.comms-setup-calling]
     verify_jwt = true
+  # INT-345 K-4: READ-ONLY provider inventory for the authorized reconciliation
+  # (super-admin gated, same authority as the backfill).
+  [functions.twilio-inspect-subaccounts]
+    verify_jwt = true
   # Comms C-2s-B: number marketplace. Both JWT-gated — each self-gates in-function on
   # admin/coach|is_platform_owner() and derives the tenant from the caller JWT
   # (current_user_tenant_id()), never the body (§9). They authenticate as the tenant's

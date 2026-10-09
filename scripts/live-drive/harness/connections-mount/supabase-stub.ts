@@ -416,11 +416,22 @@ export const supabase = {
       // A flattened guess rendered fine in TypeScript and threw at runtime on
       // `business.has_name` — the harness must model the record the resolver
       // actually returns, not a convenient summary of it.
+      // INT-345: the calling verdict, `?calling=` selectable so a drive can
+      // capture each honest state (absent | noprim | ready). Default follows
+      // the ready story so existing calendars/settings drives render the
+      // connected world unchanged.
+      const callingParam = new URLSearchParams(window.location.search).get("calling");
+      const calling = callingParam === "absent"
+        ? { ready: false, code: "calling_not_configured", reason_code: null, account: "absent", number_assigned: false, primary_selected: false, primary_e164: null, twiml_app: "absent" }
+        : callingParam === "noprim"
+          ? { ready: false, code: "calling_number_needs_verification", reason_code: "no_active_primary_number", account: "configured", number_assigned: true, primary_selected: false, primary_e164: null, twiml_app: "configured" }
+          : { ready: true, code: "calling_ready", reason_code: null, account: "configured", number_assigned: true, primary_selected: true, primary_e164: "+15550100", twiml_app: "configured" };
       return Promise.resolve(ok({
         tenant_id: TENANT,
         can_send_sms: ready,
         blocked_reason: ready ? null : "number_absent",
         subaccount: ready ? "connected" : "inactive",
+        calling,
         number: ready ? "assigned" : "absent",
         number_e164: ready ? "+15550100" : null,
         business: { has_name: true, has_website: ready, has_phone: ready },

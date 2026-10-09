@@ -2,7 +2,7 @@ export interface ExecutorStatus { executor?: string | null; terminal?: boolean; 
 export interface OutcomeObservation { outcome: string; verified_readback: boolean }
 export async function readInteractiveOutcomeStatus(input: {
   state(): Promise<ExecutorStatus>;
-  readOutcome?: () => Promise<OutcomeObservation>;
+  readOutcome?: () => Promise<OutcomeObservation | undefined>;
   readWork?: () => Promise<Readonly<Record<string, unknown>> | null>;
 }): Promise<{ executor_active: boolean; settled: boolean; original_operation?: OutcomeObservation; durable_work?: Readonly<Record<string, unknown>> | null }> {
   let state = await input.state();

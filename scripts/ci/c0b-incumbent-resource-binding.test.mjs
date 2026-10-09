@@ -5,8 +5,8 @@ import {incumbentSourcePaths,validateIncumbentResourceBindings,matchesIncumbentD
 const chat=readFileSync('supabase/functions/paige-ai-chat/index.ts','utf8');
 const sources=new Map(incumbentSourcePaths.map(path=>[path,readFileSync(path,'utf8')]));
 let actual;
-test('all 28 reviewed incumbent adapters bind to real dispatch and dependency source',()=>{
- const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,28);
+test('all 29 reviewed incumbent adapters bind to real dispatch and dependency source',()=>{
+ const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
 const mutations=[
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],

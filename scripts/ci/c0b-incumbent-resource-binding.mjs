@@ -89,6 +89,18 @@ export function inspectIncumbentSource(chatText,tool) {
 // Explicit frozen metadata + reviewed source digests are filled only by the
 // initial source review, never computed from the capability being validated.
 const CONTRACTS = {
+  "comms_setup_calling": {
+    "key": "communications.comms_setup_calling",
+    "chatTool": "comms_setup_calling",
+    "executor": "edge.paige-ai-chat",
+    "classification": "external_effect",
+    "riskPolicyKey": "high",
+    "approvalAuthority": "chat-canonical",
+    "seatAuthority": "workspace-admin",
+    "selfDescribe": true,
+    "readiness": "none",
+    "fingerprint": "a51c18d0caaefafca808ab0dc8aeb7e3eafa5a9a99042bca810b44a85e4d06b1"
+  },
   "calendar_book_meeting": {
     "key": "calendar.book_meeting",
     "chatTool": "calendar_book_meeting",

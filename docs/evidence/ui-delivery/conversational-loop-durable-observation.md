@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: observation and declaration convergence preserve exist
 FLOW_PROTOTYPE: NOT_REQUIRED: incumbent approved C3 flow retained; no new UI flow introduced.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner assigns work; PAIGE can observe canonical durable status without granting execution authority and derives existing read awareness from canonical declarations.
 VISUAL_DIRECTION: PASS: incumbent Solo shell and approved living-response presentation retained.
-AUTOMATED_EVIDENCE: PASS: fifty-seven incumbent declarations retain frozen seat/approval/readiness/visibility behavior; fifteen focused suites with183 tests and127 static source-contract controls passed after reviewed metric composition; authenticated-driver eleven recording-double controls PASS. Full composed-head regressions, non-author review and exact-head hosted CI are required.
+AUTOMATED_EVIDENCE: PASS: fifty-seven incumbent declarations retain frozen seat/approval/readiness/visibility behavior; fifteen focused suites with183 tests and127 static source-contract controls passed after reviewed metric composition; authenticated-driver eleven recording-double controls PASS. Fresh composition:138 source/driver controls,147 affected units,124 original projection/continuation controls and976 actual-handler checks PASS. Independent review SHIP; final exact-head hosted CI and release verification are required.
 STATIC_EVIDENCE: PASS: strict adapter types and diff check; exact-head hosted checks remain required before merge.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no component, geometry or visible label edited in this slice; existing status path and manifest contracts retained.
 BEHAVIORAL_EVIDENCE: PASS: recording doubles and declaration/projection controls prove code contracts; fixture-free proof invocation reports BLOCKED before credential or network access. No provider execution or genuine production sign-in was driven.
@@ -19,7 +19,7 @@ STATE_COVERAGE: PASS: existing seats, autonomy lanes, hidden/internal tools, pro
 TRUTHFUL_STATE_LABELS: PASS: code binding does not establish provider readiness or signed-in acceptance; unavailable Funding scaffold remains unavailable; provider/cache/transcript/preparation effects and unsafe retries are named explicitly.
 SOLO_UI: NO: no rendered Solo component changes; server status and model-facing declaration contracts only.
 UNVERIFIED: exact-head release gates, merge, migration persistence, Edge deployment, authenticated acceptance, effectful continuation and original-program completion remain separate states.
-INTERNAL_BUILD_IDENTITY: 1843b8c616d7d33b8800fb12f1ce1e22f7f16007; deployment=local-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(canonical-registry-source-deployment); evidence=docs/delivery/paige-conversational-loop-r0.md
+INTERNAL_BUILD_IDENTITY: c022895b6dcd020ea53662949f7c2203c206e4ca; deployment=local-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(canonical-registry-source-deployment); evidence=docs/delivery/paige-conversational-loop-r0.md
 RELEASE_CHANNEL: development: non-activating incumbent metadata and proof-driver candidate.
 RELEASE_CLASSIFICATION: internal-only: no customer program-completion claim.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement.

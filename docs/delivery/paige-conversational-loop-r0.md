@@ -26,6 +26,8 @@ preparation contract is available separately. The conversational preparation/dis
 handoff remains unimplemented and gated, with Research retaining its provider/result production.
 INT-346 clearance, C4f signed-in acceptance and C5 D2 are separate from this metadata delivery.
 
+Fresh composition with main163cca44 and reviewed observation14 passes127 source-contract controls plus11 authenticated-driver doubles (138 total), fourteen affected unit suites147 tests, four existing projection/continuation suites124 tests, actual conversational memory/approval/interruption/Metrics handler976 tests, declaration189/185/4/0, registry192 and strict adapter types. The independent exact65c06c7b1 review is SHIP after EOF whitespace repair; the subsequent c022895b6 merge adds only reviewed Preview recovery evidence from the observation release. Hosted exact-head CI, merge, deployment and authenticated acceptance remain owed.
+
 
 ## 2026-10-08 C0b existing-capability convergence and durable status consumption
 

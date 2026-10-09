@@ -1206,7 +1206,15 @@ serve(async (req) => {
                   original.data?.actorId === binding.actorId;
               },
             });
-            return readPipelineMetadataOutcome({ ...originalScope, effectId }, readers);
+            const observation = await readPipelineMetadataOutcome({ ...originalScope, effectId }, readers);
+            // Automatic selection also requires fresh current-conversation authority
+            // after the business-record awaits. Historical explicit-id readback retains
+            // its existing original-operation contract and grants no continuation.
+            if (!validatedData.interactive!.pipelineEffectId &&
+              await findPipelineOriginalEffect(originalScope, supabaseClient) !== effectId) {
+              return { outcome: "outcome_unknown", verified_readback: false };
+            }
+            return observation;
           },
         });
         return new Response(JSON.stringify(status), { headers: { ...corsHeaders,

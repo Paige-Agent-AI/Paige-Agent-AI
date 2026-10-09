@@ -41,7 +41,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        # Docker Official PostgreSQL 16, immutable linux/amd64 manifest from ECR Public.
+        # Avoid shared-runner Docker Hub anonymous pull throttling before proof starts.
+        image: public.ecr.aws/docker/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:

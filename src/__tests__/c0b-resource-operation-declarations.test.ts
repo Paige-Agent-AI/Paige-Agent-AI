@@ -41,8 +41,8 @@ describe("C0b incumbent resource operations", () => {
       expect(facts(after)).toEqual(facts(before));
     }
   });
-  it("does not reinterpret Studio authority or owner-only automation setters", () => {
-    for(const tool of ["document_generate","automation_set_grant","automation_set_state"]) {
+  it("does not reinterpret owner-only automation setters", () => {
+    for(const tool of ["automation_set_grant","automation_set_state"]) {
       expect(C0B_RESOURCE_OPERATION_CAPABILITIES.some(c=>c.action?.chatTool===tool)).toBe(false);
       expect(LEGACY_CAPABILITIES[tool]).toBeDefined();
     }

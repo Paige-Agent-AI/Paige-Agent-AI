@@ -1,6 +1,25 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## Final incumbent document registration correction
+
+Current-source tests first failed on the missing document submission descriptor and discovery
+parity. The completed metadata-only correction passes twenty-nine focused tests, strict adapter
+types and six source mutations covering caller receiver, intent, thread, raw payload and Studio
+authority. The declaration guard reports189 surfaced/186 declared/3 legacy/0 disagreements.
+This release now registers fifty-eight incumbent tools. The canonical long_form outcome remains
+unchanged; same-intent submission may wake an existing worker, and neither submission nor a lost
+response proves artifact completion or an exactly-once external effect. No runtime dispatch or
+permission changes are included. Final composition review, exact-head CI, merge, deployment and
+authenticated acceptance remain separate release gates.
+
 ## Original C6: prior recorded Research metadata in ORIENT
+
+The remaining Agent Intelligence source contract stays with its existing owner. Current
+PlatformIntelligence consumes operator-only fleet metrics and trace-tail; trace-tail also writes
+an audit row. Solo Sub-Agents supplies inventory, not advice. Existing prompt memory has no
+surface-owned projection of dated, attributable workspace advice with evidence eligibility.
+Those interfaces are not substituted for tenant ORIENT. Generalized Mind and Research findings
+also retain their existing source-owner contracts; no parallel intelligence projection is added.
 
 The existing caller-JWT `list_workspace_research(3,0)` now supplies a bounded historical metadata source to the existing tenant Chat context. It retains the canonical workspace-wide member/agency/admin standing of `current_user_tenant_id`; fresh caller, current workspace and active caller-RLS tenant checks surround two consistent canonical reads. No initiating-actor-only permission is invented over the existing Research workspace read.
 
@@ -35,9 +54,14 @@ same declarations support the shared capability interface rather than a second c
 framework. The existing read-only authenticated acceptance runner is prepared, not executed.
 Its genuine session and caller/tenant checks do not activate or settle a held executor.
 
-Four exact registration contracts remain intentionally unreduced: automation_set_grant and
- automation_set_state are owner_only and cannot be declared as Chat actions by the existing guard;
- document_generate retains the explicit Studio auto-lane mismatch recorded in long_form.ts.
+The initial fifty-seven-registration candidate retained four legacy contracts. Current-source
+verification corrected one stale historical explanation: document_generate is excluded from
+Studio's tool scope, absent from its auto list and explicitly refused by its handler. Its existing
+caller-JWT document submission can therefore be registered without changing approval or dispatch.
+The additional descriptor retains the Research/Knowledge discovery category and leaves the
+canonical long_form durable outcome row unchanged. Three exact contracts remain unreduced:
+automation_set_grant and automation_set_state are owner_only and cannot be declared as Chat
+actions by the existing guard;
 propose_action also persists only a pending operator decision and intentionally skips preconfirmation; the current Spine mutation contract cannot represent that producer without duplicating approval. Its eventual send retains the separately governed execute-approval/send-message path.
 No risk/type/approval expansion or guard exemption is used to erase that debt. Deep Research's
 incumbent Chat branch still calls its synchronous provider endpoint; the canonical durable

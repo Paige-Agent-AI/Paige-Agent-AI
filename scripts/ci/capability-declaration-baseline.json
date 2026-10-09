@@ -8,10 +8,6 @@
     "kind": "mutating"
   },
   {
-    "tool": "document_generate",
-    "kind": "mutating"
-  },
-  {
     "tool": "propose_action",
     "kind": "read"
   }

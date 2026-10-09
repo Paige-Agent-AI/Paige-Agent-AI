@@ -18,7 +18,7 @@ growth_funnel_generate growth_funnel_build action_file action_advance inbox_list
 social_post social_analytics social_accounts improvement_propose improvement_list improvement_decide action_list action_get crm_list_team presence_who_online presence_is_online crm_assign_contact
 zapier_list_actions zapier_run_action ghl_list_actions ghl_run_action crm_log_activity crm_add_note crm_list_documents crm_file_document
 crm_search_contacts crm_get_contact_summary crm_list_deals crm_list_tasks crm_pipeline_summary comms_connection_summary comms_list_numbers comms_search_numbers comms_buy_number comms_name_number
-comms_set_primary_number comms_registration_status comms_draft_registration`.split(/\s+/).sort();
+comms_set_primary_number comms_registration_status comms_draft_registration comms_setup_calling`.split(/\s+/).sort();
 const batch = [
   ["plan_list", "planning.list", "public.plan_list", "member"],
   ["action_list", "action_bus.list", "public.list_actions", "workspace-admin"],

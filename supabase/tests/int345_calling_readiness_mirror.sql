@@ -77,7 +77,7 @@ ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id
 -- The resolver's gate: is_platform_operator OR has_any_role(uid,[admin,coach]) — the
 -- owner seat alone does NOT satisfy it (it checks user_roles). Seed a plain admin role
 -- per scenario caller (no-JWT postgres context; claims cleared per §53 discipline).
-SELECT set_config('request.jwt.claims', NULL, true); -- NULL, not '': the credential guard casts the setting to jsonb and '' is not valid JSON
+SELECT set_config('request.jwt.claims', '{}', true); -- valid empty JSON: unset custom GUCs read as '' and the credential guard casts to jsonb
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('c1000000-0000-0000-0000-000000002001', 'admin'),
   ('c1000000-0000-0000-0000-000000001001', 'admin'),
@@ -150,7 +150,7 @@ BEGIN
   claims := jsonb_build_object('sub', p_user::text, 'role', 'authenticated');
   PERFORM set_config('request.jwt.claims', claims::text, true);
   SELECT public.tenant_comms_readiness() -> 'calling' INTO v;
-  PERFORM set_config('request.jwt.claims', '', true);
+  PERFORM set_config('request.jwt.claims', '{}', true);
   RETURN coalesce(v ->> p_key, '<null>');
 END $$;
 
@@ -199,7 +199,7 @@ SELECT has(public.tenant_comms_readiness(), 'can_send_sms', 'existing can_send_s
 SELECT has(public.tenant_comms_readiness(), 'subaccount', 'existing subaccount key preserved');
 SELECT has(public.tenant_comms_readiness(), 'calling', 'the new calling key present');
 SELECT performs_ok('SELECT public.tenant_comms_readiness()', 400, 'readiness stays fast (<400ms)');
-SELECT set_config('request.jwt.claims', NULL, true); -- NULL, not '': the credential guard casts the setting to jsonb and '' is not valid JSON
+SELECT set_config('request.jwt.claims', '{}', true); -- valid empty JSON: unset custom GUCs read as '' and the credential guard casts to jsonb
 
 SELECT * FROM finish();
 ROLLBACK;

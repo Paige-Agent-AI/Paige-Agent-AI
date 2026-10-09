@@ -78,14 +78,14 @@ ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id
 -- owner seat alone does NOT satisfy it (it checks user_roles). Seed a plain admin role
 -- per scenario caller (no-JWT postgres context; claims cleared per §53 discipline).
 SELECT set_config('request.jwt.claims', '', true);
-INSERT INTO public.user_roles (tenant_id, user_id, role) VALUES
-  ('c1000000-0000-0000-0000-000000002111', 'c1000000-0000-0000-0000-000000002001', 'admin'),
-  ('c1000000-0000-0000-0000-000000001111', 'c1000000-0000-0000-0000-000000001001', 'admin'),
-  ('c1000000-0000-0000-0000-000000003111', 'c1000000-0000-0000-0000-000000003001', 'admin'),
-  ('c1000000-0000-0000-0000-000000004111', 'c1000000-0000-0000-0000-000000004001', 'admin'),
-  ('c1000000-0000-0000-0000-000000005111', 'c1000000-0000-0000-0000-000000005001', 'admin'),
-  ('c1000000-0000-0000-0000-000000006111', 'c1000000-0000-0000-0000-000000006001', 'admin'),
-  ('c1000000-0000-0000-0000-000000007111', 'c1000000-0000-0000-0000-000000007001', 'admin');
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('c1000000-0000-0000-0000-000000002111', 'admin'),
+  ('c1000000-0000-0000-0000-000000001111', 'admin'),
+  ('c1000000-0000-0000-0000-000000003111', 'admin'),
+  ('c1000000-0000-0000-0000-000000004111', 'admin'),
+  ('c1000000-0000-0000-0000-000000005111', 'admin'),
+  ('c1000000-0000-0000-0000-000000006111', 'admin'),
+  ('c1000000-0000-0000-0000-000000007111', 'admin');
 
 -- Bystander subaccount (gives the WrongSub fixture a DIFFERENT subaccount to point at).
 INSERT INTO public.tenant_twilio_subaccounts

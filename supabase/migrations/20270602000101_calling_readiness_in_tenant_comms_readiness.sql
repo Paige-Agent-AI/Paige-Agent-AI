@@ -63,8 +63,11 @@ begin
   if v_tenant is null then
     raise exception 'COMMS_READINESS_NO_TENANT' using errcode = '42501';
   end if;
+  -- NOTE: the LIVE body's gate is the RETIRED-ROLE form — 20270504000000 edited
+  --  array['admin','coach'] to array['admin'] in place. This re-emit keeps that form
+  --  (re-emitting from the pre-retirement migration text would resurrect the read).
   if not (public.is_platform_operator()
-          or public.has_any_role(auth.uid(), array['admin','coach'])) then
+          or public.has_any_role(auth.uid(), array['admin'])) then
     raise exception 'COMMS_READINESS_FORBIDDEN' using errcode = '42501';
   end if;
 

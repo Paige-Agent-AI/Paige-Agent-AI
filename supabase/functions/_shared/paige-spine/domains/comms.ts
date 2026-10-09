@@ -191,6 +191,7 @@ export const COMMS_MESSAGE_CONTENT_READ = {
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
     chatTool: "read_message_content",
+    seatAuthority: "member",
   },
   outcome: {
     kinds: ["current"],
@@ -241,6 +242,7 @@ export const COMMS_SUPPORT_CASES_READ = {
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
     chatTool: "read_support_cases",
+    seatAuthority: "member",
   },
   outcome: {
     kinds: ["current"],
@@ -275,6 +277,7 @@ export const COMMS_MAILBOX_ORGANIZE = {
     chatTool: "gmail_organize",
     riskPolicyKey: "high",
     approvalAuthority: "chat-canonical",
+    seatAuthority: "workspace-admin",
     idempotency: "Applying the same organization twice is the same mailbox state (idempotent provider calls); each approved execution records the canonical mirror and its undo window under the actor + tenant + message + kind + label digest. Unsubscribe sends once per recorded target.",
   },
   outcome: {

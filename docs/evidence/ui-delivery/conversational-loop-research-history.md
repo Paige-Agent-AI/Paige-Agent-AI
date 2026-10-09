@@ -25,6 +25,6 @@ RELEASE_CLASSIFICATION: internal-only: no customer program-completion claim.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement.
 RELEASE_NOTE_REQUIRED: NO: internal context integration within original C6.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: automated source/prompt proof, no signed-in acceptance.
-RELEASE_RECOVERY: position=Revert the reviewed context consumer and adapter together; keep canonical Research RPC and DRAINING unchanged; reference=docs/delivery/paige-conversational-loop-r0.md
+RELEASE_RECOVERY: position=Revert the reviewed context consumer and adapter together while retaining the canonical Research RPC and DRAINING; reference=docs/delivery/paige-conversational-loop-r0.md
 
 The existing authenticated list_workspace_research(3,0) derives workspace scope server-side and preserves workspace-wide standing. Fresh caller, current workspace and active caller-RLS tenant checks surround two consistent reads. The prompt receives at most three quoted, sanitized historical titles, dates and recorded labels, with the shared untrusted-data notice and protected-content hold. No raw findings, new capability, provider call, Research dispatch, scheduler, receipt, approval or continuation authority is introduced. Research retains ownership of result production and citation eligibility.

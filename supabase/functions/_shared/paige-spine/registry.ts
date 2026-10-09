@@ -58,13 +58,21 @@ import { DOCUMENT_REVIEW_READ_CAPABILITIES } from "./domains/research_knowledge.
 import { CRM_CLIENT_READ_CAPABILITIES } from "./domains/crm_clients.ts";
 import { PLATFORM_META_READ_CAPABILITIES } from "./domains/platform_meta.ts";
 import { TEAM_READ_CAPABILITIES } from "./domains/team_reads.ts";
+import { CRM_OPERATOR_READ_CAPABILITIES } from "./domains/crm_operator_reads.ts";
+import { PIPELINE_READ_CAPABILITIES } from "./domains/pipeline_reads.ts";
+import { C0B_EXISTING_WRITE_CAPABILITIES } from "./domains/c0b_existing_writes.ts";
+import { TEAM_INVITATION_CAPABILITIES } from "./domains/team_invitations.ts";
+import { C0B_INCUMBENT_ADAPTER_CAPABILITIES } from "./domains/c0b_incumbent_adapters.ts";
+import { C0B_CLIENT_WRITE_CAPABILITIES } from "./domains/c0b_client_writes.ts";
+import { C0B_RESOURCE_OPERATION_CAPABILITIES } from "./domains/c0b_resource_operations.ts";
+import { C0B_FUNDING_STUDIO_CAPABILITIES } from "./domains/c0b_funding_studio_adapters.ts";
 
 import { isReadinessResolverId } from "../paige-capability-status/readiness.ts";
 
 // Preserve the incumbent tenant/member Chat gate; the metric issuer still enforces its narrower permission.
 const BUSINESS_METRIC_CHAT_CAPABILITY = { ...BUSINESS_METRIC_SPINE, action: { ...BUSINESS_METRIC_SPINE.action!, seatAuthority: "member" as const } } satisfies SpineCapability;
 
-export const PAIGE_SPINE_CAPABILITIES = [PIPELINE_DEAL_STAGE_EVIDENCE, BUSINESS_CONTEXT_READINESS, TEAM_AUTHORITY, SOCIAL_PRESENCE, N8N_CONNECTION_READINESS, ...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...BUSINESS_MISSION_CAPABILITIES, ...CAMPAIGN_BRIEF_CAPABILITIES, ...CALENDAR_PRESET_CAPABILITIES, ...CALENDAR_LINK_CAPABILITIES, ...AGREEMENT_CAPABILITIES, ...LONG_FORM_CAPABILITIES, ...GROWTH_FORM_CAPABILITIES, ...GROWTH_PAGE_CAPABILITIES, ...GROWTH_FUNNEL_CAPABILITIES, ...MARKETING_CONTENT_CAPABILITIES, ...SALES_INVOICE_CAPABILITIES, ...MERCHANT_SPINE_CAPABILITIES, ...SALES_COLLECTION_CAPABILITIES, ...EMAIL_CAMPAIGN_CAPABILITIES, ...PLANNING_READ_CAPABILITIES, ...PLANNING_WRITE_CAPABILITIES, ...ACTION_BUS_READ_CAPABILITIES, ...AUTOMATION_READ_CAPABILITIES, ...DOCUMENT_REVIEW_READ_CAPABILITIES, ...CRM_CLIENT_READ_CAPABILITIES, ...PLATFORM_META_READ_CAPABILITIES, ...TEAM_READ_CAPABILITIES, COMMS_MESSAGES_READ, COMMS_EMAIL_SEND, INTEGRATIONS_LIST, INTEGRATIONS_HEALTH, CONTACT_EVENT_STATUS, ...PIPELINE_CRM_ACTIONS, ...CONTACT_CRM_ACTIONS, BUSINESS_METRIC_CHAT_CAPABILITY] as const;
+export const PAIGE_SPINE_CAPABILITIES = [PIPELINE_DEAL_STAGE_EVIDENCE, BUSINESS_CONTEXT_READINESS, TEAM_AUTHORITY, SOCIAL_PRESENCE, N8N_CONNECTION_READINESS, ...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...BUSINESS_MISSION_CAPABILITIES, ...CAMPAIGN_BRIEF_CAPABILITIES, ...CALENDAR_PRESET_CAPABILITIES, ...CALENDAR_LINK_CAPABILITIES, ...AGREEMENT_CAPABILITIES, ...LONG_FORM_CAPABILITIES, ...GROWTH_FORM_CAPABILITIES, ...GROWTH_PAGE_CAPABILITIES, ...GROWTH_FUNNEL_CAPABILITIES, ...MARKETING_CONTENT_CAPABILITIES, ...SALES_INVOICE_CAPABILITIES, ...MERCHANT_SPINE_CAPABILITIES, ...SALES_COLLECTION_CAPABILITIES, ...EMAIL_CAMPAIGN_CAPABILITIES, ...PLANNING_READ_CAPABILITIES, ...PLANNING_WRITE_CAPABILITIES, ...ACTION_BUS_READ_CAPABILITIES, ...AUTOMATION_READ_CAPABILITIES, ...DOCUMENT_REVIEW_READ_CAPABILITIES, ...CRM_CLIENT_READ_CAPABILITIES, ...PLATFORM_META_READ_CAPABILITIES, ...TEAM_READ_CAPABILITIES, ...CRM_OPERATOR_READ_CAPABILITIES, ...PIPELINE_READ_CAPABILITIES, ...C0B_EXISTING_WRITE_CAPABILITIES, ...TEAM_INVITATION_CAPABILITIES, ...C0B_INCUMBENT_ADAPTER_CAPABILITIES, ...C0B_CLIENT_WRITE_CAPABILITIES, ...C0B_RESOURCE_OPERATION_CAPABILITIES, ...C0B_FUNDING_STUDIO_CAPABILITIES, COMMS_MESSAGES_READ, COMMS_EMAIL_SEND, INTEGRATIONS_LIST, INTEGRATIONS_HEALTH, CONTACT_EVENT_STATUS, ...PIPELINE_CRM_ACTIONS, ...CONTACT_CRM_ACTIONS, BUSINESS_METRIC_CHAT_CAPABILITY] as const;
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
 const SERVER_SYMBOL_PATTERN = /^public\.[a-z][a-z0-9_]*$/;
@@ -75,7 +83,7 @@ const MUTATING = new Set(["mutate", "external_effect"]);
 // capability may claim it ONLY by being a declared entry of one of the edge-executor domains
 // (management adapters and verified stored-state reads). The entry's chatTool, classification,
 // risk policy, and approval authority must match the declaration; CI also proves the actual binding.
-const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...AUTOMATION_READ_CAPABILITIES, ...DOCUMENT_REVIEW_READ_CAPABILITIES, ...CRM_CLIENT_READ_CAPABILITIES.filter(cap => cap.action.executor === "edge.paige-ai-chat"), ...PLATFORM_META_READ_CAPABILITIES] as const;
+const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...AUTOMATION_READ_CAPABILITIES, ...DOCUMENT_REVIEW_READ_CAPABILITIES, ...CRM_CLIENT_READ_CAPABILITIES.filter(cap => cap.action.executor === "edge.paige-ai-chat"), ...PLATFORM_META_READ_CAPABILITIES, ...CRM_OPERATOR_READ_CAPABILITIES] as const;
 
 export function validateSpineRegistry(capabilities: readonly SpineCapability[]): string[] {
   const findings: string[] = [];
@@ -110,7 +118,22 @@ export function validateSpineRegistry(capabilities: readonly SpineCapability[]):
         && EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => !!entry.action && entry.key === capability.key
           && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification
           && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority);
-      if (!SERVER_SYMBOL_PATTERN.test(action.executor) && !merchantExecutor && !chatExecutor)
+      const invitationExecutor = action.executor === "edge.solo-team-invitations"
+        && TEAM_INVITATION_CAPABILITIES.some(entry => entry.key === capability.key
+          && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification
+          && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority
+          && entry.action.seatAuthority === action.seatAuthority && entry.selfDescribe === capability.selfDescribe
+          && entry.readiness === capability.readiness);
+      // Admission here is metadata shape only. Registry lint independently pins
+      // each exact incumbent dispatch, identity scope and executable dependency.
+      const incumbentExecutor = action.executor.startsWith("edge.")
+        && [...C0B_INCUMBENT_ADAPTER_CAPABILITIES, ...C0B_CLIENT_WRITE_CAPABILITIES, ...C0B_RESOURCE_OPERATION_CAPABILITIES, ...C0B_FUNDING_STUDIO_CAPABILITIES].some(entry => entry.key === capability.key
+          && entry.action.executor === action.executor && entry.action.chatTool === action.chatTool
+          && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey
+          && entry.action.approvalAuthority === action.approvalAuthority && entry.action.seatAuthority === action.seatAuthority
+          && entry.selfDescribe === capability.selfDescribe && entry.readiness === capability.readiness
+          && entry.chatBinding === capability.chatBinding);
+      if (!SERVER_SYMBOL_PATTERN.test(action.executor) && !merchantExecutor && !chatExecutor && !invitationExecutor && !incumbentExecutor)
         findings.push(`${capability.key}: action executor must be an exact public server symbol`);
       if (MUTATING.has(action.classification)) {
         if (action.approvalAuthority !== "chat-canonical") findings.push(`${capability.key}: mutating actions require chat-canonical approval authority`);

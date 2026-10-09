@@ -28,6 +28,54 @@
  *   node scripts/ci/action-risk-lint.mjs --self-test
  */
 import fs from "node:fs";
+import ts from "typescript";
+
+const RETIRED_OWNER_ONLY_CHAT_TOOLS = ["automation_set_grant", "automation_set_state"];
+const astNodes = (root, predicate) => {
+  const found = [];
+  const visit = node => { if (predicate(node)) found.push(node); ts.forEachChild(node, visit); };
+  visit(root); return found;
+};
+const compactNode = node => ts.createPrinter({ removeComments: true })
+  .printNode(ts.EmitHint.Unspecified, node, node.getSourceFile()).replace(/\s/g, "");
+
+/** Retained policies protect historical/injected calls, never grant a model tool.
+ * Admit only the two retired keys, under the actual imported policy, unconditional
+ * clamp, off brake and early owner-only continue before approval/dispatch. */
+export function retainedOwnerOnlyDenials(src) {
+  const source = ts.createSourceFile(CHAT, src, ts.ScriptTarget.Latest, true);
+  if (source.parseDiagnostics.length) return [];
+  const imports = source.statements.filter(ts.isImportDeclaration)
+    .filter(n => n.moduleSpecifier.text === "../_shared/action-risk.ts")
+    .flatMap(n => n.importClause?.namedBindings && ts.isNamedImports(n.importClause.namedBindings)
+      ? n.importClause.namedBindings.elements.filter(e => !e.propertyName).map(e => e.name.text) : []);
+  if (!["classifyAction", "clampLaneByRisk", "mutatingTools"].every(n => imports.includes(n))) return [];
+  const gates = astNodes(source, n => ts.isIfStatement(n)
+    && compactNode(n.expression) === 'MUTATING_TOOLS.has(tc.function.name)&&!CRM_COMMAND_TOOL_NAMES.has(tc.function.nameasany)');
+  if (gates.length !== 1 || !ts.isBlock(gates[0].thenStatement)) return [];
+  const statements = gates[0].thenStatement.statements;
+  const indexOf = value => statements.findIndex(n => compactNode(n) === value);
+  const clampIndex = indexOf('constclampedMode=clampLaneByRisk(autoModeas"auto"|"confirm"|"off",tc.function.name);');
+  const clampApply = statements.findIndex(n => ts.isIfStatement(n)
+    && compactNode(n.expression) === 'clampedMode!==autoMode' && !n.elseStatement
+    && ts.isBlock(n.thenStatement) && n.thenStatement.statements.some(s => compactNode(s) === 'autoMode=clampedMode;'));
+  const offIndex = statements.findIndex(n => ts.isIfStatement(n) && compactNode(n.expression) === 'autoMode==="off"'
+    && !n.elseStatement && ts.isBlock(n.thenStatement) && n.thenStatement.statements.length > 0 && ts.isContinueStatement(n.thenStatement.statements.at(-1)));
+  const confirmIndex = statements.findIndex(n => ts.isIfStatement(n) && compactNode(n.expression) === 'autoMode==="confirm"');
+  if (!(clampIndex >= 0 && clampApply > clampIndex && offIndex > clampApply && confirmIndex > offIndex)) return [];
+  const confirm = statements[confirmIndex];
+  if (!ts.isBlock(confirm.thenStatement) || !confirm.elseStatement
+    || compactNode(confirm.elseStatement) !== '{approvalChannel.set(tc.id,studioLifted?"studio_session_auto":"standing_autonomy_setting");}') return [];
+  const approvalStatements = confirm.thenStatement.statements;
+  if (!approvalStatements[0] || compactNode(approvalStatements[0]) !== 'constrisk=classifyAction(tc.function.name);') return [];
+  const denial = approvalStatements[2];
+  if (!denial || !ts.isIfStatement(denial) || compactNode(denial.expression) !== 'risk==="owner_only"'
+    || denial.elseStatement || !ts.isBlock(denial.thenStatement)
+    || !denial.thenStatement.statements.length || !ts.isContinueStatement(denial.thenStatement.statements.at(-1))) return [];
+  const branches = astNodes(source, n => ts.isIfStatement(n)
+    && compactNode(n.expression) === 'tc.function.name==="automation_set_grant"||tc.function.name==="automation_set_state"');
+  return branches.length === 1 && branches[0].pos > gates[0].end ? [...RETIRED_OWNER_ONLY_CHAT_TOOLS] : [];
+}
 
 const POLICY = "supabase/functions/_shared/action-risk.ts";
 const CHAT = "supabase/functions/paige-ai-chat/index.ts";
@@ -65,6 +113,7 @@ export function parseChat(src, importedTools = []) {
     // discovered later by a reviewer who happens to look.
     hasHandList: /const MUTATING_TOOLS = new Set<string>\(\[/.test(src),
     gatesOnPolicy: /const MUTATING_TOOLS = mutatingTools\(\);/.test(src),
+    retainedOwnerOnlyDenials: retainedOwnerOnlyDenials(src),
   };
 }
 
@@ -208,6 +257,10 @@ export function findings({ policy, exemptions, chat, verbSourceMatches, mcpCanon
   const out = [];
   const classified = new Map(policy.map((p) => [p.tool, p.risk]));
   const exempt = new Set(exemptions.map((e) => e.tool));
+  for (const tool of chat.retainedOwnerOnlyDenials ?? []) {
+    if (RETIRED_OWNER_ONLY_CHAT_TOOLS.includes(tool) && classified.get(tool) !== "owner_only")
+      out.push(`${tool} retains a historical/injected Chat denial and must retain its owner_only classification.`);
+  }
   // Explicit mutating contracts are stronger evidence than a verb-shaped tool name.
   for (const tool of new Set(requiredClassifications)) {
     if (!classified.has(tool)) out.push(`${tool} is a canonical governed mutation but has no classification in ${POLICY}.`);
@@ -232,11 +285,15 @@ export function findings({ policy, exemptions, chat, verbSourceMatches, mcpCanon
   //    declares them indirectly, by mapping a tool onto a canonical key. Either reference keeps a
   //    classification alive — an entry with neither is the line nobody deletes.
   const declared = new Set([...chat.declared, ...mcpCanonicals, ...governedEdgeActions]);
-  for (const { tool } of policy) {
+  for (const { tool, risk } of policy) {
     // Containment tombstones are deliberately classified while not being dispatched, so a future
     // accidental re-registration cannot inherit read semantics. They are named here rather than
     // silently tolerated.
     if (tool === "marketplace_install" || tool === "marketplace_uninstall" || tool === "n8n_delete_workflow") continue;
+    if (RETIRED_OWNER_ONLY_CHAT_TOOLS.includes(tool)) {
+      if (declared.has(tool)) out.push(`${tool} is a retired owner-only Chat path and must not be advertised to a model.`);
+      if (risk === "owner_only" && !declared.has(tool) && chat.retainedOwnerOnlyDenials?.includes(tool)) continue;
+    }
     if (!declared.has(tool)) out.push(`${tool} is classified in ${POLICY} but the handler no longer declares it — remove the entry, or the policy fills with lines nobody reads.`);
   }
 
@@ -349,6 +406,30 @@ function selfTest() {
   bad += ok("a ghost classification is caught",
     findings({ ...base, policy: [...base.policy, { tool: "gone_create_thing", risk: "ordinary", reason: "a sufficiently long reason" }] })
       .some((f) => f.includes("gone_create_thing")));
+  const retainedSource = fs.readFileSync(CHAT, "utf8");
+  const retained = parseChat(retainedSource);
+  for (const tool of RETIRED_OWNER_ONLY_CHAT_TOOLS) {
+    const policy = [...base.policy, { tool, risk: "owner_only", reason: "Retained denial for historical or injected calls." }];
+    const chat = { ...base.chat, retainedOwnerOnlyDenials: retained.retainedOwnerOnlyDenials };
+    bad += ok(`${tool} has a real retained early owner-only denial`, retained.retainedOwnerOnlyDenials.includes(tool));
+    bad += ok(`${tool} retained denial keeps its owner-only policy`, !findings({ ...base, policy, chat }).some(f => f.includes(tool)));
+    bad += ok(`${tool} missing denial is not a ghost exemption`, findings({ ...base, policy, chat: { ...chat, retainedOwnerOnlyDenials: [] } }).some(f => f.includes(tool)));
+    bad += ok(`${tool} ordinary downgrade is refused`, findings({ ...base, policy: [...base.policy, { tool, risk: "ordinary", reason: "Retained denial for historical or injected calls." }], chat }).some(f => f.includes(tool)));
+    bad += ok(`${tool} high downgrade is refused`, findings({ ...base, policy: [...base.policy, { tool, risk: "high", reason: "Retained denial for historical or injected calls." }], chat }).some(f => f.includes(tool)));
+    bad += ok(`${tool} policy deletion is refused`, findings({ ...base, chat }).some(f => f.includes("must retain its owner_only classification")));
+    bad += ok(`${tool} cannot be re-advertised`, findings({ ...base, policy, chat: { ...chat, declared: [...base.chat.declared, tool] } }).some(f => f.includes("must not be advertised")));
+  }
+  for (const [label, from, to] of [
+    ["canonical policy import", '../_shared/action-risk.ts', '../_shared/fake-risk.ts'],
+    ["unconditional class clamp", 'clampLaneByRisk(autoMode as', 'fakeLane(autoMode as'],
+    ["clamp assignment", 'autoMode = clampedMode;', 'autoMode = "auto";'],
+    ["off brake", 'if (autoMode === "off") {', 'if (false) {'],
+    ["owner refusal", 'if (risk === "owner_only") {', 'if (false) {'],
+    ["retained dispatcher", 'tc.function.name === "automation_set_grant" || tc.function.name === "automation_set_state"', 'false'],
+  ]) {
+    if (!retainedSource.includes(from)) throw Error(`retained owner-only mutation target absent: ${label}`);
+    bad += ok(`retained owner-only proof refuses changed ${label}`, retainedOwnerOnlyDenials(retainedSource.replace(from, to)).length === 0);
+  }
   bad += ok("a key only the MCP door points at is NOT a ghost",
     !findings({ ...base, policy: [...base.policy, { tool: "mcp_only_create_thing", risk: "ordinary", reason: "a sufficiently long reason" }],
       mcpCanonicals: ["mcp_only_create_thing"] })

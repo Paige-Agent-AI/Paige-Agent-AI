@@ -566,15 +566,36 @@ if (process.argv.includes("--self-test")) {
   // A guard nobody proved can fail is theatre. This drives the shipped code path, not a fixture.
   if (fs.existsSync(BASELINE)) {
     const real = JSON.parse(fs.readFileSync(BASELINE, "utf8"));
-    const victim = real.find((e) => e.kind === "mutating");
+    const victim = real.find((e) => e.kind === "mutating") ?? real[0];
     const tmp = path.join(fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "capdecl-")), "baseline.json");
-    fs.writeFileSync(tmp, JSON.stringify(real.filter((e) => e.tool !== victim.tool), null, 2));
-    const run = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      encoding: "utf8", env: { ...process.env, __CAPDECL_LOADER: "", CAPABILITY_DECLARATION_BASELINE: tmp },
-    });
-    const out = `${run.stdout}${run.stderr}`;
-    ok(`END-TO-END NEGATIVE: the real check exits non-zero and names "${victim.tool}" when its baseline entry is removed`,
-      run.status !== 0 && out.includes(victim.tool), `exit=${run.status}\n${out.slice(0, 600)}`);
+    if (victim) {
+      fs.writeFileSync(tmp, JSON.stringify(real.filter((e) => e.tool !== victim.tool), null, 2));
+      const run = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+        encoding: "utf8", env: { ...process.env, __CAPDECL_LOADER: "", CAPABILITY_DECLARATION_BASELINE: tmp },
+      });
+      const out = `${run.stdout}${run.stderr}`;
+      ok(`END-TO-END NEGATIVE: the real check exits non-zero and names "${victim.tool}" when its baseline entry is removed`,
+        run.status !== 0 && out.includes(victim.tool), `exit=${run.status}\n${out.slice(0, 600)}`);
+    }
+
+    // Once the baseline has no write debt (or is empty), still drive a REAL
+    // mutating registration negative. A registered mutation parked in the legacy
+    // baseline must fail; this needs no product file or runtime policy mutation.
+    const { PAIGE_SPINE_CAPABILITIES } = await import(pathToFileURL(REGISTRY).href);
+    const registeredMutation = PAIGE_SPINE_CAPABILITIES.find(cap => cap.action?.chatTool
+      && cap.action.classification !== "read" && !real.some(row => row.tool === cap.action.chatTool));
+    if (!registeredMutation) {
+      ok("END-TO-END NEGATIVE has a real registered mutation to test", false);
+    } else {
+      const tool = registeredMutation.action.chatTool;
+      fs.writeFileSync(tmp, JSON.stringify([...real, { tool, kind: "mutating" }], null, 2));
+      const run = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+        encoding: "utf8", env: { ...process.env, __CAPDECL_LOADER: "", CAPABILITY_DECLARATION_BASELINE: tmp },
+      });
+      const out = `${run.stdout}${run.stderr}`;
+      ok(`END-TO-END NEGATIVE: the real check rejects registered mutation "${tool}" parked in the baseline`,
+        run.status !== 0 && out.includes(tool), `exit=${run.status}\n${out.slice(0, 600)}`);
+    }
 
     // …and the positive control, so the negative above proves something: unmodified baseline passes.
     const clean = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {

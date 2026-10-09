@@ -1,5 +1,29 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+PR #1878 read-only original discovery is MERGED (`35fbb19aa8892862f8dfd5c34325fcf8565141c7`), DEPLOYED and production catalog/source readback PASS. Independent SHIP on `e3873d6a5` and eleven required exact-head checks passed. Migration15/function body/ACL, Chat v374 changed sources and exact-merge Vercel READY are verified; full evidence is in R0's original-operation discovery release entry and PR #1878. Rollout remains inactive/DRAINING. Genuine signed-in Solo/Live and owner acceptance remain UNVERIFIED; automatic settlement and consequential continuation remain disabled. The candidate and failing-first notes below preserve the implementation history.
+
+## 2026-10-08 authenticated read-acceptance driver preparation
+
+`scripts/proof/int304-authenticated-observation.mjs <explicit-QA-fixture.json>` uses the existing
+synthetic `PROOF_EMAIL`/`PROOF_PASSWORD`/`PROOF_ANON_KEY` injection pattern (existing `LIVE_DRIVE`
+email/password names also accepted). Identity/QA owns provisioning and approved secure injection;
+this runner searches no secret stores and creates no account, thread, intent, operation or artifact.
+Without an explicit fixture it reports BLOCKED before credential/environment or network use.
+
+The fixture contains only pinned actorId, tenantId and a bounded list of existing thread/intent
+and effect/work references, named expected observations and expected held-executor state. It grants
+no permission. A genuine session is minted with the public key on the fixed canonical project;
+service keys/tokens are rejected. Server user/current-tenant reads surround every status-only
+request, and each case is reread. Session logout is local to this fresh proof session. Neither
+activation nor executor admission, release, retry, effect dispatch or fixture mutation is called.
+Output contains bounded case states, not passwords, tokens, account email or raw business payloads.
+
+Eleven recording-double controls PASS, covering actor/tenant drift, service keys/sessions, uncertainty,
+unavailable durable evidence, replay reads and held ownership. The returned-service-token control failed first (an unauthorized logout request), then passed after validation before token assignment. These are driver regressions, not
+authenticated production proof. A production PASS of unavailable-only cases establishes only those
+negative read contracts; positive authoritative outcomes/artifacts require their own fixture cases.
+The driver always reports Solo UI and security clearance UNVERIFIED and continuation NOT_RUN.
+It cannot establish C4f Chat/Live acceptance or waive INT-346. No production drive occurred here.
 ## 2026-10-09 automatic original-operation discovery in read-only status
 
 Independent review of0c716d88 found a freshness gap after the receipt/catalogue awaits: the incumbent original-operation RPC does not require current unarchived/latest-intent authority. A real loaded-handler late-revocation control returned confirmed_success (RED). The automatic path now revalidates canonical discovery equality after classification and withholds the verified result when membership/tenant/archive/intent authority changes. Existing explicit-id historical readback retains its original contract, granting no execution or continuation. Eleven automatic-status scenarios now PASS; fresh non-author review is required on the fix head.

@@ -217,6 +217,7 @@ import { buildTeamAuthorityBlock } from "../_shared/paige-spine/domains/teamAuth
 import { buildSocialPresenceBlock } from "../_shared/paige-spine/domains/socialPresenceChatEvidence.ts";
 import { loadN8nReadinessForChat, renderN8nReadinessForChat } from "../_shared/paige-spine/domains/n8nChatEvidence.ts";
 import { loadIntegrationsMindEvidence, renderIntegrationsMindEvidence } from "../_shared/paige-spine/domains/integrationsMindEvidence.ts";
+import { loadResearchHistoryContext, renderResearchHistoryContext } from "../_shared/research-history-context.ts";
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
@@ -5468,6 +5469,18 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const integrationsMind = personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
     const integrationsMindBlock = integrationsMind && integrationsMind.status === "recorded" ? renderIntegrationsMindEvidence(integrationsMind) : "";
 
+    // Original C6: bounded prior Research metadata from its existing caller-JWT
+    // workspace read. This is historical reference data, never findings or proof
+    // of this objective's completion. Client and Operator seats receive no read.
+    const researchHistory = personaCtx.tenant_id && callerTier === "tenant"
+      ? await loadResearchHistoryContext(supabaseClient, { actorId: user.id, tenantId: personaCtx.tenant_id })
+      : null;
+    const researchHistoryBlock = researchHistory?.status === "degraded"
+      ? "PRIOR RECORDED RESEARCH UNAVAILABLE: This turn could not verify prior research in the active workspace. Do not infer that no prior research exists, invent findings, or use this missing context as permission to execute or resume work. Mention the limitation only when it matters to the objective."
+      : researchHistory ? renderResearchHistoryContext(researchHistory) : "";
+    // The fixed degraded notice carries no workspace facts; actual history does.
+    if (researchHistory?.status === "available" && researchHistoryBlock) markProtectedLate("research_history_context");
+
     // C0a — the capability block holds its place in the prompt here (after the context blocks, before
     // the operating core) but is FILLED later, once the tool surface for this turn is final (Studio
     // scope, funding, marketplace): what PAIGE is told she can do is projected from exactly the tools
@@ -5546,6 +5559,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(businessMissionContextBlock ? [{ role: "system", content: businessMissionContextBlock }] : []),
       ...(n8nReadinessBlock ? [{ role: "system", content: n8nReadinessBlock }] : []),
       ...(integrationsMindBlock ? [{ role: "system", content: integrationsMindBlock }] : []),
+      ...(researchHistoryBlock ? [{ role: "system", content: researchHistoryBlock }] : []),
       ...(spineEvidenceBlock ? [{ role: "system", content: spineEvidenceBlock }] : []),
       // Capability status sits LAST among the context blocks, right before the operating core, so
       // "what can you do here?" is answered from the live, workspace-resolved manifest that OVERRIDES
@@ -8005,36 +8019,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   category: { type: "string", description: "Optional grouping, e.g. 'sales' or 'onboarding'." }
                 },
                 required: ["name", "trigger_key", "steps"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "automation_set_grant",
-              description: "Change how much of one process the operator lets you handle alone: 'auto' (run it without asking), 'confirm' (draft it and wait for their yes), or 'off'. This is THEIR decision about YOUR autonomy, so it always needs their explicit say-so first. Report back what the process will ACTUALLY do afterwards — the answer can be more restrictive than what they asked for, and if it is you say so plainly rather than letting them believe it's running unattended.",
-              parameters: {
-                type: "object",
-                properties: {
-                  automation_id: { type: "string", description: "Which process, from automation_list." },
-                  lane: { type: "string", enum: ["auto", "confirm", "off"], description: "How much they're letting you do on your own." }
-                },
-                required: ["automation_id", "lane"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "automation_set_state",
-              description: "Turn a process on ('live'), pause it, or put it back to a draft. Pausing keeps it exactly as it is; it just stops running.",
-              parameters: {
-                type: "object",
-                properties: {
-                  automation_id: { type: "string", description: "Which process, from automation_list." },
-                  state: { type: "string", enum: ["live", "paused", "draft"], description: "live runs it, paused keeps but stops it, draft returns it to being edited." }
-                },
-                required: ["automation_id", "state"]
               }
             }
           },

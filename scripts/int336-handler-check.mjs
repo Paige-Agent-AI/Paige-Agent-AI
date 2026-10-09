@@ -87,3 +87,27 @@ for (const valid of [true,false]) {
  assert.equal(statusRec.rpc.filter(x=>x.name==='read_paige_durable_observation').every(x=>x.client==='jwt'),true);
 }
 console.log('PASS durable observation status: caller-bound read during DRAINING, no consumption/activation/release');
+
+// Normal typed status supplies no effect id: only protected canonical discovery may select it.
+for(const variant of ['success','missing-terminal','ambiguous','foreign-tenant','changed-reference','revoked-final','forged-reference','stale-version','lost-receipt']) {
+ let discoveries=0;
+ const statusRec=scenario('accepted',{tables:{pipeline_command_results:variant==='lost-receipt'?[]:[receipt]},rpcs:{
+  paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+  current_user_tenant_id:{data:variant==='foreign-tenant'?id(99):tenant,error:null},
+  find_pipeline_metadata_original_effect:args=>{assert.deepEqual(args,{_thread:thread,_intent:intent});discoveries++;return{data:['missing-terminal','ambiguous'].includes(variant)?null:variant==='forged-reference'?{effectId:effect,settled:true}:variant==='changed-reference'&&discoveries>1?id(99):effect,error:variant==='revoked-final'&&discoveries>1?{message:'denied'}:null};},
+  read_pipeline_metadata_original:args=>({data:args._effect===effect?original:null,error:null}),
+  get_pipeline_catalogue:{data:{items:[{id:pipeline,version:variant==='stale-version'?4:3,name:'Updated',description:null}]},error:null},
+  paige_chat_interactive_executor_v2:{data:{executor:intent,terminal:true},error:null},
+ }});
+ const response=await capturedHandler()(req({interactive:{kind:'status'}}));const body=await response.json();
+ assert.equal(response.status,200);assert.equal(body.executor_active,true);assert.equal(body.settled,false);
+ if(variant==='success')assert.deepEqual(body.original_operation,{outcome:'confirmed_success',verified_readback:true,pipeline_id:pipeline,version:3});
+ else if(['stale-version','lost-receipt'].includes(variant))assert.deepEqual(body.original_operation,{outcome:'outcome_unknown',verified_readback:false});
+ else assert.equal(body.original_operation,undefined,'no authoritative original identity must not fabricate an observation');
+ if(variant==='success')assert.equal(discoveries,2);
+ assert.equal(statusRec.inserts.length,0);assert.equal(statusRec.functions.length,0);
+ assert.equal(statusRec.rpc.some(x=>/begin_v2|settle|turn_append|transition|prepare|submit|claim/.test(x.name)),false);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2').every(x=>x.args.p_operation==='state'),true);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='find_pipeline_metadata_original_effect').every(x=>x.client==='jwt'),true);
+}
+console.log('PASS automatic original-operation observation: ordinary typed status, DRAINING, authoritative identity only, ambiguity/refusal/race unknown, no release or effect');

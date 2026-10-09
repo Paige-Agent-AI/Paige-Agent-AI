@@ -137,10 +137,11 @@ VALUES
   ('c1000000-0000-0000-0000-000000004111', '+15550000004', 'PNint345multi0000000000000002',
    '{"voice": true}'::jsonb, 'active', true,
    (SELECT id FROM public.tenant_twilio_subaccounts WHERE tenant_id = 'c1000000-0000-0000-0000-000000004111'), 'marketplace', now()),
-  -- WrongSub: primary bound to ANOTHER tenant's subaccount.
+  -- WrongSub: primary not bound to THIS workspace's subaccount (NULL — unbound, a real
+  -- drift shape; the classifier only requires subaccount_id <> the active subaccount's id).
   ('c1000000-0000-0000-0000-000000005111', '+15550000005', 'PNint345wrong0000000000000001',
    '{"voice": true}'::jsonb, 'active', true,
-   (SELECT id FROM public.tenant_twilio_subaccounts WHERE tenant_id = 'c1000000-0000-0000-0000-000000007111'), 'marketplace', now()),
+   NULL, 'marketplace', now()),
   -- NoVoice: primary without voice capability (and, for the binding fact, no SID).
   ('c1000000-0000-0000-0000-000000006111', '+15550000006', NULL,
    '{"voice": false}'::jsonb, 'active', true,
@@ -197,14 +198,14 @@ SELECT is(pg_temp.as_calling('c1000000-0000-0000-0000-000000006001'::uuid, 'reas
 SELECT throws_ok(
   $$ SELECT pg_temp.as_calling('c1000000-0000-0000-0000-000000008001'::uuid, 'code') $$,
   '42501',
-  'a plain member cannot read the readiness record'
+  'COMMS_READINESS_FORBIDDEN'
 );
 
 -- ── The additive contract: existing keys still present alongside calling ──
 SELECT set_config('request.jwt.claims', jsonb_build_object('sub', 'c1000000-0000-0000-0000-000000001001', 'role', 'authenticated')::text, true);
-SELECT has(public.tenant_comms_readiness(), 'can_send_sms', 'existing can_send_sms key preserved');
-SELECT has(public.tenant_comms_readiness(), 'subaccount', 'existing subaccount key preserved');
-SELECT has(public.tenant_comms_readiness(), 'calling', 'the new calling key present');
+SELECT ok(public.tenant_comms_readiness() ? 'can_send_sms', 'existing can_send_sms key preserved');
+SELECT ok(public.tenant_comms_readiness() ? 'subaccount', 'existing subaccount key preserved');
+SELECT ok(public.tenant_comms_readiness() ? 'calling', 'the new calling key present');
 SELECT performs_ok('SELECT public.tenant_comms_readiness()', 400, 'readiness stays fast (<400ms)');
 SELECT set_config('request.jwt.claims', '{}', true); -- valid empty JSON: unset custom GUCs read as '' and the credential guard casts to jsonb
 

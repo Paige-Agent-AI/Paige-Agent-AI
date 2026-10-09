@@ -71,7 +71,7 @@ for(const [label,path,mutate]of [
 for(const [label,mutate]of [
  ['unattributed or malformed tenant admitted',s=>s.replace('if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) return false;','if (false) return false;')],
  ['explicit empty cohort kill switch bypassed',s=>s.replace('if (cohort !== null && !cohort.includes(tenantId.toLowerCase())) return false;','if (false) return false;')],
- ['default class scope widened',s=>s.replace('return listed.length ? listed : ["operational"];','return listed.length ? listed : ["cheap", "operational", "frontier"];')],
+ ['default class scope changed',s=>s.replace('return listed.length ? listed : ["cheap", "operational", "frontier"];','return listed.length ? listed : ["operational"];')],
  ['terminal budget stop guard removed',s=>s.replace('if ((e as { code?: unknown })?.code === "budget_exceeded") {','if (false) {')],
 ])test(`rejects reviewed Fabric cutover: ${label}`,()=>{
  const path='supabase/functions/_shared/model-fabric.ts',raw=sources.get(path),changed=mutate(raw);

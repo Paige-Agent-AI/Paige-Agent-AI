@@ -494,7 +494,7 @@ const SOURCES = {
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
   "supabase/functions/_shared/agreements/token.ts": "793e1c0a521fc0ea3b39e5761f87cdad7fee67a73b2110ac1f2963992b20eeea",
-  "supabase/functions/_shared/model-fabric.ts": "e259092a4b2ed069ef0d08d740666a61cfd2b66dbee7d6d46fff77f1b26e369a",
+  "supabase/functions/_shared/model-fabric.ts": "6c442b661864089c33ac4f8db953e21f4ba3f7a847a5f0e5de418e971dde0ac4",
   "supabase/functions/_shared/llm-trace.ts": "af062627f61ec1bf2702f69b234c9cee8ce0bcb5010fb3faafcfc2ebbdfc4a13",
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",

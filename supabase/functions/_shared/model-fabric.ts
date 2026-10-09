@@ -18,7 +18,8 @@
 // downstream, unchanged.
 //
 // OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, admission is
-// production-wide under the class scope (operational; the env stages or kills).
+// production-wide under the class scope (all three classes since the 2026-10-09 completion;
+// the env stages or kills).
 
 import { chatCompletionCompat, gatewayCompat, messagesCarryDocument, resolvedClaudeModel, CLAUDE_REASONING, type ClaudeTier } from "./claude.ts";
 import { NeedsConfigError } from "./provider-types.ts";
@@ -37,8 +38,10 @@ import { CLASS_POLICY, mayFallback, type CognitiveClass, type FabricProvider, ty
 // cheap, Sol first for operational, Astra first for frontier; Anthropic Sonnet 5.5 the
 // operational/frontier fallback; the open pool + Haiku remain the cheap fallbacks. The prior
 // `false` was the temporary release posture, preserved historically below. Activation is staged by
-// the cohort gate (validation cohort first, then the production cutover PR lifts it) and remains
-// class-scoped (operational only until each class's own validation passes).
+// the cohort gate and remains class-scoped: operational went production-wide first (validated live
+// 2026-10-08); the 2026-10-09 owner green light ("finish end to end") completed the policy — the
+// class scope widens to all three, with the live validation readback for cheap (Luna) and frontier
+// (Astra) recorded in EVIDENCE.md as the closing step of this same release.
 export const OPENAI_CHAT_ENABLED = true;
 
 // ── THE COHORT GATE under the owner-directed flag ────────────────────────────────────────────────
@@ -51,18 +54,18 @@ export const OPENAI_CHAT_ENABLED = true;
 //                          admits NOBODY — the no-deploy kill switch. NOTE: clearing/unsetting the
 //                          env does NOT stop admission — it RESTORES production-wide. The kill
 //                          switch is setting the env to an empty value, or flipping the flag (a deploy).
-//   OPENAI_CANARY_CLASSES  comma list from cheap|operational|frontier (default: "operational")
+//   OPENAI_CANARY_CLASSES  comma list from cheap|operational|frontier
+//                          (default: all three — the completed owner-directed policy)
 //
 // The values are read per call (never cached) so both controls act on the next call.
 
 const CANARY_TENANTS_ENV = "OPENAI_CANARY_TENANTS";
 /**
  * The CUTOVER (owner directive, 2026-10-08): admission is PRODUCTION-WIDE — every well-formed
- * tenant, in the class scope (operational only until each class's own validation). The synthetic
- * QA validation cohort was the temporary pre-cutover default; the live validation drive passed
- * (real Sol routing, tool rounds, budget stop, telemetry — EVIDENCE.md) and this is its lifting.
- * The env remains the staged control: an explicit list restricts; an explicit empty value is the
- * kill switch.
+ * tenant, in the class scope. The synthetic QA validation cohort was the temporary pre-cutover
+ * default; the live validation drive passed (real Sol routing, tool rounds, budget stop,
+ * telemetry — EVIDENCE.md) and this is its lifting. The env remains the staged control: an explicit
+ * list restricts; an explicit empty value is the kill switch.
  */
 const CANARY_CLASSES_ENV = "OPENAI_CANARY_CLASSES";
 const CANARY_CLASS_SET = new Set(["cheap", "operational", "frontier"]);
@@ -86,13 +89,15 @@ export function openAiCanaryTenants(): string[] | null {
 }
 
 /**
- * The classes the canary admits OpenAI candidates for. Default: operational only (the Sol
- * evaluation). A SET value with ZERO valid tokens (a pure typo) falls back to this same default —
- * never wider — and the cohort/master gates still bound everything.
+ * The classes the canary admits OpenAI candidates for. Default: all three — the completed
+ * owner-directed policy (operational went production-wide 2026-10-08 after its live validation;
+ * the 2026-10-09 green light completed cheap and frontier, whose live validation readback closes
+ * this release in EVIDENCE.md). A SET value with ZERO valid tokens (a pure typo) falls back to
+ * this same default — never wider — and the cohort/master gates still bound everything.
  */
 export function openAiCanaryClasses(): string[] {
   const listed = csvEnv(CANARY_CLASSES_ENV).map((c) => c.toLowerCase()).filter((c) => CANARY_CLASS_SET.has(c));
-  return listed.length ? listed : ["operational"];
+  return listed.length ? listed : ["cheap", "operational", "frontier"];
 }
 
 /**

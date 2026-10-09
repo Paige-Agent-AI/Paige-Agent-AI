@@ -77,6 +77,7 @@ globalThis.fetch = async (url, init) => {
     }
     return new Response(sse(ANTHROPIC_TOOL_ROUND), { status: 200, headers: { "content-type": "text/event-stream" } });
   }
+  if (u.startsWith("https://api.openai.com/")) return openaiFetch(url, init);
   throw new Error(`fabric-check: unexpected network call to ${u}`);
 };
 const openaiFetch = async (url, init) => {
@@ -87,7 +88,11 @@ const openaiFetch = async (url, init) => {
     return new Response(JSON.stringify({ error: { type: openaiPlan.type, code: openaiPlan.code ?? null, message: "redacted" } }), { status: openaiPlan.status, headers: { "content-type": "application/json" } });
   }
   if (req.stream !== true) {
-    return new Response(JSON.stringify({ id: "resp_ns", model: req.model, status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: "synthesis" }] }], usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
+    const isClassifier = typeof req.instructions === "string" && req.instructions.includes("You label one message sent to PAIGE");
+    const text = isClassifier
+      ? JSON.stringify({ intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 })
+      : "synthesis";
+    return new Response(JSON.stringify({ id: "resp_ns", model: req.model, status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text }] }], usage: { input_tokens: 9, output_tokens: 7 } }), { status: 200, headers: { "content-type": "application/json" } });
   }
   return new Response(sse(openaiToolRound(`${req.model}-2026-09-30`)), { status: 200, headers: { "content-type": "text/event-stream" } });
 };
@@ -379,8 +384,11 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const { classifyTurn, TURN_CLASSIFY_DEADLINE_MS } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
   const CLASSIFY_TRACE = { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a1", agent_id: "paige-ai-chat", job_kind: "turn-classify" };
 
-  // D1 — routing parity: the cheap class serves Anthropic's cheap tier, the classifier's own shape
-  // rides the wire, the route records the fabric job, and the TRACE keeps the caller's tag.
+  // D1 — routing parity: under the completed policy the cheap class serves LUNA first. The
+  // classifier's shape rides the Responses wire (instructions, 120 output tokens); its temperature-0
+  // knob is deliberately DROPPED here — the adapter's pinned rule sends no sampling to a GPT-6
+  // reasoning model (openai-responses-check 2.4). Determinism rests on the closed-enum parse, the
+  // conservative null, and the deadline. The TRACE keeps the caller's tag.
   setScenario({});
   calls.length = 0;
   const recD = recorder();
@@ -389,11 +397,11 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const d1row = recD.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeD).at(-1)?.row;
   ok(cls !== null && typeof cls.confidence === "number",
     `D1 the classifier answers through the fabric (intent ${cls?.intent})`);
-  ok(calls.length === 1 && calls[0].provider === "anthropic" && String(calls[0].req.model).includes("haiku"),
-    `D1 the cheap class serves the cheap tier — provider parity (${calls[0]?.req?.model})`);
-  ok(calls[0].req.system?.includes("You label one message sent to PAIGE") && calls[0].req.max_tokens === 120 && calls[0].req.temperature === 0,
-    "D1 the classifier's own shape rides the wire (system, 120 tokens, temperature 0)");
-  ok(d1row?.job_kind === "turn-classify" && d1row?.provider === "anthropic",
+  ok(calls.length === 1 && calls[0].provider === "openai" && String(calls[0].req.model).includes("gpt-6-luna"),
+    `D1 the cheap class serves Luna first — provider parity (${calls[0]?.req?.model})`);
+  ok(String(calls[0].req.instructions).includes("You label one message sent to PAIGE") && calls[0].req.max_output_tokens === 120 && !("temperature" in calls[0].req),
+    "D1 the classifier's shape rides the wire; sampling is never sent to a reasoning model (2.4 rule)");
+  ok(d1row?.job_kind === "turn-classify" && d1row?.provider === "openai",
     `D1 the trace keeps the caller's job_kind tag (${d1row?.job_kind}) — no trace-history break`);
 
   // D2 — the known ceiling, under the ESTABLISHED contract: the classifier is a CHEAP-band call,
@@ -411,8 +419,8 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const beforeD2 = recD2.inserts.filter((i) => i.table === "paige_llm_trace").length;
   const overCeiling = await classifyTurn("thanks so much", null, { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a2", agent_id: "paige-ai-chat", job_kind: "turn-classify" });
   const gateRows = recD2.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeD2);
-  ok(overCeiling !== null && calls.length === 1,
-    `D2 over a known ceiling the cheap-band classifier continues UNDER the established contract (answered=${overCeiling !== null})`);
+  ok(overCeiling !== null && calls.length === 1 && calls[0].provider === "openai",
+    `D2 over a known ceiling the cheap-band classifier continues UNDER the established contract, on the Luna leg (answered=${overCeiling !== null})`);
   ok(gateRows.length === 1 && gateRows[0].row?.doctrine_gate_hits?.budget != null && gateRows[0].row?.job_kind === "turn-classify",
     `D2 the gate hit is recorded on the attributed row (rows=${gateRows.length}, hit=${JSON.stringify(gateRows[0]?.row?.doctrine_gate_hits)})`);
 
@@ -427,18 +435,19 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     "D3 accrual that cannot be read proceeds ungated — the router's established policy, unchanged");
 
   // D4 — the 1.2 s deadline: a transport slower than the bound is abandoned and the conservative
-  // null returns (the fetch is aborted through the seam's signal).
+  // null returns (the fetch is aborted through the seam's signal). The slow fake sits on the
+  // OPENAI leg — under the completed policy that is the classifier's primary (Luna).
   setScenario({});
   const realFetchD = globalThis.fetch;
   let observedSignal = null;
   globalThis.fetch = async (url, init) => {
-    if (String(url).startsWith("https://api.anthropic.com/")) {
+    if (String(url).startsWith("https://api.openai.com/")) {
       observedSignal = init?.signal ?? null;
       await new Promise((resolve, reject) => {
         const t = setTimeout(resolve, TURN_CLASSIFY_DEADLINE_MS + 1500);
         observedSignal?.addEventListener("abort", () => { clearTimeout(t); const e = new Error("aborted"); e.name = "AbortError"; reject(e); }, { once: true });
       });
-      return new Response(JSON.stringify({ id: "m", model: "claude-haiku-4-5", content: [{ type: "text", text: "{}" }], usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "content-type": "application/json" } });
+      return new Response(JSON.stringify({ id: "r", model: "gpt-6-luna", status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: "{}" }] }], usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "content-type": "application/json" } });
     }
     return realFetchD(url, init);
   };
@@ -713,11 +722,12 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 }
 
 
-// ── G. THE CUTOVER: production-wide admission, class-scoped, env-staged ─────────────────────────
-// The owner-directed flag is ON and admission is PRODUCTION-WIDE (the live validation drive passed
-// — EVIDENCE.md). The class scope stays operational only; the env is the staged control (a set list
-// restricts; an explicitly EMPTY value is the kill switch). No-spend: the OpenAI legs here run
-// against the harness recording fake.
+// ── G. THE CUTOVER COMPLETED: production-wide admission, all classes, env-staged ────────────────
+// The owner-directed flag is ON and admission is PRODUCTION-WIDE for ALL THREE classes (the
+// 2026-10-09 owner green light "finish end to end"; operational validated live 2026-10-08 — the
+// live readback for cheap and frontier closes this release in EVIDENCE.md). The env is the staged
+// control (a set list restricts tenants or narrows classes; an explicitly EMPTY tenant value is
+// the kill switch). No-spend: the OpenAI legs here run against the harness recording fake.
 {
   const ANY_TENANT = "9a7d0000-0000-4000-8000-0000000000b2";
   const OTHER_TENANT = "8b5c0000-0000-4000-8000-0000000000c3";
@@ -727,15 +737,19 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
   const admits = (t, c) => fabric.openAiCohortAdmits(t, c);
   ok(admits(ANY_TENANT, "operational") === true, "G2 ANY well-formed tenant is admitted for operational");
-  ok(admits(ANY_TENANT, "cheap") === false && admits(ANY_TENANT, "frontier") === false,
-    "G2 the scope is operational ONLY — cheap and frontier stay on the incumbent path until their own validation");
+  ok(admits(ANY_TENANT, "cheap") === true && admits(ANY_TENANT, "frontier") === true,
+    "G2 the default scope is the COMPLETED owner policy — all three classes admitted (Luna/Sol/Astra first)");
   ok(admits(null, "operational") === false && admits("not-a-uuid", "operational") === false,
     "G2 unattributed and malformed tenants are never admitted");
-  ENV.OPENAI_CANARY_CLASSES = "operational,cheap";
-  ok(admits(ANY_TENANT, "cheap") === true, "G2 an explicit class scope can widen (a reviewed decision)");
+  ENV.OPENAI_CANARY_CLASSES = "operational";
+  ok(admits(ANY_TENANT, "cheap") === false && admits(ANY_TENANT, "frontier") === false,
+    "G2 an explicit class scope can NARROW to a subset (a reviewed decision)");
   ENV.OPENAI_CANARY_CLASSES = "garbage,frontier";
   ok(admits(ANY_TENANT, "operational") === false && admits(ANY_TENANT, "frontier") === true,
     "G2 an explicit scope REPLACES the default (unknown class tokens ignored, never wider)");
+  ENV.OPENAI_CANARY_CLASSES = "garbage,,";
+  ok(admits(ANY_TENANT, "operational") === true && admits(ANY_TENANT, "cheap") === true && admits(ANY_TENANT, "frontier") === true,
+    "G2 a SET value with ZERO valid tokens falls back to the default (all three)");
   delete ENV.OPENAI_CANARY_CLASSES;
 
   setScenario({});
@@ -759,14 +773,21 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   const cheapCompletion = await fabric.fabricCompletion(
     { cognitive_class: "cheap", job: "turn_classify", messages: [{ role: "user", content: "x" }] },
     { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
-  ok(cheapCompletion.route.served?.provider === "anthropic" && String(cheapCompletion.route.served?.model).includes("haiku")
-    && cheapCompletion.route.attempts.some((a) => a.provider === "openai" && a.failure === "skipped_disabled"),
-    "G3 the CLASSIFIER stays on Haiku — cheap is not admitted until its own validation");
+  ok(cheapCompletion.route.served?.provider === "openai" && cheapCompletion.route.served?.model === "gpt-6-luna",
+    "G3 the CLASSIFIER serves Luna first — cheap is admitted under the completed policy");
   const opCompletion = await fabric.fabricCompletion(
     { cognitive_class: "operational", job: "research_unit_synthesis", messages: [{ role: "user", content: "x" }] },
     { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check" } });
   ok(opCompletion.ok && opCompletion.route.served?.provider === "openai" && opCompletion.route.served?.model === "gpt-6.1-sol",
     "G3 the completion seam serves Sol first for any tenant's operational job");
+  calls.length = 0;
+  const frontierStream = await fabric.fabricChatStream("frontier", { messages: [{ role: "user", content: "x" }], tools: [TOOL], tool_choice: "auto" },
+    { openaiFetch, trace: { tenant_id: ANY_TENANT, agent_id: "fabric-check", job_kind: "chat" } });
+  const readerF = frontierStream.body?.getReader();
+  while (readerF && !(await readerF.read()).done) { /* drain */ }
+  ok(frontierStream.ok && frontierStream.served?.provider === "openai" && frontierStream.served?.model === "gpt-6-astra"
+    && calls.every((c) => c.provider === "openai"),
+    `G3 ANY tenant's frontier round serves Astra first (${frontierStream.served?.provider}:${frontierStream.served?.model})`);
 
   ENV.OPENAI_CANARY_TENANTS = OTHER_TENANT.toUpperCase();
   ok(fabric.openAiCanaryTenants() !== null && admits(ANY_TENANT, "operational") === false && admits(OTHER_TENANT, "operational") === true,

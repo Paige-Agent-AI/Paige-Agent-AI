@@ -12,10 +12,14 @@ function responses(...bodies:unknown[]) {
  vi.stubGlobal('fetch',fetch);return fetch;
 }
 describe('canonical Twilio subaccount retirement',()=>{
- it.each(['suspended','closed'] as const)('uses the bound subaccount credential for calls while %s uses the parent management credential',async desired=>{
+ it.each(['suspended','closed'] as const)('uses valid call authority before and after %s while account management keeps its Main key',async desired=>{
   let state='active';const fetch=vi.fn(async(url:string,init:RequestInit)=>{
    if(url.includes('/Calls.json')){
-    if((init.headers as Record<string,string>).Authorization!==`Basic ${btoa(`${childKey.apiKeySid}:${childKey.authToken}`)}`)return new Response('{}',{status:401});
+    // Twilio rejects every child-credential request once suspension takes effect.
+    const auth=(init.headers as Record<string,string>).Authorization;
+    const parentAuth=`Basic ${btoa(`${parent}:${credentials.authToken}`)}`;
+    const childAuth=`Basic ${btoa(`${childKey.apiKeySid}:${childKey.authToken}`)}`;
+    if(auth!==parentAuth&&(state!=='active'||auth!==childAuth))return new Response('{}',{status:401});
     return new Response(JSON.stringify({calls:[]}));
    }
    expect((init.headers as Record<string,string>).Authorization).toBe(`Basic ${btoa(`${managementKey.apiKeySid}:${managementKey.authToken}`)}`);
@@ -23,27 +27,64 @@ describe('canonical Twilio subaccount retirement',()=>{
    return new Response(JSON.stringify(account(state)));
   });vi.stubGlobal('fetch',fetch);
   const resolve=vi.fn(async()=>childKey);
-  expect(await retireTwilioSubaccount(child,desired,managementKey,false,async()=>true,resolve)).toEqual({state:'verified',provider_status:desired});
-  expect(resolve).toHaveBeenCalledTimes(1);expect(fetch.mock.calls.filter(c=>c[1].method==='POST')).toHaveLength(1);
+  expect(await retireTwilioSubaccount(child,desired,managementKey,false,async()=>true,resolve,async()=>credentials)).toEqual({state:'verified',provider_status:desired});
+  expect(resolve).toHaveBeenCalledTimes(desired==='closed'?1:0);expect(fetch.mock.calls.filter(c=>c[1].method==='POST')).toHaveLength(1);
+ });
+ it.each(['suspended','closed'] as const)('recovers or retires an already suspended child with parent call authority: %s',async desired=>{
+  let state='suspended';const fetch=vi.fn(async(url:string,init:RequestInit)=>{
+   const auth=(init.headers as Record<string,string>).Authorization;
+   if(url.includes('/Calls.json'))return auth===`Basic ${btoa(`${parent}:${credentials.authToken}`)}`?new Response(JSON.stringify({calls:[]})):new Response('{}',{status:401});
+   expect(auth).toBe(`Basic ${btoa(`${managementKey.apiKeySid}:${managementKey.authToken}`)}`);
+   if(init.method==='POST')state=desired;
+   return new Response(JSON.stringify(account(state)));
+  });vi.stubGlobal('fetch',fetch);const scoped=vi.fn(async()=>childKey);
+  expect(await retireTwilioSubaccount(child,desired,managementKey,desired==='suspended',async()=>true,scoped,async()=>credentials)).toEqual({state:'verified',provider_status:desired});
+  expect(scoped).not.toHaveBeenCalled();
+  expect(fetch.mock.calls.filter(c=>c[1].method==='POST')).toHaveLength(desired==='closed'?1:0);
+  expect(fetch.mock.calls.some(c=>c[1].body==='Status=active')).toBe(false);
+ });
+ it.each([async()=>null,async()=>{throw Error('private-parent-secret');}])('requires protected parent call authority before suspension, without leaking errors',async resolve=>{
+  const fetch=responses(account('active'));
+  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>childKey,resolve)).toEqual({state:'blocked',reason:'twilio_parent_call_credentials_unavailable'});
+  expect(fetch).toHaveBeenCalledTimes(1);
+ });
+ it.each([{...credentials,accountSid:other},managementKey])('refuses foreign or API-key parent call authority without a provider mutation',async invalid=>{
+  const fetch=responses(account('suspended'));
+  expect(await retireTwilioSubaccount(child,'closed',managementKey,false,async()=>true,async()=>childKey,async()=>invalid)).toEqual({state:'blocked',reason:'twilio_parent_call_credential_binding_mismatch'});
+  expect(fetch).toHaveBeenCalledTimes(1);
+ });
+ it('does not mistake parent call refusal for a busy call or suspend with invalid parent authority',async()=>{
+  const fetch=responses(account('active'));fetch.mockResolvedValueOnce(new Response('{}',{status:401}));
+  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>childKey,async()=>credentials)).toEqual({state:'blocked',reason:'twilio_call_access_refused'});
+  expect(fetch.mock.calls.some(c=>c[1]?.method==='POST')).toBe(false);
+ });
+ it('still catches a call racing suspension when management uses a Main key',async()=>{
+  responses(account('active'),{calls:[]},{calls:[]},{calls:[]},account('suspended'),account('suspended'),{calls:[{status:'queued'}]});
+  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>childKey,async()=>credentials)).toEqual({state:'unknown',reason:'twilio_calls_in_flight'});
+ });
+ it('does not resolve parent secrets until account ownership is verified',async()=>{
+  const fetch=responses(account('active',child,other)),resolve=vi.fn(async()=>credentials);
+  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>childKey,resolve)).toEqual({state:'blocked',reason:'twilio_identity_not_owned_by_platform'});
+  expect(resolve).not.toHaveBeenCalled();expect(fetch).toHaveBeenCalledTimes(1);
  });
  it('refuses a foreign scoped credential without any foreign resource call or mutation',async()=>{
   const fetch=responses(account('active'));
-  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>({...childKey,accountSid:other}))).toEqual({state:'blocked',reason:'twilio_call_credential_binding_mismatch'});
+  expect(await retireTwilioSubaccount(child,'closed',managementKey,false,async()=>true,async()=>({...childKey,accountSid:other}))).toEqual({state:'blocked',reason:'twilio_call_credential_binding_mismatch'});
   expect(fetch).toHaveBeenCalledTimes(1);
  });
  it('reconciles an already closed child without its retired credential or further call access',async()=>{
-  const fetch=responses(account('closed'));const resolve=vi.fn(async()=>null);
-  expect(await retireTwilioSubaccount(child,'closed',managementKey,true,async()=>true,resolve)).toEqual({state:'verified',provider_status:'closed'});
-  expect(fetch).toHaveBeenCalledTimes(1);expect(resolve).not.toHaveBeenCalled();
+  const fetch=responses(account('closed'));const resolve=vi.fn(async()=>null),parentResolve=vi.fn(async()=>null);
+  expect(await retireTwilioSubaccount(child,'closed',managementKey,true,async()=>true,resolve,parentResolve)).toEqual({state:'verified',provider_status:'closed'});
+  expect(fetch).toHaveBeenCalledTimes(1);expect(resolve).not.toHaveBeenCalled();expect(parentResolve).not.toHaveBeenCalled();
  });
  it('reports denied call access separately from a busy call and never mutates the account',async()=>{
   const fetch=responses(account('active'));fetch.mockResolvedValueOnce(new Response('{}',{status:401}));
-  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>childKey)).toEqual({state:'blocked',reason:'twilio_call_access_refused'});
+  expect(await retireTwilioSubaccount(child,'closed',managementKey,false,async()=>true,async()=>childKey)).toEqual({state:'blocked',reason:'twilio_call_access_refused'});
   expect(fetch.mock.calls.some(c=>c[1]?.method==='POST')).toBe(false);
  });
  it.each([async()=>null,async()=>{throw new Error('private-vault-payload');}])('keeps missing scoped credentials unavailable without exposing secret-store errors',async resolve=>{
   const fetch=responses(account('active'));
-  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,resolve)).toEqual({state:'blocked',reason:'twilio_call_credentials_unavailable'});
+  expect(await retireTwilioSubaccount(child,'closed',managementKey,false,async()=>true,resolve)).toEqual({state:'blocked',reason:'twilio_call_credentials_unavailable'});
   expect(fetch).toHaveBeenCalledTimes(1);
  });
  it('preserves ordinary callers transient retry while retirement can explicitly disable it',async()=>{

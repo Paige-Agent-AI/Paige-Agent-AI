@@ -26,10 +26,10 @@ MUST_PRESERVE: Owner/Admin role authority, original operation/lease/fingerprint,
 ACCEPTANCE_CRITERIA: Failing-first credential tests; actual handler binds the service-only resolver to canonical resource tenant; closed recovery and negative controls; unchanged UI flow; exact-head independent review/CI and authorized deployment/readback. Owner production acceptance is separately required.
 MOTION_PURPOSE: Existing modal context only; no motion added.
 PROTECTED_SEAMS: Current identity/role/lease/connection truth, canonical Twilio HTTP/Vault resolver, paused execution, fresh preflight and receipt. Chat/Harness/Spine/Trust/Rail/Memory and customer CRM are not modified.
-INTERNAL_BUILD_IDENTITY: base=0bf8a331ea9b322d4b70d0006504d77b7022de94; candidate=PR exact head; environment=development; migration=NOT_APPLICABLE; edge=PROOF_OWED(operator-account-retirement).
+INTERNAL_BUILD_IDENTITY: 0bf8a331ea9b322d4b70d0006504d77b7022de94 (exact base; candidate head recorded in PR); deployment=PROOF_OWED(exact-head preview and production); environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(operator-account-retirement production source readback); evidence=docs/evidence/ui-delivery/operator-twilio-call-authority-repair.md and reproducible commands in docs/delivery/operator-account-lifecycle.md
 RELEASE_CHANNEL: development: controlled repair candidate.
 RELEASE_CLASSIFICATION: internal-only: privileged lifecycle repair.
 CUSTOMER_RELEASE_IDENTITY: none: no public announcement earned.
 RELEASE_NOTE_REQUIRED: NO: Internal Operator repair.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: Repaired authenticated Agency/Solo provider execution and final Archive/Delete acceptance remain untested under Owner login hold.
-RELEASE_RECOVERY: Forward-fix; unknown operations read/reconcile their original provider identity, no automatic status-write replay. Actual customer/provider/file deletion was not performed by the agent.
+RELEASE_RECOVERY: position=Forward-fix with original-operation provider readback and no automatic status-write replay; reference=docs/delivery/operator-account-lifecycle.md provider preparation recovery. Actual customer/provider/file deletion was not performed by the agent.

@@ -46,7 +46,7 @@ GRANT USAGE ON SCHEMA auth TO authenticated,anon,service_role;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated,anon,service_role;
 -- Missing seam is the failing-first proof; the runner applies the migration before this line for the passing leg.
 \if :apply_finance_migration
-\ir ../migrations/20270602000401_finance_company_source_authority.sql
+\ir ../migrations/20270602000421_finance_company_source_authority.sql
 \endif
 SET ROLE authenticated;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);

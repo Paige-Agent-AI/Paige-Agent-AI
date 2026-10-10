@@ -21,8 +21,9 @@
 -- consumed confirmation row, never from request JSON. The read seam revalidates the
 -- full protected lineage (discovery + original resolver) before returning evidence.
 --
--- Numbering: main newest 20270602000304; production frontier 20270602000401 (#1918,
--- deployed); open-PR claims to 20270602000410 (#1907). 20270602000411 clears all three.
+-- Numbering: RENUMBERED 20270602000411 -> 20270602000430 after the production frontier
+-- advanced to 20270602000423 and open-PR claims to 20270602000428 mid-flight (the
+-- chronic below-frontier race; deploy-migrations refuses an unrecorded older entry).
 begin;
 create table if not exists public.pipeline_metadata_non_application (
   id uuid primary key default gen_random_uuid(),

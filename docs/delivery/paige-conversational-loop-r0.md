@@ -4,7 +4,7 @@
 
 The first #1807 continuation slice by the new agent: the canonical refusal/non-application
 record `classifyPipelineObservation` has been waiting for. Migration
-`20270602000411_int1807_pipeline_non_application.sql` (numbered above main `…0304`, the
+`20270602000430_int1807_pipeline_non_application.sql` (renumbered from 411 after the production frontier advanced to `…0423` mid-flight — the chronic frontier race; clears main, prod, and open-PR claims through `…0428`; originally numbered above main `…0304`, the
 deployed production frontier `…00401` and open-PR claims through `…0410`) adds the
 `pipeline_metadata_non_application` table (RLS on, no policies, all client grants revoked;
 one record per effect), a service-only write

@@ -136,23 +136,41 @@ END $$;
 REVOKE ALL ON FUNCTION public._finance_plaid_retirement() FROM PUBLIC,anon,authenticated;
 CREATE TRIGGER finance_plaid_retirement BEFORE UPDATE OR DELETE ON public.connected_bank_accounts FOR EACH ROW EXECUTE FUNCTION public._finance_plaid_retirement();
 
+CREATE FUNCTION public._finance_company_source_invalidation() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF NEW.version IS DISTINCT FROM OLD.version OR NEW.is_active IS NOT TRUE
+  OR ROW(NEW.tenant_id,NEW.kind,NEW.legal_name,NEW.identity_basis,NEW.identity_reference)
+   IS DISTINCT FROM ROW(OLD.tenant_id,OLD.kind,OLD.legal_name,OLD.identity_basis,OLD.identity_reference) THEN
+  UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
+   WHERE entity_id=OLD.id AND verification_state<>'revoked';
+ END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._finance_company_source_invalidation() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER finance_company_source_invalidation BEFORE UPDATE ON public.finance_company_entities FOR EACH ROW EXECUTE FUNCTION public._finance_company_source_invalidation();
+
 CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE binding public.finance_source_bindings; active boolean;
 BEGIN
  IF TG_OP<>'INSERT' THEN RAISE EXCEPTION 'Financial source observations are immutable' USING ERRCODE='42501'; END IF;
- SELECT * INTO binding FROM public.finance_source_bindings WHERE tenant_id=NEW.tenant_id AND entity_id=NEW.entity_id AND id=NEW.binding_id FOR SHARE;
+ SELECT * INTO binding FROM public.finance_source_bindings WHERE tenant_id=NEW.tenant_id AND entity_id=NEW.entity_id AND id=NEW.binding_id;
  IF NOT FOUND OR binding.verification_state<>'verified' OR binding.revision<>NEW.binding_revision THEN RAISE EXCEPTION 'Verified financial source unavailable or changed' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM public.tenants WHERE id=NEW.tenant_id AND status IN ('trial','active','past_due') AND archived_at IS NULL AND NOT lifecycle_execution_paused FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace unavailable or paused' USING ERRCODE='42501'; END IF;
- PERFORM 1 FROM public.finance_company_entities WHERE tenant_id=NEW.tenant_id AND id=NEW.entity_id AND is_active FOR SHARE;
- IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
  IF binding.provider='quickbooks' THEN
   SELECT is_active INTO active FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id FOR SHARE;
  ELSE
   SELECT is_active INTO active FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id FOR SHARE;
  END IF;
  IF NOT coalesce(active,false) THEN RAISE EXCEPTION 'Financial connection revoked' USING ERRCODE='42501'; END IF;
+ -- Lock mutable inputs in workspace → connection → company → binding order.
+ -- Re-read the binding after lifecycle locks; the earlier read grants no proof.
+ PERFORM 1 FROM public.finance_company_entities WHERE tenant_id=NEW.tenant_id AND id=NEW.entity_id AND is_active FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
+ SELECT * INTO binding FROM public.finance_source_bindings WHERE tenant_id=NEW.tenant_id AND entity_id=NEW.entity_id AND id=NEW.binding_id FOR SHARE;
+ IF NOT FOUND OR binding.verification_state<>'verified' OR binding.revision<>NEW.binding_revision THEN RAISE EXCEPTION 'Verified financial source unavailable or changed' USING ERRCODE='42501'; END IF;
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._finance_observation_guard() FROM PUBLIC,anon,authenticated;

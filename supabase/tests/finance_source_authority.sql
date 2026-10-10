@@ -136,6 +136,12 @@ END $$;
 SELECT 'Finance source authority PASS: synthetic PostgreSQL only; authenticated/provider acceptance owed' AS result;
 -- Scoped agency delegation is a canonical dependency fixture; no agency role engine is added.
 BEGIN;
+UPDATE finance_company_entities SET version=version+1 WHERE id='30000000-0000-0000-0000-000000000001';
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000003' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Company revision reused previous source verification'; END IF;
+END $$;
+ROLLBACK;
+BEGIN;
 UPDATE quickbooks_connections SET qb_realm_id='test-different-company',environment='production' WHERE id='40000000-0000-0000-0000-000000000001';
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000003' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Realm/environment change reused company verification'; END IF;

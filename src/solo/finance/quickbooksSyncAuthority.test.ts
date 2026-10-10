@@ -11,9 +11,9 @@ function loadHandler(getUser: () => Promise<unknown>, privilegedRead: ReturnType
     ? { from: privilegedRead }
     : { auth: { getUser } };
   const javascript = ts.transpileModule(handler, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-  return new Function("createClient", "Deno", "authorizeQuickBooksSync", "corsHeaders", "syncOneConnection", javascript)(
+  return new Function("createClient", "Deno", "authorizeQuickBooksSync", "corsHeaders", javascript)(
     createClient, { env: { get: (key: string) => ({ SUPABASE_SERVICE_ROLE_KEY: "test-service-key", SUPABASE_ANON_KEY: "test-anon", SUPABASE_URL: "https://test.invalid" })[key] } },
-    authorizeQuickBooksSync, {}, vi.fn(),
+    authorizeQuickBooksSync, {},
   ) as (request: Request) => Promise<Response>;
 }
 
@@ -34,17 +34,25 @@ describe("QuickBooks sync deployed handler containment", () => {
     expect(response.status).toBe(403);
     expect(privilegedRead).not.toHaveBeenCalled();
   });
-  it("pins a person lookup to verified identity and the requested connection", async () => {
-    const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn(async () => ({ data: null, error: null })) };
-    query.select.mockReturnValue(query);
-    query.eq.mockReturnValue(query);
-    const privilegedRead = vi.fn(() => query);
+  it("keeps authenticated legacy provider reads unavailable until company binding lands", async () => {
+    const privilegedRead = vi.fn();
     const response = await loadHandler(async () => ({ data: { user: { id: "test-user-owner" } } }), privilegedRead)(new Request("https://test.invalid", {
       method: "POST", headers: { Authorization: "Bearer test-user-token" },
       body: JSON.stringify({ user_id: "test-other-owner", connection_id: "test-other-connection" }),
     }));
-    expect(response.status).toBe(404);
-    expect(query.eq.mock.calls).toEqual([["user_id", "test-user-owner"], ["is_active", true], ["id", "test-other-connection"]]);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: "FINANCE_SOURCE_UNAVAILABLE" });
+    expect(privilegedRead).not.toHaveBeenCalled();
+  });
+  it("does not activate unsafe provider reads for the trusted cron caller", async () => {
+    const privilegedRead = vi.fn();
+    const getUser = vi.fn();
+    const response = await loadHandler(getUser, privilegedRead)(new Request("https://test.invalid", {
+      method: "POST", headers: { Authorization: "Bearer test-service-key" }, body: JSON.stringify({ sync_all: true }),
+    }));
+    expect(response.status).toBe(503);
+    expect(getUser).not.toHaveBeenCalled();
+    expect(privilegedRead).not.toHaveBeenCalled();
   });
 });
 

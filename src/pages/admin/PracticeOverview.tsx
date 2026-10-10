@@ -130,7 +130,6 @@ const KPI_META: Record<
         value={usd(m?.won_value_cents ?? 0)}
         icon={DollarSign}
         loading={loading}
-        hint={m?.arpc_cents !== undefined ? `${usd(m.arpc_cents)} avg / client` : undefined}
       />
     ),
   },

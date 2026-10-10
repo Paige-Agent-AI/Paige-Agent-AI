@@ -519,7 +519,7 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
         why: "These crossed your usual quiet threshold. PAIGE can draft a note in your voice for each.",
         owner: "paige",
         proof: "live",
-        evidence: `${n} client${n === 1 ? "" : "s"} flagged at risk in your book.`,
+        evidence: `${n} contact${n === 1 ? "" : "s"} flagged at risk in your book.`,
         outcome: "PAIGE drafts the outreach; you approve and she sends.",
         destination: "clients",
         ctaLabel: "See the clients",
@@ -715,7 +715,7 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
       chips.push({ label: `${n} draft${n === 1 ? "" : "s"} waiting`, tone: "live", destination: "paige" });
     const at = (cc.attention ?? {}) as AttentionLike;
     if ((at.at_risk_clients ?? 0) > 0)
-      chips.push({ label: `${at.at_risk_clients} client${at.at_risk_clients === 1 ? "" : "s"} at risk`, tone: "partial", destination: "clients" });
+      chips.push({ label: `${at.at_risk_clients} contact${at.at_risk_clients === 1 ? "" : "s"} at risk`, tone: "partial", destination: "clients" });
     if ((at.follow_ups_due ?? 0) > 0)
       chips.push({ label: `${at.follow_ups_due} follow-up${at.follow_ups_due === 1 ? "" : "s"} due`, tone: "live", destination: "clients" });
     // Honest indicator that a priority signal is BLIND — present regardless of what else surfaced,
@@ -893,7 +893,7 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
         title: `Re-engage ${n} client${n === 1 ? "" : "s"} before they lapse`,
         detail: "These crossed your usual quiet threshold. Paige can draft a note in your voice for each.",
         source: "recommendation", waiting: false, destination: "clients",
-        evidence: `${n} client${n === 1 ? "" : "s"} flagged at risk in your book.`,
+        evidence: `${n} contact${n === 1 ? "" : "s"} flagged at risk in your book.`,
       });
     }
     if ((at.follow_ups_due ?? 0) > 0) {

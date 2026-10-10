@@ -81,8 +81,15 @@ describe("Solo Analytics operating workspace", () => {
   it("renders structural funnels, circles, cohorts, and sources without invented values", () => {
     render();
     act(() => button("Sales funnel")?.click());
-    expect(host.querySelectorAll(".anr-cylinder-stage")).toHaveLength(4);
-    expect(host.textContent).toContain("No proved count");
+    // With no issued bundle this surface must invent NOTHING — not a count, and not a stage
+    // NAME. It used to render four hardcoded stages ("Qualified lead", "Proposal",
+    // "Commitment", "Confirmed outcome") that the tenant never created, and this assertion
+    // pinned them in place by counting them. It now asserts the absence instead.
+    expect(host.querySelectorAll(".anr-cylinder-stage")).toHaveLength(0);
+    expect(host.textContent).toContain("No proved pipeline stages");
+    for (const invented of ["Qualified lead", "Proposal", "Commitment", "Confirmed outcome"]) {
+      expect(host.textContent).not.toContain(invented);
+    }
 
     act(() => button("Revenue & profit")?.click());
     expect(host.querySelectorAll(".anr-radial-ring")).toHaveLength(3);

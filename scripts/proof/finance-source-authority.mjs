@@ -26,14 +26,17 @@ function holding(database, text) {
   let output = '', error = '';
   let ready;
   const held = new Promise(resolve => { ready = resolve; });
+  let released = false;
+  const release = () => { if (!released) { released = true; child.stdin.end('COMMIT;\n'); } };
+  const deadline = setTimeout(() => { if (!released) { released = true; child.stdin.end('ROLLBACK;\n'); } }, 20000);
   const done = new Promise((resolve, reject) => {
     child.on('error', reject);
     child.stdout.on('data', data => { output += data; if (output.includes('FINANCE_LOCK_HELD')) ready(); });
     child.stderr.on('data', data => { error += data; });
-    child.on('close', code => code === 0 ? resolve() : reject(new Error(error)));
+    child.on('close', code => { clearTimeout(deadline); code === 0 ? resolve() : reject(new Error(error)); });
   });
-  child.stdin.end(`BEGIN; ${actor} ${text} SELECT 'FINANCE_LOCK_HELD'; SELECT pg_sleep(1); COMMIT;`);
-  return { held: Promise.race([held, done.then(() => { throw new Error('Lock acknowledgement missing'); })]), done };
+  child.stdin.write(`BEGIN; ${actor} ${text} SELECT 'FINANCE_LOCK_HELD';\n`);
+  return { held: Promise.race([held, done.then(() => { throw new Error('Lock acknowledgement missing'); })]), done, release };
 }
 async function competing(database, text) {
   return new Promise((resolve, reject) => {
@@ -46,13 +49,15 @@ async function competing(database, text) {
     child.stdin.end(text);
   });
 }
-async function blockedCompetitor(database, text) {
+async function blockedCompetitor(database, text, release) {
   const outcome = competing(database, `SET application_name='finance-proof-lock-waiter'; ${text}`).then(value => ({ value }), error => ({ error }));
   let waiting = false;
-  for (let probe = 0; probe < 10; probe++) {
-    if (sql(database, "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='finance-proof-lock-waiter' AND wait_event_type='Lock');").trim() === 't') { waiting = true; break; }
-    await new Promise(resolve => setTimeout(resolve, 25));
-  }
+  try {
+    for (let probe = 0; probe < 10; probe++) {
+      if (sql(database, "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='finance-proof-lock-waiter' AND wait_event_type='Lock');").trim() === 't') { waiting = true; break; }
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+  } finally { release(); }
   const result = await outcome;
   if (result.error) throw result.error;
   assert.equal(waiting, true, 'Concurrent authority/identity change did not wait on the held transaction');
@@ -73,7 +78,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     assert.match(result.stdout, /Finance source authority PASS/);
     const first = holding(database, save('Test Concurrent Company A'));
     await first.held;
-    await blockedCompetitor(database, `${actor} SELECT public.fixture_expect_error($q$${save('Test Concurrent Company B')}$q$,'40001');`);
+    await blockedCompetitor(database, `${actor} SELECT public.fixture_expect_error($q$${save('Test Concurrent Company B')}$q$,'40001');`, first.release);
     await first.done;
     assert.equal(sql(database, "SELECT version||':'||legal_name FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000003';").trim(), '2:Test Concurrent Company A');
     assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '4');
@@ -83,7 +88,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     const create = `SELECT public.save_finance_company_entity('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000005',0,'managed_entity','Test Concurrent Creation');`;
     const creation = holding(database, create);
     await creation.held;
-    const replay = await blockedCompetitor(database, `${actor} ${create}`);
+    const replay = await blockedCompetitor(database, `${actor} ${create}`, creation.release);
     await creation.done;
     assert.match(replay, /"replayed": true/);
     assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '5');
@@ -95,14 +100,14 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000002',1,'test-concurrent','bank_accounts',now(),'partial',repeat('c',64));`;
     const ingest = holding(database, `RESET ROLE; ${observation}`);
     await ingest.held;
-    await blockedCompetitor(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000002';`);
+    await blockedCompetitor(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000002';`, ingest.release);
     await ingest.done;
     sql(database, `SELECT public.fixture_expect_error($q$${observation.replace('test-concurrent', 'test-after-revoke')}$q$,'42501');`);
     sql(database, `INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);`);
     const agencyActor = `SELECT set_config('test.actor','10000000-0000-0000-0000-000000000003',false);`;
     const agencyRead = holding(database, `${agencyActor} SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001');`);
     await agencyRead.held;
-    await blockedCompetitor(database, "UPDATE agency_team_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000003';");
+    await blockedCompetitor(database, "UPDATE agency_team_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000003';", agencyRead.release);
     await agencyRead.done;
     sql(database, `SET ROLE authenticated; ${agencyActor} SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'42501');`);
     console.log(`PASS ${leg}: actual migration, role/tenant/source guards, receipt rollback, concurrent update and replay`);

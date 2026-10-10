@@ -94,6 +94,30 @@ if(process.argv.includes('--cached-audio')) {
  RESET ROLE;`);
  await refuse(()=>db.exec("SET ROLE authenticated; SELECT operator_tts_cache_manifest('"+child+"');"),'42501');await db.exec('RESET ROLE');
 }
+if(process.argv.includes('--generated-media')) {
+ await db.exec(`CREATE TABLE marketing_content(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants(id),image_path text,image_url text,status text,meta jsonb,published_at timestamptz);
+ CREATE TABLE paige_social_posts(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants(id),media_urls jsonb,status text,published_at timestamptz);
+ INSERT INTO storage.buckets VALUES('paige-generated',true);
+ INSERT INTO storage.objects(id,bucket_id,name,metadata) VALUES(gen_random_uuid(),'paige-generated','${child}/1780000000000-abcdef12.png','{}'),(gen_random_uuid(),'paige-generated','${child}/1780000000001-abcdef13.webp','{}'),(gen_random_uuid(),'paige-generated','${solo}/1780000000002-abcdef14.jpg','{}');
+ INSERT INTO marketing_content VALUES(gen_random_uuid(),'${child}','${child}/1780000000000-abcdef12.png',null,'draft','{"versions":[{"image_path":"${child}/1780000000001-abcdef13.webp"}]}',null);`);
+ if(!process.argv.includes('--generated-baseline')){
+  const m=await readFile('supabase/migrations/20270602000304_operator_generated_media_retirement.sql','utf8');await db.exec(m);await db.exec(m);
+  for(const obligation of ['foreign','published','legal','social']){
+   const change=obligation==='foreign'?`insert into marketing_content values(gen_random_uuid(),'${solo}','${child}/1780000000000-abcdef12.png',null,'draft','{}',null)`:
+    obligation==='social'?`insert into paige_social_posts values(gen_random_uuid(),'${solo}','["${child}/1780000000000-abcdef12.png"]','draft',null)`:
+    `update marketing_content set status='${obligation==='published'?'published':'draft'}',meta='${obligation==='legal'?'{"legal_hold":true}':'{}'}' where tenant_id='${child}'`;
+   // One connection owns the transaction, including the refusal and rollback.
+   await db.exec(`BEGIN; ${change}; DO $$BEGIN
+    BEGIN PERFORM operator_generated_media_manifest('${child}'); RAISE EXCEPTION 'obligation was ignored';
+    EXCEPTION WHEN SQLSTATE '55000' THEN NULL; END;
+    END$$; ROLLBACK;`);
+  }
+  await db.exec(`BEGIN; insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'paige-generated','${child}/independent-document.pdf');
+   DO $$BEGIN BEGIN PERFORM operator_generated_media_manifest('${child}'); RAISE EXCEPTION 'unrecognized file became removable';
+    EXCEPTION WHEN SQLSTATE '55000' THEN NULL; END; END$$; ROLLBACK;`);
+  await refuse(()=>db.exec(`SET ROLE authenticated; SELECT operator_generated_media_manifest('${child}');`),'42501');await db.exec('RESET ROLE');
+ }
+}
 const op='00000000-0000-0000-0000-000000000080',claim='00000000-0000-0000-0000-000000000081',archiveOp='00000000-0000-0000-0000-000000000082';
 const key='twilio:'+child,nkey='n8n:'+agency,admin='00000000-0000-0000-0000-000000000003';
 const resourcePreview=async(mode='archive')=>(await db.query('select operator_preview_retirement_resources($1,$2) v',[agency,mode])).rows[0].v;
@@ -152,6 +176,10 @@ try {
   // An unrelated active tenant remains writable while the reviewed Agency scope is frozen.
   await db.query("update storage.objects set version='v2' where name=$1",[solo+'/'+('c'.repeat(64))+'.mp3']);
  }
+ if(process.argv.includes('--generated-media')){
+  assert.equal(p.resources.find(r=>r.provider==='generated_media')?.object_count,2,'ordinary generated files gain their actual cleanup path');
+  assert.equal(p.execution_available,true,JSON.stringify(p.blockers));
+ }
  const deleteOp='00000000-0000-0000-0000-000000000084';await begin(p,deleteOp);
  await actor('');await take(deleteOp);await finish(key,'unknown',null,deleteOp);await complete(deleteOp);
  await actor(admin);assert.equal((await db.query('select operator_read_retirement_resources($1,$2) v',[agency,deleteOp])).rows[0].v.state,'resources_unknown');
@@ -179,13 +207,26 @@ try {
   await take(deleteOp);assert.equal((await db.query('select operator_assert_retirement_resource($1,$2,$3,$4,$5) v',[agency,deleteOp,admin,claim,ckey])).rows[0].v,true,'partial removal permits same-plan recovery');
   await db.query('delete from storage.objects where name=$1',[child+'/'+('b'.repeat(64))+'.mp3']);
   await finish(ckey,'verified','removed',deleteOp);
-  assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,2,'surviving Solo and platform audio remain');
+  assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,process.argv.includes('--generated-media')?5:2,'surviving Solo/platform audio and pending media remain');
+ }
+ if(process.argv.includes('--generated-media')){
+  const gkey='generated_media:'+child;
+  await refuse(()=>finish(gkey,'verified','removed',deleteOp),'55000');
+  await refuse(()=>db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'paige-generated',$1)",[child+'/1780000000003-abcdef15.mp4']),'55000');
+  await refuse(()=>db.query("insert into marketing_content values(gen_random_uuid(),$1,$2,null,'draft','{}',null)",[solo,child+'/1780000000000-abcdef12.png']),'55000');
+  await refuse(()=>db.query("insert into paige_social_posts values(gen_random_uuid(),$1,$2,'draft',null)",[solo,JSON.stringify([child+'/1780000000000-abcdef12.png'])]),'55000');
+  await db.query("delete from storage.objects where name=$1",[child+'/1780000000000-abcdef12.png']);
+  await finish(gkey,'unknown',null,deleteOp);await complete(deleteOp);await take(deleteOp);
+  assert.equal((await db.query('select operator_assert_retirement_resource($1,$2,$3,$4,$5) v',[agency,deleteOp,admin,claim,gkey])).rows[0].v,true,'partial media cleanup recovers the same plan');
+  await db.query("delete from storage.objects where name=$1",[child+'/1780000000001-abcdef13.webp']);
+  await finish(gkey,'verified','removed',deleteOp);
  }
  await complete(deleteOp);
  assert.equal((await db.query('select count(*)::int n from vault.secrets')).rows[0].n,0,'exclusive retired credential is removed');
  await actor(admin);const ready=(await db.query('select operator_preview_account_deletion($1) v',[agency])).rows[0].v;
  assert.equal(ready.execution_available,true,JSON.stringify(ready.blockers));
  await db.query('select operator_delete_archived_account($1,$2,$3,$4)',[agency,ready.version,'Example Agency',second]);
+ if(process.argv.includes('--generated-media')){assert.equal((await db.query('select count(*)::int n from marketing_content')).rows[0].n,0);assert.equal((await db.query("select count(*)::int n from storage.objects where bucket_id='paige-generated'")).rows[0].n,1,'surviving media preserved');}
  for(const rel of ['tenant_twilio_subaccounts','tenant_n8n_connections','tenant_phone_numbers','mcp_connections','email_send_log'])assert.equal((await db.query(`select count(*)::int n from ${rel}`)).rows[0].n,0);
  assert.equal((await db.query('select sum(quantity)::text v from platform_usage_events')).rows[0].v,'4.75','historical financial quantities are unchanged');
  const retained=(await db.query('select retired_tenant_id,operator_rows_server_only,tenant_id from platform_usage_events where retired_tenant_id=$1',[child])).rows[0];assert.equal(retained.tenant_id,null);assert.equal(retained.operator_rows_server_only,true);
@@ -214,20 +255,24 @@ try {
  await db.query("insert into tenants(id,name,status,account_type) values($1,'Synthetic Solo cache','active','standalone')",[disposable]);
  await db.query("insert into tenant_members values(gen_random_uuid(),$1,$2,'owner','active')",[disposable,ordinary]);
  await db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'tts-cache',$1)",[disposable+'/'+('f'.repeat(64))+'.mp3']);
+ if(process.argv.includes('--generated-media'))await db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'paige-generated',$1)",[disposable+'/1780000000004-abcdef16.mp4']);
  let v=await preview(disposable);await db.query('select operator_archive_account($1,$2,$3,$4)',[disposable,v.version,'Synthetic Solo cache',archiveId]);
- assert.equal((await db.query("select count(*)::int n from storage.objects where split_part(name,'/',1)=$1",[disposable])).rows[0].n,1,'Archive preserves cached data');
+ assert.equal((await db.query("select count(*)::int n from storage.objects where split_part(name,'/',1)=$1",[disposable])).rows[0].n,process.argv.includes('--generated-media')?2:1,'Archive preserves tenant files');
  v=(await db.query("select operator_preview_retirement_resources($1,'delete') v",[disposable])).rows[0].v;
  await db.query("select operator_begin_retirement_resources($1,'delete',$2,$3,$4,false)",[disposable,v.version,'Synthetic Solo cache',cacheOp]);await actor('');
  await db.query('select operator_claim_retirement_resources($1,$2,$3,$4,false)',[disposable,cacheOp,admin,claim]);
  await db.query("delete from storage.objects where split_part(name,'/',1)=$1",[disposable]);
  await db.query("select operator_finish_retirement_resource($1,$2,$3,$4,$5,'verified','removed',null)",[disposable,cacheOp,admin,claim,'tts_cache:'+disposable]);
+ if(process.argv.includes('--generated-media'))await db.query("select operator_finish_retirement_resource($1,$2,$3,$4,$5,'verified','removed',null)",[disposable,cacheOp,admin,claim,'generated_media:'+disposable]);
  await db.query('select operator_complete_retirement_resources($1,$2,$3,$4)',[disposable,cacheOp,admin,claim]);await actor(admin);
  v=(await db.query('select operator_preview_account_deletion($1) v',[disposable])).rows[0].v;assert.equal(v.execution_available,true,JSON.stringify(v.blockers));
  await db.query('select operator_delete_archived_account($1,$2,$3,$4)',[disposable,v.version,'Synthetic Solo cache',archiveId]);
  assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[disposable])).rows[0].n,0);
  await refuse(()=>db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'tts-cache',$1)",[disposable+'/'+('f'.repeat(64))+'.mp3']),'55000');
- assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,2);
+ if(process.argv.includes('--generated-media'))await refuse(()=>db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'paige-generated',$1)",[disposable+'/1780000000004-abcdef16.mp4']),'55000');
+ assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,process.argv.includes('--generated-media')?3:2);
  console.log('PASS: cached-audio API plan/absence, private paths, unrecognized/public Storage refusal, partial removal recovery, archived/missing write freeze, Solo and Agency physical retirement preserve survivor/platform audio and shared identities. SQL metadata disappearance is a synthetic API port; live byte/provider proof UNVERIFIED.');
 }
 console.log('PASS: actual protected resource preparation, provider binding freeze, Admin/refusal, canonical credential disconnect, Archive/Restore, uncertain closure recovery and real Agency cleanup; shared Auth and independent Solo survive. Provider response is injected through service-only finalization; live provider proof UNVERIFIED.');
+if(process.argv.includes('--generated-media'))console.log('PASS: generated image/video cleanup, private manifest ACLs, foreign/published/legal refusal, writer/reference freeze, partial removal recovery, Solo and Agency retirement preserve survivor media. Storage API effects remain separately adapter-tested; live bytes UNVERIFIED.');
 }catch(e){console.error('FAIL:',e.code??e.name,e.message);process.exitCode=1;}finally{await db.close();}

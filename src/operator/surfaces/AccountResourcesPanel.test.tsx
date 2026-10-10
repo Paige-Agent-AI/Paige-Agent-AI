@@ -15,6 +15,17 @@ const click=(name:string)=>act(()=>button(name).click());
 const confirm=()=>act(()=>{const input=host.querySelector<HTMLInputElement>('#fleet-resource-confirm')!;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,details.name);input.dispatchEvent(new Event('input',{bubbles:true}));for(const checkbox of host.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))if(!checkbox.checked)checkbox.click();});
 async function open(mode:'archive'|'delete'='archive'){const prepared=vi.fn(),cancel=vi.fn(),busy=vi.fn();await act(async()=>root.render(<AccountResourcesPanel details={details} mode={mode} onPrepared={prepared} onCancel={cancel} onBusy={busy}/>));await vi.waitFor(()=>expect(host.querySelector('#fleet-resource-confirm')).not.toBeNull());return{prepared,cancel,busy};}
 describe('operator connected-resource flow',()=>{
+ it('retires generated media through the same confirmation and fresh Delete preflight',async()=>{
+  const mediaReview={...review,mode:'delete',resources:[{provider:'generated_media',tenant_id:details.id,action:'remove_media',object_count:2}]};
+  h.preview.mockResolvedValue(mediaReview);const {prepared}=await open('delete');
+  expect(host.textContent).toContain('Remove 2 generated media files');expect(host.textContent).toContain('Existing public links will stop working');
+  expect(host.textContent).not.toContain('Close the listed Twilio');expect(host.textContent).not.toContain('Disconnect PAIGE from n8n');
+  expect(button('Retire listed resources').disabled).toBe(true);confirm();
+  h.run.mockResolvedValue({...ready,mode:'delete',results:[{provider:'generated_media',state:'verified',provider_status:'removed',reason:null}]});click('Retire listed resources');
+  await vi.waitFor(()=>expect(host.textContent).toContain('READY ·'));expect(prepared).not.toHaveBeenCalled();
+  expect(h.run).toHaveBeenCalledWith(details.id,expect.any(String),'prepare',mediaReview,details.name,false);
+  click('Refresh account preflight');expect(prepared).toHaveBeenCalledTimes(1);
+ });
  it('retires cached audio with exact scope and consequences, then requires a fresh Delete preflight',async()=>{
   const cacheReview={...review,mode:'delete',resources:[{provider:'tts_cache',tenant_id:details.id,action:'remove_cache',object_count:2}]};
   h.preview.mockResolvedValue(cacheReview);const {prepared}=await open('delete');

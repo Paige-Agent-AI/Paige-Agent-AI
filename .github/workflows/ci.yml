@@ -79,7 +79,7 @@ jobs:
       - name: Operator cached-audio retirement, Storage boundary and partial recovery proof
         run: |
           node --test supabase/functions/_shared/operator-storage-retirement.test.mjs supabase/functions/_shared/operator-storage-handler.test.mjs
-          node scripts/proof/operator-cached-audio-retirement.mjs --postgres
+          node scripts/proof/operator-cached-audio-retirement.mjs --postgres 5432
       - name: Operator Intelligence eval metadata, real caller guards and audit refusal in disposable PostgreSQL
         run: node scripts/proof/operator-intelligence-eval.mjs --postgres
   verify:

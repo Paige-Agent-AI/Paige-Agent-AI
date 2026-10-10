@@ -49,8 +49,13 @@ Deno.serve(async(req)=>{
    if(!await assert())return json({error:'resource_authority_or_binding_changed'},409);
    let state:'verified'|'blocked'|'unknown'='unknown',status:string|null=null,reason:string|null=null;
    if(resource.provider==='twilio'&&typeof resource.sid==='string'){
+    const management=masterCreds();
     const calls=async()=>{const creds=await resolveTwilioCreds(admin,resource.tenant_id);return creds.ok?creds.data:null;};
-    const result=await retireTwilioSubaccount(resource.sid,plan.mode==='archive'?'suspended':'closed',masterCreds(),action==='read',assert,calls);
+    // Existing protected provider secret, read lazily after bound account ownership.
+    // This never accepts or returns a browser-supplied credential or uses a child
+    // credential to query a suspended account. Ordinary Comms keeps its scoped keys.
+    const parentCalls=async()=>{const token=Deno.env.get('TWILIO_AUTH_TOKEN');return token&&management?{accountSid:management.accountSid,authToken:token}:null;};
+    const result=await retireTwilioSubaccount(resource.sid,plan.mode==='archive'?'suspended':'closed',management,action==='read',assert,calls,parentCalls);
     state=result.state;if(result.state==='verified')status=result.provider_status;else reason=result.reason;
    }else if((resource.provider==='tts_cache'||resource.provider==='generated_media')&&plan.mode==='delete'&&resource.objects){
     const remove=resource.provider==='tts_cache'?retireTenantTtsCache:retireTenantGeneratedMedia;

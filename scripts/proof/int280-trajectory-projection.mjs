@@ -22,7 +22,7 @@ try {
     DROP TABLE public.paige_eval_run;`);
   await db.exec(await readFile('supabase/migrations/20260720044049_paige_eval.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20260719150000_paige_llm_trace.sql','utf8'));
-  await db.exec('ALTER TABLE public.paige_llm_trace ADD COLUMN working_context_tenant_id uuid,ADD COLUMN cache_read_input_tokens integer,ADD COLUMN cache_creation_input_tokens integer');
+  await db.exec('ALTER TABLE public.paige_llm_trace ADD COLUMN working_context_tenant_id uuid,ADD COLUMN retired_working_context_tenant_id uuid,ADD COLUMN cache_read_input_tokens integer,ADD COLUMN cache_creation_input_tokens integer');
   await db.exec(await readFile('supabase/migrations/20270107000000_receipt_correlation_and_detail.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20270416000000_the_receipt_seam_lost_its_lock_to_an_overload.sql','utf8'));
   const document=await readFile('supabase/migrations/20270418000000_paige_durable_document_work.sql','utf8');

@@ -24,6 +24,7 @@ BEGIN
       AND (p_before_at IS NULL OR (work.created_at,work.id)<(p_before_at,p_before_id))
       AND (p_trace_id IS NULL OR EXISTS (
         SELECT 1 FROM public.paige_llm_trace t WHERE t.id=p_trace_id AND t.tenant_id=work.tenant_id
+          AND t.retired_working_context_tenant_id IS NULL
           AND (t.working_context_tenant_id IS NULL OR t.working_context_tenant_id=work.tenant_id)
           AND ((t.task_id=work.id::text AND t.metadata->>'caller_function'='paige-document-worker' AND work.capability_key='document_generate')
             OR (t.metadata->>'caller_function'='paige-deep-research' AND EXISTS (
@@ -43,6 +44,7 @@ BEGIN
         CASE WHEN t.metadata->'route_fallback' IN ('true'::jsonb,'false'::jsonb) THEN t.metadata->'route_fallback' ELSE NULL END AS route_fallback,
         count(*) OVER() AS full_count
       FROM public.paige_llm_trace t WHERE t.tenant_id=w.tenant_id
+        AND t.retired_working_context_tenant_id IS NULL
         AND (t.working_context_tenant_id IS NULL OR t.working_context_tenant_id=w.tenant_id)
         AND ((t.task_id=w.id::text AND t.metadata->>'caller_function'='paige-document-worker' AND w.capability_key='document_generate')
           OR (t.metadata->>'caller_function'='paige-deep-research' AND EXISTS(

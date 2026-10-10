@@ -48,6 +48,11 @@ BEGIN
   IF jsonb_array_length(public.operator_intelligence_trajectories(p_work_id=>w.id,p_subject_tenant=>foreign_tenant)->'items')<>0 THEN RAISE EXCEPTION 'wrong subject scope returned'; END IF;
   SELECT id INTO trace FROM public.paige_llm_trace WHERE provider='private-foreign-provider';
   IF jsonb_array_length(public.operator_intelligence_trajectories(p_trace_id=>trace)->'items')<>0 THEN RAISE EXCEPTION 'foreign context trace linked'; END IF;
+  -- Exact retirement302 marker movement must not erase the former scope refusal.
+  UPDATE public.paige_llm_trace SET retired_working_context_tenant_id=working_context_tenant_id,working_context_tenant_id=NULL WHERE id=trace;
+  IF jsonb_array_length(public.operator_intelligence_trajectories(p_trace_id=>trace)->'items')<>0 THEN RAISE EXCEPTION 'retired foreign context trace linked'; END IF;
+  item:=public.operator_intelligence_trajectories(p_work_id=>w.id)->'items'->0;
+  IF jsonb_array_length(item->'models')<>2 OR item::text LIKE '%private-foreign-provider%' THEN RAISE EXCEPTION 'retired foreign context entered task models or genuine null context lost'; END IF;
   -- Cursor ties, concurrent same-conversation work and missing historical evidence.
   first_page:=public.operator_intelligence_trajectories(1);next_page:=public.operator_intelligence_trajectories(1,(first_page->'next_cursor'->>'at')::timestamptz,(first_page->'next_cursor'->>'id')::uuid);
   IF first_page->'items'->0->>'id'=next_page->'items'->0->>'id' THEN RAISE EXCEPTION 'cursor repeated task'; END IF;

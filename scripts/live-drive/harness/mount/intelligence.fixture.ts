@@ -1,6 +1,8 @@
 /** LOCAL SYNTHETIC metadata only; never imported by production src or its build inputs. */
 import { useState } from "react";
-import type { EvalRun, IntelligenceMetrics, IntelligenceRead, IntelligenceTrace, ReadState } from "@/operator/data/intelligenceContract";
+import type { EvalRun, IntelligenceMetrics, IntelligenceRead, IntelligenceTrace, ReadState, TrajectoryRequest, TrajectoryPage } from "@/operator/data/intelligenceContract";
+import { syntheticTrajectory, syntheticTrajectoryPage } from "@/test/fixtures/trajectory";
+import canonical from "@/test/fixtures/canonical-trajectory.json";
 const TRACE = "11111111-1111-4111-8111-111111111111";
 const RUN = "22222222-2222-4222-8222-222222222222";
 const CASE = "33333333-3333-4333-8333-333333333333";
@@ -10,6 +12,7 @@ function read<T>(data: T, state: string, refresh: () => void): ReadState<T> {
 export function useIntelligence(): IntelligenceRead {
   const params = new URLSearchParams(location.search);
   const [state, setState] = useState(params.get("state") ?? "populated");
+  const [request, setRequest] = useState<TrajectoryRequest | null>(null);
   const empty = state === "empty";
   const metrics: IntelligenceMetrics = empty ? {} : {
     traces: { total: 14, cost_estimate_usd: 0.184, avg_latency_ms: 430, error_count: 2, needs_config: 1, tokens_in: 8500, tokens_out: 1200,
@@ -29,7 +32,16 @@ export function useIntelligence(): IntelligenceRead {
     created_at: "2026-10-10T04:00:00Z", completed_at: "2026-10-10T04:00:01Z", dataset_status: "active", result_count: 1,
     results: [{ id: CASE, case_id: CASE, source_trace_id: TRACE, scorer: "exact_match", scorer_kind: "deterministic", score: 0, passed: false, status: "scored", judge_model: null, cost_estimate_usd: null }],
   }];
-  const refresh = () => setState("populated");
+  const refresh = () => setState(current => current === "canonical" ? current : "populated");
+  const task = { ...syntheticTrajectory, models: syntheticTrajectory.models.map(m=>({ ...m,id:TRACE })),
+    ...(state==='partial' ? { terminal_verified:false, history:{ ...syntheticTrajectory.history,complete:false,truncated:true } } : {}) };
+  // Snapshot emitted by the actual canonical local completion + Operator SQL proof.
+  // This is controlled synthetic source evidence, never an authenticated production read.
+  const tasks=state==='canonical' ? canonical.page as unknown as TrajectoryPage : syntheticTrajectoryPage(empty ? [] : [task]);
+  const selected = { ...tasks, next_cursor: null, items: state === 'unlinked' ? [] : tasks.items.filter(t =>
+    request?.workId === t.id || (!!request?.traceId && t.models.some(m => m.id === request?.traceId))) };
   return { subject: "synthetic-operator", epoch: 1, access: state === "denied" ? "denied" : "allowed", retryAccess: refresh,
-    metrics: read(metrics, state, refresh), traces: read(traces, state, refresh), evals: read(runs, state, refresh) };
+    metrics: read(metrics, state, refresh), traces: read(traces, state, refresh), evals: read(runs, state, refresh),
+    trajectories:read(tasks,state,refresh),selectedTrajectory:read(selected,state,refresh),
+    trajectoryRequest:request,inspectTrajectory:setRequest,pageTrajectories:()=>setRequest(null) };
 }

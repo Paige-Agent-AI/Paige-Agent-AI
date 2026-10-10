@@ -47,7 +47,8 @@
 .intel-coverage strong { font-weight: 500; }
 .intel-coverage p { margin-top: 5px; font-size: var(--pg-t-body); }
 .intel-search { display: flex; gap: 8px; align-items: center; max-width: 420px; margin: 12px 0; }
-.intel-table-wrap { overflow-x: auto; max-width: 100%; }
+/* Keep absolutely positioned screen-reader column labels inside the table scroller. */
+.intel-table-wrap { position: relative; overflow-x: auto; max-width: 100%; }
 .intelligence table { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--pg-t-body); }
 .intelligence th { color: var(--pg-muted); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .intelligence td, .intelligence th { padding: 10px 8px; border-bottom: 1px solid var(--pg-line); vertical-align: top; }
@@ -64,6 +65,14 @@
 .intel-form textarea { background: var(--pg-raised); color: var(--pg-ink); resize: vertical; min-height: 72px; }
 .intel-form textarea[aria-invalid="true"] { border-color: var(--pg-negative); }
 .intel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.intel-task-timeline { list-style: none; margin: 20px 0; padding: 0; }
+.intelligence .intel-task-action:hover { background: var(--pg-surface); color: var(--pg-ink); }
+.intel-task-recommend { white-space: normal; height: auto; min-height: 40px; max-width: 100%; text-align: left; }
+.intel-task-timeline li { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--pg-line); }
+.intel-task-timeline li > div { border-left: 1px solid var(--tone); padding-left: 16px; min-width: 0; }
+.intel-task-timeline time, .intel-task-timeline small { color: var(--pg-muted); font-size: var(--pg-t-label); }
+.intel-task-timeline p { margin: 4px 0; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .intel-task-timeline li { grid-template-columns: minmax(0,1fr); gap: 4px; } }
 .intel-review { display: grid; gap: 16px; }
 .intel-review dd { white-space: pre-wrap; overflow-wrap: anywhere; }
 .intel-discard { border-top: 1px solid var(--pg-line); margin-top: 16px; padding-top: 12px; }

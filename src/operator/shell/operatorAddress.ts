@@ -57,7 +57,8 @@ export function resolveOperatorAddress(
   splat: string,
 ): OperatorAddress {
   // Preserve the old Operator Intelligence bookmark under the existing guarded shell.
-  if (section === "platform" && splat.replace(/\/$/, "") === "intelligence") {
+  if ((section === "platform" && splat.replace(/\/$/, "") === "intelligence")
+    || (section === "fleet" && splat.replace(/\/$/, "") === "overview")) {
     return { kind: "resolved", slot: findSlot("settings")!, view: "PAIGE Intelligence", stale: true };
   }
   // Both generations of the Settings Mind bookmark follow the owner-approved Fleet move.

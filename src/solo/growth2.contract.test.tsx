@@ -81,8 +81,11 @@ describe("Solo Campaigns approved contract", () => {
     // Performance coverage is built on saying what can and cannot be reported — but in the
     // customer's words. RE-POINTED to guard the translation, so the release vocabulary cannot
     // drift back onto a surface a coach uses.
-    for (const plain of ["Available", "Partly available", "Planned", "Not available"]) expect(source).toContain(plain);
-    for (const internal of [">LIVE<", ">PARTIAL<", ">PROPOSED<", ">UNAVAILABLE<"]) expect(source).not.toContain(internal);
+    // INT-342 S1d (2026-10-10): the capability statements moved from growth2's Analytics into
+    // marketing-analytics.tsx, where each unavailable channel says so in plain words.
+    const analytics = readFileSync(resolve(process.cwd(), "src/solo/marketing-analytics.tsx"), "utf8");
+    for (const plain of ["Not available", "aren’t read", "aren’t recorded"]) expect(analytics).toContain(plain);
+    for (const file of [source, analytics]) for (const internal of [">LIVE<", ">PARTIAL<", ">PROPOSED<", ">UNAVAILABLE<"]) expect(file).not.toContain(internal);
   });
 
   it("fails closed on tenant identity and contains read-only tenant filters", () => {

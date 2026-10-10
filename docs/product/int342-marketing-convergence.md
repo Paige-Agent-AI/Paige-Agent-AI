@@ -379,7 +379,17 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
 1. **S1: Lead capture retires (UI, after approval).** Content retirement waits on Vibe Studio listing every
    saved piece (owner ruling 2026-10-10). Split: **S1a** (shipped first) is Overview, the form panel, the
    compatibility redirects, the routing fix and the Ads copy; **S1b** is Campaigns' map and stepper; **S1c**
-   the Ads desk; **S1d** the Analytics funnel UI.
+   the Ads desk; **S1d** the Analytics funnel UI. **Order amended by owner ruling 2026-10-10** ("I'm not sure
+   why we are going back to improve this before we do Ads and Analytics that have no UI/UX at all", then
+   "before Campaigns we need to reimagine Content subtab"): **S1d → S1c → S1e (Content reimagined) → S1b**.
+   The same day the owner approved the read-only Meta Ads backend after the desk ("Desk now, Meta read
+   next"): **S5** below, read only, no write, spend, pause or budget change.
+   - **S1d as shipped:** range Week · Month · Quarter (the prototype's Year is left out: the email read serves
+     7, 30 or 90 days and a year of leads would mostly overflow the 200-row submissions read); "the last N
+     days" instead of "this month" (a rolling window, the same as Overview's); Analytics stays readable by
+     members (the prototype showed members an owners-and-admins message; Overview already shows members the
+     same lead counts) while the email row tells a member its figures are for owners and admins; the
+     campaign-tag list is kept from the earlier Analytics (§58).
    - Overview gains capture points, recent leads and the rebuilt attention list (reading routing columns **or**
      automations, fixing C).
    - One form panel opens from Overview, Campaigns and Analytics via `?form=`.

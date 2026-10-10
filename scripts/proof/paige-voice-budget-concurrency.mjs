@@ -18,6 +18,8 @@ const suffix = randomUUID().slice(0, 12);
 const cleanup = () => {
   run(`
     DELETE FROM public.paige_voice_cost_reservations WHERE tenant_id='${tenant}';
+    -- Only this disposable proof's no-provider synthetic usage; production retention stays blocked.
+    DELETE FROM public.paige_voice_tenant_monthly_usage WHERE tenant_id='${tenant}';
     DELETE FROM public.paige_voice_tenant_budgets WHERE tenant_id='${tenant}';
     UPDATE public.paige_voice_platform_budget
        SET enabled=false, emergency_disabled=true, monthly_limit_usd=0,

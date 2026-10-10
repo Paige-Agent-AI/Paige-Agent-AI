@@ -186,11 +186,20 @@ try {
  assert.equal((await db.query('select archived_at from tenants where id=$1',[cleanupFixture])).rows[0].archived_at,null,'blocked fixture retirement rolls back archive and temporary authority');
  assert.equal((await db.query('select count(*)::int n from auth.users')).rows[0].n,3,'failed fixture cleanup must roll back its temporary actor');
  await db.query('delete from fixture_retention_obligation where tenant_id=$1',[cleanupFixture]);
+ const voiceBudget=await readFile('supabase/migrations/20270329000000_paige_voice_budget_control.sql','utf8');
+ await db.exec(voiceBudget.match(/CREATE TABLE public\.paige_voice_tenant_monthly_usage \([\s\S]*?\n\);/)[0]);
+ await db.query('insert into paige_voice_tenant_monthly_usage values($1,current_date,0.20),($2,current_date,0.30)',[cleanupFixture,solo]);
+ await refuse(()=>db.exec(retireSyntheticTenantSQL(cleanupFixture)),'P0001');
+ assert.equal((await db.query('select archived_at from tenants where id=$1',[cleanupFixture])).rows[0].archived_at,null,'financial usage blocks canonical retirement and rolls back archive');
+ assert.equal((await db.query('select count(*)::int n from paige_voice_tenant_monthly_usage')).rows[0].n,2,'canonical deletion must not silently dispose financial usage');
+ // Existing budget concurrency proof owns only its synthetic usage in a disposable DB.
+ await db.query('delete from paige_voice_tenant_monthly_usage where tenant_id=$1',[cleanupFixture]);
  await db.exec(retireSyntheticTenantSQL(cleanupFixture));
  assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[cleanupFixture])).rows[0].n,0,'existing proof fixtures use actual governed retirement');
  assert.equal((await db.query('select count(*)::int n from auth.users')).rows[0].n,3,'successful fixture cleanup removes only its temporary actor');
  assert.equal((await db.query('select count(*)::int n from user_roles')).rows[0].n,3,'temporary fixture authority is removed');
  assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[solo])).rows[0].n,1,'the independent Solo survives proof-fixture cleanup');
+ assert.equal((await db.query('select reserved_usd::text v from paige_voice_tenant_monthly_usage where tenant_id=$1',[solo])).rows[0].v,'0.30','another tenant\'s financial usage survives fixture cleanup');
  await db.query("delete from user_roles where user_id=$1",[owner]); assert.equal((await db.query('select operator_can_retire_accounts() v')).rows[0].v,false,'revoked authority refuses immediately');
  console.log('PASS: actual archive/restore/delete SQL; populated Agency tree, CRM/activity/Chat/Memory cleanup, independent Solo and shared identity preserved; admin/owner and ordinary refusal; confirmation, stale version, idempotency and minimal receipt. Auth is a fixture; production acceptance UNVERIFIED.');
 } catch(e) {console.error('FAIL:',e.code??e.name,e.message);process.exitCode=1;} finally {await db.close();}

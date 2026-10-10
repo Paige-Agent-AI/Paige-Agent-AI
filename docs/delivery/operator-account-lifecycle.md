@@ -53,6 +53,8 @@ Read-only role audit found the intended owner Super Admin and intended administr
 
 The owner-designated existing Super Admin is the Platform Owner. A unique index on the canonical user_roles table prevents a second Super Admin; additional owner-invited administrators use platform_admin. Neither email strings nor editable Auth metadata confer deletion authority. Deployment/activation must not assert exclusive administrator access until the additional existing Platform Admin assignment has been reconciled against the owner's invitation policy.
 
+The subsequent c7d2e5e14ddb06bce1bf7c9b7ea851a91ab3bab4 database run passed the Chat cleanup and voice-budget race assertions, then correctly blocked cleanup on a synthetic paige_voice_tenant_monthly_usage row. Only that existing disposable no-provider proof now removes its own known synthetic usage before canonical retirement. The production financial disposition remains blocked. A regression loads the actual usage table definition, verifies refusal and rollback while usage exists, then verifies fixture retirement after its own cleanup while another tenant's usage and identities survive. No real financial history or provider resource is removed.
+
 ## Controlled acceptance matrix
 
 | Outcome | Evidence | Boundary |

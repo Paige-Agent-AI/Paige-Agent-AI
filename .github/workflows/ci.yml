@@ -67,12 +67,15 @@ jobs:
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/booking-provider-boundary.test.mjs
+          supabase/functions/_shared/operator-retirement-handler.test.mjs
       - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
+      - name: Operator provider retirement SQL proof
+        run: node scripts/proof/operator-provider-retirement.mjs --postgres
       - name: Operator Intelligence eval metadata, real caller guards and audit refusal in disposable PostgreSQL
         run: node scripts/proof/operator-intelligence-eval.mjs --postgres
   verify:

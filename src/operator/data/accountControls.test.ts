@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { accountEditReadback, parseAccountDeletionPreview } from './accountControls';
+import { accountEditReadback, parseAccountDeletionPreview,parseResourceReceipt } from './accountControls';
 
 describe('operator account controls readback', () => {
+  it('refuses a foreign, mismatched or falsely ready provider receipt',()=>{
+    const row={tenant_id:'test-tenant-a',operation_id:'test-operation',mode:'archive',state:'resources_ready',account_count:1,results:[{provider:'twilio',state:'verified',provider_status:'suspended',reason:null}]};
+    expect(parseResourceReceipt('test-tenant-a','test-operation',row)).toEqual(row);
+    for(const value of [{...row,tenant_id:'test-tenant-b'},{...row,operation_id:'foreign-operation'},{...row,results:[]},{...row,results:[{...row.results[0],state:'unknown'}]},{...row,results:[{...row.results[0],provider_status:'active'}]}])expect(()=>parseResourceReceipt('test-tenant-a','test-operation',value)).toThrow();
+  });
   it('requires the exact target and saved values', () => {
     expect(accountEditReadback('test-tenant-a', 'Revised', 'active', { id: 'test-tenant-a', name: 'Revised', status: 'active' })).toBe(true);
     for (const row of [null, { id: 'test-tenant-b', name: 'Revised', status: 'active' }, { id: 'test-tenant-a', name: 'Old', status: 'active' }]) {

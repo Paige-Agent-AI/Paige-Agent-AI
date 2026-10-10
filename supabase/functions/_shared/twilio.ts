@@ -150,6 +150,7 @@ export async function twilioRequest<T = Record<string, unknown>>(
   method: "GET" | "POST" | "DELETE" = "POST",
   params: Record<string, TwilioParamValue> = {},
   authUser?: string,
+  options: { retryTransient?: boolean; timeoutMs?: number } = {},
 ): Promise<TwilioResult<T>> {
   // The Basic-auth username is the API Key SID when provided, else the account SID.
   const basicUser = (authUser && authUser.length > 0) ? authUser : accountSid;
@@ -178,7 +179,7 @@ export async function twilioRequest<T = Record<string, unknown>>(
 
   const attempt = async (): Promise<TwilioResult<T>> => {
     try {
-      const res = await fetch(url, { method, headers, body: bodyStr });
+      const res = await fetch(url, { method, headers, body: bodyStr, ...(options.timeoutMs ? { signal: AbortSignal.timeout(options.timeoutMs), redirect: 'error' as const } : {}) });
       const raw = await res.text();
       let json: unknown = null;
       if (raw) {
@@ -211,7 +212,7 @@ export async function twilioRequest<T = Record<string, unknown>>(
 
   let result = await attempt();
   // Retry ONCE on a transient failure: 429 (rate limit), any 5xx, or a transport fault (status 0).
-  if (!result.ok && (result.status === 0 || result.status === 429 || result.status >= 500)) {
+  if (options.retryTransient !== false && !result.ok && (result.status === 0 || result.status === 429 || result.status >= 500)) {
     await sleep(result.status === 429 ? 1000 : 400);
     result = await attempt();
   }

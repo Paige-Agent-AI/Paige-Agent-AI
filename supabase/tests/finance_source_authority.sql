@@ -11,7 +11,8 @@ DO $$ BEGIN
 END $$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY, deleted_at timestamptz, banned_until timestamptz);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
-CREATE TABLE public.tenants(id uuid PRIMARY KEY, status text, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false);
+CREATE TYPE public.tenant_status AS ENUM('trial','active','past_due','canceled','suspended');
+CREATE TABLE public.tenants(id uuid PRIMARY KEY, status public.tenant_status, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false);
 CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
 CREATE TABLE public.tenant_members(tenant_id uuid,user_id uuid,role text,status text,PRIMARY KEY(tenant_id,user_id));
 CREATE TABLE public.user_roles(user_id uuid,role text);
@@ -24,6 +25,13 @@ CREATE FUNCTION public.agency_can_manage_child(_child uuid,_actor uuid) RETURNS 
 CREATE TABLE public.fixture_receipts(id uuid PRIMARY KEY,tenant_id uuid,actor_id uuid,capability_key text);
 CREATE FUNCTION public.record_capability_run(_tenant uuid,_actor uuid,_key text,_outcome text,_run uuid,_agent text) RETURNS void LANGUAGE plpgsql AS $$ BEGIN
  IF current_setting('test.refuse_receipt',true)='yes' THEN RAISE EXCEPTION 'Receipt unavailable'; END IF;
+ INSERT INTO public.fixture_receipts VALUES(_run,_tenant,_actor,_key);
+END $$;
+-- Repository replay can install both canonical signatures; current production metadata has ten only.
+-- Keep the stricter two-signature overload resolution in the proof.
+CREATE FUNCTION public.record_capability_run(_tenant uuid,_actor uuid,_key text,_outcome text,_run uuid,_agent text DEFAULT NULL,_job text DEFAULT NULL,_trace uuid DEFAULT NULL,_release text DEFAULT NULL,_detail jsonb DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $$ BEGIN
+ IF current_setting('test.refuse_receipt',true)='yes' THEN RAISE EXCEPTION 'Receipt unavailable'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM tenant_members WHERE tenant_id=_tenant AND user_id=_actor AND status='active') THEN RAISE EXCEPTION 'Canonical receipt seat unavailable' USING ERRCODE='42501'; END IF;
  INSERT INTO public.fixture_receipts VALUES(_run,_tenant,_actor,_key);
 END $$;
 INSERT INTO auth.users VALUES ('10000000-0000-0000-0000-000000000001',null,null),('10000000-0000-0000-0000-000000000002',null,null),('10000000-0000-0000-0000-000000000003',null,null);

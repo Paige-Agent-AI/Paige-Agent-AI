@@ -184,7 +184,8 @@ BEGIN
     CASE WHEN _kind='workspace_company' THEN _expected_tenant_id::text ELSE _entity_id::text END,auth.uid(),auth.uid()) RETURNING * INTO result;
  END IF;
  -- One atomic canonical receipt; failure rolls back the entity write.
- PERFORM public.record_capability_run(_expected_tenant_id,auth.uid(),'finance_entity_save','capability_succeeded',result.receipt_run_id,NULL);
+ -- All ten arguments select the existing correlation overload unambiguously.
+ PERFORM public.record_capability_run(_expected_tenant_id,auth.uid(),'finance_entity_save','capability_succeeded',result.receipt_run_id,NULL,NULL,NULL,NULL,NULL);
  RETURN jsonb_build_object('id',result.id,'tenant_id',result.tenant_id,'version',result.version,'legal_name',result.legal_name,'identity_basis',result.identity_basis,'receipt_run_id',result.receipt_run_id,'replayed',false);
 END $$;
 REVOKE ALL ON FUNCTION public.save_finance_company_entity(uuid,uuid,bigint,text,text) FROM PUBLIC,anon,service_role;

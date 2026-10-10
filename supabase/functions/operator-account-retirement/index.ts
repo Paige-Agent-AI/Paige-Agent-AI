@@ -3,11 +3,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 import { masterCreds } from '../_shared/twilio.ts';
 import { retireTwilioSubaccount } from '../_shared/operator-retirement.ts';
-import { retireTenantTtsCache } from '../_shared/operator-storage-retirement.ts';
+import { retireTenantTtsCache, retireTenantGeneratedMedia } from '../_shared/operator-storage-retirement.ts';
 
 const cors={ 'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Cache-Control':'no-store' };
 const uuid=(v:unknown):v is string=>typeof v==='string'&&/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(v);
-type Resource={key:string;provider:'twilio'|'n8n'|'tts_cache';tenant_id:string;sid?:string;external_retention?:boolean;objects?:{id:string;name:string;fingerprint:string}[]};
+type Resource={key:string;provider:'twilio'|'n8n'|'tts_cache'|'generated_media';tenant_id:string;sid?:string;external_retention?:boolean;objects?:{id:string;name:string;fingerprint:string}[]};
 type Plan={complete:boolean;mode:'archive'|'delete';resources:Resource[];results:Record<string,{state:string}>};
 
 Deno.serve(async(req)=>{
@@ -51,8 +51,9 @@ Deno.serve(async(req)=>{
    if(resource.provider==='twilio'&&typeof resource.sid==='string'){
     const result=await retireTwilioSubaccount(resource.sid,plan.mode==='archive'?'suspended':'closed',masterCreds(),action==='read',assert);
     state=result.state;if(result.state==='verified')status=result.provider_status;else reason=result.reason;
-   }else if(resource.provider==='tts_cache'&&plan.mode==='delete'&&resource.objects){
-    const result=await retireTenantTtsCache(admin,resource.tenant_id,resource.objects,action==='read',assert);
+   }else if((resource.provider==='tts_cache'||resource.provider==='generated_media')&&plan.mode==='delete'&&resource.objects){
+    const remove=resource.provider==='tts_cache'?retireTenantTtsCache:retireTenantGeneratedMedia;
+    const result=await remove(admin,resource.tenant_id,resource.objects,action==='read',assert);
     state=result.state;if(result.state==='verified')status=result.provider_status;else reason=result.reason;
    }else if(resource.provider==='n8n'&&resource.external_retention===true&&action!=='read'){
     // External n8n workflows are explicitly retained; clear only this tenant's canonical

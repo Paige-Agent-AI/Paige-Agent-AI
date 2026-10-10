@@ -25,6 +25,26 @@ Ship-time checklist: knowledge record present; existing callable seams reused; d
 
 ## Provider audit and remaining delivery
 
+### Backend resumption — 2026-10-10
+
+Owner authorizes the complete backend mission through bounded reviewed releases. Approved seven-view UI remains intact; provider setup stays in Settings Integrations. Owner login, real provider activation, new consent, provider spending and customer financial effects remain restricted. No additional implementation agents are assigned.
+
+Current source baseline: main `b0eface4ba461136d77edaf16c9de9e5dde86258`. Source classifications below are repository-grounded, not authenticated production acceptance:
+
+| Capability | Status | Source / missing proof |
+|---|---|---|
+| Receivables / eligible receipts | PARTIAL | Canonical Sales RPCs and metric/evidence producer; bank settlement and recognized revenue are separate. |
+| QuickBooks accounting reads | IMPLEMENTED BUT UNVERIFIED | Legacy OAuth/sync/report code exists; company authority, single-use state, pagination, nullable figures and revocation still require repair. Registry remains PROOF_OWED. |
+| Company bank accounts / transactions | UNAVAILABLE | Legacy Plaid consumer rows are user-scoped. Item-wide transactions/balances are incorrectly assigned to a selected local account; products configured as auth/transactions do not prove liabilities coverage. |
+| Company identity binding | UNAVAILABLE | CRM `businesses.owner_user_id` can equal the tenant owner for customer companies. That is not proof of the workspace's own legal entity. No legacy rows are automatically promoted to company Finance. |
+| Debt / credit terms | UNAVAILABLE | Approved UI retains nullable fields and individual accounts. No verified lender/company adapter yet. Credit cards must not be classified as LOCs. |
+| Accounting profit / expenses / payables | UNAVAILABLE | Legacy zero-default snapshots lack verified currency, basis and complete pages; they cannot establish Finance measures. |
+| Budgets / reproducible forecasts | UNAVAILABLE | No canonical Finance assumptions/versioned scenario producer yet. |
+| Finance Spine / Fabric | PROOF OWED | Existing Sales/analytics capabilities remain canonical. Finance contributes domain snapshots; Operating Fabric composition remains its standing owner's seam. |
+| Chat / Live Finance acceptance | PROOF OWED | PR #1899's non-effectful conversation recovery withholds tools while interactive admission is unavailable. Finance must not change the competing executor/security path or claim prompt-launcher acceptance. |
+
+First bounded repair authenticates QuickBooks sync before privileged connection access. Exact service bearer is required for bulk admission; personal identity is verified rather than taken from the request. Production function metadata lists only QuickBooks webhook, not OAuth/sync/refresh/disconnect. Redeploying the caller repair must not activate the legacy incomplete provider reads: authenticated sync returns `503 FINANCE_SOURCE_UNAVAILABLE` without privileged database/provider access until the company-bound adapter lands. It does not repair OAuth or establish company ownership. Controlled handler tests exercise the actual endpoint body without provider calls. Deployment and independent review remain separate proof legs.
+
 QuickBooks remains under Integration Registry/Connections ownership, with readiness `PROOF_OWED`. Source audit found an unvalidated OAuth nonce, user-keyed company selection, accounting plus payments permission mismatch, bulk sync before caller validation, incomplete pagination, missing-data-to-zero projections, duplicate refresh paths and unchecked disconnect readback. Deployed gateway protection was not measured. Finance exposes no activation or accounting writeback from these endpoints.
 
 Complete the approved department through company-scoped, basis/currency/period/coverage-aware provider reads; canonical budget and forecast assumptions; reconciliation evidence and financial exceptions; bounded Finance Spine/Fabric contracts; governed recommendations and verified internal follow-ups; authenticated positive, role/refusal, switching and negative-scope proof. Accounting writebacks, bill payments, transfers and tax filings remain owner-reserved financial effects. A live UI alone does not close this target.

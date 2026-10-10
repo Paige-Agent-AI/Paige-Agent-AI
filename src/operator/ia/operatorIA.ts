@@ -46,7 +46,7 @@ export const OPERATOR_SLOTS: readonly OperatorSlot[] = [
   {
     id: "fleet",
     label: "Fleet",
-    views: ["Overview", "Systems check", "Directory", "History", "Mind"],
+    views: ["Systems check", "Directory", "History", "Mind"],
   },
   {
     id: "relationships",

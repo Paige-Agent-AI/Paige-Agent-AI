@@ -82,6 +82,12 @@ jobs:
           node scripts/proof/operator-cached-audio-retirement.mjs --postgres 5432
       - name: Operator Intelligence eval metadata, real caller guards and audit refusal in disposable PostgreSQL
         run: node scripts/proof/operator-intelligence-eval.mjs --postgres
+      - name: INT-280 canonical durable trajectory history in disposable PostgreSQL
+        run: node scripts/proof/int280-trajectory-history.mjs --postgres
+      - name: INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL
+        run: node scripts/proof/int280-trajectory-projection.mjs --postgres
+      - name: Operator generated-media retirement, shared-reference refusal and partial recovery proof
+        run: node scripts/proof/operator-generated-media-retirement.mjs --postgres 5432
   verify:
     runs-on: ubuntu-latest
     steps:

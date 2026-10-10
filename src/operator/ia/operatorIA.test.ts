@@ -48,8 +48,6 @@ describe("the operator IA mirrors the design pack", () => {
    * duplicate-guard below fails, which is what stops the exception outliving the reason for it.
    */
   const RULED_ADDITIONS = [
-    // Owner continuation: Fleet gains Overview; Mind is moved, not added.
-    { slot: "fleet", view: "Overview", index: 0 },
     { slot: "settings", view: "Numbers", index: 3 },
     // Owner INT-280 ruling, 2026-10-10: within Settings, never a seventh primary slot.
     { slot: "settings", view: "PAIGE Intelligence", index: 4 },
@@ -57,7 +55,7 @@ describe("the operator IA mirrors the design pack", () => {
     { slot: "settings", view: "Analytics", index: 12 },
     { slot: "settings", view: "Billing", index: 13 },
   ] as const;
-  const RULED_MOVES = [{ from: "settings", to: "fleet", view: "Mind", index: 4 }] as const;
+  const RULED_MOVES = [{ from: "settings", to: "fleet", view: "Mind", index: 3 }] as const;
 
   it("carries the pack's views, verbatim, apart from the ruled additions", () => {
     for (const p of pack) {

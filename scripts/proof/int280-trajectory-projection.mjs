@@ -18,7 +18,7 @@ try {
     ALTER TABLE public.research_runs ADD COLUMN tenant_id uuid,ADD COLUMN user_id uuid,ADD COLUMN question text,ADD COLUMN configured boolean,ADD COLUMN stop_reason text,ADD COLUMN coverage jsonb,ADD COLUMN findings jsonb;
     CREATE TABLE public.research_sources(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),run_id uuid,tenant_id uuid,user_id uuid,source_index integer,url text,excluded boolean DEFAULT false);
     ALTER TABLE public.paige_act_executions ADD COLUMN tenant_id uuid,ADD COLUMN event_id uuid,ADD COLUMN act_id uuid,ADD COLUMN capability_key text,ADD COLUMN outcome text,ADD COLUMN effective_lane text,ADD COLUMN decided_at timestamptz,ADD COLUMN dispatched_at timestamptz,ADD COLUMN settled_at timestamptz,ADD COLUMN provider_ref text;
-    CREATE TABLE public.paige_pending_approvals(id uuid PRIMARY KEY,tenant_id uuid,status text,metadata jsonb,draft_content jsonb,created_at timestamptz,reviewed_at timestamptz);
+    CREATE TABLE public.paige_pending_approvals(id uuid PRIMARY KEY,tenant_id uuid,status text,metadata jsonb,draft_content jsonb,created_at timestamptz,reviewed_at timestamptz,source text);
     DROP TABLE public.paige_eval_run;`);
   await db.exec(await readFile('supabase/migrations/20260720044049_paige_eval.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20260719150000_paige_llm_trace.sql','utf8'));

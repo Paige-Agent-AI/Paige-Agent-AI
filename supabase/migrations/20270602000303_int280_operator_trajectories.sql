@@ -64,9 +64,9 @@ BEGIN
     ) a;
     SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY a.created_at,a.id),'[]') INTO approvals FROM (
       SELECT q.id,CASE WHEN q.status IN('pending','approved','rejected','expired','failed','sent') THEN q.status ELSE 'unknown' END AS status,q.created_at,q.reviewed_at
-      FROM public.paige_pending_approvals q WHERE q.tenant_id=w.tenant_id AND q.metadata->>'source'='paige_orchestration'
+      FROM public.paige_pending_approvals q WHERE q.tenant_id=w.tenant_id AND q.source='paige_orchestration' AND q.metadata->>'source'='paige_orchestration'
         AND EXISTS(SELECT 1 FROM public.paige_act_executions x WHERE x.work_id=w.id AND x.tenant_id=w.tenant_id
-          AND q.metadata->>'event_id'=x.event_id::text AND q.metadata->>'act_id'=x.act_id::text)
+          AND q.metadata->>'event_id'=x.event_id::text AND q.metadata->>'act_id'=x.act_id::text AND q.metadata->>'act_execution_id'=x.id::text)
       ORDER BY q.created_at,q.id LIMIT 100
     ) a;
     SELECT COALESCE(jsonb_agg(to_jsonb(c) ORDER BY c.created_at,c.id),'[]') INTO turns FROM (
@@ -149,8 +149,8 @@ BEGIN
           AND e.detail->>'document_revision'=w.terminal_outcome->>'document_revision')
           OR (w.capability_key='deep_research' AND e.detail->>'run_id'=w.terminal_outcome->>'run_id')))
       AND NOT EXISTS(SELECT 1 FROM public.paige_act_executions x WHERE x.work_id=w.id AND (x.tenant_id IS DISTINCT FROM w.tenant_id OR x.outcome NOT IN('executed','condition_not_matched')))
-      AND NOT EXISTS(SELECT 1 FROM public.paige_pending_approvals q WHERE q.tenant_id=w.tenant_id AND q.status NOT IN('approved','sent') AND q.metadata->>'source'='paige_orchestration'
-        AND EXISTS(SELECT 1 FROM public.paige_act_executions x WHERE x.work_id=w.id AND x.tenant_id=w.tenant_id AND q.metadata->>'event_id'=x.event_id::text AND q.metadata->>'act_id'=x.act_id::text));
+      AND NOT EXISTS(SELECT 1 FROM public.paige_pending_approvals q WHERE q.tenant_id=w.tenant_id AND q.status NOT IN('approved','sent') AND q.source='paige_orchestration' AND q.metadata->>'source'='paige_orchestration'
+        AND EXISTS(SELECT 1 FROM public.paige_act_executions x WHERE x.work_id=w.id AND x.tenant_id=w.tenant_id AND q.metadata->>'event_id'=x.event_id::text AND q.metadata->>'act_id'=x.act_id::text AND q.metadata->>'act_execution_id'=x.id::text));
     history:=COALESCE(w.trajectory_history,jsonb_build_object('version',1,'complete',false,'truncated',false,'events','[]'::jsonb));
     items:=items||jsonb_build_array(jsonb_build_object('id',w.id,'contract_version',1,'work_version',w.version,
       'category',CASE WHEN w.work_kind IN('document_authoring','research','knowledge_extraction','knowledge_publication','evaluation','reconciliation','campaign_delivery') THEN w.work_kind ELSE 'other_recorded_work' END,

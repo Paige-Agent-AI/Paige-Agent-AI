@@ -25,7 +25,7 @@ BEGIN
   INSERT INTO public.paige_llm_trace(tenant_id,task_id,provider,status,metadata) VALUES(w.tenant_id,w.id::text,'untrusted-producer','success','{}');
   INSERT INTO public.paige_act_executions(id,work_id,tenant_id,event_id,act_id,capability_key,outcome,effective_lane,decided_at,dispatched_at,settled_at,provider_ref)
   VALUES('50000000-0000-4000-8000-000000000001',w.id,w.tenant_id,'60000000-0000-4000-8000-000000000001','70000000-0000-4000-8000-000000000001','test_capability','executed','confirm',now(),now(),now(),'private provider response identity');
-  INSERT INTO public.paige_pending_approvals VALUES('80000000-0000-4000-8000-000000000001',w.tenant_id,'approved','{"source":"paige_orchestration","event_id":"60000000-0000-4000-8000-000000000001","act_id":"70000000-0000-4000-8000-000000000001"}','{"private":"approval draft"}',now(),now());
+  INSERT INTO public.paige_pending_approvals VALUES('80000000-0000-4000-8000-000000000001',w.tenant_id,'approved','{"source":"paige_orchestration","event_id":"60000000-0000-4000-8000-000000000001","act_id":"70000000-0000-4000-8000-000000000001","act_execution_id":"50000000-0000-4000-8000-000000000001"}','{"private":"approval draft"}',now(),now(),'paige_orchestration');
   SELECT * INTO r FROM public.complete_paige_document_work(w.id,w.idempotency_key,'guide','Synthetic fixture draft','[{"type":"paragraph","text":"controlled synthetic content"}]','test-provider','test-model',30,40);
   IF NOT r.receipt_recorded OR r.work_status<>'succeeded' THEN RAISE EXCEPTION 'canonical completion missing'; END IF;
   SELECT * INTO w FROM public.paige_durable_work WHERE id=w.id;
@@ -63,6 +63,16 @@ BEGIN
   UPDATE public.marketing_content SET document_revision=2 WHERE work_id=w.id;
   IF (public.operator_intelligence_trajectories(p_work_id=>w.id)->'items'->0->'terminal_verified')<>'false'::jsonb THEN RAISE EXCEPTION 'changed destination verified'; END IF;
   UPDATE public.marketing_content SET document_revision=1 WHERE work_id=w.id;
+  UPDATE public.paige_pending_approvals SET source='manual',status='pending';
+  item:=public.operator_intelligence_trajectories(p_work_id=>w.id)->'items'->0;
+  IF jsonb_array_length(item->'approvals')<>0 OR item->'terminal_verified'<>'true'::jsonb THEN RAISE EXCEPTION 'editable producer spoof attributed'; END IF;
+  UPDATE public.paige_pending_approvals SET source='paige_orchestration',metadata=metadata-'act_execution_id';
+  item:=public.operator_intelligence_trajectories(p_work_id=>w.id)->'items'->0;
+  IF jsonb_array_length(item->'approvals')<>0 OR item->'terminal_verified'<>'true'::jsonb THEN RAISE EXCEPTION 'missing execution reference attributed'; END IF;
+  UPDATE public.paige_pending_approvals SET metadata=metadata||jsonb_build_object('act_execution_id',gen_random_uuid());
+  item:=public.operator_intelligence_trajectories(p_work_id=>w.id)->'items'->0;
+  IF jsonb_array_length(item->'approvals')<>0 OR item->'terminal_verified'<>'true'::jsonb THEN RAISE EXCEPTION 'wrong execution reference attributed'; END IF;
+  UPDATE public.paige_pending_approvals SET metadata=metadata||'{"act_execution_id":"50000000-0000-4000-8000-000000000001"}'::jsonb;
   UPDATE public.paige_pending_approvals SET status='rejected';
   IF (public.operator_intelligence_trajectories(p_work_id=>w.id)->'items'->0->'terminal_verified')<>'false'::jsonb THEN RAISE EXCEPTION 'denied approval verified'; END IF;
   UPDATE public.paige_pending_approvals SET status='expired';

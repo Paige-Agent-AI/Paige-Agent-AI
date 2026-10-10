@@ -18,6 +18,11 @@ describe('one confirmed Delete through existing Storage contracts',()=>{
   const io=fixture(),foreign={...files,resources:[{...files.resources[0],provider}]} as ResourcePreview;
   expect(isEligibleFileReview(preview,foreign)).toBe(false);await expect(deleteWithEligibleFiles('synthetic-a','archive-a','Example',preview,foreign,io)).rejects.toBeInstanceOf(AccountRpcError);expect(io.run).not.toHaveBeenCalled();
  });
+ it('starts no file removal when the server reports an independent dependency blocker',async()=>{
+  const io=fixture(),blocked={...files,execution_available:false,blockers:['A linked record belongs to another account.']};
+  await expect(deleteWithEligibleFiles('synthetic-a','archive-a','Example',preview,blocked,io)).rejects.toBeInstanceOf(AccountRpcError);
+  expect(io.run).not.toHaveBeenCalled();expect(io.execute).not.toHaveBeenCalled();
+ });
  it('refuses changed scope/data before file removal and after file removal',async()=>{
   for(const after of [false,true]) {
    const io=fixture();io.preview.mockReset();if(after)io.preview.mockResolvedValueOnce(preview);

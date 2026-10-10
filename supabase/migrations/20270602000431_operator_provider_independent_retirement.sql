@@ -209,6 +209,37 @@ BEGIN
   RETURN NEW;
 END $$;
 
+CREATE OR REPLACE FUNCTION public.operator_retirement_disposition(_table text)
+RETURNS text LANGUAGE sql IMMUTABLE SET search_path=public AS $$
+ SELECT CASE WHEN _table=ANY(ARRAY[
+ 'tenants','tenant_members','tenant_features','tenant_account_number_seq','tenant_provisioning','tenant_revenue_classification',
+ 'clients','client_contact_methods','client_custom_field_values','client_memory','client_notes','client_types','custom_field_definitions',
+ 'businesses','business_public_presence','business_certifications','business_vendors','tenant_business_owners','tenant_business_representatives','tenant_entity_relationships',
+ 'deals','deal_activities','tasks','plans','plan_items','pipelines','pipeline_stages','pipeline_folders','pipeline_deal_outcomes',
+ 'pipeline_command_results','pipeline_archive_confirmations','pipeline_folder_archive_confirmations','pipeline_move_approvals','crm_command_previews','crm_command_results',
+ 'paige_chat_threads','paige_chat_turns','paige_owner_memory','paige_prompt_memory','paige_prompt_template','paige_conversations','paige_conversation_labels','paige_message_labels',
+ 'messages','message_classifications','message_labels','threads','paige_context_loads','tenant_knowledge_docs','tenant_knowledge_chunks','kb_coverage_signal','kb_query_telemetry',
+ 'tenant_setup_business_context_meta','tenant_setup_knowledge_sources','tenant_setup_paige_profiles','tenant_setup_private_context','tenant_setup_voice_examples',
+ 'tenant_tool_autonomy','tenant_journey_stages','tenant_invite_tokens','agency_team_members','agency_item_allowlist','tenant_comms_preferences','invitations','staff_calendar_settings',
+ 'calendars','calendar_groups','calendar_hosts','internal_bookings','booking_notifications_sent','email_templates','email_segments','snippets','signatures','marketing_content',
+ 'email_campaigns','email_campaign_versions','email_campaign_recipients','email_sequences','email_sequence_versions','email_sequence_steps','email_sequence_enrollments','email_unsubscribe_tokens',
+ 'campaign_briefs','campaign_brief_command_results','growth_pages','growth_forms','growth_form_submissions','growth_funnels','growth_funnel_steps','growth_funnel_sessions','growth_form_automations',
+ 'paige_automations','paige_automation_acts','paige_actions','paige_action_kinds','paige_approval_policies','paige_pending_approvals','paige_pending_confirmations','paige_tool_confirmations','paige_approval_comments',
+ 'paige_durable_work','paige_workflow_registry','paige_workflow_runs','paige_native_events','paige_event_dispatches','paige_event_kinds','paige_workspace_events','paige_unassigned_queue','paige_unclassified_inbound',
+ 'paige_readiness_proposals','paige_readiness_scan_runs','paige_systems_check_baseline','paige_systems_check_run','paige_systems_check_finding','paige_systems_check_signal_reference',
+ 'business_missions','business_mission_brief_versions','business_mission_mutation_receipts','paige_client_events','paige_customer_actions','paige_customer_responses',
+ 'paige_data_source_sync_state','paige_subagent_factory_quota','paige_subagents','paige_subagent_proposals','paige_subagent_invocations',
+ 'research_runs','research_sources','response_quality_feedback','team_handoff_queue','team_scoreboard_metrics','push_subscriptions','user_presence',
+ 'paige_sales_export_snapshots','paige_sales_export_members','paige_sales_import_batches','paige_sales_import_bindings','mcp_connection_contacts','mcp_connection_oauth_state','mcp_connection_tools','mcp_connection_approvals',
+ 'tenant_n8n_discoveries','tenant_n8n_oauth_attempts','tenant_mcp_oauth_state','tenant_zapier_api_oauth_attempts','tenant_zapier_intake_routes','tenant_zapier_intake_events','mailbox_sync_state',
+ 'channel_connectors','tenant_email_identities','tenant_workflows',
+ 'paige_eval_case','paige_eval_dataset','paige_eval_result','paige_eval_run','paige_live_tenant_availability',
+ 'tenant_twilio_subaccounts','tenant_n8n_connections','tenant_phone_numbers','paige_voice_tenant_budgets','paige_voice_tenant_monthly_usage',
+ 'email_send_log','mcp_connections','mcp_connection_approvals','mcp_connection_tools',
+ 'programs','program_phases','program_enrollments','program_phase_item_states','program_messages','program_document_requests','program_approvals'
+ ]) THEN 'delete' WHEN _table=ANY(ARRAY['profiles','paige_audit_log','platform_subscriptions','platform_usage_events','paige_llm_trace','paige_voice_cost_reservations']) THEN 'preserve' ELSE 'blocked' END
+$$;
+
 CREATE OR REPLACE FUNCTION public.operator_account_deletion_plan(_ids uuid[])
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE plan jsonb:='{}'; blockers jsonb:='[]'; r record; tids jsonb; old jsonb; round int; changed boolean; n bigint; hash text; invalid bigint; cond text; entry jsonb; resource record;
@@ -244,6 +275,9 @@ BEGIN
  END IF;
  IF EXISTS(SELECT 1 FROM public.mcp_connections WHERE tenant_id=ANY(_ids) AND (legacy_source IS DISTINCT FROM 'tenant_n8n_connections' OR provider_key<>'n8n')) THEN blockers:=blockers||jsonb_build_array('mcp_connections: An independent connector requires its canonical disconnection and credential disposition.'); END IF;
  IF EXISTS(SELECT 1 FROM public.platform_subscriptions WHERE tenant_id=ANY(_ids) AND (stripe_subscription_id IS NOT NULL OR stripe_customer_id IS NOT NULL)) THEN blockers:=blockers||jsonb_build_array('Live billing references require authoritative billing retirement before account deletion.'); END IF;
+ IF EXISTS(SELECT 1 FROM public.paige_voice_cost_reservations WHERE tenant_id=ANY(_ids) AND state IN ('reserved','ambiguous')) THEN
+  blockers:=blockers||jsonb_build_array('Unsettled voice cost reservations require canonical settlement before deletion.');
+ END IF;
  FOR r IN SELECT key relation,value tids FROM jsonb_each(plan) ORDER BY key LOOP
    n:=jsonb_array_length(r.tids);
    IF n>20000 THEN blockers:=blockers||jsonb_build_array(format('%s exceeds the bounded cleanup size; use a reviewed maintenance operation.',r.relation)); END IF;
@@ -337,7 +371,7 @@ BEGIN
    plan:=plan-'paige_audit_log';
  END IF;
  -- Retain accounting in its one canonical home; historical amounts and quantities remain.
- FOREACH target IN ARRAY ARRAY['platform_subscriptions','platform_usage_events'] LOOP
+ FOREACH target IN ARRAY ARRAY['platform_subscriptions','platform_usage_events','paige_voice_cost_reservations'] LOOP
   IF plan ? target THEN
    EXECUTE format('UPDATE public.%I SET retired_tenant_id=tenant_id,tenant_id=NULL,operator_rows_server_only=true WHERE tenant_id=ANY($1)',target) USING r.scope_ids;
    plan:=plan-target;
@@ -406,7 +440,7 @@ BEGIN
  SELECT array_agg((a->>'id')::uuid) INTO ids FROM jsonb_array_elements(p->'accounts') a;
  storage_supported:=NOT EXISTS(SELECT 1 FROM storage.objects o WHERE (split_part(o.name,'/',1)=ANY(ARRAY(SELECT unnest(ids)::text)) OR (split_part(o.name,'/',1)='tenants' AND split_part(o.name,'/',2)=ANY(ARRAY(SELECT unnest(ids)::text)))) AND ((o.bucket_id IS DISTINCT FROM 'tts-cache' AND o.bucket_id IS DISTINCT FROM 'paige-generated') OR split_part(o.name,'/',1)='tenants'));
  SELECT coalesce(jsonb_agg(b),'[]') INTO blockers FROM jsonb_array_elements_text(p->'blockers') b
- WHERE b NOT LIKE 'tenant_twilio_subaccounts:%' AND b NOT LIKE 'tenant_n8n_connections:%' AND b NOT LIKE 'tenant_phone_numbers:%' AND NOT(_mode='delete' AND storage_supported AND b LIKE '% tenant-prefixed storage objects require the canonical Storage API cleanup and absence readback.');
+ WHERE NOT(_mode='delete' AND storage_supported AND b LIKE '% tenant-prefixed storage objects require the canonical Storage API cleanup and absence readback.');
  IF _mode='delete' THEN
   FOREACH cache_tenant IN ARRAY ids LOOP
    BEGIN
@@ -474,3 +508,11 @@ BEGIN
  SELECT coalesce(jsonb_agg(jsonb_build_object('provider',value->>'provider','state',value->>'state','provider_status',value->>'provider_status','reason',value->>'reason')),'[]') INTO summary FROM jsonb_each(r.resource_results);
  RETURN jsonb_build_object('tenant_id',r.root_tenant_id,'operation_id',r.id,'mode',r.resource_mode,'state',r.state,'account_count',cardinality(r.scope_ids),'file_only',jsonb_array_length(r.resource_plan)>0 AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.resource_plan) p WHERE p->>'provider' NOT IN ('tts_cache','generated_media')),'results',summary);
 END $$;
+
+-- Retain immutable voice spend in its canonical ledger. Tenant budget/cache counters
+-- are disposable configuration; platform totals and reservation amounts remain unchanged.
+ALTER TABLE public.paige_voice_cost_reservations ADD COLUMN IF NOT EXISTS operator_rows_server_only boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS retired_tenant_id uuid;
+DROP TRIGGER IF EXISTS a01_operator_retained_record ON public.paige_voice_cost_reservations;
+CREATE TRIGGER a01_operator_retained_record BEFORE INSERT OR UPDATE ON public.paige_voice_cost_reservations FOR EACH ROW EXECUTE FUNCTION public.guard_operator_retained_record();
+DROP POLICY IF EXISTS operator_retired_record_read_guard ON public.paige_voice_cost_reservations;
+CREATE POLICY operator_retired_record_read_guard ON public.paige_voice_cost_reservations AS RESTRICTIVE FOR ALL TO authenticated USING(NOT operator_rows_server_only OR public.is_platform_admin()) WITH CHECK(NOT operator_rows_server_only OR public.is_platform_admin());

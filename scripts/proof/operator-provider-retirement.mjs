@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { retireSyntheticTenantSQL } from './operator-postgres-fixture.mjs';
 process.on('uncaughtException', e => { console.error('FAIL:',e.code ?? e.name,e.message);process.exit(1); });
 const native=process.argv[2]==='--postgres';
-const db=native?new (await import('./operator-postgres-fixture.mjs')).OperatorPostgresFixture(Number(process.argv[3]??5432)):new (await import(pathToFileURL(resolve(process.argv[2])).href)).PGlite();
+const db=native?new (await import('./operator-postgres-fixture.mjs')).OperatorPostgresFixture(Number(process.argv[3]&&!process.argv[3].startsWith('--')?process.argv[3]:5432)):new (await import(pathToFileURL(resolve(process.argv[2])).href)).PGlite();
 const owner='00000000-0000-0000-0000-000000000001', ordinary='00000000-0000-0000-0000-000000000002';
 const agency='00000000-0000-0000-0000-000000000011', child='00000000-0000-0000-0000-000000000012', solo='00000000-0000-0000-0000-000000000013';
 await db.exec(`DO $$BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF; IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon; END IF; IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role; END IF; END$$; CREATE SCHEMA auth;
@@ -57,6 +57,9 @@ CREATE TABLE mcp_connection_approvals(connection_id uuid REFERENCES mcp_connecti
 CREATE TABLE mcp_connection_tools(connection_id uuid REFERENCES mcp_connections(connection_id),tool text);
 CREATE TABLE platform_subscriptions(id uuid PRIMARY KEY,tenant_id uuid NOT NULL REFERENCES tenants(id),status text,stripe_subscription_id text,stripe_customer_id text);
 CREATE TABLE platform_usage_events(id uuid PRIMARY KEY,tenant_id uuid NOT NULL REFERENCES tenants(id),quantity numeric);
+CREATE TABLE paige_voice_cost_reservations(id uuid PRIMARY KEY,tenant_id uuid REFERENCES tenants(id) ON DELETE SET NULL,state text,reserved_usd numeric);
+CREATE TABLE paige_voice_tenant_budgets(tenant_id uuid PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,enabled boolean);
+CREATE TABLE paige_voice_tenant_monthly_usage(tenant_id uuid REFERENCES tenants(id) ON DELETE CASCADE,budget_month date,reserved_usd numeric,PRIMARY KEY(tenant_id,budget_month));
 ALTER TABLE platform_usage_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY fixture_permissive ON platform_usage_events FOR SELECT TO authenticated USING(true);
 GRANT SELECT ON platform_usage_events TO authenticated;
@@ -120,8 +123,12 @@ if(process.argv.includes('--generated-media')) {
 }
 if(process.argv.includes('--platform-independent')) {
  if(!process.argv.includes('--independent-baseline')) {
-  const forward=await readFile('supabase/migrations/20270602000425_operator_provider_independent_retirement.sql','utf8');
+  const forward=await readFile('supabase/migrations/20270602000431_operator_provider_independent_retirement.sql','utf8');
   await db.exec(forward);await db.exec(forward);
+ }
+ if(process.argv.includes('--file-obligation-baseline')) {
+  const legacy=await readFile('supabase/migrations/20270602000304_operator_generated_media_retirement.sql','utf8');
+  await db.exec(legacy.match(/CREATE OR REPLACE FUNCTION public\.operator_preview_retirement_resources\([\s\S]*?\$\$;/)[0]);
  }
  try {await (await import('./operator-provider-independent-retirement.mjs')).proveProviderIndependentRetirement({db,actor,preview,refuse,owner,ordinary,agency,child,solo});}
  finally {await db.close();}

@@ -7,6 +7,8 @@ export async function proveProviderIndependentRetirement({db, actor, preview, re
  await db.query("insert into vault.secrets(name,secret) values($1,'synthetic-secret')",['twilio_subaccount_api_key_secret:'+child]);
  await db.query("insert into vault.secrets(name,secret) values('platform-preserved','synthetic-platform-secret')");
  await db.query("insert into tenant_n8n_connections values($1,'synthetic-url','synthetic-key','1234','connected',null,200,null,now())",[agency]);
+ await db.query("insert into paige_voice_cost_reservations values(gen_random_uuid(),$1,'committed',1.25,false,NULL),(gen_random_uuid(),$2,'committed',2.50,false,NULL)",[child,solo]);
+ await db.query("insert into paige_voice_tenant_monthly_usage values($1,current_date,1.25),($2,current_date,2.50)",[child,solo]);
  const childArchive='00000000-0000-0000-0000-000000000119';
  const childPreview=await preview(child);
  await db.query('select operator_archive_account($1,$2,$3,$4)',[child,childPreview.version,childPreview.accounts[0].name,childArchive]);
@@ -34,6 +36,20 @@ export async function proveProviderIndependentRetirement({db, actor, preview, re
  await db.query('select operator_archive_account($1,$2,$3,$4)',[agency,p.version,'Example Agency',archive]);
  await refuse(()=>db.query('select operator_restore_archived_account($1,$2)',[child,childArchive]),'55000');
  let deletion=(await db.query('select operator_preview_account_deletion($1) v',[agency])).rows[0].v;
+ await db.query("update paige_voice_cost_reservations set state='reserved' where tenant_id=$1",[child]);
+ assert.equal((await db.query("select operator_preview_retirement_resources($1,'delete') v",[agency])).rows[0].v.execution_available,false,'unsettled spend must block files and Delete');
+ await db.query("update paige_voice_cost_reservations set state='committed' where tenant_id=$1",[child]);
+ await db.exec('ALTER TABLE tenant_phone_numbers ADD COLUMN file_url text');
+ await db.query("insert into tenant_phone_numbers select gen_random_uuid(),$1,id,'synthetic-number','synthetic-file-reference' from tenant_twilio_subaccounts where tenant_id=$1",[child]);
+ const linkedFiles=(await db.query("select operator_preview_retirement_resources($1,'delete') v",[agency])).rows[0].v;
+ assert.equal(linkedFiles.execution_available,false,'a provider-prefixed independent file obligation must not be discarded');
+ await db.query('delete from tenant_phone_numbers where tenant_id=$1',[child]);
+ await db.query("insert into tenant_phone_numbers select gen_random_uuid(),$1,id,'synthetic-number',NULL from tenant_twilio_subaccounts where tenant_id=$2",[solo,child]);
+ const crossFiles=(await db.query("select operator_preview_retirement_resources($1,'delete') v",[agency])).rows[0].v;
+ assert.equal(crossFiles.execution_available,false,'file cleanup must preserve cross-account FK blockers before removing any bytes');
+ await refuse(()=>db.query("select operator_begin_retirement_resources($1,'delete',$2,'Example Agency',$3,false)",[agency,crossFiles.version,'00000000-0000-0000-0000-000000000120']),'55000');
+ assert.equal((await db.query('select count(*)::int n from operator_account_archives where id=$1',['00000000-0000-0000-0000-000000000120'])).rows[0].n,0);
+ await db.query('delete from tenant_phone_numbers where tenant_id=$1',[solo]);
  if(deletion.storage_count>0) {
   const files=(await db.query("select operator_preview_retirement_resources($1,'delete') v",[agency])).rows[0].v;
   assert.equal(files.execution_available,true,JSON.stringify(files.blockers));
@@ -71,6 +87,8 @@ export async function proveProviderIndependentRetirement({db, actor, preview, re
  await db.query('select operator_delete_archived_account($1,$2,$3,$4)',[agency,deletion.version,'Example Agency',archive]);
  for(const rel of ['tenant_twilio_subaccounts','tenant_n8n_connections','tenant_phone_numbers'])assert.equal((await db.query(`select count(*)::int n from ${rel}`)).rows[0].n,0);
  assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[solo])).rows[0].n,1);
+ assert.equal((await db.query('select reserved_usd::text from paige_voice_cost_reservations where retired_tenant_id=$1 and tenant_id is null and operator_rows_server_only',[child])).rows[0].reserved_usd,'1.25','immutable spend survives in its canonical protected ledger');
+ assert.equal((await db.query('select count(*)::int n from paige_voice_tenant_monthly_usage where tenant_id=$1',[solo])).rows[0].n,1,'surviving tenant budget counters are unchanged');
  assert.equal((await db.query('select count(*)::int n from auth.users')).rows[0].n,3);
  assert.equal((await db.query('select count(*)::int n from vault.secrets')).rows[0].n,1,'platform credential survives; exclusive tenant credential is removed');
  const privateReceipt=(await db.query('select external_cleanup from operator_account_archives where id=$1',[archive])).rows[0].external_cleanup;

@@ -57,12 +57,31 @@ export const TASK_EVALUATOR_SET = freeze({
 
 export const TASK_EVALUATOR_SET_HASH = '544cbea0003813658b179144833d1863c1150ad01694cccbefb6cee3ac61b05c';
 
+/** A separately released version adds call-status quality; v1 bytes stay unchanged.
+ * A successful call does not establish a successful task, tool or business outcome.
+ */
+export const TASK_EVALUATOR_SET_V2 = freeze({
+  ...TASK_EVALUATOR_SET, version: '1.1.0',
+  evaluators: [...TASK_EVALUATOR_SET.evaluators, {
+    id: 'model_call_status', version: '1.0.0', kind: 'deterministic',
+    applicability: ['server_linked_model_calls'],
+    required_evidence: ['scoped_work', 'server_proven_trace_links', 'recorded_call_status', 'source_limits'],
+    criterion: 'Every server-linked recorded model call has a successful status. This evaluates only recorded calls; missing telemetry cannot establish complete runtime coverage or task success.',
+    failure: 'An untruncated set of linked recorded calls includes an error or timeout.',
+    indeterminate: 'No linked calls, unknown status, disputed scope or a truncated call page remain indeterminate. Absence is not proof that no model was used.',
+    not_applicable: 'No exclusion without a server-proven existing no-model execution contract.',
+  }],
+} as const);
+
+export const TASK_EVALUATOR_SET_V2_HASH = '2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae';
+
 /** No dynamic registration, mutable aliases or caller-defined criteria. */
 export function resolveTaskEvaluatorSet(id: string, version: string) {
-  if (id !== TASK_EVALUATOR_SET.id || version !== TASK_EVALUATOR_SET.version) {
-    throw new Error('unsupported_evaluator_set');
+  if (id === TASK_EVALUATOR_SET.id) {
+    if (version === TASK_EVALUATOR_SET.version) return TASK_EVALUATOR_SET;
+    if (version === TASK_EVALUATOR_SET_V2.version) return TASK_EVALUATOR_SET_V2;
   }
-  return TASK_EVALUATOR_SET;
+  throw new Error('unsupported_evaluator_set');
 }
 
 /** Pure verdict semantics, not a database validator or execution-success assertion.

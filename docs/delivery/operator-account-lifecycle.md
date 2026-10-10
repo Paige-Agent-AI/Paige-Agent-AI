@@ -94,6 +94,16 @@ The owner-designated existing Super Admin is the Platform Owner. A unique index 
 
 The subsequent c7d2e5e14ddb06bce1bf7c9b7ea851a91ab3bab4 database run passed the Chat cleanup and voice-budget race assertions, then correctly blocked cleanup on a synthetic paige_voice_tenant_monthly_usage row. Only that existing disposable no-provider proof now removes its own known synthetic usage before canonical retirement. The production financial disposition remains blocked. A regression loads the actual usage table definition, verifies refusal and rollback while usage exists, then verifies fixture retirement after its own cleanup while another tenant's usage and identities survive. No real financial history or provider resource is removed.
 
+## Generated-audio cache — bounded canonical disposition
+
+The next forward migration extends the same private resource journal, not a new retirement engine. **Prepare resources** covers eligible private `tts-cache` objects in the existing canonical `<tenant UUID>/<SHA256>.mp3` contract. Public review exposes only counts; the protected service claim supplies exact object identities and metadata fingerprints. Admin/Owner confirms the selected name and irreversible resource consequences. Storage `remove` owns byte deletion; Storage inventory and independent SQL absence readback precede resource readiness, followed by a fresh Delete preflight. Never delete production Storage metadata directly.
+
+Routing: family 15, existing protected authority/lease/audit, `operator.platform` (authenticated binding PROOF OWED). Autonomous/Chat deletion remains UNAVAILABLE. Supabase Storage is existing infrastructure rather than a newly connected provider; its standalone catalogue entry is absent, recorded as a documentation requirement. Existing ElevenLabs catalogue entry describes the generated cache substrate; this cleanup grants no voice-provider authority, new credential, spend or autonomous access.
+
+One bounded manifest (100 objects per tenant), one explicit API call, 20-second service requests, no automatic destructive retry. Unknown/partial outcomes remain paused and reconcile the same plan read-only; explicit continuation can remove only remaining original reviewed objects. Archived/paused/missing tenants reject new/changed cache uploads. Active tenant and `_platform` audio remain writable. Unknown buckets/paths, versioned/delete-marker objects, public cache, independent documents or legal/billing obligations remain precise blockers. Archive preserves cache; Restore never recreates deleted bytes or reactivates external services.
+
+Controlled PostgreSQL replay twice proves non-table-owner trigger privilege, partial recovery, Solo and Agency deletion, shared identities and survivor/platform audio. Actual handler/API adapter and local Chrome flow prove scope, confirmation, fresh review, cancellation and unknown read without duplicate dispatch. Production Storage byte deletion and authenticated Owner use remain PROOF OWED. Evidence: docs/evidence/ui-delivery/operator-cached-audio-retirement.md.
+
 ## Controlled acceptance matrix
 
 | Outcome | Evidence | Boundary |

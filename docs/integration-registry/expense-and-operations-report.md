@@ -143,6 +143,10 @@ the JSON `public_presence_roadmap`.
 
 ---
 
+## Operator generated-audio cache disposition
+
+The existing ElevenLabs entry references the generated-audio Storage substrate. Eligible private cache can be removed through the canonical account-retirement journal and Storage API after Admin/Owner confirmation; platform/foreign audio, independent documents, provider-side retention and backups are separate. Controlled local proof passes; production byte absence and authenticated Owner use are PROOF OWED. No ElevenLabs call, new credential, provider spending or price change is introduced. The separate Supabase infrastructure catalogue entry remains a recorded documentation gap, not a new connection or authority.
+
 ## How to keep this report true (§BRAIN.3 / §66)
 
 Any PR that adds/changes a provider's cost responsibility, pricing model, cost driver, money-movement/

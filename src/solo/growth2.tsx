@@ -13,7 +13,9 @@ import { PipelineDelete } from "./PipelineDelete";
 import { PipelineCommandDesk } from "./PipelineCommandDesk";
 import CampaignOverview from "./campaign-desk";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT, submissionsInPeriod } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT } from "./marketing-overview-model";
+import { MarketingAnalytics } from "./marketing-analytics";
+import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
 import { MarketingAds, MarketingContent } from "./marketing-planned";
 import { CAPTURE_FILTERS, MarketingOverview, sendsToPipeline } from "./marketing-overview";
@@ -38,7 +40,6 @@ const TRUTH = {
   performance: ["PROPOSED", "Source coverage is visible; cross-source campaign analytics are not yet canonical."],
   capture: ["PARTIAL", "Pages, funnels and forms are created and published in Vibe Studio. Submission counts cover this workspace’s latest 200 submissions, not lifetime totals."],
   marketing: ["PARTIAL", "Briefs, published capture points and submissions are read from this workspace’s own records. Email broadcasts, paid ads and spend are not connected, so no reach or cost figure is shown."],
-  analytics: ["PARTIAL", "Sources come from the tracking tags on the link a visitor submitted from, not their earlier visits. Visits, spend and revenue by campaign are not recorded, so no conversion rate, cost per lead or return is calculated."],
 };
 
 // INT-342 (owner-approved 2026-10-10): Lead capture is no longer a tab. Every address it, and the
@@ -65,28 +66,12 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? "Not recorded" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-/* The four capability states, said the way a business owner would say them rather than the way a
- * release record does. Owner ruling 2026-09-23 took LIVE / PARTIAL / PROPOSED / UNAVAILABLE off the
- * tenant surface entirely; the underlying statement is honest and stays, because Performance
- * coverage exists precisely to say what can and cannot be reported (§13/§58). Only the words move. */
-const PLAIN_STATE = {
-  LIVE: "Available",
-  PARTIAL: "Partly available",
-  PROPOSED: "Planned",
-  UNAVAILABLE: "Not available",
-};
-
-
 function StateFrame({ phase, retry, noun, children }) {
   if (phase === "resolving") return <div className="campaigns-state" role="status"><span className="campaigns-spinner"/>Resolving this account’s Marketing workspace…</div>;
   if (phase === "loading") return <div className="campaigns-skeleton" role="status" aria-label={`Loading ${noun}`}><span/><span/><span/></div>;
   if (phase === "unavailable") return <div className="campaigns-state"><h2>Marketing needs a resolved workspace</h2><p>Nothing is read until your account is confirmed.</p></div>;
   if (phase === "error") return <div className="campaigns-state" role="alert"><h2>Marketing could not load</h2><p>Your records were not changed. Try again.</p><button className="btn btn-s" onClick={retry}><Ic.arrow size={13}/>Retry</button></div>;
   return children;
-}
-
-function Empty({ title, detail }) {
-  return <div className="campaigns-state"><h2>{title}</h2><p>{detail}</p></div>;
 }
 
 function SurfaceHead({ truthKey, title, description, action }) {
@@ -333,28 +318,7 @@ function Social({ data, onOpenCompass, onOpenPipeline }) {
 // estimated. Email, ads, visits and spend have no source in this workspace, so they are named as
 // unavailable instead of shown as zero.
 
-const LEAD_WINDOW_DAYS = 30;
-
-// The one definition of "last N days" (marketing-overview-model.ts), shared with Overview so the same
-// tenant never sees two different 30-day lead counts one click apart.
-function leadsInWindow(submissions) {
-  const { within, capped } = submissionsInPeriod(submissions, LEAD_WINDOW_DAYS);
-  return { within, capped };
-}
-
-function countLabel(count, capped) {
-  return capped ? `${count}+` : String(count);
-}
-
 const TYPE_LABEL = { page: "Page", funnel: "Funnel", form: "Form" };
-
-function combinedPhase(...phases) {
-  if (phases.includes("unavailable")) return "unavailable";
-  if (phases.includes("resolving")) return "resolving";
-  if (phases.includes("error")) return "error";
-  if (phases.includes("loading")) return "loading";
-  return "ready";
-}
 
 function StudioLauncher({ label = "Open Vibe Studio", primary = false }) {
   return <button className={`btn btn-s ${primary ? "btn-p" : ""}`} data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>{label}</button>;
@@ -384,60 +348,17 @@ function OverviewTab({ data, moved, onDismissMoved, onCanManage, ...rest }) {
   </StateFrame>;
 }
 
-// One ruled band of four facts, read left to right — not four floating metric cards.
-function MarketingStat({ label, value, foot }) {
-  return <div className="mk-stat"><dt>{label}</dt><dd><strong>{value}</strong>{foot && <span>{foot}</span>}</dd></div>;
-}
-
-
-function SourceBars({ rows, empty }) {
-  if (!rows.length) return <Empty title="Nothing to show yet" detail={empty}/>;
-  const max = Math.max(...rows.map(([, count]) => count));
-  return <ul className="mk-bars">{rows.map(([label, count, note]) => <li key={label}><span className="mk-bar-label"><strong>{label}</strong>{note && <small>{note}</small>}</span><span className="mk-bar-track" aria-hidden="true"><i style={{ width: `${Math.max(4, Math.round((count / max) * 100))}%` }}/></span><span className="mk-bar-count">{count}</span></li>)}</ul>;
-}
-
-function MarketingAnalytics({ data, onGo }) {
+// Analytics reads the briefs itself (only this tab and Overview pay for it). A failed briefs read never
+// hides the page: campaign matching says it can't be done, and every other figure still shows.
+function AnalyticsTab({ data, range, onRange, onOpenForm, onOpenSales, onOpenEmail, onOpenAds, studioLauncher }) {
   const briefsState = useSoloCampaignBriefs();
-  const phase = combinedPhase(data.phase, briefsState.phase);
-  const retry = () => { data.retry?.(); briefsState.retry?.(); };
-  const { within, capped } = leadsInWindow(data.submissions || []);
-  const tagged = within.filter((submission) => submission.trackingSource);
-  const campaignTagged = within.filter((submission) => submission.trackingCampaign).length;
-  const opened = within.filter((submission) => submission.dealId).length;
-  const group = (pick) => Object.entries(within.reduce((counts, submission) => { const key = pick(submission); if (key) counts[key] = (counts[key] || 0) + 1; return counts; }, {})).sort((a, b) => b[1] - a[1]);
-  // Tags merge case-insensitively, as on Overview; the first spelling seen is the one shown.
-  const spelling = {};
-  const bySource = group((submission) => { const tag = submission.trackingSource?.trim(); if (!tag) return "No tracking tag"; return (spelling[tag.toLowerCase()] ??= tag); });
-  const refs = Object.fromEntries((briefsState.briefs || []).filter((brief) => brief.shortRef).map((brief) => [brief.shortRef.toLowerCase(), brief.name]));
-  const byCampaign = group((submission) => submission.trackingCampaign).map(([tag, count]) => [tag, count, refs[tag.toLowerCase()] ? `Brief: ${refs[tag.toLowerCase()]}` : "No brief uses this reference"]);
-  return <>
-    <div className="mk-view"><StateFrame phase={phase} retry={retry} noun="marketing analytics">
-      {(data.submissions || []).length === 0 ? <section className="campaigns-surface"><div className="campaigns-state"><h2>No leads to measure yet</h2><p>When a published form collects a submission, where it came from appears here. Share your form’s link with a tracking tag on it, such as <code>?utm_source=newsletter</code>, so each lead says which channel sent it.</p><button className="btn btn-s" onClick={() => onGo("capture")}>Open capture points</button></div></section> : <>
-        <dl className="mk-ledger">
-          <MarketingStat label={`Leads · last ${LEAD_WINDOW_DAYS} days`} value={countLabel(within.length, capped)} foot={capped ? `Counted from the latest ${SUBMISSION_READ_LIMIT} submissions` : "Across every published form"}/>
-          <MarketingStat label="With a source tag" value={`${countLabel(tagged.length, capped)} of ${countLabel(within.length, capped)}`} foot="Everything below rests on this coverage"/>
-          <MarketingStat label="Became opportunities" value={countLabel(opened, capped)} foot="Revenue from them is tracked in Sales"/>
-          <MarketingStat label="Tagged with a campaign" value={`${countLabel(campaignTagged, capped)} of ${countLabel(within.length, capped)}`} foot="Matched to a brief by its reference"/>
-        </dl>
-        <div className="mk-two">
-          <section className="campaigns-surface"><SurfaceHead truthKey="analytics" title="Leads by source" description={`Last ${LEAD_WINDOW_DAYS} days · from the source tag on the link each lead submitted from (utm_source).`}/>
-            <SourceBars rows={bySource} empty="No submissions in this window."/>
-          </section>
-          <section className="campaigns-surface"><div className="campaigns-surface-head"><div><h2>Leads by campaign</h2><p>Counted when the link carries a campaign tag (utm_campaign). Use a brief’s reference as the tag and it matches that brief.</p></div><button className="btn btn-s" onClick={() => onGo("campaigns")}>Open Campaigns</button></div>
-            <SourceBars rows={byCampaign} empty="No submission in this window arrived on a link tagged with a campaign."/>
-          </section>
-        </div>
-        <section className="campaigns-surface"><div className="campaigns-surface-head"><div><h2>Not measured here</h2><p>Each needs a source this workspace doesn’t record yet.</p></div></div>
-          <div className="campaigns-list">
-            {[["Form and page conversion", "Visits to published pages aren’t counted, so there is no conversion rate."],
-              ["Cost per lead and acquisition cost", "No ad spend or budget actual is recorded."],
-              ["Multi-touch attribution", "Only the link a visitor submitted from is known, not their earlier visits."],
-              ["Revenue by campaign", "No order or deal names a campaign. Revenue stays in Sales."]].map(([title, why]) => <div className="campaigns-list-row mk-row" key={title}><div className="mk-row-main"><strong>{title}</strong><small>{why}</small></div><span className="mk-flag">{PLAIN_STATE.UNAVAILABLE}</span></div>)}
-          </div>
-        </section>
-      </>}
-    </StateFrame></div>
-  </>;
+  const briefsKnown = briefsState.phase === "ready";
+  const briefsFailed = briefsState.phase === "error" || briefsState.phase === "unavailable";
+  const phase = data.phase === "ready" && !briefsKnown && !briefsFailed ? "loading" : data.phase;
+  const notice = briefsFailed ? <div className="mov-briefs-off" role="status"><p>Campaign briefs couldn’t load, so leads can’t be matched to a campaign right now.</p>{briefsState.retry && <button className="btn btn-s" onClick={() => briefsState.retry()}>Try again</button>}</div> : null;
+  return <StateFrame phase={phase} retry={() => { data.retry?.(); briefsState.retry?.(); }} noun="marketing analytics">
+    <MarketingAnalytics notice={notice} tenantId={data.tenantId} submissions={data.submissions || []} forms={data.artifacts} briefs={briefsKnown ? briefsState.briefs || [] : []} briefsKnown={briefsKnown} range={range} onRange={onRange} onOpenForm={onOpenForm} onOpenSales={onOpenSales} onOpenEmail={onOpenEmail} onOpenAds={onOpenAds} studioLauncher={briefsKnown && briefsState.canManage ? studioLauncher : null}/>
+  </StateFrame>;
 }
 
 function CampaignTabs({ tabs, current, setCurrent }) {
@@ -648,7 +569,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   let body=<OverviewTab data={data} moved={moved} scrollToCapture={Boolean(moved&&moved!=="missing-form")||captureFilter!=="all"} onDismissMoved={()=>setOverviewQuery({moved:null})} onCanManage={setOverviewCanManage} captureFilter={captureFilter} onCaptureFilter={(filter)=>setOverviewQuery({capture:filter==="all"?null:filter})} onGo={goTo} onCreateBrief={createBrief} onOpenSales={toSales} onOpenForm={openForm} onOpenAsset={openAsset} onOpenContact={openContact} onOpenDeal={openDeal}/>;
   if(redirectTo) body=null;
   else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
-  else if(tab==="analytics") body=<MarketingAnalytics data={data} onGo={goTo}/>;
+  else if(tab==="analytics") body=<AnalyticsTab data={data} range={rangeOf(query.get("range")).key} onRange={(range)=>setOverviewQuery({range:range===DEFAULT_RANGE?null:range})} onOpenForm={openForm} onOpenSales={()=>{ if(!params.account) return; if(salesInShell) navigate(subtabPath("solo",params.account,"sales","performance")); else toSales(); }} studioLauncher={<StudioLauncher/>} onOpenEmail={()=>setTab("email")} onOpenAds={()=>setTab("ads")}/>;
   else if(tab==="catalog") body=<Catalog setDetail={setDetail}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;

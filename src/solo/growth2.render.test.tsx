@@ -11,6 +11,10 @@ const harness = vi.hoisted(() => ({
   // Owner briefs the Marketing Overview and Analytics read. Empty unless a test sets them.
   readCalls: 0,
   canManage: true,
+  // Analytics' email row (marketing-analytics-email). Days asked for, and the answer to give.
+  emailDays: [] as number[],
+  email: { phase: "ready", stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 } } as Record<string, unknown>,
+  emailRetry: vi.fn(),
   briefsPhase: "ready",
   briefs: [] as Array<Record<string, unknown>>,
   state: {
@@ -59,6 +63,12 @@ vi.mock("./useSoloCampaignBriefs", () => ({
     retry: () => {}, saveBrief: async () => ({ ok: true, message: "" }),
     transitionBrief: async () => ({ ok: true, message: "" }), archiveBrief: async () => ({ ok: true, message: "" }),
   }),
+}));
+
+// Analytics' email row reads read_email_marketing_dashboard through its own adapter; its RPC contract is
+// proven with the Email tab (marketing-email.render.test.tsx). Here it answers what a test sets.
+vi.mock("./marketing-analytics-email", () => ({
+  useEmailStats: (_tenantId: string, days: number) => { harness.emailDays.push(days); return { ...harness.email, retry: harness.emailRetry }; },
 }));
 
 // Slice 2A — Catalog now opens on Offers, which reads through its own tenant-scoped adapter
@@ -118,6 +128,9 @@ afterEach(() => {
   harness.briefs = [];
   harness.briefsPhase = "ready";
   harness.canManage = true;
+  harness.emailDays = [];
+  harness.email = { phase: "ready", stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 } };
+  harness.emailRetry.mockClear();
   harness.state.tenantId = "tenant-1";
   if (harness.state.pipelineWorkspace) {
     (harness.state.pipelineWorkspace as { canManage: boolean; canArchiveFolders: boolean }).canManage = true;
@@ -862,19 +875,138 @@ describe("Solo Marketing department views", () => {
     expect(capture()).toContain("No funnels yet.");
   });
 
-  it("Analytics groups leads by tracking tag and states its coverage", () => {
+  const funnel = () => [...host.querySelectorAll(".mva-step")].map((step) => step.querySelector(".mva-n")?.textContent);
+  const analyticsSummary = () => host.querySelector(".mva .mov-sum")?.textContent;
+
+  it("Analytics traces leads from received to opportunity, from real records inside the range", () => {
     useWorkspace();
     harness.briefs = [brief("b1", "Spring advisory intake", { shortRef: "CB-SPRING" })];
     renderAt("/solo/42/growth/analytics");
-    const tiles = [...host.querySelectorAll(".mk-stat")].map((tile) => tile.textContent);
-    expect(tiles[1]).toContain("3 of 3");
-    expect(tiles[3]).toContain("Tagged with a campaign1 of 3");
-    const bars = [...host.querySelectorAll(".mk-bars li")].map((row) => row.textContent);
-    expect(bars).toContain("newsletter2");
-    expect(bars).toContain("linkedin1");
-    // The campaign tag matches the brief that uses it as its reference.
-    expect(bars.some((row) => row?.includes("CB-SPRING") && row.includes("Brief: Spring advisory intake"))).toBe(true);
-    expect(host.textContent).toContain("Form and page conversion");
+    expect(analyticsSummary()).toBe("3 leads in the last 30 days. 3 can be traced to a source, and 1 became an opportunity.");
+    // Received, with a source tag, matched to a brief by its reference, handed to Sales.
+    expect(funnel()).toEqual(["3", "3", "1", "1"]);
+    expect([...host.querySelectorAll(".mva-step .mva-bar")].map((bar) => bar.getAttribute("aria-label"))).toEqual([
+      "Leads received: 3", "With a source tag: 100% of leads received", "Matched to a campaign: 33% of leads received", "Became opportunities: 33% of leads received",
+    ]);
+    expect([...host.querySelectorAll(".mva-rows li")].map((row) => row.textContent)).toEqual(["newsletter2", "linkedin1"]);
+    expect([...host.querySelectorAll(".mva-tags li")].map((row) => row.textContent)).toEqual(["CB-SPRINGBrief: Spring advisory intake1"]);
+    expect(host.querySelector(".mva-cov")?.getAttribute("aria-label")).toBe("3 of 3 leads carry a source tag");
+    expect([...host.querySelectorAll(".mva-cap-row")].map((row) => row.textContent)).toEqual(["Discovery call requestNot routed3"]);
+    // Channels with no source say so; nothing claims spend, reach or visits.
+    const channels = host.querySelector(".mva-ch")!.textContent!;
+    // A tenant can connect Meta in Integrations, so the row never claims nothing is connected.
+    expect(channels).toContain("Ad accounts aren’t read here");
+    expect(channels).not.toContain("connected");
+    expect(channels).toContain("Reach and engagement aren’t read from any provider");
+    expect(channels).toContain("Visits aren’t recorded on public pages");
+    expect(harness.emailDays.at(-1)).toBe(30);
+  });
+
+  it("Analytics' range lives in the address and moves every figure, the email row included", () => {
+    useWorkspace();
+    renderAt("/solo/42/growth/analytics");
+    act(() => button("Quarter")!.click());
+    expect(location()).toBe("/solo/42/growth/analytics?range=quarter");
+    expect(funnel()[0]).toBe("4");
+    expect(analyticsSummary()).toContain("4 leads in the last 90 days");
+    expect(harness.emailDays.at(-1)).toBe(90);
+    expect(button("Quarter")!.getAttribute("aria-pressed")).toBe("true");
+    act(() => button("Month")!.click());
+    // The default range keeps a clean address.
+    expect(location()).toBe("/solo/42/growth/analytics");
+    act(() => root.unmount()); host.remove();
+    renderAt("/solo/42/growth/analytics?range=week");
+    expect(analyticsSummary()).toContain("in the last 7 days");
+    expect(harness.emailDays.at(-1)).toBe(7);
+    act(() => root.unmount()); host.remove();
+    // An unknown range falls back to the month rather than showing nothing.
+    renderAt("/solo/42/growth/analytics?range=year");
+    expect(analyticsSummary()).toContain("in the last 30 days");
+  });
+
+  it("a capture point opens that form's panel on Overview, and Sales performance opens Sales › Performance", () => {
+    useWorkspace();
+    renderAt("/solo/42/growth/analytics");
+    act(() => (host.querySelector(".mva-cap-row") as HTMLButtonElement).click());
+    expect(location()).toBe("/solo/42/growth/overview?form=form-1");
+    expect(host.querySelector(".campaigns-drawer")?.textContent).toContain("Discovery call request");
+    act(() => root.unmount()); host.remove();
+    renderAt("/solo/42/growth/analytics", { salesInShell: true });
+    act(() => button("Open Sales performance")!.click());
+    expect(location()).toBe("/solo/42/sales/performance");
+    act(() => root.unmount()); host.remove();
+    // Without Sales in the shell, the link goes where the rest of Marketing sends Sales.
+    renderAt("/solo/42/growth/analytics");
+    act(() => button("Open Sales performance")!.click());
+    expect(location()).not.toContain("/sales/performance");
+  });
+
+  it("Analytics' email row reports sends, and says plainly when it is not the viewer's to see or failed", () => {
+    useWorkspace();
+    harness.email = { phase: "ready", stats: { sent: 12, tracked: 10, opened: 5, clicked: 2 } };
+    renderAt("/solo/42/growth/analytics");
+    const emailRow = () => host.querySelector(".mva-ch li")!.textContent;
+    expect(emailRow()).toContain("12 sent · 5 opened (50% of 10 tracked) · 2 clicked");
+    act(() => root.unmount()); host.remove();
+    harness.email = { phase: "denied", stats: null };
+    renderAt("/solo/42/growth/analytics");
+    expect(emailRow()).toContain("Email figures are for owners and admins");
+    expect(emailRow()).not.toContain("couldn’t load");
+    act(() => root.unmount()); host.remove();
+    harness.email = { phase: "error", stats: null };
+    renderAt("/solo/42/growth/analytics");
+    expect(emailRow()).toContain("Email figures couldn’t load");
+    act(() => (host.querySelector(".mva-ch li button") as HTMLButtonElement).click());
+    expect(harness.emailRetry).toHaveBeenCalledTimes(1);
+    // A failed email read never takes the rest of the page with it.
+    expect(funnel()).toHaveLength(4);
+  });
+
+  it("Analytics names a form's route in Overview's words, so one form never reads two ways", () => {
+    useWorkspace({ artifacts: [
+      { ...form, id: "f-auto", name: "Automations only", routingConfigured: true, routingTargets: ["notify_team"] },
+      { ...form, id: "f-alert", name: "Alert only", intakeAlert: true },
+      { ...form, id: "f-pipe", name: "Own route", intakePipelineId: "pipeline-1" },
+    ] });
+    renderAt("/solo/42/growth/analytics");
+    const routes = Object.fromEntries([...host.querySelectorAll(".mva-cap-row")].map((row) => [row.querySelector(".mva-row-t")!.firstChild!.textContent, row.querySelector("small")!.textContent]));
+    expect(routes).toEqual({ "Automations only": "No pipeline", "Alert only": "Email alert only, no pipeline", "Own route": "Routed to a pipeline", "Forms no longer live": "Leads in this range from a form since unpublished" });
+  });
+
+  it("a failed briefs read leaves Analytics up and says campaign matching can't be done", () => {
+    useWorkspace();
+    harness.briefsPhase = "error";
+    renderAt("/solo/42/growth/analytics");
+    expect(host.textContent).not.toContain("Marketing could not load");
+    expect(host.querySelector(".mva .mov-briefs-off")?.textContent).toContain("can’t be matched to a campaign");
+    expect(funnel()).toEqual(["3", "3", "—", "1"]);
+    expect(host.querySelector(".mva-tags")?.textContent).toContain("Briefs couldn’t load");
+  });
+
+  it("Analytics with no leads draws zeros and says what is ready, without inventing anything", () => {
+    useWorkspace({ submissions: [] });
+    renderAt("/solo/42/growth/analytics");
+    expect(analyticsSummary()).toBe("No leads in the last 30 days, so there’s nothing to trace yet. Your live form is ready to record the source on its link.");
+    expect(funnel()).toEqual(["0", "0", "0", "0"]);
+    expect(host.querySelector(".mva-quiet")?.textContent).toBe("Nothing to measure yet.");
+    expect(host.querySelectorAll(".mva-bar em")).toHaveLength(0);
+    act(() => root.unmount()); host.remove();
+    useWorkspace({ submissions: [], artifacts: [] });
+    renderAt("/solo/42/growth/analytics");
+    expect(analyticsSummary()).toBe("No leads in the last 30 days, and no form is live to collect them.");
+    expect(host.textContent).toContain("No form is live.");
+  });
+
+  it("a full submissions read inside the range makes every Analytics count a floor, and retired forms still count", () => {
+    const many = Array.from({ length: 200 }, (_, index) => submission(`m${index}`, 1, { formId: index < 5 ? "form-gone" : "form-1", trackingSource: index % 2 ? "newsletter" : null }));
+    useWorkspace({ submissions: many });
+    renderAt("/solo/42/growth/analytics");
+    expect(analyticsSummary()).toContain("200 leads or more");
+    expect(funnel()).toEqual(["200+", "100+", "0+", "0+"]);
+    expect(host.querySelector(".mva-cap")?.textContent).toContain("each count is a floor");
+    expect([...host.querySelectorAll(".mva-rows li")].map((row) => row.textContent)).toEqual(["newsletter100+"]);
+    expect(host.querySelector(".mva-cov")?.getAttribute("aria-label")).toBe("100+ of 200+ leads carry a source tag");
+    expect([...host.querySelectorAll(".mva-cap-row")].map((row) => row.textContent)).toEqual(["Discovery call requestNot routed195+", "Forms no longer liveLeads in this range from a form since unpublished5+"]);
   });
 
   it("a failed briefs read hides only the brief items; capture points, the chain and leads stay", () => {

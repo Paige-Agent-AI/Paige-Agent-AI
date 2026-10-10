@@ -47,7 +47,14 @@ describe("the operator IA mirrors the design pack", () => {
    * the moment it was needed. If the pack gains Numbers and this list is not cleared, the
    * duplicate-guard below fails, which is what stops the exception outliving the reason for it.
    */
-  const RULED_ADDITIONS = [{ slot: "settings", view: "Numbers", index: 3 }] as const;
+  const RULED_ADDITIONS = [
+    { slot: "settings", view: "Numbers", index: 3 },
+    // Owner INT-280 ruling, 2026-10-10: within Settings, never a seventh primary slot.
+    { slot: "settings", view: "PAIGE Intelligence", index: 4 },
+    { slot: "settings", view: "Connections", index: 12 },
+    { slot: "settings", view: "Analytics", index: 13 },
+    { slot: "settings", view: "Billing", index: 14 },
+  ] as const;
 
   it("carries the pack's views, verbatim, apart from the ruled additions", () => {
     for (const p of pack) {

@@ -20,8 +20,8 @@ describe("Integrations grid — pack L1577–L1659 / L7928–L8082", () => {
     for (const s of [
       "State",
       "Consequence",
-      "Connected",
-      "A seam runs today",
+      "Implemented adapters",
+      "Catalogue readiness; access unverified",
       "Half-wired",
       "Waiting on credentials",
       "Not built",
@@ -59,13 +59,19 @@ describe("Integrations grid — pack L1577–L1659 / L7928–L8082", () => {
     const total = INTEGRATIONS.reduce((n, sh) => n + sh.items.length, 0);
     const live = INTEGRATIONS.reduce((n, sh) => n + sh.items.filter((i) => i.state === "live").length, 0);
     const html = renderToStaticMarkup(<IntegrationsSurface />);
-    expect(html).toContain(`${total} of ${total} shown · ${live} connected`);
+    expect(html).toContain(`${total} of ${total} shown · ${live} adapters described as implemented`);
+    expect(html).toContain("Verified account connections and current provider health are not loaded");
+    expect(html).not.toContain("A seam exists and runs today");
+    expect(html).not.toContain("Connected means");
   });
 
   it("lets a live read override the catalogue's authored state (slice I drop-in)", () => {
     const html = renderToStaticMarkup(<IntegrationsSurface connectionStates={{ Stripe: "live" }} />);
     // Stripe is `planned` in the catalogue and carries a `blocks` line; a live read retires it.
     expect(html).not.toContain("Dark without it: tenant subscription billing");
+    expect(html).toContain("1 reported connected");
+    expect(html).toContain("catalogue-only implemented");
+    expect(html).toContain("Catalogue readiness; account access and health unverified");
   });
 
   it("says what is there rather than blanking when a shelf matches nothing", () => {

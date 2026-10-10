@@ -193,6 +193,12 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
     panels: ["settings/setup/feature-flags", "settings/setup/api-mcp"],
     carries: ["settings/setup/feature-flags", "settings/setup/api-mcp"],
   },
+  // INT-280 restores the unmounted PlatformIntelligence read capabilities into Settings.
+  // The pre-six-slot /admin/platform/intelligence address is redirected in App.tsx.
+  "settings/paige-intelligence": { bespoke: "IntelligenceSurface", carries: [] },
+  "settings/connections": { bespoke: "ConnectionsSettings", carries: [] },
+  "settings/analytics": { bespoke: "AnalyticsSettings", carries: [] },
+  "settings/billing": { bespoke: "BillingSettings", carries: [] },
   "settings/integrations": {
     // v3 intVals L7928-L8082 over the L1473-L1538 catalogue, ported as IntegrationsSurface.
     bespoke: "IntegrationsSurface",
@@ -248,7 +254,7 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
     carries: ["settings/governance/approvals", "settings/governance/audit-log", "settings/governance/security"],
   },
   "settings/team": {
-    panels: ["settings/team/seats", "settings/team/roles"],
+    bespoke: "TeamSettings",
     carries: ["settings/team/seats", "settings/team/roles", "paige/team"],
   },
 };

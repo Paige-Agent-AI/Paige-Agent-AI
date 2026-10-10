@@ -6,9 +6,11 @@
  * The list is a grid whose single track is `minmax(0,1fr)` — that track-min is what stops one
  * long destination label from widening the rail (rule 4, the defect that landed six times).
  *
- * FLAT, NOT GROUPED, AND NOT NINE ROWS. The shell this replaces carried seventeen branches in
+ * Primary navigation stays flat and six slots. The shell this replaces carried seventeen branches in
  * two collapsible groups and needed a ResizeObserver to keep them on screen; six slots need
- * neither, so neither is here (§30 — strip, do not layer). A rail slot is a body of work with
+ * neither, so neither is here (§30 — strip, do not layer). The owner-approved Settings sub-main
+ * menu replaces the rail locally while inside Settings, with Back to PAIGE restoring the six slots.
+ * A rail slot is a body of work with
  * its own objects; everything else is a view, a summoned surface, or a mechanism.
  *
  * `data-slot` is on every row deliberately: it is the seam the shell harness measures slot
@@ -16,7 +18,9 @@
  */
 import { NavLink } from "react-router-dom";
 import { useReducedMotion } from "framer-motion";
+import { ArrowLeft, Building2, Users, Link2, Blocks, ChartNoAxesColumn, ShieldCheck, LockKeyhole, CircleDollarSign, Brain, PanelLeftClose } from "lucide-react";
 import { OPERATOR_SLOTS } from "@/operator/ia/operatorIA";
+import { SETTINGS_MENU } from "@/operator/ia/settingsIA";
 import { slotGlyph } from "@/operator/shell/slotGlyphs";
 import { slotPath } from "@/operator/shell/operatorAddress";
 import { CommandMark } from "@/operator/shell/CommandMark";
@@ -28,10 +32,11 @@ export type SlotRailProps = {
   readonly isDark: boolean;
   readonly onToggleTheme: () => void;
   readonly onSignOut: () => void;
+  readonly settingsGroup?: string;
 };
 
 export default function SlotRail({
-  compact, onToggleCompact, isDark, onToggleTheme, onSignOut,
+  compact, onToggleCompact, isDark, onToggleTheme, onSignOut, settingsGroup,
 }: SlotRailProps) {
   const reduce = useReducedMotion();
 
@@ -46,7 +51,7 @@ export default function SlotRail({
   return (
     <nav
       data-operator-rail
-      aria-label="Destinations"
+      aria-label={settingsGroup ? "Settings menu" : "Destinations"}
       className={cn(
         "relative z-[3] flex min-h-0 min-w-0 flex-col overflow-hidden",
         "border-r border-border-strong bg-[var(--pg-nav)] text-rail-foreground",
@@ -64,16 +69,34 @@ export default function SlotRail({
             <b className="block truncate text-[11px] font-medium tracking-[0.4em] text-rail-foreground">
               PAIGE
             </b>
-            <small className="mt-1 block truncate font-mono text-[11px] tracking-[0.08em] text-rail-muted">
-              PLATFORM OPERATOR
+            <small className={cn("mt-1 block text-[11px] text-rail-muted", settingsGroup ? "leading-tight" : "truncate font-mono tracking-[0.08em]")}>
+              {settingsGroup ? "Platform Operator" : "PLATFORM OPERATOR"}
             </small>
           </span>
         )}
+        {settingsGroup && !compact && <button type="button" onClick={onToggleCompact} aria-label="Collapse the rail" title="Collapse the rail" aria-expanded
+          className="ml-auto grid h-7 w-7 flex-none place-items-center rounded border border-[var(--pg-line)] text-[var(--pg-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><PanelLeftClose size={16} aria-hidden /></button>}
       </div>
 
-      {/* The destination list. Its own scroll region — the document never scrolls. */}
+      {settingsGroup && <div className="mb-3 min-w-0 flex-none border-t border-[var(--pg-line)] pt-3">
+        <NavLink to="/operator/fleet" aria-label="Back to PAIGE" title="Back to PAIGE" className={footRow}>
+          <ArrowLeft size={18} aria-hidden />{!compact && <span className="min-w-0 text-[13px]">Back to PAIGE</span>}
+        </NavLink>
+        {!compact && <h2 className="px-[11px] pb-1 pt-3 text-[12px] font-semibold text-[var(--pg-muted)]">Settings</h2>}
+      </div>}
+      {/* Settings uses the owner's dedicated sub-main menu; the six primary slots stay intact. */}
       <div className="grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-px overflow-y-auto overflow-x-hidden">
-        {OPERATOR_SLOTS.map((slot) => {
+        {settingsGroup ? SETTINGS_MENU.map((group) => {
+          const Icon = { setup: Building2, team: Users, connections: Link2, integrations: Blocks, analytics: ChartNoAxesColumn, security: ShieldCheck, vault: LockKeyhole, billing: CircleDollarSign, intelligence: Brain }[group.icon];
+          const selected = group.slug === settingsGroup;
+          return <NavLink key={group.slug} to={`/operator/settings/${group.slug}`} data-settings-menu={group.slug} data-view={group.views[0]}
+            title={group.label} aria-label={group.label} aria-current={selected ? "page" : undefined}
+            className={cn("relative flex min-h-[44px] min-w-0 items-center gap-3 rounded-[9px] px-[11px] text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              compact && "justify-center px-0", selected ? "bg-rail-foreground/10 text-rail-foreground shadow-[inset_0_0_0_1px_var(--pg-line)]" : "text-rail-muted hover:text-rail-foreground")}>
+            <i aria-hidden className={cn("absolute left-0 top-1/2 w-px -translate-y-1/2 bg-cd-gold", selected ? "h-6" : "h-0")} />
+            <Icon size={18} strokeWidth={1.5} className="flex-none" aria-hidden />{!compact && <span className="min-w-0 flex-1">{group.label}</span>}
+          </NavLink>;
+        }) : OPERATOR_SLOTS.map((slot) => {
           const path = slotGlyph(slot.id);
           return (
             <NavLink
@@ -166,7 +189,7 @@ export default function SlotRail({
           {!compact && <span className="min-w-0 flex-1 truncate text-[13px]">{isDark ? "Obsidian" : "Mineral"}</span>}
         </button>
 
-        <button type="button" onClick={onToggleCompact} className={footRow}
+        {(!settingsGroup || compact) && <button type="button" onClick={onToggleCompact} className={footRow}
           title={compact ? "Expand the rail" : "Collapse the rail"}
           aria-label={compact ? "Expand the rail" : "Collapse the rail"} aria-expanded={!compact}>
           <i
@@ -177,7 +200,7 @@ export default function SlotRail({
             )}
           />
           {!compact && <span className="min-w-0 flex-1 truncate text-[13px]">Collapse rail</span>}
-        </button>
+        </button>}
 
         {/* §58 — the console's ONLY sign-out path. It came over from the shell this replaces
             rather than being dropped with the chrome that happened to host it. Its glyph is the

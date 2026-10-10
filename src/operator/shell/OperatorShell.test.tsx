@@ -14,12 +14,19 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { act, type ReactNode } from "react";
+import { createRoot } from "react-dom/client";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 import { OPERATOR_SLOTS } from "@/operator/ia/operatorIA";
+import { SETTINGS_MENU } from "@/operator/ia/settingsIA";
 import { resolveOperatorAddress, viewPath } from "@/operator/shell/operatorAddress";
 import { SPINE_REGIONS, spineHasContent } from "@/operator/shell/OperatorSpine";
 
 vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn(), registerSignOutActAsGuard: vi.fn(() => () => undefined) }));
+vi.mock("@/operator/data/usePlatformTrust", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/operator/data/usePlatformTrust")>(),
+  PlatformTrustProvider: ({ children }: { children: ReactNode }) => children,
+}));
 
 import OperatorShell from "./OperatorShell";
 
@@ -98,10 +105,13 @@ describe("the operator shell renders the pack's geometry", () => {
     expect(address.kind === "resolved" && address.slot.id).toBe("fleet");
   });
 
-  it("every view of the addressed slot is offered, by the design's own spelling", () => {
+  it("Settings offers its owner-approved sub-main menu and category tabs", () => {
     const html = at("/operator/settings");
-    const settings = OPERATOR_SLOTS.find((s) => s.id === "settings")!;
-    for (const view of settings.views) expect(html).toContain(`data-view="${view}"`);
+    expect(html).toContain('aria-label="Settings menu"'); expect(html).toContain("Back to PAIGE");
+    expect(slotOrder(html)).toEqual([]);
+    for (const group of SETTINGS_MENU) expect(html).toContain(`data-settings-menu="${group.slug}"`);
+    expect(html).toContain('aria-label="Setup tabs"'); expect(html).not.toContain('aria-label="Settings views"');
+    expect(html).toContain('href="/operator/settings/setup/platform"');
   });
 
   /**
@@ -118,7 +128,7 @@ describe("the operator shell renders the pack's geometry", () => {
    * the shell renders synchronously and a lazy surface is still its Suspense hold.
    */
   it("a view with no shipped source renders the IA's absence copy, unedited", () => {
-    const html = at("/operator/settings/numbers");
+    const html = at("/operator/settings/connections/numbers");
     const settings = OPERATOR_SLOTS.find((s) => s.id === "settings")!;
     // Settings carries no slot-level absence, so this is the honest general form — which is
     // the branch that would otherwise go untested entirely.
@@ -148,5 +158,16 @@ describe("the operator shell renders the pack's geometry", () => {
     // <Navigate> renders nothing on the server: no shell means the redirect fired.
     expect(at("/operator/fleet/not-a-view")).not.toContain("data-shell-grid");
     expect(at("/operator/fleet/history")).toContain("data-shell-grid");
+  });
+  it("legacy Settings redirects retain detached-surface query and fragment", async () => {
+    function Destination() { const route = useLocation(); return <output>{route.pathname}{route.search}{route.hash}</output>; }
+    const node = document.createElement("div"); document.body.append(node); const root = createRoot(node);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/operator/settings/mind?surface=sweep#evidence"]}><Routes>
+        <Route path="/operator/settings/paige-intelligence/mind" element={<Destination />} />
+        <Route path="/operator/:section/*" element={<OperatorShell />} />
+      </Routes></MemoryRouter>));
+      expect(node.querySelector("output")?.textContent).toBe("/operator/settings/paige-intelligence/mind?surface=sweep#evidence");
+    } finally { await act(async () => root.unmount()); node.remove(); }
   });
 });

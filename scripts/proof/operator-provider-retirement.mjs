@@ -76,6 +76,24 @@ await db.exec(n8n.slice(start,end+3));
 if(!process.argv.includes('--resource-baseline')) {
  const migration=await readFile('supabase/migrations/20270602000302_operator_provider_retirement.sql','utf8');await db.exec(migration);await db.exec(migration);
 }
+if(process.argv.includes('--cached-audio')) {
+ await db.exec(`CREATE SCHEMA storage;
+ CREATE TABLE storage.buckets(id text PRIMARY KEY,public boolean NOT NULL);
+ CREATE TABLE storage.objects(id uuid PRIMARY KEY,bucket_id text,name text,metadata jsonb,version text,last_accessed_at timestamptz,is_versioned boolean DEFAULT false,is_delete_marker boolean DEFAULT false);
+ INSERT INTO storage.buckets VALUES('tts-cache',false),('documents',false);
+ INSERT INTO storage.objects VALUES(gen_random_uuid(),'tts-cache','${child}/${'a'.repeat(64)}.mp3','{}','v1',now(),false,false),(gen_random_uuid(),'tts-cache','${child}/${'b'.repeat(64)}.mp3','{}','v1',now(),false,false),(gen_random_uuid(),'tts-cache','${solo}/${'c'.repeat(64)}.mp3','{}','v1',now(),false,false),(gen_random_uuid(),'tts-cache','_platform/${'d'.repeat(64)}.mp3','{}','v1',now(),false,false);`);
+ const migration=await readFile('supabase/migrations/20270602000303_operator_cached_audio_retirement.sql','utf8');await db.exec(migration);await db.exec(migration);
+ await db.exec(`DO $$BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='fixture_storage_owner') THEN CREATE ROLE fixture_storage_owner; END IF; IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='fixture_trigger_migrator') THEN CREATE ROLE fixture_trigger_migrator; END IF; END$$;
+ ALTER TABLE storage.objects OWNER TO fixture_storage_owner;
+ GRANT USAGE ON SCHEMA storage,public TO fixture_trigger_migrator;
+ GRANT TRIGGER ON storage.objects TO fixture_trigger_migrator;
+ GRANT EXECUTE ON FUNCTION guard_operator_retired_tts_cache() TO fixture_trigger_migrator;
+ SET ROLE fixture_trigger_migrator;
+ CREATE OR REPLACE TRIGGER a01_operator_retired_tts_cache BEFORE INSERT OR UPDATE ON storage.objects FOR EACH ROW EXECUTE FUNCTION public.guard_operator_retired_tts_cache();
+ CREATE OR REPLACE TRIGGER a01_operator_retired_tts_cache BEFORE INSERT OR UPDATE ON storage.objects FOR EACH ROW EXECUTE FUNCTION public.guard_operator_retired_tts_cache();
+ RESET ROLE;`);
+ await refuse(()=>db.exec("SET ROLE authenticated; SELECT operator_tts_cache_manifest('"+child+"');"),'42501');await db.exec('RESET ROLE');
+}
 const op='00000000-0000-0000-0000-000000000080',claim='00000000-0000-0000-0000-000000000081',archiveOp='00000000-0000-0000-0000-000000000082';
 const key='twilio:'+child,nkey='n8n:'+agency,admin='00000000-0000-0000-0000-000000000003';
 const resourcePreview=async(mode='archive')=>(await db.query('select operator_preview_retirement_resources($1,$2) v',[agency,mode])).rows[0].v;
@@ -121,7 +139,20 @@ try {
  await db.query('select operator_archive_account($1,$2,$3,$4)',[agency,p.version,'Example Agency',second]);
  const deletion=(await db.query('select operator_preview_account_deletion($1) v',[agency])).rows[0].v;
  assert.equal(deletion.execution_available,false,'suspension is not provider closure');
- p=await resourcePreview('delete');const deleteOp='00000000-0000-0000-0000-000000000084';await begin(p,deleteOp);
+ p=await resourcePreview('delete');
+ if(process.argv.includes('--cached-audio')){
+  assert.equal(p.resources.find(r=>r.provider==='tts_cache').object_count,2);
+  assert.ok(!JSON.stringify(p).includes('a'.repeat(64)), 'public review never exposes private paths');
+  for(const bucket of ["'documents'",'NULL']){
+   await db.exec(`BEGIN; INSERT INTO storage.objects(id,bucket_id,name) VALUES(gen_random_uuid(),${bucket},'${child}/independent-file');
+    DO $$BEGIN IF (operator_preview_retirement_resources('${agency}','delete')->>'execution_available')::boolean THEN RAISE EXCEPTION 'unrecognized storage became ready'; END IF; END$$; ROLLBACK;`);
+  }
+  await db.exec(`BEGIN; UPDATE storage.buckets SET public=true WHERE id='tts-cache';
+   DO $$BEGIN IF (operator_preview_retirement_resources('${agency}','delete')->>'execution_available')::boolean THEN RAISE EXCEPTION 'public cache became ready'; END IF; END$$; ROLLBACK;`);
+  // An unrelated active tenant remains writable while the reviewed Agency scope is frozen.
+  await db.query("update storage.objects set version='v2' where name=$1",[solo+'/'+('c'.repeat(64))+'.mp3']);
+ }
+ const deleteOp='00000000-0000-0000-0000-000000000084';await begin(p,deleteOp);
  await actor('');await take(deleteOp);await finish(key,'unknown',null,deleteOp);await complete(deleteOp);
  await actor(admin);assert.equal((await db.query('select operator_read_retirement_resources($1,$2) v',[agency,deleteOp])).rows[0].v.state,'resources_unknown');
  assert.equal((await db.query('select operator_preview_account_deletion($1) v',[agency])).rows[0].v.execution_available,false);
@@ -134,7 +165,23 @@ try {
   SELECT operator_finish_retirement_resource('${agency}','${deleteOp}','${admin}','${claim}','${key}','verified','closed',NULL);
   DO $$ BEGIN IF (SELECT count(*) FROM vault.secrets)<>1 THEN RAISE EXCEPTION 'shared survivor credential was removed'; END IF; END $$;
   ROLLBACK;`);
- await finish(key,'verified','closed',deleteOp);await finish(nkey,'verified','disconnected',deleteOp);await complete(deleteOp);
+ await finish(key,'verified','closed',deleteOp);await finish(nkey,'verified','disconnected',deleteOp);
+ if(process.argv.includes('--cached-audio')){
+  const ckey='tts_cache:'+child;
+  await refuse(()=>finish(ckey,'verified','removed',deleteOp),'55000');
+  await refuse(()=>db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'tts-cache',$1)",[child+'/'+('e'.repeat(64))+'.mp3']),'55000');
+  await refuse(()=>db.query("update storage.objects set version='changed' where name=$1",[child+'/'+('a'.repeat(64))+'.mp3']),'55000');
+  await db.query('update storage.objects set last_accessed_at=now() where name=$1',[child+'/'+('a'.repeat(64))+'.mp3']);
+  assert.equal((await db.query('select operator_assert_retirement_resource($1,$2,$3,$4,$5) v',[agency,deleteOp,admin,claim,ckey])).rows[0].v,true);
+  // Synthetic metadata disappearance models the Storage API; byte deletion is separately adapter-tested, not claimed by SQL.
+  await db.query('delete from storage.objects where name=$1',[child+'/'+('a'.repeat(64))+'.mp3']);
+  await finish(ckey,'unknown',null,deleteOp);await complete(deleteOp);
+  await take(deleteOp);assert.equal((await db.query('select operator_assert_retirement_resource($1,$2,$3,$4,$5) v',[agency,deleteOp,admin,claim,ckey])).rows[0].v,true,'partial removal permits same-plan recovery');
+  await db.query('delete from storage.objects where name=$1',[child+'/'+('b'.repeat(64))+'.mp3']);
+  await finish(ckey,'verified','removed',deleteOp);
+  assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,2,'surviving Solo and platform audio remain');
+ }
+ await complete(deleteOp);
  assert.equal((await db.query('select count(*)::int n from vault.secrets')).rows[0].n,0,'exclusive retired credential is removed');
  await actor(admin);const ready=(await db.query('select operator_preview_account_deletion($1) v',[agency])).rows[0].v;
  assert.equal(ready.execution_available,true,JSON.stringify(ready.blockers));
@@ -162,5 +209,25 @@ try {
  const snapshot=(await db.query('select (operator_snapshot_mrr_daily_internal()).*')).rows[0];assert.equal(Number(snapshot.mrr_cents),1200);assert.equal(snapshot.active_tenants,1,'trials, test, internal, canceled, unclassified and unbilled rows are not paying customers');
  assert.equal((await db.query('select mrr_cents::text v from platform_mrr_snapshot where snapshot_date=current_date-1')).rows[0].v,'12345','do not rewrite legitimate past financial snapshots');
  assert.equal((await db.query('select count(*)::int n from platform_usage_events')).rows[0].n,2,'commercial filtering never destroys accounting history');
- console.log('PASS: actual protected resource preparation, provider binding freeze, Admin/refusal, canonical credential disconnect, Archive/Restore, uncertain closure recovery and real Agency cleanup; shared Auth and independent Solo survive. Provider response is injected through service-only finalization; live provider proof UNVERIFIED.');
+ if(process.argv.includes('--cached-audio')) {
+ const disposable='00000000-0000-0000-0000-000000000098',cacheOp='00000000-0000-0000-0000-000000000099',archiveId='00000000-0000-0000-0000-000000000100';
+ await db.query("insert into tenants(id,name,status,account_type) values($1,'Synthetic Solo cache','active','standalone')",[disposable]);
+ await db.query("insert into tenant_members values(gen_random_uuid(),$1,$2,'owner','active')",[disposable,ordinary]);
+ await db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'tts-cache',$1)",[disposable+'/'+('f'.repeat(64))+'.mp3']);
+ let v=await preview(disposable);await db.query('select operator_archive_account($1,$2,$3,$4)',[disposable,v.version,'Synthetic Solo cache',archiveId]);
+ assert.equal((await db.query("select count(*)::int n from storage.objects where split_part(name,'/',1)=$1",[disposable])).rows[0].n,1,'Archive preserves cached data');
+ v=(await db.query("select operator_preview_retirement_resources($1,'delete') v",[disposable])).rows[0].v;
+ await db.query("select operator_begin_retirement_resources($1,'delete',$2,$3,$4,false)",[disposable,v.version,'Synthetic Solo cache',cacheOp]);await actor('');
+ await db.query('select operator_claim_retirement_resources($1,$2,$3,$4,false)',[disposable,cacheOp,admin,claim]);
+ await db.query("delete from storage.objects where split_part(name,'/',1)=$1",[disposable]);
+ await db.query("select operator_finish_retirement_resource($1,$2,$3,$4,$5,'verified','removed',null)",[disposable,cacheOp,admin,claim,'tts_cache:'+disposable]);
+ await db.query('select operator_complete_retirement_resources($1,$2,$3,$4)',[disposable,cacheOp,admin,claim]);await actor(admin);
+ v=(await db.query('select operator_preview_account_deletion($1) v',[disposable])).rows[0].v;assert.equal(v.execution_available,true,JSON.stringify(v.blockers));
+ await db.query('select operator_delete_archived_account($1,$2,$3,$4)',[disposable,v.version,'Synthetic Solo cache',archiveId]);
+ assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[disposable])).rows[0].n,0);
+ await refuse(()=>db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'tts-cache',$1)",[disposable+'/'+('f'.repeat(64))+'.mp3']),'55000');
+ assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,2);
+ console.log('PASS: cached-audio API plan/absence, private paths, unrecognized/public Storage refusal, partial removal recovery, archived/missing write freeze, Solo and Agency physical retirement preserve survivor/platform audio and shared identities. SQL metadata disappearance is a synthetic API port; live byte/provider proof UNVERIFIED.');
+}
+console.log('PASS: actual protected resource preparation, provider binding freeze, Admin/refusal, canonical credential disconnect, Archive/Restore, uncertain closure recovery and real Agency cleanup; shared Auth and independent Solo survive. Provider response is injected through service-only finalization; live provider proof UNVERIFIED.');
 }catch(e){console.error('FAIL:',e.code??e.name,e.message);process.exitCode=1;}finally{await db.close();}

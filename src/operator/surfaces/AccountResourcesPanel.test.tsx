@@ -13,8 +13,18 @@ afterEach(()=>{act(()=>root.unmount());host.remove();});
 const button=(name:string)=>{const b=Array.from(host.querySelectorAll('button')).find(b=>b.textContent===name);if(!b)throw Error('Missing button: '+name);return b;};
 const click=(name:string)=>act(()=>button(name).click());
 const confirm=()=>act(()=>{const input=host.querySelector<HTMLInputElement>('#fleet-resource-confirm')!;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,details.name);input.dispatchEvent(new Event('input',{bubbles:true}));for(const checkbox of host.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))if(!checkbox.checked)checkbox.click();});
-async function open(){const prepared=vi.fn(),cancel=vi.fn(),busy=vi.fn();await act(async()=>root.render(<AccountResourcesPanel details={details} mode="archive" onPrepared={prepared} onCancel={cancel} onBusy={busy}/>));await vi.waitFor(()=>expect(host.querySelector('#fleet-resource-confirm')).not.toBeNull());return{prepared,cancel,busy};}
+async function open(mode:'archive'|'delete'='archive'){const prepared=vi.fn(),cancel=vi.fn(),busy=vi.fn();await act(async()=>root.render(<AccountResourcesPanel details={details} mode={mode} onPrepared={prepared} onCancel={cancel} onBusy={busy}/>));await vi.waitFor(()=>expect(host.querySelector('#fleet-resource-confirm')).not.toBeNull());return{prepared,cancel,busy};}
 describe('operator connected-resource flow',()=>{
+ it('retires cached audio with exact scope and consequences, then requires a fresh Delete preflight',async()=>{
+  const cacheReview={...review,mode:'delete',resources:[{provider:'tts_cache',tenant_id:details.id,action:'remove_cache',object_count:2}]};
+  h.preview.mockResolvedValue(cacheReview);const {prepared}=await open('delete');
+  expect(host.textContent).toContain('Remove 2 cached audio files');expect(host.textContent).not.toContain('Close the listed Twilio');
+  expect(host.textContent).toContain('Cached audio cannot be restored');expect(button('Retire listed resources').disabled).toBe(true);
+  confirm();h.run.mockResolvedValue({...ready,mode:'delete',results:[{provider:'tts_cache',state:'verified',provider_status:'removed',reason:null}]});click('Retire listed resources');
+  await vi.waitFor(()=>expect(host.textContent).toContain('READY ·'));expect(prepared).not.toHaveBeenCalled();
+  expect(h.run).toHaveBeenCalledWith(details.id,expect.any(String),'prepare',cacheReview,details.name,false);
+  click('Refresh account preflight');expect(prepared).toHaveBeenCalledTimes(1);
+ });
  it('requires exact name, provider consequences and explicit external n8n retention',async()=>{
   await open();expect(button('Suspend connections').disabled).toBe(true);expect(host.textContent).toContain('may continue running independently');
   confirm();expect(button('Suspend connections').disabled).toBe(false);
@@ -28,7 +38,7 @@ describe('operator connected-resource flow',()=>{
  it('prevents duplicate dispatch and keeps typed input through an uncertain response',async()=>{
   await open();confirm();let reject!:(e:Error)=>void;h.run.mockImplementation(()=>new Promise((_r,j)=>{reject=j;}));const submit=button('Suspend connections');act(()=>{submit.click();submit.click();});expect(h.run).toHaveBeenCalledTimes(1);
   await act(async()=>reject(new Error('interrupted')));expect(host.textContent).toContain('OUTCOME UNKNOWN');expect((host.querySelector('#fleet-resource-confirm') as HTMLInputElement).value).toBe(details.name);
-  expect(button('Continue preparation').disabled).toBe(true);h.run.mockResolvedValue({...ready,state:'resources_unknown',results:[]});click('Read provider outcome');await vi.waitFor(()=>expect(h.run).toHaveBeenCalledTimes(2));
+  expect(button('Continue preparation').disabled).toBe(true);h.run.mockResolvedValue({...ready,state:'resources_unknown',results:[]});click('Read resource outcome');await vi.waitFor(()=>expect(h.run).toHaveBeenCalledTimes(2));
   expect(h.run.mock.calls[1][2]).toBe('read');expect(h.run.mock.calls[1][1]).toBe(h.run.mock.calls[0][1]);
  });
  it('resumes the server-bound operation after reopening instead of generating a new one',async()=>{

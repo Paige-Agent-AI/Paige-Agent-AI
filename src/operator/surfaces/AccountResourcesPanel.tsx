@@ -16,6 +16,8 @@ export default function AccountResourcesPanel({details,mode,onPrepared,onCancel,
  const [busy,setBusy]=useState(true),[error,setError]=useState(''),[unknown,setUnknown]=useState(false);
  const operation=useRef<string|null>(null),pending=useRef(false),alive=useRef(true);
  const requiresN8n=Boolean(review?.resources.some(r=>r.provider==='n8n'));
+ const requiresTwilio=Boolean(review?.resources.some(r=>r.provider==='twilio'));
+ const requiresCache=Boolean(review?.resources.some(r=>r.provider==='tts_cache'));
  const confirmed=confirmation===details.name&&consequences&&(!requiresN8n||retain);
  async function load(){
   if(pending.current)return;pending.current=true;setBusy(true);onBusy(true);setError('');
@@ -40,28 +42,29 @@ export default function AccountResourcesPanel({details,mode,onPrepared,onCancel,
   }}finally{pending.current=false;if(alive.current){setBusy(false);onBusy(false);}}
  }
  return <section aria-busy={busy} className="space-y-4">
-  <h3 className="text-lg font-medium">{mode==='archive'?'Prepare connections for Archive':'Retire connections for deletion'}</h3>
-  <p>{mode==='archive'?'Suspend the listed Twilio subaccounts and pause PAIGE execution. Phone-number charges can continue; suspension does not terminate billing.':'Close the listed Twilio subaccounts permanently, verify closure, and retire their exclusive PAIGE credentials.'}</p>
+  <h3 className="text-lg font-medium">{mode==='archive'?'Prepare connections for Archive':'Retire resources for deletion'}</h3>
+  {requiresTwilio&&<p>{mode==='archive'?'Suspend the listed Twilio subaccounts and pause PAIGE execution. Phone-number charges can continue; suspension does not terminate billing.':'Close the listed Twilio subaccounts permanently, verify closure, and retire their exclusive PAIGE credentials.'}</p>}
+  {requiresCache&&<p>Permanently remove only the listed accounts’ generated audio cache. Other accounts and platform audio are preserved. Cached audio cannot be restored here.</p>}
   {busy&&<p role="status">PROCESSING · Verifying connected resources…</p>}
   {error&&<p role="alert" className="break-words text-[var(--pg-negative)]">{unknown?'OUTCOME UNKNOWN · ':''}{error}</p>}
   {review&&<>
    <h4 className="font-medium">Exact account scope</h4><ul className="list-disc pl-5 break-words space-y-1">{review.accounts.map(a=><li key={a.id}>{a.name} · {a.account_type.replace(/_/g,' ')}</li>)}</ul>
-   <ul className="list-disc pl-5 space-y-1">{review.resources.map(r=><li key={r.provider+':'+r.tenant_id}>{review.accounts.find(a=>a.id===r.tenant_id)?.name}: {r.provider==='twilio'?(r.action==='close'?'Close Twilio subaccount':'Suspend Twilio subaccount'):'Disconnect PAIGE from n8n'}</li>)}</ul>
+   <ul className="list-disc pl-5 space-y-1">{review.resources.map(r=><li key={r.provider+':'+r.tenant_id}>{review.accounts.find(a=>a.id===r.tenant_id)?.name}: {r.provider==='tts_cache'?`Remove ${r.object_count} cached audio ${r.object_count===1?'file':'files'}`:r.provider==='twilio'?(r.action==='close'?'Close Twilio subaccount':'Suspend Twilio subaccount'):'Disconnect PAIGE from n8n'}</li>)}</ul>
    {review.blockers.length>0&&<><p role="status" className="text-[var(--pg-warning)]">BLOCKED · Resolve these requirements.</p><ul className="list-disc pl-5 break-words">{review.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul></>}
   </>}
-  {receipt&&<><p role="status">{receipt.state==='resources_ready'?'READY · Connected-resource disposition verified. Refresh the account preflight next.':receipt.state==='resources_preparing'?'PROCESSING · Continue to the next listed resource.':'OUTCOME UNKNOWN · Read the provider outcome before retrying.'}</p><ul className="list-disc pl-5 break-words">{receipt.results.map((r,i)=><li key={i}>{r.provider==='twilio'?'Twilio':'n8n'} · {r.state==='verified'?r.provider_status:'Unverified'}{r.reason?' · '+(reasons[r.reason]??'Provider retirement remains unverified. Read again or resolve its configuration.'):''}</li>)}</ul></>}
+  {receipt&&<><p role="status">{receipt.state==='resources_ready'?'READY · Resource disposition verified. Refresh the account preflight next.':receipt.state==='resources_preparing'?'PROCESSING · Continue to the next listed resource.':'OUTCOME UNKNOWN · Read the resource outcome before retrying.'}</p><ul className="list-disc pl-5 break-words">{receipt.results.map((r,i)=><li key={i}>{r.provider==='tts_cache'?'Cached audio':r.provider==='twilio'?'Twilio':'n8n'} · {r.state==='verified'?r.provider_status:'Unverified'}{r.reason?' · '+(reasons[r.reason]??'Resource retirement remains unverified. Read again or resolve its configuration.'):''}</li>)}</ul></>}
   {requiresN8n&&<p>Disconnecting removes this account’s PAIGE API credentials. External n8n workflows remain in n8n and may continue running independently. Visible workflow counts do not prove ownership.</p>}
   {receipt?.state!=='resources_ready'&&review&&<div className="space-y-3">
-   <label htmlFor="fleet-resource-confirm">Type “{details.name}” to confirm the listed provider scope</label><Input id="fleet-resource-confirm" autoComplete="off" value={confirmation} disabled={busy} onChange={e=>setConfirmation(e.target.value)}/>
-   <label className="flex min-h-11 items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--pg-gold-core)]" checked={consequences} disabled={busy} onChange={e=>setConsequences(e.target.checked)}/><span>{mode==='archive'?'I approve suspension of the listed Twilio resources and pausing PAIGE execution.':'I approve permanent closure of the listed Twilio resources and retirement of their exclusive credentials.'}</span></label>
+   <label htmlFor="fleet-resource-confirm">Type “{details.name}” to confirm the listed resource scope</label><Input id="fleet-resource-confirm" autoComplete="off" value={confirmation} disabled={busy} onChange={e=>setConfirmation(e.target.value)}/>
+   <label className="flex min-h-11 items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--pg-gold-core)]" checked={consequences} disabled={busy} onChange={e=>setConsequences(e.target.checked)}/><span>{mode==='archive'?'I approve the listed connection changes and pausing PAIGE execution.':`I approve permanent retirement of the listed resources${requiresCache?', including deletion of cached audio':''}${requiresTwilio?' and closure of Twilio subaccounts':''}.`}</span></label>
    {requiresN8n&&<label className="flex min-h-11 items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--pg-gold-core)]" checked={retain} disabled={busy} onChange={e=>setRetain(e.target.checked)}/><span>I approve retention of external n8n workflows and disconnection of PAIGE’s credentials.</span></label>}
   </div>}
   <div className="flex flex-wrap gap-3 [&_button]:min-h-11 [&_button]:focus-visible:ring-[var(--pg-gold-core)]">
    <Button variant="outline" disabled={busy} onClick={onCancel}>{operation.current?'Close preparation':'Back'}</Button>
    {receipt?.state==='resources_ready'?<Button onClick={onPrepared}>Refresh account preflight</Button>:<>
-    {operation.current&&<Button variant="outline" disabled={busy} onClick={()=>void run('read')}>Read provider outcome</Button>}
+    {operation.current&&<Button variant="outline" disabled={busy} onClick={()=>void run('read')}>Read resource outcome</Button>}
     {!review&&<Button variant="outline" disabled={busy} onClick={()=>void load()}>Retry resource review</Button>}
-    {review&&<Button disabled={busy||unknown||!confirmed||(!operation.current&&!review.execution_available)} onClick={()=>void run(operation.current?'continue':'prepare')}>{operation.current?(receipt?.state==='resources_unknown'?'Retry preparation':'Continue preparation'):mode==='archive'?'Suspend connections':'Close provider resources'}</Button>}
+    {review&&<Button disabled={busy||unknown||!confirmed||(!operation.current&&!review.execution_available)} onClick={()=>void run(operation.current?'continue':'prepare')}>{operation.current?(receipt?.state==='resources_unknown'?'Retry preparation':'Continue preparation'):mode==='archive'?'Suspend connections':'Retire listed resources'}</Button>}
    </>}
   </div>
  </section>;

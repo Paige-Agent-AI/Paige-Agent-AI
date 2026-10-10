@@ -14,6 +14,11 @@ import { OperationsProjectCreator } from "./OperationsProjectCreator";
 import { OperationsProjectEditor } from "./OperationsProjectEditor";
 import { useOperationsPeople } from "./useOperationsPeople";
 import { OperationsWork } from "./OperationsWork";
+import { useOperationsCrmWork } from "./useOperationsCrmWork";
+import { nativeWorkStage, crmActionForStage, type CrmWorkRecord } from "./operations-native-work";
+import { buildCrmWorkStageOperation, restoreCrmWorkStageOperation, type CrmWorkStageOperation } from "./operations-crm-work-command";
+import { OperationsCrmStageReview } from "./OperationsCrmStageReview";
+import { workStatusLabel } from "./operations-presentation";
 import { OperationsProjects } from "./OperationsProjects";
 import { OperationsOverview } from "./OperationsOverview";
 import { OperationsCapacity } from "./OperationsCapacity";
@@ -24,7 +29,7 @@ import "./operations-workspace.css";
 
 const DESTINATIONS = ["Overview", "Work", "Projects", "Delivery", "Playbooks", "Capacity"] as const;
 type Destination = typeof DESTINATIONS[number];
-type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus } | { kind: "plan"; id: string; view: Destination } | null;
+type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | null;
 
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void };
 export function OperationsWorkspace({ openPaige, view, onViewChange }: WorkspaceProps) {
@@ -61,18 +66,63 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   useEffect(() => { setInspection(null); }, [destination]);
   const inspectionInvoker = useRef<HTMLElement | null>(null);
   const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
+  const crm = useOperationsCrmWork(destination === "Work" ? userId : null, destination === "Work" ? tenantId : null);
+  const [crmReview,setCrmReview] = useState<CrmWorkStageOperation|null>(null);
+  const [pendingCrmRecovery,setPendingCrmRecovery] = useState<CrmWorkStageOperation|null>(null);
+  const [crmFeedback,setCrmFeedback] = useState("");
+  const readRetainedCrm = () => {
+    try {return restoreCrmWorkStageOperation(JSON.parse(sessionStorage.getItem(`paige:operations-crm-stage:${userId}:${tenantId}`)??"null"),userId,tenantId);}
+    catch {return null;}
+  };
+  useEffect(()=>{
+    setCrmReview(null);setCrmFeedback("");
+    if(destination!=="Work"){setPendingCrmRecovery(null);return;}
+    try {setPendingCrmRecovery(restoreCrmWorkStageOperation(JSON.parse(sessionStorage.getItem(`paige:operations-crm-stage:${userId}:${tenantId}`)??"null"),userId,tenantId));}
+    catch {setPendingCrmRecovery(null);}
+  },[destination,userId,tenantId]);
+  const closeCrmReview = () => {setCrmReview(null);setPendingCrmRecovery(readRetainedCrm());};
   const people = useOperationsPeople();
   const matches = operationsBundleMatchesTenant(source.plans, source.allItems, tenantId);
-  const plans = matches ? source.plans : [];
-  const items = matches ? source.allItems : [];
+  const planningAvailable = matches && !source.error && !source.forbidden;
+  const plans = planningAvailable ? source.plans : [];
+  const items = planningAvailable ? source.allItems : [];
   const rememberInvoker = () => {
     if (inspection?.view !== destination && document.activeElement instanceof HTMLElement) inspectionInvoker.current = document.activeElement;
   };
   const inspectItem = (item: PlanItem) => { rememberInvoker(); setInspection({ kind: "item", id: item.id, view: destination }); };
   const inspectPlan = (plan: Plan) => { rememberInvoker(); setInspection({ kind: "plan", id: plan.id, view: destination }); };
+  const inspectCrm = (task:CrmWorkRecord) => {rememberInvoker();setCrmReview(null);setCrmFeedback("");setInspection({kind:"crm",id:task.id,record:task,view:destination});};
+  const proposeCrm = (task:CrmWorkRecord,stage:PlanItemStatus,invoker:HTMLButtonElement|null) => {
+    const retained = readRetainedCrm();
+    if (retained) {
+      if(invoker?.isConnected)inspectionInvoker.current=invoker;else rememberInvoker();
+      setInspection({kind:"crm_recovery",id:retained.taskId,view:destination});
+      setPendingCrmRecovery(retained);setCrmFeedback("");setCrmReview(retained);return;
+    }
+    const operation=buildCrmWorkStageOperation(task,stage,userId,tenantId,crypto.randomUUID());
+    if(!operation)return;
+    if(invoker?.isConnected)inspectionInvoker.current=invoker;else rememberInvoker();
+    setInspection({kind:"crm",id:task.id,record:task,view:destination});setCrmFeedback("");setCrmReview(operation);
+  };
   const props = { plans, items, members: people.members, onInspectItem: inspectItem, onInspectPlan: inspectPlan };
   const selectedItem = inspection?.view === destination && inspection.kind === "item" ? items.find((item) => item.id === inspection.id) : null;
   const selectedPlan = inspection?.view === destination && inspection.kind === "plan" ? plans.find((plan) => plan.id === inspection.id) : null;
+  const selectedCrm = inspection?.view === destination && (inspection.kind === "crm" || inspection.kind === "crm_recovery") && !crm.error && !crm.forbidden
+    ? crm.tasks.find(task=>task.id===inspection.id) ?? (crm.loading&&inspection.kind==="crm"?inspection.record:null) : null;
+  const workReadable = (!source.loading && planningAvailable) || (!crm.loading && !crm.error && !crm.forbidden);
+  const workView = <>
+    {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={()=>void people.refresh()}>Retry profiles</button></div>}
+    {(source.error || source.forbidden || !matches) && <div className="ops-inline-notice" role="status">Planning work is unavailable in this workspace. <button type="button" onClick={()=>void source.refresh()}>Retry planning work</button></div>}
+    {source.loading && <p role="status">Reading Planning work…</p>}
+    {crm.loading && <p role="status">Reading CRM tasks…</p>}
+    {crm.error && <div className="ops-inline-notice" role="status">{crm.error} <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
+    {workReadable ? <OperationsWork {...props} crmTasks={crm.tasks} onInspectCrmTask={inspectCrm} onProposeCrmStage={proposeCrm}
+      onProposeStage={(item,proposedStage,invoker)=>{
+        if(invoker?.isConnected)inspectionInvoker.current=invoker;else rememberInvoker();
+        setInspection({kind:"item",id:item.id,view:destination,proposedStage});
+      }} /> : source.loading || crm.loading ? <OperationsLoading /> : <div className="ops-state" role="alert"><h1>Current work isn’t available</h1><p>Retry a source above or ask your workspace owner to review access.</p></div>}
+    <p className="ops-source-limit">This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.{crm.hasMore&&" More CRM tasks exist beyond this read."}</p>
+  </>;
   const isPlanning = !["Delivery", "Playbooks"].includes(destination);
   const member = people.members.find((person) => person.user_id === selectedItem?.assigned_to_user_id);
   const portalTheme = contentRef.current?.closest<HTMLElement>("[data-pg]")?.getAttribute("data-pg") ?? "dark";
@@ -93,38 +143,64 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
         aria-current={destination === name ? "page" : undefined}
         onClick={() => { setDestination(name); setInspection(null); }}>{name}</button>)}</nav>
       <div className="ops-department-actions">
+        {destination === "Work" && pendingCrmRecovery && !crmReview && <button type="button" onClick={event=>{
+          inspectionInvoker.current=event.currentTarget;setCrmFeedback("");
+          setInspection({kind:"crm_recovery",id:pendingCrmRecovery.taskId,view:destination});setCrmReview(pendingCrmRecovery);
+        }}>Recover pending task change</button>}
         {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { creationInvoker.current = event.currentTarget; setCreatingWork(true); }}>New task</button>}
         {destination === "Projects" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
         {isPlanning && <button type="button" aria-label="Refresh work and team profiles"
-          disabled={source.loading || people.loading} onClick={() => { void source.refresh(); void people.refresh(); }}><RefreshCw size={16} /></button>}
+          disabled={source.loading || people.loading || (destination === "Work" && crm.loading)} onClick={() => { void source.refresh(); void people.refresh(); if(destination === "Work")void crm.refresh(); }}><RefreshCw size={16} /></button>}
         {openPaige && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with PAIGE</button>}
       </div>
     </header>
     <div className="ops-department-body">
       {destination === "Delivery" ? <OperationsDelivery openPaige={openPaige} />
         : destination === "Playbooks" ? <OperationsPlaybooks tenantId={tenantId} />
+        : destination === "Work" ? workView
         : source.loading ? <OperationsLoading />
         : source.forbidden ? <div className="ops-state" role="status"><h1>This work isn’t available to your role</h1><p>Ask your workspace owner to review your access.</p></div>
         : source.error || !matches ? <div className="ops-state" role="alert"><h1>Your work couldn’t be loaded</h1><p>Refresh to read the current workspace again.</p><button type="button" onClick={() => void source.refresh()}>Try again</button></div>
         : <>
           {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={() => void people.refresh()}>Retry profiles</button></div>}
           {destination === "Overview" && <OperationsOverview {...props} />}
-          {destination === "Work" && <OperationsWork {...props} onProposeStage={(item, proposedStage, invoker) => {
-            if (invoker?.isConnected) inspectionInvoker.current = invoker; else rememberInvoker();
-            setInspection({ kind: "item", id: item.id, view: destination, proposedStage });
-          }} />}
           {destination === "Projects" && <OperationsProjects {...props} />}
           {destination === "Capacity" && <OperationsCapacity {...props} />}
           <p className="ops-source-limit">Figures reflect the work loaded here: up to 200 plans and standalone items, with their visible work. {people.partial && "Some team profiles are outside the current read."}</p>
         </>}
     </div>
-    <Sheet open={inspection?.view === destination} onOpenChange={(open) => { if (!open) setInspection(null); }}>
+    <Sheet open={inspection?.view === destination} onOpenChange={(open) => { if (!open) {setInspection(null);closeCrmReview();} }}>
       <SheetContent className="ops-detail-sheet paige-solo" data-pg={portalTheme} data-theme={portalTheme} onCloseAutoFocus={(event) => {
         if (inspectionInvoker.current?.isConnected) { event.preventDefault(); inspectionInvoker.current.focus(); }
+        else {
+          const workKey = inspectionInvoker.current?.dataset.workKey;
+          const replacement = workKey ? Array.from(contentRef.current?.querySelectorAll<HTMLElement>("[data-work-key]") ?? []).find(element=>element.dataset.workKey===workKey) : null;
+          if(replacement){event.preventDefault();replacement.focus();}
+        }
       }}>
-        <SheetHeader><SheetTitle>{selectedItem?.title ?? selectedPlan?.title ?? "Work is not available in this view"}</SheetTitle>
-          <SheetDescription>{selectedItem?.summary ?? selectedPlan?.summary ?? "Details from your current workspace."}</SheetDescription></SheetHeader>
-        {!selectedItem && !selectedPlan && inspection && <p>This task has not been verified here. Refresh current work before creating it again.</p>}
+        <SheetHeader><SheetTitle>{selectedItem?.title ?? selectedPlan?.title ?? selectedCrm?.title ?? (inspection?.kind === "crm_recovery" ? "Recover the task change" : source.error || !matches ? "Work couldn’t be loaded" : "Work is not available in this view")}</SheetTitle>
+          <SheetDescription>{selectedItem?.summary ?? selectedPlan?.summary ?? selectedCrm?.description ?? "Details from your current workspace."}</SheetDescription></SheetHeader>
+        {!selectedItem && !selectedPlan && !selectedCrm && inspection && <p>{inspection.kind === "crm_recovery" ? "The earlier task’s current details are unavailable. This recovery applies only to its original proposed change." : "This task has not been verified here. Refresh current work before creating it again."}</p>}
+        {(inspection?.kind === "crm" || inspection?.kind === "crm_recovery") && <button type="button" disabled={crm.loading || Boolean(crmReview)} onClick={()=>void crm.refresh()}>Refresh task details</button>}
+        {selectedCrm && <div className="ops-detail-content">
+          <dl><div><dt>Responsible person</dt><dd>{people.members.some(person=>person.user_id===selectedCrm.user_id)
+            ? <OperationsAssignee member={people.members.find(person=>person.user_id===selectedCrm.user_id)} /> : "Member unavailable"}</dd></div>
+            <div><dt>Status</dt><dd>{workStatusLabel(nativeWorkStage({source:"crm",key:`crm:${selectedCrm.id}`,record:selectedCrm}))}</dd></div>
+            <div><dt>Priority</dt><dd>{selectedCrm.recorded_priority??"Not recorded"}</dd></div>
+            <div><dt>Due date</dt><dd>{!selectedCrm.due_date?"Not scheduled":Number.isFinite(Date.parse(selectedCrm.due_date))?new Intl.DateTimeFormat(undefined,{dateStyle:"medium",timeStyle:"short"}).format(new Date(selectedCrm.due_date)):"Date unavailable"}</dd></div>
+            <div><dt>Estimated effort</dt><dd>{selectedCrm.estimated_minutes===null?"Not recorded":`${selectedCrm.estimated_minutes} minutes`}</dd></div>
+            <div><dt>Source</dt><dd>CRM task{selectedCrm.deal_id?" · linked opportunity":""}{selectedCrm.biz_id?" · linked business":""}</dd></div></dl>
+          {selectedCrm.status==="completed"&&<p>Recorded as completed internal work. Client acceptance is a separate outcome.</p>}
+          {crmFeedback&&<p role="status">{crmFeedback}</p>}
+          {!crmReview&&<label>Review a stage change<select aria-label="Review CRM task stage" value={nativeWorkStage({source:"crm",key:`crm:${selectedCrm.id}`,record:selectedCrm})}
+            disabled={crm.loading||Boolean(crm.error)} onChange={event=>proposeCrm(selectedCrm,event.target.value as PlanItemStatus,null)}>
+            <option value={nativeWorkStage({source:"crm",key:`crm:${selectedCrm.id}`,record:selectedCrm})}>{selectedCrm.status.replace(/_/g," ")}</option>
+            {(["open","in_progress","done"] as PlanItemStatus[]).filter(stage=>crmActionForStage(selectedCrm,stage)).map(stage=><option key={stage} value={stage}>{stage==="open"?"Ready":stage==="done"?"Completed":"In progress"}</option>)}
+          </select></label>}
+        </div>}
+        {crmReview && <OperationsCrmStageReview key={`${tenantId}:${crmReview.key}`} operation={crmReview} refresh={crm.refresh}
+          onClose={closeCrmReview} onVerified={taskId=>{setCrmReview(null);setPendingCrmRecovery(null);
+            setInspection({kind:"crm_recovery",id:taskId,view:destination});setCrmFeedback("This task’s stage is saved and confirmed in current CRM work.");}} />}
         {selectedItem && <div className="ops-detail-content">
           <dl><div><dt>Responsible person</dt><dd>{selectedItem.assigned_to_user_id && !member ? "Member unavailable" : <OperationsAssignee member={member} />}</dd></div>
             <div><dt>Status</dt><dd>{selectedItem.status.replace(/_/g, " ")}</dd></div>

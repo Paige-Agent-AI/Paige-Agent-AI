@@ -1,8 +1,10 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import type { CrmWorkRecord } from "./operations-native-work";
 
-const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false }));
+const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
+  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null }));
 const paige = vi.hoisted(() => ({ handoff: vi.fn(), clearClient: vi.fn(), clearPublic: vi.fn() }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: paige.handoff }));
 vi.mock("@/solo/paigeClientScope", () => ({ clearPaigeClientScope: paige.clearClient }));
@@ -11,7 +13,7 @@ vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTe
   activeUserId: harness.user, loading: false, accountContextStatus: harness.status }) }));
 vi.mock("./useOperationsPeople", () => ({ useOperationsPeople: () => ({ members: [], loading: false,
   error: null, partial: false, refresh: vi.fn() }) }));
-vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], loading: false, error: null,
+vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], loading: false, error: harness.planningError,
   forbidden: false, refresh: vi.fn(), allItems: [{ id: "test-item", tenant_id: harness.foreign ? "test-foreign" : harness.tenant,
     plan_id: null, title: `${harness.tenant} assigned work`, summary: "Test source", status: "open", priority: "normal",
     item_type: "task", assigned_to_user_id: null, due_at: null }] }) }));
@@ -19,12 +21,15 @@ vi.mock("./OperationsDelivery", () => ({ default: () => <div>Delivery test seam<
 vi.mock("./OperationsPlaybooks", () => ({ OperationsPlaybooks: () => <div>Playbook test seam</div> }));
 vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: () => <div>Work edit test seam</div> }));
 vi.mock("./OperationsProjectCreator", () => ({ OperationsProjectCreator: ({ onRecover }: { onRecover: (id?: string) => Promise<void> }) => <div data-testid="project-creator"><button onClick={() => void onRecover()}>Refresh unknown project</button><button onClick={() => void onRecover("test-project")}>Inspect acknowledged project</button></div> }));
+vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:false,error:harness.crmError,forbidden:false,hasMore:false,refresh:vi.fn()})}));
+vi.mock("./OperationsCrmStageReview",()=>({OperationsCrmStageReview:({operation}:{operation:{taskId:string}})=><div>Recovery test seam: {operation.taskId}</div>}));
 import { OperationsWorkspace } from "./OperationsWorkspace";
 let container: HTMLDivElement;
 let root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => { harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
   vi.clearAllMocks();
+  sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 async function click(text: string) {
@@ -80,4 +85,39 @@ it("retains uncertain project creation after refresh without an identity", async
   await click("Inspect acknowledged project");
   expect(container.querySelector('[data-testid="project-creator"]')).toBeNull();
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+});
+
+it("keeps native CRM work usable while Planning is unavailable",async()=>{
+ harness.planningError="Explicit Planning refusal";harness.crmTasks=[{id:"native-crm",tenant_id:harness.tenant,user_id:harness.user,title:"Native CRM work",description:null,
+  status:"pending",due_date:null,updated_at:"2026-10-10T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
+ await act(async()=>root.render(<OperationsWorkspace view="work"/>));
+ expect(container.textContent).toContain("Planning work is unavailable");expect(container.querySelectorAll(".ops-work-card")).toHaveLength(1);
+ expect(container.querySelector(".ops-work-card")?.textContent).toContain("Native CRM work");
+ await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")?.click());
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("CRM task");
+ expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain("Work edit test seam");
+});
+
+it("offers scoped retained recovery even when the original task is outside the loaded read",async()=>{
+ sessionStorage.setItem(`paige:operations-crm-stage:${harness.user}:${harness.tenant}`,JSON.stringify({actorId:harness.user,tenantId:harness.tenant,key:"original-key",taskId:"original-native-task",targetStatus:"completed",
+  command:{action:"task.complete",task_id:"original-native-task",expected_updated_at:"2026-10-10T12:00:00Z"}}));
+ await act(async()=>root.render(<OperationsWorkspace view="work"/>));await click("Recover pending task change");
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recovery test seam: original-native-task");
+ harness.tenant="test-tenant-b";await act(async()=>root.render(<OperationsWorkspace view="work"/>));
+ expect(document.querySelector('[role="dialog"]')).toBeNull();expect(container.textContent).not.toContain("Recover pending task change");
+});
+
+it("shows the original pending task before confirmation instead of the newly selected task",async()=>{
+ const task={id:"task-b",tenant_id:harness.tenant,user_id:harness.user,title:"Newly selected task B",description:null,status:"pending" as const,due_date:null,updated_at:"2026-10-10T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null};
+ harness.crmTasks=[task,{...task,id:"task-a",title:"Original pending task A"}];
+ sessionStorage.setItem(`paige:operations-crm-stage:${harness.user}:${harness.tenant}`,JSON.stringify({actorId:harness.user,tenantId:harness.tenant,key:"original-key",taskId:"task-a",targetStatus:"completed",command:{action:"task.complete",task_id:"task-a",expected_updated_at:task.updated_at}}));
+ await act(async()=>root.render(<OperationsWorkspace view="work"/>));
+ const card=Array.from(container.querySelectorAll<HTMLButtonElement>(".ops-work-card")).find(entry=>entry.textContent?.includes(task.title));
+ await act(async()=>card?.click());
+ const select=document.querySelector<HTMLSelectElement>('select[aria-label="Review CRM task stage"]');
+ await act(async()=>{if(select){select.value="done";select.dispatchEvent(new Event("change",{bubbles:true}));}});
+ const dialog=document.querySelector('[role="dialog"]');
+ expect(dialog?.querySelector("h2")?.textContent).toBe("Original pending task A");
+ expect(dialog?.textContent).toContain("Recovery test seam: task-a");
+ expect(dialog?.textContent).not.toContain(task.title);
 });

@@ -1,0 +1,348 @@
+{
+  "boundary": "Actual Operations/shared shell; explicit synthetic CRM/Planning/Team reads, actor and executor refusal ports. No authenticated customer or persisted command proof. Actual browser zoom UNVERIFIED.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 390,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeOpen": true,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paigeOpen": false,
+      "reducedMotion": true,
+      "sourceDetail": true,
+      "explicitConfirmation": true,
+      "refusalShown": true,
+      "refusalRefreshReachable": true,
+      "originalLane": "Ready",
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 390,
+        "contained": true,
+        "scrollable": false
+      }
+    }
+  ],
+  "errors": []
+}

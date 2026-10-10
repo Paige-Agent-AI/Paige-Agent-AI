@@ -6,18 +6,29 @@ import {stripTypeScriptTypes} from 'node:module';
 import {webcrypto} from 'node:crypto';
 const tenant='00000000-0000-0000-0000-000000000011',actor='00000000-0000-0000-0000-000000000001',operation='00000000-0000-0000-0000-000000000031';
 function load(options={}){
- let handler;const rpc=[],effects=[],credentialReads=[];
+ let handler;const rpc=[],effects=[],credentialReads=[],envReads=[];
  const resource={key:'twilio:'+tenant,provider:'twilio',tenant_id:tenant,sid:'AC'+'b'.repeat(32)};
  const plan={complete:false,mode:'archive',resources:[resource],results:{},...options.plan};
  const caller={auth:{getUser:async()=>({data:{user:options.unauthenticated?null:{id:actor}},error:null})},rpc:async(name,args)=>{rpc.push({name,args,client:'caller'});return {data:name==='operator_can_retire_accounts'?options.authorized!==false:name==='operator_read_retirement_resources'?{tenant_id:tenant,operation_id:operation,state:'resources_ready',results:[]}:null,error:name==='operator_begin_retirement_resources'&&options.beginError?{code:'40001',message:'private-error'}:null};}};
  const admin={rpc:async(name,args)=>{rpc.push({name,args,client:'service'});return{data:name==='operator_claim_retirement_resources'?plan:name==='operator_assert_retirement_resource'?options.assert!==false:null,error:options.fail===name?{code:'42501',message:'private-error-payload'}:null};}};
  const code=stripTypeScriptTypes(fs.readFileSync(new URL('../operator-account-retirement/index.ts',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,''),{mode:'transform'});
- vm.runInNewContext(code,{Request,Response,JSON,crypto:webcrypto,Deno:{env:{get:()=> 'synthetic-only'},serve:f=>{handler=f;}},createClient:(_u,key,o)=>o.global?.headers?caller:admin,masterCreds:()=>({accountSid:'AC'+'a'.repeat(32),authToken:'synthetic-only'}),resolveTwilioCreds:async(client,id)=>{credentialReads.push({client,id});return {ok:true,data:{accountSid:'AC'+'b'.repeat(32),authToken:'synthetic-scoped-only'}};},retireTwilioSubaccount:async(...args)=>{effects.push(args);if(!args[3])assert.equal(await args[4](),true);if(args[5])await args[5]();return options.result??{state:'verified',provider_status:'suspended'};}});
+ vm.runInNewContext(code,{Request,Response,JSON,crypto:webcrypto,Deno:{env:{get:name=>{envReads.push(name);return name==='TWILIO_AUTH_TOKEN'?options.parentToken: 'synthetic-only';}},serve:f=>{handler=f;}},createClient:(_u,key,o)=>o.global?.headers?caller:admin,masterCreds:()=>({accountSid:'AC'+'a'.repeat(32),authToken:'synthetic-only',apiKeySid:'SK'+'d'.repeat(32)}),resolveTwilioCreds:async(client,id)=>{credentialReads.push({client,id});return {ok:true,data:{accountSid:'AC'+'b'.repeat(32),authToken:'synthetic-scoped-only'}};},retireTwilioSubaccount:async(...args)=>{effects.push(args);if(!args[3])assert.equal(await args[4](),true);if(args[5])await args[5]();if(args[6])options.onParent?.(await args[6]());return options.result??{state:'verified',provider_status:'suspended'};}});
  const request=(body={},headers={Authorization:'Bearer synthetic-only'})=>handler(new Request('https://local.invalid',{method:'POST',headers,body:JSON.stringify({tenant_id:tenant,operation_id:operation,action:'continue',...body})}));
- return{request,rpc,effects,credentialReads,admin};
+ return{request,rpc,effects,credentialReads,envReads,admin};
 }
 test('actual handler refuses ordinary membership and invalid authentication before service/provider access',async()=>{
- for(const options of [{authorized:false},{unauthenticated:true}]){const h=load(options),r=await h.request();assert.equal(r.status,options.unauthenticated?401:403);assert.equal(h.effects.length,0);assert.equal(h.credentialReads.length,0);assert.ok(!h.rpc.some(r=>r.client==='service'));}
+ for(const options of [{authorized:false},{unauthenticated:true}]){const h=load(options),r=await h.request();assert.equal(r.status,options.unauthenticated?401:403);assert.equal(h.effects.length,0);assert.equal(h.credentialReads.length,0);assert.ok(!h.envReads.includes('TWILIO_AUTH_TOKEN'));assert.ok(!h.rpc.some(r=>r.client==='service'));}
+});
+
+test('actual handler supplies the existing protected parent token only through a lazy bound resolver',async()=>{
+ for(const token of [undefined,'synthetic-parent-only']){
+  let resolved='not-read';const h=load({parentToken:token,onParent:value=>{resolved=value;}});
+  const response=await h.request({action:'read'});assert.equal(response.status,200);
+  assert.equal(h.effects[0][3],true);assert.ok(h.envReads.includes('TWILIO_AUTH_TOKEN'));
+  if(token){assert.equal(resolved.accountSid,'AC'+'a'.repeat(32));assert.equal(resolved.authToken,token);assert.equal(resolved.apiKeySid,undefined);}
+  else assert.equal(resolved,null);
+  assert.ok(!(await response.text()).includes('synthetic-parent-only'));
+ }
 });
 test('forged provider identity and stale preflight never reach provider execution',async()=>{
  const h=load();assert.equal((await h.request({sid:'foreign-provider'})).status,400);assert.equal(h.effects.length,0);

@@ -731,12 +731,20 @@ serve(async (req) => {
         console.error("[ANALYZE] Auto-sync threw:", syncError);
       }
 
+      // #734 — the auto-sync audit records the sync's OWN verdict, not just that HTTP was 200:
+      // a run whose writes failed reports success:false / outcome.status from the callee instead
+      // of an untruthful ok:true (review P3; the callee's step-9 audit row carries the per-group detail).
       await supabase.from("audit_logs").insert({
         user_id: upload.user_id,
         entity: "credit_report_upload",
         action: syncError ? "auto_sync_failed" : "auto_sync_completed",
         entity_id: uploadId,
-        data: { sync_error: syncError, sync_result: syncResult ? { ok: true } : null },
+        data: {
+          sync_error: syncError,
+          sync_result: syncResult
+            ? { ok: syncResult.success !== false, outcome: syncResult?.results?.outcome?.status ?? null }
+            : null,
+        },
       });
     }
 

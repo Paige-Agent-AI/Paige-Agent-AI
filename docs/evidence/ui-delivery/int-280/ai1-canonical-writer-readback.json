@@ -1,0 +1,23 @@
+{
+  "capturedAt": "2026-10-10T18:28:49.522Z",
+  "proofClass": "read-only production catalog, normalized canonical function-body comparison",
+  "project": "xygzykjyynhzqytbqnzu",
+  "functions": [
+    {
+      "proname": "complete_paige_document_work",
+      "arguments": "_work_id uuid, _server_idempotency_key text, _doc_type text, _title text, _blocks jsonb, _provider text, _model text, _tokens_used integer, _latency_ms integer",
+      "body_md5": "77cfbe11c13b76c5d71814f1cf990e0a",
+      "reviewedSourceMd5": "77cfbe11c13b76c5d71814f1cf990e0a",
+      "match": true
+    },
+    {
+      "proname": "record_capability_run",
+      "arguments": "_tenant_id uuid, _actor_id uuid, _capability_key text, _outcome text, _run_id uuid, _agent_slug text, _job_attempt_id text, _llm_trace_id uuid, _release_id text, _detail jsonb",
+      "body_md5": "4a10cceae1c7f1226ece2c888afdca6c",
+      "reviewedSourceMd5": "4a10cceae1c7f1226ece2c888afdca6c",
+      "match": true
+    }
+  ],
+  "runtimeProof": "Controlled local PostgreSQL uses these canonical bodies; sensitive content is never projected",
+  "authenticatedAcceptance": "UNVERIFIED - OWNER_LOGIN_HOLD"
+}

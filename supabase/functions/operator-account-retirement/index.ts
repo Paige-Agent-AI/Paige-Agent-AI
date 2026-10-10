@@ -1,7 +1,7 @@
 // Operator lifecycle's provider adapter. No provider identity or credentials are accepted
 // from a browser. The canonical private operation supplies every resource binding.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
-import { masterCreds } from '../_shared/twilio.ts';
+import { masterCreds, resolveTwilioCreds } from '../_shared/twilio.ts';
 import { retireTwilioSubaccount } from '../_shared/operator-retirement.ts';
 import { retireTenantTtsCache, retireTenantGeneratedMedia } from '../_shared/operator-storage-retirement.ts';
 
@@ -49,7 +49,8 @@ Deno.serve(async(req)=>{
    if(!await assert())return json({error:'resource_authority_or_binding_changed'},409);
    let state:'verified'|'blocked'|'unknown'='unknown',status:string|null=null,reason:string|null=null;
    if(resource.provider==='twilio'&&typeof resource.sid==='string'){
-    const result=await retireTwilioSubaccount(resource.sid,plan.mode==='archive'?'suspended':'closed',masterCreds(),action==='read',assert);
+    const calls=async()=>{const creds=await resolveTwilioCreds(admin,resource.tenant_id);return creds.ok?creds.data:null;};
+    const result=await retireTwilioSubaccount(resource.sid,plan.mode==='archive'?'suspended':'closed',masterCreds(),action==='read',assert,calls);
     state=result.state;if(result.state==='verified')status=result.provider_status;else reason=result.reason;
    }else if((resource.provider==='tts_cache'||resource.provider==='generated_media')&&plan.mode==='delete'&&resource.objects){
     const remove=resource.provider==='tts_cache'?retireTenantTtsCache:retireTenantGeneratedMedia;

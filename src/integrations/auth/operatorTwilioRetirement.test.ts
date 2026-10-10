@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { retireTwilioSubaccount } from '../../../supabase/functions/_shared/operator-retirement.ts';
 import { twilioRequest } from '../../../supabase/functions/_shared/twilio.ts';
 const parent='AC'+'a'.repeat(32), child='AC'+'b'.repeat(32), other='AC'+'c'.repeat(32);
-const credentials={accountSid:parent,authToken:'synthetic-secret',apiKeySid:'SK'+'d'.repeat(32)};
+const credentials={accountSid:parent,authToken:'synthetic-secret'};
+const managementKey={...credentials,apiKeySid:'SK'+'d'.repeat(32)};
+const childKey={accountSid:child,authToken:'synthetic-child-secret',apiKeySid:'SK'+'e'.repeat(32)};
 const account=(status:string,sid=child,owner=parent)=>({sid,owner_account_sid:owner,status});
 afterEach(()=>vi.unstubAllGlobals());
 function responses(...bodies:unknown[]) {
@@ -10,6 +12,40 @@ function responses(...bodies:unknown[]) {
  vi.stubGlobal('fetch',fetch);return fetch;
 }
 describe('canonical Twilio subaccount retirement',()=>{
+ it.each(['suspended','closed'] as const)('uses the bound subaccount credential for calls while %s uses the parent management credential',async desired=>{
+  let state='active';const fetch=vi.fn(async(url:string,init:RequestInit)=>{
+   if(url.includes('/Calls.json')){
+    if((init.headers as Record<string,string>).Authorization!==`Basic ${btoa(`${childKey.apiKeySid}:${childKey.authToken}`)}`)return new Response('{}',{status:401});
+    return new Response(JSON.stringify({calls:[]}));
+   }
+   expect((init.headers as Record<string,string>).Authorization).toBe(`Basic ${btoa(`${managementKey.apiKeySid}:${managementKey.authToken}`)}`);
+   if(init.method==='POST')state=desired;
+   return new Response(JSON.stringify(account(state)));
+  });vi.stubGlobal('fetch',fetch);
+  const resolve=vi.fn(async()=>childKey);
+  expect(await retireTwilioSubaccount(child,desired,managementKey,false,async()=>true,resolve)).toEqual({state:'verified',provider_status:desired});
+  expect(resolve).toHaveBeenCalledTimes(1);expect(fetch.mock.calls.filter(c=>c[1].method==='POST')).toHaveLength(1);
+ });
+ it('refuses a foreign scoped credential without any foreign resource call or mutation',async()=>{
+  const fetch=responses(account('active'));
+  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>({...childKey,accountSid:other}))).toEqual({state:'blocked',reason:'twilio_call_credential_binding_mismatch'});
+  expect(fetch).toHaveBeenCalledTimes(1);
+ });
+ it('reconciles an already closed child without its retired credential or further call access',async()=>{
+  const fetch=responses(account('closed'));const resolve=vi.fn(async()=>null);
+  expect(await retireTwilioSubaccount(child,'closed',managementKey,true,async()=>true,resolve)).toEqual({state:'verified',provider_status:'closed'});
+  expect(fetch).toHaveBeenCalledTimes(1);expect(resolve).not.toHaveBeenCalled();
+ });
+ it('reports denied call access separately from a busy call and never mutates the account',async()=>{
+  const fetch=responses(account('active'));fetch.mockResolvedValueOnce(new Response('{}',{status:401}));
+  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,async()=>childKey)).toEqual({state:'blocked',reason:'twilio_call_access_refused'});
+  expect(fetch.mock.calls.some(c=>c[1]?.method==='POST')).toBe(false);
+ });
+ it.each([async()=>null,async()=>{throw new Error('private-vault-payload');}])('keeps missing scoped credentials unavailable without exposing secret-store errors',async resolve=>{
+  const fetch=responses(account('active'));
+  expect(await retireTwilioSubaccount(child,'suspended',managementKey,false,async()=>true,resolve)).toEqual({state:'blocked',reason:'twilio_call_credentials_unavailable'});
+  expect(fetch).toHaveBeenCalledTimes(1);
+ });
  it('preserves ordinary callers transient retry while retirement can explicitly disable it',async()=>{
   const fetch=vi.fn().mockResolvedValueOnce(new Response('temporary',{status:503})).mockResolvedValueOnce(new Response(JSON.stringify({sid:'synthetic-response'})));
   vi.stubGlobal('fetch',fetch);

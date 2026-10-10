@@ -16,6 +16,21 @@
 // No new role semantics: owner/admin/member are the tenant_members roles; agency management is
 // agency_can_manage_child; the operator is super_admin. This file only composes them.
 
+import { PAIGE_SPINE_CAPABILITIES } from "./paige-spine/registry.ts";
+import type { SpineCapability } from "./paige-spine/contracts.ts";
+
+// C0b: explicit declarations join the existing shared gates. Undecorated legacy
+// registrations keep their existing semantics; a declaration can never weaken a
+// current admin/door gate. Missing metadata for new registrations is rejected by
+// the shrink-only declaration CI ratchet, not guessed here.
+const authorityDeclarations: readonly SpineCapability[] = PAIGE_SPINE_CAPABILITIES;
+const declaredAdminTools: ReadonlySet<string> = new Set(authorityDeclarations
+  .filter((cap) => cap.action?.seatAuthority === "workspace-admin" || cap.action?.seatAuthority === "door-seat")
+  .map((cap) => cap.action!.chatTool).filter((tool): tool is string => !!tool));
+const declaredDoorSeatTools: ReadonlySet<string> = new Set(authorityDeclarations
+  .filter((cap) => cap.action?.seatAuthority === "door-seat")
+  .map((cap) => cap.action!.chatTool).filter((tool): tool is string => !!tool));
+
 /**
  * Every chat tool that routes into the owner-ops dispatch branch (paige-ai-chat). Kept here so the
  * branch router, the early refusal (before any approval card), and the capability projection all read
@@ -41,6 +56,7 @@ export const OWNER_OPS_BRANCH_TOOLS: ReadonlySet<string> = new Set([
   "crm_search_contacts", "crm_get_contact_summary", "crm_list_deals", "crm_list_tasks", "crm_pipeline_summary",
   "comms_connection_summary", "comms_list_numbers", "comms_search_numbers", "comms_buy_number", "comms_name_number",
   "comms_set_primary_number", "comms_registration_status", "comms_draft_registration",
+  "comms_setup_calling",
 ]);
 
 /**
@@ -67,7 +83,7 @@ export const OUT_OF_BRANCH_ADMIN_TOOLS: ReadonlySet<string> = new Set([
 export function requiresWorkspaceAdmin(tool: string, n8nTools: ReadonlySet<string>): boolean {
   if (n8nTools.has(tool)) return false; // n8n carries its own owner/session/tenant lease check
   if (ROLE_FREE_BRANCH_TOOLS.has(tool)) return false;
-  return OWNER_OPS_BRANCH_TOOLS.has(tool) || OUT_OF_BRANCH_ADMIN_TOOLS.has(tool);
+  return declaredAdminTools.has(tool) || OWNER_OPS_BRANCH_TOOLS.has(tool) || OUT_OF_BRANCH_ADMIN_TOOLS.has(tool);
 }
 
 export interface WorkspaceAuthority {
@@ -194,7 +210,7 @@ export function authorityAdmits(
   workspaceBuildTools: ReadonlySet<string>,
   doorSeatTools: ReadonlySet<string> = EMPTY,
 ): boolean {
-  if (doorSeatTools.has(tool)) return authority.seat;
+  if (declaredDoorSeatTools.has(tool) || doorSeatTools.has(tool)) return authority.seat;
   if (workspaceBuildTools.has(tool)) return authority.workspaceAdmin;
   return authority.workspaceAdmin || authority.platformOperator;
 }

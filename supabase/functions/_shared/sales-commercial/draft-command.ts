@@ -1,4 +1,6 @@
 import {UUID} from '../sales-invoice-command/contract.ts';
+import {parseCommercialConditions} from './conditions.ts';
+import {parseCommercialTermsReference} from './terms-reference.ts';
 
 /** Bounded draft acts only. Issuance, delivery, collection, provider operation and authority
  * stay separate. SQL save_sales_billing_draft remains financial validation and write owner.
@@ -24,7 +26,9 @@ export function parseCommercialDraftCommand(value:unknown):CommercialDraftComman
  if(Object.keys(value).length!==allowed.length||Object.keys(value).some(k=>!allowed.includes(k)))return invalid();
  if(revise&&(typeof value.invoice_id!=='string'||!UUID.test(value.invoice_id)||!Number.isSafeInteger(value.expected_version)||Number(value.expected_version)<1))return invalid();
  const d=value.draft;if(!object(d))return invalid();
- const exact=d.schema_version===3,keys=[...inputKeys,...(exact?['deposit_minor']:[])];
+ const exact=d.schema_version===3,keys=[...inputKeys,...(exact?['deposit_minor']:[]),...('commercial_conditions' in d?['commercial_conditions']:[]),...('commercial_terms_reference' in d?['commercial_terms_reference']:[])];
+ if('commercial_terms_reference' in d){try{parseCommercialTermsReference(d.commercial_terms_reference);}catch{return invalid();}}
+ if('commercial_conditions' in d){try{if(!parseCommercialConditions(d.commercial_conditions))return invalid();}catch{return invalid();}}
  if(Object.keys(d).length!==keys.length||Object.keys(d).some(k=>!keys.includes(k))||(d.schema_version!==2&&!exact)
   ||typeof d.client_id!=='string'||!UUID.test(d.client_id)||d.currency!=='usd'||!['one_time','deposit','recurring'].includes(String(d.kind))
   ||(d.kind==='recurring'?d.cadence!=='monthly':d.cadence!==null)||!date(d.due_date))return invalid();

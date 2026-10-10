@@ -27,20 +27,37 @@ export const runnerKey = "comms_configured";
 export const run: CheckRunner = async (ctx, _row) => {
   const { admin, tenantId } = ctx;
   try {
-    const [emailRes, phoneRes, a2pRes, readiness] = await Promise.all([
+    const [emailRes, phoneRes, a2pRes, readiness, subRes] = await Promise.all([
       admin.from("tenant_email_identities").select("tenant_id").eq("tenant_id", tenantId).limit(1),
-      admin.from("tenant_phone_numbers").select("id").eq("tenant_id", tenantId).eq("is_primary", true).limit(1),
+      admin.from("tenant_phone_numbers").select("id, capabilities").eq("tenant_id", tenantId).eq("is_primary", true).limit(1),
       admin.from("tenant_a2p_registrations").select("tenant_id").eq("tenant_id", tenantId).limit(1),
       readBusinessContextReadiness(admin, tenantId),
+      // INT-345: the calling ACCOUNT is a distinct fact from number assignment —
+      // its absence is fixable by the owner's own one-click setup (Settings →
+      // Registration → "Set up calling"), so the check names it separately.
+      admin.from("tenant_twilio_subaccounts")
+        .select("twilio_subaccount_sid, api_key_sid, auth_token_vault_ref, status, active")
+        .eq("tenant_id", tenantId).limit(1),
     ]);
     throwOnDbError(emailRes.error, "tenant_email_identities");
     throwOnDbError(phoneRes.error, "tenant_phone_numbers");
     throwOnDbError(a2pRes.error, "tenant_a2p_registrations");
+    throwOnDbError(subRes.error, "tenant_twilio_subaccounts");
 
     const hasEmailIdentity = (emailRes.data?.length ?? 0) > 0;
     const hasPrimaryPhone = (phoneRes.data?.length ?? 0) > 0;
     const hasA2p = (a2pRes.data?.length ?? 0) > 0;
     const hasBusinessPhone = isConfirmed(readiness.business_phone.status);
+    const subRow = (subRes.data?.[0] ?? null) as Record<string, unknown> | null;
+    const callingAccountConfigured = !!subRow
+      && !!subRow.twilio_subaccount_sid
+      && !!subRow.api_key_sid
+      && !!subRow.auth_token_vault_ref
+      && subRow.active === true
+      && subRow.status === "active";
+    const primaryVoiceCapable = hasPrimaryPhone
+      && ((phoneRes.data?.[0] as { capabilities?: Record<string, unknown> } | undefined)
+        ?.capabilities?.voice === true);
 
     const canText = hasPrimaryPhone || hasA2p;
     const pass = hasEmailIdentity && canText && hasBusinessPhone;
@@ -49,6 +66,9 @@ export const run: CheckRunner = async (ctx, _row) => {
     if (!hasEmailIdentity) missing.push("no sending email identity");
     if (!canText) missing.push("no primary phone number or A2P registration");
     if (!hasBusinessPhone) missing.push("no business phone on the profile");
+    if (!callingAccountConfigured) missing.push("calling account not connected (Settings → Registration → Set up calling)");
+    else if (!hasPrimaryPhone) missing.push("calling account connected but no primary number chosen yet");
+    else if (!primaryVoiceCapable) missing.push("the primary number is not voice-capable");
 
     return {
       status: pass ? "pass" : "fail",
@@ -57,9 +77,13 @@ export const run: CheckRunner = async (ctx, _row) => {
         has_primary_phone: hasPrimaryPhone,
         has_a2p_registration: hasA2p,
         has_business_phone: hasBusinessPhone,
+        // INT-345: the four calling facts, reported separately — account,
+        // number, voice capability of that number — never conflated.
+        calling_account_configured: callingAccountConfigured,
+        primary_voice_capable: primaryVoiceCapable,
       },
       interpretation: pass
-        ? "Communications are configured — a sending email identity plus a phone/A2P path and a business phone are on record."
+        ? `Communications are configured — a sending email identity plus a phone/A2P path and a business phone are on record.${callingAccountConfigured ? (primaryVoiceCapable ? " Calling is READY." : " The calling account is connected; the primary number is not voice-capable.") : ""}`
         : `Communications are not fully set up: ${missing.join("; ")}.`,
     };
   } catch (e) {

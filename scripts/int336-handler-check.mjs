@@ -7,23 +7,107 @@ const {capturedHandler}=await import('./knowledge-scope/stub-serve.mjs');
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const actor=id(1),tenant=id(2),thread=id(3),intent=id(4);
 const req=(extras={})=>new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Newest context'}],threadId:thread,requestIntentId:intent,interactive:{kind:'message'},...extras})});
-const scenario=(status,extra={})=>fake.setScenario({authUser:{id:actor},tables:{paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:actor}],...extra.tables},rpcs:{check_rate_limit:{data:true,error:null},paige_chat_interactive_begin:{data:{status,turn_id:status==='accepted'?id(5):null},error:null},...extra.rpcs}});
+const scenario=(status,extra={})=>fake.setScenario({authUser:{id:actor},tables:{paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:actor}],...extra.tables},rpcs:{paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},check_rate_limit:{data:true,error:null},paige_chat_interactive_begin_v2:{data:{status,turn_id:status==='accepted'?id(5):null},error:null},...extra.rpcs}});
+for(const protocol of [{data:null,error:{code:'PGRST202'}},{data:{version:1,active:true},error:null},{data:{version:2,active:false},error:null},{data:null,error:null}]){
+ const denied=scenario('accepted',{rpcs:{paige_chat_interactive_protocol:protocol}});
+ const response=await capturedHandler()(req());
+ assert.equal(response.status,503);assert.deepEqual(await response.json(),{code:'INTERACTIVE_PROTOCOL_NOT_READY',message_accepted:false});
+ assert.equal(denied.rpc.some(x=>/interactive_(begin|executor|settle)|turn_append/.test(x.name)),false,'mixed version must refuse before acceptance, acquisition or persistence');
+ assert.equal(denied.from.some(x=>x.table==='paige_chat_turns'),false);
+}
 for(const status of ['duplicate','superseded','stopped']){
 const rec=scenario(status);const res=await capturedHandler()(req({interactive:{kind:status==='stopped'?'stop':'message',supersedesIntentId:id(6)}}));
-const json=await res.json();assert.equal(json.code,'INTERACTIVE_'+status.toUpperCase());assert.equal(json.message_accepted,status==='duplicate');assert.equal(rec.rpc.some(x=>x.name==='paige_chat_interactive_executor'),false);
-assert.equal(rec.rpc.find(x=>x.name==='paige_chat_interactive_begin').client,'jwt');
+const json=await res.json();assert.equal(json.code,'INTERACTIVE_'+status.toUpperCase());assert.equal(json.message_accepted,status==='duplicate');assert.equal(rec.rpc.some(x=>x.name==='paige_chat_interactive_executor_v2'),false);
+assert.equal(rec.rpc.find(x=>x.name==='paige_chat_interactive_begin_v2').client,'jwt');
 }
-const rec=scenario('accepted',{tables:{paige_chat_turns:[{role:'user',content:'Newest context',bundle_ref:{interactive:{request_intent_id:intent}}}]},rpcs:{paige_chat_interactive_executor:args=>({data:{latest:intent,executor:args.p_operation==='state'?null:intent,acquired:true},error:null})}});
+const rec=scenario('accepted',{tables:{paige_chat_turns:[{role:'user',content:'Newest context',bundle_ref:{interactive:{request_intent_id:intent}}}]},rpcs:{paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},paige_chat_interactive_settle:{data:id(8),error:null},paige_chat_interactive_executor_v2:args=>({data:{latest:intent,executor:args.p_operation==='state'?null:intent,acquired:true},error:null})}});
 const res=await capturedHandler()(req({clientId:id(7)})); await res.text();
-assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_interactive_executor'&&x.args.p_operation==='acquire').length,1);
-assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_interactive_executor'&&x.args.p_operation==='release').length,1);
+assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2'&&x.args.p_operation==='acquire').length,1);
+assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2'&&x.args.p_operation==='release').length,1);
 assert.ok(rec.from.find(x=>x.table==='paige_chat_turns'));
 assert.equal(rec.rpc.filter(x=>x.name==='paige_chat_turn_append'&&x.args.p_role==='user').length,0);
 for(const proof of [null,{role:'assistant',bundle_ref:{interactive:{request_intent_id:intent},turn_state:{state:'INTERRUPTED'}}},{role:'system',bundle_ref:{interactive:{supersedes_intent_id:intent,stopped:true}}}]){
-const statusRec=scenario('accepted',{tables:{paige_chat_turns:proof?[proof]:[]},rpcs:{paige_chat_interactive_executor:{data:{latest:null,executor:null},error:null}}});
+const statusRec=scenario('accepted',{tables:{paige_chat_turns:proof?[proof]:[]},rpcs:{paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},paige_chat_interactive_executor_v2:{data:{latest:null,executor:null,terminal:false,stopped:false},error:null}}});
 const statusRes=await capturedHandler()(req({interactive:{kind:'status'}}));
-assert.deepEqual(await statusRes.json(),{executor_active:false,settled:!!proof});
-assert.equal(statusRec.rpc.some(x=>x.name==='paige_chat_interactive_begin'||x.name==='paige_chat_turn_append'),false);
-assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor').every(x=>x.args.p_operation==='state'),true);
+assert.deepEqual(await statusRes.json(),{executor_active:false,settled:false});
+assert.equal(statusRec.rpc.some(x=>x.name==='paige_chat_interactive_begin_v2'||x.name==='paige_chat_turn_append'),false);
+assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2').every(x=>x.args.p_operation==='state'),true);
+}
+for (const evidence of [{terminal:true,stopped:false},{terminal:false,stopped:true}]) {
+ for (const executor of [null,intent]) {
+ const statusRec=scenario('accepted',{rpcs:{paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},paige_chat_interactive_executor_v2:{data:{latest:null,executor,...evidence},error:null}}});
+ const response=await capturedHandler()(req({interactive:{kind:'status'}}));
+ assert.deepEqual(await response.json(),{executor_active:executor!==null,settled:executor===null});
+ assert.equal(statusRec.from.some(c=>c.table==='paige_chat_turns'),false,'status must use canonical authority, not JSON');
+ }
 }
 console.log('PASS real handler: stop/replay/status scope, canonical settlement, JWT begin, service executor, authoritative history, early-exit token release, no second user append');
+
+// Original-operation observations are reads even while the execution protocol drains.
+const effect=id(20),pipeline=id(21);
+const original={tenantId:tenant,actorId:actor,actorKind:'human',idempotencyKey:'original-op',commandHash:'a'.repeat(32),command:{type:'update-pipeline',pipelineId:pipeline,expectedVersion:2,name:'Updated',description:null}};
+const receipt={tenant_id:tenant,actor_user_id:actor,actor_kind:'human',idempotency_key:'original-op',command_hash:original.commandHash,result:{ok:true,outcome:'updated',pipeline_id:pipeline}};
+for (const variant of ['success','foreign-tenant','foreign-actor','stale-version','missing-original','unavailable-read','revoked-permission','forged-effect']) {
+ const statusRec=scenario('accepted',{tables:{pipeline_command_results:variant==='unavailable-read'?[]:[receipt]},rpcs:{
+   paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+   current_user_tenant_id:{data:variant==='foreign-tenant'?id(99):tenant,error:null},
+   read_pipeline_metadata_original:args=>({data:variant==='missing-original'||args._effect!==effect?null:{...original,actorId:variant==='foreign-actor'?id(99):actor},error:variant==='revoked-permission'?{message:'denied'}:null}),
+   get_pipeline_catalogue:{data:{items:[{id:pipeline,version:variant==='stale-version'?4:3,name:'Updated',description:null}]},error:null},
+   paige_chat_interactive_executor_v2:{data:{executor:intent,terminal:true},error:null},
+ }});
+ const response=await capturedHandler()(req({interactive:{kind:'status',pipelineEffectId:variant==='forged-effect'?id(99):effect}}));
+ assert.equal(response.status,200);
+ assert.equal(response.headers.get('cache-control'),'no-store');
+ assert.deepEqual(await response.json(),{executor_active:true,settled:false,original_operation:variant==='success'?{outcome:'confirmed_success',verified_readback:true,pipeline_id:pipeline,version:3}:{outcome:'outcome_unknown',verified_readback:false}});
+ assert.equal(statusRec.inserts.length,0);
+ assert.equal(statusRec.functions.length,0);
+ assert.equal(statusRec.rpc.some(x=>/begin_v2|settle|turn_append/.test(x.name)),false);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2').every(x=>x.args.p_operation==='state'),true);
+ assert.equal(statusRec.rpc.filter(x=>['read_pipeline_metadata_original','get_pipeline_catalogue','current_user_tenant_id'].includes(x.name)).every(x=>x.client==='jwt'),true);
+}
+console.log('PASS original-operation status: DRAINING readback, foreign tenant/actor, stale/missing evidence, no writes/providers/releases, caller-bound authority');
+
+for (const valid of [true,false]) {
+ const work=id(30),workIntent=id(31),artifact=id(32);
+ const observation={workId:work,threadId:thread,intentId:intent,workIntentId:workIntent,tenantId:tenant,actorId:actor,state:'succeeded',version:3,recoveryState:'observed',approvalState:'unavailable',cancelled:false,artifactVerified:true,artifactRef:artifact};
+ const statusRec=scenario('accepted',{rpcs:{
+   paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+   current_user_tenant_id:{data:tenant,error:null},
+   read_paige_durable_observation:{data:valid?observation:null,error:null},
+   paige_chat_interactive_executor_v2:{data:{executor:intent,terminal:true},error:null},
+ }});
+ const response=await capturedHandler()(req({interactive:{kind:'status',workId:work}}));
+ const body=await response.json();
+ assert.equal(body.executor_active,true);assert.equal(body.settled,false);
+ const {tenantId,actorId,...safe}=observation;
+ assert.deepEqual(body.durable_work,valid?safe:null);
+ assert.equal(statusRec.inserts.length,0);assert.equal(statusRec.functions.length,0);
+ assert.equal(statusRec.rpc.some(x=>/begin_v2|settle|turn_append|transition|prepare|submit|claim/.test(x.name)),false);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2').every(x=>x.args.p_operation==='state'),true);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='read_paige_durable_observation').every(x=>x.client==='jwt'),true);
+}
+console.log('PASS durable observation status: caller-bound read during DRAINING, no consumption/activation/release');
+
+// Normal typed status supplies no effect id: only protected canonical discovery may select it.
+for(const variant of ['success','missing-terminal','ambiguous','foreign-tenant','changed-reference','revoked-final','forged-reference','stale-version','lost-receipt','superseded-after-catalogue','membership-revoked-after-catalogue']) {
+ let discoveries=0,discoveryRevoked=false;
+ const statusRec=scenario('accepted',{tables:{pipeline_command_results:variant==='lost-receipt'?[]:[receipt]},rpcs:{
+  paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+  current_user_tenant_id:{data:variant==='foreign-tenant'?id(99):tenant,error:null},
+  find_pipeline_metadata_original_effect:args=>{assert.deepEqual(args,{_thread:thread,_intent:intent});discoveries++;if(discoveryRevoked)return{data:null,error:null};return{data:['missing-terminal','ambiguous'].includes(variant)?null:variant==='forged-reference'?{effectId:effect,settled:true}:variant==='changed-reference'&&discoveries>1?id(99):effect,error:variant==='revoked-final'&&discoveries>1?{message:'denied'}:null};},
+  read_pipeline_metadata_original:args=>({data:args._effect===effect?original:null,error:null}),
+  get_pipeline_catalogue:()=>{if(['superseded-after-catalogue','membership-revoked-after-catalogue'].includes(variant))discoveryRevoked=true;return{data:{items:[{id:pipeline,version:variant==='stale-version'?4:3,name:'Updated',description:null}]},error:null};},
+  paige_chat_interactive_executor_v2:{data:{executor:intent,terminal:true},error:null},
+ }});
+ const response=await capturedHandler()(req({interactive:{kind:'status'}}));const body=await response.json();
+ assert.equal(response.status,200);assert.equal(body.executor_active,true);assert.equal(body.settled,false);
+ if(variant==='success')assert.deepEqual(body.original_operation,{outcome:'confirmed_success',verified_readback:true,pipeline_id:pipeline,version:3});
+ else if(['stale-version','lost-receipt','superseded-after-catalogue','membership-revoked-after-catalogue'].includes(variant))assert.deepEqual(body.original_operation,{outcome:'outcome_unknown',verified_readback:false});
+ else assert.equal(body.original_operation,undefined,'no authoritative original identity must not fabricate an observation');
+ if(variant==='success')assert.equal(discoveries,4);
+ assert.equal(statusRec.inserts.length,0);assert.equal(statusRec.functions.length,0);
+ assert.equal(statusRec.rpc.some(x=>/begin_v2|settle|turn_append|transition|prepare|submit|claim/.test(x.name)),false);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='paige_chat_interactive_executor_v2').every(x=>x.args.p_operation==='state'),true);
+ assert.equal(statusRec.rpc.filter(x=>x.name==='find_pipeline_metadata_original_effect').every(x=>x.client==='jwt'),true);
+}
+console.log('PASS automatic original-operation observation: ordinary typed status, DRAINING, authoritative identity only, ambiguity/refusal/race unknown, no release or effect');

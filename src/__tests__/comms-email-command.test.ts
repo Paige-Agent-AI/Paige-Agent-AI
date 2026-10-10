@@ -13,6 +13,7 @@ import { COMMS_EMAIL_SEND_CAPABILITY } from "../../supabase/functions/_shared/pa
 import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest } from "../../supabase/functions/_shared/comms-email/contract";
 import { resolveCommsEmailParties, commsEmailReadinessOutcome, type CommsEmailReadiness } from "../../supabase/functions/_shared/comms-email/readiness";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../../supabase/functions/_shared/comms-email/adapter";
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary";
 
 const TENANT = "10000000-0000-4000-8000-000000000001";
 const FOREIGN = "10000000-0000-4000-8000-000000000002";
@@ -54,6 +55,7 @@ type Setup = {
   // Who is signed in (mutable between requests), the profile's active workspace (null = none set),
   // a replay read that errors, and a finalize that the database refuses.
   actor?: string; activeTenant?: string | null; readResultFails?: boolean; finalizeFails?: boolean;
+  providerExecution?: unknown; providerBoundaryError?: boolean;
 };
 function setup(options: Setup = {}) {
   const tables: Record<string, Row[]> = {
@@ -103,6 +105,11 @@ function setup(options: Setup = {}) {
     from: builder,
     rpc: async (name: string, args: Row) => {
       calls.push({ name, args });
+      if (name === "comms_provider_execution_allowed") {
+        if (options.providerBoundaryError) return { data: null, error: { code: "PGRST000" } };
+        const ordinaryScope = args._tenant_id === TENANT && [ACTOR, ACTOR_2].includes(String(args._actor_user_id));
+        return { data: options.providerExecution === undefined ? ordinaryScope : options.providerExecution, error: null };
+      }
       if (name === "read_comms_email_send_result") {
         if (options.readResultFails) return { data: null, error: { code: "PGRST000", message: "readback down" } };
         const b = bindings.get(String(args._operation_id).toLowerCase());
@@ -174,6 +181,7 @@ function setup(options: Setup = {}) {
     Deno: { env: { get: (key: string) => key }, serve: (fn: typeof handler) => { handler = fn; } },
     createClient: (_url: string, key: string) => key === "SUPABASE_ANON_KEY" ? caller : admin,
     fetch: fetchStub,
+    commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     confirmFingerprint, decideDeclaredCapability, COMMS_EMAIL_SEND_CAPABILITY,
     COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest,
     resolveCommsEmailParties, commsEmailReadinessOutcome, runPreSend: async () => { throw new Error("readiness is substituted in this suite"); },
@@ -194,11 +202,23 @@ function setup(options: Setup = {}) {
 }
 
 describe("comms-email-command: authority before anything", () => {
+  it("refuses restricted, malformed and unavailable provider authority before proposals or effects", async () => {
+    for (const options of [{ providerExecution: false }, { providerExecution: null }, { providerExecution: "true" }, { providerExecution: { allowed: true } }, { providerBoundaryError: true }]) {
+      const t = setup(options);
+      expect(await t.request()).toMatchObject({ status: 403, body: { ok: false, outcome: "refused", code: COMMS_PROVIDER_EXECUTION_DISABLED } });
+      expect(t.named("comms_provider_execution_allowed")).toEqual([{ name: "comms_provider_execution_allowed", args: { _tenant_id: TENANT, _actor_user_id: ACTOR, _recipient_email: null } }]);
+      expect(t.named("read_comms_email_send_result")).toEqual([]);
+      expect(t.named("readiness")).toEqual([]);
+      expect(t.named("insert:paige_pending_confirmations")).toEqual([]);
+      expect(t.named("prepare_comms_email_send")).toEqual([]);
+      expect(t.sends).toEqual([]);
+    }
+  });
   it("refuses an unsigned caller, a switched workspace, a read-only member and request-authored authority before any read", async () => {
     for (const [opts, extra, status] of [[{ authenticated: false }, {}, 401], [{ currentTenant: FOREIGN }, {}, 409], [{ role: "member" }, {}, 403], [{}, { governance: { approved: true } }, 400]] as const) {
       const t = setup(opts);
       expect((await t.request(extra)).status).toBe(status);
-      expect(t.calls.filter(c => c.name !== "update:paige_pending_confirmations")).toEqual([]);
+      expect(t.calls.filter(c => !["update:paige_pending_confirmations", "comms_provider_execution_allowed"].includes(c.name))).toEqual([]);
       expect(t.sends).toEqual([]);
     }
   });
@@ -534,7 +554,7 @@ describe("comms-email-command: the replay read and the active workspace (x2 #3)"
       const r = await t.request();
       expect(r.status, String(activeTenant)).toBe(409);
       expect(r.body, String(activeTenant)).toMatchObject({ ok: false, outcome: "refused", code: "WORKSPACE_CHANGED" });
-      expect(t.calls.filter(c => c.name !== "update:paige_pending_confirmations"), String(activeTenant)).toEqual([]);
+      expect(t.calls.filter(c => !["update:paige_pending_confirmations", "comms_provider_execution_allowed"].includes(c.name)), String(activeTenant)).toEqual([]);
       expect(t.sends).toEqual([]);
     }
   });

@@ -70,9 +70,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(decision).toHaveLength(2);
     expect(decision[1].content).toContain("Do not draft the user-facing answer here");
     expect(messages).toHaveLength(1);
-    const start = code.indexOf('finalStreamResponse = await gatewayCompat');
+    const start = code.indexOf('finalStreamResponse = noteFabric(');
+    expect(start).toBeGreaterThan(-1);
     const closing = code.slice(start, code.indexOf('traceFor(', start));
-    expect(closing.includes('messages: convo, stream: true')).toBe(true);
+    expect(closing.includes('{ messages: convo }')).toBe(true);
     expect(/tools:|tool_choice:/.test(closing)).toBe(false);
   });
   it("does not replay decision-round prose for a verified Live turn", () => {
@@ -192,8 +193,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
   });
   it("writes a receipt-only assistant turn without inventing spoken text", async () => {
     const writes: unknown[] = [];
-    const make = new Function("payloadThreadId", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
-    const persist = make("thread", { rpc: async (_name: string, args: unknown) => { writes.push(args); }, from() { throw Error("no title in fixture"); } }, async () => {}, { error() {} });
+    const client = { rpc: async (_name: string, args: unknown) => { writes.push(args); return { data: null, error: null }; }, from() { throw Error("no title in fixture"); } };
+    const append = new Function("supabaseClient", "interactiveReceiptScope", "supabase", "user", "z", js(`return ${initializer("appendAssistant")};`))(client, null, null, null, null);
+    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
+    const persist = make("thread", append, client, async () => {}, { error() {} });
     const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
     await persist("", { bundleRef });
     expect(writes).toHaveLength(1);

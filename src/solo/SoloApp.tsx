@@ -2,7 +2,7 @@
 import React from "react";
 import { WorkspaceExitControl } from "@/components/auth/WorkspaceExitControl";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Blocks, Building2, CircleDollarSign, FileLock2, Link2, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, Blocks, Building2, CircleDollarSign, FileLock2, Link2, ShieldCheck, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 import { performSignOut } from "@/lib/auth/signOut";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
@@ -24,8 +24,9 @@ import { isLegacyRelationshipOwner } from "@/components/tenant-relationships/wor
 import { ClientsHub } from "./conversations";
 import { GrowthHub } from "./growth2";
 import { SalesWorkspace } from "./SalesWorkspace";
+import { FinanceWorkspace } from "./finance/FinanceWorkspace";
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
-import { Analytics2 } from "./analytics2";
+import { soloAnalyticsCompatibility } from "./analytics-routing";
 import { Marketplace } from "./marketplace";
 import { SoloSettings } from "./settings";
 import { SOLO_SETTINGS_DESTINATIONS } from "./settings-contract";
@@ -44,10 +45,10 @@ import { LiveTranscriptPanel } from "@/components/admin/voice/LiveTranscriptPane
 // (owner-ruled 2026-09-05). The legacy `/solo/{account}/trust-compass` address redirects into it.
 // (Merge: keep the compass OUT of the top nav — this PR moved it into Command Center — while taking
 // main's NAV2, which relocated Business Vault out of the second rail; do not resurrect it, §58.)
-const NAV=[['home','Command Center',()=><Ic.grid/>],['paige','Paige',()=><Ic.spark/>],['auto','Automations',()=><Ic.bolt/>],['clients','Clients',()=><Ic.users/>],['growth','Growth',()=><Ic.trend/>],['analytics','Analytics',()=><Ic.chart/>]];
+const NAV=[['home','Command Center',()=><Ic.grid/>],['paige','Paige',()=><Ic.spark/>],['auto','Automations',()=><Ic.bolt/>],['clients','Clients',()=><Ic.users/>],['growth','Growth',()=><Ic.trend/>]];
 const NAV2=[['market','Marketplace',()=><Ic.store/>],['integrations','Integrations',()=><Ic.bolt/>],['team','Team',()=><Ic.users/>],['setup','Setup',()=><Ic.gear/>]];
 const LEGACY_SETTINGS={setup:'setup',team:'team',integrations:'integrations','business-vault':'vault'};
-const SETTINGS_ICONS={setup:Building2,team:Users,connections:Link2,integrations:Blocks,'security-data':ShieldCheck,vault:FileLock2,billing:CircleDollarSign};
+const SETTINGS_ICONS={setup:Building2,team:Users,connections:Link2,integrations:Blocks,analytics:BarChart3,'security-data':ShieldCheck,vault:FileLock2,billing:CircleDollarSign};
 
 const SoloClientsRoute=({openPaige})=>{const[tab]=useSubtabRoute("solo","clients","people");return isLegacyRelationshipOwner("solo",tab)?<ClientsHub openPaige={openPaige}/>:<TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={openPaige}/>};
 
@@ -259,6 +260,11 @@ React.useEffect(() => {
     navigate(branchPath("solo", urlAccount, defaultBranchSlug("solo")), { replace: true });
     return;
   }
+  const analyticsDestination = soloAnalyticsCompatibility(urlAccount, urlSplat, location.search);
+  if (analyticsDestination) {
+    navigate(analyticsDestination, { replace: true });
+    return;
+  }
   // The standalone Automations page was a fixture-backed surface: it claimed
   // active rules, run counts, success rates and repair actions that no substrate
   // ever produced. It is retired. The one real Automations home is the
@@ -342,10 +348,10 @@ React.useEffect(()=>{clearPaigeClientScope();clearPaigePublicPresenceScope()},[a
 // is short enough to fit. Off this list the screen host is `overflow:auto` and
 // becomes the one deliberate vertical scroll owner, which is what every other
 // document-flow route in this shell already does.
-const full=route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='analytics'||route==='market';
+const full=route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
-const screens={home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,analytics:<Analytics2 accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
+const screens={finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{
   label:'Settings',

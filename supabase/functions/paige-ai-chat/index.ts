@@ -6,8 +6,10 @@ import { CRM_ACTION_CAPABILITY, CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
+import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
+import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxIntelligenceChat, dispatchOrganizeChat } from '../_shared/inbox-intelligence/chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
@@ -30,8 +32,15 @@ import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
+import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
+import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
+import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
+import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
+import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discovery.ts";
+import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
+import { readDurableObservation } from "../_shared/durable-job/observation.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
 import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
@@ -193,6 +202,8 @@ import { PAIGE_PERSONA_CORE } from "../_shared/paige-persona/core.ts";
 // below. NO-OP (returns null) for anyone but a seeded platform operator (the tenant-less God account).
 import { loadOwnerContextBlock } from "../_shared/owner-context.ts";
 import { buildTenantTeamContextBlock } from "../_shared/team-context.ts";
+import { resolveOwnerMemoryContext, type OwnerMemoryContext } from "../_shared/paige-context/owner-memory.ts";
+import { contextDegraded, contextUnavailable, type ContextSourceResult } from "../_shared/paige-context/mod.ts";
 import { TITLE_WORD } from "../_shared/team-vocabulary.ts";
 import {
   fenceUploadedFileText,
@@ -207,6 +218,7 @@ import { buildTeamAuthorityBlock } from "../_shared/paige-spine/domains/teamAuth
 import { buildSocialPresenceBlock } from "../_shared/paige-spine/domains/socialPresenceChatEvidence.ts";
 import { loadN8nReadinessForChat, renderN8nReadinessForChat } from "../_shared/paige-spine/domains/n8nChatEvidence.ts";
 import { loadIntegrationsMindEvidence, renderIntegrationsMindEvidence } from "../_shared/paige-spine/domains/integrationsMindEvidence.ts";
+import { loadResearchHistoryContext, renderResearchHistoryContext } from "../_shared/research-history-context.ts";
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
@@ -232,6 +244,7 @@ import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
 import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
+import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
@@ -281,11 +294,6 @@ const corsHeaders = {
 // server (§11); every branch — including the default — returns human copy in §3 voice.
 // Returns null to DROP a step (policy-gated rejections and non-work stubs) so a gated call
 // never renders as a scary failure and the trace never advertises work not performed.
-const SUBAGENT_FRIENDLY: Record<string, string> = {
-  "email-composer": "your email specialist",
-  "content-writer": "your content specialist",
-  "research-analyst": "your research specialist",
-};
 /**
  * Does this tool result REPORT A FAILURE? The one reading a step's FINISH uses — its wording here in
  * describeStep and its `done` / `error` status in the step hooks — so the two cannot disagree. Tools
@@ -303,6 +311,7 @@ function toolResultReportsFailure(out: any): boolean {
 function describeStep(
   tc: any,
   res: any,
+  specialists: readonly SpecialistStepIdentity[] = [],
 ): { label: string; group: "owner" | "client" | "shared"; detail?: string } | null {
   const name: string = tc?.function?.name ?? "";
   let args: any = {};
@@ -356,6 +365,8 @@ function describeStep(
       return { label: failed ? "Couldn't read your registration" : "Checked your carrier registration", group: "owner" };
     case "comms_draft_registration":
       return { label: failed ? "Couldn't draft your registration" : "Drafted your carrier registration", group: "owner" };
+    case "comms_setup_calling":
+      return { label: failed ? "Didn't finish connecting calling" : "Connected this workspace's calling account", group: "owner" };
   }
 
   switch (name) {
@@ -557,8 +568,7 @@ function describeStep(
     }
     case "delegate_to_subagent": {
       const slug = args?.slug ?? args?.subagent ?? "";
-      const who = SUBAGENT_FRIENDLY[slug] ?? "a specialist";
-      return { label: `Bringing in ${who}`, group: "shared" };
+      return { label: specialistStepLabel(slug, specialists, res == null ? null : out), group: "shared" };
     }
     case "list_subagents": return { label: "Finding the right specialist", group: "shared" };
     // Research (shared)
@@ -760,7 +770,7 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
-  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional() }).optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional() }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1034,6 +1044,21 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
+    const appendAssistant = async (args: Record<string, any>) => {
+      if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
+      const scope = interactiveReceiptScope;
+      if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
+      const result = await supabase.rpc("paige_chat_interactive_settle", {
+        p_thread: scope.thread, p_actor: user.id, p_tenant: scope.tenant, p_intent: scope.intent,
+        p_content: args.p_content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
+        p_bundle_ref: { ...(args.p_bundle_ref ?? {}), interactive: {
+          ...(args.p_bundle_ref?.interactive ?? {}), request_intent_id: scope.intent,
+        } }, p_tool_calls: args.p_tool_calls,
+      });
+      return { ...result, error: result.error ?? (z.string().uuid().safeParse(result.data).success
+        ? null : new Error("INTERACTIVE_PERSISTENCE_UNCONFIRMED")) };
+    };
 
     // === ONE trace context for the whole turn (§34 observability, §9 attribution) ===
     // Every `gatewayCompat` call in this handler writes a `paige_llm_trace` row fire-and-forget,
@@ -1141,14 +1166,20 @@ serve(async (req) => {
     // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
     if (validatedData.interactive) {
       const interactiveInput = validatedData.interactive;
+      const protocol = await supabase.rpc("paige_chat_interactive_protocol");
+      if (protocol.error || protocol.data?.version !== 2 ||
+          (protocol.data?.active !== true && !["stop", "status"].includes(interactiveInput.kind)))
+        return new Response(JSON.stringify({ code: "INTERACTIVE_PROTOCOL_NOT_READY", message_accepted: false }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "30" } });
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
       const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
         .select("tenant_id").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
       if (threadError || !thread) throw new Error("INTERACTIVE_SCOPE_UNAVAILABLE");
+      interactiveReceiptScope = { thread: validatedData.threadId, tenant: thread.tenant_id, intent: validatedData.requestIntentId };
       const userText = [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content;
       const executor = async (operation: string) => {
-        const { data, error } = await supabase.rpc("paige_chat_interactive_executor", {
+        const { data, error } = await supabase.rpc("paige_chat_interactive_executor_v2", {
           p_thread: validatedData.threadId, p_actor: user.id, p_tenant: thread.tenant_id,
           p_intent: validatedData.requestIntentId, p_operation: operation,
         });
@@ -1156,29 +1187,48 @@ serve(async (req) => {
         return data;
       };
       if (validatedData.interactive.kind === "status") {
-        const state = await executor("state");
-        const { data: turns, error } = await supabaseClient.from("paige_chat_turns").select("role,bundle_ref")
-          .eq("thread_id", validatedData.threadId).order("created_at", { ascending: false }).limit(100);
-        if (error) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
-        const target = validatedData.requestIntentId;
-        const terminal = (turns ?? []).some((turn: any) =>
-          (turn.role === "assistant" && turn.bundle_ref?.interactive?.request_intent_id === target &&
-            ["FINAL", "WAIT_APPROVAL", "WAIT_WORK", "ASK_USER", "LIMIT_REACHED", "INTERRUPTED", "WITHHELD", "REFUSED"].includes(turn.bundle_ref?.turn_state?.state)) ||
-          turn.bundle_ref?.interactive?.supersedes_intent_id === target);
-        return new Response(JSON.stringify({ executor_active: state.executor !== null,
-          settled: state.executor === null && terminal }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const originalScope = { threadId: validatedData.threadId!,
+          intentId: validatedData.requestIntentId!, tenantId: thread.tenant_id, actorId: user.id };
+        const status = await readInteractiveOutcomeStatus({
+          state: () => executor("state"),
+          ...(validatedData.interactive.workId ? { readWork: () => readDurableObservation({
+            threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
+            workId: validatedData.interactive!.workId!,
+          }, supabaseClient) } : {}),
+          readOutcome: async () => {
+            const effectId = validatedData.interactive!.pipelineEffectId ??
+              await findPipelineOriginalEffect(originalScope, supabaseClient);
+            // No authoritative original reference means no outcome assertion.
+            if (!effectId) return undefined;
+            const readers = createPipelineCanonicalReaders({
+              caller: supabaseClient, service: supabase,
+              revalidateScope: async (binding) => {
+                const original = await supabaseClient.rpc("read_pipeline_metadata_original", {
+                  _thread: binding.threadId, _intent: binding.intentId, _effect: binding.effectId,
+                });
+                return !original.error && original.data?.tenantId === binding.tenantId &&
+                  original.data?.actorId === binding.actorId;
+              },
+            });
+            const observation = await readPipelineMetadataOutcome({ ...originalScope, effectId }, readers);
+            // Automatic selection also requires fresh current-conversation authority
+            // after the business-record awaits. Historical explicit-id readback retains
+            // its existing original-operation contract and grants no continuation.
+            if (!validatedData.interactive!.pipelineEffectId &&
+              await findPipelineOriginalEffect(originalScope, supabaseClient) !== effectId) {
+              return { outcome: "outcome_unknown", verified_readback: false };
+            }
+            return observation;
+          },
+        });
+        return new Response(JSON.stringify(status), { headers: { ...corsHeaders,
+          "Content-Type": "application/json", "Cache-Control": "no-store" } });
       }
       // This exact query/fallback/order was driven in the isolated proposed handler.
       interactiveSettlement = createInteractiveSettlement({
         owns: async () => (await executor("state")).executor === validatedData.requestIntentId,
-        readback: async () => {
-          const { data, error } = await supabaseClient.from("paige_chat_turns").select("bundle_ref")
-            .eq("thread_id", validatedData.threadId).eq("role", "assistant")
-            .contains("bundle_ref", { interactive: { request_intent_id: validatedData.requestIntentId } }).limit(1).maybeSingle();
-          if (error) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
-          return !!data?.bundle_ref?.turn_state && data.bundle_ref.turn_state.state !== "WORKING";
-        },
-        fallback: async () => await supabaseClient.rpc("paige_chat_turn_append", {
+        readback: async () => (await executor("state")).terminal === true,
+        fallback: async () => await appendAssistant({
           p_thread_id: validatedData.threadId, p_role: "assistant",
           p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
           p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
@@ -1188,7 +1238,7 @@ serve(async (req) => {
         release: async () => { await executor("release"); },
       });
       const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
-        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin", {
+        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin_v2", {
           p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
           p_supersedes: interactiveInput.supersedesIntentId ?? null,
           p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
@@ -2199,6 +2249,7 @@ JSON:`;
     // `memoryScopeTenantId` records the workspace the memory was read in; the turn's own workspace is
     // pinned later (persona read), and a block read in a different one is dropped there.
     let memoryScopeTenantId: string | null = null;
+    let ownerMemoryContext: ContextSourceResult<OwnerMemoryContext> = { ...contextUnavailable("owner_memory_scope_unavailable"), data: null };
     try {
       // The workspace sample is needed on EVERY memory-reading turn, client turns included: the
       // race guard after the persona read compares it with the turn's workspace, and a client turn
@@ -2222,9 +2273,12 @@ JSON:`;
       // S5 read flip: OWNER/WORKSPACE continuity is recalled from the canonical owner-memory
       // home through the governed read (service-role passes the turn's declared∧validated
       // scope — the same authority the writers stamp under). CLIENT-scoped recall is unchanged.
-      // The governed read returns rows with metadata, so confirmation_state travels with each
-      // item to FUTURE consumers (the C6 projection's presentation contract decides phrasing);
-      // today's builder renders rows uniformly, which is unchanged from before the cutover.
+      // C6: pin the server-derived read binding before awaiting the governed read. Its rows
+      // carry confirmation/provenance but no tenant/actor columns; metadata grants no scope.
+      const ownerMemoryReadScope = {
+        actorId: user.id, tenantId: memoryTurnTenant,
+        focusedClientId: scopedClientId, denied: clientScopeDenied,
+      };
       const memoryQuery = clientScopeDenied
         ? null
         : scopedClientId
@@ -2272,7 +2326,17 @@ JSON:`;
         memoryTenantSample,
       ]);
       memoryScopeTenantId = sampledTenant;
-      const memories = (memoryResult as any)?.data ?? null;
+      // Client recall keeps its existing projection. Only owner recall admits explicitly
+      // confirmed canonical rows; candidates and a failed read never become task knowledge.
+      if (!scopedClientId) {
+        ownerMemoryContext = resolveOwnerMemoryContext(ownerMemoryReadScope, memoryResult as any);
+        if (ownerMemoryContext.status === "degraded") {
+          console.error("[paige] owner memory context degraded", ownerMemoryContext.reason);
+        }
+      }
+      const memories = scopedClientId
+        ? (memoryResult as any)?.data ?? null
+        : ownerMemoryContext.data?.memories ?? null;
 
       if (memories && memories.length > 0) {
         // Always-on: surface user_preference at the top so Paige respects communication style.
@@ -2282,7 +2346,11 @@ JSON:`;
           milestone_completed: 4, lender_researched: 5, coach_note: 6, session_summary: 7,
           commitment: 8, open_loop: 9,
         };
-        const sorted = [...memories].sort((a, b) => (priorityOrder[a.memory_type] || 99) - (priorityOrder[b.memory_type] || 99));
+        // Owner preferences have priority zero; preserve it instead of treating it as absent.
+        // The client arm keeps its existing ordering contract in this bounded C6 slice.
+        const memoryPriority = (type: string) => scopedClientId
+          ? (priorityOrder[type] || 99) : (priorityOrder[type] ?? 99);
+        const sorted = [...memories].sort((a, b) => memoryPriority(a.memory_type) - memoryPriority(b.memory_type));
 
         let tokenEstimate = 0;
         const included: string[] = [];
@@ -2331,6 +2399,7 @@ JSON:`;
         }
       }
     } catch (err) {
+      if (!scopedClientId && !clientScopeDenied) ownerMemoryContext = contextDegraded("owner_memory_read_failed");
       console.error("Error loading client memory:", err);
     }
 
@@ -2568,6 +2637,7 @@ JSON:`;
         memory_tenant_id: memoryScopeTenantId, turn_tenant_id: personaCtx.tenant_id ?? null,
       }));
       memoryBlock = "";
+      ownerMemoryContext = { ...contextUnavailable("owner_memory_scope_changed"), data: null };
     }
 
     // THE THREAD MUST BELONG TO THIS TURN'S WORKSPACE (§9, owner addition 2026-10-05). Every later use
@@ -5402,6 +5472,18 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const integrationsMind = personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
     const integrationsMindBlock = integrationsMind && integrationsMind.status === "recorded" ? renderIntegrationsMindEvidence(integrationsMind) : "";
 
+    // Original C6: bounded prior Research metadata from its existing caller-JWT
+    // workspace read. This is historical reference data, never findings or proof
+    // of this objective's completion. Client and Operator seats receive no read.
+    const researchHistory = personaCtx.tenant_id && callerTier === "tenant"
+      ? await loadResearchHistoryContext(supabaseClient, { actorId: user.id, tenantId: personaCtx.tenant_id })
+      : null;
+    const researchHistoryBlock = researchHistory?.status === "degraded"
+      ? "PRIOR RECORDED RESEARCH UNAVAILABLE: This turn could not verify prior research in the active workspace. Do not infer that no prior research exists, invent findings, or use this missing context as permission to execute or resume work. Mention the limitation only when it matters to the objective."
+      : researchHistory ? renderResearchHistoryContext(researchHistory) : "";
+    // The fixed degraded notice carries no workspace facts; actual history does.
+    if (researchHistory?.status === "available" && researchHistoryBlock) markProtectedLate("research_history_context");
+
     // C0a — the capability block holds its place in the prompt here (after the context blocks, before
     // the operating core) but is FILLED later, once the tool surface for this turn is final (Studio
     // scope, funding, marketplace): what PAIGE is told she can do is projected from exactly the tools
@@ -5480,6 +5562,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(businessMissionContextBlock ? [{ role: "system", content: businessMissionContextBlock }] : []),
       ...(n8nReadinessBlock ? [{ role: "system", content: n8nReadinessBlock }] : []),
       ...(integrationsMindBlock ? [{ role: "system", content: integrationsMindBlock }] : []),
+      ...(researchHistoryBlock ? [{ role: "system", content: researchHistoryBlock }] : []),
       ...(spineEvidenceBlock ? [{ role: "system", content: spineEvidenceBlock }] : []),
       // Capability status sits LAST among the context blocks, right before the operating core, so
       // "what can you do here?" is answered from the live, workspace-resolved manifest that OVERRIDES
@@ -5739,7 +5822,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       if (!payloadThreadId) return null;
       try {
         const again = reopenAsk(ask, crypto.randomUUID());
-        const { error } = await supabaseClient.rpc("paige_chat_turn_append", {
+        const { error } = await appendAssistant({
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: again.content,
           p_surfaces_used: null, p_load_id: null, p_model: null,
           p_tokens_used: null, p_latency_ms: null,
@@ -5975,7 +6058,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // The canonical turn RPC accepts empty content; never invent an answer.
       if (!payloadThreadId || (!finalText?.trim() && !meta.bundleRef)) return;
       try {
-        const writeAssistant = async () => await supabaseClient.rpc("paige_chat_turn_append", {
+        const writeAssistant = async () => await appendAssistant({
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: finalText,
           p_surfaces_used: meta.surfaces ?? null, p_load_id: null,
           p_model: meta.model ?? "google/gemini-2.5-flash", p_tokens_used: null, p_latency_ms: null,
@@ -7765,6 +7848,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           {
             type: "function",
             function: {
+              name: "comms_setup_calling",
+              description: "Admin only. CONNECT this workspace's calling account — the one-time setup that makes browser calling possible. Free and idempotent: it creates no charge and buys no number, and it decides nothing about which number to use. Propose it when comms_connection_summary shows calling.account is 'absent' and the operator wants calling. It connects the account only — buying a number (Settings/Registration or comms_buy_number) and choosing it with \"Send from this\" (comms_set_primary_number) stay separate owner actions, and calling is READY only after a voice-capable number is chosen.",
+              parameters: {
+                type: "object",
+                properties: {},
+                required: []
+              }
+            }
+          },
+          {
+            type: "function",
+            function: {
               name: "comms_name_number",
               description: "Admin only. Name or rename one of this business's numbers — 'Intake line', 'Billing', 'Front desk'. Pass an empty string to clear the name. Get the id from comms_list_numbers. This changes a label only; it never changes which number the business sends from.",
               parameters: {
@@ -7942,36 +8037,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
-          {
-            type: "function",
-            function: {
-              name: "automation_set_grant",
-              description: "Change how much of one process the operator lets you handle alone: 'auto' (run it without asking), 'confirm' (draft it and wait for their yes), or 'off'. This is THEIR decision about YOUR autonomy, so it always needs their explicit say-so first. Report back what the process will ACTUALLY do afterwards — the answer can be more restrictive than what they asked for, and if it is you say so plainly rather than letting them believe it's running unattended.",
-              parameters: {
-                type: "object",
-                properties: {
-                  automation_id: { type: "string", description: "Which process, from automation_list." },
-                  lane: { type: "string", enum: ["auto", "confirm", "off"], description: "How much they're letting you do on your own." }
-                },
-                required: ["automation_id", "lane"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "automation_set_state",
-              description: "Turn a process on ('live'), pause it, or put it back to a draft. Pausing keeps it exactly as it is; it just stops running.",
-              parameters: {
-                type: "object",
-                properties: {
-                  automation_id: { type: "string", description: "Which process, from automation_list." },
-                  state: { type: "string", enum: ["live", "paused", "draft"], description: "live runs it, paused keeps but stops it, draft returns it to being edited." }
-                },
-                required: ["automation_id", "state"]
-              }
-            }
-          },
     ];
 
     // CRM/Pipeline mutations are declared by the single shared command catalogue. Remove the
@@ -7988,8 +8053,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     toolDefs.push(...CRM_COMMAND_TOOLS as any);
     toolDefs.push(...SALES_INVOICE_TOOLS as any);
     toolDefs.push(...SALES_COLLECTIONS_TOOLS);
+    // Canonical actor-tier resolver, not a client-selected lens. Operator/Agency stay separate.
+    if (callerTier === "tenant") toolDefs.push(...BUSINESS_METRIC_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
+    // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
+    // execute caller-scoped RPCs; gmail_organize executes only through comms-mailbox-command.
+    toolDefs.push(...INBOX_INTELLIGENCE_TOOLS as any);
     // Marketing email (E2b): read campaigns and their audience, write drafts, file one for the owner's
     // approval. Governed by the general gate below; PAIGE has no approve or send tool.
     toolDefs.push(...EMAIL_CAMPAIGN_TOOLS as any);
@@ -8370,6 +8440,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       update_client_data: "saving details to a client's file",
       delegate_to_subagent: "handing work to one of her specialists",
       comms_buy_number: "buying a phone number",
+      comms_setup_calling: "connecting this workspace's calling account",
       comms_name_number: "renaming a phone number",
       comms_set_primary_number: "changing which number you send from",
       comms_draft_registration: "drafting your carrier registration",
@@ -8622,6 +8693,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             ? `${buy} Its listed price is $${(cents / 100).toFixed(2)}/month, which the platform currently covers — the business isn't billed for it, but buy it deliberately: a duplicate or unused number is a real waste.`
             : `${buy} You've passed an unquoted amount, so this will be refused — run a search first so the real monthly price can be shown.`;
         }
+        case "comms_setup_calling":
+          // The sentence must say what it does NOT do (buy/choose a number) — an approval
+          // that reads as "turn on calling" would mislead the operator about what is
+          // actually being authorized: the account connection only.
+          return `Connect this workspace's calling account. Free, one-time, and idempotent — it buys no number and changes no number; choosing the number this business calls from stays a separate step ("Send from this").`;
         case "comms_name_number":
           return String(a?.friendly_name ?? "").trim()
             ? `Label that number "${a.friendly_name}".`
@@ -9091,6 +9167,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // The tool list is final here (Studio scope, funding, marketplace applied above), so "what she is
     // told she can do" and "what she can call" are the same set by construction. Readiness, lanes,
     // authority and the specialist roster are resolved server-side; nothing is taken from the model.
+    // INT-334 R5b: this projects the TURN's full governed list — on a narrowed (none/read) round the
+    // manifest below is a subset until the turn escalates, deliberately: the projection is how the
+    // model discovers a capability it was not offered, and the signal is how it asks for it.
     // Cached for the request: the capability_status tool returns this same projection.
     const n8nReadinessState = (): ReadinessState => {
       if (n8nEvidence?.status !== "available") return "unknown"; // unread ≠ disconnected: never claim setup
@@ -9099,6 +9178,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (mcp === "consent_in_progress" || mcp === "provider_unavailable") return "unknown";
       return "not_ready"; // not configured, needs OAuth, disabled, cancelled, refused, failed, expired
     };
+    let specialistStepRoster: SpecialistStepIdentity[] = [];
+    const describeScopedStep = (tc: any, res: any) => describeStep(tc, res, specialistStepRoster);
     const loadSpecialists = async (): Promise<SpecialistSummary[]> => {
       const tenantId = personaCtx?.tenant_id ?? null;
       // A uuid before it touches a PostgREST filter (§9) — the same guard the orchestrator applies.
@@ -9110,15 +9191,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // marks an internal build-crew seat (migration 20261201000800), and `name` is an internal
         // register — so it is never the fallback.
         const { data, error } = await supabase.from("paige_subagents")
-          .select("rail_display_name, domain, name, description, system_prompt")
+          .select("slug, rail_display_name, domain, name, description, system_prompt")
           .eq("enabled", true)
           .not("rail_display_name", "is", null)
           .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`);
         if (error || !Array.isArray(data)) return [];
-        return data
+        const visible = data
           .filter((r: any) => typeof r.rail_display_name === "string" && r.rail_display_name.trim())
           .filter((r: any) => personaCtx?.funding_enabled === true || !looksLikeFinanceAgent(r))
-          .map((r: any) => ({ name: String(r.rail_display_name).trim(), domain: r.domain ?? null }));
+          .map((r: any) => ({ slug: r.slug, name: String(r.rail_display_name).trim(), domain: r.domain ?? null }));
+        specialistStepRoster = visible.filter((r: any) => typeof r.slug === "string").map((r: any) => ({ slug: r.slug, displayName: r.name }));
+        return visible;
       } catch { return []; }
     };
     type CapabilityProjection = { rows: ReturnType<typeof projectCapabilities>; specialists: SpecialistSummary[] };
@@ -9157,6 +9240,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         && (r.availability === "live" || r.availability === "needs_approval"));
       return { rows, specialists: canDelegate ? specialists : [] };
     })());
+    if (!capabilityManifestEligible) await loadSpecialists();
     if (capabilityManifestEligible) {
       try {
         const projection = await gatherCapabilityProjection();
@@ -9732,32 +9816,65 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       );
     }
     const turnRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification });
-    const substantiveTurn = turnRoute.cognitive_class !== "cheap";
     console.log(`[paige] route: ${turnRoute.basis}/${turnRoute.intent}/${turnRoute.cognitive_class} tools=${turnRoute.capability.tools} (${turnRoute.reasons.join(",")})`);
+    // INT-334 R5 — every streamed round opens through the shared model fabric, for the Turn Route's
+    // cognitive class (Studio and an attached document are route facts, so the Studio design agent and
+    // the doc-attach path stay on a reasoning-class model, never the cheap one). The fabric picks the
+    // provider in the owner's order and falls back only on a proven provider-health failure before the
+    // stream opened; tools, approvals and authority are decided below, unchanged.
+    // INT-334 R5b — the route's own capability verdict now narrows what each round may SEE:
+    // `act` carries the full governed set; `read` withholds every mutating tool; `none` offers the
+    // presentation set alone. A narrowed round that discovers work beyond its exposure NAMES the
+    // capability it needs (the system prompt's projection advertises every governed capability),
+    // and that finished-round call — answered at dispatch with a re-route, never executed —
+    // re-resolves the route with the server-observed `capabilityEscalation` fact. The gates, the
+    // approvals and every dispatch check are unchanged: a provider seeing fewer tools is the only
+    // difference until the turn's own model round asks for more.
+    const roundClass = turnRoute.cognitive_class;
+    // An approved-card resume executes a stored act with no model before it (the route's `none` is
+    // about THE ACT). Its follow-up rounds narrate the verified readback and answer what comes next:
+    // reads, never fresh writes off one approval — a `none` floor would leave even a lookup unable
+    // to run, and an act floor would offer unrequested mutations. Read is the honest floor.
+    const turnExposure = exposureFor(toolDefs, resumeCalls.length > 0 && turnRoute.capability.tools === "none" ? "read" : turnRoute.capability.tools);
+    if (turnRoute.capability.tools !== "act") {
+      console.log(`[paige] exposure: ${turnRoute.basis}/${turnRoute.capability.tools} — ${turnExposure.offered.length} offered, ${turnExposure.withheld.length} withheld`);
+    }
+    // The escalation RE-RESOLVES THE ROUTE (the same pure resolver, the same facts, plus the
+    // server-observed `capabilityEscalation` fact) — the ONE router decides what an escalated turn
+    // may see and on which class it runs. That re-resolution is what keeps the route's own invariants
+    // true at runtime: an ambiguous offer still ends at a question (the cap outranks the widening),
+    // and a frontier turn keeps its class instead of being flattened to operational.
+    const governedToolNames = new Set((toolDefs as any[]).map((d: any) => d?.function?.name).filter((n: unknown): n is string => typeof n === "string"));
+    let escalatedRoute: ReturnType<typeof resolveTurnRoute> | null = null;
+    let escalatedTools: any[] | null = null;
+    /** The manifest and class of the round now in flight — the route's, or the re-resolved route's once escalated. */
+    const roundTools = (): any[] => escalatedTools ?? turnExposure.offered as any[];
+    const roundClassNow = (): typeof roundClass => escalatedRoute?.cognitive_class ?? roundClass;
+    const escalateTurn = (from: string): boolean => {
+      if (escalatedRoute) return false;
+      escalatedRoute = resolveTurnRoute({ ...turnRouteFacts, classification: turnClassification, capabilityEscalation: true });
+      escalatedTools = escalatedRoute.capability.tools === "act"
+        ? toolDefs as any[]
+        : exposureFor(toolDefs, escalatedRoute.capability.tools).offered as any[];
+      console.log(`[paige] route escalated (${from}): ${escalatedRoute.cognitive_class}/${escalatedRoute.capability.tools} — the turn asked for capability beyond its exposure`);
+      return true;
+    };
+    const noteFabric = (label: string, s: FabricStream): FabricStream => {
+      if (!s.ok || s.attempts.some((a) => a.failure && a.failure !== "skipped_disabled")) console.warn(`[paige] fabric ${label}: ${describeAttempts(s)}`);
+      return s;
+    };
     await interactive?.check();
-    const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // U2/§14 — the Studio design agent runs on the REASONING tier (pro ⇒ CLAUDE_REASONING) so its
-        // extended thinking is a real reasoning model, never Haiku; the doc-attach path already did.
-        // INT-334 R4 — the Turn Route's class picks the tier (Studio and an attached document are route facts).
-        model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
+    const response = resumeCalls.length > 0 ? null : noteFabric("chat", await fabricChatStream(roundClass, {
         messages: liveDecisionMessages(aiMessages),
-        tools: toolDefs,
+        tools: roundTools(),
         tool_choice: "auto",
-        stream: true,
-        ...(paigeThinkingOn ? { paige_thinking: true } : {}),
-      }),
-    // §18 — the ONE trace idiom, same as every other call site. This was the only stamped site
-    // and it built its context inline; leaving it that way would keep two spellings of the same
-    // thing alive next to each other, and the inline one would silently win here if `traceCtx`
-    // ever gained a field. `traceFor("chat")` is exactly equivalent to what stood here: the
-    // tenant and working context are the same values, and `traceCtx.agent_id` is set to
-    // "studio-design-agent" at the Studio-session branch above, which runs before this line.
-    }, traceFor("chat"));
+      }, {
+        // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
+        // "studio-design-agent" at the Studio-session branch above, which runs before this line.
+        trace: traceFor("chat"),
+        // U2/§14 — the dormant Studio extended-thinking flag rides only to the Anthropic candidate.
+        anthropicExtras: paigeThinkingOn ? { paige_thinking: true } : undefined,
+      }));
 
     if (response && !response.ok) {
       const errorId = crypto.randomUUID();
@@ -9892,7 +10009,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Multi-round agentic loop: consume one streamed round, detect tool
       // calls, execute them, then re-ask WITH tools until a natural stop or a
       // safety bound. consumeRound accumulates one streamed gateway response.
-      const consumeRound = async (resp: Response) => {
+      const consumeRound = async (resp: { body?: ReadableStream<Uint8Array> | null }) => {
         const fullReader = resp.body!.getReader();
         const fullDecoder = new TextDecoder();
         let content = "";
@@ -9989,6 +10106,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         };
       const toolResults: any[] = [];
       const executed: any[] = [];
+      // R5b — the manifest boundary is enforced ONLY on CHEAP rounds (`cognitive_class === "cheap"`,
+      // whose manifest is necessarily `none`), decided ONCE PER BATCH from the manifest the round
+      // actually saw: the owner's rule is about CHEAP cognition carrying no consequential authority,
+      // and there a discovered call must re-route, never execute. Every other state — a read round
+      // (already operational), an approved card's deterministic or carried-approval turn, a resume —
+      // keeps exactly the dispatch it had before R5b (enforcing the read manifest at dispatch is a
+      // recorded future item, not this slice).
+      const enforceBoundary = turnRoute.cognitive_class === "cheap";
+      const manifestNow = enforceBoundary
+        ? new Set((roundTools() as any[]).map((d: any) => d?.function?.name ?? d?.name).filter((n: unknown): n is string => typeof n === "string"))
+        : null;
+      const governedButNotOffered = manifestNow
+        ? new Set([...governedToolNames].filter((n) => !manifestNow.has(n)))
+        : new Set<string>();
       // ── C2b · MAY THIS CALL BE ANNOUNCED AS RUNNING? ────────────────────────────────────────────
       // Asked at the START point, immediately before dispatch. THE CONTRACT:
       //
@@ -10022,7 +10153,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try {
           // `any`, as everywhere in this dispatch: the door sets are typed by their own literal names.
           const name = tc?.function?.name ?? "";
-          if (!describeStepStart(tc, describeStep)) return false;
+          if (!describeStepStart(tc, describeScopedStep)) return false;
           if (CRM_COMMAND_TOOL_NAMES.has(name) || GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(name)
               || SALES_INVOICE_TOOL_NAMES.has(name) || SALES_COLLECTIONS_TOOL_NAMES.has(name)
               || COMMS_EMAIL_TOOL_NAMES.has(name)) return false;
@@ -10102,6 +10233,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // send the call again whole. Empty arguments are a tool that takes no input, and pass.
         if (!wholeArguments(tc.function.arguments)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, code: "ARGUMENTS_UNPARSEABLE", error: "This call's arguments were incomplete, so it was not run. Send it again with complete arguments." }) });
+          continue;
+        }
+
+        // ── INT-334 R5b — THE MANIFEST BOUNDARY, AND THE RESCUE IT CARRIES ──────────────────
+        // A finished-round call naming a real governed tool outside THIS round's manifest is the
+        // escalation signal: the model discovered capability beyond its exposure (the capability
+        // projection in the system prompt advertises every governed capability, so the names are
+        // known). Nothing from the escalating round executes — the call is answered with the
+        // re-route, the turn re-resolves its route with the server-observed `capabilityEscalation`
+        // fact, and the loop's NEXT round carries the widened set through the unchanged gates.
+        // This is also the first dispatch-side enforcement of the manifest itself: before R5b a
+        // withheld-but-real tool would simply have run. It sits BEFORE the client-seat gate on
+        // purpose — a client seat's question must be able to escalate too, and every re-issued
+        // call still meets that gate, the autonomy lanes and the approval doors exactly as before.
+        if (governedButNotOffered.has(tc.function.name)) {
+          escalateTurn("attempted call outside the round manifest");
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(notOfferedThisRound()) });
           continue;
         }
 
@@ -10200,6 +10348,50 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
           // comms-email-command claims the stored proposal atomically; what it returns is this approval's outcome.
+          if (result.spent) approvalSpend.set(result.spent, tc.id);
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
+          continue;
+        }
+
+        // ── INBOX INTELLIGENCE, direct verbs (#1140 two-mailbox pilot) ─────────
+        // read_message_content / read_support_cases execute caller-scoped RPCs the
+        // same way inbox_list does: the server derives the tenant from the JWT (§59)
+        // and the mailbox policy (private vs shared, active consent) is enforced in
+        // SQL, not by the model or this handler.
+        if (INBOX_INTELLIGENCE_TOOL_NAMES.has(tc.function.name) && tc.function.name !== 'gmail_organize') {
+          let inboxArgs: Record<string, unknown> = {};
+          try { inboxArgs = JSON.parse(tc.function.arguments || '{}'); } catch { inboxArgs = {}; }
+          const result = await dispatchInboxIntelligenceChat(tc.function.name, inboxArgs, {
+            caller: { rpc: async (name: string, args: Record<string, unknown>) => supabaseClient.rpc(name, args as never) as never },
+          });
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content ?? result) });
+          continue;
+        }
+
+        // ── INBOX INTELLIGENCE, the organize door (#1140) ─────────────────────
+        // gmail_organize redeems through comms-mailbox-command — the same placement
+        // rule as the email door above: after scope/seat guards, before the legacy
+        // Chat gate (which must not also gate it), and the chat files no receipt
+        // (the door records it through record_capability_run).
+        if (tc.function.name === 'gmail_organize') {
+          if (!cancellationsRecorded || !(await revalidateProposalScope())) {
+            toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify({
+              success: false, not_applied: true, error: 'confirmation_context_unavailable',
+              message: 'The workspace or declined approval could not be verified. The mailbox was not changed. Reopen the workspace and retry; do not use another tool to bypass this refusal.',
+            }) });
+            continue;
+          }
+          let organizeArgs: Record<string, unknown> = {};
+          try { organizeArgs = JSON.parse(tc.function.arguments || '{}'); } catch { organizeArgs = {}; }
+          const userTurnsO = messages.filter((message: any) => message?.role === 'user');
+          const result = await dispatchOrganizeChat({
+            tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
+            args: organizeArgs, approved: approvedConfirmations,
+            turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurnsO.length, user_turn: userTurnsO[userTurnsO.length - 1]?.content ?? null },
+          }, { caller: supabaseClient, admin: { from: (name: string) => ({
+            select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as never,
+          }) } });
+          for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.spent) approvalSpend.set(result.spent, tc.id);
           toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
           continue;
@@ -11152,7 +11344,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (stepHooks && await announceStart(tc)) stepHooks.start(tc, toolIndex);
 
-        if (tc.function.name === "update_client_data") {
+        if (tc.function.name === "read_business_metric") {
+          // Same finished-round, scope, cancellation and read-only Harness gates as every tool above.
+          // The caller-JWT client is mandatory; service-role issuer access is deliberately revoked.
+          const result: MetricReadOutcome = callerTier === "tenant"
+            ? await readBusinessMetric(supabaseClient, { tenantId: personaCtx?.tenant_id ?? null }, JSON.parse(tc.function.arguments))
+            : { status: "refused", message: "This measurement capability is available only in the authorized Solo workspace lens. No values were read." };
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ status: result.status, message: result.message, context: metricReadContext(result) }) });
+        } else if (tc.function.name === "update_client_data") {
           try {
             // §9 — same class as the credit-sync and summary-memory findings: falling back to
             // the caller is right for READING their own context and wrong for WRITING a named
@@ -12482,6 +12681,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   sms: { usable: r.can_send_sms === true, blocked_reason: r.blocked_reason ?? null },
                 },
                 number: { state: r.number ?? "absent", e164: r.number_e164 ?? null },
+                // INT-345: the CALLING verdict, verbatim from the readiness resolver —
+                // the same four facts the dialer and Settings render, so "why can't my
+                // business make calls" is answered from the one canonical record.
+                calling: (r.calling && typeof r.calling === "object") ? r.calling : null,
                 registration: r.a2p ?? "absent",
                 permitted_actions: permitted,
                 // The two ceilings on what may be offered, said plainly so they are not inferred.
@@ -12612,6 +12815,36 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ...(rec.code === "twilio_purchase_missing_sid"
                     ? { money_already_spent: true, phone_number: rec.phone_number ?? args.phone_number }
                     : {}),
+                };
+            } else if (tc.function.name === "comms_setup_calling") {
+              // The GOVERNED setup seam — same caller-JWT authority pattern as the purchase:
+              // the edge derives the tenant and re-checks admin/owner standing server-side.
+              // A 200 is not success either: `outcome` names what happened, and
+              // `blocked_needs_config` (master creds absent) is an honest refusal, not a failure.
+              if (!crmTenantId) {
+                toolResults.push({
+                  tool_call_id: tc.id,
+                  role: "tool",
+                  content: JSON.stringify({ success: false, error: "tenant_not_resolved" }),
+                });
+                continue;
+              }
+              const { data: d, error: e } = await supabaseClient.functions.invoke("comms-setup-calling", {
+                body: {},
+              });
+              const rec = await readInvokeBody(e, d);
+              const ok = rec.outcome === "provisioned" || rec.outcome === "adopted" || rec.outcome === "skipped_existing";
+              // Named fields, not a spread (the record carries provider identifiers).
+              result = ok
+                ? {
+                  success: true,
+                  outcome: rec.outcome,
+                  calling: rec.calling ?? null,
+                }
+                : {
+                  success: false,
+                  error: rec.error ?? rec.outcome ?? "setup_failed",
+                  steps: rec.steps ?? null,
                 };
             } else if (tc.function.name === "comms_name_number") {
               const { data: d, error: e } = await supabaseClient.rpc("tenant_phone_number_rename", {
@@ -15753,6 +15986,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Values that are deliberately NOT tables are declared as such in that guard, not left to be
       // guessed from context.
       const WRITE_TARGET: Record<string, string> = {
+        gmail_organize: "messages",
         agreement_draft: "paige_agreements", agreement_send: "paige_agreements",
         crm_create_contact: "clients", crm_update_contact: "clients",
         crm_archive_contact: "clients", crm_restore_contact: "clients",
@@ -15825,6 +16059,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         comms_name_number: "tenant_phone_numbers",
         comms_set_primary_number: "tenant_phone_numbers",
         comms_draft_registration: "tenant_a2p_registrations",
+        comms_setup_calling: "tenant_twilio_subaccounts",
         pipeline_configure: "pipelines",
         propose_business_brief_update: "tenants",
         // 2026-09-12 repair — the evaluation loop + social publish, newly classified (action-risk.ts).
@@ -15891,6 +16126,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         billing_create_invoice: "paige_invoices", billing_send_invoice: "paige_invoices",
         sales_revise_invoice_draft: "paige_invoices",
         sales_update_invoice_settings: "tenants", // canonical tenant brand.invoice_preferences; no client memory target
+        sales_start_merchant_onboarding: "tenants", // tenant merchant connection; no customer/provider secret attribution
+        sales_create_merchant_login_link: "tenants", // tenant-scoped hosted handoff; never customer memory or bearer URL
         sales_create_payment_request: "paige_invoice_provider_operations",
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
@@ -16316,7 +16553,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         return {
           start: (tc, toolIndex) => {
             try {
-              const s = describeStepStart(tc, describeStep);
+              const s = describeStepStart(tc, describeScopedStep);
               if (!s) return;
               const st = { id: stepId(tc, toolIndex), round, seq: ++stepSeq, kind: "action" as const, label: s.label, group: s.group,
                 status: "running" as const, ts: Date.now() - startedAt };
@@ -16340,8 +16577,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // `done` / `error` from the SAME reading describeStep's wording uses (`toolResultReportsFailure`),
               // so a result that reports failure in any of the shapes tools use never closes `done`.
               let ok = true;
-              try { ok = !toolResultReportsFailure(JSON.parse(res?.content ?? "{}")); } catch { /* keep ok */ }
-              const derived = describeStep(tc, res);
+              try { const result = JSON.parse(res?.content ?? "{}"); ok = !toolResultReportsFailure(result); if (tc?.function?.name === "delegate_to_subagent") ok = ok && (result?.ok === true || result?.success === true); } catch { if (tc?.function?.name === "delegate_to_subagent") ok = false; }
+              const derived = describeScopedStep(tc, res);
               finishedSteps.set(tc, derived);
               if (!derived) {
                 // Not rendered (a gated or stub result). A START already on screen is taken back.
@@ -16585,7 +16822,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (!resumedRound) turnTracker.roundStarted();
             const { content, toolCalls, allChunks, hasToolCall, finished, runnable } = resumedRound
               ? { ...resumedRound, runnable: true } // a server-built resume round: the stored, approved act
-              : await consumeRound(currentResponse as Response);
+              : await consumeRound(currentResponse!);
             lastRoundFinished = finished;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
@@ -16790,7 +17027,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 auditWriteForTool(tc, res);
                 // The label the step finished with (the approval rewrite above adds only fields
                 // describeStep does not read, so asking again would give the same answer).
-                const derived = finishedSteps.has(tc) ? finishedSteps.get(tc) : describeStep(tc, res);
+                const derived = finishedSteps.has(tc) ? finishedSteps.get(tc) : describeScopedStep(tc, res);
                 if (!derived) continue; // gated/stub calls dropped (never render as failure)
                 // Mirror a successful client-scoped mutation onto the rail (§8) —
                 // fire-and-forget, guarded, and only on real success (ok === true).
@@ -16815,11 +17052,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             await interactive?.check();
-            currentResponse = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-            }, traceFor("chat-tool-loop"));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -16853,11 +17086,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             convo.push({ role: "user", content: CLAIM_CORRECTION[claim] });
             try {
               await interactive?.check();
-              const correctionResponse = await gatewayCompat("anthropic", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ model: "google/gemini-2.5-pro", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-              }, traceFor("chat-claim-correction"));
+              // INT-332 — the claim correction is operational work whatever the turn's own class.
+              // R5b — the correction is operational work with the governed tools (43.42g), so the
+              // turn escalates here too: the manifest the correction round was sent and the manifest
+              // its calls are graded against stay the same set.
+              escalateTurn("claim correction");
+              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
               if (correctionResponse.ok) {
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
@@ -16900,11 +17134,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 : "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
               try {
                 await interactive?.check();
-                const continuationResponse = await gatewayCompat("anthropic", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-                }, traceFor("chat-continuation"));
+                // R5b — the action-intent continuation carries the step out, so it re-enters on the
+                // operational class with the full set: a cheap misread never keeps the turn's tools
+                // narrowed once the turn is KNOWN to be action work.
+                escalateTurn("action-intent continuation");
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -17029,7 +17263,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Text keeps its natural-round replay. Live streams the final answer
           // only from this tools-free call, AFTER the governed tool decision.
           // Protected turns still use emitContent's hold and final scope check.
-          let finalStreamResponse: Response | null = null;
+          let finalStreamResponse: FabricStream | null = null;
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             if (!(await revalidateTenantKnowledgeScope())) {
               tenantKnowledgeScopeInvalidated = true;
@@ -17038,11 +17272,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
             await interactive?.check();
-            finalStreamResponse = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: convo, stream: true }),
-            }, traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"));
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME
@@ -17539,7 +17769,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
     // With document: intercept stream to accumulate response, then trigger background sync
     // Never null here: a resume turn (the only one without a first call) is never a document turn.
-    const reader = (response as Response).body!.getReader();
+    const reader = response!.body!.getReader();
     const decoder = new TextDecoder();
     let fullAssistantResponse = "";
     // Leftover-line buffer across pulls: a `data:` record split over two reads

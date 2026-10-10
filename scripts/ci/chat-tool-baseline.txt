@@ -22,8 +22,6 @@ ask_choices
 author_event_kind
 automation_draft
 automation_list
-automation_set_grant
-automation_set_state
 automation_triggers_list
 calendar_book_meeting
 comms_buy_number
@@ -34,6 +32,7 @@ comms_name_number
 comms_registration_status
 comms_search_numbers
 comms_set_primary_number
+comms_setup_calling
 content_save
 crm_add_note
 crm_assign_coach

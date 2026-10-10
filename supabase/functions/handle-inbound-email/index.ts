@@ -25,6 +25,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
+import { classifyAndRecordMessage, type ClassifyAdmin } from "../_shared/inbox-intelligence/classify-message.ts";
 import {
   getInboundAdapter,
   registerInboundAdapter,
@@ -389,6 +390,38 @@ Deno.serve(async (req) => {
     });
   }
   const messageId = inserted!.id as string;
+
+  // -- 5b. The ONE shared inbound-intelligence engine (#1140 two-mailbox pilot). ----------
+  // Both inbound paths (Resend here, the Gmail sync for a shared connector) call the same
+  // service RPC: shared_support connectors get case upsert + follow-up cancellation; personal
+  // connectors are refused-by-construction inside it (no cases ever open on a private mailbox).
+  // Best-effort and NON-BLOCKING: a failure here must never drop or delay the inbound row that
+  // already landed — the next sync tick re-runs the classification side of the engine.
+  try {
+    await admin.rpc("record_inbound_message_intelligence", { _message_id: messageId });
+  } catch (intelErr) {
+    console.warn("[handle-inbound-email] intelligence_engine_deferred", (intelErr as Error)?.message);
+  }
+  // Classification rides the SAME shared helper the Gmail sync uses (the classify
+  // lane of the model router): the shared support mailbox gets intent + risk tier
+  // + auto labels exactly like the personal one. Best-effort and non-blocking —
+  // the sync tick's backfill sweep retries what fails here.
+  try {
+    const { data: connectorRow } = await admin.from("channel_connectors")
+      .select("mailbox_class").eq("id", connector.id).maybeSingle();
+    if (connectorRow?.mailbox_class) {
+      await classifyAndRecordMessage({
+        admin: admin as unknown as ClassifyAdmin,
+        messageId,
+        mailboxClass: connectorRow.mailbox_class === "personal" ? "personal" : "shared_support",
+        subject: (msg.subject as string | null) ?? null,
+        fromAddress: (msg.sender?.address as string | null) ?? null,
+        snippet: ((msg.body_text as string | null) ?? "").slice(0, 4000),
+      });
+    }
+  } catch (classifyErr) {
+    console.warn("[handle-inbound-email] classification_deferred", (classifyErr as Error)?.message);
+  }
 
   // -- 6. File the comms-draft-reply action (§8 action bus). ----------------------
   // tenant_id is set EXPLICITLY here — paige_actions has NO tenant-deriving trigger

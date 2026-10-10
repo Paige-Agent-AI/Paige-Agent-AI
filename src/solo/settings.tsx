@@ -52,10 +52,12 @@ import {
 import {
   Card, Field, NotYours, Outcome, ReadState, Status, Truth, type WriteState,
 } from "./settings-primitives";
+import { CallingSetupCard } from "./CallingSetupCard";
 import { settingsScrollOwner, SETTINGS_SCROLLBAR_SHOWN, settingsDestinationShowsScrollbar } from "./settings-scroll-owner";
 import { CalendarsView } from "./connections-calendars";
 import { SoloBusinessContextSetup } from "./SoloBusinessContextSetup";
 import { SoloBillingView } from "./settings-billing";
+import { SoloSettingsAnalytics } from "./settings-analytics";
 import "./settings.css";
 
 function OrthogonalConnectionState({ accountLabel, healthLabel, tone }: { accountLabel: string; healthLabel: string; tone: ConnectionStateTone }) {
@@ -118,6 +120,18 @@ export interface CommsReadiness {
   can_send_sms: boolean;
   blocked_reason: string | null;
   subaccount: "connected" | "inactive" | "absent";
+  // INT-345 K-3: the calling verdict from the same canonical record — the four
+  // facts the setup card and the dialer both render, never conflated.
+  calling?: {
+    ready: boolean;
+    code: "calling_ready" | "calling_not_configured" | "calling_number_needs_verification";
+    reason_code: string | null;
+    account: "absent" | "incomplete" | "configured";
+    number_assigned: boolean;
+    primary_selected: boolean;
+    primary_e164: string | null;
+    twiml_app: "absent" | "pending" | "configured";
+  } | null;
   number: "assigned" | "absent";
   number_e164: string | null;
   business: { has_name: boolean; has_website: boolean; has_phone: boolean };
@@ -782,7 +796,12 @@ function ConnectionsView({ initialSegment, onSegmentChange }: { initialSegment?:
 
     {view === "registration" && <div className="ss-sections">
       {readFailureNotice}
-      <PhoneSetupPanel numbers={numbers} onPurchased={readiness.retry}/>
+      <PhoneSetupPanel
+        numbers={numbers}
+        onPurchased={readiness.retry}
+        calling={r === undefined || r === null ? undefined : (r.calling ?? null)}
+        onCallingChanged={readiness.retry}
+      />
 
       <Subsection id="ss-sub-registration" title="Messaging registration"
         blurb="Carriers require a registered business, and a recorded agreement from each person, before any text can send.">
@@ -1187,15 +1206,21 @@ function GoogleSendingAccountPanel({ comms }: { comms: ReturnType<typeof useSolo
  * then confirm the price. Nothing here purchases on its own, retries a purchase, or
  * reports one that did not complete.
  */
-function PhoneSetupPanel({ numbers, onPurchased }: {
+function PhoneSetupPanel({ numbers, onPurchased, calling, onCallingChanged }: {
   numbers: ReturnType<typeof useSoloNumbers>;
   onPurchased: () => void;
+  /** The canonical calling verdict (INT-345) — drives the setup card's states. */
+  calling: CommsReadiness["calling"];
+  /** Re-reads the readiness record after a setup run so the card reflects the readback. */
+  onCallingChanged: () => void;
 }) {
   const [filters, setFilters] = useState<NumberSearchFilters>(EMPTY_NUMBER_FILTERS);
   const [outcome, setOutcome] = useState<SearchOutcome | null>(null);
   const [searching, setSearching] = useState(false);
   const [buying, setBuying] = useState<string | null>(null);
   const [bought, setBought] = useState<WriteState>(null);
+  const [settingUp, setSettingUp] = useState(false);
+  const [setupNote, setSetupNote] = useState<WriteState>(null);
 
   const set = <K extends keyof NumberSearchFilters>(k: K) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -1245,6 +1270,25 @@ function PhoneSetupPanel({ numbers, onPurchased }: {
       {!numbers.canManage
         ? <NotYours what="the numbers on this business"/>
         : <>
+          <CallingSetupCard
+            calling={calling}
+            settingUp={settingUp}
+            note={setupNote}
+            canManage={numbers.canManage}
+            onRun={async () => {
+              setSettingUp(true); setSetupNote(null);
+              const res = await numbers.setupCalling();
+              setSettingUp(false);
+              onCallingChanged();
+              if (res.ok) {
+                setSetupNote({ tone: "ok", message: res.message ?? "Calling account connected." });
+              } else if (res.outcome === "blocked_needs_config") {
+                setSetupNote({ tone: "bad", message: res.message ?? "Calling setup is temporarily unavailable. Nothing was changed; try again later." });
+              } else {
+                setSetupNote({ tone: "bad", message: res.message ?? "Calling setup didn't finish. Nothing else changed; try again." });
+              }
+            }}
+          />
           <p className="ss-phone-contract">Search live availability and buy a number for this business. Prices are monthly.</p>
           <form className="ss-form" onSubmit={runSearch}>
             <div className="ss-form-row">
@@ -1667,7 +1711,7 @@ export function SoloSettings(props: { openPaige?: () => void } = {}) {
 
 function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
   const [tab] = useSubtabRoute("solo", "settings", "setup");
-  const tabs=[['setup','Setup'],['team','Team'],['connections','Connections'],['integrations','Integrations'],['security-data','Security & data'],['vault','Vault'],['billing','Billing']];
+  const tabs=[['setup','Setup'],['team','Team'],['connections','Connections'],['integrations','Integrations'],['analytics','Analytics'],['security-data','Security & data'],['vault','Vault'],['billing','Billing']];
   const location = useLocation();
   const params = useParams();
   const account = params.account ?? "";
@@ -1797,7 +1841,7 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
     resetSettingsScroll();
   }, [tab, segment, resetSettingsScroll]);
   const current = SOLO_SETTINGS_DESTINATIONS.find(item => item.key === tab) ?? SOLO_SETTINGS_DESTINATIONS[0];
-  const view = tab === "team" ? <TeamView openPaige={openPaige}/> : tab === "connections" ? <ConnectionsView initialSegment={segment} onSegmentChange={resetSettingsScroll}/> : tab === "integrations" ? <SoloIntegrationsView/> : tab === "security-data" ? <SecurityView/> : tab === "vault" ? <VaultView openPaige={openPaige}/> : tab === "billing" ? <SoloBillingView/> : <SoloBusinessContextSetup account={account} openPaige={openPaige}/>;
+  const view = tab === "team" ? <TeamView openPaige={openPaige}/> : tab === "connections" ? <ConnectionsView initialSegment={segment} onSegmentChange={resetSettingsScroll}/> : tab === "integrations" ? <SoloIntegrationsView/> : tab === "analytics" ? <SoloSettingsAnalytics/> : tab === "security-data" ? <SecurityView/> : tab === "vault" ? <VaultView openPaige={openPaige}/> : tab === "billing" ? <SoloBillingView/> : <SoloBusinessContextSetup account={account} openPaige={openPaige}/>;
   return <div ref={rootRef} className={`solo-settings${tab === "vault" ? " solo-settings--vault" : ""}`}>
     {/* Connections and Integrations each carry their own in-surface header (the sub-tab
         row below), so the shared page-head would print the word a second time under a
@@ -1805,7 +1849,7 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
         the actual tools should be using (owner ruling 2026-09-22; connections hot-fix
         2026-09-13). The other settings tabs have no internal subnav, so the page-head
         remains their sole heading. */}
-    {tab !== "vault" && tab !== "setup" && tab !== "connections" && tab !== "integrations" && <header className="ss-page-head"><div><span>Solo settings</span><h1>{current.label}</h1><p>{current.key === "setup" ? "The owner-confirmed business truth Paige may use to understand and support this workspace." : current.key === "integrations" ? "External tools, bridges, and safe configuration handoffs." : "Account configuration with honest runtime boundaries."}</p></div><Truth value={current.truth}/></header>}
+    {tab !== "vault" && tab !== "setup" && tab !== "connections" && tab !== "integrations" && tab !== "analytics" && <header className="ss-page-head"><div><span>Solo settings</span><h1>{current.label}</h1><p>{current.key === "setup" ? "The owner-confirmed business truth Paige may use to understand and support this workspace." : current.key === "integrations" ? "External tools, bridges, and safe configuration handoffs." : "Account configuration with honest runtime boundaries."}</p></div><Truth value={current.truth}/></header>}
     {entry && <div className="ss-return"><span>Opened from {entry.origin === "calendar" ? "Calendar" : "Conversations"}</span>{entry.returnTo ? <Link to={entry.returnTo}>Return to {entry.origin === "calendar" ? "Calendar" : "Conversations"}</Link> : <span>Return address rejected</span>}</div>}
     {current.key === "setup" && <SettingsMoveNotice key={account}/>}
     <div className="ss-content" data-settings-tab={tab} data-tab-count={tabs.length}>{view}</div>

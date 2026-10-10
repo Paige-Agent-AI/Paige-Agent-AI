@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Comms C-2s-B — number MARKETPLACE purchase. JWT-gated; a tenant admin buys a
 // specific number into the tenant's OWN Twilio subaccount, then records it as a
 // tenant_phone_numbers row (source='marketplace'). The tenant never touches Twilio (§36):
@@ -129,6 +130,9 @@ Deno.serve(async (req) => {
     return json({ needs_config: true, error: "tenant_not_resolved" });
   }
 
+  if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) {
+    return json({ error: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
+  }
   let body: PurchaseBody = {};
   try { body = (await req.json()) as PurchaseBody; } catch { body = {}; }
   const phoneNumber = (body.phoneNumber ?? body.phone_number ?? "").trim();

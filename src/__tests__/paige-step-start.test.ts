@@ -11,8 +11,9 @@
  *   - doors, web_fetch and unknown names are never announced.
  *
  * describeStep lives in the edge function, which imports Deno URLs, so it is read out of the source
- * and transpiled on its own (it depends only on SUBAGENT_FRIENDLY, read out with it).
+ * and transpiled on its own (its specialist label helper is injected from the real shared module).
  */
+import { specialistStepLabel } from "../../supabase/functions/_shared/paige-turn/specialist-step-label";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
@@ -41,7 +42,7 @@ const { describeStepStart, STEP_START_LABELS, STEP_START_SAME_LABEL, STEP_NO_STA
 
 const CHAT = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 const describeStepSource = (() => {
-  const from = CHAT.indexOf("const SUBAGENT_FRIENDLY");
+  const from = CHAT.indexOf("function toolResultReportsFailure");
   const to = CHAT.indexOf("// One home for turning a client_ref");
   if (from < 0 || to < 0 || to < from) throw new Error("describeStep could not be located in paige-ai-chat/index.ts");
   return CHAT.slice(from, to);
@@ -51,7 +52,7 @@ const describeStep: DescribeStep = (() => {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const out: { describeStep?: DescribeStep } = {};
-  new Function("exports", js)(out);
+  new Function("exports", "specialistStepLabel", js)(out, specialistStepLabel);
   if (!out.describeStep) throw new Error("describeStep did not transpile");
   return out.describeStep;
 })();
@@ -118,12 +119,12 @@ describe("describeStepStart — what a START says", () => {
     expect(describeStepStart(call("comms_buy_number", { phone_number: "+15550100" }), describeStep)).toEqual({ label: "Buying that number", group: "owner" });
   });
 
-  it("action_file and delegate_to_subagent keep describeStep's fixed-vocabulary wording", () => {
+  it("action_file stays fixed and delegation requires a scoped roster", () => {
     expect(describeStepStart(call("action_file", { to_department: "marketing" }), describeStep)).toEqual({ label: "Filing this to Marketing", group: "owner" });
     expect(describeStepStart(call("action_file", { to_department: "client_experience" }), describeStep)).toEqual({ label: "Filing this to Client Experience", group: "client" });
     // A department outside the fixed set falls back, exactly as the finished step does.
     expect(describeStepStart(call("action_file", { to_department: "PRIVATE-DEPT-MARKER" }), describeStep)).toEqual({ label: "Filing this to Owner Ops", group: "owner" });
-    expect(describeStepStart(call("delegate_to_subagent", { slug: "research-analyst" }), describeStep)).toEqual({ label: "Bringing in your research specialist", group: "shared" });
+    expect(describeStepStart(call("delegate_to_subagent", { slug: "research-analyst" }), describeStep)).toEqual({ label: "Bringing in a specialist", group: "shared" });
     expect(describeStepStart(call("delegate_to_subagent", { slug: "made-up" }), describeStep)).toEqual({ label: "Bringing in a specialist", group: "shared" });
   });
 

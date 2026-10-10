@@ -15,6 +15,13 @@ const snapshot: InvoiceSnapshot = {
   total_minor: 2999, due_now_minor: 750, remainder_minor: 2249,
 };
 describe('versioned invoice-only snapshots', () => {
+  it('preserves recorded included charge treatment on reload/edit without adding it to principal',()=>{
+    const conditions={schema_version:1 as const,tax:{state:'recorded' as const,charges:[{line_index:0,amount_minor:100,currency:'usd' as const}],source:'Recorded invoice line',policy:'Included amount'},fees:{state:'not_applicable' as const,charges:[],source:'Commercial terms',policy:'No additional fee'}};
+    const saved={...snapshot,commercial_conditions:conditions};
+    expect(normalizeInvoiceSnapshot(saved,2999)).toEqual(saved);
+    expect(snapshotEditInput(saved).commercial_conditions).toEqual(conditions);
+    expect(normalizeInvoiceSnapshot({...saved,commercial_conditions:{...conditions,tax:{...conditions.tax,charges:[{line_index:0,amount_minor:2000,currency:'usd'}]}}},2999)).toBeNull();
+  });
   it('sums checked line integers and rounds one deposit on the whole obligation', () => {
     expect(aggregateInvoiceItems(snapshot.items, 2500)).toEqual({ totalMinor: 2999, dueNowMinor: 750, remainderMinor: 2249 });
     expect(() => aggregateInvoiceItems([{ ...item, unit_minor: 2147483647 }])).toThrow();
@@ -62,3 +69,5 @@ describe('versioned invoice-only snapshots', () => {
 });
 
 it('preserves optional multiline descriptions and absent legacy keys through snapshot edits',()=>{const described={...snapshot,items:snapshot.items.map((line,index)=>index===0?{...line,description:'Scope\nCustomer wording'}:line)};expect(normalizeInvoiceSnapshot(described,2999)).toEqual(described);expect(snapshotEditInput(described).items[0].description).toBe('Scope\nCustomer wording');expect(Object.prototype.hasOwnProperty.call(snapshotEditInput(snapshot).items[0],'description')).toBe(false);expect(normalizeInvoiceSnapshot({...described,items:[{...described.items[0],description:'x'.repeat(10001)},described.items[1]]},2999)).toBeNull();expect(normalizeInvoiceSnapshot({...described,items:[{...described.items[0],description:42},described.items[1]]},2999)).toBeNull();});
+it('retains optional canonical commercial terms association and clones it on edit',()=>{const ref={id:'44444444-4444-4444-8444-444444444444',version:0};const saved={...snapshot,commercial_terms_reference:ref};expect(normalizeInvoiceSnapshot(saved,2999)).toEqual(saved);const edit=snapshotEditInput(saved);expect(edit.commercial_terms_reference).toEqual(ref);expect(edit.commercial_terms_reference).not.toBe(ref);expect(snapshotEditInput(snapshot)).not.toHaveProperty('commercial_terms_reference')});
+it.each([{id:'bad',version:0},{id:'44444444-4444-4444-8444-444444444444',version:-1},{id:'44444444-4444-4444-8444-444444444444',version:1.2},{id:'44444444-4444-4444-8444-444444444444',version:0,approved:true},null])('refuses malformed terms association on snapshot reload %j',commercial_terms_reference=>{expect(normalizeInvoiceSnapshot({...snapshot,commercial_terms_reference},2999)).toBeNull()});

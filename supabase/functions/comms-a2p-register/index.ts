@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { resolveTwilioCreds, twilioJsonRequest, twilioRequest, masterCreds, type TwilioCreds } from "../_shared/twilio.ts";
 
@@ -323,9 +324,13 @@ Deno.serve(async (req) => {
       }
       return ok({ model:isIsv ? "isv_subaccount" : "direct_or_unverified", primary_profile_approved:approved.length > 0, isv_or_reseller:isIsv, compliance_embed_prerequisite:isIsv });
     }
+    const providerAllowed = await commsProviderExecutionAllowed(ctx.admin, { tenantId: ctx.tenantId, actorUserId: ctx.actorId });
+    if (action !== "status" && action !== "cancel" && !providerAllowed) {
+      return fail(403,"COMMS_PROVIDER_EXECUTION_DISABLED","Provider execution is disabled for this workspace.");
+    }
     let current = await state(ctx);
     if (action === "status") {
-      if (current.registration.brand_sid || current.registration.brand_bundle_sid || current.registration.messaging_service_sid) {
+      if (providerAllowed && (current.registration.brand_sid || current.registration.brand_bundle_sid || current.registration.messaging_service_sid)) {
         await syncProvider(ctx, current); current = await state(ctx);
       }
       return ok(publicState(current));

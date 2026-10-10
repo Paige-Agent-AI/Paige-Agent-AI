@@ -225,15 +225,15 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
-    slug: "analytics", key: "analytics", label: "Analytics", group: "main",
-    // Source: src/solo/analytics2.tsx.
+    slug: "finance", key: "finance", label: "Finance", group: "main",
     subtabs: [
-      { slug: "brief", key: "brief", label: "Brief" },
-      { slug: "money", key: "money", label: "Sales funnel" },
-      { slug: "profitability", key: "profit", label: "Revenue & profit" },
-      { slug: "retention", key: "ret", label: "Retention" },
-      { slug: "market-watch", key: "mkt", label: "Acquisition" },
-      { slug: "decisions", key: "dec", label: "Decisions" },
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "banking-cash", key: "banking", label: "Banking & Cash" },
+      { slug: "receivables", key: "receivables", label: "Receivables" },
+      { slug: "expenses-payables", key: "expenses", label: "Expenses & Payables" },
+      { slug: "profitability", key: "profitability", label: "Profitability" },
+      { slug: "budgeting-forecasting", key: "forecast", label: "Budgeting & Forecasting" },
+      { slug: "connections", key: "connections", label: "Connections" },
     ],
   },
   {
@@ -256,6 +256,14 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "team", key: "team", label: "Team" },
       { slug: "connections", key: "connections", label: "Connections" },
       { slug: "integrations", key: "integrations", label: "Integrations" },
+      { slug: "analytics", key: "analytics", label: "Analytics", subtabs: [
+        { slug: "overview", key: "overview", label: "Overview" },
+        { slug: "business-health", key: "business-health", label: "Business Health" },
+        { slug: "operations", key: "operations", label: "Operations" },
+        { slug: "team", key: "team", label: "Team" },
+        { slug: "ai-usage", key: "ai-usage", label: "AI & Usage" },
+        { slug: "data-health", key: "data-health", label: "Data Health" },
+      ] },
       { slug: "security-data", key: "security-data", label: "Security & data" },
       { slug: "vault", key: "vault", label: "Vault" },
       { slug: "billing", key: "billing", label: "Billing" },

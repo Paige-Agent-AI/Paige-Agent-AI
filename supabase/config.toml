@@ -73,6 +73,14 @@ project_id = "xygzykjyynhzqytbqnzu"
   # JWT-gated; self-gates on is_platform_owner() from the caller's JWT (§9).
   [functions.provision-tenant-twilio]
     verify_jwt = true
+  # INT-345 K-3: governed tenant calling setup — JWT-gated, self-gates in-function on
+  # admin|is_platform_owner() and derives the tenant from the caller JWT (§9).
+  [functions.comms-setup-calling]
+    verify_jwt = true
+  # INT-345 K-4: READ-ONLY provider inventory for the authorized reconciliation
+  # (super-admin gated, same authority as the backfill).
+  [functions.twilio-inspect-subaccounts]
+    verify_jwt = true
   # Comms C-2s-B: number marketplace. Both JWT-gated — each self-gates in-function on
   # admin/coach|is_platform_owner() and derives the tenant from the caller JWT
   # (current_user_tenant_id()), never the body (§9). They authenticate as the tenant's
@@ -150,6 +158,11 @@ project_id = "xygzykjyynhzqytbqnzu"
   # Marketing email dispatcher (E1). Cron-token gated every minute (migration 20270549000000);
   # self-gates in-function on a service-role bearer OR verify_cron_token, like the drainer above.
   [functions.email-campaign-worker]
+    verify_jwt = false
+  # Inbox Intelligence (#1140): the personal Gmail read engine. Cron-token gated like the
+  # drainer above (service-role bearer OR x-cron-token in-function); it only READS Gmail —
+  # organization is the approved door's job (comms-mailbox-command, verify_jwt on).
+  [functions.gmail-mailbox-sync]
     verify_jwt = false
   # The n8n OAuth grant keepalive (2026-10-03: grants dying silently every ~7-10 days).
   # CRON-invoked every 6h via pg_cron (migration 20270535000000) — self-gates in-function
@@ -664,3 +677,5 @@ verify_jwt = true
 
 [functions.sales-payment-reconcile]
 verify_jwt = false # Internal service bearer / canonical cron token is checked in the function.
+[functions.paige-pipeline-outcome]
+verify_jwt = true

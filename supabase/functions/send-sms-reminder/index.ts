@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
@@ -37,6 +38,10 @@ serve(async (req) => {
       const { data: { user }, error } = await authed.auth.getUser();
       if (error || !user) throw new Error('Unauthorized');
       if (user.id !== userId) throw new Error('Forbidden');
+    }
+    const admin = createClient(supabaseUrl, supabaseServiceKey);
+    if (!await commsProviderExecutionAllowed(admin, { actorUserId: userId })) {
+      return new Response(JSON.stringify({ error: 'COMMS_PROVIDER_EXECUTION_DISABLED' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const response = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
       method: 'POST',

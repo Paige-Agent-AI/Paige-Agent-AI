@@ -47,6 +47,26 @@ export interface TraceCtx {
    *  itemization, DISTINCT from tenant_id (the persona-context attribution). Soft ref, coerced to null
    *  if non-uuid. Optional: a site that doesn't set it writes null (default), never a fabricated id. */
   working_context_tenant_id?: string | null;
+  /** Budget-gate hits the ENFORCING layer (router/gateway/fabric) attaches to the ctx so whichever
+   *  writer records the call (streamed or not) carries the hit via its spread. Declared here so the
+   *  fabric's gate can set it without a cast (gatewayCompat historically attached it undeclared). */
+  doctrine_gate_hits?: unknown;
+  /** #1856 — the served-route telemetry the Model Fabric attaches before the leg that served (or the
+   *  final failure) so whichever writer records the call carries it via its spread. Closed
+   *  vocabulary only; flattened into allowlisted scalar metadata keys by the one trace writer. */
+  fabric_route?: FabricRouteTelemetry | null;
+}
+
+/** The served-route telemetry block (#1856): what was ASKED for and what SERVED, as closed values.
+ *  `reason` is one of the fabric's closed route codes; `job` is the consumer's validated job
+ *  identity (or the streaming caller's trace tag); served_* are null when nothing served. */
+export interface FabricRouteTelemetry {
+  requested_class: string;
+  job: string;
+  served_provider: string | null;
+  served_model: string | null;
+  fallback: boolean;
+  reason: string;
 }
 
 /** Provenance stamp — bump when the estimator/scrubber/schema changes so a reader knows what produced a row. */
@@ -123,6 +143,22 @@ export function toExcerpt(value: unknown): { text: string | null; truncated: boo
 // stop_reason / stop_category (INT-329): why the provider stopped — `refusal` + its category, or a
 // `max_tokens` cut-off — which otherwise read exactly like a normal answer. Provider-enum strings only.
 const METADATA_ALLOWLIST = ["caller_function", "actor_role", "retry_of", "attempt", "capped", "low_confidence", "stop_reason", "stop_category"] as const;
+/** #1856 — flatten the fabric's route telemetry into metadata SCALARS. The allowlist's rule is
+ *  "scalars only, never an object" (an object could smuggle a secret); every value here is a closed
+ *  enum, a validated job identity, or a provider/model id — scrubbed and capped like the rest. */
+function fabricRouteMetadata(route: FabricRouteTelemetry | null | undefined): Record<string, unknown> {
+  if (!route) return {};
+  const out: Record<string, unknown> = {
+    route_requested_class: scrubSecrets(String(route.requested_class)).slice(0, 64),
+    route_job: scrubSecrets(String(route.job)).slice(0, 64),
+    route_fallback: route.fallback === true,
+    route_reason: scrubSecrets(String(route.reason)).slice(0, 64),
+  };
+  if (typeof route.served_provider === "string") out.route_served_provider = scrubSecrets(route.served_provider).slice(0, 64);
+  if (typeof route.served_model === "string") out.route_served_model = scrubSecrets(route.served_model).slice(0, 256);
+  return out;
+}
+
 function safeMetadata(meta: Record<string, unknown> | undefined): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (!meta) return out;
@@ -167,6 +203,8 @@ export interface TraceRow {
   error_message?: string | null;
   deliverable_id?: string | null;
   doctrine_gate_hits?: unknown;
+  /** #1856 — rides any row whose writer spread a fabric-threaded ctx; flattened into metadata. */
+  fabric_route?: FabricRouteTelemetry | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -223,7 +261,7 @@ export function traceLLMCall(row: TraceRow): void {
     deliverable_id: row.deliverable_id ?? null,
     doctrine_gate_hits: row.doctrine_gate_hits ?? null,
     router_version: ROUTER_VERSION,
-    metadata: safeMetadata(row.metadata),
+    metadata: { ...safeMetadata(row.metadata), ...fabricRouteMetadata(row.fabric_route) },
   };
 
   const write = async () => {

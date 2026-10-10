@@ -37,6 +37,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  comms-provider-boundary:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Docker Official PostgreSQL 16, immutable linux/amd64 manifest from ECR Public.
+        # Avoid shared-runner Docker Hub anonymous pull throttling before proof starts.
+        image: public.ecr.aws/docker/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Controlled actual Communications handlers and strict server floor
+        run: >-
+          node --test
+          supabase/functions/_shared/comms-provider-boundary.test.ts
+          supabase/functions/_shared/comms-email-provider-boundary.test.mjs
+          supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
+          supabase/functions/_shared/booking-provider-boundary.test.mjs
+      - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
+      - name: Communications executor coverage includes subsequently introduced mailbox paths
+        run: node scripts/ci/comms-provider-boundary-wiring.mjs
+      - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
+        run: node scripts/proof/operator-account-archive.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -752,6 +788,20 @@ jobs:
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts
+          # Inbox Intelligence (#1140 two-mailbox pilot): the pure policy/classify/sync/organize
+          # contracts. Same deny-all sandbox; the modules under test are pure by design.
+          deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/inbox-intelligence/policy.test.ts \
+            supabase/functions/_shared/inbox-intelligence/classify.test.ts \
+            supabase/functions/_shared/inbox-intelligence/sync.test.ts \
+            supabase/functions/_shared/inbox-intelligence/organize.test.ts
+          # Owner addendum 6088460092: source-level boundary tests read the door's real
+          # source, so this one line grants read (repo tree only); every other deny stays.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
+          # The two-mailbox pilot's edge functions must at least TYPE-check.
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/gmail-mailbox-sync/index.ts \
+            supabase/functions/comms-mailbox-command/index.ts
           # The edge functions must at least TYPE-check; none is exercised by the tests above.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/sign-agreement/index.ts \
@@ -791,6 +841,11 @@ jobs:
           for _ in $(seq 1 20); do "$PGBIN/pg_isready" -h 127.0.0.1 -p "$PORT" >/dev/null 2>&1 && break; sleep 0.5; done
           node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d"
 
+      - name: C0b — incumbent adapter authority bindings
+        run: |
+          node --test scripts/ci/c0b-*.test.mjs
+          node --test scripts/proof/int304-authenticated-observation.test.mjs
+
       - name: INT-336 — typed supersession and canonical settlement
         if: ${{ !cancelled() }}
         run: |
@@ -798,6 +853,7 @@ jobs:
             supabase/functions/_shared/paige-turn/interactive.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
@@ -819,6 +875,14 @@ jobs:
           "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int336-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-rollout-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/c4e-research-preparation-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-durable-observation-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 
       - name: C4a/C4b — an approval resumes the same objective (the pure resume model)
         if: ${{ !cancelled() }}
@@ -852,9 +916,15 @@ jobs:
           # The round gate (round.ts): a tool call runs only from a round that reached a normal tool-use stop.
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/route.test.ts supabase/functions/_shared/paige-turn/round.test.ts \
-            supabase/functions/_shared/paige-turn/classify.test.ts
+            supabase/functions/_shared/paige-turn/classify.test.ts \
+            supabase/functions/_shared/paige-turn/exposure.test.ts \
+            supabase/functions/_shared/provider-failure.test.ts
           # The same gate through BOTH real stream converters (Anthropic and OpenAI), provider-native events.
           npm run -s test:round-gate
+          # R5 — the streaming Model Fabric through its real transports: OpenAI off for chat until the Sol
+          # canary passes; the owner's order per class; fallback only on a proven health failure before
+          # the stream opened; one chat shape to the round gate whatever served.
+          npm run -s test:model-fabric
 
       - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
         if: ${{ !cancelled() }}
@@ -890,7 +960,7 @@ jobs:
 
       - name: Test
         if: ${{ !cancelled() }}
-        run: npm run test
+        run: npm run test -- --reporter=default --reporter=json --outputFile=unit-results.json
 
       - name: Sales provider operation, account binding and recovery contract tests
         if: ${{ !cancelled() }}
@@ -1109,6 +1179,28 @@ jobs:
       - name: Public form intake (only the platform's origins, no bots, only the form's own fields)
         if: ${{ !cancelled() }}
         run: npm run test:growth-intake
+
+      # Add diagnostics to this gate; its original exit code remains authoritative.
+      # Append steps so historical failing-step ordinals retain their meaning.
+      - name: Unit isolation and failure attribution contract
+        if: ${{ !cancelled() }}
+        run: node --test scripts/ci/__tests__/unit-network-guard.test.mjs scripts/ci/__tests__/unit-failure-attribution.test.mjs
+
+      - name: Attribute unit failures (diagnostic evidence)
+        if: ${{ always() }}
+        env:
+          CI_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          export CI_EXECUTED_SHA="$(git rev-parse HEAD)"
+          node scripts/ci/unit-failure-attribution.mjs unit-results.json unit-failure-attribution.json
+
+      - name: Upload unit failure attribution
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-failure-attribution-${{ github.run_id }}-${{ github.run_attempt }}
+          path: unit-failure-attribution.json
+          if-no-files-found: error
 
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real

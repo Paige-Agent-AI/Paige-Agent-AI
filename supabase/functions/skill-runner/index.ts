@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 // deno-lint-ignore-file no-explicit-any
 // EXECUTES a `paige_skills` recipe (concept 1 in docs/doctrine/skills-vocabulary.md) — NOT
 // a `paige_subagents` specialist (that's `delegate_to_subagent`) and NOT a `marketplace_items`
@@ -366,6 +367,7 @@ async function runDraftAndEmailDocument(
   const contactId = body.contact_id ?? null;
   if (!contactId) return json(400, { status: "failed", error: "contact_id required" });
   if (!skillCaller.userId) return json(403, { status: "refused", code: "unauthenticated", error: "This action needs a signed-in person behind it." });
+  if (!await commsProviderExecutionAllowed(admin, { tenantId: callerTenantId, actorUserId: skillCaller.userId })) return json(403, { status: "refused", code: COMMS_PROVIDER_EXECUTION_DISABLED });
 
   // §9 — look up the contact SCOPED to the caller's resolved tenant. A cross-tenant contact_id returns
   // nothing, which the pure flow then denies before any draft or send.

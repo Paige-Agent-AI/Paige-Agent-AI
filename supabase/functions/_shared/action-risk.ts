@@ -80,6 +80,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["crm_delete_task", "high", "destroys a task with nothing left to restore it from"],
   ["comms_buy_number", "high", "commits the tenant to a recurring charge on a provider account"],
   ["comms_set_primary_number", "high", "changes the number every client sees when the tenant contacts them"],
+  // INT-345 K-3: free and idempotent, but it creates provider resources outside the
+  // platform — the rendered approval card, and autonomy clamps at confirm.
+  ["comms_setup_calling", "high", "connects the workspace's calling account on the provider (free, idempotent, deliberate)"],
   ["n8n_delete_workflow", "high", "permanently deletes an automation"],
   ["plan_remove_item", "high", "cancels a milestone, task or reminder"],
 
@@ -432,6 +435,8 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["comms_upsert_email_template", "high", "overwrites a shared template every future send renders from"],
   // send_btf_template_email, send_transactional_email, send_composed_email
   ["comms_send_email", "high", "puts an email in a real person's inbox"],
+  // #1140 two-mailbox pilot: reversible mailbox organization on the canonical mirror vs the real mailbox.
+  ["gmail_organize", "high", "changes a real Gmail mailbox (labels, archive, trash, unsubscribe) — external and visible to the mailbox owner, so it needs the rendered approval card; the mailbox kinds are reversible, an unsubscribe proposal has no undo and its automatic sending is disabled, and permanent deletion is not expressible"],
   // cancel_workflow_run
   ["workflow_cancel_run", "high", "acts on the operator's provider account to stop a run"],
   // register_workflow
@@ -441,6 +446,8 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["sales_update_invoice_settings", "high", "changes future invoice numbering and document preferences"],
   ["sales_publish_invoice", "high", "issues the business's reviewed customer invoice as an immutable obligation"],
   ["sales_create_payment_request", "high", "creates an exact tenant-merchant hosted customer payment request against a canonical invoice"],
+  ["sales_start_merchant_onboarding", "high", "creates or resumes a hosted Stripe merchant setup outside the workspace"],
+  ["sales_create_merchant_login_link", "high", "creates a credential-bearing hosted access link to the tenant merchant dashboard"],
   ["sales_create_commercial_terms", "high", "creates a fixed client commercial obligation without an invoice, signature or payment"],
   ["sales_save_collection_terms", "high", "changes agreement-backed customer repayment terms without executing a charge"],
   ["sales_stage_collection_import", "high", "stages tenant commercial records for explicit review without publishing or verifying payment"],

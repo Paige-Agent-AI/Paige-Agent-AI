@@ -14,6 +14,7 @@
  * Run: node --import ./scripts/client-memory-authz/register.mjs scripts/client-memory-authz/check.mjs
  */
 
+import { readFileSync } from "node:fs";
 import { AsyncLocalStorage } from "node:async_hooks";
 const modelTurnState = new AsyncLocalStorage();
 
@@ -488,7 +489,9 @@ async function drive({
     // What the SERVICE-ROLE client sees: everything, including the foreign client. This is the
     // hazard itself — if the authorization read is made with this client, a foreign id resolves.
     serviceTables: {
-      client_memory: (filters) => (filters.some((f) => f[0] === "gte" && f[1] === "created_at") ? [] : [{ client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString() }]),
+      // The legacy own-row fixture models a CONFIRMED canonical owner read after S5/C6.
+      // Client rows and automatic writes have their own unchanged fixtures below.
+      client_memory: (filters) => (filters.some((f) => f[0] === "gte" && f[1] === "created_at") ? [] : [{ id: "99999999-9999-4999-8999-999999999990", client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString(), metadata: { confirmation_state: "confirmed" } }]),
       clients: (filters) => {
         const idEq = filters.find((f) => f[0] === "eq" && f[1] === "id")?.[2];
         return idEq ? [{ id: idEq, tenant_id: "99999999-9999-4999-8999-999999999999" }] : [];
@@ -1056,6 +1059,8 @@ console.log("\nthe TOOL loop does not retarget a refused subject at the caller")
   // as load-bearing as before; it now happens on the far side of an approval. Deleting them because
   // the shape changed would have removed the only proof that this section's refusals are refusing
   // something that otherwise works.
+  // INT-334 R5b: this is an ACT turn (it scripts a mutating call) — the unclassified route carries
+  // the full manifest, so the manifest boundary does not re-route it.
   const proposed = await drive({ clientId: OWN, stream: true, toolCall: upd });
   assert("12.0 an AUTHORIZED turn now PROPOSES rather than writing — the gate covers this tool",
     !proposed.outboundCalls.some((c) => c.url.includes("paige-write-back")),
@@ -1504,7 +1509,9 @@ const mirrorConfirms = (st) => (t, row) => {
 // thing standing between "no violations" and "no evidence" — the two are indistinguishable without
 // it, and a mutation that deleted the whole injection left this green.
 {
-  const seen = await drive({ clientId: OWN, stream: true });
+  // INT-334 R5b: the section reads the gated set from the wire — the turn must carry the full
+  // manifest (an unclassified turn routes act), not the narrowed read set.
+  const seen = await drive({ clientId: OWN, stream: true, classification: null });
   const wire = seen.modelEgress
     .map((b) => (typeof b === "string" ? b : JSON.stringify(b)))
     .join("\n")
@@ -1678,6 +1685,35 @@ const mirrorConfirms = (st) => (t, row) => {
     };
   }
 
+  // C0b retirement: owner Settings decisions remain classified and refused, but
+  // the model must not be offered schemas it cannot execute at any approval.
+  for (const lane of [null, "auto", "confirm", "off"]) {
+    for (const name of ["automation_set_grant", "automation_set_state"]) {
+      const store = processStore();
+      const reply = await drive({
+        stream: true,
+        text: "please do it",
+        classification: { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: false, confidence: 0.9 },
+        toolCall: { name, args: { automation_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", lane: "auto", state: "live", confirm: true } },
+        rpcOverrides: {
+          get_actor_access: { data: { tier: "tenant" }, error: null },
+          ...store.__rpc,
+          ...(lane === null ? {} : { resolve_tool_autonomy: { data: lane, error: null } }),
+        },
+        tablesExtra: store,
+      });
+      const requests = reply.modelEgress.map(body => JSON.parse(body));
+      const offered = requests.flatMap(request => Array.isArray(request.tools) ? request.tools : []);
+      assert(`C0b owner-only ${name}/${lane || "default"}: model egress is exercised`,
+        offered.some(tool => tool.name === "automation_draft"), JSON.stringify(offered.map(tool => tool.name)));
+      assert(`C0b owner-only ${name}/${lane || "default"}: never advertised`,
+        !offered.some(tool => tool.name === "automation_set_grant" || tool.name === "automation_set_state"), JSON.stringify(offered.map(tool => tool.name)));
+      assert(`C0b owner-only ${name}/${lane || "default"}: injected call cannot update or propose`,
+        !reply.rec.inserts.some(row => row.table === "paige_automations" && row.update)
+          && !reply.rec.inserts.some(row => row.table === "paige_pending_confirmations" && row.row && row.row.tool_name === name),
+        JSON.stringify(reply.rec.inserts.filter(row => row.table === "paige_automations" || row.table === "paige_pending_confirmations")));
+    }
+  }
   // A CLIENT-PORTAL SEAT CANNOT AUTHOR PROCESSES, and that is checked first because the harness
   // caller is one by default — driving with a focused client is what surfaced it. Automations are
   // an operator capability (§51/§60); a client being able to arm work inside someone's workspace
@@ -3537,8 +3573,8 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   const historyMarker = "Earlier authenticated conversation about this workspace.";
   // `ordinary` drives a Live turn that carries no protected evidence — no tool call, no memory — so its
   // answer streams live rather than being held for the final check (paige-turn, 26.5–26.6).
-  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {}, failStreamCalls = [], breakStreamCalls = {}, ordinary = false, toolEnding = undefined } = {}) => {
-    const issued = await proof.issue({ ...scope, ...scopeOverride }, transcript);
+  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {}, failStreamCalls = [], breakStreamCalls = {}, ordinary = false, toolEnding = undefined, readTool, rpcExtras = {}, spokenText = transcript } = {}) => {
+    const issued = await proof.issue({ ...scope, ...scopeOverride }, spokenText);
     const session = { id: sessionId, tenant_id: issued.scope.tenantId, actor_user_id: issued.scope.actorId,
       thread_id: threadId, context_epoch: issued.scope.epoch, availability: "LIVE", state: "thinking",
       provider_session_ref: `runtime:${await liveRuntimeDigest(issued.token)}` };
@@ -3547,9 +3583,9 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
     const matches = (row, filters) => filters.every(([op, key, value]) =>
       op === "eq" ? row[key] === value : op === "in" ? value.includes(row[key]) : true);
     const result = await drive({
-      text: transcript, stream: true, failStreamCalls, breakStreamCalls,
+      text: spokenText, stream: true, failStreamCalls, breakStreamCalls,
       extraBody: { threadId, liveRuntimeChallenge: issued.token, ...bodyOverride },
-      toolCall: ordinary ? undefined : { name: "comms_connection_summary", args: {}, ...(toolEnding ? { ending: toolEnding } : {}) },
+      toolCall: ordinary ? undefined : readTool ?? { name: "comms_connection_summary", args: {}, ...(toolEnding ? { ending: toolEnding } : {}) },
       replyText: ordinary ? "Your connection is set up." : undefined,
       rpcOverrides: {
         ...(ordinary ? { match_paige_memory: { data: [], error: null } } : {}),
@@ -3559,6 +3595,7 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
           playbook_slug: null, funding_enabled: false, brand: null }], error: null },
         tenant_comms_readiness: { data: { can_send_sms: false, blocked_reason: null, number: "absent", number_e164: null, a2p: "absent" }, error: null },
         list_tool_autonomy: { data: [], error: null },
+        ...rpcExtras,
       },
       tablesExtra: {
         ...(ordinary ? { client_memory: () => [] } : {}),
@@ -3605,6 +3642,19 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   assert("26.4 admitted response carries valid signed output through completion for the issued scope",
     output.some((frame) => frame?.kind === "done") && output.every((frame) => frame && sameLiveRuntimeScope(frame.scope, authorized.issued.scope)),
     JSON.stringify({ status: authorized.status, outputKinds: output.map((frame) => frame?.kind), logged: authorized.logged }));
+
+  // #1837 adopts this existing signed admission harness, never a voice-specific metric reader.
+  for (const deny of [false, true]) {
+    let metric;
+    const liveMetric = await liveDrive({ spokenText: 'What do customers currently owe us?',
+      readTool: { name: 'read_business_metric', args: { metric_key: 'sales.receivables.outstanding_current', period: 'this_month' } },
+      rpcExtras: { issue_analytics_evidence_bundle: input => { metric = conversationalMetricFixture(input); return { data: metric, error: null }; },
+        resolve_analytics_evidence_reference: () => deny ? { data: null, error: { code: '42501' } } : { data: metric, error: null } },
+    });
+    const reads = liveMetric.rec.rpc.filter(r => ['issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference'].includes(r.name));
+    assert(`1837.Live ${deny ? 'denied' : 'authorized'} measurement uses identical caller-JWT issuer and resolver`, liveMetric.status === 200 && reads.length === 2 && reads.every(r => r.client === 'jwt'));
+    assert(`1837.Live ${deny ? 'refusal excludes values' : 'evidence reaches shared reasoning'}`, deny ? liveMetric.modelEgress.every(b => !b.includes('125050')) : liveMetric.modelEgress.some(b => b.includes('125050') && b.includes('current_snapshot') && b.includes('aneb_v1_')));
+  }
 
   // paige-turn — WHERE A LIVE TURN'S TERMINAL GOES. A Live answer streams from the tools-free closing
   // call, so on an ORDINARY turn (nothing held) its terminal waits for the first answer line actually
@@ -3860,7 +3910,7 @@ console.log("\nteam tools — the approval card, the tool descriptions and the r
     set_solo_team_member_permission: { data: null, error: null },
   };
   const teamDrive = (store, name, args, body = {}) => drive({
-    stream: true, extraBody: { threadId: THREAD, ...body },
+    stream: true, extraBody: { threadId: THREAD, ...body }, classification: null,
     toolCall: { name, args: { member_user_id: MEMBER, ...args } },
     rpcOverrides: TEAM_RPC,
     tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
@@ -4009,7 +4059,7 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
   // Propose, approve, and let the approved turn end in a scripted answer.
   const store = makeConfirmStore();
   const turn = (args, body, replyText) => drive({
-    stream: true, extraBody: { threadId: THREAD, ...body },
+    stream: true, extraBody: { threadId: THREAD, ...body }, classification: null,
     toolCall: { name: "team_set_work_profile", args }, rpcOverrides: RPC,
     tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
     onInsert: mirrorConfirms(store), replyText,
@@ -4037,6 +4087,11 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
   const leaky = await approvedTurn(LEAKY);
   const sent = sentOf(leaky);
   const vocabulary = deriveInternalVocabulary(sent);
+  // INT-334 R5b — a deterministic resume's narration rounds carry the READ manifest (no mutating
+  // defs), so the executed act's own name now reaches the model through the tool RESULT in the
+  // conversation instead of the manifest. It is the one name this turn provably ran; add it so the
+  // leak scan still treats a mention of it as derived, not internal.
+  vocabulary.toolNames.add("team_set_work_profile");
   const leakyReply = replyOf(leaky);
 
   assert("29.0 the approved turn ran, the scripted answer reached the person verbatim, and the vocabulary came from the real request (guards this section)",
@@ -4930,7 +4985,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     tablesExtra: studioTables(),
   });
   const mainDrive = (toolCall, extraRpc = {}, roles = [{ role: "admin" }], functionsExtra = {}) => drive({
-    stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra,
+    stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra, classification: null,
     rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...PAGE_ROW, ...extraRpc },
     serviceTablesExtra: { user_roles: () => roles, ...SCOPE_ROW },
     tablesExtra: { paige_chat_threads: () => [{ studio_session_id: null, summary: null }] },
@@ -5262,7 +5317,7 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
 
   // A — a Solo owner who is ALSO a platform operator, describing the roadmap in their own workspace.
   const solo = await drive({
-    stream: true, rpcOverrides: SOLO_OWNER, serviceTablesExtra: ownerMemory,
+    stream: true, rpcOverrides: SOLO_OWNER, serviceTablesExtra: ownerMemory, classification: null,
     text: "We're building Sales and Marketing inside you right now.",
   });
   const soloSys = sysPlain(solo);
@@ -6057,7 +6112,12 @@ try {
     { id: SUSPENDED, role: "assistant", content: "Here is what I'll do.", seq: 2, bundle_ref: { paige_confirm: [{ tool, summary: "Do it", fingerprint: fp }] } },
   ] });
   const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {}, clientId } = {}) => drive({
-    stream: true, clientId, text: body.approvedConfirmations || body.declinedConfirmations ? "Approved — run it." : "please do it",
+    // INT-334 R5b — "please do it" is a bare go-ahead: the REAL classifier labels it act (43.42e
+    // pins classify.test on exactly this), so the fixture says act too instead of the implicit
+    // ≤3-words-is-converse shortcut, and the R5b manifest boundary does not re-route it.
+    stream: true, clientId,
+    classification: { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: false, confidence: 0.9 },
+    text: body.approvedConfirmations || body.declinedConfirmations ? "Approved — run it." : "please do it",
     extraBody: { ...(threadId ? { threadId } : {}), ...body }, toolCall,
     rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), ...extraRpc },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE, ...extraService },
@@ -7508,7 +7568,7 @@ console.log("\nC4c — PAIGE asks, waits, and the same objective resumes on the 
   // ── 41.23 THE WORKSPACE CHANGES AFTER THE ANSWER WAS CHECKED AND BEFORE THE CLAIM (a turn carrying
   // protected evidence runs the pre-model re-check): 409 ACTIVE_ACCOUNT_CHANGED, NO claim written, PAIGE
   // not called — and the question is still open, so the same answer sent again from A binds once.
-  const MEM23 = [{ client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: "Kestrel prefers mornings", created_at: new Date().toISOString() }];
+  const MEM23 = [{ id: "99999999-9999-4999-8999-999999999996", client_user_id: USER, client_id: null, tenant_id: CALLER_TENANT, is_active: true, memory_type: "user_preference", content: "Kestrel prefers mornings", created_at: new Date().toISOString(), metadata: { confirmation_state: "confirmed" } }];
   const evidence23 = { tables: { client_memory: () => MEM23 }, service: { client_memory: () => MEM23 } };
   const s23 = makeThreadStore(THREADS);
   const a23 = await askThen(s23);
@@ -7933,6 +7993,127 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       classification: { intent: "act", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
     assert("43.42e a bare 'do it' labelled act never takes the cheap tier, even when trivial",
       modelOf(doIt, 0) === CLAUDE_REASONING, JSON.stringify({ model: modelOf(doIt, 0) }));
+    // INT-334 R5b — the cheap round now carries the PRESENTATION set alone: the escalation signal
+    // (plus ask_choices where a surface offers it), never a governed tool. The governed list stays
+    // on the reasoning tier; the rescue for a misread cheap turn is the signal (43.43).
+    const MUTATING_SET = (await import("../../supabase/functions/_shared/action-risk.ts")).mutatingTools();
+    const toolsOf = (r, i = 0) => streamed(r)[i]?.tools ?? null;
+    const namesOf = (r, i = 0) => (toolsOf(r, i) ?? []).map((t) => t?.function?.name ?? t?.name).filter(Boolean);
+    assert("43.42f the cheap round carries no governed tool — an empty (or presentation-only) manifest",
+      (toolsOf(thanks, 0) ?? []).length <= 1 && !namesOf(thanks, 0).some((n) => MUTATING_SET.has(n))
+        && namesOf(failed, 0).length > (toolsOf(thanks, 0) ?? []).length,
+      JSON.stringify({ cheap: namesOf(thanks, 0), reasoningCount: namesOf(failed, 0).length }));
+    // INT-332 — a claim correction is operational work whatever the turn's own class: a cheap turn that
+    // narrates a card it never minted is corrected on the reasoning tier, with the governed tools.
+    const sC = makeThreadStore(THREADS), cC = makeConfirmStore(), dbC = crmDb();
+    const cheapClaim = await turn(sC, cC, dbC, { text: "ok great", threadId: THREAD_FRESH, script: [NARRATION, "Sorry — I haven't set anything up yet."],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.42g a cheap turn's claim correction runs on the reasoning tier with the governed tools",
+      modelOf(cheapClaim, 0) === CLAUDE_CLASSIFICATION && told(cheapClaim).includes(CORRECTION.card)
+        && modelOf(cheapClaim, 1) === CLAUDE_REASONING && Array.isArray(toolsOf(cheapClaim, 1)) && toolsOf(cheapClaim, 1).length > 0,
+      JSON.stringify({ calls: streamed(cheapClaim).map((b) => [b.model, b.tools?.length ?? null]), corrected: told(cheapClaim).includes(CORRECTION.card) }));
+
+    // ── INT-334 R5b: the narrowing + the rescue. A cheap or read-only round never silently loses the
+    // objective: the model NAMES the capability it needs (the projection advertises every governed
+    // capability), the attempt is answered at dispatch with a re-route — never executed — and the
+    // turn re-resolves its route with the `capabilityEscalation` fact: the next round runs the
+    // re-resolved class with the widened set, through the same gates (the door, the card, the
+    // autonomy lanes). The boundary is enforced on the CHEAP (`none`) rounds where the owner's
+    // rule lives; read-round attempts stay decided by the gates, exactly as before R5b. Cheap
+    // classification can neither make a legitimate action disappear nor grant execution authority.
+    // 43.43a — the rescue: a cheap round's attempted call re-routes the turn; the act runs from the
+    // ESCALATED round, through the door, to the card.
+    const sA = makeThreadStore(THREADS), cA = makeConfirmStore(), dbA = crmDb();
+    const rescued = await turn(sA, cA, dbA, { text: "ok great", threadId: THREAD_FRESH,
+      script: [{ name: ASSIGN.name, args: ASSIGN.args }, { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43a a cheap round that names a governed tool it was not offered is re-routed to the reasoning tier with the governed tools",
+      modelOf(rescued, 0) === CLAUDE_CLASSIFICATION && (toolsOf(rescued, 0) ?? []).every((t) => !MUTATING_SET.has(t?.function?.name ?? t?.name))
+        && modelOf(rescued, 1) === CLAUDE_REASONING && namesOf(rescued, 1).includes(ASSIGN.name)
+        && told(rescued).includes("NOT_OFFERED_THIS_ROUND"),
+      JSON.stringify({ calls: streamed(rescued).map((b) => [b.model, b.tools?.length ?? null]) }));
+    assert("43.43b nothing executes from the escalating round — the act still goes through the door and mints the card",
+      doorCalls(rescued).length === 1 && cA.rows.length === 1 && cA.rows[0].tool_name === ASSIGN.name
+        && terminalOf(rescued)?.state === "WAIT_APPROVAL" && dbA.executions.length === 0,
+      JSON.stringify({ door: doorCalls(rescued).length, rows: cA.rows.map((r) => r.tool_name), terminal: terminalOf(rescued)?.state, executions: dbA.executions.length }));
+    // 43.43c — read exposure: a workspace-data answer keeps lookups and withholds writes.
+    const sR = makeThreadStore(THREADS), cR = makeConfirmStore(), dbR = crmDb();
+    const lookup = await turn(sR, cR, dbR, { text: "what do we have for Dana?", threadId: THREAD_FRESH,
+      script: [{ name: "crm_search_contacts", args: { query: "Dana" } }, "Dana Reyes — Retainer, Enrolled."],
+      classification: { intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.9 } });
+    const lookupNames = namesOf(lookup, 0);
+    assert("43.43c a read turn keeps its lookups and withholds every mutating tool",
+      modelOf(lookup, 0) === CLAUDE_REASONING && lookupNames.includes("crm_search_contacts")
+        && !lookupNames.includes(ASSIGN.name) && !lookupNames.includes("crm_create_contact"),
+      JSON.stringify({ model: modelOf(lookup, 0), kept: lookupNames.length, hasAssign: lookupNames.includes(ASSIGN.name) }));
+    // 43.43d — bounded: the re-route answers the attempt; the re-issued call on the escalated round
+    // is ordinary governed behavior, and the turn ends at the card.
+    const sD2 = makeThreadStore(THREADS), cD2 = makeConfirmStore(), dbD2 = crmDb();
+    const twice = await turn(sD2, cD2, dbD2, { text: "ok great", threadId: THREAD_FRESH,
+      script: [{ name: ASSIGN.name, args: ASSIGN.args }, { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43d the re-route answers once and the turn ends at the card — no loop",
+      streamed(twice).length <= 3 && told(twice).split("NOT_OFFERED_THIS_ROUND").length - 1 >= 1
+        && doorCalls(twice).length === 1 && terminalOf(twice)?.state === "WAIT_APPROVAL",
+      JSON.stringify({ rounds: streamed(twice).length, door: doorCalls(twice).length, terminal: terminalOf(twice)?.state }));
+    // 43.43e — a refusal in prose on a cheap round stays terminal: the narrowing adds no loop.
+    const sE = makeThreadStore(THREADS), cE = makeConfirmStore(), dbE = crmDb();
+    const refused = await turn(sE, cE, dbE, { text: "ok great", threadId: THREAD_FRESH, script: ["I can't do that from here."],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43e a stated refusal on a narrowed cheap round is terminal — exactly one model call",
+      streamed(refused).length === 1 && modelOf(refused, 0) === CLAUDE_CLASSIFICATION,
+      JSON.stringify({ rounds: streamed(refused).length }));
+    // 43.43f — the action-intent continuation escalates too: a C1-continued cheap misread re-enters on
+    // the reasoning tier with the governed tools (the latent R5a-era gap: roundClass stayed cheap).
+    const sF2 = makeThreadStore(THREADS), cF2 = makeConfirmStore(), dbF2 = crmDb();
+    seedOffer(sF2, THREAD_FRESH, { history: 1 });
+    const cont = await turn(sF2, cF2, dbF2, { text: "please add Dana to the deal", threadId: THREAD_FRESH,
+      script: ["Sure, considered it done.", { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43f an action-intent continuation out of a cheap round runs on the reasoning tier with the governed tools",
+      modelOf(cont, 0) === CLAUDE_CLASSIFICATION && modelOf(cont, 1) === CLAUDE_REASONING && namesOf(cont, 1).includes(ASSIGN.name),
+      JSON.stringify({ calls: streamed(cont).map((b) => [b.model, b.tools?.length ?? null]) }));
+    // 43.43h — behavioral, client seat: the seat CAN escalate (the round after the attempt is
+    // operational with the governed set), and the re-issued call is refused BY THE SEAT GATE — the
+    // capability never disappears, and never executes either.
+    const sH = makeThreadStore(THREADS), cH = makeConfirmStore(), dbH = crmDb();
+    const seatTurn = (opts) => drive({
+      stream: true, text: "ok great", streamScript: opts.script,
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 },
+      extraBody: { threadId: THREAD_FRESH },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null }, ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
+      tablesExtra: { paige_chat_turns: sH.table, paige_chat_threads: sH.threadsTable, client_memory: () => [], paige_pending_confirmations: cH.table },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
+      onInsert: mirrorConfirms(cH),
+      functionsExtra: { "crm-command": realDoor },
+    });
+    const seat = await seatTurn({ script: [{ name: ASSIGN.name, args: ASSIGN.args }, { name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, "That action isn't available from a client seat — nothing was changed."] });
+    assert("43.43h a client seat escalates, and the re-issued governed call is refused by the seat gate",
+      modelOf(seat, 0) === CLAUDE_CLASSIFICATION && modelOf(seat, 1) === CLAUDE_REASONING && namesOf(seat, 1).includes(ASSIGN.name)
+        && told(seat).includes("client portal seat") && told(seat).includes("NOT_OFFERED_THIS_ROUND")
+        && doorCalls(seat).length === 0 && cH.rows.length === 0,
+      JSON.stringify({ calls: streamed(seat).map((b) => b.model), refused: told(seat).includes("client portal seat"), door: doorCalls(seat).length, cards: cH.rows.length }));
+    // 43.43i — the route's own cap holds at RUNTIME for what a narrowed turn may SEE: an ambiguous
+    // offer keeps its READ manifest on every round (the write tools are never offered, whatever the
+    // model wants), and a read-round attempt is decided by the same gates as before R5b — not by
+    // the manifest. The none-round re-route is pinned in 43.43a/d/h; this pins the read side.
+    const sI = makeThreadStore(THREADS), cI = makeConfirmStore(), dbI = crmDb();
+    seedOffer(sI, THREAD_FRESH, { history: 1, offer: "Two things are open for Dana.\\n\\nWant me to send the approval card? Or should I draft her invoice first?" });
+    const amb = await turn(sI, cI, dbI, { text: "yes please", threadId: THREAD_FRESH,
+      script: [{ name: ASSIGN.name, args: { ...ASSIGN.args, confirm: true } }, AFTER_CARD],
+      classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 } });
+    assert("43.43i an ambiguous offer never sees the write set offered — the cap outranks any widening, on every round",
+      modelOf(amb, 0) === CLAUDE_REASONING && !namesOf(amb, 0).includes(ASSIGN.name)
+        && streamed(amb).every((b) => (b.tools ?? []).every((t) => (t?.function?.name ?? t?.name) !== ASSIGN.name)),
+      JSON.stringify({ calls: streamed(amb).map((b) => [b.model, (b.tools ?? []).length]), hasAssign: streamed(amb).map((b, i) => namesOf(amb, i).includes(ASSIGN.name)) }));
+    // 43.43g — source-level: the manifest-boundary rescue sits BEFORE the client-seat gate, so a
+    // client seat's attempt can escalate too — and every re-issued call still meets that gate.
+    const handlerSrc = readFileSync(new URL("../../supabase/functions/paige-ai-chat/index.ts", import.meta.url), "utf8");
+    const boundaryIdx = handlerSrc.indexOf("governedButNotOffered.has(tc.function.name)");
+    const seatGateIdx = handlerSrc.indexOf("CLIENT-SEAT GATE");
+    assert("43.43g the manifest-boundary rescue dispatches before the client-seat gate (the rescue works on every seat)",
+      boundaryIdx > -1 && seatGateIdx > -1 && boundaryIdx < seatGateIdx,
+      JSON.stringify({ boundaryIdx, seatGateIdx }));
   }
 
   // 43.20 (review round 4, structural) — on an accepted offer, a prose QUESTION is not a terminal answer: the
@@ -8915,9 +9096,9 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
   // only what the client arm reads (the ABOUT-a-client row). The governed read derivation
   // serves the owner rows scope-filtered, exactly as the real seam does.
   const OWNER_ROWS = [
-    { user_id: USER, tenant_id: WS_A, memory_type: "preference", content: RECENT_A, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
+    { id: "99999999-9999-4999-8999-999999999991", user_id: USER, tenant_id: WS_A, memory_type: "preference", content: RECENT_A, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "confirmed" } },
     // The same preference text, saved in A — what the 7-day de-dupe probe could wrongly find from B.
-    { user_id: USER, tenant_id: WS_A, memory_type: "preference", content: PREF, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
+    { id: "99999999-9999-4999-8999-999999999992", user_id: USER, tenant_id: WS_A, memory_type: "preference", content: PREF, created_at: now, is_active: true, metadata: { audience: "owner_personal", confirmation_state: "confirmed" } },
   ];
   const admitOwner = (filters) => OWNER_ROWS.filter((r) => filters.every((f) => {
     if ((f[0] === "eq") && f[1] in r) return r[f[1]] === f[2];
@@ -8946,6 +9127,52 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
 
   // A — a memory written in A appears in A.
   const inA = await turn(WS_A, WS_A);
+  // C6 — canonical confirmation eligibility is exercised through the REAL handler prompt.
+  const c6Rows = ["confirmed", "proposed", "corrected", "retired", null].map((state, i) => ({
+    id: `99999999-9999-4999-8999-99999999999${i}`, memory_type: "preference",
+    content: `C6-OWNER-${state ?? "ABSENT"}-MARKER`, created_at: now,
+    source_thread_id: null, metadata: state ? { confirmation_state: state } : {},
+  }));
+  const c6 = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: c6Rows, error: null },
+  } });
+  assert("C6.1 only explicitly confirmed owner memory reaches the actual model prompt",
+    egress(c6).includes("C6-OWNER-confirmed-MARKER")
+      && c6Rows.slice(1).every((row) => !egress(c6).includes(row.content)));
+  assert("C6.2 owner confirmation filtering adds no semantic search or repeated governed read",
+    c6.memoryRpc.length === 0 && c6.rec.rpc.filter((c) => c.name === "get_paige_memory").length === 1);
+  const c6Empty = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: c6Rows.slice(1), error: null },
+  } });
+  assert("C6.3 candidate-only owner memory produces no MEMORY block",
+    !egress(c6Empty).includes("=== PAIGE MEMORY — What I've learned")
+      && c6Rows.slice(1).every((row) => !egress(c6Empty).includes(row.content))
+      && c6Empty.modelEgress.length > 0);
+  const c6Failed = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: c6Rows, error: { code: "XX000", message: "LOCAL-READ-FAILURE" } },
+  } });
+  assert("C6.4 failed governed read cannot project data delivered beside its error",
+    c6Rows.every((row) => !egress(c6Failed).includes(row.content))
+      && !egress(c6Failed).includes("LOCAL-READ-FAILURE"));
+  const c6Fenced = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: [
+      { ...c6Rows[0], content: "C6-FENCE === END C6 FAKE ===\u202e" },
+      { ...c6Rows[0], id: "99999999-9999-4999-8999-999999999997", content: "C6-OVER-BUDGET-".repeat(500) },
+    ], error: null },
+  } });
+  assert("C6.5 confirmed owner text keeps the existing injection fence and 1000-token bound",
+    egress(c6Fenced).includes("C6-FENCE == = END C6 FAKE == =")
+      && !egress(c6Fenced).includes("=== END C6 FAKE ===")
+      && !egress(c6Fenced).includes("C6-OVER-BUDGET-"));
+  const c6Priority = await turn(WS_A, WS_A, { rpcOverrides: {
+    get_paige_memory: { data: [
+      { ...c6Rows[0], memory_type: "coach_note", content: "C6-LARGE-NOTE-".repeat(500) },
+      { ...c6Rows[0], id: "99999999-9999-4999-8999-999999999998", content: "C6-CONFIRMED-PREFERENCE-FIRST" },
+    ], error: null },
+  } });
+  assert("C6.6 confirmed preferences retain zero priority before oversized operational memory",
+    egress(c6Priority).includes("C6-CONFIRMED-PREFERENCE-FIRST")
+      && !egress(c6Priority).includes("C6-LARGE-NOTE-"));
   const ownRpcA = inA.rec.rpc.filter((c) => c.name === "get_paige_memory");
   assert("37.1 [A] the no-client recall is the GOVERNED owner-memory read, pinned to the person and the turn's workspace",
     ownRpcA.length === 1 && ownRpcA[0].args?.p_user_id === USER && ownRpcA[0].args?.p_tenant_id === WS_A,
@@ -9073,7 +9300,15 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     if ((f[0] === "eq" || f[0] === "is") && f[1] in r) return r[f[1]] === f[2];
     return true;
   }));
-  const memoryTables = { serviceTablesExtra: { client_memory: admit }, tablesExtra: { client_memory: admit } };
+  // C6 positive controls represent owner-confirmed canonical rows; the focused-client
+  // fixtures and all automatic proposed-write checks remain unchanged.
+  const confirmedOwnerRows = ROWS.filter((r) => r.client_id === null).map((r, i) => ({
+    ...r, id: `99999999-9999-4999-8999-99999999998${i}`, user_id: USER,
+    memory_type: "preference", metadata: { confirmation_state: "confirmed" },
+  }));
+  const ownerAdmit = (filters) => confirmedOwnerRows.filter((r) => filters.every((f) =>
+    f[0] !== "eq" || !(f[1] in r) || r[f[1]] === f[2]));
+  const memoryTables = { serviceTablesExtra: { client_memory: admit, paige_owner_memory: ownerAdmit }, tablesExtra: { client_memory: admit } };
   const persona = (tenant) => ({ get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } });
   const turn = (active, personaTenant, extra = {}) => drive({
     stream: true, ...memoryTables, ...extra,
@@ -9183,5 +9418,80 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     JSON.stringify({ egress: opBrief.modelEgress.length }));
 }
 
+function conversationalMetricFixture(input, mutate = () => {}) {
+    const at = new Date().toISOString();
+    const m = { metric_key: input.p_metric_key, metric_version: '1.0.0', owner_department: 'sales', label: 'Outstanding receivables', definition: 'Current canonical recorded invoice balance.', formula: 'Canonical invoice balance by currency.',
+      range: { key: input.p_range_key, start: input.p_range_start, end: input.p_range_end, bounds: '[start,end)', timezone: 'UTC', semantics: 'current_snapshot' }, dimensions: {},
+      values: { kind: 'currency_totals', by_currency: [{ currency: 'usd', amount_minor: '125050', record_count: 2 }], breakdown: [] }, unit: 'currency_minor', source_refs: ['public.paige_invoices'], as_of: at, freshness: { queried_at: at, source_updated_through: null },
+      coverage: { state: 'complete', candidate_count: 2, contributing_count: 2, excluded_count: 0 }, exclusions: [], truth_state: 'LIVE', caveats: ['Recorded balance is not provider settlement evidence.'],
+      source_revision_ref: 'sr_v1_' + 'a'.repeat(64), account_epoch: CALLER_TENANT, account_epoch_ref: 'ae_v1_' + 'b'.repeat(64), evidence_ref: 'aneb_v1_' + 'c'.repeat(64), reference_expires_at: new Date(Date.now() + 900000).toISOString(), private_customer_data: 'NEVER_PROJECT_THIS' };
+    mutate(m); return m;
+}
+console.log('\nINT-340 / #1837 — one governed conversational metric read');
+{
+  const metricKey = 'sales.receivables.outstanding_current';
+  async function metricDrive({ mutate, resolveError, tier = 'tenant', args = { metric_key: metricKey, period: 'this_month' } } = {}) {
+    let issued;
+    return drive({ stream: true, text: 'How much do customers currently owe us, and what does that number mean?', toolCall: { name: 'read_business_metric', args },
+      rpcOverrides: { studio_role_ok: { data: true, error: null }, get_actor_access: { data: { tier }, error: null },
+        issue_analytics_evidence_bundle: input => { issued = conversationalMetricFixture(input, mutate); return { data: issued, error: null }; },
+        resolve_analytics_evidence_reference: () => resolveError ? { data: null, error: { code: resolveError } } : { data: issued, error: null },
+      } });
+  }
+  const healthy = await metricDrive();
+  const evidenceReads = healthy.rec.rpc.filter(r => ['issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference'].includes(r.name));
+  assert('1837.1 actual Chat handler issues and resolves only as caller JWT', evidenceReads.length === 2 && evidenceReads.every(r => r.client === 'jwt' && r.authorization === 'Bearer test-jwt'));
+  assert('1837.2 verified money, current basis, caveat and evidence reach the next model round', healthy.modelEgress.some(b => b.includes('125050') && b.includes('current_snapshot') && b.includes('not provider settlement') && b.includes('aneb_v1_')));
+  assert('1837.3 extra producer content and private authority markers never reach the model', healthy.modelEgress.every(b => !b.includes('NEVER_PROJECT_THIS') && !b.includes('account_epoch_ref')));
+  assert('1837.4 measurement read writes no business-action receipt or changing KPI Memory', !healthy.rec.rpc.some(r => r.name === 'record_capability_run' || (r.name === 'record_paige_memory' && String(r.args?.p_content).includes('125050'))));
+  for (const [label, options] of [
+    ['removed membership', { resolveError: '42501' }], ['missing evidence', { resolveError: 'P0002' }],
+    ['expired evidence', { mutate: m => { m.reference_expires_at = new Date(Date.now() - 1000).toISOString(); } }],
+    ['foreign workspace result', { mutate: m => { m.account_epoch = OTHER_TENANT; } }],
+    ['foreign request identifier', { args: { metric_key: metricKey, tenant_id: OTHER_TENANT } }],
+    ['client seat', { tier: 'client' }], ['operator lens', { tier: 'god' }], ['agency lens', { tier: 'agency' }],
+  ]) {
+    const denied = await metricDrive(options);
+    assert(`1837.5 ${label} cannot supply monetary claims`, denied.modelEgress.every(b => !b.includes('125050')));
+    if (options.resolveError) assert(`1837.6 ${label} does not reissue or use service-role fallback`, denied.rec.rpc.filter(r => r.name === 'issue_analytics_evidence_bundle').length === 1 && denied.rec.rpc.filter(r => r.name === 'resolve_analytics_evidence_reference').every(r => r.client === 'jwt'));
+  }
+}
+
+console.log('\nC6 — bounded recorded Research history in original ORIENT context');
+{
+  const marker = 'C6-RESEARCH-HISTORY-MARKER';
+  const row = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', question: marker,
+    domain: 'business', caller: 'chat', stop_reason: 'answered', configured: true,
+    is_dossier: false, source_count: 2, created_at: new Date(Date.now() - 60000).toISOString() };
+  const run = (data, error = null, tier = 'tenant') => drive({ stream: true,
+    text: 'What prior research can help with this objective?',
+    rpcOverrides: { studio_role_ok: { data: true, error: null }, get_actor_access: { data: { tier }, error: null },
+      list_workspace_research: { data, error } },
+    tablesExtra: { tenants: [{ id: CALLER_TENANT, status: 'active' }] } });
+  const found = await run([row]);
+  assert('C6.R1 actual model context receives historical research title and date',
+    found.modelEgress.some(b => b.includes(marker) && b.includes(row.created_at)));
+  assert('C6.R2 existing bounded Research RPC runs only as caller JWT',
+    found.rec.rpc.filter(r => r.name === 'list_workspace_research').length === 2
+      && found.rec.rpc.filter(r => r.name === 'list_workspace_research').every(r => r.client === 'jwt' && r.args._limit === 3 && r.args._offset === 0));
+  assert('C6.R3 historical metadata supplies no provider dispatch, result fetch or receipt',
+    !found.rec.rpc.some(r => /get_workspace_research_run|record_capability_run|prepare_paige_research_work/.test(r.name))
+      && !found.outboundCalls.some(c => String(c.url ?? c).includes('paige-deep-research')));
+  for (const [name, data, error, tier] of [
+    ['empty', [], null, 'tenant'], ['unavailable', [row], { code: '42501' }, 'tenant'],
+    ['malformed', [{ ...row, source_count: -1 }], null, 'tenant'],
+    ['raw findings', [{ ...row, findings: [{ text: 'NEVER-ACCEPT-FINDINGS' }] }], null, 'tenant'],
+    ['future timestamp', [{ ...row, created_at: new Date(Date.now() + 3600000).toISOString() }], null, 'tenant'],
+    ['client seat', [row], null, 'client'],
+    ['operator seat', [row], null, 'god'],
+  ]) {
+    const refused = await run(data, error, tier);
+    assert(`C6.R4 ${name} cannot supply historical Research claims`, refused.modelEgress.every(b => !b.includes(marker)));
+    if (tier === 'client') assert('C6.R5 client seat performs no Research history read', !refused.rec.rpc.some(r => r.name === 'list_workspace_research'));
+    if (tier === 'god') assert('C6.R6 operator seat performs no Research history read', !refused.rec.rpc.some(r => r.name === 'list_workspace_research'));
+    if (error) assert('C6.R7 unavailable history is explicit without claiming an empty workspace',
+      refused.modelEgress.some(b => b.includes('PRIOR RECORDED RESEARCH UNAVAILABLE') && b.includes('Do not infer that no prior research exists')));
+  }
+}
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 // Starts Google OAuth for a tenant's Gmail SENDING connection (#141b).
 // Returns { authorization_url } for the client to redirect to, or an honest
 // { error: "gmail_oauth_not_configured" } degrade when the OAuth client isn't set.
@@ -128,6 +129,10 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    // #1140 two-mailbox pilot: purpose 'inbox' is the INCREMENTAL consent for a personal
+    // read mailbox — the SAME flow, a WIDER (still least-privilege, still
+    // permanent-delete-free) scope set. Anything else keeps the original sending consent.
+    const purpose = body.purpose === "inbox" ? "inbox" : "send";
 
     const redirectUri = `${gmailRedirectOrigin(returnOrigin)}/auth/gmail/callback`;
 
@@ -139,9 +144,13 @@ Deno.serve(async (req) => {
     // their mailbox to whichever workspace ranked first, not the one they were
     // looking at. `w`, not `t`: `t` is already this state's timestamp.
     const { data: activeTenant } = await supa.rpc("current_user_tenant_id");
+    if (!await commsProviderExecutionAllowed(admin, { tenantId: typeof activeTenant === "string" ? activeTenant : null, actorUserId: user.id })) {
+      return new Response(JSON.stringify({ error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const state = await signState({
       u: user.id,
+      p: purpose,
       n: crypto.randomUUID(),
       t: Date.now(),
       r: returnOrigin,
@@ -152,12 +161,19 @@ Deno.serve(async (req) => {
       client_id: clientId,
       redirect_uri: redirectUri,
       response_type: "code",
-      // gmail.send is the MINIMUM outbound scope. NO gmail.readonly/modify here — inbound
-      // sync is the separate follow-up #536 (§18 scope discipline: don't over-request).
-      scope: [
+      // gmail.send is the MINIMUM outbound scope (purpose 'send'). purpose 'inbox' (#1140)
+      // asks for the personal-mailbox READ + reversible-organization set instead:
+      // gmail.modify = every read/write EXCEPT immediate permanent deletion (the scope
+      // itself refuses what the pilot refuses), gmail.labels = label management. The
+      // granted set is recorded per connector so a later revoked scope refuses by column.
+      scope: (purpose === "inbox" ? [
+        "https://www.googleapis.com/auth/gmail.modify",
+        "https://www.googleapis.com/auth/gmail.labels",
+        "https://www.googleapis.com/auth/userinfo.email",
+      ] : [
         "https://www.googleapis.com/auth/gmail.send",
         "https://www.googleapis.com/auth/userinfo.email",
-      ].join(" "),
+      ]).join(" "),
       access_type: "offline",   // needed to receive a refresh_token
       prompt: "consent",        // force the consent screen so a refresh_token is returned
       include_granted_scopes: "true",

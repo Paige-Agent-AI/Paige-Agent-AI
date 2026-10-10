@@ -1,6 +1,7 @@
 import {
   BarChart3,
   ChartNoAxesCombined,
+  Landmark,
   Megaphone,
   Store,
   Settings,
@@ -15,6 +16,7 @@ type TenantDestination =
   | "clients"
   | "campaigns"
   | "sales"
+  | "finance"
   | "marketplace"
   | "analytics"
   | "studio"
@@ -53,6 +55,7 @@ const TENANT_BRANCHES: Record<TenantBranch, { slug: string; aliases: string[] }>
   calendar: { slug: "calendar", aliases: [] },
   campaigns: { slug: "growth", aliases: [] },
   sales: { slug: "sales", aliases: [] },
+  finance: { slug: "finance", aliases: [] },
   marketplace: { slug: "marketplace", aliases: [] },
   analytics: { slug: "analytics", aliases: [] },
   studio: { slug: "growth", aliases: [] },
@@ -159,8 +162,8 @@ const SOLO_SHELL_DESTINATIONS: TenantShellDestination[] = [
   },
   { id: "campaigns", label: "Marketing", href: "", icon: Megaphone, aliases: [] },
   { id: "sales", label: "Sales", href: "", icon: ChartNoAxesCombined, aliases: [] },
+  { id: "finance", label: "Finance", href: "", icon: Landmark, aliases: [] },
   { id: "marketplace", label: "Marketplace", href: "", icon: Store, aliases: [] },
-  { id: "analytics", label: "Analytics", href: "", icon: BarChart3, aliases: [] },
   {
     id: "settings",
     label: "Settings",

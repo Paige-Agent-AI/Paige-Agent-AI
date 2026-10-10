@@ -35,6 +35,7 @@ on:
       - "supabase/tests/mcp_tool_catalog_tenant_scope.sql"
       - "supabase/tests/mcp_oauth_refuses_the_rest_facet.sql"
       - "supabase/tests/s5_owner_memory_backfill.sql"
+      - "supabase/tests/int345_calling_readiness_mirror.sql"
       - "supabase/migrations/20270412090000_a_tenant_can_read_its_own_tool_catalog.sql"
       - "supabase/migrations/20270411090000_one_record_capability_run_not_two.sql"
       - "scripts/proof/mcp-gateway-endpoint-consent-race.mjs"
@@ -93,6 +94,7 @@ on:
       - "src/solo/paigeClientScope.ts"
       - "src/solo/paigeClientScope.test.ts"
       - "scripts/ci/paige-spine-registry-lint.mjs"
+      - "scripts/ci/c0b-*.mjs"
       - "scripts/ci/chat-tool-registry-lint.mjs"
       - "scripts/proof/paige-spine-local-proof.sql"
       # Everything the database-contract job runs must trigger it (18 files it ran were missing).
@@ -175,6 +177,17 @@ jobs:
       - name: Reproduce production's grants, then apply the change under review
         run: scripts/ci/reproduce-production-grants.sh "$RUNNER_TEMP/prod"
 
+      # INT-339: actual stored Analytics and scoped evidence contracts. Use this
+      # existing rebuilt database after production grants and the candidate apply;
+      # the disabled #574 premerge workflow is deliberately left untouched.
+      - name: Analytics privacy and evidence authorization (rolled back)
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          for proof in analytics_storage_minimization analytics_referral_authorization analytics_evidence_authorization settings_analytics_metric_producers shared_metric_evidence; do
+            psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f "supabase/tests/$proof.sql"
+          done
+
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql
@@ -186,6 +199,7 @@ jobs:
       # src/__tests__/deep-research-m0-contract.test.ts.
       - run: supabase test db supabase/tests/research_tenant_lineage.sql
       - run: supabase test db supabase/tests/s5_owner_memory_backfill.sql
+      - run: supabase test db supabase/tests/int345_calling_readiness_mirror.sql
         if: ${{ !cancelled() }}
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql

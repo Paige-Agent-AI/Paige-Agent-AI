@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary";
 import { buildListUnsubscribeHeaders } from "../../supabase/functions/_shared/channel-adapters";
 
 const tenant = "11111111-1111-4111-8111-111111111111";
@@ -12,7 +13,7 @@ const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.No
 
 type Sent = { msg: { body_html?: string | null }; ctx: { listUnsubscribeUrl?: string | null; idempotencyKey?: string | null } };
 
-function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?: boolean } = {}) {
+function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?: boolean; restricted?: boolean } = {}) {
   const sent: Sent[] = [];
   const tokenWrites: unknown[] = [];
   const messageWrites: unknown[] = [];
@@ -46,6 +47,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
       return b;
     },
     rpc: async (name: string) => {
+      if (name === "comms_provider_execution_allowed") return { data: !opts.restricted, error: null };
       if (name === "tenant_sender_identity") return { data: { from_address: "acme@mail.paigeagent.ai", from_name: "Acme" }, error: null };
       return { data: null, error: null };
     },
@@ -59,6 +61,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
     createClient: () => admin,
     registerOutboundAdapter: (a: (typeof adapters)[number]) => { adapters.push(a); },
     buildListUnsubscribeHeaders,
+    commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     getOutboundAdapter: () => ({
       send: async (msg: Sent["msg"], ctx: Sent["ctx"]) => {
         sent.push({ msg: { body_html: msg.body_html }, ctx: { listUnsubscribeUrl: ctx.listUnsubscribeUrl, idempotencyKey: ctx.idempotencyKey } });
@@ -92,6 +95,16 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
 }
 
 describe("send-message marketing mode", () => {
+  it("refuses restricted marketing before token minting, provider dispatch or message admission", async () => {
+    const s = setup({ restricted: true });
+    const r = await s.request({ marketing: true });
+    expect(r.status).toBe(403);
+    expect(r.body.error).toBe(COMMS_PROVIDER_EXECUTION_DISABLED);
+    expect(s.sent).toHaveLength(0);
+    expect(s.fetchCalls).toHaveLength(0);
+    expect(s.tokenWrites).toHaveLength(0);
+    expect(s.messageWrites).toHaveLength(0);
+  });
   it("replaces {{unsubscribe_url}} with the recipient's one-click link and carries it to the adapter", async () => {
     const s = setup();
     const r = await s.request({ marketing: true, idempotency_key: "ecr:abc" });

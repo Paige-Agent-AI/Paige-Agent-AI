@@ -19,6 +19,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
+import { PAIGE_SPINE_CAPABILITIES, validateSpineRegistry } from "../../supabase/functions/_shared/paige-spine/registry.ts";
+import { ZAPIER_MANAGEMENT_CAPABILITIES } from "../../supabase/functions/_shared/paige-spine/domains/zapier_management.ts";
 
 const root = join(__dirname, "..", "..");
 const registrySeed = readFileSync(
@@ -53,11 +55,16 @@ describe("the Spine registers the live zapier chat surface", () => {
   });
 
   it("the edge-executor exception covers the zapier entries field-for-field", () => {
-    expect(spineRegistry).toContain(
-      "const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES] as const;",
-    );
-    expect(spineRegistry).toContain(
-      "EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => entry.key === capability.key && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority)",
+    expect(ZAPIER_MANAGEMENT_CAPABILITIES.every(cap => PAIGE_SPINE_CAPABILITIES.includes(cap))).toBe(true);
+    expect(validateSpineRegistry(ZAPIER_MANAGEMENT_CAPABILITIES)).toEqual([]);
+    for (const cap of ZAPIER_MANAGEMENT_CAPABILITIES) {
+      for (const patch of [{ chatTool: "forged_tool" }, { classification: "mutate" as const }, { riskPolicyKey: "ordinary" as const }, { approvalAuthority: "none" as const }]) {
+        if (Object.entries(patch).every(([k, v]) => cap.action[k as keyof typeof cap.action] === v)) continue;
+        expect(validateSpineRegistry([{ ...cap, action: { ...cap.action, ...patch } }]).some(f => f.includes("action executor must be"))).toBe(true);
+      }
+    }
+    expect(spineRegistry.replace(/\s+/g, " ")).toContain(
+      "EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => !!entry.action && entry.key === capability.key && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority)",
     );
   });
 

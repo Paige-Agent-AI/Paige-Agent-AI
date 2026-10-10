@@ -11,6 +11,9 @@ on:
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
       - 'scripts/sql/sales-package-read-proof.mjs'
+      - 'scripts/sql/sales-commercial-conditions-proof.mjs'
+      - 'scripts/sql/sales-performance-proof.mjs'
+      - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
@@ -23,6 +26,9 @@ on:
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
       - 'scripts/sql/sales-package-read-proof.mjs'
+      - 'scripts/sql/sales-commercial-conditions-proof.mjs'
+      - 'scripts/sql/sales-performance-proof.mjs'
+      - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -63,6 +69,10 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-package-read-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+      - name: Commercial conditions, exact agreement compatibility and canonical writer replay
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-commercial-conditions-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
       - name: Preserve Collections SQL proof receipt
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,3 +80,25 @@ jobs:
           name: sales-collections-sql-proof
           path: supabase/functions/_shared/sales-collections/sql-proof-result.txt
           if-no-files-found: warn
+      - name: Sales Performance canonical sums, balance equivalence and tenant gates
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-performance-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+      - name: Preserve Sales Performance proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-performance-sql-proof
+          path: work/sales-performance-proof.json
+          if-no-files-found: error
+      - name: Sales Performance mutation controls
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-performance-mutation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+      - name: Preserve Sales Performance mutation proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-performance-mutation-proof
+          path: work/sales-performance-mutations.json
+          if-no-files-found: error

@@ -27,7 +27,8 @@ import { build } from "esbuild";
 const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "comms-domain-audit-"));
 
 let calls;
-const reset = () => { calls = { audits: [], inserts: [], updates: [], deletes: [] }; };
+let providerAllowed = true;
+const reset = () => { calls = { audits: [], inserts: [], updates: [], deletes: [], providerCalls: [] }; };
 
 /**
  * A fake postgrest builder covering exactly the shapes this handler uses:
@@ -89,14 +90,15 @@ globalThis.Deno = {
 
 /** Every outbound Resend call is answered here; nothing leaves the process. */
 let resendStatus = "verified";
-globalThis.fetch = async (url) => new Response(JSON.stringify(
+globalThis.fetch = async (url) => { calls.providerCalls.push(String(url)); return new Response(JSON.stringify(
   String(url).includes("/domains")
     ? { id: "rsd_1", status: resendStatus, records: [{ type: "TXT", name: "@", value: "v=spf1" }] }
-    : {}), { status: 200, headers: { "Content-Type": "application/json" } });
+    : {}), { status: 200, headers: { "Content-Type": "application/json" } }); };
 
 let rows;
 globalThis.__smoke = {
   rpc(name) {
+    if (name === "comms_provider_execution_allowed") return { data: providerAllowed, error: null };
     if (name === "has_role") return { data: true };
     if (name === "is_platform_owner") return { data: false };
     return { data: null };
@@ -136,6 +138,17 @@ const ok = (name, fn) => {
 const audit = () => calls.audits[0];
 
 console.log("\nmanage-tenant-domain — evidence on every real change\n");
+
+console.log("— restricted workspace cannot grant provider authority —");
+for (const body of [{ verb: "add", domain: "example.com", from_email_local: "hello" }, { verb: "refresh", id: "restricted-domain" }]) {
+  reset(); providerAllowed = false;
+  rows = { existingDefault: null, byId: { id: "restricted-domain", resend_domain_id: "rsd_1", status: "pending" } };
+  const response = await post(body);
+  ok("restricted action is refused", () => assert.equal(response.status, 403));
+  ok("restricted action makes no provider calls", () => assert.equal(calls.providerCalls.length, 0));
+  ok("restricted action creates no domain changes or event", () => assert.equal(calls.inserts.length + calls.updates.length + calls.deletes.length + calls.audits.length, 0));
+}
+providerAllowed = true;
 
 console.log("— adding a sending domain —");
 reset(); rows = { existingDefault: null, byId: null };

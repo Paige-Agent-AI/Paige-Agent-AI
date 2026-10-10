@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../comms-provider-boundary.ts";
 // INT-328 — the comms.email_send branch of the REAL send-message handler.
 //
 // Mirrors _shared/sales-invoice-delivery/send-message.test.ts: the actual handler source is
@@ -30,6 +31,8 @@ const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.No
 
 type Fetch = "ok" | "reject422" | "status500" | "status429" | "status409" | "throw" | "hang" | "no_id";
 interface Options {
+  providerAllowed?: boolean;
+  boundaryError?: boolean;
   fetch?: Fetch;
   preSend?: { proceed: boolean; outcome: string; reason?: string | null; queueUntil?: string | null };
   claim?: { data: unknown; error: unknown };
@@ -89,6 +92,7 @@ function setup(options: Options = {}) {
     },
     rpc: async (name: string, args: Record<string, unknown> = {}) => {
       rpcCalls.push({ name, args });
+      if (name === "comms_provider_execution_allowed") return { data: options.providerAllowed ?? true, error: options.boundaryError ? { message: "boundary unavailable" } : null };
       if (name === "read_comms_email_send_binding") return { data: { ...b, message_id: MSG, tenant_id: TENANT, channel_type: "email", message_status: options.draftStatus ?? "draft", eligible: options.eligible ?? true }, error: null };
       if (name === "claim_comms_email_send") {
         const claimed = options.claim ?? { data: { state: "dispatching", attempts: 1, admitted: true }, error: null };
@@ -130,7 +134,7 @@ function setup(options: Options = {}) {
     });
   };
 
-  const scope = {
+  const scope = { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       env: { get: (k: string) => (k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "RESEND_API_KEY" ? RESEND_KEY : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured") },
@@ -458,4 +462,11 @@ describe("send-message comms_email path (real handler source, network substitute
     expect(s.timeouts).not.toContain(20_000);
     expect(s.names()).not.toContain("claim_comms_email_send");
   });
+});
+
+it.each([{providerAllowed:false},{boundaryError:true}])('provider floor refuses governed email without dispatch or claim (%j)',async options=>{
+ const s=setup(options);const r=await s.request();
+ expect(r.body.outcome).toBe('refused');expect(s.fetchCalls).toHaveLength(0);
+ expect(s.names()).not.toContain('claim_comms_email_send');
+ expect(s.finalizeCalls()).toEqual([expect.objectContaining({_outcome:'refused',_reason:'comms_provider_execution_disabled'})]);
 });

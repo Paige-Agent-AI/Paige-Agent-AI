@@ -5,6 +5,11 @@ tenant. This file is the single door to that contract. It does **not** restate t
 already have executable homes — it names them, so a future agent finds enforcement rather than
 prose, and so nothing here can drift out of step with the code it describes.
 
+**INT-340 owner ruling, 2026-10-07:** retire the visible top-level Solo Analytics
+destination. Settings order is Setup, Team, Connections, Integrations, Analytics,
+Security & data, Vault, Billing. Analytics uses the canonical Settings host and its
+authorized visible-scroll contract. Operator and other-tier Analytics remain separate.
+
 ## The rule
 
 > A Solo tenant may differ in business identity and data, members, roles, permissions,
@@ -52,9 +57,9 @@ un-clips Clients, Campaigns and Compass too — which is precisely how it broke 
 
 | Surface | Policy |
 |---|---|
-| Settings → **Setup**, Connections (incl. Calendars), Integrations | Visible scrolling, with the bar drawn |
+| Settings → **Setup**, Connections (incl. Calendars), Integrations, Analytics | Visible scrolling, with the bar drawn |
 | Settings → Team, Security & data, Vault, Billing | Form-fitting — they genuinely fit their host |
-| Command Center, Clients, Campaigns/Growth, Compass, Mind, Analytics | Form-fitting, design-locked. Owner authorization required to change |
+| Command Center, Clients, Campaigns/Growth, Compass, Mind | Form-fitting, design-locked. Owner authorization required to change |
 
 This row used to read *"Settings, Connections, Integrations — visible scrolling where
 needed"*, which was true of no Settings destination but two: the class that DRAWS the bar was
@@ -93,7 +98,7 @@ harness drive against a reproduced shell is the third class and is never the fou
 ## Known coverage gaps (§13 — stated, not papered over)
 
 - `solo-locked-surfaces-drive.mjs` drives `clients`, `growth` and `compass`. **Command Center
-  (`home`), Analytics and Mind are named by the policy but are not in that drive's surface
+  (`home`) and Mind are named by the policy but are not in that drive's surface
   list.** Their form-fitting behaviour rests on the CSS clip and its source-contract test, not
   on a rendered-geometry drive.
 - The actual `SoloApp` wrapper, Shift+Space and independent per-surface Home-key pathways

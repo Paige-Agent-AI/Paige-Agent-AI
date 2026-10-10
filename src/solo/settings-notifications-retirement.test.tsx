@@ -30,8 +30,8 @@ async function mount(entries: string[]) {
 }
 
 describe("retired Solo notification route", () => {
-  it("has no menu or registered subtab but preserves all seven source destinations", () => {
-    const expected = ["setup", "team", "connections", "integrations", "security-data", "vault", "billing"];
+  it("has no notification menu or registered subtab and preserves eight approved Settings destinations", () => {
+    const expected = ["setup", "team", "connections", "integrations", "analytics", "security-data", "vault", "billing"];
     expect(SOLO_SETTINGS_DESTINATIONS.map(x => x.key)).toEqual(expected);
     expect(branchBySlug("solo", "settings")?.subtabs?.map(x => x.key)).toEqual(expected);
   });
@@ -64,7 +64,7 @@ describe("retired Solo notification route", () => {
   it("leaves source routes and nested Calendar notification settings alone", async () => {
     const { router, host, go } = await mount(["/solo/41/settings/setup"]);
     expect(host.textContent).not.toContain(notice);
-    for (const destination of ["team", "connections", "integrations", "security-data", "vault", "billing", "connections/notifications"]) {
+    for (const destination of ["team", "connections", "integrations", "analytics/overview", "security-data", "vault", "billing", "connections/notifications"]) {
       await go(`/solo/41/settings/${destination}`);
       expect(router.state.location.pathname).toBe(`/solo/41/settings/${destination}`);
       expect(host.textContent).not.toContain(notice);

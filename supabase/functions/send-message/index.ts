@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
 import {renderDocumentPdf} from '../_shared/document-pdf.ts';
@@ -920,6 +921,18 @@ Deno.serve(async (req) => {
   // no active tenant keeps null → platform default sender. (Internal drain: tenant stays
   // the queued row's own.)
   if (!isInternal && !tenantId && !isOwner) tenantId = callerTenant ?? null;
+
+  // Server-owned execution floor applies independently of approvals, active connectors,
+  // sender fallback and the service-role queue/retry caller. No provider or schedule admission.
+  if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user?.id ?? null })) {
+    if (commsBinding) return await refuseCommsEmail(COMMS_PROVIDER_EXECUTION_DISABLED);
+    if (isInternal && draftRow?.status === "queued") return await terminalizeScheduledRelease(COMMS_PROVIDER_EXECUTION_DISABLED);
+    if (body.message_id && tenantId) {
+      const { error } = await admin.from("messages").update({ status: "blocked", scheduled_for: null }).eq("id", body.message_id).eq("tenant_id", tenantId);
+      if (error) return new Response(JSON.stringify({ status: "failed", outcome: "outcome_unknown", error: "boundary_readback_failed" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    return new Response(JSON.stringify({ status: "blocked", outcome: "refused", error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
   // ── §9 (#141b): bind the CONNECTOR to the resolved tenant ────────────────────
   // connectorRow was fetched via the SERVICE-ROLE admin client (RLS bypassed) keyed by

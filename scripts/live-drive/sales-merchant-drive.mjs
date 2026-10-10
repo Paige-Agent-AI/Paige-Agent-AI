@@ -4,17 +4,18 @@ import path from 'node:path';
 import { resolvePlaywright, buildLaunchOptions } from './live-drive.mjs';
 const { chromium } = await resolvePlaywright();
 const browser = await chromium.launch(buildLaunchOptions());
-const output = path.resolve('scripts/live-drive/artifacts/sales-merchant');
+const output = path.resolve(process.env.SALES_MERCHANT_EVIDENCE_DIR ?? 'scripts/live-drive/artifacts/sales-merchant');
 mkdirSync(output, { recursive: true });
 const results = [];
+const base = process.env.SALES_MERCHANT_DRIVE_URL ?? 'http://127.0.0.1:5203';
 try {
  for (const [width,height] of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844]]) {
   for (const theme of ['light','dark']) for (const paige of ['closed','open']) {
    const page = await browser.newPage({ viewport: { width,height }, reducedMotion:'reduce' });
-   await page.goto(`http://127.0.0.1:5203/?theme=${theme}&paige=${paige}&merchant=empty`);
+   await page.goto(`${base}/?theme=${theme}&paige=${paige}&merchant=empty`);
    await page.getByRole('button', { name:/Stripe.*Not connected/i }).click();
    await page.getByRole('dialog').waitFor();
-   await page.getByRole('button',{name:'Connect Stripe (TEST)'}).waitFor();
+   await page.getByRole('button',{name:'Set up Stripe (TEST)'}).waitFor();
    await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {}))));
    const geometry = await page.getByRole('dialog').evaluate(el => {
     const box=el.getBoundingClientRect();
@@ -26,15 +27,33 @@ try {
    });
    if(geometry.x< -1||geometry.x+geometry.width>width+1||geometry.horizontalOverflow||geometry.bodyOverflow)throw Error(JSON.stringify({width,height,theme,paige,geometry}));
    await page.screenshot({path:path.join(output,`${width}-${theme}-${paige}.png`)});
+   await page.getByRole('button',{name:'Set up Stripe (TEST)'}).click();
+   await page.getByRole('heading',{name:'Review Stripe setup'}).waitFor();
+   const review=page.getByRole('button',{name:'Approve Stripe setup'});
+   await review.scrollIntoViewIfNeeded();
+   const bounds=await review.boundingBox();
+   if(!bounds||bounds.x<0||bounds.y<0||bounds.x+bounds.width>width+1||bounds.y+bounds.height>height+1)throw Error('Approval control unreachable');
+   await page.screenshot({path:path.join(output,`${width}-${theme}-${paige}-review.png`)});
+   await page.getByRole('button',{name:'Cancel review'}).click();
+   if(await page.getByRole('heading',{name:'Review Stripe setup'}).count())throw Error('Review cancellation failed');
    await page.keyboard.press('Escape');
    if(await page.getByRole('dialog').count())throw Error('Escape did not close');
    results.push({width,height,theme,paige,geometry,escape:'PASS'});
    await page.close();
   }
  }
+ const paypal=await browser.newPage({viewport:{width:1366,height:768}});
+ await paypal.goto(`${base}/?theme=dark`);
+ await paypal.locator('.ig-card[data-provider="paypal"]').click();
+ await paypal.getByRole('dialog').waitFor();
+ await paypal.evaluate(() => Promise.all(document.getAnimations().map(a=>a.finished.catch(()=>{}))));
+ if(await paypal.getByRole('button',{name:/connect paypal/i}).count())throw Error('Unavailable PayPal promised a connect action');
+ await paypal.screenshot({path:path.join(output,'paypal-unavailable.png')});
+ results.push({paypal:'DISCOVERABLE / CONNECTION UNAVAILABLE',text:await paypal.getByRole('dialog').innerText()});
+ await paypal.close();
  for(const merchant of ['incomplete','restricted','ready','live','unknown','stale','error','readonly']){
   const page=await browser.newPage({viewport:{width:1366,height:768}});
-  await page.goto(`http://127.0.0.1:5203/?theme=dark&merchant=${merchant}`);
+  await page.goto(`${base}/?theme=dark&merchant=${merchant}`);
   await page.locator('.ig-card').filter({hasText:'Stripe'}).click();
   await page.getByRole('dialog').waitFor();
   await page.getByRole('button',{name:'Refresh status'}).waitFor();
@@ -44,7 +63,7 @@ try {
   await page.close();
  }
  const keyboard=await browser.newPage({viewport:{width:1366,height:768}});
- await keyboard.goto('http://127.0.0.1:5203/?theme=light&merchant=empty');
+ await keyboard.goto(`${base}/?theme=light&merchant=empty`);
  const opener=keyboard.getByRole('button',{name:/Stripe.*Not connected/i});
  await opener.click(); await keyboard.getByRole('dialog').waitFor();
  await keyboard.evaluate(() => Promise.all(document.getAnimations().map(a=>a.finished.catch(()=>{}))));

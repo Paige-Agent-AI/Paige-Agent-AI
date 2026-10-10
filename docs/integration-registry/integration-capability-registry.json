@@ -462,15 +462,16 @@
         "platform subscription checkout/portal",
         "Marketplace paid install",
         "read safe billing status for a workspace",
-        "(future, §38 direct-charge) facilitate a tenant->client charge on the tenant's own account"
+        "(future, §38 direct-charge) facilitate a tenant->client charge on the tenant's own account",
+        "Tenant-scoped merchant status/refresh and canonically approved Stripe Express onboarding or hosted dashboard handoff through the shared tenant-stripe-connect door; human setup stays in Integrations."
       ],
-      "connection_prerequisite": "Platform Stripe account for Paige-held rails; per-tenant Stripe Connect for facilitated tenant->client charges.",
+      "connection_prerequisite": "Platform Stripe account for Paige-held rails; per-tenant Stripe Connect for facilitated tenant->client charges. The current Sales setup seam creates a new tenant-owned Stripe Express connected account; it does not implement OAuth for an existing Stripe account. The human completes hosted setup and the server verifies readiness separately.",
       "required_scopes": [
         "Stripe API (platform)",
         "Connect (direct-charge on tenant account) — future"
       ],
-      "safe_readable_context": "Safe platform billing-status fields remain separate from tenant Sales merchant readiness. Solo Settings Integrations reads a closed tenant-scoped projection of merchant environment, binding version, provider-checked charges/payouts/details/payment permission and freshness; never secrets, raw requirements or card data.",
-      "allowed_writes_external_effects": "Platform charges/subscriptions (Paige-held). §38: Paige is NEVER merchant-of-record for a tenant->client charge and never holds tenant funds — those run on the tenant's own rails (prohibited lane).",
+      "safe_readable_context": "Safe platform billing-status fields remain separate from tenant Sales merchant readiness. Solo Settings Integrations reads a closed tenant-scoped projection of merchant environment, binding version, provider-checked charges/payouts/details/payment permission and freshness; never secrets, raw requirements or card data. Four Sales merchant Spine declarations (sales_merchant.status, sales_merchant.refresh, sales_merchant.onboarding_start, sales_merchant.portal_link) bind read_sales_merchant_status, read_sales_merchant_refresh, sales_start_merchant_onboarding and sales_create_merchant_login_link. Chat uses a closed status projection and downgrades stale, future-dated or incomplete readiness; hosted setup/dashboard URLs and provider errors never enter the transcript or Rail.",
+      "allowed_writes_external_effects": "Platform charges/subscriptions (Paige-held). §38: Paige is NEVER merchant-of-record for a tenant->client charge and never holds tenant funds — those run on the tenant's own rails (prohibited lane). Sales merchant setup and dashboard handoff use the existing shared high/confirm Trust decision and exact stored canonical proposal; tenant-stripe-connect is the sole approval consumer. A hosted handoff is not completed human login or payment readiness.",
       "authority_lane": [
         "read",
         "confirm",
@@ -478,11 +479,11 @@
       ],
       "m1_dependency": "M1 real-money spend control (see cost_tracks): payments/charges are real money movement — currency-aware caps + atomic reserve/adjust/release + provider-confirmed actuals + reconciliation + receipt + Rail; NEVER satisfied by LLM-token metering. §38 fences merchant-of-record.",
       "canonical_provider_receipt": "Stripe payment_intent / invoice / subscription id and webhook event id.",
-      "rail_mind_memory": "Rail: billing outcome events (no sender/secret). Mind: safe billing-status only (platform-billing-spine-source-contract). Memory: none of card/PII.",
+      "rail_mind_memory": "Rail: billing outcome events (no sender/secret). Mind: safe billing-status only (platform-billing-spine-source-contract). Memory: none of card/PII. Merchant handoff uses record_capability_run with bounded safe outcomes; no hosted URLs, credentials or raw provider errors. New merchant declarations add no Mind or Memory writer.",
       "status": "PARTIAL",
       "owner": "Money Spine workstream",
-      "dependency": "Platform acquisition/Billing proof obligations remain separate. Sales S3/S4 implements shared tenant-connected direct-charge hosted requests, GET-only ambiguous-outcome recovery, provider readback and atomic verified allocation into the existing invoice ledger/Rail. PR #1769/#1779 records production persistence and deployment of the substrate. Deployed substrate does not establish authenticated merchant/payment acceptance: that remains PROOF OWED. Each current/future Solo tenant supplies its own merchant binding; no global or owner-account fallback. PayPal parity and production payment acceptance remain outstanding. Legacy destination-charge storefront is unchanged.",
-      "next_slice": "Complete Stripe authenticated sandbox/payment acceptance and PayPal canonical parity before closing S4; then shared recurring lifecycle and conversational Collections under existing Spine/Trust/durable work/Rail. No Sales application fee; PAIGE Billing remains separate. Existing platform enrollment proof obligations remain.",
+      "dependency": "Platform acquisition/Billing proof obligations remain separate. Sales S3/S4 implements shared tenant-connected direct-charge hosted requests, GET-only ambiguous-outcome recovery, provider readback and atomic verified allocation into the existing invoice ledger/Rail. PR #1769/#1779 records production persistence and deployment of the substrate. Deployed substrate does not establish authenticated merchant/payment acceptance: that remains PROOF OWED. Each current/future Solo tenant supplies its own merchant binding; no global or owner-account fallback. PayPal parity and production payment acceptance remain outstanding. Legacy destination-charge storefront is unchanged. INT-311 merchant Spine/Chat wiring adds the four declarations and shared governed setup/resume. Unknown account creation is recovered with bounded GET-only reconciliation; a pending unknown reservation does not authorize another creation. Local automated tests prove the bounded contracts only; authenticated merchant setup and TEST payment acceptance remain PROOF OWED. This work does not claim production release of the new merchant wiring.",
+      "next_slice": "Prove authenticated tenant merchant onboarding/resume, actor/workspace changes, approved secure handoff and provider readback, then TEST payment acceptance; existing Billing and deployed direct-charge substrate claims remain separate. PayPal approved partner access/onboarding is absent. Continue shared recurring lifecycle and conversational Collections under existing Spine/Trust/durable work/Rail after the payment proof boundary closes.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -556,6 +557,31 @@
           "path": "supabase/functions/_shared/sales-payments/merchant.ts",
           "role": "callback_readback",
           "note": "S1 tenant/account/environment/version readiness; requires provider tenant provenance. No charge/settlement writer."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-capability.ts",
+          "role": "provider_adapter",
+          "note": "Four merchant Spine declarations and two high/confirm Kit declarations route to the existing tenant-stripe-connect door; no provider acceptance claim."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-chat.ts",
+          "role": "fail_closed_containment",
+          "note": "C4b exact stored proposal selection; scoped approval readback and fresh readiness; bearer URLs omitted from all Chat results."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-admission.ts",
+          "role": "fail_closed_containment",
+          "note": "Shared canonical approval admission and stored merchant binding; no second approval system."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-onboarding.ts",
+          "role": "callback_readback",
+          "note": "Existing Express creation reservation and bounded GET-only unknown recovery; returned hosted link is human-only."
+        },
+        {
+          "path": "src/solo/settings-integrations.tsx",
+          "role": "provider_adapter",
+          "note": "Finance Stripe merchant handoff and visible disabled PayPal tile; listing is not connection proof."
         }
       ],
       "sources": [
@@ -579,7 +605,7 @@
         "Seller PAYMENT delegated permissions, actual partner app authorization and merchant-integration readback",
         "Refund/recurring permissions must be grounded per capability before activation"
       ],
-      "safe_readable_context": "Future tenant-scoped merchant identity/readiness and canonical invoice/balance references; no PAN/CVV, tokens or raw payloads.",
+      "safe_readable_context": "A non-executing GET-only payment readback normalizer exists for the canonical payment contract; provider/tenant delegated transport and seller setup are unavailable. The visible Finance tile states that boundary; no PAN/CVV, tokens or raw payloads enter Chat.",
       "allowed_writes_external_effects": "None implemented. Future customer payment requests and verified outcomes require shared Spine/Trust/provider readback/Rail.",
       "authority_lane": [
         "prohibited"
@@ -589,7 +615,7 @@
       "rail_mind_memory": "Future canonical Sales execution receipts on Rail; no mutable financial truth in Memory/Mind.",
       "status": "UNAVAILABLE",
       "owner": "Sales execution program INT-311",
-      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. A non-executing GET readback normalizer reuses the canonical payment contract; hosted dispatch, delegated transport and onboarding activation remain unavailable. Deterministic tests do not establish provider acceptance.",
+      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. A non-executing GET readback normalizer reuses the canonical payment contract; hosted dispatch, delegated transport and onboarding activation remain unavailable. Deterministic tests do not establish provider acceptance. Solo Settings Integrations shows a Finance PayPal tile with connectable:false and an explicit unavailable explanation. That visible tile is not a connector or seller authorization. Secure approved partner seller onboarding remains absent; the GET-only normalizer does not grant delegated transport, create a merchant binding or execute a payment.",
       "next_slice": "Ground partner app access and merchant-integrations permissions; implement the same Sales hosted request to verified settlement/allocation vertical as Stripe.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -627,7 +653,9 @@
       "code_anchors": [],
       "sources": [
         "https://developer.paypal.com/platforms/seller-onboarding/before-payment",
-        "docs/delivery/sales-provider-s1.md"
+        "docs/delivery/sales-provider-s1.md",
+        "src/solo/settings-integrations.tsx",
+        "supabase/functions/_shared/sales-payments/paypal-readback.ts"
       ]
     },
     {
@@ -1219,6 +1247,11 @@
       },
       "code_anchors": [
         {
+          "path": "supabase/functions/_shared/comms-provider-boundary.ts",
+          "role": "fail_closed_containment",
+          "note": "QA #1832 protected synthetic identity/tenant provider refusal floor; grants no provider authority. Merge/deployed proof remains owed until release closeout; ordinary provider maturity and authenticated proof are unchanged."
+        },
+        {
           "path": "supabase/functions/_shared/twilio.ts",
           "role": "provider_adapter",
           "note": "Twilio-specific API adapter."
@@ -1389,6 +1422,11 @@
         "next_slice": "Per-tenant sending-identity wiring + send receipt on the Rail."
       },
       "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/comms-provider-boundary.ts",
+          "role": "fail_closed_containment",
+          "note": "QA #1832 protected synthetic identity/tenant provider refusal floor; grants no provider authority. Merge/deployed proof remains owed until release closeout; ordinary provider maturity and authenticated proof are unchanged."
+        },
         {
           "path": "supabase/functions/_shared/email/providers.ts",
           "role": "provider_adapter",

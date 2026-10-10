@@ -191,12 +191,16 @@ describe("legacy (C0b worklist) and undeclared rows", () => {
 });
 
 describe("the real registry", () => {
-  it("every Spine chat tool, when emitted, projects as source=spine with its own domain", () => {
+  it("every self-described Spine chat tool projects as source=spine; internal tools stay hidden", () => {
     const spine = PAIGE_SPINE_CAPABILITIES as unknown as SpineDeclarationLike[];
     const tools = spine.filter((c) => c.action?.chatTool).map((c) => ({ name: c.action!.chatTool!, description: "x." }));
     const rows = byTool(projectCapabilities(input({ spine, tools })));
     for (const c of spine) {
       if (!c.action?.chatTool) continue;
+      if (c.selfDescribe === false) {
+        expect(rows[c.action.chatTool], c.key).toBeUndefined();
+        continue;
+      }
       expect(rows[c.action.chatTool]?.source, c.key).toBe("spine");
     }
   });

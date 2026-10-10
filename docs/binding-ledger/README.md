@@ -154,6 +154,7 @@ shrinks the target — it names the gap between present proof and the full opera
 
 | Surface | State | Completion target (real action) | Why / gap | Next slice |
 |---|---|---|---|---|
+| Solo Finance | `PROOF_OWED` | Source-backed review and governed follow-up with verified readback and Rail outcome | Initial Sales consumers only; accounting/bank/budget/forecast sources and authenticated acceptance owed | Finance brain record and Integrations company-source readiness |
 | Paige workspace | `PARTIAL` | Paige acts on a surface's real record via a governed tool, outcome recorded | sole chat surface, server-safe scope; no surface identity, prompt dropped (#771), raw `clientContext` prose | Phase 1: adopt the Surface Context Handoff Contract |
 | Command Center → Business Game Plan | `PARTIAL` | Owner manages Strategic Plays and Paige acts through canonical readback + Rail | #1016 Mission/Rail backend is LIVE; #1038 deployed Mission-backed cards, lifecycle drawer actions, safe selected-plan Paige handoff, and verified readback ordering. Production web/migration/Edge markers are confirmed; authenticated runtime remains unproven, and Mind/Memory remain unavailable | Drive the production signed-in owner flow, workspace switch, denied role, canonical revision, and matching Rail row |
 | Command Center → Systems Check | `UNAVAILABLE` | A failing check drives a real Paige remediation the next scan verifies | safe lens exists, unwired; needs SCR-2 + SCR-3 | Phase 4.4 read-only context |
@@ -177,7 +178,7 @@ shrinks the target — it names the gap between present proof and the full opera
 | Settings → Vault | `INTENTIONALLY_ISOLATED` | Only OCR/DLP-inspected reviewed facts become eligible knowledge; raw docs never cross | Phase 2 owner/admin foundation + quarantined intake shipped (#986); raw docs/credentials never cross | Phase 7: OCR/DLP-inspected promotion of reviewed facts |
 | Settings → Billing | `PARTIAL` | Paige drives a real billing action within the §38 boundary, on confirmation | safe status source contract shipped, not injected; secrets isolated | Phase 8 bind safe status only |
 | Settings → Security & data | `INTENTIONALLY_ISOLATED` | Posture controls perform the real governed change (or are plainly read-only) | autonomy authority is non-Chat (§67/§68) | none as a write binding |
-| Analytics | `UNAVAILABLE` | A real analytics finding drives an owner-approved action, verified | needs SCR-2 + SCR-3; strongest existing authorization semantics | Phase 8; reference consumer for SCR-2 |
+| Settings → Analytics (six views) | `UNAVAILABLE` | A real analytics finding drives an owner-approved action, verified | Shared issuer/resolver; 22 per-reading LIVE/PARTIAL/UNAVAILABLE keys, five unsupported producers; PAIGE binding not proven | #1837 Chat/Live governed read PROOF OWED; existing Mind restrictions retained |
 | Marketplace | `UNAVAILABLE` | Paige installs a marketplace item whose entitlement is verified | the most blocked; SCR-1/2/3 | bind safe install-state only |
 | Operator / Platform | `UNAVAILABLE` (out of Solo scope) | _Out of Solo scope_ — intentionally separate, tenant-less tree | intentionally separate tree, tenant-less | out of scope; no subaccount/operator work without release |
 

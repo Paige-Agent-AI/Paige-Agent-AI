@@ -54,10 +54,11 @@ describe("R6-A — the class contract is DATA, not a router", () => {
     for (const banned of ["openai", "gpt-6", "astra", "sol", "anthropic", "sonnet", "claude", "groq", "qwen", "luna"]) {
       expect(noComments.toLowerCase()).not.toContain(banned);
     }
-    // and the engine holds NO direct OpenAI fetch — every model call goes through the shared router
+    // and the engine holds NO direct OpenAI fetch — every model call goes through the R6-B
+    // research adapter, which itself owns no provider (see deep-research-r6b-fabric.test.ts)
     expect(core).not.toMatch(/api\.openai\.com|api\.openai/);
     expect(core).not.toContain('from "openai"');
-    expect(core).toContain('import { routedChatCompletion } from "../_shared/model-router.ts";');
+    expect(core).toContain('import { researchCompletion');
   });
   it("the deterministic phases are pinned LLM-free (code, not models)", () => {
     expect(core).toContain('entity_planner: "deterministic"');
@@ -120,8 +121,11 @@ describe("R6-A — telemetry readback (the router's report, not research's choic
     expect(core).toContain("__served_model =");
     expect(core).toContain("r5resp.model");
   });
-  it("the cognitive-class parameter is carried but NEVER consulted for routing in R6-A", () => {
-    expect(core).toContain("void cognitiveClass; // present for the R6-B class-bearing seam; deliberately unused here");
+  it("the cognitive-class parameter reaches the R6-B adapter as DATA (declared map, never a route table)", () => {
+    // R6-A carried it unused; R6-B (#1851, owner-approved) passes it into the class-bearing
+    // fabric request — from the engine's OWN declaration, with the map as the only source.
+    expect(core).toContain("cognitiveClass ?? RESEARCH_COGNITIVE_CLASSES.unit_synthesis");
+    expect(core).not.toContain("void cognitiveClass;");
   });
 });
 
@@ -146,9 +150,14 @@ describe("R6-A G.3 — Judge v3: the versioned fixed-route evaluator", () => {
 });
 
 describe("R6-A — research behavior is UNCHANGED (the non-regression guarantee)", () => {
-  it("no call site's routed job kind changed (extract/doc_draft/plan exactly as R5)", () => {
-    expect((core.match(/routedChatCompletion\("extract"/g) ?? []).length).toBe(2);
-    expect((core.match(/routedChatCompletion\("doc_draft"/g) ?? []).length).toBe(2);
+  it("the flag-off job kinds are EXACTLY R5's (the R6-B adapter's dormant path is byte-parity)", () => {
+    const adapter = readFileSync(join(root, "supabase/functions/paige-deep-research/fabric.ts"), "utf8");
+    expect((adapter.match(/: "extract",/g) ?? []).length).toBe(2);
+    expect((adapter.match(/: "doc_draft",/g) ?? []).length).toBe(2);
+    expect(adapter).toContain("RESEARCH_FABRIC_ENABLED: boolean = false;");
+    // and the engine itself holds no routed CALL (a doc-comment mention is not a call) —
+    // the adapter owns the dispatch
+    expect((core.match(/await routedChatCompletion\(/g) ?? []).length).toBe(0);
   });
   it("the protected seams are untouched", () => {
     expect(core).toContain("const MAX_HOPS = 3;");

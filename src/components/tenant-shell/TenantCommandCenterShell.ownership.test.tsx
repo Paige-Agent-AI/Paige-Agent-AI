@@ -7,6 +7,8 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TenantCommandCenterShell, TenantPaigeCommandField } from "./TenantCommandCenterShell";
 import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
+// Load the mounted app as suite setup, before measuring any navigation assertion.
+import "@/solo/SoloApp";
 
 const themeMock = vi.hoisted(() => ({
   resolvedTheme: "light" as "light" | "dark",
@@ -34,12 +36,50 @@ vi.mock("@/integrations/supabase/client", async (importOriginal) => {
       get(target, prop, receiver) {
         if (prop === "channel") return () => channel;
         if (prop === "removeChannel") return async () => "ok" as const;
+        // Shell navigation mounts the real Campaigns reader. Its backend contents
+        // are outside this ownership proof; supply its explicit empty read here.
+        if (prop === "rpc") return (name: string, ...args: unknown[]) => {
+          if (name === "has_tenant_role") return Promise.resolve({ data: false, error: null });
+          if (name === "business_vault_access_status") return Promise.resolve({ data: { allowed: false }, error: null });
+          if (name === "get_campaign_briefs") return Promise.resolve({
+            data: { can_manage: false, archived_count: 0, briefs: [] }, error: null,
+          });
+          return Reflect.apply(target.rpc, target, [name, ...args]);
+        };
         return Reflect.get(target, prop, receiver);
       },
     }),
   };
 });
 vi.mock("@/components/admin/AdminBridgeBell", () => ({ AdminBridgeBell: () => null }));
+// Preserve the real Campaigns launcher; its backend records are outside shell ownership.
+vi.mock("@/solo/useSoloCampaigns", () => ({
+  useSoloCampaigns: () => ({
+    tenantId: "tenant-42", phase: "ready", campaigns: [], artifacts: [], submissions: [], drafts: [],
+    pipelineWorkspace: { canManage: false, canArchiveFolders: false, folders: [], pipelines: [], stages: [], deals: [], automationRules: [] },
+    retry: vi.fn(),
+    pipelineAction: async () => { throw new Error("Unexpected pipeline mutation in shell ownership proof"); },
+  }),
+}));
+// Keep the real Studio navigation while its independently tested media seam is unavailable.
+vi.mock("@/solo/useMediaJobs", () => ({
+  useMediaJobs: () => ({
+    capabilities: null, jobs: [], assets: {}, loading: false, actionError: null,
+    submit: vi.fn().mockRejectedValue(new Error("Unexpected media mutation in shell ownership proof")),
+    approve: vi.fn(), decline: vi.fn(), decide: vi.fn(), cancel: vi.fn(),
+    approvalFor: () => ({ requestedByYou: null, requesterName: null }),
+    refreshCapabilities: vi.fn(), isJobRow: () => false,
+  }),
+}));
+vi.mock("@/solo/studio/studio-data", async (original) => ({
+  ...(await original<typeof import("@/solo/studio/studio-data")>()),
+  listSessions: async () => [],
+  loadBrand: async () => ({
+    floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
+    name: null, logoUrl: null,
+  }),
+  createSession: async () => { throw new Error("Unexpected Studio mutation in shell ownership proof"); },
+}));
 vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () => null }));
 vi.mock("@/components/ui/paige", () => ({
   AgentPresenceProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -231,7 +271,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(affectedTenant.workspaceClaim).toBe("Owner workspace");
     expect(knownGoodTenant.workspaceClaim).toBe("Team workspace");
     expect(affectedTenant.destinations.map(([id]) => id)).toEqual([
-      "command", "clients", "campaigns", "sales", "marketplace", "analytics", "settings",
+      "command", "clients", "campaigns", "sales", "finance", "marketplace", "settings",
     ]);
     expect(affectedTenant.paigeWorkspaces).toBe(1);
     expect(affectedTenant.pipelineDomains).toBe(1);
@@ -553,7 +593,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(
       Array.from(host.querySelectorAll<HTMLElement>("[data-tenant-destination]"))
         .map((item) => item.textContent?.trim()),
-    ).toEqual(["Command Center", "Clients", "Marketing", "Sales", "Marketplace", "Analytics", "Settings"]);
+    ).toEqual(["Command Center", "Clients", "Marketing", "Sales", "Finance", "Marketplace", "Settings"]);
 
     await act(async () => root.unmount());
     host.remove();

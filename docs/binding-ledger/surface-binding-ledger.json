@@ -48,6 +48,81 @@
   ],
   "surfaces": [
     {
+      "id": "finance.department",
+      "surface": "Solo Finance — seven company-finance views",
+      "group": "finance",
+      "tier_scope": [
+        "solo standalone"
+      ],
+      "owner_component": "src/solo/finance/FinanceWorkspace.tsx",
+      "canonical_source": "Sales list_sales_invoices parser and issue_analytics_evidence_bundle; company accounting/banking/budget/forecast sources unavailable",
+      "chain": {
+        "canonical_source": {
+          "status": "partial",
+          "note": "Existing Sales invoice and metric reads are reused; no company accounting/bank source or local aggregate is invented."
+        },
+        "tenant_scope": {
+          "status": "inherited_contract",
+          "note": "Server active-workspace owner/admin checks retained. Authentication, request identity and evidence expiry invalidate UI reads. Authenticated isolation proof owed."
+        },
+        "safe_context": {
+          "status": "partial",
+          "note": "Bounded metric key/evidence reference handed to existing PAIGE bridge. Canonical analytics resolver must re-authorize scope/expiry; no raw invoice/client facts are copied. Finance domain snapshots absent."
+        },
+        "authority": {
+          "status": "inherited",
+          "note": "Read-only initial UI; canonical Trust/Spine retains subsequent action authority. Navigation grants no financial effect."
+        },
+        "governed_write": {
+          "status": "none",
+          "note": "No new write. Full Finance follow-up target remains open."
+        },
+        "verified_outcome": {
+          "status": "proof_owed",
+          "note": "Source, automated and local synthetic rendered proof do not establish authenticated Finance behavior."
+        },
+        "rail_evidence": {
+          "producer": "none",
+          "read": "none",
+          "note": "Existing Sales actions retain their own receipts. Finance introduces no new receipt stream."
+        },
+        "mind_eligibility": {
+          "axis_a": "n/a",
+          "axis_b": "NO",
+          "note": "No new Mind promotion or Fabric composition; Financial domain snapshot contract remains unavailable."
+        },
+        "memory_retention": {
+          "status": "none",
+          "note": "Changing balances never automatically become durable user memories."
+        }
+      },
+      "intended_capability": {
+        "read": "Authorized company cash, obligations, expenses, assets/liabilities, accounting statements, Sales receipts and source coverage.",
+        "draft": "Prepare source-backed budgets, scenarios, reconciliations and financial follow-up proposals without external effect.",
+        "auto": "Within policy and approved scope, perform eligible internal financial reviews and governed task follow-ups with verification; no new financial effect is granted here.",
+        "confirm": "Accounting writebacks, bill payments, transfers, tax filings and provider company activation require their corresponding authority through the existing approval gate.",
+        "prohibited": "No fabricated zero, duplicate ledger, raw secrets, tenant identity from client, TEST collection promoted to bank cash, or balance copied into durable Memory.",
+        "completion_criterion": "Authenticated owner completes a source-backed financial review; PAIGE prepares and executes an authorized governed follow-up, verifies readback and records the canonical Rail outcome."
+      },
+      "state": "PROOF_OWED",
+      "state_reason": "Dedicated Finance destination and canonical Sales consumers are implemented; authenticated UI and Chat/Live proof absent. Company accounting/banking, budgets, forecasts and Finance snapshots remain unavailable. The full department mission remains open.",
+      "next_slice": "Prove authenticated scoped UI; coordinate safe company accounting/bank reads through Integrations; complete canonical budgets/forecast assumptions and Finance Spine/Fabric bindings with governed outcome/readback.",
+      "evidence_class": [
+        "source_read",
+        "automated_test",
+        "rendered_structural"
+      ],
+      "linked": [],
+      "sources": [
+        "src/solo/finance/FinanceWorkspace.tsx",
+        "src/solo/finance/useFinanceInvoices.ts",
+        "src/solo/sales/performance/useSalesPerformanceMetrics.ts",
+        "docs/brain/finance-department.md",
+        "docs/doctrine/surface-cards/finance.md",
+        "docs/delivery/finance-approved-build.md"
+      ]
+    },
+    {
       "id": "sales.department",
       "surface": "Solo Sales — Overview, Opportunities (List / Board), Offers, Terms & Agreements, Payments, Performance",
       "group": "sales",
@@ -67,15 +142,15 @@
         },
         "safe_context": {
           "status": "real",
-          "note": "Bounded read_sales_collections and read_sales_invoice Chat projections omit client PII/free text; explicit currency/version/record kind/provenance survive. Hosted owner proof owed."
+          "note": "Bounded read_sales_collections and read_sales_invoice Chat projections omit client PII/free text; explicit currency/version/record kind/provenance survive. Hosted owner proof owed. Merchant Chat exposes closed tenant status only, with scoped proposal validation and stale/future/incomplete readiness downgraded. Hosted setup/dashboard URLs, provider errors and account credentials stay out of Chat/Rail."
         },
         "authority": {
           "status": "inherited",
-          "note": "Collections and invoice writes use canonical declared decisions, pending confirmation and service-only execution with stored exact command; high-risk actions never auto."
+          "note": "Collections and invoice writes use canonical declared decisions, pending confirmation and service-only execution with stored exact command; high-risk actions never auto. Merchant start/resume reuse high/confirm shared Trust and C4b stored proposals; tenant-stripe-connect alone consumes approval."
         },
         "governed_write": {
           "status": "inherited",
-          "note": "Collection terms extend canonical agreements; reviewed imports append canonical obligations/receipts. Canonical operation replay, version checks and transactional Rail are reused. Invoice preferences use invoice.settings_update / sales_update_invoice_settings with settings-version CAS and the existing invoice operation store; issued documents keep their frozen presentation. Governed Chat draft creation/revision binds billing_create_invoice / sales_revise_invoice_draft through sales-invoice-draft-command, the common invoice writer and current shared Trust gate. Exact stored draft approval, immutable replay and atomic Rail have local proof; hosted creation/reopen remains UNVERIFIED. No second CRM, offer or payment store."
+          "note": "Collection terms extend canonical agreements; reviewed imports append canonical obligations/receipts. Canonical operation replay, version checks and transactional Rail are reused. Invoice preferences use invoice.settings_update / sales_update_invoice_settings with settings-version CAS and the existing invoice operation store; issued documents keep their frozen presentation. Governed Chat draft creation/revision binds billing_create_invoice / sales_revise_invoice_draft through sales-invoice-draft-command, the common invoice writer and current shared Trust gate. Exact stored draft approval, immutable replay and atomic Rail have local proof; hosted creation/reopen remains UNVERIFIED. No second CRM, offer or payment store. Four sales_merchant declarations route status/refresh and governed Express onboarding/dashboard handoff through the existing merchant binding and shared endpoint. Unknown creation is GET-only recovery. Existing-account OAuth is absent."
         },
         "verified_outcome": {
           "status": "proof_owed",
@@ -105,8 +180,8 @@
         "completion_criterion": "Authenticated Solo owner completes source-backed commercial workflows and verifies recorded outcomes; fixture rendering does not meet this criterion."
       },
       "state": "PROOF_OWED",
-      "state_reason": "Dedicated Sales mounts and Collections code are implemented, with local SQL and synthetic rendered proof. Authenticated tenant flows and provider outcomes remain unverified. Collections Chat binds canonical governed tools. The 2026-10-04 invoice customization and six-tab Opportunities List/Board refinement is development evidence only; authenticated preferences save/issuance, customer artifact and opportunity interactions remain UNVERIFIED. The approved invoice pop-out and actual PDF/email-attachment implementation has local component/renderer and version-fence proof; hosted renderer and authenticated provider attachment acceptance remain UNVERIFIED. Broad INT-299 runtime architecture stays deferred. Post-merge repair keeps draft previews unpublished and serializes invoice financial mutations against canonical dispatch admission; authenticated concurrent delivery/payment proof remains owed.",
-      "next_slice": "Prove authenticated scoped collection terms, import/export, partial receipts/corrections and invoice email/SMS outcomes; no iMessage/accounting sync claim. Apply INT-299 only after accepted Sales UI.",
+      "state_reason": "Dedicated Sales mounts and Collections code are implemented, with local SQL and synthetic rendered proof. Authenticated tenant flows and provider outcomes remain unverified. Collections Chat binds canonical governed tools. The 2026-10-04 invoice customization and six-tab Opportunities List/Board refinement is development evidence only; authenticated preferences save/issuance, customer artifact and opportunity interactions remain UNVERIFIED. The approved invoice pop-out and actual PDF/email-attachment implementation has local component/renderer and version-fence proof; hosted renderer and authenticated provider attachment acceptance remain UNVERIFIED. Broad INT-299 runtime architecture stays deferred. Post-merge repair keeps draft previews unpublished and serializes invoice financial mutations against canonical dispatch admission; authenticated concurrent delivery/payment proof remains owed. INT-311 merchant Spine/Chat status, refresh, setup and dashboard handoff are implemented with local automated contract proof. This does not establish authenticated merchant setup, secure handoff completion or TEST payment acceptance; those remain PROOF OWED. PayPal is a visible disabled Finance tile with a non-executing readback normalizer; approved partner seller onboarding and delegated transport remain UNAVAILABLE.",
+      "next_slice": "Prove authenticated scoped collection terms, import/export, partial receipts/corrections and invoice email/SMS outcomes; no iMessage/accounting sync claim. Apply INT-299 only after accepted Sales UI. Prove authenticated scoped merchant start/resume/readback and TEST payment acceptance; retain secure human handoff and fail-closed unknown recovery. Ground PayPal approved partner onboarding before enabling connection.",
       "evidence_class": [
         "source_read",
         "automated_test",
@@ -123,7 +198,12 @@
         "docs/evidence/ui-delivery/solo-sales-collections.md",
         "docs/evidence/ui-delivery/solo-sales-invoice-customization.md",
         "docs/evidence/ui-delivery/solo-sales-invoice-pdf-workspace.md",
-        "docs/evidence/ui-delivery/solo-sales-invoice-dispatch-repair.md"
+        "docs/evidence/ui-delivery/solo-sales-invoice-dispatch-repair.md",
+        "supabase/functions/_shared/sales-payments/merchant-capability.ts",
+        "supabase/functions/_shared/sales-payments/merchant-chat.ts",
+        "supabase/functions/tenant-stripe-connect/index.ts",
+        "src/solo/settings-integrations.tsx",
+        "src/__tests__/sales-merchant-chat.test.ts"
       ]
     },
     {
@@ -869,27 +949,77 @@
       },
       "surface": "Settings -> Integrations (n8n, MCP, automations)",
       "group": "settings",
-      "tier_scope": ["solo"],
+      "tier_scope": [
+        "solo"
+      ],
       "owner_component": "src/solo/settings-integrations.tsx (settings.tsx:1774); useN8nConnection/useMcpConnection/useSoloAutomations; StripeMerchantDrawer/useStripeMerchant reuse tenant-stripe-connect and tenant_stripe_accounts",
-      "canonical_source": "n8n + MCP connection tables; automation rules; Spine read get_n8n_spine_readiness; n8n management executor edge.paige-ai-chat",
+      "canonical_source": "n8n + MCP connection tables; automation rules; Spine read get_n8n_spine_readiness; n8n management executor edge.paige-ai-chat; tenant_stripe_accounts and tenant-stripe-connect; existing shared Trust/pending confirmations/capability-run Rail",
       "chain": {
-        "canonical_source": {"status": "real"},
-        "tenant_scope": {"status": "server_resolved"},
-        "safe_context": {"status": "wired", "note": "integrations.n8n_readiness registered; loadN8nReadinessForChat injected (status available only); best Mind-shaped fact vocabulary of the blocked set"},
-        "authority": {"status": "governed", "note": "12 n8n management capabilities; 6 reads + 6 external_effect writes (create/update/activate/deactivate/archive/run), each high + chat-canonical"},
-        "governed_write": {"status": "wired", "note": "n8n write acts wired to record_capability_run (the workspace-level Rail write)"},
-        "verified_outcome": {"status": "wired", "note": "record_capability_run + capability_outcome_unknown for dispatch-without-result; ZERO rows in prod as of 2026-09-05"},
-        "rail_evidence": {"producer": "wired", "read": "resolver", "note": "capability_run rows via get_solo_rail_activity; nothing exercised yet"},
-        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "connection state needs SCR-1+SCR-2; the connection endpoint must NEVER cross"},
-        "memory_retention": {"status": "n/a"}
+        "canonical_source": {
+          "status": "real"
+        },
+        "tenant_scope": {
+          "status": "server_resolved"
+        },
+        "safe_context": {
+          "status": "wired",
+          "note": "integrations.n8n_readiness registered; loadN8nReadinessForChat injected (status available only); best Mind-shaped fact vocabulary of the blocked set Merchant Chat exposes closed tenant status only, with scoped proposal validation and stale/future/incomplete readiness downgraded. Hosted setup/dashboard URLs, provider errors and account credentials stay out of Chat/Rail."
+        },
+        "authority": {
+          "status": "governed",
+          "note": "12 n8n management capabilities; 6 reads + 6 external_effect writes (create/update/activate/deactivate/archive/run), each high + chat-canonical Merchant start/resume reuse high/confirm shared Trust and C4b stored proposals; tenant-stripe-connect alone consumes approval."
+        },
+        "governed_write": {
+          "status": "wired",
+          "note": "n8n write acts wired to record_capability_run (the workspace-level Rail write) Four sales_merchant declarations route status/refresh and governed Express onboarding/dashboard handoff through the existing merchant binding and shared endpoint. Unknown creation is GET-only recovery. Existing-account OAuth is absent."
+        },
+        "verified_outcome": {
+          "status": "wired",
+          "note": "record_capability_run + capability_outcome_unknown for dispatch-without-result; ZERO rows in prod as of 2026-09-05"
+        },
+        "rail_evidence": {
+          "producer": "wired",
+          "read": "resolver",
+          "note": "capability_run rows via get_solo_rail_activity; nothing exercised yet"
+        },
+        "mind_eligibility": {
+          "axis_a": "BLOCKED",
+          "axis_b": "NO",
+          "note": "connection state needs SCR-1+SCR-2; the connection endpoint must NEVER cross"
+        },
+        "memory_retention": {
+          "status": "n/a"
+        }
       },
-      "prohibited_context": ["the connection endpoint above all", "every credential-derived value", "host fragments", "error text", "labels", "approved capabilities", "capability-pin digests"],
+      "prohibited_context": [
+        "the connection endpoint above all",
+        "every credential-derived value",
+        "host fragments",
+        "error text",
+        "labels",
+        "approved capabilities",
+        "capability-pin digests"
+      ],
       "state": "PARTIAL",
-      "state_reason": "n8n readiness read wired + injected; 12 n8n management capabilities registered with 6 governed writes wired to the Rail capability-run write. Not proven: ZERO capability_run rows exist in production; no authenticated runtime drive. Connection-state Mind lens is UNAVAILABLE (needs SCR-1/2). Accounting/finance/paid-media provider connectors (e.g. QuickBooks reconcile/classify/pay) have NO connected seam yet — those sub-capabilities stay UNAVAILABLE and their seam+proof is owed; the intended_capability declares the delegated-execution target regardless (owner ruling 2026-09-06, §13). settings.integrations owns only the connected-tool execution SEAM; the tenant-facing Finance/bookkeeping SURFACE (§16 Finance) is deferred to its own slice when accounting-firm tenants land (§18/§56), not cemented under Integrations (§65).",
-      "evidence_class": ["production_catalog", "automated_test", "rendered_structural", "source_read"],
+      "state_reason": "n8n readiness read wired + injected; 12 n8n management capabilities registered with 6 governed writes wired to the Rail capability-run write. Not proven: ZERO capability_run rows exist in production; no authenticated runtime drive. Connection-state Mind lens is UNAVAILABLE (needs SCR-1/2). Accounting/finance/paid-media provider connectors (e.g. QuickBooks reconcile/classify/pay) have NO connected seam yet — those sub-capabilities stay UNAVAILABLE and their seam+proof is owed; the intended_capability declares the delegated-execution target regardless (owner ruling 2026-09-06, §13). settings.integrations owns only the connected-tool execution SEAM; the tenant-facing Finance/bookkeeping SURFACE (§16 Finance) is deferred to its own slice when accounting-firm tenants land (§18/§56), not cemented under Integrations (§65). INT-311 merchant Spine/Chat status, refresh, setup and dashboard handoff are implemented with local automated contract proof. This does not establish authenticated merchant setup, secure handoff completion or TEST payment acceptance; those remain PROOF OWED. PayPal is a visible disabled Finance tile with a non-executing readback normalizer; approved partner seller onboarding and delegated transport remain UNAVAILABLE.",
+      "evidence_class": [
+        "production_catalog",
+        "automated_test",
+        "rendered_structural",
+        "source_read"
+      ],
       "linked": [],
-      "next_slice": "Authenticated drive of an n8n management write through chat to produce the first capability_run row and verify it renders on the owner's Command Center (#746 owner-visibility).",
-      "sources": ["docs/brain/paige-spine-and-rail-state.md", "supabase/functions/_shared/paige-spine/domains/n8n_management.ts", "docs/architecture/paige-mind-integration-matrix.md#integrations-n8n-mcp"]
+      "next_slice": "Authenticated drive of an n8n management write through chat to produce the first capability_run row and verify it renders on the owner's Command Center (#746 owner-visibility). Prove authenticated scoped merchant start/resume/readback and TEST payment acceptance; retain secure human handoff and fail-closed unknown recovery. Ground PayPal approved partner onboarding before enabling connection.",
+      "sources": [
+        "docs/brain/paige-spine-and-rail-state.md",
+        "supabase/functions/_shared/paige-spine/domains/n8n_management.ts",
+        "docs/architecture/paige-mind-integration-matrix.md#integrations-n8n-mcp",
+        "supabase/functions/_shared/sales-payments/merchant-capability.ts",
+        "supabase/functions/_shared/sales-payments/merchant-chat.ts",
+        "supabase/functions/tenant-stripe-connect/index.ts",
+        "src/solo/settings-integrations.tsx",
+        "src/__tests__/sales-merchant-chat.test.ts"
+      ]
     },
     {
       "id": "settings.vault",
@@ -1074,18 +1204,18 @@
         "draft": "Interpret analytics, recommend actions, and model scenarios.",
         "auto": "Within the owner's standing delegated policy, trigger a pre-approved analytics-driven action on its owning surface (e.g. pause spend on a flagged campaign) within that surface's caps and stop conditions — the action executes and is Rail-logged there. Analytics itself performs no write (chain governed_write=none), so it routes to the owning surface rather than executing here — deliberately not marked consequential.",
         "confirm": "An analytics-driven change routes to its owning surface's confirm gate.",
-        "prohibited": "Never expose metric definitions/formulas/exclusion reasons or the source refs.",
+        "prohibited": "Never expose raw customer records, actor/workspace identifiers, secrets or unvalidated producer payloads. Authorized current-turn metric definitions, source periods, coverage and opaque evidence references are permitted by the 2026-10-08 owner ruling; Pipeline Mind signal constraints remain separate.",
         "completion_criterion": "A real analytics finding drives a Paige-prepared, owner-approved action on the owning surface with a verified result — not a static dashboard (needs SCR-2 + SCR-3)."
       },
-      "surface": "Analytics",
+      "surface": "Settings → Analytics (Overview, Business Health, Operations, Team, AI & Usage, Data Health)",
       "group": "analytics",
       "tier_scope": ["solo"],
-      "owner_component": "src/solo/analytics2.tsx:254",
-      "canonical_source": "issue_analytics_evidence_bundle + resolve_analytics_evidence_reference (money tab only live); 5 tabs static",
+      "owner_component": "src/solo/settings-analytics.tsx + src/solo/data/useSettingsAnalytics.ts",
+      "canonical_source": "Shared issue_analytics_evidence_bundle seven-argument overload + resolve_analytics_evidence_reference(text), migration06 dispatcher and migration05 private Settings producer; 22 keys documented in docs/delivery/int340-metric-coverage.md",
       "chain": {
-        "canonical_source": {"status": "partial", "note": "only the money (Sales funnel) tab is live; the other five are static 'Not proved'"},
-        "tenant_scope": {"status": "server_resolved", "note": "the lens binds BOTH actor and account and refuses when the passed account epoch differs from the caller's active tenant"},
-        "safe_context": {"status": "eligible", "note": "the authorization/freshness/expiry/coverage semantics are Mind-shaped — the hard half — but subject type and unbounded counts fail the contract"},
+        "canonical_source": {"status": "partial", "note": "22 Settings keys have explicit producer semantics; readiness is per reading LIVE/PARTIAL/UNAVAILABLE. Retention, profitability, NPS, team scorecards and actual voice consumption remain UNAVAILABLE. This is source coverage, not Chat/Live acceptance."},
+        "tenant_scope": {"status": "server_resolved", "note": "Shared issuer/resolver revalidate active profile, actor, explicit active owner/admin seat, lifecycle, tenant epoch, expiry/revocation and recomputed source digest; platform role without tenant seat is denied on the new seam."},
+        "safe_context": {"status": "eligible", "note": "#1837 uses the existing ContextSourceResult interface for closed, size-bounded current-turn metric interpretation after caller-JWT issuer/resolver verification. It does not generalize client-only Pipeline SpineSignal/Mind retrieval or implement Fabric snapshot composition."},
         "authority": {"status": "none"},
         "governed_write": {"status": "none"},
         "verified_outcome": {"status": "none"},
@@ -1093,13 +1223,13 @@
         "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2 (non-client subject) AND C3 (unbounded counts); needs SCR-2 AND SCR-3 — 'the cheapest to unblock'"},
         "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": ["pipeline/stage labels", "metric label/definition/formula", "caveats", "exclusion reasons", "account epoch reference", "evidence/source-revision refs", "source table names"],
-      "state": "UNAVAILABLE",
-      "state_reason": "No Paige binding built. But its lens already ships the authorization/freshness/expiry/coverage semantics a Mind lens needs — name Analytics the reference consumer when SCR-2 is raised (recording that SCR-3 is also required for the counts).",
+      "prohibited_context": ["raw customer/source records", "actor/workspace identifiers", "account epoch reference", "provider secrets", "unvalidated producer fields", "changing KPI values promoted to durable Memory"],
+      "state": "PARTIAL",
+      "state_reason": "Settings Analytics remains complete. #1837 registers analytics.metric_read and binds read_business_metric to the actual caller-JWT issuer/resolver in the shared Chat/Live handler; closed current-turn context preserves measurement truth and evidence. Authenticated natural-language Chat/Live acceptance remains PROOF OWED, not inferred from tests or prior Settings acceptance. Pipeline Mind subject/count restrictions and Fabric composition remain separately owned.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
-      "next_slice": "Phase 8: bind only what is safe, AFTER SCR-2 + SCR-3. Reference consumer for the SCR-2 request.",
-      "sources": ["docs/architecture/paige-mind-integration-matrix.md#analytics", "docs/product/interactive-analytics-ui-spec.md"]
+      "next_slice": "#1837: exact-head review/CI, deployment readback and authenticated Chat/Live proof through approved QA access. Current-turn context uses the existing generic source interface; Pipeline Mind SCR-2/SCR-3 are not bypassed or claimed complete.",
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#analytics", "docs/product/interactive-analytics-ui-spec.md", "docs/delivery/int340-metric-coverage.md", "supabase/migrations/20270601000005_int340_settings_metric_producers.sql", "supabase/migrations/20270601000006_int340_shared_metric_evidence.sql"]
     },
     {
       "id": "marketplace",

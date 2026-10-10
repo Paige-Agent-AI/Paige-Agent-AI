@@ -55,7 +55,7 @@ try {
   let absent=false;
   try { db.run('SELECT public.operator_intelligence_task_scorecard()'); } catch(error) { absent=error.code==='42883'; }
   if(!absent)throw new Error('Scorecard failing-first absence proof missing');
-  const scorecard=await readFile('supabase/migrations/20270602000425_int280_task_scorecard.sql','utf8');
+  const scorecard=await readFile('supabase/migrations/20270602000431_int280_task_scorecard.sql','utf8');
   await db.exec(scorecard);await db.exec(scorecard);
   const scorecardProof=db.run(await readFile('supabase/tests/int280_task_scorecard.sql','utf8'));
   if(!scorecardProof.includes('PASS: protected bounded task scorecard'))throw new Error('Scorecard proof missing');

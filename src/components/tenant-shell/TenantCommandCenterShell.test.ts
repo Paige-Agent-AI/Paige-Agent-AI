@@ -28,7 +28,7 @@ describe("tenant Command Center shell routing", () => {
     expect(TENANT_SHELL_DESTINATIONS.some(({ label }) => label === "Fleet")).toBe(false);
   });
 
-  it("gives Solo six durable work homes with Analytics inside Settings", () => {
+  it("gives Solo seven durable work homes with Analytics inside Settings", () => {
     const destinations = tenantShellDestinationsForPath("/solo/42/command-center", "standalone");
 
     expect(destinations.map(({ label }) => label)).toEqual([
@@ -36,6 +36,7 @@ describe("tenant Command Center shell routing", () => {
       "Clients",
       "Marketing",
       "Sales",
+      "Finance",
       "Marketplace",
       "Settings",
     ]);
@@ -44,6 +45,7 @@ describe("tenant Command Center shell routing", () => {
       ["clients", "/solo/42/clients"],
       ["campaigns", "/solo/42/growth"],
       ["sales", "/solo/42/sales"],
+      ["finance", "/solo/42/finance"],
       ["marketplace", "/solo/42/marketplace"],
       ["settings", "/solo/42/settings"],
     ]);

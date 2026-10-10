@@ -1,0 +1,23 @@
+import React, { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { FinanceWorkspace } from "./FinanceWorkspace";
+import { branchBySlug, subtabByKey } from "@/lib/routing/tierBranches";
+import { tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
+const mocks = vi.hoisted(() => ({ phase: "ready", metricPhase: "ready", retry: vi.fn(), rows: [] as unknown[], identity: "A:0:0" }));
+vi.mock("../sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: () => ({ phase: mocks.metricPhase, metrics: [], retry: mocks.retry, unavailableKeys: {} }) }));
+vi.mock("./useFinanceInvoices", () => ({ useFinanceInvoices: () => ({ identity: mocks.identity, phase: mocks.phase, rows: mocks.rows, hasMore: false, readAt: null, retry: mocks.retry, loadMore: vi.fn() }) }));
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+let root: Root, host: HTMLDivElement;
+beforeEach(() => { mocks.phase = "ready"; mocks.metricPhase = "ready"; mocks.rows = []; mocks.identity = "A:0:0"; mocks.retry.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+afterEach(() => { act(() => root.unmount()); host.remove(); });
+async function render(path = "/solo/123/finance/overview", epoch = "A") { await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<FinanceWorkspace epoch={epoch}/>}/></Routes></MemoryRouter>)); }
+describe("Finance canonical destination", () => {
+ it("is reachable through exactly seven Solo subtabs and shared main navigation", () => { expect(branchBySlug("solo", "finance")?.subtabs).toHaveLength(7); expect(subtabByKey("solo", "finance", "banking")?.slug).toBe("banking-cash"); expect(tenantShellDestinationsForPath("/solo/123/finance", "standalone").map(row => row.label)).toContain("Finance"); expect(tenantShellDestinationsForPath("/agency/123", "agency").map(row => row.label)).not.toContain("Finance"); });
+ it("does not invent account balances/profit when sources are unavailable", async () => { await render(); expect(host.textContent).toContain("A current company bank balance is required."); expect(host.textContent).not.toContain("$0"); expect(host.querySelectorAll('[role="tab"]')).toHaveLength(7); });
+ it("navigates to distinct source jobs through the real route hook", async () => { await render(); await act(async () => (host.querySelectorAll('[role="tab"]')[6] as HTMLButtonElement).click()); expect(host.textContent).toContain("Your labels stay yours"); expect(host.textContent).toContain("Company accounting information is not available in Finance yet."); });
+ it("withholds financial controls when the server refuses access", async () => { mocks.phase = "denied"; await render(); expect(host.textContent).toContain("Financial access is restricted"); expect(host.textContent).not.toContain("Recorded receipts"); });
+ it("keeps the search field focused across multiple characters", async () => { await render(); const input=host.querySelector("input")!; input.focus(); for (const value of ["I","IN","INV"]) { await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(input,value); input.dispatchEvent(new Event("input",{bubbles:true})); }); expect(host.querySelector("input")).toBe(input); expect(document.activeElement).toBe(input); expect(input.value).toBe(value); } });
+ it("retains original invoice-line wording in a real source drawer", async () => { mocks.metricPhase = "error"; mocks.rows = [{ id: "i1", tenantId: "A", number: "INV-TEST", status: "issued", totalMinor: 10000, remainingMinor: 10000, manualRecordedMinor: 0, providerVerifiedMinor: 0, payments: [], paymentsHasMore: false, snapshot: { memo: null, due_date: "2026-10-09", currency: "usd", items: [{ item: "Conseil / debt reconciliation", quantity: 1, unit_minor: 10000 }] } }]; await render(); const open = Array.from(host.querySelectorAll("button")).find(node => node.textContent === "Inspect INV-TEST"); await act(async () => open?.click()); expect(document.body.textContent).toContain("Conseil / debt reconciliation"); mocks.identity = "A:0:1"; await render(); expect(document.querySelector('[role="dialog"]')).toBeNull(); });
+});

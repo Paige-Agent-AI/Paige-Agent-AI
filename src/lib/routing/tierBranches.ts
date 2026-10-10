@@ -225,6 +225,18 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
+    slug: "finance", key: "finance", label: "Finance", group: "main",
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "banking-cash", key: "banking", label: "Banking & Cash" },
+      { slug: "receivables", key: "receivables", label: "Receivables" },
+      { slug: "expenses-payables", key: "expenses", label: "Expenses & Payables" },
+      { slug: "profitability", key: "profitability", label: "Profitability" },
+      { slug: "budgeting-forecasting", key: "forecast", label: "Budgeting & Forecasting" },
+      { slug: "connections", key: "connections", label: "Connections" },
+    ],
+  },
+  {
     slug: "marketplace", key: "market", label: "Marketplace", group: "platform",
     // Source: src/solo/marketplace.tsx — FOUR only. Curated + Publish are agency-only
     // (a Solo tenant consumes the marketplace, it does not curate or publish to a book).

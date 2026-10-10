@@ -48,6 +48,81 @@
   ],
   "surfaces": [
     {
+      "id": "finance.department",
+      "surface": "Solo Finance — seven company-finance views",
+      "group": "finance",
+      "tier_scope": [
+        "solo standalone"
+      ],
+      "owner_component": "src/solo/finance/FinanceWorkspace.tsx",
+      "canonical_source": "Sales list_sales_invoices parser and issue_analytics_evidence_bundle; company accounting/banking/budget/forecast sources unavailable",
+      "chain": {
+        "canonical_source": {
+          "status": "partial",
+          "note": "Existing Sales invoice and metric reads are reused; no company accounting/bank source or local aggregate is invented."
+        },
+        "tenant_scope": {
+          "status": "inherited_contract",
+          "note": "Server active-workspace owner/admin checks retained. Authentication, request identity and evidence expiry invalidate UI reads. Authenticated isolation proof owed."
+        },
+        "safe_context": {
+          "status": "partial",
+          "note": "Bounded metric key/evidence reference handed to existing PAIGE bridge. Canonical analytics resolver must re-authorize scope/expiry; no raw invoice/client facts are copied. Finance domain snapshots absent."
+        },
+        "authority": {
+          "status": "inherited",
+          "note": "Read-only initial UI; canonical Trust/Spine retains subsequent action authority. Navigation grants no financial effect."
+        },
+        "governed_write": {
+          "status": "none",
+          "note": "No new write. Full Finance follow-up target remains open."
+        },
+        "verified_outcome": {
+          "status": "proof_owed",
+          "note": "Source, automated and local synthetic rendered proof do not establish authenticated Finance behavior."
+        },
+        "rail_evidence": {
+          "producer": "none",
+          "read": "none",
+          "note": "Existing Sales actions retain their own receipts. Finance introduces no new receipt stream."
+        },
+        "mind_eligibility": {
+          "axis_a": "n/a",
+          "axis_b": "NO",
+          "note": "No new Mind promotion or Fabric composition; Financial domain snapshot contract remains unavailable."
+        },
+        "memory_retention": {
+          "status": "none",
+          "note": "Changing balances never automatically become durable user memories."
+        }
+      },
+      "intended_capability": {
+        "read": "Authorized company cash, obligations, expenses, assets/liabilities, accounting statements, Sales receipts and source coverage.",
+        "draft": "Prepare source-backed budgets, scenarios, reconciliations and financial follow-up proposals without external effect.",
+        "auto": "Within policy and approved scope, perform eligible internal financial reviews and governed task follow-ups with verification; no new financial effect is granted here.",
+        "confirm": "Accounting writebacks, bill payments, transfers, tax filings and provider company activation require their corresponding authority through the existing approval gate.",
+        "prohibited": "No fabricated zero, duplicate ledger, raw secrets, tenant identity from client, TEST collection promoted to bank cash, or balance copied into durable Memory.",
+        "completion_criterion": "Authenticated owner completes a source-backed financial review; PAIGE prepares and executes an authorized governed follow-up, verifies readback and records the canonical Rail outcome."
+      },
+      "state": "PROOF_OWED",
+      "state_reason": "Dedicated Finance destination and canonical Sales consumers are implemented; authenticated UI and Chat/Live proof absent. Company accounting/banking, budgets, forecasts and Finance snapshots remain unavailable. The full department mission remains open.",
+      "next_slice": "Prove authenticated scoped UI; coordinate safe company accounting/bank reads through Integrations; complete canonical budgets/forecast assumptions and Finance Spine/Fabric bindings with governed outcome/readback.",
+      "evidence_class": [
+        "source_read",
+        "automated_test",
+        "rendered_structural"
+      ],
+      "linked": [],
+      "sources": [
+        "src/solo/finance/FinanceWorkspace.tsx",
+        "src/solo/finance/useFinanceInvoices.ts",
+        "src/solo/sales/performance/useSalesPerformanceMetrics.ts",
+        "docs/brain/finance-department.md",
+        "docs/doctrine/surface-cards/finance.md",
+        "docs/delivery/finance-approved-build.md"
+      ]
+    },
+    {
       "id": "sales.department",
       "surface": "Solo Sales — Overview, Opportunities (List / Board), Offers, Terms & Agreements, Payments, Performance",
       "group": "sales",

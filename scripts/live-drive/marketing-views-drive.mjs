@@ -3,7 +3,7 @@
 //
 // WHAT IT PROVES. It mounts the REAL GrowthHub (src/solo/growth2.tsx) with only the Campaigns read,
 // the owner-briefs read and the offers read stubbed (scripts/live-drive/harness/marketing-mount), and
-// renders Overview, Campaigns, Lead capture and Analytics at the four Solo sizes, in both themes,
+// renders every Marketing tab (Lead capture retired into Overview, INT-342) at the four Solo sizes, in both themes,
 // with PAIGE docked, expanded and closed, at the content-column widths the shell actually hands this
 // surface. For each frame it asserts: no page error, no harness crash, no horizontal overflow inside
 // the scroll owner (.campaigns-scroll), no element pushed past its right edge, and no sideways
@@ -29,7 +29,7 @@ const FRAMES = [
   { name: "900x1000", width: 900, height: 1000 },
 ];
 const POSTURES = ["docked", "wide", "closed"];
-const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "lead-capture", "analytics"];
+const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "analytics"];
 
 // Same model as campaigns-nav-fit-drive.mjs (TenantCommandCenterShell.tsx:483, verified there).
 function contentWidth(viewport, posture) {
@@ -105,7 +105,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th")) {
+        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -146,8 +146,8 @@ async function main() {
             page.on("pageerror", (e) => errors.push(String(e.message)));
             await open(page, { tab, theme });
             await setContentWidth(page, width);
-            // The Overview's charts load lazily: wait until both donuts and the time chart have drawn.
-            if (tab === "overview") await page.waitForFunction(() => document.querySelectorAll(".mo-donut .recharts-pie-sector").length > 0 && document.querySelector(".mo-chart-time .recharts-bar-rectangle"), null, { timeout: 15000 }).catch(() => {});
+            // Overview's one chart is inline SVG: wait for its line.
+            if (tab === "overview") await page.waitForSelector(".mov-line", { timeout: 15000 }).catch(() => {});
             // Audience: the composition donut, the stage bars and the growth area also load lazily.
             if (tab === "audience") await page.waitForFunction(() => document.querySelector(".ma .mo-donut .recharts-pie-sector") && document.querySelector(".ma-chart-stages .recharts-bar-rectangle") && document.querySelector(".ma-chart-growth .recharts-area-area"), null, { timeout: 15000 }).catch(() => {});
             // Email: the rate chart loads lazily too.
@@ -173,8 +173,8 @@ async function main() {
               check(!m.sideways, `${id}: document does not scroll sideways`);
               check(!m.launcherSpills, `${id}: the Vibe Studio launcher contains its label`);
               if (tab === "overview") {
-                const drawn = await page.evaluate(() => ({ donuts: [...document.querySelectorAll(".mo-donut")].filter((d) => d.querySelector(".recharts-pie-sector")).length, bars: document.querySelectorAll(".mo-chart-time .recharts-bar-rectangle").length, line: Boolean(document.querySelector(".mo-chart-time .recharts-line-curve")) }));
-                check(drawn.donuts === 2 && drawn.bars > 0 && drawn.line, `${id}: both donuts, the bars and the opportunities line are drawn`, JSON.stringify(drawn));
+                const drawn = await page.evaluate(() => ({ nodes: document.querySelectorAll(".mov-node").length, broken: document.querySelectorAll(".mov-node.is-broken").length, line: Boolean(document.querySelector(".mov-line")?.getAttribute("d")), cards: document.querySelectorAll(".mov-cp").length, leads: document.querySelectorAll(".mov-leads li").length, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(drawn.nodes === 4 && drawn.broken === 1 && drawn.line && drawn.cards === 4 && drawn.leads === 6 && drawn.h1 === 0, `${id}: the chain (one broken link), the lead line, four capture points and six recent leads are drawn, with no page title`, JSON.stringify(drawn));
               }
               if (tab === "audience") {
                 const drawn = await page.evaluate(() => ({ donut: Boolean(document.querySelector(".ma .mo-donut .recharts-pie-sector")), stages: document.querySelectorAll(".ma-chart-stages .recharts-bar-rectangle").length, growth: Boolean(document.querySelector(".ma-chart-growth .recharts-area-area")), stats: document.querySelectorAll(".ma-stats > *").length }));
@@ -196,7 +196,7 @@ async function main() {
     // States, at the ordinary 1366 docked session, both themes.
     for (const theme of ["light", "dark"]) {
       for (const mode of ["first", "loading", "error", "readonly"]) {
-        for (const tab of ["overview", "lead-capture", "analytics", "audience", "content", "email", "ads"]) {
+        for (const tab of ["overview", "analytics", "audience", "content", "email", "ads"]) {
           const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
           const page = await ctx.newPage();
           const errors = [];
@@ -210,15 +210,40 @@ async function main() {
           const text = await page.evaluate(() => document.querySelector(".campaigns-scroll")?.textContent ?? "");
           if (mode === "error") check(/could not load/.test(text), `${id}: a failed read says so`);
           if (mode === "loading") check(await page.$(".campaigns-skeleton") !== null, `${id}: loading shows a skeleton`);
-          if (mode === "readonly" && tab === "overview") check(!/Create campaign brief/.test(text), `${id}: no create act for a read-only member`);
+          if (mode === "readonly" && tab === "overview") check(!/New campaign brief|Route it|Route the forms|Finish in Vibe/.test(text), `${id}: no create, route or finish act for a read-only member`);
           if (mode === "first" && tab === "overview") {
-            check(/Nothing is being marketed yet/.test(text), `${id}: first use is guided`);
+            check(/Nothing is being marketed yet/.test(text) && /Three steps to your first lead/.test(text), `${id}: first use is guided`);
             check((await page.$$(".btn-g")).length === 1, `${id}: exactly one gold act`);
           }
           await page.screenshot({ path: path.join(OUT, `state-${mode}-${tab}-${theme}.png`) });
           await ctx.close();
         }
       }
+    }
+
+    // Retired addresses and the one form panel, both themes, at the ordinary 1366 docked session.
+    for (const theme of ["light", "dark"]) {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(String(e.message)));
+      await open(page, { tab: "lead-capture?type=form", theme });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      const notice = await page.textContent(".mov-moved").catch(() => "");
+      check(/Lead capture moved here/.test(notice ?? ""), `${theme}/moved: an old Lead capture link lands on Overview and says so`);
+      const pressed = await page.evaluate(() => document.querySelector('#mov-capture [aria-pressed="true"]')?.textContent);
+      check(pressed === "Forms", `${theme}/moved: its form filter is kept`, String(pressed));
+      await page.screenshot({ path: path.join(OUT, `flow-moved-${theme}.png`) });
+      await page.locator("button.mov-cp", { hasText: "Scorecard opt-in" }).click();
+      await page.waitForSelector(".campaigns-drawer", { timeout: 5000 }).catch(() => {});
+      const panel = await page.textContent(".campaigns-drawer").catch(() => "");
+      check(/Not routed: no pipeline, no alert/.test(panel ?? "") && /When someone submits/.test(panel ?? ""), `${theme}/form panel: an unrouted form opens its routing and submissions`);
+      await page.screenshot({ path: path.join(OUT, `flow-form-panel-${theme}.png`) });
+      await page.keyboard.press("Escape");
+      const closed = await page.$(".campaigns-drawer");
+      check(!closed, `${theme}/form panel: Escape closes it`);
+      check(errors.length === 0, `${theme}/flows: no page errors`, errors[0] ?? "");
+      await ctx.close();
     }
 
     // Keyboard: the Overview's act is reachable by Tab and shows a visible focus indicator.
@@ -229,9 +254,9 @@ async function main() {
       let found = false;
       for (let i = 0; i < 40 && !found; i++) {
         await page.keyboard.press("Tab");
-        found = await page.evaluate(() => document.activeElement?.textContent?.includes("Create campaign brief") ?? false);
+        found = await page.evaluate(() => document.activeElement?.textContent?.includes("New campaign brief") ?? false);
       }
-      check(found, "keyboard: Create campaign brief is reachable by Tab");
+      check(found, "keyboard: New campaign brief is reachable by Tab");
       const ring = await page.evaluate(() => { const s = getComputedStyle(document.activeElement); return s.outlineStyle !== "none" || s.boxShadow !== "none"; });
       check(ring, "keyboard: focused act shows a focus indicator");
       await ctx.close();

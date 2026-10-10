@@ -763,6 +763,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-10 INT-342 S1a — Solo Marketing Overview rebuilt to the owner-approved design; Lead capture retired into it — PR __PR__. Production channel on merge; internal UI delivery; no customer version/announcement.**
+- Overview (owner-approved prototype v2, frozen per §28): no page title; one summary sentence; the chain live capture points → leads → forms that route leads → opportunities in Sales, with the broken link lit and **Route it**; a 30-day lead-flow chart (hover/arrow keys, busiest day marked, zero drawn as zero); **Needs you**; a **Capture points** gallery with a filter in the address (`?capture=`); **Recent leads**; first use is "Three steps to your first lead". One form panel (`?form=`) carries a form's routing and submissions. Tabs: Overview · Campaigns · Audience · Content · Social · Email · Ads · Analytics.
+- Lead capture is no longer a tab. `/growth/lead-capture[?type=&form=]`, its aliases (brand-kit, pages, funnels, forms, builders) and `/growth/catalog?type=` replace into Overview with filter and form kept and a dismissible line saying where the work lives (§58). **Content stays** a tab until Vibe Studio lists every saved piece (owner ruling 2026-10-10; all 17 production `marketing_content` rows have `work_id` null today).
+- Routing truth: a form now reads as routed when its own intake settings route it (`growth_forms.auto_create_deal` + `pipeline_id`, written by `growth_form_set_intake`), not only when automation rows exist. Ads copy no longer claims chat tools for ad platforms. Vibe Studio copy points at Marketing › Overview.
+- §58, removed by the approved design (owner sign-off 2026-10-10): the 7/30-day period switch, source and campaign-status donuts, top-capture-points ranking, next-step banner, and the Overview's read-only list of briefs with their timing (timing stays readable and editable in the Campaigns brief editor).
+- No backend change. Evidence: `docs/evidence/ui-delivery/int342-s1a-marketing-overview.md`. Authenticated production drive owed (§32.c).
+
 **2026-10-10 Solo Finance compact workspace — PR #1894 → main `794c24e92b8f045dda0994a7b9e8c053228300a9` (reviewed head `de44ad59f9227d3f84067fba44c14f105be66659`). Production channel; internal UI refinement; no customer version/announcement.**
 - Removed every introductory Finance banner and the duplicate Connections tab. Six tabs remain; legacy Connections bookmarks redirect within the same account to Settings → Integrations, preserving query/replacing history. Finance remains below Sales. Source labels, authorization and financial truth states retained.
 - Independent source PASS/design SHIP; all five required workflows and both Vercel statuses PASS. 58 focused tests, 120 actual-component synthetic frames/eight behavioral checks PASS; actual Chrome 200 percent zoom PASS. TypeScript ratchet baseline10/current10 PASS.
@@ -6180,6 +6187,7 @@ Things Cowork/CC/Codex have claimed that the codebase disagrees with. **Never re
   - **Marketing's "Not routed" signal is wrong for forms routed in the intake panel.** `useSoloCampaigns` derives `routingConfigured` from `growth_form_automations` rows only. `growth_form_set_intake` writes the `growth_forms` routing columns and touches automation rows only if some already exist.
   - **The Ads tab tells the owner something false:** connecting an ad platform in Integrations "gives PAIGE tools for it in chat". Chat dispatches gateway tools only for GHL, Zapier and n8n.
   - All three are recorded in `docs/product/int342-marketing-convergence.md`. The routing signal and the Ads copy are fixed in INT-342 slice S1.
+- **2026-10-10 · CC's own prototype claimed "saved drafts open in Vibe Studio" (§13, caught by CC before build):** the INT-342 v2 prototype's Content-retirement notice said saved drafts open in Vibe Studio. A read-only production check found all 17 `marketing_content` rows (7 documents, 10 images) have `work_id` null, so none appears in Vibe Studio. Retiring Content would have hidden them. Put to the owner, who ruled Content stays a tab until Vibe Studio lists every saved piece; S1a ships without retiring it.
 
 ---
 

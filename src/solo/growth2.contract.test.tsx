@@ -33,7 +33,7 @@ const paigeChatSurface = readFileSync(resolve(process.cwd(), "src/components/das
 const paigeMcp = readFileSync(resolve(process.cwd(), "supabase/functions/paige-mcp/index.ts"), "utf8");
 
 describe("Solo Campaigns approved contract", () => {
-  it("renders the owner's nine Marketing tabs, with no Planned marker in the strip", () => {
+  it("renders the owner's eight Marketing tabs (Lead capture retired into Overview, INT-342), with no Planned marker in the strip", () => {
     // Owner ruling 2026-10-04: "these are the ones that I want dedicated to marketing". Audience,
     // Content, Email and Ads carry no marker in the strip (owner, 2026-10-04: no redundant words).
     const tabBlock = /const tabs=\[([\s\S]*?)\];/.exec(source)?.[1] ?? "";
@@ -45,7 +45,6 @@ describe("Solo Campaigns approved contract", () => {
       ["social", "Social"],
       ["email", "Email"],
       ["ads", "Ads"],
-      ["capture", "Lead capture"],
       ["analytics", "Analytics"],
     ]);
     expect(tabBlock).not.toMatch(/'planned'/);
@@ -65,9 +64,13 @@ describe("Solo Campaigns approved contract", () => {
     for (const slug of ["brand-kit", "pages", "funnels", "forms", "builders"]) {
       expect(source).toMatch(new RegExp(`(?:"${slug}"|\\b${slug}:)`));
     }
-    expect(source).toContain("This address moved");
-    expect(source).toContain("Go to Lead capture");
-    expect(source).toContain("Your workspace and account stay selected");
+    // INT-342: every retired address lands on Overview with its intent and one line saying where
+    // the work lives now, never a dead end.
+    for (const moved of ["lead-capture", "catalog", "missing-form"]) {
+      expect(source).toMatch(new RegExp(`(?:"${moved}"|\\b${moved}:)`));
+    }
+    expect(source).toContain("Lead capture moved here.");
+    expect(source).toContain('className="mov-moved" role="status"');
   });
 
   it("does not render the retired Campaigns fixture data", () => {

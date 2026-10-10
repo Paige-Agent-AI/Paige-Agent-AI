@@ -178,7 +178,7 @@ export function MarketingAds({ tenantId, onOpenIntegrations }: { tenantId: strin
       <Frame phase={libraryPhase} retry={content.retry} noun="saved ad copy">{access === "denied" ? <p className="mo-note">{LIBRARY_DENIED}</p> : <LibraryList rows={content.rows.slice(0, 10)} empty={<><p className="mo-note">No ad copy saved yet.</p>{ask}</>}/>}</Frame>
     </section>
     <NotYet items={[
-      { title: "Ad accounts in Marketing", detail: "Connecting an ad platform in Settings › Integrations gives PAIGE tools for it in chat. Marketing does not read an ad account yet." },
+      { title: "Ad accounts", detail: "Meta Ads and Metricool are listed in Settings › Integrations, but connecting one doesn’t let Paige read campaigns, spend or results yet, here or in chat." },
       { title: "Spend, cost per lead and return", detail: "With no ad account read here, there is no spend to show." },
       { title: "Ads in a campaign brief", detail: "A brief can name ads as a channel and a budget target; that target is not spend." },
     ]}/>

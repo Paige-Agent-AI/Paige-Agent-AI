@@ -1,5 +1,5 @@
 // Studio home: say what you want and Paige opens a project and starts building it. Unpublished work
-// lives here as drafts; published work lives in Marketing › Lead capture. There is no artifact-type picker: the
+// lives here as drafts; published work lives in Marketing › Overview. There is no artifact-type picker: the
 // brief decides what gets built.
 import React from "react";
 import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images } from "lucide-react";
@@ -109,7 +109,7 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
             <SessionIcon s={s} /><span className="vs-trunc">{sessionName(s)}</span>
           </button>
         ))}
-      <p className="vs-rail-note">Published work is in Marketing › Lead capture.</p>
+      <p className="vs-rail-note">Published work is in Marketing › Overview.</p>
     </nav>
   );
 }

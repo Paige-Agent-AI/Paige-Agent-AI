@@ -6253,3 +6253,6 @@ selected one, so each read failed with 42703. They now read `user_contact_method
   - **Analytics:** a stepped funnel through INT-340.
   - **Implementation:** in slices S1–S6 (`docs/product/int342-marketing-convergence.md` §L).
   - **Provider order:** not ruled; Meta Ads is the default for S5.
+- 2026-10-10: **OWNER RULING (INT-342):** "Keep Content for now." CC found all 17 production `marketing_content` rows have `work_id` null, so none shows in Vibe Studio and retiring Content (option A) would hide them. Content stays a tab until Vibe Studio lists every saved piece, then retires the same way. The rest of the approved redesign ships now.
+  - **Shipped in S1a:** Overview rebuilt to the approved v2 design; Lead capture retired into it, with every old address landing on Overview with its filter and form kept; one form panel (`?form=`); routing truth includes a form's own intake settings; Ads copy corrected. Tabs: Overview · Campaigns · Audience · Content · Social · Email · Ads · Analytics.
+  - **§58 removals signed off with the design:** period switch, the two donuts, top-capture-points ranking, next-step banner, and the Overview's read-only brief list with timing (timing stays in the Campaigns brief editor).

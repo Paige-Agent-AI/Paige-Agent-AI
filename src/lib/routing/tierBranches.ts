@@ -189,24 +189,27 @@ export const SOLO_BRANCHES: Branch[] = [
     slug: "growth", key: "growth", label: "Marketing", group: "main",
     // Marketing is the department (owner ruling 2026-10-03, docs/product/solo-marketing-ia-proposal.md).
     // Campaigns is one function inside it. Vibe Studio stays the only creative owner and opens
-    // through its existing side action; Lead capture measures how published Vibe work is USED.
+    // through its existing side action; Overview measures how published Vibe work is USED.
     // The slug stays `growth` until the canonical-URL slice (S5) so no copied link breaks.
     //
     // Commercial entries stay hidden for intent-preserving compatibility redirects into Sales.
-    // Retired creative slugs still resolve to the compatibility landing, which now points at
-    // Lead capture instead of Catalog.
+    // Retired creative slugs (and Lead capture) resolve to Overview with a moved notice.
     subtabs: [
       { slug: "overview", key: "overview", label: "Overview" },
       { slug: "campaigns", aliases: ["active"], key: "campaigns", label: "Campaigns" },
-      // Audience, Content, Email and Ads: the owner's Marketing list (2026-10-04). Each is marked
-      // Planned in the strip until the feature its name promises exists (src/solo/marketing-planned.tsx).
+      // The owner's Marketing list (2026-10-04), with Lead capture retired into Overview
+      // (INT-342, owner-approved 2026-10-10). Content stays a tab until Vibe Studio lists every
+      // saved piece (owner ruling 2026-10-10); then it retires the same way.
       { slug: "audience", key: "audience", label: "Audience" },
       { slug: "content", key: "content", label: "Content" },
       { slug: "social", key: "social", label: "Social" },
       { slug: "email", key: "email", label: "Email" },
       { slug: "ads", key: "ads", label: "Ads" },
-      { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture" },
       { slug: "analytics", aliases: ["performance"], key: "analytics", label: "Analytics" },
+      // Retired as a tab (INT-342, owner-approved 2026-10-10). Kept addressable so every copied link
+      // still resolves: GrowthHub lands it on Overview with its intent (filter, form) and a line
+      // saying where the work lives now.
+      { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture", hidden: true },
       { slug: "catalog", key: "catalog", label: "Offers", hidden: true },
       { slug: "sales", key: "sales", label: "Sales", hidden: true },
       { slug: "pipeline", key: "pipeline", label: "Pipeline", hidden: true },

@@ -71,6 +71,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
+      - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
+        run: node scripts/proof/operator-account-archive.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:

@@ -1,12 +1,13 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const h = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), preview: vi.fn() }));
-vi.mock('@/operator/data/accountControls', () => ({ readAccountDetails: h.read, saveAccountDetails: h.save, previewAccountDeletion: h.preview }));
+const h = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), preview: vi.fn(), archive: vi.fn(), execute: vi.fn(), outcome: vi.fn() }));
+vi.mock('@/operator/data/accountControls', async importOriginal => ({ ...await importOriginal<typeof import('@/operator/data/accountControls')>(), readAccountDetails: h.read, saveAccountDetails: h.save, previewAccountDeletion: h.preview, previewAccountArchive: h.archive, executeLifecycle: h.execute, readLifecycleOutcome: h.outcome }));
+import { AccountRpcError } from '@/operator/data/accountControls';
 import AccountDetailsDialog from './AccountDetailsDialog';
 const details = { id:'test-tenant-a', name:'Example Agency', status:'active', account_type:'agency', parent_tenant_id:null, version:'read-version' };
 let root: Root; let host: HTMLDivElement;
-beforeEach(() => { vi.resetAllMocks(); h.read.mockResolvedValue(details); host=document.createElement('div'); document.body.append(host); root=createRoot(host); });
+beforeEach(() => { (globalThis as Record<string,unknown>).IS_REACT_ACT_ENVIRONMENT=true; vi.resetAllMocks(); h.read.mockResolvedValue(details); host=document.createElement('div'); document.body.append(host); root=createRoot(host); });
 afterEach(() => { act(()=>root.unmount()); host.remove(); });
 const button = (name: string) => Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('aria-label') ?? b.textContent) === name) ?? null;
 const screen = {
@@ -50,9 +51,51 @@ describe('account controls — actual dialog interaction', () => {
   });
   it('shows the server tree and blockers without offering destructive execution', async () => {
     await open();h.preview.mockResolvedValue({tenant_id:details.id,accounts:[{id:details.id,name:details.name,account_type:'agency'},{id:'test-tenant-b',name:'Example Child',account_type:'sub_account'}],blockers:['Retained Chat evidence needs cleanup.'],execution_available:false});
-    fireEvent.click(screen.getByRole('button',{name:'Review deletion'}));
+    fireEvent.click(screen.getByRole('button',{name:'Permanently delete account'}));
     await screen.findByText('Retained Chat evidence needs cleanup.');expect(screen.getByText('Example Child · sub account')).toBeTruthy();
-    expect(screen.queryByRole('button',{name:'Delete listed accounts'})).toBeNull();
+    expect((screen.getByRole('button',{name:'Permanently delete listed accounts'}) as HTMLButtonElement).disabled).toBe(true);
     expect(h.save).not.toHaveBeenCalled();
+  });
+  it('requires exact scope confirmation before archive and dispatches once while pending', async () => {
+    const {changed}=await open(); h.archive.mockResolvedValue({tenant_id:details.id,accounts:[details],blockers:[],execution_available:true,version:'scope-version'});
+    let finish!: (v:unknown)=>void; h.execute.mockReturnValue(new Promise(resolve=>{finish=resolve;}));
+    fireEvent.click(screen.getByRole('button',{name:'Archive account'}));
+    await screen.findByRole('button',{name:'Archive listed accounts'});
+    await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());
+    const confirm=document.getElementById('fleet-lifecycle-confirm')!;
+    fireEvent.change(confirm,{target:{value:'Wrong account'}});
+    expect((screen.getByRole('button',{name:'Archive listed accounts'}) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(confirm,{target:{value:details.name}});
+    const submit=screen.getByRole('button',{name:'Archive listed accounts'});
+    fireEvent.click(submit); fireEvent.click(submit);
+    expect(h.execute).toHaveBeenCalledTimes(1);expect(changed).not.toHaveBeenCalled();
+    expect(h.execute).toHaveBeenCalledWith(details.id,'archive',expect.any(String),details.name,'scope-version');
+    await act(async()=>finish({tenant_id:details.id,operation_id:'test-operation',state:'archived',account_count:1}));
+    expect(changed).toHaveBeenCalledTimes(1);expect(document.body.textContent).toContain('COMPLETED');
+  });
+  it('requires both typed name and irreversible consent for an archived deletion', async () => {
+    h.read.mockResolvedValue({...details,archived_at:'2026-01-01',archive_operation_id:'test-operation'});
+    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} onClose={()=>{}} onChanged={changed}/>));
+    await screen.findByRole('button',{name:'Restore archived account'});
+    h.preview.mockResolvedValue({tenant_id:details.id,accounts:[details],blockers:[],execution_available:true,version:'delete-version'});
+    h.execute.mockResolvedValue({tenant_id:details.id,operation_id:'test-operation',state:'deleted',account_count:1});
+    fireEvent.click(screen.getByRole('button',{name:'Permanently delete account'}));
+    await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());
+    fireEvent.change(document.getElementById('fleet-lifecycle-confirm')!,{target:{value:details.name}});
+    const submit=screen.getByRole('button',{name:'Permanently delete listed accounts'});
+    expect((submit as HTMLButtonElement).disabled).toBe(true);fireEvent.click(document.querySelector('input[type=checkbox]')! as HTMLElement);
+    fireEvent.click(submit);await waitFor(()=>expect(changed).toHaveBeenCalledTimes(1));
+    expect(h.execute).toHaveBeenCalledWith(details.id,'delete','test-operation',details.name,'delete-version');
+  });
+  it('an unknown archive recovers by receipt without dispatching again', async () => {
+    const {changed}=await open();h.archive.mockResolvedValue({tenant_id:details.id,accounts:[details],blockers:[],execution_available:true,version:'scope-version'});h.execute.mockRejectedValue(new Error('Transport interrupted'));
+    fireEvent.click(screen.getByRole('button',{name:'Archive account'}));await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());fireEvent.change(document.getElementById('fleet-lifecycle-confirm')!,{target:{value:details.name}});fireEvent.click(screen.getByRole('button',{name:'Archive listed accounts'}));
+    await screen.findByRole('button',{name:'Read operation'});expect(changed).not.toHaveBeenCalled();
+    h.outcome.mockResolvedValue({tenant_id:details.id,operation_id:'test-operation',state:'archived',account_count:1});fireEvent.click(screen.getByRole('button',{name:'Read operation'}));await waitFor(()=>expect(changed).toHaveBeenCalledTimes(1));expect(h.execute).toHaveBeenCalledTimes(1);expect(h.outcome).toHaveBeenCalledWith(details.id,expect.any(String),'archive');
+  });
+  it('a stale preflight clears irreversible confirmation and demands a fresh review', async () => {
+    await open();h.archive.mockResolvedValue({tenant_id:details.id,accounts:[details],blockers:[],execution_available:true,version:'scope-version'});h.execute.mockRejectedValue(new AccountRpcError('Scope changed','40001'));
+    fireEvent.click(screen.getByRole('button',{name:'Archive account'}));await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());fireEvent.change(document.getElementById('fleet-lifecycle-confirm')!,{target:{value:details.name}});fireEvent.click(screen.getByRole('button',{name:'Archive listed accounts'}));await waitFor(()=>expect(document.body.textContent).toContain('FAILED'));
+    expect(screen.queryByRole('button',{name:'Read operation'})).toBeNull();expect(document.getElementById('fleet-lifecycle-confirm')).toBeNull();expect((screen.getByRole('button',{name:'Archive listed accounts'}) as HTMLButtonElement).disabled).toBe(true);
   });
 });

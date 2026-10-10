@@ -42,6 +42,10 @@ const STRUCTURED = {
 let syncCalls = [];
 let syncStatus = 200;
 let syncFetchThrows = false;
+// What a 200 from the sync carries since #734: its own verdict about the writes. Defaults to a
+// clean complete run; §10 overrides it per case. syncBody: null models a callee that reports no
+// verdict at all (the apply must fail closed on that shape).
+let syncBody200 = { success: true, results: { outcome: { status: "complete", groups_attempted: ["scores"], failed_groups: [], skipped_groups: [] } } };
 globalThis.fetch = async (url, init) => {
   const href = String(url);
   if (href.includes("sync-credit-report-data")) {
@@ -49,7 +53,7 @@ globalThis.fetch = async (url, init) => {
     // A TRANSPORT REJECTION: the fetch itself throwing before any response (DNS, reset, timeout) —
     // distinct from a non-2xx response, and the case #729 finding 3 left unhandled.
     if (syncFetchThrows) throw new TypeError("network error: connection reset");
-    return new Response(JSON.stringify(syncStatus === 200 ? { success: true } : { error: "boom" }),
+    return new Response(JSON.stringify(syncStatus === 200 ? (syncBody200 ?? { success: true }) : { error: "boom" }),
       { status: syncStatus, headers: { "Content-Type": "application/json" } });
   }
   throw new Error(`apply-extraction: unexpected fetch to ${href}`);
@@ -60,8 +64,10 @@ await import("../../supabase/functions/paige-apply-extraction/index.ts");
 const { capturedHandler } = await import("./stub-serve.mjs");
 const handler = capturedHandler();
 
-async function drive({ approved_keys, row = {}, claimReturns, releaseError = null, sync = 200, syncThrows = false, auth = true }) {
+async function drive({ approved_keys, row = {}, claimReturns, releaseError = null, sync = 200, syncThrows = false, auth = true, syncBody = undefined }) {
   syncCalls = []; syncStatus = sync; syncFetchThrows = syncThrows;
+  syncBody200 = syncBody === null ? null
+    : (syncBody ?? { success: true, results: { outcome: { status: "complete", groups_attempted: ["scores"], failed_groups: [], skipped_groups: [] } } });
   const rec = fake.setScenario({
     authUser: auth ? { id: USER } : null,
     // `row: null` means the caller CANNOT SEE the upload — RLS returned nothing. Spreading null
@@ -232,6 +238,65 @@ async function drive({ approved_keys, row = {}, claimReturns, releaseError = nul
     sel.trim().slice(0, 200));
   assert("9.2 …and rows predating the review column are still included, since they are what it repairs",
     /extraction_review_state\.is\.null/.test(sel), sel.trim().slice(0, 200));
+}
+
+// ── 10. THE SYNC'S OWN VERDICT DECIDES THE SETTLEMENT (#734). ──────────────────────────────
+//
+// A 200 means the sync RUN completed, not that the WRITES landed. The callee now reports
+// per-group outcomes; an approval must not settle as terminal `applied` when what the person
+// approved failed to write, was skipped (no profile row), or the verdict is missing (fail
+// closed). The claim is released for retry — the writer dedups, so retries converge
+// (scripts/sync-credit-report-data check §12 pins that property).
+{
+  const ok = await drive({ approved_keys: ["negative_items"] });
+  assert("10.1 a complete sync settles applied (existing behaviour, now verified by verdict)",
+    ok.status === 200 && ok.body.ok === true, JSON.stringify(ok.body));
+}
+{
+  // The exact case issue #734 names: every approved inquiry write fails; the run is still 200.
+  const r = await drive({
+    approved_keys: ["hard_inquiries"],
+    syncBody: { success: true, results: { outcome: { status: "partial", groups_attempted: ["hard_inquiries", "discrepancies"], failed_groups: ["hard_inquiries"], skipped_groups: [] }, hard_inquiries: { inserted: 3, failed: 3, dropped: 0 } } },
+  });
+  const release = r.rec.updates.filter((u) => u.table === "credit_report_uploads").at(-1);
+  assert("10.2 inquiries approved and all failed → the apply FAILS, not settles applied",
+    r.status === 502 && r.body?.ok !== true, `status ${r.status}`);
+  assert("10.3 …the claim is released so the person can retry",
+    !!release && release.row.extraction_review_state === "awaiting_review", JSON.stringify(release?.row));
+  assert("10.4 …the person is told WHICH part didn't save (truthful sentence, not 'nothing changed')",
+    /hard_inquiries/.test(String(r.body?.error)) && /Some of it saved|didn't/.test(String(r.body?.error)),
+    JSON.stringify(r.body?.error));
+  const audit = r.rec.inserts.find((i) => i.table === "audit_logs" && i.row.action === "extraction_apply_failed");
+  assert("10.5 …and the audit row carries the sync outcome evidence",
+    !!audit && audit.row.data?.sync_outcome?.status === "partial"
+      && JSON.stringify(audit.row.data?.sync_outcome?.failed_groups) === JSON.stringify(["hard_inquiries"]),
+    JSON.stringify(audit?.row?.data?.sync_outcome));
+}
+{
+  const r = await drive({
+    approved_keys: ["negative_items"],
+    syncBody: { success: false, results: { outcome: { status: "failed", groups_attempted: ["negative_items"], failed_groups: ["negative_items"], skipped_groups: [] } } },
+  });
+  assert("10.6 a total sync failure (success:false) → 'None of it saved' + claim released",
+    r.status === 502 && /None of it saved/.test(String(r.body?.error))
+      && r.rec.updates.filter((u) => u.table === "credit_report_uploads").at(-1)?.row.extraction_review_state === "awaiting_review",
+    JSON.stringify(r.body?.error));
+}
+{
+  const r = await drive({
+    approved_keys: ["credit_score_equifax"],
+    syncBody: { success: true, results: { outcome: { status: "partial", groups_attempted: ["scores", "discrepancies"], failed_groups: [], skipped_groups: ["scores"] }, scores_updated: false, scores_no_profile_row: true } },
+  });
+  assert("10.7 approved scores with no profile row → not settled applied; the skip is named",
+    r.status === 502 && /no profile row/.test(String(r.body?.error))
+      && r.rec.updates.filter((u) => u.table === "credit_report_uploads").at(-1)?.row.extraction_review_state === "awaiting_review",
+    JSON.stringify(r.body?.error));
+}
+{
+  const r = await drive({ approved_keys: ["negative_items"], syncBody: null });
+  assert("10.8 a 200 with NO verdict fails closed — never settles applied on an unverifiable run",
+    r.status === 502 && r.rec.updates.filter((u) => u.table === "credit_report_uploads").at(-1)?.row.extraction_review_state === "awaiting_review",
+    `status ${r.status}`);
 }
 
 console.log(`\n${passed} passed, ${failures.length} failed`);

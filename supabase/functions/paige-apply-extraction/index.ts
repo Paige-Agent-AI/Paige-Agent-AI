@@ -259,6 +259,47 @@ serve(async (req) => {
     return json({ error: "I couldn't save those to the profile. Nothing was changed — try again." }, 502);
   }
 
+  // ── Classify the sync's OWN verdict (#734). ──
+  // A 200 from the sync means the RUN completed, not that the WRITES landed: the callee now
+  // reports per-group outcomes. An approval must not settle as terminal `applied` when some or
+  // all of what the person approved failed to write, was skipped (no profile row to write to),
+  // or the outcome cannot be verified (fail closed on a missing verdict). The claim is released
+  // so the person can try again — the writer dedups (pinned by scripts/sync-credit-report-data
+  // check §12), so a retry converges instead of duplicating. What DID land stays landed; the
+  // sentence below says exactly that rather than "nothing was changed".
+  const outcome = syncBody?.results?.outcome;
+  const failedGroups: string[] = Array.isArray(outcome?.failed_groups) ? outcome.failed_groups : [];
+  const skippedGroups: string[] = Array.isArray(outcome?.skipped_groups) ? outcome.skipped_groups : [];
+  const complete = outcome?.status === "complete" && failedGroups.length === 0 && skippedGroups.length === 0;
+  if (!complete) {
+    console.error("[apply-extraction] sync incomplete:", JSON.stringify({ status: outcome?.status ?? "unreported", failedGroups, skippedGroups }));
+    await admin.from("audit_logs").insert({
+      user_id: user.id,
+      entity: "credit_report",
+      action: "extraction_apply_failed",
+      entity_id: body.upload_id,
+      data: {
+        status: syncResponse.status,
+        approved_keys: [...approved],
+        error: "sync_incomplete",
+        sync_outcome: outcome ?? null,
+      },
+    });
+    await releaseClaimOrLog();
+    // Truthful by class: total failure says nothing saved; a partial says what saved and what
+    // didn't; a skip names the no-profile-row reason; an unreported outcome fails closed.
+    let sentence: string;
+    if (!outcome) {
+      sentence = "The profile service didn't report what saved, so I'm not marking this done. Nothing was marked as applied — try again.";
+    } else if (outcome.status === "failed") {
+      sentence = "None of it saved. Nothing was marked as applied — try again.";
+    } else {
+      const notSaved = [...failedGroups, ...skippedGroups.map((g: string) => `${g} (no profile row for it)`)];
+      sentence = `Some of it saved, but these parts didn't: ${notSaved.join(", ")}. Nothing was marked as applied — try again; a retry won't duplicate what already saved.`;
+    }
+    return json({ error: sentence, partial: outcome?.status === "partial" }, 502);
+  }
+
   // ATTRIBUTION (§13): what a person approved, when, and which of it was applied. Written with the
   // column shape `audit_logs` actually has — `entity`/`entity_id`/`data`, never
   // `resource_type`/`resource_id`/`metadata`, which errors 42703 and is why two other chat writes

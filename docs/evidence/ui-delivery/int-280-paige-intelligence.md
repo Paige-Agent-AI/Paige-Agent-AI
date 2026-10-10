@@ -4,9 +4,9 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Operator Settings → inspect evidence → prepare a bounded recommendation → export or abandon; local verification recorded below.
 PAIGE_UI_DESIGN: PASS: Root skill, its pinned vendor and routed five modules read before editing.
 MATERIAL_FLOW_CHANGE: YES: Restores Intelligence into Operator Settings with five connected workspaces; owner subsequently directed and approved a grouped Settings sub-main menu prerequisite.
-FLOW_PROTOTYPE: UNVERIFIED: Owner approved the expanded concept and development on 2026-10-10; referenced HTML was not supplied in this workspace. Exact visual fidelity and material deviations require comparison before release.
+FLOW_PROTOTYPE: PASS: Owner explicitly approved the rendered implementation at 35d9a34b on 2026-10-10 and authorized bounded engineering/PR continuation. Earlier missing-HTML fidelity remains historical UNVERIFIED; the current approved design is not reopened.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Platform Operator investigates PAIGE performance and prepares evidence-backed improvements.
-VISUAL_DIRECTION: UNVERIFIED: Existing Operator Obsidian/Mineral tokens inherited; approved HTML comparison pending.
+VISUAL_DIRECTION: PASS: Owner approved current charts, pipelines, typography, both themes, Settings placement and removed duplicate headings at 35d9a34b on 2026-10-10.
 AUTOMATED_EVIDENCE: PASS: Local source, route, privacy/fencing and draft regression suites executed; see validation ledger below. Production behavior remains UNVERIFIED.
 STATIC_EVIDENCE: PASS: No new type errors (baseline/current 10); scoped ESLint; Operator reachability; definer ACL checks and diff whitespace checks. Build validation is local only.
 RENDERED_EVIDENCE: PASS: Actual Operator shell and Intelligence components rendered in Chrome through an isolated LOCAL SYNTHETIC adapter; five workspaces, two themes and five viewport sizes captured. Not authenticated acceptance.
@@ -18,15 +18,15 @@ REDUCED_MOTION: PASS: Static scoped media rule disables transitions for reduced 
 STATE_COVERAGE: PASS: Automated loading/empty/error/refusal, stale-source suppression, account switch, token renewal, late response fencing, draft validation and discard. Synthetic Chrome state captures supplement tests.
 TRUTHFUL_STATE_LABELS: PASS: Source-confirmed reads, partial call evidence, session-only drafts, unapplied eval projection, unavailable future workflows and unverified effects are distinguished. Catalogue readiness is separate from reported connections.
 SOLO_UI: NO: PLATFORM_OPERATOR only; no Solo files or account lifecycle changes.
-UNVERIFIED: Approved reference fidelity, production persistence, live permissions, Chat/Live evidence consumption, owner acceptance.
+UNVERIFIED: Historical expanded HTML fidelity; production persistence, live permissions, Chat/Live evidence consumption and authenticated acceptance. Current visual design is owner-approved.
 OWNER_INTENT: Build the actual Settings PAIGE Intelligence experience across Executive Flight Deck, Forensic Observatory, Improvement Studio, Local Model Lab and Opportunity Radar; observe/evaluate/propose through one governed platform.
 MUST_NOT_HAPPEN: No seventh primary slot, fabricated metrics, customer-content exposure, provider spend, training, release promotion, second Chat/Live runtime, or weaker authority path.
 MUST_PRESERVE: Existing metrics, routing, roster, memory and trace capabilities; all other Settings views; six-slot shell; canonical eval tables and paige-eval; legacy Intelligence address; trust and INT-346 restrictions.
 ACCEPTANCE_CRITERIA: Navigate through Settings; inspect legitimate call and eval metadata; distinguish traces from task trajectories; prepare and review a recommendation with source references; see truthful local-model and research readiness; recover from empty/error/refused states.
 MOTION_PURPOSE: NONE: Uses existing focus/hover and reduced-motion-safe controls; no ambient animation.
 PROTECTED_SEAMS: Affected: Operator navigation, privacy of evidence projection, session/account-switch fencing, responsive shell geometry and accessibility. Not affected: Solo isolation/provisioning/paywall/billing; approval/autonomy rules; Spine execution; canonical business writes; Rail/receipts/Memory stores; chat stream/transcript/popout; Live runtime; browser/Vault; provider effects; durable jobs/retries.
-INTERNAL_BUILD_IDENTITY: base=f6e85d3a7852280853d2ac6ba9e3e7a8db45ee0b; branch=codex/int-280-paige-intelligence; deployment=none; environment=local development; migrations=UNAPPLIED; edge=NOT_APPLICABLE; evidence=this record
-RELEASE_CHANNEL: development: Isolated branch; owner visual/flow and final release authority pending.
+INTERNAL_BUILD_IDENTITY: original_approved_head=35d9a34bb93fa2373269931265126a819475d493; reconciled_base=c9a39d274c56a54649b3d90816e3859e2170cb98; branch=codex/int-280-paige-intelligence; final_candidate_head=recorded in PR; deployment=none; environment=development; migration=20270602000204_operator_intelligence_eval_history UNAPPLIED; edge=NOT_APPLICABLE; evidence=this record
+RELEASE_CHANNEL: development: Owner visual design approved; branch push and draft PR authorized. Merge, deployment, live authenticated PAIGE testing, provider effects and model training remain excluded.
 RELEASE_CLASSIFICATION: internal-only: Local development evidence, not a customer release.
 CUSTOMER_RELEASE_IDENTITY: none: No production release.
 RELEASE_NOTE_REQUIRED: no: No merge or deployment.
@@ -116,3 +116,19 @@ Required screenshots are delivered under the chat outputs directory: settings-in
 - Independent documentation comparison: final PASS; no remaining material mismatch in the bounded recheck. No system files changed. Reported type/leading/resting-gold/radius deviations corrected using incumbent roles/tokens; stale evidence record updated.
 
 UNVERIFIED: exact expanded HTML fidelity, actual browser zoom, OS reduced-motion preference drive, hosted migration replay, real authenticated Operator reads/permissions, durable proposal persistence, contextual Chat/Live consumption, owner visual acceptance, CI/PR/merge/deployment and business effects. No additional implementation agent is needed to complete the current lane.
+
+## Owner approval and release-candidate continuation — 2026-10-10
+
+Controlling owner decision: the rendered design from `35d9a34b` is formally APPROVED. Charts, evaluation/latency visualizations, workflow pipelines, typography, theme treatments, Settings location and removed duplicate headings satisfy the current visual requirement. No concept restart or design reopening is authorized. This supersedes the earlier visual-acceptance-pending statements above; it does not convert fixture proof into authenticated acceptance.
+
+Safe continuation authorized: reconcile current main, inspect/fix bounded engineering defects, push this development branch, prepare the appropriate PR, obtain independent non-author review on the final head and run hosted CI. Explicitly excluded: merge, deployment, live authenticated PAIGE testing, unapproved data, provider spend/effects and model training. Other paused implementation lanes remain paused.
+
+Reconciliation: current main `c9a39d274c56a54649b3d90816e3859e2170cb98` adds the separately owned account lifecycle. The INT-280 rebase is clean and approved UI source is unchanged. Open scope-band draft #1520 overlaps OperatorShell but has not updated since 2026-09-27 and remains owner-held; no work is imported or assigned from it. Any future landing requires a fresh collision check.
+
+Release-preparation correction: renamed only the previously UNAPPLIED new eval projection from `20261010053600` to `20270602000204`, above current main's `20270602000203` frontier. No applied migration or function semantics were edited. The existing disposable PostgreSQL CI job now invokes `scripts/proof/operator-intelligence-eval.mjs --postgres`: canonical eval schema and canonical Operator predicate, projection replay twice, then actual caller/privacy/bounds/audit/refusal SQL assertions. No remote database URL is accepted. Hosted proof and the exact final head/review/CI dispositions belong in the PR evidence; no self-referential commit identity is invented here.
+
+Portable rendered proof is now in this repository under [int-280](int-280/): executive Obsidian/Mineral, narrow Radar, focused evidence handoff, geometry and navigation JSON. These are the existing approved LOCAL SYNTHETIC captures, not fresh authenticated product claims.
+
+Impeccable checks already applied: extension-preserve/Operate, typography/color/token conformity, detector, responsive geometry, non-author finish and documentation comparison. [Canonical Impeccable skill](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md). The approved direction remains locked.
+
+Binding Ledger, Spine registry, provider registry, tier matrix and Harness Completion Map: no LIVE transition or execution capability is claimed by this candidate; registry edits are N/A to the bounded observational read/session draft. Production surface binding/readback remains proof owed. Shipped Delivery Log: N/A until main; this branch is not a shipped workstream or full INT-280 completion.

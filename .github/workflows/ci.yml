@@ -73,6 +73,8 @@ jobs:
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
+      - name: Operator Intelligence eval metadata, real caller guards and audit refusal in disposable PostgreSQL
+        run: node scripts/proof/operator-intelligence-eval.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:

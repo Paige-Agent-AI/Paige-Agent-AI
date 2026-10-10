@@ -37,23 +37,35 @@ const readAdCopy = async (tenantId: string): Promise<AdCopyRow[]> => {
   return (data ?? []) as unknown as AdCopyRow[];
 };
 
-/** PAIGE writes ad copy as labelled parts (content-draft: headline, primary text, CTA). Anything she
- *  didn't label stays primary text, so a preview never drops words. */
+/** PAIGE writes ad copy as labelled parts (content-draft asks for a headline, primary text and a call to
+ *  action), but the chat model's formatting varies: markdown headings, list markers, bold or italic labels,
+ *  a label alone on its line, a dash or colon. A label is read only where it opens a line; everything else
+ *  stays as written. Words after a one-line call to action go back to the primary text, so a preview never
+ *  drops or misplaces them. */
 export function parseAdCopy(body: string | null | undefined): { headline: string | null; primary: string; cta: string | null } {
-  const text = (body ?? "").replace(/\*\*/g, "").replace(/\r/g, "").trim();
-  const label = /^\s*(?:#+\s*)?(headline|primary text|body|text|cta|call to action)\s*[:\-–]\s*/i;
-  const parts: Record<string, string[]> = { headline: [], primary: [], cta: [] };
+  const text = (body ?? "").replace(/\r/g, "").trim();
+  // Labels: headline, primary text, call to action / CTA. A bare "body" or "text" counts only with a colon.
+  const label = /^(headline|primary[ -]text|cta|call[- ]to[- ]action|body(?=\s*:)|text(?=\s*:))\s*(?::|[-–—](?=\s)|$)\s*/i;
+  const parts: Record<"headline" | "primary" | "cta", string[]> = { headline: [], primary: [], cta: [] };
   let current: "headline" | "primary" | "cta" = "primary";
-  for (const line of text.split("\n")) {
-    const match = line.match(label);
+  for (const raw of text.split("\n")) {
+    // Markdown dressing around a label: "## ", "- ", "• ", "**", "__", "*".
+    const line = raw.trim().replace(/^#+\s*/, "").replace(/^[-*•]\s+/, "");
+    const bare = line.replace(/^(\*\*|__|\*|_)(.+?)\1/, "$2");
+    const match = bare.match(label);
     if (match) {
-      const key = match[1].toLowerCase();
-      current = key === "headline" ? "headline" : key === "cta" || key === "call to action" ? "cta" : "primary";
-      const rest = line.slice(match[0].length).trim();
+      const key = match[1].toLowerCase().replace(/[- ]/g, "");
+      current = key === "headline" ? "headline" : key === "cta" || key === "calltoaction" ? "cta" : "primary";
+      const rest = bare.slice(match[0].length).replace(/^(\*\*|__)\s*/, "").trim();
       if (rest) parts[current].push(rest);
-    } else if (line.trim()) parts[current].push(line.trim());
+      continue;
+    }
+    if (!line) continue;
+    // A call to action is one line: anything after it belongs to the body.
+    if (current === "cta" && parts.cta.length) current = "primary";
+    parts[current].push(line);
   }
-  const join = (lines: string[]) => lines.join(" ").replace(/^["“]|["”]$/g, "").trim();
+  const join = (lines: string[]) => lines.join(" ").replace(/\*\*|__/g, "").replace(/^["“]|["”]$/g, "").trim();
   return { headline: join(parts.headline) || null, primary: join(parts.primary), cta: join(parts.cta) || null };
 }
 
@@ -82,14 +94,14 @@ export function MarketingAds({ tenantId, view, onView, onOpenIntegrations, onOpe
     : adsPhase === "loading" ? <>Reading your saved ad copy…</>
     : adsPhase === "error" ? <>Your saved ad copy could not load.</>
     : count ? <><b>{countText} ad copy {count === 1 ? "draft" : "drafts"}</b> ready.</> : <>No ad copy saved yet.</>;
-  const plans = briefs.phase === "ready" ? (briefs.briefs ?? []).filter((brief) => brief.budgetTarget && brief.lifecycleStatus !== "archived") : [];
+  const plans = briefs.phase === "ready" ? (briefs.briefs ?? []).filter((brief) => brief.budgetTarget && !["archived", "completed"].includes(brief.lifecycleStatus)) : [];
 
   return <div className="mov mad">
     <div className="mov-top">
       <p className="mov-sum" tabIndex={-1}>Paige can’t read an ad account yet, so nothing here is estimated. {drafts}</p>
       <div className="mov-acts">
         <div className="campaigns-segmented" role="group" aria-label="Ads views">{ADS_VIEWS.map((item) => <button key={item.key} aria-pressed={view === item.key} onClick={() => onView(item.key)}>{item.label}</button>)}</div>
-        {access !== "denied" && <AskPaigeButton label="Ask PAIGE for ad copy" prompt={ASK_PROMPT}/>}
+        <AskPaigeButton label="Ask PAIGE for ad copy" prompt={ASK_PROMPT}/>
       </div>
     </div>
     <section className="mov-card mad-prov" aria-label="Ad account">
@@ -110,7 +122,8 @@ function PlugIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v4"/></svg>;
 }
 
-type Plan = { id: string; name: string; budgetTarget: string | null };
+type Plan = { id: string; name: string; budgetTarget: string | null; lifecycleStatus: string };
+const BRIEF_STATE: Record<string, string> = { active: "running", approved: "approved", paused: "paused", ready_for_review: "awaiting review", blocked: "blocked", draft: "draft" };
 
 function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreative, newest, onRetry }: { drafts: React.ReactNode; adsPhase: string; count: number; access: string; plans: Plan[]; briefsPhase: string; onCreative: () => void; newest: AdCopyRow[]; onRetry: () => void }) {
   return <>
@@ -125,7 +138,7 @@ function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreat
         <div className="mad-track" aria-hidden="true"/>
         <div className="mad-plan">
           {briefsPhase === "ready" ? plans.length
-            ? <ul aria-label="Budgets written in your briefs">{plans.map((plan) => <li key={plan.id}><span>Written in <b>{plan.name || "a brief"}</b>: “{plan.budgetTarget}”</span><small>A plan, never spend</small></li>)}</ul>
+            ? <ul aria-label="Budgets written in your briefs">{plans.map((plan) => <li key={plan.id}><span>Written in <b>{plan.name || "a brief"}</b> ({BRIEF_STATE[plan.lifecycleStatus] ?? "draft"}): “{plan.budgetTarget}”</span><small>A plan, never spend</small></li>)}</ul>
             : <p>No budget is written in any brief. If one is, it shows here as written, never as spend.</p>
             : briefsPhase === "error" || briefsPhase === "unavailable" ? <p>Your briefs couldn’t load, so any budget written in them isn’t shown.</p> : <p>Reading your briefs…</p>}
         </div>
@@ -134,11 +147,11 @@ function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreat
     </section>
     <div className="mad-two">
       <section className="mov-card" aria-labelledby="mad-ready-h">
-        <header className="mov-head"><div><h2 id="mad-ready-h">Ready now</h2><p>Written by PAIGE and saved. Never published or paid for.</p></div></header>
-        <div className="mad-row"><span className="mad-ini" aria-hidden="true">Ad</span><div className="mad-row-b"><strong>{drafts}</strong><small>{access === "denied" ? "Ask an owner or admin" : adsPhase === "ready" && !count ? "Ask PAIGE for ad copy and it’s kept here" : "Each one previews as an ad would read"}</small></div>{access !== "denied" && count > 0 && <button type="button" className="btn btn-s" onClick={onCreative}>Open Creative</button>}</div>
+        <header className="mov-head"><div><h2 id="mad-ready-h">Ready now</h2><p>Saved in your library. Paige never runs or pays for ads.</p></div></header>
+        <div className="mad-row"><span className="mad-ini" aria-hidden="true">Ad</span><div className="mad-row-b"><strong>{drafts}</strong><small>{access === "denied" ? "Ask an owner or admin" : adsPhase === "error" ? "Try again below" : adsPhase === "ready" && !count ? "Ask PAIGE for ad copy and it’s kept here" : "Each one previews as an ad would read"}</small></div>{access !== "denied" && count > 0 && <button type="button" className="btn btn-s" onClick={onCreative}>Open Creative</button>}</div>
         {adsPhase === "loading" && access !== "denied" && <div className="campaigns-skeleton mad-skel" role="status" aria-busy="true" aria-label="Loading saved ad copy"><span/><span/></div>}
-        {adsPhase === "error" && <div className="mad-row mad-retry" role="alert"><div className="mad-row-b"><strong>Nothing was changed.</strong><small>Your saved ad copy could not load. Try again.</small></div><button type="button" className="btn btn-s" onClick={onRetry}>Try again</button></div>}
-        {newest.length > 0 && <ul className="mad-list mad-newest" aria-label="Newest ad copy">{newest.map((row) => <li key={row.id}><div className="mad-row-b"><strong>{row.title || "Untitled"}</strong><small>{parseAdCopy(row.body).headline ?? "No headline written"} · saved {formatDay(row.updated_at)}</small></div><span className="pill pill-n">Draft</span></li>)}</ul>}
+        {adsPhase === "error" && <div className="mad-row mad-retry" role="alert"><div className="mad-row-b"><strong>Nothing was changed.</strong><small>Reading your library failed.</small></div><button type="button" className="btn btn-s" onClick={onRetry}>Try again</button></div>}
+        {newest.length > 0 && <ul className="mad-list mad-newest" aria-label="Newest ad copy">{newest.map((row) => <li key={row.id}><div className="mad-row-b"><strong>{row.title || "Untitled"}</strong><small>{parseAdCopy(row.body).headline ?? "No headline written"} · saved {formatDay(row.updated_at)}</small></div><span className="pill pill-n">{row.status === "published" ? "Published" : "Draft"}</span></li>)}</ul>}
       </section>
       <section className="mov-card" aria-labelledby="mad-plat-h">
         <header className="mov-head"><div><h2 id="mad-plat-h">Ad platforms</h2><p>None can be read by Paige yet</p></div></header>
@@ -147,7 +160,8 @@ function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreat
           ["Metricool", "Listed in Integrations; same limit"],
           ["Google Ads", "Only through a Zapier connection; not read by Paige"],
           ["LinkedIn · TikTok · YouTube Ads", "Not available"],
-        ].map(([name, detail]) => <li key={name}><div className="mad-row-b"><strong>{name}</strong><small>{detail}</small></div><span className="pill pill-n">Not available</span></li>)}</ul>
+        ].map(([name, detail]) => <li key={name}><div className="mad-row-b"><strong>{name}</strong><small>{detail}</small></div><span className="pill pill-n">{detail === "Not available" ? "Not available" : "Not read yet"}</span></li>)}</ul>
+        <p className="mov-foot">Which one Paige reads first is your call.</p>
       </section>
     </div>
   </>;
@@ -162,14 +176,14 @@ function Creative({ access, phase, rows, retry }: { access: string; phase: strin
     <div className="mad-grid">{rows.map((row) => {
       const ad = parseAdCopy(row.body);
       return <article className="mad-card" key={row.id} aria-label={row.title || "Ad copy"}>
-        <div className="mad-prev" aria-hidden="true">
-          <div className="mad-prev-h"><span className="mad-av"/><span><b>Your business</b><small>Sponsored</small></span></div>
-          <p className="mad-prev-t">{ad.primary || row.title || "No text saved"}</p>
-          <div className="mad-prev-img">Your image or video</div>
-          <div className="mad-prev-f"><span>{ad.headline || row.title || "Untitled"}</span><span className="mad-cta">{ad.cta ? ad.cta.slice(0, 22) : "Learn more"}</span></div>
+        <div className="mad-prev">
+          <div className="mad-prev-h"><span className="mad-av" aria-hidden="true"/><span><b>Your business</b><small>Sponsored</small></span></div>
+          <p className="mad-prev-t">{ad.primary || <span className="mad-missing">No primary text written</span>}</p>
+          <div className="mad-prev-img" aria-hidden="true">Your image or video</div>
+          <div className="mad-prev-f"><span>{ad.headline ?? <span className="mad-missing">No headline written</span>}</span>{ad.cta ? <span className="mad-cta" title={ad.cta}>{ad.cta}</span> : <span className="mad-cta is-missing">No call to action</span>}</div>
         </div>
-        <div className="mad-meta"><strong>{row.title || "Untitled"}</strong><small>{row.status === "published" ? "Published" : "Draft"} · saved {formatDay(row.updated_at)}{ad.cta ? "" : " · no call to action written"}</small>
-          <div className="mad-meta-a"><span className="pill pill-n">Not in a live ad</span><AskPaigeButton label="Revise with PAIGE" prompt={`Revise my saved ad copy "${row.title || "Untitled"}". Ask me what to change first, then save the new version as a draft; do not run or publish anything.`}/></div>
+        <div className="mad-meta"><strong>{row.title || "Untitled"}</strong><small>{row.status === "published" ? "Published" : "Draft"} · saved {formatDay(row.updated_at)}</small>
+          <div className="mad-meta-a"><span className="pill pill-n">Not run by Paige</span><AskPaigeButton label="Revise with PAIGE" prompt={`Revise my saved ad copy "${row.title || "Untitled"}". Ask me what to change first, then save the new version as a draft; do not run or publish anything.`}/></div>
         </div>
       </article>;
     })}</div>

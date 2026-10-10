@@ -1,7 +1,8 @@
 /* Marketing › Ads (INT-342 S1c, owner-approved prototype v2). Builds on the Overview's card, head,
  * summary and link styles (marketing-overview.css). Solo tokens only; nothing here is an act that spends
  * or publishes, so no gold. No authored motion. */
-.paige-solo .mad .campaigns-segmented button{font-size:12px;padding:3px 10px;line-height:20px}
+.paige-solo .mad .campaigns-segmented button{font-size:12px;padding:3px 10px;line-height:20px;color:var(--ink-2)}
+.paige-solo .mad .campaigns-segmented button[aria-pressed="true"]{color:var(--ink)}
 .paige-solo .mad .pill-n{color:var(--ink-2)} /* the base pill-n ink-3 measures 3.58:1 on sunk in light */
 
 /* provider strip */
@@ -53,7 +54,7 @@
 .mad-prev-img{display:grid;place-items:center;aspect-ratio:1.91/1;background:var(--surface-sunk);border-block:1px solid var(--line-soft);font-size:11.5px;color:var(--ink-2)}
 .mad-prev-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;font-size:12.5px;font-weight:600;line-height:1.35;color:var(--ink)}
 .mad-prev-f>span:first-child{min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.mad-cta{flex:none;font-size:11.5px;padding:5px 10px;border-radius:6px;background:var(--surface-sunk);border:1px solid var(--line);color:var(--ink)}
+.mad-cta{flex:none;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;padding:5px 10px;border-radius:6px;background:var(--surface-sunk);border:1px solid var(--line);color:var(--ink)}
 .mad-meta{display:grid;gap:3px;padding:12px 14px 14px}
 .mad-meta strong{font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}
 .mad-meta small{font-size:12px;color:var(--ink-2)}
@@ -61,3 +62,6 @@
 .mad-note{font-size:12px;color:var(--ink-2);padding:0 4px}
 .mad-skel{margin:0 18px 16px}
 .mad-retry{border-top:1px solid var(--line-soft)}
+.mad-missing{color:var(--ink-2);font-style:italic;font-weight:400}
+.mad-cta.is-missing{background:none;border-style:dashed;color:var(--ink-2);font-weight:500}
+.mad-ini{color:color-mix(in srgb,var(--violet) 75%,var(--ink))}

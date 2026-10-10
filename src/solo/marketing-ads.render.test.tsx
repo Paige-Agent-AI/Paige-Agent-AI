@@ -56,6 +56,20 @@ describe("parseAdCopy", () => {
     expect(parseAdCopy("Headline - Fast\nBody: line one\nline two\nCall to action: Start")).toEqual({ headline: "Fast", primary: "line one line two", cta: "Start" });
     expect(parseAdCopy(null)).toEqual({ headline: null, primary: "", cta: null });
   });
+
+  it("reads the formats the chat model actually varies between", () => {
+    const want = { headline: "Plan your quarter", primary: "Book a session.", cta: "Book now" };
+    for (const body of [
+      "## Headline\nPlan your quarter\n## Primary text\nBook a session.\n## Call to action\nBook now",
+      "- **Headline:** Plan your quarter\n- **Primary text:** Book a session.\n- **CTA:** Book now",
+      "*Headline:* Plan your quarter\n__Primary text:__ Book a session.\nCall-to-action: Book now",
+      "Headline — Plan your quarter\nPrimary text — Book a session.\nCTA — Book now",
+    ]) expect(parseAdCopy(body)).toEqual(want);
+    // Words after a one-line call to action go back to the body, never into the button.
+    expect(parseAdCopy("Headline: Fast\nCTA: Book now\nHashtags: #coaching")).toEqual({ headline: "Fast", primary: "Hashtags: #coaching", cta: "Book now" });
+    // A sentence that happens to start with "Text" keeps every word.
+    expect(parseAdCopy("Text - me now and we'll talk.").primary).toBe("Text - me now and we'll talk.");
+  });
 });
 
 describe("Marketing › Ads desk", () => {
@@ -71,7 +85,7 @@ describe("Marketing › Ads desk", () => {
     expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toEqual([["tenant_id", "t-1"], ["channel", "ad_copy"], ["not status", "archived"]]);
     expect([...host.querySelectorAll(".mad-nums dd")].map((dd) => dd.textContent)).toEqual(["—", "—", "—"]);
     // The owner's words, verbatim, never as spend; an archived brief's budget is not a plan.
-    expect([...host.querySelectorAll(".mad-plan li")].map((li) => li.textContent)).toEqual(["Written in Spring advisory intake: “About $2,000 for April”A plan, never spend"]);
+    expect([...host.querySelectorAll(".mad-plan li")].map((li) => li.textContent)).toEqual(["Written in Spring advisory intake (running): “About $2,000 for April”A plan, never spend"]);
     expect(text()).toContain("Return on ad spend isn’t shown");
     act(() => button("Open Creative")!.click());
     expect(handlers.onView).toHaveBeenCalledWith("creative");
@@ -100,8 +114,11 @@ describe("Marketing › Ads desk", () => {
     expect(cards).toHaveLength(2);
     expect(cards[0].querySelector(".mad-prev-t")?.textContent).toBe("Book a strategy session and leave with a plan.");
     expect(cards[0].querySelector(".mad-prev-f")?.textContent).toBe("Plan your quarter in 30 minutesBook a session");
-    // No CTA written: the preview falls back, and the card says so rather than pretending one exists.
-    expect(cards[1].querySelector(".mad-meta small")?.textContent).toContain("no call to action written");
+    // Nothing is invented: a missing headline or call to action is named as missing, not filled in.
+    expect(cards[1].querySelector(".mad-prev-f")?.textContent).toBe("No headline writtenNo call to action");
+    expect(cards[1].querySelector(".mad-cta.is-missing")).not.toBeNull();
+    // The copy itself is readable by assistive tech; only the avatar and image slot are hidden.
+    expect(cards[0].querySelector(".mad-prev")?.getAttribute("aria-hidden")).toBeNull();
     act(() => (cards[0].querySelector(".mad-meta-a button") as HTMLButtonElement).click());
     window.removeEventListener("paige:open", listen);
     expect(asks[0]).toMatch(/Spring planning session/);
@@ -113,7 +130,8 @@ describe("Marketing › Ads desk", () => {
     await render();
     expect(host.querySelector(".mov-sum")?.textContent).toContain("Saved ad copy is visible to owners and admins.");
     expect(db.calls.some((c) => c.table === "marketing_content")).toBe(false);
-    expect(button("Ask PAIGE for ad copy")).toBeUndefined();
+    // Asking PAIGE stays open to everyone, as on the earlier Ads tab (§58).
+    expect(button("Ask PAIGE for ad copy")).toBeDefined();
     act(() => root.unmount()); root = createRoot(host);
     await render("creative");
     expect(text()).toContain("visible to its owners and admins");
@@ -121,7 +139,7 @@ describe("Marketing › Ads desk", () => {
 
   it("shows a failed read with a retry, and an empty library with the ask", async () => {
     db.tables.marketing_content = { data: null, error: { message: "boom" } };
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
     await render("creative");
     expect(text()).toContain("Your saved ad copy could not load");
     db.tables.marketing_content = { data: [], error: null };
@@ -129,6 +147,7 @@ describe("Marketing › Ads desk", () => {
     await flush();
     expect(text()).toContain("No ad copy yet.");
     expect(button("Ask PAIGE for ad copy")).toBeDefined();
+    quiet.mockRestore();
   });
 
   it("a failed read on Overview says so and offers a retry, and loading shows a skeleton", async () => {
@@ -137,13 +156,14 @@ describe("Marketing › Ads desk", () => {
     await render();
     expect(host.querySelector(".mad-skel")).not.toBeNull();
     release({ data: null, error: { message: "boom" } });
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
     await flush();
     expect(host.querySelector(".mov-sum")?.textContent).toContain("Your saved ad copy could not load.");
     db.tables.marketing_content = { data: [AD], error: null };
     act(() => button("Try again")!.click());
     await flush();
     expect(host.querySelector(".mov-sum")?.textContent).toContain("1 ad copy draft ready.");
+    quiet.mockRestore();
   });
 
   it("names every provider figure's source, and sends the one partly-available figure to Analytics", async () => {

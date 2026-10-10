@@ -77,7 +77,7 @@ Routes are `tierBranches.ts:189-213` (`/solo/:account/growth/<tab>`). Most tabs 
 | Content | `MarketingContent` (`marketing-planned.tsx`) | `marketing_content` (newest 60, admin) | none | draft library list |
 | Social | `social-command.tsx` | `get_social_presence_evidence` | `record_social_handles` | handles only |
 | Email | `marketing-email*.tsx` | E1–E3c reads | campaigns, series, approvals | live |
-| Ads | `MarketingAds` (`marketing-planned.tsx:170`) | `marketing_content` where `channel='ad_copy'` | none | ad-copy list + "not yet" list |
+| Ads | `MarketingAds` (`marketing-planned.tsx:170` at grounding; since S1c `marketing-ads.tsx`) | `marketing_content` where `channel='ad_copy'` | none | ad-copy list + "not yet" list |
 | Lead capture | `LeadCapture` (`growth2.tsx:510`) + `form-intake.tsx` | campaigns read; intake panel | `growth_form_set_intake` | capture points, routing, paged submissions, recent submissions, contact/deal links |
 | Analytics | `MarketingAnalytics` (`growth2.tsx:548`) | last 200 submissions, briefs | none | 4 stats, leads by `utm_source`, by `utm_campaign` matched to `short_ref` |
 

@@ -45,17 +45,17 @@ try {
   // AI-2 uses the same actual canonical writers and disposable PostgreSQL scope.
   // Remove only the preceding proof's deliberately refusing LOCAL audit trigger.
   await db.exec('DROP TRIGGER int280_fixture_audit_refusal ON public.paige_audit_log; ALTER TABLE public.paige_eval_run ADD COLUMN work_id uuid REFERENCES public.paige_durable_work(id) ON DELETE RESTRICT');
-  await db.exec(await readFile('supabase/migrations/20270602000422_int280_task_evaluations.sql','utf8'));
-  await db.exec(await readFile('supabase/migrations/20270602000422_int280_task_evaluations.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20270602000424_int280_task_evaluations.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20270602000424_int280_task_evaluations.sql','utf8'));
   const evaluations=db.run(await readFile('supabase/tests/int280_task_evaluations.sql','utf8'));
   if(!evaluations.includes('PASS: deterministic canonical task evaluation'))throw new Error('Task evaluation proof missing');
   console.log(evaluations);
-  await db.exec(await readFile('supabase/migrations/20270602000422_int280_task_evaluations.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20270602000424_int280_task_evaluations.sql','utf8'));
   // Projection is a separate bounded read-only slice; no synthetic records enter production.
   let absent=false;
   try { db.run('SELECT public.operator_intelligence_task_scorecard()'); } catch(error) { absent=error.code==='42883'; }
   if(!absent)throw new Error('Scorecard failing-first absence proof missing');
-  const scorecard=await readFile('supabase/migrations/20270602000423_int280_task_scorecard.sql','utf8');
+  const scorecard=await readFile('supabase/migrations/20270602000425_int280_task_scorecard.sql','utf8');
   await db.exec(scorecard);await db.exec(scorecard);
   const scorecardProof=db.run(await readFile('supabase/tests/int280_task_scorecard.sql','utf8'));
   if(!scorecardProof.includes('PASS: protected bounded task scorecard'))throw new Error('Scorecard proof missing');

@@ -20,6 +20,8 @@
  * No network: fetch is a recording fake per provider. Run: `npm run test:model-fabric`.
  */
 import { setScenario, recorder } from "../client-memory-authz/fake-supabase.mjs";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const ENV = {
   ANTHROPIC_API_KEY: "sk-ant-test-not-a-real-key",
@@ -377,12 +379,22 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
 
 // ── D. THE CLASSIFIER THROUGH THE FABRIC (#1844) — the first production consumer of the seam ────
-// classifyTurn now opens through fabricCompletion({cheap, turn_classify}): same wire, same 1.2 s
-// deadline, same conservative null, and — new, on the owner's order — the tenant budget gate covers
+// classifyTurn now opens through fabricCompletion({cheap, turn_classify}): same wire, same deadline,
+// same conservative null, and — new, on the owner's order — the tenant budget gate covers
 // it (R4's S3 gap), with the router's established ungated-on-unreadable-accrual policy preserved.
 {
   const { classifyTurn, TURN_CLASSIFY_DEADLINE_MS } = await import("../../supabase/functions/_shared/paige-turn/classify-call.ts");
   const CLASSIFY_TRACE = { tenant_id: "5a4a3a2a-0000-4000-8000-00000000c1a1", agent_id: "paige-ai-chat", job_kind: "turn-classify" };
+
+  // D0 — the RECALIBRATED deadline (ANT-20, 2026-10-10): the value is pinned because changing it is
+  // a reviewed decision, and it stays above the incumbent p90 the parameter was first calibrated on.
+  const classifySource = readFileSync(fileURLToPath(new URL("../../supabase/functions/_shared/paige-turn/classify-call.ts", import.meta.url)), "utf8");
+  ok(TURN_CLASSIFY_DEADLINE_MS === 2500,
+    "D0 the deadline is the recalibrated 2500 ms (Luna production evidence 2026-10-09/10: 1 completion / 20 aborts at 1200)");
+  ok(classifySource.includes("TURN_CLASSIFY_DEADLINE_MS = 2500") && classifySource.includes("tune-or-revert"),
+    "D0 the constant's own record names the calibration basis and the acceptance gate");
+  ok(TURN_CLASSIFY_DEADLINE_MS > 1460,
+    "D0 the deadline stays above the incumbent classifier p90 it was first calibrated on (Haiku 1460 ms)");
 
   // D1 — routing parity: under the completed policy the cheap class serves LUNA first. The
   // classifier's shape rides the Responses wire (instructions, 120 output tokens); its temperature-0
@@ -434,7 +446,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   ok(ungated !== null && calls.length === 1,
     "D3 accrual that cannot be read proceeds ungated — the router's established policy, unchanged");
 
-  // D4 — the 1.2 s deadline: a transport slower than the bound is abandoned and the conservative
+  // D4 — the deadline: a transport slower than the bound is abandoned and the conservative
   // null returns (the fetch is aborted through the seam's signal). The slow fake sits on the
   // OPENAI leg — under the completed policy that is the classifier's primary (Luna).
   setScenario({});

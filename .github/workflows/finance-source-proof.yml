@@ -30,3 +30,5 @@ jobs:
           node-version: 24
       - name: Actual Finance migration, failing-first, repeated fresh replay and concurrent isolation
         run: node scripts/proof/finance-source-authority.mjs
+      - name: Actual account source projection, nullable amounts and revoked-source erasure
+        run: node scripts/proof/finance-source-authority.mjs accounts

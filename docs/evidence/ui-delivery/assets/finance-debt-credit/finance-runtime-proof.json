@@ -2802,10 +2802,22 @@
     {
       "name": "different epoch withholds financial facts",
       "pass": true
+    },
+    {
+      "name": "unavailable production debt refresh is disabled",
+      "pass": true
+    },
+    {
+      "name": "unavailable debt refresh issues no Sales reads",
+      "pass": true
+    },
+    {
+      "name": "production PAIGE coverage and terms intents stay distinct",
+      "pass": true
     }
   ],
   "errors": [],
-  "codeCommit": "eff5e0328734cb7742e7b0ef1789a4b58defd71a",
+  "codeCommit": "afec591ea63367135c95b82791d681492b539d61",
   "sourceHashes": {
     "src/components/ui/sheet.tsx": {
       "workspaceSha256": "d8a698f4cabc5323f561e560dc09a727c70da50a4bf5eaccbc44d928e6d1bc23",
@@ -2820,20 +2832,20 @@
       "gitBlobSha256": "d8741619f682aa2f2480f64e558c7df1bf657472bda601832e7d2c6d159f093e"
     },
     "src/solo/finance/FinanceWorkspace.test.tsx": {
-      "workspaceSha256": "9a2c8d8b99f652188b2aee8fa8820fc89119376918a243132fcc1d7822b4fcc9",
-      "gitBlobSha256": "988c23df54d667a506d149335b5b05e67b1f4c4bf6e669b5e95c90fba6645d38"
+      "workspaceSha256": "067514c7d8a95f850f6b62698c730fc20e821ae32d65fd6852bfa5913130bec5",
+      "gitBlobSha256": "5b507e5da9cd6136ca218c9b4244378e25272399b086e69ca82670845892f587"
     },
     "src/solo/finance/FinanceWorkspace.tsx": {
-      "workspaceSha256": "37001d7ba760c25e265d84a9c9b1e3a608ff79aa0d6f2a1a420cee96844fc30c",
-      "gitBlobSha256": "cf7ecf7a12543c9873053e48cf8b26f8254f324b07d1ed7f9b474777087f6169"
+      "workspaceSha256": "f8c6f53dbf09cb648dd11e54c31f9e68154efd0624953414eb1521e1d2619828",
+      "gitBlobSha256": "f441769d6811b3d5bc2dac7be5e4d1e815dc43fc73d1f2176ce6f27c55f5e95d"
     },
     "src/solo/finance/debt-credit/DebtCreditWorkspace.test.tsx": {
       "workspaceSha256": "6f5f6df1b390768d9a109beb4d4233a022e41fab2c605024387ef4d8d9cdafa3",
       "gitBlobSha256": "1492845ef1d75a3b75724c0dbc5f6f5d7f2aaafa30f4dd1e0b5e276811421e21"
     },
     "src/solo/finance/debt-credit/DebtCreditWorkspace.tsx": {
-      "workspaceSha256": "b677c6e4f2bcd38c5aa09541ace48b4b5d65144874538872edea3354790b2b02",
-      "gitBlobSha256": "a3e7f5d775114c85dfd1ca8f43424087bff3b3adde82e8fc05c300620fa85f56"
+      "workspaceSha256": "16710f914e3838110627d97b86cf5c7ec3839e696c6aa2da51b15c99575f18bd",
+      "gitBlobSha256": "5e8ef7890bf75990ff0cad9495531049cda2d6986ca6cd4292a5bbf68cb9acc2"
     },
     "src/solo/finance/debt-credit/debt-credit.css": {
       "workspaceSha256": "55ddec392980d394f472e79bdd5cdd49b4401c44ec31f5c06cc6a2e06e578d51",
@@ -2844,8 +2856,8 @@
       "gitBlobSha256": "7c356e47fe3e63516f99a5b296803daba0e1672c93dd91fc6122195935356c20"
     },
     "src/solo/finance/financeDebtSource.ts": {
-      "workspaceSha256": "6c3493e43fcee6645b7b735ed60cff81d109fb909c30a570340dbe740061ffa7",
-      "gitBlobSha256": "6c3493e43fcee6645b7b735ed60cff81d109fb909c30a570340dbe740061ffa7"
+      "workspaceSha256": "6e66a4eb451b51dab2abd709dfd1898c8c050aedf46e8094eaf483613e7d6ba1",
+      "gitBlobSha256": "6e66a4eb451b51dab2abd709dfd1898c8c050aedf46e8094eaf483613e7d6ba1"
     }
   },
   "scope": "Actual source components and synthetic contract fixtures only; no authenticated company/provider/Chat acceptance."

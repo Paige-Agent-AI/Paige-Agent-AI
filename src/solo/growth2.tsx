@@ -53,7 +53,7 @@ const MOVED = {
   forms: { text: "Forms are on Overview, under Capture points.", filter: "form" },
   "brand-kit": { text: "Your brand kit is in Vibe Studio.", studio: true },
   builders: { text: "Builders live in Vibe Studio. Your live pages and forms are below.", studio: true },
-  "missing-form": { text: "That form isn’t in this workspace. Here are the capture points that are." },
+  "missing-form": { text: "That form isn’t live or in draft in this workspace. Here are the capture points that are." },
 };
 
 const openStudio=(event)=>window.dispatchEvent(new CustomEvent('paige-studio',{detail:{returnFocus:event.currentTarget}}));
@@ -97,8 +97,14 @@ function SurfaceHead({ truthKey, title, description, action }) {
 export function DetailDrawer({ detail, onClose }) {
   const closeRef = React.useRef(null);
   const drawerRef = React.useRef(null);
+  // The effect runs when a different item opens, never on a re-render of the same one: callers
+  // build `detail` and `onClose` inline, and re-running it moved focus to Close mid-edit (INT-342).
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose;
+  const openKey = detail ? (detail.key ?? detail.title) : null;
   React.useEffect(() => {
-    if (!detail) return;
+    if (openKey === null) return;
+    const onClose = () => onCloseRef.current();
     const previous = document.activeElement;
     const background = document.querySelectorAll(".solo-campaigns > .campaigns-nav, .solo-campaigns > .campaigns-scroll");
     background.forEach((node) => node.setAttribute("inert", ""));
@@ -118,7 +124,7 @@ export function DetailDrawer({ detail, onClose }) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => { window.removeEventListener("keydown", onKeyDown); background.forEach((node) => node.removeAttribute("inert")); if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true }); };
-  }, [detail, onClose]);
+  }, [openKey]);
   if (!detail) return null;
   return <><button className="campaigns-drawer-scrim" tabIndex={-1} aria-label="Close details" onClick={onClose}/><aside ref={drawerRef} className="campaigns-drawer" role="dialog" aria-modal="true" aria-labelledby="campaigns-detail-title">
     <header><div><span className="eyebrow">Grounded detail</span><h2 id="campaigns-detail-title">{detail.title}</h2></div><button ref={closeRef} className="btn btn-s" onClick={onClose} aria-label="Close details"><Ic.x size={14}/></button></header>
@@ -355,14 +361,21 @@ function StudioLauncher({ label = "Open Vibe Studio", primary = false }) {
 }
 
 // Overview, mounted only on its own tab so the briefs read happens only here.
+// A failed briefs read never hides the capture points, form panel or leads: Overview still renders
+// from the Marketing read and says the brief items could not load.
 function OverviewTab({ data, moved, onDismissMoved, onCanManage, ...rest }) {
   const briefsState = useSoloCampaignBriefs();
   const canManage = briefsState.canManage === true;
   React.useEffect(() => { onCanManage(canManage); }, [canManage, onCanManage]);
   React.useEffect(() => () => onCanManage(false), [onCanManage]);
-  return <StateFrame phase={combinedPhase(data.phase, briefsState.phase)} retry={() => { data.retry?.(); briefsState.retry?.(); }} noun="marketing">
-    {moved && <div className="mov-moved" role="status"><p><b>{MOVED[moved].text}</b></p>{MOVED[moved].studio && canManage && <StudioLauncher/>}<button className="btn btn-s" onClick={onDismissMoved}>Dismiss</button></div>}
-    <MarketingOverview data={data} briefs={briefsState.briefs || []} canManage={canManage} studioLauncher={(label) => <StudioLauncher label={label}/>} {...rest}/>
+  const briefsReady = briefsState.phase === "ready";
+  const briefsFailed = briefsState.phase === "error" || briefsState.phase === "unavailable";
+  const phase = data.phase === "ready" && !briefsReady && !briefsFailed ? "loading" : data.phase;
+  const dismiss = () => { onDismissMoved(); requestAnimationFrame(() => document.querySelector(".mov-sum")?.focus({ preventScroll: true })); };
+  const briefsNotice = briefsFailed ? <div className="mov-briefs-off" role="status"><p>Campaign briefs couldn’t load, so briefs waiting on you aren’t listed here.</p>{briefsState.retry && <button className="btn btn-s" onClick={() => briefsState.retry()}>Try again</button>}</div> : null;
+  return <StateFrame phase={phase} retry={() => { data.retry?.(); briefsState.retry?.(); }} noun="marketing">
+    {moved && <div className="mov-moved" role="status"><p><b>{MOVED[moved].text}</b></p>{MOVED[moved].studio && canManage && <StudioLauncher/>}<button className="btn btn-s" onClick={dismiss}>Dismiss</button></div>}
+    <MarketingOverview data={data} briefs={briefsReady ? briefsState.briefs || [] : []} canManage={canManage} briefsNotice={briefsNotice} studioLauncher={(label) => <StudioLauncher label={label}/>} {...rest}/>
   </StateFrame>;
 }
 
@@ -562,7 +575,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   //   /growth/lead-capture[?type=&form=]   → Overview, same filter, same form panel (INT-342)
   //   /growth/brand-kit|pages|funnels|forms|builders → Overview, with where that work lives now
   //   /growth/catalog?type=                → Overview, that filter (published Vibe work)
-  const movedFrom=tab==="capture"?(MOVED[segment]?segment:"lead-capture"):(segment==="catalog"&&requestedType)?"catalog":null;
+  const movedFrom=tab==="capture"?(Object.hasOwn(MOVED,segment??"")?segment:"lead-capture"):(segment==="catalog"&&requestedType)?"catalog":null;
   const redirectTo=segment==="active"?"campaigns":segment==="performance"?"analytics":movedFrom?"overview":null;
   React.useEffect(()=>{
     const account=params.account; if(!redirectTo||!account)return;
@@ -601,29 +614,33 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   // edit, so the form panel offers "Edit in Vibe Studio" only to someone who can.
   const [overviewCanManage,setOverviewCanManage]=React.useState(false);
   // The one form panel: a form's routing and every submission with what the visitor typed. Opened
-  // from Overview, Campaigns and Analytics, and by any old Lead capture link that named a form.
+  // from Overview, and by any old Lead capture link that named a form; `?form=` is its address.
   const formParam=tab==="overview"?query.get("form"):null;
   const panelForm=formParam?[...data.artifacts,...(data.drafts||[])].find((item)=>item.type==="form"&&item.id===formParam):null;
   const formMissing=!!formParam&&!panelForm&&data.phase==="ready";
   React.useEffect(()=>{ if(formMissing) setOverviewQuery({form:null,moved:"missing-form"}); },[formMissing,setOverviewQuery]);
   const openForm=React.useCallback((formId)=>{
     const account=params.account; if(!account)return;
-    if(tab==="overview") setOverviewQuery({form:formId},{replace:false});
+    // Replace, like closing: a pushed entry made Back land on an identical Overview after close.
+    if(tab==="overview") setOverviewQuery({form:formId});
     else navigate(`${subtabPath("solo",account,"growth","overview")}?form=${encodeURIComponent(formId)}`);
   },[navigate,params.account,setOverviewQuery,tab]);
   const closeForm=React.useCallback(()=>setOverviewQuery({form:null}),[setOverviewQuery]);
+  const formRoute=!panelForm?null:panelForm.routingConfigured?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Routed by an automation"):panelForm.intakeAlert?"No pipeline: each lead is only emailed":"Not routed: no pipeline, no alert";
   const formDetail=panelForm?{
+    key:`form-${panelForm.id}`,
     title:panelForm.name,
-    rows:[["Type","Form"],["State",panelForm.status==="active"?"Live":"Draft"],["Recent submissions",`${panelForm.recentSubmissions??0} in the latest ${SUBMISSION_READ_LIMIT} submissions`],["Where leads go",panelForm.routingConfigured?"Routed":"Not routed: no pipeline, no alert"]],
-    body:<FormIntakePanel key={panelForm.id} tenantId={data.tenantId} formId={panelForm.id} workspace={data.pipelineWorkspace} onOpenContact={openContact} onOpenDeal={openDeal}/>,
+    rows:[["Type","Form"],["State",panelForm.status==="active"?"Live":"Draft"],["Recent submissions",`${panelForm.recentSubmissions??0} in the latest ${SUBMISSION_READ_LIMIT} submissions`],["Where leads go",formRoute]],
+    // A saved route re-reads Marketing, so the chain, Needs you and this row change in place (§70.1).
+    body:<FormIntakePanel key={panelForm.id} tenantId={data.tenantId} formId={panelForm.id} workspace={data.pipelineWorkspace} onOpenContact={openContact} onOpenDeal={openDeal} onSaved={()=>data.retry?.()}/>,
     actions:<>{panelForm.publicHref&&<a className="btn btn-s" href={panelForm.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>}{overviewCanManage&&<StudioLauncher label="Edit in Vibe Studio"/>}</>,
     note:"The form itself is built in Vibe Studio. Its routing saves here or in Vibe Studio’s form settings; both are the same setting.",
   }:null;
   const openAsset=React.useCallback((artifact)=>setDetail({title:artifact.name,rows:[["Type",TYPE_LABEL[artifact.type]],["State","Live"],["Updated",formatDate(artifact.updatedAt)],["Where leads go",`Through the form on this ${artifact.type}. Its routing lives on that form.`]],actions:artifact.publicHref?<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>:null,note:"Visits aren’t recorded on public pages yet, so there is no conversion rate."}),[setDetail]);
   const captureFilter=CAPTURE_FILTERS.includes(query.get("capture"))?query.get("capture"):"all";
-  const moved=tab==="overview"&&MOVED[query.get("moved")]?query.get("moved"):null;
+  const moved=tab==="overview"&&Object.hasOwn(MOVED,query.get("moved")??"")?query.get("moved"):null;
   const toSales=React.useCallback(()=>{ const account=params.account; if(!account)return; navigate(salesInShell?subtabPath("solo",account,"sales","pipeline"):subtabPath("solo",account,"growth","pipeline")); },[navigate,params.account,salesInShell]);
-  let body=<OverviewTab data={data} moved={moved} onDismissMoved={()=>setOverviewQuery({moved:null})} onCanManage={setOverviewCanManage} captureFilter={captureFilter} onCaptureFilter={(filter)=>setOverviewQuery({capture:filter==="all"?null:filter})} onGo={goTo} onCreateBrief={createBrief} onOpenSales={toSales} onOpenForm={openForm} onOpenAsset={openAsset} onOpenContact={openContact} onOpenDeal={openDeal}/>;
+  let body=<OverviewTab data={data} moved={moved} scrollToCapture={Boolean(moved&&moved!=="missing-form")||captureFilter!=="all"} onDismissMoved={()=>setOverviewQuery({moved:null})} onCanManage={setOverviewCanManage} captureFilter={captureFilter} onCaptureFilter={(filter)=>setOverviewQuery({capture:filter==="all"?null:filter})} onGo={goTo} onCreateBrief={createBrief} onOpenSales={toSales} onOpenForm={openForm} onOpenAsset={openAsset} onOpenContact={openContact} onOpenDeal={openDeal}/>;
   if(redirectTo) body=null;
   else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
   else if(tab==="analytics") body=<MarketingAnalytics data={data} onGo={goTo}/>;

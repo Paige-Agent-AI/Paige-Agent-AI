@@ -36,6 +36,8 @@ export type CampaignArtifact = {
   dispatchStatuses: Record<string, number>;
   /** The pipeline and stage a form's own intake route sends new leads to (forms only). */
   intakePipelineId?: string | null;
+  /** The form emails each submission to an address (growth_forms.notify_email). */
+  intakeAlert?: boolean;
   intakeStageId?: string | null;
 };
 
@@ -348,6 +350,8 @@ type FormRow = {
   auto_create_deal: boolean | null;
   pipeline_id: string | null;
   stage_id: string | null;
+  // growth-process-submission emails each submission here whatever else routes the form.
+  notify_email: string | null;
 };
 type SubmissionRow = {
   id: string;
@@ -689,7 +693,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
             .order("updated_at", { ascending: false }),
           pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_forms")
-            .select("id,slug,name,status,updated_at,auto_create_deal,pipeline_id,stage_id")
+            .select("id,slug,name,status,updated_at,auto_create_deal,pipeline_id,stage_id,notify_email")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
           pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
@@ -780,7 +784,8 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
             (automation) => automation.effective_autonomy_lane === "auto",
           );
           return {
-            routingConfigured: configured.length > 0,
+            // A disabled automation ("Draft route") routes nothing, so it does not count.
+            routingConfigured: enabled.length > 0,
             routingState:
               configured.length === 0
                 ? ("No route" as const)
@@ -945,6 +950,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
               ...intakeRouted(routingEvidence(row.id), row),
               intakePipelineId: row.auto_create_deal && row.pipeline_id ? row.pipeline_id : null,
               intakeStageId: row.auto_create_deal && row.pipeline_id ? row.stage_id : null,
+              intakeAlert: Boolean(row.notify_email?.trim()),
             })),
         ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
         // Unpublished work, from the rows already read above. Archived work is neither live nor

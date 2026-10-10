@@ -11,6 +11,7 @@ const harness = vi.hoisted(() => ({
   // Owner briefs the Marketing Overview and Analytics read. Empty unless a test sets them.
   readCalls: 0,
   canManage: true,
+  briefsPhase: "ready",
   briefs: [] as Array<Record<string, unknown>>,
   state: {
     tenantId: "tenant-1",
@@ -54,7 +55,7 @@ vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => { harness.readCal
 // own proof in `campaign-briefs.contract.test.tsx`.
 vi.mock("./useSoloCampaignBriefs", () => ({
   useSoloCampaignBriefs: () => ({
-    tenantId: harness.state.tenantId, phase: "ready", briefs: harness.briefs, archivedCount: 0, canManage: harness.canManage,
+    tenantId: harness.state.tenantId, phase: harness.briefsPhase, briefs: harness.briefs, archivedCount: 0, canManage: harness.canManage,
     retry: () => {}, saveBrief: async () => ({ ok: true, message: "" }),
     transitionBrief: async () => ({ ok: true, message: "" }), archiveBrief: async () => ({ ok: true, message: "" }),
   }),
@@ -115,6 +116,7 @@ afterEach(() => {
   act(() => root?.unmount());
   host?.remove();
   harness.briefs = [];
+  harness.briefsPhase = "ready";
   harness.state.tenantId = "tenant-1";
   if (harness.state.pipelineWorkspace) {
     (harness.state.pipelineWorkspace as { canManage: boolean; canArchiveFolders: boolean }).canManage = true;
@@ -473,7 +475,9 @@ describe("Solo Campaigns rendered flows", () => {
     renderAt("/solo/42/growth/catalog?type=page");
     expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/overview?moved=catalog&capture=page");
     const details = card("Published page")!;
-    expect(details.getAttribute("aria-label")).toBe("Published page, Page, live");
+    // Its accessible name is what it shows, so the count and route are heard too.
+    expect(details.hasAttribute("aria-label")).toBe(false);
+    expect(details.textContent).toContain("Page · Live");
     details.focus();
     act(() => details.click());
     expect(host.querySelector('[role="dialog"]')?.textContent).toContain("Through the form on this page.");
@@ -518,7 +522,7 @@ describe("Solo Campaigns rendered flows", () => {
       act(() => root.unmount()); host.remove();
       renderAt("/solo/42/growth/overview?form=form-gone");
       expect(host.querySelector('[role="dialog"]')).toBeNull();
-      expect(host.textContent).toContain("That form isn’t in this workspace.");
+      expect(host.textContent).toContain("That form isn’t live or in draft in this workspace.");
     } finally {
       harness.state.artifacts = artifacts;
     }
@@ -716,7 +720,7 @@ describe("Solo Marketing department views", () => {
       "1Live capture points1 form",
       "3Leads receivedLast 30 days",
       "0 of 1Forms that route leadsThe chain breaks hereRoute it",
-      "1OpportunitiesHanded to SalesOpen Sales",
+      "1Opportunities33% of leads, now in SalesOpen Sales",
     ]);
     expect(host.querySelector(".mov-node.is-broken")).not.toBeNull();
     expect(host.querySelector(".mov-rate")?.textContent).toBe("33%");
@@ -763,7 +767,7 @@ describe("Solo Marketing department views", () => {
     useWorkspace({ submissions: [] });
     renderAt("/solo/42/growth/overview");
     expect(host.querySelector(".mov-zero")?.textContent).toBe("Zero every day. The line moves with your first lead.");
-    expect(host.querySelector(".mov-sum")?.textContent).toBe("1 capture point live, no leads in the last 30 days, and 1 of 1 forms has nowhere to send one.");
+    expect(host.querySelector(".mov-sum")?.textContent).toBe("1 capture point live, no leads in the last 30 days, and 1 of 1 form doesn’t route its leads.");
   });
 
   it("Overview's New campaign brief opens the builder on the Campaigns desk", () => {
@@ -782,7 +786,9 @@ describe("Solo Marketing department views", () => {
     useWorkspace();
     harness.briefs = [brief("b1", "Q2 retainer upgrade", { lifecycleStatus: "ready_for_review" })];
     renderAt("/solo/42/growth/overview");
-    expect(attention()[0]).toBe("Q2 retainer upgradeA campaign brief is waiting for your decisionReview");
+    // The chain's broken link leads; the brief waiting for a decision follows it.
+    expect(attention()[0]).toMatch(/^Discovery call request/);
+    expect(attention()[1]).toBe("Q2 retainer upgradeA campaign brief is waiting for your decisionReview");
     // Without Sales in the menu the link goes through Marketing's address, which the Sales cutover
     // (#1676) redirects to Sales' Pipeline for every Solo account.
     act(() => button("Open Sales")!.click());
@@ -868,6 +874,56 @@ describe("Solo Marketing department views", () => {
     // The campaign tag matches the brief that uses it as its reference.
     expect(bars.some((row) => row?.includes("CB-SPRING") && row.includes("Brief: Spring advisory intake"))).toBe(true);
     expect(host.textContent).toContain("Form and page conversion");
+  });
+
+  it("a failed briefs read hides only the brief items; capture points, the chain and leads stay", () => {
+    useWorkspace();
+    harness.briefsPhase = "error";
+    renderAt("/solo/42/growth/overview");
+    expect(host.textContent).not.toContain("Marketing could not load");
+    expect(host.querySelector(".mov-briefs-off")?.textContent).toContain("Campaign briefs couldn’t load");
+    expect(host.querySelector("#mov-capture")).not.toBeNull();
+    expect(chain()).toHaveLength(4);
+    expect(host.textContent).toContain("source: newsletter · campaign: CB-SPRING");
+  });
+
+  it("a form that only emails its leads is not called silent, and is still not routed", () => {
+    useWorkspace({ artifacts: [{ ...form, intakeAlert: true }] });
+    renderAt("/solo/42/growth/overview");
+    expect(attention()[0]).toBe("Discovery call requestLeads are emailed to you but never reach a pipelineRoute it");
+    expect(host.querySelector("#mov-capture")?.textContent).toContain("Email alert only, no pipeline");
+    act(() => button("Route it")!.click());
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain("No pipeline: each lead is only emailed");
+  });
+
+  it("saving a route re-reads Marketing, and the open panel keeps focus while it re-renders", async () => {
+    useWorkspace();
+    const retry = harness.state.retry as ReturnType<typeof vi.fn>;
+    retry.mockClear();
+    renderAt("/solo/42/growth/overview?form=form-1");
+    (host.querySelector("#intake-email") as HTMLInputElement).focus();
+    // A realtime refresh hands the workspace a new data object; the panel must not steal focus.
+    harness.state = { ...harness.state };
+    rerenderAt("/solo/42/growth/overview?form=form-1");
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.activeElement?.id).toBe("intake-email");
+    expect(retry).not.toHaveBeenCalled();
+    // Make the draft dirty (the alert address), then save: the mocked save resolves ok and
+    // Marketing re-reads, so the chain and Needs you change in place.
+    const email = host.querySelector("#intake-email") as HTMLInputElement;
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(email, "owner@example.com");
+      email.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const save = [...host.querySelectorAll('[role="dialog"] button')].find((item) => item.textContent === "Save changes") as HTMLButtonElement;
+    await act(async () => { save.click(); });
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
+  it("an unknown moved key shows no notice", () => {
+    useWorkspace();
+    renderAt("/solo/42/growth/overview?moved=constructor");
+    expect(host.querySelector(".mov-moved")).toBeNull();
   });
 
   it("previously shipped addresses land on their new home", () => {

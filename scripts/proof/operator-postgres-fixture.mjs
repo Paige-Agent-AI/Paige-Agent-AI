@@ -1,6 +1,34 @@
 // Local/CI-only adapter for the existing SQL proof. Never accepts a remote URL or credentials.
 import {spawnSync,spawn} from 'node:child_process';
 const literal=v=>v===null?'NULL':typeof v==='number'?String(v):`'${String(v).replaceAll("'","''")}'`;
+// Used only after an existing proof's disposable-loopback guard. Retire its random synthetic
+// tenant through the installed canonical lifecycle; do not exempt raw DELETE or disable guards.
+export function retireSyntheticTenantSQL(tenantId) {
+ if(!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(tenantId))throw new Error('Synthetic fixture UUID required');
+ return `DO $fixture_retire$
+ DECLARE fixture_actor uuid:=gen_random_uuid(); operation uuid:=gen_random_uuid(); p jsonb; account_name text;
+ BEGIN
+  SELECT name INTO account_name FROM public.tenants WHERE id='${tenantId}';
+  IF NOT FOUND THEN RETURN; END IF;
+  IF to_regprocedure('public.operator_delete_archived_account(uuid,text,text,uuid)') IS NULL THEN
+   DELETE FROM public.tenants WHERE id='${tenantId}'; RETURN;
+  END IF;
+  INSERT INTO auth.users(id,email,raw_app_meta_data) VALUES(fixture_actor,'operator-fixture-'||fixture_actor::text||'@tests.invalid','{"comms_provider_execution":"disabled"}'::jsonb);
+  INSERT INTO public.user_roles(user_id,role) VALUES(fixture_actor,'platform_admin');
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',fixture_actor,'role','authenticated')::text,true);
+  PERFORM set_config('request.jwt.claim.sub',fixture_actor::text,true);
+  PERFORM set_config('request.jwt.claim.role','authenticated',true);
+  p:=public.operator_preview_account_archive('${tenantId}');
+  IF NOT (p->>'execution_available')::boolean THEN RAISE EXCEPTION 'Synthetic archive cleanup blocked: %',p->'blockers'; END IF;
+  PERFORM public.operator_archive_account('${tenantId}',p->>'version',account_name,operation);
+  p:=public.operator_preview_account_deletion('${tenantId}');
+  IF NOT (p->>'execution_available')::boolean THEN RAISE EXCEPTION 'Synthetic deletion cleanup blocked: %',p->'blockers'; END IF;
+  PERFORM public.operator_delete_archived_account('${tenantId}',p->>'version',account_name,operation);
+  IF EXISTS(SELECT 1 FROM public.tenants WHERE id='${tenantId}') THEN RAISE EXCEPTION 'Synthetic tenant cleanup absence not verified'; END IF;
+  DELETE FROM public.user_roles WHERE user_id=fixture_actor;
+  DELETE FROM auth.users WHERE id=fixture_actor;
+ END $fixture_retire$;`;
+}
 export class OperatorPostgresFixture {
  constructor(port=5432) {
   if(!Number.isSafeInteger(port)||port<1024||port>65535||(port===5432&&!process.env.CI))throw new Error('Use the isolated CI service or a dedicated local fixture port.');

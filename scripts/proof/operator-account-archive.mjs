@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { retireSyntheticTenantSQL } from './operator-postgres-fixture.mjs';
 process.on('uncaughtException', e => { console.error('FAIL:',e.code ?? e.name,e.message);process.exit(1); });
 const native=process.argv[2]==='--postgres';
 const db=native?new (await import('./operator-postgres-fixture.mjs')).OperatorPostgresFixture(Number(process.argv[3]??5432)):new (await import(pathToFileURL(resolve(process.argv[2])).href)).PGlite();
 const owner='00000000-0000-0000-0000-000000000001', ordinary='00000000-0000-0000-0000-000000000002';
 const agency='00000000-0000-0000-0000-000000000011', child='00000000-0000-0000-0000-000000000012', solo='00000000-0000-0000-0000-000000000013';
 await db.exec(`DO $$BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF; IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon; END IF; IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role; END IF; END$$; CREATE SCHEMA auth;
-CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('test.actor',true),''))::uuid$$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_app_meta_data jsonb);
 CREATE TABLE public.user_roles(user_id uuid REFERENCES auth.users(id),role text);
 INSERT INTO auth.users VALUES('${owner}','owner@example.invalid','{}'),('${ordinary}','shared@example.invalid','{}'),('00000000-0000-0000-0000-000000000003','admin@example.invalid','{}');
@@ -171,6 +172,19 @@ try {
   assert.equal((await db.query('select count(*)::int n from paige_durable_work where tenant_id=$1',[concurrent])).rows[0].n,0);
   console.log('PASS: two actual PostgreSQL sessions serialize archive against a concurrent work insertion; no claim escapes and duplicate archive is idempotent.');
  }
+ const cleanupFixture='00000000-0000-0000-0000-000000000097';
+ await db.query("insert into tenants(id,name,status,account_type) values($1,'Proof Cleanup','active','standalone')",[cleanupFixture]);
+ await db.exec('CREATE TABLE fixture_retention_obligation(tenant_id uuid REFERENCES tenants(id));');
+ await db.query('insert into fixture_retention_obligation values($1)',[cleanupFixture]);
+ await refuse(()=>db.exec(retireSyntheticTenantSQL(cleanupFixture)),'P0001');
+ assert.equal((await db.query('select archived_at from tenants where id=$1',[cleanupFixture])).rows[0].archived_at,null,'blocked fixture retirement rolls back archive and temporary authority');
+ assert.equal((await db.query('select count(*)::int n from auth.users')).rows[0].n,3,'failed fixture cleanup must roll back its temporary actor');
+ await db.query('delete from fixture_retention_obligation where tenant_id=$1',[cleanupFixture]);
+ await db.exec(retireSyntheticTenantSQL(cleanupFixture));
+ assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[cleanupFixture])).rows[0].n,0,'existing proof fixtures use actual governed retirement');
+ assert.equal((await db.query('select count(*)::int n from auth.users')).rows[0].n,3,'successful fixture cleanup removes only its temporary actor');
+ assert.equal((await db.query('select count(*)::int n from user_roles')).rows[0].n,3,'temporary fixture authority is removed');
+ assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[solo])).rows[0].n,1,'the independent Solo survives proof-fixture cleanup');
  await db.query("delete from user_roles where user_id=$1",[owner]); assert.equal((await db.query('select operator_can_retire_accounts() v')).rows[0].v,false,'revoked authority refuses immediately');
  console.log('PASS: actual archive/restore/delete SQL; populated Agency tree, CRM/activity/Chat/Memory cleanup, independent Solo and shared identity preserved; admin/owner and ordinary refusal; confirmation, stale version, idempotency and minimal receipt. Auth is a fixture; production acceptance UNVERIFIED.');
 } catch(e) {console.error('FAIL:',e.code??e.name,e.message);process.exitCode=1;} finally {await db.close();}

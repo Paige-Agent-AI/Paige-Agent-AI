@@ -436,9 +436,28 @@ BEGIN
  RETURN public.operator_read_archive_receipt(_tenant_id,_operation_id);
 END $$;
 
-REVOKE ALL ON FUNCTION public.guard_operator_account_archive(),public.guard_archived_tenant_membership(),public.guard_archived_tenant_entry(),public.guard_archived_tenant_work(),public.operator_lock_retirement_scope(),public.operator_retirement_disposition(text),public.operator_retirement_fk_join(oid),public.operator_account_deletion_plan(uuid[]),public.operator_retirement_order_blocked(jsonb) FROM PUBLIC,anon,authenticated,service_role;
-REVOKE ALL ON FUNCTION public.operator_can_retire_accounts(),public.operator_read_archive_receipt(uuid,uuid),public.operator_preview_account_archive(uuid),public.operator_archive_account(uuid,text,text,uuid),public.operator_restore_archived_account(uuid,uuid),public.operator_delete_archived_account(uuid,text,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION public.operator_can_retire_accounts(),public.operator_read_archive_receipt(uuid,uuid),public.operator_preview_account_archive(uuid),public.operator_archive_account(uuid,text,text,uuid),public.operator_restore_archived_account(uuid,uuid),public.operator_delete_archived_account(uuid,text,text,uuid) TO authenticated;
+-- One explicit identity signature per statement, also visible to the repository ACL guard.
+REVOKE ALL ON FUNCTION public.guard_operator_account_archive() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.guard_archived_tenant_membership() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.guard_archived_tenant_entry() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.guard_archived_tenant_work() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_lock_retirement_scope() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_retirement_disposition(text) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_retirement_fk_join(oid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_account_deletion_plan(uuid[]) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_retirement_order_blocked(jsonb) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_can_retire_accounts() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_read_archive_receipt(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_preview_account_archive(uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_archive_account(uuid,text,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_restore_archived_account(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.operator_delete_archived_account(uuid,text,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.operator_can_retire_accounts() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.operator_read_archive_receipt(uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.operator_preview_account_archive(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.operator_archive_account(uuid,text,text,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.operator_restore_archived_account(uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.operator_delete_archived_account(uuid,text,text,uuid) TO authenticated;
 REVOKE ALL ON FUNCTION public.operator_preview_account_deletion(uuid) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.operator_preview_account_deletion(uuid) TO authenticated;
 CREATE OR REPLACE FUNCTION public.operator_set_tenant_status(

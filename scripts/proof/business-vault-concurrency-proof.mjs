@@ -3,6 +3,7 @@ import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
+import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const runFile = promisify(execFile);
 const [psql, port, user, database = "business_vault_test"] = process.argv.slice(2);
@@ -68,7 +69,7 @@ try {
     DELETE FROM public.business_vault_inspection_configuration WHERE id='vault';
     DELETE FROM public.tenant_members WHERE tenant_id='${tenant}';
     DELETE FROM public.profiles WHERE user_id='${actor}';
+    ${retireSyntheticTenantSQL(tenant)}
     DELETE FROM auth.users WHERE id='${actor}';
-    DELETE FROM public.tenants WHERE id='${tenant}';
   `);
 }

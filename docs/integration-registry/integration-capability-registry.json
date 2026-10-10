@@ -1188,27 +1188,29 @@
         "operator voice both directions (live)",
         "send/receive SMS once A2P approves",
         "per-tenant subaccount routing",
-        "governed issued-invoice SMS delivery with exact recipient consent/A2P readiness; provider acceptance and authenticated proof remain PROOF_OWED"
+        "governed issued-invoice SMS delivery with exact recipient consent/A2P readiness; provider acceptance and authenticated proof remain PROOF_OWED",
+        "Explicit Admin/Platform Owner whole-account retirement: verified subaccount suspension for Archive and closure for Delete; authenticated/provider proof PROOF_OWED."
       ],
       "connection_prerequisite": "Master account + per-tenant subaccount (provisioned at Twilio console); A2P registration for tenant SMS.",
       "required_scopes": [
         "Twilio account/subaccount API",
         "Messaging Service (A2P)",
-        "Voice (TwiML app)"
+        "Voice (TwiML app)",
+        "Parent Auth Token or Main API key with Accounts status-management authority; a Standard key is insufficient"
       ],
       "safe_readable_context": "Number inventory, registration status (via provider-result-contract), call/message metadata; never auth tokens.",
-      "allowed_writes_external_effects": "Number purchase, outbound SMS/voice — confirm-gated; sends run through the one approval path.",
+      "allowed_writes_external_effects": "Number purchase, outbound SMS/voice — confirm-gated; sends run through the one approval path. Explicit Operator Admin/Owner confirmation may suspend/close only the bound tenant subaccount; never the platform parent or an ambiguous/shared binding.",
       "authority_lane": [
         "read",
         "draft",
         "confirm"
       ],
       "m1_dependency": "M1 real-money spend control (see cost_tracks): number purchase is a real purchase and per-message/minute usage is metered real spend — currency-aware caps + reserve/confirm/reconcile + receipt + Rail; message/engagement VOLUME caps via M1-b. NEVER satisfied by LLM-token metering.",
-      "canonical_provider_receipt": "Twilio Message SID / Call SID / purchased number SID.",
+      "canonical_provider_receipt": "Twilio Message SID / Call SID / purchased number SID. Retirement: independent exact-child/parent Account status GET and call-quiescence readback; transport acceptance is not completion.",
       "rail_mind_memory": "Rail: send/purchase outcomes. Mind: no message bodies (Clients->Conversations forbids bodies to Mind). Memory: none of raw message content.",
       "status": "PARTIAL",
       "owner": "Comms workstream",
-      "dependency": "Per-tenant A2P approval; vanity/premium number search (task #27).",
+      "dependency": "Per-tenant A2P approval; vanity/premium number search (task #27). Account-retirement adapter reuses the canonical private Operator archive journal and provider client. See docs/delivery/operator-account-lifecycle.md; provider/authenticated acceptance remains PROOF_OWED under the owner login hold.",
       "next_slice": "Per-tenant A2P go-live; complete number-search scope.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -1233,13 +1235,13 @@
         "rate_limits_quotas": "Messaging Service throughput (MPS) tied to A2P registration; Voice concurrency limits; backoff on 429. Verify at source.",
         "usage_review_cadence": "Monthly (message/minute volume + number inventory cost).",
         "renewal_deprecation_review": "A2P registration upkeep; number renewals (per-number monthly); track Twilio API deprecations.",
-        "data_privacy_retention": "No auth tokens recorded; message bodies never enter Mind; call/message metadata only.",
+        "data_privacy_retention": "No auth tokens recorded; message bodies never enter Mind; call/message metadata only. Account suspension does not stop number charges. Closure follows Twilio retention (default 30-day closed-subaccount deletion); scheduled backups are not represented as immediately erased.",
         "money_movement": {
           "can_move_real_money": true,
           "m1_dependency_track": "m1_real_money_spend_control",
           "detail": "Number purchase = a real purchase; SMS/voice usage = metered real spend. Reserve/confirm/reconcile + receipt + Rail; send/engagement volume additionally capped by M1-b."
         },
-        "receipt_reconciliation": "Message SID / Call SID / number SID; reconcile against Twilio usage records.",
+        "receipt_reconciliation": "Message SID / Call SID / number SID; reconcile against Twilio usage records. Retirement requires fresh Account identity/state and call readback; unknown outcomes reconcile read-only, with no automatic consequential retry.",
         "rail_outcome": "send/purchase outcome.",
         "pause_revoke_path": "Suspend the subaccount / disable the send path; M1 caps + emergency-stop halt autonomous sends and purchases.",
         "next_owner": "Comms workstream",
@@ -1269,6 +1271,11 @@
         {
           "path": "supabase/functions/twilio-inbound-webhook/index.ts",
           "role": "callback_readback"
+        },
+        {
+          "path": "supabase/functions/operator-account-retirement/index.ts",
+          "role": "provider_adapter",
+          "note": "Authenticated Admin/Owner, exact private server-bound scope, one provider resource per invocation; no provider identity accepted from browser. Controlled tests only, not live provider proof."
         }
       ],
       "sources": [
@@ -2217,7 +2224,8 @@
       "business_reason": "Tenants run automations in n8n; Paige dispatches governed work to it as a worker under her authority (R7).",
       "paige_use_cases": [
         "connect/read workflow inventory (OAuth read/write)",
-        "(future) activate a workflow whose capability_run Rail row renders"
+        "(future) activate a workflow whose capability_run Rail row renders",
+        "Explicit whole-account retirement: canonical API credential disconnection plus scrub of its legacy MCP projection; external workflows retained only after scope-specific acknowledgement. Authenticated proof PROOF_OWED."
       ],
       "connection_prerequisite": "Per-tenant n8n OAuth (workflow:read + workflow:write); a saved key does not prove health. The connection is also represented 1:1 in the canonical mcp_connections gateway registry that the PR-1 outbound connection-loader reads.",
       "required_scopes": [
@@ -2236,7 +2244,7 @@
       "rail_mind_memory": "Rail: capability_run outcome (zero rows in prod today). Mind: only safe workflow facts. Memory: none of payloads.",
       "status": "PARTIAL",
       "owner": "Integrations workstream",
-      "dependency": "decideGovernedExecution wiring + downstream governance (capability-system slice 5). Outbound-gateway connection seam: the canonical single source is now mcp_connections (Phase S registry, migration 20270319000000, backfilled 1:1 non-destructively from tenant_mcp_connections + tenant_n8n_connections, which remain the sole LIVE path until a later cutover), read via get_mcp_connection_secret and loaded by the PR-1 generic gateway runner (_shared/mcp-gateway/connection.ts) so one row backs BOTH consent and dispatch. PR-1 is LIBRARY-ONLY — the runner is imported by no deployed function, zero live-provider execution; listing the loader never means this provider is connected or live. The n8n REST api_key facet (backfilled from tenant_n8n_connections, a REST base URL) is refused connection_unusable by the gateway's executable-facet gate as a non-MCP-http endpoint; an n8n MCP http endpoint would be drivable. INT-079 (url-auth RPC false-refuse) is CLOSED by MCP PR-1B-a (migration 20270326000000 — get_mcp_connection_secret now returns configured:true for a url-auth row whose endpoint is present, so the loader's existing url allow-list resolves it; still library-only, zero deployed importer). INT-078 (bind consent to the loaded endpoint version/hash) is CLOSED by MCP PR-1B-b (migration 20270327000000 — get_mcp_connection_secret now returns the loaded endpoint_hash and verify_mcp_connection_approval requires it, refusing endpoint_load_mismatch when the loaded endpoint differs from the approved one even if the row's current endpoint still matches; still library-only, zero deployed importer). INT-082 (owner_only visibility enforced at the resolution boundary — get_mcp_connection_secret returns visibility and the runner refuses a non-owner/admin caller for an owner_only row; needs an RPC migration + a new server-derived caller-authority input) is CLOSED by MCP PR-1B-c (migration 20270328000000 — get_mcp_connection_secret now returns visibility, still carrying INT-079's url exemption and INT-078's endpoint_hash; the runner enforces owner_only against a REQUIRED server-derived caller authority modeled as the capability mcp.connections.use_restricted, resolved by the single re-pointable mapping _mcp_caller_capabilities [owner + admin + platform owner today; a delegated grant is added there alone, per INT-089], refusing owner_only_forbidden on prepare AND execute after foreign_tenant and before any approval/dispatch, fail-closed with no silent service-role bypass; still library-only, zero deployed importer) — the migration-backed connection/consent contract closure, BEFORE the endpoint setter (PR-2). The endpoint setter is CLOSED by MCP PR-2 (INT-099, migration 20270330000000 — the new set_mcp_connection_endpoint RPC writes a connection's endpoint + full credential bundle in ONE atomic UPDATE, sourcing every credential column from the arguments so a changed endpoint can NEVER inherit the old secret; the derived endpoint_hash follows and the 20270322000000 trigger revokes endpoint-bound consent on a real change (A→B→A cannot resurrect it); it REFUSES a legacy-projected row (D1 — no cutover, the legacy tables remain the sole live write path); authority is the mcp.connections.manage capability resolved server-side via _mcp_caller_capabilities (owner/tenant-admin only; a platform owner is EXCLUDED from manage, A2), fail-closed with no service-role bypass; a hashes-only audit is written to paige_audit_log in the SAME transaction with audit-fail⇒no-commit (A1); the return is write-only (A3); URL validation is static https/SSRF only, runtime egress SSRF stays in mcp-client.ts (A4); EXECUTE to authenticated only (A5); still library-only, zero deployed importer). The gateway-native connection WRITERS are added by G1a-1 (migration 20270331000000): create_mcp_connection (generic MCP / Zapier-OAuth / n8n-OAuth facets), create_mcp_rest_connection + set_mcp_rest_connection_endpoint (n8n REST api_key), disconnect_mcp_connection (soft disable + history-preserving hard delete), and the capability mcp.connections.delete (owner/tenant-admin only, platform owner excluded); a successful re-key restores enabled (re-key = reconnect), the soft-disable scrubs the url-embedded credential, and get_mcp_connections_v2.configured is honest for url/none rows; library-only, zero deployed importer, execution unverified. READ-only is a staged certification milestone, NOT the final authority model: the final gateway architecture is MUTATION-CAPABLE — Paige may execute any server-advertised tool the tenant authorizes — with consequential mutations governed by policy/approval, idempotency, readback, Rail, revocation, and tenant isolation.",
+      "dependency": "decideGovernedExecution wiring + downstream governance (capability-system slice 5). Outbound-gateway connection seam: the canonical single source is now mcp_connections (Phase S registry, migration 20270319000000, backfilled 1:1 non-destructively from tenant_mcp_connections + tenant_n8n_connections, which remain the sole LIVE path until a later cutover), read via get_mcp_connection_secret and loaded by the PR-1 generic gateway runner (_shared/mcp-gateway/connection.ts) so one row backs BOTH consent and dispatch. PR-1 is LIBRARY-ONLY — the runner is imported by no deployed function, zero live-provider execution; listing the loader never means this provider is connected or live. The n8n REST api_key facet (backfilled from tenant_n8n_connections, a REST base URL) is refused connection_unusable by the gateway's executable-facet gate as a non-MCP-http endpoint; an n8n MCP http endpoint would be drivable. INT-079 (url-auth RPC false-refuse) is CLOSED by MCP PR-1B-a (migration 20270326000000 — get_mcp_connection_secret now returns configured:true for a url-auth row whose endpoint is present, so the loader's existing url allow-list resolves it; still library-only, zero deployed importer). INT-078 (bind consent to the loaded endpoint version/hash) is CLOSED by MCP PR-1B-b (migration 20270327000000 — get_mcp_connection_secret now returns the loaded endpoint_hash and verify_mcp_connection_approval requires it, refusing endpoint_load_mismatch when the loaded endpoint differs from the approved one even if the row's current endpoint still matches; still library-only, zero deployed importer). INT-082 (owner_only visibility enforced at the resolution boundary — get_mcp_connection_secret returns visibility and the runner refuses a non-owner/admin caller for an owner_only row; needs an RPC migration + a new server-derived caller-authority input) is CLOSED by MCP PR-1B-c (migration 20270328000000 — get_mcp_connection_secret now returns visibility, still carrying INT-079's url exemption and INT-078's endpoint_hash; the runner enforces owner_only against a REQUIRED server-derived caller authority modeled as the capability mcp.connections.use_restricted, resolved by the single re-pointable mapping _mcp_caller_capabilities [owner + admin + platform owner today; a delegated grant is added there alone, per INT-089], refusing owner_only_forbidden on prepare AND execute after foreign_tenant and before any approval/dispatch, fail-closed with no silent service-role bypass; still library-only, zero deployed importer) — the migration-backed connection/consent contract closure, BEFORE the endpoint setter (PR-2). The endpoint setter is CLOSED by MCP PR-2 (INT-099, migration 20270330000000 — the new set_mcp_connection_endpoint RPC writes a connection's endpoint + full credential bundle in ONE atomic UPDATE, sourcing every credential column from the arguments so a changed endpoint can NEVER inherit the old secret; the derived endpoint_hash follows and the 20270322000000 trigger revokes endpoint-bound consent on a real change (A→B→A cannot resurrect it); it REFUSES a legacy-projected row (D1 — no cutover, the legacy tables remain the sole live write path); authority is the mcp.connections.manage capability resolved server-side via _mcp_caller_capabilities (owner/tenant-admin only; a platform owner is EXCLUDED from manage, A2), fail-closed with no service-role bypass; a hashes-only audit is written to paige_audit_log in the SAME transaction with audit-fail⇒no-commit (A1); the return is write-only (A3); URL validation is static https/SSRF only, runtime egress SSRF stays in mcp-client.ts (A4); EXECUTE to authenticated only (A5); still library-only, zero deployed importer). The gateway-native connection WRITERS are added by G1a-1 (migration 20270331000000): create_mcp_connection (generic MCP / Zapier-OAuth / n8n-OAuth facets), create_mcp_rest_connection + set_mcp_rest_connection_endpoint (n8n REST api_key), disconnect_mcp_connection (soft disable + history-preserving hard delete), and the capability mcp.connections.delete (owner/tenant-admin only, platform owner excluded); a successful re-key restores enabled (re-key = reconnect), the soft-disable scrubs the url-embedded credential, and get_mcp_connections_v2.configured is honest for url/none rows; library-only, zero deployed importer, execution unverified. READ-only is a staged certification milestone, NOT the final authority model: the final gateway architecture is MUTATION-CAPABLE — Paige may execute any server-advertised tool the tenant authorizes — with consequential mutations governed by policy/approval, idempotency, readback, Rail, revocation, and tenant isolation. Account-retirement adapter reuses the canonical private Operator archive journal and provider client. See docs/delivery/operator-account-lifecycle.md; provider/authenticated acceptance remains PROOF_OWED under the owner login hold.",
       "next_slice": "Authenticated drive -> first capability_run Rail row.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -2260,13 +2268,13 @@
         "rate_limits_quotas": "n8n instance-dependent; downstream node providers impose their own limits/backoff.",
         "usage_review_cadence": "On each governed-execution change; monthly once workflows can run.",
         "renewal_deprecation_review": "Tenant plan renewal (n8n Cloud); track n8n API + node deprecations.",
-        "data_privacy_retention": "Workflow inventory + health only; never credentials (fenced as untrusted data); no payloads to Mind/Memory.",
+        "data_privacy_retention": "Workflow inventory + health only; never credentials (fenced as untrusted data); no payloads to Mind/Memory. Operator retirement removes the exact PAIGE encrypted API credential and its read-only legacy MCP projection. External workflows and n8n hosting remain independently managed; visible counts do not prove tenant-exclusive ownership.",
         "money_movement": {
           "can_move_real_money": true,
           "m1_dependency_track": "m1_real_money_spend_control",
           "detail": "A workflow node can trigger downstream real spend (a payment, a purchase, an ad buy) — the executed act binds the real-money track; trigger-workflow is fail-closed disabled until decideGovernedExecution wraps it (slice 5)."
         },
-        "receipt_reconciliation": "n8n execution id / workflow run id + the downstream provider's own receipt.",
+        "receipt_reconciliation": "n8n execution id / workflow run id + the downstream provider's own receipt. Retirement records canonical credential/legacy projection absence and explicit external workflow retention; no claim of external workflow termination or provider-spend cancellation.",
         "rail_outcome": "capability_run outcome (zero rows in prod today).",
         "pause_revoke_path": "Revoke the n8n OAuth grant / keep trigger-workflow fail-closed; M1 caps + emergency-stop halt autonomous runs.",
         "next_owner": "Integrations workstream",
@@ -2290,6 +2298,11 @@
         {
           "path": "supabase/functions/_shared/n8n-oauth.ts",
           "role": "provider_adapter"
+        },
+        {
+          "path": "supabase/functions/operator-account-retirement/index.ts",
+          "role": "provider_adapter",
+          "note": "Authenticated Admin/Owner, exact private server-bound scope, one provider resource per invocation; no provider identity accepted from browser. Controlled tests only, not live provider proof."
         }
       ],
       "sources": [

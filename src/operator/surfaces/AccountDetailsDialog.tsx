@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { readAccountDetails, saveAccountDetails, previewAccountDeletion, type AccountDetails, type DeletionPreview } from '@/operator/data/accountControls';
 import { previewAccountArchive, executeLifecycle, readLifecycleOutcome, AccountRpcError, type LifecycleAction, type LifecycleReceipt } from '@/operator/data/accountControls';
 import { cn } from '@/lib/utils';
+import AccountResourcesPanel from './AccountResourcesPanel';
 
 function Button({ variant = 'default', className, ...props }: ComponentProps<typeof BaseButton>) {
   return <BaseButton {...props} variant={variant} className={cn(
@@ -17,7 +18,8 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
   const [details, setDetails] = useState<AccountDetails | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState('');
-  const [mode, setMode] = useState<'view' | 'edit' | 'discard' | 'confirm' | 'archive' | 'delete' | 'restore' | 'completed'>('view');
+  const [mode, setMode] = useState<'view' | 'edit' | 'discard' | 'confirm' | 'archive' | 'delete' | 'restore' | 'completed' | 'resources'>('view');
+  const [resourceMode,setResourceMode]=useState<'archive'|'delete'>('archive');
   const [confirmation, setConfirmation] = useState('');
   const [irreversible, setIrreversible] = useState(false);
   const [receipt, setReceipt] = useState<LifecycleReceipt | null>(null);
@@ -145,12 +147,14 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
           {preview.memberships !== undefined && <p>{preview.memberships} workspace memberships · {preview.shared_identities ?? 'Unverified'} identities also belong to other workspaces. Shared logins are preserved.</p>}
           {preview.dependencies && preview.dependencies.length > 0 && <div><h4 className="mb-2 mt-4 font-medium">Data disposition</h4><table className="w-full text-left text-sm"><thead><tr className="border-b border-[var(--pg-line)]"><th className="py-2 font-medium">Records</th><th className="px-3 py-2 font-medium">Count</th><th className="py-2 font-medium">Disposition</th></tr></thead><tbody>{preview.dependencies.map(d => <tr key={d.relation} className="border-b border-[var(--pg-line-soft)]"><td className="break-words py-2">{d.relation.replace(/_/g,' ')}</td><td className="px-3 py-2 tabular-nums">{d.count}</td><td className="py-2">{d.disposition === 'delete' ? 'Delete' : d.disposition === 'preserve' ? 'Preserve' : 'Blocked'}</td></tr>)}</tbody></table></div>}
           {preview.blockers.length > 0 && <><h4 className="mt-4 font-medium">Required before execution</h4><ul className="list-disc space-y-2 pl-5 break-words">{preview.blockers.map((b,i) => <li key={i}>{b}</li>)}</ul></>}
+          {!preview.execution_available&&preview.blockers.some(b=>b.startsWith('tenant_twilio_subaccounts:')||b.startsWith('tenant_n8n_connections:'))&&<Button variant="outline" disabled={busy||unknown} onClick={()=>{setResourceMode(mode==='archive'?'archive':'delete');setMode('resources');}}>Prepare connected resources</Button>}
           {preview.preserved && <><h4 className="mt-2 font-medium">Preserved</h4><ul className="list-disc pl-5 break-words">{preview.preserved.map(p => <li key={p}>{p}</li>)}</ul></>}
           {mode === 'delete' && <p>Billing and external resources require their own verified retirement. Required audit history and scheduled backups follow existing retention policies.</p>}
           {preview.execution_available && <div className="mt-3 space-y-3"><label htmlFor="fleet-lifecycle-confirm">Type “{details.name}” to confirm the entire listed scope</label><Input id="fleet-lifecycle-confirm" autoComplete="off" value={confirmation} disabled={busy || unknown} onChange={e => setConfirmation(e.target.value)} />{mode === 'delete' && <label className="flex min-h-11 items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--pg-negative)]" checked={irreversible} disabled={busy || unknown} onChange={e => setIrreversible(e.target.checked)} /><span>I understand that this permanently deletes the listed eligible data.</span></label>}</div>}
         </>}
         <div className="flex flex-wrap gap-3"><Button variant="outline" disabled={busy || unknown} onClick={() => setMode('view')}>Cancel</Button><Button variant="outline" disabled={busy || unknown} onClick={() => void deletionPreview(mode === 'archive' ? 'archive' : 'delete')}>Refresh review</Button><Button disabled={busy || unknown || !preview?.execution_available || confirmation !== details.name || (mode === 'delete' && !irreversible)} className={mode === 'delete' ? 'bg-[var(--pg-negative)] hover:bg-[var(--pg-negative)]' : undefined} onClick={() => void execute(mode === 'archive' ? 'archive' : 'delete')}>{mode === 'archive' ? 'Archive listed accounts' : 'Permanently delete listed accounts'}</Button></div>
       </>}
+      {details&&mode==='resources'&&<AccountResourcesPanel details={details} mode={resourceMode} onBusy={value=>{pending.current=value;}} onCancel={()=>setMode('view')} onPrepared={()=>void deletionPreview(resourceMode)}/>}
       {mode === 'restore' && <><h3 className="text-lg font-medium">Restore archived account?</h3><p>Restore the original account scope and unchanged memberships. Paid services and scheduled/provider execution stay paused. No subscription is reactivated.</p><div className="flex flex-wrap gap-3"><Button variant="outline" disabled={busy || unknown} onClick={() => setMode('view')}>Cancel</Button><Button disabled={busy || unknown} onClick={() => void execute('restore')}>Restore account access</Button></div></>}
       {mode === 'completed' && receipt && <><p role="status" className="text-[var(--pg-positive)]">COMPLETED · {receipt.account_count} {receipt.account_count === 1 ? 'account' : 'accounts'} {receipt.state === 'deleted' ? 'permanently deleted' : receipt.state} and independently read back.</p>{receipt.state === 'restored' && <p>Access is restored. Provider and scheduled execution remains paused.</p>}<Button onClick={onClose}>Done</Button></>}
     </DialogContent>

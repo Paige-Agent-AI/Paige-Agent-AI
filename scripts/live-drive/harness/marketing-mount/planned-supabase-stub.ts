@@ -20,6 +20,7 @@ const methods = clients.filter((_, i) => i % 3 === 0 || i % 4 === 1 || i % 5 ===
 // Two documents in the Studio's block format, so Content draws their own covers.
 const doc = (docType: string, cover: Record<string, string>, sections: string[]) => JSON.stringify({ docType, title: cover.title, blocks: [
   { type: "cover", ...cover },
+  ...(sections.length > 3 ? [{ type: "callout", variant: "key-insight", title: "What changes", body: "By the end of the first month you have one plan, one weekly rhythm and one number to watch." }] : []),
   ...sections.flatMap((title, i) => [{ type: "section-header", number: i + 1, title }, ...Array.from({ length: sections.length > 3 ? 4 : 1 }, (_, n) => ({ type: "prose", markdown: `${n ? "And further:" : "In short:"} what ${title.toLowerCase()} covers, in plain words, with one example from a real engagement and the result it led to for the client, step by step, so nothing is left to guess when the work begins.` }))]),
   { type: "cta", headline: "Ready to start?", action: "Book a call" },
 ] });

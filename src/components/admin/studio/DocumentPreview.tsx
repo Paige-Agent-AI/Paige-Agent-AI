@@ -168,11 +168,11 @@ function Block({ block, allBlocks }: { block: StudioDocBlock; allBlocks: StudioD
       if (!body) return null;
       return (
         <aside
-          className="rounded-xl border border-l-4 p-5"
+          className="rounded-xl border p-5"
           style={{
-            borderColor: `hsl(var(${tone.bar}) / 0.35)`,
-            borderLeftColor: `hsl(var(${tone.bar}))`,
-            background: `hsl(var(${tone.tint}) / 0.06)`,
+            // The tone is carried by the dot and an even tinted border, not a thick side bar (Impeccable).
+            borderColor: `hsl(var(${tone.bar}) / 0.45)`,
+            background: `hsl(var(${tone.tint}) / 0.08)`,
           }}
         >
           {/* Label in foreground (AA-safe in both themes) with a colored dot carrying the semantic

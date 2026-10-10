@@ -1,0 +1,103 @@
+/* Marketing › Content (INT-342 S1e). Builds on the Overview's card, head, summary and link styles
+ * (marketing-overview.css). Solo tokens only; nothing here publishes or
+ * spends, so no gold. Hover lift is transform-only and off under reduced motion. */
+.paige-solo .mct .campaigns-segmented button{font-size:12px;padding:3px 10px;line-height:20px;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.paige-solo .mct .campaigns-segmented button[aria-pressed="true"]{color:var(--ink)}
+.mct-n{font-variant-numeric:tabular-nums;font-size:11px;color:var(--ink-2)}
+
+.paige-solo .mct .campaigns-segmented button i{width:8px;height:8px;border-radius:50%;flex:none}
+
+/* the library's mix: a small ring beside the filter that names each kind */
+.mct-filter{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mct-ring{width:34px;height:34px;border-radius:50%;flex:none;-webkit-mask:radial-gradient(circle,transparent 9px,black 10px);mask:radial-gradient(circle,transparent 9px,black 10px)}
+.mct-note{font-size:13px;color:var(--ink-2);line-height:1.5}
+.mct-note b{color:var(--ink);font-variant-numeric:tabular-nums}
+.mct-capnote{padding:0 18px 4px}
+
+/* published work from Vibe Studio, one row under the library */
+.mct-pubrow{display:flex;align-items:center;gap:12px 24px;flex-wrap:wrap;padding:14px 18px}
+.mct-pub-h{flex:1 1 260px;min-width:0}
+.mct-pub-h h2{font-size:14.5px}
+.mct-pub-h p{font-size:12.5px;color:var(--ink-2);margin-top:1px}
+.mct-pub{display:flex;gap:22px;margin:0}
+.mct-pub div{display:grid;gap:2px}
+.mct-pub dt{font-size:12px;color:var(--ink-2)}
+.mct-pub dd{margin:0;font-size:22px;font-weight:650;letter-spacing:-.03em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* states */
+.campaigns-skeleton.mct-skel{padding:4px 0}
+.campaigns-skeleton.mct-skel span{height:14px;border-radius:7px}
+.campaigns-skeleton.mct-skel span:first-child{width:60%}
+.mct-state,.mct-empty{display:grid;justify-items:start;gap:10px;padding:22px 20px}
+.mct-state p,.mct-empty p{font-size:13px;color:var(--ink-2);max-width:560px}
+.mct-starters{display:flex;gap:8px;flex-wrap:wrap}
+
+/* the gallery */
+.mct-grid{list-style:none;margin:0;padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));gap:14px}
+.campaigns-skeleton.mct-grid-skel{padding:16px 18px;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));gap:14px}
+.campaigns-skeleton.mct-grid-skel span{height:auto;aspect-ratio:4/3.9;border-radius:var(--r-l)}
+.mct-card{display:grid;align-content:start;width:100%;height:100%;padding:0;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;cursor:pointer;color:inherit;font:inherit;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.mct-card:hover{transform:translateY(-2px);box-shadow:var(--sh-2);border-color:var(--violet-line, var(--line))}
+.mct-card:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.mct-card{transition:none}.mct-card:hover{transform:none}}
+.mct-frame{display:grid;aspect-ratio:4/3;background:var(--surface-sunk);border-bottom:1px solid var(--line-soft);overflow:hidden;position:relative}
+.mct-frame img,.mct-frame video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.mct-whole img{object-fit:contain}
+.mct-play{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:var(--surface);box-shadow:var(--sh-2)}
+.mct-play::after{content:"";position:absolute;left:15px;top:12px;width:13px;height:16px;background:var(--ink);clip-path:polygon(0 0,100% 50%,0 100%)}
+.mct-missing{place-self:center;padding:12px;text-align:center;font-size:12px;color:var(--ink-2)}
+.mct-meta{display:grid;gap:3px;padding:11px 13px 13px;min-width:0}
+.mct-kind{font-size:11.5px;font-weight:600;color:var(--violet)}
+.mct-meta strong{font-size:13.5px;font-weight:600;line-height:1.35;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.mct-meta small{font-size:12px;color:var(--ink-2)}
+
+/* a document's own cover, drawn as a sheet of paper */
+.mct-frame-document{padding:14px 18px 0;background:var(--surface-2)}
+.mct-cover{display:grid;align-content:start;gap:6px;padding:16px 16px 14px;background:var(--surface);border:1px solid var(--line-soft);border-bottom:0;border-radius:var(--r-s) var(--r-s) 0 0;box-shadow:var(--sh-1);overflow:hidden;min-width:0}
+.mct-cover small{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--violet);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mct-cover b{font-size:15px;font-weight:650;letter-spacing:-.02em;line-height:1.2;color:var(--ink);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.mct-cover span{font-size:11px;line-height:1.4;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mct-cover em{font-style:normal;font-size:10.5px;color:var(--ink-2);margin-top:4px}
+
+/* saved copy, as its words */
+.mct-frame-copy{padding:16px 18px;background:var(--surface-2)}
+.mct-words{display:grid;align-content:start;gap:6px;min-width:0;font-size:12.5px;line-height:1.5;color:var(--ink);overflow:hidden}
+.mct-words>span{white-space:pre-line;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.mct-words>b{font-size:13.5px;font-weight:650;line-height:1.3;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.mct-words>b+span{-webkit-line-clamp:4}
+.mct-ad b{font-size:14px;font-weight:650;line-height:1.3;letter-spacing:-.01em;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mct-ad>span,.mct-ad>b+span{-webkit-line-clamp:3}
+.mct-ad i,.mct-adfull i{justify-self:start;font-style:normal;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:var(--r-s);background:var(--surface-sunk);color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.mct-foot{margin:0;font-size:12.5px;color:var(--ink-2)}
+
+/* the preview drawer */
+.campaigns-drawer.campaigns-drawer--wide{width:min(960px,96vw)} /* beats solo-campaigns.css, which loads later; a document page and its rail fit at 960 */
+.campaigns-drawer--wide header h2{overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mct-preview{display:grid;gap:14px;padding-top:6px}
+.mct-facts{font-size:12.5px;color:var(--ink-2)}
+.mct-full{margin:0;border-radius:var(--r-m);overflow:hidden;border:1px solid var(--line-soft);background:var(--surface-sunk)}
+.mct-full img,.mct-full video{display:block;width:100%;height:auto;max-height:70vh;object-fit:contain}
+.mct-doc{height:min(72vh,900px);overflow:hidden}
+.mct-doc-skel{height:100%}
+.mct-copy b,.mct-adfull b{display:block;margin-bottom:8px;font-size:16px;font-weight:650;letter-spacing:-.01em;line-height:1.3}
+.mct-adfull{display:grid;gap:10px;justify-items:start;padding:18px;border-radius:var(--r-m);background:var(--surface-2);border:1px solid var(--line-soft);color:var(--ink)}
+.mct-adfull b{margin:0}
+.mct-adfull p{font-size:14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.mct-adfull small{font-size:12px;color:var(--ink-2)}
+.mct-copy{white-space:pre-wrap;font-size:14px;line-height:1.6;color:var(--ink);padding:16px 18px;border-radius:var(--r-m);background:var(--surface-2);border:1px solid var(--line-soft);overflow-wrap:anywhere}
+.mct-asked{display:grid;gap:4px;padding:12px 14px;border-radius:var(--r-m);background:var(--surface-2);border:1px solid var(--line-soft)}
+.mct-asked span{font-size:12px;font-weight:600;color:var(--ink-2)}
+.mct-asked p{font-size:13px;line-height:1.5;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.mct-act-note{font-size:12px;color:var(--ink-2);align-self:center}
+.campaigns-drawer--wide .campaigns-detail-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.campaigns-drawer--wide .campaigns-detail-actions a.btn{color:var(--ink);text-decoration:none}
+
+/* Print / Save as PDF from the preview: the sheet sits in a fixed drawer and scrolling, clipped frames,
+ * so while printing the drawer is lifted to the top of the page and nothing around the sheet clips it
+ * (index.css then shows only [data-paige-doc-sheet]). Without this a long document printed one page. */
+@media print{
+  html.paige-doc-printing .campaigns-drawer-scrim{display:none!important}
+  html.paige-doc-printing .campaigns-drawer{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;height:auto!important;border:0!important;box-shadow:none!important}
+  html.paige-doc-printing .campaigns-drawer :is(.campaigns-drawer-body,.mct-preview,.mct-doc,.mct-doc *){overflow:visible!important;height:auto!important;max-height:none!important}
+}

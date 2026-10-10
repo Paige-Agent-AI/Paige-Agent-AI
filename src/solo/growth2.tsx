@@ -5,6 +5,9 @@ import { legacySalesRoute } from "./sales/legacySalesRoute";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { branchPath, subtabPath } from "@/lib/routing/tierBranches";
 import { Ic, PageHead } from "./_shared";
+import { DetailDrawer } from "./detail-drawer";
+
+export { DetailDrawer };
 import { useSoloCampaigns } from "./useSoloCampaigns";
 import { CatalogOffers } from "./catalog-offers";
 import { SalesOps } from "./sales-ops";
@@ -17,7 +20,8 @@ import { SUBMISSION_READ_LIMIT } from "./marketing-overview-model";
 import { MarketingAnalytics } from "./marketing-analytics";
 import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
-import { MarketingContent } from "./marketing-planned";
+import { MarketingContent } from "./marketing-content";
+import { contentKindOf } from "./marketing-content-model";
 import { MarketingAds, adsViewOf } from "./marketing-ads";
 import { CAPTURE_FILTERS, MarketingOverview, sendsToPipeline } from "./marketing-overview";
 import { MarketingEmail } from "./marketing-email";
@@ -78,44 +82,6 @@ function StateFrame({ phase, retry, noun, children }) {
 function SurfaceHead({ truthKey, title, description, action }) {
   const [, note] = TRUTH[truthKey];
   return <div className="campaigns-surface-head"><div><div className="campaigns-heading-line"><h2>{title}</h2></div><p>{description}</p><small>{note}</small></div>{action}</div>;
-}
-
-export function DetailDrawer({ detail, onClose }) {
-  const closeRef = React.useRef(null);
-  const drawerRef = React.useRef(null);
-  // The effect runs when a different item opens, never on a re-render of the same one: callers
-  // build `detail` and `onClose` inline, and re-running it moved focus to Close mid-edit (INT-342).
-  const onCloseRef = React.useRef(onClose);
-  onCloseRef.current = onClose;
-  const openKey = detail ? (detail.key ?? detail.title) : null;
-  React.useEffect(() => {
-    if (openKey === null) return;
-    const onClose = () => onCloseRef.current();
-    const previous = document.activeElement;
-    const background = document.querySelectorAll(".solo-campaigns > .campaigns-nav, .solo-campaigns > .campaigns-scroll");
-    background.forEach((node) => node.setAttribute("inert", ""));
-    closeRef.current?.focus({ preventScroll: true });
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") { event.preventDefault(); onClose(); return; }
-      if (event.key !== "Tab") return;
-      // Only what Tab can actually reach: controls inside a collapsed <details> are not focusable,
-      // except that details' own <summary>.
-      const focusable = [...(drawerRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])') ?? [])]
-        .filter((el) => { const closed = el.closest("details:not([open])"); return !closed || el.parentElement === closed && el.tagName === "SUMMARY"; });
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => { window.removeEventListener("keydown", onKeyDown); background.forEach((node) => node.removeAttribute("inert")); if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true }); };
-  }, [openKey]);
-  if (!detail) return null;
-  return <><button className="campaigns-drawer-scrim" tabIndex={-1} aria-label="Close details" onClick={onClose}/><aside ref={drawerRef} className="campaigns-drawer" role="dialog" aria-modal="true" aria-labelledby="campaigns-detail-title">
-    <header><div><span className="eyebrow">Grounded detail</span><h2 id="campaigns-detail-title">{detail.title}</h2></div><button ref={closeRef} className="btn btn-s" onClick={onClose} aria-label="Close details"><Ic.x size={14}/></button></header>
-    <div className="campaigns-drawer-body">{detail.rows.map(([label, value]) => <div className="campaigns-detail-row" key={label}><span>{label}</span><strong>{value || "Not recorded"}</strong></div>)}{detail.body}{detail.actions&&<div className="campaigns-detail-actions">{detail.actions}</div>}{detail.note&&<p className="campaigns-detail-note">{detail.note}</p>}</div>
-  </aside></>;
 }
 
 // Campaigns is the Campaign Command Desk (docs/prototypes/campaigns-overview.html, owner-approved
@@ -577,7 +543,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="social") body=<Social data={data} onOpenCompass={openCompass} onOpenPipeline={openPipeline}/>;
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
-  else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||[]).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>}/>;
+  else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||[]).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>} kind={contentKindOf(query.get("kind"))} onKind={(kind)=>setOverviewQuery({kind:kind==="all"?null:kind})} piece={query.get("piece")} onPiece={(id)=>setOverviewQuery({piece:id})}/>;
   else if(tab==="ads") body=<MarketingAds tenantId={data.tenantId} view={adsViewOf(query.get("view"))} onView={(view)=>setOverviewQuery({view:view==="overview"?null:view})} onOpenIntegrations={params.account?()=>navigate(subtabPath("solo",params.account,"settings","integrations")):null} onOpenAudience={()=>setTab("audience")} onOpenAnalytics={()=>setTab("analytics")} onOpenCampaigns={()=>setTab("campaigns")}/>;
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab==="capture"?"overview":tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab==="capture"?"overview":tab}`} className="campaigns-scroll">{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail||formDetail} onClose={detail?closeDetail:closeForm}/></div>;
 };

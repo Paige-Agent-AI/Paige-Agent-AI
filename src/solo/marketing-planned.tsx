@@ -1,4 +1,4 @@
-// Marketing › Content and Ads (owner ruling 2026-10-04: "these are the ones that I
+// Marketing › Content (owner ruling 2026-10-04: "these are the ones that I
 // want dedicated to marketing"). The feature each name promises is not built yet. Each tab still
 // earns its place: it shows what this workspace
 // really has today for that job, links to where it lives, and names what is missing in plain words.
@@ -6,7 +6,7 @@
 // Audience lives in marketing-audience.tsx; Email in marketing-email.tsx. These shared helpers
 // (useTenantRead, Frame, TabActions, AskPaigeButton) serve all of them.
 // Reads (all tenant-scoped, read-only, existing tables and RPCs; nothing new on the server):
-//   marketing_content     the saved library, not archived (Content, Ads; email copy shows under Content). RLS: is_tenant_admin
+//   marketing_content     the saved library, not archived (Content; email copy shows under Content; Ads reads ad copy in marketing-ads.tsx). RLS: is_tenant_admin
 //                         of the row's business, or the platform owner (20270542000000), which is the
 //                         same test the briefs read reports as can_manage, so a member who cannot read
 //                         it is told so rather than shown an empty library.
@@ -51,7 +51,6 @@ const readLibrary = (channel?: string) => async (tenantId: string): Promise<Cont
   return (data ?? []) as unknown as ContentRow[];
 };
 const readAll = readLibrary();
-const readAds = readLibrary("ad_copy");
 
 const CHANNEL_LABEL: Record<string, string> = {
   social_post: "Social post", ad_copy: "Ad copy", email_campaign: "Email", caption: "Caption", blog_outline: "Blog outline", sms_broadcast: "Text message",
@@ -111,14 +110,14 @@ function LibraryList({ rows, empty }: { rows: ContentRow[]; empty: React.ReactNo
 }
 
 /** Who may read the saved library: admins of this workspace (the same test its read policy applies). */
-function useLibraryAccess(): "checking" | "allowed" | "denied" {
+export function useLibraryAccess(): "checking" | "allowed" | "denied" {
   const briefs = useSoloCampaignBriefs();
   if (briefs.phase === "ready") return briefs.canManage ? "allowed" : "denied";
   // If the briefs read fails, still try the library; its own error state then speaks for it.
   return briefs.phase === "error" || briefs.phase === "unavailable" ? "allowed" : "checking";
 }
 
-const LIBRARY_DENIED = "Your workspace's saved library is visible to its owners and admins.";
+export const LIBRARY_DENIED = "Your workspace's saved library is visible to its owners and admins.";
 
 function libraryPhaseFor(access: ReturnType<typeof useLibraryAccess>, phase: Phase): Phase {
   return access === "denied" ? "ready" : access === "checking" ? "loading" : phase;
@@ -160,27 +159,6 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
     <NotYet items={[
       { title: "Content calendar", detail: "Briefs record timing as words, not dates, so nothing can be laid out on a calendar yet." },
       { title: "Posting and scheduling from here", detail: "Posts are drafted with PAIGE and posted by you; scheduling is not connected." },
-    ]}/>
-  </div>;
-}
-
-export function MarketingAds({ tenantId, onOpenIntegrations }: { tenantId: string | null; onOpenIntegrations: (() => void) | null }) {
-  const access = useLibraryAccess();
-  const content = useTenantRead(tenantId, NO_CONTENT, access === "allowed" ? readAds : null);
-  const libraryPhase = libraryPhaseFor(access, content.phase);
-  const ask = <AskPaigeButton label="Ask PAIGE to draft ad copy" prompt="Draft ad copy for my business. Ask me what I am promoting, who it is for and where it will run before you write it. Save it as a draft; do not run or publish anything."/>;
-  return <div className="mk-view mo mp">
-    <TabActions>
-      {ask}
-      {onOpenIntegrations && <button className="btn btn-s" onClick={onOpenIntegrations}>Open Integrations</button>}
-    </TabActions>
-    <section className="campaigns-surface mo-panel"><div className="mo-panel-head"><div><h2>Saved ad copy</h2><p>Ad drafts in your library. Nothing here has run.</p></div></div>
-      <Frame phase={libraryPhase} retry={content.retry} noun="saved ad copy">{access === "denied" ? <p className="mo-note">{LIBRARY_DENIED}</p> : <LibraryList rows={content.rows.slice(0, 10)} empty={<><p className="mo-note">No ad copy saved yet.</p>{ask}</>}/>}</Frame>
-    </section>
-    <NotYet items={[
-      { title: "Ad accounts", detail: "Meta Ads and Metricool are listed in Settings › Integrations, but connecting one doesn’t let Paige read campaigns, spend or results yet, here or in chat." },
-      { title: "Spend, cost per lead and return", detail: "With no ad account read here, there is no spend to show." },
-      { title: "Ads in a campaign brief", detail: "A brief can name ads as a channel and a budget target; that target is not spend." },
     ]}/>
   </div>;
 }

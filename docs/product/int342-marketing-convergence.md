@@ -9,7 +9,12 @@
 - the Ads desk;
 - the Analytics funnel.
 
-The approved design is frozen (§28) and is now implemented in slices (L). The ad provider to read first was not ruled; Meta Ads is the recorded default, and it matters only at slice S5.
+The approved design is frozen (§28) and is now implemented in slices (L).
+
+**Amended by owner ruling, same day ("Keep Content for now"):** all 17 production `marketing_content` rows
+have `work_id` null, so none appears in Vibe Studio and retiring Content would hide them. Content stays a tab
+until Vibe Studio lists every saved piece, then retires as F describes. The tab strip is therefore eight tabs
+for now: Overview · Campaigns · Audience · Content · Social · Email · Ads · Analytics. The ad provider to read first was not ruled; Meta Ads is the recorded default, and it matters only at slice S5.
 
 **Prototype:** https://claude.ai/artifact/7jwwBxRswrCAPxQiZqc6RG. The record copy is
 `docs/prototypes/int342-marketing-convergence.html`.
@@ -371,11 +376,14 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
 
 ## L. Implementation sequence (after owner approval)
 
-1. **S1: Lead capture and Content retire (UI, after approval).**
+1. **S1: Lead capture retires (UI, after approval).** Content retirement waits on Vibe Studio listing every
+   saved piece (owner ruling 2026-10-10). Split: **S1a** (shipped first) is Overview, the form panel, the
+   compatibility redirects, the routing fix and the Ads copy; **S1b** is Campaigns' map and stepper; **S1c**
+   the Ads desk; **S1d** the Analytics funnel UI.
    - Overview gains capture points, recent leads and the rebuilt attention list (reading routing columns **or**
      automations, fixing C).
    - One form panel opens from Overview, Campaigns and Analytics via `?form=`.
-   - Compatibility redirects cover every old address in E/F, and Content's `humanSurface` is repointed.
+   - Compatibility redirects cover every old address in E. Content's `humanSurface` stays until Content retires.
    - The Ads desk ships with Creative and the honest not-connected state, and the false Ads copy is fixed.
    - Same PR: tier matrix rows L519/L521, master reference L1220/L1245 and the decision log (§66/§0).
    - Proof: render drive at four sizes, the unit tests, and a live-drive update.

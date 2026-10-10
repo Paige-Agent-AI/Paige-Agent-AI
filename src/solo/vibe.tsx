@@ -3,7 +3,7 @@
 // LINEAGE (this workstream's collision map):
 //   canonical       — THIS surface. Studio home ("What should Paige build?") opens one project per
 //                     brief; inside a project the owner works with Paige in the owner-locked layout C
-//                     (chat, stage, timeline) and publishes to Marketing › Lead capture (src/solo/studio/*).
+//                     (chat, stage, timeline) and publishes to Marketing › Overview (src/solo/studio/*).
 //                     Images & video keeps the direct media tools, moved unchanged into
 //                     studio/MediaTools.tsx.
 //   legacy-operator — deleted in this rebuild (the unrouted pages/admin Studio pages and the
@@ -13,7 +13,7 @@
 //
 // ONE SESSION (§19/§21): no artifact-type tabs and no pre-classification gate. The brief decides what
 // Paige builds; the project holds whatever she makes. Unpublished work lives here as drafts;
-// published work lives in Marketing › Lead capture.
+// published work lives in Marketing › Overview (capture points).
 import React from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { StudioHome, StudioRail } from "./studio/StudioHome";

@@ -3024,5 +3024,88 @@
       "gitBlobSha256": "6e66a4eb451b51dab2abd709dfd1898c8c050aedf46e8094eaf483613e7d6ba1"
     }
   },
-  "scope": "Actual source components and synthetic contract fixtures only; no authenticated company/provider/Chat acceptance."
+  "scope": "Actual source components and synthetic contract fixtures only; no authenticated company/provider/Chat acceptance.",
+  "sourceNormalization": {
+    "method": "Reconstruct Git LF or CRLF bytes and require exact original captured raw SHA256 match; normalize CRLF to LF only. Original capture identities and results retained.",
+    "shippedCommit": "7dfb00fba7caa889fa81fbfc35903117ed3cb6a9",
+    "files": {
+      "src/components/ui/sheet.tsx": {
+        "capturedLineEndings": "LF",
+        "capturedRawSha256": "d8a698f4cabc5323f561e560dc09a727c70da50a4bf5eaccbc44d928e6d1bc23",
+        "capturedNormalizedSha256": "d8a698f4cabc5323f561e560dc09a727c70da50a4bf5eaccbc44d928e6d1bc23",
+        "shippedNormalizedSha256": "d8a698f4cabc5323f561e560dc09a727c70da50a4bf5eaccbc44d928e6d1bc23",
+        "contentEquivalent": true
+      },
+      "src/lib/routing/tierBranches.test.ts": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "df37b109019797e8aa49a5af33e3a1e3c568bbadedba9aed0605c11fa364ded6",
+        "capturedNormalizedSha256": "51928f440fc49d7afd73745a18c738650562c50ddefe53b4cc1ac554c67f6584",
+        "shippedNormalizedSha256": "51928f440fc49d7afd73745a18c738650562c50ddefe53b4cc1ac554c67f6584",
+        "contentEquivalent": true
+      },
+      "src/lib/routing/tierBranches.ts": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "f818ce692af200851f9ae8d8fe729e4b87be8189f9d7b20540814aeaa1c9604a",
+        "capturedNormalizedSha256": "d8741619f682aa2f2480f64e558c7df1bf657472bda601832e7d2c6d159f093e",
+        "shippedNormalizedSha256": "d8741619f682aa2f2480f64e558c7df1bf657472bda601832e7d2c6d159f093e",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/FinanceWorkspace.test.tsx": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "c4a00619352f34594be61e6e9962144ca3aab14de9a9e72934759d1794ecd30e",
+        "capturedNormalizedSha256": "cf83b8653c7eb87fa2510eb694425a2d0e4f2890ac3683b970b2cc314aec104b",
+        "shippedNormalizedSha256": "cf83b8653c7eb87fa2510eb694425a2d0e4f2890ac3683b970b2cc314aec104b",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/FinanceWorkspace.tsx": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "fa34a2ae6d0fefe5592726af6ed04b3c99ec9abc98ef7a797dff394f5c394323",
+        "capturedNormalizedSha256": "7ca0f69254118485e88c1ef8563137648c7b56934053e0f3a9c36307acc88de3",
+        "shippedNormalizedSha256": "7ca0f69254118485e88c1ef8563137648c7b56934053e0f3a9c36307acc88de3",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/debt-credit/DebtCreditWorkspace.test.tsx": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "66c42f7b7e6ff2a2919ee539ed59c4579ef5f382cbcebd9100b0451ba4719b1d",
+        "capturedNormalizedSha256": "3a0308c5e4c2c4fbfce81cd3d8e5d16b650cf53ce84f3e3c656a4ede1386a8ed",
+        "shippedNormalizedSha256": "3a0308c5e4c2c4fbfce81cd3d8e5d16b650cf53ce84f3e3c656a4ede1386a8ed",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/debt-credit/DebtCreditWorkspace.tsx": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "ad807a94141bcbdd2317847e0992b6511feab8594d35bd82d4a52e23e1637606",
+        "capturedNormalizedSha256": "09a3f36ff284cc0302d7f9cf6f544418fb6036d3ec57c30f921d07e56435d21f",
+        "shippedNormalizedSha256": "09a3f36ff284cc0302d7f9cf6f544418fb6036d3ec57c30f921d07e56435d21f",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/debt-credit/debt-credit.css": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "41ff84b849e58502c4bb8069f64d79224a91cf80367f11eace9d6602872fe337",
+        "capturedNormalizedSha256": "5ae5d7a1635c8ece1c11f575739169b0e27bccdce4982d8fad7b85e1e1f67700",
+        "shippedNormalizedSha256": "5ae5d7a1635c8ece1c11f575739169b0e27bccdce4982d8fad7b85e1e1f67700",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/debt-credit/types.ts": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "d4d426f70cee7864c9d92c0f95bada951175bdc2cf7ac2d6ff50176247e47053",
+        "capturedNormalizedSha256": "7c356e47fe3e63516f99a5b296803daba0e1672c93dd91fc6122195935356c20",
+        "shippedNormalizedSha256": "7c356e47fe3e63516f99a5b296803daba0e1672c93dd91fc6122195935356c20",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/finance.css": {
+        "capturedLineEndings": "CRLF",
+        "capturedRawSha256": "1323be71abb343eae6383fb9c5e86faa23cf273d14933662e36056d1d422f601",
+        "capturedNormalizedSha256": "3b1f096308a2c451399c11b1c9b90c4284da61f49913c99dcff96ef7c73bd567",
+        "shippedNormalizedSha256": "3b1f096308a2c451399c11b1c9b90c4284da61f49913c99dcff96ef7c73bd567",
+        "contentEquivalent": true
+      },
+      "src/solo/finance/financeDebtSource.ts": {
+        "capturedLineEndings": "LF",
+        "capturedRawSha256": "6e66a4eb451b51dab2abd709dfd1898c8c050aedf46e8094eaf483613e7d6ba1",
+        "capturedNormalizedSha256": "6e66a4eb451b51dab2abd709dfd1898c8c050aedf46e8094eaf483613e7d6ba1",
+        "shippedNormalizedSha256": "6e66a4eb451b51dab2abd709dfd1898c8c050aedf46e8094eaf483613e7d6ba1",
+        "contentEquivalent": true
+      }
+    }
+  }
 }

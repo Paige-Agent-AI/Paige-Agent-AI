@@ -12,7 +12,7 @@ try {
    await page.goto(`http://127.0.0.1:5264/solo/test-account/${branch}/overview?theme=${theme}&paige=${dock}`);
    await page.getByRole('tab',{name:'Overview',exact:true}).waitFor();
    const labels=await page.getByRole('tab').allTextContents();
-   const expected=branch==='growth'?['Overview','Campaigns','Lead capture','Social','Analytics']:['Overview','Opportunities','Pipeline','Offers','Terms & Agreements','Payments','Performance'];
+   const expected=branch==='growth'?['Overview','Campaigns','Audience','Content','Social','Email','Ads','Analytics']:['Overview','Opportunities','Pipeline','Offers','Terms & Agreements','Payments','Performance'];
    if(JSON.stringify(labels.map(x=>x.trim()))!==JSON.stringify(expected))throw Error(`Wrong ${branch} tabs: ${labels}`);
    const geometry=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth}));
    if(geometry.scrollWidth>width+1)throw Error('Document horizontal overflow');
@@ -22,7 +22,7 @@ try {
   await page.close();
  }
  const page=await browser.newPage({viewport:{width:1536,height:770}});
- for(const [legacy,destination] of [['sales?view=revenue','sales/payments?view=revenue'],['sales?view=terms&resume=terms','sales/agreements?resume=terms'],['pipeline?deal=test-deal-a','sales/pipeline?deal=test-deal-a'],['catalog','sales/offers'],['catalog?type=page','growth/lead-capture?type=page']]) {
+ for(const [legacy,destination] of [['sales?view=revenue','sales/payments?view=revenue'],['sales?view=terms&resume=terms','sales/agreements?resume=terms'],['pipeline?deal=test-deal-a','sales/pipeline?deal=test-deal-a'],['catalog','sales/offers'],['catalog?type=page','growth/overview?moved=catalog&capture=page']]) {
   await page.goto(`http://127.0.0.1:5264/solo/test-account/growth/${legacy}`);
   await page.waitForURL(`**/solo/test-account/${destination}`);
   await page.screenshot({path:`${dir}/legacy-${legacy.split('?')[0]}-${evidence.length}.png`});

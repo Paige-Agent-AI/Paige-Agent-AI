@@ -327,14 +327,14 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
     expect(host.querySelector(".campaigns-skeleton")).not.toBeNull();
   });
 
-  it("keeps the owner's nine-tab Marketing strip after commercial cutover", () => {
+  it("keeps the owner's eight-tab Marketing strip after commercial cutover", () => {
     // Campaigns became the Marketing department (owner ruling 2026-10-03). Sales stays reachable
     // here, in the Sales lane's group, until its own top-level home ships.
     renderAt("/solo/42/growth/overview");
     const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Marketing views"] [role="tab"]')]
       .map((t) => t.textContent?.trim())
       .filter(Boolean);
-    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Lead capture", "Analytics"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Analytics"]);
   });
 
   it("keeps SalesOps' own four load phases distinct from the Campaigns snapshot's", () => {

@@ -36,6 +36,13 @@ begin
     raise exception 'PLAN_SCOPE_CHANGED' using errcode = '42501';
   end if;
 
+
+  -- Match the canonical Solo mount boundary; no agency/child shell expansion.
+  if not exists (select 1 from public.tenants t where t.id=v_tenant
+      and t.account_type::text='standalone' and t.parent_tenant_id is null) then
+    raise exception 'PLAN_FORBIDDEN: Solo Operations unavailable' using errcode='42501';
+  end if;
+
   select * into v_row from public.plan_items
     where id = p_item_id for update;
   if not found or v_row.tenant_id is distinct from v_tenant then
@@ -96,6 +103,13 @@ begin
   if v_tenant is distinct from p_expected_tenant_id then
     raise exception 'PLAN_SCOPE_CHANGED' using errcode = '42501';
   end if;
+
+  -- Match the canonical Solo mount boundary; no agency/child shell expansion.
+  if not exists (select 1 from public.tenants t where t.id=v_tenant
+      and t.account_type::text='standalone' and t.parent_tenant_id is null) then
+    raise exception 'PLAN_FORBIDDEN: Solo Operations unavailable' using errcode='42501';
+  end if;
+
   select * into v_row from public.plan_items where id = p_item_id for update;
   if not found or v_row.tenant_id is distinct from v_tenant then
     raise exception 'PLAN_ITEM_UNAVAILABLE' using errcode = '42501';
@@ -131,6 +145,13 @@ begin
   v_tenant:=public.current_user_tenant_id();
   if v_tenant is distinct from p_expected_tenant_id or not public.is_tenant_member(v_tenant) then
     raise exception 'PLAN_FORBIDDEN: scope changed' using errcode='42501'; end if;
+
+  -- Match the canonical Solo mount boundary; no agency/child shell expansion.
+  if not exists (select 1 from public.tenants t where t.id=v_tenant
+      and t.account_type::text='standalone' and t.parent_tenant_id is null) then
+    raise exception 'PLAN_FORBIDDEN: Solo Operations unavailable' using errcode='42501';
+  end if;
+
   v_staff:=coalesce(public.is_tenant_admin(v_tenant),false);
   v_payload:=public.plan_list(p_from:=p_from,p_to:=p_to,p_status:=p_status,p_limit:=p_limit,
     p_contact_id:=p_contact_id,p_by_item_date:=p_by_item_date,p_assigned_to_user_id:=p_assigned_to_user_id);

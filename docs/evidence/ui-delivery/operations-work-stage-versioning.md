@@ -93,3 +93,7 @@ Non-author SQL/static and bounded visual reviews completed for development, then
 Internal build: `dc459adc88f43ff46020afd9b38fd7da3d2880fc` plus evidence follow-up; channel development/preview pending authorized green release. O1 exact production foundation is separately recorded in `docs/delivery/operations-foundation-production-record.md`; this O2a stage/concurrency slice is not yet merged/deployed. Binding Ledger and complete department remain PROOF_OWED. Creation, priority/history, CRM work unification, project/dependencies, verified delivery/acceptance, SOP runs, recorded capacity and governed COO/Fabric/Chat/Live remain additional work.
 
 
+
+### Solo API scope follow-up
+
+All three Operations wrappers now mirror canonical top-level standalone eligibility before reading or delegating work. Six additional rollback assertions cover agency and parented-standalone refusal and unchanged source, bringing registered SQL assertions to 30. These new assertions are UNEXECUTED until the fresh rebuilt-database CI run. No rendered layout change; no named customer runtime test. Prior exact-head evidence remains historical.

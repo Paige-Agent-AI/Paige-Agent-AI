@@ -77,4 +77,15 @@ select pg_temp.refused($s$select public.plan_list_operations_scoped('ee010000-00
 select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000003',true);
 select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')->'loose_items')=1,'target admin retains authorized work read');
 select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')->'plans')=2,'target admin retains private and team project read');
+
+-- Excluded registry scopes must not gain Operations through direct RPC calls.
+update public.tenants set account_type='agency' where id='ee010000-0000-4000-8000-000000001111';
+select pg_temp.refused($s$select public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')$s$,'42501','agency Operations read refused');
+select pg_temp.refused($s$select public.plan_update_item_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111','done')$s$,'42501','agency Operations write refused');
+select pg_temp.refused($s$select public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'done')$s$,'42501','agency versioned Operations write refused');
+update public.tenants set account_type='standalone',parent_tenant_id='ee020000-0000-4000-8000-000000002222' where id='ee010000-0000-4000-8000-000000001111';
+select pg_temp.refused($s$select public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')$s$,'42501','parented standalone Operations read refused');
+select pg_temp.refused($s$select public.plan_update_item_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111','done')$s$,'42501','parented standalone Operations write refused');
+select pg_temp.check_true((select status='blocked' from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'excluded account refusals preserve work');
+
 rollback;

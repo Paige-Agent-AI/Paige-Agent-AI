@@ -31,3 +31,7 @@ Workspaces remount at the actor/tenant boundary; late draft or drag identifiers 
 - Task creation, activity/history, priority editing, project dependencies, signed engagement handoff, client acceptance, playbook execution, recorded availability, COO/Chat/Live execution: still owed by later bounded slices.
 
 Flow-by-Flow, Flow Prototype and [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md) remain the UI workflow. Preserve existing tokens, names/photos, focus and reduced motion; do not reopen approved visual direction.
+
+## Solo API scope pre-edit packet
+
+Outcome: refuse direct Operations calls for agency, child and other excluded account types. Source: the existing isSoloStandalone contract requires account_type standalone and no parent. Apply that same registry condition inside the three Operations wrappers before record access or canonical delegation. Preserve membership, target-tenant authority, CAS, audit, canonical source ownership and default shared Planning reads. No lifecycle entitlement inference, operator-shell expansion, provider effect, customer mutation, identity change or new authority. Test excluded agency and parented-standalone scopes in disposable rollback SQL; existing standalone positives remain. Independent review and fresh exact-head CI are required; authenticated runtime remains UNVERIFIED.

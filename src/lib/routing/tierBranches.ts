@@ -233,7 +233,6 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "expenses-payables", key: "expenses", label: "Expenses & Payables" },
       { slug: "profitability", key: "profitability", label: "Profitability" },
       { slug: "budgeting-forecasting", key: "forecast", label: "Budgeting & Forecasting" },
-      { slug: "connections", key: "connections", label: "Connections" },
     ],
   },
   {

@@ -2436,13 +2436,20 @@ JSON:`;
 
         let tokenEstimate = 0;
         const included: string[] = [];
+        // C6 dial (INT-326 clarification 3): the owner arm's memory budget is 700 tokens
+        // (range 600-800); the client arm keeps its existing 1000.
+        const memoryBlockCap = scopedClientId ? 1000 : 700;
         for (const mem of sorted) {
           // §9/§13 injection fence (Slice 2 inc 2, folded) — memory is DURABLE and CROSS-PRINCIPAL: a
           // client's OCR'd upload lands a report_upload row in client_memory that later re-enters the
           // COACH's session. Sanitize the remembered content so it cannot forge a trusted marker.
-          const entry = `• [${mem.memory_type.replace(/_/g, ' ').toUpperCase()}] (${new Date(mem.created_at).toLocaleDateString()}): ${sanitizeUntrustedText(mem.content)}`;
+          // C6 clause 8 — a proposed/unconfirmed owner row is CANDIDATE knowledge: it may be
+          // quoted as recollection, never asserted as truth, so it is labelled at the source.
+          const candidateSuffix = !scopedClientId && (mem as { candidate?: unknown }).candidate === true
+            ? " (my recollection — not yet confirmed)" : "";
+          const entry = `• [${mem.memory_type.replace(/_/g, ' ').toUpperCase()}] (${new Date(mem.created_at).toLocaleDateString()})${candidateSuffix}: ${sanitizeUntrustedText(mem.content)}`;
           const entryTokens = Math.ceil(entry.length / 4);
-          if (tokenEstimate + entryTokens > 1000) break;
+          if (tokenEstimate + entryTokens > memoryBlockCap) break;
           tokenEstimate += entryTokens;
           included.push(entry);
         }
@@ -2477,7 +2484,10 @@ JSON:`;
           // The remembered spans above are sanitized; lead the block with the untrusted-data notice so
           // an embedded directive/tool-call/permission-change is never obeyed. The trusted instruction
           // below still scopes what to honor to tone/length/format PREFERENCES — data, not authority.
-          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any preference items (tone, length, formats; owner-memory type 'preference', client-memory type 'user_preference') in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
+          // C6 clause 8: recollection-marked items are candidates — quoted as belief, never fact.
+          const recollectionRule = included.some((e) => e.includes("(my recollection — not yet confirmed)"))
+            ? " Items marked as your recollection are things you believe but the owner has not confirmed — offer them as recollection, never as established fact." : "";
+          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any preference items (tone, length, formats; owner-memory type 'preference', client-memory type 'user_preference') in every response.${recollectionRule} Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
         }
       }
     } catch (err) {

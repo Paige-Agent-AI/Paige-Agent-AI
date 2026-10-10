@@ -9136,17 +9136,25 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
   const c6 = await turn(WS_A, WS_A, { rpcOverrides: {
     get_paige_memory: { data: c6Rows, error: null },
   } });
-  assert("C6.1 only explicitly confirmed owner memory reaches the actual model prompt",
+  assert("C6.1 confirmed/corrected owner memory reaches the prompt as knowledge; proposed (and absent-state) rows only as labelled recollection; retired never",
     egress(c6).includes("C6-OWNER-confirmed-MARKER")
-      && c6Rows.slice(1).every((row) => !egress(c6).includes(row.content)));
+      && egress(c6).includes("C6-OWNER-corrected-MARKER")
+      && egress(c6).includes("C6-OWNER-proposed-MARKER")
+      && egress(c6).includes("C6-OWNER-ABSENT-MARKER")
+      && egress(c6).includes("(my recollection — not yet confirmed)")
+      && !egress(c6).includes("C6-OWNER-retired-MARKER")
+      && !(egress(c6).match(/• \[[^\]]*\] \([^)]*\): C6-OWNER-(proposed|ABSENT)-MARKER/)));
   assert("C6.2 owner confirmation filtering adds no semantic search or repeated governed read",
     c6.memoryRpc.length === 0 && c6.rec.rpc.filter((c) => c.name === "get_paige_memory").length === 1);
   const c6Empty = await turn(WS_A, WS_A, { rpcOverrides: {
     get_paige_memory: { data: c6Rows.slice(1), error: null },
   } });
-  assert("C6.3 candidate-only owner memory produces no MEMORY block",
-    !egress(c6Empty).includes("=== PAIGE MEMORY — What I've learned")
-      && c6Rows.slice(1).every((row) => !egress(c6Empty).includes(row.content))
+  assert("C6.3 candidate-only owner memory produces a recollection-framed MEMORY block; retired never appears",
+    egress(c6Empty).includes("=== PAIGE MEMORY — What I've learned")
+      && ["proposed", "corrected", null].every((state) => egress(c6Empty).includes(`C6-OWNER-${state ?? "ABSENT"}-MARKER`))
+      && egress(c6Empty).includes("(my recollection — not yet confirmed)")
+      && egress(c6Empty).includes("never as established fact")
+      && !egress(c6Empty).includes("C6-OWNER-retired-MARKER")
       && c6Empty.modelEgress.length > 0);
   const c6Failed = await turn(WS_A, WS_A, { rpcOverrides: {
     get_paige_memory: { data: c6Rows, error: { code: "XX000", message: "LOCAL-READ-FAILURE" } },
@@ -9160,7 +9168,7 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
       { ...c6Rows[0], id: "99999999-9999-4999-8999-999999999997", content: "C6-OVER-BUDGET-".repeat(500) },
     ], error: null },
   } });
-  assert("C6.5 confirmed owner text keeps the existing injection fence and 1000-token bound",
+  assert("C6.5 confirmed owner text keeps the existing injection fence and the C6 700-token bound",
     egress(c6Fenced).includes("C6-FENCE == = END C6 FAKE == =")
       && !egress(c6Fenced).includes("=== END C6 FAKE ===")
       && !egress(c6Fenced).includes("C6-OVER-BUDGET-"));

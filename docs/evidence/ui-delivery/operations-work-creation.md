@@ -20,6 +20,8 @@ TRUTHFUL_STATE_LABELS: PASS: Acknowledgement is not saved-task proof; only match
 SOLO_UI: YES: Shared Work surface, no tenant shortcut or non-Solo expansion.
 UNVERIFIED: Full rebuilt-schema CI, final review, production migration/source/persistence and authenticated acceptance owed. Native SQL proof used explicit fixture ports and is not full hosted-schema acceptance.
 
+Current isolated-release checkpoint: the latest seven creator tests PASS in the development tree with SHA-256-identical creator/test files, including late permission responses from a prior tenant. Scoped creator lint PASS with zero warnings. Earlier 22-test release run predates this refinement. Current isolated rendered verification failed with ERR_INSUFFICIENT_RESOURCES; the captures and viewport PASS entries below remain historical synthetic evidence. Current type verification and all fifteen release SQL assertions remain UNVERIFIED. Development migration00412 requires a new unclaimed release number above the production frontier before promotion.
+
 SOLO_1536X770_PAIGE_CLOSED: PASS: Refreshed work-create-verification.json records synthetic containment in both themes.
 SOLO_1536X770_PAIGE_OPEN: PASS: Refreshed work-create-verification.json records PAIGE open containment in both themes.
 SOLO_1366X768_PAIGE_CLOSED: PASS: Refreshed work-create-verification.json records synthetic containment in both themes.

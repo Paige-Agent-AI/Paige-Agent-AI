@@ -12,10 +12,10 @@ STATIC_EVIDENCE: PASS: Focused ESLint and diff check; tsc ratchet reports baseli
 RENDERED_EVIDENCE: PASS: work/operator-controls-source-{light,dark}-{1536,1366,1024,900,390}.png; actual source components under synthetic RPC adapter in local Chrome, not authenticated production.
 BEHAVIORAL_EVIDENCE: PASS: Local Chrome edit/readback, retained input, cancellation, deletion blockers, Escape and ten viewport/theme captures; no document/dialog horizontal overflow.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Owner prohibits deployed agent login. Local adapter and PostgreSQL identity fixture do not establish live Auth, RLS or real-account acceptance.
-KEYBOARD_FOCUS: PARTIAL: Native Radix focus containment and Escape exercised locally; complete keyboard-only and assistive-technology audit owed.
+KEYBOARD_FOCUS: UNVERIFIED: Native Radix focus containment and Escape were exercised locally; complete keyboard-only and assistive-technology audit is owed.
 ZOOM_REFLOW: UNVERIFIED: Five widths checked, but 200 percent zoom and screen-reader proof not performed.
 REDUCED_MOTION: PASS: Local captures and interaction run under reduced motion; pop-out disables entrance animation for that preference.
-STATE_COVERAGE: PARTIAL: View/edit/review/discard/read errors/unknown save/deletion refusal implemented; hard deletion and recovery are absent, not simulated as delivered.
+STATE_COVERAGE: UNVERIFIED: View/edit/review/discard/read errors/unknown save/deletion refusal are implemented locally; hard deletion and recovery are absent and not simulated as delivered.
 TRUTHFUL_STATE_LABELS: PASS: Preview explicitly states deletion is blocked and never offers destructive execution. Missing deployed RPC reports account controls not deployed yet.
 SOLO_UI: NO: Operator control-plane surface; canonical Solo shell unchanged by this slice.
 UNVERIFIED: Production Auth/RLS, complete dependency inventory, storage/provider cessation, restorable archive, actual deletion and recovery, full keyboard/zoom proof, independent review, hosted CI, deployment and owner acceptance.
@@ -27,13 +27,13 @@ ACCEPTANCE_CRITERIA: Real owner can open details, edit supported fields with con
 MOTION_PURPOSE: Existing short dialog entrance preserves focus context; reduced-motion override removes animation.
 PROTECTED_SEAMS: Affected: platform authority, lifecycle writes/readback, audit, account isolation, responsive popup/accessibility; tested in bounded local fixtures. Unaffected: Solo signup/billing/provisioning source, Chat transcript implementation, Live Conversation, Secure Browser/Vault credentials, provider execution, durable scheduling, Memory/Rail, external sends/payments. Preview reads dependency counts only. No protected-domain records mutated.
 
-INTERNAL_BUILD_IDENTITY: base=28e196eea890921fc0a5e7a685853b79208bc028; working-tree changes; deployment=NOT_APPLICABLE; environment=local; migrations=NOT_APPLIED(20261010005059_operator_account_controls); edge=NOT_APPLICABLE; evidence=this record
-RELEASE_CHANNEL: development
-RELEASE_CLASSIFICATION: Internal partial implementation, not a release candidate.
-CUSTOMER_RELEASE_IDENTITY: NOT_APPLICABLE
+INTERNAL_BUILD_IDENTITY: source=930296ecc110ef3e4455b2acdec307a6101c10f8; pull-request=1890; deployment=PROOF_OWED(hosted release has not occurred); environment=GitHub pull-request candidate; migrations=PROOF_OWED(20261010005059_operator_account_controls is pending CI and production application); edge=NOT_APPLICABLE; evidence=this record
+RELEASE_CHANNEL: pull-request candidate: PR #1890 is awaiting independent review and exact-head CI; eligibility=not eligible until both gates pass; monitoring-owner=Platform Operator; recovery=forward fix or revert through the normal release process.
+RELEASE_CLASSIFICATION: internal partial: guarded account detail edits and a non-destructive preview are candidate changes; whole-workspace retirement remains unavailable.
+CUSTOMER_RELEASE_IDENTITY: none: this is an internal operator capability candidate with no owner-approved customer release identity.
 RELEASE_NOTE_REQUIRED: NO: Unreleased local work.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: Source details/edit and deletion preview; no actual deletion or production usability claim.
-RELEASE_RECOVERY: No production mutation or deployment. Revert the focused source/migration delta; local fixtures are disposable. Full deletion recovery has not been implemented or verified.
+RELEASE_RECOVERY: position=pre-deployment candidate; reference=PR #1890 evidence record and normal revert/forward-fix process. Full deletion recovery has not been implemented or verified.
 
 ## Capability routing before implementation
 
@@ -60,4 +60,4 @@ Scratch source harness: `work/operator-account-controls.html`, Vite on localhost
 
 The approved design includes deletion. No deletion function exists in this change. Preview always returns execution_available=false, including empty accounts, because verified recovery and canonical whole-workspace removal are still absent. Resolving protected retained-record and provider dependencies and implementing/testing actual retirement are outstanding engineering. A status change or successful login is not a substitute.
 
-Independent review is not performed: owner prohibits other agents. No PR, commit, hosted CI, merge, migration application, deployment, real-account change or customer acceptance is asserted.
+Independent review is in progress for PR #1890. Hosted CI is in progress; merge, migration application, deployment, real-account change and customer acceptance are not asserted.

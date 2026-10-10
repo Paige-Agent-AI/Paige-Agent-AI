@@ -117,6 +117,7 @@ afterEach(() => {
   host?.remove();
   harness.briefs = [];
   harness.briefsPhase = "ready";
+  harness.canManage = true;
   harness.state.tenantId = "tenant-1";
   if (harness.state.pipelineWorkspace) {
     (harness.state.pipelineWorkspace as { canManage: boolean; canArchiveFolders: boolean }).canManage = true;
@@ -879,12 +880,35 @@ describe("Solo Marketing department views", () => {
   it("a failed briefs read hides only the brief items; capture points, the chain and leads stay", () => {
     useWorkspace();
     harness.briefsPhase = "error";
+    // As useSoloCampaignBriefs does on a failed read: no briefs and no authority.
+    harness.canManage = false;
     renderAt("/solo/42/growth/overview");
     expect(host.textContent).not.toContain("Marketing could not load");
     expect(host.querySelector(".mov-briefs-off")?.textContent).toContain("Campaign briefs couldn’t load");
     expect(host.querySelector("#mov-capture")).not.toBeNull();
     expect(chain()).toHaveLength(4);
     expect(host.textContent).toContain("source: newsletter · campaign: CB-SPRING");
+    // A failed briefs read is not "view only": the workspace's own authority still lets the owner act.
+    expect(host.querySelector(".mov-ro")).toBeNull();
+    expect(button("Route it")).toBeDefined();
+    act(() => root.unmount()); host.remove();
+    // And when nothing says who may edit, Overview does not claim either way.
+    useWorkspace({ pipelineWorkspace: { ...emptyWorkspace, canManage: undefined } });
+    renderAt("/solo/42/growth/overview");
+    expect(host.querySelector(".mov-ro")).toBeNull();
+  });
+
+  it("only a pipeline route closes the chain: other automations still leave the link broken", () => {
+    useWorkspace({ artifacts: [{ ...form, routingConfigured: true, routingState: "Active", routingTargets: ["notify_team"] }] });
+    renderAt("/solo/42/growth/overview");
+    expect(attention()[0]).toBe("Discovery call requestIts automations run, but leads never reach a pipelineRoute it");
+    expect(host.querySelector("#mov-capture")?.textContent).toContain("No pipeline");
+    expect(chain()[2]).toMatch(/^0 of 1/);
+    act(() => root.unmount()); host.remove();
+    useWorkspace({ artifacts: [{ ...form, routingConfigured: true, routingState: "Active", routingTargets: ["pipeline_attach"] }] });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toMatch(/^1 of 1Forms that route leadsEvery live form routes its leads/);
+    expect(host.querySelector("#mov-capture")?.textContent).toContain("Sent to a pipeline by an automation");
   });
 
   it("a form that only emails its leads is not called silent, and is still not routed", () => {

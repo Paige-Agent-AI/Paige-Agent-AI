@@ -16,7 +16,7 @@ import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { SUBMISSION_READ_LIMIT, submissionsInPeriod } from "./marketing-overview-model";
 import { FormIntakePanel } from "./form-intake";
 import { MarketingAds, MarketingContent } from "./marketing-planned";
-import { CAPTURE_FILTERS, MarketingOverview } from "./marketing-overview";
+import { CAPTURE_FILTERS, MarketingOverview, sendsToPipeline } from "./marketing-overview";
 import { MarketingEmail } from "./marketing-email";
 import { MarketingAudience } from "./marketing-audience";
 import "./solo-chart-tokens.css";
@@ -365,7 +365,12 @@ function StudioLauncher({ label = "Open Vibe Studio", primary = false }) {
 // from the Marketing read and says the brief items could not load.
 function OverviewTab({ data, moved, onDismissMoved, onCanManage, ...rest }) {
   const briefsState = useSoloCampaignBriefs();
-  const canManage = briefsState.canManage === true;
+  // Who may edit comes from the briefs read; if that read failed, the pipeline workspace's own
+  // authority answers instead. A failed read is never taken as "view only" (Codex review, #1900).
+  const briefsReadyForAuthority = briefsState.phase === "ready";
+  const workspaceAuthority = data.pipelineWorkspace?.canManage;
+  const canManage = briefsReadyForAuthority ? briefsState.canManage === true : workspaceAuthority === true;
+  const authorityKnown = briefsReadyForAuthority || typeof workspaceAuthority === "boolean";
   React.useEffect(() => { onCanManage(canManage); }, [canManage, onCanManage]);
   React.useEffect(() => () => onCanManage(false), [onCanManage]);
   const briefsReady = briefsState.phase === "ready";
@@ -375,7 +380,7 @@ function OverviewTab({ data, moved, onDismissMoved, onCanManage, ...rest }) {
   const briefsNotice = briefsFailed ? <div className="mov-briefs-off" role="status"><p>Campaign briefs couldn’t load, so briefs waiting on you aren’t listed here.</p>{briefsState.retry && <button className="btn btn-s" onClick={() => briefsState.retry()}>Try again</button>}</div> : null;
   return <StateFrame phase={phase} retry={() => { data.retry?.(); briefsState.retry?.(); }} noun="marketing">
     {moved && <div className="mov-moved" role="status"><p><b>{MOVED[moved].text}</b></p>{MOVED[moved].studio && canManage && <StudioLauncher/>}<button className="btn btn-s" onClick={dismiss}>Dismiss</button></div>}
-    <MarketingOverview data={data} briefs={briefsReady ? briefsState.briefs || [] : []} canManage={canManage} briefsNotice={briefsNotice} studioLauncher={(label) => <StudioLauncher label={label}/>} {...rest}/>
+    <MarketingOverview data={data} briefs={briefsReady ? briefsState.briefs || [] : []} canManage={canManage} authorityKnown={authorityKnown} briefsNotice={briefsNotice} studioLauncher={(label) => <StudioLauncher label={label}/>} {...rest}/>
   </StateFrame>;
 }
 
@@ -626,7 +631,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     else navigate(`${subtabPath("solo",account,"growth","overview")}?form=${encodeURIComponent(formId)}`);
   },[navigate,params.account,setOverviewQuery,tab]);
   const closeForm=React.useCallback(()=>setOverviewQuery({form:null}),[setOverviewQuery]);
-  const formRoute=!panelForm?null:panelForm.routingConfigured?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Routed by an automation"):panelForm.intakeAlert?"No pipeline: each lead is only emailed":"Not routed: no pipeline, no alert";
+  const formRoute=!panelForm?null:sendsToPipeline(panelForm)?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Sent to a pipeline by an automation"):panelForm.intakeAlert?"No pipeline: each lead is only emailed":panelForm.routingConfigured?"No pipeline: its automations run, but leads never reach one":"Not routed: no pipeline, no alert";
   const formDetail=panelForm?{
     key:`form-${panelForm.id}`,
     title:panelForm.name,

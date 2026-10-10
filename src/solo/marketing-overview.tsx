@@ -55,20 +55,34 @@ export type OverviewProps = {
   scrollToCapture?: boolean;
   /** Set when the briefs read failed: Overview still shows everything else, and says so. */
   briefsNotice?: React.ReactNode;
+  /** False while who may edit is unknown (the briefs read failed): never claim "view only" then. */
+  authorityKnown?: boolean;
 };
+
+/**
+ * The chain's "forms that route leads" link means a lead reaches a pipeline: an enabled
+ * pipeline_attach automation, or the form's own intake route. Other automations (alerts, contact
+ * upserts, webhooks) still run, but they do not close the link (Codex review, PR #1900).
+ */
+export const sendsToPipeline = (form: Pick<CampaignArtifact, "routingTargets" | "intakePipelineId">) =>
+  (form.routingTargets ?? []).includes("pipeline_attach") || Boolean(form.intakePipelineId);
+const unroutedDetail = (form: CampaignArtifact) =>
+  form.intakeAlert ? "Leads are emailed to you but never reach a pipeline"
+    : form.routingConfigured ? "Its automations run, but leads never reach a pipeline"
+      : "A lead from this form goes nowhere: no pipeline, no alert";
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 const askPaige = (prompt: string) => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }));
 
 export function MarketingOverview(props: OverviewProps) {
-  const { data, briefs, canManage, onGo, onCreateBrief, onOpenSales, onOpenForm, studioLauncher, scrollToCapture, briefsNotice } = props;
+  const { data, briefs, canManage, onGo, onCreateBrief, onOpenSales, onOpenForm, studioLauncher, scrollToCapture, briefsNotice, authorityKnown = true } = props;
   const artifacts = data.artifacts;
   const drafts = data.drafts ?? [];
   const submissions = data.submissions ?? [];
   const today = new Date().toDateString(); // re-derive when the day turns
   const model = React.useMemo(() => deriveMarketingOverview({ briefs, artifacts, drafts, submissions, periodDays: WINDOW_DAYS }), [briefs, artifacts, drafts, submissions, today]); // eslint-disable-line react-hooks/exhaustive-deps
   const liveForms = artifacts.filter((item) => item.type === "form");
-  const unrouted = liveForms.filter((item) => !item.routingConfigured);
+  const unrouted = liveForms.filter((item) => !sendsToPipeline(item));
   const floor = (count: number) => (model.capped ? `${count}+` : String(count));
   const leads = model.leads.count;
   const opportunities = model.opportunities.count;
@@ -77,7 +91,7 @@ export function MarketingOverview(props: OverviewProps) {
   const create = canManage ? <button className="btn btn-g" onClick={onCreateBrief}><Ic.plus size={14}/>New campaign brief</button> : null;
   const ask = <button className="btn" onClick={() => askPaige(`Look at my Marketing for the last ${WINDOW_DAYS} days: ${floor(leads)} leads, ${floor(opportunities)} became opportunities, ${unrouted.length} of ${liveForms.length} live forms not routed. What should I do first? Use only what my records show; this workspace does not record visits, spend, reach or revenue.`)}><Ic.spark size={14}/>Ask PAIGE</button>;
 
-  const viewOnly = canManage ? null : <p className="mov-ro">View only. An owner or admin can change this.</p>;
+  const viewOnly = canManage || !authorityKnown ? null : <p className="mov-ro">View only. An owner or admin can change this.</p>;
 
   React.useEffect(() => {
     if (!scrollToCapture) return;
@@ -203,7 +217,7 @@ function FlowChart({ daily }: { daily: Model["daily"] }) {
       {ticks.map((tick) => <g key={tick}><line className="mov-gr" x1={L} x2={W - R} y1={y(tick)} y2={y(tick)}/><text x={L - 8} y={y(tick) + 3.5} textAnchor="end">{tick}</text></g>)}
       {labels.map((i) => daily[i] && <text key={i} x={x(i)} y={H - 7} textAnchor={i === 0 ? "start" : i === values.length - 1 ? "end" : "middle"}>{daily[i].label}</text>)}
       <path className="mov-area" d={`${path} L${x(values.length - 1)} ${y(0)} L${L} ${y(0)}Z`}/>
-      <path className="mov-line" d={path} pathLength={1}/>
+      <path className="mov-line" d={path}/>
       {peakIndex >= 0 && <><circle className="mov-peak" cx={x(peakIndex)} cy={y(peak)} r={4.5}/><text className="mov-peak-t" x={x(peakIndex)} y={y(peak) - 10} textAnchor="middle">{peak}</text></>}
       {!peak && <text className="mov-zero" x={L + cw / 2} y={y(0) - 14} textAnchor="middle">Zero every day. The line moves with your first lead.</text>}
       {point && <><line className="mov-xh" x1={x(hover!)} x2={x(hover!)} y1={T} y2={T + ch}/><circle className="mov-xd" cx={x(hover!)} cy={y(point.leads)} r={4}/></>}
@@ -222,7 +236,7 @@ function Attention({ data, briefs, canManage, unrouted, drafts, submissions, onG
   const items: AttentionItem[] = [];
   for (const [formId, count] of failed) items.push({ key: `fail-${formId}`, tone: "bad", title: formName(formId) ?? "A form", detail: `${plural(count, "submission")} couldn’t be processed`, action: canManage ? <button className="btn btn-s" onClick={() => onOpenForm(formId)}>Review</button> : undefined });
   // The broken link in the chain comes first: it is what the chain lights.
-  for (const form of unrouted) items.push({ key: `route-${form.id}`, tone: "warn", title: form.name, detail: form.intakeAlert ? "Leads are emailed to you but never reach a pipeline" : "A lead from this form goes nowhere: no pipeline, no alert", action: canManage ? <button className="btn btn-s" onClick={() => onOpenForm(form.id)}>Route it</button> : undefined });
+  for (const form of unrouted) items.push({ key: `route-${form.id}`, tone: "warn", title: form.name, detail: unroutedDetail(form), action: canManage ? <button className="btn btn-s" onClick={() => onOpenForm(form.id)}>Route it</button> : undefined });
   for (const brief of briefs.filter((item) => item.lifecycleStatus === "ready_for_review")) items.push({ key: `review-${brief.id}`, tone: "v", title: brief.name, detail: "A campaign brief is waiting for your decision", action: <button className="btn btn-s" onClick={() => onGo("campaigns")}>Review</button> });
   for (const brief of briefs.filter(isBlockedBrief)) items.push({ key: `blocked-${brief.id}`, tone: "bad", title: brief.name, detail: brief.blocker || "Marked blocked on the brief", action: <button className="btn btn-s" onClick={() => onGo("campaigns")}>Open</button> });
   for (const draft of drafts) items.push({ key: `draft-${draft.type}-${draft.id}`, tone: "n", title: draft.name, detail: `Draft ${TYPE_LABEL[draft.type].toLowerCase()}: collects nothing until it’s published`, action: canManage ? studioLauncher("Finish in Vibe") : undefined });
@@ -241,7 +255,7 @@ function Capture({ data, drafts, captureFilter, onCaptureFilter, onOpenForm, onO
   const routeOf = (item: CampaignArtifact) => {
     const pipeline = pipelines.find((p) => p.id === item.intakePipelineId)?.name;
     const stage = stages.find((s) => s.id === item.intakeStageId)?.label;
-    return pipeline ? [pipeline, stage].filter(Boolean).join(" → ") : "Routed by an automation";
+    return pipeline ? [pipeline, stage].filter(Boolean).join(" → ") : "Sent to a pipeline by an automation";
   };
   const live = data.artifacts.filter((item) => captureFilter === "all" || item.type === captureFilter);
   const waiting = drafts.filter((item) => captureFilter === "all" || item.type === captureFilter);
@@ -252,14 +266,14 @@ function Capture({ data, drafts, captureFilter, onCaptureFilter, onOpenForm, onO
     {live.length + waiting.length === 0 ? <div className="mov-empty-block"><p>No {captureFilter === "all" ? "capture points" : FILTER_LABEL[captureFilter].toLowerCase()} yet. Build one in Vibe Studio and publish it.</p>{canManage && studioLauncher("Open Vibe Studio")}</div>
       : <div className="mov-gal">
         {live.map((item) => {
-          const issue = item.type === "form" && !item.routingConfigured;
+          const issue = item.type === "form" && !sendsToPipeline(item);
           return <button key={`${item.type}-${item.id}`} className={`mov-cp${issue ? " is-issue" : ""}`} onClick={() => item.type === "form" ? onOpenForm(item.id) : onOpenAsset(item)}>
             <Mini type={item.type}/>
             <span className="mov-cp-b">
               <span className="mov-cp-t">{item.name}</span>
               <span className="mov-cp-s"><span className="mov-dot is-on" aria-hidden="true"/>{TYPE_LABEL[item.type]} · Live</span>
               {item.type === "form" ? <span className="mov-cp-m"><b>{item.recentSubmissions}</b> recent submission{item.recentSubmissions === 1 ? "" : "s"}</span> : <span className="mov-cp-m">Collects through its form</span>}
-              {item.type === "form" && <span className={`mov-cp-r${issue ? " is-warn" : ""}`}>{issue ? (item.intakeAlert ? "Email alert only, no pipeline" : "Not routed") : routeOf(item)}</span>}
+              {item.type === "form" && <span className={`mov-cp-r${issue ? " is-warn" : ""}`}>{issue ? (item.intakeAlert ? "Email alert only, no pipeline" : item.routingConfigured ? "No pipeline" : "Not routed") : routeOf(item)}</span>}
             </span>
           </button>;
         })}

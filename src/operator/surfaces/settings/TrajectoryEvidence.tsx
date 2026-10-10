@@ -7,7 +7,10 @@ export function trajectoryResult(t: TaskTrajectory) {
   if (t.work_state === "cancelled") return "Cancelled";
   if (t.work_state === "blocked") return "Blocked";
   if (["expired", "outcome_unknown"].includes(t.work_state)) return "Reconciliation required";
-  if (t.work_state === "claimed") return t.dispatch_attempt > 0 ? "Execution attempted" : "Accepted";
+  if (t.work_state === "claimed") {
+    if (t.dispatch_attempt > 0 && t.dispatch_attempt === t.attempt) return "Execution attempted";
+    return t.dispatch_attempt > 0 ? "Accepted · prior attempt dispatched" : "Accepted";
+  }
   if (t.work_state !== "succeeded") return "Terminal outcome unverified";
   if (t.receipt_conflict) return "Conflicting receipts";
   if (!t.terminal_verified || !t.scope_consistent) return "Terminal outcome unverified";

@@ -4,6 +4,9 @@ import { trajectoryResult, trajectoryTimeline } from "./TrajectoryEvidence";
 import canonical from "@/test/fixtures/canonical-trajectory.json";
 import type { TaskTrajectory } from "@/operator/data/intelligenceContract";
 describe("Task evidence presentation", () => {
+  it.each([[0, "Accepted"], [1, "Accepted · prior attempt dispatched"], [2, "Execution attempted"]])("attributes dispatch %s to the correct current attempt", (dispatch_attempt, label) => {
+    expect(trajectoryResult({ ...task, work_state: "claimed", attempt: 2, dispatch_attempt: Number(dispatch_attempt) })).toBe(label);
+  });
   it("reconstructs the exported canonical SQL proof without replacing its recorded facts", () => {
     const recorded=canonical.page.items[0] as unknown as TaskTrajectory;
     expect(canonical.fixture).toContain("CONTROLLED LOCAL SYNTHETIC");

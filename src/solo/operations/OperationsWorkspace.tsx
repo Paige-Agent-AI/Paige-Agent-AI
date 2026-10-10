@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { OperationsAssignee } from "./OperationsAssignee";
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
 import { OperationsWorkCreator } from "./OperationsWorkCreator";
+import { OperationsWorkActivity } from "./OperationsWorkActivity";
 import { useOperationsPeople } from "./useOperationsPeople";
 import { OperationsWork } from "./OperationsWork";
 import { OperationsProjects } from "./OperationsProjects";
@@ -132,6 +133,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
             proposedStage={inspection?.kind === "item" ? inspection.proposedStage : undefined}
             members={people.members} sourceError={Boolean(source.error) || !matches}
             refresh={() => source.refresh({ silent: true })} />
+          <OperationsWorkActivity key={`${tenantId}:${selectedItem.id}`} actorId={userId} tenantId={tenantId}
+            itemId={selectedItem.id} members={people.members} version={selectedItem.updated_at} />
         </div>}
         {selectedPlan && <div className="ops-detail-content"><p>Status: {selectedPlan.status}</p>
           <ol className="ops-detail-work">{selectedPlan.items.map((item) => <li key={item.id}><button type="button" onClick={() => inspectItem(item)}>{item.title}</button><span>{item.status.replace(/_/g, " ")}</span></li>)}</ol></div>}

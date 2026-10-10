@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { PlanItemStatus } from "@/hooks/usePlanList";
+import type { PlanItemStatus, PlanPriority } from "@/hooks/usePlanList";
 
-export type WorkUpdate = { status?: PlanItemStatus; dueAt?: string; assigneeId?: string };
+export type WorkUpdate = { status?: PlanItemStatus; dueAt?: string; assigneeId?: string; priority?: PlanPriority };
 export type WorkUpdateScope = { actorId: string; tenantId: string; itemId: string; expectedUpdatedAt?: string };
 export type WorkUpdateResult =
   | { kind: "acknowledged" }
@@ -20,12 +20,13 @@ export async function submitOperationsWorkUpdate(scope: WorkUpdateScope, update:
       kind: "refused", message: "Your account changed. Reopen the work in your current workspace.",
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- new scoped RPC awaits generated schema types
-    const { data, error } = await (supabase as any).rpc("plan_update_item_versioned", {
+    const { data, error } = await (supabase as any).rpc(update.priority ? "plan_update_item_priority_versioned" : "plan_update_item_versioned", {
       p_item_id: scope.itemId, p_expected_actor_id: scope.actorId, p_expected_tenant_id: scope.tenantId,
       p_expected_updated_at: scope.expectedUpdatedAt,
       ...(update.status ? { p_status: update.status } : {}),
       ...(update.dueAt ? { p_due_at: update.dueAt } : {}),
       ...(update.assigneeId ? { p_assigned_to_user_id: update.assigneeId } : {}),
+      ...(update.priority ? { p_priority: update.priority } : {}),
     });
     if (error) {
       if (error.code === "40001") return {

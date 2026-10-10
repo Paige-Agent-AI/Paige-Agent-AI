@@ -48,3 +48,5 @@ All 120 geometry observations and all eight synthetic behavior checks passed; no
 
 Exact-code revalidation: 120 frames and 58 focused tests were rerun on committed code 5e39e97a9e591dcab976e367f8bff90bc7b5aea0. This evidence follow-up changes no production implementation. Two account IDs are covered by routing tests; account identity switching is covered by the invoice hook tests. These synthetic checks do not establish authenticated two-tenant acceptance. Approved QA identity remains unavailable under OWNER_LOGIN_HOLD; no bypass was attempted.
 
+
+Production identity closeout October 10, 2026: PR #1894 merged reviewed head de44ad59f9227d3f84067fba44c14f105be66659 as main 794c24e92b8f045dda0994a7b9e8c053228300a9 after all five required workflows and Vercel statuses passed. Deployment dpl_8tcVybSYafYjPCupa2jsMuEc7ZTb READY at exact merge; canonical aliases confirmed. Public HTML and SoloEntry-WVMUJSod.js readback PASS, recorded in assets/finance-compact/production-source-proof.json. Source identity does not prove authenticated acceptance or full Finance intelligence. Recovery: reviewed reversal of #1894. No migration/Edge/provider/financial effects.

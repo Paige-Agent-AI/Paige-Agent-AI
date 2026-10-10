@@ -25,12 +25,12 @@ MUST_PRESERVE: Existing metrics, routing, roster, memory and trace capabilities;
 ACCEPTANCE_CRITERIA: Navigate through Settings; inspect legitimate call and eval metadata; distinguish traces from task trajectories; prepare and review a recommendation with source references; see truthful local-model and research readiness; recover from empty/error/refused states.
 MOTION_PURPOSE: NONE: Uses existing focus/hover and reduced-motion-safe controls; no ambient animation.
 PROTECTED_SEAMS: Affected: Operator navigation, privacy of evidence projection, session/account-switch fencing, responsive shell geometry and accessibility. Not affected: Solo isolation/provisioning/paywall/billing; approval/autonomy rules; Spine execution; canonical business writes; Rail/receipts/Memory stores; chat stream/transcript/popout; Live runtime; browser/Vault; provider effects; durable jobs/retries.
-INTERNAL_BUILD_IDENTITY: original_approved_head=35d9a34bb93fa2373269931265126a819475d493; reconciled_base=c9a39d274c56a54649b3d90816e3859e2170cb98; branch=codex/int-280-paige-intelligence; final_candidate_head=recorded in PR; deployment=none; environment=development; migration=20270602000204_operator_intelligence_eval_history UNAPPLIED; edge=NOT_APPLICABLE; evidence=this record
+INTERNAL_BUILD_IDENTITY: original_approved_head=35d9a34bb93fa2373269931265126a819475d493; reconciled_base=c9a39d274c56a54649b3d90816e3859e2170cb98; branch=codex/int-280-paige-intelligence; final_candidate_head=recorded in PR; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270602000204_operator_intelligence_eval_history remains unapplied until separately authorized production release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/int-280-paige-intelligence.md
 RELEASE_CHANNEL: development: Owner visual design approved; branch push and draft PR authorized. Merge, deployment, live authenticated PAIGE testing, provider effects and model training remain excluded.
 RELEASE_CLASSIFICATION: internal-only: Local development evidence, not a customer release.
 CUSTOMER_RELEASE_IDENTITY: none: No production release.
 RELEASE_NOTE_REQUIRED: no: No merge or deployment.
-RELEASE_TRUTH_BOUNDARY: Existing RPC contracts source-confirmed, runtime UNVERIFIED; new eval projection UNAPPLIED; task trajectory, registry/versioned scorecard, online clustering, execution/promotion and outcome attribution UNAVAILABLE.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: Existing RPC contracts source-confirmed, runtime UNVERIFIED; new eval projection UNAPPLIED; task trajectory, registry/versioned scorecard, online clustering, execution/promotion and outcome attribution UNAVAILABLE.
 RELEASE_RECOVERY: position=revert isolated branch changes; reference=git diff against recorded base; no production state changed
 
 ## Pre-edit capability routing and flow packet
@@ -128,6 +128,8 @@ Reconciliation: current main `c9a39d274c56a54649b3d90816e3859e2170cb98` adds the
 Release-preparation correction: renamed only the previously UNAPPLIED new eval projection from `20261010053600` to `20270602000204`, above current main's `20270602000203` frontier. No applied migration or function semantics were edited. The existing disposable PostgreSQL CI job now invokes `scripts/proof/operator-intelligence-eval.mjs --postgres`: canonical eval schema and canonical Operator predicate, projection replay twice, then actual caller/privacy/bounds/audit/refusal SQL assertions. No remote database URL is accepted. Hosted proof and the exact final head/review/CI dispositions belong in the PR evidence; no self-referential commit identity is invented here.
 
 Portable rendered proof is now in this repository under [int-280](int-280/): executive Obsidian/Mineral, narrow Radar, focused evidence handoff, geometry and navigation JSON. These are the existing approved LOCAL SYNTHETIC captures, not fresh authenticated product claims.
+
+Portable executive captures use the spine-open desktop state recorded by their geometry rows; the separate wide spine-folded Obsidian capture remains in the local delivery outputs. The first portable dark image was that wider valid state and was replaced with the already-reviewed matching spine-open capture after independent review found the attribution mismatch. No UI source or approved appearance was changed.
 
 Impeccable checks already applied: extension-preserve/Operate, typography/color/token conformity, detector, responsive geometry, non-author finish and documentation comparison. [Canonical Impeccable skill](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md). The approved direction remains locked.
 

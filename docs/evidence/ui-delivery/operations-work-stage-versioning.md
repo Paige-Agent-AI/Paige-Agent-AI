@@ -2,6 +2,10 @@
 
 ## Supported staff-role correction
 
+## Target-tenant authority hardening
+
+Migration 00411 also forward-hardens the already released Operations scoped wrapper. Both direct and versioned Operations writes require current membership and target-tenant administration or legitimate creator/assignee authority. Assignees remain status-only and ownership changes remain target-admin-only before delegation to the unchanged canonical writer. The Work hint uses existing `is_tenant_admin(selectedTenant)`, including its existing governed company-workspace platform authority. Three additional rollback assertions cover global administration elsewhere with ordinary target membership and unchanged work after refusal. Fifteen assertions are registered; prior 5992433b rebuilt-schema CI passed twelve before this hardening, so final-head SQL/CI proof is still owed. No shared Planning writer or platform role contract is changed.
+
 The Work permission hint uses supported admin/super_admin roles. The attempted coach fixture at head 46d1b9c9 failed the current platform constraint that retires coach as a permission role; that failed head was not merged. A focused UI case now covers a supported admin managing another person's work and excludes the retired role. Two supplemental rollback assertions verify the existing admin writer and stage readback. Prior-head rebuilt-schema CI passed the original ten assertions; the corrected supplemental assertions and final exact-head CI remain pending until recorded. The synthetic browser fixture returns an explicit role hint and does not prove any real user's role. No platform constraint or canonical writer was weakened.
 
 ## O2a local follow-up — stage proposals and source-version protection

@@ -41,7 +41,7 @@ it("allows assignee status control but no due-date or reassignment control", asy
   await render(item, "observer"); expect(container.querySelector("form")).toBeNull();
 });
 it("preserves supported admin controls for work assigned to another person", async () => {
-  mock.rpc.mockImplementation(async (_name, args) => ({ data: args._user_id === "admin" && args._roles.includes("admin") && !args._roles.includes("coach"), error: null }));
+  mock.rpc.mockImplementation(async (name, args) => ({ data: name === "is_tenant_admin" && args._tenant === "tenant-a", error: null }));
   await render(item, "admin");
   expect(container.querySelector("form")).not.toBeNull();
   expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();

@@ -52,4 +52,14 @@ insert into public.user_roles(user_id,role) values ('ee010000-0000-4000-8000-000
 select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000003',true);
 select pg_temp.check_true((public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'blocked')->>'ok')='true','admin delegates existing canonical staff writer');
 select pg_temp.check_true((select status='blocked' from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'admin canonical stage readback');
+-- Administration elsewhere must not grant target-tenant work management.
+update public.tenant_members set role='admin' where user_id='ee020000-0000-4000-8000-000000000001';
+insert into public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) values
+ ('ee010000-0000-4000-8000-000000001111','ee020000-0000-4000-8000-000000000001','member','active',false,now());
+insert into public.user_roles(user_id,role) values ('ee020000-0000-4000-8000-000000000001','admin') on conflict do nothing;
+update public.profiles set active_tenant_id='ee010000-0000-4000-8000-000000001111' where user_id='ee020000-0000-4000-8000-000000000001';
+select set_config('request.jwt.claim.sub','ee020000-0000-4000-8000-000000000001',true);
+select pg_temp.refused($s$select public.plan_update_item_scoped('ee010000-0000-4000-8000-00000000a001','ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111','done')$s$,'42501','global admin elsewhere cannot use released scoped wrapper');
+select pg_temp.refused($s$select public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'done')$s$,'42501','global admin elsewhere cannot use versioned wrapper');
+select pg_temp.check_true((select status='blocked' from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'tenant authority refusal preserves source work');
 rollback;

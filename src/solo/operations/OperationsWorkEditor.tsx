@@ -36,8 +36,8 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     let current = true; mounted.current = true;
     void (async () => {
       try {
-        const { data, error } = await supabase.rpc("has_any_role", {
-          _user_id: actorId, _roles: ["admin", "super_admin"],
+        const { data, error } = await supabase.rpc("is_tenant_admin", {
+          _tenant: tenantId,
         });
         if (current) setStaff(!error && data === true);
       } catch { if (current) setStaff(false); }

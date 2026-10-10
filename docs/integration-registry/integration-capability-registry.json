@@ -683,7 +683,7 @@
       ],
       "status": "PROOF_OWED",
       "owner": "Integrations workstream",
-      "dependency": "Finance backend audit (2026-10-10): caller containment repair is tested locally; company/source binding, single-use OAuth state, accounting-only consent, pagination, nullable figures, refresh/disconnect reconciliation and authenticated provider proof remain owed. No legacy snapshot is promoted to company Finance.",
+      "dependency": "Finance F1b candidate (2026-10-10): company/source identity and evidence metadata use existing workspace authority and controlled PostgreSQL proof. This is not provider verification; bindings default pending, legacy snapshots are not promoted, and QuickBooks sync remains fail-closed containment. One-use consent, actual company authorization, pagination, nullable figures, refresh/disconnect and authenticated provider proof remain owed.",
       "next_slice": "Complete explicit company/source authority and OAuth integrity, then controlled provider read proof; preserve Settings Integrations as connection owner and separately authorize real activation.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -748,12 +748,14 @@
       "id": "plaid",
       "name": "Plaid",
       "taxonomy": "finance_accounting_payments",
-      "business_reason": "Banking-data connectivity for owner finance context; opt-in, §2-constrained. A 'Settings → Integrations → Financial' connection and a capability of the OPT-IN 'Funding & Coaching Tools' Marketplace package (owner ruling 2026-09-13) — never a platform default, never a universal Solo feature.",
+      "business_reason": "Optional company banking-data connectivity for the canonical Solo Finance department (owner backend directive, 2026-10-10), activated only through Settings Integrations with explicit company/account consent. It also remains a provider for the separate opt-in Funding & Coaching Tools Marketplace vertical (2026-09-13). A Finance destination does not automatically link Plaid or grant product permissions.",
       "marketplace_package": "Funding & Coaching Tools (owner ruling 2026-09-13) — package surface NOT built/available yet. Plaid is a per-tenant Financial connection the package uses; it already requires an explicit per-tenant Plaid link + consent (the connection template the other package providers follow).",
       "paige_use_cases": [
-        "(package-entitled + linked only) read authorized banking/financial-account context"
+        "(company-authorized + explicitly linked only) read banking balances and transactions for Solo Finance",
+        "Read liabilities only for actually supported products and separately approved provider coverage",
+        "(package-entitled + linked only) financial-account context for the separate Funding & Coaching Tools vertical"
       ],
-      "connection_prerequisite": "Per-tenant Plaid link + consent (the existing per-tenant connection model — encrypted, revocable, never cross-tenant); plus the Funding & Coaching Tools package entitlement (is_finance/funding_enabled, owner ruling 2026-09-13). Opt-in only, never a platform default (R9).",
+      "connection_prerequisite": "Explicit tenant/company/account Plaid Link consent through existing Settings Integrations, verified native account identity and encrypted revocable credentials; no user/CRM identity substitution. Company Finance reads do not require the separate Funding package under the 2026-10-10 owner directive. Funding-vertical use retains its package entitlement. No default activation, new consent or provider spending is authorized by implementation.",
       "required_scopes": [
         "auth / transactions (per product)"
       ],
@@ -768,8 +770,8 @@
       "rail_mind_memory": "Rail: minimal. Mind: only safe summaries. Memory: no raw financial data.",
       "status": "PARTIAL",
       "owner": "Integrations workstream (finance lane, §2 opt-in)",
-      "dependency": "§2/§194 lane-separation; opt-in gating.",
-      "next_slice": "Confirm opt-in gating and safe-read boundary; park deeper finance-vertical work (R9).",
+      "dependency": "Finance F1b company/source metadata has controlled PostgreSQL proof, not provider acceptance. Legacy Plaid reads remain user scoped and item-wide transaction attribution/pagination are unproven. No Finance data is promoted from these rows; liabilities and commercial LOC coverage remain unverified. Preserve the separate §2/§194 Funding vertical and explicit connection consent.",
+      "next_slice": "Repair verified company/account authorization, item-to-account attribution, complete cursor pagination and safe source projection using controlled providers before separately authorized live connection proof. Settings Integrations retains activation ownership.",
       "tier_eligibility": {
         "platform": "ineligible",
         "solo": "eligible",

@@ -24,28 +24,23 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: conn, error: readError } = await supabase
+    const { data: conn } = await supabase
       .from("quickbooks_connections")
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
-    if (readError) throw new Error('Connection read unavailable');
     if (!conn) return new Response(JSON.stringify({ success: true, message: "No connection to disconnect" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    // Persist local disconnection before external work. Finance bindings are revoked
-    // atomically by the connection lifecycle trigger; historical anchors are retained.
-    const { data: disconnected, error: disconnectError } = await supabase.from('quickbooks_connections')
-      .update({ is_active: false }).eq('id', conn.id).eq('user_id', user.id).select('id').maybeSingle();
-    if (disconnectError || !disconnected) throw new Error('Connection disconnection unavailable');
-
-    // Legacy revokeToken does not validate the provider response. Never describe this
-    // best-effort attempt as confirmed provider revocation.
+    // Decrypt and revoke refresh token
     try {
       const { data: refDec } = await supabase.rpc("qb_decrypt_token", { _ciphertext: conn.refresh_token_encrypted });
       if (refDec) await revokeToken(refDec);
     } catch (e) {
-      console.warn("[qb-disconnect] provider revocation unverified");
+      console.warn("[qb-disconnect] revoke failed (continuing):", e);
     }
+
+    // Delete the connection (cascades to financials + transactions)
+    await supabase.from("quickbooks_connections").delete().eq("id", conn.id);
 
     await supabase.from("audit_logs").insert({
       user_id: user.id,
@@ -54,9 +49,10 @@ serve(async (req) => {
       data: { realm_id: conn.qb_realm_id, company_name: conn.qb_company_name },
     });
 
-    return new Response(JSON.stringify({ success: true, disconnected: true, provider_revocation: 'unverified' }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
-    console.error("[qb-disconnect] disconnection unavailable");
-    return new Response(JSON.stringify({ error: 'DISCONNECTION_UNAVAILABLE' }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[qb-disconnect]", msg);
+    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

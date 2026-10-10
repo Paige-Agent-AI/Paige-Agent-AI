@@ -25,7 +25,7 @@ CREATE TABLE public.finance_source_bindings (
  tenant_id uuid NOT NULL,
  entity_id uuid NOT NULL,
  provider text NOT NULL CHECK(provider IN ('quickbooks','plaid')),
- quickbooks_connection_id uuid REFERENCES public.quickbooks_connections(id) ON DELETE RESTRICT,
+ quickbooks_connection_id uuid,
  -- Historical opaque identity survives credential/account erasure. The insertion
  -- and lifecycle guards below validate live anchors without blocking privacy deletion.
  plaid_account_anchor_id uuid,
@@ -87,8 +87,10 @@ BEGIN
  IF TG_OP='INSERT' THEN
   IF NEW.provider='plaid' THEN
    PERFORM 1 FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id AND is_active FOR SHARE;
-   IF NOT FOUND THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
+  ELSE
+   PERFORM 1 FROM public.quickbooks_connections WHERE id=NEW.quickbooks_connection_id AND is_active FOR SHARE;
   END IF;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
   RETURN NEW;
  END IF;
  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Financial source history is retained' USING ERRCODE='42501'; END IF;
@@ -107,14 +109,15 @@ CREATE TRIGGER finance_binding_identity_guard BEFORE INSERT OR UPDATE OR DELETE 
 CREATE FUNCTION public._finance_quickbooks_deactivation() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
- IF NEW.is_active IS NOT TRUE THEN
+ IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE THEN
   UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
-   WHERE quickbooks_connection_id=NEW.id AND verification_state<>'revoked';
+   WHERE quickbooks_connection_id=OLD.id AND verification_state<>'revoked';
  END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; END IF;
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._finance_quickbooks_deactivation() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER finance_quickbooks_deactivation AFTER UPDATE OF is_active ON public.quickbooks_connections FOR EACH ROW EXECUTE FUNCTION public._finance_quickbooks_deactivation();
+CREATE TRIGGER finance_quickbooks_deactivation BEFORE UPDATE OF is_active OR DELETE ON public.quickbooks_connections FOR EACH ROW EXECUTE FUNCTION public._finance_quickbooks_deactivation();
 
 CREATE FUNCTION public._finance_plaid_retirement() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

@@ -18,6 +18,8 @@ CREATE TABLE public.tenant_members(tenant_id uuid,user_id uuid,role text,status 
 CREATE TABLE public.user_roles(user_id uuid,role text);
 CREATE TABLE public.agency_team_members(agency_tenant_id uuid,user_id uuid,agency_role text,status text,scoped_subaccounts uuid[]);
 CREATE TABLE public.quickbooks_connections(id uuid PRIMARY KEY,user_id uuid,is_active boolean);
+CREATE TABLE public.quickbooks_financials(id uuid PRIMARY KEY,qb_connection_id uuid REFERENCES public.quickbooks_connections(id) ON DELETE CASCADE);
+CREATE TABLE public.quickbooks_transactions(id uuid PRIMARY KEY,qb_connection_id uuid REFERENCES public.quickbooks_connections(id) ON DELETE CASCADE);
 CREATE TABLE public.connected_bank_accounts(id uuid PRIMARY KEY,user_id uuid,is_active boolean);
 CREATE TABLE public.connected_bank_account_secrets(account_id uuid PRIMARY KEY REFERENCES public.connected_bank_accounts(id) ON DELETE CASCADE,synthetic_token text);
 -- Existing canonical authority contracts are dependencies, not Finance role semantics.
@@ -133,6 +135,16 @@ DO $$ BEGIN
 END $$;
 SELECT 'Finance source authority PASS: synthetic PostgreSQL only; authenticated/provider acceptance owed' AS result;
 -- Scoped agency delegation is a canonical dependency fixture; no agency role engine is added.
+BEGIN;
+INSERT INTO quickbooks_financials VALUES('70000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001');
+INSERT INTO quickbooks_transactions VALUES('70000000-0000-0000-0000-000000000002','40000000-0000-0000-0000-000000000001');
+DELETE FROM quickbooks_connections WHERE id='40000000-0000-0000-0000-000000000001';
+DO $$ BEGIN
+ IF EXISTS(SELECT 1 FROM quickbooks_connections) OR EXISTS(SELECT 1 FROM quickbooks_financials) OR EXISTS(SELECT 1 FROM quickbooks_transactions) THEN RAISE EXCEPTION 'Finance history prevented QuickBooks credential/cache erasure'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000003' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'QuickBooks deletion did not retain revoked history'; END IF;
+END $$;
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','sandbox','test-erased-realm')$q$,'42501');
+ROLLBACK;
 BEGIN;
 INSERT INTO connected_bank_accounts VALUES('40000000-0000-0000-0000-000000000011','10000000-0000-0000-0000-000000000001',true);
 INSERT INTO connected_bank_account_secrets VALUES('40000000-0000-0000-0000-000000000011','synthetic-only');

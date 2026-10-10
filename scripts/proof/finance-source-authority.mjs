@@ -103,6 +103,14 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     await blockedCompetitor(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000002';`, ingest.release);
     await ingest.done;
     sql(database, `SELECT public.fixture_expect_error($q$${observation.replace('test-concurrent', 'test-after-revoke')}$q$,'42501');`);
+    sql(database, `INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000013','10000000-0000-0000-0000-000000000001',true);`);
+    const bindingInsert = `INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
+      VALUES('50000000-0000-0000-0000-000000000013','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000013','sandbox','test-concurrent-binding','verified','60000000-0000-0000-0000-000000000013',now());`;
+    const bindingCreation = holding(database, `RESET ROLE; ${bindingInsert}`);
+    await bindingCreation.held;
+    await blockedCompetitor(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000013';`, bindingCreation.release);
+    await bindingCreation.done;
+    assert.equal(sql(database, "SELECT verification_state||':'||revision FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000013';").trim(), 'revoked:2');
     sql(database, `INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);`);
     const agencyActor = `SELECT set_config('test.actor','10000000-0000-0000-0000-000000000003',false);`;
     const agencyRead = holding(database, `${agencyActor} SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001');`);

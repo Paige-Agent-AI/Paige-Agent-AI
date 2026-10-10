@@ -1,0 +1,61 @@
+/* Marketing › Ads (INT-342 S1c, owner-approved prototype v2). Builds on the Overview's card, head,
+ * summary and link styles (marketing-overview.css). Solo tokens only; nothing here is an act that spends
+ * or publishes, so no gold. No authored motion. */
+.paige-solo .mad .campaigns-segmented button{font-size:12px;padding:3px 10px;line-height:20px}
+.paige-solo .mad .pill-n{color:var(--ink-2)} /* the base pill-n ink-3 measures 3.58:1 on sunk in light */
+
+/* provider strip */
+.mad-prov{display:flex;align-items:center;gap:12px 14px;flex-wrap:wrap;padding:14px 18px}
+.mad-logo{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--surface-sunk);color:var(--ink-2);flex:none}
+.mad-prov-b{display:grid;gap:2px;flex:1 1 260px;min-width:0}
+.mad-prov-b strong,.mad-row-b strong{font-size:13.5px;font-weight:600;color:var(--ink)}
+.mad-prov-b small,.mad-row-b small{font-size:12.5px;color:var(--ink-2)}
+
+/* pacing (ghost until a connection exists) */
+.mad-pace-b{display:grid;gap:14px;padding:16px 18px 18px}
+.mad-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0}
+.mad-nums div{display:grid;gap:4px}
+.mad-nums dt{font-size:12px;color:var(--ink-2)}
+.mad-nums dd{margin:0;font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.mad-track{height:10px;border-radius:99px;background:var(--surface-sunk);border:1px dashed var(--line)}
+.mad-plan{font-size:13px;color:var(--ink-2)}
+.mad-plan ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mad-plan li{display:flex;justify-content:space-between;gap:6px 14px;flex-wrap:wrap;padding:8px 12px;border-radius:var(--r-m);background:var(--surface-2);border:1px solid var(--line-soft)}
+.mad-plan li span{color:var(--ink);overflow-wrap:anywhere}
+.mad-plan li small{font-size:12px;color:var(--ink-2)}
+@container (max-width:640px){.mad-nums{grid-template-columns:minmax(0,1fr)}}
+
+/* two-up */
+.mad-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;align-items:start}
+@container (max-width:900px){.mad-two{grid-template-columns:minmax(0,1fr)}}
+.mad-row{display:flex;align-items:center;gap:12px;padding:14px 18px;flex-wrap:wrap}
+.mad-row-b{display:grid;gap:2px;flex:1 1 200px;min-width:0}
+.mad-ini{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--violet-tint, var(--surface-sunk));color:var(--violet);font-size:12px;font-weight:700;flex:none}
+.mad-list{list-style:none;margin:0;padding:0}
+.mad-list li{display:flex;align-items:center;gap:8px 14px;padding:12px 18px;border-top:1px solid var(--line-soft)}
+.mad-list li:first-child{border-top:0}
+.mad-newest li:first-child{border-top:1px solid var(--line-soft)}
+
+/* empty and unavailable views */
+.mad-empty{display:grid;justify-items:start;gap:8px;padding:22px 20px;max-width:640px}
+.mad-empty h2{font-size:15px}
+.mad-empty p{font-size:13px;color:var(--ink-2)}
+
+/* creative: each saved ad as it would read in a feed */
+.mad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),400px));gap:14px}
+.mad-card{display:grid;align-content:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-1);overflow:hidden;min-width:0}
+.mad-prev{margin:14px 14px 0;border:1px solid var(--line-soft);border-radius:var(--r-m);background:var(--surface-2);overflow:hidden}
+.mad-prev-h{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.mad-prev-h b{display:block;font-size:12.5px;color:var(--ink)}
+.mad-prev-h small{display:block;font-size:11px;color:var(--ink-2)}
+.mad-av{width:26px;height:26px;border-radius:50%;background:var(--surface-sunk);border:1px solid var(--line);flex:none}
+.mad-prev-t{padding:0 12px 10px;font-size:13px;line-height:1.45;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.mad-prev-img{display:grid;place-items:center;aspect-ratio:1.91/1;background:var(--surface-sunk);border-block:1px solid var(--line-soft);font-size:11.5px;color:var(--ink-2)}
+.mad-prev-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;font-size:12.5px;font-weight:600;line-height:1.35;color:var(--ink)}
+.mad-prev-f>span:first-child{min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.mad-cta{flex:none;font-size:11.5px;padding:5px 10px;border-radius:6px;background:var(--surface-sunk);border:1px solid var(--line);color:var(--ink)}
+.mad-meta{display:grid;gap:3px;padding:12px 14px 14px}
+.mad-meta strong{font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}
+.mad-meta small{font-size:12px;color:var(--ink-2)}
+.mad-meta-a{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mad-note{font-size:12px;color:var(--ink-2);padding:0 4px}

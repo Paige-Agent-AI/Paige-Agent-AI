@@ -390,6 +390,12 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
      members (the prototype showed members an owners-and-admins message; Overview already shows members the
      same lead counts) while the email row tells a member its figures are for owners and admins; the
      campaign-tag list is kept from the earlier Analytics (§58).
+   - **S1d shipped** (#1913, 2026-10-10) and, on the owner's word ("Analytics HAS to be more visual than anything
+     else we have done"), carries headline figures with sparklines, leads over time, outcome, source and form rings,
+     a weekday × hour heatmap and the email rates chart on top of the approved funnel.
+   - **S1c as built:** the desk says "Paige can't read an ad account yet" rather than the prototype's "No ad account
+     connected", because Meta or Metricool can be connected in Integrations while nothing reads them; the preview
+     header reads "Your business" (no tenant-name read added for a mock frame).
    - Overview gains capture points, recent leads and the rebuilt attention list (reading routing columns **or**
      automations, fixing C).
    - One form panel opens from Overview, Campaigns and Analytics via `?form=`.

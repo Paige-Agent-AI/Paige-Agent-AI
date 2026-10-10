@@ -17,7 +17,8 @@ import { SUBMISSION_READ_LIMIT } from "./marketing-overview-model";
 import { MarketingAnalytics } from "./marketing-analytics";
 import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
-import { MarketingAds, MarketingContent } from "./marketing-planned";
+import { MarketingContent } from "./marketing-planned";
+import { MarketingAds, adsViewOf } from "./marketing-ads";
 import { CAPTURE_FILTERS, MarketingOverview, sendsToPipeline } from "./marketing-overview";
 import { MarketingEmail } from "./marketing-email";
 import { MarketingAudience } from "./marketing-audience";
@@ -577,6 +578,6 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
   else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||[]).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>}/>;
-  else if(tab==="ads") body=<MarketingAds tenantId={data.tenantId} onOpenIntegrations={params.account?()=>navigate(subtabPath("solo",params.account,"settings","integrations")):null}/>;
+  else if(tab==="ads") body=<MarketingAds tenantId={data.tenantId} view={adsViewOf(query.get("view"))} onView={(view)=>setOverviewQuery({view:view==="overview"?null:view})} onOpenIntegrations={params.account?()=>navigate(subtabPath("solo",params.account,"settings","integrations")):null} onOpenAudience={()=>setTab("audience")} onOpenAnalytics={()=>setTab("analytics")} onOpenCampaigns={()=>setTab("campaigns")}/>;
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab==="capture"?"overview":tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab==="capture"?"overview":tab}`} className="campaigns-scroll">{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail||formDetail} onClose={detail?closeDetail:closeForm}/></div>;
 };

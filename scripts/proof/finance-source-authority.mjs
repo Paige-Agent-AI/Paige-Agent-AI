@@ -57,6 +57,11 @@ async function blockedCompetitor(database, text, release) {
   const outcome = competing(database, `SET application_name='finance-proof-lock-waiter'; ${text}`).then(value => ({ value }), error => ({ error }));
   let waiting = false;
   try {
+    // Read the actual canonical retirement policy; authority remains a fixture.
+    const canonical = readFileSync(new URL('../../supabase/migrations/20270602000302_operator_provider_retirement.sql', import.meta.url), 'utf8');
+    const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
+    assert.ok(disposition, 'Canonical retirement disposition missing');
+    sql(database, disposition);
     for (let probe = 0; probe < 10; probe++) {
       if (sql(database, "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='finance-proof-lock-waiter' AND wait_event_type='Lock');").trim() === 't') { waiting = true; break; }
       await new Promise(resolve => setTimeout(resolve, 25));
@@ -71,6 +76,11 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
   const database = `finance_fixture_${process.pid}_${leg}`;
   sql('postgres', `CREATE DATABASE ${database};`);
   try {
+    // Read the actual canonical retirement policy; authority remains a fixture.
+    const canonical = readFileSync(new URL('../../supabase/migrations/20270602000302_operator_provider_retirement.sql', import.meta.url), 'utf8');
+    const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
+    assert.ok(disposition, 'Canonical retirement disposition missing');
+    sql(database, disposition);
     const result = run(database, undefined, ['-v', `apply_finance_migration=${suite === 'quickbooks' || leg !== 'absent' ? 1 : 0}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
     if (leg === 'absent') {
       assert.notEqual(result.status, 0);

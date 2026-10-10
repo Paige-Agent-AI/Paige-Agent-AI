@@ -35,7 +35,7 @@ BEGIN
   OR (OLD.status='exchanging' AND NEW.status IN ('failed','refused','cancelled','expired'))) THEN
   RAISE EXCEPTION 'QuickBooks authorization changed' USING ERRCODE='40001';
  END IF;
- IF (OLD.status<>'pending' AND NEW.binding_hash IS DISTINCT FROM OLD.binding_hash)
+ IF (NOT (OLD.status='pending' AND NEW.status='launched') AND NEW.binding_hash IS DISTINCT FROM OLD.binding_hash)
   OR (NEW.status<>'exchanging' AND NEW.consumed_at IS DISTINCT FROM OLD.consumed_at) THEN
   RAISE EXCEPTION 'QuickBooks authorization proof is immutable' USING ERRCODE='42501';
  END IF;

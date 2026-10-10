@@ -172,6 +172,12 @@ try {
   assert.equal((await db.query('select count(*)::int n from paige_durable_work where tenant_id=$1',[concurrent])).rows[0].n,0);
   console.log('PASS: two actual PostgreSQL sessions serialize archive against a concurrent work insertion; no claim escapes and duplicate archive is idempotent.');
  }
+ // Exercise cleanup against the real protected-role trigger too, not just a roles-table stub.
+ await db.exec(`CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('request.jwt.claim.role',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'role')$$;
+ CREATE TABLE public.platform_operator_roles(role text PRIMARY KEY);`);
+ const roleGuard=await readFile('supabase/migrations/20270510000000_operator_standing_one_answer.sql','utf8');
+ await db.exec(roleGuard.match(/CREATE OR REPLACE FUNCTION public\.enforce_protected_role_grant\(\)[\s\S]*?\$function\$;/)[0]);
+ await db.exec('CREATE TRIGGER fixture_protected_role_grant BEFORE INSERT OR UPDATE OR DELETE ON public.user_roles FOR EACH ROW EXECUTE FUNCTION public.enforce_protected_role_grant();');
  const cleanupFixture='00000000-0000-0000-0000-000000000097';
  await db.query("insert into tenants(id,name,status,account_type) values($1,'Proof Cleanup','active','standalone')",[cleanupFixture]);
  await db.exec('CREATE TABLE fixture_retention_obligation(tenant_id uuid REFERENCES tenants(id));');

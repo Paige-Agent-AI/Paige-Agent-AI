@@ -7,6 +7,9 @@ export function retireSyntheticTenantSQL(tenantId) {
  if(!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(tenantId))throw new Error('Synthetic fixture UUID required');
  return `DO $fixture_retire$
  DECLARE fixture_actor uuid:=gen_random_uuid(); operation uuid:=gen_random_uuid(); p jsonb; account_name text;
+  prior_claims text:=current_setting('request.jwt.claims',true);
+  prior_sub text:=current_setting('request.jwt.claim.sub',true);
+  prior_role text:=current_setting('request.jwt.claim.role',true);
  BEGIN
   SELECT name INTO account_name FROM public.tenants WHERE id='${tenantId}';
   IF NOT FOUND THEN RETURN; END IF;
@@ -25,6 +28,11 @@ export function retireSyntheticTenantSQL(tenantId) {
   IF NOT (p->>'execution_available')::boolean THEN RAISE EXCEPTION 'Synthetic deletion cleanup blocked: %',p->'blockers'; END IF;
   PERFORM public.operator_delete_archived_account('${tenantId}',p->>'version',account_name,operation);
   IF EXISTS(SELECT 1 FROM public.tenants WHERE id='${tenantId}') THEN RAISE EXCEPTION 'Synthetic tenant cleanup absence not verified'; END IF;
+  -- Restore the caller's original disposable-DB context before protected fixture-role cleanup.
+  -- The ordinary synthetic Admin cannot revoke itself through the protected role trigger.
+  PERFORM set_config('request.jwt.claims',coalesce(prior_claims,''),true);
+  PERFORM set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
+  PERFORM set_config('request.jwt.claim.role',coalesce(prior_role,''),true);
   DELETE FROM public.user_roles WHERE user_id=fixture_actor;
   DELETE FROM auth.users WHERE id=fixture_actor;
  END $fixture_retire$;`;

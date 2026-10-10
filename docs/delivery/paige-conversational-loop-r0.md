@@ -1,5 +1,41 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-10 program acceptance matrix — handoff grounding, before any code change
+
+INT-304 handoff grounding by the new Conversational Loop agent, verified read-only against
+main `024df3e3e` (the live rollout row re-read the same day: `active=false`,
+edge_head/drain_evidence_sha256/activated_at NULL, zero threads holding
+`interactive_executor_intent`, one owner conversational-admission thread from his own prod
+test). GitHub at grounding: #1807 CLOSED (its automatic-settlement objective remains partial —
+see the row below), #1822 OPEN (the security gate), #1832 OPEN (the QA principal). LIVE =
+merged and mounted with its guards; PARTIAL = proven subset with the missing part named;
+BLOCKED = complete but gated on an external dependency. Every authenticated-runtime claim
+stays PROOF OWED under #1832; no row below upgrades one.
+
+| stage | verdict | evidence |
+|---|---|---|
+| C0a capability projection | LIVE | #1697; projection manifest + CI declaration lint |
+| C0b registration burn-down | PARTIAL | #1874/#1877/#1878 registered the incumbent adapters (declaration baseline 80→61 plus the observation/discovery registrations); remaining baseline tools converge incrementally — no rebuild |
+| C1 turn contract + C1b shared reader | LIVE | #1710/#1716; `paige_turn` frames, `_shared/paige-turn`, `src/lib/paige-stream` |
+| C2a/C2b tool lifecycle steps | LIVE | #1719/#1729; per-tool running/done steps pinned by `c2-working-lifecycle` and the handler suites |
+| C3 living response | LIVE | #1744; owner-approved frozen design (§28); C3b parity items open (Studio/operator client wording, craft residuals) |
+| C4a approval resume | LIVE (harness) | #1762; authenticated drive owed (#1832) |
+| C4b governed door resume | LIVE (harness) | #1766; CRM door driven real, Sales/publish doors modelled; preview-bound proposals and the crm cycle-nonce fix open |
+| C4c ASK_USER resume | LIVE (harness) | #1771; Studio reply binding and Operator prose questions open |
+| C4d durable-work continuation | PARTIAL | `projectDurableContinuation` is a pure eligibility projection with zero runtime callers (by design); `read_paige_durable_observation` is live (#1874); effectful continuation is blocked by INT-346 |
+| C4e Deep Research durable adoption | PARTIAL | `prepare_paige_research_work` blocked envelope live (#1862, `research_execution_not_enabled`); no worker or dispatch path by design |
+| C4f authenticated acceptance | BLOCKED | `scripts/proof/int304-authenticated-observation.mjs` complete and unit-tested; requires the #1832 QA fixture |
+| C5 specialist coordination | PARTIAL | roster-driven labels shipped (`specialist-step-label.ts`, `SUBAGENT_FRIENDLY` retired); delegation-status events, refusal propagation and parallel consults open; D2 owner-reserved |
+| C6 contextual intelligence | PARTIAL | 4/5 ORIENT sources wired (owner memory confirmed-only, Research metadata ≤3 rows, Knowledge, business context; Mind domain-scoped Integrations Mind only); INT-326 C6 consumption dials not yet applied |
+| INT-346 server-issued settlement | LIVE / DRAINING | #1823 receipts live; rollout `active=false` |
+| INT-346 typed-Chat P0 restoration | LIVE / OWNER-ACCEPTED | #1899 conversational admission; the owner tested production typed Chat 2026-10-10 |
+| #1807 unknown-effect reconciliation | PARTIAL | classifier + canonical original discovery + authenticated readback + dispatch brake live (#1859/#1871/#1874/#1878); the failure/refusal observation producer and every settlement/release path are absent (gated) |
+
+Standing gates, unchanged: #1822 blocks PATH A activation (per-execution authoritative
+shutdown records for pre-rollout generations including v358, or a Supabase control-plane
+attestation); #1832 blocks every authenticated-runtime PASS; D2 (tool-less consult authority)
+is owner-reserved. Nothing in this matrix re-litigates them.
+
 ## Final C0b owner-only model exposure correction
 
 The existing owner-only gate never permits automation_set_grant or automation_set_state from

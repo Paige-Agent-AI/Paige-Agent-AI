@@ -1,0 +1,14 @@
+{
+ "environment":"production",
+ "deployment":"dpl_2ijFz79xZRNCZSndmNrZPiEnZngy",
+ "sha":"28e196eea890921fc0a5e7a685853b79208bc028",
+ "pullRequest":"https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1889",
+ "origin":"https://app.paigeagent.ai",
+ "asset":"SoloEntry-DaFeisux.js",
+ "status":200,
+ "bytes":1956557,
+ "markers":["Banking & Cash","Your labels stay yours","A current company bank balance is required.","First page retrieved"],
+ "menuPlacement":"Sales immediately followed by Finance",
+ "authenticatedRuntime":"UNVERIFIED: approved QA credentials absent and account protection unverified",
+ "fullDepartment":"PARTIAL: UI/read foundation deployed; full Finance capability target remains open"
+}

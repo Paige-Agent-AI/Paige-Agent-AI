@@ -1,5 +1,19 @@
 -- Finance scope/evidence metadata only. No ledger, provider activation, tokens or legacy backfill.
 BEGIN;
+-- Provider-owned environment provenance is missing on legacy Plaid rows. Leave
+-- it unknown; only a trusted provider adapter may supply it. Never default the
+-- historical environment from client input or legacy sandbox code.
+ALTER TABLE public.connected_bank_accounts ADD COLUMN plaid_environment text
+ CHECK(plaid_environment IN ('sandbox','development','production'));
+CREATE FUNCTION public._finance_plaid_environment_guard() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$ BEGIN
+ IF NEW.plaid_environment IS NOT NULL AND (TG_OP='INSERT' OR NEW.plaid_environment IS DISTINCT FROM OLD.plaid_environment)
+  AND current_user NOT IN ('postgres','service_role') THEN RAISE EXCEPTION 'Provider environment requires a private adapter' USING ERRCODE='42501'; END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._finance_plaid_environment_guard() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER finance_plaid_environment_guard BEFORE INSERT OR UPDATE ON public.connected_bank_accounts
+ FOR EACH ROW EXECUTE FUNCTION public._finance_plaid_environment_guard();
 CREATE TABLE public.finance_company_entities (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  tenant_id uuid NOT NULL REFERENCES public.tenants(id) ON DELETE RESTRICT,
@@ -102,7 +116,7 @@ REVOKE ALL ON FUNCTION public._finance_retirement_allowed(uuid) FROM PUBLIC,anon
 
 CREATE FUNCTION public._finance_binding_identity_guard() RETURNS trigger
 LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
-DECLARE source_actor uuid; locked_actor uuid;
+DECLARE source_actor uuid; locked_actor uuid; native_namespace text; native_environment text; native_scope text;
 BEGIN
  IF TG_OP='INSERT' THEN
   IF NEW.provider='plaid' THEN SELECT user_id INTO source_actor FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id;
@@ -111,11 +125,14 @@ BEGIN
   PERFORM 1 FROM public.tenants WHERE id=NEW.tenant_id AND status IN ('trial','active','past_due') AND archived_at IS NULL AND NOT lifecycle_execution_paused FOR SHARE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace unavailable' USING ERRCODE='42501'; END IF;
   IF NEW.provider='plaid' THEN
-   SELECT user_id INTO locked_actor FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id AND is_active FOR SHARE;
+   SELECT user_id,account_id,plaid_environment INTO locked_actor,native_namespace,native_environment FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id AND is_active FOR SHARE;
   ELSE
-   SELECT user_id INTO locked_actor FROM public.quickbooks_connections WHERE id=NEW.quickbooks_connection_id AND is_active FOR SHARE;
+   SELECT user_id,qb_realm_id,environment,scope INTO locked_actor,native_namespace,native_environment,native_scope FROM public.quickbooks_connections WHERE id=NEW.quickbooks_connection_id AND is_active FOR SHARE;
   END IF;
   IF NOT FOUND OR locked_actor IS DISTINCT FROM source_actor THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
+  IF native_namespace IS NULL OR native_environment IS NULL OR NEW.source_namespace IS DISTINCT FROM native_namespace
+   OR NEW.environment IS DISTINCT FROM native_environment THEN RAISE EXCEPTION 'Financial provider identity mismatch or unknown' USING ERRCODE='42501'; END IF;
+  IF NEW.provider='quickbooks' AND (native_scope ~ '(^|[[:space:]])com\.intuit\.quickbooks\.accounting($|[[:space:]])') IS NOT TRUE THEN RAISE EXCEPTION 'Accounting consent unavailable' USING ERRCODE='42501'; END IF;
   -- Match observation lock order: provider before company before binding.
   PERFORM 1 FROM public.finance_company_entities e JOIN public.tenants t ON t.id=e.tenant_id
    WHERE e.id=NEW.entity_id AND e.tenant_id=NEW.tenant_id AND e.is_active
@@ -158,8 +175,8 @@ CREATE FUNCTION public._finance_plaid_retirement() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
  IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE OR
-  ROW(NEW.plaid_item_id,NEW.account_id,NEW.user_id,NEW.business_id)
-   IS DISTINCT FROM ROW(OLD.plaid_item_id,OLD.account_id,OLD.user_id,OLD.business_id) THEN
+  ROW(NEW.plaid_item_id,NEW.account_id,NEW.plaid_environment,NEW.user_id,NEW.business_id)
+   IS DISTINCT FROM ROW(OLD.plaid_item_id,OLD.account_id,OLD.plaid_environment,OLD.user_id,OLD.business_id) THEN
   UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
    WHERE plaid_account_anchor_id=OLD.id AND verification_state<>'revoked';
  END IF;
@@ -205,7 +222,7 @@ CREATE TRIGGER finance_setup_source_invalidation AFTER UPDATE OF brand ON public
 
 CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE binding public.finance_source_bindings; active boolean; source_actor uuid; locked_actor uuid;
+DECLARE binding public.finance_source_bindings; active boolean; source_actor uuid; locked_actor uuid; native_namespace text; native_environment text; native_scope text;
 BEGIN
  IF TG_OP='DELETE' AND public._finance_retirement_allowed(OLD.tenant_id) THEN RETURN OLD; END IF;
  IF TG_OP<>'INSERT' THEN RAISE EXCEPTION 'Financial source observations are immutable' USING ERRCODE='42501'; END IF;
@@ -217,11 +234,14 @@ BEGIN
  PERFORM 1 FROM public.tenants WHERE id=NEW.tenant_id AND status IN ('trial','active','past_due') AND archived_at IS NULL AND NOT lifecycle_execution_paused FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace unavailable or paused' USING ERRCODE='42501'; END IF;
  IF binding.provider='quickbooks' THEN
-  SELECT is_active,user_id INTO active,locked_actor FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id FOR SHARE;
+  SELECT is_active,user_id,qb_realm_id,environment,scope INTO active,locked_actor,native_namespace,native_environment,native_scope FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id FOR SHARE;
  ELSE
-  SELECT is_active,user_id INTO active,locked_actor FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id FOR SHARE;
+  SELECT is_active,user_id,account_id,plaid_environment INTO active,locked_actor,native_namespace,native_environment FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id FOR SHARE;
  END IF;
  IF NOT coalesce(active,false) OR locked_actor IS DISTINCT FROM source_actor THEN RAISE EXCEPTION 'Financial connection revoked' USING ERRCODE='42501'; END IF;
+ IF native_namespace IS NULL OR native_environment IS NULL OR binding.source_namespace IS DISTINCT FROM native_namespace
+  OR binding.environment IS DISTINCT FROM native_environment THEN RAISE EXCEPTION 'Financial provider identity changed or unknown' USING ERRCODE='42501'; END IF;
+ IF binding.provider='quickbooks' AND (native_scope ~ '(^|[[:space:]])com\.intuit\.quickbooks\.accounting($|[[:space:]])') IS NOT TRUE THEN RAISE EXCEPTION 'Accounting consent unavailable' USING ERRCODE='42501'; END IF;
  -- Lock mutable inputs in workspace → connection → company → binding order.
  -- Re-read the binding after lifecycle locks; the earlier read grants no proof.
  PERFORM 1 FROM public.finance_company_entities e JOIN public.tenants t ON t.id=e.tenant_id

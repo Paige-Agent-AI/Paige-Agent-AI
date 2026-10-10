@@ -88,6 +88,15 @@ DO $$ BEGIN
  IF (SELECT count(*) FROM finance_company_entities)<>3 THEN RAISE EXCEPTION 'Entity isolation failed'; END IF;
 END $$;
 INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001',true);
+UPDATE quickbooks_connections SET qb_realm_id='test-realm-1' WHERE id='40000000-0000-0000-0000-000000000001';
+BEGIN;
+UPDATE quickbooks_connections SET scope='com.intuit.quickbooks.payment' WHERE id='40000000-0000-0000-0000-000000000001';
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','sandbox','test-realm-1')$q$,'42501');
+UPDATE quickbooks_connections SET scope=NULL WHERE id='40000000-0000-0000-0000-000000000001';
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','sandbox','test-realm-1')$q$,'42501');
+ROLLBACK;
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','sandbox','wrong-native-realm','verified',gen_random_uuid(),now())$q$,'42501');
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','production','test-realm-1')$q$,'42501');
 INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000002',true);
 SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000099','sandbox','test-foreign-owner')$q$,'42501');
 DELETE FROM quickbooks_connections WHERE id='40000000-0000-0000-0000-000000000099';
@@ -105,6 +114,13 @@ SELECT public.fixture_expect_error($q$UPDATE finance_source_bindings SET revisio
 INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,currency,reporting_basis,source_observed_at,coverage,pages_complete,evidence_digest)
  VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'test-account-1','bank_accounts',null,'not_supplied',now(),'partial',false,repeat('a',64));
 SELECT public.fixture_expect_error($q$UPDATE finance_source_observations SET coverage='complete'$q$,'42501');
+BEGIN;
+-- Simulate a restored provider row whose lifecycle invalidation did not run.
+ALTER TABLE quickbooks_connections DISABLE TRIGGER finance_quickbooks_deactivation;
+UPDATE quickbooks_connections SET qb_realm_id='unexpected-restored-realm' WHERE id='40000000-0000-0000-0000-000000000001';
+ALTER TABLE quickbooks_connections ENABLE TRIGGER finance_quickbooks_deactivation;
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,evidence_digest) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'restored-source-mismatch','bank_accounts',now(),'partial',repeat('f',64))$q$,'42501');
+ROLLBACK;
 UPDATE tenants SET lifecycle_execution_paused=true WHERE id='20000000-0000-0000-0000-000000000001';
 SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,evidence_digest) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'test-paused','bank_accounts',now(),'partial',repeat('e',64))$q$,'42501');
 UPDATE tenants SET lifecycle_execution_paused=false WHERE id='20000000-0000-0000-0000-000000000001';
@@ -178,6 +194,7 @@ DO $$ BEGIN
   OR public.operator_retirement_disposition('unknown_finance_table')<>'blocked' THEN RAISE EXCEPTION 'Canonical disposition changed outside Finance'; END IF;
 END $$;
 INSERT INTO quickbooks_connections(id,user_id,is_active) VALUES('40000000-0000-0000-0000-000000000990','10000000-0000-0000-0000-000000000001',true);
+UPDATE quickbooks_connections SET qb_realm_id='retirement-controlled-native' WHERE id='40000000-0000-0000-0000-000000000990';
 INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
  VALUES('50000000-0000-0000-0000-000000000990','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000990','quickbooks','40000000-0000-0000-0000-000000000990','sandbox','retirement-controlled-native','verified',gen_random_uuid(),now());
 INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,pages_complete,evidence_digest)
@@ -219,6 +236,16 @@ SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant
 ROLLBACK;
 BEGIN;
 INSERT INTO connected_bank_accounts VALUES('40000000-0000-0000-0000-000000000011','10000000-0000-0000-0000-000000000001',true);
+UPDATE connected_bank_accounts SET account_id='test-plaid-account' WHERE id='40000000-0000-0000-0000-000000000011';
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000011','sandbox','test-plaid-account')$q$,'42501');
+UPDATE connected_bank_accounts SET plaid_environment='sandbox' WHERE id='40000000-0000-0000-0000-000000000011';
+GRANT SELECT(id),UPDATE(plaid_environment),INSERT(id,user_id,is_active,plaid_environment) ON connected_bank_accounts TO authenticated;
+SET ROLE authenticated;
+SELECT public.fixture_expect_error($q$UPDATE connected_bank_accounts SET plaid_environment='production' WHERE id='40000000-0000-0000-0000-000000000011'$q$,'42501');
+SELECT public.fixture_expect_error($q$INSERT INTO connected_bank_accounts(id,user_id,is_active,plaid_environment) VALUES('40000000-0000-0000-0000-000000000088','10000000-0000-0000-0000-000000000001',true,'production')$q$,'42501');
+RESET ROLE;
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace,verification_state,verification_reference,verified_at) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000011','sandbox','wrong-native-account','verified',gen_random_uuid(),now())$q$,'42501');
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000011','production','test-plaid-account')$q$,'42501');
 INSERT INTO connected_bank_account_secrets VALUES('40000000-0000-0000-0000-000000000011',decode('73796e746865746963','hex'));
 INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace,verification_state,verification_reference,verified_at)
  VALUES('50000000-0000-0000-0000-000000000011','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000011','sandbox','test-plaid-account','verified','60000000-0000-0000-0000-000000000011',now());
@@ -227,6 +254,9 @@ DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000011' AND verification_state='verified' AND revision=1) THEN RAISE EXCEPTION 'Ordinary cursor update invalidated unchanged account identity'; END IF;
 END $$;
 SAVEPOINT before_native_change;
+UPDATE connected_bank_accounts SET plaid_environment='production' WHERE id='40000000-0000-0000-0000-000000000011';
+DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000011' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Plaid environment change reused verification'; END IF; END $$;
+ROLLBACK TO SAVEPOINT before_native_change;
 UPDATE connected_bank_accounts SET account_id='test-different-native-account' WHERE id='40000000-0000-0000-0000-000000000011';
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000011' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Native account change reused company verification'; END IF;
@@ -278,7 +308,7 @@ SET LOCAL ROLE authenticated;
 SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'54000');
 ROLLBACK;
 BEGIN;
-INSERT INTO quickbooks_connections SELECT format('40000000-0000-0000-0001-%s',lpad(i::text,12,'0'))::uuid,'10000000-0000-0000-0000-000000000001',true FROM generate_series(1,1001) i;
+INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) SELECT format('40000000-0000-0000-0001-%s',lpad(i::text,12,'0'))::uuid,'10000000-0000-0000-0000-000000000001',true,'test-catalog-realm-'||i FROM generate_series(1,1001) i;
 INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace)
  SELECT '20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks',format('40000000-0000-0000-0001-%s',lpad(i::text,12,'0'))::uuid,'sandbox','test-catalog-realm-'||i FROM generate_series(1,1001) i;
 SET LOCAL ROLE authenticated;

@@ -104,7 +104,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     assert.equal(sql(database, "SELECT version FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000005';").trim(), '1');
     assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '5');
     sql(database, `
-      INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000001',true);
+      INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000001',true,'test-realm-2');
       INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
        VALUES('50000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000002','sandbox','test-realm-2','verified','60000000-0000-0000-0000-000000000002',now());`);
     const observation = `INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,evidence_digest)
@@ -114,7 +114,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     await blockedCompetitor(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000002';`, ingest.release);
     await ingest.done;
     sql(database, `SELECT public.fixture_expect_error($q$${observation.replace('test-concurrent', 'test-after-revoke')}$q$,'42501');`);
-    sql(database, `INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000013','10000000-0000-0000-0000-000000000001',true);`);
+    sql(database, `INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000013','10000000-0000-0000-0000-000000000001',true,'test-concurrent-binding');`);
     const bindingInsert = `INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
       VALUES('50000000-0000-0000-0000-000000000013','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000013','sandbox','test-concurrent-binding','verified','60000000-0000-0000-0000-000000000013',now());`;
     const bindingCreation = holding(database, `RESET ROLE; ${bindingInsert}`);
@@ -122,15 +122,15 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     await blockedCompetitor(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000013';`, bindingCreation.release);
     await bindingCreation.done;
     assert.equal(sql(database, "SELECT verification_state||':'||revision FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000013';").trim(), 'revoked:2');
-    sql(database, `INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000014','10000000-0000-0000-0000-000000000001',true);`);
+    sql(database, `INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000014','10000000-0000-0000-0000-000000000001',true,'test-company-binding');`);
     const companyBinding = bindingInsert.replaceAll('000000000013', '000000000014').replace('test-concurrent-binding', 'test-company-binding');
     const companyCreation = holding(database, `RESET ROLE; ${companyBinding}`);
     await companyCreation.held;
     await blockedCompetitor(database, "UPDATE finance_company_entities SET is_active=false,version=version+1 WHERE id='30000000-0000-0000-0000-000000000001';", companyCreation.release);
     await companyCreation.done;
     assert.equal(sql(database, "SELECT verification_state||':'||revision FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000014';").trim(), 'revoked:2');
-    sql(database, `INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000015','10000000-0000-0000-0000-000000000001',true);`);
-    sql(database, `SELECT public.fixture_expect_error($q$${companyBinding.replaceAll('000000000014','000000000015').replace('test-company-binding','test-inactive-company')}$q$,'42501');`);
+    sql(database, `INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000015','10000000-0000-0000-0000-000000000001',true,'test-setup-binding');`);
+    sql(database, `SELECT public.fixture_expect_error($q$${companyBinding.replaceAll('000000000014','000000000015').replace('test-company-binding','test-setup-binding')}$q$,'42501');`);
     sql(database, "UPDATE finance_company_entities SET is_active=true,version=version+1 WHERE id='30000000-0000-0000-0000-000000000001';");
     const setupBinding = companyBinding.replaceAll('000000000014','000000000015').replace('test-company-binding','test-setup-binding');
     const setupCreation = holding(database, `RESET ROLE; ${setupBinding}`);
@@ -138,7 +138,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     await blockedCompetitor(database, "UPDATE tenants SET brand=jsonb_set(brand,'{business_brief,legalName}','\"Changed Company\"') WHERE id='20000000-0000-0000-0000-000000000001';", setupCreation.release);
     await setupCreation.done;
     assert.equal(sql(database, "SELECT verification_state||':'||revision FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000015';").trim(), 'revoked:2');
-    sql(database, `SELECT public.fixture_expect_error($q$${companyBinding.replaceAll('000000000014','000000000015').replace('test-company-binding','test-setup-mismatch')}$q$,'42501');`);
+    sql(database, `SELECT public.fixture_expect_error($q$${setupBinding}$q$,'42501');`);
     sql(database, "UPDATE tenants SET brand=jsonb_set(brand,'{business_brief,legalName}','\"Test Company A\"') WHERE id='20000000-0000-0000-0000-000000000001';");
     assert.equal(sql(database, "SELECT verification_state||':'||revision FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000015';").trim(), 'revoked:2');
     sql(database, `INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);`);

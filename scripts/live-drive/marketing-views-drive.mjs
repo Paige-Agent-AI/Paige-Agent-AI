@@ -106,7 +106,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th, .mva-step-l small, .mva-step-t, .mva-bar em, .mva-row-t small, .mva-cov-l span, .mva-sub, .mva .pill-n, .mva-cap, .mva .mov-foot code, .mva-kpi-h, .mva-kpi-f, .mva-kpi-d, .mva-legend li, .mva-heat-x, .mva-heat-y, .mva-heat-key, .mva .mo-keys span, .mva .mo-keys em, .mad .pill-n, .mad-prov-b small, .mad-row-b small, .mad-nums dt, .mad-nums dd, .mad-plan, .mad-plan small, .mad-prev-h small, .mad-cta, .mad-meta small, .mad-note, .mad-empty p, .mad .campaigns-segmented button, .mad-missing, .mad-cta.is-missing, .mad-ini, .mct-sum, .mct .campaigns-segmented button, .mct-n, .mct-note, .mct-kind, .mct-meta small, .mct-cover small, .mct-cover span, .mct-cover em, .mct-words, .mct-foot, .mct-pub dt, .mct-missing, .mct .mo-keys span, .mct .mo-keys em, .mct-facts, .mct-asked span, .mct-act-note")) {
+        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th, .mva-step-l small, .mva-step-t, .mva-bar em, .mva-row-t small, .mva-cov-l span, .mva-sub, .mva .pill-n, .mva-cap, .mva .mov-foot code, .mva-kpi-h, .mva-kpi-f, .mva-kpi-d, .mva-legend li, .mva-heat-x, .mva-heat-y, .mva-heat-key, .mva .mo-keys span, .mva .mo-keys em, .mad .pill-n, .mad-prov-b small, .mad-row-b small, .mad-nums dt, .mad-nums dd, .mad-plan, .mad-plan small, .mad-prev-h small, .mad-cta, .mad-meta small, .mad-note, .mad-empty p, .mad .campaigns-segmented button, .mad-missing, .mad-cta.is-missing, .mad-ini, .mct-sum, .mct .campaigns-segmented button, .mct-n, .mct-note, .mct-kind, .mct-meta small, .mct-cover small, .mct-cover span, .mct-cover em, .mct-words, .mct-foot, .mct-pub dt, .mct-missing, .mct .mo-keys span, .mct .mo-keys em, .mct-facts, .mct-asked span, .mct-act-note, .mct-pub-h p, .mct-channels, .mct-ad i, .mct-adfull small")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -172,8 +172,8 @@ async function main() {
               }
               if (tab === "content") {
                 await page.waitForFunction(() => [...document.querySelectorAll(".mct-frame img")].every((img) => img.complete), null, { timeout: 5000 }).catch(() => {});
-                const drawn = await page.evaluate(() => ({ cards: document.querySelectorAll(".mct-card").length, pictures: [...document.querySelectorAll(".mct-frame img")].filter((img) => img.naturalWidth > 0).length, covers: document.querySelectorAll(".mct-cover").length, words: document.querySelectorAll(".mct-words").length, ring: document.querySelectorAll(".mct .mo-donut .recharts-pie-sector").length, pub: [...document.querySelectorAll(".mct-pub dd")].map((dd) => dd.textContent), sum: document.querySelector(".mct .mov-sum")?.textContent ?? "", missing: document.querySelectorAll(".mct-missing").length, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
-                check(drawn.cards === 11 && drawn.pictures === 3 && drawn.covers === 2 && drawn.words === 6 && drawn.ring === 3 && drawn.pub.length === 3 && /11 pieces in your library/.test(drawn.sum) && drawn.missing === 0 && drawn.h1 === 0, `${id}: the gallery draws every piece as itself (three pictures, two document covers, six pieces of copy) with the mix ring and published work`, JSON.stringify(drawn));
+                const drawn = await page.evaluate(() => ({ first: document.querySelector(".mct > section h2")?.textContent ?? "", cards: document.querySelectorAll(".mct-card").length, pictures: [...document.querySelectorAll(".mct-frame img")].filter((img) => img.naturalWidth > 0).length, covers: document.querySelectorAll(".mct-cover").length, words: document.querySelectorAll(".mct-words").length, ads: document.querySelectorAll(".mct-ad").length, ring: Boolean(document.querySelector(".mct-ring")), pub: [...document.querySelectorAll(".mct-pub dd")].map((dd) => dd.textContent), sum: document.querySelector(".mct .mov-sum")?.textContent ?? "", missing: document.querySelectorAll(".mct-missing").length, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(drawn.first === "Your library" && drawn.cards === 11 && drawn.pictures === 3 && drawn.covers === 2 && drawn.words === 6 && drawn.ads === 2 && drawn.ring && drawn.pub.length === 3 && /11 pieces in your library/.test(drawn.sum) && drawn.missing === 0 && drawn.h1 === 0, `${id}: the gallery leads and draws every piece as itself (three pictures, two document covers, six pieces of copy, the two with labels laid out as ads) with the mix ring and published work`, JSON.stringify(drawn));
               }
               if (tab === "email") {
                 const drawn = await page.evaluate(() => ({ stats: document.querySelectorAll(".me-stats > *").length, starters: document.querySelectorAll(".me-starters button").length, rows: document.querySelectorAll(".me-table tbody tr").length, rates: Boolean(document.querySelector(".me-chart-rates .recharts-area-curve")) }));
@@ -274,25 +274,43 @@ async function main() {
       const creative = await page.evaluate(() => ({ cards: document.querySelectorAll(".mad-card").length, first: document.querySelector(".mad-prev-f")?.textContent ?? "" }));
       check(creative.cards === 3 && /Plan your quarter in 30 minutes/.test(creative.first), `${theme}/ads: Creative previews each saved ad with its headline and call to action`, JSON.stringify(creative));
       await page.screenshot({ path: path.join(OUT, `flow-ads-creative-${theme}.png`) });
-      // Content: a document opens drawn by the Studio's renderer; an image full size; the filter keeps to one kind.
+      // Content: every control in the preview is live (the drawer must not sit inside the region it makes
+      // inert); a document prints whole; an image downloads; the filter keeps to one kind.
       await open(page, { tab: "content", theme });
       await setContentWidth(page, contentWidth(1366, "docked"));
-      // The first open loads the Studio renderer; in the dev harness Vite may reload the page once while it
-      // prepares that code, so open again if the panel was lost.
-      for (let attempt = 0; attempt < 3; attempt++) {
-        await page.locator(".mct-card", { hasText: "Spring advisory offer" }).click();
-        if (await page.waitForSelector(".campaigns-drawer [data-paige-doc-sheet]", { timeout: 8000 }).catch(() => null)) break;
-        await page.waitForSelector(".mct-card", { timeout: 15000 }).catch(() => {});
-      }
-      const docPanel = await page.evaluate(() => ({ wide: document.querySelector(".campaigns-drawer")?.getBoundingClientRect().width ?? 0, sheet: document.querySelector(".campaigns-drawer [data-paige-doc-sheet]")?.textContent ?? "", print: [...document.querySelectorAll(".campaigns-drawer button")].some((b) => /Save as PDF/.test(b.textContent ?? "")), facts: document.querySelector(".mct-facts")?.textContent ?? "" }));
-      check(docPanel.wide > 600 && /Spring advisory: a clear quarter/.test(docPanel.sheet) && docPanel.print && /^Document · Sales offer/.test(docPanel.facts), `${theme}/content: a document opens wide, drawn by the Studio renderer with Print / Save as PDF`, JSON.stringify({ ...docPanel, sheet: docPanel.sheet.slice(0, 60) }));
+      const openPiece = async (name, ready) => {
+        // The first open loads the Studio renderer; in the dev harness Vite may reload the page once while
+        // it prepares that code, so open again if the panel was lost.
+        for (let attempt = 0; attempt < 3; attempt++) {
+          await page.locator(".mct-card", { hasText: name }).click();
+          if (await page.waitForSelector(ready, { timeout: 8000, state: "attached" }).catch(() => null)) return true;
+          await page.waitForSelector(".mct-card", { timeout: 15000 }).catch(() => {});
+        }
+        return false;
+      };
+      await openPiece("Spring advisory offer", ".campaigns-drawer [data-paige-doc-sheet]");
+      const docPanel = await page.evaluate(() => ({ wide: document.querySelector(".campaigns-drawer")?.getBoundingClientRect().width ?? 0, inert: Boolean(document.querySelector(".campaigns-drawer")?.closest("[inert]")), focus: document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName, acts: [...document.querySelectorAll(".campaigns-detail-actions .btn")].map((b) => b.textContent), facts: document.querySelector(".mct-facts")?.textContent ?? "" }));
+      check(docPanel.wide > 600 && !docPanel.inert && docPanel.focus === "Close details" && docPanel.acts.join("|") === "Print / Save as PDF|Revise with PAIGE" && /^Document · Sales offer/.test(docPanel.facts), `${theme}/content: a document opens wide and live (not inert, focus on Close), with Print / Save as PDF beside Revise`, JSON.stringify(docPanel));
       await page.screenshot({ path: path.join(OUT, `flow-content-document-${theme}.png`) });
-      await page.keyboard.press("Escape");
-      check(!(await page.$(".campaigns-drawer")), `${theme}/content: Escape closes the preview`);
-      await page.locator(".mct-card", { hasText: "Spring workshop hero" }).click();
+      // Print: the same class the button sets, then the page as a PDF; the whole document must be in it.
+      await page.evaluate(() => document.documentElement.classList.add("paige-doc-printing"));
+      await page.emulateMedia({ media: "print" });
+      const pdf = await page.pdf({ format: "Letter", printBackground: true });
+      await page.emulateMedia({ media: "screen" });
+      await page.evaluate(() => document.documentElement.classList.remove("paige-doc-printing"));
+      const pdfPath = path.join(OUT, `flow-content-print-${theme}.pdf`);
+      fs.writeFileSync(pdfPath, pdf);
+      const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+      check(pages >= 2, `${theme}/content: Print / Save as PDF carries the whole long document, not one clipped page`, `pages=${pages}`);
+      await page.locator(".campaigns-drawer button[aria-label='Close details']").click({ timeout: 5000 }).catch(() => {});
+      check(!(await page.$(".campaigns-drawer")), `${theme}/content: the Close button closes the preview`);
+      await openPiece("Spring workshop hero", ".mct-full img");
       await page.waitForFunction(() => { const img = document.querySelector(".mct-full img"); return img && img.complete && img.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
-      const imgPanel = await page.evaluate(() => ({ img: (document.querySelector(".mct-full img")?.naturalWidth ?? 0) > 0, acts: [...document.querySelectorAll(".campaigns-detail-actions .btn")].map((b) => b.textContent) }));
-      check(imgPanel.img && imgPanel.acts.join("|") === "Download|Open full size|Revise with PAIGE", `${theme}/content: an image opens full size with Download, Open full size and Revise with PAIGE`, JSON.stringify(imgPanel));
+      const download = page.waitForEvent("download", { timeout: 8000 }).catch(() => null);
+      await page.locator(".campaigns-detail-actions button", { hasText: "Download" }).click({ timeout: 5000 }).catch(() => {});
+      const file = await download;
+      const imgPanel = await page.evaluate(() => ({ img: (document.querySelector(".mct-full img")?.naturalWidth ?? 0) > 0, acts: [...document.querySelectorAll(".campaigns-detail-actions .btn")].map((b) => b.textContent), note: document.querySelector(".mct-act-note")?.textContent ?? "" }));
+      check(imgPanel.img && imgPanel.acts.join("|") === "Download|Open full size|Revise with PAIGE" && Boolean(file) && /\.svg$/.test(file?.suggestedFilename() ?? "") && imgPanel.note === "Download started.", `${theme}/content: an image opens full size and Download really downloads it`, JSON.stringify({ ...imgPanel, file: file?.suggestedFilename() ?? null }));
       await page.screenshot({ path: path.join(OUT, `flow-content-image-${theme}.png`) });
       await page.keyboard.press("Escape");
       await page.locator(".mct .campaigns-segmented button", { hasText: "Documents" }).click();

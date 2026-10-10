@@ -106,9 +106,36 @@ export function kindCounts(pieces: readonly Pick<ContentPiece, "kind">[]): { key
   return (["image", "document", "copy", "video"] as PieceKind[]).map((key) => ({ key, count: counts[key] })).filter((row) => row.count > 0);
 }
 
-/** A file name for a downloaded image: its short title and the extension its address carries. */
-export function downloadName(piece: Pick<ContentPiece, "title" | "image_url">): string {
-  const base = shortTitle(piece.title, 48).text.replace(/…$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "image";
-  const ext = /\.(png|jpe?g|webp|gif)(?:\?|$)/i.exec(piece.image_url ?? "")?.[1]?.toLowerCase() ?? "png";
+/** A file name for a downloaded image or video: its short title and the extension its address carries. */
+export function downloadName(piece: Pick<ContentPiece, "title" | "image_url" | "kind">): string {
+  const base = shortTitle(piece.title, 48).text.replace(/…$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || (piece.kind === "video" ? "video" : "image");
+  const ext = /\.(png|jpe?g|webp|gif|svg|mp4|webm|mov)(?:\?|$)/i.exec(piece.image_url ?? "")?.[1]?.toLowerCase() ?? (piece.kind === "video" ? "mp4" : "png");
   return `${base}.${ext}`;
+}
+
+/** Saved copy split into the line that leads it and the rest: an email's subject, or a heading the copy
+ *  opens with. Copy with neither has no lead. */
+export function copyParts(body: string | null | undefined, channel: string | null): { lead: string | null; rest: string } {
+  const raw = (body ?? "").replace(/\r/g, "").trim();
+  const [first = "", ...others] = raw.split("\n");
+  const subject = channel === "email_campaign" ? /^\s*subject\s*:\s*(.+)$/i.exec(first) : null;
+  const heading = /^\s*#+\s*(.+)$/.exec(first);
+  const lead = subject?.[1] ?? heading?.[1] ?? null;
+  return lead ? { lead: plainCopy(lead), rest: plainCopy(others.join("\n")) } : { lead: null, rest: plainCopy(raw) };
+}
+
+/** A stored media address is used only when it is https or a same-origin path; anything else (a
+ *  javascript: or data: address, a protocol-relative one) is treated as no file. */
+export function safeMediaUrl(value: string | null | undefined): string | null {
+  const url = (value ?? "").trim();
+  if (!url) return null;
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+  try { return new URL(url).protocol === "https:" ? url : null; } catch { return null; }
+}
+
+/** Saved copy counted by channel, most first: the old "By kind" split, kept under the Copy filter. */
+export function channelCounts(pieces: readonly Pick<ContentPiece, "kind" | "channel">[]): { label: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const piece of pieces) if (pieceKind(piece) === "copy") { const label = pieceLabel(piece); counts.set(label, (counts.get(label) ?? 0) + 1); }
+  return [...counts.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }

@@ -20,7 +20,7 @@ const methods = clients.filter((_, i) => i % 3 === 0 || i % 4 === 1 || i % 5 ===
 // Two documents in the Studio's block format, so Content draws their own covers.
 const doc = (docType: string, cover: Record<string, string>, sections: string[]) => JSON.stringify({ docType, title: cover.title, blocks: [
   { type: "cover", ...cover },
-  ...sections.flatMap((title, i) => [{ type: "section-header", number: i + 1, title }, { type: "prose", markdown: `What ${title.toLowerCase()} covers, in plain words, with one example from a real engagement.` }]),
+  ...sections.flatMap((title, i) => [{ type: "section-header", number: i + 1, title }, ...Array.from({ length: sections.length > 3 ? 4 : 1 }, (_, n) => ({ type: "prose", markdown: `${n ? "And further:" : "In short:"} what ${title.toLowerCase()} covers, in plain words, with one example from a real engagement and the result it led to for the client, step by step, so nothing is left to guess when the work begins.` }))]),
   { type: "cta", headline: "Ready to start?", action: "Book a call" },
 ] });
 const content = [
@@ -30,7 +30,7 @@ const content = [
   { id: "mc-4", kind: "text", channel: "social_post", status: "draft", title: "Three questions to ask before hiring help", updated_at: day(4), body: "## Before you hire help, ask three questions\n**1. What will be different in 90 days?**\n2. Who owns the result?\n3. How will we know it worked?\n\nIf you can't answer them yet, start there." },
   { id: "mc-5", kind: "text", channel: "ad_copy", status: "draft", title: "Free planning session, limited seats", updated_at: day(5), body: "**Headline:** Plan your quarter in 30 minutes\n**Primary text:** Your last workshop was the start. Book a free planning session and leave with a plan for the next 90 days.\n**CTA:** Book a session" },
   { id: "mc-8", kind: "text", channel: "ad_copy", status: "draft", title: "Scorecard: where does your week go?", updated_at: day(6), body: "**Headline:** Where does your week go?\n**Primary text:** Take the 3-minute scorecard and see where your business loses time.\n**CTA:** Take the scorecard" },
-  { id: "mc-10", kind: "document", channel: null, status: "draft", title: "Spring advisory offer", updated_at: day(7), body: doc("sales_offer", { eyebrow: "A personal offer", title: "Spring advisory: a clear quarter", subhead: "Three months of weekly sessions, one fixed price" }, ["What you get", "How it runs", "Investment"]) },
+  { id: "mc-10", kind: "document", channel: null, status: "draft", title: "Spring advisory offer", updated_at: day(7), body: doc("sales_offer", { eyebrow: "A personal offer", title: "Spring advisory: a clear quarter", subhead: "Three months of weekly sessions, one fixed price" }, ["What you get", "How it runs", "Your first month", "Your second month", "Your third month", "Investment"]) },
   { id: "mc-9", kind: "text", channel: "ad_copy", status: "draft", title: "Retainer: keep the momentum", updated_at: day(9), body: "Monthly advisory at one fixed price, so the work keeps moving after the project ends." },
   { id: "mc-6", kind: "text", channel: "email_campaign", status: "draft", title: "Welcome to the list", updated_at: day(8), body: "Welcome aboard. Every other Tuesday you'll get one idea you can use that week, and nothing else." },
   { id: "mc-7", kind: "image", channel: null, status: "draft", title: "Testimonial card", updated_at: day(11), image_url: "/samples/card.svg", size: "square", body: null, brief: null },

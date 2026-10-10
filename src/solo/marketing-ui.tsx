@@ -11,12 +11,12 @@ function ChartSkeleton({ className }: { className?: string }) {
 
 // A chart is an enhancement over numbers already on the page: if its code fails to load (a stale
 // deploy, a dropped connection) it says so in place and logs why, and the rest of Marketing stays up.
-export class ChartBoundary extends React.Component<{ className?: string; children: React.ReactNode }, { failed: boolean }> {
+export class ChartBoundary extends React.Component<{ className?: string; children: React.ReactNode; failed?: string }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(error: unknown) { console.error("[marketing] chart failed to render", error); }
   render() {
-    if (this.state.failed) return <p className={`${this.props.className ?? ""} mo-chart-failed`}>This chart couldn’t load. The figures beside it are still current; reload the page to try again.</p>;
+    if (this.state.failed) return <p className={`${this.props.className ?? ""} mo-chart-failed`}>{this.props.failed ?? "This chart couldn’t load. The figures beside it are still current; reload the page to try again."}</p>;
     return <React.Suspense fallback={<ChartSkeleton className={this.props.className}/>}>{this.props.children}</React.Suspense>;
   }
 }

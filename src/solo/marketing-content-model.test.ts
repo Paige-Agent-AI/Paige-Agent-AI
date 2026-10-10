@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contentKindOf, documentCover, downloadName, kindCounts, pieceKind, plainCopy, shapeLabel, shortTitle } from "./marketing-content-model";
+import { channelCounts, contentKindOf, copyParts, documentCover, downloadName, kindCounts, pieceKind, plainCopy, safeMediaUrl, shapeLabel, shortTitle } from "./marketing-content-model";
 import { parseStudioDocument } from "@/components/admin/studio/studio-document";
 
 describe("Marketing › Content model", () => {
@@ -37,7 +37,21 @@ describe("Marketing › Content model", () => {
   });
 
   it("names a download from its title and its address's extension", () => {
-    expect(downloadName({ title: "Spring hero: final!", image_url: "https://x/y/hero.JPG?v=2" })).toBe("spring-hero-final.jpg");
-    expect(downloadName({ title: null, image_url: "https://x/y/z" })).toBe("untitled.png");
+    expect(downloadName({ kind: "image", title: "Spring hero: final!", image_url: "https://x/y/hero.JPG?v=2" })).toBe("spring-hero-final.jpg");
+    expect(downloadName({ kind: "image", title: null, image_url: "https://x/y/z" })).toBe("untitled.png");
+    expect(downloadName({ kind: "video", title: "Promo", image_url: "https://x/y/promo.mp4" })).toBe("promo.mp4");
+  });
+
+  it("uses a stored media address only when it is https or this site", () => {
+    expect(safeMediaUrl("https://x.supabase.co/storage/v1/object/public/a.png")).toBe("https://x.supabase.co/storage/v1/object/public/a.png");
+    expect(safeMediaUrl("/samples/hero.svg")).toBe("/samples/hero.svg");
+    expect([safeMediaUrl("javascript:alert(1)"), safeMediaUrl("data:image/png;base64,AA"), safeMediaUrl("http://x/a.png"), safeMediaUrl("//evil/a.png"), safeMediaUrl("  "), safeMediaUrl(null)]).toEqual([null, null, null, null, null, null]);
+  });
+
+  it("splits copy into its lead line and the rest, and counts copy by channel", () => {
+    expect(copyParts("Subject: Two days to go\n\nSee you.", "email_campaign")).toEqual({ lead: "Two days to go", rest: "See you." });
+    expect(copyParts("Subject: not an email", "social_post")).toEqual({ lead: null, rest: "Subject: not an email" });
+    expect(copyParts("## **Big** news\nBody", "social_post")).toEqual({ lead: "Big news", rest: "Body" });
+    expect(channelCounts([{ kind: "text", channel: "ad_copy" }, { kind: "text", channel: "ad_copy" }, { kind: "text", channel: "email_campaign" }, { kind: "image", channel: null }])).toEqual([{ label: "Ad copy", count: 2 }, { label: "Email", count: 1 }]);
   });
 });

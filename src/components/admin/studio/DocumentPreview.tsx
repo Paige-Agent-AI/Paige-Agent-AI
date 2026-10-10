@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SectionCard, EmptyState } from "@/components/ui/page";
 import { ArtifactStrip } from "./ArtifactStrip";
+import { printStudioDocument } from "./studio-document";
 import type { StudioDocBlock, StudioDocument } from "./studio-types";
 
 // Coerce any model-authored value to a safe display string (§13 — a mis-typed field never crashes the
@@ -558,7 +559,8 @@ function DocumentPager({
   return (
     <div className="flex h-full min-h-0 gap-4 print:hidden">
       <PageThumbRail pages={pages} allBlocks={allBlocks} currentPage={safePage} onSelect={setCurrentPage} reduceMotion={reduceMotion} />
-      <div className="flex min-h-0 flex-1 flex-col">
+      {/* min-w-0: the page column may shrink below the 720px sheet in a narrow host instead of overflowing it. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto px-1 py-1">
           {reduceMotion ? (
             pageView
@@ -605,24 +607,11 @@ function DocumentPager({
   );
 }
 
-export function DocumentPreview({ document, className }: { document: StudioDocument; className?: string }) {
+/** `toolbar={false}` leaves the Print / Save as PDF button to the host, which calls printStudioDocument
+ *  (the Marketing library puts it beside its other actions). */
+export function DocumentPreview({ document, className, toolbar = true }: { document: StudioDocument; className?: string; toolbar?: boolean }) {
   // Print / Save as PDF — the browser's native dialog over a print-scoped view of just this sheet.
-  // A body-level class + the @media print rules in index.css hide the rest of the app while printing.
-  // A safety timeout also clears the class in case `afterprint` never fires (headless/print-to-file).
-  const onPrint = useCallback(() => {
-    const root = window.document.documentElement;
-    root.classList.add("paige-doc-printing");
-    let done = false;
-    const cleanup = () => {
-      if (done) return;
-      done = true;
-      root.classList.remove("paige-doc-printing");
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    window.setTimeout(cleanup, 60_000);
-    window.print();
-  }, []);
+  const onPrint = useCallback(() => printStudioDocument(), []);
 
   const reduceMotion = !!useReducedMotion();
   const blocks = useMemo(() => (Array.isArray(document.blocks) ? document.blocks : []), [document.blocks]);
@@ -665,12 +654,14 @@ export function DocumentPreview({ document, className }: { document: StudioDocum
 
       <div className={cn("mx-auto flex w-full max-w-3xl flex-col gap-3 px-1 py-1", paged && "h-full min-h-0")}>
         {/* Toolbar — neutral, no gold (§11). Honest label: it's the browser's Save-as-PDF. */}
-        <div className="flex shrink-0 items-center justify-end print:hidden">
-          <Button variant="outline" size="sm" onClick={onPrint} className="gap-2">
-            <Printer className="h-4 w-4" aria-hidden />
-            Print / Save as PDF
-          </Button>
-        </div>
+        {toolbar && (
+          <div className="flex shrink-0 items-center justify-end print:hidden">
+            <Button variant="outline" size="sm" onClick={onPrint} className="gap-2">
+              <Printer className="h-4 w-4" aria-hidden />
+              Print / Save as PDF
+            </Button>
+          </div>
+        )}
         <DocBoundary fallback={DOC_EMPTY}>
           {paged ? (
             // Long document → the paged view (rail + one page). The whole document still prints via the

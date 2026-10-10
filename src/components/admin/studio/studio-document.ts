@@ -19,3 +19,21 @@ export function parseStudioDocument(id: string, title: string | null, body: stri
     return null; // corrupt body — degrade to empty, never throw (§13)
   }
 }
+
+/** Print / Save as PDF for a rendered document: the browser's own dialog over a print-scoped view of
+ *  just the sheet ([data-paige-doc-sheet]; the rules are in index.css). A safety timeout clears the class
+ *  in case `afterprint` never fires (headless or print-to-file). */
+export function printStudioDocument(): void {
+  const root = window.document.documentElement;
+  root.classList.add("paige-doc-printing");
+  let done = false;
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    root.classList.remove("paige-doc-printing");
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+  window.setTimeout(cleanup, 60_000);
+  window.print();
+}

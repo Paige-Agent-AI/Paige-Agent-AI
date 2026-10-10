@@ -1,30 +1,32 @@
 // Marketing › Content (INT-342 S1e, owner ask 2026-10-10: "before Campaigns we need to reimagine Content").
 //
-// The saved library as a gallery of the work itself. Each piece shows what it really is (model:
-// marketing-content-model.ts) and opens in a preview: an image full size with Download, a document drawn
-// by the Studio's own renderer (DocumentPreview, with its Print / Save as PDF), saved copy as its words
-// with Copy text. Revising is draft-first through PAIGE; nothing here posts, sends or publishes.
+// The saved library as a gallery of the work itself, leading the page. Each piece shows what it really is
+// (model: marketing-content-model.ts) and opens in a preview: an image full size and a video playing, each
+// with Download; a document drawn by the Studio's own renderer (DocumentPreview) with Print / Save as PDF;
+// ad copy laid out as an ad; other copy as its words with Copy text. Revising is draft-first through PAIGE;
+// nothing here posts, sends or publishes.
 // Reads (tenant-scoped, read-only, nothing new on the server):
 //   marketing_content  not archived, newest first. RLS: admins of the business or the platform owner, the
 //                      same test the briefs read reports as can_manage, so a member is told the library is
-//                      for owners and admins rather than shown an empty one.
+//                      for owners and admins rather than shown an empty one. `published` on a piece means it
+//                      is in the Catalog (Vibe Studio's publish lifecycle), so it is labelled that way.
 //   published work     pages, funnels and forms from Vibe Studio (useSoloCampaigns, via growth2).
 // `?kind=` keeps the filter in the address and `?piece=` the open preview, so PAIGE can link to a piece.
 import React from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { printStudioDocument } from "@/components/admin/studio/studio-document";
 import { AskPaigeButton, LIBRARY_DENIED, useLibraryAccess, useTenantRead, type Phase, type PublishedWork } from "./marketing-planned";
 import { ChartBoundary } from "./marketing-ui";
 import { parseAdCopy } from "./marketing-ads";
 import { DetailDrawer } from "./detail-drawer";
-import type { DonutSlice } from "./marketing-overview-charts";
 import {
-  CONTENT_KINDS, documentCover, downloadName, kindCounts, kindNoun, parsePieceDocument, pieceKind, pieceLabel, plainCopy, shapeLabel, shortTitle,
+  CONTENT_KINDS, channelCounts, copyParts, safeMediaUrl, documentCover, downloadName, kindCounts, kindNoun, parsePieceDocument, pieceKind, pieceLabel, plainCopy, shapeLabel, shortTitle,
   type ContentKindFilter, type ContentPiece, type PieceKind,
 } from "./marketing-content-model";
 import "./marketing-overview.css";
 import "./marketing-content.css";
 
-const Donut = React.lazy(() => import("./marketing-overview-charts").then((module) => ({ default: module.Donut })));
 const DocumentPreview = React.lazy(() => import("@/components/admin/studio/DocumentPreview").then((module) => ({ default: module.DocumentPreview })));
 
 export const LIBRARY_READ_LIMIT = 60;
@@ -50,15 +52,22 @@ const readPiece = (id: string) => async (tenantId: string): Promise<ContentPiece
 };
 
 const formatDay = (iso: string) => { const t = Date.parse(iso); return Number.isFinite(t) ? new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""; };
-const stateWord = (piece: ContentPiece) => (piece.status === "published" ? "Published" : "Draft");
-const SLICE: Record<PieceKind, DonutSlice["colorToken"]> = { image: "--chart-1", document: "--chart-2", copy: "--chart-3", video: "--chart-4" };
+const IN_CATALOG = "In your Catalog";
 const KIND_TITLE: Record<PieceKind, string> = { image: "Images", document: "Documents", copy: "Copy", video: "Video" };
+const KIND_COLOR: Record<PieceKind, string> = { image: "--chart-1", document: "--chart-2", copy: "--chart-3", video: "--chart-4" };
 
 const ASK_PROMPT = "Help me make a piece of marketing content for my business. Ask me what it is for and who it is for before you draft it. Save it as a draft; do not post or send anything.";
+// First use proposes something concrete rather than a blank ask (§15/§36).
+const STARTERS = [
+  { label: "A launch image", prompt: "Make an image announcing something new in my business. Ask me what it announces and where it will be posted before you make it. Save it as a draft; do not post anything." },
+  { label: "A one-page offer", prompt: "Write a one-page offer document for my main service. Ask me who it is for and what it costs before you draft it. Save it as a draft; do not send anything." },
+  { label: "A welcome email", prompt: "Write a welcome email for new people on my list. Ask me what they signed up for before you draft it. Save it as a draft; do not send anything." },
+];
 const reviseNoun: Record<PieceKind, string> = { image: "image", video: "video", document: "document", copy: "copy" };
 const revisePrompt = (piece: ContentPiece) =>
-  `Revise my saved ${reviseNoun[pieceKind(piece)]} “${shortTitle(piece.title, 120).text}”. Ask me what to change before you start. Save the new version as a draft; do not post, send or publish anything.`;
-const openPaige = (prompt: string) => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }));
+  `Revise my saved ${reviseNoun[pieceKind(piece)]} “${shortTitle(piece.title, 120).text}” (library piece ${piece.id}). Ask me what to change before you start. Save the new version as a draft; do not post, send or publish anything.`;
+// The drawer returns focus to the card as it closes; PAIGE opens after that, so her composer keeps focus.
+const reviseAfterClose = (prompt: string) => window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }))));
 
 export type MarketingContentProps = {
   tenantId: string | null;
@@ -79,43 +88,51 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
   const pieces = all.rows;
   const capped = pieces.length >= LIBRARY_READ_LIMIT;
   const counts = kindCounts(pieces);
-  const publishedCount = pieces.filter((p) => p.status === "published").length;
-  const ask = <AskPaigeButton label="Ask PAIGE for content" prompt={ASK_PROMPT}/>;
+  const inCatalog = pieces.filter((p) => p.status === "published").length;
+  const filled = access === "allowed" && phase === "ready" && pieces.length > 0;
 
   const total = capped ? `${pieces.length}+` : String(pieces.length);
-  const mix = counts.map((row) => `${capped ? "" : `${row.count} `}${capped ? KIND_TITLE[row.key].toLowerCase() : kindNoun(row.key, row.count)}`);
+  const mix = counts.map((row) => (capped ? KIND_TITLE[row.key].toLowerCase() : `${row.count} ${kindNoun(row.key, row.count)}`));
   const summary = access === "denied" ? <>{LIBRARY_DENIED}</>
     : phase === "loading" ? <>Reading your library…</>
     : phase === "error" ? <>Your library could not load.</>
-    : !pieces.length ? <>Your library is empty. Ask PAIGE for an image, a document or copy, and it is kept here.</>
-    : <><b>{total} {pieces.length === 1 && !capped ? "piece" : "pieces"}</b> in your library{mix.length ? `: ${joinWords(mix)}` : ""}{capped ? `, the newest ${LIBRARY_READ_LIMIT} shown` : ""}. {publishedCount ? <>{publishedCount} published; the rest are drafts.</> : <>All are drafts.</>} Nothing here posts or sends.</>;
+    : !pieces.length ? <>Your library is empty. Everything PAIGE makes for you is kept here.</>
+    : <><b>{total} {pieces.length === 1 && !capped ? "piece" : "pieces"}</b> in your library{mix.length ? `: ${joinWords(mix)}` : ""}{capped ? `, the newest ${LIBRARY_READ_LIMIT} shown` : ""}.{inCatalog ? <> {inCatalog}{capped ? ` of the newest ${LIBRARY_READ_LIMIT}` : ""} {inCatalog === 1 ? "is" : "are"} in your Catalog.</> : null} Nothing here posts or sends.</>;
 
   // The filter offers the kinds the library holds, plus whichever one the address names.
   const offered = CONTENT_KINDS.filter((option) => option.key === "all" || option.key === kind || counts.some((row) => row.key === option.key));
   const countOf = (key: ContentKindFilter) => (capped ? null : key === "all" ? pieces.length : counts.find((row) => row.key === key)?.count ?? 0);
 
-  return <div className="mov mct">
+  // The preview portals to `.solo-campaigns`, a sibling of the scroll region the drawer marks inert;
+  // rendered inline it would inert itself (the same reason as campaign-desk.tsx's drawers).
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const [host, setHost] = React.useState<Element | null>(null);
+  React.useEffect(() => { setHost(rootRef.current?.closest(".solo-campaigns") ?? document.body); }, []);
+
+  return <div className="mov mct" ref={rootRef}>
     <div className="mov-top">
       <p className="mov-sum" tabIndex={-1}>{summary}</p>
-      <div className="mov-acts">{ask}{studioLauncher}</div>
+      <div className="mov-acts">{filled && <AskPaigeButton label="Ask PAIGE for content" prompt={ASK_PROMPT}/>}{studioLauncher}</div>
     </div>
-    <div className="mct-two">
-      <Mix access={access} phase={phase} counts={counts} total={total} capped={capped} kind={kind} onKind={onKind} retry={all.retry}/>
-      <Published published={published} onOpenCapture={onOpenCapture} onRetry={onRetryPublished}/>
-    </div>
-    <section className="mov-card mct-lib" aria-labelledby="mct-lib-h">
+    {access !== "denied" && <section className="mov-card mct-lib" aria-labelledby="mct-lib-h">
       <header className="mov-head">
-        <div><h2 id="mct-lib-h">Your library</h2><p>Newest first. Open a piece to preview it, download it or ask PAIGE to revise it.</p></div>
-        {access === "allowed" && phase === "ready" && pieces.length > 0 && <div className="campaigns-segmented" role="group" aria-label="Show">
-          {offered.map((option) => { const n = countOf(option.key); return <button key={option.key} aria-pressed={kind === option.key} onClick={() => onKind(option.key)}>{option.label}{n !== null && <span className="mct-n">{n}</span>}</button>; })}
+        <div><h2 id="mct-lib-h">Your library</h2>{filled && <p>Newest first. Open a piece to preview it, download it or ask PAIGE to revise it.</p>}</div>
+        {filled && <div className="mct-filter">
+          <MiniRing counts={counts}/>
+          <div className="campaigns-segmented" role="group" aria-label="Show">
+            {offered.map((option) => { const n = countOf(option.key); return <button key={option.key} aria-pressed={kind === option.key} onClick={() => onKind(kind === option.key && option.key !== "all" ? "all" : option.key)}>
+              {option.key !== "all" && <i aria-hidden="true" style={{ background: `var(${KIND_COLOR[option.key as PieceKind]})` }}/>}{option.label}{n !== null && <span className="mct-n">{n}</span>}
+            </button>; })}
+          </div>
         </div>}
       </header>
-      {access === "denied" ? <p className="mct-note">{LIBRARY_DENIED}</p>
-        : kind === "all" ? <Gallery phase={phase} pieces={pieces} retry={all.retry} capped={capped} onOpen={onPiece} ask={ask}/>
-        : <FilteredGallery key={`${tenantId}:${kind}`} tenantId={tenantId} kind={kind} enabled={access === "allowed"} onOpen={onPiece} ask={ask} onAll={() => onKind("all")}/>}
-      <p className="mct-foot">PAIGE drafts and you post: posting and scheduling aren’t connected here. Nothing is laid out on a calendar yet, because briefs record timing as words, not dates.</p>
-    </section>
-    {piece && access === "allowed" && <PiecePreview key={`${tenantId}:${piece}`} tenantId={tenantId} id={piece} known={pieces.find((p) => p.id === piece) ?? null} listPhase={phase} onClose={() => onPiece(null)}/>}
+      {kind === "all" || !filled
+        ? <Gallery phase={phase} pieces={pieces} retry={all.retry} capped={capped} onOpen={onPiece}/>
+        : <FilteredGallery key={`${tenantId}:${kind}`} tenantId={tenantId} kind={kind} onOpen={onPiece} onAll={() => onKind("all")}/>}
+    </section>}
+    <Published published={published} onOpenCapture={onOpenCapture} onRetry={onRetryPublished}/>
+    <p className="mct-foot">Posting, scheduling and a content calendar aren’t connected yet: PAIGE drafts, and you post.</p>
+    {host && piece && access === "allowed" && createPortal(<PiecePreview key={`${tenantId}:${piece}`} tenantId={tenantId} id={piece} known={pieces.find((p) => p.id === piece) ?? null} listPhase={phase} onClose={() => onPiece(null)}/>, host)}
   </div>;
 }
 
@@ -123,59 +140,49 @@ function joinWords(words: string[]) {
   return words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
 }
 
-function Mix({ access, phase, counts, total, capped, kind, onKind, retry }: { access: string; phase: Phase; counts: { key: PieceKind; count: number }[]; total: string; capped: boolean; kind: ContentKindFilter; onKind: (kind: ContentKindFilter) => void; retry: () => void }) {
-  const [active, setActive] = React.useState<string | null>(null);
+/** The library's mix as a small ring beside the filter that names each kind. */
+function MiniRing({ counts }: { counts: { key: PieceKind; count: number }[] }) {
   const whole = counts.reduce((sum, row) => sum + row.count, 0);
-  const slices: DonutSlice[] = counts.map((row) => ({ key: row.key, label: KIND_TITLE[row.key], count: row.count, colorToken: SLICE[row.key] }));
-  return <section className="mov-card" aria-labelledby="mct-mix-h">
-    <header className="mov-head"><div><h2 id="mct-mix-h">What’s in your library</h2><p>{capped ? `The newest ${total.replace("+", "")} pieces, by kind` : "Every saved piece, by kind"}</p></div></header>
-    <div className="mct-body">
-      {access === "denied" ? <p className="mct-note">{LIBRARY_DENIED}</p>
-        : phase === "loading" ? <div className="campaigns-skeleton mct-skel" role="status" aria-busy="true" aria-label="Loading your library"><span/><span/></div>
-        : phase === "error" ? <div className="mct-state"><p>Your library could not load. Nothing was changed.</p><button type="button" className="btn btn-s" onClick={retry}>Try again</button></div>
-        : !whole ? <p className="mct-note">Nothing saved yet.</p>
-        : <div className="mo-split mct-split">
-          <ChartBoundary className="mo-donut"><Donut slices={slices} total={total} caption={whole === 1 ? "piece" : "pieces"} label="What’s in your library" activeKey={active} onActiveKey={setActive} onSelect={(slice) => onKind(slice.key as ContentKindFilter)}/></ChartBoundary>
-          <ul className="mo-keys">{slices.map((slice) => <li key={slice.key}><button type="button" aria-pressed={kind === slice.key} className={active === slice.key ? "is-active" : ""} onMouseEnter={() => setActive(slice.key)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(slice.key)} onBlur={() => setActive(null)} onClick={() => onKind(slice.key as ContentKindFilter)} aria-label={`${slice.label}: ${slice.count}${capped ? " or more" : ""}, ${Math.round((slice.count / whole) * 100)}%. Show only these`}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{slice.count}{capped ? "+" : ""}</b><em>{Math.round((slice.count / whole) * 100)}%</em></button></li>)}</ul>
-        </div>}
-    </div>
-  </section>;
+  let at = 0;
+  const stops = counts.map((row) => { const from = at; at += (row.count / whole) * 100; return `var(${KIND_COLOR[row.key]}) ${from}% ${at}%`; });
+  return <span className="mct-ring" role="img" aria-label={`Your library by kind: ${counts.map((row) => `${KIND_TITLE[row.key]} ${row.count}`).join(", ")}`} style={{ background: `conic-gradient(${stops.join(", ")})` }}/>;
 }
 
 function Published({ published, onOpenCapture, onRetry }: { published: PublishedWork; onOpenCapture: () => void; onRetry: () => void }) {
   const ready = published.phase === "ready";
   const failed = published.phase === "error" || published.phase === "unavailable";
   const value = (n: number) => (ready ? String(n) : failed ? "—" : "…");
-  const live = published.pages + published.funnels + published.forms;
-  return <section className="mov-card" aria-labelledby="mct-pub-h">
-    <header className="mov-head"><div><h2 id="mct-pub-h">Published from Vibe Studio</h2><p>{ready ? (live ? `${live} live, collecting leads where they have a form` : "Nothing published yet") : failed ? "Could not load" : "Loading"}</p></div>
-      <button type="button" className="mov-lnk" onClick={onOpenCapture}>Published work</button></header>
-    <div className="mct-body">
-      <dl className="mct-pub">
-        <div><dt>Pages</dt><dd>{value(published.pages)}</dd></div>
-        <div><dt>Funnels</dt><dd>{value(published.funnels)}</dd></div>
-        <div><dt>Forms</dt><dd>{value(published.forms)}</dd></div>
-      </dl>
-      {failed ? <p className="mct-note">Your published pages, funnels and forms could not load. <button type="button" className="mov-lnk" onClick={onRetry}>Try again</button></p>
-        : <p className="mct-note">{ready ? <><b>{published.unpublished}</b> built in Vibe Studio and not published yet, so collecting nothing.</> : " "}</p>}
-    </div>
+  return <section className="mov-card mct-pubrow" aria-labelledby="mct-pub-h">
+    <div className="mct-pub-h"><h2 id="mct-pub-h">Published from Vibe Studio</h2>
+      <p>{failed ? <>Could not load. <button type="button" className="mov-lnk" onClick={onRetry}>Try again</button></> : !ready ? "Loading" : published.unpublished ? `${published.unpublished} more built and not published yet, so collecting nothing.` : published.pages + published.funnels + published.forms ? "Everything you built is published." : "Nothing built in Vibe Studio yet."}</p></div>
+    <dl className="mct-pub">
+      <div><dt>Pages</dt><dd>{value(published.pages)}</dd></div>
+      <div><dt>Funnels</dt><dd>{value(published.funnels)}</dd></div>
+      <div><dt>Forms</dt><dd>{value(published.forms)}</dd></div>
+    </dl>
+    <button type="button" className="mov-lnk" onClick={onOpenCapture}>Published work</button>
   </section>;
 }
 
-function FilteredGallery({ tenantId, kind, enabled, onOpen, ask, onAll }: { tenantId: string | null; kind: ContentKindFilter; enabled: boolean; onOpen: (id: string) => void; ask: React.ReactNode; onAll: () => void }) {
-  const read = useTenantRead(tenantId, NO_PIECES, enabled ? READERS[kind] : null);
-  const phase: Phase = enabled ? read.phase : "loading";
-  if (phase === "ready" && !read.rows.length) {
+function FilteredGallery({ tenantId, kind, onOpen, onAll }: { tenantId: string | null; kind: ContentKindFilter; onOpen: (id: string) => void; onAll: () => void }) {
+  const read = useTenantRead(tenantId, NO_PIECES, READERS[kind]);
+  if (read.phase === "ready" && !read.rows.length) {
     const label = CONTENT_KINDS.find((option) => option.key === kind)?.label.toLowerCase() ?? "pieces";
     return <div className="mct-empty"><p>No {label} saved yet.</p><button type="button" className="mov-lnk" onClick={onAll}>Show everything</button></div>;
   }
-  return <Gallery phase={phase} pieces={read.rows} retry={read.retry} capped={read.rows.length >= LIBRARY_READ_LIMIT} onOpen={onOpen} ask={ask}/>;
+  // Copy keeps the old "By kind" split by channel (§58): email, social post, ad copy and the rest.
+  const channels = kind === "copy" && read.phase === "ready" ? channelCounts(read.rows) : [];
+  return <>
+    {channels.length > 1 && <p className="mct-note mct-channels">{channels.map((row) => `${row.count} ${row.label.toLowerCase()}`).join(" · ")}{read.rows.length >= LIBRARY_READ_LIMIT ? ", in the newest 60" : ""}</p>}
+    <Gallery phase={read.phase} pieces={read.rows} retry={read.retry} capped={read.rows.length >= LIBRARY_READ_LIMIT} onOpen={onOpen}/>
+  </>;
 }
 
-function Gallery({ phase, pieces, retry, capped, onOpen, ask }: { phase: Phase; pieces: ContentPiece[]; retry: () => void; capped: boolean; onOpen: (id: string) => void; ask: React.ReactNode }) {
+function Gallery({ phase, pieces, retry, capped, onOpen }: { phase: Phase; pieces: ContentPiece[]; retry: () => void; capped: boolean; onOpen: (id: string) => void }) {
   if (phase === "loading") return <div className="campaigns-skeleton mct-grid-skel" role="status" aria-busy="true" aria-label="Loading your library">{[0, 1, 2, 3].map((i) => <span key={i}/>)}</div>;
-  if (phase === "error") return <div className="mct-state"><p>Your library could not load. Nothing was changed.</p><button type="button" className="btn btn-s" onClick={retry}>Try again</button></div>;
-  if (!pieces.length) return <div className="mct-empty"><p>Nothing saved yet. Ask PAIGE for an image, a document or copy, and it is kept here as a draft.</p>{ask}</div>;
+  if (phase === "error") return <div className="mct-state"><p>Nothing was changed.</p><button type="button" className="btn btn-s" onClick={retry}>Try again</button></div>;
+  if (!pieces.length) return <div className="mct-empty"><p>Ask PAIGE for something to start with. She drafts it and keeps it here; nothing is posted or sent.</p>
+    <div className="mct-starters">{STARTERS.map((starter) => <AskPaigeButton key={starter.label} label={starter.label} prompt={starter.prompt}/>)}<AskPaigeButton label="Something else" prompt={ASK_PROMPT}/></div></div>;
   return <>
     <ul className="mct-grid">{pieces.map((piece) => <li key={piece.id}><PieceCard piece={piece} onOpen={() => onOpen(piece.id)}/></li>)}</ul>
     {capped && <p className="mct-note mct-capnote">The newest {LIBRARY_READ_LIMIT} are shown.</p>}
@@ -185,16 +192,15 @@ function Gallery({ phase, pieces, retry, capped, onOpen, ask }: { phase: Phase; 
 function PieceCard({ piece, onOpen }: { piece: ContentPiece; onOpen: () => void }) {
   const kind = pieceKind(piece);
   const doc = React.useMemo(() => parsePieceDocument(piece), [piece]);
-  const title = shortTitle(piece.title).text;
-  const shape = kind === "image" ? shapeLabel(piece.size) : null;
   // Wide pictures fill the frame; square and tall ones are shown whole, never cropped.
+  const shape = kind === "image" ? shapeLabel(piece.size) : null;
   const whole = kind === "image" && !["Landscape", "Wide"].includes(shape ?? "Landscape");
   return <button type="button" className="mct-card" onClick={onOpen}>
     <span className={`mct-frame mct-frame-${kind}${whole ? " mct-whole" : ""}`} aria-hidden="true"><Thumb piece={piece} doc={doc}/></span>
     <span className="mct-meta">
-      <span className="mct-kind">{pieceLabel(piece, doc)}{shape ? ` · ${shape}` : ""}</span>
-      <strong>{title}</strong>
-      <small>{stateWord(piece)} · saved {formatDay(piece.updated_at)}</small>
+      <span className="mct-kind">{pieceLabel(piece, doc)}</span>
+      <strong>{shortTitle(piece.title).text}</strong>
+      <small>{piece.status === "published" ? `${IN_CATALOG} · ` : ""}saved {formatDay(piece.updated_at)}</small>
     </span>
   </button>;
 }
@@ -202,11 +208,13 @@ function PieceCard({ piece, onOpen }: { piece: ContentPiece; onOpen: () => void 
 function Thumb({ piece, doc }: { piece: ContentPiece; doc: ReturnType<typeof parsePieceDocument> }) {
   const kind = pieceKind(piece);
   const [broken, setBroken] = React.useState(false);
-  if (kind === "image") {
-    if (!piece.image_url || broken) return <span className="mct-missing">{piece.image_url ? "This image couldn’t load" : "No picture saved with this image"}</span>;
-    return <img src={piece.image_url} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)}/>;
+  if (kind === "image" || kind === "video") {
+    const url = safeMediaUrl(piece.image_url);
+    if (!url || broken) return <span className="mct-missing">{url ? `This ${kind} couldn’t load` : `No file saved with this ${kind}`}</span>;
+    return kind === "image"
+      ? <img src={url} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)}/>
+      : <><video src={url} muted playsInline preload="metadata" tabIndex={-1} onError={() => setBroken(true)}/><span className="mct-play"/></>;
   }
-  if (kind === "video") return <span className="mct-missing">Video preview isn’t available here</span>;
   if (kind === "document") {
     const cover = documentCover(doc);
     if (!cover) return <span className="mct-missing">This document couldn’t be read</span>;
@@ -214,15 +222,16 @@ function Thumb({ piece, doc }: { piece: ContentPiece; doc: ReturnType<typeof par
       {cover.eyebrow && <small>{cover.eyebrow}</small>}
       <b>{cover.title}</b>
       {cover.subhead && <span>{cover.subhead}</span>}
-      <em>{cover.type}{cover.sections ? ` · ${cover.sections} ${cover.sections === 1 ? "section" : "sections"}` : ""}</em>
+      <em>{cover.sections ? `${cover.sections} ${cover.sections === 1 ? "section" : "sections"}` : cover.type}</em>
     </span>;
   }
   if (piece.channel === "ad_copy") {
     const ad = parseAdCopy(piece.body);
     if (ad.headline || ad.cta) return <span className="mct-words mct-ad">{ad.headline && <b>{ad.headline}</b>}{ad.primary && <span>{plainCopy(ad.primary)}</span>}{ad.cta && <i>{ad.cta}</i>}</span>;
   }
-  const words = plainCopy(piece.body);
-  return <span className="mct-words">{words ? <span>{words}</span> : <span className="mct-missing">No words saved with this piece</span>}</span>;
+  const parts = copyParts(piece.body, piece.channel);
+  if (!parts.lead && !parts.rest) return <span className="mct-missing">No words saved with this piece</span>;
+  return <span className="mct-words">{parts.lead && <b>{parts.lead}</b>}{parts.rest && <span>{parts.rest}</span>}</span>;
 }
 
 function PiecePreview({ tenantId, id, known, listPhase, onClose }: { tenantId: string | null; id: string; known: ContentPiece | null; listPhase: Phase; onClose: () => void }) {
@@ -240,33 +249,39 @@ function PiecePreview({ tenantId, id, known, listPhase, onClose }: { tenantId: s
   const title = shortTitle(piece.title, 120);
   const asked = piece.brief?.trim() && piece.brief.trim() !== (piece.title ?? "").trim() ? piece.brief.trim() : title.cut ? (piece.title ?? "").trim() : null;
   const shape = kind === "image" ? shapeLabel(piece.size) : null;
+  const ad = kind === "copy" && piece.channel === "ad_copy" ? parseAdCopy(piece.body) : null;
+  const parts = kind === "copy" ? copyParts(piece.body, piece.channel) : null;
   const body = <div className="mct-preview">
-    <p className="mct-facts">{[pieceLabel(piece, doc), shape, stateWord(piece), `saved ${formatDay(piece.updated_at)}`].filter(Boolean).join(" · ")}</p>
-    {kind === "image" && (piece.image_url ? <FullImage url={piece.image_url} alt={title.text}/> : <p className="mct-note">No picture was saved with this image.</p>)}
-    {kind === "video" && <p className="mct-note">Video can’t be previewed here yet.</p>}
+    <p className="mct-facts">{[pieceLabel(piece, doc), shape, piece.status === "published" ? IN_CATALOG : "Draft", `saved ${formatDay(piece.updated_at)}`].filter(Boolean).join(" · ")}</p>
+    {(kind === "image" || kind === "video") && (safeMediaUrl(piece.image_url) ? <FullMedia kind={kind} url={safeMediaUrl(piece.image_url)!} alt={title.text}/> : <p className="mct-note">No file was saved with this {kind}.</p>)}
     {kind === "document" && (doc
-      ? <div className="mct-doc"><ChartBoundary className="mct-doc-skel"><DocumentPreview document={doc}/></ChartBoundary></div>
+      ? <div className="mct-doc"><ChartBoundary className="mct-doc-skel" failed="This document couldn’t be shown. Reload the page to try again; nothing was changed."><DocumentPreview document={doc} toolbar={false}/></ChartBoundary></div>
       : <p className="mct-note">This document couldn’t be read. Ask PAIGE to make it again.</p>)}
-    {kind === "copy" && (plainCopy(piece.body) ? <div className="mct-copy">{plainCopy(piece.body)}</div> : <p className="mct-note">No words were saved with this piece.</p>)}
-    {asked && kind === "image" && <div className="mct-asked"><span>What PAIGE was asked</span><p>{asked}</p></div>}
+    {ad && (ad.headline || ad.cta)
+      ? <div className="mct-adfull">{ad.headline && <b>{ad.headline}</b>}{ad.primary && <p>{plainCopy(ad.primary)}</p>}{ad.cta ? <i>{ad.cta}</i> : <small>No call to action written</small>}</div>
+      : parts && (parts.lead || parts.rest ? <div className="mct-copy">{parts.lead && <b>{parts.lead}</b>}{parts.rest}</div> : <p className="mct-note">No words were saved with this piece.</p>)}
+    {asked && (kind === "image" || kind === "video") && <div className="mct-asked"><span>What PAIGE was asked</span><p>{asked}</p></div>}
   </div>;
-  return <DetailDrawer detail={{ key: piece.id, eyebrow: "Content", wide: true, title: title.text, rows: [], body, actions: <PieceActions piece={piece} onClose={onClose}/> }} onClose={onClose}/>;
+  return <DetailDrawer detail={{ key: piece.id, eyebrow: "Content", wide: true, title: title.text, rows: [], body, actions: <PieceActions piece={piece} hasDoc={Boolean(doc)} onClose={onClose}/> }} onClose={onClose}/>;
 }
 
-function FullImage({ url, alt }: { url: string; alt: string }) {
+function FullMedia({ kind, url, alt }: { kind: "image" | "video"; url: string; alt: string }) {
   const [broken, setBroken] = React.useState(false);
-  if (broken) return <p className="mct-note">This image couldn’t load. <a className="mov-lnk" href={url} target="_blank" rel="noreferrer">Open it in a new tab</a></p>;
-  return <figure className="mct-full"><img src={url} alt={alt} onError={() => setBroken(true)}/></figure>;
+  if (broken) return <p className="mct-note">This {kind} couldn’t load. <a className="mov-lnk" href={url} target="_blank" rel="noreferrer">Open it in a new tab</a></p>;
+  return <figure className="mct-full">{kind === "image" ? <img src={url} alt={alt} onError={() => setBroken(true)}/> : <video src={url} controls playsInline preload="metadata" aria-label={alt} onError={() => setBroken(true)}/>}</figure>;
 }
 
-function PieceActions({ piece, onClose }: { piece: ContentPiece; onClose: () => void }) {
+function PieceActions({ piece, hasDoc, onClose }: { piece: ContentPiece; hasDoc: boolean; onClose: () => void }) {
   const kind = pieceKind(piece);
   const [note, setNote] = React.useState("");
+  const url = kind === "image" || kind === "video" ? safeMediaUrl(piece.image_url) : null;
+  const [busy, setBusy] = React.useState(false);
   const download = async () => {
-    if (!piece.image_url) return;
+    if (!url || busy) return;
+    setBusy(true);
     setNote("Downloading…");
     try {
-      const response = await fetch(piece.image_url);
+      const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const href = URL.createObjectURL(await response.blob());
       const link = Object.assign(document.createElement("a"), { href, download: downloadName(piece) });
@@ -274,20 +289,21 @@ function PieceActions({ piece, onClose }: { piece: ContentPiece; onClose: () => 
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(href), 10_000);
-      setNote("Downloaded.");
+      setNote("Download started.");
     } catch (error) {
-      console.error("[marketing] image download failed", error);
+      console.error("[marketing] download failed", error);
       setNote("The download didn’t start. Use Open full size and save it from there.");
-    }
+    } finally { setBusy(false); }
   };
   const copy = async () => {
     try { await navigator.clipboard.writeText(plainCopy(piece.body)); setNote("Copied."); }
     catch (error) { console.error("[marketing] copy failed", error); setNote("Couldn’t copy. Select the words and copy them yourself."); }
   };
   return <>
-    {kind === "image" && piece.image_url && <><button type="button" className="btn btn-s" onClick={() => void download()}>Download</button><a className="btn btn-s" href={piece.image_url} target="_blank" rel="noreferrer">Open full size</a></>}
+    {url && <><button type="button" className="btn btn-s" disabled={busy} onClick={() => void download()}>Download</button><a className="btn btn-s" href={url} target="_blank" rel="noreferrer">Open full size</a></>}
+    {kind === "document" && hasDoc && <button type="button" className="btn btn-s" onClick={printStudioDocument}>Print / Save as PDF</button>}
     {kind === "copy" && plainCopy(piece.body) && <button type="button" className="btn btn-s" onClick={() => void copy()}>Copy text</button>}
-    <button type="button" className="btn btn-s" onClick={() => { onClose(); openPaige(revisePrompt(piece)); }}>Revise with PAIGE</button>
+    <button type="button" className="btn btn-s" onClick={() => { onClose(); reviseAfterClose(revisePrompt(piece)); }}>Revise with PAIGE</button>
     <span className="mct-act-note" role="status" aria-live="polite">{note}</span>
   </>;
 }

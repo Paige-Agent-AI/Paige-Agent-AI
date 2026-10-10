@@ -49,7 +49,7 @@
   "surfaces": [
     {
       "id": "finance.department",
-      "surface": "Solo Finance — seven company-finance views",
+      "surface": "Solo Finance — six company-finance views",
       "group": "finance",
       "tier_scope": [
         "solo standalone"

@@ -11,7 +11,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const parsed = await req.json().catch(() => null);
+    const body = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
     const { sync_all } = body;
     const authHeader = req.headers.get("Authorization");
     const authority = await authorizeQuickBooksSync(
@@ -41,6 +42,6 @@ serve(async (req) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("[qb-sync]", msg);
-    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "QuickBooks sync unavailable" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

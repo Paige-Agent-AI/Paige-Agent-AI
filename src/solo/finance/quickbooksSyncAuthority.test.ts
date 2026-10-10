@@ -18,13 +18,22 @@ function loadHandler(getUser: () => Promise<unknown>, privilegedRead: ReturnType
 }
 
 describe("QuickBooks sync deployed handler containment", () => {
-  it.each([{}, { sync_all: true }, { user_id: "test-victim", sync_all: true }])("denies anonymous requests without a privileged read: %j", async (body) => {
+  it.each([null, [], "test-text", 42, {}, { sync_all: true }, { user_id: "test-victim", sync_all: true }])("denies anonymous requests without a privileged read: %j", async (body) => {
     const privilegedRead = vi.fn();
     const getUser = vi.fn();
     const response = await loadHandler(getUser, privilegedRead)(new Request("https://test.invalid", { method: "POST", body: JSON.stringify(body) }));
     expect(response.status).toBe(401);
     expect(privilegedRead).not.toHaveBeenCalled();
     expect(getUser).not.toHaveBeenCalled();
+  });
+  it.each([null, [], "test-text", 42])("contains authenticated non-object input: %j", async (body) => {
+    const privilegedRead = vi.fn();
+    const response = await loadHandler(async () => ({ data: { user: { id: "test-user-owner" } } }), privilegedRead)(new Request("https://test.invalid", {
+      method: "POST", headers: { Authorization: "Bearer test-user-token" }, body: JSON.stringify(body),
+    }));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: "FINANCE_SOURCE_UNAVAILABLE" });
+    expect(privilegedRead).not.toHaveBeenCalled();
   });
   it("denies verified-user bulk requests before a privileged read", async () => {
     const privilegedRead = vi.fn();

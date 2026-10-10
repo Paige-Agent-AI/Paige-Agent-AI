@@ -84,6 +84,8 @@ jobs:
         run: node scripts/proof/operator-intelligence-eval.mjs --postgres
       - name: INT-280 canonical durable trajectory history in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-history.mjs --postgres
+      - name: INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL
+        run: node scripts/proof/int280-trajectory-projection.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:

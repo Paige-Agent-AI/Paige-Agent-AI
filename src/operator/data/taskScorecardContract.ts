@@ -9,6 +9,8 @@ const hash = z.string().regex(/^[0-9a-f]{64}$/);
 const count = z.number().int().nonnegative().safe();
 const timestamp = z.string().refine(value => Number.isFinite(Date.parse(value)));
 const code = z.string().max(100).regex(/^[a-z][a-z0-9_]*$/);
+// Existing durable-work grammar, not a new capability catalogue.
+const capability = z.string().min(3).max(129).regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)?$/);
 const criterion = z.object({ id: code, version: z.literal('1.0.0'), kind: z.literal('deterministic'),
   applicability: z.array(z.string()), required_evidence: z.array(z.string()), criterion: z.string(),
   failure: z.string(), indeterminate: z.string(), not_applicable: z.string() });
@@ -17,7 +19,7 @@ const result = z.object({ result_ref: uuid, scorer: code, version: z.literal('1.
   evidence: z.enum(['complete', 'missing', 'stale', 'partial', 'conflicting', 'unrelated', 'unavailable']), reason: code });
 const item = z.object({ run_ref: uuid, work_ref: uuid, source_available: z.boolean(), mode: z.enum(['observation', 'replay']),
   created_at: timestamp, source_observed_at: timestamp, input_hash: hash, previous_run_ref: uuid.nullable(),
-  work_version: count.nullable(), attempt: count.nullable(), category: code.nullable(), capability: code.nullable(),
+  work_version: count.nullable(), attempt: count.nullable(), category: code.nullable(), capability: capability.nullable(),
   recorded_state: code.nullable(), terminal_condition: z.enum(['artifact', 'read_only', 'unavailable']).nullable(),
   terminal_verified_at_observation: z.boolean().nullable(),
   participants: z.array(z.object({ trace_ref: uuid, agent_ref: z.string().max(200),
@@ -55,6 +57,22 @@ export function parseTaskScorecard(value: unknown, requestedVersion: TaskSetVers
   if (new Set(parsed.items.map(i => i.run_ref)).size !== parsed.items.length || parsed.items.some(i =>
     i.results.length !== definition.evaluators.length || new Set(i.results.map(r => r.scorer)).size !== i.results.length ||
     i.results.some(r => !definition.evaluators.some(c => c.id === r.scorer && c.version === r.version)))) throw new Error('Incomplete scorecard criteria');
+  const results = parsed.items.flatMap(i => i.results);
+  if (new Set(results.map(r => r.result_ref)).size !== results.length ||
+    results.some(r => r.verdict !== 'indeterminate' && r.evidence !== 'complete'))
+    throw new Error('Invalid scorecard result evidence');
+  for (const evaluation of parsed.items) {
+    if (evaluation.mode === 'observation' ? evaluation.previous_run_ref !== null :
+      evaluation.previous_run_ref === null || evaluation.previous_run_ref === evaluation.run_ref)
+      throw new Error('Invalid evaluation lineage');
+    // A valid historical parent can be outside this versioned, bounded page.
+    const parent = parsed.items.find(i => i.run_ref === evaluation.previous_run_ref);
+    if (parent && (parent.work_ref !== evaluation.work_ref || parent.input_hash !== evaluation.input_hash ||
+      parent.source_observed_at !== evaluation.source_observed_at)) throw new Error('Conflicting evaluation lineage');
+  }
+  const last = parsed.items.at(-1);
+  if (parsed.next_cursor && (!last || parsed.next_cursor.id !== last.run_ref || parsed.next_cursor.at !== last.created_at))
+    throw new Error('Unanchored scorecard cursor');
   const observed = parsed.items.filter(i => i.mode === 'observation').length;
   if (parsed.sample.evaluations !== parsed.items.length || parsed.sample.task_subjects !== new Set(parsed.items.map(i => i.work_ref)).size ||
     parsed.sample.observations !== observed || parsed.sample.replays !== parsed.items.length - observed) throw new Error('Invalid scorecard sample');

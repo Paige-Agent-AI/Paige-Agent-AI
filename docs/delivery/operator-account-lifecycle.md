@@ -106,6 +106,18 @@ Controlled PostgreSQL replay twice proves non-table-owner trigger privilege, par
 
 ## Controlled acceptance matrix
 
+### Generated images and videos — same resource operation
+
+Forward migration `20270602000304_operator_generated_media_retirement` extends the existing protected journal, claim and Storage adapter for the canonical `paige-generated` bucket. It does not create a second lifecycle engine. Ordinary tenant-owned PNG/JPG/WebP/MP4 objects, including orphan files and previous draft versions, have a bounded supported API disposition. Public review exposes counts, not private object paths. Exact Admin/Owner confirmation explicitly covers irreversible image/video removal and broken public links. Resource readiness requires API inventory plus independent SQL absence, then a fresh account Delete preflight.
+
+The authoritative manifest refuses foreign references, published/scheduled/approved artifacts, legal holds, unsupported/versioned files and ambiguous bucket contracts. Canonical Marketing/social references and Storage writes are frozen for archived/paused/missing scopes; active survivor work remains writable. Interrupted cleanup reconciles the same original manifest, with no automatic destructive retry. Existing public CDN or third-party cached copies and required backups are not claimed to disappear immediately.
+
+Routing continues family 15 Operator lifecycle: protected global roles, account identity, existing journal/lease/audit and `operator.platform` surface (PARTIAL). Consequential deletion requires explicit exact-name acknowledgement in the existing flow; autonomous/Chat deletion remains UNAVAILABLE. No new Harness, Spine capability, scheduler, provider credentials or spend is introduced. Canonical Storage SDK is existing infrastructure; its standalone Integration Registry entry remains absent, documented here rather than inventing provider authority. Voice/Twilio/n8n contracts are unchanged. Production bytes, authenticated Operator use and actual account removal remain PROOF OWED, distinct from local SQL/API/Chrome results.
+
+Reproduce with `node scripts/proof/operator-generated-media-retirement.mjs --postgres <dedicated-loopback-port>` and the existing `OPERATOR_PROOF_PSQL` client. Actual native PostgreSQL replay twice covers disposable Solo and Agency retirement, preserved shared Auth/survivor files, ACL refusal, published/shared/legal obligations, write/reference freeze and partial absence recovery. SQL metadata disappearance is a synthetic API port; actual Storage remove/list and loaded handler are separately injected tests, never live-byte evidence. Failing-first source refused a generated-media plan; the client also rejected its receipt and displayed the wrong resource action. The shared fix applies to every eligible archived tenant. Evidence: `docs/evidence/ui-delivery/operator-generated-media-retirement.md`.
+
+The earlier privilege-audit blocker has been resolved separately through the protected role-revocation operation. Its credential-free aggregate readback showed one Owner, one Admin and zero extra Admin assignments. This lifecycle extension never hardcodes email addresses and preserves future owner-invited Admin authority.
+
 | Outcome | Evidence | Boundary |
 | --- | --- | --- |
 | Archive/Restore preserves Agency tree and authorized business records | Actual SQL and Chrome source interaction PASS | Restore access; execution remains paused, never restarts billing |

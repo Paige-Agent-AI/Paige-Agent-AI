@@ -24,6 +24,7 @@ export default defineConfig({
       { find: "./useSoloCampaigns", replacement: path.join(here, "stubs.ts") },
       { find: "./useSoloCampaignBriefs", replacement: path.join(here, "briefs-stub.ts") },
       { find: "./useCatalogOffers", replacement: path.join(here, "../catalog-mount/useCatalogOffers-stub.ts") },
+      { find: /^\.\/useFormIntake$/, replacement: path.join(here, "form-intake-stub.ts") },
       { find: "@", replacement: path.join(repo, "src") },
     ],
   },

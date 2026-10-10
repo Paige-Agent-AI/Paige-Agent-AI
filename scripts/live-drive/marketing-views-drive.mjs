@@ -134,7 +134,9 @@ async function main() {
     browser = await chromium.launch(buildLaunchOptions());
     const warm = await browser.newPage(); await open(warm, { tab: "overview" }); await warm.close();
 
-    for (const theme of ["light", "dark"]) {
+    // DRIVE_ONLY=flows re-runs only the retired-address and form-panel flows (the frames take ~20 min).
+    const only = process.env.DRIVE_ONLY;
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
       for (const frame of FRAMES) {
         for (const posture of POSTURES) {
           const width = contentWidth(frame.width, posture);
@@ -194,7 +196,7 @@ async function main() {
     }
 
     // States, at the ordinary 1366 docked session, both themes.
-    for (const theme of ["light", "dark"]) {
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
       for (const mode of ["first", "loading", "error", "readonly"]) {
         for (const tab of ["overview", "analytics", "audience", "content", "email", "ads"]) {
           const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
@@ -265,7 +267,7 @@ async function main() {
     if (browser) await browser.close().catch(() => {});
     await stopTree(vite);
   }
-  fs.writeFileSync(path.join(OUT, "geometry.json"), JSON.stringify(geometry, null, 2));
+  if (process.env.DRIVE_ONLY !== "flows") fs.writeFileSync(path.join(OUT, "geometry.json"), JSON.stringify(geometry, null, 2));
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
   if (failed.length) process.exitCode = 1; else console.log(`frames written to ${OUT}`);

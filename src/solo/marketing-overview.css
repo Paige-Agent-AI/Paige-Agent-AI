@@ -15,8 +15,8 @@
 .mov-foot{border-top:1px solid var(--line-soft);background:var(--surface-2)}
 .mov-empty{padding:18px;color:var(--ink-2);font-size:13px}
 .mov-empty-block{display:grid;justify-items:start;gap:10px;padding:20px 18px;color:var(--ink-2);font-size:13px}
-.mov-lnk{color:var(--violet);font-weight:600;font-size:13px;padding:0;justify-self:start;text-align:left;text-underline-offset:3px}
-.mov-lnk:hover{text-decoration:underline} /* --violet-2 measured 4.43:1 at 13px; the underline carries the hover */
+.paige-solo .mov .mov-lnk{color:var(--violet);font-weight:600;font-size:13px;padding:0;justify-self:start;text-align:left;text-underline-offset:3px}
+.paige-solo .mov .mov-lnk:hover{text-decoration:underline} /* --violet-2 measured 4.43:1 at 13px; the underline carries the hover */
 .mov :focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:6px}
 
 /* the chain */

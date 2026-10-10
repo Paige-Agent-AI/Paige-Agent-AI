@@ -11,7 +11,7 @@ DO $$ BEGIN
 END $$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY, deleted_at timestamptz, banned_until timestamptz);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
-CREATE TABLE public.tenants(id uuid PRIMARY KEY, status text, brand jsonb DEFAULT '{}');
+CREATE TABLE public.tenants(id uuid PRIMARY KEY, status text, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false);
 CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
 CREATE TABLE public.tenant_members(tenant_id uuid,user_id uuid,role text,status text,PRIMARY KEY(tenant_id,user_id));
 CREATE TABLE public.user_roles(user_id uuid,role text);
@@ -27,7 +27,7 @@ CREATE FUNCTION public.record_capability_run(_tenant uuid,_actor uuid,_key text,
  INSERT INTO public.fixture_receipts VALUES(_run,_tenant,_actor,_key);
 END $$;
 INSERT INTO auth.users VALUES ('10000000-0000-0000-0000-000000000001',null,null),('10000000-0000-0000-0000-000000000002',null,null),('10000000-0000-0000-0000-000000000003',null,null);
-INSERT INTO tenants VALUES ('20000000-0000-0000-0000-000000000001','active','{"business_brief":{"legalName":"Test Company A"}}'),('20000000-0000-0000-0000-000000000002','active','{"business_brief":{"legalName":"Test Company B"}}');
+INSERT INTO tenants(id,status,brand) VALUES ('20000000-0000-0000-0000-000000000001','active','{"business_brief":{"legalName":"Test Company A"}}'),('20000000-0000-0000-0000-000000000002','active','{"business_brief":{"legalName":"Test Company B"}}');
 INSERT INTO profiles VALUES ('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001'),('10000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002'),('10000000-0000-0000-0000-000000000003','20000000-0000-0000-0000-000000000001');
 INSERT INTO tenant_members VALUES ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','owner','active'),('20000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','owner','active'),('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000003','member','active');
 GRANT USAGE ON SCHEMA auth TO authenticated,anon,service_role;
@@ -78,6 +78,9 @@ SELECT public.fixture_expect_error($q$UPDATE finance_source_bindings SET revisio
 INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,currency,reporting_basis,source_observed_at,coverage,pages_complete,evidence_digest)
  VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'test-account-1','bank_accounts',null,'not_supplied',now(),'partial',false,repeat('a',64));
 SELECT public.fixture_expect_error($q$UPDATE finance_source_observations SET coverage='complete'$q$,'42501');
+UPDATE tenants SET lifecycle_execution_paused=true WHERE id='20000000-0000-0000-0000-000000000001';
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,evidence_digest) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'test-paused','bank_accounts',now(),'partial',repeat('e',64))$q$,'42501');
+UPDATE tenants SET lifecycle_execution_paused=false WHERE id='20000000-0000-0000-0000-000000000001';
 SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,pages_complete,evidence_digest) VALUES('20000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000001',1,'test-foreign','bank_accounts',now(),'partial',false,repeat('b',64))$q$,'42501');
 SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,pages_complete,evidence_digest) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'test-incomplete','income_statement',now(),'complete',false,repeat('b',64))$q$,'23514');
 UPDATE quickbooks_connections SET is_active=false;

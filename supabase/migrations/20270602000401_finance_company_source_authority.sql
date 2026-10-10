@@ -99,6 +99,8 @@ BEGIN
  IF TG_OP<>'INSERT' THEN RAISE EXCEPTION 'Financial source observations are immutable' USING ERRCODE='42501'; END IF;
  SELECT * INTO binding FROM public.finance_source_bindings WHERE tenant_id=NEW.tenant_id AND entity_id=NEW.entity_id AND id=NEW.binding_id FOR SHARE;
  IF NOT FOUND OR binding.verification_state<>'verified' OR binding.revision<>NEW.binding_revision THEN RAISE EXCEPTION 'Verified financial source unavailable or changed' USING ERRCODE='42501'; END IF;
+ PERFORM 1 FROM public.tenants WHERE id=NEW.tenant_id AND status IN ('trial','active','past_due') AND archived_at IS NULL AND NOT lifecycle_execution_paused FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace unavailable or paused' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM public.finance_company_entities WHERE tenant_id=NEW.tenant_id AND id=NEW.entity_id AND is_active FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
  IF binding.provider='quickbooks' THEN
@@ -121,7 +123,7 @@ BEGIN
  IF NOT FOUND THEN RAISE EXCEPTION 'Finance actor unavailable' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM public.profiles WHERE user_id=_actor AND active_tenant_id=_expected_tenant FOR SHARE;
  IF NOT FOUND OR public.current_user_tenant_id() IS DISTINCT FROM _expected_tenant THEN RAISE EXCEPTION 'Finance workspace changed' USING ERRCODE='42501'; END IF;
- PERFORM 1 FROM public.tenants WHERE id=_expected_tenant AND status IN ('trial','active','past_due') FOR SHARE;
+ PERFORM 1 FROM public.tenants WHERE id=_expected_tenant AND status IN ('trial','active','past_due') AND archived_at IS NULL FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Finance workspace unavailable' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM public.tenant_members WHERE user_id=_actor FOR SHARE;
  PERFORM 1 FROM public.user_roles WHERE user_id=_actor FOR SHARE;

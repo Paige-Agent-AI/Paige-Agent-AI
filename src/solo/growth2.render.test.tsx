@@ -877,6 +877,7 @@ describe("Solo Marketing department views", () => {
 
   const funnel = () => [...host.querySelectorAll(".mva-step")].map((step) => step.querySelector(".mva-n")?.textContent);
   const analyticsSummary = () => host.querySelector(".mva .mov-sum")?.textContent;
+  const sourceKeys = () => [...host.querySelector("[aria-labelledby='mva-cov-h']")!.querySelectorAll(".mo-keys li")].map((li) => li.textContent);
 
   it("Analytics traces leads from received to opportunity, from real records inside the range", () => {
     useWorkspace();
@@ -888,7 +889,17 @@ describe("Solo Marketing department views", () => {
     expect([...host.querySelectorAll(".mva-step .mva-bar")].map((bar) => bar.getAttribute("aria-label"))).toEqual([
       "Leads received: 3", "With a source tag: 100% of leads received", "Matched to a campaign: 33% of leads received", "Became opportunities: 33% of leads received",
     ]);
-    expect([...host.querySelectorAll(".mva-rows li")].map((row) => row.textContent)).toEqual(["newsletter2", "linkedin1"]);
+    expect(sourceKeys()).toEqual(["newsletter267%", "linkedin133%"]);
+    // Headline figures, compared with the 30 days before because the read covers them (s4, 40 days ago).
+    expect([...host.querySelectorAll(".mva-kpi")].map((kpi) => [kpi.querySelector(".mva-kpi-v")?.textContent, kpi.querySelector(".mva-kpi-d")?.textContent])).toEqual([
+      ["3", "+2 vs the previous 30 days"], ["100%", "Same as the previous 30 days"], ["1", "+1 vs the previous 30 days"], ["1", "+1 vs the previous 30 days"], ["33%", "+33 pts vs the previous 30 days"],
+    ]);
+    expect(host.querySelectorAll(".mva-kpi .mva-spark")).toHaveLength(5);
+    // What became of each lead, from its own record.
+    expect([...host.querySelector("[aria-labelledby='mva-out-h']")!.querySelectorAll(".mo-keys li")].map((li) => li.textContent)).toEqual(["Became an opportunity133%", "Added to Clients133%", "Saved, nothing more yet133%"]);
+    // When leads arrive: seven weekday rows of 24 hours, three lit.
+    expect(host.querySelectorAll(".mva-heat i")).toHaveLength(168);
+    expect(host.querySelectorAll(".mva-heat i.is-on").length).toBeGreaterThan(0);
     expect([...host.querySelectorAll(".mva-tags li")].map((row) => row.textContent)).toEqual(["CB-SPRINGBrief: Spring advisory intake1"]);
     expect(host.querySelector(".mva-cov")?.getAttribute("aria-label")).toBe("3 of 3 leads carry a source tag");
     expect([...host.querySelectorAll(".mva-cap-row")].map((row) => row.textContent)).toEqual(["Discovery call requestNot routed3"]);
@@ -988,7 +999,8 @@ describe("Solo Marketing department views", () => {
     renderAt("/solo/42/growth/analytics");
     expect(analyticsSummary()).toBe("No leads in the last 30 days, so there’s nothing to trace yet. Your live form is ready to record the source on its link.");
     expect(funnel()).toEqual(["0", "0", "0", "0"]);
-    expect(host.querySelector(".mva-quiet")?.textContent).toBe("Nothing to measure yet.");
+    expect(host.querySelector("[aria-labelledby='mva-cov-h'] .mva-quiet")?.textContent).toBe("Nothing to measure yet.");
+    expect(host.querySelector("[aria-labelledby='mva-heat-h'] p")?.textContent).toContain("No leads in this range yet");
     expect(host.querySelectorAll(".mva-bar em")).toHaveLength(0);
     act(() => root.unmount()); host.remove();
     useWorkspace({ submissions: [], artifacts: [] });
@@ -1004,7 +1016,9 @@ describe("Solo Marketing department views", () => {
     expect(analyticsSummary()).toContain("200 leads or more");
     expect(funnel()).toEqual(["200+", "100+", "0+", "0+"]);
     expect(host.querySelector(".mva-cap")?.textContent).toContain("each count is a floor");
-    expect([...host.querySelectorAll(".mva-rows li")].map((row) => row.textContent)).toEqual(["newsletter100+"]);
+    expect(sourceKeys()).toEqual(["newsletter100+50%", "No tracking tag100+50%"]);
+    // A full read can't vouch for the period before, so nothing is compared.
+    expect(host.querySelector(".mva-kpi-d")?.textContent).toBe("No comparison: the read is full");
     expect(host.querySelector(".mva-cov")?.getAttribute("aria-label")).toBe("100+ of 200+ leads carry a source tag");
     expect([...host.querySelectorAll(".mva-cap-row")].map((row) => row.textContent)).toEqual(["Discovery call requestNot routed195+", "Forms no longer liveLeads in this range from a form since unpublished5+"]);
   });

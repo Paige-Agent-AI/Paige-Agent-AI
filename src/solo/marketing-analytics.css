@@ -1,4 +1,4 @@
-/* Marketing › Analytics (INT-342 S1d, owner-approved prototype v2). Builds on the Overview's card,
+/* Marketing › Analytics (INT-342 S1d, owner-approved prototype v2; "the most visual tab", owner 2026-10-10). Builds on the Overview's card,
  * head, summary and link styles (marketing-overview.css) so the two tabs read as one system. Solo
  * tokens only; violet is data, warn is a form that doesn't route, gold is not spent here (no act on
  * this page creates anything). One authored motion: the funnel bars grow once (transform), off under
@@ -7,6 +7,57 @@
 .mva-foot{display:flex;align-items:center;justify-content:space-between;gap:6px 14px;flex-wrap:wrap}
 .paige-solo .mva .campaigns-segmented button{font-size:12px;padding:3px 10px;line-height:20px}
 .mva-cap{font-size:12px;color:var(--ink-2);padding:0 4px}
+
+/* headline figures: five tiles, each with a sparkline */
+.mva-kpis{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@container (max-width:1100px){.mva-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.mva-kpi:first-child{grid-column:span 2}} /* 2+1 then 3: no hole */
+@container (max-width:720px){.mva-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}} /* 2, then 2+2 */
+@container (max-width:420px){.mva-kpis{grid-template-columns:minmax(0,1fr)}.mva-kpi:first-child{grid-column:auto}}
+.mva-kpi{position:relative;display:grid;align-content:start;gap:4px;padding:14px 16px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-1);min-width:0;overflow:hidden}
+.mva-kpi-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.mva-kpi-i{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--violet-tint, var(--surface-sunk));color:var(--violet);flex:none}
+.mva-kpi-v{font-size:32px;font-weight:600;letter-spacing:-.035em;line-height:1.05;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:6px}
+.mva-kpi-f{font-size:12px;color:var(--ink-2)}
+.mva-kpi-d{font-size:11.5px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.mva-kpi-d.is-up{color:color-mix(in srgb,var(--ok) 80%,var(--ink))}
+.mva-kpi-d.is-down{color:color-mix(in srgb,var(--bad) 80%,var(--ink))}
+.mva-spark{display:block;width:100%;height:30px;margin-top:6px}
+.mva-spark-a{fill:var(--violet);opacity:.12}
+.mva-spark-l{fill:none;stroke:var(--violet);stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+
+/* paired cards */
+.mva-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+.mva-pair.is-wide{grid-template-columns:minmax(0,1.65fr) minmax(0,1fr)}
+.mva-pair>.mov-card{display:flex;flex-direction:column}
+.mva-pair>.mov-card>.mov-foot{margin-top:auto} /* footers line up across the pair */
+@container (max-width:900px){.mva-pair,.mva-pair.is-wide{grid-template-columns:minmax(0,1fr)}}
+.mva-chart-pad{padding:10px 14px 14px}
+.mva-chart-trend{height:260px;min-width:0}
+.mva-legend{list-style:none;margin:0;padding:0;display:flex;gap:14px;font-size:12px;color:var(--ink-2)}
+.mva-legend li{display:inline-flex;align-items:center;gap:6px}
+.mva-legend i{display:inline-block}
+.mva-legend i.is-bar{width:10px;height:10px;border-radius:3px;background:var(--chart-1)}
+.mva-legend i.is-line{width:14px;height:2.5px;border-radius:2px;background:var(--chart-2)}
+.mva-split{grid-template-columns:minmax(120px,160px) minmax(0,1fr)}
+.mva-body-tight{padding-bottom:4px}
+
+/* when leads arrive */
+.mva-heat{display:grid;grid-template-columns:64px repeat(24,minmax(0,1fr));gap:3px;padding:14px 18px 18px;align-items:center}
+.mva-heat-x{font:10.5px/1 var(--mono);color:var(--ink-2);text-align:left;white-space:nowrap;overflow:visible}
+.mva-heat-y{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);padding-right:8px}
+.mva-heat-y b{font-size:11.5px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.mva-heat i{display:block;width:100%;height:24px;border-radius:4px;background:color-mix(in srgb,var(--line) 60%,var(--surface))}
+.mva-heat i.is-on{background:color-mix(in srgb,var(--violet) var(--mva-heat),var(--surface))}
+.mva-heat-key{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-2)}
+.mva-heat-key i{width:12px;height:12px;border-radius:3px;background:color-mix(in srgb,var(--violet) 18%,var(--surface))}
+.mva-heat-key i:nth-child(2){background:color-mix(in srgb,var(--violet) 45%,var(--surface))}
+.mva-heat-key i:nth-child(3){background:color-mix(in srgb,var(--violet) 72%,var(--surface))}
+.mva-heat-key i:nth-child(4){background:var(--violet)}
+@container (max-width:640px){.mva-heat i{height:16px;border-radius:3px}.mva-heat{grid-template-columns:44px repeat(24,minmax(0,1fr));gap:2px;padding-inline:12px}.mva-heat-y b{display:none}.mva-heat-x{font-size:9px}}
+
+/* channels' email chart */
+.mva-ch-chart{padding:12px 18px 4px;border-bottom:1px solid var(--line-soft)}
+.mva-chart-email{height:200px}
 
 /* the funnel */
 .mva-funnel{list-style:none;margin:0;padding:8px 18px 14px;display:grid}
@@ -25,11 +76,7 @@
 @keyframes mva-grow{from{transform:scaleX(0)}}
 @container (max-width:720px){.mva-step{grid-template-columns:minmax(0,1fr)}.mva-n{font-size:26px}}
 
-/* two-up */
-.mva-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
-.mva-two>.mov-card{display:flex;flex-direction:column}
-.mva-two>.mov-card>.mov-foot{margin-top:auto} /* footers line up across the pair */
-@container (max-width:900px){.mva-two{grid-template-columns:minmax(0,1fr)}}
+/* card bodies */
 .mva-body{padding:14px 18px 16px;display:grid;gap:10px}
 .mva-quiet{font-size:13px;color:var(--ink-2)}
 

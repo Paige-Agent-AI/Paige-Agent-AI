@@ -221,3 +221,41 @@ export function EmailRatesChart({ points, label }: { points: EmailRatePointView[
     </ResponsiveContainer>
   </div>;
 }
+
+// ── Marketing › Analytics ─────────────────────────────────────────────────────────────────────────
+
+export type LeadTrendPointView = { key: string; label: string; leads: number; opportunities: number };
+
+/**
+ * Leads received in each day (or week, for a quarter) as bars, with the opportunities they became as a
+ * line over them. Hover any bar for its date, leads and opportunities.
+ */
+export function LeadsTrend({ points, step, label }: { points: LeadTrendPointView[]; step: "day" | "week"; label: string }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const colors = useChartColors(ref);
+  const reduced = useReducedMotion();
+  const total = points.reduce((sum, point) => sum + point.leads, 0);
+  const busiest = points.reduce((top, point) => (point.leads > (top?.leads ?? 0) ? point : top), null as LeadTrendPointView | null);
+  return <div ref={ref} className="mo-chart mva-chart-trend" role="img"
+    aria-label={`${label}: ${total} leads${busiest ? `, the busiest ${step} ${busiest.label} with ${busiest.leads}` : ""}.`}>
+    <ResponsiveContainer width="100%" height="100%">
+      <ComposedChart accessibilityLayer={false} data={points} margin={{ top: 12, right: 8, bottom: 0, left: -18 }} barCategoryGap="22%">
+        <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
+        <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={18} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} domain={[0, "auto"]} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+        <Tooltip cursor={{ fill: colors["--line-soft"], opacity: 0.6 }}
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null;
+            const point = (payload[0] as unknown as { payload: LeadTrendPointView }).payload;
+            return <TipBox title={step === "week" ? `Week of ${point.label}` : point.label} rows={[
+              { label: "Leads", value: point.leads, color: colors["--chart-1"] },
+              { label: "Became opportunities", value: point.opportunities, color: colors["--chart-2"] },
+            ]} />;
+          }} />
+        <Bar dataKey="leads" fill={colors["--chart-1"]} radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={!reduced} />
+        <Line type="monotone" dataKey="opportunities" stroke={colors["--chart-2"]} strokeWidth={2.25} isAnimationActive={!reduced}
+          dot={{ r: 2.5, fill: colors["--chart-2"], stroke: colors["--surface"], strokeWidth: 1.5 }} activeDot={{ r: 4, stroke: colors["--surface"], strokeWidth: 2 }} />
+      </ComposedChart>
+    </ResponsiveContainer>
+  </div>;
+}

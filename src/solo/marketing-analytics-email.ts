@@ -8,7 +8,9 @@ type Rpc = (fn: string, args: Record<string, unknown>) => Promise<{ data: unknow
 const rpc = (supabase as unknown as { rpc: Rpc }).rpc.bind(supabase);
 const zone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; } };
 
-export type EmailStats = { sent: number; tracked: number; opened: number; clicked: number };
+import type { SeriesDay } from "./marketing-email-model";
+
+export type EmailStats = { sent: number; tracked: number; opened: number; clicked: number; series: SeriesDay[] };
 export type EmailRead = { phase: "loading" | "ready" | "error" | "denied"; stats: EmailStats | null; retry: () => void };
 
 /** The email row's own read. Owners and admins only; anyone else is told so rather than shown a failure. */
@@ -28,8 +30,9 @@ export function useEmailStats(tenantId: string | null, days: number): EmailRead 
         setState({ key, phase: denied ? "denied" : "error", stats: null });
         return;
       }
-      const stats = (data as { stats?: Partial<EmailStats> } | null)?.stats;
-      setState({ key, phase: "ready", stats: { sent: stats?.sent ?? 0, tracked: stats?.tracked ?? 0, opened: stats?.opened ?? 0, clicked: stats?.clicked ?? 0 } });
+      const read = data as { stats?: Partial<EmailStats>; series?: SeriesDay[] } | null;
+      const stats = read?.stats;
+      setState({ key, phase: "ready", stats: { sent: stats?.sent ?? 0, tracked: stats?.tracked ?? 0, opened: stats?.opened ?? 0, clicked: stats?.clicked ?? 0, series: Array.isArray(read?.series) ? read.series : [] } });
     }, (error) => {
       // A rejected request (offline, aborted) is a failed read, never a read stuck loading.
       console.error("[marketing-analytics] email read failed", error);

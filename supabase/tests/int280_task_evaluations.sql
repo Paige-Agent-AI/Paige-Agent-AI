@@ -143,8 +143,12 @@ END $$;
 RESET ROLE;
 SELECT set_config('request.jwt.claim.role','service_role',false);
 SET ROLE service_role;
-DO $$ DECLARE r uuid; BEGIN
+DO $$ DECLARE r uuid; n integer; BEGIN
   BEGIN PERFORM public.operator_intelligence_evaluate_task(gen_random_uuid());RAISE EXCEPTION 'service RPC admitted';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END;
+  SELECT count(*) INTO n FROM public.paige_eval_run WHERE evaluator_set_id IS NOT NULL;
+  BEGIN TRUNCATE public.paige_eval_result;RAISE EXCEPTION 'service truncated protected results';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END;
+  BEGIN TRUNCATE public.paige_eval_result,public.paige_eval_run;RAISE EXCEPTION 'service truncated protected runs';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END;
+  IF n=0 OR n<>(SELECT count(*) FROM public.paige_eval_run WHERE evaluator_set_id IS NOT NULL) THEN RAISE EXCEPTION 'bulk erasure changed protected evidence'; END IF;
   SELECT id INTO r FROM public.paige_eval_run WHERE evaluator_set_id IS NOT NULL LIMIT 1;
   BEGIN INSERT INTO public.paige_eval_result(run_id,scorer,scorer_kind,status,task_verdict,evaluator_version,evidence_state) VALUES(r,'forged','deterministic','needs_config','indeterminate','1.0.0','missing');RAISE EXCEPTION 'service forged task result';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END;
   -- Original model-output evaluation writes remain functional.
@@ -153,6 +157,15 @@ DO $$ DECLARE r uuid; BEGIN
   INSERT INTO public.paige_eval_result(run_id,tenant_id,scorer,scorer_kind,status) VALUES(r,'10000000-0000-4000-8000-000000000001','existing_output_scorer','deterministic','needs_config');
 END $$;
 RESET ROLE;
+-- A later broad service grant cannot silently reopen bulk erasure; statement guards remain.
+GRANT TRUNCATE ON public.paige_eval_run,public.paige_eval_result TO service_role;
+SET ROLE service_role;
+DO $$ BEGIN
+  BEGIN TRUNCATE public.paige_eval_result;RAISE EXCEPTION 'regrown grant erased results';EXCEPTION WHEN SQLSTATE '55000' THEN NULL;END;
+  BEGIN TRUNCATE public.paige_eval_result,public.paige_eval_run;RAISE EXCEPTION 'regrown grant erased runs';EXCEPTION WHEN SQLSTATE '55000' THEN NULL;END;
+END $$;
+RESET ROLE;
+REVOKE TRUNCATE ON public.paige_eval_run,public.paige_eval_result FROM service_role;
 SET ROLE anon;
 DO $$ BEGIN BEGIN PERFORM public.operator_intelligence_evaluate_task(gen_random_uuid());RAISE EXCEPTION 'anon admitted';EXCEPTION WHEN SQLSTATE '42501' THEN NULL;END; END $$;
 RESET ROLE;

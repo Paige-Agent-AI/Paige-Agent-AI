@@ -62,6 +62,7 @@ CREATE OR REPLACE FUNCTION public._guard_paige_task_evaluation()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
 DECLARE protected boolean; owner_name name;
 BEGIN
+  IF TG_OP='TRUNCATE' THEN RAISE EXCEPTION 'task_evaluation_bulk_erasure_refused' USING ERRCODE='55000'; END IF;
   IF TG_TABLE_NAME='paige_eval_evaluator_set' THEN
     IF TG_OP IN('UPDATE','DELETE') THEN RAISE EXCEPTION 'evaluator_definition_immutable' USING ERRCODE='55000'; END IF;
     RETURN NEW;
@@ -105,6 +106,14 @@ CREATE TRIGGER trg_paige_eval_task_run_immutable BEFORE INSERT OR UPDATE OR DELE
 DROP TRIGGER IF EXISTS trg_paige_eval_task_result_immutable ON public.paige_eval_result;
 CREATE TRIGGER trg_paige_eval_task_result_immutable BEFORE INSERT OR UPDATE OR DELETE ON public.paige_eval_result
   FOR EACH ROW EXECUTE FUNCTION public._guard_paige_task_evaluation();
+-- TRUNCATE bypasses row triggers and RLS. Ordinary legacy Eval DML remains available.
+REVOKE TRUNCATE ON public.paige_eval_run,public.paige_eval_result FROM PUBLIC,anon,authenticated,service_role;
+DROP TRIGGER IF EXISTS trg_paige_eval_task_run_bulk_erasure ON public.paige_eval_run;
+CREATE TRIGGER trg_paige_eval_task_run_bulk_erasure BEFORE TRUNCATE ON public.paige_eval_run
+  FOR EACH STATEMENT EXECUTE FUNCTION public._guard_paige_task_evaluation();
+DROP TRIGGER IF EXISTS trg_paige_eval_task_result_bulk_erasure ON public.paige_eval_result;
+CREATE TRIGGER trg_paige_eval_task_result_bulk_erasure BEFORE TRUNCATE ON public.paige_eval_result
+  FOR EACH STATEMENT EXECUTE FUNCTION public._guard_paige_task_evaluation();
 
 -- Private deterministic implementation. Input is only a protected server snapshot.
 CREATE OR REPLACE FUNCTION public._paige_task_evaluator_verdicts(p jsonb,set_version text)

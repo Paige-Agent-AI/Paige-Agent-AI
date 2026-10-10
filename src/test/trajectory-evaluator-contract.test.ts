@@ -37,7 +37,7 @@ describe('INT-280 AI-2A immutable task evaluator contract', () => {
   });
 
   it('deploys the exact reviewed version/hash/definition bytes to the protected registry', () => {
-    const sql = readFileSync('supabase/migrations/20270602000411_int280_task_evaluations.sql', 'utf8');
+    const sql = readFileSync('supabase/migrations/20270602000422_int280_task_evaluations.sql', 'utf8');
     const seeds = [...sql.matchAll(/\$manifest\$(.*?)\$manifest\$/g)].map(m => m[1]);
     expect(seeds).toEqual([JSON.stringify(TASK_EVALUATOR_SET), JSON.stringify(TASK_EVALUATOR_SET_V2)]);
     expect(sql).toContain(TASK_EVALUATOR_SET_HASH);

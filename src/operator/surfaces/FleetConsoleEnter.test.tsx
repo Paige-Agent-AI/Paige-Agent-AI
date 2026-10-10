@@ -106,7 +106,7 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
   async function render() {
     await act(async () => { root.render(<FleetConsole isPlatformOwner={true} />); });
     return (name: string) =>
-      Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes(name) && b.textContent?.includes("Enter"));
+      Array.from(host.querySelectorAll("button")).find((b) => b.getAttribute("aria-label") === `Enter ${name}`);
   }
 
   it("enters, then takes the operator into the tenant's workspace", async () => {

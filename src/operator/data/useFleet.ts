@@ -134,7 +134,7 @@ export function rowReadComplete(rowsReturned: number, matched: number | null): b
   return matched !== null && matched <= rowsReturned;
 }
 
-export function useFleet(enabled: boolean): FleetData {
+export function useFleet(enabled: boolean, revision = 0): FleetData {
   const [tenants, setTenants] = useState<FleetTenant[]>([]);
   const [classificationVisible, setClassificationVisible] = useState(false);
   const [detailReadFailed, setDetailReadFailed] = useState(false);
@@ -226,7 +226,7 @@ export function useFleet(enabled: boolean): FleetData {
     return () => {
       alive = false;
     };
-  }, [enabled]);
+  }, [enabled, revision]);
 
   return { tenants, classificationVisible, detailReadFailed, loading, error };
 }

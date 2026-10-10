@@ -26,7 +26,7 @@ MUST_PRESERVE: Canonical protected roles, precise scope/version/name, journal/au
 ACCEPTANCE_CRITERIA: Eligible tenant contexts archive without provider credentials; eligible PAIGE data physically deletes; supported files removed within Delete; unrelated workspaces/users/platform connection survive; live reviewed source/ACLs and public build independently read back; authenticated acceptance remains separate.
 MOTION_PURPOSE: NONE: No motion added or changed.
 PROTECTED_SEAMS: Auth/tenant isolation, lifecycle writes/readback, audit/Vault/provider references, idempotency/partial recovery and responsive/focus behavior affected and tested. Chat/Live, Spine registry, Harness, Rail consumer contracts, signup/pricing/provisioning, billing execution and Solo shell routing/geometry unchanged. No autonomous retirement capability introduced.
-INTERNAL_BUILD_IDENTITY: 85533c644 (observed base; exact candidate SHA in PR); deployment=PROOF_OWED(exact candidate production readback); environment=development; migrations=PROOF_OWED(20270602000425_operator_provider_independent_retirement); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-provider-independent-retirement.md
+INTERNAL_BUILD_IDENTITY: 85533c64440bc4d5c48e3a6a3483fb63e2da3730 (observed base; exact reviewed candidate SHA in PR); deployment=PROOF_OWED(exact candidate production readback); environment=development; migrations=PROOF_OWED(20270602000425_operator_provider_independent_retirement); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-provider-independent-retirement.md
 RELEASE_CHANNEL: development: bounded Operator lifecycle repair; exact production identity follows verified delivery.
 RELEASE_CLASSIFICATION: internal-only: privileged Operator reliability repair, no customer release version.
 CUSTOMER_RELEASE_IDENTITY: none: no public version or announcement authorized.
@@ -51,6 +51,8 @@ Supported file cleanup uses the existing exact server plan and Storage API, boun
 - Serve repository locally with Vite, then `node docs/evidence/ui-delivery/operator-provider-independent-retirement/render.cjs` (optional OPERATOR_PROOF_URL local fixture URL). Driver blocks remote requests, uses actual dialog source and synthetic ports, records 20 responsive contexts plus files/unknown/legal cases in geometry.json.
 
 SQL proves Admin/ordinary refusal, stale and forged confirmation, actual Agency and Solo deletion/absence, Restore pause, lease/late-claim protection, abandoned provider-operation supersession, exclusive/shared credential handling, mandatory-audit rollback, shared Auth/survivor/platform preservation and private ACLs. Fixture Storage metadata disappearance models the separate API adapter; it is not a production byte-erasure claim.
+
+Additional failing-first regression: the forward repair initially refused an Agency with an independently archived child. The real SQL assertion failed before the mixed-tree correction and now passes. Parent Archive binds all descendants to the exact reviewed scope, without restoring children first. Parent Restore reinstates each earlier child archive and preserves its inactive memberships. Parent Delete removes the tree child before parent and clears superseded archive membership snapshots. Older child operations cannot restore the newly archived parent scope.
 
 ## Review and delivery
 

@@ -43,6 +43,10 @@ CREATE OR REPLACE FUNCTION public.operator_remove_retired_credentials(_ids uuid[
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE item record; rel record; shared boolean; refs bigint;
 BEGIN
+ IF NOT public.operator_can_retire_accounts() OR NOT EXISTS(SELECT 1 FROM public.operator_account_archives
+  WHERE state='deleting' AND scope_ids @> _ids AND scope_ids <@ _ids) THEN
+  RAISE EXCEPTION 'confirmed administrator deletion required' USING ERRCODE='42501';
+ END IF;
  -- Remove only exact, exclusively tenant-owned canonical Vault entries. Shared or
  -- legacy credential references remain protected pending their independent disposition.
  FOR item IN SELECT tenant_id,auth_token_vault_ref reference FROM public.tenant_twilio_subaccounts WHERE tenant_id=ANY(_ids) LOOP
@@ -59,10 +63,6 @@ BEGIN
  -- These are PAIGE-owned encrypted credentials, not external workflow deletion.
  -- This private finalizer is called only by the Admin-authorized deletion RPC.
  -- Keep the ordinary tenant connection writer's authorization unchanged.
- IF NOT public.operator_can_retire_accounts() OR NOT EXISTS(SELECT 1 FROM public.operator_account_archives
-  WHERE state='deleting' AND scope_ids @> _ids AND scope_ids <@ _ids) THEN
-  RAISE EXCEPTION 'confirmed administrator deletion required' USING ERRCODE='42501';
- END IF;
  UPDATE public.tenant_n8n_connections SET base_url_ct=NULL,api_key_ct=NULL,api_key_last4=NULL,
   status='unconfigured',last_error=NULL,workflow_count=0,updated_by=auth.uid(),updated_at=now()
  WHERE tenant_id=ANY(_ids);
@@ -88,8 +88,8 @@ BEGIN
   SELECT jsonb_agg(jsonb_build_object('id',id,'name',name,'account_type',account_type,'status',status,'parent_tenant_id',parent_tenant_id) ORDER BY id) INTO accounts FROM public.tenants WHERE id=ANY(ids);
   SELECT md5(jsonb_build_object('tenants',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.tenants t WHERE id=ANY(ids)),
     'external_resources',public.operator_external_retirement_inventory(ids),'members',(SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM public.tenant_members m WHERE tenant_id=ANY(ids)))::text) INTO fingerprint;
-  IF EXISTS(SELECT 1 FROM public.tenants WHERE id=ANY(ids) AND (archived_at IS NOT NULL OR features->'system_workspace'='true'::jsonb OR account_type NOT IN ('agency','sub_account','standalone'))) THEN
-    blockers:=blockers||jsonb_build_array('Platform workspaces, unsupported types and already archived accounts are protected.');
+  IF EXISTS(SELECT 1 FROM public.tenants WHERE id=ANY(ids) AND ((id=_tenant_id AND archived_at IS NOT NULL) OR (archived_at IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.operator_account_archives a WHERE a.id=archive_operation_id AND a.state='archived' AND tenants.id=ANY(a.scope_ids))) OR features->'system_workspace'='true'::jsonb OR account_type NOT IN ('agency','sub_account','standalone'))) THEN
+    blockers:=blockers||jsonb_build_array('Platform workspaces, unsupported types, an archived selected account and invalid child archives are protected.');
   END IF;
   -- No archive can race a worker already executing an external operation.
   IF EXISTS(SELECT 1 FROM public.platform_subscriptions WHERE tenant_id=ANY(ids) AND (stripe_subscription_id IS NOT NULL OR stripe_customer_id IS NOT NULL) AND status NOT IN ('canceled','expired')) THEN blockers:=blockers||jsonb_build_array('Live billing references require authoritative billing retirement before archive.'); END IF;
@@ -130,12 +130,12 @@ BEGIN
   SELECT array_agg((a->>'id')::uuid) INTO ids FROM jsonb_array_elements(p->'accounts') a;
   INSERT INTO public.operator_account_archives(id,root_tenant_id,actor_user_id,root_name,state,scope_ids,prior_tenants,prior_members)
     SELECT _operation_id,_tenant_id,auth.uid(),row.name,'preparing',ids,
-      (SELECT jsonb_agg(jsonb_build_object('id',t.id,'status',t.status) ORDER BY t.id) FROM public.tenants t WHERE t.id=ANY(ids)),
+      (SELECT jsonb_agg(jsonb_build_object('id',t.id,'status',t.status,'archived_at',t.archived_at,'archive_operation_id',t.archive_operation_id) ORDER BY t.id) FROM public.tenants t WHERE t.id=ANY(ids)),
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id',m.id,'tenant_id',m.tenant_id,'user_id',m.user_id,'role',m.role,'status',m.status,'is_owner',to_jsonb(m)->'is_owner') ORDER BY m.id) FROM public.tenant_members m WHERE m.tenant_id=ANY(ids)),'[]');
   PERFORM public.operator_detach_pending_provider_preparation(ids);
   UPDATE public.operator_account_archives SET external_cleanup=public.operator_external_retirement_inventory(ids) WHERE id=_operation_id;
   -- Same canonical status transition/audit for both privileged operator roles.
-  FOR row IN SELECT * FROM public.tenants WHERE id=ANY(ids) ORDER BY id LOOP
+  FOR row IN SELECT * FROM public.tenants WHERE id=ANY(ids) AND archived_at IS NULL ORDER BY id LOOP
     PERFORM public.operator_set_tenant_status(row.id,'canceled','Account archived through Fleet');
   END LOOP;
   UPDATE public.tenants SET archived_at=now(),archive_operation_id=_operation_id,lifecycle_execution_paused=true WHERE id=ANY(ids);
@@ -144,6 +144,69 @@ BEGIN
   UPDATE public.operator_account_archives SET state='archived' WHERE id=_operation_id;
   INSERT INTO public.audit_logs(user_id,action,entity,entity_id,data) VALUES(auth.uid(),'tenant.archive','tenant',_tenant_id,jsonb_build_object('operation_id',_operation_id,'account_count',cardinality(ids)));
   RETURN public.operator_read_archive_receipt(_tenant_id,_operation_id);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.operator_restore_archived_account(_tenant_id uuid,_operation_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE r public.operator_account_archives; saved jsonb;
+BEGIN
+  IF NOT public.operator_can_retire_accounts() THEN RAISE EXCEPTION 'platform administrator only' USING ERRCODE='42501'; END IF;
+  PERFORM public.operator_lock_retirement_scope();
+  SELECT * INTO r FROM public.operator_account_archives WHERE id=_operation_id AND root_tenant_id=_tenant_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'archive operation not found' USING ERRCODE='P0002'; END IF;
+  IF r.state='restored' THEN RETURN public.operator_read_archive_receipt(_tenant_id,_operation_id); END IF;
+  IF r.state<>'archived' OR (SELECT count(*) FROM public.tenants WHERE id=ANY(r.scope_ids) AND archive_operation_id=r.id)<>cardinality(r.scope_ids) THEN RAISE EXCEPTION 'archive changed; recovery required' USING ERRCODE='55000'; END IF;
+  UPDATE public.operator_account_archives SET state='restoring' WHERE id=r.id;
+  -- Restore each prior lifecycle, including independently archived children.
+  UPDATE public.tenants t SET archived_at=(s.value->>'archived_at')::timestamptz,
+    archive_operation_id=(s.value->>'archive_operation_id')::uuid
+  FROM jsonb_array_elements(r.prior_tenants) s(value) WHERE t.id=(s.value->>'id')::uuid AND t.id=ANY(r.scope_ids);
+  FOR saved IN SELECT value FROM jsonb_array_elements(r.prior_tenants) LOOP
+    IF saved->>'archived_at' IS NULL THEN
+      PERFORM public.operator_set_tenant_status((saved->>'id')::uuid,saved->>'status','Restore Fleet archive; execution remains paused');
+    END IF;
+  END LOOP;
+  FOR saved IN SELECT value FROM jsonb_array_elements(r.prior_members) LOOP
+    UPDATE public.tenant_members m SET status=saved->>'status' WHERE id=(saved->>'id')::uuid AND tenant_id=(saved->>'tenant_id')::uuid AND user_id=(saved->>'user_id')::uuid
+      AND role::text=saved->>'role' AND coalesce(to_jsonb(m)->'is_owner','null'::jsonb) IS NOT DISTINCT FROM saved->'is_owner' AND status='archived';
+  END LOOP;
+  UPDATE public.operator_account_archives SET state='restored' WHERE id=r.id;
+  INSERT INTO public.audit_logs(user_id,action,entity,entity_id,data) VALUES(auth.uid(),'tenant.archive_restore','tenant',_tenant_id,jsonb_build_object('operation_id',r.id,'account_count',cardinality(r.scope_ids),'execution_paused',true));
+  RETURN public.operator_read_archive_receipt(_tenant_id,_operation_id);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.guard_operator_account_archive()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+  IF TG_OP='UPDATE' AND NOT OLD.lifecycle_execution_paused AND NEW.lifecycle_execution_paused
+   AND (to_jsonb(NEW)-'lifecycle_execution_paused')=(to_jsonb(OLD)-'lifecycle_execution_paused')
+   AND EXISTS(SELECT 1 FROM public.operator_account_archives r WHERE r.state='resources_preparing' AND r.actor_user_id=auth.uid() AND NEW.id=ANY(r.scope_ids)) THEN RETURN NEW; END IF;
+  IF TG_OP='DELETE' THEN
+    IF NOT public.operator_can_retire_accounts() OR NOT EXISTS(SELECT 1 FROM public.operator_account_archives r WHERE r.state='deleting' AND OLD.id=ANY(r.scope_ids) AND OLD.archive_operation_id=r.id) THEN
+      RAISE EXCEPTION 'permanent deletion requires the canonical confirmed operation' USING ERRCODE='42501';
+    END IF;
+    RETURN OLD;
+  END IF;
+  IF TG_OP='INSERT' THEN
+    IF NEW.archived_at IS NOT NULL OR NEW.archive_operation_id IS NOT NULL OR NEW.lifecycle_execution_paused THEN RAISE EXCEPTION 'archive requires the canonical operation' USING ERRCODE='42501'; END IF;
+  ELSIF NEW.archived_at IS DISTINCT FROM OLD.archived_at OR NEW.archive_operation_id IS DISTINCT FROM OLD.archive_operation_id
+    OR NEW.lifecycle_execution_paused IS DISTINCT FROM OLD.lifecycle_execution_paused THEN
+    IF NOT public.operator_can_retire_accounts() OR NOT EXISTS(
+      SELECT 1 FROM public.operator_account_archives r WHERE NEW.id=ANY(r.scope_ids)
+      AND ((NEW.archived_at IS NOT NULL AND NEW.archive_operation_id=r.id AND NEW.lifecycle_execution_paused AND r.state='preparing')
+        OR (NEW.archived_at IS NULL AND NEW.archive_operation_id IS NULL AND NEW.lifecycle_execution_paused AND OLD.archive_operation_id=r.id AND r.state='restoring')
+        OR (NEW.archived_at IS NOT NULL AND NEW.lifecycle_execution_paused AND OLD.archive_operation_id=r.id AND r.state='restoring'
+          AND EXISTS(SELECT 1 FROM jsonb_array_elements(r.prior_tenants) saved WHERE (saved->>'id')::uuid=NEW.id
+            AND (saved->>'archived_at')::timestamptz=NEW.archived_at AND (saved->>'archive_operation_id')::uuid=NEW.archive_operation_id
+            AND EXISTS(SELECT 1 FROM public.operator_account_archives child WHERE child.id=NEW.archive_operation_id AND child.state='archived' AND NEW.id=ANY(child.scope_ids)))))
+    ) THEN RAISE EXCEPTION 'archive requires the canonical operation' USING ERRCODE='42501'; END IF;
+  ELSIF OLD.archived_at IS NOT NULL AND to_jsonb(NEW) IS DISTINCT FROM to_jsonb(OLD) THEN
+    RAISE EXCEPTION 'restore the archived account before editing it' USING ERRCODE='55000';
+  END IF;
+  IF NEW.parent_tenant_id IS NOT NULL AND EXISTS(SELECT 1 FROM public.tenants WHERE id=NEW.parent_tenant_id AND archived_at IS NOT NULL) THEN
+    IF TG_OP='INSERT' OR NEW.parent_tenant_id IS DISTINCT FROM OLD.parent_tenant_id THEN RAISE EXCEPTION 'restore the parent before adding a child' USING ERRCODE='55000'; END IF;
+  END IF;
+  RETURN NEW;
 END $$;
 
 CREATE OR REPLACE FUNCTION public.operator_account_deletion_plan(_ids uuid[])
@@ -215,7 +278,7 @@ BEGIN
  SELECT * INTO t FROM public.tenants WHERE id=_tenant_id;
  IF NOT FOUND THEN RAISE EXCEPTION 'account not found' USING ERRCODE='P0002'; END IF;
  SELECT * INTO r FROM public.operator_account_archives WHERE id=t.archive_operation_id AND root_tenant_id=t.id AND state='archived';
- IF NOT FOUND THEN RETURN jsonb_build_object('tenant_id',t.id,'accounts',jsonb_build_array(jsonb_build_object('id',t.id,'name',t.name,'account_type',t.account_type,'status',t.status,'parent_tenant_id',t.parent_tenant_id)),'blockers',jsonb_build_array('Archive this account and its children before permanent deletion.'),'version',md5(to_jsonb(t)::text),'dependencies','[]'::jsonb,'execution_available',false); END IF;
+ IF NOT FOUND THEN RETURN jsonb_build_object('tenant_id',t.id,'accounts',jsonb_build_array(jsonb_build_object('id',t.id,'name',t.name,'account_type',t.account_type,'status',t.status,'parent_tenant_id',t.parent_tenant_id)),'blockers',jsonb_build_array(CASE WHEN t.archived_at IS NOT NULL THEN 'This account belongs to an archived parent scope. Open that scope to delete it.' WHEN EXISTS(SELECT 1 FROM public.tenants WHERE parent_tenant_id=t.id) THEN 'Archive this account and its children before permanent deletion.' ELSE 'Archive this account before permanent deletion.' END),'version',md5(to_jsonb(t)::text),'dependencies','[]'::jsonb,'execution_available',false); END IF;
  SELECT jsonb_agg(jsonb_build_object('id',id,'name',name,'account_type',account_type,'status',status,'parent_tenant_id',parent_tenant_id) ORDER BY id) INTO accounts FROM public.tenants WHERE id=ANY(r.scope_ids);
  IF (SELECT count(*) FROM public.tenants WHERE id=ANY(r.scope_ids) AND archived_at IS NOT NULL AND archive_operation_id=r.id)<>cardinality(r.scope_ids)
    OR EXISTS(SELECT 1 FROM public.tenants WHERE parent_tenant_id=ANY(r.scope_ids) AND NOT(id=ANY(r.scope_ids))) THEN blockers:=blockers||jsonb_build_array('Archived scope changed; reconcile the exact account tree.'); END IF;
@@ -318,7 +381,7 @@ BEGIN
  IF EXISTS(SELECT 1 FROM public.tenants WHERE id=ANY(r.scope_ids)) OR EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=ANY(r.scope_ids)) THEN RAISE EXCEPTION 'retirement absence readback failed' USING ERRCODE='55000'; END IF;
  IF (public.operator_account_deletion_plan(r.scope_ids))->'tables'<>'{}'::jsonb THEN RAISE EXCEPTION 'scoped data absence readback failed; transaction rolled back' USING ERRCODE='55000'; END IF;
  UPDATE public.operator_account_archives SET prior_tenants='[]',resource_plan='[]' WHERE resource_mode IS NOT NULL AND state='resources_ready' AND scope_ids<@r.scope_ids;
- UPDATE public.operator_account_archives SET state='deleted',deleted_at=now(),prior_tenants='[]',prior_members='[]' WHERE id=r.id;
+ UPDATE public.operator_account_archives SET state='deleted',deleted_at=now(),prior_tenants='[]',prior_members='[]' WHERE scope_ids<@r.scope_ids AND state IN ('archived','restored','deleting');
  INSERT INTO public.audit_logs(user_id,action,entity,entity_id,data) VALUES(auth.uid(),'tenant.permanent_delete','tenant',_tenant_id,jsonb_build_object('operation_id',r.id,'account_count',cardinality(r.scope_ids),'preflight_version',_expected_version));
  RETURN public.operator_read_archive_receipt(_tenant_id,_operation_id);
 END $$;

@@ -1,7 +1,8 @@
 /** LOCAL SYNTHETIC metadata only; never imported by production src or its build inputs. */
 import { useState } from "react";
-import type { EvalRun, IntelligenceMetrics, IntelligenceRead, IntelligenceTrace, ReadState, TrajectoryRequest } from "@/operator/data/intelligenceContract";
+import type { EvalRun, IntelligenceMetrics, IntelligenceRead, IntelligenceTrace, ReadState, TrajectoryRequest, TrajectoryPage } from "@/operator/data/intelligenceContract";
 import { syntheticTrajectory, syntheticTrajectoryPage } from "@/test/fixtures/trajectory";
+import canonical from "@/test/fixtures/canonical-trajectory.json";
 const TRACE = "11111111-1111-4111-8111-111111111111";
 const RUN = "22222222-2222-4222-8222-222222222222";
 const CASE = "33333333-3333-4333-8333-333333333333";
@@ -34,9 +35,11 @@ export function useIntelligence(): IntelligenceRead {
   const refresh = () => setState("populated");
   const task = { ...syntheticTrajectory, models: syntheticTrajectory.models.map(m=>({ ...m,id:TRACE })),
     ...(state==='partial' ? { terminal_verified:false, history:{ ...syntheticTrajectory.history,complete:false,truncated:true } } : {}) };
-  const tasks=syntheticTrajectoryPage(empty ? [] : [task]);
+  // Snapshot emitted by the actual canonical local completion + Operator SQL proof.
+  // This is controlled synthetic source evidence, never an authenticated production read.
+  const tasks=state==='canonical' ? canonical.page as unknown as TrajectoryPage : syntheticTrajectoryPage(empty ? [] : [task]);
   return { subject: "synthetic-operator", epoch: 1, access: state === "denied" ? "denied" : "allowed", retryAccess: refresh,
     metrics: read(metrics, state, refresh), traces: read(traces, state, refresh), evals: read(runs, state, refresh),
-    trajectories:read(tasks,state,refresh),selectedTrajectory:read(syntheticTrajectoryPage(state==='unlinked'||empty ? [] : [task]),state,refresh),
+    trajectories:read(tasks,state,refresh),selectedTrajectory:read(state==='canonical' ? tasks : syntheticTrajectoryPage(state==='unlinked'||empty ? [] : [task]),state,refresh),
     trajectoryRequest:request,inspectTrajectory:setRequest,pageTrajectories:()=>setRequest(null) };
 }

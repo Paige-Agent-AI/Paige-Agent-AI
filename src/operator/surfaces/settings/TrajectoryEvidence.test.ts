@@ -1,7 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { syntheticTrajectory as task } from "@/test/fixtures/trajectory";
 import { trajectoryResult, trajectoryTimeline } from "./TrajectoryEvidence";
+import canonical from "@/test/fixtures/canonical-trajectory.json";
+import type { TaskTrajectory } from "@/operator/data/intelligenceContract";
 describe("Task evidence presentation", () => {
+  it("reconstructs the exported canonical SQL proof without replacing its recorded facts", () => {
+    const recorded=canonical.page.items[0] as unknown as TaskTrajectory;
+    expect(canonical.fixture).toContain("CONTROLLED LOCAL SYNTHETIC");
+    expect(recorded.history.events.map(e=>e.state)).toEqual(['claimed','blocked','claimed','claimed','succeeded']);
+    expect(recorded.models).toHaveLength(2); expect(recorded.turns).toHaveLength(3);
+    expect(trajectoryResult(recorded)).toBe("Artifact creation verified");
+    const timeline=trajectoryTimeline(recorded,canonical.page.observed_at);
+    expect(timeline.map(e=>e.kind)).toEqual(expect.arrayContaining(['Approval record','Canonical receipt','Current server readback']));
+    expect(timeline.filter(e=>e.kind==='Model call')).toHaveLength(2);
+    expect(trajectoryResult({ ...recorded,terminal_verified:false })).toBe("Terminal outcome unverified");
+  });
   it.each([['failed','Failed'],['cancelled','Cancelled'],['blocked','Blocked'],['expired','Reconciliation required'],['outcome_unknown','Reconciliation required']])("preserves recorded %s despite a model success", (work_state,label) => {
     expect(trajectoryResult({ ...task,work_state })).toBe(label);
   });

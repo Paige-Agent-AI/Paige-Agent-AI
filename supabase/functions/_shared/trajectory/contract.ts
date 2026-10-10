@@ -41,17 +41,17 @@ export function correlateTrajectory(identity: TrajectoryIdentity, candidates: re
  * Only current-attempt terminal receipts and independently proven readbacks count.
  * Models, HTTP acceptance, narration and approval requests cannot establish completion.
  */
-export function classifyTrajectory(workState: string, evidence: readonly TrajectoryEvidence[], condition: TerminalCondition): TrajectoryState {
+export function classifyTrajectory(workState: string, evidence: readonly TrajectoryEvidence[], condition: TerminalCondition, currentAttempt: number | null): TrajectoryState {
   if (workState === 'failed') return 'failed';
   if (workState === 'cancelled') return 'cancelled';
   if (workState === 'blocked') return 'blocked';
   if (workState === 'expired' || workState === 'outcome_unknown') return 'reconciliation_required';
   if (workState === 'claimed') return evidence.some(e => e.source === 'canonical' && (e.kind === 'dispatch' || e.kind === 'model')) ? 'in_progress' : 'accepted';
   if (workState !== 'succeeded') return 'terminal_unverified';
-  const attempt = Math.max(0, ...evidence.map(e => e.attempt ?? 0));
-  const current = evidence.filter(e => e.source === 'canonical' && (e.attempt ?? 0) === attempt);
+  if (!Number.isSafeInteger(currentAttempt) || currentAttempt! < 1) return 'terminal_unverified';
+  const current = evidence.filter(e => e.source === 'canonical' && e.attempt === currentAttempt);
   const receipts = current.filter(e => e.kind === 'receipt');
-  if (receipts.some(e => ['capability_failed', 'capability_refused', 'capability_outcome_unknown', 'capability_completed_unrecorded'].includes(e.outcome ?? ''))) return 'conflicting';
+  if (receipts.some(e => e.outcome !== 'capability_succeeded')) return 'conflicting';
   if (current.some(e => e.kind === 'execution' && e.outcome !== 'executed')) return 'terminal_unverified';
   if (!receipts.some(e => e.outcome === 'capability_succeeded') || !current.some(e => e.kind === 'readback')) return 'terminal_unverified';
   return condition === 'artifact' ? 'artifact_verified' : condition === 'read_only' ? 'read_verified' : 'terminal_unverified';

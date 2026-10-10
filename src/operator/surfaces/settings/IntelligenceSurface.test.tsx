@@ -61,6 +61,8 @@ describe("INT-280 supported Operator flows", () => {
   });
   it("inspects real adapter metadata and hands only its reference to a local draft", async () => {
     await mount(); await click("Forensic Observatory"); await click("Inspect");
+    expect(node.textContent).toContain("canonical metadata read on load and explicit refresh");
+    expect(node.textContent).not.toContain("audited read on load");
     expect(node.textContent).toContain("test-trace-1");
     expect(node.textContent).toContain("This is one model call");
     await click("Prepare recommendation");

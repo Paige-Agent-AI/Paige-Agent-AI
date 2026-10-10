@@ -143,7 +143,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
         </TabsContent>
 
         <TabsContent value="forensic">
-          <Section title="Inspect the operational evidence" subtitle="Latest 50 recorded LLM calls · metadata only · audited read on load and explicit refresh">
+          <Section title="Inspect the operational evidence" subtitle="Latest 50 recorded LLM calls · canonical metadata read on load and explicit refresh">
             <ReadStatus state={read.traces} name="Call evidence" />
             <LatencyPlot traces={traces} />
             <label className="intel-search"><Search size={16} aria-hidden /><span className="sr-only">Filter call evidence</span>

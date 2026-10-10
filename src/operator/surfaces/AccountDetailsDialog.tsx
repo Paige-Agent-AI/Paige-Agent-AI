@@ -104,4 +104,3 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
     </DialogContent>
   </Dialog>;
 }
-

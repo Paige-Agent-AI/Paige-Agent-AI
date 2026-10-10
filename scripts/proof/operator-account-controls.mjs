@@ -34,7 +34,7 @@ await db.exec(fixture);
 const lifecycle=await readFile('supabase/migrations/20260804150000_operator_fleet_seam.sql','utf8');
 const canonical=lifecycle.match(/CREATE OR REPLACE FUNCTION public\.operator_set_tenant_status\([\s\S]*?\$\$;/)?.[0];
 assert.ok(canonical,'canonical lifecycle source missing'); await db.exec(canonical);
-const migration=await readFile('supabase/migrations/20270602000202_operator_account_controls.sql','utf8');
+const migration=await readFile('supabase/migrations/20261010005059_operator_account_controls.sql','utf8');
 await db.exec(migration); await db.exec(migration);
 const actor=async id=>db.query("select set_config('test.actor',$1,false)",[id]);
 const read=async (id=agency)=>(await db.query('select operator_read_account_details($1) as value',[id])).rows[0].value;

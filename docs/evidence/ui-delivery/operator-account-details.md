@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Real owner can open details, edit supported fields with con
 MOTION_PURPOSE: Existing short dialog entrance preserves focus context; reduced-motion override removes animation.
 PROTECTED_SEAMS: Affected: platform authority, lifecycle writes/readback, audit, account isolation, responsive popup/accessibility; tested in bounded local fixtures. Unaffected: Solo signup/billing/provisioning source, Chat transcript implementation, Live Conversation, Secure Browser/Vault credentials, provider execution, durable scheduling, Memory/Rail, external sends/payments. Preview reads dependency counts only. No protected-domain records mutated.
 
-INTERNAL_BUILD_IDENTITY: source=c0169032b5f18244e080d473113a5e22bed7a1f0; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20270602000202_operator_account_controls production application); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-account-details.md
+INTERNAL_BUILD_IDENTITY: source=c0169032b5f18244e080d473113a5e22bed7a1f0; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20261010005059_operator_account_controls and 20270602000202_operator_account_controls_grants production application); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-account-details.md
 RELEASE_CHANNEL: development: source candidate only; hosted preview and production deployment remain PROOF_OWED.
 RELEASE_CLASSIFICATION: internal-only: guarded account detail edits and a non-destructive preview are candidate changes; whole-workspace retirement remains unavailable.
 CUSTOMER_RELEASE_IDENTITY: none: this is an internal operator capability candidate with no owner-approved customer release identity.

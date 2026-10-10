@@ -117,10 +117,10 @@ describe("tenant Command Center secondary tabs", () => {
     });
   });
 
-  it("keeps non-Solo owners unchanged while Solo leads with Business Game Plan, then Systems Check and Mind", () => {
+  it("preserves tenant owners and the owner-approved Fleet menu while Solo leads with Business Game Plan, Systems Check and Mind", () => {
     expect(OPERATOR_SLOTS.find((slot) => slot.id === "fleet")).toMatchObject({
       label: "Fleet",
-      views: ["Systems check", "Directory", "History"],
+      views: ["Overview", "Systems check", "Directory", "History", "Mind"],
     });
 
     for (const tier of ["sub_account", "agency", "enterprise"] as const) {

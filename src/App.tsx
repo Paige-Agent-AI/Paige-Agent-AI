@@ -33,7 +33,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 // Vercel Speed Insights — Core Web Vitals from real visitors. This is a Vite +
 // React SPA, so we use the framework-agnostic /react entry (NOT /next).
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -185,6 +185,11 @@ const PageSuspense = ({ children }: { children: React.ReactNode }) => (
 // (docs/product/public-product-guide-contract.md). The regression guard in
 // src/__tests__/no-floating-platform-chat.test.ts fails if any floating Paige chat is re-mounted.
 
+function LegacyIntelligenceRedirect() {
+  const route = useLocation();
+  return <Navigate to={{ pathname: "/operator/settings/paige-intelligence", search: route.search, hash: route.hash }} replace />;
+}
+
 const AppInner = () => {
   useHostRouting();
   useReferralTracking();
@@ -241,6 +246,8 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
                 root would ship undetected); `:section/*` is the console behind ONE guard. */}
             <Route path="/tenant-redesign" element={<PageSuspense><TenantRedesign /></PageSuspense>} />
             <Route path="/operator/*" element={<PageSuspense><OperatorEntry /></PageSuspense>} />
+            {/* INT-280: restore the old Intelligence bookmark to the guarded Settings home. */}
+            <Route path="/admin/platform/intelligence" element={<LegacyIntelligenceRedirect />} />
             <Route path="/join-platform" element={<PageSuspense><JoinPlatform /></PageSuspense>} />
             {/* Where a provider's consent lands. The path is registered with the provider
                 and compared by it on every exchange, so it is fixed rather than derived

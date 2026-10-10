@@ -10,6 +10,12 @@ const executableSource = (path: string) => source(path)
   .filter((line) => !/^\s*(?:\/\/|\*)/.test(line))
   .join("\n");
 
+// INT-280 retains this one inbound bookmark as a redirect to the guarded Operator
+// door. It produces no /admin destination; every other executable legacy URL stays forbidden.
+const intelligenceInboundRoute = '<Route path="/admin/platform/intelligence" element={<LegacyIntelligenceRedirect />} />';
+const withoutIntelligenceInboundRoute = (code: string) => code.replace(intelligenceInboundRoute, "");
+const legacyDestination = /["'`]\/admin(?:\/|["'`])/;
+
 
 describe("retired privileged URL", () => {
   it("does not mount a legacy privileged route in the product router", () => {
@@ -48,6 +54,25 @@ describe("retired privileged URL", () => {
       "src/App.tsx", "src/pages/ChooseAccount.tsx", "src/lib/auth/resolveLandingRoute.ts",
       "src/pages/GmailCallback.tsx", "src/pages/GoogleCalendarCallback.tsx",
       "src/components/dashboard/NotificationBell.tsx", "src/components/auth/RequireSetupComplete.tsx",
-    ]) expect(executableSource(path)).not.toMatch(/["'`]\/admin(?:\/|["'`])/);
+    ]) {
+      const code = executableSource(path);
+      expect(path === "src/App.tsx" ? withoutIntelligenceInboundRoute(code) : code).not.toMatch(legacyDestination);
+    }
+  });
+
+  it("permits only the dedicated inbound Intelligence redirect, never a legacy producer or privileged mount", () => {
+    expect(withoutIntelligenceInboundRoute(intelligenceInboundRoute)).not.toMatch(legacyDestination);
+    for (const forbidden of [
+      '<Navigate to="/admin/platform/intelligence" />',
+      '<Route path="/admin/platform/intelligence" element={<PrivilegedPage />} />',
+      '<Route path="/admin/*" element={<LegacyIntelligenceRedirect />} />',
+      '<Route path="/admin/another-view" element={<LegacyIntelligenceRedirect />} />',
+    ]) expect(withoutIntelligenceInboundRoute(`${intelligenceInboundRoute}\n${forbidden}`)).toMatch(legacyDestination);
+
+    const app = executableSource("src/App.tsx");
+    expect(app.split(intelligenceInboundRoute)).toHaveLength(2);
+    const redirect = app.match(/function LegacyIntelligenceRedirect\(\) \{[\s\S]*?\n\}/)?.[0];
+    expect(redirect).toContain('pathname: "/operator/settings/paige-intelligence", search: route.search, hash: route.hash');
+    expect(redirect).toContain(" replace />");
   });
 });

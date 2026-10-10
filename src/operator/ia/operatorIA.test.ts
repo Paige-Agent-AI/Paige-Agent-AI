@@ -47,15 +47,27 @@ describe("the operator IA mirrors the design pack", () => {
    * the moment it was needed. If the pack gains Numbers and this list is not cleared, the
    * duplicate-guard below fails, which is what stops the exception outliving the reason for it.
    */
-  const RULED_ADDITIONS = [{ slot: "settings", view: "Numbers", index: 3 }] as const;
+  const RULED_ADDITIONS = [
+    // Owner continuation: Fleet gains Overview; Mind is moved, not added.
+    { slot: "fleet", view: "Overview", index: 0 },
+    { slot: "settings", view: "Numbers", index: 3 },
+    // Owner INT-280 ruling, 2026-10-10: within Settings, never a seventh primary slot.
+    { slot: "settings", view: "PAIGE Intelligence", index: 4 },
+    { slot: "settings", view: "Connections", index: 11 },
+    { slot: "settings", view: "Analytics", index: 12 },
+    { slot: "settings", view: "Billing", index: 13 },
+  ] as const;
+  const RULED_MOVES = [{ from: "settings", to: "fleet", view: "Mind", index: 4 }] as const;
 
   it("carries the pack's views, verbatim, apart from the ruled additions", () => {
     for (const p of pack) {
       const ours = OPERATOR_SLOTS.find((s) => s.id === p.id);
       expect(ours, `slot ${p.id} missing from our IA`).toBeDefined();
       const added = RULED_ADDITIONS.filter((a) => a.slot === p.id).map((a) => a.view);
-      const withoutRuled = ours!.views.filter((v) => !added.includes(v as never));
-      expect(withoutRuled, `views drifted on ${p.id}`).toEqual(p.views);
+      const movedHere = RULED_MOVES.filter((m) => m.to === p.id).map((m) => m.view);
+      const movedAway = RULED_MOVES.filter((m) => m.from === p.id).map((m) => m.view);
+      const withoutRuled = ours!.views.filter((v) => !added.includes(v as never) && !movedHere.includes(v as never));
+      expect(withoutRuled, `views drifted on ${p.id}`).toEqual(p.views.filter((v) => !movedAway.includes(v as never)));
     }
   });
 
@@ -63,6 +75,13 @@ describe("the operator IA mirrors the design pack", () => {
     for (const a of RULED_ADDITIONS) {
       const ours = OPERATOR_SLOTS.find((s) => s.id === a.slot)!;
       expect(ours.views[a.index], `${a.view} moved out of its ruled position`).toBe(a.view);
+    }
+  });
+  it("moves Mind to Fleet exactly once while preserving the remaining pack views", () => {
+    for (const move of RULED_MOVES) {
+      expect(findSlot(move.from)?.views).not.toContain(move.view);
+      expect(findSlot(move.to)?.views[move.index]).toBe(move.view);
+      expect(OPERATOR_SLOTS.flatMap((s) => [...s.views]).filter((v) => v === move.view)).toHaveLength(1);
     }
   });
 

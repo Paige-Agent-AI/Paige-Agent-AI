@@ -76,6 +76,11 @@ const SegmentsSurface = lazy(() => import("@/operator/surfaces/relationships/Seg
 const StorefrontSurface = lazy(() => import("@/operator/surfaces/marketplace/StorefrontSurface"));
 const SetupSurface = lazy(() => import("@/operator/surfaces/settings/SetupSurface"));
 const CapabilitiesSurface = lazy(() => import("@/operator/surfaces/settings/CapabilitiesSurface"));
+const IntelligenceSurface = lazy(() => import("@/operator/surfaces/settings/IntelligenceSurface"));
+const ConnectionsSettings = lazy(() => import("@/operator/surfaces/settings/SettingsDestinations").then((m) => ({ default: m.ConnectionsSettings })));
+const AnalyticsSettings = lazy(() => import("@/operator/surfaces/settings/SettingsDestinations").then((m) => ({ default: m.AnalyticsSettings })));
+const BillingSettings = lazy(() => import("@/operator/surfaces/settings/SettingsDestinations").then((m) => ({ default: m.BillingSettings })));
+const TeamSettings = lazy(() => import("@/operator/surfaces/settings/SettingsDestinations").then((m) => ({ default: m.TeamSettings })));
 const MarketCatalogSurface = lazy(
   () => import("@/operator/surfaces/marketplace/MarketCatalogSurface"),
 );
@@ -171,6 +176,11 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
         {bespoke === "FleetHistorySurface" && <FleetHistorySurface />}
         {bespoke === "FleetAlertRulesSurface" && <FleetAlertRulesSurface />}
         {bespoke === "PlatformHealthSurface" && <PlatformHealthSurface />}
+        {bespoke === "IntelligenceSurface" && <IntelligenceSurface key={`${slot.id}/${active}`} />}
+        {bespoke === "ConnectionsSettings" && <ConnectionsSettings />}
+        {bespoke === "AnalyticsSettings" && <AnalyticsSettings />}
+        {bespoke === "BillingSettings" && <BillingSettings />}
+        {bespoke === "TeamSettings" && <TeamSettings />}
         {/* Read-only until the lane WRITE path lands: no `onCommit`, and the surface says so
             itself rather than offering a control that silently discards the movement. */}
         {bespoke === "TrustCompass" && (

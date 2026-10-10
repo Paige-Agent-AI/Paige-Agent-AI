@@ -6,8 +6,9 @@ const ROOT = process.cwd();
 const SOURCE_EXT = /\.(?:[cm]?[jt]sx?|json|ya?ml|sql)$/i;
 const ADMIN_STRING = /["'`](?:https:\/\/(?:www\.|app\.)?paigeagent\.ai)?\/admin(?:\/|\b)/i;
 
-// The retired path has no inbound compatibility mount. Negative regression fixtures and the
-// one data-cleanup migration may name it; executable product destinations may not.
+// Only INT-280's owner-required Intelligence bookmark redirects into the guarded Operator door.
+// Negative fixtures and the one cleanup migration may name the retired namespace; destinations may not.
+const INTELLIGENCE_INBOUND = '<Route path="/admin/platform/intelligence" element={<LegacyIntelligenceRedirect />} />';
 const RETIREMENT_FIXTURES = new Set([
   "supabase/migrations/20261227000000_retire_admin_notification_urls.sql",
 ]);
@@ -90,6 +91,7 @@ function scanText(file, text, classDef) {
   const hits = [];
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     if (isCommentOnly(line) || !classDef.line(line) || !ADMIN_STRING.test(line)) continue;
+    if (relative(file) === "src/App.tsx" && line.trim() === INTELLIGENCE_INBOUND) continue;
     hits.push({ file: relative(file), line: index + 1, text: line.trim() });
   }
   return hits;
@@ -113,6 +115,21 @@ function selfTest() {
   }
   if (ADMIN_STRING.test('const role = "admin";') || ADMIN_STRING.test('import x from "@/components/admin/X"')) {
     throw new Error("self-test confused an admin role/import with a URL");
+  }
+  const app = path.join(ROOT, "src/App.tsx");
+  const frontend = CLASSES[0];
+  if (scanText(app, INTELLIGENCE_INBOUND, frontend).length !== 0) {
+    throw new Error("self-test rejects the dedicated inbound Intelligence redirect");
+  }
+  for (const [file, text] of [
+    [path.join(ROOT, "src/another.tsx"), INTELLIGENCE_INBOUND],
+    [app, '<Navigate to="/admin/platform/intelligence" />'],
+    [app, '<Route path="/admin/platform/intelligence" element={<PrivilegedPage />} />'],
+    [app, '<Route path="/admin/*" element={<LegacyIntelligenceRedirect />} />'],
+    [app, '<Route path="/admin/another-view" element={<LegacyIntelligenceRedirect />} />'],
+    [app, `${INTELLIGENCE_INBOUND}<Navigate to="/admin/security" />`],
+  ]) {
+    if (scanText(file, text, frontend).length !== 1) throw new Error("self-test let a legacy producer or privileged mount through");
   }
   console.log(`user-facing-admin-producer-lint self-test: ${CLASSES.length} producer classes covered`);
 }

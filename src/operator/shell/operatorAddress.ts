@@ -19,6 +19,7 @@
  * rather than indexing into an empty array.
  */
 import { findSlot, viewSlug, type OperatorSlot } from "@/operator/ia/operatorIA";
+import { SETTINGS_MENU, settingsGroupForView } from "@/operator/ia/settingsIA";
 
 export type OperatorAddress =
   | { readonly kind: "unknown"; readonly section: string }
@@ -38,6 +39,10 @@ export function slotPath(slotId: string): string {
 
 /** `/operator/{slot}/{view}` — the canonical address of one view. */
 export function viewPath(slotId: string, view: string): string {
+  if (slotId === "settings") {
+    const group = settingsGroupForView(view);
+    if (group) return `/operator/settings/${group.slug}${view === group.views[0] ? "" : `/${viewSlug(view)}`}`;
+  }
   return `/operator/${slotId}/${viewSlug(view)}`;
 }
 
@@ -51,12 +56,28 @@ export function resolveOperatorAddress(
   section: string | undefined,
   splat: string,
 ): OperatorAddress {
+  // Preserve the old Operator Intelligence bookmark under the existing guarded shell.
+  if (section === "platform" && splat.replace(/\/$/, "") === "intelligence") {
+    return { kind: "resolved", slot: findSlot("settings")!, view: "PAIGE Intelligence", stale: true };
+  }
+  // Both generations of the Settings Mind bookmark follow the owner-approved Fleet move.
+  if (section === "settings" && ["mind", "paige-intelligence/mind"].includes(splat.replace(/\/$/, ""))) {
+    return { kind: "resolved", slot: findSlot("fleet")!, view: "Mind", stale: true };
+  }
   const slot = findSlot(section);
   if (!slot) return { kind: "unknown", section: section ?? "" };
 
   const [requested] = splat.split("/").filter(Boolean);
   const views = slot.views ?? [];
   if (views.length === 0) return { kind: "resolved", slot, view: null, stale: false };
+  if (slot.id === "settings") {
+    const segments = splat.split("/").filter(Boolean);
+    const group = SETTINGS_MENU.find((g) => g.slug === requested);
+    const legacyView = views.find((v) => viewSlug(v) === requested);
+    const selected = group ? group.views.find((v) => viewSlug(v) === segments[1]) ?? group.views[0] : legacyView ?? "Setup";
+    const path = viewPath("settings", selected);
+    return { kind: "resolved", slot, view: selected, stale: Boolean(requested) && `/operator/settings/${segments.join("/")}` !== path };
+  }
 
   const matched = requested ? views.find((v) => viewSlug(v) === requested) : undefined;
   const view = matched ?? views[0];

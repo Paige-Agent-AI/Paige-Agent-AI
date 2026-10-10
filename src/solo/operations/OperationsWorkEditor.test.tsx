@@ -40,6 +40,13 @@ it("allows assignee status control but no due-date or reassignment control", asy
   expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
   await render(item, "observer"); expect(container.querySelector("form")).toBeNull();
 });
+it("preserves canonical coach staff controls for work assigned to another person", async () => {
+  mock.rpc.mockImplementation(async (_name, args) => ({ data: args._user_id === "coach" && args._roles.includes("coach"), error: null }));
+  await render(item, "coach");
+  expect(container.querySelector("form")).not.toBeNull();
+  expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
+  expect(Array.from(container.querySelectorAll("label")).some(label => label.textContent?.startsWith("Responsible person"))).toBe(true);
+});
 it("requires matching canonical readback after an acknowledgement", async () => {
   mock.submit.mockResolvedValue({ kind: "acknowledged" }); const refresh = vi.fn().mockResolvedValue(undefined);
   await render(item, "assignee", refresh); await status("done"); await save();

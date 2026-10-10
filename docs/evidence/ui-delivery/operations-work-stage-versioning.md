@@ -1,5 +1,9 @@
 # Operations Work stage movement — bounded release evidence
 
+## Canonical coach parity correction
+
+The Work permission hint now includes the canonical `coach` staff role alongside admin/super_admin, matching the unchanged Planning writer. This corrects an Operations-created restriction; it does not change server permissions. A focused UI case covers a coach managing another person's work. Two supplemental rollback assertions verify the existing coach writer and stage readback. Prior-head rebuilt-schema CI passed the original ten assertions; supplemental assertions and final exact-head CI remain pending until recorded. The synthetic browser fixture returns an explicit role hint and does not prove any real user's role.
+
 ## O2a local follow-up — stage proposals and source-version protection
 
 This O2a slice is PR #1922, unreleased and subject to its own exact-head CI. Only stage proposals and timestamp concurrency protection are new. Foundation evidence below is explicitly historical; the O2a evidence section records the fresh tests. The original evidence below records earlier checkpoints rather than a completed department.

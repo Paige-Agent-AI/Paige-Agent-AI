@@ -47,4 +47,9 @@ select pg_temp.check_true((select count(*)=0 from public.audit_logs where entity
 select pg_temp.refused($s$select public.plan_update_item_versioned('ee020000-0000-4000-8000-00000000b001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111','2000-01-01','done')$s$,'42501','foreign item fails closed before version comparison');
 select pg_temp.check_true((public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'in_progress')->>'ok')='true','matching version delegates canonical update');
 select pg_temp.check_true((select status='in_progress' from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'versioned update source readback');
+delete from public.user_roles where user_id='ee010000-0000-4000-8000-000000000003';
+insert into public.user_roles(user_id,role) values ('ee010000-0000-4000-8000-000000000003','coach');
+select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000003',true);
+select pg_temp.check_true((public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'blocked')->>'ok')='true','coach delegates existing canonical staff writer');
+select pg_temp.check_true((select status='blocked' from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'coach canonical stage readback');
 rollback;

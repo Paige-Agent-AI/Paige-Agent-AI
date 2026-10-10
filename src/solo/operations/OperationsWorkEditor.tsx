@@ -37,7 +37,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     void (async () => {
       try {
         const { data, error } = await supabase.rpc("has_any_role", {
-          _user_id: actorId, _roles: ["admin", "super_admin"],
+          _user_id: actorId, _roles: ["admin", "super_admin", "coach"],
         });
         if (current) setStaff(!error && data === true);
       } catch { if (current) setStaff(false); }

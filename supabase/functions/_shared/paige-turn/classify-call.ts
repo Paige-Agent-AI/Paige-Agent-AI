@@ -25,12 +25,23 @@ export { routeNeedsClassifier } from "./classify.ts";
 
 /**
  * The classifier's budget. On most fresh turns nothing else is awaited between the classifier's start
- * and the first model call, so this is added to the time to first token in the worst case. Set from
- * production traces of comparable small Haiku calls (session-summary, ~200 tokens in / 35 out, 30 days:
- * p50 840 ms, p90 1.46 s). Past it the classifier is ignored and the route takes its conservative
- * default (operational, governed tools) — a timeout costs the cheap-tier saving, never correctness.
+ * and the first model call, so this is added to the time to first token in the worst case. Past it
+ * the classifier is ignored and the route takes its conservative default (operational, governed
+ * tools) — a timeout costs the cheap-tier saving, never correctness.
+ *
+ * RECALIBRATED for the serving model (ANT-20, 2026-10-10). The original 1200 ms came from production
+ * traces of small HAIKU calls (session-summary workload, 30 days: p50 840 ms, p90 1.46 s — the bound
+ * deliberately truncated that tail). The 2026-10-08 owner policy moved the classifier's cheap class
+ * to GPT-6 LUNA, and production evidence shows Luna sits above the old bound: across 2026-10-09/10,
+ * 1 completed call (1070 ms) against 20 deadline aborts at 1200 ms — every miss cost the turn its
+ * cheap-tier routing (the conservative default served a full operational round instead). 2500 ms is
+ * the recalibration, NOT a promise: acceptance is measured from post-deploy organic traces over the
+ * first 50 classifier turns (success share and p50/p90 of completed calls; accept at >=80%
+ * success and p90 <= 2400 ms), with a one-line tune-or-revert if the measured distribution
+ * says the bound is wrong. Every other bound is
+ * unchanged — the conservative null, the closed-enum parse, the abort signal, and all gates.
  */
-export const TURN_CLASSIFY_DEADLINE_MS = 1200;
+export const TURN_CLASSIFY_DEADLINE_MS = 2500;
 
 /** The fabric-side job identity (snake_case). The trace keeps the caller's `turn-classify` tag. */
 export const TURN_CLASSIFY_JOB = "turn_classify";

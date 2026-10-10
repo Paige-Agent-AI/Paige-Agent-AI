@@ -10,7 +10,7 @@ try {
     CREATE TABLE public.paige_chat_turns(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),thread_id uuid,role text,content text,surfaces_used text[],load_id uuid,model text,tokens_used integer,latency_ms integer,bundle_ref jsonb,tool_calls jsonb,created_at timestamptz DEFAULT now(),interactive_intent_id uuid,interactive_actor_id uuid,interactive_tenant_id uuid,interactive_terminal_state text);
     CREATE TABLE public.audit_logs(user_id uuid,entity text,action text,entity_id uuid,data jsonb);
     CREATE TABLE public.paige_workspace_events(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,actor_id uuid,source_kind text,source_id uuid,source_revision bigint,outcome text,occurred_at timestamptz DEFAULT now(),actor_agent_slug text,actor_agent_label text,capability_key text,UNIQUE(tenant_id,source_kind,source_id,source_revision,outcome));
-    CREATE TABLE public.paige_subagents(slug text,tenant_id uuid,rail_display_name text);
+    CREATE TABLE public.paige_subagents(slug text PRIMARY KEY,tenant_id uuid,rail_display_name text,version integer NOT NULL DEFAULT 1);
     CREATE SCHEMA realtime;
     -- Only notification transport is inert: authoritative receipt persistence remains the real writer.
     CREATE FUNCTION realtime.send(jsonb,text,text,boolean) RETURNS void LANGUAGE sql AS $$ SELECT $$;
@@ -42,4 +42,13 @@ try {
     await writeFile(process.argv[5],JSON.stringify({ fixture:'CONTROLLED LOCAL SYNTHETIC: actual canonical completion and projection, no production evidence',page:rows.rows[0].payload },null,2)+'\n');
   }
   console.log(proof);
+  // AI-2 uses the same actual canonical writers and disposable PostgreSQL scope.
+  // Remove only the preceding proof's deliberately refusing LOCAL audit trigger.
+  await db.exec('DROP TRIGGER int280_fixture_audit_refusal ON public.paige_audit_log; ALTER TABLE public.paige_eval_run ADD COLUMN work_id uuid REFERENCES public.paige_durable_work(id) ON DELETE RESTRICT');
+  await db.exec(await readFile('supabase/migrations/20270602000424_int280_task_evaluations.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20270602000424_int280_task_evaluations.sql','utf8'));
+  const evaluations=db.run(await readFile('supabase/tests/int280_task_evaluations.sql','utf8'));
+  if(!evaluations.includes('PASS: deterministic canonical task evaluation'))throw new Error('Task evaluation proof missing');
+  console.log(evaluations);
+  await db.exec(await readFile('supabase/migrations/20270602000424_int280_task_evaluations.sql','utf8'));
 } finally {await db.close();}

@@ -1,0 +1,31 @@
+# Operations O2a — stage proposal and concurrent-edit protection
+
+This slice follows the approved V3 build contract. It does not complete O2 or the department.
+
+## Capability routing
+
+1. Outcome: move existing work to a reviewed stage without overwriting a teammate's intervening edit.
+2. Domain: Operations consumes canonical Planning and Team. Finance and zCod's Chat executor/security path are excluded.
+3. Harness/Gateway: manual caller-JWT Planning RPC; existing shared context and canonical SQL authority. This does not activate a Harness executor.
+4. Spine: existing `planning.list` and `planning.update_item`; conversational writers remain separately PARTIAL and require their own governed proof. This UI wrapper is not a second registered tool.
+5. Provider: none. No communication or model/provider effect.
+6. Lane: manual internal work UPDATE through existing Planning permissions; existing confirmation component reviews the proposed change. No substitute Trust approval or automated execution.
+7. Durable work: no asynchronous job in this slice. No scheduler, retry worker or receipt store.
+8. Readback: exact bounded actor/tenant/item acknowledgement followed by canonical `plan_list` field matching. Acknowledgement is not Rail, durable completion or client acceptance.
+9. Surface: canonical Solo Operations Work; Binding Ledger remains PROOF_OWED for the complete department.
+10. Acceptance: local synthetic DOM and isolated SQL proof, independent review, exact-head CI and production source/migration readback are separate. Authenticated runtime remains UNVERIFIED under standing owner restrictions.
+
+## Flow and exits
+
+Board drag resolves the current scoped item, proposes a stage in the same detail editor, and retains the saved card in its original lane. Open-task keyboard inspection provides the same stage selector. Save opens confirmation; cancellation retains the draft. Only confirmed changes call the versioned scoped writer. The server holds profile and item locks, checks the source timestamp at PostgreSQL precision, then delegates canonical permission, assignment and audit behavior to the existing writer. No timestamp or an intervening edit refuses the write. Explicit refresh replaces the draft/version only after canonical readback. Lost responses remain uncertain with no automatic retry.
+
+Workspaces remount at the actor/tenant boundary; late draft or drag identifiers do not survive switching. External drag payloads are never resolved as work records. Cancelled stages remain excluded from movement until authorized cancelled-item history/readback exists.
+
+## Proof and remaining scope
+
+- Focused local Operations suite: all 27 assertions passed, including background-refresh draft retention and native-event proposal tests. Scoped ESLint and definer-function ACL lint passed.
+- Native disposable PostgreSQL: 10 version/ACL/source assertions passed, plus a second committed canonical transaction refused the stale save and preserved intervening work. Minimal fixture ports, not full-schema or JWT/runtime proof.
+- Rendered native drag (1366x768) and keyboard equivalent (390x844): passed in Obsidian and Mineral using actual shared shell and explicit synthetic read/role/refusal ports. Correct task identity, cancellation draft retention, refusal, unchanged saved lane, invoker focus and page containment verified. Full migrated-schema tests and exact-head CI remain owed before release.
+- Task creation, activity/history, priority editing, project dependencies, signed engagement handoff, client acceptance, playbook execution, recorded availability, COO/Chat/Live execution: still owed by later bounded slices.
+
+Flow-by-Flow, Flow Prototype and [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md) remain the UI workflow. Preserve existing tokens, names/photos, focus and reduced motion; do not reopen approved visual direction.

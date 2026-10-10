@@ -1,5 +1,17 @@
 # Operations V3 source workspace — development evidence
 
+## O2a local follow-up — stage proposals and source-version protection
+
+This follow-up remains local, unreleased and subject to its own exact-head CI. The original evidence below records earlier checkpoints rather than a completed department.
+
+Twenty-seven focused Operations assertions pass. A disposable native PostgreSQL test ran ten timestamp/ACL/source assertions, then verified that an intervening committed canonical update refuses an old-version save and preserves the changed work. Full migrated-schema proof for the new guard is registered in the existing database CI job but has not run for a released O2 head.
+
+`operations-v3/work-move-verification.json` records four actual shared-shell cases: native drag at 1366x768 and keyboard equivalent at 390x844, both themes. Each asserts the intended task, proposed stage, cancelled draft retention, explicit refusal, unchanged saved lane, invoker focus and page containment. Source, role and refusal ports are synthetic. No saved production effect, authenticated account or real employee photograph is claimed.
+
+Independent static review found no remaining material issue; its database-test registration finding was fixed. Independent bounded finish review returned SHIP with no visual/usable regression in the supplied desktop Obsidian and phone Mineral refusal captures. Neither review establishes full department acceptance. Task creation, priority editing, history, projects/dependencies, deliverable review/acceptance, sourced capacity, playbook execution and governed COO/Chat/Live completion remain required work.
+
+## Original foundation checkpoint
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Deep existing-product flow packet recorded October 9, 2026 before edits; canonical Planning, Team, Sales, Knowledge and shared-shell ownership inspected.
 PAIGE_UI_DESIGN: PASS: Project skill, vendored accessibility reference and five quality modules read; canonical token and authority requirements preserved.

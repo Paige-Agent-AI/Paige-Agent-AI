@@ -31,6 +31,8 @@ export interface PlanItem {
   reminded_at: string | null;
   created_by: string | null;
   linked_action_id: string | null;
+  /** Canonical row version; absent versions are inspect-only in Operations. */
+  updated_at?: string;
 }
 
 export interface Plan {

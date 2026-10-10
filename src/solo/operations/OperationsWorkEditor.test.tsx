@@ -55,3 +55,11 @@ it("keeps uncertain results from becoming successful saves or automatic retries"
   expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
   expect(container.textContent).not.toContain("Saved and confirmed");
 });
+it("offers readback recovery after a refusal and prevents another write until refreshed", async () => {
+  mock.submit.mockResolvedValue({ kind: "refused", message: "Permission refused" });
+  await render(); await status("done"); await save(); await save();
+  expect(mock.submit).toHaveBeenCalledOnce();
+  expect(container.textContent).toContain("Refresh and review");
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  expect(container.querySelector("select")?.value).toBe("done");
+});

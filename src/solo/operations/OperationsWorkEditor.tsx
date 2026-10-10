@@ -20,9 +20,13 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   const [status, setStatus] = useState<PlanItemStatus>(item.status);
   const [due, setDue] = useState("");
   const [assignee, setAssignee] = useState(item.assigned_to_user_id ?? "");
-  const [phase, setPhase] = useState<"idle" | "saving" | "reading" | "uncertain">("idle");
+  const [phase, setPhase] = useState<"idle" | "saving" | "reading" | "uncertain" | "refused">("idle");
   const [message, setMessage] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const feedbackRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (message && ["idle", "uncertain", "refused"].includes(phase)) feedbackRef.current?.scrollIntoView?.({ block: "nearest", behavior: "auto" });
+  }, [message, phase]);
   const readback = useRef<Readback | null>(null);
   const mounted = useRef(true);
   useEffect(() => {
@@ -67,7 +71,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     setPhase("saving"); setMessage("Saving your change…");
     const result = await submitOperationsWorkUpdate({ actorId, tenantId, itemId: item.id }, update);
     if (!mounted.current) return;
-    if (result.kind !== "acknowledged") { setPhase(result.kind === "uncertain" ? "uncertain" : "idle"); setMessage(result.message); return; }
+    if (result.kind !== "acknowledged") { setPhase(result.kind); setMessage(result.message); return; }
     readback.current = { original: item, update, acknowledged: true }; setPhase("reading"); setMessage("Checking current work…");
     try { await refresh(); } catch {
       if (mounted.current) { setPhase("uncertain"); setMessage("Current work couldn’t be read. Refresh before making another change."); }
@@ -105,13 +109,13 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
         <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={() => void save()}>Confirm change</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-    {message && <p role="status">{message}</p>}
-    {phase === "uncertain" && <button type="button" onClick={async () => {
+    {message && <div ref={feedbackRef}><p role="status">{message}</p>
+    {(phase === "uncertain" || phase === "refused") && <button type="button" onClick={async () => {
       readback.current = { original: item, update: {}, acknowledged: false };
       setPhase("reading"); setMessage("Reading current work…");
       try { await refresh(); } catch {
         if (mounted.current) { setPhase("uncertain"); setMessage("Current work couldn’t be read. Try refreshing again."); }
       }
-    }}>Refresh and review</button>}
+    }}>Refresh and review</button>}</div>}
   </form>;
 }

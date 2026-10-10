@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: New owner-approved six-view Operations workspace, rea
 FLOW_PROTOTYPE: PASS: Owner approved operations-concepts-v3.html on October 9, 2026: “Much better, now you have the green light to merge live on green.”
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Owners and teams identify stalled commitments, inspect responsible people, and update eligible canonical work.
 VISUAL_DIRECTION: PASS: Approved V3 project-progress, customer-promise and people-workload compositions; inherited Obsidian/Mineral tokens, Schibsted, champagne actions and indigo focus.
-AUTOMATED_EVIDENCE: PASS: Twenty-one focused Operations tests plus ninety-five route/navigation tests; native PostgreSQL sixteen harness ran twenty-five authorization assertions against actual writer/resolver functions with explicit fixture dependencies.
-STATIC_EVIDENCE: PASS: Scoped ESLint and whitespace checks; required type ratchet baseline ten/current ten before final routing/theme hunks; integrated application build passed against current main; confirmation follow-up passed focused tests and scoped lint. Exact final head CI remains required.
+AUTOMATED_EVIDENCE: PASS: Twenty-two focused Operations tests plus ninety-five route/navigation tests; native PostgreSQL sixteen harness ran twenty-five authorization assertions against actual writer/resolver functions with explicit fixture dependencies.
+STATIC_EVIDENCE: PASS: Scoped ESLint and whitespace checks; type ratchet baseline ten/current ten passed after integration; final recovery follow-up remains subject to exact-head CI; integrated application build passed against current main; confirmation follow-up passed focused tests and scoped lint. Exact final head CI remains required.
 RENDERED_EVIDENCE: PASS: operations-v3/ captures and verification.json record forty isolated view renders in both themes at 1536x770,1366x768,1024x768,900x1000,390x844. Synthetic image tile is a test asset, not an authenticated person's photo.
 BEHAVIORAL_EVIDENCE: PASS: root-verification.json records actual drawer opening/closing, focus restoration, six source states and ten responsive/theme cases with mocked source ports.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Canonical Solo route is integrated locally; no authenticated Operations owner drive or hosted scoped RPC proof exists yet.
@@ -36,7 +36,7 @@ ACCEPTANCE_CRITERIA: Authenticated owner reaches all six views, sees authorized 
 MOTION_PURPOSE: Drawer transition indicates detail inspection; reduced motion removes the animation.
 PROTECTED_SEAMS: Actor/tenant request preconditions around unchanged Planning authority; profile lock serializes active-scope switching. Shared SoloApp, tenantShellRoutes and tierBranches preserve current main, Finance navigation and the Chat HotFix.
 
-INTERNAL_BUILD_IDENTITY: 5968a896bfd5ad9860b55b49a908dab997c3f4dd + confirmation follow-up pending final commit; deployment=none-local-development; environment=development; migrations=PROOF_OWED(hosted-scoped-plan-update-deployment); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operations-v3.md
+INTERNAL_BUILD_IDENTITY: 3723378b7f67fc9863f7596c182dcca76a4f0fd8 + refusal-recovery follow-up; deployment=none-local-development; environment=development; migrations=PROOF_OWED(hosted-scoped-plan-update-deployment); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operations-v3.md
 RELEASE_CHANNEL: development: isolated implementation only, no production claim.
 RELEASE_CLASSIFICATION: internal-only: development implementation under owner-approved V3 direction; customer outcome is not yet released.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated department outcome has not earned a customer release identity.

@@ -51,4 +51,13 @@ try {
   if(!evaluations.includes('PASS: deterministic canonical task evaluation'))throw new Error('Task evaluation proof missing');
   console.log(evaluations);
   await db.exec(await readFile('supabase/migrations/20270602000422_int280_task_evaluations.sql','utf8'));
+  // Projection is a separate bounded read-only slice; no synthetic records enter production.
+  let absent=false;
+  try { db.run('SELECT public.operator_intelligence_task_scorecard()'); } catch(error) { absent=error.code==='42883'; }
+  if(!absent)throw new Error('Scorecard failing-first absence proof missing');
+  const scorecard=await readFile('supabase/migrations/20270602000423_int280_task_scorecard.sql','utf8');
+  await db.exec(scorecard);await db.exec(scorecard);
+  const scorecardProof=db.run(await readFile('supabase/tests/int280_task_scorecard.sql','utf8'));
+  if(!scorecardProof.includes('PASS: protected bounded task scorecard'))throw new Error('Scorecard proof missing');
+  console.log(scorecardProof);
 } finally {await db.close();}

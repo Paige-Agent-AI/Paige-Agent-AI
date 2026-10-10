@@ -8,7 +8,10 @@ const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const actor=id(1),tenant=id(2),thread=id(3),intent=id(4);
 const req=(extras={})=>new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Newest context'}],threadId:thread,requestIntentId:intent,interactive:{kind:'message'},...extras})});
 const scenario=(status,extra={})=>fake.setScenario({authUser:{id:actor},tables:{paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:actor}],...extra.tables},rpcs:{paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},check_rate_limit:{data:true,error:null},paige_chat_interactive_begin_v2:{data:{status,turn_id:status==='accepted'?id(5):null},error:null},...extra.rpcs}});
-for(const protocol of [{data:null,error:{code:'PGRST202'}},{data:{version:1,active:true},error:null},{data:{version:2,active:false},error:null},{data:null,error:null}]){
+// INT-346: version 2 + active:false is NO LONGER a 503 for a typed message — it is the
+// conversational degraded admission, proven end to end by int346-conversational-handler-check.
+// This loop keeps only genuinely broken rollout metadata failing closed.
+for(const protocol of [{data:null,error:{code:'PGRST202'}},{data:{version:1,active:true},error:null},{data:null,error:null}]){
  const denied=scenario('accepted',{rpcs:{paige_chat_interactive_protocol:protocol}});
  const response=await capturedHandler()(req());
  assert.equal(response.status,503);assert.deepEqual(await response.json(),{code:'INTERACTIVE_PROTOCOL_NOT_READY',message_accepted:false});

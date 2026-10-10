@@ -95,10 +95,14 @@ SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(te
 UPDATE quickbooks_connections SET is_active=false;
 SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,evidence_digest) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'test-revoked','bank_accounts',now(),'partial',repeat('b',64))$q$,'42501');
 UPDATE quickbooks_connections SET is_active=true;
-UPDATE finance_source_bindings SET revision=revision+1,verification_state='revoked';
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000001' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Connection deactivation did not revoke historical binding'; END IF;
+END $$;
+SELECT public.fixture_expect_error($q$DELETE FROM finance_source_bindings$q$,'42501');
 SELECT public.fixture_expect_error($q$UPDATE finance_source_bindings SET revision=revision+1,verification_state='verified'$q$,'40001');
 INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace)
  VALUES('50000000-0000-0000-0000-000000000003','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','sandbox','test-realm-1');
+SELECT public.fixture_expect_error($q$DELETE FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000003'$q$,'42501');
 SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,evidence_digest) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000003',1,'test-unverified-reconnect','bank_accounts',now(),'partial',repeat('d',64))$q$,'42501');
 SELECT public.fixture_expect_error($q$INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,evidence_digest) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',1,'test-stale-revision','bank_accounts',now(),'partial',repeat('b',64))$q$,'42501');
 UPDATE tenant_members SET status='revoked' WHERE user_id='10000000-0000-0000-0000-000000000001';

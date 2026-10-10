@@ -82,6 +82,7 @@ GRANT ALL ON public.finance_company_entities,public.finance_source_bindings,publ
 CREATE FUNCTION public._finance_binding_identity_guard() RETURNS trigger
 LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 BEGIN
+ IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Financial source history is retained' USING ERRCODE='42501'; END IF;
  IF ROW(NEW.id,NEW.tenant_id,NEW.entity_id,NEW.provider,NEW.quickbooks_connection_id,NEW.plaid_account_anchor_id,NEW.environment,NEW.source_namespace)
   IS DISTINCT FROM ROW(OLD.id,OLD.tenant_id,OLD.entity_id,OLD.provider,OLD.quickbooks_connection_id,OLD.plaid_account_anchor_id,OLD.environment,OLD.source_namespace) THEN
   RAISE EXCEPTION 'Financial source identity is immutable' USING ERRCODE='42501';
@@ -90,7 +91,21 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._finance_binding_identity_guard() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER finance_binding_identity_guard BEFORE UPDATE ON public.finance_source_bindings FOR EACH ROW EXECUTE FUNCTION public._finance_binding_identity_guard();
+CREATE TRIGGER finance_binding_identity_guard BEFORE UPDATE OR DELETE ON public.finance_source_bindings FOR EACH ROW EXECUTE FUNCTION public._finance_binding_identity_guard();
+
+-- Connection lifecycle remains Integration-owned. Deactivation invalidates Finance
+-- evidence atomically, while retaining the provider anchor and authorization history.
+CREATE FUNCTION public._finance_quickbooks_deactivation() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF NEW.is_active IS NOT TRUE THEN
+  UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
+   WHERE quickbooks_connection_id=NEW.id AND verification_state<>'revoked';
+ END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._finance_quickbooks_deactivation() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER finance_quickbooks_deactivation AFTER UPDATE OF is_active ON public.quickbooks_connections FOR EACH ROW EXECUTE FUNCTION public._finance_quickbooks_deactivation();
 
 CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

@@ -19,6 +19,7 @@ CREATE TABLE public.user_roles(user_id uuid,role text);
 CREATE TABLE public.agency_team_members(agency_tenant_id uuid,user_id uuid,agency_role text,status text,scoped_subaccounts uuid[]);
 CREATE TABLE public.quickbooks_connections(id uuid PRIMARY KEY,user_id uuid,is_active boolean);
 CREATE TABLE public.connected_bank_accounts(id uuid PRIMARY KEY,user_id uuid,is_active boolean);
+CREATE TABLE public.connected_bank_account_secrets(account_id uuid PRIMARY KEY REFERENCES public.connected_bank_accounts(id) ON DELETE CASCADE,synthetic_token text);
 -- Existing canonical authority contracts are dependencies, not Finance role semantics.
 CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT active_tenant_id FROM public.profiles WHERE user_id=auth.uid() $$;
 CREATE FUNCTION public.is_tenant_admin_as(_actor uuid,_tenant uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT EXISTS(SELECT 1 FROM public.tenant_members WHERE user_id=_actor AND tenant_id=_tenant AND status='active' AND role IN ('owner','admin')) $$;
@@ -132,9 +133,28 @@ DO $$ BEGIN
 END $$;
 SELECT 'Finance source authority PASS: synthetic PostgreSQL only; authenticated/provider acceptance owed' AS result;
 -- Scoped agency delegation is a canonical dependency fixture; no agency role engine is added.
+BEGIN;
+INSERT INTO connected_bank_accounts VALUES('40000000-0000-0000-0000-000000000011','10000000-0000-0000-0000-000000000001',true);
+INSERT INTO connected_bank_account_secrets VALUES('40000000-0000-0000-0000-000000000011','synthetic-only');
+INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace,verification_state,verification_reference,verified_at)
+ VALUES('50000000-0000-0000-0000-000000000011','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000011','sandbox','test-plaid-account','verified','60000000-0000-0000-0000-000000000011',now());
+UPDATE connected_bank_accounts SET is_active=false WHERE id='40000000-0000-0000-0000-000000000011';
+UPDATE connected_bank_accounts SET is_active=true WHERE id='40000000-0000-0000-0000-000000000011';
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000011' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Plaid reactivation restored old authority'; END IF;
+END $$;
+DELETE FROM connected_bank_accounts WHERE id='40000000-0000-0000-0000-000000000011';
+DO $$ BEGIN
+ IF EXISTS(SELECT 1 FROM connected_bank_account_secrets) THEN RAISE EXCEPTION 'Finance history prevented credential erasure'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000011' AND verification_state='revoked') THEN RAISE EXCEPTION 'Historical source erased'; END IF;
+END $$;
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000011','sandbox','test-erased-account')$q$,'42501');
+ROLLBACK;
 INSERT INTO tenants(id,status) VALUES('20000000-0000-0000-0000-000000000003','active');
 UPDATE tenants SET parent_tenant_id='20000000-0000-0000-0000-000000000003' WHERE id='20000000-0000-0000-0000-000000000001';
 INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);
+-- Match the real agency switch: a persistent child admin seat, not a member seat.
+UPDATE tenant_members SET role='admin' WHERE user_id='10000000-0000-0000-0000-000000000003';
 SET ROLE authenticated;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000003',false);
 SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001');
@@ -150,6 +170,9 @@ SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog(
 RESET ROLE;
 UPDATE tenants SET archived_at=NULL WHERE id='20000000-0000-0000-0000-000000000003';
 DELETE FROM agency_team_members;
+SET ROLE authenticated;
+SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'42501');
+RESET ROLE;
 SET ROLE authenticated;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
 RESET ROLE;

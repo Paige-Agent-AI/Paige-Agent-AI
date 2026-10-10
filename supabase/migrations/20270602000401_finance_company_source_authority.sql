@@ -26,7 +26,9 @@ CREATE TABLE public.finance_source_bindings (
  entity_id uuid NOT NULL,
  provider text NOT NULL CHECK(provider IN ('quickbooks','plaid')),
  quickbooks_connection_id uuid REFERENCES public.quickbooks_connections(id) ON DELETE RESTRICT,
- plaid_account_anchor_id uuid REFERENCES public.connected_bank_accounts(id) ON DELETE RESTRICT,
+ -- Historical opaque identity survives credential/account erasure. The insertion
+ -- and lifecycle guards below validate live anchors without blocking privacy deletion.
+ plaid_account_anchor_id uuid,
  environment text NOT NULL CHECK(environment IN ('sandbox','development','production')),
  source_namespace text NOT NULL CHECK(length(source_namespace) BETWEEN 1 AND 500),
  verification_state text NOT NULL DEFAULT 'pending' CHECK(verification_state IN ('pending','verified','revoked')),
@@ -82,6 +84,13 @@ GRANT ALL ON public.finance_company_entities,public.finance_source_bindings,publ
 CREATE FUNCTION public._finance_binding_identity_guard() RETURNS trigger
 LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 BEGIN
+ IF TG_OP='INSERT' THEN
+  IF NEW.provider='plaid' THEN
+   PERFORM 1 FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id AND is_active FOR SHARE;
+   IF NOT FOUND THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
+  END IF;
+  RETURN NEW;
+ END IF;
  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Financial source history is retained' USING ERRCODE='42501'; END IF;
  IF ROW(NEW.id,NEW.tenant_id,NEW.entity_id,NEW.provider,NEW.quickbooks_connection_id,NEW.plaid_account_anchor_id,NEW.environment,NEW.source_namespace)
   IS DISTINCT FROM ROW(OLD.id,OLD.tenant_id,OLD.entity_id,OLD.provider,OLD.quickbooks_connection_id,OLD.plaid_account_anchor_id,OLD.environment,OLD.source_namespace) THEN
@@ -91,7 +100,7 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._finance_binding_identity_guard() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER finance_binding_identity_guard BEFORE UPDATE OR DELETE ON public.finance_source_bindings FOR EACH ROW EXECUTE FUNCTION public._finance_binding_identity_guard();
+CREATE TRIGGER finance_binding_identity_guard BEFORE INSERT OR UPDATE OR DELETE ON public.finance_source_bindings FOR EACH ROW EXECUTE FUNCTION public._finance_binding_identity_guard();
 
 -- Connection lifecycle remains Integration-owned. Deactivation invalidates Finance
 -- evidence atomically, while retaining the provider anchor and authorization history.
@@ -106,6 +115,19 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._finance_quickbooks_deactivation() FROM PUBLIC,anon,authenticated;
 CREATE TRIGGER finance_quickbooks_deactivation AFTER UPDATE OF is_active ON public.quickbooks_connections FOR EACH ROW EXECUTE FUNCTION public._finance_quickbooks_deactivation();
+
+CREATE FUNCTION public._finance_plaid_retirement() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE THEN
+  UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
+   WHERE plaid_account_anchor_id=OLD.id AND verification_state<>'revoked';
+ END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._finance_plaid_retirement() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER finance_plaid_retirement BEFORE UPDATE OF is_active OR DELETE ON public.connected_bank_accounts FOR EACH ROW EXECUTE FUNCTION public._finance_plaid_retirement();
 
 CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -132,6 +154,7 @@ CREATE TRIGGER finance_observation_guard BEFORE INSERT OR UPDATE OR DELETE ON pu
 -- Compose the existing workspace authority; freeze its mutable inputs for this transaction.
 CREATE FUNCTION public._finance_assert_workspace(_actor uuid,_expected_tenant uuid) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE parent_id uuid; delegated boolean;
 BEGIN
  IF _actor IS NULL OR _expected_tenant IS NULL THEN RAISE EXCEPTION 'Finance workspace unavailable' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM auth.users WHERE id=_actor AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=now()) FOR SHARE;
@@ -144,10 +167,17 @@ BEGIN
  PERFORM 1 FROM public.user_roles WHERE user_id=_actor FOR SHARE;
  PERFORM 1 FROM public.agency_team_members WHERE user_id=_actor FOR SHARE;
  PERFORM 1 FROM public.tenants WHERE id=(SELECT parent_tenant_id FROM public.tenants WHERE id=_expected_tenant) FOR SHARE;
- IF NOT (coalesce(public.is_tenant_admin_as(_actor,_expected_tenant),false) OR
-  (coalesce(public.agency_can_manage_child(_expected_tenant,_actor),false) AND EXISTS(
+ SELECT parent_tenant_id INTO parent_id FROM public.tenants WHERE id=_expected_tenant;
+ delegated:=coalesce(public.agency_can_manage_child(_expected_tenant,_actor),false) AND EXISTS(
    SELECT 1 FROM public.tenants parent JOIN public.tenants child ON child.parent_tenant_id=parent.id
-   WHERE child.id=_expected_tenant AND parent.status IN ('trial','active','past_due') AND parent.archived_at IS NULL))) THEN
+   WHERE child.id=_expected_tenant AND parent.status IN ('trial','active','past_due') AND parent.archived_at IS NULL);
+ -- Canonical agency switching leaves indistinguishable child admin seats behind.
+ -- Until Identity provides grant provenance, a parented admin seat alone cannot
+ -- bypass current agency authority. Genuine direct child owners remain independent.
+ IF parent_id IS NOT NULL AND EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=_expected_tenant AND user_id=_actor AND role='admin' AND status='active') AND NOT delegated THEN
+  RAISE EXCEPTION 'Current delegated Finance authority required' USING ERRCODE='42501';
+ END IF;
+ IF NOT (coalesce(public.is_tenant_admin_as(_actor,_expected_tenant),false) OR delegated) THEN
   RAISE EXCEPTION 'Finance owner or administrator required' USING ERRCODE='42501';
  END IF;
 END $$;

@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: Owner prohibits deployed agent login. Role/ac
 KEYBOARD_FOCUS: PASS: Local Tab stays in the Dialog, Escape exits and controls have labels. Complete keyboard-only return-focus and assistive-technology audit remain UNVERIFIED.
 ZOOM_REFLOW: UNVERIFIED: Five widths prove measured document/dialog horizontal fit and control reachability; browser 200 percent zoom and screen-reader acceptance are not performed.
 REDUCED_MOTION: PASS: Computed dialog animation is none in all ten reduced-motion captures after specificity repair; overlay has the same explicit override.
-STATE_COVERAGE: PASS: Local view/edit/review/dirty cancellation, blocked/ready preflight, typed validation, processing, completed/readback, stale refusal, unknown/read-only recovery and unavailable-contract states. Production/provider states remain proof owed.
+STATE_COVERAGE: PASS: Local view/edit/review/dirty cancellation, blocked/ready preflight, typed validation, processing, completed/readback, stale refusal, unknown/read-only recovery and unavailable-contract states exercised by the source tests and Chrome harness.
 TRUTHFUL_STATE_LABELS: PASS: READY requires authoritative preflight; confirmation never bypasses blockers/stale scope. PROCESSING, FAILED, OUTCOME UNKNOWN and COMPLETED are distinct. Receipt and canonical absence are both required for deletion completion.
 SOLO_UI: NO: Platform Operator control plane; no account-specific Solo code or alternate identity/tenant engine.
 UNVERIFIED: Production role exclusivity (one additional Admin assignment needs protected reconciliation), hosted exact-head CI, independent review, migration application, deployment, authenticated runtime/zoom/assistive technology, actual external resource cleanup, old-worker cessation and owner acceptance. No real deletion executed.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Controlled Solo and Agency cleanup works physically and ato
 MOTION_PURPOSE: Existing short dialog entrance maintains focus context; reduced-motion users receive no entrance animation. No new ornamental motion.
 PROTECTED_SEAMS: Existing protected global roles, tenant lifecycle, active scope pointer, scheduled claims, Communications server floor, audit, FK relationships and storage inventory. Provider/file/legal/financial dependencies require canonical disposition and remain blocked when unavailable. No paid-provider or financial execution authority is added.
 
-INTERNAL_BUILD_IDENTITY: Exact candidate head is recorded in PR metadata and independent-review evidence; base=f6e85d3a7852280853d2ac6ba9e3e7a8db45ee0b; deployment=NOT_APPLICABLE; environment=development; migration=20270602000203_operator_account_archive (local proof only); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-account-lifecycle.md.
+INTERNAL_BUILD_IDENTITY: product=edcc4c9fe2cc5f530c2c5291d98464a57839ae69; base=f6e85d3a7852280853d2ac6ba9e3e7a8db45ee0b; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270602000203_operator_account_archive production apply after separately authorized release); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-account-lifecycle.md.
 RELEASE_CHANNEL: development: controlled source candidate only; preview/production do not inherit authenticated proof.
 RELEASE_CLASSIFICATION: internal-only: privileged Operator lifecycle extension, no customer announcement or product version.
 CUSTOMER_RELEASE_IDENTITY: none: owner acceptance and authenticated production proof remain outstanding.

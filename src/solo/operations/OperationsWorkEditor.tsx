@@ -4,6 +4,7 @@ import type { PlanItem, PlanItemStatus } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import { workStatusLabel } from "./operations-presentation";
 import { submitOperationsWorkUpdate, type WorkUpdate } from "./operations-work-update";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 // Canonical plan_list excludes cancelled work. Cancellation needs a separate
 // authorized detail/history readback before it can be offered in this editor.
@@ -21,6 +22,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   const [assignee, setAssignee] = useState(item.assigned_to_user_id ?? "");
   const [phase, setPhase] = useState<"idle" | "saving" | "reading" | "uncertain">("idle");
   const [message, setMessage] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const readback = useRef<Readback | null>(null);
   const mounted = useRef(true);
   useEffect(() => {
@@ -73,7 +75,12 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   }
   if (staff === null) return <p role="status">Checking your edit permissions…</p>;
   if (!canStatus) return <p>You can inspect this work. Its responsible person or an authorized manager can update it.</p>;
-  return <form className="ops-work-editor" onSubmit={(event) => { event.preventDefault(); void save(); }}>
+  return <form className="ops-work-editor" onSubmit={(event) => {
+    event.preventDefault();
+    if (busy || !changed) return;
+    if (status !== item.status || assignee !== (item.assigned_to_user_id ?? "")) setConfirming(true);
+    else void save();
+  }}>
     <h2>Update this work</h2>
     <label>Status<select value={status} disabled={busy} onChange={(event) => setStatus(event.target.value as PlanItemStatus)}>
       {STATUSES.map(value => <option key={value} value={value}>{workStatusLabel(value)}</option>)}
@@ -84,6 +91,20 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
       {members.map(member => <option key={member.user_id} value={member.user_id}>{member.full_name ?? member.email ?? "Team member"}</option>)}
     </select></label>}
     <button type="submit" disabled={busy || !changed}>Save change</button>
+    <AlertDialog open={confirming} onOpenChange={setConfirming}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm this work change</AlertDialogTitle>
+          <AlertDialogDescription>
+            {status !== item.status && <span>Stage: {workStatusLabel(item.status)} → {workStatusLabel(status)}. </span>}
+            {assignee !== (item.assigned_to_user_id ?? "") && <span>Responsibility will move to {members.find(member => member.user_id === assignee)?.full_name ?? "the selected team member"}. </span>}
+            {due && <span>The due date will also change. </span>}
+            The change is saved only after permission checks and confirmed by reading current work.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={() => void save()}>Confirm change</AlertDialogAction></AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     {message && <p role="status">{message}</p>}
     {phase === "uncertain" && <button type="button" onClick={async () => {
       readback.current = { original: item, update: {}, acknowledged: false };

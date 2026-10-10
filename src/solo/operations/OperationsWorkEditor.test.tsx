@@ -20,7 +20,20 @@ async function status(value: string) {
   const select = container.querySelector("select")!;
   await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
 }
-async function save() { await act(async () => container.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))); }
+async function requestSave() { await act(async () => container.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))); }
+async function save() {
+  await requestSave();
+  const confirm = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')).find(button => button.textContent === "Confirm change");
+  if (confirm) await act(async () => confirm.click());
+}
+it("does not persist a stage change before confirmation and preserves the draft on cancellation", async () => {
+  await render(); await status("done"); await requestSave();
+  expect(mock.submit).not.toHaveBeenCalled();
+  const cancel = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')).find(button => button.textContent === "Keep editing")!;
+  await act(async () => cancel.click());
+  expect(mock.submit).not.toHaveBeenCalled();
+  expect(container.querySelector("select")?.value).toBe("done");
+});
 it("allows assignee status control but no due-date or reassignment control", async () => {
   await render(); expect(container.querySelectorAll("select")).toHaveLength(1);
   expect(Array.from(container.querySelectorAll("option")).map(option => option.value)).not.toContain("cancelled");

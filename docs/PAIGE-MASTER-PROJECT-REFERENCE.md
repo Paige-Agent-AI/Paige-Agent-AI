@@ -763,7 +763,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-**2026-10-10 INT-342 S1c — Solo Marketing › Ads rebuilt as the paid-acquisition desk — PR [#__PR__](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/__PR__).** Owner ruling the same day: "Desk now, Meta read next."
+**2026-10-10 INT-342 S1c — Solo Marketing › Ads rebuilt as the paid-acquisition desk — PR [#1927](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1927).** Owner ruling the same day: "Desk now, Meta read next."
 - Five views kept in `?view=`: Overview (a spend-this-month card that stays empty until an ad account can be read, any budget written in a brief quoted verbatim as "a plan, never spend", the drafts ready with the newest three named, and the ad platforms with what each can and can't do), Campaigns, Creative (each saved ad copy previewed as it reads in a feed: headline, primary text and call to action parsed from what PAIGE wrote), Audiences and Performance (every figure with its source).
 - Nothing is estimated: Paige can't read an ad account yet, and the desk says so rather than "not connected" (a tenant can connect Meta or Metricool in Integrations; nothing reads them). Saved ad copy stays owners-and-admins only (its read policy), and members are told so.
 - §58: the old Ads tab's saved-ad-copy list, Ask PAIGE and Open Integrations all remain (Creative and the header); its "Not available yet" list became the platforms list and Performance.

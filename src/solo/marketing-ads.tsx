@@ -80,7 +80,7 @@ export function MarketingAds({ tenantId, view, onView, onOpenIntegrations, onOpe
   const countText = count >= AD_READ_LIMIT ? `${count}+` : String(count);
   const drafts = access === "denied" ? <>Saved ad copy is visible to owners and admins.</>
     : adsPhase === "loading" ? <>Reading your saved ad copy…</>
-    : adsPhase === "error" ? <>Your saved ad copy couldn’t load.</>
+    : adsPhase === "error" ? <>Your saved ad copy could not load.</>
     : count ? <><b>{countText} ad copy {count === 1 ? "draft" : "drafts"}</b> ready.</> : <>No ad copy saved yet.</>;
   const plans = briefs.phase === "ready" ? (briefs.briefs ?? []).filter((brief) => brief.budgetTarget && brief.lifecycleStatus !== "archived") : [];
 
@@ -98,7 +98,7 @@ export function MarketingAds({ tenantId, view, onView, onOpenIntegrations, onOpe
       <span className="pill pill-n">Not read yet</span>
       {onOpenIntegrations && <button type="button" className="btn btn-s" onClick={onOpenIntegrations}>Open Integrations</button>}
     </section>
-    {view === "overview" && <Overview drafts={drafts} adsPhase={adsPhase} count={count} access={access} plans={plans} briefsPhase={briefs.phase} onCreative={() => onView("creative")} newest={access === "allowed" && adsPhase === "ready" ? ads.rows.slice(0, 3) : []}/>}
+    {view === "overview" && <Overview drafts={drafts} adsPhase={adsPhase} count={count} access={access} plans={plans} briefsPhase={briefs.phase} onCreative={() => onView("creative")} newest={access === "allowed" && adsPhase === "ready" ? ads.rows.slice(0, 3) : []} onRetry={ads.retry}/>}
     {view === "campaigns" && <section className="mov-card"><div className="mad-empty"><h2>No ad campaigns to show.</h2><p>Ad campaigns run inside the ad platform. Once Paige can read an ad account they appear here, next to the brief each one serves.</p><button type="button" className="mov-lnk" onClick={onOpenCampaigns}>Open your campaign briefs</button></div></section>}
     {view === "creative" && <Creative access={access} phase={adsPhase} rows={ads.rows} retry={ads.retry}/>}
     {view === "audiences" && <section className="mov-card"><div className="mad-empty"><h2>Audiences</h2><p>Shown only when an ad platform shares them, and Paige can’t read one yet.</p><p>Your own people live in Clients, and Audience shows who you can reach.</p><button type="button" className="mov-lnk" onClick={onOpenAudience}>Open Audience</button></div></section>}
@@ -112,7 +112,7 @@ function PlugIcon() {
 
 type Plan = { id: string; name: string; budgetTarget: string | null };
 
-function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreative, newest }: { drafts: React.ReactNode; adsPhase: string; count: number; access: string; plans: Plan[]; briefsPhase: string; onCreative: () => void; newest: AdCopyRow[] }) {
+function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreative, newest, onRetry }: { drafts: React.ReactNode; adsPhase: string; count: number; access: string; plans: Plan[]; briefsPhase: string; onCreative: () => void; newest: AdCopyRow[]; onRetry: () => void }) {
   return <>
     <section className="mov-card mad-pace" aria-labelledby="mad-pace-h">
       <header className="mov-head"><div><h2 id="mad-pace-h">Spend this month</h2><p>What you’ll see once Paige can read an ad account</p></div><span className="pill pill-n">Not read yet</span></header>
@@ -136,6 +136,8 @@ function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreat
       <section className="mov-card" aria-labelledby="mad-ready-h">
         <header className="mov-head"><div><h2 id="mad-ready-h">Ready now</h2><p>Written by PAIGE and saved. Never published or paid for.</p></div></header>
         <div className="mad-row"><span className="mad-ini" aria-hidden="true">Ad</span><div className="mad-row-b"><strong>{drafts}</strong><small>{access === "denied" ? "Ask an owner or admin" : adsPhase === "ready" && !count ? "Ask PAIGE for ad copy and it’s kept here" : "Each one previews as an ad would read"}</small></div>{access !== "denied" && count > 0 && <button type="button" className="btn btn-s" onClick={onCreative}>Open Creative</button>}</div>
+        {adsPhase === "loading" && access !== "denied" && <div className="campaigns-skeleton mad-skel" role="status" aria-busy="true" aria-label="Loading saved ad copy"><span/><span/></div>}
+        {adsPhase === "error" && <div className="mad-row mad-retry" role="alert"><div className="mad-row-b"><strong>Nothing was changed.</strong><small>Your saved ad copy could not load. Try again.</small></div><button type="button" className="btn btn-s" onClick={onRetry}>Try again</button></div>}
         {newest.length > 0 && <ul className="mad-list mad-newest" aria-label="Newest ad copy">{newest.map((row) => <li key={row.id}><div className="mad-row-b"><strong>{row.title || "Untitled"}</strong><small>{parseAdCopy(row.body).headline ?? "No headline written"} · saved {formatDay(row.updated_at)}</small></div><span className="pill pill-n">Draft</span></li>)}</ul>}
       </section>
       <section className="mov-card" aria-labelledby="mad-plat-h">
@@ -154,7 +156,7 @@ function Overview({ drafts, adsPhase, count, access, plans, briefsPhase, onCreat
 function Creative({ access, phase, rows, retry }: { access: string; phase: string; rows: AdCopyRow[]; retry: () => void }) {
   if (access === "denied") return <section className="mov-card"><div className="mad-empty"><p>{LIBRARY_DENIED}</p></div></section>;
   if (phase === "loading") return <div className="campaigns-skeleton" role="status" aria-busy="true" aria-label="Loading ad copy"><span/><span/><span/></div>;
-  if (phase === "error") return <section className="mov-card"><div className="mad-empty"><h2>Your saved ad copy couldn’t load</h2><p>Nothing was changed. Try again.</p><button type="button" className="btn btn-s" onClick={retry}>Try again</button></div></section>;
+  if (phase === "error") return <section className="mov-card"><div className="mad-empty"><h2>Your saved ad copy could not load</h2><p>Nothing was changed. Try again.</p><button type="button" className="btn btn-s" onClick={retry}>Try again</button></div></section>;
   if (!rows.length) return <section className="mov-card"><div className="mad-empty"><h2>No ad copy yet.</h2><p>Ask PAIGE for ad copy for a campaign. She saves it here as a draft; saving never publishes or pays for anything.</p><AskPaigeButton label="Ask PAIGE for ad copy" prompt={ASK_PROMPT}/></div></section>;
   return <>
     <div className="mad-grid">{rows.map((row) => {

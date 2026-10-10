@@ -123,12 +123,27 @@ describe("Marketing › Ads desk", () => {
     db.tables.marketing_content = { data: null, error: { message: "boom" } };
     vi.spyOn(console, "error").mockImplementation(() => {});
     await render("creative");
-    expect(text()).toContain("Your saved ad copy couldn’t load");
+    expect(text()).toContain("Your saved ad copy could not load");
     db.tables.marketing_content = { data: [], error: null };
     act(() => button("Try again")!.click());
     await flush();
     expect(text()).toContain("No ad copy yet.");
     expect(button("Ask PAIGE for ad copy")).toBeDefined();
+  });
+
+  it("a failed read on Overview says so and offers a retry, and loading shows a skeleton", async () => {
+    let release: (value: Answer) => void = () => {};
+    db.tables.marketing_content = new Promise<Answer>((resolve) => { release = resolve; });
+    await render();
+    expect(host.querySelector(".mad-skel")).not.toBeNull();
+    release({ data: null, error: { message: "boom" } });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await flush();
+    expect(host.querySelector(".mov-sum")?.textContent).toContain("Your saved ad copy could not load.");
+    db.tables.marketing_content = { data: [AD], error: null };
+    act(() => button("Try again")!.click());
+    await flush();
+    expect(host.querySelector(".mov-sum")?.textContent).toContain("1 ad copy draft ready.");
   });
 
   it("names every provider figure's source, and sends the one partly-available figure to Analytics", async () => {

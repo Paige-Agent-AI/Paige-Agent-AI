@@ -1,0 +1,13 @@
+{
+  "kind": "actual Chrome browser zoom 200 percent; synthetic source only",
+  "codeCommit": "eff5e0328734cb7742e7b0ef1789a4b58defd71a",
+  "geometry": {
+    "width": 759,
+    "dpr": 2,
+    "bodyWidth": 759,
+    "scrollOwner": "auto"
+  },
+  "drawerClosed": true,
+  "focusRestored": true,
+  "errors": []
+}

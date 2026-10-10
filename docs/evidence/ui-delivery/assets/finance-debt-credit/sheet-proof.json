@@ -1,0 +1,53 @@
+{
+  "codeCommit": "eff5e0328734cb7742e7b0ef1789a4b58defd71a",
+  "proof": [
+    {
+      "theme": "dark",
+      "geometry": {
+        "x": 966,
+        "width": 570,
+        "right": 1536,
+        "viewport": 1536,
+        "background": "rgb(17, 15, 21)",
+        "color": "rgb(246, 242, 234)",
+        "pg": "#100e14",
+        "transform": "none"
+      }
+    },
+    {
+      "theme": "light",
+      "geometry": {
+        "x": 966,
+        "width": 570,
+        "right": 1536,
+        "viewport": 1536,
+        "background": "rgb(251, 248, 244)",
+        "color": "rgb(32, 30, 35)",
+        "pg": "#fbf9f5",
+        "transform": "none"
+      }
+    },
+    {
+      "theme": "dark",
+      "paymentChartOpensAccount": true,
+      "motion": {
+        "animation": "none",
+        "transition": "0s",
+        "overlayAnimation": "none",
+        "overlayTransition": "0s"
+      }
+    },
+    {
+      "theme": "light",
+      "paymentChartOpensAccount": true,
+      "motion": {
+        "animation": "none",
+        "transition": "0s",
+        "overlayAnimation": "none",
+        "overlayTransition": "0s"
+      }
+    }
+  ],
+  "mouseScroll": true,
+  "errors": []
+}

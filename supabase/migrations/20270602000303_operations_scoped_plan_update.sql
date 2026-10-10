@@ -2,7 +2,7 @@
 -- future-version tail. Manual caller-JWT scope guard only; no executor activation.
 begin;
 
-create function public.plan_update_item_scoped(
+create or replace function public.plan_update_item_scoped(
   p_item_id uuid,
   p_expected_actor_id uuid,
   p_expected_tenant_id uuid,

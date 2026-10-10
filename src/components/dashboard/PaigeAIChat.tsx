@@ -724,6 +724,10 @@ const PaigeAIChatInner = ({
   // the server refused on its merits will be refused identically on a retry, and offering one
   // would be a button that cannot work (§70).
   const [connectionIssue, setConnectionIssue] = useState<"offline" | "timeout" | "server" | "interactive-unconfirmed" | "live-interrupted" | null>(null);
+  // INT-346 — true while the server says this turn runs in conversational mode (interactive
+  // rollout staged, actions unavailable). Cleared at every turn start; set only by the
+  // server's own `paige_mode` frame, never assumed locally.
+  const [conversationalMode, setConversationalMode] = useState(false);
   const retryTurnRef = useRef<{
     base: Message[];
     rollback: Message[];
@@ -1447,6 +1451,7 @@ const PaigeAIChatInner = ({
       decision: decisionTurn,
     };
     setConnectionIssue(null);
+    setConversationalMode(false);
     if (soloTenantSafety && typeof navigator !== "undefined" && navigator.onLine === false) {
       // A decision that never left is undone, card and all: the person decides again when they are
       // back online. A Retry could not carry it — an approval is never replayed on a retry.
@@ -1825,6 +1830,12 @@ const PaigeAIChatInner = ({
           if (parsed.paige_phase === "writing") {
             setWritingPhase(true);
             updateLiveTurn(assistantId, (t) => ({ ...t, writing: true }));
+            continue;
+          }
+          // INT-346 — the server's own notice that this turn runs without actions. Shown, not
+          // acted on: the enforcement is entirely server-side; this only states it truthfully.
+          if (parsed.paige_mode === "conversational") {
+            setConversationalMode(true);
             continue;
           }
           // The server refused the focused client — that client does not belong to this
@@ -3385,6 +3396,11 @@ const PaigeAIChatInner = ({
             {soloTenantSafety && !composerScope.writable && !isLoading && composerScope.unavailableReason && (
               <div role="status" className="rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
                 {composerScope.unavailableReason}
+              </div>
+            )}
+            {soloTenantSafety && conversationalMode && !connectionIssue && (
+              <div role="status" className="rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+                Paige can answer and plan in this conversation. Running actions is briefly unavailable while a platform update finishes — she will say so if you ask for one.
               </div>
             )}
             {soloTenantSafety && connectionIssue && (

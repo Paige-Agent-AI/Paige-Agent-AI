@@ -1,0 +1,497 @@
+{
+  "fixture": "CONTROLLED LOCAL SYNTHETIC: canonical SQL writers and protected RPCs; no authenticated production proof",
+  "v1": {
+    "set": {
+      "id": "durable-task-evidence",
+      "hash": "544cbea0003813658b179144833d1863c1150ad01694cccbefb6cee3ac61b05c",
+      "version": "1.0.0",
+      "evaluators": [
+        {
+          "id": "terminal_evidence",
+          "kind": "deterministic",
+          "failure": "Canonical supported work is failed or cancelled, or its complete current-attempt evidence proves the terminal condition was not met.",
+          "version": "1.0.0",
+          "criterion": "The recorded terminal condition is independently verified for the current attempt. Artifact creation and read-only research do not establish downstream business impact.",
+          "applicability": [
+            "document_generate:document_authoring",
+            "deep_research:research"
+          ],
+          "indeterminate": "Nonterminal, missing, stale, partial, disputed or unsupported evidence never establishes successful completion.",
+          "not_applicable": "The server proves the capability and category are outside this definition. Missing identity is indeterminate.",
+          "required_evidence": [
+            "scoped_work",
+            "current_work_version",
+            "current_attempt_receipt",
+            "canonical_destination_readback"
+          ]
+        },
+        {
+          "id": "trajectory_capture",
+          "kind": "deterministic",
+          "failure": "Complete canonical evidence proves an internally inconsistent history or source scope.",
+          "version": "1.0.0",
+          "criterion": "The canonical history records initiation through the observed current work version, is complete and untruncated, and source reference limits were not reached.",
+          "applicability": [
+            "scoped_durable_work:trajectory_contract_v1"
+          ],
+          "indeterminate": "Missing or truncated history, partial source pages, unrecognized versions and unresolved source relationships remain indeterminate.",
+          "not_applicable": "No exclusion for a scoped version-1 durable task. Unknown task identity is indeterminate.",
+          "required_evidence": [
+            "scoped_work",
+            "current_work_version",
+            "canonical_history",
+            "source_limits"
+          ]
+        },
+        {
+          "id": "approval_decision",
+          "kind": "deterministic",
+          "failure": "Complete canonical evidence proves execution despite a denied, expired or missing required approval.",
+          "version": "1.0.0",
+          "criterion": "The actual linked approval decision and subsequent execution comply with the existing canonical requirement. Requested approval or provider acceptance is insufficient.",
+          "applicability": [
+            "server_proven_approval_requirement"
+          ],
+          "indeterminate": "Absent universal requirement/attempt linkage, pending decisions or incomplete approval evidence remain indeterminate; absence does not imply no approval was required.",
+          "not_applicable": "Only an explicit server-proven existing policy result that approval was not required permits exclusion.",
+          "required_evidence": [
+            "scoped_work",
+            "current_work_version",
+            "approval_requirement",
+            "canonical_approval_decision",
+            "execution_approval_link"
+          ]
+        }
+      ]
+    },
+    "items": [
+      {
+        "mode": "observation",
+        "attempt": 2,
+        "results": [
+          {
+            "reason": "approval_requirement_link_unavailable",
+            "scorer": "approval_decision",
+            "verdict": "indeterminate",
+            "version": "1.0.0",
+            "evidence": "unavailable",
+            "result_ref": "ef1a418f-7465-4187-8a6e-197ba5946595"
+          },
+          {
+            "reason": "canonical_receipt_and_destination_verified",
+            "scorer": "terminal_evidence",
+            "verdict": "pass",
+            "version": "1.0.0",
+            "evidence": "complete",
+            "result_ref": "714e8cb7-078c-4e8a-b7bc-5a400f92939d"
+          },
+          {
+            "reason": "bounded_history_consistency",
+            "scorer": "trajectory_capture",
+            "verdict": "pass",
+            "version": "1.0.0",
+            "evidence": "complete",
+            "result_ref": "2d1ff865-abad-4480-99da-b73e5f95942c"
+          }
+        ],
+        "run_ref": "85f8e315-4e74-4ad1-9b8c-7e3f2aa293ab",
+        "category": "document_authoring",
+        "work_ref": "930a2fa9-6acc-46d4-953c-2a7b66265513",
+        "capability": "document_generate",
+        "created_at": "2026-10-10T18:50:10.503173-04:00",
+        "input_hash": "701ec24450bb6f66f29421d58de6d8e80b26c45424a84a25539d4a75d8e0d66b",
+        "participants": [
+          {
+            "agent_ref": "test-agent-evaluator",
+            "trace_ref": "1f188e63-c985-4073-89fc-5d4ea242cb4f",
+            "execution_agent_version": "unavailable",
+            "roster_version_at_observation": 3
+          },
+          {
+            "agent_ref": "test-agent-evaluator",
+            "trace_ref": "9ad4ff42-09af-4f11-a623-fa8264cdd889",
+            "execution_agent_version": "unavailable",
+            "roster_version_at_observation": 3
+          }
+        ],
+        "work_version": 5,
+        "recorded_state": "succeeded",
+        "previous_run_ref": null,
+        "source_available": true,
+        "source_observed_at": "2026-10-10T18:50:10.635542-04:00",
+        "terminal_condition": "artifact",
+        "unassigned_model_calls": 0,
+        "terminal_verified_at_observation": true
+      }
+    ],
+    "sample": {
+      "replays": 0,
+      "evaluations": 1,
+      "observations": 1,
+      "task_subjects": 1
+    },
+    "criteria": [
+      {
+        "fail": 0,
+        "pass": 0,
+        "total": 1,
+        "scorer": "approval_decision",
+        "version": "1.0.0",
+        "coverage": 0,
+        "resolved": 0,
+        "indeterminate": 1,
+        "not_applicable": 0,
+        "criterion_pass_rate": null,
+        "coverage_denominator": 1
+      },
+      {
+        "fail": 0,
+        "pass": 1,
+        "total": 1,
+        "scorer": "terminal_evidence",
+        "version": "1.0.0",
+        "coverage": 1,
+        "resolved": 1,
+        "indeterminate": 0,
+        "not_applicable": 0,
+        "criterion_pass_rate": 1,
+        "coverage_denominator": 1
+      },
+      {
+        "fail": 0,
+        "pass": 1,
+        "total": 1,
+        "scorer": "trajectory_capture",
+        "version": "1.0.0",
+        "coverage": 1,
+        "resolved": 1,
+        "indeterminate": 0,
+        "not_applicable": 0,
+        "criterion_pass_rate": 1,
+        "coverage_denominator": 1
+      }
+    ],
+    "versions": [
+      {
+        "id": "durable-task-evidence",
+        "hash": "544cbea0003813658b179144833d1863c1150ad01694cccbefb6cee3ac61b05c",
+        "version": "1.0.0"
+      },
+      {
+        "id": "durable-task-evidence",
+        "hash": "2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae",
+        "version": "1.1.0"
+      }
+    ],
+    "next_cursor": null,
+    "observed_at": "2026-10-10T18:50:12.022692-04:00",
+    "coverage_basis": "returned_evaluations_including_explicit_historical_replays",
+    "contract_version": 1,
+    "attribution_basis": "recorded_model_participants_not_task_ownership",
+    "source_consistency": "bounded_double_read_not_atomic"
+  },
+  "v2": {
+    "set": {
+      "id": "durable-task-evidence",
+      "hash": "2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae",
+      "version": "1.1.0",
+      "evaluators": [
+        {
+          "id": "terminal_evidence",
+          "kind": "deterministic",
+          "failure": "Canonical supported work is failed or cancelled, or its complete current-attempt evidence proves the terminal condition was not met.",
+          "version": "1.0.0",
+          "criterion": "The recorded terminal condition is independently verified for the current attempt. Artifact creation and read-only research do not establish downstream business impact.",
+          "applicability": [
+            "document_generate:document_authoring",
+            "deep_research:research"
+          ],
+          "indeterminate": "Nonterminal, missing, stale, partial, disputed or unsupported evidence never establishes successful completion.",
+          "not_applicable": "The server proves the capability and category are outside this definition. Missing identity is indeterminate.",
+          "required_evidence": [
+            "scoped_work",
+            "current_work_version",
+            "current_attempt_receipt",
+            "canonical_destination_readback"
+          ]
+        },
+        {
+          "id": "trajectory_capture",
+          "kind": "deterministic",
+          "failure": "Complete canonical evidence proves an internally inconsistent history or source scope.",
+          "version": "1.0.0",
+          "criterion": "The canonical history records initiation through the observed current work version, is complete and untruncated, and source reference limits were not reached.",
+          "applicability": [
+            "scoped_durable_work:trajectory_contract_v1"
+          ],
+          "indeterminate": "Missing or truncated history, partial source pages, unrecognized versions and unresolved source relationships remain indeterminate.",
+          "not_applicable": "No exclusion for a scoped version-1 durable task. Unknown task identity is indeterminate.",
+          "required_evidence": [
+            "scoped_work",
+            "current_work_version",
+            "canonical_history",
+            "source_limits"
+          ]
+        },
+        {
+          "id": "approval_decision",
+          "kind": "deterministic",
+          "failure": "Complete canonical evidence proves execution despite a denied, expired or missing required approval.",
+          "version": "1.0.0",
+          "criterion": "The actual linked approval decision and subsequent execution comply with the existing canonical requirement. Requested approval or provider acceptance is insufficient.",
+          "applicability": [
+            "server_proven_approval_requirement"
+          ],
+          "indeterminate": "Absent universal requirement/attempt linkage, pending decisions or incomplete approval evidence remain indeterminate; absence does not imply no approval was required.",
+          "not_applicable": "Only an explicit server-proven existing policy result that approval was not required permits exclusion.",
+          "required_evidence": [
+            "scoped_work",
+            "current_work_version",
+            "approval_requirement",
+            "canonical_approval_decision",
+            "execution_approval_link"
+          ]
+        },
+        {
+          "id": "model_call_status",
+          "kind": "deterministic",
+          "failure": "An untruncated set of linked recorded calls includes an error or timeout.",
+          "version": "1.0.0",
+          "criterion": "Every server-linked recorded model call has a successful status. This evaluates only recorded calls; missing telemetry cannot establish complete runtime coverage or task success.",
+          "applicability": [
+            "server_linked_model_calls"
+          ],
+          "indeterminate": "No linked calls, unknown status, disputed scope or a truncated call page remain indeterminate. Absence is not proof that no model was used.",
+          "not_applicable": "No exclusion without a server-proven existing no-model execution contract.",
+          "required_evidence": [
+            "scoped_work",
+            "server_proven_trace_links",
+            "recorded_call_status",
+            "source_limits"
+          ]
+        }
+      ]
+    },
+    "items": [
+      {
+        "mode": "observation",
+        "attempt": 2,
+        "results": [
+          {
+            "reason": "approval_requirement_link_unavailable",
+            "scorer": "approval_decision",
+            "verdict": "indeterminate",
+            "version": "1.0.0",
+            "evidence": "unavailable",
+            "result_ref": "1d9ec95d-4e22-4035-95fe-1cf86ce3e90f"
+          },
+          {
+            "reason": "model_source_truncated",
+            "scorer": "model_call_status",
+            "verdict": "indeterminate",
+            "version": "1.0.0",
+            "evidence": "partial",
+            "result_ref": "58abb352-337b-4689-ac63-bb68111cdbdd"
+          },
+          {
+            "reason": "current_receipts_conflict",
+            "scorer": "terminal_evidence",
+            "verdict": "indeterminate",
+            "version": "1.0.0",
+            "evidence": "conflicting",
+            "result_ref": "3d3fe9e3-f55b-4178-a8d5-aa77a4c0bafe"
+          },
+          {
+            "reason": "source_or_history_truncated",
+            "scorer": "trajectory_capture",
+            "verdict": "indeterminate",
+            "version": "1.0.0",
+            "evidence": "partial",
+            "result_ref": "ce093732-753e-4844-a5ee-adf55ef6360e"
+          }
+        ],
+        "run_ref": "fc71ddd6-93dc-45df-9060-81520f9ac714",
+        "category": "document_authoring",
+        "work_ref": "930a2fa9-6acc-46d4-953c-2a7b66265513",
+        "capability": "document_generate",
+        "created_at": "2026-10-10T18:50:10.503173-04:00",
+        "input_hash": "0e8d17a9dbc594665f77623a452beb913205a0a938d41d9a7b3ac1c2f50a601f",
+        "participants": [
+          {
+            "agent_ref": "test-agent-evaluator",
+            "trace_ref": "1f188e63-c985-4073-89fc-5d4ea242cb4f",
+            "execution_agent_version": "unavailable",
+            "roster_version_at_observation": 3
+          },
+          {
+            "agent_ref": "test-agent-evaluator",
+            "trace_ref": "9ad4ff42-09af-4f11-a623-fa8264cdd889",
+            "execution_agent_version": "unavailable",
+            "roster_version_at_observation": 3
+          }
+        ],
+        "work_version": 5,
+        "recorded_state": "succeeded",
+        "previous_run_ref": null,
+        "source_available": true,
+        "source_observed_at": "2026-10-10T18:50:10.745874-04:00",
+        "terminal_condition": "artifact",
+        "unassigned_model_calls": 102,
+        "terminal_verified_at_observation": false
+      },
+      {
+        "mode": "replay",
+        "attempt": 2,
+        "results": [
+          {
+            "reason": "approval_requirement_link_unavailable",
+            "scorer": "approval_decision",
+            "verdict": "indeterminate",
+            "version": "1.0.0",
+            "evidence": "unavailable",
+            "result_ref": "495c1ed0-75a5-4d17-bca3-36338b2ee252"
+          },
+          {
+            "reason": "recorded_model_call_status",
+            "scorer": "model_call_status",
+            "verdict": "fail",
+            "version": "1.0.0",
+            "evidence": "complete",
+            "result_ref": "c9da2682-9ad2-42fa-8502-126de83a93e1"
+          },
+          {
+            "reason": "canonical_receipt_and_destination_verified",
+            "scorer": "terminal_evidence",
+            "verdict": "pass",
+            "version": "1.0.0",
+            "evidence": "complete",
+            "result_ref": "856094c6-2790-42f2-afc0-70c3565df9a9"
+          },
+          {
+            "reason": "bounded_history_consistency",
+            "scorer": "trajectory_capture",
+            "verdict": "pass",
+            "version": "1.0.0",
+            "evidence": "complete",
+            "result_ref": "6deae465-3642-4cb5-9bd1-a574f5f3d427"
+          }
+        ],
+        "run_ref": "247c6f84-9c85-464d-904b-ec23e24d96b1",
+        "category": "document_authoring",
+        "work_ref": "930a2fa9-6acc-46d4-953c-2a7b66265513",
+        "capability": "document_generate",
+        "created_at": "2026-10-10T18:50:10.503173-04:00",
+        "input_hash": "701ec24450bb6f66f29421d58de6d8e80b26c45424a84a25539d4a75d8e0d66b",
+        "participants": [
+          {
+            "agent_ref": "test-agent-evaluator",
+            "trace_ref": "1f188e63-c985-4073-89fc-5d4ea242cb4f",
+            "execution_agent_version": "unavailable",
+            "roster_version_at_observation": 3
+          },
+          {
+            "agent_ref": "test-agent-evaluator",
+            "trace_ref": "9ad4ff42-09af-4f11-a623-fa8264cdd889",
+            "execution_agent_version": "unavailable",
+            "roster_version_at_observation": 3
+          }
+        ],
+        "work_version": 5,
+        "recorded_state": "succeeded",
+        "previous_run_ref": "85f8e315-4e74-4ad1-9b8c-7e3f2aa293ab",
+        "source_available": true,
+        "source_observed_at": "2026-10-10T18:50:10.635542-04:00",
+        "terminal_condition": "artifact",
+        "unassigned_model_calls": 0,
+        "terminal_verified_at_observation": true
+      }
+    ],
+    "sample": {
+      "replays": 1,
+      "evaluations": 2,
+      "observations": 1,
+      "task_subjects": 1
+    },
+    "criteria": [
+      {
+        "fail": 0,
+        "pass": 0,
+        "total": 2,
+        "scorer": "approval_decision",
+        "version": "1.0.0",
+        "coverage": 0,
+        "resolved": 0,
+        "indeterminate": 2,
+        "not_applicable": 0,
+        "criterion_pass_rate": null,
+        "coverage_denominator": 2
+      },
+      {
+        "fail": 1,
+        "pass": 0,
+        "total": 2,
+        "scorer": "model_call_status",
+        "version": "1.0.0",
+        "coverage": 0.5,
+        "resolved": 1,
+        "indeterminate": 1,
+        "not_applicable": 0,
+        "criterion_pass_rate": 0,
+        "coverage_denominator": 2
+      },
+      {
+        "fail": 0,
+        "pass": 1,
+        "total": 2,
+        "scorer": "terminal_evidence",
+        "version": "1.0.0",
+        "coverage": 0.5,
+        "resolved": 1,
+        "indeterminate": 1,
+        "not_applicable": 0,
+        "criterion_pass_rate": 1,
+        "coverage_denominator": 2
+      },
+      {
+        "fail": 0,
+        "pass": 1,
+        "total": 2,
+        "scorer": "trajectory_capture",
+        "version": "1.0.0",
+        "coverage": 0.5,
+        "resolved": 1,
+        "indeterminate": 1,
+        "not_applicable": 0,
+        "criterion_pass_rate": 1,
+        "coverage_denominator": 2
+      }
+    ],
+    "versions": [
+      {
+        "id": "durable-task-evidence",
+        "hash": "544cbea0003813658b179144833d1863c1150ad01694cccbefb6cee3ac61b05c",
+        "version": "1.0.0"
+      },
+      {
+        "id": "durable-task-evidence",
+        "hash": "2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae",
+        "version": "1.1.0"
+      }
+    ],
+    "next_cursor": null,
+    "observed_at": "2026-10-10T18:50:12.07375-04:00",
+    "coverage_basis": "returned_evaluations_including_explicit_historical_replays",
+    "contract_version": 1,
+    "attribution_basis": "recorded_model_participants_not_task_ownership",
+    "source_consistency": "bounded_double_read_not_atomic"
+  },
+  "trajectory": {
+    "items": [
+      {
+        "id": "930a2fa9-6acc-46d4-953c-2a7b66265513",
+        "terminal_verified": false
+      }
+    ]
+  },
+  "scope": "Minimal synthetic canonical RPC metadata; complete proof export remains separate."
+}

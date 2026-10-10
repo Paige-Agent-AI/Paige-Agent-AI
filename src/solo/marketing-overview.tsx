@@ -13,7 +13,7 @@ import React from "react";
 import { Ic as SharedIcons } from "./_shared";
 import type { CampaignArtifact, CampaignDraft, CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, sendsToPipeline } from "./marketing-overview-model";
 import "./marketing-overview.css";
 
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
@@ -64,8 +64,7 @@ export type OverviewProps = {
  * pipeline_attach automation, or the form's own intake route. Other automations (alerts, contact
  * upserts, webhooks) still run, but they do not close the link (Codex review, PR #1900).
  */
-export const sendsToPipeline = (form: Pick<CampaignArtifact, "routingTargets" | "intakePipelineId">) =>
-  (form.routingTargets ?? []).includes("pipeline_attach") || Boolean(form.intakePipelineId);
+export { sendsToPipeline };
 const unroutedDetail = (form: CampaignArtifact) =>
   form.intakeAlert ? "Leads are emailed to you but never reach a pipeline"
     : form.routingConfigured ? "Its automations run, but leads never reach a pipeline"

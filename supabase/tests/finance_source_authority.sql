@@ -10,7 +10,7 @@ DO $$ BEGIN
  IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN; END IF;
 END $$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY, deleted_at timestamptz, banned_until timestamptz);
-CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('test.actor',true),''))::uuid $$;
 CREATE TYPE public.tenant_status AS ENUM('trial','active','past_due','canceled','suspended');
 CREATE TABLE public.tenants(id uuid PRIMARY KEY, status public.tenant_status, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false,parent_tenant_id uuid);
 CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
@@ -83,6 +83,16 @@ DO $$ BEGIN
  IF (SELECT count(*) FROM finance_company_entities)<>3 THEN RAISE EXCEPTION 'Entity isolation failed'; END IF;
 END $$;
 INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001',true);
+INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000002',true);
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000099','sandbox','test-foreign-owner')$q$,'42501');
+DELETE FROM quickbooks_connections WHERE id='40000000-0000-0000-0000-000000000099';
+INSERT INTO connected_bank_accounts VALUES('40000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000002',true);
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000099','sandbox','test-foreign-bank-owner')$q$,'42501');
+DELETE FROM connected_bank_accounts WHERE id='40000000-0000-0000-0000-000000000099';
+DO $$ BEGIN IF coalesce(current_setting('request.jwt.claim.sub',true),'')<>'' THEN RAISE EXCEPTION 'Source owner claims leaked after refusal'; END IF; END $$;
+UPDATE tenant_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000001';
+SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace) VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','sandbox','test-revoked-source-owner')$q$,'42501');
+UPDATE tenant_members SET status='active' WHERE user_id='10000000-0000-0000-0000-000000000001';
 INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
  VALUES('50000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000001','sandbox','test-realm-1','verified','60000000-0000-0000-0000-000000000001',now());
 SELECT public.fixture_expect_error($q$UPDATE finance_source_bindings SET entity_id='30000000-0000-0000-0000-000000000003',revision=revision+1$q$,'42501');

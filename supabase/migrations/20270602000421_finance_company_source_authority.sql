@@ -83,16 +83,20 @@ GRANT ALL ON public.finance_company_entities,public.finance_source_bindings,publ
 
 CREATE FUNCTION public._finance_binding_identity_guard() RETURNS trigger
 LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+DECLARE source_actor uuid; locked_actor uuid;
 BEGIN
  IF TG_OP='INSERT' THEN
+  IF NEW.provider='plaid' THEN SELECT user_id INTO source_actor FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id;
+  ELSE SELECT user_id INTO source_actor FROM public.quickbooks_connections WHERE id=NEW.quickbooks_connection_id; END IF;
+  PERFORM public._finance_assert_stored_source_actor(source_actor,NEW.tenant_id);
   PERFORM 1 FROM public.tenants WHERE id=NEW.tenant_id AND status IN ('trial','active','past_due') AND archived_at IS NULL AND NOT lifecycle_execution_paused FOR SHARE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace unavailable' USING ERRCODE='42501'; END IF;
   IF NEW.provider='plaid' THEN
-   PERFORM 1 FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id AND is_active FOR SHARE;
+   SELECT user_id INTO locked_actor FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id AND is_active FOR SHARE;
   ELSE
-   PERFORM 1 FROM public.quickbooks_connections WHERE id=NEW.quickbooks_connection_id AND is_active FOR SHARE;
+   SELECT user_id INTO locked_actor FROM public.quickbooks_connections WHERE id=NEW.quickbooks_connection_id AND is_active FOR SHARE;
   END IF;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
+  IF NOT FOUND OR locked_actor IS DISTINCT FROM source_actor THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
   -- Match observation lock order: provider before company before binding.
   PERFORM 1 FROM public.finance_company_entities e JOIN public.tenants t ON t.id=e.tenant_id
    WHERE e.id=NEW.entity_id AND e.tenant_id=NEW.tenant_id AND e.is_active
@@ -175,19 +179,22 @@ CREATE TRIGGER finance_setup_source_invalidation AFTER UPDATE OF brand ON public
 
 CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE binding public.finance_source_bindings; active boolean;
+DECLARE binding public.finance_source_bindings; active boolean; source_actor uuid; locked_actor uuid;
 BEGIN
  IF TG_OP<>'INSERT' THEN RAISE EXCEPTION 'Financial source observations are immutable' USING ERRCODE='42501'; END IF;
  SELECT * INTO binding FROM public.finance_source_bindings WHERE tenant_id=NEW.tenant_id AND entity_id=NEW.entity_id AND id=NEW.binding_id;
  IF NOT FOUND OR binding.verification_state<>'verified' OR binding.revision<>NEW.binding_revision THEN RAISE EXCEPTION 'Verified financial source unavailable or changed' USING ERRCODE='42501'; END IF;
+ IF binding.provider='quickbooks' THEN SELECT user_id INTO source_actor FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id;
+ ELSE SELECT user_id INTO source_actor FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id; END IF;
+ PERFORM public._finance_assert_stored_source_actor(source_actor,NEW.tenant_id);
  PERFORM 1 FROM public.tenants WHERE id=NEW.tenant_id AND status IN ('trial','active','past_due') AND archived_at IS NULL AND NOT lifecycle_execution_paused FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace unavailable or paused' USING ERRCODE='42501'; END IF;
  IF binding.provider='quickbooks' THEN
-  SELECT is_active INTO active FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id FOR SHARE;
+  SELECT is_active,user_id INTO active,locked_actor FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id FOR SHARE;
  ELSE
-  SELECT is_active INTO active FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id FOR SHARE;
+  SELECT is_active,user_id INTO active,locked_actor FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id FOR SHARE;
  END IF;
- IF NOT coalesce(active,false) THEN RAISE EXCEPTION 'Financial connection revoked' USING ERRCODE='42501'; END IF;
+ IF NOT coalesce(active,false) OR locked_actor IS DISTINCT FROM source_actor THEN RAISE EXCEPTION 'Financial connection revoked' USING ERRCODE='42501'; END IF;
  -- Lock mutable inputs in workspace → connection → company → binding order.
  -- Re-read the binding after lifecycle locks; the earlier read grants no proof.
  PERFORM 1 FROM public.finance_company_entities e JOIN public.tenants t ON t.id=e.tenant_id
@@ -233,6 +240,25 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._finance_assert_workspace(uuid,uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public._finance_assert_workspace(uuid,uuid) TO service_role;
+
+-- Private actor recovery from the existing provider row. This is workspace-owner
+-- validation only, not proof that the native provider company belongs to this entity.
+CREATE FUNCTION public._finance_assert_stored_source_actor(_actor uuid,_tenant uuid) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE old_claims text:=current_setting('request.jwt.claims',true); old_sub text:=current_setting('request.jwt.claim.sub',true);
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
+ PERFORM set_config('request.jwt.claim.sub',coalesce(_actor::text,''),true);
+ PERFORM public._finance_assert_workspace(_actor,_tenant);
+ PERFORM set_config('request.jwt.claims',coalesce(old_claims,''),true);
+ PERFORM set_config('request.jwt.claim.sub',coalesce(old_sub,''),true);
+EXCEPTION WHEN OTHERS THEN
+ PERFORM set_config('request.jwt.claims',coalesce(old_claims,''),true);
+ PERFORM set_config('request.jwt.claim.sub',coalesce(old_sub,''),true);
+ RAISE;
+END $$;
+REVOKE ALL ON FUNCTION public._finance_assert_stored_source_actor(uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public._finance_assert_stored_source_actor(uuid,uuid) TO service_role;
 
 CREATE FUNCTION public.read_finance_source_catalog(_expected_tenant_id uuid) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

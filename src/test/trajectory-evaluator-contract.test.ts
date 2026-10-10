@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { webcrypto } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import {
   TASK_EVALUATOR_SET, TASK_EVALUATOR_SET_HASH, evaluatorVerdict,
   resolveTaskEvaluatorSet, summarizeEvaluatorVerdicts,
+  TASK_EVALUATOR_SET_V2, TASK_EVALUATOR_SET_V2_HASH,
 } from '../../supabase/functions/_shared/eval/trajectory-registry';
 
 describe('INT-280 AI-2A immutable task evaluator contract', () => {
@@ -19,6 +21,27 @@ describe('INT-280 AI-2A immutable task evaluator contract', () => {
     expect(digest).toBe(TASK_EVALUATOR_SET_HASH);
     // A future change to criteria, evidence or applicability requires a new immutable version.
     expect(TASK_EVALUATOR_SET_HASH).toBe('544cbea0003813658b179144833d1863c1150ad01694cccbefb6cee3ac61b05c');
+  });
+
+  it('registers a separate version without changing the released v1 definition', async () => {
+    expect(resolveTaskEvaluatorSet('durable-task-evidence', '1.1.0')).toBe(TASK_EVALUATOR_SET_V2);
+    expect(TASK_EVALUATOR_SET_V2.evaluators.map(e => e.id)).toEqual([
+      'terminal_evidence', 'trajectory_capture', 'approval_decision', 'model_call_status',
+    ]);
+    const digest = Array.from(new Uint8Array(await webcrypto.subtle.digest('SHA-256',
+      new TextEncoder().encode(JSON.stringify(TASK_EVALUATOR_SET_V2)))))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+    expect(digest).toBe(TASK_EVALUATOR_SET_V2_HASH);
+    expect(digest).not.toBe(TASK_EVALUATOR_SET_HASH);
+    expect(Object.isFrozen(TASK_EVALUATOR_SET_V2.evaluators[3])).toBe(true);
+  });
+
+  it('deploys the exact reviewed version/hash/definition bytes to the protected registry', () => {
+    const sql = readFileSync('supabase/migrations/20270602000411_int280_task_evaluations.sql', 'utf8');
+    const seeds = [...sql.matchAll(/\$manifest\$(.*?)\$manifest\$/g)].map(m => m[1]);
+    expect(seeds).toEqual([JSON.stringify(TASK_EVALUATOR_SET), JSON.stringify(TASK_EVALUATOR_SET_V2)]);
+    expect(sql).toContain(TASK_EVALUATOR_SET_HASH);
+    expect(sql).toContain(TASK_EVALUATOR_SET_V2_HASH);
   });
 
   it('freezes definitions, applicability and evidence requirements recursively', () => {

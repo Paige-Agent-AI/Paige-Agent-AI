@@ -10,10 +10,11 @@ const psql = process.env.FINANCE_PROOF_PSQL ?? 'psql';
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('PG')));
 const args = database => ['-X', '--no-password', '-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', '-d', database, '-At', '-v', 'ON_ERROR_STOP=1'];
 const suite = process.argv[2] ?? 'source';
-const fixtures = { source: 'finance_source_authority.sql', accounts: 'finance_source_authority.sql', quickbooks: 'quickbooks_oauth_authority.sql' };
+const fixtures = { source: 'finance_source_authority.sql', accounts: 'finance_source_authority.sql', liabilities: 'finance_source_authority.sql', quickbooks: 'quickbooks_oauth_authority.sql' };
 if (!Object.hasOwn(fixtures, suite)) throw new Error('Unknown Finance fixture suite');
 const fixture = fileURLToPath(new URL(`../../supabase/tests/${fixtures[suite]}`, import.meta.url));
 const accountFixture = fileURLToPath(new URL('../../supabase/tests/finance_account_source_projections.sql', import.meta.url));
+const liabilityFixture = fileURLToPath(new URL('../../supabase/tests/finance_liability_source_projections.sql', import.meta.url));
 function run(database, input, extra = [], timeout = 30000) {
   const result = spawnSync(psql, [...args(database), ...extra], { input, env, encoding: 'utf8', windowsHide: true, timeout });
   if (result.error) throw result.error;
@@ -82,9 +83,15 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       assert.equal(result.status, 0, result.stderr);
       result = run(database, undefined, ['-v', 'apply_account_migration=0', '-f', accountFixture]);
     }
+    if (leg === 'absent' && suite === 'liabilities') {
+      assert.equal(result.status, 0, result.stderr);
+      result = run(database, undefined, ['-v', 'apply_account_migration=1', '-f', accountFixture]);
+      assert.equal(result.status, 0, result.stderr);
+      result = run(database, undefined, ['-v', 'apply_liability_migration=0', '-f', liabilityFixture]);
+    }
     if (leg === 'absent') {
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, suite === 'source' ? /read_finance_source_catalog.*does not exist/ : suite === 'accounts' ? /read_finance_account_source.*does not exist/ : /begin_quickbooks_company_authorization.*does not exist/);
+      assert.match(result.stderr, suite === 'source' ? /read_finance_source_catalog.*does not exist/ : suite === 'accounts' ? /read_finance_account_source.*does not exist/ : suite === 'quickbooks' ? /begin_quickbooks_company_authorization.*does not exist/ : /read_finance_liability_source.*does not exist/);
       console.log(`PASS failing-first: Finance ${suite} contract does not exist before migration`);
       continue;
     }
@@ -166,7 +173,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     await blockedCompetitor(database, "UPDATE agency_team_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000003';", agencyRead.release);
     await agencyRead.done;
     sql(database, `SET ROLE authenticated; ${agencyActor} SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'42501');`);
-    if (suite === 'accounts') {
+    if (suite === 'accounts' || suite === 'liabilities') {
       const accounts = run(database, undefined, ['-v', 'apply_account_migration=1', '-f', accountFixture]);
       assert.equal(accounts.status, 0, accounts.stderr);
       assert.match(accounts.stdout, /Finance account projections PASS/);
@@ -181,6 +188,18 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       await snapshotWrite.done;
       assert.equal(sql(database, "SELECT version FROM finance_account_source_snapshots WHERE binding_id='50000000-0000-0000-0000-000000000203';").trim(), '1');
       assert.equal(sql(database, "SELECT count(*) FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000203';").trim(), '1');
+    }
+    if (suite === 'liabilities') {
+      const liabilities = run(database, undefined, ['-v', 'apply_liability_migration=1', '-f', liabilityFixture]);
+      assert.equal(liabilities.status, 0, liabilities.stderr);
+      assert.match(liabilities.stdout, /Finance liability projections PASS/);
+      const replace = `SELECT public.fixture_liability_write('[]',2,2);`;
+      const liabilityWrite = holding(database, `RESET ROLE; ${replace}`);
+      await liabilityWrite.held;
+      await blockedCompetitor(database, `SELECT public.fixture_expect_error($q$${replace}$q$,'40001');`, liabilityWrite.release);
+      await liabilityWrite.done;
+      assert.equal(sql(database, "SELECT version FROM finance_liability_source_snapshots WHERE binding_id='50000000-0000-0000-0000-000000000228';").trim(), '3');
+      assert.equal(sql(database, "SELECT count(*) FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000228' AND domain='liabilities';").trim(), '3');
     }
     console.log(`PASS ${leg}: actual migration, role/tenant/source guards, receipt rollback, concurrent update and replay`);
   } finally {

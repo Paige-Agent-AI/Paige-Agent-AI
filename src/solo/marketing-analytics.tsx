@@ -283,7 +283,7 @@ function Channels({ days, email, onOpenEmail, onOpenAds }: { days: number; email
   const points = s && s.tracked > 0 && s.series?.length ? ratePoints(s.series) : null;
   return <section className="mov-card" aria-labelledby="mva-ch-h">
     <header className="mov-head"><div><h2 id="mva-ch-h">Channels</h2><p>How each channel did in the last {days} days</p></div></header>
-    {points && <div className="mva-ch-chart"><h3 className="mva-sub">Email open and click rates</h3><ChartBoundary className="mo-chart me-chart-rates mva-chart-email"><EmailRatesChart points={points} label={`Email open and click rates, last ${days} days`}/></ChartBoundary></div>}
+    {points && <div className="mva-ch-chart"><h3 className="mva-sub">Email open and click rates</h3><ChartBoundary className="mo-chart me-chart-rates"><EmailRatesChart points={points} label={`Email open and click rates, last ${days} days`}/></ChartBoundary></div>}
     <ul className="mva-ch">{rows.map((row) => <li key={row.name}>
       <span className="mva-row-t">{row.name}<small aria-live={row.name === "Email" ? "polite" : undefined}>{row.line}</small></span>
       <span className="mva-ch-a">{row.flag && <span className="pill pill-n">{row.flag}</span>}{row.act}</span>

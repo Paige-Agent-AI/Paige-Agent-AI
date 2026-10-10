@@ -29,7 +29,8 @@ const FRAMES = [
   { name: "900x1000", width: 900, height: 1000 },
 ];
 const POSTURES = ["docked", "wide", "closed"];
-const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "analytics"];
+// DRIVE_TABS=analytics,ads re-runs the frames for only those tabs (the full set takes ~20 min).
+const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "analytics"].filter((tab) => !process.env.DRIVE_TABS || process.env.DRIVE_TABS.split(",").includes(tab));
 
 // Same model as campaigns-nav-fit-drive.mjs (TenantCommandCenterShell.tsx:483, verified there).
 function contentWidth(viewport, posture) {
@@ -153,7 +154,7 @@ async function main() {
             // Audience: the composition donut, the stage bars and the growth area also load lazily.
             if (tab === "audience") await page.waitForFunction(() => document.querySelector(".ma .mo-donut .recharts-pie-sector") && document.querySelector(".ma-chart-stages .recharts-bar-rectangle") && document.querySelector(".ma-chart-growth .recharts-area-area"), null, { timeout: 15000 }).catch(() => {});
             // Analytics: the leads chart, the rings and the email chart load lazily.
-            if (tab === "analytics") await page.waitForFunction(() => document.querySelector(".mva-chart-trend .recharts-bar-rectangle") && document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length >= 3 && document.querySelector(".mva-chart-email .recharts-area-curve"), null, { timeout: 15000 }).catch(() => {});
+            if (tab === "analytics") await page.waitForFunction(() => document.querySelector(".mva-chart-trend .recharts-bar-rectangle") && document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length >= 3 && document.querySelector(".mva-ch-chart .recharts-area-curve"), null, { timeout: 15000 }).catch(() => {});
             // Email: the rate chart loads lazily too.
             if (tab === "email") await page.waitForFunction(() => document.querySelector(".me-chart-rates .recharts-area-curve"), null, { timeout: 15000 }).catch(() => {});
             const id = `${theme}/${frame.name}/paige-${posture}@${width}px/${tab}`;
@@ -181,7 +182,7 @@ async function main() {
                 check(drawn.nodes === 4 && drawn.broken === 1 && drawn.line && drawn.cards === 4 && drawn.leads === 6 && drawn.h1 === 0, `${id}: the chain (one broken link), the lead line, four capture points and six recent leads are drawn, with no page title`, JSON.stringify(drawn));
               }
               if (tab === "analytics") {
-                const drawn = await page.evaluate(() => ({ kpis: document.querySelectorAll(".mva-kpi").length, sparks: document.querySelectorAll(".mva-kpi .mva-spark").length, trend: document.querySelectorAll(".mva-chart-trend .recharts-bar-rectangle").length, rings: document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length, steps: document.querySelectorAll(".mva-step").length, bars: [...document.querySelectorAll(".mva-bar i")].filter((i) => i.getBoundingClientRect().width > 0).length, heat: document.querySelectorAll(".mva-heat i.is-on").length, emailChart: Boolean(document.querySelector(".mva-chart-email .recharts-area-curve")), capture: document.querySelectorAll(".mva-cap-row").length, channels: document.querySelectorAll(".mva-ch li").length, email: document.querySelector(".mva-ch li small")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                const drawn = await page.evaluate(() => ({ kpis: document.querySelectorAll(".mva-kpi").length, sparks: document.querySelectorAll(".mva-kpi .mva-spark").length, trend: document.querySelectorAll(".mva-chart-trend .recharts-bar-rectangle").length, rings: document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length, steps: document.querySelectorAll(".mva-step").length, bars: [...document.querySelectorAll(".mva-bar i")].filter((i) => i.getBoundingClientRect().width > 0).length, heat: document.querySelectorAll(".mva-heat i.is-on").length, emailChart: Boolean(document.querySelector(".mva-ch-chart .recharts-area-curve")), capture: document.querySelectorAll(".mva-cap-row").length, channels: document.querySelectorAll(".mva-ch li").length, email: document.querySelector(".mva-ch li small")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
                 check(drawn.kpis === 5 && drawn.sparks === 5 && drawn.trend > 0 && drawn.rings >= 3 && drawn.steps === 4 && drawn.bars === 4 && drawn.heat > 0 && drawn.emailChart && drawn.capture > 0 && drawn.channels === 4 && /sent ·/.test(drawn.email) && drawn.h1 === 0, `${id}: five figures with sparklines, the leads chart, three rings, the funnel, the heatmap, the email chart and four channels are drawn, with no page title`, JSON.stringify(drawn));
               }
               if (tab === "audience") {

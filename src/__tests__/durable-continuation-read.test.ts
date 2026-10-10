@@ -97,6 +97,16 @@ describe('durable continuation eligibility adapter', () => {
     const result = await readDurableContinuation(ref, caller(row({ settledAt: new Date(Date.now() + 60_000).toISOString() })), budgetDb(50, 1));
     expect(result?.reason).toBe('terminal_unverified');
   });
+  it('research-kind work with its frozen question is continuable context', async () => {
+    clearCeilingCacheForTests();
+    const result = await readDurableContinuation(ref, caller(row({
+      capabilityKey: 'deep_research', workKind: 'research',
+      canonicalObjective: 'Which channel converts best?',
+      status: 'failed', errorCode: 'research_provider_error', terminalOutcome: { failed: true },
+    })), budgetDb(50, 1));
+    expect(result?.eligibleForContext).toBe(true);
+    expect(result?.state).toBe('failed');
+  });
   it('an actor drift after the read refuses', async () => {
     clearCeilingCacheForTests();
     const result = await readDurableContinuation(ref, caller(row(), { driftActor: true }), budgetDb(50, 1));

@@ -1,5 +1,21 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-10 CL-4 slice — C4e research-kind continuation coverage; the gated boundary stated
+
+C4e's merged preparation (#1862, `prepare_paige_research_work` always blocked with
+`research_execution_not_enabled`) is unchanged. What this adds is the research half of the
+CL-3 continuation read's coverage: research-kind work now proven at SQL level (frozen
+`question` objective, provider-error terminal context, deep_research effect lineage on the
+same thread beside document work without cross-reading) and at adapter level (18/18). The
+pure citation-lineage projection (`projectResearchContinuation`) stays the C4e runtime
+contract, unit-tested and unwired — its inputs (`research_runs.work_id` linkage + canonical
+sources) do not exist until the producer adopts the envelope. THE GATED BOUNDARY, stated
+plainly: connecting the Research execution owner to the durable substrate (producer
+`work_id` population, dispatch, wake, verified-result continuation) remains behind #1822
+(security clearance), #1832 (QA principal) and coordination with the Deep Research lane's
+provider/result/cost controls. No scheduler, worker, provider route or dispatch path is
+introduced. INT-346 stays DRAINING.
+
 ## 2026-10-10 CL-3 slice — the authorized durable-continuation eligibility read (C4d)
 
 The C4d foundation's missing runtime half: `projectDurableContinuation` had zero runtime

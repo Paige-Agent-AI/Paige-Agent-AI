@@ -42,3 +42,10 @@ SOLO_900X1000_PAIGE_CLOSED: PASS: assets/finance-domain/finance-runtime-dark-900
 SOLO_900X1000_PAIGE_OPEN: PASS: assets/finance-domain/finance-runtime-dark-900-open-0.png and matching light capture; real shell geometry, requested PAIGE state and zero body overflow verified.
 
 Independent review: human_design_critic returned SHIP for the bounded visual review on 2026-10-09 after mobile Connections and settled drawer fixes. Technical exact-head review and remote required checks are separate release gates. Full local suite includes platform-specific shell-tool errors and unrelated failures still being investigated; the focused result is not a full-suite green claim. The harness uses clearly labeled synthetic Northstar Studio data and a PAIGE geometry slot; it does not impersonate a real tenant or prove a live PAIGE exchange.
+
+
+## Observed production identity — October 9, 2026
+
+PR #1889 merged after independent exact-head review and all five required PR workflows succeeded. Reviewed head: `377b13eb4ca180ae3d5217b3a830d4062de7a49e`; merged main: `28e196eea890921fc0a5e7a685853b79208bc028`. Production deployment `dpl_2ijFz79xZRNCZSndmNrZPiEnZngy` is READY at that SHA, with canonical `app.paigeagent.ai` alias. Production HTML and `SoloEntry-DaFeisux.js` returned HTTP200; Finance tab labels, source-wording and unavailable-accounting markers were present. Exact source observation: `assets/finance-domain/production-source-proof.json`.
+
+This observation does not upgrade the development harness into authenticated evidence. QA reports approved ordinary credentials absent and account protection unverified. Role/tenant switching, live providers, PAIGE conversation and full Finance completion remain UNVERIFIED or UNAVAILABLE as above. No migrations, edge changes, customer version or announcement apply. The local Windows full-suite failure is retained; the required hosted Test step98 succeeded. Finance remains directly below Sales in the canonical main menu.

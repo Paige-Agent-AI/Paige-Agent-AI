@@ -3909,6 +3909,14 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
+### Finance backend — owner-resumed end-to-end mission (2026-10-10)
+
+Approved Solo UI from #1889/#1894/#1898 is preserved. Finance owns sequential backend implementation; no new implementation agents, account-specific forks, duplicate ledgers or provider setup in Finance. Canonical Sales receivables remain PARTIAL; company cash, debt, accounting statements, budgets and forecasts remain UNAVAILABLE until source-backed contracts land. [Current source reconciliation](brain/finance-department.md) distinguishes implementation from production acceptance.
+
+First bounded candidate #1905 contains QuickBooks sync caller verification before privileged access and exact service-only bulk admission. Authenticated requests return `503 FINANCE_SOURCE_UNAVAILABLE` without provider/privileged data access until the company-bound adapter lands; production metadata lists no current sync deployment, so the repair must not reactivate unsafe legacy ingestion. It does not establish company ownership: CRM business ownership is not proof of the tenant's own company. QuickBooks OAuth/state/scope/pagination/refresh and Plaid item-to-account integrity remain in-scope repairs. Provider readiness stays PROOF_OWED; legacy zero-default snapshots are not company Finance evidence.
+
+Finance capability contracts must join existing Spine/Harness/Trust/Rail/Metric/Fabric, without competing with Operating Fabric #1790 or the active Chat executor/security owner. #1899's non-effectful conversation mode withholds tools while interactive admission is unavailable; Chat/Live financial acceptance is PROOF OWED. Owner login, real connection activation, new consent, spending and financial-effect holds remain. Safe backend work continues through reviewed CI/merge/deploy, with every release leg recorded separately.
+
 ### INT-328 follow-on intake — four defects found by the production drive, parked for their lanes (2026-10-06)
 
 - **INT-330 — a tenant's email Reply-To is the platform's support address (HIGH; owner: Comms / connector provisioning).** Evidence: Resend's record of a governed send from the synthetic Solo workspace shows `Reply-To: support@paigeagent.ai`; production holds 16 email `channel_connectors` with `reply_to = support@paigeagent.ai` (14 active Resend). `send-message` takes `reply_to` from the connector, so a client replying to any of those businesses — governed email, invoices, every connector send — reaches Paige support, not the business. Pre-existing; does not block INT-328 acceptance (the email reaches the right recipient), but the owner should know. Next: decide the default (the business owner's address, or none), backfill, and show Reply-To on the approval card (INT-328 already names `reply_to` as unbound by the approval).

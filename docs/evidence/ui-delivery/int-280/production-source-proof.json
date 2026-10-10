@@ -1,0 +1,111 @@
+{
+  "captured_at": "2026-10-10T15:42:56Z",
+  "channel": "production",
+  "classification": "internal-only",
+  "customer_release_identity": null,
+  "product": {
+    "pr": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1893",
+    "approved_head": "613abb66d19aad0554d6e1068960f8c6a731392c",
+    "merge_sha": "d7c93e20f1b79f418c25e99933eb746cab66b05a",
+    "merged_at": "2026-10-10T15:37:02Z"
+  },
+  "reviews": {
+    "engineering": "/root/engineering_review: independent non-author PASS; no actionable findings at approved head",
+    "design": "/root/design_review: independent non-author CLEAR/PASS, bounded SHIP at approved head",
+    "premerge_main": "a164649e05c5dfdee73bb5432775950c1580a1ff: independent no-material-findings drift addendum"
+  },
+  "checks": {
+    "head": "613abb66d19aad0554d6e1068960f8c6a731392c",
+    "check_runs_passed": 12,
+    "statuses_passed": 2,
+    "tests_passed": 10532,
+    "test_files": 706,
+    "has_more": false,
+    "workflow_runs": [
+      38059424108,
+      38059424090,
+      38059424146,
+      38059424102,
+      38059424091,
+      38059424081,
+      38059424073
+    ],
+    "branch_policy": "No classic protection; disabled Paige Main ruleset20484098; no configured required-check contexts. No policy changed or bypassed."
+  },
+  "database": {
+    "project": "xygzykjyynhzqytbqnzu",
+    "migration": "20270602000204_operator_intelligence_eval_history.sql",
+    "status": "APPLIED_AND_PERSISTED",
+    "workflow_run": 38064335633,
+    "deploy_job": 114248879360,
+    "db_live_sha": "d7c93e20f1b79f418c25e99933eb746cab66b05a",
+    "signature": "public.operator_intelligence_eval_history(integer)",
+    "body_md5": "9d68716774b8f9de00b7d80e5b05913b",
+    "security_definer": true,
+    "volatility": "v",
+    "search_path": "",
+    "execute": {
+      "authenticated": true,
+      "public": false,
+      "anon": false,
+      "service_role": false
+    },
+    "proof_class": "Read-only catalog plus CI persistence readback; no production RPC invocation or customer/eval record read."
+  },
+  "deployment": {
+    "id": "dpl_3HEDJ5vwm9RGYRtWyoAFpBw2iZxi",
+    "state": "READY",
+    "sha": "d7c93e20f1b79f418c25e99933eb746cab66b05a",
+    "url": "https://paige-agent-kqo7mr6nx-paige-agent-ai.vercel.app",
+    "ready_at": "2026-10-10T15:38:10.331Z"
+  },
+  "public_readback": {
+    "hosts": [
+      "https://app.paigeagent.ai",
+      "https://paigeagent.ai"
+    ],
+    "status": 200,
+    "build_id": "227b101da6eeb915ad054c8f0fc0c908bc48db51-mv2k9kqu",
+    "deployment_id": "dpl_EN5Fr77dZWmKi8DexTWq9e7n6LJz",
+    "state": "READY",
+    "superseding_change": "PR1895: five documentation/prototype files only; git diff --quiet d7c93e20..227b101d -- src supabase scripts .github package.json package-lock.json PASS",
+    "operator_asset": "/assets/OperatorEntry-2JqIgrbM.js",
+    "operator_sha256": "076cd589853dff62f214a1a5ae82eaf71c27231cba9f376baec769fb8332c6c4",
+    "intelligence_asset": "/assets/IntelligenceSurface-DiRROM1o.js",
+    "intelligence_sha256": "fc65b0edbbe6654189c706ebc41f649241668d012c890ecd85e50fd93e9dc88b",
+    "all_five_workspace_and_eval_rpc_source_checks": true,
+    "proof_class": "Unauthenticated static source only; no authenticated rendered acceptance"
+  },
+  "postmerge_ci": {
+    "sha": "d7c93e20f1b79f418c25e99933eb746cab66b05a",
+    "ci_run": 38064335618,
+    "conclusion": "cancelled",
+    "reason": "New docs-only main push under ci-${github.ref} cancel-in-progress; not a pass. Approved exact PR-head CI passed.",
+    "database_contract_run": 38064335610,
+    "status": "in_progress_at_snapshot"
+  },
+  "runtime_log_probe": {
+    "deployment_id": "dpl_3HEDJ5vwm9RGYRtWyoAFpBw2iZxi",
+    "levels": [
+      "error",
+      "fatal"
+    ],
+    "window": "30m",
+    "returned_groups": 0,
+    "limitation": "Function/daemon logs only; empty result is not browser or Supabase health proof."
+  },
+  "edge": "NOT_APPLICABLE",
+  "acceptance": {
+    "status": "UNVERIFIED",
+    "affected_scope": "Authenticated Platform Operator navigation, genuine metrics/trace/eval reads, denied-role/null-session refusal, retry/account-switch suppression and draft recovery",
+    "blocker": "OWNER_LOGIN_HOLD",
+    "excluded_live_claim": "Authenticated end-to-end Operator Intelligence usability and permission acceptance"
+  },
+  "scope": {
+    "partial": "Observational metadata UI and session-local recommendation/dossier preparation over existing Evals/traces",
+    "unavailable": "Task/receipt/outcome correlation; evaluator/versioned-scorecard and corpus lifecycle; clustering/proposal execution; local-model benchmarks/training; Intelligence-context Chat/Live consumption; market research and department execution; experiments/promotion/rollback/business outcomes",
+    "next_phase": "NOT_STARTED - separate owner authorization required",
+    "future_delivery": "Owner requested smaller bounded PRs"
+  },
+  "recovery": "Reviewed UI/source reversal; any database reversal by reviewed forward migration. No reset, include-all, applied-history rewrite or customer-record cleanup."
+}

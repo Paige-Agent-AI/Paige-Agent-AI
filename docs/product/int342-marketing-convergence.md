@@ -1,7 +1,15 @@
 # INT-342 Marketing Department convergence: grounding, recommendation and prototype (first return)
 
-**Status:** grounding and prototype are done. No product UI has changed. Tab and navigation changes wait for the
-owner's prototype approval, which is the coordinator's explicit gate for this work.
+**Status:** APPROVED by the owner on 2026-10-10 ("Much better I can green light what you created"). The approval covers prototype version 2 as built:
+- the seven tabs;
+- Lead capture re-homed;
+- Content retired (option A, as recommended);
+- the Overview chain;
+- the campaign map;
+- the Ads desk;
+- the Analytics funnel.
+
+The approved design is frozen (§28) and is now implemented in slices (L). The ad provider to read first was not ruled; Meta Ads is the recorded default, and it matters only at slice S5.
 
 **Prototype:** https://claude.ai/artifact/7jwwBxRswrCAPxQiZqc6RG. The record copy is
 `docs/prototypes/int342-marketing-convergence.html`.

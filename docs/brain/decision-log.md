@@ -6245,3 +6245,11 @@ selected one, so each read failed with 42703. They now read `user_contact_method
   - **Waits on the owner's prototype approval:** https://claude.ai/artifact/7jwwBxRswrCAPxQiZqc6RG.
   - **Deployment-order finding:** routed to the pipeline owner, not fixed in Marketing.
   - **Record:** `docs/product/int342-marketing-convergence.md`.
+- 2026-10-10: **OWNER RULING (INT-342):** the owner approved prototype version 2: "Much better I can green light what you created."
+  - **Approved and frozen (§28):** seven tabs (Overview · Campaigns · Audience · Social · Email · Ads · Analytics).
+  - **Retired:** Lead capture, re-homed into the Overview chain, capture points, one form panel, Campaigns and Analytics. Content is retired (option A).
+  - **Design:** no repeated page titles.
+  - **Ads desk:** spend pacing that keeps planned, budget and spent apart.
+  - **Analytics:** a stepped funnel through INT-340.
+  - **Implementation:** in slices S1–S6 (`docs/product/int342-marketing-convergence.md` §L).
+  - **Provider order:** not ruled; Meta Ads is the default for S5.

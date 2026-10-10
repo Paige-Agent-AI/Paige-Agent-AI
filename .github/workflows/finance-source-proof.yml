@@ -32,3 +32,5 @@ jobs:
         run: node scripts/proof/finance-source-authority.mjs
       - name: QuickBooks company-bound consent state and concurrent single-use claim
         run: node scripts/proof/finance-source-authority.mjs quickbooks
+      - name: Actual account source projection, nullable amounts and revoked-source erasure
+        run: node scripts/proof/finance-source-authority.mjs accounts

@@ -10,9 +10,10 @@ const psql = process.env.FINANCE_PROOF_PSQL ?? 'psql';
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('PG')));
 const args = database => ['-X', '--no-password', '-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', '-d', database, '-At', '-v', 'ON_ERROR_STOP=1'];
 const suite = process.argv[2] ?? 'source';
-const fixtures = { source: 'finance_source_authority.sql', quickbooks: 'quickbooks_oauth_authority.sql' };
+const fixtures = { source: 'finance_source_authority.sql', accounts: 'finance_source_authority.sql', quickbooks: 'quickbooks_oauth_authority.sql' };
 if (!Object.hasOwn(fixtures, suite)) throw new Error('Unknown Finance fixture suite');
 const fixture = fileURLToPath(new URL(`../../supabase/tests/${fixtures[suite]}`, import.meta.url));
+const accountFixture = fileURLToPath(new URL('../../supabase/tests/finance_account_source_projections.sql', import.meta.url));
 function run(database, input, extra = [], timeout = 30000) {
   const result = spawnSync(psql, [...args(database), ...extra], { input, env, encoding: 'utf8', windowsHide: true, timeout });
   if (result.error) throw result.error;
@@ -76,11 +77,15 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
     assert.ok(disposition, 'Canonical retirement disposition missing');
     sql(database, disposition);
-    const result = run(database, undefined, ['-v', `apply_finance_migration=${suite === 'quickbooks' || leg !== 'absent' ? 1 : 0}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
+    let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && suite === 'source' ? 0 : 1}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
+    if (leg === 'absent' && suite === 'accounts') {
+      assert.equal(result.status, 0, result.stderr);
+      result = run(database, undefined, ['-v', 'apply_account_migration=0', '-f', accountFixture]);
+    }
     if (leg === 'absent') {
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, suite === 'source' ? /read_finance_source_catalog.*does not exist/ : /begin_quickbooks_company_authorization.*does not exist/);
-      console.log(`PASS failing-first: ${suite} contract does not exist before migration`);
+      assert.match(result.stderr, suite === 'source' ? /read_finance_source_catalog.*does not exist/ : suite === 'accounts' ? /read_finance_account_source.*does not exist/ : /begin_quickbooks_company_authorization.*does not exist/);
+      console.log(`PASS failing-first: Finance ${suite} contract does not exist before migration`);
       continue;
     }
     assert.equal(result.status, 0, result.stderr);
@@ -161,6 +166,22 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     await blockedCompetitor(database, "UPDATE agency_team_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000003';", agencyRead.release);
     await agencyRead.done;
     sql(database, `SET ROLE authenticated; ${agencyActor} SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'42501');`);
+    if (suite === 'accounts') {
+      const accounts = run(database, undefined, ['-v', 'apply_account_migration=1', '-f', accountFixture]);
+      assert.equal(accounts.status, 0, accounts.stderr);
+      assert.match(accounts.stdout, /Finance account projections PASS/);
+      sql(database, `INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000203','10000000-0000-0000-0000-000000000001',true,'synthetic-concurrent-snapshot');
+        INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
+        VALUES('50000000-0000-0000-0000-000000000203','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000203','sandbox','synthetic-concurrent-snapshot','verified','60000000-0000-0000-0000-000000000203',now());`);
+      const replace = `SELECT public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000203',1,0,'2026-01-01T00:00:00Z','complete',true,repeat('c',64),'[]');`;
+      const snapshotWrite = holding(database, `RESET ROLE; ${replace}`);
+      await snapshotWrite.held;
+      // Identical version/evidence retries must reach CAS, not a unique-index 23505.
+      await blockedCompetitor(database, `SELECT public.fixture_expect_error($q$${replace}$q$,'40001');`, snapshotWrite.release);
+      await snapshotWrite.done;
+      assert.equal(sql(database, "SELECT version FROM finance_account_source_snapshots WHERE binding_id='50000000-0000-0000-0000-000000000203';").trim(), '1');
+      assert.equal(sql(database, "SELECT count(*) FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000203';").trim(), '1');
+    }
     console.log(`PASS ${leg}: actual migration, role/tenant/source guards, receipt rollback, concurrent update and replay`);
   } finally {
     // Only a hardcoded, newly-created fixture database on loopback can reach this operation.

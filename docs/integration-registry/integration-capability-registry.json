@@ -735,6 +735,11 @@
           "role": "fail_closed_containment",
           "note": "Authenticate first; authorized requests return FINANCE_SOURCE_UNAVAILABLE without privileged data or provider traffic until the company-bound read adapter is proven."
         },
+          {
+            "path": "supabase/migrations/20270602000423_finance_account_source_projections.sql",
+            "role": "provider_adapter",
+            "note": "Controlled company-bound account projection cache only: exact observation identity, nullable source values and revocation. No provider activation, fresh institution balance proof or live ingestion."
+          },
         {
           "path": "supabase/functions/quickbooks-webhook/index.ts",
           "role": "callback_readback"
@@ -830,6 +835,11 @@
           "path": "supabase/functions/plaid-webhook/index.ts",
           "role": "callback_readback",
           "note": "legacy Plaid webhook variant."
+        },
+        {
+          "path": "supabase/migrations/20270602000423_finance_account_source_projections.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company-account projection candidate; exact native account identity and observation provenance. No provider activation, live ingestion or verified institution freshness."
         }
       ],
       "sources": [

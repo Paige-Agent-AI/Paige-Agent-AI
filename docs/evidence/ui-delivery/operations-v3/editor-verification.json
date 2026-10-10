@@ -1,0 +1,30 @@
+{
+  "boundary": "Synthetic role/read source and explicit RPC refusal; no live writes",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1366,
+      "draftRetained": true,
+      "refusalShown": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "draftRetained": true,
+      "refusalShown": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "draftRetained": true,
+      "refusalShown": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "draftRetained": true,
+      "refusalShown": true
+    }
+  ],
+  "errors": []
+}

@@ -29,7 +29,8 @@ const FRAMES = [
   { name: "900x1000", width: 900, height: 1000 },
 ];
 const POSTURES = ["docked", "wide", "closed"];
-const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "analytics"];
+// DRIVE_TABS=analytics,ads re-runs the frames for only those tabs (the full set takes ~20 min).
+const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "analytics"].filter((tab) => !process.env.DRIVE_TABS || process.env.DRIVE_TABS.split(",").includes(tab));
 
 // Same model as campaigns-nav-fit-drive.mjs (TenantCommandCenterShell.tsx:483, verified there).
 function contentWidth(viewport, posture) {
@@ -105,7 +106,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th")) {
+        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th, .mva-step-l small, .mva-step-t, .mva-bar em, .mva-row-t small, .mva-cov-l span, .mva-sub, .mva .pill-n, .mva-cap, .mva .mov-foot code, .mva-kpi-h, .mva-kpi-f, .mva-kpi-d, .mva-legend li, .mva-heat-x, .mva-heat-y, .mva-heat-key, .mva .mo-keys span, .mva .mo-keys em")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -152,6 +153,8 @@ async function main() {
             if (tab === "overview") await page.waitForSelector(".mov-line", { timeout: 15000 }).catch(() => {});
             // Audience: the composition donut, the stage bars and the growth area also load lazily.
             if (tab === "audience") await page.waitForFunction(() => document.querySelector(".ma .mo-donut .recharts-pie-sector") && document.querySelector(".ma-chart-stages .recharts-bar-rectangle") && document.querySelector(".ma-chart-growth .recharts-area-area"), null, { timeout: 15000 }).catch(() => {});
+            // Analytics: the leads chart, the rings and the email chart load lazily.
+            if (tab === "analytics") await page.waitForFunction(() => document.querySelector(".mva-chart-trend .recharts-bar-rectangle") && document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length >= 3 && document.querySelector(".mva-ch-chart .recharts-area-curve"), null, { timeout: 15000 }).catch(() => {});
             // Email: the rate chart loads lazily too.
             if (tab === "email") await page.waitForFunction(() => document.querySelector(".me-chart-rates .recharts-area-curve"), null, { timeout: 15000 }).catch(() => {});
             const id = `${theme}/${frame.name}/paige-${posture}@${width}px/${tab}`;
@@ -177,6 +180,10 @@ async function main() {
               if (tab === "overview") {
                 const drawn = await page.evaluate(() => ({ nodes: document.querySelectorAll(".mov-node").length, broken: document.querySelectorAll(".mov-node.is-broken").length, line: Boolean(document.querySelector(".mov-line")?.getAttribute("d")), cards: document.querySelectorAll(".mov-cp").length, leads: document.querySelectorAll(".mov-leads li").length, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
                 check(drawn.nodes === 4 && drawn.broken === 1 && drawn.line && drawn.cards === 4 && drawn.leads === 6 && drawn.h1 === 0, `${id}: the chain (one broken link), the lead line, four capture points and six recent leads are drawn, with no page title`, JSON.stringify(drawn));
+              }
+              if (tab === "analytics") {
+                const drawn = await page.evaluate(() => ({ kpis: document.querySelectorAll(".mva-kpi").length, sparks: document.querySelectorAll(".mva-kpi .mva-spark").length, trend: document.querySelectorAll(".mva-chart-trend .recharts-bar-rectangle").length, rings: document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length, steps: document.querySelectorAll(".mva-step").length, bars: [...document.querySelectorAll(".mva-bar i")].filter((i) => i.getBoundingClientRect().width > 0).length, heat: document.querySelectorAll(".mva-heat i.is-on").length, emailChart: Boolean(document.querySelector(".mva-ch-chart .recharts-area-curve")), capture: document.querySelectorAll(".mva-cap-row").length, channels: document.querySelectorAll(".mva-ch li").length, email: document.querySelector(".mva-ch li small")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(drawn.kpis === 5 && drawn.sparks === 5 && drawn.trend > 0 && drawn.rings >= 3 && drawn.steps === 4 && drawn.bars === 4 && drawn.heat > 0 && drawn.emailChart && drawn.capture > 0 && drawn.channels === 4 && /sent ·/.test(drawn.email) && drawn.h1 === 0, `${id}: five figures with sparklines, the leads chart, three rings, the funnel, the heatmap, the email chart and four channels are drawn, with no page title`, JSON.stringify(drawn));
               }
               if (tab === "audience") {
                 const drawn = await page.evaluate(() => ({ donut: Boolean(document.querySelector(".ma .mo-donut .recharts-pie-sector")), stages: document.querySelectorAll(".ma-chart-stages .recharts-bar-rectangle").length, growth: Boolean(document.querySelector(".ma-chart-growth .recharts-area-area")), stats: document.querySelectorAll(".ma-stats > *").length }));
@@ -244,6 +251,17 @@ async function main() {
       await page.keyboard.press("Escape");
       const closed = await page.$(".campaigns-drawer");
       check(!closed, `${theme}/form panel: Escape closes it`);
+      // Analytics: the range moves every figure and stays in the address; a capture point opens its form panel.
+      await open(page, { tab: "analytics", theme });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.locator(".mva .campaigns-segmented button", { hasText: "Week" }).click();
+      const week = await page.evaluate(() => ({ sum: document.querySelector(".mva .mov-sum")?.textContent ?? "", pressed: document.querySelector('.mva .campaigns-segmented [aria-pressed="true"]')?.textContent, email: document.querySelector(".mva-ch li small")?.textContent ?? "" }));
+      check(/last 7 days/.test(week.sum) && week.pressed === "Week" && /sent ·/.test(week.email), `${theme}/analytics: Week moves the summary and the email row to 7 days`, JSON.stringify(week));
+      await page.screenshot({ path: path.join(OUT, `flow-analytics-week-${theme}.png`) });
+      await page.locator(".mva-cap-row", { hasText: "Scorecard opt-in" }).click();
+      await page.waitForSelector(".campaigns-drawer", { timeout: 5000 }).catch(() => {});
+      const opened = await page.textContent(".campaigns-drawer").catch(() => "");
+      check(/Scorecard opt-in/.test(opened ?? "") && /When someone submits/.test(opened ?? ""), `${theme}/analytics: a capture point opens that form's panel`);
       check(errors.length === 0, `${theme}/flows: no page errors`, errors[0] ?? "");
       await ctx.close();
     }

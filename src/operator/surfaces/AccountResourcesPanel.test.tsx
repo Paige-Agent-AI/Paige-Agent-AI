@@ -15,6 +15,15 @@ const click=(name:string)=>act(()=>button(name).click());
 const confirm=()=>act(()=>{const input=host.querySelector<HTMLInputElement>('#fleet-resource-confirm')!;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,details.name);input.dispatchEvent(new Event('input',{bubbles:true}));for(const checkbox of host.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))if(!checkbox.checked)checkbox.click();});
 async function open(mode:'archive'|'delete'='archive'){const prepared=vi.fn(),cancel=vi.fn(),busy=vi.fn();await act(async()=>root.render(<AccountResourcesPanel details={details} mode={mode} onPrepared={prepared} onCancel={cancel} onBusy={busy}/>));await vi.waitFor(()=>expect(host.querySelector('#fleet-resource-confirm')).not.toBeNull());return{prepared,cancel,busy};}
 describe('operator connected-resource flow',()=>{
+ it.each([
+  ['twilio_call_access_refused','Twilio refused this account’s call-inventory access.'],
+  ['twilio_call_credentials_unavailable','This account’s stored calling credential is unavailable.'],
+  ['twilio_call_credential_binding_mismatch','The calling credential belongs to a different account.'],
+ ])('reports %s without claiming that a call is active',async(reason,message)=>{
+  h.read.mockResolvedValue({...ready,state:'resources_unknown',results:[{provider:'twilio',state:'blocked',provider_status:null,reason}]});
+  await open();expect(host.textContent).toContain(message);expect(host.textContent).not.toContain('Calls remain in flight');expect(host.textContent).not.toContain('READY ·');
+  expect(button('Read resource outcome')).toBeTruthy();expect(h.run).not.toHaveBeenCalled();
+ });
  it('retires generated media through the same confirmation and fresh Delete preflight',async()=>{
   const mediaReview={...review,mode:'delete',resources:[{provider:'generated_media',tenant_id:details.id,action:'remove_media',object_count:2}]};
   h.preview.mockResolvedValue(mediaReview);const {prepared}=await open('delete');

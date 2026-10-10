@@ -66,6 +66,15 @@ const harness = vi.hoisted(() => ({
 
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.campaigns }));
 vi.mock("./useCatalogOffers", () => ({ useCatalogOffers: () => harness.offers }));
+// Marketing › Overview (where retired Lead capture addresses now land) reads briefs; stubbed empty
+// and ready, as in growth2.render.test.tsx. The briefs seam has its own proof.
+vi.mock("./useSoloCampaignBriefs", () => ({
+  useSoloCampaignBriefs: () => ({
+    tenantId: "tenant-1", phase: "ready", briefs: [], archivedCount: 0, canManage: true,
+    retry: () => {}, saveBrief: async () => ({ ok: true, message: "" }),
+    transitionBrief: async () => ({ ok: true, message: "" }), archiveBrief: async () => ({ ok: true, message: "" }),
+  }),
+}));
 
 let host: HTMLDivElement;
 let root: Root;
@@ -484,14 +493,12 @@ describe("Catalog Offers — truthfulness", () => {
   });
 
   it("returns a retired address to the Vibe-owned published work, not to an empty offer list", () => {
-    // The published Vibe work left Catalog for Marketing › Lead capture (owner ruling 2026-10-03);
-    // the retired creative addresses follow it there.
+    // The published Vibe work left Catalog for Marketing (owner ruling 2026-10-03) and now lives on
+    // Overview under Capture points (INT-342); the retired creative addresses land there directly.
     setCampaigns(); setOffers({ offers: [] });
     renderAt("/solo/4471/growth/pages");
-    expect(host.textContent).toContain("This address moved");
-    const back = [...host.querySelectorAll("button")].find((b) => b.textContent === "Go to Lead capture");
-    act(() => { back?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-    expect(host.textContent).toContain("Created and published in Vibe Studio.");
+    expect(host.textContent).toContain("Pages are on Overview, under Capture points.");
+    expect(host.querySelector("#mov-cap-h")?.textContent).toBe("Capture points");
     expect(host.textContent).not.toContain("Nothing is listed yet");
   });
 
@@ -652,10 +659,11 @@ describe("Catalog Offers — rendered flows", () => {
     expect(host.textContent).not.toContain("Foundations Coaching Program");
   });
 
-  it("preserves the Vibe-owned published work in Lead capture, and lands old Catalog addresses on it", () => {
+  it("preserves the Vibe-owned published work on Overview, and lands old Catalog addresses on it", () => {
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog?type=form");
-    expect(host.textContent).toContain("Created and published in Vibe Studio.");
+    expect(host.textContent).toContain("Published pages, forms and funnels are on Overview, under Capture points.");
+    expect(host.querySelector("#mov-cap-h")?.textContent).toBe("Capture points");
     expect(host.textContent).toContain("Published form");
     // Published Vibe work must not be reframed as an offer.
     expect(host.textContent).not.toContain("What this business sells");
@@ -732,14 +740,14 @@ describe("Catalog Offers — rendered flows", () => {
   });
 
   it("returns to Offers from published work without unmounting", () => {
-    // An old `?type=` address lands on Lead capture; the Offers tab must then show offers, not the
-    // published work it was redirected from.
+    // An old `?type=` address lands on Overview's capture points; the Offers tab must then show
+    // offers, not the published work it was redirected from.
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog?type=form");
-    expect(host.textContent).toContain("Created and published in Vibe Studio.");
+    expect(host.querySelector("#mov-cap-h")).not.toBeNull();
     act(() => (host.querySelector("[data-offers-owner]") as HTMLAnchorElement).click());
     expect(host.querySelector(".co-list")).not.toBeNull();
-    expect(host.textContent).not.toContain("Created and published in Vibe Studio.");
+    expect(host.querySelector("#mov-cap-h")).toBeNull();
   });
 
   it("closes an open detail drawer when the workspace changes", () => {
@@ -1087,7 +1095,7 @@ describe("Catalog Offers — rendered flows", () => {
 
   it("keeps offers and published Vibe work in their own tabs, each listing only its own", () => {
     // They shared one tab until the Marketing department ruling (2026-10-03). Offers is the Sales
-    // lane's; published Vibe work is measured in Marketing › Lead capture.
+    // lane's; published Vibe work is measured on Marketing › Overview (INT-342).
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog");
     expect(host.textContent).toContain("Foundations Coaching Program");

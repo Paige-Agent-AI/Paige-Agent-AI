@@ -12,7 +12,7 @@ export function useSoloCampaigns() {
     artifacts: [{
       id: "form-1", type: "form", name: "Discovery call request", slug: "discovery-call", status: "active",
       updatedAt: "2026-09-28T16:20:00Z", publicHref: "/form/form-1", recentSubmissions: 4, routingConfigured: true,
-      routingState: "Active", routingTargets: [], recentDispatches: { succeeded: 0, failed: 0, other: 0 }, dispatchStatuses: {},
+      routingState: "Active", routingTargets: ["pipeline_attach"], recentDispatches: { succeeded: 0, failed: 0, other: 0 }, dispatchStatuses: {},
     }],
     pipelineWorkspace: {
       canManage: new URLSearchParams(window.location.search).get("member") !== "1", canArchiveFolders: true, folders: [],

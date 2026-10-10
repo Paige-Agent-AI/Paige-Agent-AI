@@ -298,28 +298,66 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
 
 ## K. Prototype
 
-**Where:** https://claude.ai/artifact/7jwwBxRswrCAPxQiZqc6RG (record copy in `docs/prototypes/`).
+**Where:** https://claude.ai/artifact/7jwwBxRswrCAPxQiZqc6RG (version 2). The record copy is in `docs/prototypes/`.
 
-**What it covers:**
-- the seven-tab strip with no Lead capture;
-- Content A and B;
-- the Ads desk, not connected and connected (proposed);
-- the Overview cockpit, with attention, capture points and recent leads;
-- the single form panel (routing plus paged submissions, focus trap, Escape, focus return);
-- campaign composition, with the chain status and the proposed asset link;
-- Analytics through the INT-340 contract;
-- ten old links resolved with intent;
-- PAIGE closed, docked, expanded and overlay;
-- data states: like production today (empty and unrouted), populated (MOCK), loading, read error and
-  member view-only;
-- workspace switch, which drops the open panel and stale data;
-- both themes and reduced motion;
-- the maps view: re-home map, Ads matrix, COO matrix and metric definitions.
+**Owner feedback on version 1 (2026-10-10):** the owner flagged repeated titles and asked for more impact: "if someone is already inside of a menu tab that already says 'marketing' then we do not need a banner to repeat the word … Ask yourself does this say WOW! If not then redo it." Version 2 is that redo.
 
-**Rendered proof:** a Playwright drive ran 2,531 layout checks. It covered four Solo sizes, three PAIGE modes,
-two themes, two data states, Content A and B, both ad states, every tab and Ads sub-view, campaign detail, the
-panel, every old link and the workspace switch. Results: 0 overflow and 0 script errors (the only console error
-is the font host's certificate in this sandbox).
+**No page titles.** Each view opens on a one-line live summary, for example "26 leads in the last 30 days, and 11 became opportunities in Sales", with its actions beside it. This also honours the earlier owner ruling of 2026-10-04 ("no header").
+
+**Overview opens on the Marketing chain:** live capture points → leads → routed → opportunities (Sales).
+- The break in the chain is lit and fixable in one click. In production today that break is "0 of 4 forms route leads".
+- Below the chain:
+  - a hoverable 30-day lead-flow chart with its sources;
+  - "Needs you", ordered by urgency;
+  - a gallery of capture points with miniature previews;
+  - recent leads.
+- When there are no leads, "Needs you" leads and the chart says zero plainly instead of showing a blank.
+
+**Campaigns:** the list shows each campaign's progress through the seven INT-298 stages. A campaign opens to:
+- a stage stepper (solid / half / hollow is what records show);
+- a campaign map in three lanes, Reach → Land → Brought in, that flows into leads and opportunities;
+- the brief;
+- the next step.
+
+**Ads:** a spend-pacing picture keeps actual spend, the provider's budget and the brief's planned budget visibly apart.
+- The planned budget is shown as written, never as spend.
+- ROAS is withheld with its reason.
+- Creative shows how each ad would read.
+- States: not connected (with a route to Integrations), connected (proposed), and connected but the read is failing (out of date, reconnect).
+
+**Analytics:** a stepped funnel (lead → tagged → matched to a campaign → opportunity), a source-coverage bar, capture points and channels.
+- Every metric is tagged PROPOSED until the marketing producer exists.
+- Members see an owners-and-admins access state.
+
+**Old links:** eleven, each resolving with its intent. A form id missing from the current workspace says so, and the brand kit and builders links offer Vibe Studio.
+
+**Also kept from version 1:** PAIGE closed, docked, expanded and overlay; the data states; workspace switch; both themes; reduced motion; the maps view.
+
+**Independent non-author review of version 1.** Every finding is folded into version 2:
+- **Two blocking:**
+  - The Ads connection leaked across a workspace switch.
+  - Values were tagged LIVE that production does not have: the Analytics tiles, the brief budget, and PAIGE's capability panel.
+- **Should-fix items:**
+  - the wrong brief link in Ads;
+  - pause and resume that looked immediate (now "Request pause…");
+  - silent old-link loss;
+  - mock numbers that contradicted each other;
+  - false copy (deals only from routed forms; Meta as the only catalogue entry; Social connection as live);
+  - view-only gaps;
+  - focusable links and real form controls;
+  - focus return to the opener;
+  - an uneven Content A/B presentation, now argued in the harness rather than inside the product.
+
+**Product-token findings.** These belong to the existing Solo tokens, not this prototype. They are recorded here for a product-wide fix:
+- **Gold text on the `btn-g` fill is 2.72:1 in Mineral,** which fails AA. §11 says gold used as text must use a dark gold. The prototype uses a proposed `--gold-ink` (#7A4E05).
+- **`--ink-3` small text is 3.6–4.2:1 in Mineral,** depending on the surface.
+- **Gold marks the selected tab and the active rail item,** which §11 reserves for the act or approve moment.
+
+**Rendered proof:**
+- A Playwright drive ran 3,732 layout checks.
+  - Coverage: four Solo sizes; PAIGE closed, docked and expanded; both themes; production-like and populated data; Content A and B; three ad states; every tab and Ads sub-view; campaign detail; the form panel; every old link; and the workspace switch.
+  - Results: 0 overflow and 0 script errors. The only console error is the font host's certificate in this sandbox.
+- Key frames were inspected by eye.
 
 **Mocked:** everything populated, every provider value and every write.
 

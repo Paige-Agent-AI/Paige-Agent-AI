@@ -28,7 +28,8 @@ export type RouteState = "pipeline" | "alert" | "automations" | "none";
 export type CapturePoint = { id: string; name: string; count: number; route: RouteState; failed: number };
 
 /** One bar of the leads chart: a day (week and month ranges) or a week (quarter). */
-export type TrendPoint = { key: string; label: string; leads: number; tagged: number; matched: number; opportunities: number };
+/** `days` is how many days the point covers: 1, 7, or fewer for the newest week of a quarter, which ends today. */
+export type TrendPoint = { key: string; label: string; days: number; leads: number; tagged: number; matched: number; opportunities: number };
 /** What became of each lead, from the submission's own record. */
 export type OutcomeKey = "opportunity" | "client" | "saved" | "waiting" | "failed";
 export type OutcomeSlice = { key: OutcomeKey; label: string; count: number };
@@ -65,7 +66,7 @@ export type MarketingAnalyticsModel = {
 
 const OUTCOME_LABEL: Record<OutcomeKey, string> = {
   opportunity: "Became an opportunity",
-  client: "Added to Clients",
+  client: "Added to Clients, no deal yet",
   saved: "Saved, nothing more yet",
   waiting: "Waiting to be processed",
   failed: "Couldn’t process",
@@ -156,7 +157,7 @@ export function deriveMarketingAnalytics(input: {
   const trend: TrendPoint[] = [];
   for (let offset = 0; offset < input.days; offset += span) {
     const from = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset).getTime();
-    trend.push({ key: String(from), label: format.format(from), leads: 0, tagged: 0, matched: 0, opportunities: 0 });
+    trend.push({ key: String(from), label: format.format(from), days: Math.min(span, input.days - offset), leads: 0, tagged: 0, matched: 0, opportunities: 0 });
   }
   const bucketOf = (time: number) => {
     let index = trend.length - 1;

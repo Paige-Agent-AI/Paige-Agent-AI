@@ -896,12 +896,12 @@ describe("Solo Marketing department views", () => {
     ]);
     expect(host.querySelectorAll(".mva-kpi .mva-spark")).toHaveLength(5);
     // What became of each lead, from its own record.
-    expect([...host.querySelector("[aria-labelledby='mva-out-h']")!.querySelectorAll(".mo-keys li")].map((li) => li.textContent)).toEqual(["Became an opportunity133%", "Added to Clients133%", "Saved, nothing more yet133%"]);
+    expect([...host.querySelector("[aria-labelledby='mva-out-h']")!.querySelectorAll(".mo-keys li")].map((li) => li.textContent)).toEqual(["Became an opportunity133%", "Added to Clients, no deal yet133%", "Saved, nothing more yet133%"]);
     // When leads arrive: seven weekday rows of 24 hours, three lit.
     expect(host.querySelectorAll(".mva-heat i")).toHaveLength(168);
     expect(host.querySelectorAll(".mva-heat i.is-on").length).toBeGreaterThan(0);
     expect([...host.querySelectorAll(".mva-tags li")].map((row) => row.textContent)).toEqual(["CB-SPRINGBrief: Spring advisory intake1"]);
-    expect(host.querySelector(".mva-cov")?.getAttribute("aria-label")).toBe("3 of 3 leads carry a source tag");
+    expect(host.querySelector("[aria-labelledby='mva-cov-h'] .mov-head p")?.textContent).toContain("3 of 3 carry a source tag");
     expect([...host.querySelectorAll(".mva-cap-row")].map((row) => row.textContent)).toEqual(["Discovery call requestNot routed3"]);
     // Channels with no source say so; nothing claims spend, reach or visits.
     const channels = host.querySelector(".mva-ch")!.textContent!;
@@ -984,6 +984,22 @@ describe("Solo Marketing department views", () => {
     expect(routes).toEqual({ "Automations only": "No pipeline", "Alert only": "Email alert only, no pipeline", "Own route": "Routed to a pipeline", "Forms no longer live": "Leads in this range from a form since unpublished" });
   });
 
+  it("a share with nothing to take a share of shows a dash, and a withheld comparison says why", () => {
+    // No leads now, and nothing in the 30 days before: no share, and no "+N pts" against a rate that never existed.
+    useWorkspace({ submissions: [submission("old", 80, { trackingSource: "newsletter" })] });
+    renderAt("/solo/42/growth/analytics");
+    const tile = (key: number) => host.querySelectorAll(".mva-kpi")[key];
+    expect(tile(1).querySelector(".mva-kpi-v")?.textContent).toBe("—");
+    expect(tile(1).querySelector(".mva-kpi-d")?.textContent).toBe("No leads in the previous 30 days");
+    expect(tile(4).querySelector(".mva-kpi-v")?.textContent).toBe("—");
+    act(() => root.unmount()); host.remove();
+    // A full read whose oldest row sits in the period before: that period exists but isn't fully read.
+    const many = [...Array.from({ length: 199 }, (_, index) => submission(`n${index}`, 1)), submission("edge", 45)];
+    useWorkspace({ submissions: many });
+    renderAt("/solo/42/growth/analytics");
+    expect(host.querySelector(".mva-kpi-d")?.textContent).toBe("The read doesn’t reach the previous 30 days");
+  });
+
   it("a failed briefs read leaves Analytics up and says campaign matching can't be done", () => {
     useWorkspace();
     harness.briefsPhase = "error";
@@ -1019,7 +1035,7 @@ describe("Solo Marketing department views", () => {
     expect(sourceKeys()).toEqual(["newsletter100+50%", "No tracking tag100+50%"]);
     // A full read can't vouch for the period before, so nothing is compared.
     expect(host.querySelector(".mva-kpi-d")?.textContent).toBe("No comparison: the read is full");
-    expect(host.querySelector(".mva-cov")?.getAttribute("aria-label")).toBe("100+ of 200+ leads carry a source tag");
+    expect(host.querySelector("[aria-labelledby='mva-cov-h'] .mov-head p")?.textContent).toContain("100+ of 200+ carry a source tag");
     expect([...host.querySelectorAll(".mva-cap-row")].map((row) => row.textContent)).toEqual(["Discovery call requestNot routed195+", "Forms no longer liveLeads in this range from a form since unpublished5+"]);
   });
 

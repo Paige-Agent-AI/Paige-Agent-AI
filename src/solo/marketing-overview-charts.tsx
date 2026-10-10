@@ -224,7 +224,7 @@ export function EmailRatesChart({ points, label }: { points: EmailRatePointView[
 
 // ── Marketing › Analytics ─────────────────────────────────────────────────────────────────────────
 
-export type LeadTrendPointView = { key: string; label: string; leads: number; opportunities: number };
+export type LeadTrendPointView = { key: string; label: string; days: number; leads: number; opportunities: number };
 
 /**
  * Leads received in each day (or week, for a quarter) as bars, with the opportunities they became as a
@@ -235,9 +235,9 @@ export function LeadsTrend({ points, step, label }: { points: LeadTrendPointView
   const colors = useChartColors(ref);
   const reduced = useReducedMotion();
   const total = points.reduce((sum, point) => sum + point.leads, 0);
-  const busiest = points.reduce((top, point) => (point.leads > (top?.leads ?? 0) ? point : top), null as LeadTrendPointView | null);
+  const opportunities = points.reduce((sum, point) => sum + point.opportunities, 0);
   return <div ref={ref} className="mo-chart mva-chart-trend" role="img"
-    aria-label={`${label}: ${total} leads${busiest ? `, the busiest ${step} ${busiest.label} with ${busiest.leads}` : ""}.`}>
+    aria-label={`${label}: ${total} leads and ${opportunities} opportunities.`}>
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart accessibilityLayer={false} data={points} margin={{ top: 12, right: 8, bottom: 0, left: -18 }} barCategoryGap="22%">
         <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
@@ -247,7 +247,7 @@ export function LeadsTrend({ points, step, label }: { points: LeadTrendPointView
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
             const point = (payload[0] as unknown as { payload: LeadTrendPointView }).payload;
-            return <TipBox title={step === "week" ? `Week of ${point.label}` : point.label} rows={[
+            return <TipBox title={step === "week" ? `Week of ${point.label}${point.days < 7 ? ` · ${point.days} day${point.days === 1 ? "" : "s"} so far` : ""}` : point.label} rows={[
               { label: "Leads", value: point.leads, color: colors["--chart-1"] },
               { label: "Became opportunities", value: point.opportunities, color: colors["--chart-2"] },
             ]} />;

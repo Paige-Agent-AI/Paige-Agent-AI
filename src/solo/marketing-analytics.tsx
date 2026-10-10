@@ -72,12 +72,16 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
 
   const prev = model.previous;
   const share = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
+  // Why a figure has no comparison, in the owner's words: the read is full, it doesn't reach back far
+  // enough, or (for a share) the period before had no leads to take a share of.
+  const noCompare = model.capped ? "No comparison: the read is full" : !prev ? `The read doesn’t reach the previous ${current.days} days` : `No leads in the previous ${current.days} days`;
+  const rateSpark = (pick: (p: (typeof model.trend)[number]) => number) => model.trend.map((p) => (p.leads ? pick(p) / p.leads : null));
   const kpis: Kpi[] = [
     { key: "leads", icon: "users", label: "Leads", value: floor(model.leads), foot: `in the last ${current.days} days`, spark: model.trend.map((p) => p.leads), delta: prev && { now: model.leads, before: prev.leads } },
-    { key: "traced", icon: "filter", label: "Traced to a source", value: `${share(model.tagged, model.leads)}%`, foot: `${floor(model.tagged)} of ${floor(model.leads)} carry a source tag`, spark: model.trend.map((p) => p.tagged), delta: prev && { now: share(model.tagged, model.leads), before: share(prev.tagged, prev.leads), points: true } },
-    { key: "matched", icon: "bolt", label: "Matched to a campaign", value: briefsKnown ? floor(model.matched) : "—", foot: briefsKnown ? "Their campaign tag is a brief’s reference" : "Briefs couldn’t load", spark: briefsKnown ? model.trend.map((p) => p.matched) : [], delta: briefsKnown && prev ? { now: model.matched, before: prev.matched } : null },
+    { key: "traced", icon: "filter", label: "Traced to a source", value: model.leads ? `${share(model.tagged, model.leads)}%` : "—", foot: model.leads ? `${floor(model.tagged)} of ${floor(model.leads)} carry a source tag` : "No leads to measure", spark: rateSpark((p) => p.tagged), delta: prev && model.leads && prev.leads ? { now: share(model.tagged, model.leads), before: share(prev.tagged, prev.leads), points: true } : null },
+    { key: "matched", icon: "bolt", label: "Matched to a campaign", value: briefsKnown ? floor(model.matched) : "—", foot: briefsKnown ? "Their campaign tag is a brief’s reference" : "Briefs couldn’t load", spark: briefsKnown ? model.trend.map((p) => p.matched) : [], delta: briefsKnown && prev ? { now: model.matched, before: prev.matched } : null, why: briefsKnown ? undefined : "Briefs couldn’t load" },
     { key: "opps", icon: "trend", label: "Became opportunities", value: floor(model.opportunities), foot: "Handed to Sales as a deal", spark: model.trend.map((p) => p.opportunities), delta: prev && { now: model.opportunities, before: prev.opportunities } },
-    { key: "rate", icon: "pulse", label: "Lead to opportunity", value: model.leads ? `${share(model.opportunities, model.leads)}%` : "—", foot: model.leads ? "Of the leads in this range" : "No leads to measure", spark: model.trend.map((p) => (p.leads ? p.opportunities / p.leads : 0)), delta: prev && model.leads && prev.leads ? { now: share(model.opportunities, model.leads), before: share(prev.opportunities, prev.leads), points: true } : null },
+    { key: "rate", icon: "pulse", label: "Lead to opportunity", value: model.leads ? `${share(model.opportunities, model.leads)}%` : "—", foot: model.leads ? "Of the leads in this range" : "No leads to measure", spark: rateSpark((p) => p.opportunities), delta: prev && model.leads && prev.leads ? { now: share(model.opportunities, model.leads), before: share(prev.opportunities, prev.leads), points: true } : null },
   ];
 
   return <div className="mov mva">
@@ -89,7 +93,7 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
         <button type="button" className="btn" onClick={() => askPaige(prompt)}><Ic.spark size={14}/>Ask PAIGE</button>
       </div>
     </div>
-    <ul className="mva-kpis" aria-label="Headline figures">{kpis.map((kpi) => <KpiTile key={kpi.key} kpi={kpi} days={current.days} capped={model.capped}/>)}</ul>
+    <ul className="mva-kpis" aria-label="Headline figures">{kpis.map((kpi) => <KpiTile key={kpi.key} kpi={kpi} days={current.days} noCompare={kpi.why ?? noCompare}/>)}</ul>
     <div className="mva-pair is-wide">
       <TrendCard model={model} days={current.days}/>
       <OutcomesCard model={model} floor={floor}/>
@@ -105,31 +109,35 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
   </div>;
 }
 
-type Kpi = { key: string; icon: string; label: string; value: string; foot: string; spark: number[]; delta: { now: number; before: number; points?: boolean } | null | false | 0 };
+type Kpi = { key: string; icon: string; label: string; value: string; foot: string; spark: (number | null)[]; delta: { now: number; before: number; points?: boolean } | null | false | 0; why?: string };
 
-function KpiTile({ kpi, days, capped }: { kpi: Kpi; days: number; capped: boolean }) {
+function KpiTile({ kpi, days, noCompare }: { kpi: Kpi; days: number; noCompare: string }) {
   const Icon = Ic[kpi.icon] ?? Ic.pulse;
-  const delta = kpi.delta && !capped ? kpi.delta : null;
+  const delta = kpi.delta || null;
   const change = delta ? delta.now - delta.before : 0;
   return <li className="mva-kpi">
     <span className="mva-kpi-h"><span className="mva-kpi-i" aria-hidden="true"><Icon size={15}/></span>{kpi.label}</span>
     <strong className="mva-kpi-v">{kpi.value}</strong>
     <span className="mva-kpi-f">{kpi.foot}</span>
     {delta ? <span className={`mva-kpi-d${change > 0 ? " is-up" : change < 0 ? " is-down" : ""}`}>{change === 0 ? `Same as the previous ${days} days` : `${change > 0 ? "+" : "−"}${Math.abs(change).toLocaleString()}${delta.points ? " pts" : ""} vs the previous ${days} days`}</span>
-      : <span className="mva-kpi-d">{capped ? "No comparison: the read is full" : "No earlier period to compare"}</span>}
-    {kpi.spark.length > 1 && <Spark values={kpi.spark}/>}
+      : <span className="mva-kpi-d">{noCompare}</span>}
+    {kpi.spark.filter((v) => v !== null).length > 1 && <Spark values={kpi.spark}/>}
   </li>;
 }
 
-/** A small trend line under a figure: plain SVG, so it paints with the number. */
-function Spark({ values }: { values: number[] }) {
-  const max = Math.max(1, ...values);
+/** A small trend line under a figure: plain SVG, so it paints with the number. A point with nothing to
+ *  measure (a share on a day with no leads) is a gap in the line, never a dip to zero. */
+function Spark({ values }: { values: (number | null)[] }) {
+  const max = Math.max(1e-9, ...values.map((v) => v ?? 0));
   const w = 100, h = 28;
   const step = values.length > 1 ? w / (values.length - 1) : w;
-  const points = values.map((v, i) => `${(i * step).toFixed(2)},${(h - 2 - (v / max) * (h - 4)).toFixed(2)}`);
+  const xy = (v: number, i: number) => `${(i * step).toFixed(2)},${(h - 2 - (v / max) * (h - 4)).toFixed(2)}`;
+  let line = "";
+  values.forEach((v, i) => { if (v === null) return; line += `${i === 0 || values[i - 1] === null ? "M" : "L"}${xy(v, i)} `; });
+  const whole = values.every((v) => v !== null);
   return <svg className="mva-spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
-    <path className="mva-spark-a" d={`M0,${h} L${points.join(" L")} L${w},${h} Z`}/>
-    <path className="mva-spark-l" d={`M${points.join(" L")}`}/>
+    {whole && <path className="mva-spark-a" d={`M0,${h} L${values.map((v, i) => xy(v as number, i)).join(" L")} L${w},${h} Z`}/>}
+    <path className="mva-spark-l" d={line.trim()}/>
   </svg>;
 }
 
@@ -155,10 +163,13 @@ function OutcomesCard({ model, floor }: { model: Model; floor: (n: number) => st
 /** A ring and its legend, highlighting the same slice from either side (Audience's pattern). */
 function RingWithKeys({ slices, total, caption, label, active, setActive, floor, whole, onPick }: { slices: DonutSlice[]; total: string; caption: string; label: string; active: string | null; setActive: (key: string | null) => void; floor: (n: number) => string; whole: number; onPick?: (key: string) => void }) {
   const shown = slices.filter((slice) => slice.count > 0);
+  const pct = (count: number) => (whole ? Math.round((count / whole) * 100) : 0);
+  // A grouped slice ("Other forms") opens nothing, so it never offers to.
+  const picks = (key: string) => Boolean(onPick) && key !== "rest";
   if (!shown.length) return <p className="mva-quiet">Nothing to show in this range yet.</p>;
   return <div className="mo-split mva-split">
-    <ChartBoundary className="mo-donut"><Donut slices={shown} total={total} caption={caption} label={label} activeKey={active} onActiveKey={setActive} onSelect={onPick ? (slice) => onPick(slice.key) : undefined}/></ChartBoundary>
-    <ul className="mo-keys">{shown.map((slice) => <li key={slice.key}><button type="button" className={active === slice.key ? "is-active" : ""} onMouseEnter={() => setActive(slice.key)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(slice.key)} onBlur={() => setActive(null)} onClick={onPick ? () => onPick(slice.key) : undefined} aria-label={`${slice.label}: ${floor(slice.count)}${onPick ? ". Open it" : ""}`}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{floor(slice.count)}</b><em>{whole ? Math.round((slice.count / whole) * 100) : 0}%</em></button></li>)}</ul>
+    <ChartBoundary className="mo-donut"><Donut slices={shown} total={total} caption={caption} label={label} activeKey={active} onActiveKey={setActive} onSelect={onPick ? (slice) => { if (picks(slice.key)) onPick(slice.key); } : undefined}/></ChartBoundary>
+    <ul className="mo-keys">{shown.map((slice) => <li key={slice.key}><button type="button" className={active === slice.key ? "is-active" : ""} onMouseEnter={() => setActive(slice.key)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(slice.key)} onBlur={() => setActive(null)} onClick={picks(slice.key) ? () => onPick!(slice.key) : undefined} aria-label={`${slice.label}: ${floor(slice.count)}, ${pct(slice.count)}%${picks(slice.key) ? ". Open it" : ""}`}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{floor(slice.count)}</b><em>{pct(slice.count)}%</em></button></li>)}</ul>
   </div>;
 }
 
@@ -171,7 +182,13 @@ function HeatCard({ model, days }: { model: Model; days: number }) {
   let peakDay = 0, peakHour = 0;
   model.heat.forEach((row, day) => row.forEach((count, hour) => { if (count > model.heat[peakDay][peakHour]) { peakDay = day; peakHour = hour; } }));
   const busiestDay = model.weekdays.reduce((top, d, i) => (d.count > model.weekdays[top].count ? i : top), 0);
-  const summary = max ? `Most leads arrive on ${DAY_NAMES[busiestDay]}s; the busiest hour is ${DAY_NAMES[peakDay]} around ${hourLabel(peakHour)}m` : "No leads in this range yet";
+  // A "busiest" claim only when it stands out: at least three leads, and no tie.
+  const dayCounts = model.weekdays.map((d) => d.count);
+  const dayClear = dayCounts[busiestDay] >= 3 && dayCounts.filter((c) => c === dayCounts[busiestDay]).length === 1;
+  const hourClear = max >= 3 && model.heat.flat().filter((c) => c === max).length === 1;
+  const summary = !max ? "No leads in this range yet"
+    : dayClear ? `Most leads arrive on ${DAY_NAMES[busiestDay]}s${hourClear ? `; the busiest hour is ${DAY_NAMES[peakDay]} around ${hourLabel(peakHour)}m` : ""}`
+    : "Leads are spread across the week, with no clear busiest day";
   return <section className="mov-card" aria-labelledby="mva-heat-h">
     <header className="mov-head"><div><h2 id="mva-heat-h">When leads arrive</h2><p>{summary}. Last {days} days, your local time.</p></div>
       <span className="mva-heat-key" aria-hidden="true">Fewer<i/><i/><i/><i/>More</span></header>
@@ -218,14 +235,11 @@ function Funnel({ model, floor, days, briefsKnown, onOpenSales }: { model: Model
 
 function Coverage({ model, floor, days, briefsKnown }: { model: Model; floor: (n: number) => string; days: number; briefsKnown: boolean }) {
   const [active, setActive] = React.useState<string | null>(null);
-  const untagged = model.leads - model.tagged;
   const slices: DonutSlice[] = model.sourceSlices.map((slice, index) => ({ key: slice.key, label: slice.label, count: slice.count, colorToken: slice.kind === "tag" ? SERIES[index % SERIES.length] : slice.kind === "other" ? "--chart-other" : "--chart-untagged" }));
   return <section className="mov-card" aria-labelledby="mva-cov-h">
-    <header className="mov-head"><div><h2 id="mva-cov-h">Source mix</h2><p>Where the leads of the last {days} days came from</p></div></header>
+    <header className="mov-head"><div><h2 id="mva-cov-h">Source mix</h2><p>Where the leads of the last {days} days came from · {floor(model.tagged)} of {floor(model.leads)} carry a source tag</p></div></header>
     <div className="mva-body">
       {model.leads ? <>
-        <div className="mva-cov" role="img" aria-label={`${floor(model.tagged)} of ${floor(model.leads)} leads carry a source tag`}><span style={{ flexGrow: model.tagged }}/><span className="is-u" style={{ flexGrow: untagged }}/></div>
-        <div className="mva-cov-l"><span><i aria-hidden="true"/>{floor(model.tagged)} tagged</span><span><i className="is-u" aria-hidden="true"/>{floor(untagged)} untagged</span></div>
         <RingWithKeys slices={slices} total={floor(model.leads)} caption="Leads" label="Leads by source" active={active} setActive={setActive} floor={floor} whole={model.leads}/>
         {model.campaignTags.length > 0 && <>
           <h3 className="mva-sub">Campaign tags · {floor(model.campaignTagged)} of {floor(model.leads)} leads tagged</h3>

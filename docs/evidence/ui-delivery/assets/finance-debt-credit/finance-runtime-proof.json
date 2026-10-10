@@ -11,12 +11,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 1464,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -33,7 +34,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -45,12 +47,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 1464,
-        "panelScroll": 950,
+        "panelScroll": 966,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -67,7 +70,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -84,7 +88,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -101,7 +106,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -118,7 +124,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -130,12 +137,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -152,7 +160,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -164,12 +173,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 969,
+        "panelScroll": 985,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -186,7 +196,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -198,12 +209,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 595,
+        "panelScroll": 578,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -220,7 +232,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -232,12 +245,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 603,
+        "panelScroll": 578,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1536-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -249,12 +263,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 1294,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -271,7 +286,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -283,12 +299,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 1294,
-        "panelScroll": 950,
+        "panelScroll": 966,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -305,7 +322,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -322,7 +340,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -339,7 +358,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -356,7 +376,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -368,12 +389,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 1387,
+        "panelScroll": 1097,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -385,12 +407,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 584,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -402,12 +425,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 997,
+        "panelScroll": 1013,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -424,7 +448,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -436,12 +461,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 595,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -453,12 +479,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 775,
+        "panelScroll": 753,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -470,12 +497,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 625,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1366-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -487,12 +515,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -509,7 +538,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -521,12 +551,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 969,
+        "panelScroll": 985,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -543,7 +574,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -555,12 +587,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 595,
+        "panelScroll": 576,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -577,7 +610,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -589,12 +623,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 583,
+        "panelScroll": 576,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -606,12 +641,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -628,7 +664,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -640,12 +677,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 969,
+        "panelScroll": 985,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -662,7 +700,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -674,12 +713,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 595,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -696,7 +736,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -708,12 +749,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 583,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-1024-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -725,12 +767,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1640,
+        "panelScroll": 1350,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -742,12 +785,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 867,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -759,12 +803,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1358,
+        "panelScroll": 1044,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -776,12 +821,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 808,
+        "panelScroll": 756,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -793,12 +839,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 877,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -810,12 +857,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1055,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -827,12 +875,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 866,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -844,12 +893,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1640,
+        "panelScroll": 1350,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -861,12 +911,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 867,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -878,12 +929,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1358,
+        "panelScroll": 1044,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -895,12 +947,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 808,
+        "panelScroll": 756,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -912,12 +965,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 877,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -929,12 +983,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1055,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -946,12 +1001,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 866,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-900-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -963,12 +1019,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 2335,
+        "panelScroll": 1934,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -980,12 +1037,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1087,
+        "panelScroll": 674,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -997,12 +1055,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1885,
+        "panelScroll": 1616,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1019,7 +1078,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1031,12 +1091,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1036,
+        "panelScroll": 623,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1048,12 +1109,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1225,
+        "panelScroll": 834,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1065,12 +1127,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1077,
+        "panelScroll": 647,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1082,12 +1145,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 2335,
+        "panelScroll": 1934,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1099,12 +1163,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1087,
+        "panelScroll": 674,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1116,12 +1181,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1885,
+        "panelScroll": 1616,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1138,7 +1204,8 @@
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1150,12 +1217,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1036,
+        "panelScroll": 623,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1167,12 +1235,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1225,
+        "panelScroll": 834,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -1184,12 +1253,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1077,
+        "panelScroll": 647,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-dark-390-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1201,12 +1271,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 1464,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1223,7 +1294,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1235,12 +1307,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 1464,
-        "panelScroll": 950,
+        "panelScroll": 966,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1257,7 +1330,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1274,7 +1348,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1291,7 +1366,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1308,7 +1384,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1320,12 +1397,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1342,7 +1420,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1354,12 +1433,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 969,
+        "panelScroll": 985,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1376,7 +1456,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1388,12 +1469,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 595,
+        "panelScroll": 578,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1410,7 +1492,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1422,12 +1505,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 603,
+        "panelScroll": 578,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1536-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1439,12 +1523,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 1294,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1461,7 +1546,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1473,12 +1559,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 1294,
-        "panelScroll": 950,
+        "panelScroll": 966,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1495,7 +1582,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1512,7 +1600,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1529,7 +1618,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1546,7 +1636,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1558,12 +1649,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 1387,
+        "panelScroll": 1097,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1575,12 +1667,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 584,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1592,12 +1685,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 997,
+        "panelScroll": 1013,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1614,7 +1708,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1626,12 +1721,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 595,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1643,12 +1739,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 775,
+        "panelScroll": 753,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1660,12 +1757,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 625,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1366-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1677,12 +1775,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1699,7 +1798,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1711,12 +1811,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 969,
+        "panelScroll": 985,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1733,7 +1834,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1745,12 +1847,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 595,
+        "panelScroll": 576,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1767,7 +1870,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1779,12 +1883,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 583,
+        "panelScroll": 576,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1796,12 +1901,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 1371,
+        "panelScroll": 1081,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1818,7 +1924,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1830,12 +1937,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 969,
+        "panelScroll": 985,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1852,7 +1960,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1864,12 +1973,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 595,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1886,7 +1996,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1898,12 +2009,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 583,
+        "panelScroll": 576,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-1024-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1915,12 +2027,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1640,
+        "panelScroll": 1350,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1932,12 +2045,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 867,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1949,12 +2063,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1358,
+        "panelScroll": 1044,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1966,12 +2081,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 808,
+        "panelScroll": 756,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -1983,12 +2099,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 877,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2000,12 +2117,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1055,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2017,12 +2135,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 866,
+        "panelScroll": 808,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2034,12 +2153,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1640,
+        "panelScroll": 1350,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2051,12 +2171,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 867,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2068,12 +2189,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1358,
+        "panelScroll": 1044,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2085,12 +2207,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 808,
+        "panelScroll": 756,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2102,12 +2225,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 877,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2119,12 +2243,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 1055,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2136,12 +2261,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 866,
+        "panelScroll": 808,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-900-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2153,12 +2279,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 2335,
+        "panelScroll": 1934,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-closed-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2170,12 +2297,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1087,
+        "panelScroll": 674,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-closed-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2187,12 +2315,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1885,
+        "panelScroll": 1616,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-closed-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2209,7 +2338,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-closed-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2221,12 +2351,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1036,
+        "panelScroll": 623,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-closed-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2238,12 +2369,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1225,
+        "panelScroll": 834,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-closed-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2255,12 +2387,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1077,
+        "panelScroll": 647,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-closed-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2272,12 +2405,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 2335,
+        "panelScroll": 1934,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-open-0.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2289,12 +2423,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1087,
+        "panelScroll": 674,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-open-1.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2306,12 +2441,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1885,
+        "panelScroll": 1616,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-open-2.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2328,7 +2464,8 @@
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-open-3.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2340,12 +2477,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1036,
+        "panelScroll": 623,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-open-4.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2357,12 +2495,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1225,
+        "panelScroll": 834,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-open-5.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2374,12 +2513,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 1077,
+        "panelScroll": 647,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/finance-runtime-light-390-open-6.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2391,12 +2531,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 1464,
-        "panelScroll": 2879,
+        "panelScroll": 2745,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-1536-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2408,12 +2549,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 3112,
+        "panelScroll": 2914,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-1536-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2425,12 +2567,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 1294,
-        "panelScroll": 2978,
+        "panelScroll": 2745,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-1366-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2442,12 +2585,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 3140,
+        "panelScroll": 3041,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-1366-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2459,12 +2603,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 3112,
+        "panelScroll": 2896,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-1024-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2476,12 +2621,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 3112,
+        "panelScroll": 2896,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-1024-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2493,12 +2639,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 3386,
+        "panelScroll": 3072,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-900-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2510,12 +2657,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 3386,
+        "panelScroll": 3072,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-900-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2527,12 +2675,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 4176,
+        "panelScroll": 3863,
         "paige": "closed",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-390-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "dark",
@@ -2544,12 +2693,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 4176,
+        "panelScroll": 3863,
         "paige": "open",
         "theme": "dark"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-dark-390-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2561,12 +2711,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 1464,
-        "panelScroll": 2879,
+        "panelScroll": 2745,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-1536-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2578,12 +2729,13 @@
         "bodyWidth": 1536,
         "viewport": 1536,
         "panelWidth": 942,
-        "panelScroll": 3112,
+        "panelScroll": 2914,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-1536-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2595,12 +2747,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 1294,
-        "panelScroll": 2978,
+        "panelScroll": 2745,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-1366-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2612,12 +2765,13 @@
         "bodyWidth": 1366,
         "viewport": 1366,
         "panelWidth": 830,
-        "panelScroll": 3140,
+        "panelScroll": 3041,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-1366-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2629,12 +2783,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 3112,
+        "panelScroll": 2896,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-1024-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2646,12 +2801,13 @@
         "bodyWidth": 1024,
         "viewport": 1024,
         "panelWidth": 952,
-        "panelScroll": 3112,
+        "panelScroll": 2896,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-1024-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2663,12 +2819,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 3386,
+        "panelScroll": 3072,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-900-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2680,12 +2837,13 @@
         "bodyWidth": 900,
         "viewport": 900,
         "panelWidth": 828,
-        "panelScroll": 3386,
+        "panelScroll": 3072,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-900-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2697,12 +2855,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 4176,
+        "panelScroll": 3863,
         "paige": "closed",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-390-closed.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     },
     {
       "theme": "light",
@@ -2714,12 +2873,13 @@
         "bodyWidth": 390,
         "viewport": 390,
         "panelWidth": 318,
-        "panelScroll": 4176,
+        "panelScroll": 3863,
         "paige": "open",
         "theme": "light"
       },
       "file": "docs/evidence/ui-delivery/assets/finance-debt-credit/populated-light-390-open.png",
-      "bannerCount": 0
+      "bannerCount": 0,
+      "paigeActionCount": 1
     }
   ],
   "checks": [
@@ -2812,12 +2972,12 @@
       "pass": true
     },
     {
-      "name": "production PAIGE coverage and terms intents stay distinct",
+      "name": "single production PAIGE action retains honest scoped review",
       "pass": true
     }
   ],
   "errors": [],
-  "codeCommit": "afec591ea63367135c95b82791d681492b539d61",
+  "codeCommit": "af5d3f3a841c4a9c5ed5938e13eb54113c9f62e2",
   "sourceHashes": {
     "src/components/ui/sheet.tsx": {
       "workspaceSha256": "d8a698f4cabc5323f561e560dc09a727c70da50a4bf5eaccbc44d928e6d1bc23",
@@ -2832,28 +2992,32 @@
       "gitBlobSha256": "d8741619f682aa2f2480f64e558c7df1bf657472bda601832e7d2c6d159f093e"
     },
     "src/solo/finance/FinanceWorkspace.test.tsx": {
-      "workspaceSha256": "067514c7d8a95f850f6b62698c730fc20e821ae32d65fd6852bfa5913130bec5",
-      "gitBlobSha256": "5b507e5da9cd6136ca218c9b4244378e25272399b086e69ca82670845892f587"
+      "workspaceSha256": "c4a00619352f34594be61e6e9962144ca3aab14de9a9e72934759d1794ecd30e",
+      "gitBlobSha256": "cf83b8653c7eb87fa2510eb694425a2d0e4f2890ac3683b970b2cc314aec104b"
     },
     "src/solo/finance/FinanceWorkspace.tsx": {
-      "workspaceSha256": "f8c6f53dbf09cb648dd11e54c31f9e68154efd0624953414eb1521e1d2619828",
-      "gitBlobSha256": "f441769d6811b3d5bc2dac7be5e4d1e815dc43fc73d1f2176ce6f27c55f5e95d"
+      "workspaceSha256": "fa34a2ae6d0fefe5592726af6ed04b3c99ec9abc98ef7a797dff394f5c394323",
+      "gitBlobSha256": "7ca0f69254118485e88c1ef8563137648c7b56934053e0f3a9c36307acc88de3"
     },
     "src/solo/finance/debt-credit/DebtCreditWorkspace.test.tsx": {
-      "workspaceSha256": "6f5f6df1b390768d9a109beb4d4233a022e41fab2c605024387ef4d8d9cdafa3",
-      "gitBlobSha256": "1492845ef1d75a3b75724c0dbc5f6f5d7f2aaafa30f4dd1e0b5e276811421e21"
+      "workspaceSha256": "66c42f7b7e6ff2a2919ee539ed59c4579ef5f382cbcebd9100b0451ba4719b1d",
+      "gitBlobSha256": "3a0308c5e4c2c4fbfce81cd3d8e5d16b650cf53ce84f3e3c656a4ede1386a8ed"
     },
     "src/solo/finance/debt-credit/DebtCreditWorkspace.tsx": {
-      "workspaceSha256": "16710f914e3838110627d97b86cf5c7ec3839e696c6aa2da51b15c99575f18bd",
-      "gitBlobSha256": "5e8ef7890bf75990ff0cad9495531049cda2d6986ca6cd4292a5bbf68cb9acc2"
+      "workspaceSha256": "ad807a94141bcbdd2317847e0992b6511feab8594d35bd82d4a52e23e1637606",
+      "gitBlobSha256": "09a3f36ff284cc0302d7f9cf6f544418fb6036d3ec57c30f921d07e56435d21f"
     },
     "src/solo/finance/debt-credit/debt-credit.css": {
-      "workspaceSha256": "55ddec392980d394f472e79bdd5cdd49b4401c44ec31f5c06cc6a2e06e578d51",
-      "gitBlobSha256": "539c2833169fd87d4e7e5e2f019a66ffd0f43219a14dcfb5a6294449f7cfab03"
+      "workspaceSha256": "41ff84b849e58502c4bb8069f64d79224a91cf80367f11eace9d6602872fe337",
+      "gitBlobSha256": "5ae5d7a1635c8ece1c11f575739169b0e27bccdce4982d8fad7b85e1e1f67700"
     },
     "src/solo/finance/debt-credit/types.ts": {
       "workspaceSha256": "d4d426f70cee7864c9d92c0f95bada951175bdc2cf7ac2d6ff50176247e47053",
       "gitBlobSha256": "7c356e47fe3e63516f99a5b296803daba0e1672c93dd91fc6122195935356c20"
+    },
+    "src/solo/finance/finance.css": {
+      "workspaceSha256": "1323be71abb343eae6383fb9c5e86faa23cf273d14933662e36056d1d422f601",
+      "gitBlobSha256": "3b1f096308a2c451399c11b1c9b90c4284da61f49913c99dcff96ef7c73bd567"
     },
     "src/solo/finance/financeDebtSource.ts": {
       "workspaceSha256": "6e66a4eb451b51dab2abd709dfd1898c8c050aedf46e8094eaf483613e7d6ba1",

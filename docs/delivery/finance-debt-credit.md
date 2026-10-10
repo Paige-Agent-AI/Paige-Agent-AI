@@ -24,3 +24,7 @@ Solo only, shared navigation/PAIGE workspace, original source wording, canonical
 
 ## Verification and recovery
 Verify source-envelope epoch fencing, expiry, numeric precision, compatible currencies/entities, duplicate handling, multiple same-product accounts, filters, both themes, four Solo viewports plus mobile, PAIGE open/closed, drawer keyboard/focus, reduced motion and 200 percent zoom. Synthetic proof does not replace authenticated acceptance. Recovery is reviewed reversal of this isolated UI slice; no persistent financial records change.
+
+## Owner compact-chat refinement October 10
+
+Owner explicitly removed oversized PAIGE panels and redundant chat launchers across all Finance subtabs: retain one compact persistent PAIGE control per subtab because the canonical chat is adjacent. Removes advisor columns, forecast/evidence/account duplicate chat buttons and separate Debt terms launcher. Financial source content uses the released width; all source/evidence, authority, freshness and multiple-account boundaries remain. The single Debt control prepares a scoped coverage review; no separate terms/account action is claimed. This authorized refinement is included before green merge; no new owner approval loop.

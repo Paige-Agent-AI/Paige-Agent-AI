@@ -127,7 +127,7 @@ describe("Sub-tab tree (§65 3-level, agency verified 2026-08-17)", () => {
   it("verified counts + first-is-default per the live-screen audit", () => {
     const count = (slug: string) => branchBySlug("agency", slug)?.subtabs?.length ?? 0;
     expect(count("command-center")).toBe(4);
-    expect(count("paige")).toBe(6);
+        expect(count("paige")).toBe(6);
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(7);
     expect(count("calendar")).toBe(6);
@@ -198,12 +198,13 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     // redirects into the Command Center path. Vault is an owner-locked Settings destination.
     const noSub = SOLO_BRANCHES.filter((b) => !b.subtabs).map((b) => b.slug).sort();
     expect(noSub).toEqual([]);
-    expect(SOLO_BRANCHES.filter((b) => b.subtabs).length).toBe(10);
+    expect(SOLO_BRANCHES.filter((b) => b.subtabs).length).toBe(11);
     expect(branchBySlug("solo", "trust-compass")).toBeFalsy(); // no longer a top-level branch
   });
 
   it("verified Solo counts + first-is-default per the live-screen audit", () => {
     const count = (slug: string) => branchBySlug("solo", slug)?.subtabs?.length ?? 0;
+    expect(count("operations")).toBe(6);
     expect(count("command-center")).toBe(4);
     expect(count("paige")).toBe(5); // +Deep Research (INT-303)
     expect(count("automations")).toBe(3);
@@ -216,7 +217,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(8);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(62); // retired six-lens branch; one Settings Analytics destination
+    expect(total).toBe(68); // Operations adds six; one Settings Analytics destination
     // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
@@ -380,6 +381,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
 describe("Solo sub-tab registry ↔ screen source contract (§39 #1)", () => {
   const SCREEN_FOR_BRANCH: Record<string, string> = {
     "command-center": "src/solo/CommandCenter.tsx",
+    operations: "src/solo/operations/OperationsRoute.tsx",
     paige: "src/solo/SoloPaigeWorkspace.tsx",
     automations: "src/solo/automations-build.tsx",
     calendar: "src/pages/admin/CalendarAdmin.tsx",
@@ -417,6 +419,12 @@ describe("Solo sub-tab registry ↔ screen source contract (§39 #1)", () => {
     ).exec(src);
     if (!hook) throw new Error(`no useSubtabRoute("solo","${branchSlug}") in ${file}`);
     const after = src.slice(hook.index);
+    if (branchSlug === "operations") {
+      const workspace = readFileSync(resolve(process.cwd(), "src/solo/operations/OperationsWorkspace.tsx"), "utf8");
+      const declaration = workspace.indexOf("const DESTINATIONS =");
+      const array = balancedArray(workspace, workspace.indexOf("[", declaration));
+      return [...array.matchAll(/"([A-Za-z]+)"/g)].map(match => match[1].toLowerCase());
+    }
     if (branchSlug === "finance") {
       const declaration = src.indexOf("export const FINANCE_TABS =");
       const array = balancedArray(src, src.indexOf("[", declaration));

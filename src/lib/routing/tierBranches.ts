@@ -132,6 +132,17 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
+    slug: "operations", key: "operations", label: "Operations", group: "main",
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "work", key: "work", label: "Work" },
+      { slug: "projects", key: "projects", label: "Projects" },
+      { slug: "delivery", key: "delivery", label: "Delivery" },
+      { slug: "playbooks", key: "playbooks", label: "Playbooks" },
+      { slug: "capacity", key: "capacity", label: "Capacity" },
+    ],
+  },
+  {
     slug: "paige", key: "paige", label: "Paige", group: "main",
     // Source: src/solo/SoloPaigeWorkspace.tsx. Solo intentionally exposes the
     // customer-facing Chat, Knowledge, Deep Research, Helpers, and Capabilities

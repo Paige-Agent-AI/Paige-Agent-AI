@@ -1,4 +1,5 @@
 import {
+  BriefcaseBusiness,
   BarChart3,
   ChartNoAxesCombined,
   Landmark,
@@ -13,6 +14,7 @@ import {
 
 type TenantDestination =
   | "command"
+  | "operations"
   | "clients"
   | "campaigns"
   | "sales"
@@ -51,6 +53,7 @@ const AGENCY_ACTING_CHILD_ROUTE_PATTERN = /^\/agency\/([^/]+)\/sub\/(\d+)(?:\/|$
 
 const TENANT_BRANCHES: Record<TenantBranch, { slug: string; aliases: string[] }> = {
   command: { slug: "command-center", aliases: ["paige", "trust-compass", "automations"] },
+  operations: { slug: "operations", aliases: [] },
   clients: { slug: "clients", aliases: ["client-support", "billing"] },
   calendar: { slug: "calendar", aliases: [] },
   campaigns: { slug: "growth", aliases: [] },
@@ -153,6 +156,7 @@ export const TENANT_SHELL_DESTINATIONS: TenantShellDestination[] = [
 /** Solo's approved durable work homes. Existing route owners remain unchanged. */
 const SOLO_SHELL_DESTINATIONS: TenantShellDestination[] = [
   { id: "command", label: "Command Center", href: "", icon: Sparkles, aliases: [""] },
+  { id: "operations", label: "Operations", href: "", icon: BriefcaseBusiness, aliases: [] },
   {
     id: "clients",
     label: "Clients",

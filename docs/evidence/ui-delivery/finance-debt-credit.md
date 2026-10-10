@@ -24,7 +24,7 @@ RELEASE_CHANNEL: development: isolated candidate; production is authorized only 
 RELEASE_CLASSIFICATION: internal-only: source-safe UI slice, no full provider/intelligence outcome claim.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or publication authorized.
 RELEASE_NOTE_REQUIRED: NO: internal candidate; no ready live debt capability claimed.
-RELEASE_TRUTH_BOUNDARY: PARTIAL UI; debt source UNAVAILABLE; authenticated and full Finance intelligence PROOF OWED.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: verified interface; debt source UNAVAILABLE; authenticated and full Finance intelligence PROOF OWED.
 RELEASE_RECOVERY: position=reviewed reversal of this isolated UI slice; reference=docs/delivery/finance-debt-credit.md
 AUTOMATED_EVIDENCE: PASS: 74 focused tests (four files), production build 5337 modules, scoped ESLint and Solo parity SP1-SP5; type ratchet supporting c82481823b4f90f84dd9b14d4e0d42176badc03a baseline/current 10/10; exact PR CI required.
 STATIC_EVIDENCE: PASS: non-author financial-source recheck at c82481823b4f90f84dd9b14d4e0d42176badc03a resolved four findings; detector on Finance targets returned []; finish palette/motion/eyebrow fixes included at immutable code above. Final non-author finish verdict recorded separately in PR.

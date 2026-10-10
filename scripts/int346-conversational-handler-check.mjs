@@ -43,11 +43,11 @@ const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const actor = id(1), tenant = id(2), thread = id(3), intent = id(4);
 const receipts = [];
 const executorState = { held: null };
-const req = (extras = {}) => new Request('https://test.supabase.co/functions/v1/paige-ai-chat', {
+const req = (extras = {}, intentId = intent) => new Request('https://test.supabase.co/functions/v1/paige-ai-chat', {
   method: 'POST', headers: { Authorization: 'Bearer test', 'Content-Type': 'application/json' },
   // The EXACT browser shape (PaigeAIChat.tsx): messages + threadId + requestIntentId +
   // interactive:{kind:"message"} — never a curl-shaped body that omits `interactive`.
-  body: JSON.stringify({ messages: [{ role: 'user', content: 'What should I focus on this week?' }], threadId: thread, requestIntentId: intent, interactive: { kind: 'message' }, ...extras }),
+  body: JSON.stringify({ messages: [{ role: 'user', content: 'What should I focus on this week?' }], threadId: thread, requestIntentId: intentId, interactive: { kind: 'message' }, ...extras }),
 });
 const scenario = (extra = {}) => fake.setScenario({
   authUser: { id: actor },
@@ -116,6 +116,33 @@ assert.equal(settled[0].args.p_bundle_ref.interactive.request_intent_id, intent)
 // exactly one, releasing nothing — and it cannot raise, because the receipt precedes it.
 assert.equal(rec.rpc.filter((c) => c.name === 'paige_chat_interactive_executor_v2' && c.args.p_operation === 'release').length, 1);
 assert.equal(rec.from.some((c) => c.table === 'paige_pending_confirmations'), false, 'no approval store touch');
+
+// 2b — Same-thread follow-up: after the first conversational turn settled, a SECOND typed
+//     message on the SAME thread (a NEW intent, same actor/tenant) is admitted again and
+//     settles again — each turn independently non-effectful, the second never touching the
+//     first turn's intent or claiming executor authority.
+receipts.length = 0; executorState.held = null; modelCalls = 0;
+const followUpIntent = id(9);
+rec = scenario({ rpcs: {
+  paige_chat_interactive_begin_v2: { data: { status: 'accepted', turn_id: id(6) }, error: null },
+  paige_chat_interactive_executor_v2: () => ({ data: { latest: followUpIntent, executor: executorState.held, acquired: false, terminal: receipts.length > 0, stopped: false }, error: null }),
+} });
+const followUp = await capturedHandler()(req({}, followUpIntent));
+assert.notEqual(followUp.status, 503, 'a same-thread follow-up must never 503 while DRAINING');
+const followUpWire = await followUp.text();
+assert.ok(followUpWire.includes('Answered in words.'), 'the follow-up must stream a real answer');
+assert.ok(followUpWire.includes('"paige_mode":"conversational"'), 'the follow-up announces conversational mode again');
+const followUpBegin = rec.rpc.filter((c) => c.name === 'paige_chat_interactive_begin_v2');
+assert.equal(followUpBegin.length, 1);
+assert.equal(followUpBegin[0].args.p_effectful, false, 'the follow-up admission is non-effectful');
+assert.equal(followUpBegin[0].args.p_intent, followUpIntent, 'the follow-up is admitted under its own intent');
+const followUpSettles = rec.rpc.filter((c) => c.name === 'paige_chat_interactive_settle');
+assert.equal(followUpSettles.length, 1, 'the follow-up settles exactly once');
+assert.equal(followUpSettles[0].args.p_intent, followUpIntent);
+assert.equal(followUpSettles[0].args.p_bundle_ref.turn_state.state, 'FINAL');
+assert.equal(rec.rpc.filter((c) => c.name === 'paige_chat_interactive_executor_v2' && c.args.p_operation === 'acquire').length, 0,
+  'the follow-up never acquires executor authority');
+assert.equal(offeredToolCount, 0, 'the follow-up model round is also offered ZERO tools');
 
 // 3 — Replay of the same intent is idempotent (no duplicate user turn, no second settle).
 rec = scenario({ rpcs: { paige_chat_interactive_begin_v2: { data: { status: 'duplicate' }, error: null } } });

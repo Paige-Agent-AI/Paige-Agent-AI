@@ -176,7 +176,7 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
         {bespoke === "FleetHistorySurface" && <FleetHistorySurface />}
         {bespoke === "FleetAlertRulesSurface" && <FleetAlertRulesSurface />}
         {bespoke === "PlatformHealthSurface" && <PlatformHealthSurface />}
-        {bespoke === "IntelligenceSurface" && <IntelligenceSurface />}
+        {bespoke === "IntelligenceSurface" && <IntelligenceSurface key={`${slot.id}/${active}`} />}
         {bespoke === "ConnectionsSettings" && <ConnectionsSettings />}
         {bespoke === "AnalyticsSettings" && <AnalyticsSettings />}
         {bespoke === "BillingSettings" && <BillingSettings />}

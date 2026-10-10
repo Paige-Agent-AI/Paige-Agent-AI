@@ -35,11 +35,18 @@ export type ViewSource = {
 /** Keyed `${slotId}/${viewSlug}`. */
 export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
   // ── Fleet ──────────────────────────────────────────────────────────────────────────────────
+  // Overview is a second entry to the same governed Intelligence surface, not a second engine.
+  "fleet/overview": { bespoke: "IntelligenceSurface", carries: [] },
   "fleet/systems-check": { bespoke: "SystemsCheckSurface", carries: ["fleet/systems-check"] },
   "fleet/directory": { bespoke: "FleetConsole", carries: ["fleet/tenants", "provisioning/pipeline"] },
   "fleet/history": {
     bespoke: "FleetHistorySurface",
     carries: ["fleet/history", "provisioning/history", "settings/governance/act-as-history"],
+  },
+  // Owner INT-280 continuation: Mind moves to Fleet; its existing read and source ledger survive.
+  "fleet/mind": {
+    bespoke: "KnowledgeSurface",
+    carries: ["paige/knowledge", "paige/memory", "paige/documents", "paige/playbooks", "paige/research", "paige/sandbox"],
   },
 
   // ── Relationships ──────────────────────────────────────────────────────────────────────────
@@ -211,10 +218,6 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
    * empty inventory. It carries no old address because the thirteen-branch console never had one.
    */
   "settings/numbers": { carries: [] },
-  "settings/mind": {
-    bespoke: "KnowledgeSurface",
-    carries: ["paige/knowledge", "paige/memory", "paige/documents", "paige/playbooks", "paige/research", "paige/sandbox"],
-  },
   "settings/automations": {
     panels: ["automations/library", "automations/runs", "automations/build"],
     carries: ["automations/library", "automations/runs", "automations/build"],

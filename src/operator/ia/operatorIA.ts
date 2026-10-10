@@ -46,7 +46,7 @@ export const OPERATOR_SLOTS: readonly OperatorSlot[] = [
   {
     id: "fleet",
     label: "Fleet",
-    views: ["Systems check", "Directory", "History"],
+    views: ["Overview", "Systems check", "Directory", "History", "Mind"],
   },
   {
     id: "relationships",
@@ -90,7 +90,7 @@ export const OPERATOR_SLOTS: readonly OperatorSlot[] = [
      * and it does not touch the six-slot ruling.
      */
     views: [
-      "Setup", "Platform", "Integrations", "Numbers", "PAIGE Intelligence", "Mind", "Automations",
+      "Setup", "Platform", "Integrations", "Numbers", "PAIGE Intelligence", "Automations",
       "Alerts", "Capabilities", "Vault", "Governance", "Team",
       // Owner's Settings sub-main menu adds these destinations; existing leaves stay addressable.
       "Connections", "Analytics", "Billing",

@@ -77,10 +77,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
     .some((value) => value?.toLowerCase().includes(search.toLowerCase())));
   return (
     <section className="intelligence" data-workspace={workspace} aria-label="PAIGE Intelligence">
-      <div className="intel-heading">
-        <div><h2 className="sr-only">PAIGE Intelligence</h2><p>Observe performance. Investigate evidence. Prepare the next improvement.</p></div>
-        <span className="intel-state">PARTIAL · observational foundation</span>
-      </div>
+      <h2 className="sr-only">PAIGE Intelligence</h2>
       <Tabs value={workspace} onValueChange={(v) => { setWorkspace(v as Workspace); setNotice(""); }}>
         <TabsList className="intel-tabs" aria-label="Intelligence workspaces">
           {WORKSPACES.map(([id, name]) => { const Icon = WORKSPACE_ICONS[id]; return <TabsTrigger key={id} value={id} data-workspace={id}><Icon size={16} aria-hidden="true" />{name}</TabsTrigger>; })}
@@ -88,7 +85,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
         <p className="intel-notice" role="status">{notice}</p>
 
         <TabsContent value="executive">
-          <Section title="The evidence available today" subtitle="Fleet-wide · last 30 days · call telemetry, not verified task outcomes">
+          <Section title="The evidence available today" subtitle="PARTIAL · Fleet-wide · last 30 days · call telemetry, not verified task outcomes">
             <ReadStatus state={read.metrics} name="Fleet metrics" />
             <dl className="intel-measures">
               <Measure label="Traced LLM calls" value={displayNumber(t.total)} />

@@ -30,6 +30,14 @@ describe("INT-280 supported Operator flows", () => {
     expect(canonicalPath(resolveOperatorAddress("platform", "intelligence"))).toBe("/operator/settings/paige-intelligence");
     expect(resolveOperatorAddress("platform", "other").kind).toBe("unknown");
   });
+  it("lands directly on Executive Flight Deck without the removed intro banner", async () => {
+    await mount();
+    expect(node.querySelector('[role="tab"][data-state="active"]')?.textContent).toBe("Executive Flight Deck");
+    expect(node.querySelector('[role="tablist"]')?.getAttribute("aria-label")).toBe("Intelligence workspaces");
+    expect(node.querySelector(".intel-heading")).toBeNull();
+    expect(node.textContent).not.toContain("Observe performance. Investigate evidence.");
+    expect(node.textContent).toContain("PARTIAL · Fleet-wide");
+  });
   it("preserves null cost and never turns call telemetry into a task completion rate", async () => {
     await mount();
     const term = Array.from(node.querySelectorAll("dt")).find((dt) => dt.textContent === "Estimated model spend");

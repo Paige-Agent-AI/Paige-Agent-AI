@@ -60,6 +60,10 @@ export function resolveOperatorAddress(
   if (section === "platform" && splat.replace(/\/$/, "") === "intelligence") {
     return { kind: "resolved", slot: findSlot("settings")!, view: "PAIGE Intelligence", stale: true };
   }
+  // Both generations of the Settings Mind bookmark follow the owner-approved Fleet move.
+  if (section === "settings" && ["mind", "paige-intelligence/mind"].includes(splat.replace(/\/$/, ""))) {
+    return { kind: "resolved", slot: findSlot("fleet")!, view: "Mind", stale: true };
+  }
   const slot = findSlot(section);
   if (!slot) return { kind: "unknown", section: section ?? "" };
 

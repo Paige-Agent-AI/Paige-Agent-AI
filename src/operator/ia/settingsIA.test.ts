@@ -26,4 +26,13 @@ describe("owner-approved Operator Settings categories", () => {
     expect(bad.kind === "resolved" && bad.stale).toBe(true);
     expect(resolveOperatorAddress("seventh-slot", "settings").kind).toBe("unknown");
   });
+  it("retains both moved Mind bookmark generations under Fleet", () => {
+    for (const bookmark of ["mind", "paige-intelligence/mind", "mind/"]) {
+      const address = resolveOperatorAddress("settings", bookmark);
+      expect(canonicalPath(address)).toBe("/operator/fleet/mind");
+      expect(address.kind === "resolved" && address.stale).toBe(true);
+    }
+    expect(resolveOperatorAddress("settings", "paige-intelligence/mind/unknown").kind).toBe("resolved");
+    expect(SETTINGS_MENU.find((g) => g.slug === "paige-intelligence")?.views).toEqual(["PAIGE Intelligence"]);
+  });
 });

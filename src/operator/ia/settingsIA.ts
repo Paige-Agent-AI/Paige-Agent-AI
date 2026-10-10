@@ -8,6 +8,6 @@ export const SETTINGS_MENU = [
   { label: "Security & data", slug: "security-data", icon: "security", views: ["Governance", "Capabilities"] },
   { label: "Vault", slug: "vault", icon: "vault", views: ["Vault"] },
   { label: "Billing", slug: "billing", icon: "billing", views: ["Billing"] },
-  { label: "PAIGE Intelligence", slug: "paige-intelligence", icon: "intelligence", views: ["PAIGE Intelligence", "Mind"] },
+  { label: "PAIGE Intelligence", slug: "paige-intelligence", icon: "intelligence", views: ["PAIGE Intelligence"] },
 ] as const;
 export const settingsGroupForView = (view: string | null) => SETTINGS_MENU.find((group) => group.views.some((v) => v === view));

@@ -114,6 +114,15 @@ describe("the operator shell renders the pack's geometry", () => {
     expect(html).toContain('href="/operator/settings/setup/platform"');
   });
 
+  it("Intelligence lands without a redundant category tab row; Mind lives in Fleet", () => {
+    const html = at("/operator/settings/paige-intelligence");
+    expect(html).not.toContain('aria-label="PAIGE Intelligence tabs"');
+    expect(html).not.toContain('href="/operator/settings/paige-intelligence/mind"');
+    const fleet = at("/operator/fleet/mind");
+    expect(fleet).toContain('href="/operator/fleet/mind"');
+    expect(fleet).toContain('data-surface-view="Mind"');
+  });
+
   /**
    * Absence is per VIEW, not per slot. A slot can have a shipped surface behind one view and
    * nothing behind the next; showing the slot's absence over a view that HAS one would hide
@@ -159,15 +168,15 @@ describe("the operator shell renders the pack's geometry", () => {
     expect(at("/operator/fleet/not-a-view")).not.toContain("data-shell-grid");
     expect(at("/operator/fleet/history")).toContain("data-shell-grid");
   });
-  it("legacy Settings redirects retain detached-surface query and fragment", async () => {
+  it.each(["/operator/settings/mind", "/operator/settings/paige-intelligence/mind"])("moved Mind bookmark %s retains detached-surface query and fragment", async (bookmark) => {
     function Destination() { const route = useLocation(); return <output>{route.pathname}{route.search}{route.hash}</output>; }
     const node = document.createElement("div"); document.body.append(node); const root = createRoot(node);
     try {
-      await act(async () => root.render(<MemoryRouter initialEntries={["/operator/settings/mind?surface=sweep#evidence"]}><Routes>
-        <Route path="/operator/settings/paige-intelligence/mind" element={<Destination />} />
+      await act(async () => root.render(<MemoryRouter initialEntries={[`${bookmark}?surface=sweep#evidence`]}><Routes>
+        <Route path="/operator/fleet/mind" element={<Destination />} />
         <Route path="/operator/:section/*" element={<OperatorShell />} />
       </Routes></MemoryRouter>));
-      expect(node.querySelector("output")?.textContent).toBe("/operator/settings/paige-intelligence/mind?surface=sweep#evidence");
+      expect(node.querySelector("output")?.textContent).toBe("/operator/fleet/mind?surface=sweep#evidence");
     } finally { await act(async () => root.unmount()); node.remove(); }
   });
 });

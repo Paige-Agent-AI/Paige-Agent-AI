@@ -540,7 +540,7 @@ function SlotSurface({ address }: { address: Extract<OperatorAddress, { kind: "r
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {name === "PAIGE Intelligence" ? "Overview" : name === "Governance" && settingsGroup ? "Governance & security" : name}
+              {name === "Governance" && settingsGroup ? "Governance & security" : name}
               {name === view && (
                 <span aria-hidden className="absolute inset-x-2 bottom-0 h-0.5 rounded-t-full bg-cd-gold" />
               )}

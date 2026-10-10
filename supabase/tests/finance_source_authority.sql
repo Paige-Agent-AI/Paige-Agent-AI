@@ -126,3 +126,17 @@ DO $$ BEGIN
  IF EXISTS(SELECT 1 FROM finance_source_observations WHERE currency IS NOT NULL OR coverage<>'partial' OR pages_complete) THEN RAISE EXCEPTION 'Missing data became complete'; END IF;
 END $$;
 SELECT 'Finance source authority PASS: synthetic PostgreSQL only; authenticated/provider acceptance owed' AS result;
+-- Oversized catalogs refuse explicitly rather than presenting truncated account coverage.
+BEGIN;
+INSERT INTO finance_company_entities(id,tenant_id,kind,legal_name,identity_basis,identity_reference,declared_by,updated_by)
+ SELECT format('30000000-0000-0000-0001-%s',lpad(i::text,12,'0'))::uuid,'20000000-0000-0000-0000-000000000001','managed_entity','Test bounded company','owner_declaration','test-bound-'||i,'10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001' FROM generate_series(1,201) i;
+SET LOCAL ROLE authenticated;
+SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'54000');
+ROLLBACK;
+BEGIN;
+INSERT INTO quickbooks_connections SELECT format('40000000-0000-0000-0001-%s',lpad(i::text,12,'0'))::uuid,'10000000-0000-0000-0000-000000000001',true FROM generate_series(1,1001) i;
+INSERT INTO finance_source_bindings(tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace)
+ SELECT '20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks',format('40000000-0000-0000-0001-%s',lpad(i::text,12,'0'))::uuid,'sandbox','test-catalog-realm-'||i FROM generate_series(1,1001) i;
+SET LOCAL ROLE authenticated;
+SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'54000');
+ROLLBACK;

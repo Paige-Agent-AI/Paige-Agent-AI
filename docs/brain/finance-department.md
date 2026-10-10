@@ -61,6 +61,8 @@ Revoked bindings stay historical and cannot be revived. A new pending binding ma
 
 Controlled proof: `scripts/proof/finance-source-authority.mjs` runs the actual migration against disposable loopback PostgreSQL, confirms the missing RPC before migration, repeats fresh replay, and exercises role/tenant/company/refusal, banned actor, membership revocation, workspace switching, stale versions, concurrent edits, retry receipt uniqueness, incomplete pages, immutable identity/evidence, revoked connections and concurrent revocation. Canonical authority/receipt dependencies are explicit fixtures; these tests do not establish deployed auth, actual Rail persistence, provider ownership or live company data. The dedicated CI workflow runs the same database proof. Migration/deployment, independent review, canonical production metadata and authenticated/provider acceptance remain separate proof legs.
 
+Catalog reads are bounded to 200 company entities and 1,000 source bindings per workspace. An oversized scope fails explicitly (`54000`); it never silently truncates accounts or declares complete coverage. Controlled SQL proof exercises both limits.
+
 ## Owner efficiency ruling — 2026-10-10
 
 Finance has six work tabs. Remove introductory banners throughout; connection setup belongs to canonical Settings Integrations. Existing `/solo/{account}/finance/connections` bookmarks redirect there. Finance remains directly below Sales for every eligible standalone tenant. Provider direction is Plaid and QuickBooks: bank accounts, credit cards and lines of credit where explicit provider contracts and approved scopes support them. This direction does not establish provider readiness or authorize real company activation, new permissions or financial effects.

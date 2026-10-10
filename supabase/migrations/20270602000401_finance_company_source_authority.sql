@@ -139,6 +139,11 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE entities jsonb; sources jsonb;
 BEGIN
  PERFORM public._finance_assert_workspace(auth.uid(),_expected_tenant_id);
+ -- Bound metadata aggregation without silently omitting companies or accounts.
+ IF (SELECT count(*) FROM (SELECT 1 FROM public.finance_company_entities WHERE tenant_id=_expected_tenant_id LIMIT 201) bounded)>200
+  OR (SELECT count(*) FROM (SELECT 1 FROM public.finance_source_bindings WHERE tenant_id=_expected_tenant_id LIMIT 1001) bounded)>1000 THEN
+  RAISE EXCEPTION 'Financial source catalog exceeds supported scope' USING ERRCODE='54000';
+ END IF;
  SELECT coalesce(jsonb_agg(jsonb_build_object('id',id,'legal_name',legal_name,'kind',kind,'identity_basis',identity_basis,'version',version,'is_active',is_active) ORDER BY created_at,id),'[]'::jsonb)
  INTO entities FROM public.finance_company_entities WHERE tenant_id=_expected_tenant_id;
  SELECT coalesce(jsonb_agg(jsonb_build_object('id',s.id,'entity_id',s.entity_id,'provider',s.provider,'environment',s.environment,'verification_state',s.verification_state,'revision',s.revision,'verified_at',s.verified_at,

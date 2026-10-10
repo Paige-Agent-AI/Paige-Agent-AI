@@ -3,6 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 export type AccountDetails = { id: string; name: string; status: string; account_type: string; parent_tenant_id: string | null; version: string };
 export type DeletionPreview = { tenant_id: string; accounts: { id: string; name: string; account_type: string }[]; blockers: string[]; execution_available: false };
 
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
 export function accountEditReadback(id: string, name: string, status: string, row: unknown): boolean {
   if (!row || typeof row !== 'object') return false;
   const value = row as Record<string, unknown>;
@@ -14,7 +18,7 @@ export function parseAccountDeletionPreview(id: string, row: unknown): DeletionP
   const value = row as Record<string, unknown>;
   if (value.tenant_id !== id || !Array.isArray(value.accounts) || value.accounts.length === 0 || !Array.isArray(value.blockers)
     || !value.blockers.every(b => typeof b === 'string') || value.execution_available !== false
-    || !value.accounts.every(a => a && typeof a.id === 'string' && typeof a.name === 'string' && typeof a.account_type === 'string')
+    || !value.accounts.every(a => a && typeof a.id === 'string' && typeof a.name === 'string' && isString(a.account_type))
     || !value.accounts.some(a => a.id === id)) throw new Error('Deletion scope could not be verified. Refresh the preview.');
   return value as DeletionPreview;
 }
@@ -31,7 +35,7 @@ export async function readAccountDetails(id: string): Promise<AccountDetails> {
   const result = await rpc('operator_read_account_details', { _tenant_id: id });
   if (!result || typeof result !== 'object') throw new Error('Account details could not be verified.');
   const row = result as AccountDetails;
-  if (row.id !== id || typeof row.version !== 'string' || typeof row.name !== 'string' || typeof row.status !== 'string' || typeof row.account_type !== 'string') throw new Error('Account details could not be verified.');
+  if (row.id !== id || typeof row.version !== 'string' || typeof row.name !== 'string' || typeof row.status !== 'string' || !isString(row.account_type)) throw new Error('Account details could not be verified.');
   return row;
 }
 

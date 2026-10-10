@@ -1,0 +1,202 @@
+[
+  {
+    "context": "solo",
+    "theme": "light",
+    "width": 1536,
+    "height": 770,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 736
+  },
+  {
+    "context": "solo",
+    "theme": "light",
+    "width": 1366,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "solo",
+    "theme": "light",
+    "width": 1024,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "solo",
+    "theme": "light",
+    "width": 900,
+    "height": 1000,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 966
+  },
+  {
+    "context": "solo",
+    "theme": "light",
+    "width": 390,
+    "height": 844,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1179,
+    "clientHeight": 810
+  },
+  {
+    "context": "solo",
+    "theme": "dark",
+    "width": 1536,
+    "height": 770,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 736
+  },
+  {
+    "context": "solo",
+    "theme": "dark",
+    "width": 1366,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "solo",
+    "theme": "dark",
+    "width": 1024,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "solo",
+    "theme": "dark",
+    "width": 900,
+    "height": 1000,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 966
+  },
+  {
+    "context": "solo",
+    "theme": "dark",
+    "width": 390,
+    "height": 844,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1179,
+    "clientHeight": 810
+  },
+  {
+    "context": "agency",
+    "theme": "light",
+    "width": 1536,
+    "height": 770,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 736
+  },
+  {
+    "context": "agency",
+    "theme": "light",
+    "width": 1366,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "agency",
+    "theme": "light",
+    "width": 1024,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "agency",
+    "theme": "light",
+    "width": 900,
+    "height": 1000,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 966
+  },
+  {
+    "context": "agency",
+    "theme": "light",
+    "width": 390,
+    "height": 844,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1179,
+    "clientHeight": 810
+  },
+  {
+    "context": "agency",
+    "theme": "dark",
+    "width": 1536,
+    "height": 770,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 736
+  },
+  {
+    "context": "agency",
+    "theme": "dark",
+    "width": 1366,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "agency",
+    "theme": "dark",
+    "width": 1024,
+    "height": 768,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 734
+  },
+  {
+    "context": "agency",
+    "theme": "dark",
+    "width": 900,
+    "height": 1000,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1052,
+    "clientHeight": 966
+  },
+  {
+    "context": "agency",
+    "theme": "dark",
+    "width": 390,
+    "height": 844,
+    "documentOverflow": false,
+    "dialogOverflow": false,
+    "scrollHeight": 1179,
+    "clientHeight": 810
+  }
+]

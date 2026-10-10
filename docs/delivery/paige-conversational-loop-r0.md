@@ -1,5 +1,35 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-10 CL-2 slice — canonical failure observation (the non-application record)
+
+The first #1807 continuation slice by the new agent: the canonical refusal/non-application
+record `classifyPipelineObservation` has been waiting for. Migration
+`20270602000430_int1807_pipeline_non_application.sql` (renumbered from 411 after the production frontier advanced to `…0423` mid-flight — the chronic frontier race; clears main, prod, and open-PR claims through `…0428`; originally numbered above main `…0304`, the
+deployed production frontier `…00401` and open-PR claims through `…0410`) adds the
+`pipeline_metadata_non_application` table (RLS on, no policies, all client grants revoked;
+one record per effect), a service-only write
+`record_pipeline_metadata_non_application(thread, intent, token, sqlstate)` and an
+authenticated-only read `read_pipeline_metadata_observation(thread, intent, effect)` that
+composes the frozen discovery + original resolvers before returning classifier-shaped
+evidence for an exactly-matching record. Exactly ONE provably-safe producer class is wired:
+a database-ANSWERED refusal of the single-RPC Pipeline door call (`databaseAnswered`/
+`refusedByDatabase` doctrine — one transaction rolled back whole), recorded best-effort at
+the C4a pinned dispatch seam where the card token is held. Transport failures, timeouts and
+lost answers are never recorded and stay `outcome_unknown`; `refused_before_dispatch` needs
+the door's own typed vocabulary (Pipeline-owned) and stays reserved. The status path now
+upgrades an unknown readback through
+`_shared/pipeline-metadata-observation.ts` (triple scope recheck; the classifier's
+scopeEpoch comparison is tautological by design and said so — the five caller-known fields
+carry the real cross-check). Observations remain observations: nothing settles, retries,
+releases or activates, the successor-write brake stays controlling, and recording the
+gated model-emit path (non-pinned calls) is a named follow-up. INT-346 remains DRAINING.
+Proofs: native rollback check `scripts/int1807-non-application-check.mjs` (derivation,
+idempotency, transport-code refusal, lineage-gated reads, drifted-record refusal, ACLs;
+`--negative-control` fails without the migration), handler composition
+`scripts/int1807-observation-handler-check.mjs` (failing-first against the unmodified
+handler: `actual: 'outcome_unknown'`), adapter unit 18/18, family vitest 71/71, tsc ratchet
+10=10, no new Deno diagnostics. Both checks are CI-wired beside their siblings.
+
 ## 2026-10-10 program acceptance matrix — handoff grounding, before any code change
 
 INT-304 handoff grounding by the new Conversational Loop agent, verified read-only against

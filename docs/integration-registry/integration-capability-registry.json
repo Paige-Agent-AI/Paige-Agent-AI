@@ -1196,7 +1196,7 @@
         "Twilio account/subaccount API",
         "Messaging Service (A2P)",
         "Voice (TwiML app)",
-        "Parent Auth Token or Main API key with Accounts status-management authority; a Standard key is insufficient. Main API keys cannot inspect child Calls: Operator retirement resolves the exact resource tenant's existing scoped API key through the server-only Vault resolver. Parent Auth Token callers retain documented v2010 access. Verified closed children need no already-retired calling key."
+        "Parent Auth Token or Main API key with Accounts status-management authority; a Standard key is insufficient. Main API keys cannot inspect child Calls. Suspended child credentials receive 401: Archive and suspended-child retirement/readback require the existing protected parent TWILIO_AUTH_TOKEN, bound to the configured parent, for call inventory. Active-child closure resolves the exact resource tenant's scoped API key through the server-only Vault resolver. Verified closed children need no already-retired calling key. Missing parent call authority refuses suspension before any provider write; no child reactivation or call-check bypass."
       ],
       "safe_readable_context": "Number inventory, registration status (via provider-result-contract), call/message metadata; never auth tokens.",
       "allowed_writes_external_effects": "Number purchase, outbound SMS/voice — confirm-gated; sends run through the one approval path. Explicit Operator Admin/Owner confirmation may suspend/close only the bound tenant subaccount; never the platform parent or an ambiguous/shared binding.",

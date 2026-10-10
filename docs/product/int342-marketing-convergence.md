@@ -77,7 +77,7 @@ Routes are `tierBranches.ts:189-213` (`/solo/:account/growth/<tab>`). Most tabs 
 | Content | `MarketingContent` (`marketing-planned.tsx`) | `marketing_content` (newest 60, admin) | none | draft library list |
 | Social | `social-command.tsx` | `get_social_presence_evidence` | `record_social_handles` | handles only |
 | Email | `marketing-email*.tsx` | E1–E3c reads | campaigns, series, approvals | live |
-| Ads | `MarketingAds` (`marketing-planned.tsx:170`) | `marketing_content` where `channel='ad_copy'` | none | ad-copy list + "not yet" list |
+| Ads | `MarketingAds` (`marketing-planned.tsx:170` at grounding; since S1c `marketing-ads.tsx`) | `marketing_content` where `channel='ad_copy'` | none | ad-copy list + "not yet" list |
 | Lead capture | `LeadCapture` (`growth2.tsx:510`) + `form-intake.tsx` | campaigns read; intake panel | `growth_form_set_intake` | capture points, routing, paged submissions, recent submissions, contact/deal links |
 | Analytics | `MarketingAnalytics` (`growth2.tsx:548`) | last 200 submissions, briefs | none | 4 stats, leads by `utm_source`, by `utm_campaign` matched to `short_ref` |
 
@@ -390,6 +390,12 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
      members (the prototype showed members an owners-and-admins message; Overview already shows members the
      same lead counts) while the email row tells a member its figures are for owners and admins; the
      campaign-tag list is kept from the earlier Analytics (§58).
+   - **S1d shipped** (#1913, 2026-10-10) and, on the owner's word ("Analytics HAS to be more visual than anything
+     else we have done"), carries headline figures with sparklines, leads over time, outcome, source and form rings,
+     a weekday × hour heatmap and the email rates chart on top of the approved funnel.
+   - **S1c as built:** the desk says "Paige can't read an ad account yet" rather than the prototype's "No ad account
+     connected", because Meta or Metricool can be connected in Integrations while nothing reads them; the preview
+     header reads "Your business" (no tenant-name read added for a mock frame).
    - Overview gains capture points, recent leads and the rebuilt attention list (reading routing columns **or**
      automations, fixing C).
    - One form panel opens from Overview, Campaigns and Analytics via `?form=`.

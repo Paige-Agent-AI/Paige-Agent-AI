@@ -22,7 +22,9 @@ const content = [
   { id: "mc-2", kind: "text", channel: "email_campaign", status: "draft", title: "Workshop reminder: two days out", updated_at: day(2) },
   { id: "mc-3", kind: "document", channel: null, status: "draft", title: "Client onboarding guide", updated_at: day(3) },
   { id: "mc-4", kind: "text", channel: "social_post", status: "draft", title: "Three questions to ask before hiring help", updated_at: day(4) },
-  { id: "mc-5", kind: "text", channel: "ad_copy", status: "draft", title: "Free planning session, limited seats", updated_at: day(5) },
+  { id: "mc-5", kind: "text", channel: "ad_copy", status: "draft", title: "Free planning session, limited seats", updated_at: day(5), body: "**Headline:** Plan your quarter in 30 minutes\n**Primary text:** Your last workshop was the start. Book a free planning session and leave with a plan for the next 90 days.\n**CTA:** Book a session" },
+  { id: "mc-8", kind: "text", channel: "ad_copy", status: "draft", title: "Scorecard: where does your week go?", updated_at: day(6), body: "**Headline:** Where does your week go?\n**Primary text:** Take the 3-minute scorecard and see where your business loses time.\n**CTA:** Take the scorecard" },
+  { id: "mc-9", kind: "text", channel: "ad_copy", status: "draft", title: "Retainer: keep the momentum", updated_at: day(9), body: "Monthly advisory at one fixed price, so the work keeps moving after the project ends." },
   { id: "mc-6", kind: "text", channel: "email_campaign", status: "draft", title: "Welcome to the list", updated_at: day(8) },
   { id: "mc-7", kind: "image", channel: null, status: "draft", title: "Testimonial card", updated_at: day(11) },
 ];

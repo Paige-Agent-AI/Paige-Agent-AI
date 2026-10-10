@@ -106,7 +106,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th, .mva-step-l small, .mva-step-t, .mva-bar em, .mva-row-t small, .mva-cov-l span, .mva-sub, .mva .pill-n, .mva-cap, .mva .mov-foot code, .mva-kpi-h, .mva-kpi-f, .mva-kpi-d, .mva-legend li, .mva-heat-x, .mva-heat-y, .mva-heat-key, .mva .mo-keys span, .mva .mo-keys em")) {
+        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th, .mva-step-l small, .mva-step-t, .mva-bar em, .mva-row-t small, .mva-cov-l span, .mva-sub, .mva .pill-n, .mva-cap, .mva .mov-foot code, .mva-kpi-h, .mva-kpi-f, .mva-kpi-d, .mva-legend li, .mva-heat-x, .mva-heat-y, .mva-heat-key, .mva .mo-keys span, .mva .mo-keys em, .mad .pill-n, .mad-prov-b small, .mad-row-b small, .mad-nums dt, .mad-nums dd, .mad-plan, .mad-plan small, .mad-prev-h small, .mad-cta, .mad-meta small, .mad-note, .mad-empty p, .mad .campaigns-segmented button, .mad-missing, .mad-cta.is-missing, .mad-ini")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -167,8 +167,8 @@ async function main() {
               const failed = await page.evaluate(() => [...document.querySelectorAll(".campaigns-scroll h2, .campaigns-scroll h3")].map((h) => h.textContent ?? "").filter((t) => /could not load/.test(t)));
               check(failed.length === 0, `${id}: every read lands (no error state on populated data)`, failed.join(" | "));
               if (tab === "ads") {
-                const kinds = await page.evaluate(() => [...document.querySelectorAll(".mp-list .mk-flag")].map((el) => el.textContent).filter((t) => t !== "Not available"));
-                check(kinds.length > 0 && kinds.every((k) => k === "Ad copy"), `${id}: lists only ad copy`, kinds.join(","));
+                const drawn = await page.evaluate(() => ({ sum: document.querySelector(".mad .mov-sum")?.textContent ?? "", views: document.querySelectorAll('.mad .campaigns-segmented button').length, prov: Boolean(document.querySelector(".mad-prov")), nums: [...document.querySelectorAll(".mad-nums dd")].map((dd) => dd.textContent), plan: document.querySelector(".mad-plan")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(/nothing here is estimated/.test(drawn.sum) && /3 ad copy drafts/.test(drawn.sum) && drawn.views === 5 && drawn.prov && drawn.nums.every((n) => n === "—") && /About \$2,000 for April/.test(drawn.plan) && drawn.h1 === 0, `${id}: the desk opens on nothing estimated, five views, the provider strip, a ghost spend card and the brief's budget quoted as a plan`, JSON.stringify(drawn));
               }
               if (tab === "email") {
                 const drawn = await page.evaluate(() => ({ stats: document.querySelectorAll(".me-stats > *").length, starters: document.querySelectorAll(".me-starters button").length, rows: document.querySelectorAll(".me-table tbody tr").length, rates: Boolean(document.querySelector(".me-chart-rates .recharts-area-curve")) }));
@@ -262,6 +262,13 @@ async function main() {
       await page.waitForSelector(".campaigns-drawer", { timeout: 5000 }).catch(() => {});
       const opened = await page.textContent(".campaigns-drawer").catch(() => "");
       check(/Scorecard opt-in/.test(opened ?? "") && /When someone submits/.test(opened ?? ""), `${theme}/analytics: a capture point opens that form's panel`);
+      // Ads: Creative previews each saved ad; the view stays in the address.
+      await open(page, { tab: "ads", theme });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.locator(".mad .campaigns-segmented button", { hasText: "Creative" }).click();
+      const creative = await page.evaluate(() => ({ cards: document.querySelectorAll(".mad-card").length, first: document.querySelector(".mad-prev-f")?.textContent ?? "" }));
+      check(creative.cards === 3 && /Plan your quarter in 30 minutes/.test(creative.first), `${theme}/ads: Creative previews each saved ad with its headline and call to action`, JSON.stringify(creative));
+      await page.screenshot({ path: path.join(OUT, `flow-ads-creative-${theme}.png`) });
       check(errors.length === 0, `${theme}/flows: no page errors`, errors[0] ?? "");
       await ctx.close();
     }

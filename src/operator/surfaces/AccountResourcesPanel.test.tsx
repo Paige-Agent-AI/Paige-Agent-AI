@@ -19,6 +19,8 @@ describe('operator connected-resource flow',()=>{
   ['twilio_call_access_refused','Twilio refused this account’s call-inventory access.'],
   ['twilio_call_credentials_unavailable','This account’s stored calling credential is unavailable.'],
   ['twilio_call_credential_binding_mismatch','The calling credential belongs to a different account.'],
+  ['twilio_parent_call_credentials_unavailable','Protected parent call access is missing.'],
+  ['twilio_parent_call_credential_binding_mismatch','Parent call access does not match the configured platform connection.'],
  ])('reports %s without claiming that a call is active',async(reason,message)=>{
   h.read.mockResolvedValue({...ready,state:'resources_unknown',results:[{provider:'twilio',state:'blocked',provider_status:null,reason}]});
   await open();expect(host.textContent).toContain(message);expect(host.textContent).not.toContain('Calls remain in flight');expect(host.textContent).not.toContain('READY ·');

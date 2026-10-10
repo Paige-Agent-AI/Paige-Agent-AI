@@ -1089,6 +1089,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:apply-extraction
 
+      - name: Smoke — the shared credit-profile writer reports writes truthfully (#734)
+        if: ${{ !cancelled() }}
+        run: npm run test:sync-credit-report-data
+
       - name: Smoke — a durable write that did not land says so (postgrest resolves, it does not throw)
         if: ${{ !cancelled() }}
         run: npm run test:checked-write

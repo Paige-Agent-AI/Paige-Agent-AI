@@ -1525,7 +1525,8 @@
       "business_reason": "Expressive streaming playback may carry Paige's approved spoken character while Paige remains the sole owner of reasoning, tenant context, authority, records, and actions.",
       "paige_use_cases": [
         "future streaming text-to-speech for Paige-authored responses",
-        "server-profile-resolved per-message speech playback"
+        "server-profile-resolved per-message speech playback",
+        "Operator permanent account retirement can remove only eligible private generated-audio cache through the existing Storage API/journal; this grants no ElevenLabs provider authority. Controlled proof PASS; production byte deletion/authenticated use PROOF_OWED."
       ],
       "connection_prerequisite": "Server-side credential, exact Jessica entitlement and canonical scoped pilot authorization. Default provider retention may be explicitly authorized for the restricted pilot; verified zero retention remains unavailable. Broader client use still requires the owner-held retention and speaker-identity decisions. Adapter tests do not prove provider eligibility.",
       "required_scopes": [
@@ -1565,7 +1566,7 @@
         "rate_limits_quotas": "Account concurrency and quota are unverified. Provider refusal, rate limits and disconnects fail honestly without a live-state claim; this adapter adds no billing or allowance gate.",
         "usage_review_cadence": "Review observed provider usage during the bounded owner pilot; the Budget lane owns platform-wide usage and cost policy, and this voice adapter asserts no spending-control claim.",
         "renewal_deprecation_review": "Quarterly provider API/model/privacy review and before changing an approved voice-profile revision.",
-        "data_privacy_retention": "ElevenLabs receives Paige-authored text, not microphone audio. Live dialogue requests use explicit enable_logging=true only after scoped default-retention authorization. The unchanged HTTP read-aloud transport still requests enable_logging=false; its active profile remains OpenAI. Zero Retention Mode is Enterprise-only; verified zero retention remains UNAVAILABLE. Owner authorization and vendor documentation are not provider verification.",
+        "data_privacy_retention": "ElevenLabs receives Paige-authored text, not microphone audio. Live dialogue requests use explicit enable_logging=true only after scoped default-retention authorization. The unchanged HTTP read-aloud transport still requests enable_logging=false; its active profile remains OpenAI. Zero Retention Mode is Enterprise-only; verified zero retention remains UNAVAILABLE. Owner authorization and vendor documentation are not provider verification. Eligible private tenant-generated cache is irreversibly removed only after exact Admin/Owner resource confirmation, API removal and absence readback. Platform/foreign audio and independent file obligations are preserved; this does not claim provider-side audio or backups were destroyed.",
         "money_movement": {
           "can_move_real_money": false,
           "m1_dependency_track": "none",
@@ -1587,6 +1588,11 @@
           "path": "supabase/functions/paige-tts/index.ts",
           "role": "provider_adapter",
           "note": "Existing profile-resolved read-aloud seam; active profile remains OpenAI and no ElevenLabs playback is activated by the Jessica candidate correction."
+        },
+        {
+          "path": "supabase/functions/_shared/operator-storage-retirement.ts",
+          "role": "fail_closed_containment",
+          "note": "Existing generated-audio cache substrate only, exact protected tenant manifest; no ElevenLabs call or new credentials. Real Storage byte absence remains PROOF_OWED."
         }
       ],
       "sources": [

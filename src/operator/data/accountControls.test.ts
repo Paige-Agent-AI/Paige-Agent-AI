@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { accountEditReadback, parseAccountDeletionPreview,parseResourceReceipt } from './accountControls';
 
 describe('operator account controls readback', () => {
+  it('only accepts verified cached-file absence for permanent resource retirement',()=>{
+    const row={tenant_id:'test-tenant-a',operation_id:'test-operation',mode:'delete',state:'resources_ready',account_count:1,results:[{provider:'tts_cache',state:'verified',provider_status:'removed',reason:null}]};
+    expect(parseResourceReceipt('test-tenant-a','test-operation',row)).toEqual(row);
+    for(const value of [{...row,mode:'archive'},{...row,results:[{...row.results[0],provider_status:'present'}]},{...row,results:[{...row.results[0],state:'unknown'}]}])expect(()=>parseResourceReceipt('test-tenant-a','test-operation',value)).toThrow();
+  });
   it('refuses a foreign, mismatched or falsely ready provider receipt',()=>{
     const row={tenant_id:'test-tenant-a',operation_id:'test-operation',mode:'archive',state:'resources_ready',account_count:1,results:[{provider:'twilio',state:'verified',provider_status:'suspended',reason:null}]};
     expect(parseResourceReceipt('test-tenant-a','test-operation',row)).toEqual(row);

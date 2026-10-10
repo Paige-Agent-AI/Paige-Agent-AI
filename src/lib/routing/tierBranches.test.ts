@@ -267,10 +267,11 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["social", "Social"],
       ["email", "Email"],
       ["ads", "Ads"],
-      ["lead-capture", "Lead capture"],
       ["analytics", "Analytics"],
     ]);
-    // Previously shipped addresses keep resolving (§58).
+    // Previously shipped addresses keep resolving (§58). Lead capture retired into Overview
+    // (INT-342, owner-approved 2026-10-10) but its address and aliases still resolve.
+    expect(subtabBySlug("solo", "growth", "lead-capture")?.key).toBe("capture");
     expect(subtabBySlug("solo", "growth", "active")?.key).toBe("campaigns");
     expect(subtabBySlug("solo", "growth", "performance")?.key).toBe("analytics");
     for (const legacy of ["brand-kit", "pages", "funnels", "forms", "builders"]) {

@@ -7,7 +7,7 @@ const daysAgo = (days: number) => new Date(now - days * 86400000).toISOString();
 const form = (id: string, name: string, recent: number, routed: boolean) => ({
   id, type: "form", name, slug: id, status: "active", updatedAt: daysAgo(2), publicHref: `/form/${id}`,
   recentSubmissions: recent, routingConfigured: routed, routingState: routed ? "Active" : "No route",
-  routingTargets: [], recentDispatches: { succeeded: 0, failed: 0, other: 0 }, dispatchStatuses: {},
+  routingTargets: routed ? ["pipeline_attach"] : [], recentDispatches: { succeeded: 0, failed: 0, other: 0 }, dispatchStatuses: {},
 });
 const page = (id: string, name: string) => ({
   id, type: "page", name, slug: id, status: "published", updatedAt: daysAgo(4), publicHref: `/p/harbor-pine/${id}`,

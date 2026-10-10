@@ -142,7 +142,7 @@ begin
    and r.scope_epoch = v_card.issued_in_request::text) then return null; end if;
   return jsonb_build_object(
     'authoritative', true, 'effect', 'none', 'conflicting', false,
-    'kind', 'failed_not_applied',
+    'kind', (select r.kind from public.pipeline_metadata_non_application r where r.effect_id = v_effect),
     'binding', jsonb_build_object(
       'tenantId', v_tenant, 'actorId', v_actor, 'threadId', _thread,
       'intentId', _intent, 'operationId', v_effect,

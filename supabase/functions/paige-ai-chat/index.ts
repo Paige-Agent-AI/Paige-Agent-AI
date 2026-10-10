@@ -42,6 +42,8 @@ import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discove
 import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
 import { readPipelineNonApplicationOutcome } from "../_shared/pipeline-metadata-observation.ts";
 import { readDurableObservation } from "../_shared/durable-job/observation.ts";
+import { readDurableContinuation } from "../_shared/durable-job/continuation-read.ts";
+import type { BudgetDb } from "../_shared/router-budget/mod.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
 import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
@@ -1214,10 +1216,23 @@ serve(async (req) => {
           intentId: validatedData.requestIntentId!, tenantId: thread.tenant_id, actorId: user.id };
         const status = await readInteractiveOutcomeStatus({
           state: () => executor("state"),
-          ...(validatedData.interactive.workId ? { readWork: () => readDurableObservation({
-            threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
-            workId: validatedData.interactive!.workId!,
-          }, supabaseClient) } : {}),
+          ...(validatedData.interactive.workId ? { readWork: async () => {
+            const work = await readDurableObservation({
+              threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
+              workId: validatedData.interactive!.workId!,
+            }, supabaseClient);
+            // C4d preparation (CL-3) — bounded terminal CONTEXT for the same validated
+            // work: eligibility to explain, never permission to dispatch or continue.
+            // Effectful continuation stays disabled behind INT-346.
+            if (work) {
+              const continuation = await readDurableContinuation({
+                threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
+                workId: validatedData.interactive!.workId!,
+              }, supabaseClient, admin as unknown as BudgetDb);
+              if (continuation) return { ...work, continuation };
+            }
+            return work;
+          } } : {}),
           readOutcome: async () => {
             const effectId = validatedData.interactive!.pipelineEffectId ??
               await findPipelineOriginalEffect(originalScope, supabaseClient);

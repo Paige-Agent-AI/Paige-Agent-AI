@@ -62,4 +62,19 @@ select set_config('request.jwt.claim.sub','ee020000-0000-4000-8000-000000000001'
 select pg_temp.refused($s$select public.plan_update_item_scoped('ee010000-0000-4000-8000-00000000a001','ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111','done')$s$,'42501','global admin elsewhere cannot use released scoped wrapper');
 select pg_temp.refused($s$select public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'done')$s$,'42501','global admin elsewhere cannot use versioned wrapper');
 select pg_temp.check_true((select status='blocked' from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'tenant authority refusal preserves source work');
+insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id) values
+ ('ee010000-0000-4000-8000-00000000a011','ee010000-0000-4000-8000-000000001111','Test private project','custom',current_date,current_date+10,'individual','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000000003'),
+ ('ee010000-0000-4000-8000-00000000a012','ee010000-0000-4000-8000-000000001111','Test team project','custom',current_date,current_date+10,'team','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000000003');
+insert into public.plan_items(id,tenant_id,plan_id,item_type,title,created_by,assigned_to_user_id) values
+ ('ee010000-0000-4000-8000-00000000a013','ee010000-0000-4000-8000-000000001111','ee010000-0000-4000-8000-00000000a012','task','Test teammate private work','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000000003');
+select pg_temp.check_true(has_function_privilege('authenticated','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid)','EXECUTE'),'guarded read authenticated grant');
+select pg_temp.check_true(not has_function_privilege('anon','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid)','EXECUTE'),'guarded read anon denied');
+select pg_temp.check_true(not has_function_privilege('service_role','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid)','EXECUTE'),'guarded read service denied');
+select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')->'loose_items')=0,'global admin elsewhere cannot read unrelated loose work');
+select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')->'plans')=1,'target member sees team plan but not private plan');
+select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')->'plans'->0->'items')=0,'team plan does not disclose unrelated private items');
+select pg_temp.refused($s$select public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')$s$,'42501','guarded read actor mismatch refused');
+select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000003',true);
+select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')->'loose_items')=1,'target admin retains authorized work read');
+select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')->'plans')=2,'target admin retains private and team project read');
 rollback;

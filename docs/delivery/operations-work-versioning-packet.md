@@ -2,6 +2,8 @@
 
 This slice follows the approved V3 build contract. It does not complete O2 or the department.
 
+Pre-edit read-boundary addition: Operations selects an optional guarded read in the existing shared Planning hook, with explicit expected actor/tenant. A new authenticated-only source wrapper delegates canonical `plan_list` and removes records outside target administration or legitimate item creator/assignee relations; private plan access still requires owner/creator or tenant administration, while team plans remain readable. Scope switches lock the same profile row and late client reads remain fenced. No copied records, separate source, new role authority or changed non-Operations read is introduced. Shared legacy source risk is parked #1933. SQL/read-hook negatives, scope switching and non-author review are required; all previous-head CI is historical after this addition.
+
 ## Capability routing
 
 1. Outcome: move existing work to a reviewed stage without overwriting a teammate's intervening edit.

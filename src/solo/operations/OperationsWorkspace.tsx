@@ -52,7 +52,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   const contentRef = useRef<HTMLElement | null>(null);
   useEffect(() => { setInspection(null); }, [destination]);
   const inspectionInvoker = useRef<HTMLElement | null>(null);
-  const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}` });
+  const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
   const people = useOperationsPeople();
   const matches = operationsBundleMatchesTenant(source.plans, source.allItems, tenantId);
   const plans = matches ? source.plans : [];
@@ -105,7 +105,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
           }} />}
           {destination === "Projects" && <OperationsProjects {...props} />}
           {destination === "Capacity" && <OperationsCapacity {...props} />}
-          <p className="ops-source-limit">This view shows up to 200 plans and standalone items, with their visible work. {people.partial && "Some team profiles are outside the current read."}</p>
+          <p className="ops-source-limit">Figures reflect the work loaded here: up to 200 plans and standalone items, with their visible work. {people.partial && "Some team profiles are outside the current read."}</p>
         </>}
     </div>
     <Sheet open={inspection?.view === destination} onOpenChange={(open) => { if (!open) setInspection(null); }}>

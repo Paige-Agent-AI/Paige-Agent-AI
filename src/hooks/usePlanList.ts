@@ -70,6 +70,9 @@ export interface UsePlanListOpts {
    * this key only clears client residue and rejects late responses after a switch.
    */
   tenantScopeKey?: string | null;
+  /** Operations adds target-tenant authority to the same canonical read. */
+  operationsActorId?: string | null;
+  operationsTenantId?: string | null;
 }
 
 export interface UsePlanListResult {
@@ -89,7 +92,7 @@ export interface UsePlanListResult {
 }
 
 export function usePlanList(opts: UsePlanListOpts = {}): UsePlanListResult {
-  const { scope = "mine", from, to, status, contactId, byItemDate, enabled = true, tenantScopeKey } = opts;
+  const { scope = "mine", from, to, status, contactId, byItemDate, enabled = true, tenantScopeKey, operationsActorId, operationsTenantId } = opts;
   const [plans, setPlans] = useState<Plan[]>([]);
   const [looseItems, setLooseItems] = useState<PlanItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,9 +132,13 @@ export function usePlanList(opts: UsePlanListOpts = {}): UsePlanListResult {
       // filter client-side (plan_list has no created_by filter yet).
       if (scope === "mine" && uid) params.p_assigned_to_user_id = uid;
 
-      const { data, error: rpcErr } = await supabase.rpc("plan_list", params);
+      const guarded = operationsActorId !== undefined || operationsTenantId !== undefined;
+      if (guarded && (!operationsActorId || !operationsTenantId || uid !== operationsActorId)) throw new Error("PLAN_FORBIDDEN: scope changed");
+      if (guarded) Object.assign(params, { p_expected_actor_id: operationsActorId, p_expected_tenant_id: operationsTenantId });
+      const reader = supabase as unknown as { rpc: (name: string, parameters: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }> };
+      const { data, error: rpcErr } = guarded ? await reader.rpc("plan_list_operations_scoped", params) : await supabase.rpc("plan_list", params);
       if (seq !== requestSeq.current) return;
-      if (rpcErr) throw rpcErr;
+      if (rpcErr) throw guarded ? new Error(rpcErr.message) : rpcErr;
 
       const payload = (data ?? {}) as { plans?: Plan[]; loose_items?: PlanItem[] };
       let nextPlans = Array.isArray(payload.plans) ? payload.plans : [];
@@ -160,7 +167,7 @@ export function usePlanList(opts: UsePlanListOpts = {}): UsePlanListResult {
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
-  }, [enabled, scope, from, to, status, contactId, byItemDate, tenantScopeKey]);
+  }, [enabled, scope, from, to, status, contactId, byItemDate, tenantScopeKey, operationsActorId, operationsTenantId]);
 
   useEffect(() => {
     requestSeq.current += 1;
@@ -169,7 +176,7 @@ export function usePlanList(opts: UsePlanListOpts = {}): UsePlanListResult {
     setUserId(null);
     setError(null);
     setForbidden(false);
-  }, [tenantScopeKey]);
+  }, [tenantScopeKey, operationsActorId, operationsTenantId]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 

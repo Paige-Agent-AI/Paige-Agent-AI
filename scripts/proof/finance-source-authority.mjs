@@ -125,6 +125,15 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     sql(database, `INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000015','10000000-0000-0000-0000-000000000001',true);`);
     sql(database, `SELECT public.fixture_expect_error($q$${companyBinding.replaceAll('000000000014','000000000015').replace('test-company-binding','test-inactive-company')}$q$,'42501');`);
     sql(database, "UPDATE finance_company_entities SET is_active=true,version=version+1 WHERE id='30000000-0000-0000-0000-000000000001';");
+    const setupBinding = companyBinding.replaceAll('000000000014','000000000015').replace('test-company-binding','test-setup-binding');
+    const setupCreation = holding(database, `RESET ROLE; ${setupBinding}`);
+    await setupCreation.held;
+    await blockedCompetitor(database, "UPDATE tenants SET brand=jsonb_set(brand,'{business_brief,legalName}','\"Changed Company\"') WHERE id='20000000-0000-0000-0000-000000000001';", setupCreation.release);
+    await setupCreation.done;
+    assert.equal(sql(database, "SELECT verification_state||':'||revision FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000015';").trim(), 'revoked:2');
+    sql(database, `SELECT public.fixture_expect_error($q$${companyBinding.replaceAll('000000000014','000000000015').replace('test-company-binding','test-setup-mismatch')}$q$,'42501');`);
+    sql(database, "UPDATE tenants SET brand=jsonb_set(brand,'{business_brief,legalName}','\"Test Company A\"') WHERE id='20000000-0000-0000-0000-000000000001';");
+    assert.equal(sql(database, "SELECT verification_state||':'||revision FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000015';").trim(), 'revoked:2');
     sql(database, `INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);`);
     const agencyActor = `SELECT set_config('test.actor','10000000-0000-0000-0000-000000000003',false);`;
     const agencyRead = holding(database, `${agencyActor} SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001');`);

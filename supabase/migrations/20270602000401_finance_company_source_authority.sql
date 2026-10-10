@@ -85,6 +85,8 @@ CREATE FUNCTION public._finance_binding_identity_guard() RETURNS trigger
 LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 BEGIN
  IF TG_OP='INSERT' THEN
+  PERFORM 1 FROM public.tenants WHERE id=NEW.tenant_id AND status IN ('trial','active','past_due') AND archived_at IS NULL AND NOT lifecycle_execution_paused FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace unavailable' USING ERRCODE='42501'; END IF;
   IF NEW.provider='plaid' THEN
    PERFORM 1 FROM public.connected_bank_accounts WHERE id=NEW.plaid_account_anchor_id AND is_active FOR SHARE;
   ELSE
@@ -92,7 +94,9 @@ BEGIN
   END IF;
   IF NOT FOUND THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
   -- Match observation lock order: provider before company before binding.
-  PERFORM 1 FROM public.finance_company_entities WHERE id=NEW.entity_id AND tenant_id=NEW.tenant_id AND is_active FOR SHARE;
+  PERFORM 1 FROM public.finance_company_entities e JOIN public.tenants t ON t.id=e.tenant_id
+   WHERE e.id=NEW.entity_id AND e.tenant_id=NEW.tenant_id AND e.is_active
+    AND (e.kind<>'workspace_company' OR e.legal_name=coalesce(nullif(t.brand->'business_brief'->>'legalName',''),nullif(t.brand->>'legal_entity_name',''))) FOR SHARE OF e;
   IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
   RETURN NEW;
  END IF;
@@ -153,6 +157,22 @@ END $$;
 REVOKE ALL ON FUNCTION public._finance_company_source_invalidation() FROM PUBLIC,anon,authenticated;
 CREATE TRIGGER finance_company_source_invalidation BEFORE UPDATE ON public.finance_company_entities FOR EACH ROW EXECUTE FUNCTION public._finance_company_source_invalidation();
 
+-- Setup owns the primary legal identity. A change revokes old Finance verification
+-- atomically, including changes later reversed; it never reactivates an old binding.
+CREATE FUNCTION public._finance_setup_source_invalidation() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF coalesce(nullif(NEW.brand->'business_brief'->>'legalName',''),nullif(NEW.brand->>'legal_entity_name',''))
+  IS DISTINCT FROM coalesce(nullif(OLD.brand->'business_brief'->>'legalName',''),nullif(OLD.brand->>'legal_entity_name','')) THEN
+  UPDATE public.finance_source_bindings s SET verification_state='revoked',revision=revision+1
+   FROM public.finance_company_entities e WHERE e.id=s.entity_id AND e.tenant_id=OLD.id
+    AND e.kind='workspace_company' AND s.verification_state<>'revoked';
+ END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._finance_setup_source_invalidation() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER finance_setup_source_invalidation AFTER UPDATE OF brand ON public.tenants FOR EACH ROW EXECUTE FUNCTION public._finance_setup_source_invalidation();
+
 CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE binding public.finance_source_bindings; active boolean;
@@ -170,7 +190,9 @@ BEGIN
  IF NOT coalesce(active,false) THEN RAISE EXCEPTION 'Financial connection revoked' USING ERRCODE='42501'; END IF;
  -- Lock mutable inputs in workspace → connection → company → binding order.
  -- Re-read the binding after lifecycle locks; the earlier read grants no proof.
- PERFORM 1 FROM public.finance_company_entities WHERE tenant_id=NEW.tenant_id AND id=NEW.entity_id AND is_active FOR SHARE;
+ PERFORM 1 FROM public.finance_company_entities e JOIN public.tenants t ON t.id=e.tenant_id
+  WHERE e.tenant_id=NEW.tenant_id AND e.id=NEW.entity_id AND e.is_active
+   AND (e.kind<>'workspace_company' OR e.legal_name=coalesce(nullif(t.brand->'business_brief'->>'legalName',''),nullif(t.brand->>'legal_entity_name',''))) FOR SHARE OF e;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
  SELECT * INTO binding FROM public.finance_source_bindings WHERE tenant_id=NEW.tenant_id AND entity_id=NEW.entity_id AND id=NEW.binding_id FOR SHARE;
  IF NOT FOUND OR binding.verification_state<>'verified' OR binding.revision<>NEW.binding_revision THEN RAISE EXCEPTION 'Verified financial source unavailable or changed' USING ERRCODE='42501'; END IF;

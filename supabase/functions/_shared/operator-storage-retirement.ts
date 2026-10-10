@@ -1,13 +1,19 @@
-// Generated-audio cache only. Reviewed paths come from the private canonical journal,
+// Canonical generated assets only. Reviewed paths come from the private journal,
 // never browser input. All byte removal uses Storage API; no SQL metadata deletion.
 type ObjectRef={id:string;name:string;fingerprint:string};
 type StorageClient={storage:{from:(bucket:string)=>{remove:(paths:string[])=>Promise<{error:unknown}>;list:(prefix:string,options:{limit:number;offset:number})=>Promise<{data:{name:string}[]|null;error:unknown}>}}};
 type Result={state:'verified';provider_status:'removed'}|{state:'blocked'|'unknown';reason:string};
-export async function retireTenantTtsCache(admin:StorageClient,tenant:string,objects:ObjectRef[],readOnly:boolean,assertBinding:()=>Promise<boolean>):Promise<Result>{
+export function retireTenantTtsCache(admin:StorageClient,tenant:string,objects:ObjectRef[],readOnly:boolean,assertBinding:()=>Promise<boolean>):Promise<Result>{
+ return retireTenantStorageAssets(admin,tenant,objects,readOnly,assertBinding,'tts-cache','[0-9a-f]{64}\\.mp3');
+}
+export function retireTenantGeneratedMedia(admin:StorageClient,tenant:string,objects:ObjectRef[],readOnly:boolean,assertBinding:()=>Promise<boolean>):Promise<Result>{
+ return retireTenantStorageAssets(admin,tenant,objects,readOnly,assertBinding,'paige-generated','[0-9]{13}-[0-9a-f]{8}\\.(?:png|jpg|webp|mp4)');
+}
+async function retireTenantStorageAssets(admin:StorageClient,tenant:string,objects:ObjectRef[],readOnly:boolean,assertBinding:()=>Promise<boolean>,bucket:'tts-cache'|'paige-generated',pattern:string):Promise<Result>{
  if(!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(tenant)||!Array.isArray(objects)||!objects.length||objects.length>100
-  ||objects.some(o=>!o||!new RegExp('^'+tenant+'/[0-9a-f]{64}\\.mp3$').test(o.name))||new Set(objects.map(o=>o.name)).size!==objects.length)return{state:'blocked',reason:'storage_scope_invalid'};
+  ||objects.some(o=>!o||!new RegExp('^'+tenant+'/'+pattern+'$').test(o.name))||new Set(objects.map(o=>o.name)).size!==objects.length)return{state:'blocked',reason:'storage_scope_invalid'};
  if(!await assertBinding())return{state:'blocked',reason:'operator_authority_changed'};
- const cache=admin.storage.from('tts-cache');
+ const cache=admin.storage.from(bucket);
  if(!readOnly){
   // One bounded call; retry only after readback and explicit continuation. A timeout is
   // ambiguous and does not cause an automatic second remove.

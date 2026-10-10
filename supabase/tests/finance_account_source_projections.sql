@@ -6,7 +6,7 @@ SET ROLE authenticated;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
 SELECT public.read_finance_account_source('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001');
 RESET ROLE;
-INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000200','10000000-0000-0000-0000-000000000001',true);
+INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000200','10000000-0000-0000-0000-000000000001',true,'synthetic-account-projection');
 INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
  VALUES('50000000-0000-0000-0000-000000000200','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000200','sandbox','synthetic-account-projection','verified','60000000-0000-0000-0000-000000000200',now());
 CREATE FUNCTION public.fixture_account_write(payload jsonb,expected bigint DEFAULT 0,digest text DEFAULT repeat('d',64)) RETURNS jsonb LANGUAGE sql AS $$
@@ -34,6 +34,13 @@ END $$;
 SELECT public.fixture_expect_error($q$SELECT public.read_finance_account_source('20000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000200')$q$,'42501');
 SELECT public.fixture_expect_error($q$SELECT public.read_finance_account_source('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000200')$q$,'42501');
 RESET ROLE;
+BEGIN;
+ALTER TABLE quickbooks_connections DISABLE TRIGGER finance_quickbooks_deactivation;
+UPDATE quickbooks_connections SET qb_realm_id='restored-unrelated-company' WHERE id='40000000-0000-0000-0000-000000000200';
+ALTER TABLE quickbooks_connections ENABLE TRIGGER finance_quickbooks_deactivation;
+SET LOCAL ROLE authenticated;
+DO $$ BEGIN IF public.fixture_account_read()->>'coverage'<>'unavailable' OR public.fixture_account_read()->'accounts'<>'null'::jsonb THEN RAISE EXCEPTION 'Restored provider identity returned unrelated cache'; END IF; END $$;
+ROLLBACK;
 SET ROLE service_role;
 SELECT public.fixture_expect_error($q$UPDATE finance_account_source_snapshots SET accounts='[]',normalized_digest=encode(sha256(convert_to('[]','UTF8')),'hex') WHERE binding_id='50000000-0000-0000-0000-000000000200'$q$,'42501');
 SELECT public.fixture_expect_error($q$SELECT public.fixture_account_write('[{"native_id":"1","source_label":"Bank","product":"deposit","source_updated_at":"yesterday"}]',1)$q$,'22023');
@@ -63,11 +70,12 @@ DO $$ BEGIN IF EXISTS(SELECT 1 FROM finance_account_source_snapshots WHERE bindi
 SET ROLE authenticated;
 DO $$ BEGIN IF public.fixture_account_read()->>'coverage'<>'unavailable' OR public.fixture_account_read()->'accounts'<>'null'::jsonb THEN RAISE EXCEPTION 'Revoked source returned financial figures'; END IF; END $$;
 RESET ROLE;
-INSERT INTO connected_bank_accounts(id,user_id,is_active,account_id) VALUES('40000000-0000-0000-0000-000000000201','10000000-0000-0000-0000-000000000001',true,'synthetic-native-card');
+INSERT INTO connected_bank_accounts(id,user_id,is_active,account_id,plaid_environment) VALUES('40000000-0000-0000-0000-000000000201','10000000-0000-0000-0000-000000000001',true,'synthetic-native-card','sandbox');
 INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace,verification_state,verification_reference,verified_at)
- VALUES('50000000-0000-0000-0000-000000000201','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000201','sandbox','synthetic-item-card','verified','60000000-0000-0000-0000-000000000201',now());
+ VALUES('50000000-0000-0000-0000-000000000201','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000201','sandbox','synthetic-native-card','verified','60000000-0000-0000-0000-000000000201',now());
 SET ROLE service_role;
 SELECT public.fixture_expect_error($q$SELECT public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000201',1,0,'2026-01-01T00:00:00Z','complete',true,repeat('a',64),'[{"native_id":"another-account","source_label":"Card","product":"credit_card"}]')$q$,'22023');
+SELECT public.fixture_expect_error($q$SELECT public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000201',1,0,'2026-01-01T00:00:00Z','complete',true,repeat('a',64),'[{"native_id":"synthetic-native-card","source_label":"Card","product":"credit_card","credit_limit":"-1"}]')$q$,'22023');
 SELECT public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000201',1,0,'2026-01-01T00:00:00Z','complete',true,repeat('a',64),'[{"native_id":"synthetic-native-card","source_label":"Company Card","product":"credit_card","currency":"USD","current_balance":"10","credit_limit":"100","available_credit":"90"}]');
 RESET ROLE;
 DO $$ BEGIN

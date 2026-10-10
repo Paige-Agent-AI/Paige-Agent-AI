@@ -108,6 +108,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid financial amount' USING ERRCODE='22023';
    END IF;
   END LOOP;
+  IF row->>'credit_limit' IS NOT NULL AND (row->>'credit_limit')::numeric<0 THEN RAISE EXCEPTION 'Invalid credit limit' USING ERRCODE='22023'; END IF;
   FOREACH field IN ARRAY ARRAY['source_path','institution_label','source_updated_at'] LOOP
    IF row->>field IS NOT NULL AND (jsonb_typeof(row->field)<>'string' OR length(row->>field)>500) THEN RAISE EXCEPTION 'Invalid financial source label' USING ERRCODE='22023'; END IF;
   END LOOP;
@@ -154,8 +155,11 @@ BEGIN
   RETURN jsonb_build_object('coverage','unavailable','accounts',NULL,'reason','source_authority_unavailable');
  END;
  -- Preserve the source-lock order, then re-read state after its lifecycle locks.
- IF binding.provider='plaid' THEN PERFORM 1 FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id AND is_active AND user_id=actor FOR SHARE;
- ELSE PERFORM 1 FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id AND is_active AND user_id=actor FOR SHARE; END IF;
+ IF binding.provider='plaid' THEN PERFORM 1 FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id AND is_active AND user_id=actor
+  AND account_id=binding.source_namespace AND plaid_environment=binding.environment FOR SHARE;
+ ELSE PERFORM 1 FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id AND is_active AND user_id=actor
+  AND qb_realm_id=binding.source_namespace AND environment=binding.environment
+  AND (scope ~ '(^|[[:space:]])com\.intuit\.quickbooks\.accounting($|[[:space:]])') IS TRUE FOR SHARE; END IF;
  IF NOT FOUND THEN RETURN jsonb_build_object('coverage','unavailable','accounts',NULL,'reason','connection_changed'); END IF;
  PERFORM 1 FROM public.finance_company_entities e JOIN public.tenants t ON t.id=e.tenant_id
   WHERE e.id=_entity_id AND e.tenant_id=_expected_tenant AND e.is_active

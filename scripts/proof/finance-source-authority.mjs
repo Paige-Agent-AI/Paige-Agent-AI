@@ -159,7 +159,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       const accounts = run(database, undefined, ['-v', 'apply_account_migration=1', '-f', accountFixture]);
       assert.equal(accounts.status, 0, accounts.stderr);
       assert.match(accounts.stdout, /Finance account projections PASS/);
-      sql(database, `INSERT INTO quickbooks_connections VALUES('40000000-0000-0000-0000-000000000203','10000000-0000-0000-0000-000000000001',true);
+      sql(database, `INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000203','10000000-0000-0000-0000-000000000001',true,'synthetic-concurrent-snapshot');
         INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
         VALUES('50000000-0000-0000-0000-000000000203','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000203','sandbox','synthetic-concurrent-snapshot','verified','60000000-0000-0000-0000-000000000203',now());`);
       const replace = `SELECT public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000203',1,0,'2026-01-01T00:00:00Z','complete',true,repeat('c',64),'[]');`;

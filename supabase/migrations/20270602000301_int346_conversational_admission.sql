@@ -59,7 +59,7 @@ begin
   update public.paige_chat_turns set interactive_actor_id=auth.uid(),interactive_tenant_id=t.tenant_id,
    interactive_supersedes_id=p_supersedes where id=turn_id;
   if t.interactive_latest_intent=p_supersedes then
-   update public.paige_chat_threads set interactive_latest_intent=null where id=p_thread;
+   update public.paige_chat_threads set interactive_latest_intent=null,interactive_admission=null where id=p_thread;
   end if;
   return jsonb_build_object('status','stopped');
  end if;
@@ -116,6 +116,12 @@ grant execute on function public.paige_chat_interactive_begin_v2(uuid,uuid,uuid,
 -- one — while every other unowned intent is still refused. A stale pre-rollout executor
 -- claim on another intent cannot block a conversational receipt, and a conversational
 -- receipt never releases or rewrites that claim.
+-- Reviewer-verified boundary (non-author review 2026-10-10): the relaxed branch is
+-- bounded by "this intent is still the thread's CURRENT conversational admission", not
+-- by the rollout row — an activation racing an in-flight conversational turn lets that
+-- one turn finish truthfully. Post-activation, no NEW conversational admission exists
+-- (begin refuses the class) and this RPC is service-role only, so the branch is
+-- reachable only by trusted edge code for a turn that genuinely ran degraded.
 create or replace function public.paige_chat_interactive_settle(
  p_thread uuid,p_actor uuid,p_tenant uuid,p_intent uuid,p_content text,
  p_surfaces_used text[],p_model text,p_bundle_ref jsonb,p_tool_calls jsonb default null

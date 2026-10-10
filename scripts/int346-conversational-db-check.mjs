@@ -18,7 +18,7 @@ const strip=(name)=>fs.readFileSync(path.join(root,'supabase/migrations',name),'
 const issuance=strip('20270601000008_int346_server_issued_interactive_receipts.sql');
 const conversational=strip('20270602000301_int346_conversational_admission.sql');
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
-const th=id(1),a=id(2),t=id(3),staleIntent=id(4),conv=id(5),eff=id(6),next=id(7),conv2=id(8);
+const th=id(1),a=id(2),t=id(3),staleIntent=id(4),conv=id(5),eff=id(6),next=id(7),conv2=id(8),racing=id(9);
 const sql=baseline+`
 insert into paige_chat_threads(id,caller_user_id,tenant_id)values('${th}','${a}','${t}');
 set test.actor='${a}';set test.tenant='${t}';set role authenticated;
@@ -66,12 +66,17 @@ end $$;reset role;set role authenticated;
 do $$begin
   -- Replay of the settled conversational intent is duplicate, never a re-admission.
   if(paige_chat_interactive_begin_v2('${th}','${conv}',null,'Retry',false,false,false))->>'status'<>'duplicate' then raise exception 'settled conversational replay';end if;
-  -- Stop is available while staged and supersedes the live intent.
+  -- Stop is available while staged and supersedes the live intent, clearing the
+  -- admission class with it; the stopped intent can then never settle (latest is null).
   perform paige_chat_interactive_begin_v2('${th}',null,'${conv}','',false,true,false);
-  -- Direct client writes to the admission column are refused.
-  begin update paige_chat_threads set interactive_admission=null where id='${th}';raise exception 'direct admission write';exception when insufficient_privilege then null;end;
+  -- Direct client writes to the admission column are refused (a null->null no-op
+  -- would not trip the change-guard, so the probe writes a value).
+  begin update paige_chat_threads set interactive_admission='conversational' where id='${th}';raise exception 'direct admission write';exception when insufficient_privilege then null;end;
   -- An UNSETTLED second conversational intent, for the post-activation guard below.
   if(paige_chat_interactive_begin_v2('${th}','${conv2}',null,'Second typed message',false,false,false))->>'status'<>'accepted' then raise exception 'second conversational not accepted';end if;
+  -- An UNSETTLED conversational intent that will still be CURRENT when activation lands,
+  -- pinning the reviewer-verified in-flight race boundary.
+  if(paige_chat_interactive_begin_v2('${th}','${racing}',null,'Racing typed message',false,false,false))->>'status'<>'accepted' then raise exception 'racing conversational not accepted';end if;
 end $$;reset role;set role service_role;
 -- The established drain procedure: the old handler's legacy JSON FINAL, then legacy release.
 set role authenticated;
@@ -80,16 +85,26 @@ select paige_chat_turn_append('${th}','assistant','Old answer',null,null,null,nu
 reset role;set role service_role;
 select paige_chat_interactive_executor('${th}','${a}','${t}','${staleIntent}','release');
 select paige_chat_interactive_activate(repeat('a',40),repeat('b',64));
+reset role;set role service_role;
+do $$begin
+  -- Reviewer-verified boundary: activation racing an in-flight conversational turn -- the
+  -- intent admitted while staged is STILL the thread's current conversational admission,
+  -- so trusted service code can settle it truthfully. A NEW conversational admission is
+  -- refused once ACTIVE (the block below pins that). Accepted, pinned.
+  perform paige_chat_interactive_settle('${th}','${a}','${t}','${racing}','Racing answer',null,null,
+   '{"interactive":{"request_intent_id":"${racing}","admission":"conversational"},"turn_state":{"state":"FINAL"}}'::jsonb,null);
+  if not exists(select 1 from paige_chat_turns where thread_id='${th}' and interactive_intent_id='${racing}' and interactive_terminal_state='FINAL') then raise exception 'racing settle missing';end if;
+end $$;
 reset role;set role authenticated;
 do $$begin
   -- ACTIVE: the conversational class disappears; effectful admission resumes unchanged.
   begin perform paige_chat_interactive_begin_v2('${th}','${next}',null,'Conversational after activation',false,false,false);raise exception 'conversational accepted after activation';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_REQUIRED' then raise;end if;end;
   if(paige_chat_interactive_begin_v2('${th}','${next}',null,'Protected',false,false))->>'status'<>'accepted' then raise exception 'effectful not accepted when active';end if;
   if exists(select 1 from paige_chat_threads where id='${th}' and interactive_latest_intent='${next}' and interactive_admission is not null) then raise exception 'effectful admission misrecorded';end if;
+  -- A NEW conversational admission is refused once ACTIVE.
+  begin perform paige_chat_interactive_begin_v2('${th}','${id(10)}',null,'Late conversational',false,false,false);raise exception 'late conversational accepted';exception when others then if sqlerrm<>'INTERACTIVE_PROTOCOL_REQUIRED' then raise;end if;end;
 end $$;reset role;set role service_role;
 do $$begin
-  -- A conversational intent that is no longer the thread's current admission cannot use the
-  -- relaxed settle branch: the branch binds to the CURRENT latest admission, not a memory of one.
   -- An unsettled conversational intent that is no longer the thread's CURRENT admission cannot
   -- use the relaxed settle branch: it binds to the CURRENT latest admission, not a memory of one.
   begin perform paige_chat_interactive_settle('${th}','${a}','${t}','${conv2}','Late conversational',null,null,
@@ -97,6 +112,13 @@ do $$begin
   -- And a drifted re-settle of the receipt that DOES exist conflicts rather than rewriting it.
   begin perform paige_chat_interactive_settle('${th}','${a}','${t}','${conv}','Late drifted',null,null,
    '{"interactive":{"request_intent_id":"${conv}"},"turn_state":{"state":"FINAL"}}'::jsonb,null);raise exception 'drifted late settle accepted';exception when others then if sqlerrm<>'interactive receipt conflict' then raise;end if;end;
+end $$;
+
+do $$begin
+  -- A stopped conversational intent (latest cleared by Stop) can never settle again.
+  if exists(select 1 from paige_chat_threads where id='${th}' and interactive_latest_intent='${conv}') then raise exception 'stop did not clear latest';end if;
+  begin perform paige_chat_interactive_settle('${th}','${a}','${t}','${conv}','After stop',null,null,
+   '{"interactive":{"request_intent_id":"${conv}"},"turn_state":{"state":"FINAL"}}'::jsonb,null);raise exception 'stopped conversational settle accepted';exception when others then if sqlerrm<>'interactive receipt conflict' then raise;end if;end;
 end $$;
 select paige_chat_interactive_executor_v2('${th}','${a}','${t}','${next}','acquire');
 select paige_chat_interactive_settle('${th}','${a}','${t}','${next}','Protected answer',null,null,

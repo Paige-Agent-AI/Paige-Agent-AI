@@ -6889,4 +6889,3 @@ This entry is deliberately outside Section 4.0: the branch is not merged or depl
 ### Solo Sales customer invoice lifecycle — PR #1688 production closeout
 
 Merged `6c9e5a532884065a2c8c238e450655741aea6470`; web READY on both production addresses, four migrations applied, edge deployment reconciled at the same commit. Invoice publication, full/partial manual receipts and remaining balances, controlled access and shared offer refresh are shipped source/runtime. Overall PARTIAL: authenticated customer-money and provider acceptance proof owed; email testing owner-deferred. No verification customer writes or sends. Canonical stores, approval/Rail and Settings Billing boundary preserved; INT-299 deferred. Details: [release packet](delivery/solo-sales-invoice-publication.md).
-

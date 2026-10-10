@@ -831,10 +831,84 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
         } else {
           results.funding_readiness_recalculated = true;
         }
+      } else {
+        // No profile row: the readiness recalc has nothing to attach to. Named explicitly
+        // (review P3) so a caller can tell "not applicable here" from "not run".
+        results.funding_readiness_no_profile_row = true;
       }
     } catch (frErr) {
       console.error("Funding readiness recalc error:", frErr);
     }
+
+    // ========== OUTCOME CLASSIFICATION (#734) ==========
+    //
+    // Additive summary a caller can classify from without re-deriving per-group counts:
+    //   complete — every attempted write landed (dropped rows were never attempted);
+    //   partial  — some writes landed, or a group was skipped (no row to write to);
+    //   failed   — writes were attempted and NONE landed anywhere.
+    // Only the four PAYLOAD groups (scores, negative_items, hard_inquiries, positive_accounts)
+    // can make a run not-a-total-failure: a derived recalc landing while every requested row
+    // failed must not dress that up as success. Derived groups (credit_factors, discrepancies,
+    // funding_readiness) still surface their own failures in failed_groups. The fire-and-forget
+    // followups are excluded entirely: initiated ≠ completed, and their outcomes stay unknown
+    // at response time by design. Computed HERE — before the step-9 audit row embeds `results`
+    // — so the durable record carries the same verdict the response does (review P3).
+    currentStep = "outcome";
+    const failedGroups: string[] = [];
+    const skippedGroups: string[] = [];
+    const groupsAttempted: string[] = [];
+    let anyRequestedWriteSucceeded = false;
+
+    if (payload.scores) {
+      groupsAttempted.push("scores");
+      if (results.scores_error) failedGroups.push("scores");
+      else if (results.scores_no_profile_row) skippedGroups.push("scores");
+      else if (results.scores_updated === true) anyRequestedWriteSucceeded = true;
+    }
+    const negRes = results.negative_items;
+    if (negRes && negRes.inserted + negRes.updated + negRes.failed > 0) {
+      groupsAttempted.push("negative_items");
+      if (negRes.failed > 0) failedGroups.push("negative_items");
+      if (negRes.inserted + negRes.updated > 0) anyRequestedWriteSucceeded = true;
+    }
+    const inqRes = results.hard_inquiries;
+    if (inqRes && inqRes.inserted + inqRes.failed > 0) {
+      groupsAttempted.push("hard_inquiries");
+      if (inqRes.failed > 0) failedGroups.push("hard_inquiries");
+      if (inqRes.inserted > 0) anyRequestedWriteSucceeded = true;
+    }
+    const acctRes = results.positive_accounts;
+    if (acctRes && acctRes.inserted + acctRes.updated + acctRes.failed > 0) {
+      groupsAttempted.push("positive_accounts");
+      if (acctRes.failed > 0) failedGroups.push("positive_accounts");
+      if (acctRes.inserted + acctRes.updated > 0) anyRequestedWriteSucceeded = true;
+    }
+    if (results.credit_factors_recalculated === true || results.credit_factors_error || results.factor_score_error) {
+      groupsAttempted.push("credit_factors");
+      if (results.credit_factors_recalculated !== true) failedGroups.push("credit_factors");
+    }
+    // The discrepancies profile write always runs; its readback classifies it.
+    groupsAttempted.push("discrepancies");
+    if (results.discrepancies_error) failedGroups.push("discrepancies");
+    else if (results.discrepancies_no_profile_row) skippedGroups.push("discrepancies");
+    if (results.funding_readiness_recalculated === true || results.funding_readiness_error) {
+      groupsAttempted.push("funding_readiness");
+      if (results.funding_readiness_recalculated !== true) failedGroups.push("funding_readiness");
+    } else if (results.funding_readiness_no_profile_row) {
+      skippedGroups.push("funding_readiness");
+    }
+
+    let outcomeStatus: "complete" | "partial" | "failed";
+    if (failedGroups.length === 0 && skippedGroups.length === 0) outcomeStatus = "complete";
+    else if (!anyRequestedWriteSucceeded && failedGroups.length > 0) outcomeStatus = "failed";
+    else outcomeStatus = "partial";
+
+    results.outcome = {
+      status: outcomeStatus,
+      groups_attempted: groupsAttempted,
+      failed_groups: failedGroups,
+      skipped_groups: skippedGroups,
+    };
 
     // ========== STEP 9: ACTIVITY LOG ==========
     currentStep = "audit_log";
@@ -936,76 +1010,10 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
       console.error("Predictions setup failed (non-blocking):", predErr);
     }
 
-    // ========== OUTCOME CLASSIFICATION (#734) ==========
-    //
-    // Additive summary a caller can classify from without re-deriving per-group counts:
-    //   complete — every attempted write landed (dropped rows were never attempted);
-    //   partial  — some writes landed, or a group was skipped (no row to write to);
-    //   failed   — writes were attempted and NONE landed anywhere.
-    // Only the four PAYLOAD groups (scores, negative_items, hard_inquiries, positive_accounts)
-    // can make a run not-a-total-failure: a derived recalc landing while every requested row
-    // failed must not dress that up as success. Derived groups (credit_factors, discrepancies,
-    // funding_readiness) still surface their own failures in failed_groups. The fire-and-forget
-    // followups are excluded entirely: initiated ≠ completed, and their outcomes stay unknown
-    // at response time by design.
-    currentStep = "outcome";
-    const failedGroups: string[] = [];
-    const skippedGroups: string[] = [];
-    const groupsAttempted: string[] = [];
-    let anyRequestedWriteSucceeded = false;
-
-    if (payload.scores) {
-      groupsAttempted.push("scores");
-      if (results.scores_error) failedGroups.push("scores");
-      else if (results.scores_no_profile_row) skippedGroups.push("scores");
-      else if (results.scores_updated === true) anyRequestedWriteSucceeded = true;
-    }
-    const negRes = results.negative_items;
-    if (negRes && negRes.inserted + negRes.updated + negRes.failed > 0) {
-      groupsAttempted.push("negative_items");
-      if (negRes.failed > 0) failedGroups.push("negative_items");
-      if (negRes.inserted + negRes.updated > 0) anyRequestedWriteSucceeded = true;
-    }
-    const inqRes = results.hard_inquiries;
-    if (inqRes && inqRes.inserted + inqRes.failed > 0) {
-      groupsAttempted.push("hard_inquiries");
-      if (inqRes.failed > 0) failedGroups.push("hard_inquiries");
-      if (inqRes.inserted > 0) anyRequestedWriteSucceeded = true;
-    }
-    const acctRes = results.positive_accounts;
-    if (acctRes && acctRes.inserted + acctRes.updated + acctRes.failed > 0) {
-      groupsAttempted.push("positive_accounts");
-      if (acctRes.failed > 0) failedGroups.push("positive_accounts");
-      if (acctRes.inserted + acctRes.updated > 0) anyRequestedWriteSucceeded = true;
-    }
-    if (results.credit_factors_recalculated === true || results.credit_factors_error || results.factor_score_error) {
-      groupsAttempted.push("credit_factors");
-      if (results.credit_factors_recalculated !== true) failedGroups.push("credit_factors");
-    }
-    // The discrepancies profile write always runs; its readback classifies it.
-    groupsAttempted.push("discrepancies");
-    if (results.discrepancies_error) failedGroups.push("discrepancies");
-    else if (results.discrepancies_no_profile_row) skippedGroups.push("discrepancies");
-    if (results.funding_readiness_recalculated === true || results.funding_readiness_error) {
-      groupsAttempted.push("funding_readiness");
-      if (results.funding_readiness_recalculated !== true) failedGroups.push("funding_readiness");
-    }
-
-    let outcomeStatus: "complete" | "partial" | "failed";
-    if (failedGroups.length === 0 && skippedGroups.length === 0) outcomeStatus = "complete";
-    else if (!anyRequestedWriteSucceeded && failedGroups.length > 0) outcomeStatus = "failed";
-    else outcomeStatus = "partial";
-
-    results.outcome = {
-      status: outcomeStatus,
-      groups_attempted: groupsAttempted,
-      failed_groups: failedGroups,
-      skipped_groups: skippedGroups,
-    };
-
-    // success is now a claim about the writes: false only when writes were attempted and
-    // none landed. A partial run keeps success:true — writes DID land, and the per-group
-    // evidence + outcome.status carry the failure detail for the caller to act on.
+    // ========== OUTCOME CLASSIFICATION (computed in STEP 9's preamble; see there) ==========
+    // success is a claim about the writes: false only when writes were attempted and none
+    // landed. A partial run keeps success:true — writes DID land, and the per-group evidence
+    // + outcome.status carry the failure detail for the caller to act on.
     const allWritesFailed = outcomeStatus === "failed";
     return new Response(JSON.stringify({ success: !allWritesFailed, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

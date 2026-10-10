@@ -44,8 +44,10 @@ let syncStatus = 200;
 let syncFetchThrows = false;
 // What a 200 from the sync carries since #734: its own verdict about the writes. Defaults to a
 // clean complete run; §10 overrides it per case. syncBody: null models a callee that reports no
-// verdict at all (the apply must fail closed on that shape).
+// verdict at all (the apply must fail closed on that shape). A non-2xx body defaults to a bare
+// error; §10.9 overrides it to model the callee's partial_results uncertain class.
 let syncBody200 = { success: true, results: { outcome: { status: "complete", groups_attempted: ["scores"], failed_groups: [], skipped_groups: [] } } };
+let syncErrBody = null;
 globalThis.fetch = async (url, init) => {
   const href = String(url);
   if (href.includes("sync-credit-report-data")) {
@@ -53,7 +55,7 @@ globalThis.fetch = async (url, init) => {
     // A TRANSPORT REJECTION: the fetch itself throwing before any response (DNS, reset, timeout) —
     // distinct from a non-2xx response, and the case #729 finding 3 left unhandled.
     if (syncFetchThrows) throw new TypeError("network error: connection reset");
-    return new Response(JSON.stringify(syncStatus === 200 ? (syncBody200 ?? { success: true }) : { error: "boom" }),
+    return new Response(JSON.stringify(syncStatus === 200 ? (syncBody200 ?? { success: true }) : (syncErrBody ?? { error: "boom" })),
       { status: syncStatus, headers: { "Content-Type": "application/json" } });
   }
   throw new Error(`apply-extraction: unexpected fetch to ${href}`);
@@ -64,10 +66,11 @@ await import("../../supabase/functions/paige-apply-extraction/index.ts");
 const { capturedHandler } = await import("./stub-serve.mjs");
 const handler = capturedHandler();
 
-async function drive({ approved_keys, row = {}, claimReturns, releaseError = null, sync = 200, syncThrows = false, auth = true, syncBody = undefined }) {
+async function drive({ approved_keys, row = {}, claimReturns, releaseError = null, sync = 200, syncThrows = false, auth = true, syncBody = undefined, errBody = undefined }) {
   syncCalls = []; syncStatus = sync; syncFetchThrows = syncThrows;
   syncBody200 = syncBody === null ? null
     : (syncBody ?? { success: true, results: { outcome: { status: "complete", groups_attempted: ["scores"], failed_groups: [], skipped_groups: [] } } });
+  syncErrBody = errBody ?? null;
   const rec = fake.setScenario({
     authUser: auth ? { id: USER } : null,
     // `row: null` means the caller CANNOT SEE the upload — RLS returned nothing. Spreading null
@@ -297,6 +300,24 @@ async function drive({ approved_keys, row = {}, claimReturns, releaseError = nul
   assert("10.8 a 200 with NO verdict fails closed — never settles applied on an unverifiable run",
     r.status === 502 && r.rec.updates.filter((u) => u.table === "credit_report_uploads").at(-1)?.row.extraction_review_state === "awaiting_review",
     `status ${r.status}`);
+}
+{
+  // The callee's uncertain class: a 500 whose body carries partial_results (writes may have
+  // landed before the failure). The sentence must say UNCERTAIN — the blanket "Nothing was
+  // changed" would be a lie about rows that may stand.
+  const r = await drive({
+    approved_keys: ["negative_items"],
+    sync: 500,
+    errBody: { error: "Internal error", failed_step: "audit_log", partial_results: { negative_items: { inserted: 2, updated: 0, failed: 0, dropped: 0 } } },
+  });
+  assert("10.9 a 500 with partial_results is reported UNCERTAIN — never 'Nothing was changed'",
+    r.status === 502 && /couldn't confirm what saved/.test(String(r.body?.error)) && r.body?.outcome_uncertain === true
+      && r.rec.updates.filter((u) => u.table === "credit_report_uploads").at(-1)?.row.extraction_review_state === "awaiting_review",
+    JSON.stringify(r.body));
+  const plain = await drive({ approved_keys: ["negative_items"], sync: 502 });
+  assert("10.10 a plain non-2xx without partial_results keeps the definite 'Nothing was changed'",
+    plain.status === 502 && /Nothing was changed/.test(String(plain.body?.error)) && !plain.body?.outcome_uncertain,
+    JSON.stringify(plain.body));
 }
 
 console.log(`\n${passed} passed, ${failures.length} failed`);

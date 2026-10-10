@@ -73,7 +73,7 @@ const basePayload = (over = {}) => ({
   ...over,
 });
 
-async function drive({ auth = "user", target = USER, payload, scenario = {} }) {
+async function drive({ auth = "user", target = USER, payload, scenario = {}, rejectFollowup = false }) {
   const headers = { "Content-Type": "application/json" };
   if (auth === "user") headers.Authorization = "Bearer user-jwt";
   else if (auth === "service") headers.Authorization = "Bearer service-role-key";
@@ -85,7 +85,7 @@ async function drive({ auth = "user", target = USER, payload, scenario = {} }) {
     // default: a profile row exists so the scores step has something to write
   }
   const rec = fake.setScenario(sc);
-  fetchLog = []; rejectStageDisputes = false;
+  fetchLog = []; rejectStageDisputes = rejectFollowup;
   let res, body;
   try {
     res = await handler(new Request("http://local/sync-credit-report-data", {
@@ -124,6 +124,9 @@ const profileRow = (id = USER) => ({ user_id: id, estimated_fico_eq: 600, estima
       && Array.isArray(r.body.results?.outcome?.failed_groups) && r.body.results.outcome.failed_groups.length === 0
       && r.body.results.outcome.groups_attempted.includes("hard_inquiries"),
     JSON.stringify(r.body.results?.outcome));
+  assert("1.6 the durable audit row carries the same verdict the response does",
+    audit?.data?.sync_results?.outcome?.status === "complete",
+    JSON.stringify(audit?.data?.sync_results?.outcome));
 }
 
 // ── 2. SCORES: a zero-row profiles update is NOT a success (#734 gap 4).
@@ -310,6 +313,14 @@ const profileRow = (id = USER) => ({ user_id: id, estimated_fico_eq: 600, estima
     facUpd.body.results?.credit_factors_recalculated === false && !!facUpd.body.results?.credit_factors_error
       && facUpd.body.results?.outcome?.failed_groups?.includes("credit_factors"),
     JSON.stringify({ f: facUpd.body.results?.credit_factors_recalculated, e: facUpd.body.results?.credit_factors_error }));
+  const frNoRow = await drive({
+    payload: basePayload({ scores: undefined, negative_items: [], hard_inquiries: [], positive_accounts: [], discrepancies: [] }),
+    scenario: { db: { profiles: [] } },
+  });
+  assert("8.7 no profile row → the funding-readiness recalc is skipped and named, not silent",
+    frNoRow.body.results?.funding_readiness_no_profile_row === true
+      && frNoRow.body.results?.outcome?.skipped_groups?.includes("funding_readiness"),
+    JSON.stringify({ f: frNoRow.body.results?.funding_readiness_no_profile_row, s: frNoRow.body.results?.outcome?.skipped_groups }));
 }
 
 // ── 9. FIRE-AND-FORGET FOLLOWUPS are reported as INITIATED — never as done.
@@ -319,8 +330,8 @@ const profileRow = (id = USER) => ({ user_id: id, estimated_fico_eq: 600, estima
     Array.isArray(r.body.results?.followups_initiated)
       && ["detect-credit-alerts", "auto-stage-disputes", "generate-credit-predictions"].every((n) => r.body.results.followups_initiated.includes(n)),
     JSON.stringify(r.body.results?.followups_initiated));
-  assert("9.2 a REJECTED fire-and-forget fetch does not fail the sync",
-    (await drive({ scenario: { db: { profiles: [profileRow()] } } })).body.results?.outcome?.status === "complete");
+  assert("9.2 a REJECTED fire-and-forget fetch does not fail the sync (the rejection is exercised)",
+    (await drive({ scenario: { db: { profiles: [profileRow()] } }, rejectFollowup: true })).body.results?.outcome?.status === "complete");
   const alertFail = await drive({ scenario: { db: { profiles: [profileRow()] }, alertInvokeError: { message: "alerts down" } } });
   assert("9.3 a detect-credit-alerts invoke error is reported, not swallowed, and excluded from initiated",
     alertFail.body.results?.followup_errors?.["detect-credit-alerts"] === "alerts down"

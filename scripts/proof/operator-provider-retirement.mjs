@@ -74,7 +74,7 @@ const start=n8n.indexOf('CREATE OR REPLACE FUNCTION public.clear_tenant_n8n_conn
 const body=n8n.indexOf('AS $$',start),end=n8n.indexOf('$$;',body+5);
 await db.exec(n8n.slice(start,end+3));
 if(!process.argv.includes('--resource-baseline')) {
- const migration=await readFile('supabase/migrations/20270602000204_operator_provider_retirement.sql','utf8');await db.exec(migration);await db.exec(migration);
+ const migration=await readFile('supabase/migrations/20270602000205_operator_provider_retirement.sql','utf8');await db.exec(migration);await db.exec(migration);
 }
 const op='00000000-0000-0000-0000-000000000080',claim='00000000-0000-0000-0000-000000000081',archiveOp='00000000-0000-0000-0000-000000000082';
 const key='twilio:'+child,nkey='n8n:'+agency,admin='00000000-0000-0000-0000-000000000003';

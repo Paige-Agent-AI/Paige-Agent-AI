@@ -32,17 +32,6 @@ const EXEMPT = new Map([
       "render em-dashes, so a read waiting for its wiring layer is correct. Deleting working " +
       "reads to satisfy a graph check would be the waste, not the fix.",
   ],
-  [
-    "src/operator/data/useTeamPulse.ts",
-    "The platform seat roster read (`list_platform_staff()`), orphaned when its only consumer — " +
-      "`FleetTeamPulseSurface.tsx` — was stripped as a retired-pack port. The §58 record in " +
-      "`src/operator/ia/viewSources.ts` keeps this capability OWED to the v3 Settings → Team port " +
-      "(Layer 6 wiring), and `carries: [\"fleet/team-pulse\"]` is its drop-nothing ledger entry. " +
-      "Same class as `useOperatorChrome.ts` above: a real read waiting for its wiring layer. The " +
-      "SURFACE was deleted because v3 draws Team Pulse nowhere and its design is superseded; the " +
-      "READ is kept because the v3 port will need exactly this RPC and re-deriving it would be the " +
-      "waste, not the fix.",
-  ],
 ]);
 
 const EXTS = ["", ".tsx", ".ts", "/index.tsx", "/index.ts"];
@@ -52,7 +41,7 @@ function resolve(spec, from) {
   const base = spec.startsWith("@/") ? join("src", spec.slice(2)) : join(dirname(from), spec);
   for (const ext of EXTS) {
     const p = base + ext;
-    if (existsSync(p) && statSync(p).isFile()) return p;
+    if (existsSync(p) && statSync(p).isFile()) return p.replaceAll("\\", "/");
   }
   return null;
 }
@@ -86,7 +75,7 @@ function listModules(dir) {
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) out.push(...listModules(p));
-    else if (/\.(tsx?|ts)$/.test(name) && !/\.test\.|\.d\.ts$/.test(name)) out.push(p);
+    else if (/\.(tsx?|ts)$/.test(name) && !/\.test\.|\.d\.ts$/.test(name)) out.push(p.replaceAll("\\", "/"));
   }
   return out;
 }

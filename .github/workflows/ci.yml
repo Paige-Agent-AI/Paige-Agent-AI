@@ -76,6 +76,8 @@ jobs:
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof
         run: node scripts/proof/operator-provider-retirement.mjs --postgres
+      - name: Operator Intelligence eval metadata, real caller guards and audit refusal in disposable PostgreSQL
+        run: node scripts/proof/operator-intelligence-eval.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:

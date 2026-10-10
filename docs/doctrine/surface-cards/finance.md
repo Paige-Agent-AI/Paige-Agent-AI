@@ -1,6 +1,6 @@
 # Solo Finance
 
-- **Owner job and user flow:** inspect the company's financial condition, trace evidence, review exceptions and prepare a governed follow-up. Six views: Overview, Banking & Cash, Receivables, Expenses & Payables, Profitability, Budgeting & Forecasting. Connection setup belongs to Settings Integrations.
+- **Owner job and user flow:** inspect the company's financial condition, trace evidence, review exceptions and prepare a governed follow-up. Seven views: Overview, Banking & Cash, Debt & Credit, Receivables, Expenses & Payables, Profitability, Budgeting & Forecasting. Connection setup belongs to Settings Integrations.
 - **Tenant data / domain owner:** Finance owns presentation and future approved domain reads; Sales owns canonical invoices, receipts, allocations and metric producers. Integrations owns connection activation. No independent accounting/payment ledger.
 - **Solo shell placement:** additive `/solo/:account/finance/*` destination in the existing shell and persistent PAIGE workspace. No agency, operator or account-specific shell fork.
 - **States:** initial/refresh loading, unavailable source, empty/matching invoice records, partial/expired metric evidence, source error and retry, server refusal, workspace/authentication change, paginated reads and evidence drawer close. No live create/edit/save effect exists in this initial consumer.
@@ -12,3 +12,5 @@
 - **Dependencies, collisions, and required browser proof:** Sales, Integrations, Analytics and Fabric owners retained. Finance has shared-nav priority; Operations parks overlapping shell files. Required source-backed authenticated owner/admin, wrong-role, workspace switch, negative-scope, refresh and evidence-expiry proof remains owed; local synthetic rendering is separate evidence.
 
 Current implementation and remaining target: [Finance brain record](../../brain/finance-department.md).
+
+Debt & Credit design approved October 10, 2026 with green deployment authority. Company debt reads remain unavailable; the approved UI supports distinct multiple accounts, nullable terms, currency/entity separation, verified matching and evidence expiry. No live debt ledger/provider/financial action is established.

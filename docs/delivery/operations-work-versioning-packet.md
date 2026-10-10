@@ -35,3 +35,7 @@ Flow-by-Flow, Flow Prototype and [Impeccable](https://github.com/pbakaus/impecca
 ## Solo API scope pre-edit packet
 
 Outcome: refuse direct Operations calls for agency, child and other excluded account types. Source: the existing isSoloStandalone contract requires account_type standalone and no parent. Apply that same registry condition inside the three Operations wrappers before record access or canonical delegation. Preserve membership, target-tenant authority, CAS, audit, canonical source ownership and default shared Planning reads. No lifecycle entitlement inference, operator-shell expansion, provider effect, customer mutation, identity change or new authority. Test excluded agency and parented-standalone scopes in disposable rollback SQL; existing standalone positives remain. Independent review and fresh exact-head CI are required; authenticated runtime remains UNVERIFIED.
+
+## Version precondition authority pre-edit follow-up
+
+Before CAS comparison, versioned Operations mutation must require canonical current membership and target-tenant admin/record creator/assignee visibility. Otherwise unrelated members could distinguish an existing stale record by its conflict response. Preserve the same canonical scope/mutation/audit/locks, no new authority; add a stale-version negative under unrelated target member/global role elsewhere. Fresh independent review and exact-head CI required. No customer runtime proof.

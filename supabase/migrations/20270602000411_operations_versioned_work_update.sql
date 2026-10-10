@@ -100,7 +100,7 @@ begin
   perform 1 from public.profiles where user_id = v_actor for update;
   if not found then raise exception 'PLAN_SCOPE_CHANGED' using errcode = '42501'; end if;
   v_tenant := public.current_user_tenant_id();
-  if v_tenant is distinct from p_expected_tenant_id then
+  if v_tenant is distinct from p_expected_tenant_id or not public.is_tenant_member(v_tenant) then
     raise exception 'PLAN_SCOPE_CHANGED' using errcode = '42501';
   end if;
 
@@ -114,6 +114,8 @@ begin
   if not found or v_row.tenant_id is distinct from v_tenant then
     raise exception 'PLAN_ITEM_UNAVAILABLE' using errcode = '42501';
   end if;
+  if not coalesce(public.is_tenant_admin(v_tenant) or v_row.created_by=v_actor or v_row.assigned_to_user_id=v_actor,false) then
+    raise exception 'PLAN_ITEM_UNAVAILABLE' using errcode='42501'; end if;
   -- Canonical writers touch updated_at. Compare the untouched source string at
   -- PostgreSQL precision while retaining the lock through the existing writer.
   if p_expected_updated_at is null or v_row.updated_at is distinct from p_expected_updated_at then

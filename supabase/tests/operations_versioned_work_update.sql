@@ -61,6 +61,7 @@ update public.profiles set active_tenant_id='ee010000-0000-4000-8000-00000000111
 select set_config('request.jwt.claim.sub','ee020000-0000-4000-8000-000000000001',true);
 select pg_temp.refused($s$select public.plan_update_item_scoped('ee010000-0000-4000-8000-00000000a001','ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111','done')$s$,'42501','global admin elsewhere cannot use released scoped wrapper');
 select pg_temp.refused($s$select public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'done')$s$,'42501','global admin elsewhere cannot use versioned wrapper');
+select pg_temp.refused($s$select public.plan_update_item_versioned('ee010000-0000-4000-8000-00000000a001','ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111','2000-01-01','done')$s$,'42501','unrelated member refused before stale version comparison');
 select pg_temp.check_true((select status='blocked' from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'tenant authority refusal preserves source work');
 insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id) values
  ('ee010000-0000-4000-8000-00000000a011','ee010000-0000-4000-8000-000000001111','Test private project','custom',current_date,current_date+10,'individual','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000000003'),

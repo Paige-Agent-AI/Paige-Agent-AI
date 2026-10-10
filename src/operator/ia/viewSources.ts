@@ -35,8 +35,6 @@ export type ViewSource = {
 /** Keyed `${slotId}/${viewSlug}`. */
 export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
   // ── Fleet ──────────────────────────────────────────────────────────────────────────────────
-  // Overview is a second entry to the same governed Intelligence surface, not a second engine.
-  "fleet/overview": { bespoke: "IntelligenceSurface", carries: [] },
   "fleet/systems-check": { bespoke: "SystemsCheckSurface", carries: ["fleet/systems-check"] },
   "fleet/directory": { bespoke: "FleetConsole", carries: ["fleet/tenants", "provisioning/pipeline"] },
   "fleet/history": {

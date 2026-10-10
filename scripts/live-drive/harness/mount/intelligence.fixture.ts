@@ -32,14 +32,16 @@ export function useIntelligence(): IntelligenceRead {
     created_at: "2026-10-10T04:00:00Z", completed_at: "2026-10-10T04:00:01Z", dataset_status: "active", result_count: 1,
     results: [{ id: CASE, case_id: CASE, source_trace_id: TRACE, scorer: "exact_match", scorer_kind: "deterministic", score: 0, passed: false, status: "scored", judge_model: null, cost_estimate_usd: null }],
   }];
-  const refresh = () => setState("populated");
+  const refresh = () => setState(current => current === "canonical" ? current : "populated");
   const task = { ...syntheticTrajectory, models: syntheticTrajectory.models.map(m=>({ ...m,id:TRACE })),
     ...(state==='partial' ? { terminal_verified:false, history:{ ...syntheticTrajectory.history,complete:false,truncated:true } } : {}) };
   // Snapshot emitted by the actual canonical local completion + Operator SQL proof.
   // This is controlled synthetic source evidence, never an authenticated production read.
   const tasks=state==='canonical' ? canonical.page as unknown as TrajectoryPage : syntheticTrajectoryPage(empty ? [] : [task]);
+  const selected = { ...tasks, next_cursor: null, items: state === 'unlinked' ? [] : tasks.items.filter(t =>
+    request?.workId === t.id || (!!request?.traceId && t.models.some(m => m.id === request?.traceId))) };
   return { subject: "synthetic-operator", epoch: 1, access: state === "denied" ? "denied" : "allowed", retryAccess: refresh,
     metrics: read(metrics, state, refresh), traces: read(traces, state, refresh), evals: read(runs, state, refresh),
-    trajectories:read(tasks,state,refresh),selectedTrajectory:read(state==='canonical' ? tasks : syntheticTrajectoryPage(state==='unlinked'||empty ? [] : [task]),state,refresh),
+    trajectories:read(tasks,state,refresh),selectedTrajectory:read(selected,state,refresh),
     trajectoryRequest:request,inspectTrajectory:setRequest,pageTrajectories:()=>setRequest(null) };
 }

@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Controlled provider-positive/negative/recovery proof plus a
 MOTION_PURPOSE: Existing popout focus context, reduced-motion safe; no additional motion.
 PROTECTED_SEAMS: Existing Twilio client/Edge secrets, role predicate, provider bindings, catalog locks, canonical credential clearing, exact journal lease, worker pause and retention RLS.
 
-INTERNAL_BUILD_IDENTITY: product=git-head-containing-this-record; base=c9a39d274c56a54649b3d90816e3859e2170cb98; deployment=none-before-release; environment=development; migrations=20270602000204_operator_provider_retirement; edge=operator-account-retirement; evidence=docs/evidence/ui-delivery/operator-provider-retirement.md. The PR records the resolved exact head and all subsequent delivery identities.
+INTERNAL_BUILD_IDENTITY: product=275cb49ee0ae8e58564751bf68ec9e6afd822bef; base=c9a39d274c56a54649b3d90816e3859e2170cb98; deployment=none-before-release; environment=development; migrations=20270602000204_operator_provider_retirement; edge=operator-account-retirement; evidence=docs/evidence/ui-delivery/operator-provider-retirement.md. Product source and captures are unchanged by this evidence-identity closeout; the PR records the final reviewed head and subsequent delivery identities.
 RELEASE_CHANNEL: development: controlled candidate; preview/production do not inherit authenticated proof.
 RELEASE_CLASSIFICATION: internal-only: bounded privileged Operator account-lifecycle repair.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version/name/announcement earned by local proof.

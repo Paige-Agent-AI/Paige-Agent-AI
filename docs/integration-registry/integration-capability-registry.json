@@ -727,8 +727,8 @@
         },
         {
           "path": "supabase/functions/quickbooks-sync-financials/index.ts",
-          "role": "provider_adapter",
-          "note": "read seam / Intuit API client."
+          "role": "fail_closed_containment",
+          "note": "Authenticate first; authorized requests return FINANCE_SOURCE_UNAVAILABLE without privileged data or provider traffic until the company-bound read adapter is proven."
         },
         {
           "path": "supabase/functions/quickbooks-webhook/index.ts",

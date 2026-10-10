@@ -11,6 +11,7 @@ import {
 import { landAt, operatorLandingFor, readActAsTenant } from "@/operator/actAs";
 import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
 import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
+import AccountDetailsDialog from "@/operator/surfaces/AccountDetailsDialog";
 
 /**
  * Fleet · Directory — authoritative v3 source:
@@ -140,6 +141,7 @@ export function FleetDirectoryView({
   loading = false,
   error = null,
   onEnter,
+  onDetails,
 }: {
   tenants: FleetTenant[];
   classificationVisible: boolean;
@@ -148,6 +150,7 @@ export function FleetDirectoryView({
   loading?: boolean;
   error?: string | null;
   onEnter: (tenant: FleetTenant) => void;
+  onDetails?: (tenant: FleetTenant) => void;
 }) {
   const [showInternal, setShowInternal] = useState(false);
   const internalCount = useMemo(
@@ -288,7 +291,8 @@ export function FleetDirectoryView({
               )}
               <button
                 type="button"
-                onClick={() => onEnter(row.tenant)}
+                onClick={() => (onDetails ?? onEnter)(row.tenant)}
+                aria-label={onDetails ? `Account details for ${row.tenant.name}` : undefined}
                 className="flex min-w-0 flex-1 flex-col border-0 border-b border-[var(--pg-line-soft)] bg-transparent px-0 py-[9px] text-left"
               >
                 <span className="flex min-w-0 items-center gap-[9px]">
@@ -329,9 +333,10 @@ export function FleetDirectoryView({
                   {statusNote(row.tenant) && (
                     <small className="whitespace-nowrap text-[10.5px] text-[var(--pg-muted)]">{statusNote(row.tenant)}</small>
                   )}
-                  <small className="ml-auto whitespace-nowrap text-[10.5px] text-[var(--pg-faint)]">Enter →</small>
+                  <small className="ml-auto whitespace-nowrap text-[10.5px] text-[var(--pg-faint)]">{onDetails ? "Account details" : "Enter →"}</small>
                 </span>
               </button>
+              {onDetails && <button type="button" onClick={() => onEnter(row.tenant)} aria-label={`Enter ${row.tenant.name}`} className="ml-3 min-h-11 shrink-0 px-3 text-[12px] text-[var(--pg-muted)] hover:text-[var(--pg-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">Enter →</button>}
             </div>
           ))}
 
@@ -350,7 +355,9 @@ export function FleetDirectoryView({
  * changes) — passed through rather than asked a second time here (§18).
  */
 export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {
-  const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
+  const [revision, setRevision] = useState(0);
+  const [selected, setSelected] = useState<{ id: string; actor: string | null } | null>(null);
+  const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true, revision);
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
   const { enterOperatorActAs, exitOperatorActAs, tenants: contextTenants, activeUserId } = useTenantContext();
   // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
@@ -424,13 +431,16 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
   );
 
   return (
-    <FleetDirectoryView
+    <><FleetDirectoryView
       tenants={tenants}
       classificationVisible={classificationVisible}
       detailVisible={detailVisible}
       loading={loading}
       error={error}
       onEnter={(tenant) => void enterTenant(tenant)}
+      onDetails={isPlatformOwner === true ? tenant => setSelected({ id: tenant.id, actor: activeUserId }) : undefined}
     />
+    {selected && selected.actor === activeUserId && isPlatformOwner === true && <AccountDetailsDialog key={`${selected.actor}:${selected.id}`} tenantId={selected.id} onClose={() => setSelected(null)} onChanged={() => setRevision(value => value + 1)} />}
+    </>
   );
 }

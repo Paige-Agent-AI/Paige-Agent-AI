@@ -71,6 +71,16 @@ vi.mock("./marketing-analytics-email", () => ({
   useEmailStats: (_tenantId: string, days: number) => { harness.emailDays.push(days); return { ...harness.email, retry: harness.emailRetry }; },
 }));
 
+// Content reads its library through Supabase; its own proof is marketing-content.render.test.tsx. Here it
+// shows only what the hub hands it, so the address wiring (?kind=, ?piece=) can be driven.
+vi.mock("./marketing-content", () => ({
+  MarketingContent: ({ kind, onKind, piece, onPiece, published }: { kind: string; onKind: (k: string) => void; piece: string | null; onPiece: (id: string | null) => void; published: { pages: number; forms: number } }) =>
+    <div data-content-stub data-kind={kind} data-piece={piece ?? ""} data-published={`${published.pages}/${published.forms}`}>
+      <button onClick={() => onKind("document")}>Stub documents</button><button onClick={() => onKind("all")}>Stub all</button>
+      <button onClick={() => onPiece("mc-9")}>Stub open</button><button onClick={() => onPiece(null)}>Stub close</button>
+    </div>,
+}));
+
 // Slice 2A — Catalog now opens on Offers, which reads through its own tenant-scoped adapter
 // (`useCatalogOffers`). This file proves the VIBE-OWNED half of the tab, so the offer read is
 // stubbed empty here and the two published-output tests below address that half explicitly by
@@ -933,6 +943,27 @@ describe("Solo Marketing department views", () => {
     // An unknown range falls back to the month rather than showing nothing.
     renderAt("/solo/42/growth/analytics?range=year");
     expect(analyticsSummary()).toContain("in the last 30 days");
+  });
+
+  it("Content's filter and open preview live in the address, and an unknown kind falls back to everything", () => {
+    useWorkspace();
+    renderAt("/solo/42/growth/content");
+    const stub = () => host.querySelector("[data-content-stub]")!;
+    expect(stub().getAttribute("data-kind")).toBe("all");
+    act(() => button("Stub documents")!.click());
+    expect(location()).toBe("/solo/42/growth/content?kind=document");
+    expect(stub().getAttribute("data-kind")).toBe("document");
+    act(() => button("Stub open")!.click());
+    expect(location()).toBe("/solo/42/growth/content?kind=document&piece=mc-9");
+    expect(stub().getAttribute("data-piece")).toBe("mc-9");
+    act(() => button("Stub close")!.click());
+    act(() => button("Stub all")!.click());
+    // Everything keeps a clean address.
+    expect(location()).toBe("/solo/42/growth/content");
+    act(() => root.unmount()); host.remove();
+    renderAt("/solo/42/growth/content?kind=spreadsheets&piece=mc-3");
+    expect(stub().getAttribute("data-kind")).toBe("all");
+    expect(stub().getAttribute("data-piece")).toBe("mc-3");
   });
 
   it("a capture point opens that form's panel on Overview, and Sales performance opens Sales › Performance", () => {

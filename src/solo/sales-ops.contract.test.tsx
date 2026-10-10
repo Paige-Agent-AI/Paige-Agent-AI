@@ -86,10 +86,7 @@ vi.mock("./data/useSoloTrust", () => ({
 }));
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.state }));
 // Audience, Content, Email and Ads read Supabase directly; this suite only needs them mounted, not reading.
-vi.mock("./marketing-planned", () => {
-  const view = (name: string) => () => <div data-planned-view={name}/>;
-  return { MarketingContent: view("content") };
-});
+vi.mock("./marketing-content", () => ({ MarketingContent: () => <div data-planned-view="content"/> }));
 vi.mock("./marketing-ads", () => ({ MarketingAds: () => <div data-planned-view="ads"/>, adsViewOf: () => "overview" }));
 vi.mock("./marketing-email", () => ({ MarketingEmail: () => <div data-planned-view="email"/> }));
 vi.mock("./marketing-audience", () => ({ MarketingAudience: () => <div data-planned-view="audience"/> }));

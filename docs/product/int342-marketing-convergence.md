@@ -396,6 +396,12 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
    - **S1c as built:** the desk says "Paige can't read an ad account yet" rather than the prototype's "No ad account
      connected", because Meta or Metricool can be connected in Integrations while nothing reads them; the preview
      header reads "Your business" (no tenant-name read added for a mock frame).
+   - **S1c shipped** (#1927 → `c710ec3`, 2026-10-10, live on paigeagent.ai).
+   - **S1e as built** (owner ask 2026-10-10, no prototype stage: pre-launch §4, frames shown on delivery): Content
+     is a gallery of the saved library, each piece shown as itself (an image its picture, a document its cover from
+     its blocks, copy its words, ad copy its headline and call to action), a ring of kinds, published work from Vibe
+     Studio, a kind filter in `?kind=` and a wide preview in `?piece=` (Download, Print / Save as PDF through the
+     Studio's own renderer, Copy text, draft-first Revise with PAIGE). Video has no preview yet and says so.
    - Overview gains capture points, recent leads and the rebuilt attention list (reading routing columns **or**
      automations, fixing C).
    - One form panel opens from Overview, Campaigns and Analytics via `?form=`.

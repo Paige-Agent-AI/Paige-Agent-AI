@@ -1,0 +1,1025 @@
+{
+  "capturedAt": "2026-10-10T19:05:52.662Z",
+  "workstream": "INT-280",
+  "purpose": "Mechanical post-merge identity and proof closeout for preceding owner-authorized releases; no product, policy or capability change",
+  "releases": {
+    "B": {
+      "capturedAt": "2026-10-10T18:22:46.116Z",
+      "pr": 1906,
+      "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+      "merge": "b2e613e98751bcbe665956403365c1a30fe233e3",
+      "channel": "production",
+      "review": {
+        "type": "independent non-author engineering",
+        "status": "COMPLETE/PASS",
+        "base": "024df3e3ee09078af9ac9c1c522b73bac297f4c0"
+      },
+      "checks": [
+        {
+          "name": "Supabase Preview",
+          "id": 114279138758,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://supabase.com/dashboard/project/midwbubmiklumxahnyvt"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "id": 114278904206,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://vercel.com/github"
+        },
+        {
+          "name": "contract",
+          "id": 114278735832,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571465/job/114278735832"
+        },
+        {
+          "name": "Validate UI delivery evidence",
+          "id": 114278735745,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571502/job/114278735745"
+        },
+        {
+          "name": "channel-sql",
+          "id": 114278735651,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571495/job/114278735651"
+        },
+        {
+          "name": "database-contract",
+          "id": 114278735649,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571465/job/114278735649"
+        },
+        {
+          "name": "verify",
+          "id": 114278735502,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571396/job/114278735502"
+        },
+        {
+          "name": "comms-provider-boundary",
+          "id": 114278735468,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571396/job/114278735468"
+        },
+        {
+          "name": "lint",
+          "id": 114278735293,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571417/job/114278735293"
+        },
+        {
+          "name": "web-fetch-hardening-smoke",
+          "id": 114278735209,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571396/job/114278735209"
+        },
+        {
+          "name": "audit",
+          "id": 114278735024,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571385/job/114278735024"
+        },
+        {
+          "name": "collections-sql",
+          "id": 114278734967,
+          "head": "7f30ea4321cf39d38c407b2b12e573eb6627df98",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074571386/job/114278734967"
+        }
+      ],
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success",
+          "description": "Deployment has completed",
+          "target_url": "https://vercel.com/paige-agent-ai/paige-agent-ai/DsGLPVXadGEtawBavgWXZkCabKmw"
+        },
+        {
+          "context": "Vercel Deployments – MMA",
+          "state": "success",
+          "description": "All required and affected projects deployed",
+          "target_url": "https://vercel.com/paige-agent-ai/~/deployments?repo=github%2FPaige-Agent-AI%2FPaige-Agent-AI&filterBranch=codex%2Fint-280-ai1b-history&sha=7f30ea4321cf39d38c407b2b12e573eb6627df98"
+        }
+      ],
+      "migration": {
+        "run": 38075392473,
+        "lintJob": 114281179598,
+        "deployJob": 114281241354,
+        "apply": "PASS",
+        "persistence": "PASS",
+        "catalog": {
+          "trigger": "CREATE TRIGGER trg_paige_trajectory_history BEFORE INSERT OR UPDATE ON public.paige_durable_work FOR EACH ROW EXECUTE FUNCTION _capture_paige_trajectory_history()",
+          "functions": [
+            {
+              "acl": "{postgres=X/postgres}",
+              "name": "_capture_paige_trajectory_history",
+              "definer": false,
+              "body_md5": "745d1f477f54d5fc760151e4f735d497",
+              "settings": [
+                "search_path=\"\""
+              ],
+              "arguments": "",
+              "volatility": "v"
+            }
+          ],
+          "migrations": [
+            {
+              "name": "int346_conversational_admission",
+              "version": "20270602000301"
+            },
+            {
+              "name": "operator_provider_retirement",
+              "version": "20270602000302"
+            },
+            {
+              "name": "operator_cached_audio_retirement",
+              "version": "20270602000303"
+            },
+            {
+              "name": "operator_generated_media_retirement",
+              "version": "20270602000304"
+            },
+            {
+              "name": "int280_durable_trajectory_history",
+              "version": "20270602000400"
+            }
+          ],
+          "raw_access": [
+            {
+              "role": "anon",
+              "any_dml": false
+            },
+            {
+              "role": "authenticated",
+              "any_dml": false
+            },
+            {
+              "role": "service_role",
+              "any_dml": false
+            }
+          ],
+          "history_column": {
+            "type": "jsonb",
+            "nullable": "YES"
+          },
+          "durable_boundary": {
+            "acl": "{postgres=arwdDxtm/postgres}",
+            "rls": true,
+            "forced": true
+          }
+        }
+      },
+      "deployment": {
+        "id": "dpl_CX4pMdPXpdy2dawVdSWz2ETn3Zk8",
+        "state": "READY",
+        "sha": "b2e613e98751bcbe665956403365c1a30fe233e3",
+        "aliases": [
+          "paigeagent.ai",
+          "app.paigeagent.ai",
+          "inbound.paigeagent.ai",
+          "paige-agent-ai.vercel.app",
+          "paige-agent-ai-paige-agent-ai.vercel.app",
+          "paige-agent-ai-git-main-paige-agent-ai.vercel.app"
+        ]
+      },
+      "authenticatedAcceptance": "UNVERIFIED - OWNER_LOGIN_HOLD",
+      "preview": {
+        "previousOwnedProjects": [
+          "tsrvzdvsmucuutncvygh",
+          "midwbubmiklumxahnyvt"
+        ],
+        "current": "ABSENT from post-merge branch inventory"
+      },
+      "customerRelease": "NOT_ASSIGNED - internal release only",
+      "executedTrajectoryProof": {
+        "run": 38074571396,
+        "job": 114278735468,
+        "steps": [
+          {
+            "name": "INT-280 canonical durable trajectory history in disposable PostgreSQL",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          }
+        ]
+      }
+    },
+    "Fleet": {
+      "capturedAt": "2026-10-10T18:26:10.292Z",
+      "pr": 1912,
+      "head": "d492dad65fa34705d1c90ebf007a7c81f15e832f",
+      "merge": "e70cf505136cbdeb6772495e5d9f4312a785bec5",
+      "channel": "production",
+      "review": {
+        "engineering": "COMPLETE/PASS",
+        "design": "COMPLETE/PASS",
+        "sourceHead": "d492dad65fa34705d1c90ebf007a7c81f15e832f",
+        "mainCompatibility": "PASS; reviewed B base, latest docs-only delta and B/C history preserved"
+      },
+      "checks": [
+        {
+          "name": "Vercel Preview Comments",
+          "id": 114278267525,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://vercel.com/github"
+        },
+        {
+          "name": "Supabase Preview",
+          "id": 114278252824,
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://supabase.com/dashboard/project/xygzykjyynhzqytbqnzu/branches"
+        },
+        {
+          "name": "comms-provider-boundary",
+          "id": 114278157035,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367301/job/114278157035"
+        },
+        {
+          "name": "verify",
+          "id": 114278156999,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367301/job/114278156999"
+        },
+        {
+          "name": "web-fetch-hardening-smoke",
+          "id": 114278156897,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367301/job/114278156897"
+        },
+        {
+          "name": "lint",
+          "id": 114278123418,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367520/job/114278123418"
+        },
+        {
+          "name": "database-contract",
+          "id": 114278123216,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367382/job/114278123216"
+        },
+        {
+          "name": "Validate UI delivery evidence",
+          "id": 114278122992,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367341/job/114278122992"
+        },
+        {
+          "name": "contract",
+          "id": 114278122942,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367382/job/114278122942"
+        },
+        {
+          "name": "audit",
+          "id": 114278122934,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074367390/job/114278122934"
+        }
+      ],
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success",
+          "description": "Deployment has completed",
+          "target_url": "https://vercel.com/paige-agent-ai/paige-agent-ai/DsEmR9o6Zun2GbaqMFiuzdNgTkMP"
+        },
+        {
+          "context": "Vercel Deployments – MMA",
+          "state": "success",
+          "description": "All required and affected projects deployed",
+          "target_url": "https://vercel.com/paige-agent-ai/~/deployments?repo=github%2FPaige-Agent-AI%2FPaige-Agent-AI&filterBranch=codex%2Fint-280-fleet-intelligence-removal&sha=d492dad65fa34705d1c90ebf007a7c81f15e832f"
+        }
+      ],
+      "localRegression": "38 tests PASS; both theme/shell bounded rendered review retained",
+      "migration": "NOT_APPLICABLE",
+      "edge": "NOT_APPLICABLE",
+      "supabasePreview": "NOT_APPLICABLE; UI-only no branch created, skipped means absent rather than passed",
+      "deployment": {
+        "id": "dpl_B7dsFZMNGcAoDVpS1cgRkRJJGqbd",
+        "state": "READY",
+        "sha": "e70cf505136cbdeb6772495e5d9f4312a785bec5",
+        "aliases": [
+          "paigeagent.ai",
+          "app.paigeagent.ai",
+          "inbound.paigeagent.ai",
+          "paige-agent-ai.vercel.app",
+          "paige-agent-ai-paige-agent-ai.vercel.app",
+          "paige-agent-ai-git-main-paige-agent-ai.vercel.app"
+        ]
+      },
+      "authenticatedAcceptance": "UNVERIFIED - OWNER_LOGIN_HOLD"
+    },
+    "C": {
+      "capturedAt": "2026-10-10T18:39:18.473Z",
+      "pr": 1911,
+      "head": "0f6f8af768353873c7339ca6086c911cdbc51b45",
+      "merge": "0bf8a331ea9b322d4b70d0006504d77b7022de94",
+      "channel": "production",
+      "review": {
+        "engineering": "COMPLETE/PASS",
+        "advisorDispositions": "Intentional private FORCE RLS and protected authenticated Operator RPC; no new finding",
+        "compatibility": "PASS against e70cf505; reviewed source and Fleet deletion retained"
+      },
+      "checks": [
+        {
+          "name": "Supabase Preview",
+          "id": 114281870365,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://supabase.com/dashboard/project/rvredfdveqhgtpskjsxv"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "id": 114281572485,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://vercel.com/github"
+        },
+        {
+          "name": "web-fetch-hardening-smoke",
+          "id": 114281273836,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424682/job/114281273836"
+        },
+        {
+          "name": "comms-provider-boundary",
+          "id": 114281273501,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424682/job/114281273501"
+        },
+        {
+          "name": "verify",
+          "id": 114281273337,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424682/job/114281273337"
+        },
+        {
+          "name": "contract",
+          "id": 114281273259,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424660/job/114281273259"
+        },
+        {
+          "name": "Validate UI delivery evidence",
+          "id": 114281273241,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424676/job/114281273241"
+        },
+        {
+          "name": "database-contract",
+          "id": 114281273070,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424660/job/114281273070"
+        },
+        {
+          "name": "collections-sql",
+          "id": 114281272988,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424697/job/114281272988"
+        },
+        {
+          "name": "lint",
+          "id": 114281272951,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424620/job/114281272951"
+        },
+        {
+          "name": "channel-sql",
+          "id": 114281272757,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424597/job/114281272757"
+        },
+        {
+          "name": "audit",
+          "id": 114281272632,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38075424596/job/114281272632"
+        },
+        {
+          "name": "web-fetch-hardening-smoke",
+          "id": 114278853035,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610396/job/114278853035"
+        },
+        {
+          "name": "comms-provider-boundary",
+          "id": 114278853018,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610396/job/114278853018"
+        },
+        {
+          "name": "database-contract",
+          "id": 114278852980,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610438/job/114278852980"
+        },
+        {
+          "name": "verify",
+          "id": 114278852876,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610396/job/114278852876"
+        },
+        {
+          "name": "contract",
+          "id": 114278852783,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610438/job/114278852783"
+        },
+        {
+          "name": "Validate UI delivery evidence",
+          "id": 114278852578,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610352/job/114278852578"
+        },
+        {
+          "name": "channel-sql",
+          "id": 114278852495,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610357/job/114278852495"
+        },
+        {
+          "name": "collections-sql",
+          "id": 114278852396,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610318/job/114278852396"
+        },
+        {
+          "name": "lint",
+          "id": 114278852355,
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38074610326/job/114278852355"
+        }
+      ],
+      "statuses": [
+        {
+          "context": "Vercel Deployments – MMA",
+          "state": "success",
+          "description": "All required and affected projects deployed",
+          "target_url": "https://vercel.com/paige-agent-ai/~/deployments?repo=github%2FPaige-Agent-AI%2FPaige-Agent-AI&filterBranch=codex%2Fint-280-ai1c-projection&sha=0f6f8af768353873c7339ca6086c911cdbc51b45"
+        },
+        {
+          "context": "Vercel",
+          "state": "success",
+          "description": "Deployment has completed",
+          "target_url": "https://vercel.com/paige-agent-ai/paige-agent-ai/FLyBuTJhxruTJ8SeBsEqUPKrbgHA"
+        }
+      ],
+      "canonicalProof": {
+        "run": 38075424682,
+        "job": 114281273501,
+        "steps": [
+          {
+            "name": "INT-280 canonical durable trajectory history in disposable PostgreSQL",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          }
+        ]
+      },
+      "migration": {
+        "run": 38076530116,
+        "jobs": [
+          {
+            "id": 114284567388,
+            "name": "lint",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 114284631195,
+            "name": "deploy",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ],
+        "apply": "PASS",
+        "persistence": "PASS",
+        "catalog": {
+          "functions": [
+            {
+              "acl": "{postgres=X/postgres}",
+              "name": "_capture_paige_trajectory_history",
+              "definer": false,
+              "body_md5": "745d1f477f54d5fc760151e4f735d497",
+              "settings": [
+                "search_path=\"\""
+              ],
+              "arguments": "",
+              "volatility": "v"
+            },
+            {
+              "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+              "name": "operator_intelligence_trajectories",
+              "definer": true,
+              "body_md5": "6c3b093b6496cdc188356f8a410cffd4",
+              "settings": [
+                "search_path=\"\""
+              ],
+              "arguments": "p_limit integer, p_before_at timestamp with time zone, p_before_id uuid, p_work_id uuid, p_trace_id uuid, p_subject_tenant uuid",
+              "volatility": "v"
+            }
+          ],
+          "migrations": [
+            {
+              "name": "int280_durable_trajectory_history",
+              "version": "20270602000400"
+            },
+            {
+              "name": "int280_operator_trajectories",
+              "version": "20270602000401"
+            }
+          ],
+          "execute_access": [
+            {
+              "role": "anon",
+              "execute": false
+            },
+            {
+              "role": "authenticated",
+              "execute": true
+            },
+            {
+              "role": "service_role",
+              "execute": false
+            }
+          ],
+          "durable_boundary": {
+            "acl": "{postgres=arwdDxtm/postgres}",
+            "rls": true,
+            "forced": true
+          }
+        },
+        "reviewedBodyMd5": "6c3b093b6496cdc188356f8a410cffd4"
+      },
+      "deployment": {
+        "id": "dpl_8RqUQQSHQYvRfDrFNuqRNakLWacx",
+        "state": "READY",
+        "sha": "0bf8a331ea9b322d4b70d0006504d77b7022de94",
+        "aliases": [
+          "paigeagent.ai",
+          "app.paigeagent.ai",
+          "inbound.paigeagent.ai",
+          "paige-agent-ai.vercel.app",
+          "paige-agent-ai-paige-agent-ai.vercel.app",
+          "paige-agent-ai-git-main-paige-agent-ai.vercel.app"
+        ]
+      },
+      "authenticatedAcceptance": "UNVERIFIED - OWNER_LOGIN_HOLD",
+      "preview": {
+        "projects": [
+          "zbaktfljifwatynfdlym",
+          "rvredfdveqhgtpskjsxv"
+        ],
+        "reason": "Automatic nonpersistent no-data PR1911 integration; reopening refreshed main-only checks and replaced the first preview",
+        "retirement": "ABSENT verified in post-merge branch inventory; both owned PR1911 projects retired, no retained INT-280 preview"
+      },
+      "customerRelease": "NOT_ASSIGNED - internal release only"
+    },
+    "D": {
+      "capturedAt": "2026-10-10T19:05:27.510Z",
+      "pr": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1914",
+      "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+      "merge": "f4c8e7e3c246842a3e586476b252982064b3fdf3",
+      "channel": "production",
+      "review": {
+        "engineering": "COMPLETE/PASS non-author exact-head c433 versus main0bf; no actionable findings",
+        "design": "COMPLETE/PASS non-author exact-head c433; approved design preserved",
+        "independentTests": "35/35 production-source tests",
+        "authorCombinedRegression": "87/87 tests in seven files"
+      },
+      "checks": [
+        {
+          "name": "Vercel Preview Comments",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://vercel.com/github"
+        },
+        {
+          "name": "verify",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193505/job/114286592547"
+        },
+        {
+          "name": "comms-provider-boundary",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193505/job/114286592290"
+        },
+        {
+          "name": "web-fetch-hardening-smoke",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193505/job/114286592077"
+        },
+        {
+          "name": "Validate UI delivery evidence",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193513/job/114286530182"
+        },
+        {
+          "name": "database-contract",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193497/job/114286530181"
+        },
+        {
+          "name": "contract",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193497/job/114286530058"
+        },
+        {
+          "name": "lint",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193500/job/114286529888"
+        },
+        {
+          "name": "audit",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38077193487/job/114286529828"
+        },
+        {
+          "name": "Supabase Preview",
+          "head": "c433c327c4a89a57e2c1373bcc843e59712f409b",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://supabase.com/dashboard/project/xygzykjyynhzqytbqnzu/branches"
+        }
+      ],
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success",
+          "description": "Deployment has completed",
+          "target_url": "https://vercel.com/paige-agent-ai/paige-agent-ai/FXTLyhShhQZhszuopfNra8auHeic"
+        },
+        {
+          "context": "Vercel Deployments – MMA",
+          "state": "success",
+          "description": "All required and affected projects deployed",
+          "target_url": "https://vercel.com/paige-agent-ai/~/deployments?repo=github%2FPaige-Agent-AI%2FPaige-Agent-AI&filterBranch=codex%2Fint-280-ai1d-inspector&sha=c433c327c4a89a57e2c1373bcc843e59712f409b"
+        }
+      ],
+      "canonicalProof": {
+        "run": 38077193505,
+        "job": 114286592290,
+        "steps": [
+          {
+            "name": "INT-280 canonical durable trajectory history in disposable PostgreSQL",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          }
+        ]
+      },
+      "verify": {
+        "run": 38077193505,
+        "job": 114286592547,
+        "conclusion": "success",
+        "unit": "PASS",
+        "build": "PASS",
+        "smokes": "PASS"
+      },
+      "migration": "NOT_APPLICABLE for D; released 20270602000400/401 persist",
+      "edge": "NOT_APPLICABLE",
+      "supabasePreview": "ABSENT/skipped/N/A UI-only; not a test pass",
+      "deployment": {
+        "id": "dpl_BTLrhPowEVEvAU2r85dFDG1XUPkA",
+        "state": "READY",
+        "sha": "f4c8e7e3c246842a3e586476b252982064b3fdf3",
+        "aliases": [
+          "paigeagent.ai",
+          "app.paigeagent.ai",
+          "inbound.paigeagent.ai",
+          "paige-agent-ai.vercel.app",
+          "paige-agent-ai-paige-agent-ai.vercel.app",
+          "paige-agent-ai-git-main-paige-agent-ai.vercel.app"
+        ]
+      },
+      "catalog": {
+        "trigger": "CREATE TRIGGER trg_paige_trajectory_history BEFORE INSERT OR UPDATE ON public.paige_durable_work FOR EACH ROW EXECUTE FUNCTION _capture_paige_trajectory_history()",
+        "functions": [
+          {
+            "acl": "{postgres=X/postgres}",
+            "name": "_capture_paige_trajectory_history",
+            "definer": false,
+            "body_md5": "8f99c2e2797927d7cffbd623fd149c54",
+            "settings": [
+              "search_path=\"\""
+            ],
+            "arguments": "",
+            "volatility": "v",
+            "normalized_body_md5": "745d1f477f54d5fc760151e4f735d497"
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+            "name": "operator_intelligence_eval_history",
+            "definer": true,
+            "body_md5": "9d68716774b8f9de00b7d80e5b05913b",
+            "settings": [
+              "search_path=\"\""
+            ],
+            "arguments": "p_limit integer",
+            "volatility": "v",
+            "normalized_body_md5": "0b3f6fc9a0576bc4d9c0ce5fb4e20506"
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+            "name": "operator_intelligence_trajectories",
+            "definer": true,
+            "body_md5": "2c6f15832a98ca35728a22391eddba00",
+            "settings": [
+              "search_path=\"\""
+            ],
+            "arguments": "p_limit integer, p_before_at timestamp with time zone, p_before_id uuid, p_work_id uuid, p_trace_id uuid, p_subject_tenant uuid",
+            "volatility": "v",
+            "normalized_body_md5": "6c3b093b6496cdc188356f8a410cffd4"
+          }
+        ],
+        "migrations": [
+          {
+            "name": "operator_intelligence_eval_history",
+            "version": "20270602000204"
+          },
+          {
+            "name": "int280_durable_trajectory_history",
+            "version": "20270602000400"
+          },
+          {
+            "name": "int280_operator_trajectories",
+            "version": "20270602000401"
+          }
+        ],
+        "history_column": {
+          "type": "jsonb",
+          "nullable": "YES"
+        },
+        "durable_boundary": {
+          "acl": "{postgres=arwdDxtm/postgres}",
+          "rls": true,
+          "forced": true
+        },
+        "durable_raw_access": [
+          {
+            "role": "anon",
+            "any_dml": false
+          },
+          {
+            "role": "authenticated",
+            "any_dml": false
+          },
+          {
+            "role": "service_role",
+            "any_dml": false
+          }
+        ],
+        "trajectory_execute": [
+          {
+            "role": "anon",
+            "execute": false
+          },
+          {
+            "role": "authenticated",
+            "execute": true
+          },
+          {
+            "role": "service_role",
+            "execute": false
+          }
+        ],
+        "normalization": "remove all whitespace, preserving every non-whitespace character; raw prosrc hashes retained separately"
+      },
+      "authenticatedAcceptance": "UNVERIFIED - OWNER_LOGIN_HOLD",
+      "coverage": "PARTIAL - supported canonical durable adopters; no universal parent/Chat/Live identity or complete fingerprints",
+      "customerRelease": "NOT_ASSIGNED - internal-only"
+    }
+  },
+  "finalPublicSource": {
+    "capturedAt": "2026-10-10T19:05:37.091Z",
+    "proofClass": "public unauthenticated static source",
+    "expectedMergeSha": "f4c8e7e3c246842a3e586476b252982064b3fdf3",
+    "authenticatedAcceptance": "UNVERIFIED - OWNER_LOGIN_HOLD",
+    "hosts": [
+      {
+        "origin": "https://app.paigeagent.ai",
+        "versionStatus": 200,
+        "version": {
+          "buildId": "f4c8e7e3c246842a3e586476b252982064b3fdf3-mv2rjwz9",
+          "customerUpdate": null
+        },
+        "exactBuild": true,
+        "htmlStatus": 200,
+        "assets": [
+          {
+            "path": "/assets/main-Gz37gF0S.js",
+            "status": 200,
+            "sha256": "4fdf1bf07c4d856f2aa37d12d1d8769c276acd76d793139698865b43c134b802",
+            "kind": "bootstrap"
+          },
+          {
+            "path": "/assets/main-DT2HoBv6.js",
+            "status": 200,
+            "sha256": "7a35d8af96940691d34370735fc6170016e602ed9d6e3f5e1b608d5c47c1458c",
+            "kind": "bootstrap"
+          },
+          {
+            "path": "/assets/OperatorEntry-BfJKPydJ.js",
+            "status": 200,
+            "sha256": "47231814935fc8c58c057c99bcc41b9b91f5c5f14aba91f34abe3daaacc1db88",
+            "kind": "Operator entry",
+            "sourceChecks": {
+              "legacyFleetOverviewReference": false,
+              "fleetIntelligenceMount": false,
+              "settingsIntelligenceMount": true,
+              "intelligenceMountCount": 1,
+              "systemsCheck": true
+            }
+          },
+          {
+            "path": "/assets/IntelligenceSurface-BLFsXVGM.js",
+            "status": 200,
+            "sha256": "9d9cb2e1f31910b7c351497cc5b55237e1cd46bb2526ef78d7c51016736e9956",
+            "kind": "Intelligence surface",
+            "sourceChecks": {
+              "executive": true,
+              "forensic": true,
+              "studio": true,
+              "lab": true,
+              "radar": true,
+              "evalProjection": true,
+              "trajectoryProjection": true,
+              "taskInspector": true,
+              "attemptTruth": true
+            }
+          }
+        ]
+      },
+      {
+        "origin": "https://paigeagent.ai",
+        "versionStatus": 200,
+        "version": {
+          "buildId": "f4c8e7e3c246842a3e586476b252982064b3fdf3-mv2rjwz9",
+          "customerUpdate": null
+        },
+        "exactBuild": true,
+        "htmlStatus": 200,
+        "assets": [
+          {
+            "path": "/assets/main-Gz37gF0S.js",
+            "status": 200,
+            "sha256": "4fdf1bf07c4d856f2aa37d12d1d8769c276acd76d793139698865b43c134b802",
+            "kind": "bootstrap"
+          },
+          {
+            "path": "/assets/main-DT2HoBv6.js",
+            "status": 200,
+            "sha256": "7a35d8af96940691d34370735fc6170016e602ed9d6e3f5e1b608d5c47c1458c",
+            "kind": "bootstrap"
+          },
+          {
+            "path": "/assets/OperatorEntry-BfJKPydJ.js",
+            "status": 200,
+            "sha256": "47231814935fc8c58c057c99bcc41b9b91f5c5f14aba91f34abe3daaacc1db88",
+            "kind": "Operator entry",
+            "sourceChecks": {
+              "legacyFleetOverviewReference": false,
+              "fleetIntelligenceMount": false,
+              "settingsIntelligenceMount": true,
+              "intelligenceMountCount": 1,
+              "systemsCheck": true
+            }
+          },
+          {
+            "path": "/assets/IntelligenceSurface-BLFsXVGM.js",
+            "status": 200,
+            "sha256": "9d9cb2e1f31910b7c351497cc5b55237e1cd46bb2526ef78d7c51016736e9956",
+            "kind": "Intelligence surface",
+            "sourceChecks": {
+              "executive": true,
+              "forensic": true,
+              "studio": true,
+              "lab": true,
+              "radar": true,
+              "evalProjection": true,
+              "trajectoryProjection": true,
+              "taskInspector": true,
+              "attemptTruth": true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "previewRetirement": {
+    "capturedAt": "2026-10-10T18:40:31.516Z",
+    "project": "xygzykjyynhzqytbqnzu",
+    "proofClass": "read-only branch inventory",
+    "ownedProjects": [
+      {
+        "project": "kxnslkrlwkdxlqznwish",
+        "present": false
+      },
+      {
+        "project": "tsrvzdvsmucuutncvygh",
+        "present": false
+      },
+      {
+        "project": "midwbubmiklumxahnyvt",
+        "present": false
+      },
+      {
+        "project": "zbaktfljifwatynfdlym",
+        "present": false
+      },
+      {
+        "project": "rvredfdveqhgtpskjsxv",
+        "present": false
+      }
+    ],
+    "result": "No owned INT-280 preview remains; unrelated branch resources were not modified",
+    "policy": "Local PostgreSQL first; automatic PR integration previews were nonpersistent and with_data=false; failed migration preview explicitly retired; reopen-generated C preview automatically retired on merge"
+  },
+  "acceptance": "UNVERIFIED - OWNER_LOGIN_HOLD",
+  "coverage": "PARTIAL - supported canonical durable adopters only"
+}

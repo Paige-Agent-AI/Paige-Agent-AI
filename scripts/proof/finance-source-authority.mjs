@@ -165,7 +165,8 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       const replace = `SELECT public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000203',1,0,'2026-01-01T00:00:00Z','complete',true,repeat('c',64),'[]');`;
       const snapshotWrite = holding(database, `RESET ROLE; ${replace}`);
       await snapshotWrite.held;
-      await blockedCompetitor(database, `SELECT public.fixture_expect_error($q$${replace.replace("repeat('c',64)","repeat('b',64)")}$q$,'40001');`, snapshotWrite.release);
+      // Identical version/evidence retries must reach CAS, not a unique-index 23505.
+      await blockedCompetitor(database, `SELECT public.fixture_expect_error($q$${replace}$q$,'40001');`, snapshotWrite.release);
       await snapshotWrite.done;
       assert.equal(sql(database, "SELECT version FROM finance_account_source_snapshots WHERE binding_id='50000000-0000-0000-0000-000000000203';").trim(), '1');
       assert.equal(sql(database, "SELECT count(*) FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000203';").trim(), '1');

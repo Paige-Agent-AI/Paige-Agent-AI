@@ -23,6 +23,39 @@ RESET ROLE;
 SET ROLE service_role;
 SELECT public.fixture_account_write('[{"native_id":"101","source_label":"Operating","product":"deposit","currency":"USD","current_balance":"100.10","available_cash":null},{"native_id":"102","source_label":"Operating","product":"deposit","currency":"EUR","current_balance":null}]');
 RESET ROLE;
+-- A matching observation/digest must not allow raw service writes or forged receipts.
+BEGIN;
+INSERT INTO finance_source_observations(id,tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,pages_complete,evidence_digest)
+ VALUES('70000000-0000-0000-0000-000000000200','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000200',1,'account-snapshot-2','bank_accounts','2026-01-01T00:00:00Z','complete',true,repeat('a',64));
+SET LOCAL ROLE service_role;
+SELECT public.fixture_expect_error($q$UPDATE finance_account_source_snapshots SET version=2,observation_id='70000000-0000-0000-0000-000000000200',
+ accounts='[{"native_id":"101","source_label":"Poison","product":"deposit","private_payload":"forbidden"}]',
+ normalized_digest=encode(sha256(convert_to('[{"native_id":"101","source_label":"Poison","product":"deposit","private_payload":"forbidden"}]'::jsonb::text,'UTF8')),'hex'),
+ receipt_run_id='80000000-0000-0000-0000-000000000200' WHERE binding_id='50000000-0000-0000-0000-000000000200'$q$,'42501');
+SELECT public.fixture_expect_error($q$DELETE FROM finance_account_source_snapshots WHERE binding_id='50000000-0000-0000-0000-000000000200'$q$,'42501');
+ROLLBACK;
+-- Current agency delegation plus an eligible actual child seat can refresh.
+-- Delegation alone still reads but cannot invent a canonical receipt actor.
+BEGIN;
+INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);
+INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000208','10000000-0000-0000-0000-000000000003',true,'synthetic-agency-source');
+INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
+ VALUES('50000000-0000-0000-0000-000000000208','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','quickbooks','40000000-0000-0000-0000-000000000208','sandbox','synthetic-agency-source','verified','60000000-0000-0000-0000-000000000208',now());
+SET LOCAL ROLE service_role;
+SELECT public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000208',1,0,'2026-01-01T00:00:00Z','complete',true,repeat('a',64),'[]');
+RESET ROLE;
+DELETE FROM tenant_members WHERE tenant_id='20000000-0000-0000-0000-000000000001' AND user_id='10000000-0000-0000-0000-000000000003';
+SET LOCAL ROLE authenticated;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000003',true);
+DO $$ BEGIN IF public.read_finance_account_source('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000208')->>'coverage'<>'complete' THEN RAISE EXCEPTION 'Delegated read was incorrectly denied'; END IF; END $$;
+SET LOCAL ROLE service_role;
+DO $$ BEGIN
+ BEGIN PERFORM public.replace_finance_account_source_snapshot('50000000-0000-0000-0000-000000000208',1,1,'2026-01-01T00:00:00Z','complete',true,repeat('b',64),'[]');
+  RAISE EXCEPTION 'Delegation minted an ineligible actor receipt';
+ EXCEPTION WHEN SQLSTATE '42501' THEN IF SQLERRM<>'Financial snapshot receipt authority unavailable' THEN RAISE; END IF;
+ END;
+END $$;
+ROLLBACK;
 SET ROLE authenticated;
 DO $$ DECLARE read jsonb:=public.fixture_account_read(); BEGIN
  IF jsonb_array_length(read->'accounts')<>2 OR read#>>'{accounts,0,native_id}'<>'101' OR read#>>'{accounts,1,native_id}'<>'102'

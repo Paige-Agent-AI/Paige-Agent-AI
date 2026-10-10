@@ -22,8 +22,8 @@ CREATE TABLE public.finance_account_source_snapshots (
  CHECK(coverage<>'complete' OR pages_complete)
 );
 ALTER TABLE public.finance_account_source_snapshots ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.finance_account_source_snapshots FROM PUBLIC,anon,authenticated;
-GRANT ALL ON public.finance_account_source_snapshots TO service_role;
+REVOKE ALL ON public.finance_account_source_snapshots FROM PUBLIC,anon,authenticated,service_role;
+GRANT SELECT ON public.finance_account_source_snapshots TO service_role;
 
 DO $$ DECLARE body text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; at integer; BEGIN
  body:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure); at:=position(anchor IN body);
@@ -65,7 +65,7 @@ CREATE FUNCTION public.replace_finance_account_source_snapshot(
 ) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE binding public.finance_source_bindings; existing public.finance_account_source_snapshots;
- row jsonb; field text; native_account text; actor uuid; observation uuid:=gen_random_uuid(); receipt uuid:=gen_random_uuid(); next_version bigint; source_stamp timestamptz;
+ row jsonb; field text; native_account text; actor uuid; locked_actor uuid; observation uuid:=gen_random_uuid(); receipt uuid:=gen_random_uuid(); next_version bigint; source_stamp timestamptz;
 BEGIN
  IF _expected_version IS NULL OR _expected_version<0 OR _binding_revision IS NULL OR _source_observed_at IS NULL
   OR _source_observed_at>clock_timestamp()+interval '5 minutes' OR _coverage IS NULL OR _coverage NOT IN ('complete','partial')
@@ -76,23 +76,29 @@ BEGIN
  END IF;
  SELECT * INTO binding FROM public.finance_source_bindings WHERE id=_binding_id;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial source unavailable' USING ERRCODE='42501'; END IF;
- -- Observation insertion composes existing actor/workspace/company/provider locks
- -- and revalidates verified revision. No earlier lookup grants financial access.
- next_version:=_expected_version+1;
- INSERT INTO public.finance_source_observations(id,tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,
-  source_observed_at,coverage,pages_complete,evidence_digest,reporting_basis)
- VALUES(observation,binding.tenant_id,binding.entity_id,binding.id,_binding_revision,'account-snapshot-'||next_version,'bank_accounts',
-  _source_observed_at,_coverage,_pages_complete,_evidence_digest,'provider_balance');
- -- Serialize snapshot replacement only after the canonical source lifecycle locks.
+ -- Establish the canonical actor -> provider -> company -> binding lock order
+ -- before serializing version-keyed observations. The observation guard still
+ -- performs all native identity/scope/verification checks before persistence.
+ IF binding.provider='plaid' THEN SELECT user_id INTO actor FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id;
+ ELSE SELECT user_id INTO actor FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id; END IF;
+ PERFORM public._finance_assert_stored_source_actor(actor,binding.tenant_id);
+ -- The canonical receipt requires this actual actor's active tenant seat.
+ -- Delegation alone cannot mint a receipt; never substitute another person's ID.
+ PERFORM 1 FROM public.tenant_members WHERE tenant_id=binding.tenant_id AND user_id=actor AND status='active' FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Financial snapshot receipt authority unavailable' USING ERRCODE='42501'; END IF;
+ IF binding.provider='plaid' THEN SELECT user_id,account_id INTO locked_actor,native_account FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id FOR SHARE;
+ ELSE SELECT user_id INTO locked_actor FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id FOR SHARE; END IF;
+ IF NOT FOUND OR locked_actor IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Financial source changed' USING ERRCODE='42501'; END IF;
+ PERFORM 1 FROM public.finance_company_entities WHERE tenant_id=binding.tenant_id AND id=binding.entity_id FOR SHARE;
+ SELECT * INTO binding FROM public.finance_source_bindings WHERE id=_binding_id FOR SHARE;
+ IF NOT FOUND OR binding.revision<>_binding_revision OR binding.verification_state<>'verified' THEN
+  RAISE EXCEPTION 'Financial source unavailable' USING ERRCODE='42501'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('finance-account-snapshot:'||binding.id::text,0));
  SELECT * INTO existing FROM public.finance_account_source_snapshots WHERE binding_id=binding.id FOR UPDATE;
  IF FOUND THEN
   IF existing.version<>_expected_version OR existing.binding_revision<>_binding_revision THEN RAISE EXCEPTION 'Financial snapshot changed' USING ERRCODE='40001'; END IF;
   IF _source_observed_at<existing.source_observed_at THEN RAISE EXCEPTION 'Financial source snapshot is older' USING ERRCODE='40001'; END IF;
  ELSIF _expected_version<>0 THEN RAISE EXCEPTION 'Financial snapshot changed' USING ERRCODE='40001'; END IF;
- IF binding.provider='plaid' THEN
-  SELECT account_id,user_id INTO native_account,actor FROM public.connected_bank_accounts WHERE id=binding.plaid_account_anchor_id;
- ELSE SELECT user_id INTO actor FROM public.quickbooks_connections WHERE id=binding.quickbooks_connection_id; END IF;
  IF EXISTS(SELECT 1 FROM jsonb_array_elements(_accounts) a GROUP BY a->>'native_id' HAVING count(*)>1) THEN RAISE EXCEPTION 'Duplicate native financial account' USING ERRCODE='22023'; END IF;
  FOR row IN SELECT value FROM jsonb_array_elements(_accounts) LOOP
   IF jsonb_typeof(row) IS DISTINCT FROM 'object' OR jsonb_typeof(row->'native_id') IS DISTINCT FROM 'string' OR length(btrim(row->>'native_id')) NOT BETWEEN 1 AND 500
@@ -128,6 +134,11 @@ BEGIN
    RAISE EXCEPTION 'Unsupported financial balance classification' USING ERRCODE='22023';
   END IF;
  END LOOP;
+ next_version:=_expected_version+1;
+ INSERT INTO public.finance_source_observations(id,tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,
+  source_observed_at,coverage,pages_complete,evidence_digest,reporting_basis)
+ VALUES(observation,binding.tenant_id,binding.entity_id,binding.id,_binding_revision,'account-snapshot-'||next_version,'bank_accounts',
+  _source_observed_at,_coverage,_pages_complete,_evidence_digest,'provider_balance');
  PERFORM public.record_capability_run(binding.tenant_id,actor,'finance_account_snapshot_refresh','capability_succeeded',receipt,NULL,NULL,NULL,NULL,NULL);
  INSERT INTO public.finance_account_source_snapshots(binding_id,tenant_id,entity_id,binding_revision,version,observation_id,source_observed_at,coverage,pages_complete,accounts,normalized_digest,receipt_run_id)
  VALUES(binding.id,binding.tenant_id,binding.entity_id,_binding_revision,next_version,observation,_source_observed_at,_coverage,_pages_complete,_accounts,encode(sha256(convert_to(_accounts::text,'UTF8')),'hex'),receipt)

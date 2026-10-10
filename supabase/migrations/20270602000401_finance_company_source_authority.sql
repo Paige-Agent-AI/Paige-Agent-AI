@@ -91,6 +91,9 @@ BEGIN
    PERFORM 1 FROM public.quickbooks_connections WHERE id=NEW.quickbooks_connection_id AND is_active FOR SHARE;
   END IF;
   IF NOT FOUND THEN RAISE EXCEPTION 'Financial account unavailable' USING ERRCODE='42501'; END IF;
+  -- Match observation lock order: provider before company before binding.
+  PERFORM 1 FROM public.finance_company_entities WHERE id=NEW.entity_id AND tenant_id=NEW.tenant_id AND is_active FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
   RETURN NEW;
  END IF;
  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Financial source history is retained' USING ERRCODE='42501'; END IF;
@@ -256,6 +259,9 @@ BEGIN
    RETURN jsonb_build_object('id',existing.id,'tenant_id',existing.tenant_id,'version',existing.version,'legal_name',existing.legal_name,'identity_basis',existing.identity_basis,'receipt_run_id',existing.receipt_run_id,'replayed',true);
   END IF;
   IF existing.version<>_expected_version OR existing.kind<>_kind THEN RAISE EXCEPTION 'Financial entity changed' USING ERRCODE='40001'; END IF;
+  IF existing.legal_name=_legal_name THEN
+   RETURN jsonb_build_object('id',existing.id,'tenant_id',existing.tenant_id,'version',existing.version,'legal_name',existing.legal_name,'identity_basis',existing.identity_basis,'receipt_run_id',existing.receipt_run_id,'replayed',true);
+  END IF;
   UPDATE public.finance_company_entities SET legal_name=_legal_name,version=version+1,updated_by=auth.uid(),receipt_run_id=gen_random_uuid(),updated_at=clock_timestamp() WHERE tenant_id=_expected_tenant_id AND id=_entity_id RETURNING * INTO result;
  ELSE
   IF _expected_version<>0 THEN RAISE EXCEPTION 'Financial entity changed' USING ERRCODE='40001'; END IF;

@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
  SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub',nullif(current_setting('test.actor',true),''))::uuid
 $$;
 \if :apply_quickbooks_migration
-\ir ../migrations/20270602000402_quickbooks_company_oauth_attempts.sql
+\ir ../migrations/20270602000422_quickbooks_company_oauth_attempts.sql
 \endif
 CREATE TABLE public.fixture_qb_result(value jsonb);
 GRANT ALL ON fixture_qb_result TO authenticated,service_role;
@@ -99,4 +99,12 @@ END $$;
 SET ROLE service_role;
 SELECT public.quickbooks_oauth_attempt_service('launch',public.fixture_qb_input());
 RESET ROLE;
+BEGIN;
+UPDATE tenants SET brand=jsonb_set(brand,'{business_brief,legalName}','"Other Company"') WHERE id='20000000-0000-0000-0000-000000000001';
+SET LOCAL ROLE service_role;
+SELECT public.fixture_expect_error($q$SELECT public.quickbooks_oauth_attempt_service('consume',public.fixture_qb_input())$q$,'40001');
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT public.fixture_expect_error($q$SELECT public.fixture_qb_prepare()$q$,'40001');
+ROLLBACK;
 SELECT 'QuickBooks OAuth authority PASS: nonce correlation only; no provider, tokens, connection or authenticated production acceptance' AS result;

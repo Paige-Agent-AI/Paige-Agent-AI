@@ -44,26 +44,6 @@ END $$;
 REVOKE ALL ON FUNCTION public._quickbooks_attempt_guard() FROM PUBLIC,anon,authenticated;
 CREATE TRIGGER quickbooks_attempt_identity BEFORE UPDATE ON public.quickbooks_oauth_attempts FOR EACH ROW EXECUTE FUNCTION public._quickbooks_attempt_guard();
 
--- Reuse the canonical Finance workspace gate with an actor recovered from private,
--- single-use consent state. Only service code can call this helper. Restore claims on
--- every exit; no browser/model parameter is an actor authority source.
-CREATE FUNCTION public._quickbooks_assert_stored_actor(_actor uuid,_tenant uuid) RETURNS void
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE old_claims text:=current_setting('request.jwt.claims',true); old_sub text:=current_setting('request.jwt.claim.sub',true);
-BEGIN
- PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
- PERFORM set_config('request.jwt.claim.sub',_actor::text,true);
- PERFORM public._finance_assert_workspace(_actor,_tenant);
- PERFORM set_config('request.jwt.claims',coalesce(old_claims,''),true);
- PERFORM set_config('request.jwt.claim.sub',coalesce(old_sub,''),true);
-EXCEPTION WHEN OTHERS THEN
- PERFORM set_config('request.jwt.claims',coalesce(old_claims,''),true);
- PERFORM set_config('request.jwt.claim.sub',coalesce(old_sub,''),true);
- RAISE;
-END $$;
-REVOKE ALL ON FUNCTION public._quickbooks_assert_stored_actor(uuid,uuid) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public._quickbooks_assert_stored_actor(uuid,uuid) TO service_role;
-
 CREATE FUNCTION public.begin_quickbooks_company_authorization(_expected_tenant_id uuid,_entity_id uuid,_expected_entity_version bigint,_environment text) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE entity public.finance_company_entities; state text; ticket text; proof text; attempt public.quickbooks_oauth_attempts;
@@ -73,6 +53,7 @@ BEGIN
  SELECT * INTO entity FROM public.finance_company_entities WHERE tenant_id=_expected_tenant_id AND id=_entity_id AND is_active FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
  IF entity.version IS DISTINCT FROM _expected_entity_version THEN RAISE EXCEPTION 'Financial company changed' USING ERRCODE='40001'; END IF;
+ IF entity.kind='workspace_company' AND NOT EXISTS(SELECT 1 FROM public.tenants t WHERE t.id=entity.tenant_id AND entity.legal_name=coalesce(nullif(t.brand->'business_brief'->>'legalName',''),nullif(t.brand->>'legal_entity_name',''))) THEN RAISE EXCEPTION 'Financial company changed' USING ERRCODE='40001'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended(auth.uid()::text||':'||entity.id::text||':'||_environment,0));
  UPDATE public.quickbooks_oauth_attempts SET status='cancelled',finished_at=clock_timestamp()
   WHERE actor_id=auth.uid() AND entity_id=entity.id AND environment=_environment AND status IN ('pending','launched','exchanging');
@@ -90,27 +71,33 @@ GRANT EXECUTE ON FUNCTION public.begin_quickbooks_company_authorization(uuid,uui
 
 CREATE FUNCTION public.quickbooks_oauth_attempt_service(_operation text,_input jsonb) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE attempt public.quickbooks_oauth_attempts; entity public.finance_company_entities; outcome text;
+DECLARE attempt public.quickbooks_oauth_attempts; entity public.finance_company_entities; outcome text; expected_status text;
 BEGIN
  IF _input IS NULL OR jsonb_typeof(_input)<>'object' OR _operation IS NULL OR _operation NOT IN ('launch','consume','validate_exchange','finish') THEN
   RAISE EXCEPTION 'QuickBooks authorization refused' USING ERRCODE='42501';
  END IF;
  IF _operation='launch' THEN
   SELECT * INTO attempt FROM public.quickbooks_oauth_attempts
-   WHERE launch_hash=_input->>'launch_hash' AND launch_proof_hash=_input->>'launch_proof_hash' AND state_hash=_input->>'state_hash' AND status='pending' FOR UPDATE;
+   WHERE launch_hash=_input->>'launch_hash' AND launch_proof_hash=_input->>'launch_proof_hash' AND state_hash=_input->>'state_hash' AND status='pending';
  ELSIF _operation='consume' THEN
   SELECT * INTO attempt FROM public.quickbooks_oauth_attempts
-   WHERE state_hash=_input->>'state_hash' AND binding_hash=_input->>'binding_hash' AND status='launched' FOR UPDATE;
+   WHERE state_hash=_input->>'state_hash' AND binding_hash=_input->>'binding_hash' AND status='launched';
  ELSE
-  SELECT * INTO attempt FROM public.quickbooks_oauth_attempts WHERE id=(_input->>'attempt_id')::uuid AND status='exchanging' FOR UPDATE;
+  SELECT * INTO attempt FROM public.quickbooks_oauth_attempts WHERE id=(_input->>'attempt_id')::uuid AND status='exchanging';
  END IF;
  IF NOT FOUND THEN RAISE EXCEPTION 'QuickBooks authorization refused' USING ERRCODE='42501'; END IF;
  IF attempt.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'QuickBooks authorization expired' USING ERRCODE='42501'; END IF;
- PERFORM public._quickbooks_assert_stored_actor(attempt.actor_id,attempt.tenant_id);
+ PERFORM public._finance_assert_stored_source_actor(attempt.actor_id,attempt.tenant_id);
  PERFORM 1 FROM public.tenants WHERE id=attempt.tenant_id AND NOT lifecycle_execution_paused FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace paused' USING ERRCODE='42501'; END IF;
  SELECT * INTO entity FROM public.finance_company_entities WHERE tenant_id=attempt.tenant_id AND id=attempt.entity_id AND is_active FOR SHARE;
  IF NOT FOUND OR entity.version<>attempt.entity_version THEN RAISE EXCEPTION 'Financial company changed' USING ERRCODE='40001'; END IF;
+ IF entity.kind='workspace_company' AND NOT EXISTS(SELECT 1 FROM public.tenants t WHERE t.id=entity.tenant_id AND entity.legal_name=coalesce(nullif(t.brand->'business_brief'->>'legalName',''),nullif(t.brand->>'legal_entity_name',''))) THEN RAISE EXCEPTION 'Financial company changed' USING ERRCODE='40001'; END IF;
+ -- Lock actor/workspace/company before consent, matching preparation. The first
+ -- lookup grants no authority; re-read the status under lock before consuming it.
+ expected_status:=attempt.status;
+ SELECT * INTO attempt FROM public.quickbooks_oauth_attempts WHERE id=attempt.id AND status=expected_status FOR UPDATE;
+ IF NOT FOUND OR attempt.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'QuickBooks authorization refused' USING ERRCODE='42501'; END IF;
  IF _operation='launch' THEN
   IF (_input->>'binding_hash' ~ '^[0-9a-f]{64}$') IS NOT TRUE THEN RAISE EXCEPTION 'QuickBooks authorization refused' USING ERRCODE='42501'; END IF;
   UPDATE public.quickbooks_oauth_attempts SET status='launched',binding_hash=_input->>'binding_hash' WHERE id=attempt.id;

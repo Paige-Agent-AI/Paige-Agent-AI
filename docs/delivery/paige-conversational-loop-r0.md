@@ -15,7 +15,7 @@ stays PROOF OWED under #1832; no row below upgrades one.
 | stage | verdict | evidence |
 |---|---|---|
 | C0a capability projection | LIVE | #1697; projection manifest + CI declaration lint |
-| C0b registration burn-down | PARTIAL | #1874/#1877/#1878 registered the incumbent adapters (declaration baseline 80→61 plus the observation/discovery registrations); remaining baseline tools converge incrementally — no rebuild |
+| C0b registration burn-down | PARTIAL | #1874/#1877/#1878 registered the incumbent adapters (declaration baseline 80→61 at #1874, →1 at #1877 — only the Operator `propose_action` producer remains at this ref); convergence continues incrementally — no rebuild |
 | C1 turn contract + C1b shared reader | LIVE | #1710/#1716; `paige_turn` frames, `_shared/paige-turn`, `src/lib/paige-stream` |
 | C2a/C2b tool lifecycle steps | LIVE | #1719/#1729; per-tool running/done steps pinned by `c2-working-lifecycle` and the handler suites |
 | C3 living response | LIVE | #1744; owner-approved frozen design (§28); C3b parity items open (Studio/operator client wording, craft residuals) |

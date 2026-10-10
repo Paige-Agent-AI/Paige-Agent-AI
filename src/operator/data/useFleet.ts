@@ -26,6 +26,7 @@ export type FleetTenant = {
   seats: number;
   customers: number;
   trialEndsAt: string | null;
+  archivedAt?: string | null;
 };
 
 /**
@@ -158,7 +159,7 @@ export function useFleet(enabled: boolean, revision = 0): FleetData {
           await Promise.all([
             supabase
               .from("tenants")
-              .select("id, slug, name, status, account_type, parent_tenant_id, plan_offer, trial_ends_at")
+              .select("id, slug, name, status, account_type, parent_tenant_id, plan_offer, trial_ends_at, archived_at")
               .order("created_at", { ascending: true }),
             supabase.from("tenant_members").select("tenant_id", { count: "exact" }).eq("status", "active"),
             supabase.from("clients").select("tenant_id", { count: "exact" }),
@@ -214,6 +215,7 @@ export function useFleet(enabled: boolean, revision = 0): FleetData {
             seats: seatBy.get(t.id) ?? 0,
             customers: custBy.get(t.id) ?? 0,
             trialEndsAt: t.trial_ends_at ?? null,
+            archivedAt: t.archived_at ?? null,
           })),
         );
       } catch (e) {

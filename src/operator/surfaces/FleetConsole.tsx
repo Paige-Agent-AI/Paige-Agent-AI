@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -12,6 +12,7 @@ import { landAt, operatorLandingFor, readActAsTenant } from "@/operator/actAs";
 import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
 import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
 import AccountDetailsDialog from "@/operator/surfaces/AccountDetailsDialog";
+import { readRetirementAuthority } from "@/operator/data/accountControls";
 
 /**
  * Fleet · Directory — authoritative v3 source:
@@ -194,7 +195,7 @@ export function FleetDirectoryView({
             {loading || error
               ? "—"
               : classificationVisible
-                ? `${live.length} live · ${shown.length} shown · entering performs an audited act-as`
+                ? `${live.length} listed · ${shown.length} shown · entering performs an audited act-as`
                 : `${shown.length} ${shown.length === 1 ? "tenant" : "tenants"}, internal accounts included · entering performs an audited act-as`}
           </small>
           {/* Only offered when this session can tell internal accounts apart. A disabled chip that
@@ -336,7 +337,7 @@ export function FleetDirectoryView({
                   <small className="ml-auto whitespace-nowrap text-[10.5px] text-[var(--pg-faint)]">{onDetails ? "Account details" : "Enter →"}</small>
                 </span>
               </button>
-              {onDetails && <button type="button" onClick={() => onEnter(row.tenant)} aria-label={`Enter ${row.tenant.name}`} className="ml-3 min-h-11 shrink-0 px-3 text-[12px] text-[var(--pg-muted)] hover:text-[var(--pg-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">Enter →</button>}
+              {onDetails && !row.tenant.archivedAt && <button type="button" onClick={() => onEnter(row.tenant)} aria-label={`Enter ${row.tenant.name}`} className="ml-3 min-h-11 shrink-0 px-3 text-[12px] text-[var(--pg-muted)] hover:text-[var(--pg-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">Enter →</button>}
             </div>
           ))}
 
@@ -359,7 +360,16 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
   const [selected, setSelected] = useState<{ id: string; actor: string | null } | null>(null);
   const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true, revision);
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
-  const { enterOperatorActAs, exitOperatorActAs, tenants: contextTenants, activeUserId } = useTenantContext();
+  const { enterOperatorActAs, exitOperatorActAs, tenants: contextTenants, activeUserId, refresh } = useTenantContext();
+  const [archiveView, setArchiveView] = useState(false);
+  const [retirementAuthority, setRetirementAuthority] = useState<{ actor: string; allowed: boolean } | null>(null);
+  useEffect(() => {
+    let alive = true; setRetirementAuthority(null);
+    if (activeUserId) void readRetirementAuthority().then(value => { if (alive) setRetirementAuthority({ actor: activeUserId, allowed: value }); }).catch(() => {});
+    return () => { alive = false; };
+  }, [activeUserId]);
+  const canManage = isPlatformOwner === true || (retirementAuthority?.actor === activeUserId && retirementAuthority?.allowed === true);
+  const visibleTenants = tenants.filter(tenant => Boolean(tenant.archivedAt) === archiveView);
   // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
   // late to stop a second press in the same tick; production recorded paired entries.
   const entering = useRef(false);
@@ -370,6 +380,7 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
   // actually arriving in that tenant's workspace — whose header carries their way out.
   const enterTenant = useCallback(
     async (tenant: FleetTenant) => {
+      if (tenant.archivedAt) { toast.error('Restore the archived workspace before entering it.'); return; }
       if (entering.current) return;
       entering.current = true;
       // The provider's row, not the directory's: it carries the account number the address needs. A
@@ -431,16 +442,16 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
   );
 
   return (
-    <><FleetDirectoryView
-      tenants={tenants}
+    <><div className="mb-3 flex flex-wrap gap-2" aria-label="Account lifecycle filter"><button type="button" aria-pressed={!archiveView} className="min-h-11 rounded-md border border-[var(--pg-line)] px-3 text-sm focus-visible:outline-[var(--pg-gold-core)]" onClick={() => setArchiveView(false)}>Current accounts</button><button type="button" aria-pressed={archiveView} className="min-h-11 rounded-md border border-[var(--pg-line)] px-3 text-sm focus-visible:outline-[var(--pg-gold-core)]" onClick={() => setArchiveView(true)}>Archived accounts</button></div><FleetDirectoryView
+      tenants={visibleTenants}
       classificationVisible={classificationVisible}
       detailVisible={detailVisible}
       loading={loading}
       error={error}
       onEnter={(tenant) => void enterTenant(tenant)}
-      onDetails={isPlatformOwner === true ? tenant => setSelected({ id: tenant.id, actor: activeUserId }) : undefined}
+      onDetails={canManage ? tenant => setSelected({ id: tenant.id, actor: activeUserId }) : undefined}
     />
-    {selected && selected.actor === activeUserId && isPlatformOwner === true && <AccountDetailsDialog key={`${selected.actor}:${selected.id}`} tenantId={selected.id} onClose={() => setSelected(null)} onChanged={() => setRevision(value => value + 1)} />}
+    {selected && selected.actor === activeUserId && canManage && <AccountDetailsDialog key={`${selected.actor}:${selected.id}`} tenantId={selected.id} onClose={() => setSelected(null)} onChanged={() => { setRevision(value => value + 1); refresh?.(); }} />}
     </>
   );
 }

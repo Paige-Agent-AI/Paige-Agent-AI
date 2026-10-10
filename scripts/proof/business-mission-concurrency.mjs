@@ -1,6 +1,7 @@
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
+import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const url = new URL(process.env.BUSINESS_MISSION_TEST_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres");
 assert.equal(url.hostname, "127.0.0.1", "Disposable loopback database required");
@@ -26,7 +27,7 @@ const cleanup = () => {
     DELETE FROM public.paige_audit_log WHERE tenant_id='${tenant}';
     DELETE FROM public.tenant_members WHERE tenant_id='${tenant}';
     DELETE FROM public.profiles WHERE user_id='${uid}';
-    DELETE FROM public.tenants WHERE id='${tenant}';
+    ${retireSyntheticTenantSQL(tenant)}
     DELETE FROM auth.users WHERE id='${uid}';
   `);
 };

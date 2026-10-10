@@ -31,9 +31,11 @@ const h = vi.hoisted(() => ({
   // The tenant row a fresh read returns when the provider's snapshot is older than the directory.
   freshRow: null as Record<string, unknown> | null,
   freshReads: [] as string[],
+  retirementAdmin: false,
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
+    rpc: async (name:string) => ({data:name==='operator_can_retire_accounts' && h.retirementAdmin,error:null}),
     from: () => ({
       select: () => ({
         eq: (_col: string, id: string) => ({
@@ -74,6 +76,8 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
   let go: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    (globalThis as Record<string,unknown>).IS_REACT_ACT_ENVIRONMENT=true;
+    h.retirementAdmin=false;
     h.fleet = [
       row({ id: "solo", name: "Solo Co" }),
       row({ id: "big", name: "Big Agency", accountType: "agency" }),
@@ -108,6 +112,21 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     return (name: string) =>
       Array.from(host.querySelectorAll("button")).find((b) => b.getAttribute("aria-label") === `Enter ${name}`);
   }
+
+  it('an ordinary platform member receives no account lifecycle controls',async()=>{
+    await act(async()=>root.render(<FleetConsole isPlatformOwner={false}/>));
+    expect(host.querySelector('[aria-label="Account details for Solo Co"]')).toBeNull();
+  });
+  it('a server-confirmed Platform Admin receives account lifecycle controls',async()=>{
+    h.retirementAdmin=true;await act(async()=>root.render(<FleetConsole isPlatformOwner={false}/>));
+    await vi.waitFor(()=>expect(host.querySelector('[aria-label="Account details for Solo Co"]')).not.toBeNull());
+  });
+  it('archived workspaces are excluded from Current and have no operational Enter',async()=>{
+    h.fleet=[...h.fleet,row({id:'test-archived',name:'Archived Co',status:'canceled',archivedAt:'2026-01-01'})];
+    await render();expect(host.textContent).not.toContain('Archived Co');
+    const archived=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Archived accounts')!;
+    await act(async()=>archived.click());expect(host.textContent).toContain('Archived Co');expect(host.querySelector('[aria-label="Enter Archived Co"]')).toBeNull();expect(h.enter).not.toHaveBeenCalled();
+  });
 
   it("enters, then takes the operator into the tenant's workspace", async () => {
     const enter = await render();

@@ -23,9 +23,12 @@
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
+import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const url = new URL(process.env.MCP_GATEWAY_TEST_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres");
 assert.equal(url.hostname, "127.0.0.1", "Disposable loopback database required");
+assert.ok((process.env.CI === "true" && url.port === "54322" && url.pathname === "/postgres") ||
+  (process.env.MCP_GATEWAY_DISPOSABLE_DB === "1" && url.port !== "5432"), "Disposable MCP fixture database required");
 const args = ["-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-d", url.toString()];
 const psqlBin = process.env.PSQL_BIN || "psql";
 const run = (sql) => execFileSync(psqlBin, args, { input: sql, encoding: "utf8", windowsHide: true }).trim();
@@ -40,7 +43,7 @@ const E2 = "https://mcp-race-b.example/rpc";
 const cleanup = () => run(`
   DELETE FROM public.mcp_connection_approvals WHERE connection_id='${conn}';
   DELETE FROM public.mcp_connections WHERE connection_id='${conn}';
-  DELETE FROM public.tenants WHERE id='${tenant}';
+  ${retireSyntheticTenantSQL(tenant)}
 `);
 
 const invoke = (sql) => new Promise((resolve, reject) => {

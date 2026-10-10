@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 const source = readFileSync(resolve(process.cwd(), "src/solo/growth2.tsx"), "utf8");
 const commandDesk = readFileSync(resolve(process.cwd(), "src/solo/PipelineCommandDesk.tsx"), "utf8");
 const css = readFileSync(resolve(process.cwd(), "src/solo/solo-campaigns.css"), "utf8");
+// The detail drawer moved to its own module (INT-342 S1e) so Content can mount it too.
+const drawer = readFileSync(resolve(process.cwd(), "src/solo/detail-drawer.tsx"), "utf8");
 const adapter = readFileSync(resolve(process.cwd(), "src/solo/useSoloCampaigns.ts"), "utf8");
 const pipelineSettings = readFileSync(resolve(process.cwd(), "src/pages/admin/PipelineSettings.tsx"), "utf8");
 const closingStageMigration = readFileSync(resolve(process.cwd(), "supabase/migrations/20261205000000_a_stage_can_be_marked_closing.sql"), "utf8");
@@ -108,10 +110,11 @@ describe("Solo Campaigns approved contract", () => {
   });
 
   it("contains keyboard, reduced-motion, forced-colors, and overflow safeguards", () => {
-    expect(source).toContain("event.key === \"Escape\"");
-    expect(source).toContain('role="dialog"');
-    expect(source).toContain('aria-modal="true"');
-    expect(source).toContain('setAttribute("inert", "")');
+    expect(drawer).toContain("event.key === \"Escape\"");
+    expect(drawer).toContain('role="dialog"');
+    expect(drawer).toContain('aria-modal="true"');
+    expect(drawer).toContain('setAttribute("inert", "")');
+    expect(source).toContain('import { DetailDrawer } from "./detail-drawer";');
     expect(css).toContain("prefers-reduced-motion");
     expect(css).toContain("forced-colors");
     expect(css).toContain("overflow-x: clip");

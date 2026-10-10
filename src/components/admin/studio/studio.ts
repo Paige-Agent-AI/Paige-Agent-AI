@@ -46,6 +46,9 @@ import type {
   StudioSessionView,
 } from "./studio-types";
 
+import { parseStudioDocument } from "./studio-document";
+export { parseStudioDocument };
+
 // StudioShell and useGeneratePage read the error map through the seam, so a caller only ever
 // needs one import to drive an action and speak about its failure.
 export { STUDIO_ERROR_COPY };
@@ -2614,18 +2617,10 @@ export async function loadDocument(tenantId: string, contentId: string): Promise
     .eq("id", contentId)
     .eq("tenant_id", tid)
     .maybeSingle();
-  if (error || !data || data.kind !== "document" || !data.body) return null;
-  try {
-    const parsed = JSON.parse(data.body) as { docType?: string; title?: string; blocks?: unknown };
-    const blocks = Array.isArray(parsed.blocks) ? (parsed.blocks as StudioDocBlock[]) : [];
-    if (!blocks.length) return null;
-    const docType = (["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer", "agreement_draft"].includes(String(parsed.docType))
-      ? parsed.docType : "guide") as StudioDocType;
-    return { id: data.id, title: data.title || parsed.title || "Untitled document", docType, blocks };
-  } catch {
-    return null; // corrupt body — degrade to empty, never throw (§13)
-  }
+  if (error || !data || data.kind !== "document") return null;
+  return parseStudioDocument(data.id, data.title, data.body);
 }
+
 
 /** A reopened COPY/text artifact — the plain saved words for a read-only in-session view (#290).
  *  Copy is a chat deliverable (§21), not a designed canvas asset, so the canvas renders its REAL text

@@ -47,7 +47,7 @@ import {
 import { cn } from "@/lib/utils";
 import { loadDocument } from "@/components/admin/studio/studio";
 import { DocumentPreview } from "@/components/admin/studio/DocumentPreview";
-import type { StudioDocType, StudioDocument } from "@/components/admin/studio/studio-types";
+import { STUDIO_DOC_TYPE_LABEL, type StudioDocument } from "@/components/admin/studio/studio-types";
 
 /** The artifact a chat surface hands to the card — the exact shape of the streamed artifact frame
  *  (kind→artifactType, id, title, url). `url` carries the image src for an image; a document hydrates
@@ -73,17 +73,6 @@ export interface PaigeArtifactCardProps {
   className?: string;
 }
 
-const DOC_TYPE_LABEL: Record<StudioDocType, string> = {
-  guide: "Guide",
-  one_pager: "One-pager",
-  ebook: "eBook",
-  checklist: "Checklist",
-  worksheet: "Worksheet",
-  proposal: "Proposal",
-  offer_letter: "Offer letter",
-  sales_offer: "Sales offer",
-  agreement_draft: "Agreement draft",
-};
 
 // Thumbnail geometry — the tile is a fixed 80×96px page; the scaled DocumentPreview renders at an
 // explicit 800×960 (DocumentPreview is h-full, so the wrapper MUST carry a real height) and is shrunk
@@ -179,7 +168,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
   const TypeIcon = isDoc ? FileText : ImageIcon;
   const typeLine = isDoc
     ? doc
-      ? `Document · ${DOC_TYPE_LABEL[doc.docType]}`
+      ? `Document · ${STUDIO_DOC_TYPE_LABEL[doc.docType]}`
       : "Document"
     : "Image";
 

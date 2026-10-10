@@ -1,18 +1,11 @@
-// Marketing › Content (owner ruling 2026-10-04: "these are the ones that I
-// want dedicated to marketing"). The feature each name promises is not built yet. Each tab still
-// earns its place: it shows what this workspace
-// really has today for that job, links to where it lives, and names what is missing in plain words.
-//
-// Audience lives in marketing-audience.tsx; Email in marketing-email.tsx. These shared helpers
-// (useTenantRead, Frame, TabActions, AskPaigeButton) serve all of them.
-// Reads (all tenant-scoped, read-only, existing tables and RPCs; nothing new on the server):
-//   marketing_content     the saved library, not archived (Content; email copy shows under Content; Ads reads ad copy in marketing-ads.tsx). RLS: is_tenant_admin
-//                         of the row's business, or the platform owner (20270542000000), which is the
-//                         same test the briefs read reports as can_manage, so a member who cannot read
-//                         it is told so rather than shown an empty library.
-// No segment, broadcast, ad-account or spend source exists; those stay "Not available".
+// Helpers Marketing's tabs share: a tenant-scoped read (useTenantRead), its loading and error frame
+// (Frame), the tab's own acts (TabActions), Ask PAIGE, the honest "not available yet" list (NotYet), and
+// who may read the saved library (useLibraryAccess). Content lives in marketing-content.tsx, Ads in
+// marketing-ads.tsx, Audience in marketing-audience.tsx, Email in marketing-email.tsx.
+//   marketing_content (the saved library) RLS: is_tenant_admin of the row's business, or the platform
+//   owner (20270542000000), which is the same test the briefs read reports as can_manage, so a member
+//   who cannot read it is told so rather than shown an empty library.
 import React from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 
 export type Phase = "loading" | "ready" | "error";
@@ -39,40 +32,6 @@ export function useTenantRead<T>(tenantId: string | null, empty: T, load: ((tena
   return { phase: current ? state.phase : "loading", rows: current ? state.rows : empty, retry: () => setAttempt((n) => n + 1) };
 }
 
-const LIBRARY_READ_LIMIT = 60;
-type ContentRow = { id: string; kind: string; channel: string | null; status: string; title: string; updated_at: string };
-const NO_CONTENT: ContentRow[] = [];
-/** The newest saved pieces, or only one channel's, filtered on the server so a cap never hides a channel. */
-const readLibrary = (channel?: string) => async (tenantId: string): Promise<ContentRow[]> => {
-  let query = supabase.from("marketing_content" as never).select("id,kind,channel,status,title,updated_at").eq("tenant_id", tenantId).neq("status", "archived");
-  if (channel) query = query.eq("channel", channel);
-  const { data, error } = await query.order("updated_at", { ascending: false }).limit(LIBRARY_READ_LIMIT);
-  if (error) throw error;
-  return (data ?? []) as unknown as ContentRow[];
-};
-const readAll = readLibrary();
-
-const CHANNEL_LABEL: Record<string, string> = {
-  social_post: "Social post", ad_copy: "Ad copy", email_campaign: "Email", caption: "Caption", blog_outline: "Blog outline", sms_broadcast: "Text message",
-};
-// What a saved piece is. Images, video and documents carry no channel; copy is named by its channel.
-const KIND_LABEL: Record<string, string> = { image: "Image", video: "Video", document: "Document" };
-const pieceKey = (row: ContentRow) => (KIND_LABEL[row.kind] ? row.kind : row.channel || "text");
-const pieceLabel = (key: string) => KIND_LABEL[key] ?? CHANNEL_LABEL[key] ?? (key === "text" ? "Copy" : key.replace(/_/g, " "));
-
-function tally(values: (string | null | undefined)[], label: (value: string) => string) {
-  const counts = new Map<string, number>();
-  for (const value of values) {
-    const key = value?.trim() || "";
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([key, count]) => ({ key: key || "__none", label: key ? label(key) : "Not recorded", count }));
-}
-
-const formatDay = (iso: string) => { const t = Date.parse(iso); return Number.isFinite(t) ? new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""; };
-/** A count from a capped read is a floor, never a total. */
-const floor = (n: number, capped: boolean) => (capped ? `${n}+` : String(n));
-
 /** Opens PAIGE with a question in her composer. She drafts; nothing is sent until the owner says so. */
 export function AskPaigeButton({ label, prompt }: { label: string; prompt: string }) {
   return <button type="button" className="btn btn-s" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }))}>{label}</button>;
@@ -98,17 +57,6 @@ export function NotYet({ items }: { items: { title: string; detail: string }[] }
   </section>;
 }
 
-function Ranked({ rows, total, empty }: { rows: { key: string; label: string; count: number }[]; total: number; empty: string }) {
-  if (!rows.length) return <p className="mo-note">{empty}</p>;
-  const max = Math.max(...rows.map((row) => row.count));
-  return <ol className="mo-rank mp-rank">{rows.map((row) => <li key={row.key}><span className="mp-rank-row"><span className="mo-rank-name">{row.label}</span><span className="mo-rank-bar" aria-hidden="true"><i style={{ width: `${Math.max(4, (row.count / max) * 100)}%` }}/></span><b>{row.count}</b></span><span className="campaigns-sr-only">{` of ${total}`}</span></li>)}</ol>;
-}
-
-function LibraryList({ rows, empty }: { rows: ContentRow[]; empty: React.ReactNode }) {
-  if (!rows.length) return <div className="mp-empty">{empty}</div>;
-  return <ul className="mp-list">{rows.map((row) => <li key={row.id}><span className="mk-flag">{pieceLabel(pieceKey(row))}</span><span className="mp-list-main"><strong>{row.title || "Untitled"}</strong><small>{row.status === "published" ? "Published" : "Draft"} · saved {formatDay(row.updated_at)}</small></span></li>)}</ul>;
-}
-
 /** Who may read the saved library: admins of this workspace (the same test its read policy applies). */
 export function useLibraryAccess(): "checking" | "allowed" | "denied" {
   const briefs = useSoloCampaignBriefs();
@@ -119,46 +67,4 @@ export function useLibraryAccess(): "checking" | "allowed" | "denied" {
 
 export const LIBRARY_DENIED = "Your workspace's saved library is visible to its owners and admins.";
 
-function libraryPhaseFor(access: ReturnType<typeof useLibraryAccess>, phase: Phase): Phase {
-  return access === "denied" ? "ready" : access === "checking" ? "loading" : phase;
-}
-
 export type PublishedWork = { phase: string; pages: number; funnels: number; forms: number; unpublished: number };
-
-export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPublished, studioLauncher }: { tenantId: string | null; published: PublishedWork; onOpenCapture: () => void; onRetryPublished: () => void; studioLauncher: React.ReactNode }) {
-  const access = useLibraryAccess();
-  const read = useTenantRead(tenantId, NO_CONTENT, access === "allowed" ? readAll : null);
-  const pieces = read.rows;
-  const capped = pieces.length >= LIBRARY_READ_LIMIT;
-  const byKind = tally(pieces.map(pieceKey), pieceLabel);
-  const libraryPhase = libraryPhaseFor(access, read.phase);
-  const publishedReady = published.phase === "ready";
-  const publishedFailed = published.phase === "error" || published.phase === "unavailable";
-  const publishedValue = (n: number) => (publishedReady ? String(n) : publishedFailed ? "—" : "…");
-  const total = published.pages + published.funnels + published.forms;
-  const libraryCount = access === "denied" || libraryPhase === "error" ? "—" : libraryPhase === "ready" ? floor(pieces.length, capped) : "…";
-  const ask = <AskPaigeButton label="Ask PAIGE for content" prompt="Help me make a piece of marketing content for my business. Ask me what it is for and who it is for before you draft it. Save it as a draft; do not post or send anything."/>;
-  return <div className="mk-view mo mp">
-    <TabActions>
-      {ask}{studioLauncher}
-    </TabActions>
-    <dl className="mk-ledger mp-ledger-3">
-      <div className="mk-stat"><dt>In your library</dt><dd><strong>{libraryCount}</strong><span>{access === "denied" ? "Visible to owners and admins" : capped ? `The newest ${LIBRARY_READ_LIMIT} are counted` : "Images, documents and copy, not archived"}</span></dd></div>
-      <div className="mk-stat"><dt>Published</dt><dd><strong>{publishedValue(total)}</strong><span>{publishedReady ? [[published.pages, "page"], [published.funnels, "funnel"], [published.forms, "form"]].map(([n, noun]) => `${n} ${noun}${n === 1 ? "" : "s"}`).join(" · ") : publishedFailed ? "Could not load" : "Loading"}</span></dd></div>
-      <div className="mk-stat"><dt>Not published yet</dt><dd><strong>{publishedValue(published.unpublished)}</strong><span>Built in Vibe Studio, collecting nothing</span></dd></div>
-    </dl>
-    {publishedFailed && <p className="mo-note mp-inline-note">Your published pages, funnels and forms could not load. <button className="mo-link" onClick={onRetryPublished}>Try again</button></p>}
-    <div className="mo-grid mp-grid mp-grid-2">
-      <section className="campaigns-surface mo-panel"><div className="mo-panel-head"><div><h2>Your library</h2><p>Newest first. Drafts have not been posted or sent anywhere.</p></div></div>
-        <Frame phase={libraryPhase} retry={read.retry} noun="library">{access === "denied" ? <p className="mo-note">{LIBRARY_DENIED}</p> : <LibraryList rows={pieces.slice(0, 12)} empty={<><p className="mo-note">Nothing saved yet. Ask PAIGE for an image, a document or copy, and it is kept here.</p>{ask}</>}/>}</Frame>
-      </section>
-      <section className="campaigns-surface mo-panel"><div className="mo-panel-head"><div><h2>By kind</h2><p>What your saved pieces are.</p></div><button className="mo-link" onClick={onOpenCapture}>Published work</button></div>
-        <Frame phase={libraryPhase} retry={read.retry} noun="library">{access === "denied" ? <p className="mo-note">{LIBRARY_DENIED}</p> : <Ranked rows={byKind} total={pieces.length} empty="Nothing saved to group yet."/>}</Frame>
-      </section>
-    </div>
-    <NotYet items={[
-      { title: "Content calendar", detail: "Briefs record timing as words, not dates, so nothing can be laid out on a calendar yet." },
-      { title: "Posting and scheduling from here", detail: "Posts are drafted with PAIGE and posted by you; scheduling is not connected." },
-    ]}/>
-  </div>;
-}

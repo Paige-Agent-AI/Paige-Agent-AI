@@ -207,6 +207,19 @@ export type StudioDocType = "guide" | "one_pager" | "ebook" | "checklist" | "wor
  *  `chapter-divider` is the ebook signature, `toc` a table of contents, `pricing-table` a proposal's
  *  line-item investment table (a generic $ amount — §2: never lending/credit). Image/figure blocks
  *  stay out of scope this slice (image generation is off without a key). */
+/** What each document type is called on screen (the chat card and the Marketing library). */
+export const STUDIO_DOC_TYPE_LABEL: Record<StudioDocType, string> = {
+  guide: "Guide",
+  one_pager: "One-pager",
+  ebook: "eBook",
+  checklist: "Checklist",
+  worksheet: "Worksheet",
+  proposal: "Proposal",
+  offer_letter: "Offer letter",
+  sales_offer: "Sales offer",
+  agreement_draft: "Agreement draft",
+};
+
 export type StudioDocBlock =
   | { type: "cover"; eyebrow?: string; title: string; subhead?: string }
   | { type: "section-header"; number?: number; kicker?: string; title: string }

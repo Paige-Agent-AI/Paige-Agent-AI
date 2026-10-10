@@ -298,22 +298,29 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
         .select("estimated_fico_eq, estimated_fico_ex, estimated_fico_tu")
         .eq("user_id", targetUserId).maybeSingle();
 
-      const updateFields: Record<string, any> = { updated_at: new Date().toISOString() };
-      if (equifax != null) updateFields.estimated_fico_eq = equifax;
-      if (experian != null) updateFields.estimated_fico_ex = experian;
-      if (transunion != null) updateFields.estimated_fico_tu = transunion;
-      if (payload.score_model && ["FICO", "VantageScore", "Unknown"].includes(payload.score_model)) {
-        updateFields.score_model = payload.score_model;
-      }
-
-      const { error: scoreErr } = await supabase.from("profiles").update(updateFields).eq("user_id", targetUserId);
-      if (scoreErr) {
-        console.error("Score update error:", scoreErr);
-        results.scores_error = scoreErr.message;
+      if (!prevProfile) {
+        // #734 — an error-free update that matches ZERO rows is not a success. The profile row
+        // was already fetched above, so absence is knowable without another query: there is no
+        // row to update, no update is attempted, and the response says so instead of
+        // scores_updated:true (which every producer would read as "the scores were written").
+        results.scores_updated = false;
+        results.scores_no_profile_row = true;
       } else {
-        results.scores_updated = true;
-        if (prevProfile) {
-          await supabase.from("audit_logs").insert({
+        const updateFields: Record<string, any> = { updated_at: new Date().toISOString() };
+        if (equifax != null) updateFields.estimated_fico_eq = equifax;
+        if (experian != null) updateFields.estimated_fico_ex = experian;
+        if (transunion != null) updateFields.estimated_fico_tu = transunion;
+        if (payload.score_model && ["FICO", "VantageScore", "Unknown"].includes(payload.score_model)) {
+          updateFields.score_model = payload.score_model;
+        }
+
+        const { error: scoreErr } = await supabase.from("profiles").update(updateFields).eq("user_id", targetUserId);
+        if (scoreErr) {
+          console.error("Score update error:", scoreErr);
+          results.scores_error = scoreErr.message;
+        } else {
+          results.scores_updated = true;
+          const { error: scoreAuditErr } = await supabase.from("audit_logs").insert({
             user_id: targetUserId, entity: "credit_scores", action: "scores_updated_via_chat_upload",
             data: {
               previous: { equifax: prevProfile.estimated_fico_eq, experian: prevProfile.estimated_fico_ex, transunion: prevProfile.estimated_fico_tu },
@@ -321,6 +328,7 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
               source: "chat_report_upload", updated_by: callerUserId,
             },
           });
+          if (scoreAuditErr) console.error("Score audit-log insert error:", scoreAuditErr);
         }
       }
     }
@@ -407,7 +415,10 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
       }
 
       if (existing) {
-        await supabase.from("credit_negative_items").update({
+        // #734 — the UPDATE branch reads its own error. An update that failed is counted
+        // failed, never updated; previously negativeItemsUpdated++ ran unconditionally, so
+        // results.negative_items.failed under-reported and a caller could not see the loss.
+        const { error: updateErr } = await supabase.from("credit_negative_items").update({
           status, amount: item.amount, item_type: itemType,
           notes: item.dispute_basis, removal_probability: removalProb,
           date_of_occurrence: item.date_of_occurrence || null,
@@ -417,7 +428,12 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
           original_amount: item.original_amount || null,
           is_removable: true, updated_at: new Date().toISOString(),
         }).eq("id", existing.id);
-        negativeItemsUpdated++;
+        if (updateErr) {
+          console.error(`[NEG ${idx + 1}] Update error:`, updateErr);
+          negativeItemsFailed++;
+        } else {
+          negativeItemsUpdated++;
+        }
       } else {
         const insertPayload = withClientId({
           user_id: targetUserId, creditor_name: item.creditor_name,
@@ -437,11 +453,14 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
         }
       }
     }
-    results.negative_items = { inserted: negativeItemsInserted, updated: negativeItemsUpdated, failed: negativeItemsFailed };
+    // #734 — dropped rows (filtered before any write was attempted) are named per group so a
+    // caller can reconcile input counts against inserted+updated+failed without guessing.
+    results.negative_items = { inserted: negativeItemsInserted, updated: negativeItemsUpdated, failed: negativeItemsFailed, dropped: droppedNegatives.length };
 
     // ========== STEP 3: HARD INQUIRIES ==========
     currentStep = "hard_inquiries";
     let inquiriesInserted = 0;
+    let inquiriesFailed = 0;
     for (const inq of payload.hard_inquiries) {
       const { data: existingInq } = await supabase
         .from("credit_inquiries").select("id")
@@ -449,20 +468,29 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
         .maybeSingle();
 
       if (!existingInq) {
-        await supabase.from("credit_inquiries").insert({
+        // #734 — the insert reads its own error; previously the error was discarded and
+        // inquiriesInserted++ ran unconditionally, counting failed writes as successes with
+        // no failed counter for the group at all.
+        const { error: inqErr } = await supabase.from("credit_inquiries").insert({
           user_id: targetUserId, creditor_name: inq.creditor_name, inquiry_date: inq.inquiry_date,
           bureau: inq.bureau, is_authorized: inq.is_authorized,
           status: inq.is_authorized ? "active" : "disputed",
         });
-        inquiriesInserted++;
+        if (inqErr) {
+          console.error(`[INQ ${inq.creditor_name}] Insert error:`, inqErr);
+          inquiriesFailed++;
+        } else {
+          inquiriesInserted++;
+        }
       }
     }
-    results.hard_inquiries = { inserted: inquiriesInserted };
+    results.hard_inquiries = { inserted: inquiriesInserted, failed: inquiriesFailed, dropped: droppedInquiries.length };
 
     // ========== STEP 4: POSITIVE ACCOUNTS (account_number-first dedup) ==========
     currentStep = "positive_accounts";
     let accountsInserted = 0;
     let accountsUpdated = 0;
+    let accountsFailed = 0;
     const accountTypeMap: Record<string, string> = {
       revolving: "credit_card", "credit card": "credit_card", credit_card: "credit_card",
       installment: "personal_loan", "auto loan": "auto_loan", auto: "auto_loan", auto_loan: "auto_loan",
@@ -535,16 +563,28 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
       }
 
       if (existing) {
-        await supabase.from("credit_accounts").update(acctData).eq("id", existing.id);
-        accountsUpdated++;
+        // #734 — both branches read their own error; previously update and insert errors were
+        // discarded and the counters incremented unconditionally, with no failed counter.
+        const { error: acctUpdErr } = await supabase.from("credit_accounts").update(acctData).eq("id", existing.id);
+        if (acctUpdErr) {
+          console.error(`[ACCT ${acct.creditor}] Update error:`, acctUpdErr);
+          accountsFailed++;
+        } else {
+          accountsUpdated++;
+        }
       } else {
-        await supabase.from("credit_accounts").insert(withClientId({
+        const { error: acctInsErr } = await supabase.from("credit_accounts").insert(withClientId({
           user_id: targetUserId, creditor: acct.creditor, type: mappedType, ...acctData,
         }));
-        accountsInserted++;
+        if (acctInsErr) {
+          console.error(`[ACCT ${acct.creditor}] Insert error:`, acctInsErr);
+          accountsFailed++;
+        } else {
+          accountsInserted++;
+        }
       }
     }
-    results.positive_accounts = { inserted: accountsInserted, updated: accountsUpdated };
+    results.positive_accounts = { inserted: accountsInserted, updated: accountsUpdated, failed: accountsFailed, dropped: droppedPositives.length };
 
     // ========== STEP 5: RECALCULATE CREDIT FACTOR SCORES ==========
     currentStep = "credit_factors";
@@ -691,16 +731,28 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
       const { data: existingFactors } = await supabase
         .from("credit_factor_scores").select("id").eq("user_id", targetUserId).maybeSingle();
 
+      // #734 — the factor write reads its own error; previously a failed update/insert still
+      // left credit_factors_recalculated:true. A write error is distinct from the calculation
+      // throw this step's catch already reports as factor_score_error.
+      let factorWriteError: string | null = null;
       if (existingFactors) {
-        await supabase.from("credit_factor_scores").update(factorData).eq("id", existingFactors.id);
+        const { error: fwErr } = await supabase.from("credit_factor_scores").update(factorData).eq("id", existingFactors.id);
+        if (fwErr) factorWriteError = fwErr.message;
       } else {
-        await supabase.from("credit_factor_scores").insert(withClientId(factorData));
+        const { error: fwErr } = await supabase.from("credit_factor_scores").insert(withClientId(factorData));
+        if (fwErr) factorWriteError = fwErr.message;
       }
-      results.credit_factors_recalculated = true;
-      results.factor_scores = {
-        payment_history: paymentHistoryScore, utilization: utilizationScore,
-        credit_age: creditAgeScore, credit_mix: creditMixScore, inquiries: inquiryScore, overall: overallScore,
-      };
+      if (factorWriteError) {
+        console.error("Factor score write error:", factorWriteError);
+        results.credit_factors_recalculated = false;
+        results.credit_factors_error = factorWriteError;
+      } else {
+        results.credit_factors_recalculated = true;
+        results.factor_scores = {
+          payment_history: paymentHistoryScore, utilization: utilizationScore,
+          credit_age: creditAgeScore, credit_mix: creditMixScore, inquiries: inquiryScore, overall: overallScore,
+        };
+      }
     } catch (factorErr) {
       console.error("Factor score calc error:", factorErr);
       results.factor_score_error = String(factorErr);
@@ -714,13 +766,25 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
     // ========== STEP 7: CROSS-BUREAU DISCREPANCIES ==========
     currentStep = "discrepancies";
     const hasDiscrepancies = payload.discrepancies.length > 0;
-    await supabase.from("profiles").update({
+    // #734 — the profile update is read back: an error, or an update that matched zero rows
+    // (no profile), must not be reported as flagged. Previously discrepancies_flagged reported
+    // the INTENT (payload content) regardless of whether anything was written.
+    const { data: discRows, error: discErr } = await supabase.from("profiles").update({
       has_discrepancies: hasDiscrepancies,
       cross_bureau_discrepancies: hasDiscrepancies ? payload.discrepancies : null,
       last_report_source: "chat_upload",
       last_report_analyzed_at: new Date().toISOString(),
-    }).eq("user_id", targetUserId);
-    results.discrepancies_flagged = hasDiscrepancies;
+    }).eq("user_id", targetUserId).select("user_id");
+    if (discErr) {
+      console.error("Discrepancies profile update error:", discErr);
+      results.discrepancies_flagged = false;
+      results.discrepancies_error = discErr.message;
+    } else if (!discRows || discRows.length === 0) {
+      results.discrepancies_flagged = false;
+      results.discrepancies_no_profile_row = true;
+    } else {
+      results.discrepancies_flagged = hasDiscrepancies;
+    }
 
     // ========== STEP 8: PME FUNDING READINESS RECALCULATION ==========
     currentStep = "funding_readiness";
@@ -740,22 +804,33 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
           .select("id, business_credit_score, entity_structure_score, banking_history_score, revenue_documentation_score, lender_alignment_score")
           .eq("user_id", targetUserId).maybeSingle();
 
+        // #734 — the readiness write reads its own error; previously both branches discarded
+        // it and funding_readiness_recalculated reported true regardless.
+        let readinessWriteError: string | null = null;
         if (existingReadiness) {
           const overall = personalCreditScore +
             (existingReadiness.business_credit_score || 0) + (existingReadiness.entity_structure_score || 0) +
             (existingReadiness.banking_history_score || 0) + (existingReadiness.revenue_documentation_score || 0) +
             (existingReadiness.lender_alignment_score || 0);
-          await supabase.from("funding_readiness_scores").update({
+          const { error: frErr } = await supabase.from("funding_readiness_scores").update({
             personal_credit_score: personalCreditScore, overall_score: overall,
             last_calculated_at: new Date().toISOString(), updated_at: new Date().toISOString(),
           }).eq("id", existingReadiness.id);
+          if (frErr) readinessWriteError = frErr.message;
         } else {
-          await supabase.from("funding_readiness_scores").insert({
+          const { error: frErr } = await supabase.from("funding_readiness_scores").insert({
             user_id: targetUserId, personal_credit_score: personalCreditScore,
             overall_score: personalCreditScore, last_calculated_at: new Date().toISOString(),
           });
+          if (frErr) readinessWriteError = frErr.message;
         }
-        results.funding_readiness_recalculated = true;
+        if (readinessWriteError) {
+          console.error("Funding readiness write error:", readinessWriteError);
+          results.funding_readiness_recalculated = false;
+          results.funding_readiness_error = readinessWriteError;
+        } else {
+          results.funding_readiness_recalculated = true;
+        }
       }
     } catch (frErr) {
       console.error("Funding readiness recalc error:", frErr);
@@ -763,7 +838,11 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
 
     // ========== STEP 9: ACTIVITY LOG ==========
     currentStep = "audit_log";
-    await supabase.from("audit_logs").insert({
+    // #734 — this step referenced `disputesCreated`, an identifier removed with the §194
+    // auto-dispute block, so EVERY run threw a ReferenceError HERE — after steps 1–8 had
+    // already written — and answered 500 while the writes stood: the uncertain outcome,
+    // lived. The truthful value is the §194 constant the results already carry.
+    const { error: syncAuditErr } = await supabase.from("audit_logs").insert({
       user_id: targetUserId, entity: "credit_report", action: "chat_report_analyzed",
       data: {
         report_type: payload.report_type,
@@ -772,16 +851,23 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
         hard_inquiries_count: payload.hard_inquiries.length,
         positive_accounts_count: payload.positive_accounts.length,
         discrepancies_count: payload.discrepancies.length,
-        disputes_auto_created: disputesCreated,
+        disputes_auto_created: results.disputes_auto_created,
         synced_by: callerUserId, source: "chat_document_upload",
         sync_results: results,
       },
     });
+    if (syncAuditErr) console.error("Sync audit-log insert error:", syncAuditErr);
+
+    // #734 — the followups are fire-and-forget BY DESIGN: report them as initiated (their
+    // outcomes are unknown at response time and are never implied to have completed). An
+    // invoke that returns an error is reported under followup_errors, not swallowed.
+    results.followups_initiated = [];
+    results.followup_errors = {};
 
     // ========== STEP 10: DETECT CREDIT ALERTS ==========
     currentStep = "detect_alerts";
     try {
-      await supabase.functions.invoke("detect-credit-alerts", {
+      const { error: alertErr } = await supabase.functions.invoke("detect-credit-alerts", {
         body: {
           client_id: targetUserId,
           new_scores: payload.scores || null,
@@ -793,8 +879,15 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
           bureau_source: payload.report_type === "consumer" ? "all" : null,
         },
       });
+      if (alertErr) {
+        console.error("Alert detection failed (non-blocking):", alertErr);
+        results.followup_errors["detect-credit-alerts"] = alertErr.message ?? String(alertErr);
+      } else {
+        results.followups_initiated.push("detect-credit-alerts");
+      }
     } catch (alertErr) {
       console.error("Alert detection failed (non-blocking):", alertErr);
+      results.followup_errors["detect-credit-alerts"] = alertErr instanceof Error ? alertErr.message : String(alertErr);
     }
 
     // ========== STEP 11: AUTO-STAGE DISPUTES (fire-and-forget) ==========
@@ -820,6 +913,8 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
           bureau_source: bureauSources.length === 1 ? bureauSources[0] : "all",
         }),
       }).catch(err => console.error("Auto-stage-disputes fire-and-forget failed:", err));
+      // The call was placed; its outcome is unknown at response time by design.
+      results.followups_initiated.push("auto-stage-disputes");
     } catch (stageErr) {
       console.error("Auto-stage-disputes setup failed (non-blocking):", stageErr);
     }
@@ -836,16 +931,92 @@ async function processSync(supabase: any, payload: any, targetUserId: string, ca
         },
         body: JSON.stringify({ user_id: targetUserId }),
       }).catch(err => console.error("generate-credit-predictions fire-and-forget failed:", err));
+      results.followups_initiated.push("generate-credit-predictions");
     } catch (predErr) {
       console.error("Predictions setup failed (non-blocking):", predErr);
     }
 
-    return new Response(JSON.stringify({ success: true, results }), {
+    // ========== OUTCOME CLASSIFICATION (#734) ==========
+    //
+    // Additive summary a caller can classify from without re-deriving per-group counts:
+    //   complete — every attempted write landed (dropped rows were never attempted);
+    //   partial  — some writes landed, or a group was skipped (no row to write to);
+    //   failed   — writes were attempted and NONE landed anywhere.
+    // Only the four PAYLOAD groups (scores, negative_items, hard_inquiries, positive_accounts)
+    // can make a run not-a-total-failure: a derived recalc landing while every requested row
+    // failed must not dress that up as success. Derived groups (credit_factors, discrepancies,
+    // funding_readiness) still surface their own failures in failed_groups. The fire-and-forget
+    // followups are excluded entirely: initiated ≠ completed, and their outcomes stay unknown
+    // at response time by design.
+    currentStep = "outcome";
+    const failedGroups: string[] = [];
+    const skippedGroups: string[] = [];
+    const groupsAttempted: string[] = [];
+    let anyRequestedWriteSucceeded = false;
+
+    if (payload.scores) {
+      groupsAttempted.push("scores");
+      if (results.scores_error) failedGroups.push("scores");
+      else if (results.scores_no_profile_row) skippedGroups.push("scores");
+      else if (results.scores_updated === true) anyRequestedWriteSucceeded = true;
+    }
+    const negRes = results.negative_items;
+    if (negRes && negRes.inserted + negRes.updated + negRes.failed > 0) {
+      groupsAttempted.push("negative_items");
+      if (negRes.failed > 0) failedGroups.push("negative_items");
+      if (negRes.inserted + negRes.updated > 0) anyRequestedWriteSucceeded = true;
+    }
+    const inqRes = results.hard_inquiries;
+    if (inqRes && inqRes.inserted + inqRes.failed > 0) {
+      groupsAttempted.push("hard_inquiries");
+      if (inqRes.failed > 0) failedGroups.push("hard_inquiries");
+      if (inqRes.inserted > 0) anyRequestedWriteSucceeded = true;
+    }
+    const acctRes = results.positive_accounts;
+    if (acctRes && acctRes.inserted + acctRes.updated + acctRes.failed > 0) {
+      groupsAttempted.push("positive_accounts");
+      if (acctRes.failed > 0) failedGroups.push("positive_accounts");
+      if (acctRes.inserted + acctRes.updated > 0) anyRequestedWriteSucceeded = true;
+    }
+    if (results.credit_factors_recalculated === true || results.credit_factors_error || results.factor_score_error) {
+      groupsAttempted.push("credit_factors");
+      if (results.credit_factors_recalculated !== true) failedGroups.push("credit_factors");
+    }
+    // The discrepancies profile write always runs; its readback classifies it.
+    groupsAttempted.push("discrepancies");
+    if (results.discrepancies_error) failedGroups.push("discrepancies");
+    else if (results.discrepancies_no_profile_row) skippedGroups.push("discrepancies");
+    if (results.funding_readiness_recalculated === true || results.funding_readiness_error) {
+      groupsAttempted.push("funding_readiness");
+      if (results.funding_readiness_recalculated !== true) failedGroups.push("funding_readiness");
+    }
+
+    let outcomeStatus: "complete" | "partial" | "failed";
+    if (failedGroups.length === 0 && skippedGroups.length === 0) outcomeStatus = "complete";
+    else if (!anyRequestedWriteSucceeded && failedGroups.length > 0) outcomeStatus = "failed";
+    else outcomeStatus = "partial";
+
+    results.outcome = {
+      status: outcomeStatus,
+      groups_attempted: groupsAttempted,
+      failed_groups: failedGroups,
+      skipped_groups: skippedGroups,
+    };
+
+    // success is now a claim about the writes: false only when writes were attempted and
+    // none landed. A partial run keeps success:true — writes DID land, and the per-group
+    // evidence + outcome.status carry the failure detail for the caller to act on.
+    const allWritesFailed = outcomeStatus === "failed";
+    return new Response(JSON.stringify({ success: !allWritesFailed, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error(`Sync error at step '${currentStep}':`, error);
-    return new Response(JSON.stringify({ error: "Internal error", failed_step: currentStep, message: error instanceof Error ? error.message : "Unknown" }), {
+    // #734 — an unexpected throw can happen AFTER earlier writes landed; the response must
+    // not force callers to guess what stood. partial_results carries what the callee had
+    // recorded before the failure (the caller treats a 500 as an UNCERTAIN outcome, never
+    // as "nothing happened").
+    return new Response(JSON.stringify({ error: "Internal error", failed_step: currentStep, message: error instanceof Error ? error.message : "Unknown", partial_results: results }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

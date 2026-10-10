@@ -26,7 +26,8 @@ RESET ROLE;
 SET ROLE authenticated;
 DO $$ DECLARE read jsonb:=public.fixture_account_read(); BEGIN
  IF jsonb_array_length(read->'accounts')<>2 OR read#>>'{accounts,0,native_id}'<>'101' OR read#>>'{accounts,1,native_id}'<>'102'
-  OR read#>>'{accounts,0,current_balance}'<>'100.10' OR read#>'{accounts,1,current_balance}'<>'null'::jsonb OR read->'calculated_totals'<>'null'::jsonb THEN
+  OR read#>>'{accounts,0,current_balance}'<>'100.10' OR read#>'{accounts,1,current_balance}'<>'null'::jsonb OR read->'calculated_totals'<>'null'::jsonb
+  OR read->>'institution_freshness_verified'<>'false' OR read->>'temporal_basis'<>'source_snapshot' THEN
   RAISE EXCEPTION 'Native account identity, nullable balance or currency boundary lost';
  END IF;
 END $$;
@@ -34,6 +35,10 @@ SELECT public.fixture_expect_error($q$SELECT public.read_finance_account_source(
 SELECT public.fixture_expect_error($q$SELECT public.read_finance_account_source('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000002','50000000-0000-0000-0000-000000000200')$q$,'42501');
 RESET ROLE;
 SET ROLE service_role;
+SELECT public.fixture_expect_error($q$UPDATE finance_account_source_snapshots SET accounts='[]',normalized_digest=encode(sha256(convert_to('[]','UTF8')),'hex') WHERE binding_id='50000000-0000-0000-0000-000000000200'$q$,'42501');
+SELECT public.fixture_expect_error($q$SELECT public.fixture_account_write('[{"native_id":"1","source_label":"Bank","product":"deposit","source_updated_at":"yesterday"}]',1)$q$,'22023');
+SELECT public.fixture_expect_error($q$SELECT public.fixture_account_write('[{"native_id":"1","source_label":"Bank","product":"deposit","source_updated_at":"2026-02-30T00:00:00Z"}]',1)$q$,'22023');
+SELECT public.fixture_expect_error($q$SELECT public.fixture_account_write('[{"native_id":"1","source_label":"Bank","product":"deposit","source_updated_at":"2026-01-02T00:00:00Z"}]',1)$q$,'22023');
 SELECT public.fixture_expect_error($q$SELECT public.fixture_account_write('[{"native_id":"1","source_label":"Card","product":"credit_card","available_cash":"100"}]',1)$q$,'22023');
 SELECT public.fixture_expect_error($q$SELECT public.fixture_account_write('[{"native_id":"1","source_label":"Bank","product":"deposit","available_credit":"100"}]',1)$q$,'22023');
 SELECT public.fixture_expect_error($q$SELECT public.fixture_account_write('[{"native_id":"1","source_label":"Accounting Bank","product":"deposit","available_cash":"100"}]',1)$q$,'22023');
@@ -72,3 +77,8 @@ END $$;
 UPDATE connected_bank_accounts SET account_id='replacement-native-card' WHERE id='40000000-0000-0000-0000-000000000201';
 DO $$ BEGIN IF EXISTS(SELECT 1 FROM finance_account_source_snapshots WHERE binding_id='50000000-0000-0000-0000-000000000201') THEN RAISE EXCEPTION 'Native replacement retained account projection'; END IF; END $$;
 SELECT 'Finance account projections PASS: controlled source cache only; provider and authenticated runtime proof owed' AS result;
+DO $$ BEGIN
+ IF public.operator_retirement_disposition('finance_account_source_snapshots')<>'delete'
+ OR public.operator_retirement_disposition('finance_source_observations')<>'delete'
+ OR public.operator_retirement_disposition('profiles')<>'preserve' THEN RAISE EXCEPTION 'Projection canonical retirement policy drift'; END IF;
+END $$;

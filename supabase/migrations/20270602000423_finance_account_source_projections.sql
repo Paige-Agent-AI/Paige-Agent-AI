@@ -1,12 +1,14 @@
 -- Replaceable provider projections, not an accounting or payment ledger.
 BEGIN;
+ALTER TABLE public.finance_source_observations ADD CONSTRAINT finance_observation_projection_scope
+ UNIQUE(tenant_id,entity_id,binding_id,binding_revision,id);
 CREATE TABLE public.finance_account_source_snapshots (
  binding_id uuid PRIMARY KEY,
  tenant_id uuid NOT NULL,
  entity_id uuid NOT NULL,
  binding_revision bigint NOT NULL CHECK(binding_revision>0),
  version bigint NOT NULL CHECK(version>0),
- observation_id uuid NOT NULL REFERENCES public.finance_source_observations(id) ON DELETE RESTRICT,
+ observation_id uuid NOT NULL,
  source_observed_at timestamptz NOT NULL,
  synchronized_at timestamptz NOT NULL DEFAULT now(),
  coverage text NOT NULL CHECK(coverage IN ('complete','partial')),
@@ -15,11 +17,38 @@ CREATE TABLE public.finance_account_source_snapshots (
  normalized_digest text NOT NULL CHECK(normalized_digest ~ '^[0-9a-f]{64}$'),
  receipt_run_id uuid NOT NULL,
  FOREIGN KEY(tenant_id,entity_id,binding_id) REFERENCES public.finance_source_bindings(tenant_id,entity_id,id) ON DELETE RESTRICT,
+ FOREIGN KEY(tenant_id,entity_id,binding_id,binding_revision,observation_id)
+  REFERENCES public.finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,id) ON DELETE RESTRICT,
  CHECK(coverage<>'complete' OR pages_complete)
 );
 ALTER TABLE public.finance_account_source_snapshots ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.finance_account_source_snapshots FROM PUBLIC,anon,authenticated;
 GRANT ALL ON public.finance_account_source_snapshots TO service_role;
+
+DO $$ DECLARE body text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; at integer; BEGIN
+ body:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure); at:=position(anchor IN body);
+ IF at=0 OR position('finance_company_entities' IN body)=0 OR position('finance_account_source_snapshots' IN body)>0 THEN
+  RAISE EXCEPTION 'Canonical Finance retirement policy requires reviewed reconciliation'; END IF;
+ EXECUTE left(body,at+length(anchor)-1)||'''finance_account_source_snapshots'','||substr(body,at+length(anchor));
+END $$;
+
+CREATE FUNCTION public._finance_account_snapshot_guard() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF TG_OP='UPDATE' AND (ROW(NEW.binding_id,NEW.tenant_id,NEW.entity_id) IS DISTINCT FROM ROW(OLD.binding_id,OLD.tenant_id,OLD.entity_id)
+  OR NEW.version<>OLD.version+1 OR NEW.observation_id=OLD.observation_id) THEN
+  RAISE EXCEPTION 'Financial snapshot requires a new scoped observation' USING ERRCODE='42501'; END IF;
+ IF NEW.normalized_digest IS DISTINCT FROM encode(sha256(convert_to(NEW.accounts::text,'UTF8')),'hex') OR NOT EXISTS(
+  SELECT 1 FROM public.finance_source_observations o WHERE o.id=NEW.observation_id AND o.tenant_id=NEW.tenant_id
+   AND o.entity_id=NEW.entity_id AND o.binding_id=NEW.binding_id AND o.binding_revision=NEW.binding_revision
+   AND o.domain='bank_accounts' AND o.source_record_key='account-snapshot-'||NEW.version
+   AND o.source_observed_at=NEW.source_observed_at AND o.coverage=NEW.coverage AND o.pages_complete=NEW.pages_complete) THEN
+  RAISE EXCEPTION 'Financial snapshot observation does not match' USING ERRCODE='22023'; END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._finance_account_snapshot_guard() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER finance_account_snapshot_guard BEFORE INSERT OR UPDATE ON public.finance_account_source_snapshots
+ FOR EACH ROW EXECUTE FUNCTION public._finance_account_snapshot_guard();
 
 CREATE FUNCTION public._finance_clear_revoked_account_snapshot() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -36,7 +65,7 @@ CREATE FUNCTION public.replace_finance_account_source_snapshot(
 ) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE binding public.finance_source_bindings; existing public.finance_account_source_snapshots;
- row jsonb; field text; native_account text; actor uuid; observation uuid:=gen_random_uuid(); receipt uuid:=gen_random_uuid(); next_version bigint;
+ row jsonb; field text; native_account text; actor uuid; observation uuid:=gen_random_uuid(); receipt uuid:=gen_random_uuid(); next_version bigint; source_stamp timestamptz;
 BEGIN
  IF _expected_version IS NULL OR _expected_version<0 OR _binding_revision IS NULL OR _source_observed_at IS NULL
   OR _source_observed_at>clock_timestamp()+interval '5 minutes' OR _coverage IS NULL OR _coverage NOT IN ('complete','partial')
@@ -82,6 +111,15 @@ BEGIN
   FOREACH field IN ARRAY ARRAY['source_path','institution_label','source_updated_at'] LOOP
    IF row->>field IS NOT NULL AND (jsonb_typeof(row->field)<>'string' OR length(row->>field)>500) THEN RAISE EXCEPTION 'Invalid financial source label' USING ERRCODE='22023'; END IF;
   END LOOP;
+  IF row->>'source_updated_at' IS NOT NULL THEN
+   IF row->>'source_updated_at' !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$' THEN
+    RAISE EXCEPTION 'Invalid financial source timestamp' USING ERRCODE='22023'; END IF;
+   BEGIN source_stamp:=(row->>'source_updated_at')::timestamptz;
+   EXCEPTION WHEN invalid_datetime_format OR datetime_field_overflow THEN
+    RAISE EXCEPTION 'Invalid financial source timestamp' USING ERRCODE='22023'; END;
+   IF NOT isfinite(source_stamp) OR source_stamp>_source_observed_at+interval '5 minutes' THEN
+    RAISE EXCEPTION 'Financial source timestamp conflicts with observation' USING ERRCODE='22023'; END IF;
+  END IF;
   IF (row->>'available_cash' IS NOT NULL AND row->>'product' NOT IN ('deposit','cash_on_hand'))
    OR (row->>'available_credit' IS NOT NULL AND row->>'product' NOT IN ('credit_card','revolving_line'))
    OR (row->>'credit_limit' IS NOT NULL AND row->>'product' NOT IN ('credit_card','revolving_line'))
@@ -129,7 +167,8 @@ BEGIN
  IF NOT FOUND THEN RETURN jsonb_build_object('coverage','unavailable','accounts',NULL,'reason','snapshot_not_supplied'); END IF;
  RETURN jsonb_build_object('binding_id',binding.id,'binding_revision',binding.revision,'version',snapshot.version,'provider',binding.provider,'environment',binding.environment,
   'coverage',snapshot.coverage,'pages_complete',snapshot.pages_complete,'source_observed_at',snapshot.source_observed_at,'synchronized_at',snapshot.synchronized_at,
-  'accounts',snapshot.accounts,'normalized_digest',snapshot.normalized_digest,'observation_id',snapshot.observation_id,'receipt_run_id',snapshot.receipt_run_id,'calculated_totals',NULL);
+  'accounts',snapshot.accounts,'normalized_digest',snapshot.normalized_digest,'observation_id',snapshot.observation_id,'receipt_run_id',snapshot.receipt_run_id,'calculated_totals',NULL,
+  'temporal_basis','source_snapshot','institution_freshness_verified',false);
 END $$;
 REVOKE ALL ON FUNCTION public.read_finance_account_source(uuid,uuid,uuid) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.read_finance_account_source(uuid,uuid,uuid) TO authenticated;

@@ -1216,14 +1216,14 @@
         "send/receive SMS once A2P approves",
         "per-tenant subaccount routing",
         "governed issued-invoice SMS delivery with exact recipient consent/A2P readiness; provider acceptance and authenticated proof remain PROOF_OWED",
-        "Explicit Admin/Platform Owner whole-account retirement: verified subaccount suspension for Archive and closure for Delete; authenticated/provider proof PROOF_OWED."
+        "Admin/Platform Owner PAIGE Archive and Delete are independent of Twilio permission or availability. PAIGE pauses access/execution and removes eligible tenant data/credentials; external service retirement and charges are tracked separately in the protected canonical journal. Optional verified Twilio termination remains provider/authenticated PROOF_OWED."
       ],
       "connection_prerequisite": "Master account + per-tenant subaccount (provisioned at Twilio console); A2P registration for tenant SMS.",
       "required_scopes": [
         "Twilio account/subaccount API",
         "Messaging Service (A2P)",
         "Voice (TwiML app)",
-        "Parent Auth Token or Main API key with Accounts status-management authority; a Standard key is insufficient. Main API keys cannot inspect child Calls. Suspended child credentials receive 401: Archive and suspended-child retirement/readback require the existing protected parent TWILIO_AUTH_TOKEN, bound to the configured parent, for call inventory. Active-child closure resolves the exact resource tenant's scoped API key through the server-only Vault resolver. Verified closed children need no already-retired calling key. Missing parent call authority refuses suspension before any provider write; no child reactivation or call-check bypass."
+        "Optional Twilio-side termination needs Parent Auth Token or Main API key with Accounts status-management authority; a Standard key is insufficient. Main API keys cannot inspect child Calls. Suspended-child provider retirement/readback requires protected parent TWILIO_AUTH_TOKEN for call inventory. This never gates PAIGE Archive or Delete. Missing provider authority refuses only the external operation; platform parent/main number remains separate and preserved."
       ],
       "safe_readable_context": "Number inventory, registration status (via provider-result-contract), call/message metadata; never auth tokens.",
       "allowed_writes_external_effects": "Number purchase, outbound SMS/voice — confirm-gated; sends run through the one approval path. Explicit Operator Admin/Owner confirmation may suspend/close only the bound tenant subaccount; never the platform parent or an ambiguous/shared binding.",
@@ -2258,7 +2258,7 @@
       "paige_use_cases": [
         "connect/read workflow inventory (OAuth read/write)",
         "(future) activate a workflow whose capability_run Rail row renders",
-        "Explicit whole-account retirement: canonical API credential disconnection plus scrub of its legacy MCP projection; external workflows retained only after scope-specific acknowledgement. Authenticated proof PROOF_OWED."
+        "Confirmed PAIGE whole-account Delete removes its canonical encrypted API credential and exact legacy MCP projection without calling n8n. External workflows and hosting remain independently managed and explicitly pending; Archive pauses PAIGE execution without a separate provider-preparation screen. Authenticated proof PROOF_OWED."
       ],
       "connection_prerequisite": "Per-tenant n8n OAuth (workflow:read + workflow:write); a saved key does not prove health. The connection is also represented 1:1 in the canonical mcp_connections gateway registry that the PR-1 outbound connection-loader reads.",
       "required_scopes": [

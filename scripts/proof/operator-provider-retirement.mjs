@@ -118,6 +118,15 @@ if(process.argv.includes('--generated-media')) {
   await refuse(()=>db.exec(`SET ROLE authenticated; SELECT operator_generated_media_manifest('${child}');`),'42501');await db.exec('RESET ROLE');
  }
 }
+if(process.argv.includes('--platform-independent')) {
+ if(!process.argv.includes('--independent-baseline')) {
+  const forward=await readFile('supabase/migrations/20270602000425_operator_provider_independent_retirement.sql','utf8');
+  await db.exec(forward);await db.exec(forward);
+ }
+ try {await (await import('./operator-provider-independent-retirement.mjs')).proveProviderIndependentRetirement({db,actor,preview,refuse,owner,ordinary,agency,child,solo});}
+ finally {await db.close();}
+ process.exit(0);
+}
 const op='00000000-0000-0000-0000-000000000080',claim='00000000-0000-0000-0000-000000000081',archiveOp='00000000-0000-0000-0000-000000000082';
 const key='twilio:'+child,nkey='n8n:'+agency,admin='00000000-0000-0000-0000-000000000003';
 const resourcePreview=async(mode='archive')=>(await db.query('select operator_preview_retirement_resources($1,$2) v',[agency,mode])).rows[0].v;

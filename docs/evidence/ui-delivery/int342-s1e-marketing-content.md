@@ -41,7 +41,7 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens Marketing › Content, s
 MOTION_PURPOSE: a small lift on hover marks a card as openable; off under reduced motion
 PROTECTED_SEAMS: tested - tab registry and order (growth2, sales-ops contract), the drawer's focus trap and Escape (growth2 contract), the library read policy (useLibraryAccess), the document parser (marketing-content-model tests through parseStudioDocument; loadDocument now calls it). Unaffected and named - Overview, Campaigns, Audience, Social, Email, Ads, Analytics, Vibe Studio, the chat artifact card
 
-INTERNAL_BUILD_IDENTITY: 164dcf455; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: 164dcf45582841d7c112621db2933e0dda6bf2aa; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production on merge per the pre-launch stance (CLAUDE.md §4)
 RELEASE_CLASSIFICATION: internal-only: a Solo Marketing view over existing records, no backend change
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version

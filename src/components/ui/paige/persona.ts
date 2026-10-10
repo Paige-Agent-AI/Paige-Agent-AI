@@ -28,7 +28,7 @@ import type { VP } from "@/components/ui/page";
  * NEVER an authorization signal — the real tenant/operator boundary is server-side
  * (RLS + PlatformStaffOnly, §9). It only picks which chrome/identity the rail shows.
  */
-export type AgentAccountType = "solo" | "sub_account" | "agency" | "super_admin";
+export type AgentAccountType = "solo" | "sub_account" | "agency" | "platform_operator";
 
 /** A resolved persona identity for the rail header + launcher. Pure display data. */
 export interface AgentPersona {
@@ -56,12 +56,12 @@ export interface AgentPersona {
  * `persona` (e.g. a tenant-authored Playbook persona, §7) to override this entirely;
  * this is only the fallback so the rail is never identity-less.
  *
- * Super Admin / God → "Paige Operator" (spec §5a): terser, fleet-framed, visually
+ * A platform operator at rest (either tier) → "Paige Operator" (spec §5a): terser, fleet-framed, visually
  * differentiated. Every tenant-facing type → the neutral "Paige" orchestrator
  * identity; the tenant's real name/voice arrives via the `persona` prop.
  */
 export function resolveAgentPersona(accountType: AgentAccountType): AgentPersona {
-  if (accountType === "super_admin") {
+  if (accountType === "platform_operator") {
     return {
       id: "paige-operator",
       label: "Paige Operator",

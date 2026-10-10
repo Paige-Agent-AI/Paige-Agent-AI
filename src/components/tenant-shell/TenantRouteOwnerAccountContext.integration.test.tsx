@@ -75,11 +75,27 @@ vi.mock("@/integrations/supabase/client", () => ({
       },
     },
     rpc: (name: string) => {
-      if (name === "is_platform_owner") {
-        harness.currentLoad += 1;
-        return loadPart("owner");
+      // The tenant context reads operator standing once per load (one server answer). The
+      // fixtures still describe it as owner/staff; this folds them into the answer's shape, and a
+      // failed read of either side is a failed read of the answer.
+      // A context load reads standing, its profile and the tenant list in one tick; its profile read
+      // opens the load (below). The act-as probe reads standing too, but not that profile read, so it
+      // answers from the load already open instead of consuming the next one. Read after a microtask
+      // so the standing call sees the load its own tick opened.
+      if (name === "operator_standing") {
+        return Promise.resolve().then(() => Promise.all([loadPart("owner"), loadPart("staff")])).then(([owner, staff]) =>
+          owner.error || staff.error
+            ? { data: null, error: owner.error ?? staff.error }
+            : {
+                data: [{
+                  tier: owner.data ? "super_admin" : staff.data ? "platform_admin" : null,
+                  active_tenant_id: null,
+                  holds_unlisted: Boolean(owner.data),
+                }],
+                error: null,
+              },
+        );
       }
-      if (name === "is_platform_admin") return loadPart("staff");
       if (name === "get_user_primary_tenant") {
         const primary = harness.primaryLoads.shift();
         if (!primary) throw new Error("No primary-tenant response is queued");
@@ -99,9 +115,12 @@ vi.mock("@/integrations/supabase/client", () => ({
     from: (table: string) => {
       if (table === "profiles") {
         return {
-          select: () => ({
-            eq: () => ({ maybeSingle: () => loadPart("profile") }),
-          }),
+          select: (columns: string) => {
+            // Only a context load asks for the login default with the pointer; the act-as probe's
+            // scope read asks for the pointer alone. So the load's own profile read opens it.
+            if (columns.includes("agency_login_default")) harness.currentLoad += 1;
+            return { eq: () => ({ maybeSingle: () => loadPart("profile") }) };
+          },
           update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
         };
       }

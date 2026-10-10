@@ -49,7 +49,7 @@
   "surfaces": [
     {
       "id": "finance.department",
-      "surface": "Solo Finance — six company-finance views",
+      "surface": "Solo Finance — seven company-finance views, including Debt & Credit",
       "group": "finance",
       "tier_scope": [
         "solo standalone"
@@ -105,7 +105,7 @@
         "completion_criterion": "Authenticated owner completes a source-backed financial review; PAIGE prepares and executes an authorized governed follow-up, verifies readback and records the canonical Rail outcome."
       },
       "state": "PROOF_OWED",
-      "state_reason": "Dedicated Finance destination and canonical Sales consumers are implemented; authenticated UI and Chat/Live proof absent. Company accounting/banking, budgets, forecasts and Finance snapshots remain unavailable. The full department mission remains open.",
+      "state_reason": "Dedicated Finance destination and canonical Sales consumers are implemented; authenticated UI and Chat/Live proof absent. Company accounting/banking/debt, budgets, forecasts and Finance snapshots remain unavailable. Owner-approved Debt & Credit UI supports multiple accounts but its live source binding is absent. The full department mission remains open.",
       "next_slice": "Prove authenticated scoped UI; coordinate safe company accounting/bank reads through Integrations; complete canonical budgets/forecast assumptions and Finance Spine/Fabric bindings with governed outcome/readback.",
       "evidence_class": [
         "source_read",

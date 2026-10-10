@@ -232,6 +232,7 @@ export const SOLO_BRANCHES: Branch[] = [
     subtabs: [
       { slug: "overview", key: "overview", label: "Overview" },
       { slug: "banking-cash", key: "banking", label: "Banking & Cash" },
+      { slug: "debt-credit", key: "debt", label: "Debt & Credit" },
       { slug: "receivables", key: "receivables", label: "Receivables" },
       { slug: "expenses-payables", key: "expenses", label: "Expenses & Payables" },
       { slug: "profitability", key: "profitability", label: "Profitability" },

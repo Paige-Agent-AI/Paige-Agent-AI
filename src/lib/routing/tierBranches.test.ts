@@ -211,12 +211,12 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("calendar")).toBe(6);
     expect(count("growth")).toBe(12);
     expect(count("sales")).toBe(7);
-    expect(count("finance")).toBe(6);
+    expect(count("finance")).toBe(7);
     expect(count("analytics")).toBe(0);
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(8);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(61); // retired six-lens branch; one Settings Analytics destination
+    expect(total).toBe(62); // retired six-lens branch; one Settings Analytics destination
     // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");

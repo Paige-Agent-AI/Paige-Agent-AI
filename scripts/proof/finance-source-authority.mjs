@@ -2,6 +2,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 const port = Number(process.env.FINANCE_PROOF_PORT ?? (process.env.CI ? 5432 : 55463));
 if (!Number.isSafeInteger(port) || port < 1024 || port > 65535 || (port === 5432 && !process.env.CI)) throw new Error('Dedicated fixture port required');
@@ -9,8 +10,8 @@ const psql = process.env.FINANCE_PROOF_PSQL ?? 'psql';
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('PG')));
 const args = database => ['-X', '--no-password', '-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', '-d', database, '-At', '-v', 'ON_ERROR_STOP=1'];
 const fixture = fileURLToPath(new URL('../../supabase/tests/finance_source_authority.sql', import.meta.url));
-function run(database, input, extra = []) {
-  const result = spawnSync(psql, [...args(database), ...extra], { input, env, encoding: 'utf8', windowsHide: true, timeout: 30000 });
+function run(database, input, extra = [], timeout = 30000) {
+  const result = spawnSync(psql, [...args(database), ...extra], { input, env, encoding: 'utf8', windowsHide: true, timeout });
   if (result.error) throw result.error;
   return result;
 }
@@ -67,6 +68,12 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
   const database = `finance_fixture_${process.pid}_${leg}`;
   sql('postgres', `CREATE DATABASE ${database};`);
   try {
+    // Actual canonical disposition definition; role/archive authority remains an
+    // explicit fixture dependency, never authenticated Operator acceptance.
+    const canonical = readFileSync(new URL('../../supabase/migrations/20270602000302_operator_provider_retirement.sql', import.meta.url), 'utf8');
+    const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
+    assert.ok(disposition, 'Canonical retirement disposition missing');
+    sql(database, disposition);
     const result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
     if (leg === 'absent') {
       assert.notEqual(result.status, 0);
@@ -144,7 +151,8 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     console.log(`PASS ${leg}: actual migration, role/tenant/source guards, receipt rollback, concurrent update and replay`);
   } finally {
     // Only a hardcoded, newly-created fixture database on loopback can reach this operation.
-    sql('postgres', `DROP DATABASE ${database} WITH (FORCE);`);
+    const cleanup = run('postgres', `DROP DATABASE ${database} WITH (FORCE);`, [], 60000);
+    assert.equal(cleanup.status, 0, cleanup.stderr);
   }
 }
 console.log('Finance PostgreSQL proof PASS. Canonical dependency fixtures; live-provider/authenticated acceptance owed.');

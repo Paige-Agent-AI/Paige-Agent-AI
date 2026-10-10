@@ -9,8 +9,8 @@ CREATE TABLE public.finance_company_entities (
  identity_reference text NOT NULL CHECK(length(identity_reference) BETWEEN 1 AND 500),
  version bigint NOT NULL DEFAULT 1 CHECK(version>0),
  is_active boolean NOT NULL DEFAULT true,
- declared_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
- updated_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+ declared_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+ updated_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
  receipt_run_id uuid NOT NULL DEFAULT gen_random_uuid(),
  created_at timestamptz NOT NULL DEFAULT now(),
  updated_at timestamptz NOT NULL DEFAULT now(),
@@ -81,6 +81,25 @@ ALTER TABLE public.finance_source_observations ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.finance_company_entities,public.finance_source_bindings,public.finance_source_observations FROM PUBLIC,anon,authenticated;
 GRANT ALL ON public.finance_company_entities,public.finance_source_bindings,public.finance_source_observations TO service_role;
 
+-- Extend the one canonical disposition function without replacing its existing
+-- table policy. Refuse unknown source shapes rather than omit another domain.
+DO $$ DECLARE body text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; BEGIN
+ body:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure);
+ IF position(anchor IN body)=0 OR position('finance_company_entities' IN body)>0
+  OR length(body)-length(replace(body,anchor,''))<>length(anchor) THEN
+  RAISE EXCEPTION 'Canonical retirement disposition requires reviewed reconciliation'; END IF;
+ EXECUTE replace(body,anchor,'SELECT CASE WHEN _table=ANY(ARRAY[''finance_company_entities'',''finance_source_bindings'',''finance_source_observations'']) THEN ''delete'' WHEN _table=ANY(ARRAY[');
+END $$;
+
+CREATE FUNCTION public._finance_retirement_allowed(_tenant uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+ SELECT coalesce(public.operator_can_retire_accounts(),false) AND EXISTS(
+  SELECT 1 FROM public.tenants t JOIN public.operator_account_archives r ON r.id=t.archive_operation_id
+  WHERE t.id=_tenant AND t.archived_at IS NOT NULL AND t.lifecycle_execution_paused
+   AND r.state='deleting' AND _tenant=ANY(r.scope_ids))
+$$;
+REVOKE ALL ON FUNCTION public._finance_retirement_allowed(uuid) FROM PUBLIC,anon,authenticated,service_role;
+
 CREATE FUNCTION public._finance_binding_identity_guard() RETURNS trigger
 LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 DECLARE source_actor uuid; locked_actor uuid;
@@ -104,7 +123,10 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;
   RETURN NEW;
  END IF;
- IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Financial source history is retained' USING ERRCODE='42501'; END IF;
+ IF TG_OP='DELETE' THEN
+  IF public._finance_retirement_allowed(OLD.tenant_id) THEN RETURN OLD; END IF;
+  RAISE EXCEPTION 'Financial source history is retained' USING ERRCODE='42501';
+ END IF;
  IF ROW(NEW.id,NEW.tenant_id,NEW.entity_id,NEW.provider,NEW.quickbooks_connection_id,NEW.plaid_account_anchor_id,NEW.environment,NEW.source_namespace)
   IS DISTINCT FROM ROW(OLD.id,OLD.tenant_id,OLD.entity_id,OLD.provider,OLD.quickbooks_connection_id,OLD.plaid_account_anchor_id,OLD.environment,OLD.source_namespace) THEN
   RAISE EXCEPTION 'Financial source identity is immutable' USING ERRCODE='42501';
@@ -181,6 +203,7 @@ CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE binding public.finance_source_bindings; active boolean; source_actor uuid; locked_actor uuid;
 BEGIN
+ IF TG_OP='DELETE' AND public._finance_retirement_allowed(OLD.tenant_id) THEN RETURN OLD; END IF;
  IF TG_OP<>'INSERT' THEN RAISE EXCEPTION 'Financial source observations are immutable' USING ERRCODE='42501'; END IF;
  SELECT * INTO binding FROM public.finance_source_bindings WHERE tenant_id=NEW.tenant_id AND entity_id=NEW.entity_id AND id=NEW.binding_id;
  IF NOT FOUND OR binding.verification_state<>'verified' OR binding.revision<>NEW.binding_revision THEN RAISE EXCEPTION 'Verified financial source unavailable or changed' USING ERRCODE='42501'; END IF;

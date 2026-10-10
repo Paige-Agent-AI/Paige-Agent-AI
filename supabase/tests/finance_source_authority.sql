@@ -12,10 +12,12 @@ END $$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY, deleted_at timestamptz, banned_until timestamptz);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('test.actor',true),''))::uuid $$;
 CREATE TYPE public.tenant_status AS ENUM('trial','active','past_due','canceled','suspended');
-CREATE TABLE public.tenants(id uuid PRIMARY KEY, status public.tenant_status, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false,parent_tenant_id uuid);
+CREATE TABLE public.tenants(id uuid PRIMARY KEY, status public.tenant_status, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false,parent_tenant_id uuid,archive_operation_id uuid);
+CREATE TABLE public.operator_account_archives(id uuid PRIMARY KEY,state text,scope_ids uuid[]);
 CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
 CREATE TABLE public.tenant_members(tenant_id uuid,user_id uuid,role text,status text,PRIMARY KEY(tenant_id,user_id));
 CREATE TABLE public.user_roles(user_id uuid,role text);
+CREATE FUNCTION public.operator_can_retire_accounts() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=auth.uid() AND role='platform_admin') $$;
 CREATE TABLE public.agency_team_members(agency_tenant_id uuid,user_id uuid,agency_role text,status text,scoped_subaccounts uuid[]);
 CREATE TABLE public.quickbooks_connections(id uuid PRIMARY KEY,user_id uuid,is_active boolean,qb_realm_id text DEFAULT 'test-realm',environment text DEFAULT 'sandbox',business_id uuid,scope text DEFAULT 'com.intuit.quickbooks.accounting');
 CREATE TABLE public.quickbooks_financials(id uuid PRIMARY KEY,qb_connection_id uuid REFERENCES public.quickbooks_connections(id) ON DELETE CASCADE);
@@ -149,6 +151,48 @@ BEGIN;
 UPDATE finance_company_entities SET version=version+1 WHERE id='30000000-0000-0000-0000-000000000001';
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000003' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Company revision reused previous source verification'; END IF;
+END $$;
+ROLLBACK;
+-- Finance must not prevent canonical Auth erasure or account retirement.
+BEGIN;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',true);
+SELECT set_config('test.refuse_receipt','no',true);
+INSERT INTO auth.users VALUES('10000000-0000-0000-0000-000000000990',NULL,NULL);
+INSERT INTO finance_company_entities(id,tenant_id,kind,legal_name,identity_basis,identity_reference,declared_by,updated_by)
+ VALUES('30000000-0000-0000-0000-000000000990','20000000-0000-0000-0000-000000000001','managed_entity','Retirement controlled company','owner_declaration','30000000-0000-0000-0000-000000000990','10000000-0000-0000-0000-000000000990','10000000-0000-0000-0000-000000000990');
+DELETE FROM auth.users WHERE id='10000000-0000-0000-0000-000000000990';
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000990' AND declared_by IS NULL AND updated_by IS NULL AND version=1)
+ THEN RAISE EXCEPTION 'Auth erasure lost company history or remained blocked'; END IF;
+ IF public.operator_retirement_disposition('finance_company_entities')<>'delete'
+  OR public.operator_retirement_disposition('finance_source_bindings')<>'delete'
+  OR public.operator_retirement_disposition('finance_source_observations')<>'delete'
+  OR public.operator_retirement_disposition('clients')<>'delete'
+  OR public.operator_retirement_disposition('profiles')<>'preserve'
+  OR public.operator_retirement_disposition('unknown_finance_table')<>'blocked' THEN RAISE EXCEPTION 'Canonical disposition changed outside Finance'; END IF;
+END $$;
+INSERT INTO quickbooks_connections(id,user_id,is_active) VALUES('40000000-0000-0000-0000-000000000990','10000000-0000-0000-0000-000000000001',true);
+INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)
+ VALUES('50000000-0000-0000-0000-000000000990','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000990','quickbooks','40000000-0000-0000-0000-000000000990','sandbox','retirement-controlled-native','verified',gen_random_uuid(),now());
+INSERT INTO finance_source_observations(tenant_id,entity_id,binding_id,binding_revision,source_record_key,domain,source_observed_at,coverage,pages_complete,evidence_digest)
+ VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000990','50000000-0000-0000-0000-000000000990',1,'retirement-controlled-observation','bank_accounts',now(),'complete',true,repeat('a',64));
+INSERT INTO user_roles VALUES('10000000-0000-0000-0000-000000000001','platform_admin');
+INSERT INTO operator_account_archives VALUES('90000000-0000-0000-0000-000000000990','archived',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);
+UPDATE tenants SET archived_at=now(),lifecycle_execution_paused=true,archive_operation_id='90000000-0000-0000-0000-000000000990' WHERE id='20000000-0000-0000-0000-000000000001';
+SELECT public.fixture_expect_error($q$DELETE FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000990'$q$,'42501');
+UPDATE operator_account_archives SET state='deleting',scope_ids=ARRAY['20000000-0000-0000-0000-000000000002'::uuid];
+SELECT public.fixture_expect_error($q$DELETE FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000990'$q$,'42501');
+UPDATE operator_account_archives SET scope_ids=ARRAY['20000000-0000-0000-0000-000000000001'::uuid];
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000002',true);
+SELECT public.fixture_expect_error($q$DELETE FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000990'$q$,'42501');
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',true);
+DELETE FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000990';
+DELETE FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000990';
+DELETE FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000990';
+DO $$ BEGIN
+ IF EXISTS(SELECT 1 FROM finance_source_observations WHERE binding_id='50000000-0000-0000-0000-000000000990')
+  OR EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000990')
+  OR EXISTS(SELECT 1 FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000990') THEN RAISE EXCEPTION 'Canonical retirement left Finance rows'; END IF;
 END $$;
 ROLLBACK;
 BEGIN;

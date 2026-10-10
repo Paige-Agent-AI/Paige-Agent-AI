@@ -65,6 +65,8 @@
 .intel-form textarea[aria-invalid="true"] { border-color: var(--pg-negative); }
 .intel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .intel-task-timeline { list-style: none; margin: 20px 0; padding: 0; }
+.intelligence .intel-task-action:hover { background: var(--pg-surface); color: var(--pg-ink); }
+.intel-task-recommend { white-space: normal; height: auto; min-height: 40px; max-width: 100%; text-align: left; }
 .intel-task-timeline li { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--pg-line); }
 .intel-task-timeline li > div { border-left: 2px solid var(--tone); padding-left: 16px; min-width: 0; }
 .intel-task-timeline time, .intel-task-timeline small { color: var(--pg-muted); font-size: var(--pg-t-label); }

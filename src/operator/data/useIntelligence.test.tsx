@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import IntelligenceSurface from "@/operator/surfaces/settings/IntelligenceSurface";
+import { syntheticTrajectory, syntheticTrajectoryPage } from "@/test/fixtures/trajectory";
 
 const mock = vi.hoisted(() => ({ rpc: vi.fn(), auth: vi.fn(), getSession: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mock.rpc, auth: {
@@ -46,6 +47,42 @@ async function draft() {
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 50)); });
 afterEach(async () => { if (root) await act(async () => root.unmount()); cache?.clear(); node?.remove(); });
 describe("Operator Intelligence identity and authority fences", () => {
+  it("refuses trajectory permission and discards all previously readable evidence", async () => {
+    await mount();
+    mock.rpc.mockImplementation((name: string) => ({ abortSignal: () => Promise.resolve({
+      data: null, error: name === "operator_intelligence_trajectories" ? { code: "42501" } : null,
+    }) }));
+    await act(async () => { await cache.invalidateQueries({ queryKey: ["operator_intelligence", "operator-a", 1, "trajectories"] }); });
+    await flush();
+    expect(node.textContent).toContain("Platform Operator access required");
+    expect(node.textContent).not.toContain("12,345");
+  });
+  it("does not render an unsupported trajectory contract as task evidence", async () => {
+    await mount();
+    mock.rpc.mockImplementation(() => ({ abortSignal: () => Promise.resolve({ data: { ...syntheticTrajectoryPage(), contract_version: 2 }, error: null }) }));
+    await act(async () => { await cache.invalidateQueries({ queryKey: ["operator_intelligence", "operator-a", 1, "trajectories"] }); });
+    await click("Forensic Observatory"); await flush();
+    expect(node.textContent).toContain("Task trajectories could not load");
+    expect(node.textContent).not.toContain(syntheticTrajectory.id);
+  });
+  it("fences a late selected task after close and account switch", async () => {
+    await mount(); let resolveTask: (value: unknown) => void = () => {};
+    mock.rpc.mockImplementation((name: string, args: { p_work_id?: string }) => {
+      if (name === "is_platform_admin") return Promise.resolve({ data: true, error: null });
+      return { abortSignal: () => name === "operator_intelligence_trajectories" && args.p_work_id
+        ? new Promise(resolve => { resolveTask = resolve; })
+        : Promise.resolve({ data: name === "operator_intelligence_trajectories" ? syntheticTrajectoryPage() : [], error: null }) };
+    });
+    await act(async () => { await cache.invalidateQueries({ queryKey: ["operator_intelligence", "operator-a", 1, "trajectories"] }); });
+    await click("Forensic Observatory"); await click("Inspect task"); await flush();
+    await click("Close inspection");
+    resolveTask({ data: syntheticTrajectoryPage(), error: null }); await flush();
+    expect(node.textContent).not.toContain("Recorded task timeline");
+    await click("Inspect task"); await flush();
+    await act(async () => { notify("SIGNED_IN", user("operator-b")); }); await flush();
+    resolveTask({ data: syntheticTrajectoryPage(), error: null }); await flush();
+    expect(node.textContent).not.toContain("Recorded task timeline");
+  });
   it("retains a session draft through same-user renewal and refocus sign-in", async () => {
     await mount(); await draft();
     await act(async () => { notify("TOKEN_REFRESHED", user("operator-a")); }); await flush();

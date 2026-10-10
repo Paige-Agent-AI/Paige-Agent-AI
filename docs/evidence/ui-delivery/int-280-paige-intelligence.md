@@ -2,6 +2,20 @@
 
 Current release: owner-authorized PR #1893 merged and production-deployed on 2026-10-10. The production closeout below supersedes the development-only merge/deployment/persistence holds in the historical snapshot; authenticated acceptance remains UNVERIFIED under OWNER_LOGIN_HOLD. Original stage evidence is preserved.
 
+## AI-1D task evidence extension (2026-10-10)
+
+Owner authorized AI-1 through bounded reviewed releases. The approved five-workspace design is preserved; this slice adds a read-only durable task list and inline task inspector to the existing Forensic Observatory. Fleet and Solo navigation are unchanged.
+
+Sources: `operator_intelligence_trajectories` contract v1; exact server-proven work/trace links only. Timeline separates work observations, protected conversation references, model calls, capability decisions/dispatch/outcomes, canonical approval records, receipts, evaluation results and the current server destination check. Private content is withheld. Artifact/read-result verification is distinct from publication, sending, business impact, assistant narration and model success. Legacy/missing history, unknown attempt attribution, bounded omissions and incomplete runtime fingerprints are explicit.
+
+Automated: 31 local inspector/presentation/authentication-fence tests PASS, including trajectory RPC refusal, unsupported contract version, selected-read failure, close/account-switch delayed responses, cursor controls, trace lookup and focus return. Isolated PostgreSQL canonical reconstruction and negative-evidence proofs are recorded in AI-1C; browser fixtures do not establish those SQL facts.
+
+Static: canonical app TypeScript check reports the ten known unrelated baseline errors; no new slice error. Scoped ESLint and whitespace checks are separate recorded checks. Rendered: actual Operator shell in Chrome using an isolated, explicitly labelled LOCAL SYNTHETIC adapter; task inspection, source-labelled timeline, both themes, Escape opener recovery and desktop/narrow reflow exercised. A new recommendation button overflow found at 390px was repaired with wrapping; table scroll remains local to its wrapper. Screenshots and measurements are retained in the assignment outputs. Zoom and assistive-technology acceptance remain UNVERIFIED.
+
+Permission: the existing authenticated Operator predicate, server RPC refusal and identity/epoch fence apply to list and selected reads. No public route, direct table access, new authority, executor, provider operation, business write or Chat/Live runtime is introduced. Existing improvement-draft preparation receives the canonical work reference; it remains a session draft, not submission or approval.
+
+Release proof: local candidate only at this snapshot. Final exact-head independent reviews, hosted CI, PR/merge, migration persistence, deployment and public bundle readback are recorded in the release closeout when observed. Authenticated production Operator acceptance remains UNVERIFIED under OWNER_LOGIN_HOLD. Cross-work parent objectives, universal producer adoption and full runtime/version coverage remain PARTIAL or unavailable. Later AI-2 through AI-9 engines are not activated.
+
 ## Historical development and candidate snapshot
 
 UI_DELIVERY_EVIDENCE_VERSION: 1

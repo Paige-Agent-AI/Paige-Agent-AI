@@ -107,4 +107,30 @@ RESET ROLE;
 SET LOCAL ROLE authenticated;
 SELECT public.fixture_expect_error($q$SELECT public.fixture_qb_prepare()$q$,'40001');
 ROLLBACK;
+BEGIN;
+INSERT INTO auth.users VALUES('10000000-0000-0000-0000-000000000990',NULL,NULL);
+INSERT INTO quickbooks_oauth_attempts(id,tenant_id,entity_id,entity_version,actor_id,environment,state_hash,launch_hash,launch_proof_hash,binding_hash,status)
+ VALUES('70000000-0000-0000-0000-000000000990','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001',1,'10000000-0000-0000-0000-000000000990','sandbox',repeat('d',64),repeat('e',64),repeat('f',64),repeat('a',64),'launched');
+SELECT public.fixture_expect_error($q$UPDATE quickbooks_oauth_attempts SET actor_id=NULL WHERE id='70000000-0000-0000-0000-000000000990'$q$,'42501');
+DELETE FROM auth.users WHERE id='10000000-0000-0000-0000-000000000990';
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM quickbooks_oauth_attempts WHERE id='70000000-0000-0000-0000-000000000990' AND actor_id IS NULL AND status='launched') THEN RAISE EXCEPTION 'Auth erasure changed consent history'; END IF;
+END $$;
+SET LOCAL ROLE service_role;
+SELECT public.fixture_expect_error($q$SELECT public.quickbooks_oauth_attempt_service('consume',jsonb_build_object('state_hash',repeat('d',64),'binding_hash',repeat('a',64)))$q$,'42501');
+SELECT public.fixture_expect_error($q$DELETE FROM quickbooks_oauth_attempts WHERE id='70000000-0000-0000-0000-000000000990'$q$,'42501');
+RESET ROLE;
+INSERT INTO user_roles VALUES('10000000-0000-0000-0000-000000000001','platform_admin');
+INSERT INTO operator_account_archives VALUES('90000000-0000-0000-0000-000000000991','archived',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);
+UPDATE tenants SET archived_at=now(),lifecycle_execution_paused=true,archive_operation_id='90000000-0000-0000-0000-000000000991' WHERE id='20000000-0000-0000-0000-000000000001';
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',true);
+SELECT public.fixture_expect_error($q$DELETE FROM quickbooks_oauth_attempts WHERE id='70000000-0000-0000-0000-000000000990'$q$,'42501');
+UPDATE operator_account_archives SET state='deleting';
+DELETE FROM quickbooks_oauth_attempts WHERE id='70000000-0000-0000-0000-000000000990';
+DO $$ BEGIN
+ IF EXISTS(SELECT 1 FROM quickbooks_oauth_attempts WHERE id='70000000-0000-0000-0000-000000000990')
+  OR public.operator_retirement_disposition('quickbooks_oauth_attempts')<>'delete'
+  OR public.operator_retirement_disposition('profiles')<>'preserve' THEN RAISE EXCEPTION 'Consent retirement disposition mismatch'; END IF;
+END $$;
+ROLLBACK;
 SELECT 'QuickBooks OAuth authority PASS: nonce correlation only; no provider, tokens, connection or authenticated production acceptance' AS result;

@@ -2,7 +2,7 @@
 BEGIN;
 CREATE TABLE public.quickbooks_oauth_attempts (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id uuid NOT NULL, entity_id uuid NOT NULL,
- entity_version bigint NOT NULL CHECK(entity_version>0), actor_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+ entity_version bigint NOT NULL CHECK(entity_version>0), actor_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
  environment text NOT NULL CHECK(environment IN ('sandbox','production')),
  requested_scope text NOT NULL DEFAULT 'com.intuit.quickbooks.accounting' CHECK(requested_scope='com.intuit.quickbooks.accounting'),
  state_hash text NOT NULL UNIQUE CHECK(state_hash ~ '^[0-9a-f]{64}$'),
@@ -24,8 +24,15 @@ GRANT ALL ON public.quickbooks_oauth_attempts TO service_role;
 COMMENT ON TABLE public.quickbooks_oauth_attempts IS 'QuickBooks consent correlation only; existing Integrations retains connection lifecycle. No tokens/native-company verification. Preparing or consuming state is not a connected provider.';
 
 CREATE FUNCTION public._quickbooks_attempt_guard() RETURNS trigger
-LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
+ IF TG_OP='DELETE' THEN
+  IF public._finance_retirement_allowed(OLD.tenant_id) THEN RETURN OLD; END IF;
+  RAISE EXCEPTION 'QuickBooks authorization history is retained' USING ERRCODE='42501';
+ END IF;
+ IF OLD.actor_id IS NOT NULL AND NEW.actor_id IS NULL
+  AND (to_jsonb(NEW)-'actor_id')=(to_jsonb(OLD)-'actor_id')
+  AND NOT EXISTS(SELECT 1 FROM auth.users WHERE id=OLD.actor_id) THEN RETURN NEW; END IF;
  IF ROW(NEW.id,NEW.tenant_id,NEW.entity_id,NEW.entity_version,NEW.actor_id,NEW.environment,NEW.requested_scope,NEW.state_hash,NEW.launch_hash,NEW.launch_proof_hash,NEW.created_at,NEW.expires_at)
   IS DISTINCT FROM ROW(OLD.id,OLD.tenant_id,OLD.entity_id,OLD.entity_version,OLD.actor_id,OLD.environment,OLD.requested_scope,OLD.state_hash,OLD.launch_hash,OLD.launch_proof_hash,OLD.created_at,OLD.expires_at) THEN
   RAISE EXCEPTION 'QuickBooks authorization identity is immutable' USING ERRCODE='42501';
@@ -42,7 +49,20 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._quickbooks_attempt_guard() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER quickbooks_attempt_identity BEFORE UPDATE ON public.quickbooks_oauth_attempts FOR EACH ROW EXECUTE FUNCTION public._quickbooks_attempt_guard();
+CREATE TRIGGER quickbooks_attempt_identity BEFORE UPDATE OR DELETE ON public.quickbooks_oauth_attempts FOR EACH ROW EXECUTE FUNCTION public._quickbooks_attempt_guard();
+
+-- Extend the existing retirement disposition; never introduce another deletion manager.
+DO $$
+DECLARE definition text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; position integer;
+BEGIN
+ definition:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure);
+ position:=strpos(definition,anchor);
+ IF position=0 OR strpos(definition,'''finance_company_entities''')=0
+  OR strpos(definition,'''quickbooks_oauth_attempts''')>0 THEN
+  RAISE EXCEPTION 'Unsupported canonical retirement policy';
+ END IF;
+ EXECUTE left(definition,position+length(anchor)-1)||'''quickbooks_oauth_attempts'','||substr(definition,position+length(anchor));
+END $$;
 
 CREATE FUNCTION public.begin_quickbooks_company_authorization(_expected_tenant_id uuid,_entity_id uuid,_expected_entity_version bigint,_environment text) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

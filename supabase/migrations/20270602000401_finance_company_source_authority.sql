@@ -125,8 +125,8 @@ CREATE FUNCTION public._finance_plaid_retirement() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
  IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE OR
-  ROW(NEW.plaid_item_id,NEW.plaid_account_id,NEW.user_id,NEW.business_id)
-   IS DISTINCT FROM ROW(OLD.plaid_item_id,OLD.plaid_account_id,OLD.user_id,OLD.business_id) THEN
+  ROW(NEW.plaid_item_id,NEW.account_id,NEW.user_id,NEW.business_id)
+   IS DISTINCT FROM ROW(OLD.plaid_item_id,OLD.account_id,OLD.user_id,OLD.business_id) THEN
   UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
    WHERE plaid_account_anchor_id=OLD.id AND verification_state<>'revoked';
  END IF;

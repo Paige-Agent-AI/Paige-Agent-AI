@@ -20,8 +20,8 @@ CREATE TABLE public.agency_team_members(agency_tenant_id uuid,user_id uuid,agenc
 CREATE TABLE public.quickbooks_connections(id uuid PRIMARY KEY,user_id uuid,is_active boolean,qb_realm_id text DEFAULT 'test-realm',environment text DEFAULT 'sandbox',business_id uuid,scope text DEFAULT 'com.intuit.quickbooks.accounting');
 CREATE TABLE public.quickbooks_financials(id uuid PRIMARY KEY,qb_connection_id uuid REFERENCES public.quickbooks_connections(id) ON DELETE CASCADE);
 CREATE TABLE public.quickbooks_transactions(id uuid PRIMARY KEY,qb_connection_id uuid REFERENCES public.quickbooks_connections(id) ON DELETE CASCADE);
-CREATE TABLE public.connected_bank_accounts(id uuid PRIMARY KEY,user_id uuid,is_active boolean,plaid_item_id text DEFAULT 'test-item',plaid_account_id text DEFAULT 'test-account',business_id uuid);
-CREATE TABLE public.connected_bank_account_secrets(account_id uuid PRIMARY KEY REFERENCES public.connected_bank_accounts(id) ON DELETE CASCADE,synthetic_token text);
+CREATE TABLE public.connected_bank_accounts(id uuid PRIMARY KEY,user_id uuid,is_active boolean,plaid_item_id text DEFAULT 'test-item',account_id text DEFAULT 'test-account',business_id uuid,transactions_cursor text,last_sync_at timestamptz);
+CREATE TABLE public.connected_bank_account_secrets(account_row_id uuid PRIMARY KEY REFERENCES public.connected_bank_accounts(id) ON DELETE CASCADE,plaid_access_token_ct bytea);
 -- Existing canonical authority contracts are dependencies, not Finance role semantics.
 CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT active_tenant_id FROM public.profiles WHERE user_id=auth.uid() $$;
 CREATE FUNCTION public.is_tenant_admin_as(_actor uuid,_tenant uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT EXISTS(SELECT 1 FROM public.tenant_members WHERE user_id=_actor AND tenant_id=_tenant AND status='active' AND role IN ('owner','admin')) $$;
@@ -159,11 +159,15 @@ SELECT public.fixture_expect_error($q$INSERT INTO finance_source_bindings(tenant
 ROLLBACK;
 BEGIN;
 INSERT INTO connected_bank_accounts VALUES('40000000-0000-0000-0000-000000000011','10000000-0000-0000-0000-000000000001',true);
-INSERT INTO connected_bank_account_secrets VALUES('40000000-0000-0000-0000-000000000011','synthetic-only');
+INSERT INTO connected_bank_account_secrets VALUES('40000000-0000-0000-0000-000000000011',decode('73796e746865746963','hex'));
 INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace,verification_state,verification_reference,verified_at)
  VALUES('50000000-0000-0000-0000-000000000011','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid','40000000-0000-0000-0000-000000000011','sandbox','test-plaid-account','verified','60000000-0000-0000-0000-000000000011',now());
+UPDATE connected_bank_accounts SET transactions_cursor='test-next',last_sync_at=now() WHERE id='40000000-0000-0000-0000-000000000011';
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000011' AND verification_state='verified' AND revision=1) THEN RAISE EXCEPTION 'Ordinary cursor update invalidated unchanged account identity'; END IF;
+END $$;
 SAVEPOINT before_native_change;
-UPDATE connected_bank_accounts SET plaid_account_id='test-different-native-account' WHERE id='40000000-0000-0000-0000-000000000011';
+UPDATE connected_bank_accounts SET account_id='test-different-native-account' WHERE id='40000000-0000-0000-0000-000000000011';
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM finance_source_bindings WHERE id='50000000-0000-0000-0000-000000000011' AND verification_state='revoked' AND revision=2) THEN RAISE EXCEPTION 'Native account change reused company verification'; END IF;
 END $$;

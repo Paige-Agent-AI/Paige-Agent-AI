@@ -34,3 +34,6 @@ jobs:
         run: node scripts/proof/finance-source-authority.mjs accounts
       - name: Actual accounting source objects, settlement refusal and atomic evidence
         run: node scripts/proof/finance-source-authority.mjs accounting
+
+      - name: Actual lender source projection, account-version evidence and liability meaning
+        run: node scripts/proof/finance-source-authority.mjs liabilities

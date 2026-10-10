@@ -1,0 +1,31 @@
+DO $$ DECLARE w public.paige_durable_work%rowtype; result record; history jsonb; i integer;
+BEGIN
+  SELECT * INTO w FROM public.paige_durable_work WHERE intent_id='40000000-0000-4000-8000-000000000001';
+  IF w.trajectory_history IS NOT NULL THEN RAISE EXCEPTION 'legacy history invented'; END IF;
+  UPDATE public.paige_durable_work SET heartbeat_at=now() WHERE id=w.id;
+  SELECT trajectory_history INTO history FROM public.paige_durable_work WHERE id=w.id;
+  IF history->'complete'<>'false'::jsonb OR jsonb_array_length(history->'events')<>1 THEN RAISE EXCEPTION 'legacy coverage not explicit'; END IF;
+  SELECT * INTO result FROM public.create_paige_durable_work(w.tenant_id,w.initiating_user_id,'40000000-0000-4000-8000-000000000002',w.thread_id,w.capability_key,w.work_kind,w.authority_context,w.scope_epoch);
+  SELECT * INTO w FROM public.paige_durable_work WHERE id=result.work_id;
+  IF w.trajectory_history->'complete'<>'true'::jsonb OR jsonb_array_length(w.trajectory_history->'events')<>1 THEN RAISE EXCEPTION 'canonical initiation missing'; END IF;
+  SELECT * INTO result FROM public.create_paige_durable_work(w.tenant_id,w.initiating_user_id,w.intent_id,w.thread_id,w.capability_key,w.work_kind,w.authority_context,w.scope_epoch);
+  IF result.work_id<>w.id OR NOT result.resumed_existing THEN RAISE EXCEPTION 'replay created new task'; END IF;
+  UPDATE public.paige_durable_work SET heartbeat_at=now(),version=version+1 WHERE id=w.id;
+  IF (SELECT jsonb_array_length(trajectory_history->'events') FROM public.paige_durable_work WHERE id=w.id)<>1 THEN RAISE EXCEPTION 'heartbeat bloated history'; END IF;
+  PERFORM public.transition_paige_durable_work(w.id,w.idempotency_key,'blocked',NULL,NULL,'approval_expired');
+  PERFORM public.transition_paige_durable_work(w.id,w.idempotency_key,'claimed');
+  UPDATE public.paige_durable_work SET dispatch_started_attempt=2,version=version+1 WHERE id=w.id;
+  PERFORM public.transition_paige_durable_work(w.id,w.idempotency_key,'succeeded','{"verified_readback":true,"private_payload":"must not enter history"}');
+  SELECT trajectory_history INTO history FROM public.paige_durable_work WHERE id=w.id;
+  IF jsonb_array_length(history->'events')<>5 OR history->'events'->4->>'attempt'<>'2' OR history->'events'->1->>'blocked_code'<>'approval_expired' THEN RAISE EXCEPTION 'resume chain incorrect'; END IF;
+  IF history::text LIKE '%private_payload%' OR history::text LIKE '%test-scope%' OR history::text LIKE '%actor_user_id%' THEN RAISE EXCEPTION 'private payload copied'; END IF;
+  BEGIN UPDATE public.paige_durable_work SET trajectory_history='{}' WHERE id=w.id; RAISE EXCEPTION 'history tamper accepted'; EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
+  -- Stress bounded observation through actual source row transitions; no backfill inference.
+  SELECT * INTO w FROM public.paige_durable_work WHERE intent_id='40000000-0000-4000-8000-000000000001';
+  PERFORM public.transition_paige_durable_work(w.id,w.idempotency_key,'blocked',NULL,NULL,'approval_expired');
+  FOR i IN 1..150 LOOP UPDATE public.paige_durable_work SET blocked_reason=CASE WHEN blocked_reason='approval_expired' THEN 'approval_denied' ELSE 'approval_expired' END WHERE id=w.id; END LOOP;
+  SELECT trajectory_history INTO history FROM public.paige_durable_work WHERE id=w.id;
+  IF jsonb_array_length(history->'events')<>128 OR history->'truncated'<>'true'::jsonb OR history->'complete'<>'false'::jsonb THEN RAISE EXCEPTION 'history unbounded or truncation hidden'; END IF;
+  IF has_table_privilege('authenticated','public.paige_durable_work','SELECT') OR has_table_privilege('service_role','public.paige_durable_work','UPDATE') THEN RAISE EXCEPTION 'canonical raw-table restriction changed'; END IF;
+END $$;
+SELECT 'PASS: canonical work history, replay, resume, privacy, boundedness and tamper refusal';

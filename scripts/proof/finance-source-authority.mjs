@@ -86,7 +86,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       const consume = `SELECT public.quickbooks_oauth_attempt_service('consume',$input$${input}$input$::jsonb);`;
       const claim = holding(database, `RESET ROLE; SET ROLE service_role; ${consume}`);
       await claim.held;
-      await blockedCompetitor(database, `SET ROLE service_role; SELECT public.fixture_expect_error($q$${consume}$q$,'42501');`);
+      await blockedCompetitor(database, `SET ROLE service_role; SELECT public.fixture_expect_error($q$${consume}$q$,'42501');`, claim.release);
       await claim.done;
       assert.equal(sql(database, "SELECT count(*) FROM quickbooks_oauth_attempts WHERE status='exchanging';").trim(), '1');
     }

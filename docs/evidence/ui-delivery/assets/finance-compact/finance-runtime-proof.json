@@ -2076,5 +2076,10 @@
       "pass": true
     }
   ],
-  "errors": []
+  "errors": [],
+  "codeCommit": "5e39e97a9e591dcab976e367f8bff90bc7b5aea0",
+  "sourceHashes": {
+    "src/solo/finance/FinanceWorkspace.tsx": "6823ee371ad6e4ec5ec37d53753cd573c81622b409439130efb0eae5e90b52fd",
+    "src/solo/finance/finance.css": "3dde61233d047c76f5a0c15b257c9a389be3a73b289ce3c7e48996b79a13fc2e"
+  }
 }

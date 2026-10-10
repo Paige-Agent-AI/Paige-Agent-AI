@@ -61,7 +61,8 @@
         "authority": {"status": "inherited", "note": "Canonical Planning creator/assignee/staff rules; manual confirmation is not a Trust grant."},
         "governed_write": {"status": "partial", "note": "Scoped status/date/reassignment delegates to plan_update_item; canonical readback required. Hosted proof owed."},
         "verified_outcome": {"status": "proof_owed", "note": "Fixture and isolated SQL checks do not establish customer runtime or client acceptance."},
-        "mind_promotion": {"status": "unavailable", "note": "Operations domain evidence composition remains required; no replacement Fabric."},
+        "rail_evidence": {"producer": "none", "read": "none", "note": "Manual Planning updates preserve canonical audit; no new Rail producer or receipt stream. Governed Operations receipt integration remains owed."},
+        "mind_eligibility": {"axis_a": "n/a", "axis_b": "NO", "note": "Operations domain evidence composition remains required; no replacement Fabric or proven authenticated Mind promotion."},
         "memory_retention": {"status": "none", "note": "No automatic promotion of mutable work or profile facts to Memory."}
       },
       "intended_capability": {

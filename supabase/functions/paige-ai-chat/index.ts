@@ -1228,7 +1228,7 @@ serve(async (req) => {
               const continuation = await readDurableContinuation({
                 threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
                 workId: validatedData.interactive!.workId!,
-              }, supabaseClient, admin as unknown as BudgetDb);
+              }, supabaseClient, supabase as unknown as BudgetDb);
               if (continuation) return { ...work, continuation };
             }
             return work;

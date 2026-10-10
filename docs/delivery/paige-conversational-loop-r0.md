@@ -25,7 +25,11 @@ DRAINING; effectful continuation remains disabled. Proofs: native read check
 `scripts/int304-continuation-read-check.mjs` (20 cases: field derivation, permission/
 tenant/actor/intent/archival gates, approval-pending only from a real expired approval,
 blank objective refused, duplicate-effect lineage refused, foreign capability class,
-service/anon refused) CI-wired; adapter vitest 17/17; Deno clean; tsc ratchet 10=10.
+service/anon refused) CI-wired; adapter vitest 17/17; tsc ratchet 10=10. The initial
+commit referenced `admin` (out of scope at the status seam) for the budget client — the
+reviewer’s P1: a swallowed ReferenceError would have silently nulled the whole
+durable_work block. Fixed to the in-scope `supabase` service client; the Deno diagnostic
+count returns to the 9-diagnostic baseline (the fix commit’s check measured 10 before).
 Also folds the CL-2 review's P3: the observation reader now returns the record's own
 `kind` instead of a hardcoded literal, so the future `refused_before_dispatch` producer
 reads correctly without touching this reader.

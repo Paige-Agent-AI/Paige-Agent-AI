@@ -172,6 +172,10 @@ CREATE TRIGGER finance_plaid_retirement BEFORE UPDATE OR DELETE ON public.connec
 CREATE FUNCTION public._finance_company_source_invalidation() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
+ IF TG_OP='DELETE' THEN
+  IF public._finance_retirement_allowed(OLD.tenant_id) THEN RETURN OLD; END IF;
+  RAISE EXCEPTION 'Financial company history is retained' USING ERRCODE='42501';
+ END IF;
  IF NEW.version IS DISTINCT FROM OLD.version OR NEW.is_active IS NOT TRUE
   OR ROW(NEW.tenant_id,NEW.kind,NEW.legal_name,NEW.identity_basis,NEW.identity_reference)
    IS DISTINCT FROM ROW(OLD.tenant_id,OLD.kind,OLD.legal_name,OLD.identity_basis,OLD.identity_reference) THEN
@@ -181,7 +185,7 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._finance_company_source_invalidation() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER finance_company_source_invalidation BEFORE UPDATE ON public.finance_company_entities FOR EACH ROW EXECUTE FUNCTION public._finance_company_source_invalidation();
+CREATE TRIGGER finance_company_source_invalidation BEFORE UPDATE OR DELETE ON public.finance_company_entities FOR EACH ROW EXECUTE FUNCTION public._finance_company_source_invalidation();
 
 -- Setup owns the primary legal identity. A change revokes old Finance verification
 -- atomically, including changes later reversed; it never reactivates an old binding.

@@ -9,6 +9,9 @@ DO $$ BEGIN
  IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
  IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN; END IF;
 END $$;
+-- Supabase service_role bypasses RLS. Exercise its real deletion privilege;
+-- a fixture role hidden by RLS would otherwise delete zero rows without a guard.
+ALTER ROLE service_role BYPASSRLS;
 CREATE TABLE auth.users(id uuid PRIMARY KEY, deleted_at timestamptz, banned_until timestamptz);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('test.actor',true),''))::uuid $$;
 CREATE TYPE public.tenant_status AS ENUM('trial','active','past_due','canceled','suspended');
@@ -154,6 +157,9 @@ DO $$ BEGIN
 END $$;
 ROLLBACK;
 -- Finance must not prevent canonical Auth erasure or account retirement.
+SET ROLE service_role;
+SELECT public.fixture_expect_error($q$DELETE FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000003'$q$,'42501');
+RESET ROLE;
 BEGIN;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',true);
 SELECT set_config('test.refuse_receipt','no',true);

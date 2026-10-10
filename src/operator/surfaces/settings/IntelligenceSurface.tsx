@@ -8,9 +8,11 @@ import { useIntelligence } from "@/operator/data/useIntelligence";
 import {
   displayCost, displayNumber, displayPercent, newRecommendation, recommendationDocument, recommendationErrors,
   type EvalRun, type IntelligenceRead, type IntelligenceTrace, type Recommendation, type ReadState,
+  type TrajectoryRequest,
 } from "@/operator/data/intelligenceContract";
 import "./intelligence.css";
 import { DistributionChart, StatusComposition, LatencyPlot, EvaluationChart, GovernedPath } from "./IntelligenceVisuals";
+import { TrajectoryEvidence, trajectoryResult } from "./TrajectoryEvidence";
 
 const WORKSPACES = [
   ["executive", "Executive Flight Deck"], ["forensic", "Forensic Observatory"],
@@ -75,6 +77,16 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
     .map((key) => { const [provider, model] = JSON.parse(key) as [string | null, string]; return { provider, model, count: traces.filter((r) => r.provider === provider && r.model === model).length }; });
   const filtered = traces.filter((row) => [row.id, row.agent_id, row.provider, row.model, row.status, row.job_kind]
     .some((value) => value?.toLowerCase().includes(search.toLowerCase())));
+  const tasks = read.trajectories.error ? [] : read.trajectories.data?.items ?? [];
+  const selectedTask = read.selectedTrajectory.error ? null : read.selectedTrajectory.data?.items[0] ?? null;
+  function inspectTask(request: TrajectoryRequest) {
+    setTrace(null); setRun(null); setWorkspace("forensic"); read.inspectTrajectory(request);
+  }
+  function closeTask() {
+    read.inspectTrajectory(null);
+    if (opener.current?.isConnected) opener.current.focus();
+    else document.getElementById("intel-task-evidence")?.focus();
+  }
   return (
     <section className="intelligence" data-workspace={workspace} aria-label="PAIGE Intelligence">
       <h2 className="sr-only">PAIGE Intelligence</h2>
@@ -108,7 +120,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
               <p className="intel-source">Counts show recorded signals; severity and root cause require investigation.</p>
             </Section>
             <Section title="Operational quality coverage" subtitle="What this source cannot yet measure">
-              <Coverage label="Verified task completion" status="UNAVAILABLE" detail="Task identity and terminal-outcome correlation are missing." />
+              <Coverage label="Verified task completion" status="PARTIAL" detail="Inspect supported durable tasks in the Forensic Observatory. No platform-wide completion rate or business-impact denominator is established." />
               <Coverage label="Approval / tenant integrity" status="UNAVAILABLE" detail="No task-level hard-gate scorecard is exposed here." />
               <Coverage label="Cost per completed task" status="UNAVAILABLE" detail="Call spend has no verified completed-task denominator." />
               <Coverage label="Business effects" status="UNVERIFIED" detail="No attributable outcome link; no uplift or ROI claim." />
@@ -140,6 +152,20 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
         </TabsContent>
 
         <TabsContent value="forensic">
+          <Section title="Task trajectories" headingId="intel-task-evidence" subtitle="PARTIAL · accepted durable objectives · exact canonical links · metadata only">
+            <ReadStatus state={read.trajectories} name="Task trajectories" />
+            {!read.trajectories.loading && !read.trajectories.error && tasks.length === 0 && <Empty title="No linked tasks returned" detail="Only server-issued work identities qualify. Legacy calls and conversation activity are not grouped into invented tasks." />}
+            {tasks.length > 0 && <div className="intel-table-wrap"><table><caption className="sr-only">Canonical durable task metadata</caption><thead><tr><th>Accepted</th><th>Objective / capability</th><th>Recorded state</th><th>Evidence check</th><th><span className="sr-only">Inspection</span></th></tr></thead><tbody>{tasks.map(task => <tr key={task.id}>
+              <td><time dateTime={task.created_at}>{new Date(task.created_at).toLocaleString()}</time></td><td>{task.category}<small>{task.capability_key}</small></td><td>{task.work_state}<small>Attempt {task.attempt}</small></td><td>{trajectoryResult(task)}</td><td><Button variant="ghost" size="sm" aria-label={`Inspect task ${task.id}`} onClick={e => { opener.current=e.currentTarget; inspectTask({ workId: task.id }); }}>Inspect task</Button></td>
+            </tr>)}</tbody></table></div>}
+            {read.trajectories.data && !read.trajectories.error && <p className="intel-source">Server observed {new Date(read.trajectories.data.observed_at).toLocaleString()} · up to 25 tasks per page · refreshing hides failed source data.</p>}
+            <div className="intel-actions"><Button variant="outline" size="sm" onClick={() => { read.pageTrajectories(null); document.getElementById("intel-task-evidence")?.focus(); }}>Newest tasks</Button><Button variant="outline" size="sm" disabled={read.trajectories.fetching || read.trajectories.error || !read.trajectories.data?.next_cursor} onClick={() => { read.pageTrajectories(read.trajectories.data?.next_cursor ?? null); document.getElementById("intel-task-evidence")?.focus(); }}>Older tasks</Button></div>
+          </Section>
+          {read.trajectoryRequest && <Inspection title="Task evidence" onClose={closeTask}>
+            <ReadStatus state={read.selectedTrajectory} name="Selected task evidence" />
+            {selectedTask && read.selectedTrajectory.data && <><TrajectoryEvidence task={selectedTask} observedAt={read.selectedTrajectory.data.observed_at} /><Button variant="outline" onClick={() => { prepare("improvement", `paige_durable_work:${selectedTask.id}`); read.inspectTrajectory(null); }}>Prepare recommendation from this task <ArrowUpRight size={14} aria-hidden /></Button></>}
+            {!read.selectedTrajectory.loading && !read.selectedTrajectory.error && read.selectedTrajectory.data && !selectedTask && <Empty title="No server-proven trajectory link" detail="This reference has no supported scoped work correlation. No related task was guessed." />}
+          </Inspection>}
           <Section title="Inspect the operational evidence" subtitle="Latest 50 recorded LLM calls · canonical metadata read on load and explicit refresh">
             <ReadStatus state={read.traces} name="Call evidence" />
             <LatencyPlot traces={traces} />
@@ -164,7 +190,8 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
               <Fact label="Modality" value={validTrace.modality} /><Fact label="Tokens in / out" value={`${displayNumber(validTrace.tokens_in)} / ${displayNumber(validTrace.tokens_out)}`} />
               <Fact label="Latency" value={displayNumber(validTrace.latency_ms, " ms")} /><Fact label="Error class" value={validTrace.error_class} />
             </dl>
-            <Coverage label="Task trajectory" status="PARTIAL" detail="This is one model call. Goal, conversation, tool selection, approvals, receipts, continuations and verified terminal outcome are not exposed by this read." />
+            <Coverage label="Task trajectory" status="PARTIAL" detail="This is one model call. A server-proven work relation is required before task evidence can be inspected." />
+            <Button variant="outline" onClick={() => inspectTask({ traceId: validTrace.id })}>Find linked task</Button>
             <Button variant="outline" onClick={() => prepare("improvement", `paige_llm_trace:${validTrace.id}`)}>Prepare recommendation from this evidence <ArrowUpRight size={14} aria-hidden /></Button>
           </Inspection>}
           <ConversationSeam />
@@ -191,7 +218,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
             <div className="intel-table-wrap"><table><caption className="sr-only">Sampled scorer results</caption><thead><tr><th>Scorer</th><th>Status</th><th>Score / verdict</th><th>Case / trace reference</th></tr></thead>
               <tbody>{validRun.results.map((result) => <tr key={result.id}><td>{result.scorer}<small>{result.scorer_kind}</small></td><td>{result.status}</td>
                 <td>{displayNumber(result.score)} · {result.passed === null ? "Unscored" : result.passed ? "Passed" : "Failed"}</td>
-                <td className="intel-id">{result.case_id ?? "No case"}<small>{result.source_trace_id ?? "No trace"}</small></td></tr>)}</tbody></table></div>
+                <td className="intel-id">{result.case_id ?? "No case"}<small>{result.source_trace_id ?? "No trace"}</small>{result.source_trace_id && <Button variant="ghost" size="sm" aria-label={`Find task for evaluation ${result.id}`} onClick={() => inspectTask({ traceId: result.source_trace_id! })}>Find linked task</Button>}</td></tr>)}</tbody></table></div>
             <Coverage label="Reproducible task scorecard" status="UNAVAILABLE" detail="Target version and scorer names exist; an immutable dataset revision and complete runtime/evaluator fingerprint do not." />
             <Button variant="outline" onClick={() => prepare("improvement", `paige_eval_run:${validRun.id}; dataset:${validRun.dataset_id ?? "not recorded"}`)}>Prepare recommendation from this run</Button>
           </Inspection>}

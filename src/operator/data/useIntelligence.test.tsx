@@ -19,7 +19,7 @@ beforeEach(() => {
   mock.auth.mockImplementation((cb) => { notify = cb; return { data: { subscription: { unsubscribe: vi.fn() } } }; });
   mock.rpc.mockImplementation((name: string) => {
     if (name === "is_platform_admin") return Promise.resolve({ data: true, error: null });
-    const value = name === "operator_intelligence_metrics" ? { traces: { total: 12345 } } : [];
+    const value = name === "operator_intelligence_metrics" ? { traces: { total: 12345 } } : name === "operator_intelligence_trajectories" ? { contract_version: 1, observed_at: "2026-10-10T12:00:00Z", items: [], next_cursor: null } : [];
     return { abortSignal: () => name === "operator_intelligence_trace_tail" && delayed
       ? new Promise((resolve) => { delayed = resolve; })
       : Promise.resolve({ data: value, error: denial ? { code: "42501" } : null }) };

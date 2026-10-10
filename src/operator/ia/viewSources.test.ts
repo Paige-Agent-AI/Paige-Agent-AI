@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest";
 import { OPERATOR_BRANCHES } from "@/lib/routing/tierBranches";
 import { OPERATOR_SLOTS, viewSlug } from "@/operator/ia/operatorIA";
 import { RETIRED_ADDRESSES, VIEW_SOURCES, viewSource } from "@/operator/ia/viewSources";
+import { canonicalPath, resolveOperatorAddress } from "@/operator/shell/operatorAddress";
 
 /** Every addressable leaf in the shipped tree, as `branch/leaf` or `settings/group/leaf`. */
 function shippedLeaves(): string[] {
@@ -29,6 +30,14 @@ function shippedLeaves(): string[] {
 }
 
 describe("viewSources — every shipped operator feature has a home", () => {
+  it("keeps Intelligence exclusively in Settings and removes the duplicate Fleet area", () => {
+    expect(Object.entries(VIEW_SOURCES).filter(([, source]) => source.bespoke === "IntelligenceSurface").map(([address]) => address))
+      .toEqual(["settings/paige-intelligence"]);
+    expect(OPERATOR_SLOTS.find(s => s.id === "fleet")?.views).toEqual(["Systems check", "Directory", "History", "Mind"]);
+    expect(canonicalPath(resolveOperatorAddress("fleet", ""))).toBe("/operator/fleet/systems-check");
+    expect(canonicalPath(resolveOperatorAddress("fleet", "overview"))).toBe("/operator/settings/paige-intelligence");
+    expect(canonicalPath(resolveOperatorAddress("fleet", "mind"))).toBe("/operator/fleet/mind");
+  });
   it("covers every leaf of the shipped branch tree", () => {
     const carried = new Set(Object.values(VIEW_SOURCES).flatMap((s) => s.carries));
     const homeless = shippedLeaves().filter(

@@ -683,8 +683,8 @@
       ],
       "status": "PROOF_OWED",
       "owner": "Integrations workstream",
-      "dependency": "Grounded capability audit; not yet driven end-to-end.",
-      "next_slice": "Catalogue the real wired capability and scopes, then a governed read proof.",
+      "dependency": "Finance backend audit (2026-10-10): caller containment repair is tested locally; company/source binding, single-use OAuth state, accounting-only consent, pagination, nullable figures, refresh/disconnect reconciliation and authenticated provider proof remain owed. No legacy snapshot is promoted to company Finance.",
+      "next_slice": "Complete explicit company/source authority and OAuth integrity, then controlled provider read proof; preserve Settings Integrations as connection owner and separately authorize real activation.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -727,8 +727,8 @@
         },
         {
           "path": "supabase/functions/quickbooks-sync-financials/index.ts",
-          "role": "provider_adapter",
-          "note": "read seam / Intuit API client."
+          "role": "fail_closed_containment",
+          "note": "Authenticate first; authorized requests return FINANCE_SOURCE_UNAVAILABLE without privileged data or provider traffic until the company-bound read adapter is proven."
         },
         {
           "path": "supabase/functions/quickbooks-webhook/index.ts",

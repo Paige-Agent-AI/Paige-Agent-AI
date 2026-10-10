@@ -14,8 +14,11 @@ export type LifecyclePreview = {
 export type DeletionPreview = LifecyclePreview;
 export type LifecycleAction = 'archive' | 'restore' | 'delete';
 export type LifecycleReceipt = { tenant_id: string; operation_id: string; state: 'archived'|'restored'|'deleted'; account_count: number };
+export type ResourceMode = 'archive'|'delete';
+export type ResourcePreview = LifecyclePreview & {mode:ResourceMode;resources:{provider:'twilio'|'n8n';tenant_id:string;action:'suspend'|'close'|'disconnect';external_retention?:boolean}[]};
+export type ResourceReceipt = {tenant_id:string;operation_id:string;mode:ResourceMode;state:'resources_preparing'|'resources_ready'|'resources_unknown'|'resources_failed';account_count:number;results:{provider:'twilio'|'n8n';state:'verified'|'blocked'|'unknown';provider_status:string|null;reason:string|null}[]};
 export class AccountRpcError extends Error {
-  constructor(message: string, public readonly code?: string) { super(message); }
+  constructor(message: string, public readonly code?: string,public readonly beforeExecution=false) { super(message); }
 }
 const isString = (v: unknown): v is string => typeof v === 'string';
 export function accountEditReadback(id: string, name: string, status: string, row: unknown): boolean {
@@ -97,4 +100,39 @@ export async function executeLifecycle(id: string, action: LifecycleAction, oper
   const result = await rpc(name, args);
   parseLifecycleReceipt(id, operation, result);
   return readLifecycleOutcome(id, operation, action);
+}
+
+export function parseResourceReceipt(id:string, operation:string|null, row:unknown):ResourceReceipt {
+  if(!row||typeof row!=='object')throw new Error('Provider outcome is unknown. Read the operation.');
+  const r=row as ResourceReceipt;
+  if(r.tenant_id!==id||(operation!==null&&r.operation_id!==operation)||!isString(r.operation_id)
+    ||!['archive','delete'].includes(r.mode)||!['resources_preparing','resources_ready','resources_unknown','resources_failed'].includes(r.state)
+    ||!Number.isSafeInteger(r.account_count)||r.account_count<1||!Array.isArray(r.results)
+    ||!r.results.every(v=>v&&['twilio','n8n'].includes(v.provider)&&['verified','blocked','unknown'].includes(v.state)
+      &&(v.reason===null||isString(v.reason))&&(v.provider_status===null||isString(v.provider_status)))
+    ||(r.state==='resources_ready'&&(!r.results.length||r.results.some(v=>v.state!=='verified'||(v.provider==='n8n'?v.provider_status!=='disconnected':!(r.mode==='delete'?['closed']:['suspended','closed']).includes(v.provider_status??''))))))throw new Error('Provider outcome is unknown. Read the operation.');
+  return r;
+}
+export async function previewRetirementResources(id:string,mode:ResourceMode):Promise<ResourcePreview> {
+  const row=await rpc('operator_preview_retirement_resources',{_tenant_id:id,_mode:mode});
+  const p=parseAccountDeletionPreview(id,row) as ResourcePreview;
+  if(p.mode!==mode||!Array.isArray(p.resources)||!p.resources.every(r=>r&&['twilio','n8n'].includes(r.provider)&&p.accounts.some(a=>a.id===r.tenant_id)
+    &&r.action===(r.provider==='n8n'?'disconnect':mode==='archive'?'suspend':'close'))
+    ||new Set(p.resources.map(r=>r.provider+':'+r.tenant_id)).size!==p.resources.length)throw new Error('Provider scope could not be verified. Refresh the review.');
+  return p;
+}
+export async function readRetirementResources(id:string,operation:string|null):Promise<ResourceReceipt|null> {
+  try{return parseResourceReceipt(id,operation,await rpc('operator_read_retirement_resources',{_tenant_id:id,_operation_id:operation}));}
+  catch(e){if(operation===null&&e instanceof AccountRpcError&&e.code==='P0002')return null;throw e;}
+}
+export async function runRetirementResources(id:string,operation:string,action:'prepare'|'continue'|'read',review?:ResourcePreview,confirmation?:string,retainExternalN8n?:boolean):Promise<ResourceReceipt> {
+  const body:Record<string,unknown>={tenant_id:id,operation_id:operation,action};
+  if(action==='prepare'){body.mode=review?.mode;body.version=review?.version;body.confirmation=confirmation;body.retain_external_n8n=retainExternalN8n;}
+  const {data,error}=await supabase.functions.invoke('operator-account-retirement',{body});
+  if(error){
+    let code:string|undefined,beforeExecution=false;
+    if('context' in error&&error.context instanceof Response){try{const r=await error.context.json();if(typeof r.code==='string')code=r.code;beforeExecution=r.error==='resource_review_refused';}catch{/* No untrusted provider payload is displayed. */}}
+    throw new AccountRpcError('Provider preparation was not verified. Read the operation before retrying.',code,beforeExecution);
+  }
+  return parseResourceReceipt(id,operation,data);
 }

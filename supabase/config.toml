@@ -679,3 +679,5 @@ verify_jwt = true
 verify_jwt = false # Internal service bearer / canonical cron token is checked in the function.
 [functions.paige-pipeline-outcome]
 verify_jwt = true
+[functions.operator-account-retirement]
+verify_jwt = true

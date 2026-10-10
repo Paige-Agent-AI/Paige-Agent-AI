@@ -70,6 +70,10 @@ URL, publisher, checked-as-of date, applicable plan/edition/region, and re-verif
 cannot override verified Paige or tenant truth. This architecture decision changes no provider entry
 or state in `integration-capability-registry.json`.
 
+### Operator resource retirement
+
+Twilio and n8n entries also describe the bounded Operator account-lifecycle repair. The existing Twilio client can suspend a protected child for Archive or close it for Delete, with parent binding, call-quiescence checks and status readback. Actual management-key acceptance and live termination remain **PROOF OWED**. n8n disconnect clears PAIGE's canonical encrypted connection and exact legacy MCP projection; explicitly retained external workflows may continue independently. The private canonical archive journal records disposition; no second provider/lifecycle system is introduced. Scope, recovery and proof boundary: [operator-account-lifecycle](../delivery/operator-account-lifecycle.md). Neither registry listing nor local HTTP/SQL proof grants provider authority or proves production retirement.
+
 ## The six delivery states (the task-mandated vocabulary)
 
 | State | Meaning |

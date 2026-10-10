@@ -26,6 +26,23 @@ Variants: ordinary Platform members/tenant owners refused server-side; archived 
 
 ## Capability routing before further implementation
 
+### Provider retirement repair, owner direction 2026-10-10
+
+PR #1892 was owner-merged at c9a39d274c56a54649b3d90816e3859e2170cb98. Production deployment dpl_2eMJu1sVAov8AnzmdVY3N8kvaYBc is READY; migration 20270602000203 is recorded. This is deployment evidence, separate from authenticated lifecycle acceptance. Owner screenshots demonstrate that blanket Twilio/n8n row-existence checks leave the Agency archive flow blocked. The owner explicitly requests using the existing Twilio API to complete resource retirement; existing approved Account Details design is retained.
+
+1. Outcome: a privileged operator prepares connected resources, then actually archives or permanently deletes an eligible exact account scope.
+2. Ownership: portfolio family 15 / Platform Operator; one implementation lane. Communications owns the reused Twilio adapter; no competing provider client or other coding agent.
+3. Shared dependency: verified Auth caller, canonical protected roles, existing SQL lifecycle, existing private archive-operation journal, mandatory audit and readback. Provider partial failure is recorded there, never in a second lifecycle engine.
+4. Spine: autonomous/Chat account deletion remains UNAVAILABLE; no deletion tool is registered and INT-346 stays DRAINING.
+5. Providers: canonical `_shared/twilio.ts` / master credentials; Twilio suspension for Archive and closure for Delete, verified against the bound child and parent. API documentation confirms suspension leaves current calls and monthly number charges; closure is irreversible and provider retention is separate. n8n API credential disconnection uses the canonical encrypted connection seam. Visible workflow counts do not prove exclusive ownership; shared/external workflows are retained only under explicit scoped operator acknowledgement, never bulk-deleted.
+6. Authority: existing Platform Admin/Super Admin server predicate, typed exact name/scope and explicit provider consequences. Ordinary Platform members/business owners refused. No credential or email identifier creates authority.
+7. Durability: extend the existing private archive-operation journal for resource preparation/claim/readback; canonical execution pause and worker guards. No scheduler/drainer is added.
+8. Evidence: exact provider GET readback, connection/credential disposition, canonical audit, then fresh Archive/Delete preflight and final lifecycle receipt/absence. Unknown responses never imply completion or repeat consequential requests automatically.
+9. Surface: operator.platform, same approved Account Details modal and tokens. Resource preparation is a recoverable step within the existing review, with READY/BLOCKED/PROCESSING/FAILED/OUTCOME UNKNOWN states.
+10. Required proof: deterministic SQL plus mocked HTTP through the actual provider adapter; local rendered flow; independent exact-head security/UI review and CI; authoritative production source/schema/Edge readback. Live provider termination and authenticated owner execution require actual scoped operator execution; agent login/customer deletion remain held.
+
+Flow contract: review selected tree → show provider consequences → exact name/consent → prepare only bound resources → verify readback → refresh authoritative review → Archive/Delete → verify canonical receipt. Cancel precedes execution; after an uncertain result, Read operation reconciles without repeating the write. Archive/Restore retains business data and never reactivates paid services. Unrelated Solo, shared identities, provider parent and other tenant resources survive.
+
 1. Outcome: explicit reversible archive and irreversible eligible tenant-data retirement.
 2. Family 15, Platform Operator; this sole lane owns account controls. Other development agents remain on hold.
 3. Reuse canonical tenant lifecycle, protected global roles, SQL transactions and audit; no new tenant/identity/scheduling engine.
@@ -36,6 +53,24 @@ Variants: ordinary Platform members/tenant owners refused server-side; archived 
 8. Existing mandatory audit plus minimal protected operation receipt, independent readback and exact scope absence. No customer payload or secret in the receipt.
 9. Existing operator.platform surface; source/fixture proof does not promote authenticated binding status.
 10. Local SQL and rendered tests, exact-head independent review/CI, deployed source/schema readback; authenticated production usability remains PROOF OWED under owner hold.
+
+## Provider preparation — forward repair
+
+Migration `20270602000204_operator_provider_retirement` extends the existing private archive journal and canonical contracts. The JWT-protected `operator-account-retirement` endpoint accepts the selected tenant, operation, action, fresh review version and explicit confirmation. Protected SQL supplies the provider binding; browser-supplied SIDs, credentials and email-based privilege are refused.
+
+Select **Prepare connected resources** inside the blocked Archive/Delete review. Twilio Archive suspends the exact child; Delete closes it permanently. Both verify the configured parent, check queued/ringing/in-progress calls before and after the status change, and read back the child status. No automatic status-write retry. The existing parent credential needs legitimate Accounts-management scope; a Standard API key may correctly refuse. Suspension is not billing termination.
+
+Preparation pauses canonical execution before provider I/O. A protected lease binds the initiating Admin, account snapshot, scope and resource fingerprint. Each invocation processes one unfinished resource; stale/rebound/concurrent/unauthorized execution refuses. Unknown outcomes remain paused and use **Read provider outcome** before explicit continuation. Read recovery makes Twilio GETs and never newly disconnects n8n. The initiating Admin can reopen the operation; another administrator's takeover is unavailable. Revoked initiating authority requires protected administrative recovery.
+
+n8n requires explicit external-retention acknowledgement: visible workflow counts do not prove exclusive ownership. Clear the canonical encrypted PAIGE connection and its exact legacy MCP projection; external workflows remain and may continue independently. Native connectors remain protected. Vault cleanup removes only a canonical exclusive Twilio secret after verified closure, preserves surviving shared references, and refuses unrecognized bindings.
+
+Eligible cleanup includes retired Twilio/n8n bindings, scoped phone references, the disconnected legacy MCP projection and email-send history. Financial quantities/subscriptions remain in their canonical tables with protected retired-tenant markers and restricted access. Deleted-business LLM excerpts are removed while minimal cost/status evidence remains; survivor-primary traces keep their payload when only the working context is retired. Shared Auth/global roles and unrelated businesses survive.
+
+Current paid MRR/ARR cohorts require the existing real commercial classification, an eligible active tenant and active Stripe-backed subscription. Tests/internal/unclassified/trial/unbilled/canceled/archived/retired rows are excluded. Historical snapshots and quantities are not rewritten. This filters the existing plan-price MRR calculation; it does not prove invoice-cash reconciliation or full Finance acceptance.
+
+Unresolved live Stripe obligations, independent connectors, file/storage bytes without canonical API cleanup, unknown obligations, cross-account links and unrecognized Vault bindings remain specific blockers. Ordinary eligible business records alone do not block deletion. External n8n retention is explicitly disclosed.
+
+Reproduce: `node scripts/proof/operator-provider-retirement.mjs --postgres <loopback-port>`; `node --test supabase/functions/_shared/operator-retirement-handler.test.mjs`; focused UI/client/Twilio Vitest tests. Evidence: `docs/evidence/ui-delivery/operator-provider-retirement.md`. The old-source `--resource-baseline` control fails at the missing SQL seam. Live provider authentication/termination and authenticated usability remain UNVERIFIED under the owner hold; actual destructive scope still needs explicit authorization. Code/review/CI/merge/deployment/persistence are separate PR evidence states.
 
 ## Disposition rules
 

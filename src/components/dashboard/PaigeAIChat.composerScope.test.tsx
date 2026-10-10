@@ -825,6 +825,33 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     expect(textarea().disabled).toBe(false);
   });
 
+  it("shows the server's conversational-mode notice while actions are unavailable, and clears it on a normal turn", async () => {
+    const conversationalStream = () => new Response(
+      `data: ${JSON.stringify({ paige_mode: "conversational" })}
+
+data: ${JSON.stringify({ choices: [{ delta: { content: "Answered in words." } }] })}
+
+data: [DONE]
+
+`,
+      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+    );
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(async () => conversationalStream())
+      .mockImplementationOnce(async () => streamed("actions are back"));
+    vi.stubGlobal("fetch", fetchMock);
+    await render();
+    await type("what should I focus on?");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Answered in words.");
+    // INT-346 — the server said this turn runs without actions; the surface states it, visibly.
+    expect(host.textContent).toContain("Running actions is briefly unavailable");
+    await type("and now?");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("actions are back");
+    expect(host.textContent).not.toContain("Running actions is briefly unavailable");
+  });
+
   it("consumes a submitted draft synchronously so rapid duplicate Enter cannot execute it twice", async () => {
     const fetchMock = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => streamed("one answer"));
     vi.stubGlobal("fetch", fetchMock);

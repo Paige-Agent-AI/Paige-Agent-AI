@@ -34,7 +34,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
 import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
-import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
+import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
@@ -284,6 +284,12 @@ import { resolveActiveMarketplaceTenant, retainActiveMarketplaceTenant } from ".
 // wall-clock tier. Keep 40s of platform headroom and keep this exactly symmetric
 // with PaigeAIChat's local fence. Durable work still needs the envelope.
 const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
+// INT-346 conversational mode: appended to the system blocks only on turns admitted while the
+// interactive rollout is staged. It must stay short (prompt rules are regex-pinned elsewhere in
+// this file's suites) and truthful: what is off, what she still does, and the one hard line.
+const PAIGE_CONVERSATIONAL_MODE_BLOCK = `CONVERSATIONAL MODE — ACTIONS ARE OFF THIS TURN.
+A platform update is finishing, so in this conversation you have NO tools, actions, approvals or external effects — none can be requested or run, and none have run. Read and discuss everything you are given (the thread, workspace context, knowledge) and answer fully in words.
+If asked to create, change, send, schedule or delete anything: say plainly and briefly that you cannot run actions in this conversation right now, then give the answer, plan or wording in words. Never claim an action was performed, and never promise one for later.`;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -1018,6 +1024,11 @@ serve(async (req) => {
   let interactive: ReturnType<typeof createInteractiveExecution> | null = null;
   let interactiveLifetime: ReturnType<typeof createInteractiveLifetime> | null = null;
   let interactiveSettlement: ReturnType<typeof createInteractiveSettlement> | null = null;
+  // INT-346 (#1822): true when this typed interactive turn was admitted while the version-2
+  // rollout is staged but NOT active. A conversational turn runs with zero tool exposure,
+  // no executor claim and no approval consumption — non-effectful by server enforcement —
+  // and still settles through a server-issued receipt.
+  let interactiveConversational = false;
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -1167,10 +1178,21 @@ serve(async (req) => {
     if (validatedData.interactive) {
       const interactiveInput = validatedData.interactive;
       const protocol = await supabase.rpc("paige_chat_interactive_protocol");
-      if (protocol.error || protocol.data?.version !== 2 ||
-          (protocol.data?.active !== true && !["stop", "status"].includes(interactiveInput.kind)))
+      const protocolVersionOk = !protocol.error && protocol.data?.version === 2;
+      const protocolActive = protocolVersionOk && protocol.data?.active === true;
+      // INT-346 (#1822 outage): while the rollout is staged but not active, an ordinary typed
+      // message is admitted as a CONVERSATIONAL turn (non-effectful, enforced below) instead of
+      // failing the whole product with 503. Broken rollout metadata still fails closed, and
+      // stop/status keep their own always-available contracts.
+      if (!protocolVersionOk || (!protocolActive && !["stop", "status", "message"].includes(interactiveInput.kind)))
         return new Response(JSON.stringify({ code: "INTERACTIVE_PROTOCOL_NOT_READY", message_accepted: false }),
           { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "30" } });
+      const degraded = !protocolActive && interactiveInput.kind === "message";
+      if (degraded && (validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length))
+        return new Response(JSON.stringify({ code: "INTERACTIVE_EFFECTS_UNAVAILABLE", message_accepted: false,
+          reason: "Governed actions are paused while a platform update finishes.",
+          recommendation: "Send the message without the approval — Paige can answer and plan. The approval stays on its card." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
       const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
@@ -1225,33 +1247,58 @@ serve(async (req) => {
           "Content-Type": "application/json", "Cache-Control": "no-store" } });
       }
       // This exact query/fallback/order was driven in the isolated proposed handler.
-      interactiveSettlement = createInteractiveSettlement({
-        owns: async () => (await executor("state")).executor === validatedData.requestIntentId,
-        readback: async () => (await executor("state")).terminal === true,
-        fallback: async () => await appendAssistant({
-          p_thread_id: validatedData.threadId, p_role: "assistant",
-          p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
-          p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
-          p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
-            turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
-        }),
-        release: async () => { await executor("release"); },
+      const interactiveFallback = async () => await appendAssistant({
+        p_thread_id: validatedData.threadId, p_role: "assistant",
+        p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
+        p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
+        p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
+          turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
-      const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
-        begin: async () => await supabaseClient.rpc("paige_chat_interactive_begin_v2", {
-          p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
-          p_supersedes: interactiveInput.supersedesIntentId ?? null,
-          p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
-          p_stop: interactiveInput.kind === "stop",
-        }),
-        store: { state: () => executor("state"), acquire: async () => (await executor("acquire")).acquired === true,
-          release: async () => { await interactiveSettlement!.release(); } },
+      const beginTurn = (effectful: boolean) => supabaseClient.rpc("paige_chat_interactive_begin_v2", {
+        p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
+        p_supersedes: interactiveInput.supersedesIntentId ?? null,
+        p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
+        p_stop: interactiveInput.kind === "stop", ...(effectful ? {} : { p_effectful: false }),
       });
-      if (!started.boundary.proceed) return new Response(JSON.stringify(started.boundary), {
-        status: started.boundary.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-      interactive = started.execution;
-      interactiveLifetime = started.lifetime;
+      if (degraded) {
+        // A conversational turn never holds executor authority: no acquire, and settlement
+        // owns the live intent rather than the executor token. Stop/supersede still applies
+        // (the intent stops being `latest`), persistence is still a server-issued receipt,
+        // and an interrupted turn still records INTERRUPTED through the same fallback.
+        interactiveSettlement = createInteractiveSettlement({
+          owns: async () => { const s = await executor("state"); return s.latest === validatedData.requestIntentId
+            && s.executor !== validatedData.requestIntentId && s.terminal !== true; },
+          readback: async () => (await executor("state")).terminal === true,
+          fallback: interactiveFallback,
+          release: async () => { await executor("release"); },
+        });
+        const accepted = await beginTurn(false);
+        const boundary = interactiveAcceptanceBoundary(accepted.data, !!accepted.error);
+        if (!boundary.proceed) return new Response(JSON.stringify(boundary), {
+          status: boundary.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+        interactiveConversational = true;
+        interactiveLifetime = createInteractiveLifetime({
+          release: async () => { await interactiveSettlement!.release(); },
+        });
+      } else {
+        interactiveSettlement = createInteractiveSettlement({
+          owns: async () => (await executor("state")).executor === validatedData.requestIntentId,
+          readback: async () => (await executor("state")).terminal === true,
+          fallback: interactiveFallback,
+          release: async () => { await executor("release"); },
+        });
+        const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
+          begin: async () => await beginTurn(true),
+          store: { state: () => executor("state"), acquire: async () => (await executor("acquire")).acquired === true,
+            release: async () => { await interactiveSettlement!.release(); } },
+        });
+        if (!started.boundary.proceed) return new Response(JSON.stringify(started.boundary), {
+          status: started.boundary.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+        interactive = started.execution;
+        interactiveLifetime = started.lifetime;
+      }
       // Re-read only after the preceding executor has finished its receipts.
       const { data: history, error: historyError } = await supabaseClient.from("paige_chat_turns")
         .select("role,content,bundle_ref").eq("thread_id", validatedData.threadId).order("seq", { ascending: false }).limit(49);
@@ -5569,6 +5616,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // any general impression from the tool list or persona (P0 Defect-1, §13/§36/§70).
       ...(capabilityManifestEligible ? [capabilityStatusMessage] : []),
       { role: "system", content: systemPrompt },
+      ...(interactiveConversational ? [{ role: "system", content: PAIGE_CONVERSATIONAL_MODE_BLOCK }] : []),
       ...(liveRuntimeScope ? [{ role: "system", content: PAIGE_LIVE_SPOKEN_STYLE }] : []),
       // "Watch Paige work" narration (#152): when she's about to USE tools, she first
       // writes one short backstage line saying what she's doing and why. It streams to
@@ -6084,7 +6132,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         await maybeRefreshSummary(payloadThreadId);
       } catch (e) {
         console.error("[paige] persist assistant turn failed:", (e as Error)?.message);
-        if (interactive) throw e;
+        if (interactive || interactiveConversational) throw e;
       }
     };
 
@@ -9147,6 +9195,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (offScope.length) console.log(`[paige] design-studio scope: ${toolDefs.length} tools offered, ${offScope.length} withheld`);
     }
 
+    // INT-346 conversational mode: a turn admitted while the interactive rollout is staged runs
+    // with ZERO tool exposure — the model is offered nothing, and dispatch refuses anything a
+    // provider emits anyway (see the per-call guard in executeToolCalls). Nothing downstream
+    // (capability projection, manifest, exposure, escalation) can widen an empty list, so a
+    // degraded turn is non-effectful by construction, not by prompt.
+    if (interactiveConversational) {
+      const withheldCount = toolDefs.length;
+      toolDefs.splice(0, withheldCount);
+      console.log(`[paige] conversational mode: ${withheldCount} tools withheld (interactive rollout staged, not active)`);
+    }
+
     // Advertise the confirm flag on every mutating tool so the model knows the
     // second (confirm:true) step exists. Read-only tools are untouched.
     for (const def of toolDefs) {
@@ -9750,7 +9809,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         p_surfaces_used: null, p_load_id: null, p_model: null,
         p_tokens_used: null, p_latency_ms: null,
         p_bundle_ref: { paige_resume: answerClaim(askId, binding.turnId, binding.skipped),
-          ...(interactive ? { interactive: { request_intent_id: payloadRequestIntentId,
+          ...((interactive || interactiveConversational) ? { interactive: { request_intent_id: payloadRequestIntentId,
             supersedes_intent_id: validatedData.interactive?.supersedesIntentId ?? null } } : {}),
         } as any,
         p_tool_calls: null,
@@ -10192,6 +10251,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try { await interactive?.check(); }
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
+        // INT-346 conversational mode — the dispatch-side refusal. A degraded turn offers the
+        // model no tools, so a call here means a provider emitted one anyway; it is refused
+        // BEFORE any executor, provider or store is touched, and the refusal is what the model
+        // reads. This is the second, independent enforcement behind the empty offer list.
+        if (interactiveConversational) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
+            code: "CONVERSATIONAL_MODE", error: "This conversation is running without actions while a platform update finishes. No tool can be run here." }) });
+          continue;
+        }
         // Actual dispatch boundary: the account may change after the model round was
         // consumed but before its proposed tools execute. This is asserted PER TOOL, not
         // once per batch, because a batch is not instantaneous — one round may propose
@@ -16782,6 +16850,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
          if (clientScopeDenied) {
            controller.enqueue(enc.encode(`data: ${JSON.stringify({ client_scope: { status: "refused", kind: clientScopeKind, reason: clientScopeRefusal } })}\n\n`));
          }
+         // INT-346: announce conversational mode ahead of every content frame so the surface can
+         // state truthfully that actions are unavailable on this turn (additive frame — parsers
+         // are `if (parsed.X)` chains, so consumers that do not know it ignore it).
+         if (interactiveConversational) {
+           controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_mode: "conversational" })}\n\n`));
+         }
          // #12 — flush the PRE-FLIGHT compaction frames next, so the compacting card renders
          // before Paige's reasoning/answer streams. Empty (no-op) on every turn that didn't fold.
          // (The refusal frame above precedes them; no parser depends on frame order.)
@@ -17674,7 +17748,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               try {
                 const p = persistAssistantTurn(withheld, withTurnRecord(withheld, interactive ? assistantTurnMetadata() : { bundleRef: null }));
                 // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-                if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+                if (interactive || interactiveConversational) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
               } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
             }
             return;
@@ -17701,7 +17775,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             try {
               const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-              if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+              if (interactive || interactiveConversational) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
             } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
           }
          } catch (e) {
@@ -17755,7 +17829,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
              try {
                const p = persistAssistantTurn(snag, withTurnRecord(snag, interactive ? assistantTurnMetadata() : { surfaces: [], bundleRef: null }));
                // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-               if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+               if (interactive || interactiveConversational) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
              } catch (pe) { console.error("[paige] persist snag fallback failed:", (pe as Error)?.message); }
            }
          } finally {
@@ -18123,7 +18197,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             docTurn.naturalStop();
             const p = persistAssistantTurn(fullAssistantResponse, attachTurnRecord(docTurn, fullAssistantResponse, { bundleRef: null }));
             // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
-            if (interactive) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+            if (interactive || interactiveConversational) await p; else if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
             docTurnRecorded = true;
           }
 
@@ -18229,7 +18303,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // the client always has a real reason to show. `error` is kept (= reason) for any legacy consumer.
     const outerStructured = structuredChatError(500, { message: error instanceof Error ? error.message : "" });
     const outer = new Response(JSON.stringify({ ...outerStructured, error: outerStructured.reason, errorId,
-      ...(interactive ? { message_accepted: true } : {}),
+      ...((interactive || interactiveConversational) ? { message_accepted: true } : {}),
     }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     // C4c — a throw between an answer's claim and PAIGE asks the question again rather than strand it.
     if (afterAnswerClaimFailure) {

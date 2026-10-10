@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Real owner can open details, edit supported fields with con
 MOTION_PURPOSE: Existing short dialog entrance preserves focus context; reduced-motion override removes animation.
 PROTECTED_SEAMS: Affected: platform authority, lifecycle writes/readback, audit, account isolation, responsive popup/accessibility; tested in bounded local fixtures. Unaffected: Solo signup/billing/provisioning source, Chat transcript implementation, Live Conversation, Secure Browser/Vault credentials, provider execution, durable scheduling, Memory/Rail, external sends/payments. Preview reads dependency counts only. No protected-domain records mutated.
 
-INTERNAL_BUILD_IDENTITY: source=c0169032b5f18244e080d473113a5e22bed7a1f0; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20261010005059_operator_account_controls and 20270602000202_operator_account_controls_grants production application); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-account-details.md
+INTERNAL_BUILD_IDENTITY: source=c0169032b5f18244e080d473113a5e22bed7a1f0; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20270602000202_operator_account_controls production application); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-account-details.md
 RELEASE_CHANNEL: development: source candidate only; hosted preview and production deployment remain PROOF_OWED.
 RELEASE_CLASSIFICATION: internal-only: guarded account detail edits and a non-destructive preview are candidate changes; whole-workspace retirement remains unavailable.
 CUSTOMER_RELEASE_IDENTITY: none: this is an internal operator capability candidate with no owner-approved customer release identity.
@@ -61,3 +61,7 @@ Scratch source harness: `work/operator-account-controls.html`, Vite on localhost
 The approved design includes deletion. No deletion function exists in this change. Preview always returns execution_available=false, including empty accounts, because verified recovery and canonical whole-workspace removal are still absent. Resolving protected retained-record and provider dependencies and implementing/testing actual retirement are outstanding engineering. A status change or successful login is not a substitute.
 
 Independent review is in progress for PR #1890. Hosted CI is in progress; merge, migration application, deployment, real-account change and customer acceptance are not asserted.
+
+## Migration delivery correction
+
+The initial candidate migration was older than production's newest recorded version 20270602000201. Production has not applied either candidate version. Keeping that older file plus a forward grants file would still violate the normal production push contract; CI correctly refused it. The final candidate uses one migration, 20270602000202_operator_account_controls.sql, containing the same functions and explicit least-privilege grants. This PR's nonpersistent, data-free preview (no Auth users, memberships or clients) is recreated through the existing Supabase/GitHub integration to discard its obsolete unmerged migration history. No production schema or customer data is reset. The final candidate/review/CI identity is recorded externally on PR #1890 rather than pretending this document can contain its own commit SHA.

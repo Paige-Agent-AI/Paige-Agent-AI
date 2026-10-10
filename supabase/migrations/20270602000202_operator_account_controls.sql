@@ -1,5 +1,6 @@
 -- Extend the existing Operator lifecycle seam. No email-based authorization,
 -- tenant conversion, membership mutation, provider action or hard deletion.
+-- Ordered after production's recorded migration 20270602000201.
 CREATE OR REPLACE FUNCTION public.operator_read_account_details(_tenant_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE t public.tenants;

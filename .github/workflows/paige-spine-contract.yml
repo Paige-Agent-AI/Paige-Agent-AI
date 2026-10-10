@@ -188,6 +188,10 @@ jobs:
             psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f "supabase/tests/$proof.sql"
           done
 
+      - name: Operations scoped manual work authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_plan_update.sql
+
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql

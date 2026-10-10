@@ -34,7 +34,35 @@ export type IntelligenceRead = {
   subject: string | null; epoch: number; access: "checking" | "allowed" | "denied" | "error";
   retryAccess: () => void; metrics: ReadState<IntelligenceMetrics>;
   traces: ReadState<IntelligenceTrace[]>; evals: ReadState<EvalRun[]>;
+  trajectories: ReadState<TrajectoryPage>; selectedTrajectory: ReadState<TrajectoryPage>;
+  trajectoryRequest: TrajectoryRequest | null;
+  inspectTrajectory: (request: TrajectoryRequest | null) => void;
+  pageTrajectories: (cursor: TrajectoryPage['next_cursor']) => void;
 };
+export type TrajectoryRequest = { workId: string } | { traceId: string };
+export type TrajectoryHistory = { version: number; complete: boolean; truncated: boolean; events: {
+  at: string; version: number; state: string; attempt: number; dispatch_attempt: number;
+  readback_claimed: boolean | null; blocked_code: string | null;
+}[] };
+export type TaskTrajectory = {
+  id: string; contract_version: number; work_version: number; category: string; capability_key: string;
+  thread_ref: string | null; intent_ref: string; work_state: string; attempt: number; dispatch_attempt: number;
+  created_at: string; updated_at: string; settled_at: string | null; scope_consistent: boolean;
+  terminal_condition: 'artifact' | 'read_only' | 'unavailable'; terminal_verified: boolean;
+  artifact_ref: string | null; receipt_conflict: boolean; history: TrajectoryHistory;
+  model_count: number; models: { id: string; created_at: string; provider: string | null; model: string | null;
+    tier: string | null; status: string; router_version: string | null; tokens_in: number | null; tokens_out: number | null;
+    latency_ms: number | null; cost_estimate_usd: number | null; cost_basis: string | null;
+    route_class: string | null; route_provider: string | null; route_model: string | null; route_fallback: boolean | null;
+  }[];
+  receipts: { id: string; occurred_at: string; outcome: string; capability_key: string; attempt: number | null; llm_trace_id: string | null; release_id: string | null }[];
+  executions: { id: string; capability_key: string; outcome: string; effective_lane: string; decided_at: string; dispatched_at: string | null; settled_at: string | null; provider_reference_recorded: boolean }[];
+  approvals: { id: string; status: string; created_at: string; reviewed_at: string | null }[];
+  turns: { id: string; role: string; created_at: string; intent_ref: string | null; processing_state: string | null }[];
+  evaluations: { id: string; run_id: string; source_trace_id: string; scorer: string; status: string; score: number | null; passed: boolean | null; created_at: string }[];
+  limits: Record<string, number>; limit_reached: Record<string, boolean>; coverage: Record<string, string>;
+};
+export type TrajectoryPage = { contract_version: number; observed_at: string; items: TaskTrajectory[]; next_cursor: { at: string; id: string } | null };
 export type Recommendation = {
   kind: "improvement" | "opportunity"; problem: string; target: string; evidence: string;
   freshness: string; confidence: string; assumptions: string; capability: string;

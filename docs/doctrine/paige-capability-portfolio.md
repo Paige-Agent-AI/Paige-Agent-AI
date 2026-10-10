@@ -126,6 +126,7 @@ This is a mirror, not a claim, and not a score: **zero of these are `LIVE`.**
 
 <!-- LEDGER-SNAPSHOT:BEGIN (generated from surface-binding-ledger.json; verified by scripts/ci/binding-ledger-lint.mjs) -->
 ```
+operations.department = PROOF_OWED
 sales.department = PROOF_OWED
 finance.department = PROOF_OWED
 paige.workspace = PARTIAL

@@ -4,12 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { IntelligenceWorkspace } from "./IntelligenceSurface";
 import { canonicalPath, resolveOperatorAddress } from "@/operator/shell/operatorAddress";
 import { recommendationDocument, newRecommendation, type EvalRun, type IntelligenceRead, type ReadState, type IntelligenceTrace } from "@/operator/data/intelligenceContract";
+import { syntheticTrajectory, syntheticTrajectoryPage } from "@/test/fixtures/trajectory";
 vi.mock("@/operator/data/useIntelligence", () => ({ useIntelligence: vi.fn() }));
 
 const source = <T,>(data: T): ReadState<T> => ({ data, loading: false, fetching: false, error: false, updatedAt: 1791604800000, refresh: vi.fn() });
 const trace: IntelligenceTrace = { id: "test-trace-1", created_at: "2026-10-10T04:00:00Z", tenant_label: "Test workspace", agent_id: "test-agent", provider: "test-provider", model: "test-model", job_kind: "test-job", modality: "text", tier: "operational", status: "error", tokens_in: null, tokens_out: null, latency_ms: 240, cost_estimate_usd: null, error_class: "test_failure", account_type: "standalone", parent_name: null, working_context_label: null };
 const read = (): IntelligenceRead => ({ subject: "test-operator", epoch: 1, access: "allowed", retryAccess: vi.fn(),
-  metrics: source({ traces: { total: 1, cost_estimate_usd: null } }), traces: source([trace]), evals: source([]) });
+  metrics: source({ traces: { total: 1, cost_estimate_usd: null } }), traces: source([trace]), evals: source([]),
+  trajectories: source({ contract_version: 1, observed_at: trace.created_at, items: [], next_cursor: null }), selectedTrajectory: source({ contract_version: 1, observed_at: trace.created_at, items: [], next_cursor: null }), trajectoryRequest: null, inspectTrajectory: vi.fn(), pageTrajectories: vi.fn() });
 let root: Root;
 let node: HTMLDivElement;
 async function mount(data = read()) {
@@ -25,6 +27,36 @@ async function click(text: string) {
 }
 afterEach(async () => { if (root) await act(async () => root.unmount()); node?.remove(); });
 describe("INT-280 supported Operator flows", () => {
+  it("shows source-backed task inspection, truthful measurement gaps and close focus", async () => {
+    const data=read(); data.trajectories=source(syntheticTrajectoryPage());
+    data.inspectTrajectory=vi.fn(request => { data.trajectoryRequest=request; data.selectedTrajectory=source(syntheticTrajectoryPage()); root.render(<IntelligenceWorkspace read={{ ...data }} />); });
+    await mount(data); await click("Forensic Observatory"); await click("Inspect task");
+    expect(data.inspectTrajectory).toHaveBeenCalledWith({ workId: syntheticTrajectory.id });
+    expect(node.textContent).toContain("Artifact creation verified"); expect(node.textContent).toContain("approval_expired");
+    expect(node.textContent).toContain("source claimed readback"); expect(node.textContent).toContain("0/1 calls measured");
+    expect(node.textContent).toContain("provider reference recorded, private"); expect(node.textContent).toContain("Publication, sending and business effects are unverified");
+    await click("Close inspection");
+    expect(data.inspectTrajectory).toHaveBeenLastCalledWith(null);
+    expect(document.activeElement?.getAttribute("aria-label")).toBe(`Inspect task ${syntheticTrajectory.id}`);
+  });
+  it("hides stale selected tasks on refusal or refresh error and renders unavailable without fixtures", async () => {
+    const data=read(); data.trajectoryRequest={ workId: syntheticTrajectory.id }; data.selectedTrajectory={ ...source(syntheticTrajectoryPage()), error: true, unavailable: true };
+    await mount(data); await click("Forensic Observatory");
+    expect(node.textContent).toContain("Selected task evidence unavailable"); expect(node.textContent).not.toContain("synthetic-artifact");
+  });
+  it("does not guess a task for an unlinked call and requests only its trace reference", async () => {
+    const data=read(); await mount(data); await click("Forensic Observatory"); await click("Inspect"); await click("Find linked task");
+    expect(data.inspectTrajectory).toHaveBeenCalledWith({ traceId: trace.id });
+    data.trajectoryRequest={ traceId: trace.id }; await act(async()=>root.render(<IntelligenceWorkspace read={{ ...data }} />));
+    expect(node.textContent).toContain("No server-proven trajectory link");
+    expect(node.textContent).not.toContain("Artifact creation verified");
+  });
+  it("uses the server cursor for older task pages", async () => {
+    const data=read(); data.trajectories=source({ ...syntheticTrajectoryPage(), next_cursor: { at: syntheticTrajectory.created_at,id: syntheticTrajectory.id } });
+    await mount(data); await click("Forensic Observatory"); await click("Older tasks");
+    expect(data.pageTrajectories).toHaveBeenCalledWith(data.trajectories.data!.next_cursor);
+    expect(document.activeElement?.id).toBe("intel-task-evidence");
+  });
   it("resolves the new Settings home and legacy Operator bookmark", () => {
     expect(canonicalPath(resolveOperatorAddress("settings", "paige-intelligence"))).toBe("/operator/settings/paige-intelligence");
     expect(canonicalPath(resolveOperatorAddress("platform", "intelligence"))).toBe("/operator/settings/paige-intelligence");

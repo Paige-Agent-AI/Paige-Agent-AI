@@ -92,7 +92,7 @@ export default function SlotRail({
           return <NavLink key={group.slug} to={`/operator/settings/${group.slug}`} data-settings-menu={group.slug} data-view={group.views[0]}
             title={group.label} aria-label={group.label} aria-current={selected ? "page" : undefined}
             className={cn("relative flex min-h-[44px] min-w-0 items-center gap-3 rounded-[9px] px-[11px] text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              compact && "justify-center px-0", selected ? "bg-rail-foreground/10 text-rail-foreground shadow-[inset_0_0_0_1px_var(--pg-line)]" : "text-rail-muted hover:text-rail-foreground")}>
+              compact && "justify-center px-0", selected ? "bg-rail-foreground/10 text-rail-foreground shadow-[shadow:inset_0_0_0_1px_var(--pg-line)]" : "text-rail-muted hover:text-rail-foreground")}>
             <i aria-hidden className={cn("absolute left-0 top-1/2 w-px -translate-y-1/2 bg-cd-gold", selected ? "h-6" : "h-0")} />
             <Icon size={18} strokeWidth={1.5} className="flex-none" aria-hidden />{!compact && <span className="min-w-0 flex-1">{group.label}</span>}
           </NavLink>;

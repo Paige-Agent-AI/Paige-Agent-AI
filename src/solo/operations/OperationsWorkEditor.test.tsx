@@ -1,0 +1,44 @@
+import React, { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import type { PlanItem } from "@/hooks/usePlanList";
+const mock = vi.hoisted(() => ({ rpc: vi.fn(), submit: vi.fn() }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mock.rpc } }));
+vi.mock("./operations-work-update", () => ({ submitOperationsWorkUpdate: mock.submit }));
+import { OperationsWorkEditor } from "./OperationsWorkEditor";
+let container: HTMLDivElement;
+let root: Root;
+const item = { id: "item-a", tenant_id: "tenant-a", status: "open", created_by: "creator", assigned_to_user_id: "assignee", due_at: null } as PlanItem;
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+beforeEach(() => { vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: false, error: null });
+  container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
+afterEach(() => { act(() => root.unmount()); container.remove(); });
+async function render(value = item, actorId = "assignee", refresh = vi.fn().mockResolvedValue(undefined)) {
+  await act(async () => root.render(<OperationsWorkEditor item={value} actorId={actorId} tenantId="tenant-a" members={[]} refresh={refresh} sourceError={false} />));
+}
+async function status(value: string) {
+  const select = container.querySelector("select")!;
+  await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
+}
+async function save() { await act(async () => container.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))); }
+it("allows assignee status control but no due-date or reassignment control", async () => {
+  await render(); expect(container.querySelectorAll("select")).toHaveLength(1);
+  expect(Array.from(container.querySelectorAll("option")).map(option => option.value)).not.toContain("cancelled");
+  expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+  await render(item, "observer"); expect(container.querySelector("form")).toBeNull();
+});
+it("requires matching canonical readback after an acknowledgement", async () => {
+  mock.submit.mockResolvedValue({ kind: "acknowledged" }); const refresh = vi.fn().mockResolvedValue(undefined);
+  await render(item, "assignee", refresh); await status("done"); await save();
+  expect(refresh).toHaveBeenCalledOnce(); expect(container.textContent).toContain("Checking current work");
+  expect(container.textContent).not.toContain("Saved and confirmed");
+  await render({ ...item, status: "done" }, "assignee", refresh);
+  expect(container.textContent).toContain("Saved and confirmed in current work");
+});
+it("keeps uncertain results from becoming successful saves or automatic retries", async () => {
+  mock.submit.mockResolvedValue({ kind: "uncertain", message: "Result uncertain" });
+  await render(); await status("done"); await save(); await save();
+  expect(mock.submit).toHaveBeenCalledOnce();
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  expect(container.textContent).not.toContain("Saved and confirmed");
+});

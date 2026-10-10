@@ -1,5 +1,5 @@
 // Synthetic source metadata and actual canonical completion/projection functions, local only.
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { trajectoryFixture } from './int280-trajectory-fixture.mjs';
 if(process.argv[2]!=='--postgres')throw new Error('Use --postgres with isolated CI or dedicated loopback fixture port.');
 const db=await trajectoryFixture(Number(process.argv[3]??5432));
@@ -31,10 +31,15 @@ try {
   const completion=document.match(/create or replace function public\.complete_paige_document_work\([\s\S]*?to service_role;/)?.[0];
   if(!completion)throw new Error('Actual canonical document completion function missing');
   await db.exec(completion);
-  await db.exec(await readFile('supabase/migrations/20270602000302_int280_durable_trajectory_history.sql','utf8'));
-  const projection=await readFile('supabase/migrations/20270602000303_int280_operator_trajectories.sql','utf8');
+  await db.exec(await readFile('supabase/migrations/20270602000304_int280_durable_trajectory_history.sql','utf8'));
+  const projection=await readFile('supabase/migrations/20270602000305_int280_operator_trajectories.sql','utf8');
   await db.exec(projection);await db.exec(projection);
   const proof=db.run(await readFile('supabase/tests/int280_operator_trajectories.sql','utf8'));
   if(!proof.includes('PASS: trajectory reconstruction, canonical readback, missing/stale/conflicting evidence, scope, roles, cursor, privacy and audit refusal'))throw new Error('Projection completion missing');
+  if(process.argv[4]) {
+    if(process.argv[4]!=='--evidence-out'||!process.argv[5])throw new Error('Optional export requires --evidence-out path');
+    const rows=await db.query('SELECT payload FROM int280_fixture_snapshot');
+    await writeFile(process.argv[5],JSON.stringify({ fixture:'CONTROLLED LOCAL SYNTHETIC: actual canonical completion and projection, no production evidence',page:rows.rows[0].payload },null,2)+'\n');
+  }
   console.log(proof);
 } finally {await db.close();}

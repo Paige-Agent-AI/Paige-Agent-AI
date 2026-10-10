@@ -1,5 +1,6 @@
 -- Controlled task: canonical acceptance -> interruption -> resume -> two model calls ->
 -- governed synthetic approval/act -> actual canonical document completion + receipt/readback.
+CREATE TABLE int280_fixture_snapshot(payload jsonb); -- Disposable loopback proof only, never a production migration.
 DO $$ DECLARE legacy public.paige_durable_work%rowtype; w public.paige_durable_work%rowtype; r record; trace uuid; eval_run uuid; bad_run uuid; p jsonb; item jsonb; first_page jsonb; next_page jsonb; n integer;
   operator_id uuid := '20000000-0000-4000-8000-000000000002';
   foreign_tenant uuid := '10000000-0000-4000-8000-000000000002';
@@ -34,6 +35,7 @@ BEGIN
   IF item->'terminal_verified'<>'true'::jsonb OR item->>'artifact_ref'<>w.id::text OR item->>'attempt'<>'2' OR jsonb_array_length(item->'models')<>2 OR jsonb_array_length(item->'approvals')<>1 OR jsonb_array_length(item->'turns')<>3 THEN RAISE EXCEPTION 'full chain reconstruction incorrect'; END IF;
   IF item->'history'->'complete'<>'true'::jsonb OR jsonb_array_length(item->'history'->'events')<>5 THEN RAISE EXCEPTION 'interruption/resume history missing'; END IF;
   IF p::text ~* '(private customer|private concurrent|private generated|private narration|private-foreign|private provider|approval draft|controlled synthetic content|scope_epoch|actor_user_id|tenant_id|idempotency|input_excerpt|output_excerpt|draft_content|request_payload)' THEN RAISE EXCEPTION 'sensitive source projection'; END IF;
+  INSERT INTO int280_fixture_snapshot VALUES(p); -- Preserve the proven chain before negative-case mutations.
   IF jsonb_array_length(public.operator_intelligence_trajectories(p_trace_id=>trace)->'items')<>1 THEN RAISE EXCEPTION 'legitimate trace link missing'; END IF;
   INSERT INTO public.paige_eval_run(tenant_id,status) VALUES(w.tenant_id,'complete') RETURNING id INTO eval_run;
   INSERT INTO public.paige_eval_run(tenant_id,status) VALUES(foreign_tenant,'complete') RETURNING id INTO bad_run;

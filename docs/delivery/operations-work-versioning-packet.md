@@ -39,3 +39,9 @@ Outcome: refuse direct Operations calls for agency, child and other excluded acc
 ## Version precondition authority pre-edit follow-up
 
 Before CAS comparison, versioned Operations mutation must require canonical current membership and target-tenant admin/record creator/assignee visibility. Otherwise unrelated members could distinguish an existing stale record by its conflict response. Preserve the same canonical scope/mutation/audit/locks, no new authority; add a stale-version negative under unrelated target member/global role elsewhere. Fresh independent review and exact-head CI required. No customer runtime proof.
+
+## Test cohort correction under canonical role synchronization
+
+Exact-head4e08 database step failed; final job log not yet available. Source inspection found the global-admin-elsewhere fixture granted its role while the granting caller was admin in target A. Canonical sync_user_role_to_tenant_member legitimately seats the grantee in that caller workspace, invalidating the intended member-A/admin-B cohort. Grant now runs while the caller is in B before switching to A. No trigger, constraint or authority is bypassed; actual production role synchronization remains unchanged. Independent review and fresh rebuilt-schema proof remain required; this source finding is not yet asserted as the exact CI failure text.
+
+Completed CI log confirms4e08failure: operations_versioned_work_update.sql line58 duplicate tenant_members_tenant_id_user_id_key after12PASSassertions. Tenant-role UPDATE also reverse-syncs the global role before the explicit insert, so the fixture now selects B before both role changes. This prevents an unintended A seat without disabling either synchronization or consent trigger. Production authority is unchanged.32assertions registered; fresh CI required.

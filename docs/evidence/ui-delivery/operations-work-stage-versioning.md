@@ -99,3 +99,5 @@ Internal build: `dc459adc88f43ff46020afd9b38fd7da3d2880fc` plus evidence follow-
 All three Operations wrappers now mirror canonical top-level standalone eligibility before reading or delegating work. Six additional rollback assertions cover agency and parented-standalone refusal and unchanged source, bringing registered SQL assertions to 30. These new assertions are UNEXECUTED until the fresh rebuilt-database CI run. No rendered layout change; no named customer runtime test. Prior exact-head evidence remains historical.
 
 Versioned mutation now checks canonical membership and item visibility before CAS, preserving refusal ordering for unrelated callers. Thirty-one rollback assertions registered, new assertion UNEXECUTED until fresh rebuilt-schema CI. No rendered change or customer test.
+
+Current exact-head database step4e08 failed; release held. The isolated global-role cohort now grants while in its legitimate admin workspace before selecting member-only target A, preserving canonical role-sync behavior. An explicit cohort assertion brings SQL to32registered. Fresh execution remains owed; no green/release claim.

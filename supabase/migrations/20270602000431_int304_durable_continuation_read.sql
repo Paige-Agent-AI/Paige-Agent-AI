@@ -13,8 +13,8 @@
 -- that bounded terminal context may be explained. No dispatch, wake, settlement, retry,
 -- approval or exactly-once consumption exists here or is implied.
 --
--- Numbering: clears main 20270602000304, the deployed production frontier 20270602000401
--- and open-PR claims through 20270602000410; follows this program's 20270602000411.
+-- Numbering: RENUMBERED 20270602000412 -> 20270602000431 in the same frontier race as
+-- 430 (prod frontier 20270602000423, open-PR claims 20270602000428).
 begin;
 create or replace function public.read_paige_durable_continuation(
  _thread uuid, _intent uuid, _work uuid

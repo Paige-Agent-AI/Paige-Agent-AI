@@ -4,7 +4,7 @@
 
 The C4d foundation's missing runtime half: `projectDurableContinuation` had zero runtime
 callers because nothing selected the envelope's internal fields under fresh authorization.
-Migration `20270602000412_int304_durable_continuation_read.sql` adds
+Migration `20270602000431_int304_durable_continuation_read.sql` (renumbered from 412 in the same frontier race as 430) adds
 `read_paige_durable_continuation(thread, intent, work)` — authenticated-only, validating
 exactly like the frozen durable-observation reader (owned active thread with the CURRENT
 intent, caller-bound work row, the document/research class, CURRENT owner/admin permission,

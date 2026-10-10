@@ -2408,8 +2408,9 @@ JSON:`;
         memoryTenantSample,
       ]);
       memoryScopeTenantId = sampledTenant;
-      // Client recall keeps its existing projection. Only owner recall admits explicitly
-      // confirmed canonical rows; candidates and a failed read never become task knowledge.
+      // Client recall keeps its existing projection. Owner recall admits confirmed and
+      // corrected canonical rows as knowledge plus the C6 dial's capped, labelled
+      // candidates (• see resolveOwnerMemoryContext); a failed read never becomes task knowledge.
       if (!scopedClientId) {
         ownerMemoryContext = resolveOwnerMemoryContext(ownerMemoryReadScope, memoryResult as any);
         if (ownerMemoryContext.status === "degraded") {
@@ -2439,6 +2440,9 @@ JSON:`;
         // C6 dial (INT-326 clarification 3): the owner arm's memory budget is 700 tokens
         // (range 600-800); the client arm keeps its existing 1000.
         const memoryBlockCap = scopedClientId ? 1000 : 700;
+        // One home for the candidate label; the never-assert-as-fact rule keys on this
+        // exact constant so the two can never drift apart (review P2-3).
+        const C6_RECOLLECTION_SUFFIX = " (my recollection — not yet confirmed)";
         for (const mem of sorted) {
           // §9/§13 injection fence (Slice 2 inc 2, folded) — memory is DURABLE and CROSS-PRINCIPAL: a
           // client's OCR'd upload lands a report_upload row in client_memory that later re-enters the
@@ -2446,7 +2450,7 @@ JSON:`;
           // C6 clause 8 — a proposed/unconfirmed owner row is CANDIDATE knowledge: it may be
           // quoted as recollection, never asserted as truth, so it is labelled at the source.
           const candidateSuffix = !scopedClientId && (mem as { candidate?: unknown }).candidate === true
-            ? " (my recollection — not yet confirmed)" : "";
+            ? C6_RECOLLECTION_SUFFIX : "";
           const entry = `• [${mem.memory_type.replace(/_/g, ' ').toUpperCase()}] (${new Date(mem.created_at).toLocaleDateString()})${candidateSuffix}: ${sanitizeUntrustedText(mem.content)}`;
           const entryTokens = Math.ceil(entry.length / 4);
           if (tokenEstimate + entryTokens > memoryBlockCap) break;
@@ -2485,7 +2489,7 @@ JSON:`;
           // an embedded directive/tool-call/permission-change is never obeyed. The trusted instruction
           // below still scopes what to honor to tone/length/format PREFERENCES — data, not authority.
           // C6 clause 8: recollection-marked items are candidates — quoted as belief, never fact.
-          const recollectionRule = included.some((e) => e.includes("(my recollection — not yet confirmed)"))
+          const recollectionRule = included.some((e) => e.includes(C6_RECOLLECTION_SUFFIX))
             ? " Items marked as your recollection are things you believe but the owner has not confirmed — offer them as recollection, never as established fact." : "";
           memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any preference items (tone, length, formats; owner-memory type 'preference', client-memory type 'user_preference') in every response.${recollectionRule} Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
         }

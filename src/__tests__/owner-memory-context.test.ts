@@ -35,7 +35,7 @@ describe("C6 governed owner-memory context (INT-326 dials)", () => {
     const result = resolveOwnerMemoryContext(scope, { data: [absentState], error: null });
     expect(result.data?.memories).toEqual([item("proposed", "absent")]);
   });
-  it.each(["retired", "CONFIRMED", "garbage", 7])("excludes %s without promoting it", (state) => {
+  it.each(["retired", "CONFIRMED", "garbage", 7, null])("excludes %s without promoting it", (state) => {
     const result = resolveOwnerMemoryContext(scope, { data: [row(state, "bad")], error: null });
     expect(result.data?.memories).toEqual([]);
   });

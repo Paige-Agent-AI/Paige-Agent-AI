@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Marketing › Content, Email and Ads: what each tab shows from real records, and what
+// Marketing › Content and Email (Ads: marketing-ads.render.test.tsx): what each tab shows from real records, and what
 // it refuses to show. Network reads are stubbed at the Supabase client; everything else is the real view.
 import React from "react";
 import { act } from "react";
@@ -28,7 +28,7 @@ vi.mock("@/integrations/supabase/client", () => {
 const access = { phase: "ready", canManage: true };
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => access }));
 
-import { MarketingAds, MarketingContent } from "./marketing-planned";
+import { MarketingContent } from "./marketing-planned";
 
 let host: HTMLDivElement;
 let root: Root;
@@ -96,39 +96,3 @@ describe("Marketing › Content", () => {
   });
 });
 
-describe("Marketing › Ads", () => {
-  it("shows saved ad copy, offers a draft-first ask, and never a spend, click or lead figure", async () => {
-    db.tables.marketing_content = { data: [{ id: "a1", kind: "text", channel: "ad_copy", status: "draft", title: "Spring ad", updated_at: "2026-10-01T10:00:00Z" }], error: null };
-    const onOpenIntegrations = vi.fn();
-    const asks: string[] = [];
-    const listen = (event: Event) => asks.push((event as CustomEvent).detail?.prompt);
-    window.addEventListener("paige:open", listen);
-    await render(<MarketingAds tenantId="t-1" onOpenIntegrations={onOpenIntegrations}/>);
-    expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toContainEqual(["channel", "ad_copy"]);
-    expect(text()).toContain("Spring ad");
-    expect(text()).toContain("Nothing here has run");
-    expect(host.querySelector(".mp-notyet .mk-flag")).toBeNull();
-    expect(text()).not.toMatch(/\$\s?\d|cost per lead\s*\d|\bROAS\b/i);
-    const button = (label: string) => [...host.querySelectorAll(".mp-actions button")].find((b) => b.textContent === label) as HTMLButtonElement;
-    act(() => button("Open Integrations").click());
-    expect(onOpenIntegrations).toHaveBeenCalled();
-    act(() => button("Ask PAIGE to draft ad copy").click());
-    window.removeEventListener("paige:open", listen);
-    expect(asks).toHaveLength(1);
-    expect(asks[0]).toMatch(/do not run or publish anything/);
-  });
-
-  it("drops a stale answer when the workspace changes mid-read", async () => {
-    let release: (value: { data: unknown; error: unknown }) => void = () => {};
-    const slow = new Promise<{ data: unknown; error: unknown }>((resolve) => { release = resolve; });
-    // The first workspace's read is held; the second resolves at once.
-    db.tables = new Proxy({}, { get: (_, table: string) => (table === "marketing_content" && db.calls.filter((c) => c.table === table).length === 1 ? slow : { data: [{ id: "b1", kind: "text", channel: "ad_copy", status: "draft", title: "Second workspace ad", updated_at: "2026-10-01T10:00:00Z" }], error: null }) }) as never;
-    act(() => root.render(<MarketingAds tenantId="t-1" onOpenIntegrations={null}/>));
-    await render(<MarketingAds tenantId="t-2" onOpenIntegrations={null}/>);
-    release({ data: [{ id: "a1", kind: "text", channel: "ad_copy", status: "draft", title: "First workspace ad", updated_at: "2026-10-01T10:00:00Z" }], error: null });
-    await flush();
-    expect(text()).toContain("Second workspace ad");
-    expect(text()).not.toContain("First workspace ad");
-    expect(host.querySelector(".mp-actions")?.textContent).not.toContain("Open Integrations");
-  });
-});

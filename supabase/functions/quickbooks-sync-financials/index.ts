@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { qbApiGet, parsePnL, parseBalanceSheet, parseMonthlyRevenue, refreshAccessToken } from "../_shared/quickbooks-utils.ts";
+import { authorizeQuickBooksSync } from "../_shared/quickbooks-sync-authority.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -285,20 +286,36 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const { user_id, sync_all, connection_id } = body;
+    const authHeader = req.headers.get("Authorization");
+    const authority = await authorizeQuickBooksSync(
+      authHeader, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "", sync_all === true,
+      async () => {
+        const authClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+          global: { headers: { Authorization: authHeader! } },
+        });
+        const { data: { user }, error } = await authClient.auth.getUser();
+        return error ? null : user?.id ?? null;
+      },
+    );
+    if (!authority.allowed) {
+      return new Response(JSON.stringify({ error: authority.status === 401 ? "Unauthorized" : "Forbidden" }), {
+        status: authority.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const body = await req.json().catch(() => ({}));
-    const { user_id, sync_all } = body;
-
-    if (sync_all) {
+    if (sync_all === true) {
       // Cron mode: sync all active connections
-      const { data: conns } = await supabase
+      const { data: conns, error: connectionError } = await supabase
         .from("quickbooks_connections")
         .select("id, user_id")
         .eq("is_active", true);
+      if (connectionError) throw new Error("QuickBooks connection lookup failed");
       const results = [];
       for (const c of conns || []) {
         try {
@@ -314,27 +331,20 @@ serve(async (req) => {
     }
 
     // Single user sync — verify caller owns it OR is service role
-    let targetUserId = user_id;
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader && !authHeader.includes(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)) {
-      const authClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user } } = await authClient.auth.getUser();
-      if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      targetUserId = user.id;
-    }
+    const targetUserId = authority.actor === "person" ? authority.userId : user_id;
 
     if (!targetUserId) {
       return new Response(JSON.stringify({ error: "Missing user_id" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { data: conn } = await supabase
+    let connectionQuery = supabase
       .from("quickbooks_connections")
       .select("id")
       .eq("user_id", targetUserId)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+    if (connection_id) connectionQuery = connectionQuery.eq("id", connection_id);
+    const { data: conn, error: connectionError } = await connectionQuery.maybeSingle();
+    if (connectionError) throw new Error("QuickBooks connection lookup failed");
     if (!conn) {
       return new Response(JSON.stringify({ error: "No active QB connection" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

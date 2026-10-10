@@ -71,21 +71,17 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
   const database = `finance_fixture_${process.pid}_${leg}`;
   sql('postgres', `CREATE DATABASE ${database};`);
   try {
-<<<<<<< HEAD
     // Actual canonical disposition definition; role/archive authority remains an
     // explicit fixture dependency, never authenticated Operator acceptance.
     const canonical = readFileSync(new URL('../../supabase/migrations/20270602000302_operator_provider_retirement.sql', import.meta.url), 'utf8');
     const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
     assert.ok(disposition, 'Canonical retirement disposition missing');
     sql(database, disposition);
-    const result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
-=======
     let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && suite === 'source' ? 0 : 1}`, '-f', fixture]);
     if (leg === 'absent' && suite === 'accounts') {
       assert.equal(result.status, 0, result.stderr);
       result = run(database, undefined, ['-v', 'apply_account_migration=0', '-f', accountFixture]);
     }
->>>>>>> e357e7d5 (Finance: stage company-scoped account source projections and revocation proof)
     if (leg === 'absent') {
       assert.notEqual(result.status, 0);
       assert.match(result.stderr, suite === 'source' ? /read_finance_source_catalog.*does not exist/ : /read_finance_account_source.*does not exist/);

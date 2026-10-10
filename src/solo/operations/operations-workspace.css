@@ -22,3 +22,5 @@
 
 
 .ops-work-editor :is(input,select):focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}
+
+.ops-create-fields{display:grid;gap:16px;min-width:0;border:0;margin:0;padding:0}.ops-create-fields textarea{width:100%;min-width:0;resize:vertical;padding:10px;border:1px solid var(--pg-line-strong);border-radius:8px;background:var(--pg-raised);color:var(--pg-ink);font:inherit}.ops-create-fields textarea:focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}.ops-create-pair{display:grid;grid-template-columns:1fr;gap:16px}

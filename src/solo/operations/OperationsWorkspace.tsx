@@ -8,6 +8,7 @@ import { usePlanList, type Plan, type PlanItem, type PlanItemStatus } from "@/ho
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { OperationsAssignee } from "./OperationsAssignee";
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
+import { OperationsWorkCreator } from "./OperationsWorkCreator";
 import { useOperationsPeople } from "./useOperationsPeople";
 import { OperationsWork } from "./OperationsWork";
 import { OperationsProjects } from "./OperationsProjects";
@@ -49,6 +50,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
     if (onViewChange) onViewChange(name.toLowerCase()); else setLocalDestination(name);
   };
   const [inspection, setInspection] = useState<Inspection>(null);
+  const [creatingWork, setCreatingWork] = useState(false);
+  const creationInvoker = useRef<HTMLButtonElement | null>(null);
   const contentRef = useRef<HTMLElement | null>(null);
   useEffect(() => { setInspection(null); }, [destination]);
   const inspectionInvoker = useRef<HTMLElement | null>(null);
@@ -85,6 +88,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
         aria-current={destination === name ? "page" : undefined}
         onClick={() => { setDestination(name); setInspection(null); }}>{name}</button>)}</nav>
       <div className="ops-department-actions">
+        {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event=>{creationInvoker.current=event.currentTarget;setCreatingWork(true);}}>New task</button>}
         {isPlanning && <button type="button" aria-label="Refresh work and team profiles"
           disabled={source.loading || people.loading} onClick={() => { void source.refresh(); void people.refresh(); }}><RefreshCw size={16} /></button>}
         {openPaige && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with PAIGE</button>}
@@ -112,8 +116,9 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
       <SheetContent className="ops-detail-sheet paige-solo" data-pg={portalTheme} data-theme={portalTheme} onCloseAutoFocus={(event) => {
         if (inspectionInvoker.current?.isConnected) { event.preventDefault(); inspectionInvoker.current.focus(); }
       }}>
-        <SheetHeader><SheetTitle>{selectedItem?.title ?? selectedPlan?.title ?? "Work is no longer available"}</SheetTitle>
+        <SheetHeader><SheetTitle>{selectedItem?.title ?? selectedPlan?.title ?? "Work is not available in this view"}</SheetTitle>
           <SheetDescription>{selectedItem?.summary ?? selectedPlan?.summary ?? "Details from your current workspace."}</SheetDescription></SheetHeader>
+        {!selectedItem && !selectedPlan && inspection && <p>This task has not been verified here. Refresh current work before creating it again.</p>}
         {selectedItem && <div className="ops-detail-content">
           <dl><div><dt>Responsible person</dt><dd>{selectedItem.assigned_to_user_id && !member ? "Member unavailable" : <OperationsAssignee member={member} />}</dd></div>
             <div><dt>Status</dt><dd>{selectedItem.status.replace(/_/g, " ")}</dd></div>
@@ -132,5 +137,9 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
           <ol className="ops-detail-work">{selectedPlan.items.map((item) => <li key={item.id}><button type="button" onClick={() => inspectItem(item)}>{item.title}</button><span>{item.status.replace(/_/g, " ")}</span></li>)}</ol></div>}
       </SheetContent>
     </Sheet>
+    {creatingWork && <OperationsWorkCreator actorId={userId} tenantId={tenantId} members={people.members} plans={plans}
+      theme={portalTheme} invoker={creationInvoker.current} onClose={()=>setCreatingWork(false)}
+      onCreated={async()=>{await source.refresh({silent:true});}}
+      onRecover={async itemId=>{await source.refresh({silent:true});if(itemId){setCreatingWork(false);inspectionInvoker.current=creationInvoker.current;setInspection({kind:"item",id:itemId,view:destination});}}} />}
   </section>;
 }

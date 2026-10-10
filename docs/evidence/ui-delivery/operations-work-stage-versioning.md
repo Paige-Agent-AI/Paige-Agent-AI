@@ -1,8 +1,8 @@
 # Operations Work stage movement — bounded release evidence
 
-## Canonical coach parity correction
+## Supported staff-role correction
 
-The Work permission hint now includes the canonical `coach` staff role alongside admin/super_admin, matching the unchanged Planning writer. This corrects an Operations-created restriction; it does not change server permissions. A focused UI case covers a coach managing another person's work. Two supplemental rollback assertions verify the existing coach writer and stage readback. Prior-head rebuilt-schema CI passed the original ten assertions; supplemental assertions and final exact-head CI remain pending until recorded. The synthetic browser fixture returns an explicit role hint and does not prove any real user's role.
+The Work permission hint uses supported admin/super_admin roles. The attempted coach fixture at head 46d1b9c9 failed the current platform constraint that retires coach as a permission role; that failed head was not merged. A focused UI case now covers a supported admin managing another person's work and excludes the retired role. Two supplemental rollback assertions verify the existing admin writer and stage readback. Prior-head rebuilt-schema CI passed the original ten assertions; the corrected supplemental assertions and final exact-head CI remain pending until recorded. The synthetic browser fixture returns an explicit role hint and does not prove any real user's role. No platform constraint or canonical writer was weakened.
 
 ## O2a local follow-up — stage proposals and source-version protection
 

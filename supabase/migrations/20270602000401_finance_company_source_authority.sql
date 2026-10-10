@@ -127,7 +127,12 @@ BEGIN
  IF NOT FOUND THEN RAISE EXCEPTION 'Finance workspace unavailable' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM public.tenant_members WHERE user_id=_actor FOR SHARE;
  PERFORM 1 FROM public.user_roles WHERE user_id=_actor FOR SHARE;
- IF NOT (coalesce(public.is_tenant_admin_as(_actor,_expected_tenant),false) OR coalesce(public.agency_can_manage_child(_expected_tenant,_actor),false)) THEN
+ PERFORM 1 FROM public.agency_team_members WHERE user_id=_actor FOR SHARE;
+ PERFORM 1 FROM public.tenants WHERE id=(SELECT parent_tenant_id FROM public.tenants WHERE id=_expected_tenant) FOR SHARE;
+ IF NOT (coalesce(public.is_tenant_admin_as(_actor,_expected_tenant),false) OR
+  (coalesce(public.agency_can_manage_child(_expected_tenant,_actor),false) AND EXISTS(
+   SELECT 1 FROM public.tenants parent JOIN public.tenants child ON child.parent_tenant_id=parent.id
+   WHERE child.id=_expected_tenant AND parent.status IN ('trial','active','past_due') AND parent.archived_at IS NULL))) THEN
   RAISE EXCEPTION 'Finance owner or administrator required' USING ERRCODE='42501';
  END IF;
 END $$;

@@ -12,16 +12,17 @@ END $$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY, deleted_at timestamptz, banned_until timestamptz);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
 CREATE TYPE public.tenant_status AS ENUM('trial','active','past_due','canceled','suspended');
-CREATE TABLE public.tenants(id uuid PRIMARY KEY, status public.tenant_status, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false);
+CREATE TABLE public.tenants(id uuid PRIMARY KEY, status public.tenant_status, brand jsonb DEFAULT '{}',archived_at timestamptz,lifecycle_execution_paused boolean NOT NULL DEFAULT false,parent_tenant_id uuid);
 CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
 CREATE TABLE public.tenant_members(tenant_id uuid,user_id uuid,role text,status text,PRIMARY KEY(tenant_id,user_id));
 CREATE TABLE public.user_roles(user_id uuid,role text);
+CREATE TABLE public.agency_team_members(agency_tenant_id uuid,user_id uuid,agency_role text,status text,scoped_subaccounts uuid[]);
 CREATE TABLE public.quickbooks_connections(id uuid PRIMARY KEY,user_id uuid,is_active boolean);
 CREATE TABLE public.connected_bank_accounts(id uuid PRIMARY KEY,user_id uuid,is_active boolean);
 -- Existing canonical authority contracts are dependencies, not Finance role semantics.
 CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT active_tenant_id FROM public.profiles WHERE user_id=auth.uid() $$;
 CREATE FUNCTION public.is_tenant_admin_as(_actor uuid,_tenant uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT EXISTS(SELECT 1 FROM public.tenant_members WHERE user_id=_actor AND tenant_id=_tenant AND status='active' AND role IN ('owner','admin')) $$;
-CREATE FUNCTION public.agency_can_manage_child(_child uuid,_actor uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
+CREATE FUNCTION public.agency_can_manage_child(_child uuid,_actor uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS(SELECT 1 FROM public.agency_team_members atm JOIN public.tenants child ON child.parent_tenant_id=atm.agency_tenant_id WHERE atm.user_id=_actor AND child.id=_child AND atm.status='active' AND _child=ANY(atm.scoped_subaccounts)) $$;
 CREATE TABLE public.fixture_receipts(id uuid PRIMARY KEY,tenant_id uuid,actor_id uuid,capability_key text);
 CREATE FUNCTION public.record_capability_run(_tenant uuid,_actor uuid,_key text,_outcome text,_run uuid,_agent text) RETURNS void LANGUAGE plpgsql AS $$ BEGIN
  IF current_setting('test.refuse_receipt',true)='yes' THEN RAISE EXCEPTION 'Receipt unavailable'; END IF;
@@ -126,6 +127,28 @@ DO $$ BEGIN
  IF EXISTS(SELECT 1 FROM finance_source_observations WHERE currency IS NOT NULL OR coverage<>'partial' OR pages_complete) THEN RAISE EXCEPTION 'Missing data became complete'; END IF;
 END $$;
 SELECT 'Finance source authority PASS: synthetic PostgreSQL only; authenticated/provider acceptance owed' AS result;
+-- Scoped agency delegation is a canonical dependency fixture; no agency role engine is added.
+INSERT INTO tenants(id,status) VALUES('20000000-0000-0000-0000-000000000003','active');
+UPDATE tenants SET parent_tenant_id='20000000-0000-0000-0000-000000000003' WHERE id='20000000-0000-0000-0000-000000000001';
+INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);
+SET ROLE authenticated;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000003',false);
+SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001');
+RESET ROLE;
+UPDATE agency_team_members SET status='inactive';
+SET ROLE authenticated;
+SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'42501');
+RESET ROLE;
+UPDATE agency_team_members SET status='active';
+UPDATE tenants SET archived_at=now() WHERE id='20000000-0000-0000-0000-000000000003';
+SET ROLE authenticated;
+SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'42501');
+RESET ROLE;
+UPDATE tenants SET archived_at=NULL WHERE id='20000000-0000-0000-0000-000000000003';
+DELETE FROM agency_team_members;
+SET ROLE authenticated;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+RESET ROLE;
 -- Oversized catalogs refuse explicitly rather than presenting truncated account coverage.
 BEGIN;
 INSERT INTO finance_company_entities(id,tenant_id,kind,legal_name,identity_basis,identity_reference,declared_by,updated_by)

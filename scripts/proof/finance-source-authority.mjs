@@ -46,6 +46,18 @@ async function competing(database, text) {
     child.stdin.end(text);
   });
 }
+async function blockedCompetitor(database, text) {
+  const outcome = competing(database, `SET application_name='finance-proof-lock-waiter'; ${text}`).then(value => ({ value }), error => ({ error }));
+  let waiting = false;
+  for (let probe = 0; probe < 10; probe++) {
+    if (sql(database, "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='finance-proof-lock-waiter' AND wait_event_type='Lock');").trim() === 't') { waiting = true; break; }
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  const result = await outcome;
+  if (result.error) throw result.error;
+  assert.equal(waiting, true, 'Concurrent authority/identity change did not wait on the held transaction');
+  return result.value;
+}
 for (const leg of ['absent', 'replay1', 'replay2']) {
   const database = `finance_fixture_${process.pid}_${leg}`;
   sql('postgres', `CREATE DATABASE ${database};`);
@@ -61,7 +73,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     assert.match(result.stdout, /Finance source authority PASS/);
     const first = holding(database, save('Test Concurrent Company A'));
     await first.held;
-    await competing(database, `${actor} SELECT public.fixture_expect_error($q$${save('Test Concurrent Company B')}$q$,'40001');`);
+    await blockedCompetitor(database, `${actor} SELECT public.fixture_expect_error($q$${save('Test Concurrent Company B')}$q$,'40001');`);
     await first.done;
     assert.equal(sql(database, "SELECT version||':'||legal_name FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000003';").trim(), '2:Test Concurrent Company A');
     assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '4');
@@ -71,7 +83,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     const create = `SELECT public.save_finance_company_entity('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000005',0,'managed_entity','Test Concurrent Creation');`;
     const creation = holding(database, create);
     await creation.held;
-    const replay = await competing(database, `${actor} ${create}`);
+    const replay = await blockedCompetitor(database, `${actor} ${create}`);
     await creation.done;
     assert.match(replay, /"replayed": true/);
     assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '5');
@@ -83,9 +95,16 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       VALUES('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000002',1,'test-concurrent','bank_accounts',now(),'partial',repeat('c',64));`;
     const ingest = holding(database, `RESET ROLE; ${observation}`);
     await ingest.held;
-    await competing(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000002';`);
+    await blockedCompetitor(database, `UPDATE quickbooks_connections SET is_active=false WHERE id='40000000-0000-0000-0000-000000000002';`);
     await ingest.done;
     sql(database, `SELECT public.fixture_expect_error($q$${observation.replace('test-concurrent', 'test-after-revoke')}$q$,'42501');`);
+    sql(database, `INSERT INTO agency_team_members VALUES('20000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','agency_specialist','active',ARRAY['20000000-0000-0000-0000-000000000001'::uuid]);`);
+    const agencyActor = `SELECT set_config('test.actor','10000000-0000-0000-0000-000000000003',false);`;
+    const agencyRead = holding(database, `${agencyActor} SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001');`);
+    await agencyRead.held;
+    await blockedCompetitor(database, "UPDATE agency_team_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000003';");
+    await agencyRead.done;
+    sql(database, `SET ROLE authenticated; ${agencyActor} SELECT public.fixture_expect_error($q$SELECT public.read_finance_source_catalog('20000000-0000-0000-0000-000000000001')$q$,'42501');`);
     console.log(`PASS ${leg}: actual migration, role/tenant/source guards, receipt rollback, concurrent update and replay`);
   } finally {
     // Only a hardcoded, newly-created fixture database on loopback can reach this operation.

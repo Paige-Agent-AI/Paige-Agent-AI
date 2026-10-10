@@ -31,8 +31,8 @@ try {
   const completion=document.match(/create or replace function public\.complete_paige_document_work\([\s\S]*?to service_role;/)?.[0];
   if(!completion)throw new Error('Actual canonical document completion function missing');
   await db.exec(completion);
-  await db.exec(await readFile('supabase/migrations/20270602000304_int280_durable_trajectory_history.sql','utf8'));
-  const projection=await readFile('supabase/migrations/20270602000305_int280_operator_trajectories.sql','utf8');
+  await db.exec(await readFile('supabase/migrations/20270602000400_int280_durable_trajectory_history.sql','utf8'));
+  const projection=await readFile('supabase/migrations/20270602000401_int280_operator_trajectories.sql','utf8');
   await db.exec(projection);await db.exec(projection);
   const proof=db.run(await readFile('supabase/tests/int280_operator_trajectories.sql','utf8'));
   if(!proof.includes('PASS: trajectory reconstruction, canonical readback, missing/stale/conflicting evidence, scope, roles, cursor, privacy and audit refusal'))throw new Error('Projection completion missing');

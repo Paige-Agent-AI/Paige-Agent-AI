@@ -1,6 +1,6 @@
 # Solo Finance
 
-- **Owner job and user flow:** inspect the company's financial condition, trace evidence, review exceptions and prepare a governed follow-up. Seven views: Overview, Banking & Cash, Receivables, Expenses & Payables, Profitability, Budgeting & Forecasting, Connections.
+- **Owner job and user flow:** inspect the company's financial condition, trace evidence, review exceptions and prepare a governed follow-up. Six views: Overview, Banking & Cash, Receivables, Expenses & Payables, Profitability, Budgeting & Forecasting. Connection setup belongs to Settings Integrations.
 - **Tenant data / domain owner:** Finance owns presentation and future approved domain reads; Sales owns canonical invoices, receipts, allocations and metric producers. Integrations owns connection activation. No independent accounting/payment ledger.
 - **Solo shell placement:** additive `/solo/:account/finance/*` destination in the existing shell and persistent PAIGE workspace. No agency, operator or account-specific shell fork.
 - **States:** initial/refresh loading, unavailable source, empty/matching invoice records, partial/expired metric evidence, source error and retry, server refusal, workspace/authentication change, paginated reads and evidence drawer close. No live create/edit/save effect exists in this initial consumer.

@@ -245,18 +245,73 @@ serve(async (req) => {
 
   if (!syncResponse.ok) {
     console.error("[apply-extraction] sync failed:", syncResponse.status, syncBody);
-    await admin.from("audit_logs").insert({
+    const { error: failAuditErr } = await admin.from("audit_logs").insert({
       user_id: user.id,
       entity: "credit_report",
       action: "extraction_apply_failed",
       entity_id: body.upload_id,
       data: { status: syncResponse.status, approved_keys: [...approved], error: syncBody?.error ?? null },
     });
+    if (failAuditErr) console.error("[apply-extraction] failure audit write failed:", failAuditErr.message);
     // RELEASE THE CLAIM (the same closure the transport-rejection path uses) so the person can try
     // again rather than losing the proposal. Without it a transient sync failure would leave the row
     // `applied` with nothing applied — unrecoverable from the card.
     await releaseClaimOrLog();
-    return json({ error: "I couldn't save those to the profile. Nothing was changed — try again." }, 502);
+    // #734 — a 5xx from the sync is UNCERTAIN, not empty: since the callee's repair it carries
+    // partial_results when writes may have landed before the failure. Say exactly that; the
+    // blanket "Nothing was changed" is only truthful when the sync reported nothing written.
+    const partialResults = syncBody?.partial_results;
+    return json({
+      error: partialResults
+        ? "I couldn't confirm what saved — some of it may have. Nothing was marked as applied — try again; a retry won't duplicate what already saved."
+        : "I couldn't save those to the profile. Nothing was changed — try again.",
+      outcome_uncertain: !!partialResults,
+    }, 502);
+  }
+
+  // ── Classify the sync's OWN verdict (#734). ──
+  // A 200 from the sync means the RUN completed, not that the WRITES landed: the callee now
+  // reports per-group outcomes. An approval must not settle as terminal `applied` when some or
+  // all of what the person approved failed to write, was skipped (no profile row to write to),
+  // or the outcome cannot be verified (fail closed on a missing verdict). The claim is released
+  // so the person can try again — the writer dedups (pinned by scripts/sync-credit-report-data
+  // check §12), so a retry converges instead of duplicating. What DID land stays landed; the
+  // sentence below says exactly that rather than "nothing was changed".
+  const outcome = syncBody?.results?.outcome;
+  const failedGroups: string[] = Array.isArray(outcome?.failed_groups) ? outcome.failed_groups : [];
+  const skippedGroups: string[] = Array.isArray(outcome?.skipped_groups) ? outcome.skipped_groups : [];
+  const complete = outcome?.status === "complete" && failedGroups.length === 0 && skippedGroups.length === 0;
+  if (!complete) {
+    console.error("[apply-extraction] sync incomplete:", JSON.stringify({ status: outcome?.status ?? "unreported", failedGroups, skippedGroups }));
+    const { error: incAuditErr } = await admin.from("audit_logs").insert({
+      user_id: user.id,
+      entity: "credit_report",
+      action: "extraction_apply_failed",
+      entity_id: body.upload_id,
+      data: {
+        status: syncResponse.status,
+        approved_keys: [...approved],
+        error: "sync_incomplete",
+        sync_outcome: outcome ?? null,
+      },
+    });
+    if (incAuditErr) console.error("[apply-extraction] incomplete-outcome audit write failed:", incAuditErr.message);
+    await releaseClaimOrLog();
+    // Truthful by class: total failure says nothing saved; a mixed partial says what saved and
+    // what didn't; a skip-only run never claims "some of it saved" (nothing did — there was no
+    // row to write to); an unreported outcome fails closed.
+    let sentence: string;
+    if (!outcome) {
+      sentence = "The profile service didn't report what saved, so I'm not marking this done. Nothing was marked as applied — try again.";
+    } else if (outcome.status === "failed") {
+      sentence = "None of it saved. Nothing was marked as applied — try again.";
+    } else if (failedGroups.length === 0) {
+      sentence = `These parts couldn't be saved yet (no profile row to write to): ${skippedGroups.join(", ")}. Nothing was marked as applied — try again.`;
+    } else {
+      const notSaved = [...failedGroups, ...skippedGroups.map((g: string) => `${g} (no profile row for it)`)];
+      sentence = `Some of it saved, but these parts didn't: ${notSaved.join(", ")}. Nothing was marked as applied — try again; a retry won't duplicate what already saved.`;
+    }
+    return json({ error: sentence, partial: outcome?.status === "partial" }, 502);
   }
 
   // ATTRIBUTION (§13): what a person approved, when, and which of it was applied. Written with the

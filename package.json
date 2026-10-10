@@ -113,6 +113,7 @@
     "test:extraction-proposal": "node --import ./scripts/knowledge-scope/register.mjs scripts/extraction-proposal/check.mjs",
     "test:checked-write": "node --import ./scripts/knowledge-scope/register.mjs scripts/checked-write/check.mjs",
     "test:apply-extraction": "node --import ./scripts/apply-extraction/register.mjs scripts/apply-extraction/check.mjs",
+    "test:sync-credit-report-data": "node --import ./scripts/sync-credit-report-data/register.mjs scripts/sync-credit-report-data/check.mjs",
     "test:knowledge-scope": "node --import ./scripts/knowledge-scope/register.mjs scripts/knowledge-scope/stage1-check.mjs",
     "lint:no-shadowed-credential": "node scripts/ci/no-shadowed-credential-lint.mjs",
     "lint:user-facing-admin-urls": "node scripts/ci/user-facing-admin-producer-lint.mjs",

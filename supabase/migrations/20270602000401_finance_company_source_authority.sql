@@ -109,7 +109,9 @@ CREATE TRIGGER finance_binding_identity_guard BEFORE INSERT OR UPDATE OR DELETE 
 CREATE FUNCTION public._finance_quickbooks_deactivation() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
- IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE THEN
+ IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE OR
+  ROW(NEW.qb_realm_id,NEW.environment,NEW.user_id,NEW.business_id,NEW.scope)
+   IS DISTINCT FROM ROW(OLD.qb_realm_id,OLD.environment,OLD.user_id,OLD.business_id,OLD.scope) THEN
   UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
    WHERE quickbooks_connection_id=OLD.id AND verification_state<>'revoked';
  END IF;
@@ -117,12 +119,14 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._finance_quickbooks_deactivation() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER finance_quickbooks_deactivation BEFORE UPDATE OF is_active OR DELETE ON public.quickbooks_connections FOR EACH ROW EXECUTE FUNCTION public._finance_quickbooks_deactivation();
+CREATE TRIGGER finance_quickbooks_deactivation BEFORE UPDATE OR DELETE ON public.quickbooks_connections FOR EACH ROW EXECUTE FUNCTION public._finance_quickbooks_deactivation();
 
 CREATE FUNCTION public._finance_plaid_retirement() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 BEGIN
- IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE THEN
+ IF TG_OP='DELETE' OR NEW.is_active IS NOT TRUE OR
+  ROW(NEW.plaid_item_id,NEW.plaid_account_id,NEW.user_id,NEW.business_id)
+   IS DISTINCT FROM ROW(OLD.plaid_item_id,OLD.plaid_account_id,OLD.user_id,OLD.business_id) THEN
   UPDATE public.finance_source_bindings SET verification_state='revoked',revision=revision+1
    WHERE plaid_account_anchor_id=OLD.id AND verification_state<>'revoked';
  END IF;
@@ -130,7 +134,7 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._finance_plaid_retirement() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER finance_plaid_retirement BEFORE UPDATE OF is_active OR DELETE ON public.connected_bank_accounts FOR EACH ROW EXECUTE FUNCTION public._finance_plaid_retirement();
+CREATE TRIGGER finance_plaid_retirement BEFORE UPDATE OR DELETE ON public.connected_bank_accounts FOR EACH ROW EXECUTE FUNCTION public._finance_plaid_retirement();
 
 CREATE FUNCTION public._finance_observation_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

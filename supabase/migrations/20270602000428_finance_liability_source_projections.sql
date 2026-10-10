@@ -107,6 +107,8 @@ BEGIN
   END LOOP;
   IF (row->>'outstandingBalance')::numeric IS DISTINCT FROM (account->>'current_balance')::numeric
    OR (row->>'product'='credit_card' AND ((row->>'creditLimit')::numeric IS DISTINCT FROM (account->>'credit_limit')::numeric OR (row->>'availableCredit')::numeric IS DISTINCT FROM (account->>'available_credit')::numeric))
+   OR (row->>'product'='revolving_line' AND ((account->>'credit_limit' IS NOT NULL AND (row->>'creditLimit')::numeric IS DISTINCT FROM (account->>'credit_limit')::numeric)
+    OR (account->>'available_credit' IS NOT NULL AND (row->>'availableCredit')::numeric IS DISTINCT FROM (account->>'available_credit')::numeric)))
    OR (row->>'product'='credit_card' AND row->>'principalBalance' IS NOT NULL)
    OR (row->>'product'<>'loan_obligation' AND (row->>'originalPrincipal' IS NOT NULL OR row->>'maturityDate' IS NOT NULL OR row->>'paymentFrequency' IS NOT NULL))
    OR (row->>'product'='loan_obligation' AND (row->>'creditLimit' IS NOT NULL OR row->>'availableCredit' IS NOT NULL OR row->>'minimumPayment' IS NOT NULL))

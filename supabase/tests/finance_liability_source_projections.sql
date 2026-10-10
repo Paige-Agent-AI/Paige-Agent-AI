@@ -88,6 +88,7 @@ DO $$ DECLARE spec jsonb; row_id uuid; binding_id uuid; account jsonb; term json
  FOR spec IN SELECT value FROM jsonb_array_elements('[
   {"suffix":"229","native":"synthetic-second-card","product":"credit_card","currency":"EUR","balance":"0","limit":"0","capacity":"0"},
   {"suffix":"230","native":"synthetic-company-loc","product":"revolving_line","currency":"USD","balance":"50","limit":"200","capacity":"150"},
+  {"suffix":"232","native":"synthetic-loc-without-account-terms","product":"revolving_line","currency":"USD","balance":"50","limit":"200","capacity":"150","accountTermsKnown":false},
   {"suffix":"231","native":"synthetic-company-loan","product":"loan_obligation","currency":"USD","balance":"1000"}]'::jsonb) LOOP
   row_id:=format('40000000-0000-0000-0000-%s',lpad(spec->>'suffix',12,'0'))::uuid;
   binding_id:=format('50000000-0000-0000-0000-%s',lpad(spec->>'suffix',12,'0'))::uuid;
@@ -95,8 +96,8 @@ DO $$ DECLARE spec jsonb; row_id uuid; binding_id uuid; account jsonb; term json
   INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,plaid_account_anchor_id,environment,source_namespace,verification_state,verification_reference,verified_at)
    VALUES(binding_id,'20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','plaid',row_id,'sandbox',spec->>'native','verified',gen_random_uuid(),now());
   account:=jsonb_build_object('native_id',spec->>'native','source_label','Same provider label','product',spec->>'product','currency',spec->>'currency','current_balance',spec->>'balance',
-   'credit_limit',CASE WHEN spec->>'product'='credit_card' THEN spec->>'limit' ELSE NULL END,
-   'available_credit',CASE WHEN spec->>'product'='credit_card' THEN spec->>'capacity' ELSE NULL END);
+   'credit_limit',CASE WHEN spec->>'product' IN ('credit_card','revolving_line') AND coalesce((spec->>'accountTermsKnown')::boolean,true) THEN spec->>'limit' ELSE NULL END,
+   'available_credit',CASE WHEN spec->>'product' IN ('credit_card','revolving_line') AND coalesce((spec->>'accountTermsKnown')::boolean,true) THEN spec->>'capacity' ELSE NULL END);
   PERFORM public.replace_finance_account_source_snapshot(binding_id,1,0,'2026-01-01T00:00:00Z','partial',true,repeat('a',64),jsonb_build_array(account));
   term:=jsonb_build_object('nativeId',spec->>'native','sourceLabel','Same provider label','product',spec->>'product','currency',spec->>'currency','outstandingBalance',spec->>'balance',
    'creditLimit',spec->>'limit','availableCredit',spec->>'capacity','principalBalance',CASE WHEN spec->>'product'='loan_obligation' THEN spec->>'balance' ELSE NULL END,
@@ -104,9 +105,23 @@ DO $$ DECLARE spec jsonb; row_id uuid; binding_id uuid; account jsonb; term json
    'nextPayment',CASE WHEN spec->>'product'='loan_obligation' THEN '100' ELSE NULL END,
    'maturityDate',CASE WHEN spec->>'product'='loan_obligation' THEN '2027-01-15' ELSE NULL END,
    'drawPeriodEndDate',CASE WHEN spec->>'product'='revolving_line' THEN '2030-12-31' ELSE NULL END);
+  IF spec->>'product'='revolving_line' AND coalesce((spec->>'accountTermsKnown')::boolean,true) THEN
+   BEGIN
+    PERFORM public.replace_finance_liability_source_snapshot(binding_id,1,1,0,'2026-01-01T00:00:00Z',repeat('b',64),jsonb_build_array(term||'{"creditLimit":"201"}'::jsonb));
+    RAISE EXCEPTION 'Conflicting line credit limit was accepted';
+   EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
+   BEGIN
+    PERFORM public.replace_finance_liability_source_snapshot(binding_id,1,1,0,'2026-01-01T00:00:00Z',repeat('b',64),jsonb_build_array(term||'{"creditLimit":null,"availableCredit":null}'::jsonb));
+    RAISE EXCEPTION 'Supplied account capacity was discarded';
+   EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
+   BEGIN
+    PERFORM public.replace_finance_liability_source_snapshot(binding_id,1,1,0,'2026-01-01T00:00:00Z',repeat('b',64),jsonb_build_array(term||'{"availableCredit":"149"}'::jsonb));
+    RAISE EXCEPTION 'Conflicting line available credit was accepted';
+   EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
+  END IF;
   PERFORM public.replace_finance_liability_source_snapshot(binding_id,1,1,0,'2026-01-01T00:00:00Z',repeat('b',64),jsonb_build_array(term));
  END LOOP;
- IF (SELECT count(*) FROM finance_liability_source_snapshots WHERE records#>>'{0,sourceLabel}'='Same provider label')<>3 THEN RAISE EXCEPTION 'Same labels collapsed multiple accounts'; END IF;
+ IF (SELECT count(*) FROM finance_liability_source_snapshots WHERE records#>>'{0,sourceLabel}'='Same provider label')<>4 THEN RAISE EXCEPTION 'Same labels collapsed multiple accounts'; END IF;
  IF (SELECT s.records#>>'{0,outstandingBalance}' FROM finance_liability_source_snapshots s WHERE s.binding_id='50000000-0000-0000-0000-000000000229')<>'0' THEN RAISE EXCEPTION 'Explicit source zero lost'; END IF;
 END $$;
 DO $$ BEGIN IF public.operator_retirement_disposition('finance_liability_source_snapshots')<>'delete' THEN RAISE EXCEPTION 'Canonical liability cache retirement absent'; END IF; END $$;

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { retireTwilioSubaccount } from '../../../supabase/functions/_shared/operator-retirement.ts';
+import { twilioRequest } from '../../../supabase/functions/_shared/twilio.ts';
 const parent='AC'+'a'.repeat(32), child='AC'+'b'.repeat(32), other='AC'+'c'.repeat(32);
 const credentials={accountSid:parent,authToken:'synthetic-secret',apiKeySid:'SK'+'d'.repeat(32)};
 const account=(status:string,sid=child,owner=parent)=>({sid,owner_account_sid:owner,status});
@@ -9,6 +10,20 @@ function responses(...bodies:unknown[]) {
  vi.stubGlobal('fetch',fetch);return fetch;
 }
 describe('canonical Twilio subaccount retirement',()=>{
+ it('preserves ordinary callers transient retry while retirement can explicitly disable it',async()=>{
+  const fetch=vi.fn().mockResolvedValueOnce(new Response('temporary',{status:503})).mockResolvedValueOnce(new Response(JSON.stringify({sid:'synthetic-response'})));
+  vi.stubGlobal('fetch',fetch);
+  expect((await twilioRequest(parent,'synthetic-secret','/2010-04-01/Accounts.json','POST',{Status:'suspended'})).ok).toBe(true);
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(fetch.mock.calls[0][1].body).toBe('Status=suspended');
+  expect(fetch.mock.calls[0][1].signal).toBeUndefined();
+  expect(fetch.mock.calls[0][1].redirect).toBeUndefined();
+  fetch.mockReset().mockResolvedValueOnce(new Response('temporary',{status:503}));
+  expect((await twilioRequest(parent,'synthetic-secret','/2010-04-01/Accounts.json','POST',{},undefined,{retryTransient:false,timeoutMs:1000})).ok).toBe(false);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+  expect(fetch.mock.calls[0][1].redirect).toBe('error');
+ });
  it('refuses completion when a call begins between preflight and suspension',async()=>{
   responses(account('active'),{calls:[]},{calls:[]},{calls:[]},account('suspended'),account('suspended'),{calls:[{status:'queued'}]});
   expect(await retireTwilioSubaccount(child,'suspended',credentials)).toEqual({state:'unknown',reason:'twilio_calls_in_flight'});

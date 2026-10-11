@@ -37,6 +37,7 @@ import { SalesWorkspace } from "./SalesWorkspace";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // Marketing › Analytics' email row reads through its own adapter; its RPC contract is proven with the Email tab.
 vi.mock('./marketing-analytics-email', () => ({ useEmailStats: () => ({ phase: 'ready', stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 }, retry: () => {} }) }));
+vi.mock('./useCampaignAssets', async (importOriginal) => ({ ...(await importOriginal<typeof import('./useCampaignAssets')>()), useCampaignAssets: () => ({ phase: 'ready', canManage: false, links: [], available: [], retry: () => {}, attach: async () => ({ ok: false, message: '' }), detach: async () => ({ ok: false, message: '' }) }) }));
 vi.mock('./marketing-analytics-metrics', async (importOriginal) => ({ ...(await importOriginal<typeof import('./marketing-analytics-metrics')>()), useMarketingServerFigures: () => ({ phase: 'denied', current: null, previous: null }) }));
 vi.mock('./useSalesInvoiceDrafts', () => ({ useSalesInvoiceDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
 vi.mock('./sales/useInvoiceBillingSources',()=>({useInvoiceBillingSources:()=>({tenantId:'test-tenant-billing',phase:'ready',customers:[],agreements:[]})}));

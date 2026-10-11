@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { readAccountDetails, saveAccountDetails, previewAccountDeletion, type AccountDetails, type DeletionPreview } from '@/operator/data/accountControls';
 import { previewAccountArchive, executeLifecycle, readLifecycleOutcome, AccountRpcError, type LifecycleAction, type LifecycleReceipt } from '@/operator/data/accountControls';
 import { cn } from '@/lib/utils';
-import AccountResourcesPanel from './AccountResourcesPanel';
+import { readRetirementResources, runRetirementResources, type ResourcePreview } from '@/operator/data/accountControls';
+import { AccountFileCleanupError, deleteWithEligibleFiles, reviewDeletionFiles } from '@/operator/data/accountDeletion';
 
 function Button({ variant = 'default', className, ...props }: ComponentProps<typeof BaseButton>) {
   return <BaseButton {...props} variant={variant} className={cn(
@@ -18,8 +19,10 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
   const [details, setDetails] = useState<AccountDetails | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState('');
-  const [mode, setMode] = useState<'view' | 'edit' | 'discard' | 'confirm' | 'archive' | 'delete' | 'restore' | 'completed' | 'resources'>('view');
-  const [resourceMode,setResourceMode]=useState<'archive'|'delete'>('archive');
+  const [mode, setMode] = useState<'view' | 'edit' | 'discard' | 'confirm' | 'archive' | 'delete' | 'restore' | 'completed'>('view');
+  const [files, setFiles] = useState<ResourcePreview | null>(null);
+  const fileOperation = useRef<string | null>(null);
+  const [resumeFiles, setResumeFiles] = useState(false);
   const [confirmation, setConfirmation] = useState('');
   const [irreversible, setIrreversible] = useState(false);
   const [receipt, setReceipt] = useState<LifecycleReceipt | null>(null);
@@ -75,10 +78,19 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
   }
   async function deletionPreview(action: 'archive' | 'delete' = 'delete') {
     if (pending.current || unknown) return;
-    pending.current = true; setBusy(true); setError(''); setPreview(null); setMode(action); setConfirmation(''); setIrreversible(false);
+    pending.current = true; setBusy(true); setError(''); setPreview(null); setFiles(null); setMode(action); setConfirmation(''); setIrreversible(false);
     try {
       const result = await (action === 'archive' ? previewAccountArchive(tenantId) : previewAccountDeletion(tenantId));
-      if (alive.current) setPreview(result);
+      const fileReview = action === 'delete' ? await reviewDeletionFiles(result) : null;
+      const existing = action === 'delete' && result.storage_count ? await readRetirementResources(tenantId, null) : null;
+      if (alive.current) {
+        setPreview(result); setFiles(fileReview);
+        if (existing?.file_only && existing.mode === 'delete' && ['resources_preparing','resources_unknown','resources_failed'].includes(existing.state)) {
+          fileOperation.current = existing.operation_id;
+          operation.current = {id: result.archive_operation_id ?? existing.operation_id, action:'delete'};
+          setUnknown(true); setError('File cleanup is pending. Read its outcome before confirming deletion.');
+        }
+      }
     } catch(e) { if (alive.current) setError(e instanceof Error ? e.message : 'Deletion preview unavailable. Retry.'); }
     finally { pending.current = false; if (alive.current) setBusy(false); }
   }
@@ -89,23 +101,37 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
   }
   async function execute(action: LifecycleAction) {
     if (!details || pending.current || unknown) return;
-    if (action !== 'restore' && (!preview?.execution_available || !preview.version || confirmation !== details.name || (action === 'delete' && !irreversible))) return;
+    if (action !== 'restore' && (!(preview?.execution_available || files) || !preview?.version || confirmation !== details.name || (action === 'delete' && !irreversible))) return;
     const id = action === 'archive' ? crypto.randomUUID() : details.archive_operation_id;
     if (!id) { setError('Archive identity unavailable. Reload account details.'); return; }
     operation.current = { id, action }; pending.current = true; setBusy(true); setError('');
-    try { completed(await executeLifecycle(tenantId, action, id, confirmation, preview?.version)); }
+    try { completed(await (action === 'delete' && files && preview
+      ? deleteWithEligibleFiles(tenantId, id, confirmation, preview, files)
+      : executeLifecycle(tenantId, action, id, confirmation, preview?.version))); }
     catch(e) {
       if (!alive.current) return;
+      if (e instanceof AccountFileCleanupError) fileOperation.current = e.operationId;
       const refused = e instanceof AccountRpcError && ['42501','22023','40001','55000','54000','23503'].includes(e.code ?? '');
       setUnknown(!refused); setError(e instanceof Error ? e.message : 'Operation outcome unknown. Read the operation.');
       if (refused) { setPreview(null); setConfirmation(''); setIrreversible(false); }
     } finally { pending.current = false; if (alive.current) setBusy(false); }
   }
-  async function recoverOperation() {
+  async function recoverOperation(resume = false) {
     if (pending.current) return;
     if (!operation.current) { await load(); return; }
     pending.current = true; setBusy(true); setError('');
-    try { completed(await readLifecycleOutcome(tenantId, operation.current.id, operation.current.action)); }
+    try {
+      if (fileOperation.current) {
+        let fileResult = await runRetirementResources(tenantId, fileOperation.current, resume ? 'continue' : 'read');
+        for (let step = 1; resume && fileResult.state === 'resources_preparing' && step < 50; step++)
+          fileResult = await runRetirementResources(tenantId, fileOperation.current, 'continue');
+        if (!fileResult.file_only) throw new Error('File-only cleanup scope could not be verified. No account deletion has run.');
+        if (fileResult.state !== 'resources_ready') { setResumeFiles(true); throw new Error('File cleanup remains unverified. No account deletion has run. Resume only the previously confirmed file scope.'); }
+        setResumeFiles(false);
+        fileOperation.current = null; operation.current = null; setUnknown(false); setPreview(null); setFiles(null); setConfirmation(''); setIrreversible(false);
+        setNotice('File cleanup read back. Refresh the deletion review and confirm again.');
+      } else completed(await readLifecycleOutcome(tenantId, operation.current.id, operation.current.action));
+    }
     catch(e) { if (alive.current) setError(e instanceof Error ? e.message : 'Outcome remains unknown. Read again.'); }
     finally { pending.current = false; if (alive.current) setBusy(false); }
   }
@@ -117,7 +143,7 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
       {busy && <p role="status">{pending.current ? 'PROCESSING · Verifying the operation…' : 'Reading account details…'}</p>}
       {error && <p role="alert" className="break-words text-[var(--pg-negative)]">{unknown ? 'OUTCOME UNKNOWN · ' : 'FAILED · '}{error}</p>}
       {notice && <p role="status">{notice}</p>}
-      {unknown && <div className="flex flex-wrap gap-3"><Button disabled={busy} onClick={() => void recoverOperation()}>{operation.current ? 'Read operation' : 'Read current account'}</Button><Button variant="outline" disabled={busy} onClick={() => { onChanged(); onClose(); }}>Close without confirmation</Button></div>}
+      {unknown && <div className="flex flex-wrap gap-3"><Button disabled={busy} onClick={() => void recoverOperation()}>{operation.current ? 'Read operation' : 'Read current account'}</Button>{resumeFiles && <Button variant="outline" disabled={busy} onClick={() => void recoverOperation(true)}>Resume confirmed file removal</Button>}<Button variant="outline" disabled={busy} onClick={() => { onChanged(); onClose(); }}>Close without confirmation</Button></div>}
       {!details && !busy && <Button onClick={() => void load()}>Retry details</Button>}
       {details && mode === 'view' && <>
         {details.parent_tenant_id && <p>This account belongs to an Agency. Editing preserves that relationship.</p>}
@@ -142,21 +168,21 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
         <h3 className="text-lg font-medium">{mode === 'archive' ? 'Archive account' : 'Permanently delete account'}</h3>
         <p>{mode === 'archive' ? 'Archive the listed scope, remove active access and pause execution. Business records stay in place for restoration.' : 'Permanently remove the listed workspaces and eligible data. Shared logins and their other accounts are preserved. A completed deletion cannot be undone here.'}</p>
         {preview && <>
-          <p role="status" className={preview.execution_available ? 'text-[var(--pg-positive)]' : 'text-[var(--pg-warning)]'}>{preview.execution_available ? 'READY · Server preflight permits this scope.' : 'BLOCKED · Resolve the requirements below.'}</p>
+          <p role="status" className={preview.execution_available || files ? 'text-[var(--pg-positive)]' : 'text-[var(--pg-warning)]'}>{preview.execution_available || files ? 'READY · Server preflight permits this scope.' : 'BLOCKED · Resolve the requirements below.'}</p>
           <h4 className="mt-2 font-medium">Accounts in scope</h4><ul className="list-disc space-y-1 pl-5 break-words">{preview.accounts.map(a => <li key={a.id}>{a.name} · {a.account_type.replace(/_/g,' ')}{a.status ? ' · ' + a.status : ''}</li>)}</ul>
           {preview.memberships !== undefined && <p>{preview.memberships} workspace memberships · {preview.shared_identities ?? 'Unverified'} identities also belong to other workspaces. Shared logins are preserved.</p>}
           {preview.dependencies && preview.dependencies.length > 0 && <div><h4 className="mb-2 mt-4 font-medium">Data disposition</h4><table className="w-full text-left text-sm"><thead><tr className="border-b border-[var(--pg-line)]"><th className="py-2 font-medium">Records</th><th className="px-3 py-2 font-medium">Count</th><th className="py-2 font-medium">Disposition</th></tr></thead><tbody>{preview.dependencies.map(d => <tr key={d.relation} className="border-b border-[var(--pg-line-soft)]"><td className="break-words py-2">{d.relation.replace(/_/g,' ')}</td><td className="px-3 py-2 tabular-nums">{d.count}</td><td className="py-2">{d.disposition === 'delete' ? 'Delete' : d.disposition === 'preserve' ? 'Preserve' : 'Blocked'}</td></tr>)}</tbody></table></div>}
-          {preview.blockers.length > 0 && <><h4 className="mt-4 font-medium">Required before execution</h4><ul className="list-disc space-y-2 pl-5 break-words">{preview.blockers.map((b,i) => <li key={i}>{b === 'Archive this account and its children before permanent deletion.' ? 'Archive this account before permanent deletion.' : b}</li>)}</ul></>}
-          {!preview.execution_available&&preview.blockers.some(b=>b.startsWith('tenant_twilio_subaccounts:')||b.startsWith('tenant_n8n_connections:')||b.includes('tenant-prefixed storage objects require the canonical Storage API'))&&<Button variant="outline" disabled={busy||unknown} onClick={()=>{setResourceMode(mode==='archive'?'archive':'delete');setMode('resources');}}>Prepare resources</Button>}
+          {!files && preview.blockers.length > 0 && <><h4 className="mt-4 font-medium">Required before execution</h4><ul className="list-disc space-y-2 pl-5 break-words">{preview.blockers.map((b,i) => <li key={i}>{b === 'Archive this account and its children before permanent deletion.' ? 'Archive this account before permanent deletion.' : b}</li>)}</ul></>}
+          {preview.warnings?.map(warning => <p key={warning}>{warning}</p>)}
+          {files && <p>{preview.storage_count} eligible files will be removed as part of this deletion. File absence and the unchanged account scope are verified before account removal.</p>}
           {preview.preserved && <><h4 className="mt-2 font-medium">Preserved</h4><ul className="list-disc pl-5 break-words">{preview.preserved.map(p => <li key={p}>{p}</li>)}</ul></>}
-          {mode === 'delete' && <p>Billing and external resources require their own verified retirement. Required audit history and scheduled backups follow existing retention policies.</p>}
-          {preview.execution_available && <div className="mt-3 space-y-3"><label htmlFor="fleet-lifecycle-confirm">Type “{details.name}” to confirm the entire listed scope</label><Input id="fleet-lifecycle-confirm" autoComplete="off" value={confirmation} disabled={busy || unknown} onChange={e => setConfirmation(e.target.value)} />{mode === 'delete' && <label className="flex min-h-11 items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--pg-negative)]" checked={irreversible} disabled={busy || unknown} onChange={e => setIrreversible(e.target.checked)} /><span>I understand that this permanently deletes the listed eligible data.</span></label>}</div>}
+          {mode === 'delete' && <p>Deleting PAIGE data does not cancel external services or charges. Required audit history and scheduled backups follow existing retention policies.</p>}
+          {(preview.execution_available || files) && <div className="mt-3 space-y-3"><label htmlFor="fleet-lifecycle-confirm">Type “{details.name}” to confirm the entire listed scope</label><Input id="fleet-lifecycle-confirm" autoComplete="off" value={confirmation} disabled={busy || unknown} onChange={e => setConfirmation(e.target.value)} />{mode === 'delete' && <label className="flex min-h-11 items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--pg-negative)]" checked={irreversible} disabled={busy || unknown} onChange={e => setIrreversible(e.target.checked)} /><span>I understand that this permanently deletes the listed eligible data.</span></label>}</div>}
         </>}
-        <div className="flex flex-wrap gap-3"><Button variant="outline" disabled={busy || unknown} onClick={() => setMode('view')}>Cancel</Button><Button variant="outline" disabled={busy || unknown} onClick={() => void deletionPreview(mode === 'archive' ? 'archive' : 'delete')}>Refresh review</Button><Button disabled={busy || unknown || !preview?.execution_available || confirmation !== details.name || (mode === 'delete' && !irreversible)} className={mode === 'delete' ? 'bg-[var(--pg-negative)] hover:bg-[var(--pg-negative)]' : undefined} onClick={() => void execute(mode === 'archive' ? 'archive' : 'delete')}>{mode === 'archive' ? 'Archive listed accounts' : 'Permanently delete listed accounts'}</Button></div>
+        <div className="flex flex-wrap gap-3"><Button variant="outline" disabled={busy || unknown} onClick={() => setMode('view')}>Cancel</Button><Button variant="outline" disabled={busy || unknown} onClick={() => void deletionPreview(mode === 'archive' ? 'archive' : 'delete')}>Refresh review</Button><Button disabled={busy || unknown || !(preview?.execution_available || files) || confirmation !== details.name || (mode === 'delete' && !irreversible)} className={mode === 'delete' ? 'bg-[var(--pg-negative)] hover:bg-[var(--pg-negative)]' : undefined} onClick={() => void execute(mode === 'archive' ? 'archive' : 'delete')}>{mode === 'archive' ? 'Archive listed accounts' : 'Permanently delete listed accounts'}</Button></div>
       </>}
-      {details&&mode==='resources'&&<AccountResourcesPanel details={details} mode={resourceMode} onBusy={value=>{pending.current=value;}} onCancel={()=>setMode('view')} onPrepared={()=>void deletionPreview(resourceMode)}/>}
       {mode === 'restore' && <><h3 className="text-lg font-medium">Restore archived account?</h3><p>Restore the original account scope and unchanged memberships. Paid services and scheduled/provider execution stay paused. No subscription is reactivated.</p><div className="flex flex-wrap gap-3"><Button variant="outline" disabled={busy || unknown} onClick={() => setMode('view')}>Cancel</Button><Button disabled={busy || unknown} onClick={() => void execute('restore')}>Restore account access</Button></div></>}
-      {mode === 'completed' && receipt && <><p role="status" className="text-[var(--pg-positive)]">COMPLETED · {receipt.account_count} {receipt.account_count === 1 ? 'account' : 'accounts'} {receipt.state === 'deleted' ? 'permanently deleted' : receipt.state} and independently read back.</p>{receipt.state === 'restored' && <p>Access is restored. Provider and scheduled execution remains paused.</p>}<Button onClick={onClose}>Done</Button></>}
+      {mode === 'completed' && receipt && <><p role="status" className="text-[var(--pg-positive)]">COMPLETED · {receipt.account_count} {receipt.account_count === 1 ? 'account' : 'accounts'} {receipt.state === 'deleted' ? 'permanently deleted' : receipt.state} and independently read back.</p>{receipt.external_cleanup_pending && <p>PAIGE retirement is complete. External cleanup remains pending; services or charges may continue.</p>}{receipt.state === 'restored' && <p>Access is restored. Provider and scheduled execution remains paused.</p>}<Button onClick={onClose}>Done</Button></>}
     </DialogContent>
   </Dialog>;
 }

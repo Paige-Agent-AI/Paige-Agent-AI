@@ -203,13 +203,17 @@ export function isHttpUrl(u: string | null | undefined): boolean {
  */
 export function foldPublicBrowse(obs: PublicBrowseObservation): string {
   const lines: string[] = ["Public web observation (read-only browse):"];
+  // PC-1 (review fix): EVERY url-shaped value in the fold goes through the audit redactor —
+  // query strings carry OAuth codes/state, reset tokens and session ids, and links_inventory
+  // hrefs arrive raw from the page. Same shape as the rail: scheme+host+path + count marker.
+  const foldUrl = (u: unknown) => (typeof u === "string" && u ? redactUrlForAudit(u) : String(u ?? ""));
   if (!obs.ok) {
     const why = obs.blocked_reason || obs.error || "unknown";
     lines.push(`- status: BLOCKED/FAILED — ${String(why).slice(0, 300)}`);
-    if (obs.final_url) lines.push(`- final_url: ${obs.final_url}`);
+    if (obs.final_url) lines.push(`- final_url: ${foldUrl(obs.final_url)}`);
     return lines.join("\n"); // an honest denial IS worth folding so the forge can explain it to the user
   }
-  if (obs.final_url) lines.push(`- final_url: ${obs.final_url}`);
+  if (obs.final_url) lines.push(`- final_url: ${foldUrl(obs.final_url)}`);
   if (obs.http_status !== undefined && obs.http_status !== null) lines.push(`- http_status: ${obs.http_status}`);
   if (obs.title) lines.push(`- title: ${String(obs.title).slice(0, 300)}`);
   if (obs.meta_description) lines.push(`- meta: ${String(obs.meta_description).slice(0, 400)}`);
@@ -218,7 +222,7 @@ export function foldPublicBrowse(obs: PublicBrowseObservation): string {
   }
   if (obs.body_text) lines.push(`- content: ${String(obs.body_text).slice(0, 4000)}`);
   if (Array.isArray(obs.links_inventory) && obs.links_inventory.length) {
-    const links = obs.links_inventory.slice(0, 20).map((l) => `${String(l?.text ?? "").slice(0, 60)} → ${l?.href ?? ""}`.trim());
+    const links = obs.links_inventory.slice(0, 20).map((l) => `${String(l?.text ?? "").slice(0, 60)} → ${foldUrl(l?.href)}`.trim());
     lines.push(`- links: ${links.join(" ; ")}`);
   }
   return lines.length > 1 ? lines.join("\n") : "";

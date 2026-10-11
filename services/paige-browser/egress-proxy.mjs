@@ -97,7 +97,10 @@ export function startEgressProxy({ host = "127.0.0.1", port = 0, resolve } = {})
 
   // CONNECT tunneling (https:// and wss://): validate, dial the pinned address, pipe bytes.
   server.on("connect", async (req, clientSocket, head) => {
-    const [hostPart, portPart] = String(req.url || "").split(":");
+    // IPv6 CONNECT targets arrive bracketed ([2001:db8::1]:443) — strip the brackets before the
+    // host:port split so a PUBLIC v6 literal validates instead of parsing as malformed (review P2;
+    // private v6 still refuses in the validator).
+    const [hostPart, portPart] = String(req.url || "").replace(/^\[|\]$/g, "").split(":");
     const port = Number(portPart);
     try {
       if (!hostPart || !Number.isInteger(port) || port < 1 || port > 65535) {
@@ -115,6 +118,9 @@ export function startEgressProxy({ host = "127.0.0.1", port = 0, resolve } = {})
       upstream.on("error", fail);
       upstream.on("timeout", fail);
       upstream.on("connect", () => {
+        // Established: the timeout was a CONNECT ceiling only — clear it so a slow but live
+        // tunnel is not destroyed at 10s idle (review P2). Client-side caps still bound runs.
+        upstream.setTimeout(0);
         try {
           clientSocket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
           upstream.write(head);
@@ -132,10 +138,10 @@ export function startEgressProxy({ host = "127.0.0.1", port = 0, resolve } = {})
   return new Promise((resolveStart, rejectStart) => {
     server.once("error", rejectStart);
     server.listen(port, host, () => {
-      const { port: boundPort } = server.address();
+      const addr = server.address();
       resolveStart({
-        port: boundPort,
-        serverUrl: `http://${host}:${boundPort}`,
+        port: addr.port,
+        serverUrl: `http://${addr.address}:${addr.port}`,
         close: () => new Promise((done) => server.close(() => done())),
         unref: () => server.unref(),
       });

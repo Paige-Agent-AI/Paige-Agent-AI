@@ -389,14 +389,16 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
             .eq("endpoint", "browse-public-url")
             .gte("called_at", dayStart)
             .limit(2000);
-          const usedMs = usageErr
-            ? null
-            : (usage ?? []).reduce(
-                (acc: number, r: { response_time_ms?: number | null }) => acc + (Number(r?.response_time_ms) || 0),
-                0,
-              );
-          if (usedMs === null) controlPlaneReason = "control_plane:unreadable";
-          else if (usedMs / 1000 >= Number(limitsRow.max_daily_session_seconds)) controlPlaneReason = "control_plane:daily_budget";
+          if (usageErr) controlPlaneReason = "control_plane:unreadable";
+          else if (!Array.isArray(usage)) controlPlaneReason = "control_plane:unreadable";
+          else if (usage.length >= 2000) controlPlaneReason = "control_plane:unreadable"; // row-cap hit: the sum may undercount — fail closed (review fix)
+          else {
+            const usedMs = usage.reduce(
+              (acc: number, r: { response_time_ms?: number | null }) => acc + (Number(r?.response_time_ms) || 0),
+              0,
+            );
+            if (usedMs / 1000 >= Number(limitsRow.max_daily_session_seconds)) controlPlaneReason = "control_plane:daily_budget";
+          }
         }
       } catch {
         controlPlaneReason = "control_plane:unreadable";

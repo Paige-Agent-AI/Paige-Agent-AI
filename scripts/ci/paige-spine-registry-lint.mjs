@@ -263,6 +263,24 @@ const crmReadProof = validateCrmReadBindings(readFileSync(chatSourcePath, "utf8"
 crmReadProof.findings.push(...validatePipelinePreparationSql(migrations));
 const invitationProof = validateInvitationBindings(readFileSync(chatSourcePath, "utf8"), readFileSync(join(root, "supabase/functions/solo-team-invitations/index.ts"), "utf8"));
 const incumbentProof = validateIncumbentResourceBindings(readFileSync(chatSourcePath,"utf8"),new Map(incumbentSourcePaths.map(path=>[path,readFileSync(join(root,path),"utf8")])));
+// PC-1 — the browser.browse_public_url READ declaration is proven against the REAL skill-runner
+// dispatch: the named edge executor is the function that injects the interpreter's public-browse
+// seam, and that seam targets the Fly host's /browse-public-url endpoint. Source contracts, not
+// runtime permission (same honesty class as the other proofs).
+const browserProof = (() => {
+  const findings = [];
+  const src = readFileSync(join(root, "supabase/functions/skill-runner/index.ts"), "utf8");
+  if (!/browsePublic:\s*(\(a\)\s*=>\s*browsePublicViaHost\(a,\s*req\.signal\)|browsePublicViaHost)/.test(src)) findings.push("skill-runner no longer injects the browsePublic interpreter seam");
+  if (!/\/browse-public-url/.test(src)) findings.push("the public-browse seam no longer targets /browse-public-url");
+  if (!/redactUrlForAudit|scrubSecretLikeText/.test(readFileSync(join(root, "supabase/functions/_shared/skill-interpreter.ts"), "utf8"))) findings.push("the browse rail/fold no longer applies PC-1 redaction");
+  return { findings };
+})();
+function provenBrowserSymbol(capability, role, symbol) {
+  return !browserProof.findings.length && role === "executor" && symbol === "edge.skill-runner"
+    && capability.key === "browser.browse_public_url" && capability.domain === "browser"
+    && capability.action.classification === "read" && capability.action.riskPolicyKey === "read_only"
+    && capability.action.approvalAuthority === "none" && capability.chatBinding === "UNAVAILABLE";
+}
 const fundingStudioProof = validateFundingStudioBindings(readFileSync(chatSourcePath,"utf8"),{
  contentDraft:readFileSync(join(root,"supabase/functions/content-draft/index.ts"),"utf8"),
  pageDraft:readFileSync(join(root,"supabase/functions/growth-page-draft/index.ts"),"utf8"),
@@ -307,7 +325,7 @@ function lint(capabilities, sql, chatGuard, classifyAction, proof = null) {
     const symbols = [["adapter",capability.evidence?.adapter], ["executor",capability.action?.executor], ["projector",capability.outcome?.projector]].filter(([,symbol])=>!!symbol);
     for (const [role,symbol] of symbols) {
       // Never bypass a public SQL symbol, even on a verified TS capability.
-      if (!symbol.startsWith("public.") && (provenTypeScriptSymbol(capability,role,symbol)||provenMerchantSymbol(capability,role,symbol)||provenStoredReadSymbol(capability,role,symbol)||provenInvitationSymbol(capability,role,symbol)||provenIncumbentSymbol(capability,role,symbol)||provenFundingStudioSymbol(capability,role,symbol))) continue;
+      if (!symbol.startsWith("public.") && (provenTypeScriptSymbol(capability,role,symbol)||provenMerchantSymbol(capability,role,symbol)||provenStoredReadSymbol(capability,role,symbol)||provenInvitationSymbol(capability,role,symbol)||provenIncumbentSymbol(capability,role,symbol)||provenFundingStudioSymbol(capability,role,symbol)||provenBrowserSymbol(capability,role,symbol))) continue;
       const bare = symbol.replace(/^public\./, "");
       if (!new RegExp(`create\\s+or\\s+replace\\s+function\\s+public\\.${bare}\\s*\\(`, "i").test(sql)) findings.push(`${capability.key}: registered server symbol is absent from migration history: ${symbol}`);
     }
@@ -335,7 +353,7 @@ if (process.argv.includes("--self-test")) {
   const later = migrations + "\ncreate or replace function public.future_domain_adapter() returns void language sql as $$ select $$;";
   const future = [{ ...PAIGE_SPINE_CAPABILITIES[0], key: "future.safe_evidence", domain: "future", owner: "future-domain", evidence: { ...PAIGE_SPINE_CAPABILITIES[0].evidence, adapter: "public.future_domain_adapter" }, action: undefined, outcome: undefined }];
   if (lint(future, later, null, null).length) { console.error("PAIGE Spine registry lint rejected a coherent additive later-domain migration"); process.exit(1); }
-  if(tsProof.findings.length||zapierProof.findings.length||ghlProof.findings.length||merchantProof.findings.length){console.error(tsProof.findings.concat(zapierProof.findings,ghlProof.findings,merchantProof.findings));process.exit(1);}
+  if(tsProof.findings.length||zapierProof.findings.length||ghlProof.findings.length||merchantProof.findings.length||browserProof.findings.length){console.error(tsProof.findings.concat(zapierProof.findings,ghlProof.findings,merchantProof.findings,browserProof.findings));process.exit(1);}
   const merchantNegatives=[
     ['unmounted catalog','aggregate','...SALES_MERCHANT_TOOLS','...OTHER_TOOLS'],
     ['unmounted family','chat','toolDefs.push(...SALES_INVOICE_TOOLS','toolDefs.push(...OTHER_TOOLS'],

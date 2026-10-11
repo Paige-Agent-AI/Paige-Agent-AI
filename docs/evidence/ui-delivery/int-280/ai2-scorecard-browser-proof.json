@@ -1,0 +1,220 @@
+{
+  "fixture": "LOCAL SYNTHETIC actual Operator source + real scorecard hook with isolated RPC fixture",
+  "observedAt": "2026-10-11T04:19:13.257Z",
+  "geometry": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 992,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 648
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 998.0625,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 646
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 746.5625,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 646
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 774,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 882
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 270,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 710
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 992,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 648
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 998.0625,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 646
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 746.5625,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 646
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 774,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 882
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "bodyOverflow": false,
+      "scorecardWidth": 270,
+      "scrollOwners": [
+        {
+          "tag": "MAIN",
+          "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+          "height": 710
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "equivalentZoom": 2,
+      "viewport": 768,
+      "overflow": false
+    },
+    {
+      "theme": "light",
+      "equivalentZoom": 4,
+      "viewport": 384,
+      "overflow": false
+    }
+  ],
+  "flows": [
+    {
+      "action": "criteria",
+      "result": "Terminal evidence · 1.0.0\n\nThe recorded terminal condition is independently verified for the current attempt. Artifact creation and read-only research do not establish downstream business impact.\n\nRequired evidence\nscoped_work · current_work_version · current_attempt_receipt · canonical_destination_readback\nFailure\nCanonical supported work is failed or cancelled, or its complete current-attempt evidence proves the terminal condition was not met.\nIndeterminate\nNonterminal, missing, stale, partial, disputed or unsupported evidence never establishes successful completion.\nNot applicable\nThe server proves the capability and category are outside this definition. Missing identity is indeterminate.\nTrajectory capture · 1.0.0\nApproval decision · 1.0.0\nRecorded model-call status · 1.0.0"
+    },
+    {
+      "action": "inspect",
+      "focus": "Task evaluation inspection",
+      "text": "Close evaluation\nRecorded task evaluation\nEvaluation reference\nfc71ddd6-93dc-45df-9060-81520f9ac714\nCanonical task reference\n930a2fa9-6acc-46d4-953c-2a7b66265513\nEvaluator set\ndurable-task-evidence@1.1.0\nDefinition hash\n2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae\nInput identity\n0e8d17a9dbc594665f77623a452beb913205a0a938d41d9a7b3ac1c2f50a601f\nSource observed\n10/10/2026, 6:50:10 PM\nPrevious evaluation\nNone · fresh observation\nTerminal verification at observation\nUnverified\nApproval decision · 1.0.0\nindeterminate\n\nEvidence: unavailable · approval_requirement_link_unavailable\n\npaige_eval_result:1d9ec95d-4e22-4035-95fe-1cf86ce3e90f\nRecorded model-call status · 1.0.0\nindeterminate\n\nEvidence: partial · model_source_truncated\n\npaige_eval_result:58abb352-337b-4689-ac63-bb68111cdbdd\nTerminal evidence · 1.0.0\nindeterminate\n\nEvidence: conflicting · current_receipts_conflict\n\npaige_eval_result:3d3fe9e3-f55b-4178-a8d5-aa77a4c0bafe\nTrajectory capture · 1.0.0\nindeterminate\n\nEvidence: partial · source_or_history_truncated\n\npaige_eval_result:ce093732-753e-4844-a5ee-adf55ef6360e\nRecorded participant context\n\ntest-agent-evaluator · roster version 3 at observation · execution version unavailable · trace 1f188e63-c985-4073-89fc-5d4ea242cb4f\n\ntest-agent-evaluator · roster version 3 at observation · execution version unavailable · trace 9ad4ff42-09af-4f11-a623-fa8264cdd889\n\n102 unassigned model calls. Participation does not establish task ownership.\n\nHistorical input is immutable. Source reads detect observed drift; they are not an atomic snapshot across every system. Replay does not reverify the destination or rerun the task.\n\nInspect canonical task evidence\nReplay stored evidence"
+    },
+    {
+      "action": "escape",
+      "focus": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714"
+    },
+    {
+      "action": "replay",
+      "result": "new historical record + protected projection readback, synthetic RPC only"
+    },
+    {
+      "action": "forensic-return",
+      "focus": "intel-scorecard-heading"
+    },
+    {
+      "action": "evaluate-selected-task",
+      "result": "new observation + readback, no task execution"
+    },
+    {
+      "state": "empty",
+      "text": "Agent scorecard\n\nPARTIAL · versioned task evidence · recorded model participants · outcome ownership unavailable\n\nEvaluator set\nDurable task evidence · 1.1.0\nInspect criteria\nRefresh scorecard\n\nCoverage applies to this returned evaluation sample, including labeled historical replays. It is not a business completion rate or an overall agent-health score.\n\nEvaluator identity: durable-task-evidence@1.1.0 · 2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae\n\nNo recorded task evaluations\n\nInspect a supported task in the Forensic Observatory, then evaluate its recorded evidence with an exact evaluator version.\n\nInspect a task\nNewest evaluations\nOlder evaluations"
+    },
+    {
+      "state": "error",
+      "text": "Agent scorecard\n\nPARTIAL · versioned task evidence · recorded model participants · outcome ownership unavailable\n\nEvaluator set\nDurable task evidence · 1.1.0\nInspect criteria\nRefresh scorecard\n\nCoverage applies to this returned evaluation sample, including labeled historical replays. It is not a business completion rate or an overall agent-health score.\n\nEvaluator identity: durable-task-evidence@1.1.0 · Server identity not yet read\n\nTask scorecard could not load\n\nNo stale evidence is shown. Refresh after checking access and the connection.\n\nNewest evaluations\nOlder evaluations"
+    },
+    {
+      "state": "unavailable",
+      "text": "Agent scorecard\n\nPARTIAL · versioned task evidence · recorded model participants · outcome ownership unavailable\n\nEvaluator set\nDurable task evidence · 1.1.0\nInspect criteria\nRefresh scorecard\n\nCoverage applies to this returned evaluation sample, including labeled historical replays. It is not a business completion rate or an overall agent-health score.\n\nEvaluator identity: durable-task-evidence@1.1.0 · Server identity not yet read\n\nTask scorecard unavailable\n\nNo stale evidence is shown. Refresh after checking access and the connection.\n\nNewest evaluations\nOlder evaluations"
+    },
+    {
+      "state": "uncertain",
+      "text": "Agent scorecard\n\nPARTIAL · versioned task evidence · recorded model participants · outcome ownership unavailable\n\nEvaluator set\nDurable task evidence · 1.1.0\nInspect criteria\nRefresh scorecard\n\nCoverage applies to this returned evaluation sample, including labeled historical replays. It is not a business completion rate or an overall agent-health score.\n\nEvaluator identity: durable-task-evidence@1.1.0 · 2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae\n\nEvaluations in sample\n2\n1 observations · 1 historical replays\nCanonical task subjects\n1\nRepeated evaluation is not another task\nResolved criterion coverage\n37.5%\n3 / 8 applicable checks resolved\nUnresolved checks\n5\n0 positively excluded checks\nCriterion evidence coverage\nApproval decision\n1.0.0\n\n0 / 2 resolved · 0 pass · 0 fail · 2 indeterminate · 0 excluded · criterion pass rate unavailable\n\nRecorded model-call status\n1.0.0\n\n1 / 2 resolved · 0 pass · 1 fail · 1 indeterminate · 0 excluded · criterion pass rate 0.0%\n\nTerminal evidence\n1.0.0\n\n1 / 2 resolved · 1 pass · 0 fail · 1 indeterminate · 0 excluded · criterion pass rate 100.0%\n\nTrajectory capture\n1.0.0\n\n1 / 2 resolved · 1 pass · 0 fail · 1 indeterminate · 0 excluded · criterion pass rate 100.0%\n\nGreen: pass · red: fail · amber: indeterminate · neutral: not applicable. Missing evidence remains unresolved.\n\nServer observed 10/10/2026, 6:50:12 PM · up to 25 evaluations per page · historical observations retain their original source time.\n\nRecorded task evaluations\nRecorded / mode\tCanonical task\tObserved state\t\nInspection\n\n10/10/2026, 6:50:10 PM\nObservation\n\tdocument_authoring\n930a2fa9-6acc-46d4-953c-2a7b66265513\n\tsucceeded\nSource available\n\tInspect evaluation\n10/10/2026, 6:50:10 PM\nHistorical replay\n\tdocument_authoring\n930a2fa9-6acc-46d4-953c-2a7b66265513\n\tsucceeded\nSource available\n\tInspect evaluation\nNewest evaluations\nOlder evaluations\nClose evaluation\nRecorded task evaluation\nEvaluation reference\nfc71ddd6-93dc-45df-9060-81520f9ac714\nCanonical task reference\n930a2fa9-6acc-46d4-953c-2a7b66265513\nEvaluator set\ndurable-task-evidence@1.1.0\nDefinition hash\n2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae\nInput identity\n0e8d17a9dbc594665f77623a452beb913205a0a938d41d9a7b3ac1c2f50a601f\nSource observed\n10/10/2026, 6:50:10 PM\nPrevious evaluation\nNone · fresh observation\nTerminal verification at observation\nUnverified\nApproval decision · 1.0.0\nindeterminate\n\nEvidence: unavailable · approval_requirement_link_unavailable\n\npaige_eval_result:1d9ec95d-4e22-4035-95fe-1cf86ce3e90f\nRecorded model-call status · 1.0.0\nindeterminate\n\nEvidence: partial · model_source_truncated\n\npaige_eval_result:58abb352-337b-4689-ac63-bb68111cdbdd\nTerminal evidence · 1.0.0\nindeterminate\n\nEvidence: conflicting · current_receipts_conflict\n\npaige_eval_result:3d3fe9e3-f55b-4178-a8d5-aa77a4c0bafe\nTrajectory capture · 1.0.0\nindeterminate\n\nEvidence: partial · source_or_history_truncated\n\npaige_eval_result:ce093732-753e-4844-a5ee-adf55ef6360e\nRecorded participant context\n\ntest-agent-evaluator · roster version 3 at observation · execution version unavailable · trace 1f188e63-c985-4073-89fc-5d4ea242cb4f\n\ntest-agent-evaluator · roster version 3 at observation · execution version unavailable · trace 9ad4ff42-09af-4f11-a623-fa8264cdd889\n\n102 unassigned model calls. Participation does not establish task ownership.\n\nHistorical input is immutable. Source reads detect observed drift; they are not an atomic snapshot across every system. Replay does not reverify the destination or rerun the task.\n\nInspect canonical task evidence\nReplay stored evidence\n\nThe evaluation result is unconfirmed. Refresh recorded evaluations before trying again; a record may already exist."
+    },
+    {
+      "state": "pending",
+      "text": "Agent scorecard\n\nPARTIAL · versioned task evidence · recorded model participants · outcome ownership unavailable\n\nEvaluator set\nDurable task evidence · 1.1.0\nInspect criteria\nRefresh scorecard\n\nCoverage applies to this returned evaluation sample, including labeled historical replays. It is not a business completion rate or an overall agent-health score.\n\nEvaluator identity: durable-task-evidence@1.1.0 · 2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae\n\nEvaluations in sample\n2\n1 observations · 1 historical replays\nCanonical task subjects\n1\nRepeated evaluation is not another task\nResolved criterion coverage\n37.5%\n3 / 8 applicable checks resolved\nUnresolved checks\n5\n0 positively excluded checks\nCriterion evidence coverage\nApproval decision\n1.0.0\n\n0 / 2 resolved · 0 pass · 0 fail · 2 indeterminate · 0 excluded · criterion pass rate unavailable\n\nRecorded model-call status\n1.0.0\n\n1 / 2 resolved · 0 pass · 1 fail · 1 indeterminate · 0 excluded · criterion pass rate 0.0%\n\nTerminal evidence\n1.0.0\n\n1 / 2 resolved · 1 pass · 0 fail · 1 indeterminate · 0 excluded · criterion pass rate 100.0%\n\nTrajectory capture\n1.0.0\n\n1 / 2 resolved · 1 pass · 0 fail · 1 indeterminate · 0 excluded · criterion pass rate 100.0%\n\nGreen: pass · red: fail · amber: indeterminate · neutral: not applicable. Missing evidence remains unresolved.\n\nServer observed 10/10/2026, 6:50:12 PM · up to 25 evaluations per page · historical observations retain their original source time.\n\nRecorded task evaluations\nRecorded / mode\tCanonical task\tObserved state\t\nInspection\n\n10/10/2026, 6:50:10 PM\nObservation\n\tdocument_authoring\n930a2fa9-6acc-46d4-953c-2a7b66265513\n\tsucceeded\nSource available\n\tInspect evaluation\n10/10/2026, 6:50:10 PM\nHistorical replay\n\tdocument_authoring\n930a2fa9-6acc-46d4-953c-2a7b66265513\n\tsucceeded\nSource available\n\tInspect evaluation\nNewest evaluations\nOlder evaluations\nClose evaluation\nRecorded task evaluation\nEvaluation reference\nfc71ddd6-93dc-45df-9060-81520f9ac714\nCanonical task reference\n930a2fa9-6acc-46d4-953c-2a7b66265513\nEvaluator set\ndurable-task-evidence@1.1.0\nDefinition hash\n2e2615068b05d5b664588257eb67da4e520b1a63c5cfa7f2f7cfc0a70dac7cae\nInput identity\n0e8d17a9dbc594665f77623a452beb913205a0a938d41d9a7b3ac1c2f50a601f\nSource observed\n10/10/2026, 6:50:10 PM\nPrevious evaluation\nNone · fresh observation\nTerminal verification at observation\nUnverified\nApproval decision · 1.0.0\nindeterminate\n\nEvidence: unavailable · approval_requirement_link_unavailable\n\npaige_eval_result:1d9ec95d-4e22-4035-95fe-1cf86ce3e90f\nRecorded model-call status · 1.0.0\nindeterminate\n\nEvidence: partial · model_source_truncated\n\npaige_eval_result:58abb352-337b-4689-ac63-bb68111cdbdd\nTerminal evidence · 1.0.0\nindeterminate\n\nEvidence: conflicting · current_receipts_conflict\n\npaige_eval_result:3d3fe9e3-f55b-4178-a8d5-aa77a4c0bafe\nTrajectory capture · 1.0.0\nindeterminate\n\nEvidence: partial · source_or_history_truncated\n\npaige_eval_result:ce093732-753e-4844-a5ee-adf55ef6360e\nRecorded participant context\n\ntest-agent-evaluator · roster version 3 at observation · execution version unavailable · trace 1f188e63-c985-4073-89fc-5d4ea242cb4f\n\ntest-agent-evaluator · roster version 3 at observation · execution version unavailable · trace 9ad4ff42-09af-4f11-a623-fa8264cdd889\n\n102 unassigned model calls. Participation does not establish task ownership.\n\nHistorical input is immutable. Source reads detect observed drift; they are not an atomic snapshot across every system. Replay does not reverify the destination or rerun the task.\n\nInspect canonical task evidence\nReplay stored evidence\n\nStopped waiting. A result may still have been recorded. Refresh recorded evaluations before trying again."
+    },
+    {
+      "action": "reduced-motion",
+      "enabled": true
+    }
+  ],
+  "errors": []
+}

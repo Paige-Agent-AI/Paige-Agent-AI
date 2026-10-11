@@ -191,7 +191,7 @@ export const COMMS_MESSAGE_CONTENT_READ = {
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
     chatTool: "read_message_content",
-    seatAuthority: "member",
+    seatAuthority: "workspace-admin",
   },
   outcome: {
     kinds: ["current"],
@@ -242,7 +242,7 @@ export const COMMS_SUPPORT_CASES_READ = {
     riskPolicyKey: "read_only",
     approvalAuthority: "none",
     chatTool: "read_support_cases",
-    seatAuthority: "member",
+    seatAuthority: "workspace-admin",
   },
   outcome: {
     kinds: ["current"],

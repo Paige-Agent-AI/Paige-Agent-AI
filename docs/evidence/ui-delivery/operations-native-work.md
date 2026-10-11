@@ -35,7 +35,7 @@ MUST_PRESERVE: Planning/CRM writers, Team photo references, existing Trust/CAS/R
 ACCEPTANCE_CRITERIA: Explicit stage confirmation; same-key uncertain recovery; independent authorized current readback before success.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: CRM executor unchanged; no competing Chat, approval or audit store; other native consumers remain queued.
-INTERNAL_BUILD_IDENTITY: Local uncommitted native Work extension; deployment=none; migration=PROOF_OWED(20270602000416).
+INTERNAL_BUILD_IDENTITY: Local native Work source fb4af56e68fec577a9254efc5f27792ebe09ac6b, integrated parent 10581b77d6bc3810639398df72a592cebf19bfc2; deployment=none; migration=PROOF_OWED(20271020000250).
 RELEASE_CHANNEL: development.
 RELEASE_CLASSIFICATION: internal-only.
 CUSTOMER_RELEASE_IDENTITY: none.

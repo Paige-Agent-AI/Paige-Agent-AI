@@ -51,8 +51,7 @@ describe("Solo Campaigns approved contract", () => {
     // Ads left Marketing for its own department below it (owner ruling 2026-10-10): no tab, no desk here.
     expect(tabBlock).not.toMatch(/'ads'/);
     expect(source).not.toContain("<MarketingAds");
-    // Analytics' "Open Ads" opens the Ads department; old `/growth/ads` links replace into it first.
-    expect(source).toContain('onOpenAds={()=>params.account&&navigate(branchPath("solo",params.account,"ads"))}');
+    // Old `/growth/ads` links replace into the Ads department before any Marketing reader mounts.
     expect(source).toMatch(/legacySalesRoute\([^)]*\)\?\?legacyAdsRoute\(/);
     expect(tabBlock).not.toMatch(/'planned'/);
     expect([...tabBlock.matchAll(/\['([^']+)','[^']+',\(\)=>[^,\]]+,'sales'\]/g)].map((match) => match[1])).toEqual([]);

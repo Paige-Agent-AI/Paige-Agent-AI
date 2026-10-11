@@ -915,8 +915,12 @@ describe("Solo Marketing department views", () => {
     expect([...host.querySelectorAll(".mva-cap-row")].map((row) => row.textContent)).toEqual(["Discovery call requestNot routed3"]);
     // Channels with no source say so; nothing claims spend, reach or visits.
     const channels = host.querySelector(".mva-ch")!.textContent!;
-    // A tenant can connect Meta in Integrations, so the row never claims nothing is connected.
-    expect(channels).toContain("Ad accounts aren’t read here");
+    // Ads is its own department (coordinator 2026-10-11): Analytics shows no ad-account row and no route
+    // into it, while leads from paid links are still counted by their source tag in the Source mix.
+    expect([...host.querySelectorAll(".mva-ch li .mva-row-t")].map((row) => row.firstChild?.textContent)).toEqual(["Email", "Social", "Your pages"]);
+    expect(channels).not.toMatch(/Ad accounts|spend/i);
+    expect(button("Open Ads")).toBeUndefined();
+    expect(host.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent).toBe("Leads from links with a source tag, paid ones included, are counted in Source mix.");
     expect(channels).not.toContain("connected");
     expect(channels).toContain("Reach and engagement aren’t read from any provider");
     expect(channels).toContain("Visits aren’t recorded on public pages");

@@ -842,6 +842,11 @@
           "note": "Controlled company-account projection candidate; exact native account identity and observation provenance. No provider activation, live ingestion or verified institution freshness."
         },
         {
+          "path": "supabase/migrations/20270602000429_finance_accounting_obligation_projections.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company-bound Bill/Purchase cache; original native references and unknown amounts. No verified bank settlement, automatic expense recognition, provider activation or live ingestion claim."
+        },
+        {
           "path": "supabase/migrations/20270602000428_finance_liability_source_projections.sql",
           "role": "provider_adapter",
           "note": "Controlled company/native-account liability cache candidate, tied to exact account evidence version. No provider consent, product eligibility, live ingestion or verified institution freshness claim."

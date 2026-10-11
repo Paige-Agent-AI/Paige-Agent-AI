@@ -40,11 +40,14 @@ import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-stat
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
 import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discovery.ts";
 import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
+import { readPipelineNonApplicationOutcome } from "../_shared/pipeline-metadata-observation.ts";
 import { readDurableObservation } from "../_shared/durable-job/observation.ts";
+import { readDurableContinuation } from "../_shared/durable-job/continuation-read.ts";
+import type { BudgetDb } from "../_shared/router-budget/mod.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
 import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
-import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, invokeOutcomeUnknown, OUTCOME_UNKNOWN_NOTE, refusedByDatabase, sayWhatTheCardSays, settleUsedEarlier, thrownOutcomeUnknown, type ApprovalRefusalReason } from "../_shared/approval-outcome.ts";
+import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, databaseAnswered, invokeOutcomeUnknown, OUTCOME_UNKNOWN_NOTE, refusedByDatabase, sayWhatTheCardSays, settleUsedEarlier, thrownOutcomeUnknown, type ApprovalRefusalReason } from "../_shared/approval-outcome.ts";
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
@@ -1213,10 +1216,23 @@ serve(async (req) => {
           intentId: validatedData.requestIntentId!, tenantId: thread.tenant_id, actorId: user.id };
         const status = await readInteractiveOutcomeStatus({
           state: () => executor("state"),
-          ...(validatedData.interactive.workId ? { readWork: () => readDurableObservation({
-            threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
-            workId: validatedData.interactive!.workId!,
-          }, supabaseClient) } : {}),
+          ...(validatedData.interactive.workId ? { readWork: async () => {
+            const work = await readDurableObservation({
+              threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
+              workId: validatedData.interactive!.workId!,
+            }, supabaseClient);
+            // C4d preparation (CL-3) — bounded terminal CONTEXT for the same validated
+            // work: eligibility to explain, never permission to dispatch or continue.
+            // Effectful continuation stays disabled behind INT-346.
+            if (work) {
+              const continuation = await readDurableContinuation({
+                threadId: validatedData.threadId!, intentId: validatedData.requestIntentId!,
+                workId: validatedData.interactive!.workId!,
+              }, supabaseClient, supabase as unknown as BudgetDb);
+              if (continuation) return { ...work, continuation };
+            }
+            return work;
+          } } : {}),
           readOutcome: async () => {
             const effectId = validatedData.interactive!.pipelineEffectId ??
               await findPipelineOriginalEffect(originalScope, supabaseClient);
@@ -1239,6 +1255,25 @@ serve(async (req) => {
             if (!validatedData.interactive!.pipelineEffectId &&
               await findPipelineOriginalEffect(originalScope, supabaseClient) !== effectId) {
               return { outcome: "outcome_unknown", verified_readback: false };
+            }
+            // A lineage-validated non-application record upgrades the unknown for a
+            // database-answered door refusal (INT-1807 CL-2): the single-RPC transaction
+            // rolled back whole, so the act definitely did not apply. Still an
+            // observation — the successor-write brake and executor state stay controlling.
+            if (observation.outcome === "outcome_unknown") {
+              const nonApplication = await readPipelineNonApplicationOutcome(
+                { ...originalScope, effectId },
+                {
+                  scopeHolds: readers.scopeHolds,
+                  resolveObservation: async (b) => {
+                    const { data, error } = await supabaseClient.rpc("read_pipeline_metadata_observation", {
+                      _thread: b.threadId, _intent: b.intentId, _effect: b.effectId,
+                    });
+                    if (error) throw new Error("PIPELINE_OBSERVATION_READ_UNAVAILABLE");
+                    return data;
+                  },
+                });
+              if (nonApplication.outcome !== "outcome_unknown") return nonApplication;
             }
             return observation;
           },
@@ -13503,7 +13538,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   _command: args.command,
                   _idempotency_key: args.idempotency_key,
                 });
-                if (configureError) throw configureError;
+                if (configureError) {
+                  // INT-1807 CL-2 — a database-ANSWERED refusal of this single-RPC door call
+                  // rolled its one transaction back whole (approval-outcome.ts): nothing the
+                  // command would have written was written. Record that definite
+                  // non-application for the original effect so a later status read can
+                  // distinguish "definitely did not apply" from unknown. Only the C4a
+                  // pinned carry-forward holds the card token at this seam; recording the
+                  // gated model-emit path is a named follow-up. Best-effort by design: the
+                  // refusal itself is the answer and never waits on the observation.
+                  if (databaseAnswered(configureError) && interactive && resumePin.has(tc.id)) {
+                    try {
+                      await admin.rpc("record_pipeline_metadata_non_application", {
+                        p_thread: validatedData.threadId,
+                        p_intent: validatedData.requestIntentId,
+                        p_token: resumePin.get(tc.id),
+                        p_sqlstate: String((configureError as { code?: unknown }).code ?? ""),
+                      });
+                    } catch { /* the observation is best-effort; the refusal stands without it */ }
+                  }
+                  throw configureError;
+                }
                 result = { success: (configured as any)?.ok !== false, ...(configured as any) };
               }
             } else if (tc.function.name === "crm_add_note") {

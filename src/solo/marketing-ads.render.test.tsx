@@ -130,8 +130,9 @@ describe("The Ads desk", () => {
     await render();
     expect(host.querySelector(".mov-sum")?.textContent).toContain("Saved ad copy is visible to owners and admins.");
     expect(db.calls.some((c) => c.table === "marketing_content")).toBe(false);
-    // Asking PAIGE stays open to everyone, as on the earlier Ads tab (§58).
-    expect(button("Ask PAIGE for ad copy")).toBeDefined();
+    // Asking PAIGE stays open to everyone (§58): it now sits in the Ads department strip
+    // (AdsWorkspace.route.test.tsx), so the desk itself carries no view switcher or ask.
+    expect(host.querySelector('[aria-label="Ads views"]')).toBeNull();
     act(() => root.unmount()); root = createRoot(host);
     await render("creative");
     expect(text()).toContain("visible to its owners and admins");

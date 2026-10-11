@@ -40,10 +40,12 @@ CREATE TABLE IF NOT EXISTS public.sendgrid_receipt_processing (
 );
 
 REVOKE ALL ON public.sendgrid_receipt_processing FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.sendgrid_receipt_processing TO service_role;
+ALTER TABLE public.sendgrid_receipt_processing ENABLE ROW LEVEL SECURITY;
 
 -- One verified event → journal row (idempotent on receipt_id) → one append-only
 -- email_send_log row per EVENT (the timeline survives; nothing is updated).
--- Returns: 'invalid' | 'duplicate' | 'processed' | 'unresolved'.
+-- Returns: 'invalid' | 'duplicate' | 'processed' | 'pending' (outer failure; provider redelivery retries).
 CREATE OR REPLACE FUNCTION public.ingest_sendgrid_receipt(
   _receipt_id text, _message_id text, _status text,
   _email text DEFAULT NULL, _event_at timestamptz DEFAULT NULL
@@ -68,28 +70,27 @@ BEGIN
      OR r.email IS DISTINCT FROM lower(btrim(_email)) THEN RETURN 'duplicate'; END IF;
   IF r.state = 'processed' THEN RETURN 'duplicate'; END IF;
 
-  -- The append: one row per verified event. message_id carries the provider id
-  -- the send recorded; recipient email is allowlisted from the event payload.
-  INSERT INTO public.email_send_log
-    (message_id, template_name, recipient_email, status, sender_account, metadata, created_at)
-  VALUES
-    (r.message_id,
-     'sendgrid_event', -- NOT NULL column; honest label for a provider-event append
-     COALESCE(r.email, 'unknown'),
-     r.status,
-     'sendgrid',
-     jsonb_build_object('provider','sendgrid','receipt_id',r.receipt_id,'event_at',r.event_at),
-     COALESCE(r.event_at, r.received_at));
-
+  -- The append: one row per verified event, inside its own subtransaction so a
+  -- unique_violation (the send path's own 'sent' row) is truthfully absorbed.
+  BEGIN
+    INSERT INTO public.email_send_log
+      (message_id, template_name, recipient_email, status, sender_account, metadata, created_at)
+    VALUES
+      (r.message_id, 'sendgrid_event', COALESCE(r.email, 'unknown'), r.status, 'sendgrid',
+       jsonb_build_object('provider','sendgrid','receipt_id',r.receipt_id,'event_at',r.event_at),
+       COALESCE(r.event_at, r.received_at));
+  EXCEPTION WHEN unique_violation THEN
+    -- The send path already recorded this fact (its own 'sent' row under the
+    -- partial unique index). Truthful: processed, nothing to append.
+    UPDATE public.sendgrid_receipt_processing SET state = 'processed', attempts = attempts + 1
+      WHERE receipt_id = r.receipt_id;
+    RETURN 'processed';
+  END;
   UPDATE public.sendgrid_receipt_processing
     SET state = 'processed', attempts = attempts + 1
     WHERE receipt_id = r.receipt_id;
   RETURN 'processed';
 EXCEPTION WHEN OTHERS THEN
-  UPDATE public.sendgrid_receipt_processing
-    SET attempts = attempts + 1,
-        next_attempt_at = now() + make_interval(secs => LEAST(3600, 60 * power(2, LEAST(attempts, 6))::integer))
-    WHERE receipt_id = _receipt_id;
   RETURN 'pending';
 END $function$;
 

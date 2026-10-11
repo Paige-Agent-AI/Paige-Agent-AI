@@ -1,7 +1,7 @@
 -- ============================================================================
 -- ANT-43/S7 slice 2 — SendGrid receipt journal: validate, dedup, append-once.
 --
--- Failing-first: before 20271020000320 the ingest RPC, journal, and 'dropped'
+-- Failing-first: before 20271020000340 the ingest RPC, journal, and 'dropped'
 -- status do not exist (first statement errors). After the migration every
 -- assertion holds. Synthetic fixtures only; the transaction always rolls back.
 -- Run: psql "$DB_URL" -1 -f supabase/tests/sendgrid_receipt_ingest.sql
@@ -11,6 +11,8 @@ CREATE FUNCTION pg_temp.require_true(value boolean, label text) RETURNS void LAN
 BEGIN IF value IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: %', label; END IF; END $$;
 
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
+-- The door's REAL role: prove service_role can write through the grant.
+SET LOCAL ROLE service_role;
 
 -- 1. A verified event appends exactly one email_send_log row (sendgrid marker).
 SELECT pg_temp.require_true(

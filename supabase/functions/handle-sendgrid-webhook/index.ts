@@ -25,8 +25,10 @@ const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "content-type, x-twilio-email-event-webhook-signature",
 };
+// 'processed' is deliberately NOT mapped: the send path already recorded the
+// handoff (its own 'sent' row under the partial unique index); appending again
+// would collide — ack, no row (the resend mirror does the same).
 const STATUS_MAP: Record<string, string> = {
-  processed: "sent",
   delivered: "delivered",
   deferred: "delivery_delayed",
   open: "opened",
@@ -95,7 +97,9 @@ Deno.serve(async (req) => {
     const kind = typeof evt.event === "string" ? evt.event : "";
     const status = STATUS_MAP[kind];
     if (!status) { results.ignored = (results.ignored ?? 0) + 1; continue; } // ack, never guess
-    const sgMessageId = typeof evt.sg_message_id === "string" ? evt.sg_message_id.split(" ").pop() ?? evt.sg_message_id : "";
+    // Correlation: the event's sg_message_id is "<X-Message-Id>.<n>.filterdrecv-...";
+    // the FIRST DOT-SEGMENT is the send-time X-Message-Id the send path recorded.
+    const sgMessageId = typeof evt.sg_message_id === "string" ? evt.sg_message_id.split(".")[0] : "";
     if (!sgMessageId) { results.ignored = (results.ignored ?? 0) + 1; continue; }
     const timestamp = typeof evt.timestamp === "number" ? new Date(evt.timestamp * 1000).toISOString() : null;
     const email = typeof evt.email === "string" ? evt.email : null;

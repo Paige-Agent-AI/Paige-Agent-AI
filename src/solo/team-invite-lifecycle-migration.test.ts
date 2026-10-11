@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 const MIGRATION = "supabase/migrations/20261105000000_an_invitation_says_what_happened_to_it.sql";
 const ORDERING = "supabase/migrations/20261107000000_the_headline_is_the_furthest_the_email_got.sql";
 const WEBHOOK = "supabase/functions/handle-resend-webhook/index.ts";
+const SHARED_SIG = "supabase/functions/_shared/webhookSig.ts";
 const RECEIPTS = "supabase/migrations/20260903235327_resend_receipt_reliability.sql";
 const PERSISTENCE = "supabase/functions/handle-resend-webhook/handler.ts";
 const SENDER = "supabase/functions/send-portal-invite/index.ts";
@@ -99,15 +100,25 @@ describe("the webhook is authenticated by its signature", () => {
     // Without a bound, a captured correctly-signed request stays valid for ever. The assertion
     // pins the WHOLE expression: mutation showed `/5 \* 60 \* 1000/` still matches
     // `5 * 60 * 1000 * 100000`, which is a bound of about a year and is not a bound at all.
-    expect(ts).toMatch(/Math\.abs\(Date\.now\(\) - sentAt\) > 5 \* 60 \* 1000\)/);
+    // The bound now lives in the ONE canonical Svix verifier both Resend doors share; the
+    // door must route through it with the five-minute tolerance pinned at the call site.
+    const verifier = code(SHARED_SIG);
+    expect(verifier).toMatch(/tolerance = opts\.toleranceSeconds \?\? 300/);
+    expect(verifier).toMatch(/Math\.abs\(nowSec - ts\) > tolerance/);
+    expect(ts).toMatch(/toleranceSeconds: 300/);
   });
 
   it("compares signatures in constant time", () => {
     // Asserting the helper merely EXISTS is not enough — mutation proved it: replacing the
     // comparison with a string === left the function defined, unused, and the test green. The
     // assertion has to name the comparison site, because that is what leaks a signature byte by byte.
-    expect(ts).toMatch(/if \(timingSafeEqual\(mac, b64ToBytes\(value\)\)\) return true;/);
-    expect(ts).not.toMatch(/String\(mac\)\s*===/);
+    // The comparison site is the shared verifier's, and the door must use that verifier rather
+    // than growing a private copy.
+    const verifier = code(SHARED_SIG);
+    expect(verifier).toMatch(/if \(timingSafeEqual\(mac, b64ToBytes\(value\)\)\) return \{ ok: true \};/);
+    expect(verifier).not.toMatch(/String\(mac\)\s*===/);
+    expect(ts).toMatch(/verifySvix/);
+    expect(ts).not.toMatch(/svixSignature\.split\(/);
   });
 
   it("derives tenancy from OUR record, never from the inbound payload", () => {

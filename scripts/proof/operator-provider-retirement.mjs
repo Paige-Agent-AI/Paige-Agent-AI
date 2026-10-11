@@ -123,7 +123,7 @@ if(process.argv.includes('--generated-media')) {
 }
 if(process.argv.includes('--platform-independent')) {
  if(!process.argv.includes('--independent-baseline')) {
-  const forward=await readFile('supabase/migrations/20270602000431_operator_provider_independent_retirement.sql','utf8');
+  const forward=await readFile('supabase/migrations/20270602000432_operator_provider_independent_retirement.sql','utf8');
   await db.exec(forward);await db.exec(forward);
  }
  if(process.argv.includes('--file-obligation-baseline')) {

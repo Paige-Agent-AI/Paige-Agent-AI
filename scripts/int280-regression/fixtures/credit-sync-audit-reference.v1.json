@@ -1,0 +1,7 @@
+{
+  "kind": "synthetic_offline",
+  "scenario": "self_profile_score_update",
+  "user_id": "55555555-5555-4555-8555-555555555555",
+  "scores": { "equifax": 712, "experian": 705, "transunion": 698 },
+  "report_type": "consumer"
+}

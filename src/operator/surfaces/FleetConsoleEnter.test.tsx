@@ -32,10 +32,11 @@ const h = vi.hoisted(() => ({
   freshRow: null as Record<string, unknown> | null,
   freshReads: [] as string[],
   retirementAdmin: false,
+  retirementArchiveOnly: false,
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    rpc: async (name:string) => ({data:name==='operator_can_retire_accounts' && h.retirementAdmin,error:null}),
+    rpc: async (name:string) => ({data:name==='operator_can_archive_accounts' ? (h.retirementAdmin||h.retirementArchiveOnly) : name==='operator_can_permanently_delete_accounts' ? h.retirementAdmin : false,error:null}),
     from: () => ({
       select: () => ({
         eq: (_col: string, id: string) => ({
@@ -119,6 +120,10 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
   });
   it('a server-confirmed Platform Admin receives account lifecycle controls',async()=>{
     h.retirementAdmin=true;await act(async()=>root.render(<FleetConsole isPlatformOwner={false}/>));
+    await vi.waitFor(()=>expect(host.querySelector('[aria-label="Account details for Solo Co"]')).not.toBeNull());
+  });
+  it('a delegated archive-only operator still reaches account details; the dialog alone splits actions',async()=>{
+    h.retirementArchiveOnly=true;await act(async()=>root.render(<FleetConsole isPlatformOwner={false}/>));
     await vi.waitFor(()=>expect(host.querySelector('[aria-label="Account details for Solo Co"]')).not.toBeNull());
   });
   it('archived workspaces are excluded from Current and have no operational Enter',async()=>{

@@ -12,7 +12,7 @@ import { landAt, operatorLandingFor, readActAsTenant } from "@/operator/actAs";
 import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
 import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
 import AccountDetailsDialog from "@/operator/surfaces/AccountDetailsDialog";
-import { readRetirementAuthority } from "@/operator/data/accountControls";
+import { readLifecycleAuthority } from "@/operator/data/accountControls";
 
 /**
  * Fleet · Directory — authoritative v3 source:
@@ -362,13 +362,21 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
   const { enterOperatorActAs, exitOperatorActAs, tenants: contextTenants, activeUserId, refresh } = useTenantContext();
   const [archiveView, setArchiveView] = useState(false);
-  const [retirementAuthority, setRetirementAuthority] = useState<{ actor: string; allowed: boolean } | null>(null);
+  const [lifecycleAuthority, setLifecycleAuthority] = useState<{ actor: string; archive: boolean; delete: boolean } | null>(null);
   useEffect(() => {
-    let alive = true; setRetirementAuthority(null);
-    if (activeUserId) void readRetirementAuthority().then(value => { if (alive) setRetirementAuthority({ actor: activeUserId, allowed: value }); }).catch(() => {});
+    let alive = true; setLifecycleAuthority(null);
+    if (activeUserId) void readLifecycleAuthority().then(value => { if (alive) setLifecycleAuthority({ actor: activeUserId, ...value }); }).catch(() => {});
     return () => { alive = false; };
   }, [activeUserId]);
-  const canManage = isPlatformOwner === true || (retirementAuthority?.actor === activeUserId && retirementAuthority?.allowed === true);
+  // The two authorities are separate server predicates (ANT-47): a delegated operator tier may
+  // archive but never permanently delete. Either one opens the account's details; the dialog
+  // shows only the actions the server would actually admit for this actor.
+  const ownAuthority = lifecycleAuthority?.actor === activeUserId ? lifecycleAuthority : null;
+  const canManage = isPlatformOwner === true || (ownAuthority !== null && (ownAuthority.archive || ownAuthority.delete));
+  const authority = {
+    archive: isPlatformOwner === true || ownAuthority?.archive === true,
+    delete: isPlatformOwner === true || ownAuthority?.delete === true,
+  };
   const visibleTenants = tenants.filter(tenant => Boolean(tenant.archivedAt) === archiveView);
   // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
   // late to stop a second press in the same tick; production recorded paired entries.
@@ -451,7 +459,7 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
       onEnter={(tenant) => void enterTenant(tenant)}
       onDetails={canManage ? tenant => setSelected({ id: tenant.id, actor: activeUserId }) : undefined}
     />
-    {selected && selected.actor === activeUserId && canManage && <AccountDetailsDialog key={`${selected.actor}:${selected.id}`} tenantId={selected.id} onClose={() => setSelected(null)} onChanged={() => { setRevision(value => value + 1); refresh?.(); }} />}
+    {selected && selected.actor === activeUserId && canManage && <AccountDetailsDialog key={`${selected.actor}:${selected.id}`} tenantId={selected.id} authority={authority} onClose={() => setSelected(null)} onChanged={() => { setRevision(value => value + 1); refresh?.(); }} />}
     </>
   );
 }

@@ -24,7 +24,7 @@ const fireEvent = {
   change: (element:HTMLElement,event:{target:{value:string}}) => act(()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(element,event.target.value);element.dispatchEvent(new Event('input',{bubbles:true}));}),
 };
 const waitFor = vi.waitFor;
-const open = async () => { const changed=vi.fn(), close=vi.fn(); await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} onClose={close} onChanged={changed}/>)); await screen.findByRole('button',{name:'Edit account'}); return {changed,close}; };
+const open = async () => { const changed=vi.fn(), close=vi.fn(); await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} authority={{archive:true,delete:true}} onClose={close} onChanged={changed}/>)); await screen.findByRole('button',{name:'Edit account'}); return {changed,close}; };
 describe('account controls — actual dialog interaction', () => {
   it('includes file cleanup in one Delete confirmation and never opens Prepare', async()=>{
     h.read.mockResolvedValue({...details,archived_at:'2026-01-01',archive_operation_id:'archive-a'});
@@ -33,7 +33,7 @@ describe('account controls — actual dialog interaction', () => {
     h.resources.mockResolvedValue({...review,mode:'delete',version:'files',execution_available:true,resources:[{provider:'tts_cache',tenant_id:details.id,action:'remove_cache',object_count:2}]});
     h.resourceRead.mockResolvedValue(null);h.resourceRun.mockImplementation(async(_id,operation)=>({tenant_id:details.id,operation_id:operation,mode:'delete',file_only:true,state:'resources_ready',account_count:1,results:[{provider:'tts_cache',state:'verified',provider_status:'removed',reason:null}]}));
     h.execute.mockResolvedValue({tenant_id:details.id,operation_id:'archive-a',state:'deleted',account_count:1,external_cleanup_pending:true});
-    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} onClose={()=>{}} onChanged={changed}/>));
+    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} authority={{archive:true,delete:true}} onClose={()=>{}} onChanged={changed}/>));
     fireEvent.click(screen.getByRole('button',{name:'Permanently delete account'}));
     await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());
     expect(button('Prepare resources')).toBeNull();expect(button('Remove eligible files')).toBeNull();
@@ -92,7 +92,7 @@ describe('account controls — actual dialog interaction', () => {
   });
   it('requires both typed name and irreversible consent for an archived deletion', async () => {
     h.read.mockResolvedValue({...details,archived_at:'2026-01-01',archive_operation_id:'test-operation'});
-    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} onClose={()=>{}} onChanged={changed}/>));
+    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} authority={{archive:true,delete:true}} onClose={()=>{}} onChanged={changed}/>));
     await screen.findByRole('button',{name:'Restore archived account'});
     h.preview.mockResolvedValue({tenant_id:details.id,accounts:[details],blockers:[],execution_available:true,version:'delete-version'});
     h.execute.mockResolvedValue({tenant_id:details.id,operation_id:'test-operation',state:'deleted',account_count:1});
@@ -114,5 +114,33 @@ describe('account controls — actual dialog interaction', () => {
     await open();h.archive.mockResolvedValue({tenant_id:details.id,accounts:[details],blockers:[],execution_available:true,version:'scope-version'});h.execute.mockRejectedValue(new AccountRpcError('Scope changed','40001'));
     fireEvent.click(screen.getByRole('button',{name:'Archive account'}));await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());fireEvent.change(document.getElementById('fleet-lifecycle-confirm')!,{target:{value:details.name}});fireEvent.click(screen.getByRole('button',{name:'Archive listed accounts'}));await waitFor(()=>expect(document.body.textContent).toContain('FAILED'));
     expect(screen.queryByRole('button',{name:'Read operation'})).toBeNull();expect(document.getElementById('fleet-lifecycle-confirm')).toBeNull();expect((screen.getByRole('button',{name:'Archive listed accounts'}) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it('an archive-only delegated tier never sees administrator or deletion controls, but archives and restores', async () => {
+    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} authority={{archive:true,delete:false}} onClose={()=>{}} onChanged={changed}/>));
+    await screen.findByRole('button',{name:'Archive account'});
+    expect(screen.queryByRole('button',{name:'Permanently delete account'})).toBeNull();
+    expect(screen.queryByRole('button',{name:'Edit account'})).toBeNull();
+    expect(screen.queryByRole('button',{name:'Cancel account'})).toBeNull();
+    expect(h.preview).not.toHaveBeenCalled();
+    h.archive.mockResolvedValue({tenant_id:details.id,accounts:[details],blockers:[],execution_available:true,version:'scope-version'});
+    h.execute.mockResolvedValue({tenant_id:details.id,operation_id:'test-operation',state:'archived',account_count:1});
+    h.outcome.mockResolvedValue({tenant_id:details.id,operation_id:'test-operation',state:'archived',account_count:1});
+    fireEvent.click(screen.getByRole('button',{name:'Archive account'}));
+    await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());
+    fireEvent.change(document.getElementById('fleet-lifecycle-confirm')!,{target:{value:details.name}});
+    fireEvent.click(screen.getByRole('button',{name:'Archive listed accounts'}));
+    await waitFor(()=>expect(changed).toHaveBeenCalledTimes(1));
+    expect(h.execute).toHaveBeenCalledWith(details.id,'archive',expect.any(String),details.name,'scope-version');
+    expect(h.execute.mock.calls.every(c=>c[1]!=='delete')).toBe(true);
+  });
+  it('an archive-only delegated tier restoring an archived account still never sees deletion', async () => {
+    h.read.mockResolvedValue({...details,archived_at:'2026-01-01',archive_operation_id:'test-operation'});
+    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} authority={{archive:true,delete:false}} onClose={()=>{}} onChanged={changed}/>));
+    await screen.findByRole('button',{name:'Restore archived account'});
+    expect(screen.queryByRole('button',{name:'Permanently delete account'})).toBeNull();
+    h.execute.mockResolvedValue({tenant_id:details.id,operation_id:'test-operation',state:'restored',account_count:1});
+    fireEvent.click(screen.getByRole('button',{name:'Restore archived account'}));
+    fireEvent.click(screen.getByRole('button',{name:'Restore account access'}));
+    await waitFor(()=>expect(changed).toHaveBeenCalledTimes(1));
   });
 });

@@ -18,6 +18,9 @@ CREATE TABLE public.quickbooks_oauth_attempts (
  CHECK(status<>'exchanging' OR consumed_at IS NOT NULL)
 );
 CREATE UNIQUE INDEX quickbooks_current_oauth_attempt ON public.quickbooks_oauth_attempts(actor_id,entity_id,environment) WHERE status IN ('pending','launched','exchanging');
+-- FK erasure/retirement touches terminal history too; partial active indexes cannot serve it.
+CREATE INDEX quickbooks_oauth_attempt_actor ON public.quickbooks_oauth_attempts(actor_id);
+CREATE INDEX quickbooks_oauth_attempt_company ON public.quickbooks_oauth_attempts(tenant_id,entity_id);
 ALTER TABLE public.quickbooks_oauth_attempts ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.quickbooks_oauth_attempts FROM PUBLIC,anon,authenticated,service_role;
 GRANT SELECT ON public.quickbooks_oauth_attempts TO service_role;

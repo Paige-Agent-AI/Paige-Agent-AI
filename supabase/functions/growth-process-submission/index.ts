@@ -499,9 +499,11 @@ async function runExecutor(
         // marking it "done" would leave a lead that was never refused unfiled for good. "Never
         // reached" = no code (the request itself failed), PostgREST's own connection, schema-cache
         // and pool-timeout codes (PGRST000-003), or Postgres connection 08*, resource 53* and
-        // operator-intervention 57*. A missing function (PGRST202) is permanent and not retried.
+        // operator-intervention 57*. PGRST202 (function not found) is retried too: Edge and migrations
+        // deploy independently, so this step can run before its function exists; the retry budget
+        // bounds it.
         const sqlState = fileError.code ? String(fileError.code) : "";
-        if (sqlState === "40001" || sqlState === "40P01" || sqlState === "" || /^PGRST00[0-3]$/.test(sqlState) || /^(08|53|57)/.test(sqlState)) {
+        if (sqlState === "40001" || sqlState === "40P01" || sqlState === "" || sqlState === "PGRST202" || /^PGRST00[0-3]$/.test(sqlState) || /^(08|53|57)/.test(sqlState)) {
           return { status: "error", result: {}, error: `submission_default_deal_failed: ${message.slice(0, 200)}` };
         }
         const code = /^[A-Z][A-Z0-9_]{2,63}/.exec(message)?.[0] ?? (fileError.code ? String(fileError.code) : "rpc_error");

@@ -265,7 +265,7 @@ INSERT INTO public.marketing_content(id,tenant_id,kind,status,image_url) VALUES
   ('ac000000-0000-0000-0000-000000000009','aaaaaaaa-0000-0000-0000-00000000000a','image','archived','https://cdn.example.invalid/creative-9.png'),
   ('ac000000-0000-0000-0000-0000000000b1','bbbbbbbb-0000-0000-0000-00000000000b','video','draft',NULL);
 
-SELECT plan(98);
+SELECT plan(100);
 
 -- ── EXECUTE grants (the grant is not the guard, but it must not widen either). ──
 SELECT ok(NOT has_function_privilege('anon','public.growth_attach_submission_default_deal(uuid,integer)','EXECUTE'), 'A: anon cannot execute');
@@ -413,6 +413,10 @@ SELECT is((SELECT (public.get_pipeline_lead_funnel('a0000000-0000-0000-0000-0000
 SELECT as_user('33333333-3333-3333-3333-333333333333','bbbbbbbb-0000-0000-0000-00000000000b');
 SELECT throws_ok($$SELECT public.get_pipeline_lead_funnel('a0000000-0000-0000-0000-0000000000a1')$$,'42501','PIPELINE_FORBIDDEN','C: another business''s owner is refused');
 SELECT throws_ok($$SELECT public.get_pipeline_lead_funnel('a0000000-0000-0000-0000-0000000000ff')$$,'42501','PIPELINE_FORBIDDEN','C: a missing pipeline refuses the same way');
+-- The business's own owner, while working in ANOTHER workspace, is refused: a retained pipeline id never
+-- reads a business that is not the caller's active one (the Marketing metric bundle's binding).
+SELECT as_user('11111111-1111-1111-1111-111111111111','bbbbbbbb-0000-0000-0000-00000000000b');
+SELECT throws_ok($$SELECT public.get_pipeline_lead_funnel('a0000000-0000-0000-0000-0000000000a1')$$,'42501','PIPELINE_FORBIDDEN','C: the owner working in another workspace is refused');
 SELECT as_claims('{}');
 SELECT throws_ok($$SELECT public.get_pipeline_lead_funnel('a0000000-0000-0000-0000-0000000000a1')$$,'42501','PIPELINE_FORBIDDEN','C: no signed-in caller is refused');
 
@@ -433,6 +437,8 @@ SELECT is(public.set_ad_creative_featured('ac000000-0000-0000-0000-000000000006'
 SELECT is(public.set_ad_creative_featured('ac000000-0000-0000-0000-000000000001',false),'{"id":"ac000000-0000-0000-0000-000000000001","featured":false}'::jsonb,'D: unfeature returns the contract shape');
 SELECT as_user('22222222-2222-2222-2222-222222222222','aaaaaaaa-0000-0000-0000-00000000000a');
 SELECT throws_ok($$SELECT public.set_ad_creative_featured('ac000000-0000-0000-0000-000000000002',false)$$,'42501','AD_CREATIVE_FORBIDDEN','D: a plain member is refused');
+SELECT as_user('11111111-1111-1111-1111-111111111111','bbbbbbbb-0000-0000-0000-00000000000b');
+SELECT throws_ok($$SELECT public.set_ad_creative_featured('ac000000-0000-0000-0000-000000000002',true)$$,'42501','AD_CREATIVE_FORBIDDEN','D: the owner working in another workspace is refused');
 SELECT as_user('44444444-4444-4444-4444-444444444444','a9000000-0000-0000-0000-0000000000a9');
 SELECT throws_ok($$SELECT public.set_ad_creative_featured('ac000000-0000-0000-0000-000000000001',true)$$,'42501','AD_CREATIVE_FORBIDDEN','D: the agency owner NOT working in the business is refused');
 SELECT as_user('44444444-4444-4444-4444-444444444444','aaaaaaaa-0000-0000-0000-00000000000a');

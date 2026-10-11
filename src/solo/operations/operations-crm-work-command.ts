@@ -1,11 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PlanItemStatus } from "@/hooks/usePlanList";
 import { crmActionForStage, type CrmWorkRecord } from "./operations-native-work";
+import { restoreCrmWorkEditOperation, type CrmWorkEditOperation } from "./operations-crm-work-edit";
 
 export type CrmWorkStageOperation = Readonly<{
   actorId:string; tenantId:string; key:string; taskId:string; targetStatus:"pending"|"completed";
   command:Readonly<{action:"task.complete"|"task.reopen";task_id:string;expected_updated_at:string}>;
 }>;
+export type CrmWorkOperation = CrmWorkStageOperation | CrmWorkEditOperation;
 export type CrmWorkCommandResult =
   | {kind:"approval";fingerprint:string;summary:string}
   | {kind:"acknowledged"}
@@ -38,11 +40,16 @@ export function restoreCrmWorkStageOperation(value:unknown,actorId:string,tenant
     command:Object.freeze({action,task_id:value.taskId,expected_updated_at:command.expected_updated_at})});
 }
 
+export function restoreCrmWorkOperation(value:unknown,actorId:string,tenantId:string):CrmWorkOperation|null {
+  return restoreCrmWorkStageOperation(value,actorId,tenantId)??restoreCrmWorkEditOperation(value,actorId,tenantId);
+}
+
 /** The UI must confirm first. Trust, CAS, idempotency and Rail remain in crm-command.
  * A bounded executor readback acknowledges the request; the caller must still refresh
  * the independently scoped native read before showing a saved stage.
  */
-export async function submitCrmWorkStageOperation(operation:CrmWorkStageOperation,approvedFingerprint?:string):Promise<CrmWorkCommandResult> {
+export async function submitCrmWorkStageOperation(operation:CrmWorkOperation,approvedFingerprint?:string):Promise<CrmWorkCommandResult> {
+  if(!restoreCrmWorkOperation(operation,operation.actorId,operation.tenantId))return {kind:"refused",message:"This task proposal is invalid. Reopen its current details."};
   let dispatched=false;
   try {
     const before=await supabase.auth.getUser();
@@ -61,7 +68,11 @@ export async function submitCrmWorkStageOperation(operation:CrmWorkStageOperatio
       return {kind:"approval",fingerprint:data.fingerprint,summary:typeof data.summary==="string"?data.summary:"Review the proposed task change."};
     if(data.ok===true){
       const read=data.readback;
-      if(!object(read)||read.id!==operation.taskId||read.status!==operation.targetStatus||
+      const fieldMatches=object(read)&&("targetStatus" in operation?read.status===operation.targetStatus:
+        operation.target.kind==="assignment"?read.assignee_user_id===operation.target.assigneeId:
+        operation.target.dueAt===null?read.due_date===null:
+        typeof read.due_date==="string"&&Number.isFinite(Date.parse(read.due_date))&&Date.parse(read.due_date)===Date.parse(operation.target.dueAt));
+      if(!object(read)||read.id!==operation.taskId||!fieldMatches||
         read.external_effect!==false||read.notification_sent!==false||typeof read.updated_at!=="string"||!Number.isFinite(Date.parse(read.updated_at)))return uncertain();
       return {kind:"acknowledged"};
     }

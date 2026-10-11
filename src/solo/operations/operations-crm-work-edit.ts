@@ -44,8 +44,10 @@ export function restoreCrmWorkEditOperation(value:unknown,actorId:string,tenantI
   const patch=command.patch;
   if(command.action==="task.assign"&&target.kind==="assignment"&&typeof target.assigneeId==="string"&&uuid.test(target.assigneeId)&&patch.assignee_user_id===target.assigneeId&&Object.keys(patch).length===1&&Object.keys(target).length===2)
     return Object.freeze({actorId,tenantId,key:value.key,taskId:value.taskId,target:Object.freeze({kind:"assignment",assigneeId:target.assigneeId}),command:Object.freeze({action:"task.assign",task_id:value.taskId,expected_updated_at:command.expected_updated_at,patch:Object.freeze({assignee_user_id:target.assigneeId})})});
-  if(command.action==="task.reschedule"&&target.kind==="due"&&(target.dueAt===null||instant(target.dueAt))&&patch.due_date===target.dueAt&&Object.keys(patch).length===1&&Object.keys(target).length===2)
-    return Object.freeze({actorId,tenantId,key:value.key,taskId:value.taskId,target:Object.freeze({kind:"due",dueAt:target.dueAt}),command:Object.freeze({action:"task.reschedule",task_id:value.taskId,expected_updated_at:command.expected_updated_at,patch:Object.freeze({due_date:target.dueAt})})});
+  if(command.action==="task.reschedule"&&target.kind==="due"&&(target.dueAt===null||instant(target.dueAt))&&patch.due_date===target.dueAt&&Object.keys(patch).length===1&&Object.keys(target).length===2){
+    const dueAt=target.dueAt as string|null;
+    return Object.freeze({actorId,tenantId,key:value.key,taskId:value.taskId,target:Object.freeze({kind:"due" as const,dueAt}),command:Object.freeze({action:"task.reschedule",task_id:value.taskId,expected_updated_at:command.expected_updated_at,patch:Object.freeze({due_date:dueAt})})});
+  }
   return null;
 }
 

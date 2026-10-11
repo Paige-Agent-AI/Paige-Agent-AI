@@ -16,8 +16,9 @@ import { useOperationsPeople } from "./useOperationsPeople";
 import { OperationsWork } from "./OperationsWork";
 import { useOperationsCrmWork } from "./useOperationsCrmWork";
 import { nativeWorkStage, crmActionForStage, type CrmWorkRecord } from "./operations-native-work";
-import { buildCrmWorkStageOperation, restoreCrmWorkStageOperation, type CrmWorkStageOperation } from "./operations-crm-work-command";
+import { buildCrmWorkStageOperation, restoreCrmWorkOperation, type CrmWorkOperation } from "./operations-crm-work-command";
 import { OperationsCrmStageReview } from "./OperationsCrmStageReview";
+import { OperationsCrmWorkEditor } from "./OperationsCrmWorkEditor";
 import { workStatusLabel } from "./operations-presentation";
 import { OperationsProjects } from "./OperationsProjects";
 import { OperationsOverview } from "./OperationsOverview";
@@ -68,17 +69,17 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
   const readsCrm = destination === "Work" || destination === "Capacity" || destination === "Overview";
   const crm = useOperationsCrmWork(readsCrm ? userId : null, readsCrm ? tenantId : null);
-  const [crmReview,setCrmReview] = useState<CrmWorkStageOperation|null>(null);
-  const [pendingCrmRecovery,setPendingCrmRecovery] = useState<CrmWorkStageOperation|null>(null);
+  const [crmReview,setCrmReview] = useState<CrmWorkOperation|null>(null);
+  const [pendingCrmRecovery,setPendingCrmRecovery] = useState<CrmWorkOperation|null>(null);
   const [crmFeedback,setCrmFeedback] = useState("");
   const readRetainedCrm = () => {
-    try {return restoreCrmWorkStageOperation(JSON.parse(sessionStorage.getItem(`paige:operations-crm-stage:${userId}:${tenantId}`)??"null"),userId,tenantId);}
+    try {return restoreCrmWorkOperation(JSON.parse(sessionStorage.getItem(`paige:operations-crm-stage:${userId}:${tenantId}`)??"null"),userId,tenantId);}
     catch {return null;}
   };
   useEffect(()=>{
     setCrmReview(null);setCrmFeedback("");
     if(destination!=="Work"){setPendingCrmRecovery(null);return;}
-    try {setPendingCrmRecovery(restoreCrmWorkStageOperation(JSON.parse(sessionStorage.getItem(`paige:operations-crm-stage:${userId}:${tenantId}`)??"null"),userId,tenantId));}
+    try {setPendingCrmRecovery(restoreCrmWorkOperation(JSON.parse(sessionStorage.getItem(`paige:operations-crm-stage:${userId}:${tenantId}`)??"null"),userId,tenantId));}
     catch {setPendingCrmRecovery(null);}
   },[destination,userId,tenantId]);
   const closeCrmReview = () => {setCrmReview(null);setPendingCrmRecovery(readRetainedCrm());};
@@ -221,10 +222,14 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
             <option value={nativeWorkStage({source:"crm",key:`crm:${selectedCrm.id}`,record:selectedCrm})}>{selectedCrm.status.replace(/_/g," ")}</option>
             {(["open","in_progress","done"] as PlanItemStatus[]).filter(stage=>crmActionForStage(selectedCrm,stage)).map(stage=><option key={stage} value={stage}>{stage==="open"?"Ready":stage==="done"?"Completed":"In progress"}</option>)}
           </select></label>}
+          {!crmReview&&<OperationsCrmWorkEditor key={`${tenantId}:${selectedCrm.id}`} task={selectedCrm} actorId={userId} tenantId={tenantId}
+            members={people.error?[]:people.members} unavailable={crm.loading||!crmAvailable}
+            onPropose={operation=>{const retained=readRetainedCrm();setCrmFeedback("");setCrmReview(retained??operation);
+              if(retained)setInspection({kind:"crm_recovery",id:retained.taskId,view:destination});}} />}
         </div>}
-        {crmReview && <OperationsCrmStageReview key={`${tenantId}:${crmReview.key}`} operation={crmReview} refresh={crm.refresh}
+        {crmReview && <OperationsCrmStageReview key={`${tenantId}:${crmReview.key}`} operation={crmReview} refresh={crm.refresh} members={people.members}
           onClose={closeCrmReview} onVerified={taskId=>{setCrmReview(null);setPendingCrmRecovery(null);
-            setInspection({kind:"crm_recovery",id:taskId,view:destination});setCrmFeedback("This task’s stage is saved and confirmed in current CRM work.");}} />}
+            setInspection({kind:"crm_recovery",id:taskId,view:destination});setCrmFeedback("This task’s change is saved and confirmed in current CRM work.");}} />}
         {selectedItem && <div className="ops-detail-content">
           <dl><div><dt>Responsible person</dt><dd>{selectedItem.assigned_to_user_id && !member ? "Member unavailable" : <OperationsAssignee member={member} />}</dd></div>
             <div><dt>Status</dt><dd>{selectedItem.status.replace(/_/g, " ")}</dd></div>

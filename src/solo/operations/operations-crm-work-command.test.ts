@@ -3,6 +3,7 @@ import type { CrmWorkRecord } from "./operations-native-work";
 const mocks=vi.hoisted(()=>({getUser:vi.fn(),invoke:vi.fn()}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{getUser:mocks.getUser},functions:{invoke:mocks.invoke}}}));
 import { buildCrmWorkStageOperation, restoreCrmWorkStageOperation, submitCrmWorkStageOperation } from "./operations-crm-work-command";
+import { buildCrmWorkEditOperation } from "./operations-crm-work-edit";
 const task={id:"native-task",tenant_id:"workspace",status:"pending",updated_at:"2026-10-10T12:00:00.123456Z"} as CrmWorkRecord;
 const operation=()=>buildCrmWorkStageOperation(task,"done","actor","workspace","original-key")!;
 const ack=()=>({data:{ok:true,readback:{id:task.id,status:"completed",updated_at:"2026-10-10T12:01:00Z",external_effect:false,notification_sent:false}},error:null});
@@ -51,4 +52,13 @@ it("restores only an exact same-scope supported task stage command",()=>{
  expect(restoreCrmWorkStageOperation({...original,targetStatus:"pending"},"actor","workspace")).toBeNull();
  expect(restoreCrmWorkStageOperation({...original,command:{...original.command,patch:{user_id:"other"}}},"actor","workspace")).toBeNull();
  expect(restoreCrmWorkStageOperation({...original,targetStatus:"in_progress",command:{...original.command,action:"task.update",patch:{status:"in_progress"}}},"actor","workspace")).toBeNull();
+});
+it("acknowledges only the changed assignment or date field through the same executor",async()=>{
+ const scope={actorId:"actor",tenantId:"workspace",key:"original-edit-key"};
+ const due=buildCrmWorkEditOperation({...task,due_date:null},{kind:"due",dueAt:"2026-10-16T13:00:00Z"},scope,[])!;
+ const result=ack();Object.assign(result.data.readback,{status:"pending",due_date:"2026-10-16T09:00:00-04:00"});mocks.invoke.mockResolvedValue(result);
+ expect(await submitCrmWorkStageOperation(due)).toEqual({kind:"acknowledged"});
+ expect(mocks.invoke.mock.calls[0][1].body.command).toEqual(due.command);
+ Object.assign(result.data.readback,{due_date:null});
+ expect((await submitCrmWorkStageOperation(due)).kind).toBe("uncertain");
 });

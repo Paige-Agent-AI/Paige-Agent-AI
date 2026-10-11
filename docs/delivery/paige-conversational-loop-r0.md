@@ -1,5 +1,102 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-10 CL-7 slice — the C6 memory consumption dials (INT-326 contract applied)
+
+The INT-326 C6 consumption contract reserved the exact dials to the consuming implementer
+(clarification 3). As the Conversational Loop implementer I set them from the Memory
+lane's measured evidence: **max items 10** (range 8–12; measured max subject rows 8),
+**proposed/unconfirmed capped at 3 per turn**, precedence **confirmed > corrected >
+proposed** (retired/unclassified never admitted; a missing confirmation_state is
+UNCONFIRMED — a candidate, per clarification 1), **no freshness window** at measured
+scale (1–4 rows/week, no decay), and the owner arm's memory block budget tightened
+1000→**700 tokens** (range 600–800; the client arm keeps 1000). `resolveOwnerMemoryContext`
+now admits corrected rows as knowledge and proposed rows as labelled candidates; the
+prompt block labels each candidate "(my recollection — not yet confirmed)" with an
+explicit never-assert-as-fact instruction (clause 8). The authz harness's C6 scenarios
+were updated to the new contract (C6.1/C6.3/C6.5) and the full suite passes **1013/0**
+through the real handler; projection unit tests 16/16; deno 9=9 baseline; tsc 10=10.
+SQL owns supersession as before: a corrected row here is the LATEST correction.
+
+## 2026-10-10 CL-4 slice — C4e research-kind continuation coverage; the gated boundary stated
+
+C4e's merged preparation (#1862, `prepare_paige_research_work` always blocked with
+`research_execution_not_enabled`) is unchanged. What this adds is the research half of the
+CL-3 continuation read's coverage: research-kind work now proven at SQL level (frozen
+`question` objective, provider-error terminal context, deep_research effect lineage on the
+same thread beside document work without cross-reading) and at adapter level (18/18). The
+pure citation-lineage projection (`projectResearchContinuation`) stays the C4e runtime
+contract, unit-tested and unwired — its inputs (`research_runs.work_id` linkage + canonical
+sources) do not exist until the producer adopts the envelope. THE GATED BOUNDARY, stated
+plainly: connecting the Research execution owner to the durable substrate (producer
+`work_id` population, dispatch, wake, verified-result continuation) remains behind #1822
+(security clearance), #1832 (QA principal) and coordination with the Deep Research lane's
+provider/result/cost controls. No scheduler, worker, provider route or dispatch path is
+introduced. INT-346 stays DRAINING.
+
+## 2026-10-10 CL-3 slice — the authorized durable-continuation eligibility read (C4d)
+
+The C4d foundation's missing runtime half: `projectDurableContinuation` had zero runtime
+callers because nothing selected the envelope's internal fields under fresh authorization.
+Migration `20270602000431_int304_durable_continuation_read.sql` (renumbered from 412 in the same frontier race as 430) adds
+`read_paige_durable_continuation(thread, intent, work)` — authenticated-only, validating
+exactly like the frozen durable-observation reader (owned active thread with the CURRENT
+intent, caller-bound work row, the document/research class, CURRENT owner/admin permission,
+exactly-one durable_accepted protected effect) and returning the pinned envelope fields with
+the canonical objective read from the frozen request payload. The edge adapter
+`_shared/durable-job/continuation-read.ts` adds the observation-style identity re-read and
+fills the projection's context booleans from REAL sources only: the budget ladder
+(`resolveCeiling`/`accruedSpendToday`/`enforceBudget` — unknown accrual is never allowed),
+Spine `action.chatTool` registry membership, and the SQL-derived approval-pending
+(blocked + approval_expired). `interrupted`/`superseded`/`alreadyContinued` are false by
+construction and said so in-source: the SQL refuses a superseded intent before returning, a
+stable status read carries no interruption brake, and no continuation-consumption seam
+exists yet — that seam is the gated C4d runtime. The interactive status path's
+`durable_work` block now carries `continuation {eligibleForContext, state, reason}`:
+bounded terminal CONTEXT (e.g. "the document finished and verified — the objective can be
+continued"), never dispatch, wake, settlement or continuation permission. INT-346 stays
+DRAINING; effectful continuation remains disabled. Proofs: native read check
+`scripts/int304-continuation-read-check.mjs` (20 cases: field derivation, permission/
+tenant/actor/intent/archival gates, approval-pending only from a real expired approval,
+blank objective refused, duplicate-effect lineage refused, foreign capability class,
+service/anon refused) CI-wired; adapter vitest 17/17; tsc ratchet 10=10. The initial
+commit referenced `admin` (out of scope at the status seam) for the budget client — the
+reviewer’s P1: a swallowed ReferenceError would have silently nulled the whole
+durable_work block. Fixed to the in-scope `supabase` service client; the Deno diagnostic
+count returns to the 9-diagnostic baseline (the fix commit’s check measured 10 before).
+Also folds the CL-2 review's P3: the observation reader now returns the record's own
+`kind` instead of a hardcoded literal, so the future `refused_before_dispatch` producer
+reads correctly without touching this reader.
+
+## 2026-10-10 CL-2 slice — canonical failure observation (the non-application record)
+
+The first #1807 continuation slice by the new agent: the canonical refusal/non-application
+record `classifyPipelineObservation` has been waiting for. Migration
+`20270602000430_int1807_pipeline_non_application.sql` (renumbered from 411 after the production frontier advanced to `…0423` mid-flight — the chronic frontier race; clears main, prod, and open-PR claims through `…0428`; originally numbered above main `…0304`, the
+deployed production frontier `…00401` and open-PR claims through `…0410`) adds the
+`pipeline_metadata_non_application` table (RLS on, no policies, all client grants revoked;
+one record per effect), a service-only write
+`record_pipeline_metadata_non_application(thread, intent, token, sqlstate)` and an
+authenticated-only read `read_pipeline_metadata_observation(thread, intent, effect)` that
+composes the frozen discovery + original resolvers before returning classifier-shaped
+evidence for an exactly-matching record. Exactly ONE provably-safe producer class is wired:
+a database-ANSWERED refusal of the single-RPC Pipeline door call (`databaseAnswered`/
+`refusedByDatabase` doctrine — one transaction rolled back whole), recorded best-effort at
+the C4a pinned dispatch seam where the card token is held. Transport failures, timeouts and
+lost answers are never recorded and stay `outcome_unknown`; `refused_before_dispatch` needs
+the door's own typed vocabulary (Pipeline-owned) and stays reserved. The status path now
+upgrades an unknown readback through
+`_shared/pipeline-metadata-observation.ts` (triple scope recheck; the classifier's
+scopeEpoch comparison is tautological by design and said so — the five caller-known fields
+carry the real cross-check). Observations remain observations: nothing settles, retries,
+releases or activates, the successor-write brake stays controlling, and recording the
+gated model-emit path (non-pinned calls) is a named follow-up. INT-346 remains DRAINING.
+Proofs: native rollback check `scripts/int1807-non-application-check.mjs` (derivation,
+idempotency, transport-code refusal, lineage-gated reads, drifted-record refusal, ACLs;
+`--negative-control` fails without the migration), handler composition
+`scripts/int1807-observation-handler-check.mjs` (failing-first against the unmodified
+handler: `actual: 'outcome_unknown'`), adapter unit 18/18, family vitest 71/71, tsc ratchet
+10=10, no new Deno diagnostics. Both checks are CI-wired beside their siblings.
+
 ## 2026-10-10 program acceptance matrix — handoff grounding, before any code change
 
 INT-304 handoff grounding by the new Conversational Loop agent, verified read-only against

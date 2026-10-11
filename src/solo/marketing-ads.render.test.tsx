@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Marketing › Ads (INT-342 S1c): the paid-acquisition desk before any ad platform can be read. Saved ad
+// The Ads desk (INT-342 S1c; its own department since 2026-10-10): the paid-acquisition desk before any ad platform can be read. Saved ad
 // copy and briefs are real; every provider figure is named as not available. Network reads are stubbed at
 // the Supabase client and the briefs adapter; everything else is the real view.
 import React from "react";
@@ -72,7 +72,7 @@ describe("parseAdCopy", () => {
   });
 });
 
-describe("Marketing › Ads desk", () => {
+describe("The Ads desk", () => {
   it("opens on Overview: nothing estimated, a ghost spend card, the brief's budget quoted as a plan, and the drafts ready", async () => {
     db.tables.marketing_content = { data: [AD], error: null };
     briefs.briefs = [{ id: "b1", name: "Spring advisory intake", budgetTarget: "About $2,000 for April", lifecycleStatus: "active" }, { id: "b2", name: "Old", budgetTarget: "$9", lifecycleStatus: "archived" }];

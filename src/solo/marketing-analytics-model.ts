@@ -22,7 +22,9 @@ export const DEFAULT_RANGE: RangeKey = "month";
 export const rangeOf = (key: string | null | undefined) => RANGES.find((range) => range.key === key) ?? RANGES[1];
 
 export type SourceRow = { label: string; count: number };
-export type CampaignTagRow = { tag: string; count: number; brief: string | null };
+/** `note` replaces the brief line for rows that are not one tag (the server's folded rest, leads matching
+ *  several briefs, a brief this page doesn't list); `key` keeps those rows distinct. */
+export type CampaignTagRow = { tag: string; count: number; brief: string | null; key?: string; note?: string };
 /** Where a form's leads go, in Overview's words: a pipeline, an email alert only, automations but no pipeline, or nowhere. */
 export type RouteState = "pipeline" | "alert" | "automations" | "none";
 export type CapturePoint = { id: string; name: string; count: number; route: RouteState; failed: number };
@@ -72,7 +74,7 @@ const OUTCOME_LABEL: Record<OutcomeKey, string> = {
   failed: "Couldn’t process",
 };
 const OUTCOME_ORDER: OutcomeKey[] = ["opportunity", "client", "saved", "waiting", "failed"];
-const NAMED_SOURCES = 4;
+export const NAMED_SOURCES = 4;
 // Monday first, as a business week reads.
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

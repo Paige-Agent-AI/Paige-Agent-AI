@@ -1,5 +1,6 @@
-// Marketing › Ads (INT-342 S1c, owner-approved prototype v2, 2026-10-10; owner ruling the same day: "Desk
-// now, Meta read next"). docs/product/int342-marketing-convergence.md §G/§K.
+// The Ads desk (INT-342 S1c, owner-approved prototype v2, 2026-10-10; owner ruling the same day: "Desk now,
+// Meta read next"). docs/product/int342-marketing-convergence.md §G/§K. Mounted by its own department since
+// 2026-10-10 (src/solo/AdsWorkspace.tsx, directly below Marketing); it was Marketing's Ads tab before.
 //
 // The paid-acquisition desk, built before any ad platform can be read. Paige cannot read an ad account yet
 // (connecting Meta or Metricool in Integrations does not change that), so every provider figure (spend, impressions, clicks, cost per

@@ -240,6 +240,81 @@
       ]
     },
     {
+      "id": "ads.department",
+      "consequential": true,
+      "surface": "Solo Ads — Overview, Campaigns, Creative, Audiences, Performance (its own department directly below Marketing; owner ruling 2026-10-10, ANT-15/INT-342)",
+      "group": "ads",
+      "tier_scope": [
+        "solo standalone"
+      ],
+      "owner_component": "src/solo/AdsWorkspace.tsx (route owner); src/solo/marketing-ads.tsx (the rehomed S1c desk); src/solo/ads-routing.ts (legacy /growth/ads redirect)",
+      "canonical_source": "marketing_content (saved ad copy, owner/admin read policy); campaign briefs via useSoloCampaignBriefs (a brief's written budget, quoted as a plan); no ad-provider, spend or attribution source exists",
+      "chain": {
+        "canonical_source": {
+          "status": "partial",
+          "note": "The desk reads saved ad copy and campaign briefs only. No provider account, campaign, spend, delivery or attribution record exists; those are named UNAVAILABLE in docs/product/int342-marketing-convergence.md §M."
+        },
+        "tenant_scope": {
+          "status": "inherited_contract",
+          "note": "Existing tenant-scoped reads and the library owner/admin read policy are reused unchanged; the route address is never authority (§9). Authenticated isolation proof for the new mount is absent."
+        },
+        "safe_context": {
+          "status": "none",
+          "note": "No ads.* capability is registered with the Spine or Chat/Live; Ask PAIGE hands an ad-copy brief to the existing chat only. The future contract is §M3."
+        },
+        "authority": {
+          "status": "none",
+          "note": "Department navigation grants nothing. No ad account activation, campaign creation, publishing or spend is authorized."
+        },
+        "governed_write": {
+          "status": "none",
+          "note": "The desk writes nothing; ad copy is drafted through the existing chat handoff and saved by Marketing's content seam."
+        },
+        "verified_outcome": {
+          "status": "proof_owed",
+          "note": "Automated route/registry/rail contracts and a local rendered harness pass; no authenticated Solo session has opened the department."
+        },
+        "rail_evidence": {
+          "producer": "none",
+          "read": "none",
+          "note": "Ad-copy saves keep Marketing's existing content_save receipt; no Ads-owned producer or receipt exists."
+        },
+        "mind_eligibility": {
+          "axis_a": "n/a",
+          "axis_b": "NO",
+          "note": "The department introduces no Mind evidence; source records keep their existing eligibility."
+        },
+        "memory_retention": {
+          "status": "none",
+          "note": "No department memory write or retention policy is introduced."
+        }
+      },
+      "intended_capability": {
+        "read": "Tenant-authorized ad accounts, campaigns, ad sets, creatives, delivery, spend and provider-reported results, each with provenance, kept distinct from CRM-attributed leads and confirmed Sales outcomes.",
+        "draft": "Prepare campaign structures, targeting, budgets and creative variants from Marketing's briefs and saved content, for owner review.",
+        "auto": "Within the owner's standing delegated policy and its approved objectives, budget caps and stop conditions, act on the tenant's own connected ad account as its delegated operator — pause harmful spend, or launch/pause a pre-approved campaign within scope — recording why, Rail-logged. Blocked today by the absent provider integration and authorization, not by policy.",
+        "confirm": "Account activation, a new campaign, publishing, any spend above the granted caps, or an action not on the pre-approved list escalates to owner confirmation (high).",
+        "prohibited": "Never invent a metric, account or campaign (§13). Ad spend executes only on the tenant's OWN connected ad account (§38); Paige never holds or routes the tenant's ad funds. No duplicate of Marketing's campaign records and no second executor.",
+        "completion_criterion": "An authenticated Solo owner sees real provider-reported performance and Paige completes a governed, owner-approved ad action with verified readback and a Rail receipt, the same capability reachable from Chat and Live — fixture rendering does not meet this criterion."
+      },
+      "state": "PROOF_OWED",
+      "state_reason": "The existing S1c desk is rehomed from Marketing into its own Solo department with five addressable views; old /growth/ads links redirect. Automated contracts and a local rendered harness pass; authenticated runtime is UNVERIFIED. Provider read, attribution, approvals, execution and Chat/Live ads capabilities are UNAVAILABLE or GATED — the department is not end-to-end operational.",
+      "next_slice": "Prove the department in an authenticated Solo session (§32.c). Then Phase B of int342 §M: a tenant-authorized, read-only provider connection through Integrations, with no activation, publishing or spend until the owner authorizes it.",
+      "evidence_class": [
+        "source_read",
+        "automated_test",
+        "rendered_structural"
+      ],
+      "sources": [
+        "src/solo/AdsWorkspace.tsx",
+        "src/solo/ads-routing.ts",
+        "src/solo/marketing-ads.tsx",
+        "src/solo/AdsWorkspace.route.test.tsx",
+        "docs/product/int342-marketing-convergence.md",
+        "docs/evidence/ui-delivery/int342-ads-department.md"
+      ]
+    },
+    {
       "id": "paige.workspace",
       "intended_capability": {
         "read": "The safe surface context handed to the workspace — surface id, public-safe record ref, readiness/provenance — never raw payload or authority.",
@@ -626,7 +701,7 @@
       "intended_capability": {
         "read": "Once a metrics source exists: real performance metrics with provenance.",
         "draft": "Interpret performance and recommend actions.",
-        "auto": "Within the owner's standing delegated policy and its budget caps and stop conditions, take the pre-approved performance-driven action on the connected ad platform — e.g. pause a campaign breaching a CPA ceiling, or shift spend within the approved budget — recording the basis and the action, Rail-logged. Blocked today only by the absent metrics source.",
+        "auto": "Within the owner's standing delegated policy and its budget caps and stop conditions, take the pre-approved performance-driven action on the connected ad platform — e.g. pause a campaign breaching a CPA ceiling, or shift spend within the approved budget — recording the basis and the action, Rail-logged. Blocked today only by the absent metrics source. The ad-platform action itself executes through the Ads department's capability (`ads.department`), never a second executor here.",
         "confirm": "A performance-driven change above the granted caps, or one not on the pre-approved action list, escalates to owner confirmation (high).",
         "prohibited": "Never infer or fabricate a metric (§13). Spend actions execute on the tenant's own connected ad account (§38).",
         "completion_criterion": "Real performance data drives a Paige-prepared, owner-approved action with a verified result — blocked today on the absent metrics source."
@@ -651,7 +726,7 @@
       "state": "UNAVAILABLE",
       "state_reason": "No metrics source exists. Performance is the right model for how Mind should DECLINE, and must not be given data to look otherwise. Mind must be pointed away from it.",
       "evidence_class": ["source_read"],
-      "linked": [],
+      "linked": ["ads.department"],
       "next_slice": "None. Mind must be pointed away from this surface.",
       "sources": ["docs/architecture/paige-mind-integration-matrix.md#campaigns-social-performance"]
     },

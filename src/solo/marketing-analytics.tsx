@@ -7,7 +7,9 @@
 // opportunity; the source mix; which forms collected them; when leads arrive; and how each channel did. Every figure comes from a read that already
 // exists: submissions, published forms and briefs (passed in from the Marketing hub) and, for the email
 // row only, read_email_marketing_dashboard. Nothing is estimated. Where a channel has no source
-// (ads, social, page visits) it says so instead of showing a zero.
+// (social, page visits) it says so instead of showing a zero. Ad accounts, spend and ad performance
+// belong to the Ads department (coordinator, 2026-10-11); a lead from a paid link is still counted here
+// by its source tag, in the Source mix.
 //
 // The prototype's Year range is left out: the email read serves 7, 30 or 90 days, and a year of leads
 // would almost always exceed the submissions read, so a year figure would be mostly a floor.
@@ -17,6 +19,8 @@ import type { CampaignArtifact, CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
 import { SUBMISSION_READ_LIMIT } from "./marketing-overview-model";
 import { RANGES, deriveMarketingAnalytics, rangeOf, type RangeKey } from "./marketing-analytics-model";
+import { useMarketingServerFigures, withServerFigures } from "./marketing-analytics-metrics";
+import { submissionsInPeriod } from "./marketing-overview-model";
 import { rate, ratePoints } from "./marketing-email-model";
 import { ChartBoundary } from "./marketing-ui";
 import type { DonutSlice } from "./marketing-overview-charts";
@@ -50,16 +54,25 @@ export type MarketingAnalyticsProps = {
   onOpenForm: (formId: string) => void;
   onOpenSales: () => void;
   onOpenEmail: () => void;
-  onOpenAds: () => void;
   /** Vibe Studio's launcher, for someone who may build there; offered when no form is live. */
   studioLauncher?: React.ReactNode;
 };
 
-export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, onOpenAds, studioLauncher }: MarketingAnalyticsProps) {
+export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher }: MarketingAnalyticsProps) {
   const current = rangeOf(range);
-  const model = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days }), [submissions, briefs, forms, current.days]);
+  const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days }), [submissions, briefs, forms, current.days]);
+  // The headline figures, the funnel and the source mix are counted on the server over every lead in the
+  // range (owners and admins); anyone else, or a read that fails, keeps the counts from the records read
+  // here. The trend, the outcome ring, the heatmap and the capture points always draw from the records.
+  const periodStart = submissionsInPeriod([], current.days).periodStart;
+  const { phase: serverPhase, current: serverNow, previous: serverBefore } = useMarketingServerFigures(tenantId, range, periodStart);
+  const model = React.useMemo(() => (serverPhase === "ready" && serverNow ? withServerFigures(records, serverNow, serverBefore, briefs) : records), [records, serverPhase, serverNow, serverBefore, briefs]);
   const email = useEmailStats(tenantId, current.days);
   const floor = (count: number) => `${count.toLocaleString()}${model.capped ? "+" : ""}`;
+  const recordFloor = (count: number) => `${count.toLocaleString()}${records.capped ? "+" : ""}`;
+  const counted = model !== records;
+  // The server matches campaign tags to briefs itself, so a failed briefs read here no longer hides it.
+  const briefsShown = briefsKnown || counted;
   const period = `the last ${current.days} days`;
   const liveForms = model.capture.length;
 
@@ -75,12 +88,15 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
   // Why a figure has no comparison, in the owner's words: the read is full, it doesn't reach back far
   // enough, or (for a share) the period before had no leads to take a share of.
   const noCompare = model.capped ? "No comparison: the read is full" : !prev ? `The read doesn’t reach the previous ${current.days} days` : `No leads in the previous ${current.days} days`;
-  const rateSpark = (pick: (p: (typeof model.trend)[number]) => number) => model.trend.map((p) => (p.leads ? pick(p) / p.leads : null));
+  // The sparklines draw the records read. Under an exact figure from a full read they would show only part
+  // of the range, so they are left out there (the trend card below still draws what was read).
+  const sparkOf = <T,>(values: T[]): T[] => (counted && records.capped ? [] : values);
+  const rateSpark = (pick: (p: (typeof model.trend)[number]) => number) => sparkOf(model.trend.map((p) => (p.leads ? pick(p) / p.leads : null)));
   const kpis: Kpi[] = [
-    { key: "leads", icon: "users", label: "Leads", value: floor(model.leads), foot: `in the last ${current.days} days`, spark: model.trend.map((p) => p.leads), delta: prev && { now: model.leads, before: prev.leads } },
+    { key: "leads", icon: "users", label: "Leads", value: floor(model.leads), foot: `in the last ${current.days} days`, spark: sparkOf(model.trend.map((p) => p.leads)), delta: prev && { now: model.leads, before: prev.leads } },
     { key: "traced", icon: "filter", label: "Traced to a source", value: model.leads ? `${share(model.tagged, model.leads)}%` : "—", foot: model.leads ? `${floor(model.tagged)} of ${floor(model.leads)} carry a source tag` : "No leads to measure", spark: rateSpark((p) => p.tagged), delta: prev && model.leads && prev.leads ? { now: share(model.tagged, model.leads), before: share(prev.tagged, prev.leads), points: true } : null },
-    { key: "matched", icon: "bolt", label: "Matched to a campaign", value: briefsKnown ? floor(model.matched) : "—", foot: briefsKnown ? "Their campaign tag is a brief’s reference" : "Briefs couldn’t load", spark: briefsKnown ? model.trend.map((p) => p.matched) : [], delta: briefsKnown && prev ? { now: model.matched, before: prev.matched } : null, why: briefsKnown ? undefined : "Briefs couldn’t load" },
-    { key: "opps", icon: "trend", label: "Became opportunities", value: floor(model.opportunities), foot: "Handed to Sales as a deal", spark: model.trend.map((p) => p.opportunities), delta: prev && { now: model.opportunities, before: prev.opportunities } },
+    { key: "matched", icon: "bolt", label: "Matched to a campaign", value: briefsShown ? floor(model.matched) : "—", foot: briefsShown ? "Their campaign tag is a brief’s reference" : "Briefs couldn’t load", spark: briefsKnown ? sparkOf(model.trend.map((p) => p.matched)) : [], delta: briefsShown && prev ? { now: model.matched, before: prev.matched } : null, why: briefsShown ? undefined : "Briefs couldn’t load" },
+    { key: "opps", icon: "trend", label: "Became opportunities", value: floor(model.opportunities), foot: "Handed to Sales as a deal", spark: sparkOf(model.trend.map((p) => p.opportunities)), delta: prev && { now: model.opportunities, before: prev.opportunities } },
     { key: "rate", icon: "pulse", label: "Lead to opportunity", value: model.leads ? `${share(model.opportunities, model.leads)}%` : "—", foot: model.leads ? "Of the leads in this range" : "No leads to measure", spark: rateSpark((p) => p.opportunities), delta: prev && model.leads && prev.leads ? { now: share(model.opportunities, model.leads), before: share(prev.opportunities, prev.leads), points: true } : null },
   ];
 
@@ -95,17 +111,20 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
     </div>
     <ul className="mva-kpis" aria-label="Headline figures">{kpis.map((kpi) => <KpiTile key={kpi.key} kpi={kpi} days={current.days} noCompare={kpi.why ?? noCompare}/>)}</ul>
     <div className="mva-pair is-wide">
-      <TrendCard model={model} days={current.days}/>
-      <OutcomesCard model={model} floor={floor}/>
+      <TrendCard model={records} days={current.days}/>
+      <OutcomesCard model={records} floor={recordFloor}/>
     </div>
-    <Funnel model={model} floor={floor} days={current.days} briefsKnown={briefsKnown} onOpenSales={onOpenSales}/>
+    <Funnel model={model} floor={floor} days={current.days} briefsKnown={briefsShown} onOpenSales={onOpenSales}/>
     <div className="mva-pair">
-      <Coverage model={model} floor={floor} days={current.days} briefsKnown={briefsKnown}/>
-      <Capture model={model} floor={floor} onOpenForm={onOpenForm} studioLauncher={studioLauncher}/>
+      <Coverage model={model} floor={floor} days={current.days} briefsKnown={briefsShown}/>
+      <Capture model={records} floor={recordFloor} onOpenForm={onOpenForm} studioLauncher={studioLauncher}/>
     </div>
-    <HeatCard model={model} days={current.days}/>
-    <Channels days={current.days} email={email} onOpenEmail={onOpenEmail} onOpenAds={onOpenAds}/>
-    {model.capped && <p className="mva-cap">Counted from the latest {SUBMISSION_READ_LIMIT} submissions, all inside this range, so each count is a floor and nothing is compared with the period before.</p>}
+    <HeatCard model={records} days={current.days}/>
+    <Channels days={current.days} email={email} onOpenEmail={onOpenEmail}/>
+    {counted && serverNow && serverNow.missingDeals > 0 && <p className="mva-cap">{plural(serverNow.missingDeals, "lead")} {serverNow.missingDeals === 1 ? "points" : "point"} to an opportunity that no longer exists, so {serverNow.missingDeals === 1 ? "it isn’t" : "they aren’t"} counted as {serverNow.missingDeals === 1 ? "an opportunity" : "opportunities"} here.</p>}
+    {records.capped && <p className="mva-cap">{counted
+      ? <>The headline figures, the funnel and the source mix count every lead in this range. Leads over time, what happened to each lead, capture points and when leads arrive are drawn from the latest {SUBMISSION_READ_LIMIT} submissions, so their counts are floors.</>
+      : <>Counted from the latest {SUBMISSION_READ_LIMIT} submissions, all inside this range, so each count is a floor and nothing is compared with the period before.</>}</p>}
   </div>;
 }
 
@@ -243,7 +262,7 @@ function Coverage({ model, floor, days, briefsKnown }: { model: Model; floor: (n
         <RingWithKeys slices={slices} total={floor(model.leads)} caption="Leads" label="Leads by source" active={active} setActive={setActive} floor={floor} whole={model.leads}/>
         {model.campaignTags.length > 0 && <>
           <h3 className="mva-sub">Campaign tags · {floor(model.campaignTagged)} of {floor(model.leads)} leads tagged</h3>
-          <ul className="mva-tags" aria-label="Leads by campaign tag">{model.campaignTags.map((row) => <li key={row.tag}><span className="mva-row-t">{row.tag}<small>{row.brief ? `Brief: ${row.brief}` : briefsKnown ? "No brief uses this reference" : "Briefs couldn’t load"}</small></span><b>{floor(row.count)}</b></li>)}</ul>
+          <ul className="mva-tags" aria-label="Leads by campaign tag">{model.campaignTags.map((row) => <li key={row.key ?? row.tag}><span className="mva-row-t">{row.tag}<small>{row.note ?? (row.brief ? `Brief: ${row.brief}` : briefsKnown ? "No brief uses this reference" : "Briefs couldn’t load")}</small></span><b>{floor(row.count)}</b></li>)}</ul>
         </>}
       </> : <>
         <div className="mva-cov is-empty" aria-hidden="true"><span className="is-u" style={{ flexGrow: 1 }}/></div>
@@ -280,7 +299,7 @@ function Capture({ model, floor, onOpenForm, studioLauncher }: { model: Model; f
   </section>;
 }
 
-function Channels({ days, email, onOpenEmail, onOpenAds }: { days: number; email: EmailRead; onOpenEmail: () => void; onOpenAds: () => void }) {
+function Channels({ days, email, onOpenEmail }: { days: number; email: EmailRead; onOpenEmail: () => void }) {
   const s = email.stats;
   const opened = s ? rate(s.opened, s.tracked) : null;
   const emailLine = email.phase === "loading" ? "Reading email…"
@@ -290,7 +309,6 @@ function Channels({ days, email, onOpenEmail, onOpenAds }: { days: number; email
     : `${n(s.sent)} sent · ${n(s.opened)} opened${opened === null ? "" : ` (${opened}% of ${n(s.tracked)} tracked)`} · ${n(s.clicked)} clicked${s.sent > s.tracked ? ` · ${n(s.sent - s.tracked)} sent through your own mail, not tracked` : ""}`;
   const rows: { name: string; line: string; flag?: string; act?: React.ReactNode }[] = [
     { name: "Email", line: emailLine, act: email.phase === "error" ? <button type="button" className="btn btn-s" onClick={email.retry}>Try again</button> : <button type="button" className="mov-lnk" onClick={onOpenEmail}>Open Email</button> },
-    { name: "Ads", line: "Ad accounts aren’t read here, so no spend or ad leads are shown", flag: "Not available", act: <button type="button" className="mov-lnk" onClick={onOpenAds}>Open Ads</button> },
     { name: "Social", line: "Reach and engagement aren’t read from any provider", flag: "Not available" },
     { name: "Your pages", line: "Visits aren’t recorded on public pages", flag: "Not available" },
   ];
@@ -302,5 +320,6 @@ function Channels({ days, email, onOpenEmail, onOpenAds }: { days: number; email
       <span className="mva-row-t">{row.name}<small aria-live={row.name === "Email" ? "polite" : undefined}>{row.line}</small></span>
       <span className="mva-ch-a">{row.flag && <span className="pill pill-n">{row.flag}</span>}{row.act}</span>
     </li>)}</ul>
+    <p className="mov-foot">Leads from links with a source tag, paid ones included, are counted in Source mix.</p>
   </section>;
 }

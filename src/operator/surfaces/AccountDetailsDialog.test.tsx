@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const h = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), preview: vi.fn(), archive: vi.fn(), execute: vi.fn(), outcome: vi.fn() }));
-vi.mock('@/operator/data/accountControls', async importOriginal => ({ ...await importOriginal<typeof import('@/operator/data/accountControls')>(), readAccountDetails: h.read, saveAccountDetails: h.save, previewAccountDeletion: h.preview, previewAccountArchive: h.archive, executeLifecycle: h.execute, readLifecycleOutcome: h.outcome }));
+const h = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), preview: vi.fn(), archive: vi.fn(), execute: vi.fn(), outcome: vi.fn(), resources:vi.fn(), resourceRead:vi.fn(), resourceRun:vi.fn() }));
+vi.mock('@/operator/data/accountControls', async importOriginal => ({ ...await importOriginal<typeof import('@/operator/data/accountControls')>(), readAccountDetails: h.read, saveAccountDetails: h.save, previewAccountDeletion: h.preview, previewAccountArchive: h.archive, executeLifecycle: h.execute, readLifecycleOutcome: h.outcome, previewRetirementResources:h.resources,readRetirementResources:h.resourceRead,runRetirementResources:h.resourceRun }));
 import { AccountRpcError } from '@/operator/data/accountControls';
 import AccountDetailsDialog from './AccountDetailsDialog';
 const details = { id:'test-tenant-a', name:'Example Agency', status:'active', account_type:'agency', parent_tenant_id:null, version:'read-version' };
@@ -26,6 +26,23 @@ const fireEvent = {
 const waitFor = vi.waitFor;
 const open = async () => { const changed=vi.fn(), close=vi.fn(); await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} onClose={close} onChanged={changed}/>)); await screen.findByRole('button',{name:'Edit account'}); return {changed,close}; };
 describe('account controls — actual dialog interaction', () => {
+  it('includes file cleanup in one Delete confirmation and never opens Prepare', async()=>{
+    h.read.mockResolvedValue({...details,archived_at:'2026-01-01',archive_operation_id:'archive-a'});
+    const review={tenant_id:details.id,archive_operation_id:'archive-a',accounts:[details],blockers:['2 files need cleanup'],storage_count:2,version:'before',data_version:'business-data',execution_available:false};
+    h.preview.mockResolvedValueOnce(review).mockResolvedValueOnce(review).mockResolvedValue({...review,storage_count:0,version:'after',execution_available:true,blockers:[]});
+    h.resources.mockResolvedValue({...review,mode:'delete',version:'files',execution_available:true,resources:[{provider:'tts_cache',tenant_id:details.id,action:'remove_cache',object_count:2}]});
+    h.resourceRead.mockResolvedValue(null);h.resourceRun.mockImplementation(async(_id,operation)=>({tenant_id:details.id,operation_id:operation,mode:'delete',file_only:true,state:'resources_ready',account_count:1,results:[{provider:'tts_cache',state:'verified',provider_status:'removed',reason:null}]}));
+    h.execute.mockResolvedValue({tenant_id:details.id,operation_id:'archive-a',state:'deleted',account_count:1,external_cleanup_pending:true});
+    const changed=vi.fn();await act(async()=>root.render(<AccountDetailsDialog tenantId={details.id} onClose={()=>{}} onChanged={changed}/>));
+    fireEvent.click(screen.getByRole('button',{name:'Permanently delete account'}));
+    await waitFor(()=>expect(document.getElementById('fleet-lifecycle-confirm')).not.toBeNull());
+    expect(button('Prepare resources')).toBeNull();expect(button('Remove eligible files')).toBeNull();
+    fireEvent.change(document.getElementById('fleet-lifecycle-confirm')!,{target:{value:details.name}});fireEvent.click(document.querySelector('input[type="checkbox"]')! as HTMLElement);
+    fireEvent.click(screen.getByRole('button',{name:'Permanently delete listed accounts'}));
+    await waitFor(()=>expect(changed).toHaveBeenCalledTimes(1));expect(h.resourceRun).toHaveBeenCalledTimes(1);
+    expect(h.execute).toHaveBeenCalledWith(details.id,'delete','archive-a',details.name,'after');
+    expect(screen.getByText('PAIGE retirement is complete. External cleanup remains pending; services or charges may continue.')).toBeTruthy();
+  });
   it('preserves edited input through Cancel / Keep editing', async () => {
     await open(); fireEvent.click(screen.getByRole('button',{name:'Edit account'}));
     fireEvent.change(screen.getByLabelText('Account name'),{target:{value:'Revised example'}});

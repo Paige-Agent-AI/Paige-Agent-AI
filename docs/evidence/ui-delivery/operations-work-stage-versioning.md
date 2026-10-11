@@ -1,5 +1,17 @@
 # Operations Work stage movement — bounded release evidence
 
+## Current P1 interaction coverage — October 10/11 continuation
+
+Actual release source at merge59c8fde6 (main9290a63c preserved; product code unchanged from8b1d9050) was rendered through the canonical Solo shell with explicit synthetic actor, Planning, Team and RPC-refusal ports. No authenticated customer or successful production write is claimed.
+
+- `operations-v3/stage-matrix-verification.json`:32 configurations PASS:1536×770,1366×768,1024×768,900×1000; Obsidian/Mineral; PAIGE initially open/closed; native drag and keyboard equivalent. Correct item/stage, confirmation focus, cancelled draft retention, refusal, unchanged authoritative lane, invoker focus, real board scrolling, recovery reachability and no page/panel overflow checked. Desktop open PAIGE remains a side rail. At1024/900 it is the canonical modal: the genuine fold control restores the work area before editing; simultaneous editing through the backdrop is neither forced nor claimed. Keyboard cases use reduced motion; drag cases exercise ordinary motion.
+- Four second-workspace cases PASS in both worlds at1366/900: switching with a dirty confirmation clears it and the drawer, preserves the Work route, resolves B records, pins the new write to B, never replays A's proposal, and refuses a foreign bundle without showing its work/details. The actual shared-hook epoch tests independently cover late A responses after B resolves.
+- `operations-v3/stage-zoom-verification.json`: eight genuine Chrome200%/400% browser-zoom cases PASS, both worlds and PAIGE initially open/closed. Separate new unsigned-in profiles use persisted native zoom preferences; DPR2/4 and outer1366 versus CSS674/337 establish zoom/reflow rather than CSS scaling. Keyboard stage, confirmation/refusal, scroll-to-recovery, panel containment, no document overflow and focus return PASS. Canonical modal fold and its existing150ms focus settlement are honored.
+- Current focused source suite:19 tests in four files PASS (Work, WorkEditor, versioned adapter and shared-hook tenant switching). SQL32 assertions remain gated on final rebuilt-schema CI. Earlier failed test attempts used incorrect test selectors/route expectations or ran before the canonical fold focus settled; none were reported as passing.
+- Captures: `operations-v3/stage-matrix/` and `operations-v3/stage-zoom/`. Local runners/ports remain in `work/operations-render-harness/verify-stage-matrix.cjs`, `verify-stage-zoom.cjs`, `root-fixtures.tsx`; they are explicitly synthetic and are not shipped product data.
+
+Impeccable checks applied: existing V3 world preserved, actual containment/scroll/focus and keyboard recovery checked, semantic refusal maintained, reduced motion exercised. Independent current-evidence finish review, final exact-head review/CI, deployment/migration/source readback and authenticated acceptance remain owed at this checkpoint. Historical entries below retain their original evidence boundaries; their old zoom UNVERIFIED entry is superseded only by the current synthetic browser proof above, never authenticated acceptance.
+
 ## Supported staff-role correction
 
 ## Target-tenant authority hardening

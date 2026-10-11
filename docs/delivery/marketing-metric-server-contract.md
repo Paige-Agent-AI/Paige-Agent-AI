@@ -14,7 +14,7 @@ Spine/Chat/Live access. This slice follows the Sales precedent (`sales-performan
   `_analytics_metric_produce` with the eleven `marketing.*` keys and one `marketing.%` branch; every other line is as
   `20270601000006` wrote it. Coordination is recorded on Linear ANT-23 (INT-340). Nothing else in the shared seam changes.
 - **Not in this slice:** the Chat/Live key list (`supabase/functions/_shared/analytics-metrics/read.ts`, Platform Reach,
-  MBC slice 6) and the Analytics surface consuming these keys (slice 2b). No KPI value is stored; the issuer persists only
+  MBC slice 6). No KPI value is stored; the issuer persists only
   an opaque reference that expires after 15 minutes.
 
 ## Private entry and authority
@@ -76,4 +76,13 @@ CPL, CAC, ROAS (Ads department), revenue (Sales), qualified leads.
   - the private producer, a foreign epoch and a member refused;
   - a new lead invalidating an issued reference;
   - other domains still dispatching.
-- Unit tests of the shapes against `parseMetricResult` ship with slice 2b, which consumes them.
+- Slice 2b consumes four keys on Marketing › Analytics (`src/solo/marketing-analytics-metrics.ts`):
+  - `marketing.leads.received`, `.by_utm_source`, `.by_campaign_tag` and `.converted_to_opportunity`, read for the range
+    [start of the first local day, now − 1 s) and the same number of local days before it;
+  - every answer passes `parseMetricResult` with the expected key, version, epoch, range and dimensions, and must be
+    owned by `marketing`, before anything is drawn;
+  - "traced to a source" = named source tags + the folded rest; "campaign tagged" = brief and unmatched tags + the
+    ambiguous exclusion; "matched" = brief rows only;
+  - 42501 is a member: the page keeps its own counts. Any other failure is logged and the page keeps its own counts.
+  - Tests: `src/solo/marketing-analytics-metrics.test.tsx` (shapes against the real validator, the eight issued reads,
+    refusal, a foreign epoch) and `src/solo/growth2.render.test.tsx` (owner, member).

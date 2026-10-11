@@ -11,11 +11,17 @@
 // belong to the Ads department (coordinator, 2026-10-11); a lead from a paid link is still counted here
 // by its source tag, in the Source mix.
 //
+// Where those leads stand in Sales (owner ruling 2026-10-11: Marketing, Sales and Ads read the SAME
+// pipelines and stages): the shared pipeline lead funnel (pipeline-lead-funnel.tsx), counted on the
+// server by campaign tag and ad tag, or from the submissions read here when that count isn't available.
+//
 // The prototype's Year range is left out: the email read serves 7, 30 or 90 days, and a year of leads
 // would almost always exceed the submissions read, so a year figure would be mostly a floor.
 import React from "react";
 import { Ic as SharedIcons } from "./_shared";
-import type { CampaignArtifact, CampaignSubmission } from "./useSoloCampaigns";
+import type { CampaignArtifact, CampaignSubmission, PipelineWorkspace } from "./useSoloCampaigns";
+import { deriveLeadFunnel, pipelineChoices } from "./ads-model";
+import { LeadFunnelPanel, sinceFor, useLeadFunnel, type FunnelFallback } from "./pipeline-lead-funnel";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
 import { SUBMISSION_READ_LIMIT } from "./marketing-overview-model";
 import { RANGES, deriveMarketingAnalytics, rangeOf, type RangeKey } from "./marketing-analytics-model";
@@ -56,9 +62,11 @@ export type MarketingAnalyticsProps = {
   onOpenEmail: () => void;
   /** Vibe Studio's launcher, for someone who may build there; offered when no form is live. */
   studioLauncher?: React.ReactNode;
+  /** The Sales pipelines, stages and deals (the same read Sales draws from). Omitted, no funnel is drawn. */
+  pipelineWorkspace?: Pick<PipelineWorkspace, "pipelines" | "stages" | "deals"> | null;
 };
 
-export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher }: MarketingAnalyticsProps) {
+export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher, pipelineWorkspace }: MarketingAnalyticsProps) {
   const current = rangeOf(range);
   const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days }), [submissions, briefs, forms, current.days]);
   // The headline figures, the funnel and the source mix are counted on the server over every lead in the
@@ -115,6 +123,7 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
       <OutcomesCard model={records} floor={recordFloor}/>
     </div>
     <Funnel model={model} floor={floor} days={current.days} briefsKnown={briefsShown} onOpenSales={onOpenSales}/>
+    {pipelineWorkspace && <PipelineStages tenantId={tenantId} workspace={pipelineWorkspace} submissions={submissions} days={current.days} onOpenSales={onOpenSales}/>}
     <div className="mva-pair">
       <Coverage model={model} floor={floor} days={current.days} briefsKnown={briefsShown}/>
       <Capture model={records} floor={recordFloor} onOpenForm={onOpenForm} studioLauncher={studioLauncher}/>
@@ -250,6 +259,23 @@ function Funnel({ model, floor, days, briefsKnown, onOpenSales }: { model: Model
     })}</ol>
     <p className="mov-foot mva-foot"><span>Won deals, value and revenue are Sales numbers. Marketing links to them and never recalculates them.</span><button type="button" className="mov-lnk" onClick={onOpenSales}>Open Sales performance</button></p>
   </section>;
+}
+
+/** The leads of this range, by the stage they stand in on one Sales pipeline (the default first). */
+function PipelineStages({ tenantId, workspace, submissions, days, onOpenSales }: { tenantId: string | null; workspace: Pick<PipelineWorkspace, "pipelines" | "stages" | "deals">; submissions: CampaignSubmission[]; days: number; onOpenSales: () => void }) {
+  const choices = React.useMemo(() => pipelineChoices(workspace.pipelines), [workspace.pipelines]);
+  const [pipelineId, setPipelineId] = React.useState<string | null>(null);
+  const chosen = choices.find((choice) => choice.id === pipelineId) ?? choices[0] ?? null;
+  const since = React.useMemo(() => sinceFor(days), [days]);
+  const fallback = React.useCallback<FunnelFallback>(async (pipeline, from) => ({
+    funnel: deriveLeadFunnel({ pipeline, stages: workspace.stages, deals: workspace.deals, since: from,
+      submissions: submissions.map((row) => ({ createdAt: row.createdAt, dealId: row.dealId, campaign: row.trackingCampaign, ad: row.trackingContent ?? null })) }),
+    capped: submissions.length >= SUBMISSION_READ_LIMIT,
+  }), [workspace.stages, workspace.deals, submissions]);
+  const read = useLeadFunnel({ tenantId, pipeline: chosen, since, fallback });
+  return <LeadFunnelPanel title="Where these leads stand in Sales" periodWords={`in the last ${days} days`} choices={choices} choicesReady
+    pipelineId={chosen?.id ?? null} onPipeline={setPipelineId} read={read} recordLimit={SUBMISSION_READ_LIMIT} onOpenSales={onOpenSales}
+    adHint="None of these leads carried an ad tag (utm_content). In Ads › Creative each picture has a tracking tag to add to its ad’s link."/>;
 }
 
 function Coverage({ model, floor, days, briefsKnown }: { model: Model; floor: (n: number) => string; days: number; briefsKnown: boolean }) {

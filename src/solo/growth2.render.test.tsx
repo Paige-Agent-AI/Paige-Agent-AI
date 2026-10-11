@@ -89,6 +89,14 @@ vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
   useMarketingProcessingHealth: () => harness.health,
 }));
 
+// Analytics' pipeline lead funnel reads get_pipeline_lead_funnel through its own hook; its server and
+// records paths are proven in marketing-analytics-funnel.render.test.tsx. Here the panel stays real and
+// the read never leaves the test (it draws the records the hub holds).
+vi.mock("./pipeline-lead-funnel", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./pipeline-lead-funnel")>();
+  return { ...actual, useLeadFunnel: () => ({ phase: "idle", funnel: null, source: null, reason: null, capped: false, retry: () => {} }) };
+});
+
 // What each campaign uses reads and writes through governed RPCs; their contract is proven by
 // supabase/tests/campaign_brief_asset_links.sql and useCampaignAssets.test.tsx. Here it answers what a test sets.
 vi.mock("./useCampaignAssets", async (importOriginal) => ({

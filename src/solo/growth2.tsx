@@ -324,7 +324,7 @@ function AnalyticsTab({ data, range, onRange, onOpenForm, onOpenSales, onOpenEma
   const phase = data.phase === "ready" && !briefsKnown && !briefsFailed ? "loading" : data.phase;
   const notice = briefsFailed ? <div className="mov-briefs-off" role="status"><p>Campaign briefs couldn’t load, so leads can’t be matched to a campaign right now.</p>{briefsState.retry && <button className="btn btn-s" onClick={() => briefsState.retry()}>Try again</button>}</div> : null;
   return <StateFrame phase={phase} retry={() => { data.retry?.(); briefsState.retry?.(); }} noun="marketing analytics">
-    <MarketingAnalytics notice={notice} tenantId={data.tenantId} submissions={data.submissions || []} forms={data.artifacts} briefs={briefsKnown ? briefsState.briefs || [] : []} briefsKnown={briefsKnown} range={range} onRange={onRange} onOpenForm={onOpenForm} onOpenSales={onOpenSales} onOpenEmail={onOpenEmail} studioLauncher={briefsKnown && briefsState.canManage ? studioLauncher : null}/>
+    <MarketingAnalytics notice={notice} tenantId={data.tenantId} submissions={data.submissions || []} forms={data.artifacts} briefs={briefsKnown ? briefsState.briefs || [] : []} briefsKnown={briefsKnown} range={range} onRange={onRange} onOpenForm={onOpenForm} onOpenSales={onOpenSales} onOpenEmail={onOpenEmail} studioLauncher={briefsKnown && briefsState.canManage ? studioLauncher : null} pipelineWorkspace={data.pipelineWorkspace ?? null}/>
   </StateFrame>;
 }
 

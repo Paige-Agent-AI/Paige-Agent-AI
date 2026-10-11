@@ -15,14 +15,18 @@ export default defineConfig({
     name: "planned-tabs-supabase",
     enforce: "pre",
     resolveId(source, importer) {
-      if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-content.tsx") || importer?.endsWith("marketing-ads.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(marketing, "planned-supabase-stub.ts");
+      // The Ads desk and the pipeline lead funnel: the business's pictures, its submissions and the two
+      // contracted server reads (ads-fixtures.ts); saved ad copy still answers from Marketing's fixture.
+      if ((importer?.endsWith("marketing-ads.tsx") || importer?.endsWith("pipeline-lead-funnel.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "ads-supabase-stub.ts");
+      if (importer?.endsWith("marketing-ads.tsx") && source.endsWith("components/admin/studio/studio")) return path.join(here, "studio-stub.ts");
+      if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-content.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(marketing, "planned-supabase-stub.ts");
       if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx") || importer?.endsWith("marketing-email-series.tsx") || importer?.endsWith("marketing-analytics-email.ts")) && source.endsWith("integrations/supabase/client")) return path.join(marketing, "email-supabase-stub.ts");
       return null;
     },
   }],
   resolve: {
     alias: [
-      { find: "./useSoloCampaigns", replacement: path.join(marketing, "stubs.ts") },
+      { find: "./useSoloCampaigns", replacement: path.join(here, "campaigns-stub.ts") },
       { find: "./useSoloCampaignBriefs", replacement: path.join(marketing, "briefs-stub.ts") },
       { find: "./useCatalogOffers", replacement: path.join(marketing, "../catalog-mount/useCatalogOffers-stub.ts") },
       { find: /^\.\/useFormIntake$/, replacement: path.join(marketing, "form-intake-stub.ts") },

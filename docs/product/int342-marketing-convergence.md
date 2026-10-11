@@ -457,7 +457,7 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
   and not-read states are byte-for-byte the shipped S1c behaviour.
 - **Old addresses:** `/solo/{n}/growth/ads[?view=X]` replaces into `/solo/{n}/ads[/X]` before any Marketing reader
   mounts (`legacyAdsRoute`, `src/solo/ads-routing.ts`).
-  - Other query values and the hash travel with it; identity and redirect keys never do.
+  - Tracking tags (`utm_*`) and the hash travel with it; nothing else does.
   - An unknown view lands on Overview.
   - A `?view=` on the new address lands on that view's path.
 - **Links:**

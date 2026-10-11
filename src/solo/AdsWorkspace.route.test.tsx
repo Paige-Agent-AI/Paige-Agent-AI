@@ -83,8 +83,8 @@ describe("the Ads address contract", () => {
     }
     // An unknown view lands on Overview, never a dead address.
     expect(legacyAdsRoute("42", "ads", "?view=billing", "")).toBe("/solo/42/ads");
-    // Other query values and the hash travel; identity and redirect values never do.
-    expect(legacyAdsRoute("42", "ads", "?view=creative&utm_source=mail&tenant=other&token=x&next=/evil", "#top")).toBe("/solo/42/ads/creative?utm_source=mail#top");
+    // Tracking tags and the hash travel; nothing else does (identity, token and redirect keys included).
+    expect(legacyAdsRoute("42", "ads", "?view=creative&utm_source=mail&tenant=other&token=x&next=/evil&redirect_to=/x&callback=y", "#top")).toBe("/solo/42/ads/creative?utm_source=mail#top");
     // Only the Ads segment, and only with an account.
     expect(legacyAdsRoute("42", "analytics", "?view=creative", "")).toBeNull();
     expect(legacyAdsRoute(null, "ads", "?view=creative", "")).toBeNull();

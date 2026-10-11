@@ -158,7 +158,7 @@ async function main() {
       await open(page, { path: "/solo/review/growth/ads?view=creative&utm_source=mail", theme });
       await page.waitForSelector(".mad", { timeout: 15000 });
       s = await state(page);
-      check(s.path === "/solo/review/ads/creative?utm_source=mail" && s.pressed === "Creative" && s.lit === "Ads" && s.strip.length === 0, `${theme}/flow: /growth/ads?view=creative opens Ads › Creative with its other query kept`, JSON.stringify(s));
+      check(s.path === "/solo/review/ads/creative?utm_source=mail" && s.pressed === "Creative" && s.lit === "Ads" && s.strip.length === 0, `${theme}/flow: /growth/ads?view=creative opens Ads › Creative with its tracking tag kept`, JSON.stringify(s));
       await page.screenshot({ path: path.join(OUT, `flow-legacy-bookmark-${theme}.png`) });
 
       // Links out land in the department that owns each piece.

@@ -1,5 +1,39 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-10 CL-3 slice — the authorized durable-continuation eligibility read (C4d)
+
+The C4d foundation's missing runtime half: `projectDurableContinuation` had zero runtime
+callers because nothing selected the envelope's internal fields under fresh authorization.
+Migration `20270602000431_int304_durable_continuation_read.sql` (renumbered from 412 in the same frontier race as 430) adds
+`read_paige_durable_continuation(thread, intent, work)` — authenticated-only, validating
+exactly like the frozen durable-observation reader (owned active thread with the CURRENT
+intent, caller-bound work row, the document/research class, CURRENT owner/admin permission,
+exactly-one durable_accepted protected effect) and returning the pinned envelope fields with
+the canonical objective read from the frozen request payload. The edge adapter
+`_shared/durable-job/continuation-read.ts` adds the observation-style identity re-read and
+fills the projection's context booleans from REAL sources only: the budget ladder
+(`resolveCeiling`/`accruedSpendToday`/`enforceBudget` — unknown accrual is never allowed),
+Spine `action.chatTool` registry membership, and the SQL-derived approval-pending
+(blocked + approval_expired). `interrupted`/`superseded`/`alreadyContinued` are false by
+construction and said so in-source: the SQL refuses a superseded intent before returning, a
+stable status read carries no interruption brake, and no continuation-consumption seam
+exists yet — that seam is the gated C4d runtime. The interactive status path's
+`durable_work` block now carries `continuation {eligibleForContext, state, reason}`:
+bounded terminal CONTEXT (e.g. "the document finished and verified — the objective can be
+continued"), never dispatch, wake, settlement or continuation permission. INT-346 stays
+DRAINING; effectful continuation remains disabled. Proofs: native read check
+`scripts/int304-continuation-read-check.mjs` (20 cases: field derivation, permission/
+tenant/actor/intent/archival gates, approval-pending only from a real expired approval,
+blank objective refused, duplicate-effect lineage refused, foreign capability class,
+service/anon refused) CI-wired; adapter vitest 17/17; tsc ratchet 10=10. The initial
+commit referenced `admin` (out of scope at the status seam) for the budget client — the
+reviewer’s P1: a swallowed ReferenceError would have silently nulled the whole
+durable_work block. Fixed to the in-scope `supabase` service client; the Deno diagnostic
+count returns to the 9-diagnostic baseline (the fix commit’s check measured 10 before).
+Also folds the CL-2 review's P3: the observation reader now returns the record's own
+`kind` instead of a hardcoded literal, so the future `refused_before_dispatch` producer
+reads correctly without touching this reader.
+
 ## 2026-10-10 CL-2 slice — canonical failure observation (the non-application record)
 
 The first #1807 continuation slice by the new agent: the canonical refusal/non-application

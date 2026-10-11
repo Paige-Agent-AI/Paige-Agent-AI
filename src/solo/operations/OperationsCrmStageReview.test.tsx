@@ -33,7 +33,7 @@ it("does not claim saved work when independent readback differs",async()=>{
 });
 it("retains unknown recovery across remount and never substitutes a newly requested task",async()=>{
  mocks.submit.mockResolvedValueOnce({kind:"uncertain",message:"Result unknown"}).mockResolvedValueOnce({kind:"acknowledged"});await render();await click("Confirm stage change");await click("Close · recovery retained");
- await act(async()=>root.unmount());root=createRoot(node);const next=buildCrmWorkStageOperation({...task,id:"new-task"},"in_progress","actor","workspace","new-key")!;
+ await act(async()=>root.unmount());root=createRoot(node);const next=buildCrmWorkStageOperation({...task,id:"new-task"},"done","actor","workspace","new-key")!;
  await render(next);expect(node.textContent).toContain("newly selected task has not been changed");await click("Recover original action");
  expect(mocks.submit.mock.calls[1]).toEqual([original,undefined]);expect(verified).toHaveBeenCalledExactlyOnceWith("original-task");
 });

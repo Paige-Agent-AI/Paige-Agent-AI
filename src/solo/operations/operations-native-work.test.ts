@@ -18,7 +18,7 @@ describe("native Operations source boundary", () => {
     expect(crmActionForStage(crm,"blocked")).toBeNull();expect(crmActionForStage(crm,"cancelled")).toBeNull();
     expect(crmActionForStage({...crm,updated_at:null},"done")).toBeNull();
     expect(crmActionForStage(crm,"open")).toBeNull();expect(crmActionForStage(crm,"done")).toBe("task.complete");
-    expect(crmActionForStage(crm,"in_progress")).toBe("task.update");
+    expect(crmActionForStage(crm,"in_progress")).toBeNull();
     expect(crmActionForStage({...crm,status:"completed"},"open")).toBe("task.reopen");
   });
 });

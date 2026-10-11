@@ -10,6 +10,7 @@ beforeEach(()=>{vi.clearAllMocks();mocks.getUser.mockResolvedValue({data:{user:{
 it("preserves the raw native version and refuses unsupported stages or foreign scope",()=>{
  expect(operation().command).toEqual({action:"task.complete",task_id:task.id,expected_updated_at:task.updated_at});
  expect(buildCrmWorkStageOperation(task,"blocked","actor","workspace","key")).toBeNull();
+ expect(buildCrmWorkStageOperation(task,"in_progress","actor","workspace","key")).toBeNull();
  expect(buildCrmWorkStageOperation(task,"done","actor","other-workspace","key")).toBeNull();
  expect(Object.isFrozen(operation().command)).toBe(true);
 });
@@ -49,4 +50,5 @@ it("restores only an exact same-scope supported task stage command",()=>{
  expect(restoreCrmWorkStageOperation({...original,command:{...original.command,action:"task.delete"}},"actor","workspace")).toBeNull();
  expect(restoreCrmWorkStageOperation({...original,targetStatus:"pending"},"actor","workspace")).toBeNull();
  expect(restoreCrmWorkStageOperation({...original,command:{...original.command,patch:{user_id:"other"}}},"actor","workspace")).toBeNull();
+ expect(restoreCrmWorkStageOperation({...original,targetStatus:"in_progress",command:{...original.command,action:"task.update",patch:{status:"in_progress"}}},"actor","workspace")).toBeNull();
 });

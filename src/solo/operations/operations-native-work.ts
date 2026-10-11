@@ -59,13 +59,14 @@ export function summarizeNativeWorkload(work: NativeOperationsWork[], userId: st
 }
 
 /** CRM has no blocked/review state in its canonical status enum. Never fake one. */
-export function crmActionForStage(record: CrmWorkRecord, stage: PlanItemStatus): "task.update" | "task.complete" | "task.reopen" | null {
+export function crmActionForStage(record: CrmWorkRecord, stage: PlanItemStatus): "task.complete" | "task.reopen" | null {
   const version = record.updated_at ?? record.created_at;
   if (!version || !Number.isFinite(Date.parse(version))) return null;
   if (stage === nativeWorkStage({ source: "crm", key: `crm:${record.id}`, record })) return null;
   if (stage === "done") return "task.complete";
   if (stage === "open") return "task.reopen";
-  if (stage === "in_progress") return "task.update";
+  // The canonical task.update allowlist has no status field. Existing in-progress
+  // rows remain visible, but entering that state has no eligible command today.
   // Cancellation requires its separate consequential preview/approval flow.
   return null;
 }

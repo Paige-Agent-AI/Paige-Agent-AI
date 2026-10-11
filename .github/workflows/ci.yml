@@ -947,6 +947,11 @@ jobs:
           # canary passes; the owner's order per class; fallback only on a proven health failure before
           # the stream opened; one chat shape to the round gate whatever served.
           npm run -s test:model-fabric
+          # ANT-37 — the Model Discovery Watch core: source-backed registry, deterministic diff
+          # (new family / retirement / price / capability / context / stale / contradiction /
+          # dedupe), cost-per-completed-task comparator, and the authority-isolation pin
+          # (the fabric imports no discovery module; detection advances no lifecycle).
+          npm run -s test:model-discovery
 
       - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
         if: ${{ !cancelled() }}

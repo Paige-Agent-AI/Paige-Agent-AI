@@ -10,7 +10,7 @@ remains available for Platform Operator communications.
 | Surface | State | Where |
 |---|---|---|
 | `EmailProvider` seam | `SendGridProvider implements EmailProvider` (Mail Send v3, Bearer, 202 contract, `X-Message-Id` as the durable id) + `buildProvider` case; missing executor key → `UnimplementedProvider` (honest readiness, no crash) | `_shared/email/providers.ts` |
-| Canonical send door | `send-message` gains a `sendgrid` dispatch arm, selected ONLY by `connectorRow.provider === "sendgrid"`; key is ALWAYS the platform executor secret `SENDGRID_MAIL_SEND_API_KEY` (or a namespaced `TENANT_EMAIL_KEY_*` tenant key); List-Unsubscribe + In-Reply-To headers preserved; `provider_message_id` = `X-Message-Id` | `send-message/index.ts` |
+| Canonical send door | `send-message` gains a `sendgrid` dispatch arm, selected ONLY by `connectorRow.provider === "sendgrid"`; key is ALWAYS the platform executor secret `SENDGRID_MAIL_SEND_API_KEY` (the `buildProvider` seam separately honors namespaced `TENANT_EMAIL_KEY_*` tenant keys); List-Unsubscribe + In-Reply-To headers preserved; `provider_message_id` = `X-Message-Id` | `send-message/index.ts` |
 | Signature verification | Canonical ES256 verifier `verifySendgridEvent` (SPKI PEM public key, DER→P-1363 conversion, fail-closed reasons) with 2 deno tests | `_shared/webhookSig.ts` |
 | Scopes self-check | `comms-sendgrid-scopes` — operator-gated (JWT + `is_platform_owner`), GET `/v3/scopes` with the EXECUTOR key only, returns scopes + `can_send_mail`/`non_sending_scopes`; never the key; no send capability | `comms-sendgrid-scopes/index.ts` |
 | Admin-key guard | CI step forbids `SENDGRID_PLATFORM_ADMIN_API_KEY` references in ALL function code (allowlist intentionally empty) | `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` + ci.yml |
@@ -37,7 +37,7 @@ Edge secrets — readable by ANY deployed function. Smallest safe plan, in order
 `buildProvider` resolves sendgrid + correct Mail Send v3 shape (202 → `X-Message-Id` id);
 non-202 surfaces `sendgrid_<status>` truthfully; unknown providers fail safe to Resend;
 ES256 verifier accepts a correctly-signed DER request and rejects tampered bodies, wrong keys,
-malformed base64, malformed DER, and unconfigured keys — 5 webhookSig tests + 3 provider tests,
+malformed base64, malformed DER, and unconfigured keys — 2 new webhookSig test functions (6 assertions; suite totals 15) + 3 provider tests,
 all mocked (no network, no real credentials; the test key value is synthetic).
 
 ## Remaining acceptance requirements (precise)

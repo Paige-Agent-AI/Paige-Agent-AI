@@ -815,6 +815,10 @@ jobs:
           # Owner addendum 6088460092: source-level boundary tests read the door's real
           # source, so this one line grants read (repo tree only); every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
+        - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
+          run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
+        - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
+          run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \

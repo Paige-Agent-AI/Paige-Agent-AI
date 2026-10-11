@@ -302,6 +302,6 @@ function Channels({ days, email, onOpenEmail }: { days: number; email: EmailRead
       <span className="mva-row-t">{row.name}<small aria-live={row.name === "Email" ? "polite" : undefined}>{row.line}</small></span>
       <span className="mva-ch-a">{row.flag && <span className="pill pill-n">{row.flag}</span>}{row.act}</span>
     </li>)}</ul>
-    <p className="mov-foot">Leads from paid links are counted in Source mix by their source tag.</p>
+    <p className="mov-foot">Leads from links with a source tag, paid ones included, are counted in Source mix.</p>
   </section>;
 }

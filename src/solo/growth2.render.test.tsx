@@ -920,7 +920,7 @@ describe("Solo Marketing department views", () => {
     expect([...host.querySelectorAll(".mva-ch li .mva-row-t")].map((row) => row.firstChild?.textContent)).toEqual(["Email", "Social", "Your pages"]);
     expect(channels).not.toMatch(/Ad accounts|spend/i);
     expect(button("Open Ads")).toBeUndefined();
-    expect(host.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent).toBe("Leads from paid links are counted in Source mix by their source tag.");
+    expect(host.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent).toBe("Leads from links with a source tag, paid ones included, are counted in Source mix.");
     expect(channels).not.toContain("connected");
     expect(channels).toContain("Reach and engagement aren’t read from any provider");
     expect(channels).toContain("Visits aren’t recorded on public pages");

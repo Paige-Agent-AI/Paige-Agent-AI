@@ -9,7 +9,7 @@ key frames in `assets/int298-mbc1-analytics-ads-ownership/`.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: grounding against the Channels card in src/solo/marketing-analytics.tsx (the Ads row and its onOpenAds prop), its one caller (growth2.tsx AnalyticsTab, setTab("ads")), the render test and the drive that asserted the row, the source-mix derivation in marketing-analytics-model.ts (every lead with a utm_source is counted, the four most-used named and the rest as Other sources) and open PRs and remote branches (no Ads-agent branch touches these files yet). Flows: open Analytics; read how each channel did; trace a lead from a paid link to its source; change the range
-PAIGE_UI_DESIGN: PASS: Impeccable Operate mode; a removal inside the owner-approved design, no new pattern; one independent non-author review of the real diff
+PAIGE_UI_DESIGN: PASS: Impeccable Operate mode; a removal inside the owner-approved design, no new pattern; one independent non-author review of the real diff returned SHIP-WITH-FIXES, no blocking; both should-fixes taken (the tier matrix status still named ads as unavailable in Analytics; the foot line overclaimed for a paid link with no source tag)
 MATERIAL_FLOW_CHANGE: YES: the Channels card loses the Ads row and the Open Ads action, as instructed by the owner-authorized coordinator command (§58 named here); a foot line says where paid leads are counted
 FLOW_PROTOTYPE: PASS: no prototype stage: a removal inside an approved design, pre-launch stance (CLAUDE.md §4, §69 pre-launch override)
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner reads how their owned channels did and where their leads came from; ad accounts, spend and paid performance are the Ads department's
@@ -23,7 +23,7 @@ KEYBOARD_FOCUS: PASS: one fewer button; the remaining Open Email and Try again k
 ZOOM_REFLOW: PASS: the card reflows as before at every drive viewport
 REDUCED_MOTION: PASS: no motion added
 STATE_COVERAGE: PASS: the foot line is true in every state (it names where paid leads are counted, not a count): loading, email denied or failed, no leads, capped read
-TRUTHFUL_STATE_LABELS: PASS: no claim about ad accounts, spend or connections remains in Analytics; paid leads are described as counted by source tag, which is what Source mix does
+TRUTHFUL_STATE_LABELS: PASS: no claim about ad accounts, spend or connections remains in Analytics; the foot says leads from links with a source tag, paid ones included, are counted in Source mix, which is what it does (the review caught a first wording that implied every paid lead is counted by its tag, untrue for a paid link without utm_source)
 SOLO_UI: YES: Solo Marketing, /solo/{account}/growth/analytics
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: Analytics both themes, overflow 0 (DRIVE_TABS=analytics)

@@ -1,0 +1,70 @@
+{
+  "boundary": "Actual product source with explicit synthetic source, permission hint and RPC refusal. No customer records, persistence or authenticated acceptance.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1366,
+      "inspectedTitle": "Prepare stakeholder review",
+      "input": "native drag",
+      "draftRetained": true,
+      "refusalShown": true,
+      "canonicalLaneRetained": true,
+      "focusRestored": true,
+      "focusTarget": {
+        "tag": "BUTTON",
+        "className": "ops-work-card",
+        "text": "normal priority · taskPrepare stakeholder reviewSample client onboardi"
+      },
+      "noPageOverflow": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "inspectedTitle": "Prepare stakeholder review",
+      "input": "keyboard",
+      "draftRetained": true,
+      "refusalShown": true,
+      "canonicalLaneRetained": true,
+      "focusRestored": true,
+      "focusTarget": {
+        "tag": "BUTTON",
+        "className": "ops-work-card",
+        "text": "normal priority · taskPrepare stakeholder reviewSample client onboardi"
+      },
+      "noPageOverflow": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "inspectedTitle": "Prepare stakeholder review",
+      "input": "native drag",
+      "draftRetained": true,
+      "refusalShown": true,
+      "canonicalLaneRetained": true,
+      "focusRestored": true,
+      "focusTarget": {
+        "tag": "BUTTON",
+        "className": "ops-work-card",
+        "text": "normal priority · taskPrepare stakeholder reviewSample client onboardi"
+      },
+      "noPageOverflow": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "inspectedTitle": "Prepare stakeholder review",
+      "input": "keyboard",
+      "draftRetained": true,
+      "refusalShown": true,
+      "canonicalLaneRetained": true,
+      "focusRestored": true,
+      "focusTarget": {
+        "tag": "BUTTON",
+        "className": "ops-work-card",
+        "text": "normal priority · taskPrepare stakeholder reviewSample client onboardi"
+      },
+      "noPageOverflow": true
+    }
+  ],
+  "errors": []
+}

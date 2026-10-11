@@ -1,0 +1,844 @@
+{
+  "boundary": "Actual release product and canonical shell; explicitly synthetic Planning, Team, actor and refusal ports. Not authenticated customer acceptance. Browser zoom recorded separately.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1262,
+        "clientWidth": 1262,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1262,
+        "clientWidth": 1262,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 740,
+        "scrollLeft": 268
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 740,
+        "scrollLeft": 268
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1236,
+        "clientWidth": 1236,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1236,
+        "clientWidth": 1236,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 772,
+        "scrollLeft": 236
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 772,
+        "scrollLeft": 236
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1262,
+        "clientWidth": 1262,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1262,
+        "clientWidth": 1262,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 740,
+        "scrollLeft": 268
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 740,
+        "scrollLeft": 268
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1236,
+        "clientWidth": 1236,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1236,
+        "clientWidth": 1236,
+        "scrollLeft": 0
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 772,
+        "scrollLeft": 236
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 772,
+        "scrollLeft": 236
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 894,
+        "scrollLeft": 114
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "drag",
+      "reducedMotion": false,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal overlay; folded through real control before editing",
+      "input": "keyboard",
+      "reducedMotion": true,
+      "confirmationFocus": true,
+      "draftRetained": true,
+      "refusal": true,
+      "originalLane": "In progress",
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "inViewport": true
+      },
+      "boardScroll": {
+        "scrollWidth": 1008,
+        "clientWidth": 770,
+        "scrollLeft": 238
+      },
+      "scopedWrite": true
+    }
+  ],
+  "switches": [
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "dirtyConfirmationCleared": true,
+      "secondTenantWriteIdentity": true,
+      "noOldDraftReplay": true,
+      "foreignBundleRefused": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "dirtyConfirmationCleared": true,
+      "secondTenantWriteIdentity": true,
+      "noOldDraftReplay": true,
+      "foreignBundleRefused": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "dirtyConfirmationCleared": true,
+      "secondTenantWriteIdentity": true,
+      "noOldDraftReplay": true,
+      "foreignBundleRefused": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "dirtyConfirmationCleared": true,
+      "secondTenantWriteIdentity": true,
+      "noOldDraftReplay": true,
+      "foreignBundleRefused": true
+    }
+  ],
+  "errors": []
+}

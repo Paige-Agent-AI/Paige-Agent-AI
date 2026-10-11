@@ -2,7 +2,8 @@
 import { useState } from "react";
 import type { EvalRun, IntelligenceMetrics, IntelligenceRead, IntelligenceTrace, ReadState, TrajectoryRequest, TrajectoryPage } from "@/operator/data/intelligenceContract";
 import { syntheticTrajectory, syntheticTrajectoryPage } from "@/test/fixtures/trajectory";
-import canonical from "@/test/fixtures/canonical-trajectory.json";
+import canonical from "@/test/fixtures/canonical-task-scorecard.json";
+import { useTaskScorecard } from '@/operator/data/useTaskScorecard';
 const TRACE = "11111111-1111-4111-8111-111111111111";
 const RUN = "22222222-2222-4222-8222-222222222222";
 const CASE = "33333333-3333-4333-8333-333333333333";
@@ -14,6 +15,7 @@ export function useIntelligence(): IntelligenceRead {
   const [state, setState] = useState(params.get("state") ?? "populated");
   const [request, setRequest] = useState<TrajectoryRequest | null>(null);
   const empty = state === "empty";
+  const scorecard = useTaskScorecard({ subject: 'synthetic-operator', epoch: 1, access: state === 'denied' ? 'denied' : 'allowed' }, () => setState('denied'));
   const metrics: IntelligenceMetrics = empty ? {} : {
     traces: { total: 14, cost_estimate_usd: 0.184, avg_latency_ms: 430, error_count: 2, needs_config: 1, tokens_in: 8500, tokens_out: 1200,
       by_provider: [{ provider: "Synthetic hosted adapter A", count: 9, cost_estimate_usd: 0.12 }, { provider: "Synthetic hosted adapter B", count: 5, cost_estimate_usd: 0.064 }], by_tier: [{ tier: "operational", count: 14, cost_estimate_usd: 0.184 }],
@@ -37,10 +39,10 @@ export function useIntelligence(): IntelligenceRead {
     ...(state==='partial' ? { terminal_verified:false, history:{ ...syntheticTrajectory.history,complete:false,truncated:true } } : {}) };
   // Snapshot emitted by the actual canonical local completion + Operator SQL proof.
   // This is controlled synthetic source evidence, never an authenticated production read.
-  const tasks=state==='canonical' ? canonical.page as unknown as TrajectoryPage : syntheticTrajectoryPage(empty ? [] : [task]);
+  const tasks=state==='canonical' ? canonical.trajectory as unknown as TrajectoryPage : syntheticTrajectoryPage(empty ? [] : [task]);
   const selected = { ...tasks, next_cursor: null, items: state === 'unlinked' ? [] : tasks.items.filter(t =>
     request?.workId === t.id || (!!request?.traceId && t.models.some(m => m.id === request?.traceId))) };
-  return { subject: "synthetic-operator", epoch: 1, access: state === "denied" ? "denied" : "allowed", retryAccess: refresh,
+  return { scorecard, subject: "synthetic-operator", epoch: 1, access: state === "denied" ? "denied" : "allowed", retryAccess: refresh,
     metrics: read(metrics, state, refresh), traces: read(traces, state, refresh), evals: read(runs, state, refresh),
     trajectories:read(tasks,state,refresh),selectedTrajectory:read(selected,state,refresh),
     trajectoryRequest:request,inspectTrajectory:setRequest,pageTrajectories:()=>setRequest(null) };

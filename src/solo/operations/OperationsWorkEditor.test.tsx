@@ -8,7 +8,7 @@ vi.mock("./operations-work-update", () => ({ submitOperationsWorkUpdate: mock.su
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
 let container: HTMLDivElement;
 let root: Root;
-const item = { id: "item-a", tenant_id: "tenant-a", status: "open", created_by: "creator", assigned_to_user_id: "assignee", due_at: null } as PlanItem;
+const item = { id: "item-a", tenant_id: "tenant-a", status: "open", created_by: "creator", assigned_to_user_id: "assignee", due_at: null, updated_at: "2026-10-10T12:00:00Z" } as PlanItem;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => { vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: false, error: null });
   container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
@@ -40,6 +40,13 @@ it("allows assignee status control but no due-date or reassignment control", asy
   expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
   await render(item, "observer"); expect(container.querySelector("form")).toBeNull();
 });
+it("preserves supported admin controls for work assigned to another person", async () => {
+  mock.rpc.mockImplementation(async (name, args) => ({ data: name === "is_tenant_admin" && args._tenant === "tenant-a", error: null }));
+  await render(item, "admin");
+  expect(container.querySelector("form")).not.toBeNull();
+  expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
+  expect(Array.from(container.querySelectorAll("label")).some(label => label.textContent?.startsWith("Responsible person"))).toBe(true);
+});
 it("requires matching canonical readback after an acknowledgement", async () => {
   mock.submit.mockResolvedValue({ kind: "acknowledged" }); const refresh = vi.fn().mockResolvedValue(undefined);
   await render(item, "assignee", refresh); await status("done"); await save();
@@ -62,4 +69,12 @@ it("offers readback recovery after a refusal and prevents another write until re
   expect(container.textContent).toContain("Refresh and review");
   expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
   expect(container.querySelector("select")?.value).toBe("done");
+});
+it("does not grant a newer source version to an older draft after background refresh", async () => {
+  mock.submit.mockResolvedValue({ kind: "refused", message: "Someone changed this work" });
+  await render(); await status("done");
+  await render({ ...item, status: "in_progress", updated_at: "2026-10-10T12:01:00Z" });
+  await save();
+  expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: item.updated_at }), { status: "done" });
+  expect(container.textContent).toContain("Someone changed this work");
 });

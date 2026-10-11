@@ -72,7 +72,7 @@ export function parseAdCopy(body: string | null | undefined): { headline: string
 
 const formatDay = (iso: string) => { const t = Date.parse(iso); return Number.isFinite(t) ? new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""; };
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
-const ASK_PROMPT = "Draft ad copy for my business. Ask me what I am promoting, who it is for and where it will run before you write it. Give it a headline, primary text and a call to action, and save it as a draft; do not run or publish anything.";
+export const ADS_ASK_PROMPT = "Draft ad copy for my business. Ask me what I am promoting, who it is for and where it will run before you write it. Give it a headline, primary text and a call to action, and save it as a draft; do not run or publish anything.";
 
 export type MarketingAdsProps = {
   tenantId: string | null;
@@ -100,10 +100,6 @@ export function MarketingAds({ tenantId, view, onView, onOpenIntegrations, onOpe
   return <div className="mov mad">
     <div className="mov-top">
       <p className="mov-sum" tabIndex={-1}>Paige can’t read an ad account yet, so nothing here is estimated. {drafts}</p>
-      <div className="mov-acts">
-        <div className="campaigns-segmented" role="group" aria-label="Ads views">{ADS_VIEWS.map((item) => <button key={item.key} aria-pressed={view === item.key} onClick={() => onView(item.key)}>{item.label}</button>)}</div>
-        <AskPaigeButton label="Ask PAIGE for ad copy" prompt={ASK_PROMPT}/>
-      </div>
     </div>
     <section className="mov-card mad-prov" aria-label="Ad account">
       <span className="mad-logo" aria-hidden="true"><PlugIcon/></span>
@@ -172,7 +168,7 @@ function Creative({ access, phase, rows, retry }: { access: string; phase: strin
   if (access === "denied") return <section className="mov-card"><div className="mad-empty"><p>{LIBRARY_DENIED}</p></div></section>;
   if (phase === "loading") return <div className="campaigns-skeleton" role="status" aria-busy="true" aria-label="Loading ad copy"><span/><span/><span/></div>;
   if (phase === "error") return <section className="mov-card"><div className="mad-empty"><h2>Your saved ad copy could not load</h2><p>Nothing was changed. Try again.</p><button type="button" className="btn btn-s" onClick={retry}>Try again</button></div></section>;
-  if (!rows.length) return <section className="mov-card"><div className="mad-empty"><h2>No ad copy yet.</h2><p>Ask PAIGE for ad copy for a campaign. She saves it here as a draft; saving never publishes or pays for anything.</p><AskPaigeButton label="Ask PAIGE for ad copy" prompt={ASK_PROMPT}/></div></section>;
+  if (!rows.length) return <section className="mov-card"><div className="mad-empty"><h2>No ad copy yet.</h2><p>Ask PAIGE for ad copy for a campaign. She saves it here as a draft; saving never publishes or pays for anything.</p><AskPaigeButton label="Ask PAIGE for ad copy" prompt={ADS_ASK_PROMPT}/></div></section>;
   return <>
     <div className="mad-grid">{rows.map((row) => {
       const ad = parseAdCopy(row.body);

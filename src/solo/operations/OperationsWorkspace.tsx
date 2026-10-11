@@ -4,7 +4,7 @@ import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
 import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { usePlanList, type Plan, type PlanItem } from "@/hooks/usePlanList";
+import { usePlanList, type Plan, type PlanItem, type PlanItemStatus } from "@/hooks/usePlanList";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { OperationsAssignee } from "./OperationsAssignee";
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
@@ -20,7 +20,7 @@ import "./operations-workspace.css";
 
 const DESTINATIONS = ["Overview", "Work", "Projects", "Delivery", "Playbooks", "Capacity"] as const;
 type Destination = typeof DESTINATIONS[number];
-type Inspection = { kind: "item"; id: string; view: Destination } | { kind: "plan"; id: string; view: Destination } | null;
+type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus } | { kind: "plan"; id: string; view: Destination } | null;
 
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void };
 export function OperationsWorkspace({ openPaige, view, onViewChange }: WorkspaceProps) {
@@ -52,7 +52,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   const contentRef = useRef<HTMLElement | null>(null);
   useEffect(() => { setInspection(null); }, [destination]);
   const inspectionInvoker = useRef<HTMLElement | null>(null);
-  const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}` });
+  const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
   const people = useOperationsPeople();
   const matches = operationsBundleMatchesTenant(source.plans, source.allItems, tenantId);
   const plans = matches ? source.plans : [];
@@ -99,10 +99,13 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
         : <>
           {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={() => void people.refresh()}>Retry profiles</button></div>}
           {destination === "Overview" && <OperationsOverview {...props} />}
-          {destination === "Work" && <OperationsWork {...props} />}
+          {destination === "Work" && <OperationsWork {...props} onProposeStage={(item, proposedStage, invoker) => {
+            if (invoker?.isConnected) inspectionInvoker.current = invoker; else rememberInvoker();
+            setInspection({ kind: "item", id: item.id, view: destination, proposedStage });
+          }} />}
           {destination === "Projects" && <OperationsProjects {...props} />}
           {destination === "Capacity" && <OperationsCapacity {...props} />}
-          <p className="ops-source-limit">This view shows up to 200 plans and standalone items, with their visible work. {people.partial && "Some team profiles are outside the current read."}</p>
+          <p className="ops-source-limit">Figures reflect the work loaded here: up to 200 plans and standalone items, with their visible work. {people.partial && "Some team profiles are outside the current read."}</p>
         </>}
     </div>
     <Sheet open={inspection?.view === destination} onOpenChange={(open) => { if (!open) setInspection(null); }}>
@@ -120,7 +123,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
             <div><dt>Work type</dt><dd>{selectedItem.item_type}</dd></div></dl>
           {selectedItem.status === "done" && <p>Recorded as completed work. Client delivery acceptance is a separate outcome.</p>}
           {selectedItem.linked_action_id && <p>A linked action exists. Its execution result has not been verified here.</p>}
-          <OperationsWorkEditor key={selectedItem.id} item={selectedItem} actorId={userId} tenantId={tenantId}
+          <OperationsWorkEditor key={`${selectedItem.id}:${inspection?.kind === "item" ? inspection.proposedStage ?? "inspect" : "inspect"}`} item={selectedItem} actorId={userId} tenantId={tenantId}
+            proposedStage={inspection?.kind === "item" ? inspection.proposedStage : undefined}
             members={people.members} sourceError={Boolean(source.error) || !matches}
             refresh={() => source.refresh({ silent: true })} />
         </div>}

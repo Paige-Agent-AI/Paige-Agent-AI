@@ -33,8 +33,8 @@ export function useTenantRead<T>(tenantId: string | null, empty: T, load: ((tena
 }
 
 /** Opens PAIGE with a question in her composer. She drafts; nothing is sent until the owner says so. */
-export function AskPaigeButton({ label, prompt }: { label: string; prompt: string }) {
-  return <button type="button" className="btn btn-s" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }))}>{label}</button>;
+export function AskPaigeButton({ label, prompt, className, icon }: { label: string; prompt: string; className?: string; icon?: React.ReactNode }) {
+  return <button type="button" className={className ? `btn btn-s ${className}` : "btn btn-s"} title={icon ? label : undefined} onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }))}>{icon}{label}</button>;
 }
 
 export function Frame({ phase, retry, noun, children }: { phase: Phase; retry: () => void; noun: string; children: React.ReactNode }) {

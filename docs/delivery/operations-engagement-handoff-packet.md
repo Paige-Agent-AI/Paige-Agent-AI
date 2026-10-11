@@ -22,3 +22,7 @@ Added source-ID CAS for reviewed client/terms/offer and canonical milestone cont
 Forward allocation preparation: production readback frontier250, queued signing260, all26 active PR file lists without truncation show no270 reservation. DEV00418 promoted to proposed20271020000270, unapplied. Rollback handoff assertions registered in the existing database-contract job; none executed locally. Recheck applied/reserved frontier and released signing parent before promotion/merge.
 
 Fresh direct TypeScript compiler completed with ten existing diagnostics, exact committed baseline match and no Operations diagnostics; plain compiler remains exit1, not clean PASS.49 focused assertions PASS, scopedlint PASS, signature/definer/migrationversion guards PASS. Readback source IDs and milestones remain independently confirmed only in synthetic tests; actual SQL/CI/UI/production/authentication still owed.
+
+## Current-head fixture recovery
+
+Sales310 is independently verified. The rollback fixture now supplies the existing committed-agreement starts_on requirement and preserves every refusal assertion. Hosted preview execution reached authenticated role but stopped on missing ambient clients SELECT grant; production catalog confirms that grant exists. Required database-contract reproduces the production ACL baseline before running assertions. No PostgreSQL PASS claimed from this attempt; no Sales function or grant changed.

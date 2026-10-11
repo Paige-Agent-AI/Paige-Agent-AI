@@ -11,6 +11,21 @@
 -- "qualified" leads have no producer here and stay unavailable at the reader.
 BEGIN;
 
+-- One cleaner for every tag and name that becomes a key or label. The shared validator measures length in
+-- UTF-16 units and trims JavaScript whitespace, so: characters outside the Basic Multilingual Plane become
+-- U+FFFD (one unit each, so a character limit is a unit limit), every control character and every Unicode
+-- space becomes one space, ends are trimmed, and a value with nothing left is no value.
+CREATE OR REPLACE FUNCTION public._marketing_metric_text(p_value text,p_max integer)
+RETURNS text LANGUAGE sql IMMUTABLE SET search_path = '' AS $$
+ SELECT nullif(btrim(left(btrim(regexp_replace(regexp_replace(p_value,'[\U00010000-\U0010FFFF]',U&'\FFFD','g'),
+  '[[:space:][:cntrl:]\u00a0\u1680\u2000-\u200b\u2028\u2029\u202f\u205f\u3000\ufeff]+',' ','g')),p_max)),'')
+$$;
+REVOKE ALL ON FUNCTION public._marketing_metric_text(text,integer) FROM PUBLIC,anon,authenticated,service_role;
+
+-- The failed-and-stalled count reads only unfinished submissions; this keeps it off the whole history.
+CREATE INDEX IF NOT EXISTS growth_form_submissions_tenant_unfinished
+ ON public.growth_form_submissions (tenant_id) WHERE processing_state IN ('error','pending','claimed');
+
 CREATE OR REPLACE FUNCTION public._marketing_metric_bundle(
  p_tenant_id uuid,p_metric_key text,p_metric_version text,
  p_range_start timestamptz,p_range_end timestamptz,p_as_of timestamptz,p_dimensions jsonb DEFAULT '{}'::jsonb
@@ -48,8 +63,8 @@ BEGIN
  IF p_metric_key LIKE 'marketing.leads.%' THEN
   -- One row per form submission received in the range. A submission is a lead; nothing here judges quality.
   SELECT coalesce(jsonb_agg(jsonb_build_object('id',s.id,'form_id',s.form_id,'created_at',s.created_at,'observed_at',coalesce(s.processed_at,s.created_at),
-   'source',CASE WHEN jsonb_typeof(s.utm_json->'utm_source')='string' THEN nullif(left(btrim(regexp_replace(s.utm_json->>'utm_source','[[:cntrl:]]+',' ','g')),120),'') END,
-   'campaign',CASE WHEN jsonb_typeof(s.utm_json->'utm_campaign')='string' THEN nullif(left(btrim(regexp_replace(s.utm_json->>'utm_campaign','[[:cntrl:]]+',' ','g')),120),'') END,
+   'source',CASE WHEN jsonb_typeof(s.utm_json->'utm_source')='string' THEN public._marketing_metric_text(s.utm_json->>'utm_source',120) END,
+   'campaign',CASE WHEN jsonb_typeof(s.utm_json->'utm_campaign')='string' THEN public._marketing_metric_text(s.utm_json->>'utm_campaign',120) END,
    'deal_id',s.deal_id,'deal_found',d.id IS NOT NULL,
    'reason',CASE WHEN p_metric_key='marketing.leads.converted_to_opportunity' AND s.deal_id IS NOT NULL AND d.id IS NULL THEN 'opportunity_record_missing' END)
    ORDER BY s.id),'[]'::jsonb) INTO source_rows
@@ -68,7 +83,7 @@ BEGIN
   ELSIF p_metric_key='marketing.leads.by_utm_source' THEN
    kind:='distribution'; label:='Leads by source tag';
    definition:='Leads received in the range grouped by the utm_source on the link they submitted from (case-insensitive). Leads whose link carried no source tag are counted as their own item, never dropped.';
-   formula:='COUNT(submissions) GROUP BY lower(utm_source) as item src:<tag>; no tag -> item _untagged; beyond 99 tags the rest -> item _other';
+   formula:='COUNT(submissions) GROUP BY lower(utm_source) as item src:<tag>; no tag -> item _untagged; beyond 98 tags the rest -> item _other';
    caveats:=jsonb_build_array('Only the link a lead submitted from is known, not earlier visits. Whether a link was paid is not recorded: a paid link counts here only if it carried a source tag.');
   ELSIF p_metric_key='marketing.leads.by_campaign_tag' THEN
    kind:='distribution'; label:='Leads by campaign tag';
@@ -85,8 +100,11 @@ BEGIN
  ELSIF p_metric_key IN ('marketing.capture_points.published_current','marketing.forms.unrouted_current') THEN
   semantics:='current_snapshot';
   SELECT coalesce(jsonb_agg(jsonb_build_object('id',f.id,'observed_at',f.updated_at,
+   -- As growth-process-submission runs it: enabled automations decide; the form's own intake columns
+   -- apply only when the form has no enabled automation at all.
    'routed',EXISTS(SELECT 1 FROM public.growth_form_automations a WHERE a.tenant_id=p_tenant_id AND a.form_id=f.id AND a.target_slug='pipeline_attach' AND a.enabled)
-     OR (f.auto_create_deal AND f.pipeline_id IS NOT NULL),
+     OR (f.auto_create_deal AND f.pipeline_id IS NOT NULL
+       AND NOT EXISTS(SELECT 1 FROM public.growth_form_automations a WHERE a.tenant_id=p_tenant_id AND a.form_id=f.id AND a.enabled)),
    'reason',NULL) ORDER BY f.id),'[]'::jsonb) INTO source_rows
   FROM public.growth_forms f WHERE f.tenant_id=p_tenant_id AND f.status='active';
   sources:='["public.growth_forms","public.growth_form_automations"]';
@@ -96,8 +114,8 @@ BEGIN
    formula:='COUNT(growth_forms WHERE status = active)';
   ELSE
    label:='Live forms not routed to a pipeline';
-   definition:='Live forms whose leads reach no pipeline: no enabled "Add to your pipeline" automation and no intake route (create a deal on a chosen pipeline). The denominator is every live form.';
-   formula:='COUNT(live forms WHERE NOT (enabled pipeline_attach automation OR (auto_create_deal AND pipeline_id IS NOT NULL)))';
+   definition:='Live forms whose leads reach no pipeline, as the submission processor runs them: no enabled "Add to your pipeline" automation, and no intake route (create a deal on a chosen pipeline) that applies because the form has no enabled automation. The denominator is every live form.';
+   formula:='COUNT(live forms WHERE NOT (enabled pipeline_attach automation OR (no enabled automation AND auto_create_deal AND pipeline_id IS NOT NULL)))';
   END IF;
  ELSIF p_metric_key='marketing.submissions.failed_current' THEN
   semantics:='current_snapshot'; kind:='distribution';
@@ -148,17 +166,17 @@ BEGIN
    SELECT coalesce('src:'||left(lower(r->>'source'),76),'_untagged') k,min(r->>'source') lbl,count(*) n
    FROM jsonb_array_elements(source_rows) r WHERE r->>'reason' IS NULL GROUP BY 1
   ), ranked AS (
-   SELECT k,lbl,n,row_number() OVER (ORDER BY (k='_untagged'),n DESC,k) rn FROM grouped
+   SELECT k,lbl,n,row_number() OVER (ORDER BY (k='_untagged'),n DESC,k COLLATE "C") rn FROM grouped
   ), folded AS (
-   SELECT CASE WHEN k<>'_untagged' AND rn>99 THEN '_other' ELSE k END k,
-    CASE WHEN k='_untagged' THEN 'No source tag' WHEN rn>99 THEN 'Other sources' ELSE left(lbl,80) END lbl,n FROM ranked
+   SELECT CASE WHEN k<>'_untagged' AND rn>98 THEN '_other' ELSE k END k,
+    CASE WHEN k='_untagged' THEN 'No source tag' WHEN rn>98 THEN 'Other sources' ELSE left(lbl,80) END lbl,n FROM ranked
   )
-  SELECT jsonb_build_object('kind','distribution','items',coalesce(jsonb_agg(jsonb_build_object('key',left(k,80),'label',lbl,'count',n) ORDER BY (k IN ('_other','_untagged')),n DESC,k),'[]'::jsonb)) INTO vals
+  SELECT jsonb_build_object('kind','distribution','items',coalesce(jsonb_agg(jsonb_build_object('key',left(k,80),'label',lbl,'count',n) ORDER BY (k IN ('_other','_untagged')),n DESC,k COLLATE "C"),'[]'::jsonb)) INTO vals
   FROM (SELECT k,min(lbl) lbl,sum(n)::bigint n FROM folded GROUP BY k) x;
  ELSIF p_metric_key='marketing.leads.by_campaign_tag' THEN
   WITH refs AS (
-   SELECT lower(btrim(b.short_ref)) ref,count(*) brief_count,min(b.id::text)::uuid brief_id
-   FROM public.campaign_briefs b WHERE b.tenant_id=p_tenant_id AND b.short_ref IS NOT NULL AND btrim(b.short_ref)<>'' GROUP BY 1
+   SELECT lower(public._marketing_metric_text(b.short_ref,120)) ref,count(*) brief_count,min(b.id::text)::uuid brief_id
+   FROM public.campaign_briefs b WHERE b.tenant_id=p_tenant_id AND public._marketing_metric_text(b.short_ref,120) IS NOT NULL GROUP BY 1
   )
   SELECT jsonb_agg(CASE WHEN f.brief_count>1 THEN r||jsonb_build_object('reason','campaign_tag_matches_several_briefs')
    ELSE r||jsonb_build_object('brief_id',CASE WHEN f.brief_count=1 THEN f.brief_id END) END ORDER BY r->>'id') INTO source_rows
@@ -170,13 +188,13 @@ BEGIN
   FROM(SELECT r->>'reason' reason,count(*) n FROM jsonb_array_elements(source_rows) r WHERE r->>'reason' IS NOT NULL GROUP BY r->>'reason') x;
   WITH grouped AS (
    SELECT CASE WHEN r->>'brief_id' IS NOT NULL THEN 'brief:'||(r->>'brief_id') WHEN r->>'campaign' IS NOT NULL THEN 'tag:'||left(lower(r->>'campaign'),76) ELSE '_untagged' END k,
-    CASE WHEN r->>'brief_id' IS NOT NULL THEN (SELECT left(btrim(regexp_replace(b.name,'[[:cntrl:]]+',' ','g')),120) FROM public.campaign_briefs b WHERE b.id=(r->>'brief_id')::uuid AND b.tenant_id=p_tenant_id)
+    CASE WHEN r->>'brief_id' IS NOT NULL THEN (SELECT public._marketing_metric_text(b.name,120) FROM public.campaign_briefs b WHERE b.id=(r->>'brief_id')::uuid AND b.tenant_id=p_tenant_id)
      WHEN r->>'campaign' IS NOT NULL THEN left(r->>'campaign',120) ELSE 'No campaign tag' END lbl
    FROM jsonb_array_elements(source_rows) r WHERE r->>'reason' IS NULL
   ), counted AS (SELECT k,min(lbl) lbl,count(*) n FROM grouped GROUP BY k),
-  ranked AS (SELECT k,lbl,n,row_number() OVER (ORDER BY (k='_untagged'),n DESC,k) rn FROM counted),
-  folded AS (SELECT CASE WHEN k<>'_untagged' AND rn>99 THEN '_other' ELSE k END k,CASE WHEN k<>'_untagged' AND rn>99 THEN 'Other tags' ELSE coalesce(nullif(btrim(lbl),''),'Untitled brief') END lbl,n FROM ranked)
-  SELECT jsonb_build_object('kind','distribution','items',coalesce(jsonb_agg(jsonb_build_object('key',k,'label',lbl,'count',n) ORDER BY (k IN ('_other','_untagged')),n DESC,k),'[]'::jsonb)) INTO vals
+  ranked AS (SELECT k,lbl,n,row_number() OVER (ORDER BY (k='_untagged'),n DESC,k COLLATE "C") rn FROM counted),
+  folded AS (SELECT CASE WHEN k<>'_untagged' AND rn>98 THEN '_other' ELSE k END k,CASE WHEN k<>'_untagged' AND rn>98 THEN 'Other tags' ELSE coalesce(nullif(btrim(lbl),''),'Untitled brief') END lbl,n FROM ranked)
+  SELECT jsonb_build_object('kind','distribution','items',coalesce(jsonb_agg(jsonb_build_object('key',k,'label',lbl,'count',n) ORDER BY (k IN ('_other','_untagged')),n DESC,k COLLATE "C"),'[]'::jsonb)) INTO vals
   FROM (SELECT k,min(lbl) lbl,sum(n)::bigint n FROM folded GROUP BY k) x;
  ELSIF p_metric_key='marketing.submissions.failed_current' THEN
   SELECT jsonb_build_object('kind','distribution','items',jsonb_build_array(

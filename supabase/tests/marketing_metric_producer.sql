@@ -48,11 +48,28 @@ INSERT INTO public.growth_forms(id,tenant_id,slug,name,status,auto_create_deal,p
  ('a2980000-0000-4000-8000-0000000000f1','a2980000-0000-4000-8000-000000000011','routed-automation','Routed by automation','active',false,null),
  ('a2980000-0000-4000-8000-0000000000f2','a2980000-0000-4000-8000-000000000011','unrouted','Unrouted','active',false,null),
  ('a2980000-0000-4000-8000-0000000000f4','a2980000-0000-4000-8000-000000000011','archived','Archived','archived',false,null),
+ -- Intake columns route a form only while it has no enabled automation (as growth-process-submission runs it).
+ ('a2980000-0000-4000-8000-0000000000f6','a2980000-0000-4000-8000-000000000011','intake-only','Intake only','active',true,gen_random_uuid()),
+ ('a2980000-0000-4000-8000-0000000000f7','a2980000-0000-4000-8000-000000000011','intake-and-notify','Intake and notify','active',true,gen_random_uuid()),
  ('a2980000-0000-4000-8000-0000000000f5','a2980000-0000-4000-8000-000000000012','foreign','Foreign','active',false,null);
 INSERT INTO public.growth_form_automations(tenant_id,form_id,target_slug,enabled) VALUES
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1','pipeline_attach',true),
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f2','pipeline_attach',false),
- ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f2','notify_team',true);
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f2','notify_team',true),
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f7','notify_team',true);
+-- Email: three managed sends (two opened, one clicked), one through the business's own connector, and B's.
+INSERT INTO public.email_campaigns(id,tenant_id,name,status) VALUES
+ ('a2980000-0000-4000-8000-0000000000e1','a2980000-0000-4000-8000-000000000011','Proof campaign','completed'),
+ ('a2980000-0000-4000-8000-0000000000e2','a2980000-0000-4000-8000-000000000012','Foreign campaign','completed');
+INSERT INTO public.email_campaign_versions(id,campaign_id,tenant_id,version_no,state) VALUES
+ ('a2980000-0000-4000-8000-0000000000e3','a2980000-0000-4000-8000-0000000000e1','a2980000-0000-4000-8000-000000000011',1,'sent'),
+ ('a2980000-0000-4000-8000-0000000000e4','a2980000-0000-4000-8000-0000000000e2','a2980000-0000-4000-8000-000000000012',1,'sent');
+INSERT INTO public.email_campaign_recipients(campaign_id,version_id,tenant_id,email,status,route,sent_at,opened_at,clicked_at) VALUES
+ ('a2980000-0000-4000-8000-0000000000e1','a2980000-0000-4000-8000-0000000000e3','a2980000-0000-4000-8000-000000000011','one@example.invalid','sent','managed',now()-interval '2 days',now()-interval '1 day',now()-interval '1 day'),
+ ('a2980000-0000-4000-8000-0000000000e1','a2980000-0000-4000-8000-0000000000e3','a2980000-0000-4000-8000-000000000011','two@example.invalid','sent','managed',now()-interval '2 days',now()-interval '1 day',null),
+ ('a2980000-0000-4000-8000-0000000000e1','a2980000-0000-4000-8000-0000000000e3','a2980000-0000-4000-8000-000000000011','three@example.invalid','sent','managed',now()-interval '2 days',null,null),
+ ('a2980000-0000-4000-8000-0000000000e1','a2980000-0000-4000-8000-0000000000e3','a2980000-0000-4000-8000-000000000011','four@example.invalid','sent','connector',now()-interval '2 days',null,null),
+ ('a2980000-0000-4000-8000-0000000000e2','a2980000-0000-4000-8000-0000000000e4','a2980000-0000-4000-8000-000000000012','foreign@example.invalid','sent','managed',now()-interval '2 days',now(),now());
 INSERT INTO public.campaign_briefs(tenant_id,short_ref,name) VALUES
  ('a2980000-0000-4000-8000-000000000011','CB-SPRING','Spring intake'),
  ('a2980000-0000-4000-8000-000000000011','DUP','One'),
@@ -99,14 +116,34 @@ SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='PARTIAL' AND bundle-
 -- A deal id that resolves to no deal in this workspace is excluded, not counted.
 SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='PARTIAL' AND bundle#>>'{values,count}'='0' AND bundle#>>'{coverage,contributing_count}'='6'
  AND bundle->'exclusions'='[{"reason":"opportunity_record_missing","count":1}]'::jsonb FROM marketing_results WHERE key='marketing.leads.converted_to_opportunity'),'opportunity link');
-SELECT pg_temp.require_true((SELECT bundle#>>'{values,count}'='2' AND bundle#>>'{range,semantics}'='current_snapshot' FROM marketing_results WHERE key='marketing.capture_points.published_current'),'live forms');
+SELECT pg_temp.require_true((SELECT bundle#>>'{values,count}'='4' AND bundle#>>'{range,semantics}'='current_snapshot' FROM marketing_results WHERE key='marketing.capture_points.published_current'),'live forms');
 -- A disabled pipeline automation does not route; another enabled automation is not a pipeline route.
-SELECT pg_temp.require_true((SELECT bundle#>>'{values,count}'='1' AND bundle#>>'{coverage,contributing_count}'='2' FROM marketing_results WHERE key='marketing.forms.unrouted_current'),'unrouted live forms');
+SELECT pg_temp.require_true((SELECT bundle#>>'{values,count}'='2' AND bundle#>>'{coverage,contributing_count}'='4' FROM marketing_results WHERE key='marketing.forms.unrouted_current'),'unrouted live forms (intake columns lose to an enabled automation)');
 -- Failed at any age; waiting more than 15 minutes is stalled; a 2-minute-old pending lead is not.
 SELECT pg_temp.require_true((SELECT bundle#>'{values,items}'='[{"key":"failed","label":"Processing failed","count":2},{"key":"stalled","label":"Still waiting after 15 minutes","count":1}]'::jsonb
  FROM marketing_results WHERE key='marketing.submissions.failed_current'),'failed and stalled');
-SELECT pg_temp.require_true((SELECT bool_and(bundle->>'truth_state'='LIVE' AND bundle#>>'{values,count}'='0' AND bundle#>>'{coverage,candidate_count}'='0')
- FROM marketing_results WHERE key LIKE 'marketing.email.%'),'no sends is a true zero');
+SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='LIVE' AND bundle#>>'{values,count}'='4' FROM marketing_results WHERE key='marketing.email.sent'),'emails sent, any route, this workspace');
+SELECT pg_temp.require_true((SELECT bool_and(bundle->>'truth_state'='PARTIAL' AND bundle#>>'{coverage,contributing_count}'='3'
+ AND bundle->'exclusions'='[{"reason":"not_tracked_own_mail","count":1}]'::jsonb
+ AND bundle#>>'{values,count}'=CASE key WHEN 'marketing.email.opened' THEN '2' ELSE '1' END)
+ FROM marketing_results WHERE key IN ('marketing.email.opened','marketing.email.clicked')),'opens and clicks over tracked sends only');
+SELECT pg_temp.require_true((SELECT (bundle#>'{values,points}'->0->>'at')::timestamptz=(bundle#>>'{range,start}')::timestamptz
+ FROM marketing_results WHERE key='marketing.leads.daily'),'the first point starts at the range start');
+
+-- A hundred and twenty tags fold to exactly 100 items; an emoji tag and a Unicode-space tag stay valid labels.
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
+INSERT INTO public.growth_form_submissions(tenant_id,form_id,utm_json,processing_state,created_at)
+ SELECT 'a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source','bulk'||g),'done',now()-interval '6 days' FROM generate_series(1,120) g;
+INSERT INTO public.growth_form_submissions(tenant_id,form_id,utm_json,processing_state,created_at) VALUES
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source',repeat(U&'\+01F600',130)),'done',now()-interval '6 days'),
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source',U&'\00A0\3000'),'done',now()-interval '6 days');
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','a2980000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a2980000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+SELECT pg_temp.require_true(jsonb_array_length(b#>'{values,items}')=100
+ AND (SELECT bool_and(char_length(i->>'key')<=80 AND char_length(i->>'label')<=120 AND btrim(i->>'label')<>'' AND (i->>'label')!~'[[:cntrl:]]') FROM jsonb_array_elements(b#>'{values,items}') i)
+ AND b#>'{values,items}'@>'[{"key":"_untagged","count":3}]'::jsonb AND b#>'{values,items}' @> '[{"key":"_other"}]'::jsonb,'fold to 100 items with valid labels')
+ FROM (SELECT public.issue_analytics_evidence_bundle('marketing.leads.by_utm_source','1.0.0','{}','month',now()-interval '30 days',now(),'a2980000-0000-4000-8000-000000000011') b) x;
 
 -- Contract: unknown key, a dimension, and a daily range past 366 days are refused.
 SELECT pg_temp.require_invalid($q$SELECT public.issue_analytics_evidence_bundle('marketing.roas','1.0.0','{}','month',now()-interval '30 days',now(),'a2980000-0000-4000-8000-000000000011')$q$,'unknown marketing key');

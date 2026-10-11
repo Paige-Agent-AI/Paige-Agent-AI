@@ -33,14 +33,23 @@ A **lead** is a form submission. Nothing here judges lead quality: "qualified le
 |---|---|---|---|
 | `marketing.leads.received` | Submissions with `created_at` in [start,end), every form in the workspace | count | none |
 | `marketing.leads.daily` | Same, one point per UTC day the range touches (zeros kept); range may touch at most 366 days | series | none |
-| `marketing.leads.by_utm_source` | Same, grouped by `lower(btrim(utm_source))` when a string (control characters become spaces), as item `src:<tag>`; no tag → item `_untagged` ("No source tag"); beyond 99 tags → `_other` | distribution | none (untagged is an item, never dropped) |
+| `marketing.leads.by_utm_source` | Same, grouped by `lower(btrim(utm_source))` when a string (control characters become spaces), as item `src:<tag>`; no tag → item `_untagged` ("No source tag"); beyond 98 tags → `_other` (so at most 100 items) | distribution | none (untagged is an item, never dropped) |
 | `marketing.leads.by_campaign_tag` | Same, `utm_campaign` matched case-insensitively to this workspace's `campaign_briefs.short_ref`: one match → `brief:<id>` labelled with the brief's name; no match → `tag:<tag>`; no tag → `_untagged` | distribution | `campaign_tag_matches_several_briefs` (never guessed) |
 | `marketing.leads.converted_to_opportunity` | Same; count those whose `deal_id` resolves to a deal in this workspace. Denominator = contributing leads | count | `opportunity_record_missing` (a `deal_id` with no deal here) |
 | `marketing.capture_points.published_current` | Forms with `status = active` now (pages and funnels capture through the forms they embed) | count, snapshot | none |
-| `marketing.forms.unrouted_current` | Live forms with no enabled `pipeline_attach` automation and no intake route (`auto_create_deal` with a `pipeline_id`). Denominator = live forms | count, snapshot | none |
+| `marketing.forms.unrouted_current` | Live forms whose leads reach no pipeline as `growth-process-submission` runs them: no enabled `pipeline_attach` automation, and no intake route (`auto_create_deal` with a `pipeline_id`) that applies because the form has no enabled automation. Denominator = live forms | count, snapshot | none |
 | `marketing.submissions.failed_current` | Now, any age: `processing_state = error` (failed) and `pending`/`claimed` more than 15 minutes after arriving (stalled; the processor retries after 5) | distribution, snapshot | none |
 | `marketing.email.sent` | Recipients with `sent_at` in range, any route | count | none |
 | `marketing.email.opened` / `.clicked` | Of the managed-route sends in range, those opened / clicked since. Denominator = tracked sends | count | `not_tracked_own_mail` (sends through the business's own mail) |
+
+Every tag, reference and brief name that becomes a key or label passes `_marketing_metric_text`. That function:
+- replaces characters outside the Basic Multilingual Plane with U+FFFD, so a character limit is also a UTF-16 limit;
+- turns control characters and every Unicode space into one space;
+- trims the ends;
+- treats an empty result as no value.
+
+This keeps every answer inside the shared validator's key and label rules, whatever an anonymous form submission carried.
+Ordering and the 98-tag cutoff use the `"C"` collation, so results are the same on every database.
 
 Truth state follows the shared rule: excluded candidates make a reading PARTIAL; candidates with none contributing make
 it UNAVAILABLE (the dispatcher then nulls values). A reading with no candidates is a true zero, LIVE.
@@ -48,11 +57,20 @@ it UNAVAILABLE (the dispatcher then nulls values). A reading with no candidates 
 **Not produced, unavailable at the reader:** visits and page conversion, funnel step-through, social reach, ad spend,
 CPL, CAC, ROAS (Ads department), revenue (Sales), qualified leads.
 
+## Known limits
+
+- Each read builds the range's rows as one JSON array, and the shared resolver runs the producer again on every readback.
+  - Sized for today's volumes: hundreds of submissions per workspace.
+  - Past tens of thousands per range, move the counting into SQL aggregates and keep the digest over row identities.
+- Failed and stalled submissions are read through the partial index `growth_form_submissions_tenant_unfinished`.
+- When every candidate is excluded, the shared dispatcher's UNAVAILABLE rewrite replaces the specific reason with its generic one. That behaviour is INT-340's.
+
 ## Proof
 
 - `supabase/tests/marketing_metric_producer.sql`, run in the `database-contract` job on a production-schema clone,
   through the real issuer and resolver. It covers:
-  - every key's value against fixtures;
+  - every key's value against fixtures, including email over managed and connector routes, and intake routing losing to an enabled automation;
+  - 120 tags folding to exactly 100 items, and emoji or Unicode-space tags staying valid labels;
   - tenant isolation, including another workspace's brief, deal and leads;
   - an unknown key, a dimension and an over-long daily range refused;
   - the private producer, a foreign epoch and a member refused;

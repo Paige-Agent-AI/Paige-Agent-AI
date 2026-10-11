@@ -397,6 +397,12 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
      connected", because Meta or Metricool can be connected in Integrations while nothing reads them; the preview
      header reads "Your business" (no tenant-name read added for a mock frame).
    - **S1c shipped** (#1927 → `c710ec3`, 2026-10-10, live on paigeagent.ai).
+   - **S1e shipped** (#1931 → `6a285f5`, 2026-10-10, live on paigeagent.ai).
+   - **2026-10-11 coordinator command (owner-authorized):** Ads leaves Marketing for its own top-level department
+     and a dedicated Ads agent; this plan's Ads desk (S1c) and S5 Meta read now belong to that agent. Marketing
+     Analytics drops its Ads channel row and Open Ads (MBC slice 1); paid leads stay attributed by source tag.
+     The backend completion slices (metric producer, campaign/asset links, capture events, action contract,
+     Chat/Live) follow in that order under INT-298.
    - **S1e as built** (owner ask 2026-10-10, no prototype stage: pre-launch §4, frames shown on delivery): Content
      is a gallery of the saved library, each piece shown as itself (an image its picture, a document its cover from
      its blocks, copy its words, ad copy its headline and call to action), a ring of kinds, published work from Vibe

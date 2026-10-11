@@ -43,6 +43,11 @@ import crypto from "node:crypto";
 // SSRF egress guard + two-layer content denylist — extracted to a shared module (§18 one home) so the
 // smoke test exercises the SAME real code the server runs (§32), not a mirror that can drift.
 import { urlBlockReason, assertPublicUrl, installReadOnlyBrowserEgress, loadDenylist } from "./ssrf-guard.mjs";
+// PC-1 — the per-request isolated context factory (one home, proven by smoke-isolation.mjs).
+import { createIsolatedBrowseContext } from "./browse-context.mjs";
+// PC-1 — the connect-time egress proxy: browse contexts dial ONLY guard-validated, pinned addresses
+// (#138 DNS-rebinding closure). Started at boot below; /browse-public-url fails closed without it.
+import { startEgressProxy } from "./egress-proxy.mjs";
 // /render — screenshot capture of Paige's own pages for the §33 critique loop. The capture logic lives
 // in ./render.mjs (§18 one home) so smoke-render.mjs exercises the code the server runs (§32).
 import { renderConfig, validateRenderRequest, renderCapture } from "./render.mjs";
@@ -323,8 +328,14 @@ async function browsePublic({ url, viewport, waitForSelector, waitMs, maxContent
   const browser = await getBrowser();
   let ctx = null, page = null;
   try {
-    ctx = await browser.newContext({ viewport: clampVp(viewport), userAgent: PAIGE_UA, serviceWorkers: "block" });
-    await installReadOnlyBrowserEgress(ctx);
+    // PC-1 — fresh isolated context per request via the ONE factory (cross-request/cross-tenant
+    // state isolation, smoke-isolation.mjs), with every dial pinned through the egress proxy
+    // (#138 closure). Fenced by installReadOnlyBrowserEgress inside the factory.
+    ctx = await createIsolatedBrowseContext(browser, {
+      viewport: clampVp(viewport),
+      userAgent: PAIGE_UA,
+      proxy: egressProxy ? { server: egressProxy.serverUrl } : null,
+    });
     page = await ctx.newPage();
     page.setDefaultTimeout(STEP_TIMEOUT_MS);
 
@@ -470,6 +481,13 @@ app.post("/browse-public-url", rateLimit, async (req, res) => { // codeql[js/mis
     return res.status(403).json({ ok: false, url, error: "capability_disabled", reason: "wildcard browsing not yet enabled", blocked_reason: "wildcard:disabled" });
   }
 
+  // PC-1 fail-closed: without the connect-time egress proxy the browse path MUST NOT run — unpinned
+  // dials would reopen the #138 DNS-rebinding window the proxy exists to close. /pdf, /render and
+  // /self-verify are NOT gated by this (their targets are local HTML, Paige origins, paigeagent.ai).
+  if (!egressProxy) {
+    return res.status(503).json({ ok: false, url, error: "egress_proxy_unavailable", reason: "connect-time egress proxy is not running; browse fails closed", blocked_reason: "egress:proxy-unavailable" });
+  }
+
   // Resolve-first SSRF + denylist pre-check (reason-coded) BEFORE the browser ever touches the URL.
   const blocked = await urlBlockReason(url);
   if (blocked) {
@@ -538,4 +556,16 @@ app.post('/pdf', rateLimit, async (req, res) => {
   } catch { return res.status(503).json({ error: 'pdf_unavailable' }); }
   finally { inFlight--; }
 });
+// PC-1 — boot the loopback egress proxy before listening. A boot failure (or an explicit
+// PAIGE_BROWSER_EGRESS_PROXY=off) keeps the server UP for /pdf, /render and /self-verify but
+// leaves /browse-public-url 503 fail-closed — the proxy is mandatory for untrusted browsing.
+let egressProxy = null;
+const EGRESS_PROXY_DISABLED = ["off", "false", "0"].includes(String(process.env.PAIGE_BROWSER_EGRESS_PROXY || "").toLowerCase());
+if (EGRESS_PROXY_DISABLED) {
+  console.error("[paige-browser] egress proxy disabled by env (PAIGE_BROWSER_EGRESS_PROXY) — /browse-public-url will fail closed");
+} else {
+  startEgressProxy()
+    .then((p) => { egressProxy = p; p.unref(); console.log(`[paige-browser] egress proxy listening on ${p.serverUrl}`); })
+    .catch((e) => console.error("[paige-browser] egress proxy FAILED to start — /browse-public-url will fail closed:", e?.message || e));
+}
 app.listen(PORT, () => console.log(`[paige-browser] listening on :${PORT}`));

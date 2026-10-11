@@ -109,13 +109,23 @@ export function ipBlockReason(ip) {
 }
 
 const _dnsCache = new Map(); // host -> {reason:string|null, at:number}
-// Returns a "ssrf:*" / "denylist:*" reason for a blocked host, or null if allowed. Fail-closed on any
-// resolution failure (unresolvable host -> "ssrf:unresolved").
-export async function hostBlockReason(host) {
+// PC-1 — the DNS-INDEPENDENT part of the host rules (literal/suffix/denylist shape), split out so
+// the connect-time egress proxy applies the SAME hostname rules without the 30s allow-cache: the
+// proxy must see a fresh answer for every dial it pins (§18 one home for the rules themselves).
+export function hostnameShapeBlockReason(host) {
   const h = String(host).replace(/^\[|\]$/g, "").toLowerCase();
   if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal")) return "ssrf:loopback";
   if (isDenylisted(h)) return "denylist:stevenblack";
   if (net.isIP(h)) { const r = ipBlockReason(h); return r ? `ssrf:${r}` : null; }
+  return null;
+}
+
+// Returns a "ssrf:*" / "denylist:*" reason for a blocked host, or null if allowed. Fail-closed on any
+// resolution failure (unresolvable host -> "ssrf:unresolved").
+export async function hostBlockReason(host) {
+  const h = String(host).replace(/^\[|\]$/g, "").toLowerCase();
+  const shapeReason = hostnameShapeBlockReason(h);
+  if (shapeReason) return shapeReason;
   const hit = _dnsCache.get(h);
   if (hit && Date.now() - hit.at < 30_000) return hit.reason;
   let reason = "ssrf:unresolved"; // fail-closed if we can't resolve

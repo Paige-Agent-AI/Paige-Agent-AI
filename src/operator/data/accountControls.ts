@@ -56,8 +56,22 @@ async function rpc(name: string, args: Record<string, unknown>): Promise<unknown
   if (error) throw new AccountRpcError(error.code === 'PGRST202' ? 'Account lifecycle controls are not deployed yet.' : error.message, error.code);
   return data;
 }
-export async function readRetirementAuthority(): Promise<boolean> {
-  return await rpc('operator_can_retire_accounts', {}) === true;
+/**
+ * The server's answer for what THIS session may do, asked directly rather than inferred:
+ * archive/restore authority and permanent-delete authority are separate server predicates
+ * (ANT-47 — a delegated operator tier may archive but never permanently delete). A missing or
+ * malformed answer is an error, never a silent "no" and never a silent "yes".
+ */
+export type LifecycleAuthority = { archive: boolean; delete: boolean };
+export async function readLifecycleAuthority(): Promise<LifecycleAuthority> {
+  const [archive, deletion] = await Promise.all([
+    rpc('operator_can_archive_accounts', {}),
+    rpc('operator_can_permanently_delete_accounts', {}),
+  ]);
+  if (typeof archive !== 'boolean' || typeof deletion !== 'boolean') {
+    throw new Error('Account lifecycle authority could not be verified.');
+  }
+  return { archive, delete: deletion };
 }
 export async function readAccountDetails(id: string): Promise<AccountDetails> {
   const result = await rpc('operator_read_account_details', { _tenant_id: id });

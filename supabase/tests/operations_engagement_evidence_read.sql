@@ -41,4 +41,27 @@ update public.tenants set account_type='agency' where id='ea710000-0000-4000-800
 set local role authenticated;
 select pg_temp.ops_refused($s$select public.operations_engagement_evidence_read('ea710000-0000-4000-8000-000000000001','ea710000-0000-4000-8000-000000001111','ea710000-0000-4000-8000-00000000a001')$s$,'agency evidence capability refused');
 reset role;
+do $fixture$ declare prior_sub text:=current_setting('request.jwt.claim.sub',true);
+ prior_claims text:=current_setting('request.jwt.claims',true); begin
+ perform set_config('request.jwt.claim.sub','',true);
+ perform set_config('request.jwt.claims','{}',true);
+ update public.tenants set account_type='standalone',parent_tenant_id='ea720000-0000-4000-8000-000000002222' where id='ea710000-0000-4000-8000-000000001111';
+ perform set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
+ perform set_config('request.jwt.claims',coalesce(prior_claims,'{}'),true);
+end $fixture$;
+set local role authenticated;
+select pg_temp.ops_refused($s$select public.operations_engagement_evidence_read('ea710000-0000-4000-8000-000000000001','ea710000-0000-4000-8000-000000001111','ea710000-0000-4000-8000-00000000a001')$s$,'parented standalone evidence capability refused');
+reset role;
+do $fixture$ declare prior_sub text:=current_setting('request.jwt.claim.sub',true);
+ prior_claims text:=current_setting('request.jwt.claims',true); begin
+ perform set_config('request.jwt.claim.sub','',true);
+ perform set_config('request.jwt.claims','{}',true);
+ update public.tenants set parent_tenant_id=null where id='ea710000-0000-4000-8000-000000001111';
+ perform set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
+ perform set_config('request.jwt.claims',coalesce(prior_claims,'{}'),true);
+end $fixture$;
+delete from public.tenant_members where tenant_id='ea710000-0000-4000-8000-000000001111' and user_id='ea710000-0000-4000-8000-000000000001';
+set local role authenticated;
+select pg_temp.ops_refused($s$select public.operations_engagement_evidence_read('ea710000-0000-4000-8000-000000000001','ea710000-0000-4000-8000-000000001111','ea710000-0000-4000-8000-00000000a001')$s$,'revoked member evidence capability refused');
+reset role;
 rollback;

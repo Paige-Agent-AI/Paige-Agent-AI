@@ -43,3 +43,5 @@ The next bounded source preparation is a single agreement evidence projection un
 
 Read preparation now includes12 rollback-owned SQL assertions for effective ACL, caller-RLS frozen provenance, withheld private payload, explicit non-authority/non-acceptance, actor/workspace/missing-source and Agency refusals. All12 UNEXECUTED and not CI-registered yet. Migration collision lint1246 and definer lint PASS locally; neither is database execution. No production claim.
 
+
+Added rollback-only parented-standalone and revoked-membership source refusals, bringing signing-source SQL assertions to14, all UNEXECUTED. Uses database-owner setup only for owned hierarchy fixture and restores caller claims before invoking unchanged evidence reader. No handoff authority or client acceptance inferred; migration remains development-only/unallocated.

@@ -61,6 +61,28 @@ select public.operations_delivery_release_scoped((select value::uuid from delive
 reset role;
 insert into delivery_test_values values('release',(select id::text from public.operations_delivery_client_releases)),('release_updated',(select updated_at::text from public.operations_delivery_client_releases));
 select pg_temp.check_true((select state='awaiting_client' and decision_by is null from public.operations_delivery_client_releases),'release awaits actual client decision');
+-- Identity is revalidated per read; a saved release is not a perpetual tenant grant.
+select set_config('request.jwt.claim.sub','',true);
+select set_config('request.jwt.claims','{}',true);
+update public.clients set linked_user_id='ed010000-0000-4000-8000-000000000003'
+ where id='ed010000-0000-4000-8000-00000000c001';
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000004',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.operations_delivery_client_read_scoped((select value::uuid from delivery_test_values where key='release'),'ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111')$s$,'42501','relinked identity revokes previous client artifact access');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+update public.clients set linked_user_id='ed010000-0000-4000-8000-000000000004'
+ where id='ed010000-0000-4000-8000-00000000c001';
+insert into public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) values
+ ('ed010000-0000-4000-8000-000000001111','ed010000-0000-4000-8000-000000000004','member','active',false,now());
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000004',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.operations_delivery_client_read_scoped((select value::uuid from delivery_test_values where key='release'),'ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111')$s$,'42501','staff identity cannot act as external accepting client');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+delete from public.tenant_members where tenant_id='ed010000-0000-4000-8000-000000001111'
+ and user_id='ed010000-0000-4000-8000-000000000004';
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000001',true);
 set local role authenticated;
 select pg_temp.refused($s$select public.operations_delivery_client_read_scoped((select value::uuid from delivery_test_values where key='release'),'ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111')$s$,'42501','staff cannot impersonate customer acceptance');
 reset role;

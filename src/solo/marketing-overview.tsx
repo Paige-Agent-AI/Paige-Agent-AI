@@ -67,6 +67,7 @@ export type OverviewProps = {
 export { sendsToPipeline };
 const unroutedDetail = (form: CampaignArtifact) =>
   form.intakeAlert ? "Leads are emailed to you but never reach a pipeline"
+    : form.intakePipelineId && form.routingConfigured ? "Its own pipeline route is skipped while an automation is on; add a pipeline step to its automations in Vibe Studio"
     : form.routingConfigured ? "Its automations run, but leads never reach a pipeline"
       : "A lead from this form goes nowhere: no pipeline, no alert";
 

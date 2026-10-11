@@ -16,6 +16,6 @@ ${read('supabase/tests/int304_durable_continuation.sql')}
 rollback;`;
 const result=spawnSync(process.env.PSQL_BIN??'psql',['-X','-v','ON_ERROR_STOP=1',url],{input:sql,encoding:'utf8',timeout:45000,windowsHide:true});if(result.status!==0){console.error(result.stderr);process.exit(1)}
 const proofs=(result.stdout+'\n'+result.stderr).split('\n').filter(l=>l.includes('CONTINUATION_PROOF'));
-if(proofs.length<20)throw Error(`expected at least 20 CONTINUATION_PROOF lines, saw ${proofs.length}`);
+if(proofs.length<22)throw Error(`expected at least 22 CONTINUATION_PROOF lines, saw ${proofs.length}`);
 console.log(proofs.join('\n'));
 console.log('PASS durable continuation read: exact validated fields with canonical objective, permission/tenant/actor/intent/archival gates, approval-pending only from a real expired approval, blank objective refused, ambiguous lineage refused, capability class closed, service/anon refused');

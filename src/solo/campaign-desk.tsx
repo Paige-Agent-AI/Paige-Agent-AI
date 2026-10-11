@@ -15,6 +15,8 @@ import { createPortal } from "react-dom";
 import { Ic } from "./_shared";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { useCatalogOffers } from "./useCatalogOffers";
+import { kindLabel, useCampaignAssets } from "./useCampaignAssets";
+import { CampaignComposition } from "./campaign-composition";
 
 // ── vocab ──────────────────────────────────────────────────────────────────────────────────────
 const ST = {
@@ -150,12 +152,20 @@ function LoopMap({ data, focus, onClearFocus, onRoute, offerSignal }) {
 }
 
 // ── launch readiness (sourced + routed, no score / no green-all) ───────────────────────────────
-function readinessRows(b) {
+const PLURAL = { Page: "pages", Form: "forms", Funnel: "funnels", Email: "emails", "Email series": "email series", "Social post": "social posts", "Ad copy": "ad copy", "Library piece": "library pieces" };
+// What a brief has attached, in words ("2 pages, 1 email"); empty when nothing is attached.
+function attachedSummary(links) {
+  const counts = new Map();
+  for (const link of links) { const label = kindLabel(link.kind, link.channel); counts.set(label, (counts.get(label) || 0) + 1); }
+  return [...counts].map(([label, n]) => `${n} ${n === 1 ? label.toLowerCase() : PLURAL[label] || label.toLowerCase()}`).join(", ");
+}
+function readinessRows(b, links = []) {
   const loop = briefLoop(b);
+  const attached = attachedSummary(links);
   return [
     ["Offer ready", loop.offer, "catalog", b.offerId ? `Linked: ${b.offerName || "recorded in Offers"}` : "No offer linked to this brief."],
     ["Audience identified", loop.audience, "clients", b.audience ? `Recorded: ${b.audience}` : "No audience recorded."],
-    ["Source content / creative ready", loop.content, "studio", b.contentNeeds ? "Content needs recorded; create it in Vibe Studio." : "No content needs recorded."],
+    ["Source content / creative ready", attached ? "partial" : loop.content, "studio", attached ? `Attached: ${attached}.` : b.contentNeeds ? "Content needs recorded; create it in Vibe Studio." : "No content needs recorded."],
     ["Target channels connected", "unavail", "social", "No customer-facing social / publishing provider is connected."],
     ["Publishing / distribution path", "unavail", "social", "Depends on a connected provider — not checked."],
     ["Conversations / follow-up path", "unavail", "social", "No connected messaging provider on this workspace."],
@@ -165,13 +175,13 @@ function readinessRows(b) {
       b.lifecycleStatus === "ready_for_review" ? "Awaiting your review." : b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "Approved." : "Not sent for review yet."],
   ];
 }
-function Readiness({ brief, onRoute }) {
+function Readiness({ brief, links, onRoute }) {
   return (
     <div className="rd">
       <div className="rd-head"><Ic.shield size={15}/><h4>Launch readiness</h4>
         <div className="note">Every item is sourced and routed. No score, no green-all. “Unavailable / needs confirmation” where the platform can’t know.</div></div>
       <div className="rd-grid">
-        {readinessRows(brief).map(([label, stKey, route, meta]) => {
+        {readinessRows(brief, links).map(([label, stKey, route, meta]) => {
           const st = ST[stKey] || ST.unavail;
           return (
             <div className="rd-item" key={label}>
@@ -189,6 +199,7 @@ function Readiness({ brief, onRoute }) {
 
 export default function CampaignOverview({ data, onRoute, autoOpenBrief = false, onAutoOpenConsumed = undefined }) {
   const briefsState = useSoloCampaignBriefs();
+  const assets = useCampaignAssets(briefsState.tenantId);
   // A REAL tenant-scoped Catalog read — the honest backing for the workspace-scope "Offer" loop
   // stage (§13). Only EXISTENCE is needed here, so a single-row page is enough (never the whole
   // catalog). "has" only when offers truly exist; "error" when the read failed; else unknown.
@@ -312,7 +323,7 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
   const drawers = (
     <>
       {drawer?.kind === "dossier" && portalHost && (() => { const b = briefs.find((x) => x.id === drawer.briefId); return b
-        ? createPortal(<DossierDrawer brief={b} canManage={canManage} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
+        ? createPortal(<DossierDrawer brief={b} canManage={canManage} assets={assets} onToast={showToast} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
             onEdit={() => setDrawer({ kind: "brief", briefId: b.id })}
             onTransition={async (status, blocker, idem) => { const r = await briefsState.transitionBrief(b.id, status, b.version, blocker, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
             onArchive={async (idem) => { const r = await briefsState.archiveBrief(b.id, b.version, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
@@ -376,7 +387,7 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
             {shown.length === 0
               ? <div className="campaigns-state" style={{ minHeight: 150 }}>{truth("PARTIAL")}<h2>No campaigns match these filters</h2><p>Clear the filters, or create a brief. Campaign status is never inferred from partial or global records.</p><button className="btn btn-s" onClick={() => setFilters({ phase: "all", src: "all", q: "" })}>Clear filters</button></div>
               : shown.map((b) => (
-                <PortfolioRow key={b.id} b={b} open={openRow === b.id} onToggle={() => setOpenRow(openRow === b.id ? null : b.id)}
+                <PortfolioRow key={b.id} b={b} links={assets.phase === "ready" ? assets.links.filter((link) => link.briefId === b.id) : []} open={openRow === b.id} onToggle={() => setOpenRow(openRow === b.id ? null : b.id)}
                   onDossier={() => openDrawer("dossier", b.id)} onFocus={() => { setFocusId(b.id); }} onAsk={() => askPaige(b)} onRoute={onRoute}/>
               ))}
           </section>
@@ -396,7 +407,7 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
 }
 
 // ── portfolio row ──────────────────────────────────────────────────────────────────────────────
-function PortfolioRow({ b, open, onToggle, onDossier, onFocus, onAsk, onRoute }) {
+function PortfolioRow({ b, links, open, onToggle, onDossier, onFocus, onAsk, onRoute }) {
   const phaseIcon = b.lifecycleStatus === "active" ? "pulse" : b.lifecycleStatus === "paused" ? "clock" : b.lifecycleStatus === "blocked" ? "bell" : b.lifecycleStatus === "ready_for_review" ? "clock" : "bolt";
   return (
     <div className={`pf-row ${open ? "open" : ""}`}>
@@ -425,7 +436,7 @@ function PortfolioRow({ b, open, onToggle, onDossier, onFocus, onAsk, onRoute })
       </div>
       {open && (
         <div className="pf-fold">
-          <Readiness brief={b} onRoute={onRoute}/>
+          <Readiness brief={b} links={links} onRoute={onRoute}/>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
             <button className="btn btn-s" onClick={onFocus}><Ic.pulse size={13}/> Focus loop map on this</button>
             <button className="btn btn-s" onClick={onDossier}><Ic.doc size={13}/> Open dossier</button>
@@ -541,7 +552,9 @@ function useDrawerA11y(onClose) {
 }
 
 // ── dossier drawer ─────────────────────────────────────────────────────────────────────────────
-function DossierDrawer({ brief: b, canManage, onClose, onRoute, onAsk, onEdit, onTransition, onArchive }) {
+function DossierDrawer({ brief: b, canManage, assets, onToast, onClose, onRoute, onAsk, onEdit, onTransition, onArchive }) {
+  const links = assets.phase === "ready" ? assets.links.filter((link) => link.briefId === b.id) : [];
+  const attached = attachedSummary(links);
   const ref = useDrawerA11y(onClose);
   const [busy, setBusy] = React.useState(false);
   const act = (fn) => async () => { if (busy) return; setBusy(true); try { await fn(); } finally { setBusy(false); } };
@@ -566,11 +579,12 @@ function DossierDrawer({ brief: b, canManage, onClose, onRoute, onAsk, onEdit, o
             {b.budgetTarget && <div className="dw-note" style={{ marginTop: 8 }}>The budget target is a figure you set — not actual ad spend, a forecast, or connected media buying.</div>}
           </div>
           {b.blocker && <div className="dw-note" style={{ borderColor: "var(--bad)", background: "var(--bad-tint)", color: "var(--bad)" }}><Ic.bell size={13}/> Blocker: {b.blocker}</div>}
-          <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} onRoute={onRoute}/></div>
+          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast}/></div>
+          <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} links={links} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>
             <div className="dw-links">
               <button className="dw-link" onClick={() => onRoute("pipeline")}><Ic.trend size={14}/> {b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."} <span className="rroute">Pipeline <Ic.arrow size={11}/></span></button>
-              <button className="dw-link" data-solo-vibe-studio-launcher onClick={(event) => onRoute("studio", event)}><Ic.spark size={14}/> {b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" data-solo-vibe-studio-launcher onClick={(event) => onRoute("studio", event)}><Ic.spark size={14}/> {attached ? `Attached: ${attached}. Creative is made in Vibe Studio.` : b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
               <button className="dw-link" onClick={() => onRoute("analytics")}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Analytics <Ic.arrow size={11}/></span></button>
             </div>
           </div>

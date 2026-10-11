@@ -101,7 +101,7 @@ export interface TierTree {
 }
 
 /**
- * SOLO_BRANCHES — the Solo tree (13). Shared by `solo` AND `sub_account` (§11c/§60).
+ * SOLO_BRANCHES — the Solo tree (12). Shared by `solo` AND `sub_account` (§11c/§60).
  * Keys match `src/solo/SoloApp.tsx`'s `screens` registry.
  *
  * Sub-tabs verified screen-by-screen against the Solo screen SOURCE (47 across 9
@@ -215,7 +215,9 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "content", key: "content", label: "Content" },
       { slug: "social", key: "social", label: "Social" },
       { slug: "email", key: "email", label: "Email" },
-      { slug: "ads", key: "ads", label: "Ads" },
+      // Ads left this strip for its own department (owner, 2026-10-10, INT-342). The old
+      // `/growth/ads[?view=]` address is not a subtab any more: GrowthHub replaces it into the Ads
+      // branch below with the same view, before any Marketing reader mounts.
       { slug: "analytics", aliases: ["performance"], key: "analytics", label: "Analytics" },
       // Retired as a tab (INT-342, owner-approved 2026-10-10). Kept addressable so every copied link
       // still resolves: GrowthHub lands it on Overview with its intent (filter, form) and a line
@@ -224,6 +226,20 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "catalog", key: "catalog", label: "Offers", hidden: true },
       { slug: "sales", key: "sales", label: "Sales", hidden: true },
       { slug: "pipeline", key: "pipeline", label: "Pipeline", hidden: true },
+    ],
+  },
+  {
+    slug: "ads", key: "ads", label: "Ads", group: "main",
+    // Ads is its own department, directly below Marketing (owner ruling 2026-10-10, INT-342; it was a
+    // Marketing tab until then). Marketing owns demand strategy and campaign briefs; Ads owns paid
+    // media. Source: src/solo/AdsWorkspace.tsx over the existing desk in src/solo/marketing-ads.tsx.
+    // The five views are the desk's own (it was `?view=` under Marketing; those links replace here).
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "campaigns", key: "campaigns", label: "Campaigns" },
+      { slug: "creative", key: "creative", label: "Creative" },
+      { slug: "audiences", key: "audiences", label: "Audiences" },
+      { slug: "performance", key: "performance", label: "Performance" },
     ],
   },
   {

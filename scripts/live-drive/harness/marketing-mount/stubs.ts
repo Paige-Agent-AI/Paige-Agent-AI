@@ -19,7 +19,7 @@ const submission = (id: string, formId: string, days: number, source: string | n
   trackingSource: source, trackingCampaign: campaign,
 });
 
-const populated = {
+export const populated = {
   artifacts: [form("f1", "Discovery call request", 14, true), form("f2", "Scorecard opt-in", 6, false), page("p1", "Advisory scorecard landing page")],
   drafts: [{ id: "p2", type: "page", name: "Retainer upgrade page", updatedAt: daysAgo(1) }],
   submissions: [
@@ -61,5 +61,14 @@ export function useSoloCampaigns() {
   if (mode === "loading") return { ...base, phase: "loading", artifacts: [], drafts: [], submissions: [] };
   if (mode === "error") return { ...base, phase: "error", artifacts: [], drafts: [], submissions: [] };
   if (mode === "first") return { ...base, phase: "ready", artifacts: [], drafts: [], submissions: [] };
+  if (mode === "full") return { ...base, phase: "ready", ...populated, submissions: FULL_READ };
   return { ...base, phase: "ready", ...populated };
 }
+
+// `?mode=full` (Analytics only): the page's 200-row read is full and every row is inside the range, so its own
+// counts are floors; the server counts these and FULL_UNREAD_IN_RANGE more (metrics-supabase-stub.ts).
+export const FULL_READ = Array.from({ length: 200 }, (_, i) => {
+  const source = ["newsletter", "linkedin", null, "instagram"][i % 4];
+  return submission(`r${i}`, i % 3 === 0 ? "f2" : "f1", (i % 20) + 0.3, source, source === "newsletter" ? "CB-SPRING" : null, i % 5 === 0 ? `rd${i}` : null, `rc${i}`);
+});
+export const FULL_UNREAD_IN_RANGE = 140;

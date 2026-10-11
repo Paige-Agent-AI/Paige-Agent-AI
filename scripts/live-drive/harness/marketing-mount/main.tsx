@@ -1,8 +1,9 @@
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import * as React from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { GrowthHub } from "@/solo/growth2";
+import { AdsWorkspace } from "@/solo/AdsWorkspace";
 import "@/index.css";
 import "@/solo/solo-tokens.css";
 
@@ -25,11 +26,22 @@ class HarnessBoundary extends Component<{ children: ReactNode }, { error: Error 
   }
 }
 
+// SoloApp's dispatch, reduced to the two screens this harness owns: Ads is its own department since
+// 2026-10-10, so `tab=ads` opens `/solo/review/ads`. `legacy=` opens an old `/growth/ads` address instead.
+function Screen() {
+  const params = useParams();
+  const location = useLocation();
+  React.useEffect(() => { document.body.dataset.harnessPath = `${location.pathname}${location.search}`; }, [location]);
+  return (params["*"] || "").split("/")[0] === "ads" ? <AdsWorkspace tenantId="tenant-review"/> : <GrowthHub />;
+}
+const legacy = params.get("legacy");
+const entry = legacy !== null ? `/solo/review/growth/ads${legacy ? `?view=${legacy}` : ""}` : tab === "ads" ? "/solo/review/ads" : `/solo/review/growth/${tab}`;
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode><HarnessBoundary>
     <main className="paige-solo" data-theme={theme} style={{ height: "100vh", minHeight: 0, minWidth: 0, overflow: "hidden" }}>
-      <MemoryRouter initialEntries={[`/solo/review/growth/${tab}`]}>
-        <Routes><Route path="/solo/:account/*" element={<GrowthHub />} /></Routes>
+      <MemoryRouter initialEntries={[entry]}>
+        <Routes><Route path="/solo/:account/*" element={<Screen />} /></Routes>
       </MemoryRouter>
     </main>
   </HarnessBoundary></StrictMode>,

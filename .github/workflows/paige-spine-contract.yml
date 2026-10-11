@@ -184,9 +184,15 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
-          for proof in analytics_storage_minimization analytics_referral_authorization analytics_evidence_authorization settings_analytics_metric_producers shared_metric_evidence; do
+          for proof in analytics_storage_minimization analytics_referral_authorization analytics_evidence_authorization settings_analytics_metric_producers shared_metric_evidence marketing_metric_producer; do
             psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f "supabase/tests/$proof.sql"
           done
+
+      # INT-298 MBC 3a: campaign ↔ asset links through the real writer and read, on this rebuilt
+      # database after the candidate apply (tenant, archive and member-visibility negatives).
+      - name: Marketing campaign asset links (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_brief_asset_links.sql
 
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/

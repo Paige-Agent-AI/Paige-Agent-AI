@@ -60,8 +60,9 @@ DECLARE definition text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; posi
 BEGIN
  definition:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure);
  position:=strpos(definition,anchor);
- IF position=0 OR strpos(definition,'''finance_company_entities''')=0
-  OR strpos(definition,'''quickbooks_oauth_attempts''')>0 THEN
+ -- Later canonical replacements may omit older Finance registrations. Require
+ -- the canonical extension anchor, not an unrelated historical table entry.
+ IF position=0 OR strpos(definition,'''quickbooks_oauth_attempts''')>0 THEN
   RAISE EXCEPTION 'Unsupported canonical retirement policy';
  END IF;
  EXECUTE left(definition,position+length(anchor)-1)||'''quickbooks_oauth_attempts'','||substr(definition,position+length(anchor));

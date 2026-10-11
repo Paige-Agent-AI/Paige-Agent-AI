@@ -79,6 +79,12 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
     assert.ok(disposition, 'Canonical retirement disposition missing');
     sql(database, disposition);
+    if (suite === 'quickbooks' && leg === 'replay2') {
+      const currentPolicy = readFileSync(new URL('../../supabase/migrations/20270602000504_operator_provider_independent_retirement.sql', import.meta.url), 'utf8');
+      const currentDisposition = currentPolicy.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
+      assert.ok(currentDisposition, 'Current canonical retirement disposition missing');
+      sql(database, `CREATE TABLE public.fixture_current_retirement(definition text); INSERT INTO public.fixture_current_retirement VALUES ('${currentDisposition.replaceAll("'", "''")}');`);
+    }
     let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && suite === 'source' ? 0 : 1}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
     if (leg === 'absent' && suite === 'accounts') {
       assert.equal(result.status, 0, result.stderr);

@@ -1,6 +1,13 @@
 \set ON_ERROR_STOP on
 \ir finance_source_authority.sql
 SELECT set_config('test.refuse_receipt','',false);
+-- Replay the real later canonical replacement, which no longer lists Finance
+-- tables. The consent migration must extend it without rewriting other policy.
+DO $$ BEGIN
+ IF to_regclass('public.fixture_current_retirement') IS NOT NULL THEN
+  EXECUTE (SELECT definition FROM public.fixture_current_retirement);
+ END IF;
+END $$;
 -- Canonical JWT claim dependency shape, in this disposable database only.
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
  SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub',nullif(current_setting('test.actor',true),''))::uuid

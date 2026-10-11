@@ -16,14 +16,15 @@ import { PipelineDelete } from "./PipelineDelete";
 import { PipelineCommandDesk } from "./PipelineCommandDesk";
 import CampaignOverview from "./campaign-desk";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT, defaultPipelineHint, defaultPipelineTarget, defaultRouteLabel, pipelineRouteOf } from "./marketing-overview-model";
+import { useAdsIntakeCapability } from "./ads-intake-capability";
 import { MarketingAnalytics } from "./marketing-analytics";
 import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
 import { MarketingContent } from "./marketing-content";
 import { contentKindOf } from "./marketing-content-model";
 import { legacyAdsRoute } from "./ads-routing";
-import { CAPTURE_FILTERS, MarketingOverview, sendsToPipeline } from "./marketing-overview";
+import { CAPTURE_FILTERS, MarketingOverview } from "./marketing-overview";
 import { MarketingEmail } from "./marketing-email";
 import { MarketingAudience } from "./marketing-audience";
 import "./solo-chart-tokens.css";
@@ -522,7 +523,16 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     else navigate(`${subtabPath("solo",account,"growth","overview")}?form=${encodeURIComponent(formId)}`);
   },[navigate,params.account,setOverviewQuery,tab]);
   const closeForm=React.useCallback(()=>setOverviewQuery({form:null}),[setOverviewQuery]);
-  const formRoute=!panelForm?null:sendsToPipeline(panelForm)?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Sent to a pipeline by an automation"):panelForm.intakeAlert?"No pipeline: each lead is only emailed":panelForm.intakePipelineId&&panelForm.routingConfigured?"No pipeline: the route below is skipped while an automation is on. Add a pipeline step to its automations in Vibe Studio":panelForm.routingConfigured?"No pipeline: its automations run, but leads never reach one":"Not routed: no pipeline, no alert";
+  // Where this form's leads go, as the submission processor runs it. A form with no route of its own files
+  // its leads into the default pipeline's first open stage (owner ruling 2026-10-11) while there is one.
+  // Only listens: if this page load learned the default-pipeline functions are undeployed, say none of it.
+  const intakeMissing=useAdsIntakeCapability(false)==="missing";
+  const panelDefault=intakeMissing?null:defaultPipelineTarget(data.pipelineWorkspace);
+  const panelRoute=panelForm?pipelineRouteOf(panelForm,panelDefault!==null):null;
+  const formRoute=!panelForm?null
+    :panelRoute==="own"?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Sent to a pipeline by an automation")
+    :panelRoute==="default"&&panelDefault?`${defaultRouteLabel(panelDefault)}. With no route of its own, this form files its leads in your default pipeline. ${panelForm.intakePipelineId&&panelForm.routingConfigured?"The route below is skipped while an automation is on; add a pipeline step to its automations in Vibe Studio to send them elsewhere.":"Set a route below to send them to a specific pipeline instead."}${panelForm.intakeAlert?" Each lead is also emailed to you.":""}`
+    :`${panelForm.intakeAlert?"No pipeline: each lead is only emailed":panelForm.intakePipelineId&&panelForm.routingConfigured?"No pipeline: the route below is skipped while an automation is on. Add a pipeline step to its automations in Vibe Studio":panelForm.routingConfigured?"No pipeline: its automations run, but leads never reach one":"Not routed: no pipeline, no alert"}${intakeMissing?"":`. ${defaultPipelineHint(data.pipelineWorkspace)}.`}`;
   const formDetail=panelForm?{
     key:`form-${panelForm.id}`,
     title:panelForm.name,

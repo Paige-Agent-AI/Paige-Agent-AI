@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
  SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub',nullif(current_setting('test.actor',true),''))::uuid
 $$;
 \if :apply_quickbooks_migration
-\ir ../migrations/20271020000030_quickbooks_company_oauth_attempts.sql
+\ir ../migrations/20271020000300_quickbooks_company_oauth_attempts.sql
 \endif
 CREATE TABLE public.fixture_qb_result(value jsonb);
 GRANT ALL ON fixture_qb_result TO authenticated,service_role;

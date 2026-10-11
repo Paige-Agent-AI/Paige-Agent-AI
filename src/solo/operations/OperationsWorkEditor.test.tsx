@@ -78,3 +78,27 @@ it("does not grant a newer source version to an older draft after background ref
   expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: item.updated_at }), { status: "done" });
   expect(container.textContent).toContain("Someone changed this work");
 });
+it("confirms priority only when canonical readback matches the requested priority", async () => {
+  mock.submit.mockResolvedValue({ kind: "acknowledged" });
+  const original = { ...item, priority: "normal" as const };
+  await render(original, "creator");
+  const priority = container.querySelector<HTMLSelectElement>('select[aria-label="Priority"]')!;
+  await act(async () => { priority.value = "high"; priority.dispatchEvent(new Event("change", { bubbles: true })); });
+  await save();
+  expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: original.updated_at }), { priority: "high" });
+  expect(container.textContent).not.toContain("Saved and confirmed");
+  await render({ ...original, priority: "high", updated_at: "2026-10-10T12:01:00Z" }, "creator");
+  expect(container.textContent).toContain("Saved and confirmed in current work");
+});
+it("refuses to call a mismatched priority readback a successful save", async () => {
+  mock.submit.mockResolvedValue({ kind: "acknowledged" });
+  const original = { ...item, priority: "normal" as const };
+  await render(original, "creator");
+  const priority = container.querySelector<HTMLSelectElement>('select[aria-label="Priority"]')!;
+  await act(async () => { priority.value = "urgent"; priority.dispatchEvent(new Event("change", { bubbles: true })); });
+  await save();
+  await render({ ...original, priority: "low", updated_at: "2026-10-10T12:01:00Z" }, "creator");
+  expect(container.textContent).toContain("Current work differs from the requested change");
+  expect(container.textContent).not.toContain("Saved and confirmed");
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+});

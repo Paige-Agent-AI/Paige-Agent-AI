@@ -82,7 +82,7 @@ export function OperationsWorkCreator({ actorId, tenantId, members, plans, theme
   const alertTheme = { "data-pg": theme, "data-theme": theme };
   return <>
     <Sheet open onOpenChange={open => { if (!open) requestClose(); }}>
-      <SheetContent className="ops-detail-sheet paige-solo" {...alertTheme} onCloseAutoFocus={event => {
+      <SheetContent className="ops-detail-sheet ops-work-create-sheet paige-solo" {...alertTheme} onCloseAutoFocus={event => {
         if (invoker?.isConnected) { event.preventDefault(); invoker.focus(); }
       }}>
         <SheetHeader><SheetTitle>Give the next step an owner</SheetTitle><SheetDescription>Create a task with a clear responsibility and deadline.</SheetDescription></SheetHeader>

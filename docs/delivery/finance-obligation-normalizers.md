@@ -1,0 +1,11 @@
+# Finance obligations — controlled provider normalization
+
+Owner outcome: inspect individual company debt terms and recorded supplier obligations without treating accounting balance as settlement or cash. Finance owns these normalizers; Settings → Integrations owns consent, eligible products, credentials and ingestion. Sales records remain canonical for customer receivables/payments.
+
+Plaid inputs require the expected native item identity and an authorized native-account selection. Item-wide responses discard unselected accounts before normalizing private fields. Individual equal-label accounts remain distinct. Explicit account metadata distinguishes cards, revolving lines and loan obligations; unsupported terms, ownership, collateral and institution freshness remain unknown. Coverage stays partial. [Plaid liability coverage](https://plaid.com/docs/api/products/liabilities/) does not establish every institution or commercial product's eligibility; controlled fixtures are not provider acceptance.
+
+QuickBooks bills preserve vendor identity, due dates, source totals and unknown values. An explicitly recorded zero outstanding balance is an accounting fact, not bank settlement. Purchases preserve original references/payment type and never become recognized expense without additional classification evidence. Company authorization and complete-page checks must precede canonical ingestion.
+
+No new Finance Spine registration, Harness execution, provider transport, financial effect, mutation verb, approval mechanism, ledger, scheduler or event producer. Governing actor/company/version/source contracts, evidence issuance, atomic persistence and canonical receipts/Rail remain required in the future consumer. `finance.department` stays **PROOF_OWED** and approved UI remains intact. Provider registry entries remain unchanged in readiness and grant no activation authority.
+
+Current-main controlled tests: **43 PASS**. Independent exact-head review, hosted CI, merge, deployment, source persistence and authenticated/provider acceptance remain **NOT_DONE / UNVERIFIED**. Real company OAuth, customer ingestion and provider spending remain separately gated. Internal development source only; no customer version, announcement or live-data claim.

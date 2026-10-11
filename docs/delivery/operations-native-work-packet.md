@@ -57,3 +57,7 @@ Overview attention and upcoming deadlines now consume the same source-prefixed P
 
 Native Overview source1efa082c4 independent non-author review COMPLETE COMPATIBLE, no material findings. Type ratchetPASS baseline10/current10. Additional4 actual scrolled Coming up captures PASS in both themes desktop/phone, direct native-row inspection/focus/containment. Eight genuine unsigned-in Chrome200/400percent cases PASS, DPR2/4 measured, same canonical shell, genuine PAIGE fold, keyboard/native detail/confirmation/refusal/recovery/scrolling/focus/reducedmotion; both Overview top and detail captures saved. Visual critic is completing those direct changed-row/zoom captures. No authenticated or persisted outcome inferred.
 
+
+### Critic-driven short-viewport repair
+Expanded independent zoom critique correctly rejected navigation-only400percent captures. Actual body measurement failed:36px, consisting of padding with no useful content viewport. At viewport heights420px or less the existing Operations workspace now scrolls as one department, preserving the shared shell. Actual native200/400percent rerun8cases PASS with body content, actual scrollOwner, visible native deadline bounds, detail/confirmation/refusal/recovery/focus/reducedmotion0errors. At400percent workspaceviewport109px, scrollTop1813.25 and native button91..136 within59..168visiblebounds. Earlier zoom checks measured drawer only and are superseded as landscape proof. Final non-author source/visual recheck remains owed. No backend authority or customer effects changed.
+

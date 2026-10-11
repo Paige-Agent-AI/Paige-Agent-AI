@@ -66,6 +66,12 @@ const harness = vi.hoisted(() => ({
 
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.campaigns }));
 vi.mock("./useCatalogOffers", () => ({ useCatalogOffers: () => harness.offers }));
+// Marketing › Overview's server reads (MBC 2c): a refused seat, so it keeps its record counts and nothing leaves the test.
+vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./marketing-analytics-metrics")>()),
+  useMarketingServerFigures: () => ({ phase: "denied", current: null, previous: null, retry: () => {} }),
+  useMarketingProcessingHealth: () => ({ phase: "denied", health: null }),
+}));
 // Marketing › Overview (where retired Lead capture addresses now land) reads briefs; stubbed empty
 // and ready, as in growth2.render.test.tsx. The briefs seam has its own proof.
 vi.mock("./useSoloCampaignBriefs", () => ({

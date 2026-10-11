@@ -219,3 +219,35 @@ export function deriveMarketingOverview(input: {
     status,
   };
 }
+
+/** The first midnight of the period Overview and its server read share: whole local days ending today. */
+export const periodStartOf = (periodDays: number, now = Date.now()) => midnight(now, -(periodDays - 1));
+
+/** The server's counts over every lead in the period, with the period before (Marketing's producer, read
+ *  through the shared INT-340 seam). Only the figures change: the daily chart and top forms stay on the
+ *  records they are drawn from. Structural, so this file needs nothing from the read itself. */
+export type OverviewServerFigures = {
+  leads: number;
+  tagged: number;
+  opportunities: number;
+  sources: readonly { key: string; label: string; count: number }[];
+  otherSources: number;
+  untagged: number;
+};
+
+export function withServerOverview(model: MarketingOverviewModel, current: OverviewServerFigures, previous: OverviewServerFigures | null): MarketingOverviewModel {
+  const named = current.sources.slice(0, NAMED_SOURCES);
+  const rest = current.sources.slice(NAMED_SOURCES).reduce((sum, row) => sum + row.count, 0) + current.otherSources;
+  return {
+    ...model,
+    capped: false,
+    leads: { count: current.leads, tagged: current.tagged, delta: previous ? deltaOf(current.leads, previous.leads) : null },
+    opportunities: { count: current.opportunities, delta: previous ? deltaOf(current.opportunities, previous.opportunities) : null },
+    sources: [
+      ...named.map((row) => ({ key: row.key, label: row.label, count: row.count, kind: "tag" as const })),
+      ...(rest ? [{ key: "__other", label: "Other sources", count: rest, kind: "other" as const }] : []),
+      ...(current.untagged ? [{ key: "__untagged", label: "No tracking tag", count: current.untagged, kind: "untagged" as const }] : []),
+    ],
+  };
+}
+

@@ -189,6 +189,9 @@ async function main() {
               if (tab === "overview") {
                 const drawn = await page.evaluate(() => ({ nodes: document.querySelectorAll(".mov-node").length, broken: document.querySelectorAll(".mov-node.is-broken").length, line: Boolean(document.querySelector(".mov-line")?.getAttribute("d")), cards: document.querySelectorAll(".mov-cp").length, leads: document.querySelectorAll(".mov-leads li").length, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
                 check(drawn.nodes === 4 && drawn.broken === 1 && drawn.line && drawn.cards === 4 && drawn.leads === 6 && drawn.h1 === 0, `${id}: the chain (one broken link), the lead line, four capture points and six recent leads are drawn, with no page title`, JSON.stringify(drawn));
+                // MBC 2c: the figures are the server's, and Needs you carries what the server counts beyond the records.
+                const counted = await page.evaluate(() => ({ reads: globalThis.__marketingMetricReads ?? 0, health: [...document.querySelectorAll("[aria-labelledby='mov-att-h'] .mov-note")].map((n) => n.textContent).join(" ") }));
+                check(counted.reads >= 5 && /2 older submissions couldn’t be processed, and 1 submission is still waiting/.test(counted.health), `${id}: the server was read for the figures and processing health, and Needs you states the older failures and the waiting submission`, JSON.stringify(counted));
               }
               if (tab === "analytics") {
                 const drawn = await page.evaluate(() => ({ kpis: document.querySelectorAll(".mva-kpi").length, sparks: document.querySelectorAll(".mva-kpi .mva-spark").length, trend: document.querySelectorAll(".mva-chart-trend .recharts-bar-rectangle").length, rings: document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length, steps: document.querySelectorAll(".mva-step").length, bars: [...document.querySelectorAll(".mva-bar i")].filter((i) => i.getBoundingClientRect().width > 0).length, heat: document.querySelectorAll(".mva-heat i.is-on").length, emailChart: Boolean(document.querySelector(".mva-ch-chart .recharts-area-curve")), capture: document.querySelectorAll(".mva-cap-row").length, channels: document.querySelectorAll(".mva-ch li").length, adsRow: [...document.querySelectorAll(".mva-ch li")].some((li) => /Ad accounts|Open Ads/.test(li.textContent ?? "")), paidNote: document.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent ?? "", email: document.querySelector(".mva-ch li small")?.textContent ?? "", leads: document.querySelector(".mva-kpi .mva-kpi-v")?.textContent ?? "", firstStep: document.querySelector(".mva-step .mva-n")?.textContent ?? "", ring: document.querySelector("[aria-labelledby='mva-out-h'] .mo-donut-center strong")?.textContent ?? "", serverReads: globalThis.__marketingMetricReads ?? 0, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
@@ -242,6 +245,26 @@ async function main() {
           await ctx.close();
         }
       }
+    }
+
+    // MBC 2c: Overview on a full read: the summary and chain count all 340 leads; the chart says it is drawn from the latest 200.
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(String(e.message)));
+      await open(page, { tab: "overview", theme, mode: "full" });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.waitForFunction(() => /^340 leads/.test(document.querySelector(".mov-sum")?.textContent ?? ""), null, { timeout: 15000 }).catch(() => {});
+      const id = `${theme}/state-full/overview`;
+      const full = await page.evaluate(() => ({ sum: document.querySelector(".mov-sum")?.textContent ?? "", chainLeads: document.querySelectorAll(".mov-node .mov-v")[1]?.textContent ?? "", notes: [...document.querySelectorAll(".mov-note")].map((n) => n.textContent) }));
+      check(errors.length === 0 && /^340 leads in the last 30 days/.test(full.sum) && full.chainLeads === "340" && full.notes.some((n) => /The totals count every lead in the last 30 days/.test(n)) && !full.notes.some((n) => /so lead counts are a floor/.test(n)), `${id}: the summary and chain count all 340 leads, and the chart's note says it is drawn from the latest 200`, JSON.stringify(full));
+      const m = await measure(page);
+      if (m) check(m.overflowX <= 0 && !m.sideways, `${id}: no overflow`);
+      await page.screenshot({ path: path.join(OUT, `state-full-overview-${theme}.png`), fullPage: false });
+      await page.evaluate(() => document.querySelector("[aria-labelledby='mov-att-h']")?.scrollIntoView({ block: "center" }));
+      await page.screenshot({ path: path.join(OUT, `state-full-overview-needs-${theme}.png`) });
+      await ctx.close();
     }
 
     // A full read: the server counts every lead in the range; the record-drawn parts stay floors and the page says so.

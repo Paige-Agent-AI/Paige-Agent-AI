@@ -1,4 +1,5 @@
-// Replaces only Marketing › Analytics' server-figures read (`issue_analytics_evidence_bundle`, INT-298 MBC 2b).
+// Replaces only Marketing's server-figures reads (`issue_analytics_evidence_bundle`, INT-298 MBC 2b/2c): Analytics'
+// headline figures, and Overview's figures and processing health.
 // Each answer is shaped as the shared issuer returns it, so the page's real validator (parseMetricResult)
 // checks it exactly as in production. A fictional business's figures (§63).
 //   populated  — an owner whose leads all fit the page's read: the server's counts equal the page's own
@@ -62,6 +63,12 @@ function figures(args: Record<string, unknown>): Values {
       const brief = BRIEF_REFS[value];
       return brief ? [`brief:${brief.id}`, brief.name] : [`tag:${value}`, value];
     }), "No campaign tag") };
+    // Processing health is a current snapshot: two submissions failed before the page's read and one is still
+    // waiting, so Overview's "Needs you" shows what the latest records can't.
+    case "marketing.submissions.failed_current": return { kind: "distribution", items: [
+      { key: "failed", label: "Processing failed", count: mode === "first" ? 0 : 2 },
+      { key: "stalled", label: "Still waiting after 15 minutes", count: mode === "first" ? 0 : 1 },
+    ] };
     default: return { kind: "count", count: 0 };
   }
 }

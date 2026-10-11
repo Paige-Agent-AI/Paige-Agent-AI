@@ -1,7 +1,7 @@
 # PAIGE Mail — Multi-Tenant Deliverability & Reputation Gap Assessment (ANT-43)
 
 **Owner:** Mail agent lane (P-ANT-12; ANT-43, coordinated with ANT-40/44 and the Marketing owner).
-**Date:** 2026-10-11. **Status:** source-grounded assessment + phased architecture. **Authorizes
+**Date:** 2026-10-10. **Status:** source-grounded assessment + phased architecture. **Authorizes
 nothing:** no DNS change, purchase, provider call, or live send. Branding unchanged — tenants see
 **PAIGE Email**; PLATFORM_OPERATOR governs all provider infrastructure. Resend policy restrictions
 (including prohibited credit-repair/debt-relief traffic without written permission) and INT-346
@@ -13,9 +13,9 @@ gates are preserved.
 |---|---|---|
 | Sender identities | **EXISTS** — `tenant_sender_identity()` primary; connector `from_address` fallback (precedence identical at draft and send) | send door; ANT-38 lineage |
 | Provider credential | **EXISTS (single platform account)** — operator-managed `admin_app_settings` + env; one Resend account, Svix multi-secret rotation | both Resend doors |
-| Tenant→domain mapping | **PARTIAL** — `channel_connectors.inbound_address/inbound_domain` (inbound only; globally unique); NO sending-domain registry, NO per-tenant domain rows | migrations; #1089 |
+| Tenant→domain mapping | **EXISTS (sending)** — `tenant_email_domains` per-tenant registry (`dns_records`, `status`, `verified_at`, `resend_domain_id`, `is_default`); `manage-tenant-domain` performs list/add/refresh/set_default/remove against the Resend domains API with audited status transitions, and provision-on-verify stands up the connector row; admin UI surfaces it (`EmailDomainsPanel` via `EmailIntegrationConfig`). Inbound mapping (`channel_connectors.inbound_address/inbound_domain`) exists separately (#1089) | `20260711130611_tenant_email_identity_registry`; `manage-tenant-domain`; `20260729030000` |
 | Email types | **EXISTS** — transactional doors + marketing (campaign worker/queue behind the same boundary) | functions inventory |
-| DKIM/SPF/DMARC state | **ABSENT** — zero source references; no verification records surfaced, tracked, or health-checked | `git grep -ci dkim|spf|dmarc` = 0 |
+| DKIM/SPF/DMARC state | **PARTIAL** — records + verified status are stored per domain and surfaced in the admin verify surface; **absent**: scheduled re-verification/health jobs, warmup, per-domain class/risk tiering (the schema speaks in `dns_records`/`status`, not the literal tokens — grounding is by table/function, not token-grep) | `tenant_email_domains`; `manage-tenant-domain` |
 | Provider adapter | **EXISTS** — canonical boundary `comms_provider_execution_allowed(uuid,uuid,text)` + provider floor; provider-id abstraction designed (study §3), single implementation | #1884 lineage |
 | Dispatch policy | **EXISTS** — per-tenant `comms_provider_execution_disabled`, operator policy, action-risk/one-approval-gate | boundary migrations |
 | Quotas / per-tenant rate limits | **ABSENT for email** — generic `public_rate_limits` table exists; no email-specific limits or per-tenant send budgets | migrations |
@@ -54,18 +54,20 @@ Sources: [Resend domains/multi-tenant](https://resend.com/docs/add-a-domain), [R
 ## 4. Four isolation dimensions — current truth
 
 1. **Tenant data access:** **STRONG** (RLS engine-only writes, is_tenant_admin reads, personal-mailbox predicates, receipt doors tenant-resolved). The strongest dimension today.
-2. **Authenticated domain reputation:** **WEAK** — no BYOD; single platform sender identity; nothing tracks tenant-domain DKIM/SPF/DMARC.
+2. **Authenticated domain reputation:** **PARTIAL** — a real per-tenant BYOD path exists (tenant-admin `add` verb → Resend domains API → verify → connector provisioning, surfaced in the admin panel); weak where it matters for reputation: no re-verification/health-check jobs, no warmup, no per-domain class tiering, and adoption is not yet the one PAIGE Email surface.
 3. **Sending IP/pool reputation:** **NONE** — shared provider IPs only; no PAIGE concept of pools; impossible to isolate a noisy tenant's IP reputation.
 4. **Provider-account/compliance blast radius:** **MAXIMAL** — one Resend account: one AUP strike, one compliance event, or one pricing change affects every tenant. This is the existential gap the credit-content matrix (study §4) already partially mitigates at the policy layer.
 
 ## 5. Phased architecture (recommendation; each phase = smallest viable slices)
 
 - **Phase A — Managed included (Model B):** dedicated PAIGE org domain + per-tenant authenticated
-  subdomains; domain registry rows (tenant, domain, class, verification state, last-checked) on the
-  existing connector model; Svix/provider verification via operator; fail-closed send until
-  verified. *Isolation gained: dimension 2 per-tenant.*
-- **Phase B — BYOD (Model C):** tenant-owned domains through the one PAIGE Email interface
-  (ANT-40 study §2 design): records display, provider provisioning invisible, owner/admin-only.
+  subdomains ON THE EXISTING `tenant_email_domains` registry (it already stores records/status/
+  provider id — extend with class, last-health-checked, warmup state); operator-side verification
+  is already wired; the genuinely missing piece is fail-closed send-until-verified enforcement at
+  the boundary. *Isolation gained: dimension 2 per-tenant.*
+- **Phase B — BYOD (Model C):** the tenant-admin `add` verb and verify surface ALREADY implement
+  the mechanism; the work is presentation and consolidation into the one PAIGE Email interface
+  (ANT-40 study §2: provider invisible, owner/admin-only, truthful per-record state).
 - **Phase C — Deliverability controls:** per-tenant send budgets/rate limits on `public_rate_limits`;
   bounce/complaint thresholds with automated suspension (soft, owner-notified, one-approval-gate
   recovery) reading the existing `email_send_log`; suppression enforced at the send boundary;
@@ -85,8 +87,10 @@ Sources: [Resend domains/multi-tenant](https://resend.com/docs/add-a-domain), [R
 
 - **Exists:** receipts, signed doors, engine-only writes, tenant authority, dispatch policy,
   suppression receivers, inbound completion (inert).
-- **Absent (engineering, no external gate):** domain registry + verification state; email rate
-  limits; thresholds/auto-suspension; warmup; boundary suppression enforcement; BYOD UI flows.
+- **Absent (engineering, no external gate):** on TOP of the existing domain registry: scheduled
+  re-verification/health jobs, per-domain class tiering, fail-closed send-until-verified
+  enforcement; email rate limits; thresholds/auto-suspension; warmup; boundary suppression
+  enforcement; consolidating BYOD into the one PAIGE Email surface.
 - **Needs owner/provider approval:** dedicated org domain purchase + DNS; Resend domain add-ons +
   (if ever) multi-workspace; any second provider account (SendGrid/Mailgun/SES) — selection,
   cost, AUP review; credit-content written-permission records; pilot execution.
@@ -105,13 +109,15 @@ magnitude, not quotes).
 
 ## 8. Smallest viable engineering slices (ordered)
 
-1. **S1 Domain registry + verification state** (Phase A substrate; schema + operator readback; no
-   DNS) — enables everything else.
+1. **S1 Domain lifecycle hardening** (on the EXISTING registry): scheduled re-verification/health
+   job, per-domain class, fail-closed send-until-verified at the boundary — no DNS, no new schema
+   family.
 2. **S2 Per-tenant email budgets + boundary enforcement** (public_rate_limits rows + door check +
    truthful refusal).
 3. **S3 Bounce/complaint thresholds → automated soft suspension + governed recovery** (reads
    email_send_log; paige_actions recovery; owner notification).
-4. **S4 BYOD connect-domain flow** (S1 + the ANT-40 §2 design; Connections surface).
+4. **S4 BYOD consolidation** (present the existing add/verify/remove mechanism inside the ONE
+   PAIGE Email interface per the ANT-40 §2 design; Connections surface).
 5. **S5 Credit-content provider-policy enforcement** (already committed as the ANT-40-successor
    slice; study §4 — it is also this lane's blast-radius mitigation).
 6. **S6 Warmup pacing** (dispatch-path ramp for new/cooling domains).

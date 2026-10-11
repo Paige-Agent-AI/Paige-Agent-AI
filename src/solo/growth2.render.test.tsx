@@ -19,6 +19,8 @@ const harness = vi.hoisted(() => ({
   // "error" and the page keeps its record counts; a test sets "ready" with the server's answer.
   server: { phase: "denied", current: null, previous: null } as Record<string, unknown>,
   serverReads: [] as Array<[string | null, string, number]>,
+  // Overview's processing health (marketing.submissions.failed_current): denied unless a test answers.
+  health: { phase: "denied", health: null } as Record<string, unknown>,
   // What each campaign uses (useCampaignAssets). Writes are recorded; the read answers what a test sets.
   assets: { phase: "ready", canManage: true, links: [], available: [] } as Record<string, unknown>,
   assetWrites: [] as Array<[string, string, string, string]>,
@@ -84,6 +86,7 @@ vi.mock("./marketing-analytics-email", () => ({
 vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./marketing-analytics-metrics")>()),
   useMarketingServerFigures: (tenantId: string | null, range: string, periodStart: number) => { harness.serverReads.push([tenantId, range, periodStart]); return { ...harness.server, retry: () => {} }; },
+  useMarketingProcessingHealth: () => harness.health,
 }));
 
 // What each campaign uses reads and writes through governed RPCs; their contract is proven by
@@ -169,6 +172,7 @@ afterEach(() => {
   harness.emailRetry.mockClear();
   harness.server = { phase: "denied", current: null, previous: null };
   harness.serverReads = [];
+  harness.health = { phase: "denied", health: null };
   harness.assets = { phase: "ready", canManage: true, links: [], available: [] };
   harness.assetWrites = [];
   harness.state.tenantId = "tenant-1";
@@ -802,6 +806,38 @@ describe("Solo Marketing department views", () => {
     expect(chain()[1]).toBe("200+Leads receivedLast 30 days");
     expect(sources()).toEqual(["No tracking tag200+"]);
     expect(host.textContent).toContain("Counted from the latest 200 submissions, so lead counts are a floor.");
+  });
+
+  it("an owner's Overview counts every lead on the server; the chart stays on the records and says so (MBC 2c)", () => {
+    useWorkspace({ submissions: Array.from({ length: 200 }, (_, index) => submission(`s${index}`, 1)) });
+    const fig = (leads: number, opportunities: number) => ({ leads, tagged: 300, opportunities, campaignTagged: 0, matched: 0, ambiguous: 0, missingDeals: 0,
+      sources: [{ key: "src:newsletter", label: "newsletter", count: 200 }, { key: "src:podcast", label: "podcast", count: 100 }], untagged: leads - 300, otherSources: 0, campaignTags: [] });
+    harness.server = { phase: "ready", current: fig(412, 31), previous: fig(350, 20) };
+    renderAt("/solo/42/growth/overview");
+    expect(harness.serverReads.at(-1)?.slice(0, 2)).toEqual(["tenant-1", "month"]);
+    expect(host.querySelector(".mov-sum")?.textContent).toBe("412 leads in the last 30 days, and 31 became opportunities in Sales.");
+    expect(chain()[1]).toBe("412Leads receivedLast 30 days");
+    expect(sources()).toEqual(["newsletter200", "podcast100", "No tracking tag112"]);
+    expect(host.textContent).not.toContain("so lead counts are a floor");
+    expect(host.textContent).toContain("The totals count every lead in the last 30 days. The chart and top forms are drawn from the latest 200 submissions, so they show fewer.");
+  });
+
+  it("Needs you shows older failures and stalled submissions the server counts, and a member's Overview claims only the latest records", () => {
+    useWorkspace({ submissions: [submission("s1", 1, { state: "error" })] });
+    harness.health = { phase: "ready", health: { failed: 4, stalled: 2 } };
+    renderAt("/solo/42/growth/overview");
+    const needs = [...host.querySelectorAll(".mov-att li")].map((row) => row.querySelector(".mov-att-main")?.textContent);
+    expect(needs.slice(0, 3)).toEqual([
+      "Discovery call request1 submission couldn’t be processed",
+      "Older submissions3 more submissions couldn’t be processed",
+      "Waiting to be processed2 submissions still waiting more than 15 minutes after arriving",
+    ]);
+    act(() => root.unmount()); host.remove();
+    // Routed, nothing failed in what the page read; the server was not asked (a member).
+    harness.health = { phase: "denied", health: null };
+    useWorkspace({ submissions: [submission("s2", 1)], drafts: [], artifacts: [{ ...form, intakePipelineId: "pipeline-1" }] });
+    renderAt("/solo/42/growth/overview");
+    expect(host.querySelector("[aria-labelledby='mov-att-h'] .mov-empty")?.textContent).toBe("Every live form is routed, and none of the latest 200 submissions failed.");
   });
 
   it("the lead-flow chart states its scale and busiest day, and reads zero as zero", () => {

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 
-import { HEADLINE_KEYS, figuresFrom, useMarketingServerFigures, withServerFigures, type ServerRead } from "./marketing-analytics-metrics";
+import { HEADLINE_KEYS, figuresFrom, healthFrom, useMarketingServerFigures, withServerFigures, type ServerRead } from "./marketing-analytics-metrics";
 import { deriveMarketingAnalytics } from "./marketing-analytics-model";
 import type { MetricResult } from "@/lib/analytics/metric-contract";
 
@@ -159,3 +159,13 @@ describe("useMarketingServerFigures", () => {
     spy.mockRestore();
   });
 });
+
+describe("processing health (MBC 2c)", () => {
+  it("reads failed and stalled from the server's distribution, and zero when an item is absent", () => {
+    const args = { p_metric_key: "marketing.submissions.failed_current", p_range_key: "month", p_range_start: "2026-10-01T00:00:00.000Z", p_range_end: "2026-10-02T00:00:00.000Z" };
+    const result = bundle(args, { kind: "distribution", items: [{ key: "failed", label: "Processing failed", count: 3 }, { key: "stalled", label: "Still waiting after 15 minutes", count: 2 }] }) as unknown as MetricResult;
+    expect(healthFrom(result)).toEqual({ failed: 3, stalled: 2 });
+    expect(healthFrom(bundle(args, { kind: "distribution", items: [{ key: "stalled", label: "x", count: 1 }] }) as unknown as MetricResult)).toEqual({ failed: 0, stalled: 1 });
+  });
+});
+

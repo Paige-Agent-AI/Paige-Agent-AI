@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { DAY_MS, deriveMarketingOverview } from "./marketing-overview-model";
+import { DAY_MS, deriveMarketingOverview, periodStartOf, withServerOverview } from "./marketing-overview-model";
 import type { CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
 
@@ -105,3 +105,26 @@ describe("Marketing Overview model edges", () => {
     expect(derive([...Array.from({ length: 199 }, (_, index) => sub(`f${index}`, 2)), sub("ahead", -0.01)]).capped).toBe(true);
   });
 });
+
+describe("withServerOverview (MBC 2c)", () => {
+  it("takes the server's counts, deltas and source mix, and keeps the record-drawn chart and top forms", () => {
+    const records = deriveMarketingOverview({ briefs: [], artifacts: [], drafts: [], submissions: Array.from({ length: 200 }, (_, i) => sub(`s${i}`, 1)), periodDays: 30, now: NOW });
+    expect(records.capped).toBe(true);
+    const sources = ["a", "b", "c", "d", "e"].map((tag, i) => ({ key: `src:${tag}`, label: tag, count: 50 - i }));
+    const merged = withServerOverview(records, { leads: 412, tagged: 250, opportunities: 31, sources, otherSources: 10, untagged: 152 }, { leads: 350, tagged: 0, opportunities: 31, sources: [], otherSources: 0, untagged: 0 });
+    expect(merged.capped).toBe(false);
+    expect(merged.leads).toEqual({ count: 412, tagged: 250, delta: { previous: 350, change: 62, percent: 18 } });
+    expect(merged.opportunities).toEqual({ count: 31, delta: { previous: 31, change: 0, percent: 0 } });
+    expect(merged.sources.map((s) => [s.label, s.count, s.kind])).toEqual([["a", 50, "tag"], ["b", 49, "tag"], ["c", 48, "tag"], ["d", 47, "tag"], ["Other sources", 56, "other"], ["No tracking tag", 152, "untagged"]]);
+    expect(merged.daily).toBe(records.daily);
+    expect(merged.topContent).toBe(records.topContent);
+    expect(withServerOverview(records, { leads: 1, tagged: 0, opportunities: 0, sources: [], otherSources: 0, untagged: 1 }, null).leads.delta).toBeNull();
+  });
+
+  it("starts the server's period on the same local midnight as the records' period", () => {
+    const start = periodStartOf(30, NOW);
+    expect(new Date(start).getHours()).toBe(0);
+    expect(Math.round((NOW - start) / DAY_MS)).toBe(30);
+  });
+});
+

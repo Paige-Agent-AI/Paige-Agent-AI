@@ -166,3 +166,48 @@ export function withServerFigures(model: MarketingAnalyticsModel, current: Serve
     previous: previous && { leads: previous.leads, tagged: previous.tagged, matched: previous.matched, opportunities: previous.opportunities },
   };
 }
+
+/** Submissions the processor could not finish, as the server counts them now, at any age: `failed` ended in
+ *  an error; `stalled` is still waiting more than 15 minutes after arriving (marketing.submissions.failed_current). */
+export type ProcessingHealth = { failed: number; stalled: number };
+
+export function healthFrom(result: MetricResult): ProcessingHealth {
+  const rows = items(result);
+  const of = (key: string) => rows.find((row) => row.key === key)?.count ?? 0;
+  return { failed: of("failed"), stalled: of("stalled") };
+}
+
+export type HealthRead = { phase: "loading" | "ready" | "denied" | "error"; health: ProcessingHealth | null };
+
+/** One current-state read of submission processing through the same shared seam. A member is refused and
+ *  gets `denied`; the caller then keeps what its own records show. */
+export function useMarketingProcessingHealth(tenantId: string | null, periodStart: number): HealthRead {
+  const key = `${tenantId}:${periodStart}`;
+  const [state, setState] = React.useState<{ key: string; read: HealthRead }>({ key: "", read: { phase: "loading", health: null } });
+  React.useEffect(() => {
+    if (!tenantId) return;
+    let live = true;
+    const metricKey = "marketing.submissions.failed_current";
+    const start = new Date(periodStart).toISOString();
+    const end = new Date(Math.floor((Date.now() - 5 * 60_000) / 60_000) * 60_000).toISOString();
+    if (end <= start) { setState({ key, read: { phase: "error", health: null } }); return; }
+    const rpc = (supabase as unknown as { rpc: Rpc }).rpc.bind(supabase);
+    Promise.resolve(rpc("issue_analytics_evidence_bundle", {
+      p_metric_key: metricKey, p_metric_version: "1.0.0", p_dimensions: {}, p_range_key: "month",
+      p_range_start: start, p_range_end: end, p_account_epoch: tenantId,
+    })).then(({ data, error }) => {
+      if (error) throw Object.assign(new Error(error.message ?? "read refused"), { code: error.code });
+      const result = parseMetricResult(data, { metricKey, metricVersion: "1.0.0", accountEpoch: tenantId, rangeKey: "month", rangeStart: start, rangeEnd: end, dimensions: {} });
+      if (result.owner_department !== "marketing") throw new Error("unexpected metric owner");
+      if (live) setState({ key, read: { phase: "ready", health: healthFrom(result) } });
+    }).catch((error: { code?: string }) => {
+      if (!live) return;
+      const denied = error?.code === "42501" || error?.code === "28000";
+      if (!denied) console.error("[marketing-overview] processing health failed", error);
+      setState({ key, read: { phase: denied ? "denied" : "error", health: null } });
+    });
+    return () => { live = false; };
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  return state.key === key ? state.read : { phase: "loading", health: null };
+}
+

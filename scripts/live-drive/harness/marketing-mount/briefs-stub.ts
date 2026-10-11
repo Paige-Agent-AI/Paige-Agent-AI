@@ -20,7 +20,7 @@ const BRIEFS = [
 export function useSoloCampaignBriefs() {
   const phase = mode === "loading" ? "loading" : mode === "error" ? "error" : "ready";
   return {
-    tenantId: "t", phase, briefs: mode === "populated" || mode === "readonly" ? BRIEFS : [], archivedCount: 0,
+    tenantId: "t", phase, briefs: mode === "populated" || mode === "readonly" || mode === "full" ? BRIEFS : [], archivedCount: 0,
     canManage: mode !== "readonly",
     retry: () => {}, saveBrief: async () => ({ ok: true, message: "Saved." }),
     transitionBrief: async () => ({ ok: true, message: "Saved." }), archiveBrief: async () => ({ ok: true, message: "Saved." }),

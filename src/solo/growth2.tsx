@@ -519,7 +519,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     else navigate(`${subtabPath("solo",account,"growth","overview")}?form=${encodeURIComponent(formId)}`);
   },[navigate,params.account,setOverviewQuery,tab]);
   const closeForm=React.useCallback(()=>setOverviewQuery({form:null}),[setOverviewQuery]);
-  const formRoute=!panelForm?null:sendsToPipeline(panelForm)?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Sent to a pipeline by an automation"):panelForm.intakeAlert?"No pipeline: each lead is only emailed":panelForm.routingConfigured?"No pipeline: its automations run, but leads never reach one":"Not routed: no pipeline, no alert";
+  const formRoute=!panelForm?null:sendsToPipeline(panelForm)?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Sent to a pipeline by an automation"):panelForm.intakeAlert?"No pipeline: each lead is only emailed":panelForm.intakePipelineId&&panelForm.routingConfigured?"No pipeline: the route below is skipped while an automation is on. Add a pipeline step to its automations in Vibe Studio":panelForm.routingConfigured?"No pipeline: its automations run, but leads never reach one":"Not routed: no pipeline, no alert";
   const formDetail=panelForm?{
     key:`form-${panelForm.id}`,
     title:panelForm.name,
@@ -527,7 +527,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     // A saved route re-reads Marketing, so the chain, Needs you and this row change in place (§70.1).
     body:<FormIntakePanel key={panelForm.id} tenantId={data.tenantId} formId={panelForm.id} workspace={data.pipelineWorkspace} onOpenContact={openContact} onOpenDeal={openDeal} onSaved={()=>data.retry?.()}/>,
     actions:<>{panelForm.publicHref&&<a className="btn btn-s" href={panelForm.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>}{overviewCanManage&&<StudioLauncher label="Edit in Vibe Studio"/>}</>,
-    note:"The form itself is built in Vibe Studio. Its routing saves here or in Vibe Studio’s form settings; both are the same setting.",
+    note:"The form itself is built in Vibe Studio. Its route saves here or in Vibe Studio’s form settings; both are the same setting. While the form has an automation turned on, leads follow the automations instead.",
   }:null;
   const openAsset=React.useCallback((artifact)=>setDetail({title:artifact.name,rows:[["Type",TYPE_LABEL[artifact.type]],["State","Live"],["Updated",formatDate(artifact.updatedAt)],["Where leads go",`Through the form on this ${artifact.type}. Its routing lives on that form.`]],actions:artifact.publicHref?<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>:null,note:"Visits aren’t recorded on public pages yet, so there is no conversion rate."}),[setDetail]);
   const captureFilter=CAPTURE_FILTERS.includes(query.get("capture"))?query.get("capture"):"all";

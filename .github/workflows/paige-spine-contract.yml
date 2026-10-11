@@ -188,6 +188,14 @@ jobs:
             psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f "supabase/tests/$proof.sql"
           done
 
+      # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
+      # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
+      # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.
+      # Runs on this rebuilt database AFTER the candidate migration apply.
+      - name: Mailbox Solo-owner authorization (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/mailbox_solo_owner_authorization.sql
+
       - name: Operations scoped manual work authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_plan_update.sql

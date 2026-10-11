@@ -35,7 +35,7 @@ MUST_PRESERVE: Shared Solo shell, Team photo references, canonical writer permis
 ACCEPTANCE_CRITERIA: Eligible authorized user edits priority with matching persistence readback and inspects scoped named source activity; refusals and concurrent differences remain honest.
 MOTION_PURPOSE: NONE: no animation change.
 PROTECTED_SEAMS: Existing Planning writer and audit preserved; new scoped projection returns allowlisted fields only. Team remains identity owner; Chat executor untouched.
-INTERNAL_BUILD_IDENTITY: 3d8aa6441e71c6835b5b89a9010886bcf8ebeefa plus documentation follow-up; deployment=none; environment=development; migrations=PROOF_OWED(20270602000414); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operations-work-priority-activity.md
+INTERNAL_BUILD_IDENTITY: ffe63bb36e2929145732ad2d05032f1b9a1fec37; deployment=none; environment=development; migrations=PROOF_OWED(proposed-20271020000240); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operations-work-priority-activity.md
 RELEASE_CHANNEL: development: local slice, no production claim.
 RELEASE_CLASSIFICATION: internal-only: bounded development evidence, not complete department acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: full verified operational outcome has not earned a customer release identity.
@@ -47,4 +47,7 @@ Independent non-author visual critique returned bounded SHIP, no material findin
 
 Local authority follow-up 10ee402cb replaces global-role projection eligibility with existing target-tenant administration or legitimate item creator/assignee relations; priority editing requires target administration or creator and changed assignment requires target administration. New negatives are UNEXECUTED and fresh final-head review/checks remain required. Canonical Planning writer and audit remain unchanged.
 
+
+
+Final parentde7 source review COMPLETE COMPATIBLE retains actualmain6cccd95a and reviewedlifecycle58c62, prioritysourceunchanged. Supplemental16actualtitle-entry/refusal zoomcaptures atoperations-v3/priority-final-zoom-captures, reportpriority-final-zoom-verification.json, eightPASScases; non-author visual SHIP atffe63bb36. Earliercoldtimeout and superseded whole-card-fit assertion failures are recorded in the work packet. Migration240 remains proposed/unapplied; registered24SQL unexecuted. Historical lint/type proof above is supporting evidence, not fresh exact-head CI.
 

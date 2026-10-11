@@ -142,8 +142,6 @@ export interface OutboundSendContext {
   to: string;                  // primary recipient address/phone/handle
   replyTo?: string | null;
   providerApiKey?: string | null;
-  /** Which transport the key belongs to ("resend" | "sendgrid" | ...) — the dispatch reads this, never the connector row again. */
-  providerKind?: string | null;
   vaultCredentials?: Record<string, string> | null; // per-tenant creds (SMS subaccount, etc.)
   connectorConfig?: Record<string, unknown> | null;
   // ── C-2 additive: what the SMS adapter needs to resolve creds/number/A2P server-side (§9).

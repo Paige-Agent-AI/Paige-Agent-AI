@@ -336,7 +336,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
       return { ok: true, status: "sent" as const, provider_message_id: sent.data?.messageId ?? null };
     }
 
-    if ((ctx as { providerKind?: string }).providerKind === "sendgrid") {
+    if (ctx.provider === "sendgrid") {
       const sgKey = ctx.providerApiKey as string;
       const name0 = ctx.from.display_name?.replace(/[^\w \-.@'"]/g, " ").replace(/\s+/g, " ").trim();
       const sgHeaders: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
@@ -1435,7 +1435,6 @@ Deno.serve(async (req) => {
         to: body.to,
         replyTo,
         providerApiKey: isSendgrid ? sendgridKey : resendKey,
-        providerKind: isSendgrid ? "sendgrid" : "resend",
         // #141c: thread the connector's non-secret SMTP transport config (host/port/secure) so
         // the provider==='smtp' branch can send through the tenant's own host. null for Resend/Gmail.
         connectorConfig: isSmtp ? (connectorRow?.config ?? null) : null,

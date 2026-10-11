@@ -167,3 +167,10 @@ describe('Finance Spine planning reads', () => {
     expect(await executeFinanceRead(c, { ...planningCommand, capability: 'finance.budget_read' })).toMatchObject({ outcome: 'read', evidence: { actuals: null } });
   });
 });
+
+it('keeps validated source selectors stable during actor resolution',async()=>{
+  const mutable={...command};const c=client();
+  c.auth.getUser.mockImplementation(async()=>{mutable.binding_id=entity;return {data:{user:{id:actor}},error:null};});
+  await executeFinanceRead(c,mutable);
+  expect(c.rpc).toHaveBeenCalledWith('read_finance_account_source',{_expected_tenant:tenant,_entity_id:entity,_binding_id:binding});
+});

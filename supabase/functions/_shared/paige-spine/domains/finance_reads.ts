@@ -128,7 +128,9 @@ function recordProjection(evidence: Record<string, unknown>, command: Record<str
 // are enforced in PostgreSQL; an injected selector or this interface grants nothing.
 // Do not pass a privileged fallback client or retain evidence as durable Memory.
 export async function executeFinanceRead(client: FinanceCallerClient, input: unknown): Promise<ReadResult> {
-  const command = object(input);
+  // Keep validated primitive selectors fixed across caller/source awaits.
+  const supplied = object(input);
+  const command = supplied ? { ...supplied } : null;
   if (!command || !FINANCE_READ_CAPABILITIES.some(c => c.key === command.capability)) return result('refused', 'invalid_finance_read');
   const planning = ['finance.budget_read','finance.cash_scenario_read'].includes(String(command.capability));
   const obligations = command.capability === 'finance.accounting_obligations';

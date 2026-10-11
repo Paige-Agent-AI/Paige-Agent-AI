@@ -11,3 +11,5 @@ Read-only classification; no mutation verb, financial effects, approval mechanis
 The `finance.department` Binding Ledger remains **PROOF_OWED**, with no interface changes. Controlled caller-contract suite: **36 PASS**; focused ESLint/TypeScript **PASS**. Independent review, hosted CI, merge and deployment are **NOT_DONE**. Budgets/scenario database dependencies remain unreleased, and protected shared registration awaits its actual owner. Authenticated Chat/Live finance conversations and provider behavior remain **UNVERIFIED** under the owner login/provider holds.
 
 Internal source candidate only; no customer release name, announcement or end-to-end delivery claim.
+
+Current-main reconciliation preserves QuickBooks successor contracts. A mutable selector control fails before the defensive primitive-selector snapshot and passes afterward; validation and all subsequent reads/projections use that same snapshot. This is read-intent integrity, not a new authority grant. Corrective non-author review on the final head and exact-head CI remain owed.

@@ -2,16 +2,17 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { CrmWorkRecord } from "./operations-native-work";
+import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
-  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null }));
+  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[] }));
 const paige = vi.hoisted(() => ({ handoff: vi.fn(), clearClient: vi.fn(), clearPublic: vi.fn() }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: paige.handoff }));
 vi.mock("@/solo/paigeClientScope", () => ({ clearPaigeClientScope: paige.clearClient }));
 vi.mock("@/solo/paigePublicPresenceScope", () => ({ clearPaigePublicPresenceScope: paige.clearPublic }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: harness.tenant,
   activeUserId: harness.user, loading: false, accountContextStatus: harness.status }) }));
-vi.mock("./useOperationsPeople", () => ({ useOperationsPeople: () => ({ members: [], loading: false,
+vi.mock("./useOperationsPeople", () => ({ useOperationsPeople: () => ({ members: harness.members, loading: false,
   error: null, partial: false, refresh: vi.fn() }) }));
 vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], loading: false, error: harness.planningError,
   forbidden: false, refresh: vi.fn(), allItems: [{ id: "test-item", tenant_id: harness.foreign ? "test-foreign" : harness.tenant,
@@ -29,7 +30,7 @@ let root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => { harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
   vi.clearAllMocks();
-  sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;
+  sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 async function click(text: string) {
@@ -96,6 +97,21 @@ it("keeps native CRM work usable while Planning is unavailable",async()=>{
  await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")?.click());
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("CRM task");
  expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain("Work edit test seam");
+});
+
+it("keeps native capacity assignments visible with an explicit Planning gap",async()=>{
+ harness.members=[{user_id:harness.user,membership_id:"test-membership",full_name:"Sample Person",avatar_url:null} as TeamMemberRecord];
+ harness.planningError="Explicit Planning refusal";harness.crmTasks=[{id:"native-capacity",tenant_id:harness.tenant,user_id:harness.user,title:"Native capacity assignment",description:null,
+  status:"pending",due_date:null,updated_at:"2026-10-10T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:60}];
+ await act(async()=>root.render(<OperationsWorkspace view="capacity"/>));
+ expect(container.textContent).toContain("Planning assignments are unavailable");
+ expect(container.textContent).toContain("Native capacity assignment");
+ expect(container.textContent).toContain("60 minutes of recorded estimated effort.");
+ expect(container.textContent).toContain("Availability unknown");
+ await act(async()=>container.querySelector<HTMLButtonElement>(".ops-capacity-blocks button")?.click());
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("CRM task");
+ harness.tenant="test-tenant-b";await act(async()=>root.render(<OperationsWorkspace view="capacity"/>));
+ expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
 it("offers scoped retained recovery even when the original task is outside the loaded read",async()=>{

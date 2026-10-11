@@ -42,6 +42,22 @@ export function presentNativeWork(native: NativeOperationsWork) {
     linked_action_id:null };
 }
 
+/** Recorded effort is an estimate of work, never a person's available hours. */
+export function summarizeNativeWorkload(work: NativeOperationsWork[], userId: string) {
+  const assignments = work.filter(native => {
+    const owner = native.source === "planning" ? native.record.assigned_to_user_id : native.record.user_id;
+    return owner === userId && !["done", "cancelled"].includes(nativeWorkStage(native));
+  });
+  const estimates = assignments.map(native => native.source === "crm" ? native.record.estimated_minutes : null);
+  const recorded = estimates.filter((value): value is number => value !== null);
+  return {
+    assignments,
+    recordedMinutes: recorded.length ? recorded.reduce((sum,value) => sum + value,0) : null,
+    unknownEffortCount: estimates.filter(value => value === null).length,
+    blockedCount: assignments.filter(native => nativeWorkStage(native) === "blocked").length,
+  };
+}
+
 /** CRM has no blocked/review state in its canonical status enum. Never fake one. */
 export function crmActionForStage(record: CrmWorkRecord, stage: PlanItemStatus): "task.update" | "task.complete" | "task.reopen" | null {
   const version = record.updated_at ?? record.created_at;

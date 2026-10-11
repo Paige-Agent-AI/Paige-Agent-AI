@@ -66,7 +66,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   useEffect(() => { setInspection(null); }, [destination]);
   const inspectionInvoker = useRef<HTMLElement | null>(null);
   const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
-  const crm = useOperationsCrmWork(destination === "Work" ? userId : null, destination === "Work" ? tenantId : null);
+  const readsCrm = destination === "Work" || destination === "Capacity";
+  const crm = useOperationsCrmWork(readsCrm ? userId : null, readsCrm ? tenantId : null);
   const [crmReview,setCrmReview] = useState<CrmWorkStageOperation|null>(null);
   const [pendingCrmRecovery,setPendingCrmRecovery] = useState<CrmWorkStageOperation|null>(null);
   const [crmFeedback,setCrmFeedback] = useState("");
@@ -84,6 +85,9 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   const people = useOperationsPeople();
   const matches = operationsBundleMatchesTenant(source.plans, source.allItems, tenantId);
   const planningAvailable = matches && !source.error && !source.forbidden;
+  const crmMatches = crm.tasks.every(task => task.tenant_id === tenantId);
+  const crmAvailable = crmMatches && !crm.error && !crm.forbidden;
+  const crmTasks = crmAvailable ? crm.tasks : [];
   const plans = planningAvailable ? source.plans : [];
   const items = planningAvailable ? source.allItems : [];
   const rememberInvoker = () => {
@@ -108,15 +112,15 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   const selectedItem = inspection?.view === destination && inspection.kind === "item" ? items.find((item) => item.id === inspection.id) : null;
   const selectedPlan = inspection?.view === destination && inspection.kind === "plan" ? plans.find((plan) => plan.id === inspection.id) : null;
   const selectedCrm = inspection?.view === destination && (inspection.kind === "crm" || inspection.kind === "crm_recovery") && !crm.error && !crm.forbidden
-    ? crm.tasks.find(task=>task.id===inspection.id) ?? (crm.loading&&inspection.kind==="crm"?inspection.record:null) : null;
-  const workReadable = (!source.loading && planningAvailable) || (!crm.loading && !crm.error && !crm.forbidden);
+    ? crmTasks.find(task=>task.id===inspection.id) ?? (crm.loading&&inspection.kind==="crm"&&inspection.record.tenant_id===tenantId?inspection.record:null) : null;
+  const workReadable = (!source.loading && planningAvailable) || (!crm.loading && crmAvailable);
   const workView = <>
     {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={()=>void people.refresh()}>Retry profiles</button></div>}
     {(source.error || source.forbidden || !matches) && <div className="ops-inline-notice" role="status">Planning work is unavailable in this workspace. <button type="button" onClick={()=>void source.refresh()}>Retry planning work</button></div>}
     {source.loading && <p role="status">Reading Planning work…</p>}
     {crm.loading && <p role="status">Reading CRM tasks…</p>}
-    {crm.error && <div className="ops-inline-notice" role="status">{crm.error} <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
-    {workReadable ? <OperationsWork {...props} crmTasks={crm.tasks} onInspectCrmTask={inspectCrm} onProposeCrmStage={proposeCrm}
+    {(crm.error || !crmMatches) && <div className="ops-inline-notice" role="status">{crm.error ?? "CRM work couldn’t be verified for this workspace."} <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
+    {workReadable ? <OperationsWork {...props} crmTasks={crmTasks} onInspectCrmTask={inspectCrm} onProposeCrmStage={proposeCrm}
       onProposeStage={(item,proposedStage,invoker)=>{
         if(invoker?.isConnected)inspectionInvoker.current=invoker;else rememberInvoker();
         setInspection({kind:"item",id:item.id,view:destination,proposedStage});
@@ -124,6 +128,16 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
     <p className="ops-source-limit">This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.{crm.hasMore&&" More CRM tasks exist beyond this read."}</p>
   </>;
   const isPlanning = !["Delivery", "Playbooks"].includes(destination);
+  const capacityView = <>
+    {people.error && <div className="ops-inline-notice" role="status">Team names and photos couldn’t be loaded. <button type="button" onClick={()=>void people.refresh()}>Retry profiles</button></div>}
+    {!planningAvailable && <div className="ops-inline-notice" role="status">Planning assignments are unavailable. <button type="button" onClick={()=>void source.refresh()}>Retry planning work</button></div>}
+    {source.loading && <p role="status">Reading project assignments…</p>}
+    {crm.loading && <p role="status">Reading task assignments…</p>}
+    {(crm.error || !crmMatches) && <div className="ops-inline-notice" role="status">CRM assignments couldn’t be verified for this workspace. <button type="button" onClick={()=>void crm.refresh()}>Retry tasks</button></div>}
+    {workReadable ? <OperationsCapacity {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm} />
+      : source.loading || crm.loading ? <OperationsLoading /> : <div className="ops-state" role="alert"><h1>Assignments aren’t available</h1><p>Retry a source above or ask your workspace owner to review access.</p></div>}
+    <p className="ops-source-limit">Workload reflects loaded project work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."} Recorded effort is an estimate, not confirmed availability.</p>
+  </>;
   const member = people.members.find((person) => person.user_id === selectedItem?.assigned_to_user_id);
   const portalTheme = contentRef.current?.closest<HTMLElement>("[data-pg]")?.getAttribute("data-pg") ?? "dark";
   const reviewWithPaige = () => {
@@ -150,7 +164,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
         {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { creationInvoker.current = event.currentTarget; setCreatingWork(true); }}>New task</button>}
         {destination === "Projects" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
         {isPlanning && <button type="button" aria-label="Refresh work and team profiles"
-          disabled={source.loading || people.loading || (destination === "Work" && crm.loading)} onClick={() => { void source.refresh(); void people.refresh(); if(destination === "Work")void crm.refresh(); }}><RefreshCw size={16} /></button>}
+          disabled={source.loading || people.loading || (readsCrm && crm.loading)} onClick={() => { void source.refresh(); void people.refresh(); if(readsCrm)void crm.refresh(); }}><RefreshCw size={16} /></button>}
         {openPaige && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with PAIGE</button>}
       </div>
     </header>
@@ -158,6 +172,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
       {destination === "Delivery" ? <OperationsDelivery openPaige={openPaige} />
         : destination === "Playbooks" ? <OperationsPlaybooks tenantId={tenantId} />
         : destination === "Work" ? workView
+        : destination === "Capacity" ? capacityView
         : source.loading ? <OperationsLoading />
         : source.forbidden ? <div className="ops-state" role="status"><h1>This work isn’t available to your role</h1><p>Ask your workspace owner to review your access.</p></div>
         : source.error || !matches ? <div className="ops-state" role="alert"><h1>Your work couldn’t be loaded</h1><p>Refresh to read the current workspace again.</p><button type="button" onClick={() => void source.refresh()}>Try again</button></div>
@@ -165,7 +180,6 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
           {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={() => void people.refresh()}>Retry profiles</button></div>}
           {destination === "Overview" && <OperationsOverview {...props} />}
           {destination === "Projects" && <OperationsProjects {...props} />}
-          {destination === "Capacity" && <OperationsCapacity {...props} />}
           <p className="ops-source-limit">Figures reflect the work loaded here: up to 200 plans and standalone items, with their visible work. {people.partial && "Some team profiles are outside the current read."}</p>
         </>}
     </div>

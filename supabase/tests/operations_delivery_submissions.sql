@@ -51,6 +51,18 @@ select pg_temp.check_true(jsonb_array_length(public.operations_delivery_list_sco
 select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000003',true);
 select pg_temp.check_true(jsonb_array_length(public.operations_delivery_list_scoped('ed010000-0000-4000-8000-00000000b001','ed010000-0000-4000-8000-000000000003','ed010000-0000-4000-8000-000000001111')->'submissions')=0,'unrelated member cannot read submission notes');
 -- Exercise real database role privileges, not only owner impersonation by JWT.
+do $$ begin execute format('grant usage on schema %I to authenticated',
+  (select nspname from pg_namespace where oid=pg_my_temp_schema())); end $$;
+insert into public.tenants(id,slug,name,status,account_type,account_number_prefix,account_number,features) values
+ ('ed020000-0000-4000-8000-000000002222','test-ops-delivery-foreign','Test Foreign Delivery','active','standalone','ODF',9950022,'{}');
+insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id) values
+ ('ed020000-0000-4000-8000-00000000a002','ed020000-0000-4000-8000-000000002222','Foreign existing project','custom',current_date,current_date+30,'team','ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000000001');
+insert into public.plan_items(id,tenant_id,plan_id,item_type,title,created_by) values
+ ('ed020000-0000-4000-8000-00000000b002','ed020000-0000-4000-8000-000000002222','ed020000-0000-4000-8000-00000000a002','task','Foreign work','ed010000-0000-4000-8000-000000000001');
+insert into public.studio_sessions(id,tenant_id,owner_user_id,title) values
+ ('ed020000-0000-4000-8000-00000000d002','ed020000-0000-4000-8000-000000002222','ed010000-0000-4000-8000-000000000001','Foreign session');
+insert into public.studio_artifact_versions(id,tenant_id,session_id,kind,lineage_id,version_no,snapshot,created_by) values
+ ('ed020000-0000-4000-8000-00000000e002','ed020000-0000-4000-8000-000000002222','ed020000-0000-4000-8000-00000000d002','content','ed020000-0000-4000-8000-00000000f002',1,'{"body":"Foreign version"}','ed010000-0000-4000-8000-000000000001');
 create temporary table delivery_fixture_context as select
   w.updated_at as work_updated_at,s.id as submission_id,s.updated_at as submission_updated_at
   from public.plan_items w join public.operations_delivery_submissions s on s.work_item_id=w.id;
@@ -59,6 +71,8 @@ grant execute on function pg_temp.check_true(boolean,text),pg_temp.refused(text,
 select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000001',true);
 set local role authenticated;
 select pg_temp.refused($s$select * from public.operations_delivery_submissions$s$,'42501','authenticated direct submission read denied');
+select pg_temp.refused($s$select public.operations_delivery_submit_scoped('ed020000-0000-4000-8000-00000000b002','ed010000-0000-4000-8000-00000000e001','ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111',(select work_updated_at from delivery_fixture_context),1)$s$,'42501','actual foreign work refused');
+select pg_temp.refused($s$select public.operations_delivery_submit_scoped('ed010000-0000-4000-8000-00000000b001','ed020000-0000-4000-8000-00000000e002','ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111',(select work_updated_at from delivery_fixture_context),1)$s$,'42501','actual foreign artifact refused');
 select pg_temp.refused($s$select public.operations_delivery_submit_scoped('ed010000-0000-4000-8000-00000000b001','ed010000-0000-4000-8000-00000000e001','ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000000001','ed020000-0000-4000-8000-000000002222',(select work_updated_at from delivery_fixture_context),1)$s$,'42501','authenticated foreign tenant scope refused');
 select pg_temp.check_true((public.operations_delivery_submit_scoped('ed010000-0000-4000-8000-00000000b001','ed010000-0000-4000-8000-00000000e001','ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111',(select work_updated_at from delivery_fixture_context),1)->>'revision_no')='2','authenticated revision submission executes without table grants');
 reset role;
@@ -79,6 +93,16 @@ set local role authenticated;
 select pg_temp.refused($s$select public.operations_delivery_review_scoped((select submission_id from delivery_fixture_context),'ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000001111',(select submission_updated_at from delivery_fixture_context),'approved',null)$s$,'42501','agency review capability refused');
 reset role;
 update public.tenants set account_type='standalone' where id='ed010000-0000-4000-8000-000000001111';
+select set_config('request.jwt.claim.sub','',true);
+select set_config('request.jwt.claims','{}',true);
+update public.tenants set parent_tenant_id='ed020000-0000-4000-8000-000000002222' where id='ed010000-0000-4000-8000-000000001111';
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000002',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.operations_delivery_review_scoped((select submission_id from delivery_fixture_context),'ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000001111',(select submission_updated_at from delivery_fixture_context),'approved',null)$s$,'42501','parented standalone review refused');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+update public.tenants set parent_tenant_id=null where id='ed010000-0000-4000-8000-000000001111';
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000002',true);
 set local role authenticated;
 select pg_temp.check_true((public.operations_delivery_review_scoped((select submission_id from delivery_fixture_context),'ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000001111',(select submission_updated_at from delivery_fixture_context),'approved','Ready for explicit client release')->>'state')='approved','authenticated reviewer approval persists');
 reset role;

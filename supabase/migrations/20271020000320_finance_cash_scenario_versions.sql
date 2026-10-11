@@ -53,7 +53,7 @@ DO $$
 DECLARE body text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; at integer;
 BEGIN
  body:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure); at:=strpos(body,anchor);
- IF at=0 OR strpos(body,'''finance_company_entities''')=0 OR strpos(body,'''finance_cash_scenarios''')>0 THEN RAISE EXCEPTION 'Unsupported canonical retirement policy'; END IF;
+ IF at=0 OR strpos(body,'''finance_cash_scenarios''')>0 THEN RAISE EXCEPTION 'Unsupported canonical retirement policy'; END IF;
  EXECUTE left(body,at+length(anchor)-1)||'''finance_cash_scenarios'',''finance_cash_scenario_versions'','||substr(body,at+length(anchor));
 END $$;
 

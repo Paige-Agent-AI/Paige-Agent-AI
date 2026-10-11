@@ -79,7 +79,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
     assert.ok(disposition, 'Canonical retirement disposition missing');
     sql(database, disposition);
-    if (['quickbooks', 'budgets'].includes(suite) && leg === 'replay2') {
+    if (['quickbooks', 'budgets', 'scenarios'].includes(suite) && leg === 'replay2') {
       const currentPolicy = readFileSync(new URL('../../supabase/migrations/20270602000504_operator_provider_independent_retirement.sql', import.meta.url), 'utf8');
       const currentDisposition = currentPolicy.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
       assert.ok(currentDisposition, 'Current canonical retirement disposition missing');

@@ -84,5 +84,9 @@ set local role authenticated;
 select pg_temp.ops_check(jsonb_array_length(public.operations_crm_work_read('ef010000-0000-4000-8000-000000000004','ef010000-0000-4000-8000-000000001111')->'tasks')=200,'native read caps source records');
 select pg_temp.ops_check((public.operations_crm_work_read('ef010000-0000-4000-8000-000000000004','ef010000-0000-4000-8000-000000001111')->>'has_more')='true','native incomplete read remains explicit');
 reset role;
+delete from public.tenant_members where tenant_id='ef010000-0000-4000-8000-000000001111' and user_id='ef010000-0000-4000-8000-000000000004';
+set local role authenticated;
+select pg_temp.ops_refused($s$select public.operations_crm_work_read('ef010000-0000-4000-8000-000000000004','ef010000-0000-4000-8000-000000001111')$s$,'native revoked membership refused');
+reset role;
 -- Entire synthetic fixture and any queued transaction-owned events roll back.
 rollback;

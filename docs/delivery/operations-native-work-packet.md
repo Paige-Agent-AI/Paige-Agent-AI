@@ -88,3 +88,5 @@ Independent visual critique found the date-removal checkbox detached above its l
 
 
 Native preparation reconciled the current released project-lifecycle main and priority PR #1989 without product conflicts. Registered the existing rollback-only native caller-scope SQL fixture in database-contract; its 15 assertions remain UNEXECUTED until fresh CI. Development migration 20270602000416 remains unallocated and unapplied. No concurrent overlapping release PR opened.
+
+Independent merged-tree/CI-registration review ba18c45aa COMPLETE COMPATIBLE. Added a rollback-only revoked-member read refusal, bringing native SQL assertions to16, still UNEXECUTED. Product and authority function unchanged; new fixture review remains owed.

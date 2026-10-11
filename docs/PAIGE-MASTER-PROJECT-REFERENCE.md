@@ -7087,3 +7087,5 @@ Merged `6c9e5a532884065a2c8c238e450655741aea6470`; web READY on both production 
 
 
 
+
+**2026-10-11 — Operations priority/activity source release — PR #1989, reviewed head32763ae9769b9c78389b1176844e40ec2988e62f, protected squash1c87d2b5afb362aa21f6ae0e5392ac011820ef1e.** Independent COMPLETE/visualSHIP, requiredexactheadCI green including24actualSQL assertions. VercelREADYdpl_Eka6Jru3etvjbBoZVb3J2cYTgs8x/exactmerge/publicbuild1c87d2b5afb362aa21f6ae0e5392ac011820ef1e-mv3k88ne and served priority/activity source readback verified. Normalmigration38124836267SUCCESS/applied240; reviewedfunctionhashes/emptysearchpath/authenticated-onlyACL verifiedread-only. Evidence: docs/delivery/operations-priority-production-record.md. ANT-11 updated. AuthenticatedcustomeracceptanceUNVERIFIED; no customer/provider/INT-346 effects. FullOperationsPARTIAL; nativework1990/signingevidence preparation continue. Forwardfix, no historyreset or uncertainreplay.

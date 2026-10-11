@@ -41,11 +41,11 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens a campaign's dossier, ad
 MOTION_PURPOSE: none added
 PROTECTED_SEAMS: tested - the brief seams unchanged (configure_campaign_brief, get_campaign_briefs), growth2 render and sales-ops contract with the new hook stubbed; unaffected and named - Overview, Analytics, Audience, Content, Social, Email, Ads
 
-INTERNAL_BUILD_IDENTITY: 71f56e8bdb31a4b58b2efcca425f663749127a58; deployment=none-pre-merge; environment=development; migrations=20270602000504 pending deploy-migrations on merge; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: 71f56e8bdb31a4b58b2efcca425f663749127a58; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270602000504 is applied by deploy-migrations on merge and read back on production); edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production on merge per the pre-launch stance (CLAUDE.md §4)
 RELEASE_CLASSIFICATION: internal-only: a new planning link and its dossier section
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version
 RELEASE_NOTE_REQUIRED: no: pre-launch, no customers
 RELEASE_TRUTH_BOUNDARY: PARTIAL: authenticated production behaviour is PROOF OWED
-RELEASE_RECOVERY: position=revert the merge commit for the surface; the table is additive and can stay empty; reference=git revert of this PR's merge, and a forward migration if the table must go
+RELEASE_RECOVERY: position=revert the merge commit for the surface - the table is additive and can stay empty; reference=git revert of this PR merge, plus a forward migration if the table must go
 UNVERIFIED: authenticated production runtime (§32.c): attach and remove against a real Solo account; no tenant login in this session. Not built here: a Chat tool and Spine key (slice 6), the roll-up metric per linked piece.

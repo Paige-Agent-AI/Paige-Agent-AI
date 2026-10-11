@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: Not required — no visual or interaction change; the incu
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: A Platform Administrator permanently deletes an archived eligible account and the operation completes instead of timing out.
 VISUAL_DIRECTION: PASS: Unchanged incumbent design; no new pixels.
 AUTOMATED_EVIDENCE: PASS: The same disposable-PostgreSQL proof extended with stage B — the round-2 body applies twice (replay) and must STILL return a plan byte-identical to the deployed 504 body with an unchanged probe count; the mini archive-to-delete runs under the final body; failing-first missing-migration control retained.
-STATIC_EVIDENCE: PASS: Migration diff verified line-by-line against the deployed 20270602000504 body — only the worklist frontier lines, the declaration and a five-line explanatory comment above the frontier initialization differ; the proof suite pins equivalence.
+STATIC_EVIDENCE: PASS: Round-2 migration diff verified line-by-line against the deployed worklist body (20271020000400) — only the two query rewrites and two explanatory comment blocks differ; the closure loop, declarations and every other line are byte-identical; the proof suite pins equivalence.
 RENDERED_EVIDENCE: NOT_APPLICABLE: No rendered change; the dialog is byte-identical.
 BEHAVIORAL_EVIDENCE: PASS: Deterministic probe-count proof through a counting fk_join wrapper (far fewer probes for the identical plan) plus an end-to-end Worklist-Solo archive→delete with absence readback.
 AUTHENTICATED_RUNTIME: UNVERIFIED: the post-deploy production re-time of the two affected scopes and the owner's supervised deletions remain owed; the pre-fix read-only plan timings are the baseline.
@@ -26,7 +26,7 @@ MUST_PRESERVE: The single-transaction delete with mandatory audit and readback, 
 ACCEPTANCE_CRITERIA: The deployed plan returns byte-identical results with substantially fewer FK probes; the two affected scopes' preflight re-times well under the 8s budget; the owner's supervised delete completes.
 MOTION_PURPOSE: NONE: No motion added or changed.
 PROTECTED_SEAMS: operator_account_deletion_plan body (worklist only), the audited tenant-column indexes, and nothing else. Entry points, guard trigger, Edge, UI, predicates and capability registry untouched.
-INTERNAL_BUILD_IDENTITY: d10fe338afad704c7250a5087c6c2c1e75501b0f (observed base; exact candidate SHA in PR); exact base and candidate SHAs in PR); deployment=PROOF_OWED(candidate production readback); environment=development; migrations=PROOF_OWED(20271020000420 and 20271020000421 await the normal deploy-migrations run); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-deletion-timeout-repair.md
+INTERNAL_BUILD_IDENTITY: d10fe338afad704c7250a5087c6c2c1e75501b0f (observed base; exact candidate SHA in PR); deployment=PROOF_OWED(candidate production readback); environment=development; migrations=PROOF_OWED(20271020000420 and 20271020000421 await the normal deploy-migrations run); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/operator-deletion-timeout-repair.md
 RELEASE_CHANNEL: development: bounded Operator lifecycle reliability repair; exact production identity follows verified delivery.
 RELEASE_CLASSIFICATION: internal-only: privileged Operator reliability repair, no customer release version.
 CUSTOMER_RELEASE_IDENTITY: none: no public version or announcement authorized.
@@ -42,7 +42,7 @@ The repair is the honest performance fix: (1) `20271020000400` re-emits `operato
 
 ## Round 2 (20271020000420 + 20271020000421)
 
-Post-deploy re-time: the worst scope's plan walk improved 8342ms to 5198ms — preview fits the 8s budget, but the delete path's three walks still exceeded it. The measured remainder: ~17 information_schema queries inside the function (~45ms each as the definer) and unindexed FK columns on closure children (paige_actions carries seven). 20271020000420 rewrites the two information_schema queries to equivalent pg_catalog queries (same rows, same string_agg order); 20271020000421 adds 14 FK-column indexes. No algorithmic, contract or authority change. The proof's stage B applies 420 twice (replay) and asserts the plan is STILL byte-identical to the deployed 504 body with an unchanged probe count; the mini archive-to-delete runs under the final body.
+Post-deploy re-time: the worst scope's plan walk improved 8342ms to 5198ms — preview fits the 8s budget, but the delete path's three walks still exceeded it. The measured remainder: ~17 information_schema queries inside the function (~45ms each as the definer) and unindexed FK columns on closure children (paige_actions carries seven). 20271020000420 rewrites the two information_schema queries to equivalent pg_catalog queries (same rows, same string_agg order); 20271020000421 adds the 4 closure-live FK-column indexes (liveness verified against the disposition array; 10 audit hits with blocked/preserved/auth.users parents were deliberately not added). No algorithmic, contract or authority change. The proof's stage B applies 420 twice (replay) and asserts the plan is STILL byte-identical to the deployed 504 body with an unchanged probe count; the mini archive-to-delete runs under the final body.
 
 ## Evidence and reproduction
 

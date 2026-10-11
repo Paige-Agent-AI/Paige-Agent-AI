@@ -14,6 +14,9 @@ CREATE OR REPLACE FUNCTION public.operator_account_deletion_plan(_ids uuid[])
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE plan jsonb:='{}'; blockers jsonb:='[]'; r record; tids jsonb; old jsonb; round int; changed boolean; n bigint; hash text; invalid bigint; cond text; entry jsonb; resource record; frontier text[]; next_frontier text[];
 BEGIN
+ -- Vacuous-today deltas kept in mind: a future uuid-DOMAIN tenant column or a partitioned
+ -- base table would resolve differently (information_schema folds domains; relkind r
+ -- excludes p) — neither exists in this schema; the proof pins output equality.
  -- ANT-47 round 2: the same discovery against pg_catalog directly; information_schema
  -- views cost ~45ms per query as this definer and the walk issued ~17 of them.
  FOR r IN SELECT cl.relname table_name,string_agg(format('t.%I=ANY($1)',a.attname),' OR ' ORDER BY a.attname) predicate

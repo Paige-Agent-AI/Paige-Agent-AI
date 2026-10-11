@@ -593,6 +593,11 @@ Each phase sets direction only. None authorizes provider activation, extra engin
      permanent), with budget ceilings, stop and rollback conditions, audit and measured outcomes.
 
 **Operational status of the Ads department (2026-10-10):**
-- Navigation, desk and conversational ad-copy handoffs: **LIVE**.
+- The new department navigation (menu item, five view addresses, old-link redirect): **PROOF OWED**. Automated
+  contracts and a local rendered harness pass; authenticated runtime is **UNVERIFIED** until a signed-in Solo
+  session opens it (§32.c). Binding Ledger row `ads.department` = `PROOF_OWED`.
+- The desk and its ad-copy handoffs are the same code Marketing shipped; the move changes no read, policy or
+  handoff. Their behaviour on the new route is **UNVERIFIED** in an authenticated session. The matrix's LIVE
+  cells above describe those existing contracts, not authenticated proof of this route.
 - Provider read, attribution, approvals, execution, Chat/Live ads capabilities: **UNAVAILABLE or GATED**.
 - **The department is NOT end-to-end operational.**

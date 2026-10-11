@@ -173,9 +173,15 @@ try {
   console.log('PASS: two actual PostgreSQL sessions serialize archive against a concurrent work insertion; no claim escapes and duplicate archive is idempotent.');
  }
  // Exercise cleanup against the real protected-role trigger too, not just a roles-table stub.
- await db.exec(`CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('request.jwt.claim.role',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'role')$$;
- CREATE TABLE public.platform_operator_roles(role text PRIMARY KEY);`);
+ await db.exec(`CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('request.jwt.claim.role',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'role')$$;`);
  const roleGuard=await readFile('supabase/migrations/20270510000000_operator_standing_one_answer.sql','utf8');
+ // The REAL R0 registry replaces the former stub so the ANT-47 capability split proves against
+ // the same tables production enforces with.
+ for (const shape of [/CREATE TABLE IF NOT EXISTS public\.platform_operator_roles \([\s\S]*?\n\);/, /CREATE TABLE IF NOT EXISTS public\.platform_operator_capabilities \([\s\S]*?\n\);/, /CREATE TABLE IF NOT EXISTS public\.platform_operator_role_capabilities \([\s\S]*?\n\);/]) await db.exec(roleGuard.match(shape)[0]);
+ await db.exec(roleGuard.match(/CREATE OR REPLACE FUNCTION public\.operator_may\(_capability text\)[\s\S]*?\n\$\$;/)[0]);
+ await db.exec(`INSERT INTO platform_operator_roles(role,rank,holds_unlisted,description,ruling) VALUES ('super_admin',100,true,'The platform owner tier. Holds every capability, listed or not.','R0, owner ruling 2026-09-27'),('platform_admin',50,false,'The delegated operator tier. Holds the capabilities granted to it and nothing else.','R0, owner ruling 2026-09-27'),('moderator',10,false,'Proof-only delegated tier granted archive and nothing else.','ANT-47 proof fixture');
+ INSERT INTO platform_operator_capabilities(capability,description,ruling) VALUES ('fleet.account.archive','Archive and restore eligible accounts through the canonical Fleet lifecycle.','ANT-47 owner rule 2026-10-10'),('fleet.account.permanent_delete','Permanently delete archived eligible accounts. Irreversible.','ANT-47 owner rule 2026-10-10');
+ INSERT INTO platform_operator_role_capabilities(role,capability,ruling,in_force) VALUES ('super_admin','fleet.account.archive','ANT-47 owner rule 2026-10-10',true),('super_admin','fleet.account.permanent_delete','ANT-47 owner rule 2026-10-10',true),('platform_admin','fleet.account.archive','ANT-47 owner rule 2026-10-10',true),('platform_admin','fleet.account.permanent_delete','ANT-47 owner rule 2026-10-10',true),('moderator','fleet.account.archive','ANT-47 proof fixture',true);`);
  await db.exec(roleGuard.match(/CREATE OR REPLACE FUNCTION public\.enforce_protected_role_grant\(\)[\s\S]*?\$function\$;/)[0]);
  await db.exec('CREATE TRIGGER fixture_protected_role_grant BEFORE INSERT OR UPDATE OR DELETE ON public.user_roles FOR EACH ROW EXECUTE FUNCTION public.enforce_protected_role_grant();');
  const cleanupFixture='00000000-0000-0000-0000-000000000097';
@@ -200,6 +206,53 @@ try {
  assert.equal((await db.query('select count(*)::int n from user_roles')).rows[0].n,3,'temporary fixture authority is removed');
  assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[solo])).rows[0].n,1,'the independent Solo survives proof-fixture cleanup');
  assert.equal((await db.query('select reserved_usd::text v from paige_voice_tenant_monthly_usage where tenant_id=$1',[solo])).rows[0].v,'0.30','another tenant\'s financial usage survives fixture cleanup');
+ // ANT-47 role split: registry-derived archive authority; permanent deletion stays Super Admin + Platform Admin.
+ // Failing-first baseline: without 20271020000100 the two predicates do not exist and this block dies.
+ const delegated='00000000-0000-0000-0000-000000000004', split='00000000-0000-0000-0000-000000000101', splitOp='00000000-0000-0000-0000-000000000102';
+ await db.query("insert into auth.users values($1,'delegated@example.invalid','{}')",[delegated]);
+ await db.query('insert into user_roles values($1,$2)',[delegated,'moderator']);
+ // The 20270602000504-era bodies this migration re-emits reference the provider-independent
+ // retirement helpers and journal columns that migration introduced. Mirror the minimal
+ // production shape this proof exercises (archive/restore paths; delete stays refusal-only).
+ await db.exec(`CREATE SCHEMA IF NOT EXISTS vault; CREATE TABLE IF NOT EXISTS vault.secrets(name text);
+ CREATE TABLE IF NOT EXISTS tenant_twilio_subaccounts(id uuid PRIMARY KEY,tenant_id uuid,twilio_subaccount_sid text,auth_token_vault_ref text,status text,active boolean);
+ CREATE TABLE IF NOT EXISTS tenant_n8n_connections(tenant_id uuid primary key,status text,updated_by uuid,updated_at timestamptz);
+ CREATE TABLE IF NOT EXISTS platform_subscriptions(tenant_id uuid,stripe_subscription_id text,stripe_customer_id text,status text);
+ CREATE OR REPLACE FUNCTION public.operator_resource_ready(text,uuid,text) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
+ ALTER TABLE public.operator_account_archives ADD COLUMN IF NOT EXISTS resource_mode text, ADD COLUMN IF NOT EXISTS resource_claim uuid, ADD COLUMN IF NOT EXISTS resource_started_at timestamptz, ADD COLUMN IF NOT EXISTS resource_plan jsonb NOT NULL DEFAULT '[]', ADD COLUMN IF NOT EXISTS resource_results jsonb NOT NULL DEFAULT '{}', ADD COLUMN IF NOT EXISTS external_cleanup jsonb NOT NULL DEFAULT '[]';`);
+ const independent=await readFile('supabase/migrations/20270602000504_operator_provider_independent_retirement.sql','utf8');
+ for (const shape of [/CREATE OR REPLACE FUNCTION public\.operator_external_retirement_inventory\(_ids uuid\[\]\)[\s\S]*?\n\$\$;/, /CREATE OR REPLACE FUNCTION public\.operator_external_retirement_warnings\(_ids uuid\[\]\)[\s\S]*?\n\$\$;/, /CREATE OR REPLACE FUNCTION public\.operator_detach_pending_provider_preparation\(_ids uuid\[\]\)[\s\S]*?\n\$\$;/]) await db.exec(independent.match(shape)[0]);
+ const roleSplit=await readFile('supabase/migrations/20271020000100_operator_archive_delete_authority.sql','utf8');
+ await db.exec(roleSplit); await db.exec(roleSplit);
+ await actor(owner);
+ assert.equal((await db.query('select operator_can_archive_accounts() v')).rows[0].v,true,'owner tier archives');
+ assert.equal((await db.query('select operator_can_permanently_delete_accounts() v')).rows[0].v,true,'owner tier deletes');
+ await actor('00000000-0000-0000-0000-000000000003');
+ assert.equal((await db.query('select operator_can_archive_accounts() v')).rows[0].v,true,'platform_admin archives');
+ assert.equal((await db.query('select operator_can_permanently_delete_accounts() v')).rows[0].v,true,'platform_admin deletes');
+ await actor(delegated);
+ assert.equal((await db.query('select operator_can_archive_accounts() v')).rows[0].v,true,'a tier granted only fleet.account.archive may archive');
+ assert.equal((await db.query('select operator_can_permanently_delete_accounts() v')).rows[0].v,false,'delegated tier never permanently deletes');
+ await refuse(()=>db.query('select operator_preview_account_deletion($1)',[solo]),'42501','delegated tier cannot preview deletion');
+ await refuse(()=>db.query('select operator_preview_retirement_resources($1,$2)',[solo,'delete']),'42501','delegated tier cannot prepare delete-mode resources');
+ await db.query('select operator_read_account_details($1)',[solo]);
+ await db.query("insert into tenants(id,name,status,account_type) values($1,'Delegated Solo','active','standalone')",[split]);
+ const splitPreview=await preview(split);
+ await db.query('select operator_archive_account($1,$2,$3,$4)',[split,splitPreview.version,'Delegated Solo',splitOp]);
+ assert.equal((await db.query('select state from operator_account_archives where id=$1',[splitOp])).rows[0].state,'archived','delegated tier archives through the canonical lifecycle');
+ await refuse(()=>db.query('select operator_preview_account_deletion($1)',[split]),'42501','archive-only tier must not preview its own archive for deletion');
+ await refuse(()=>db.query('select operator_delete_archived_account($1,$2,$3,$4)',[split,'stale','Delegated Solo',splitOp]),'42501','archive-only tier must not execute deletion');
+ assert.equal((await db.query('select operator_restore_archived_account($1,$2) v',[split,splitOp])).rows[0].v.state,'restored','delegated tier restores');
+ await actor(ordinary);
+ assert.equal((await db.query('select operator_can_archive_accounts() v')).rows[0].v,false,'tenant identities hold no archive authority');
+ assert.equal((await db.query('select operator_can_permanently_delete_accounts() v')).rows[0].v,false,'tenant identities hold no deletion authority');
+ await refuse(()=>preview(solo),'42501');
+ await db.query('delete from user_roles where user_id=$1',[delegated]);
+ await actor(delegated);
+ assert.equal((await db.query('select operator_can_archive_accounts() v')).rows[0].v,false,'revoked capability refuses immediately');
+ await actor(owner);
  await db.query("delete from user_roles where user_id=$1",[owner]); assert.equal((await db.query('select operator_can_retire_accounts() v')).rows[0].v,false,'revoked authority refuses immediately');
+ assert.equal((await db.query('select operator_can_permanently_delete_accounts() v')).rows[0].v,false,'owner revocation also removes deletion authority');
  console.log('PASS: actual archive/restore/delete SQL; populated Agency tree, CRM/activity/Chat/Memory cleanup, independent Solo and shared identity preserved; admin/owner and ordinary refusal; confirmation, stale version, idempotency and minimal receipt. Auth is a fixture; production acceptance UNVERIFIED.');
+ console.log('PASS: ANT-47 authority split — Super Admin and Platform Admin archive AND permanently delete; a registry-granted delegated tier archives and restores only (deletion preview/execute/resources refused); tenant identities hold neither authority; a revoked capability refuses immediately; the migration replays idempotently.');
 } catch(e) {console.error('FAIL:',e.code??e.name,e.message);process.exitCode=1;} finally {await db.close();}

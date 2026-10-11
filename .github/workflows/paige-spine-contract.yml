@@ -215,6 +215,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/messages_engine_only_writes.sql
 
+      # ANT-43/S7 slice 2: SendGrid receipt journal — validate, dedup (replay-safe),
+      # append-once into the one truth table; journal invisible to anon/authenticated.
+      - name: SendGrid receipt ingest (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sendgrid_receipt_ingest.sql
+
       - name: Operations scoped manual work authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_plan_update.sql

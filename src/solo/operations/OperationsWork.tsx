@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowRight, Circle, CircleCheck, CirclePause, Search } from "lucide-react";
-import type { Plan, PlanItem } from "@/hooks/usePlanList";
+import type { Plan, PlanItem, PlanItemStatus } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsAssignee } from "./OperationsAssignee";
 import { workStatusLabel, workStages as stages, byDueDate } from "./operations-presentation";
@@ -12,6 +12,7 @@ export interface OperationsWorkProps {
   members: TeamMemberRecord[];
   onInspectItem: (item: PlanItem) => void;
   onInspectPlan?: (plan: Plan) => void;
+  onProposeStage?: (item: PlanItem, status: PlanItemStatus, invoker: HTMLButtonElement | null) => void;
 }
 
 const unfinished = (item: PlanItem) => !["done", "cancelled"].includes(item.status);
@@ -19,7 +20,18 @@ const isOverdue = (item: PlanItem) => Boolean(item.due_at && unfinished(item) &&
 const dueLabel = (value: string | null) => value && !Number.isNaN(new Date(value).getTime())
   ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(value)) : "No due date";
 
-export function OperationsWork({ plans, items, members, onInspectItem }: OperationsWorkProps) {
+export function OperationsWork({ plans, items, members, onInspectItem, onProposeStage }: OperationsWorkProps) {
+  const draggedId = useRef<string | null>(null);
+  const draggedInvoker = useRef<HTMLButtonElement | null>(null);
+  const [dropStage, setDropStage] = useState<PlanItemStatus | null>(null);
+  const proposeDrop = (status: PlanItemStatus) => {
+    const item = items.find(value => value.id === draggedId.current);
+    const invoker = draggedInvoker.current;
+    draggedInvoker.current = null;
+    draggedId.current = null; setDropStage(null);
+    // Resolve from the current scoped read, never from a browser/external payload.
+    if (item && item.status !== status && status !== "cancelled") onProposeStage?.(item, status, invoker);
+  };
   const [view, setView] = useState("Board");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("active");
@@ -55,7 +67,7 @@ export function OperationsWork({ plans, items, members, onInspectItem }: Operati
       <span className="ops-view-muted">{visible.length} items shown</span>
     </div>
     {visible.length === 0 ? <div className="ops-view-empty"><CircleCheck size={32} aria-hidden="true" /><h2>{items.length ? "No work matches this view" : "Your next steps belong here"}</h2><p>{items.length ? "Try another status or a different search." : "Tasks and milestones from your plans will appear together, with their owners and due dates."}</p>{items.length > 0 && <button type="button" onClick={() => { setFilter("all"); setQuery(""); }}>Clear filters</button>}</div>
-      : view === "Board" ? <><p className="ops-board-scroll-cue"><ArrowRight size={15} aria-hidden="true" />Scroll across stages · Tab reaches every task</p><div className="ops-work-board" tabIndex={0} role="region" aria-label="Work board. Scroll horizontally to view later stages.">{stages.filter(stage => filter === "all" || (filter === "active" ? ["open", "in_progress", "blocked"].includes(stage.status) : visible.some(item => item.status === stage.status))).map(stage => <section className="ops-work-lane" key={stage.status} aria-label={stage.label}><header><h2>{stage.status === "blocked" ? <CirclePause size={16} aria-hidden="true" /> : stage.status === "done" ? <CircleCheck size={16} aria-hidden="true" /> : <Circle size={14} aria-hidden="true" />}{stage.label}</h2><span>{visible.filter(item => item.status === stage.status).length}</span></header><div className="ops-work-stack">{visible.filter(item => item.status === stage.status).map(item => <button className="ops-work-card" type="button" key={item.id} onClick={() => onInspectItem(item)}><span className="ops-work-context">{item.priority} priority · {item.item_type}</span><strong>{item.title}</strong><span className="ops-view-muted">{projects.get(item.plan_id ?? "") ?? "Standalone work"}</span><div className="ops-work-owner">{owner(item)}</div><footer>{date(item)}{item.linked_action_id && <span className="ops-work-link">Linked action</span>}</footer></button>)}</div></section>)}</div></>
+      : view === "Board" ? <><p className="ops-board-scroll-cue"><ArrowRight size={15} aria-hidden="true" />Drag to review a stage change · Open a task to change it with the keyboard</p><div className="ops-work-board" tabIndex={0} role="region" aria-label="Work board. Scroll horizontally to view later stages.">{stages.filter(stage => filter === "all" || (filter === "active" ? ["open", "in_progress", "blocked", "done"].includes(stage.status) : visible.some(item => item.status === stage.status))).map(stage => <section className="ops-work-lane" key={stage.status} aria-label={stage.label} data-drop-target={dropStage === stage.status || undefined} onDragOver={event => { if (onProposeStage && draggedId.current && stage.status !== "cancelled") { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropStage(stage.status); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropStage(null); }} onDrop={event => { event.preventDefault(); proposeDrop(stage.status); }}><header><h2>{stage.status === "blocked" ? <CirclePause size={16} aria-hidden="true" /> : stage.status === "done" ? <CircleCheck size={16} aria-hidden="true" /> : <Circle size={14} aria-hidden="true" />}{stage.label}</h2><span>{visible.filter(item => item.status === stage.status).length}</span></header><div className="ops-work-stack">{visible.filter(item => item.status === stage.status).map(item => <button className="ops-work-card" type="button" key={item.id} draggable={Boolean(onProposeStage) && Boolean(item.updated_at)} onDragStart={event => { event.currentTarget.focus(); draggedInvoker.current = event.currentTarget; draggedId.current = item.id; event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", "Operations work"); }} onDragEnd={() => { draggedInvoker.current = null; draggedId.current = null; setDropStage(null); }} onClick={() => onInspectItem(item)}><span className="ops-work-context">{item.priority} priority · {item.item_type}</span><strong>{item.title}</strong><span className="ops-view-muted">{projects.get(item.plan_id ?? "") ?? "Standalone work"}</span><div className="ops-work-owner">{owner(item)}</div><footer>{date(item)}{item.linked_action_id && <span className="ops-work-link">Linked action</span>}</footer></button>)}</div></section>)}</div></>
       : view === "List" ? <><div className="ops-view-table-scroll" tabIndex={0} role="region" aria-label="Work list"><table className="ops-work-table" role="table"><thead><tr><th>Work / project</th><th>Owner</th><th>Status</th><th>Due</th></tr></thead><tbody>{visible.map(item => <tr key={item.id}><td data-label="Work"><button type="button" className="ops-view-text-action" onClick={() => onInspectItem(item)}>{item.title}</button><small>{projects.get(item.plan_id ?? "") ?? "Standalone work"}</small></td><td data-label="Owner">{owner(item)}</td><td data-label="Status"><span className="ops-view-status" data-status={item.status}>{stages.find(stage => stage.status === item.status)?.label}</span></td><td data-label="Due">{date(item)}</td></tr>)}</tbody></table></div></>
       : timeline}
   </section>;

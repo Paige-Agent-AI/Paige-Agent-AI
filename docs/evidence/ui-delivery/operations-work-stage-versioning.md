@@ -1,8 +1,18 @@
-# Operations V3 source workspace — development evidence
+# Operations Work stage movement — bounded release evidence
+
+## Supported staff-role correction
+
+## Target-tenant authority hardening
+
+Migration 00411 also forward-hardens the already released Operations scoped wrapper. Both direct and versioned Operations writes require current membership and target-tenant administration or legitimate creator/assignee authority. Assignees remain status-only and ownership changes remain target-admin-only before delegation to the unchanged canonical writer. The Work hint uses existing `is_tenant_admin(selectedTenant)`, including its existing governed company-workspace platform authority. Three additional rollback assertions cover global administration elsewhere with ordinary target membership and unchanged work after refusal. Fifteen assertions are registered; prior 5992433b rebuilt-schema CI passed twelve before this hardening, so final-head SQL/CI proof is still owed. No shared Planning writer or platform role contract is changed.
+
+The Operations guarded read delegates the same canonical `plan_list`, then filters private plans and item visibility using target administration and legitimate owner/creator/assignee relations. The existing shared hook selects this wrapper only for Operations, with actor/tenant expectations and unchanged legacy reads elsewhere. Four hook tests plus seven Work editor and five Workspace checks passed locally (sixteen total); twenty-four rolled-back SQL assertions are now registered, including read ACL, private/team project visibility and global-role negatives. New final-head SQL execution, CI and production readback remain owed. Figures explicitly describe the bounded loaded work, not a complete-company census. This is a scope-safety extension, not a copied Planning store or new authority service.
+
+The Work permission hint uses supported admin/super_admin roles. The attempted coach fixture at head 46d1b9c9 failed the current platform constraint that retires coach as a permission role; that failed head was not merged. A focused UI case now covers a supported admin managing another person's work and excludes the retired role. Two supplemental rollback assertions verify the existing admin writer and stage readback. Prior-head rebuilt-schema CI passed the original ten assertions; the corrected supplemental assertions and final exact-head CI remain pending until recorded. The synthetic browser fixture returns an explicit role hint and does not prove any real user's role. No platform constraint or canonical writer was weakened.
 
 ## O2a local follow-up — stage proposals and source-version protection
 
-This follow-up remains local, unreleased and subject to its own exact-head CI. The original evidence below records earlier checkpoints rather than a completed department.
+This O2a slice is PR #1922, unreleased and subject to its own exact-head CI. Only stage proposals and timestamp concurrency protection are new. Foundation evidence below is explicitly historical; the O2a evidence section records the fresh tests. The original evidence below records earlier checkpoints rather than a completed department.
 
 Twenty-seven focused Operations assertions pass. A disposable native PostgreSQL test ran ten timestamp/ACL/source assertions, then verified that an intervening committed canonical update refuses an old-version save and preserves the changed work. Full migrated-schema proof for the new guard is registered in the existing database CI job but has not run for a released O2 head.
 
@@ -10,7 +20,7 @@ Twenty-seven focused Operations assertions pass. A disposable native PostgreSQL 
 
 Independent static review found no remaining material issue; its database-test registration finding was fixed. Independent bounded finish review returned SHIP with no visual/usable regression in the supplied desktop Obsidian and phone Mineral refusal captures. Neither review establishes full department acceptance. Task creation, priority editing, history, projects/dependencies, deliverable review/acceptance, sourced capacity, playbook execution and governed COO/Chat/Live completion remain required work.
 
-## Original foundation checkpoint
+## Inherited O1 foundation evidence (historical, not rerun for O2a)
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Deep existing-product flow packet recorded October 9, 2026 before edits; canonical Planning, Team, Sales, Knowledge and shared-shell ownership inspected.
@@ -82,3 +92,12 @@ Non-author SQL/static and bounded visual reviews completed for development, then
 
 Internal build: `dc459adc88f43ff46020afd9b38fd7da3d2880fc` plus evidence follow-up; channel development/preview pending authorized green release. O1 exact production foundation is separately recorded in `docs/delivery/operations-foundation-production-record.md`; this O2a stage/concurrency slice is not yet merged/deployed. Binding Ledger and complete department remain PROOF_OWED. Creation, priority/history, CRM work unification, project/dependencies, verified delivery/acceptance, SOP runs, recorded capacity and governed COO/Fabric/Chat/Live remain additional work.
 
+
+
+### Solo API scope follow-up
+
+All three Operations wrappers now mirror canonical top-level standalone eligibility before reading or delegating work. Six additional rollback assertions cover agency and parented-standalone refusal and unchanged source, bringing registered SQL assertions to 30. These new assertions are UNEXECUTED until the fresh rebuilt-database CI run. No rendered layout change; no named customer runtime test. Prior exact-head evidence remains historical.
+
+Versioned mutation now checks canonical membership and item visibility before CAS, preserving refusal ordering for unrelated callers. Thirty-one rollback assertions registered, new assertion UNEXECUTED until fresh rebuilt-schema CI. No rendered change or customer test.
+
+Current exact-head database step4e08 failed; release held. The isolated global-role cohort now grants while in its legitimate admin workspace before selecting member-only target A, preserving canonical role-sync behavior. An explicit cohort assertion brings SQL to32registered. Fresh execution remains owed; no green/release claim.

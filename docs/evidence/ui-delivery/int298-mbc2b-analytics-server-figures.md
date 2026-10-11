@@ -42,7 +42,7 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner with more than 200 leads in a 
 MOTION_PURPOSE: none added
 PROTECTED_SEAMS: tested - Analytics render and drive, Overview routing render, sales-ops.contract; unaffected and named - the INT-340 issuer, resolver and validator (consumed, not changed), Campaigns, Audience, Content, Social, Email, Ads (marketing-ads.tsx untouched)
 
-INTERNAL_BUILD_IDENTITY: working tree on 64a646f; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: f729d4090ac9adb0c0878ccf92f8a0d5bb80ba48; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production on merge per the pre-launch stance (CLAUDE.md §4)
 RELEASE_CLASSIFICATION: internal-only: a Solo Marketing view now reading a shipped server producer
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version

@@ -20478,6 +20478,10 @@ export type Database = {
         }[]
       }
       get_platform_email_settings: { Args: never; Returns: Json }
+      get_pipeline_lead_funnel: {
+        Args: { p_pipeline_id: string; p_since?: string }
+        Returns: Json
+      }
       get_platform_rail: {
         Args: { p_limit?: number; p_tenant_id?: string }
         Returns: {
@@ -20666,6 +20670,14 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      growth_attach_inbound_default_deal: {
+        Args: { p_contact_id: string; p_source: string; p_tenant_id: string }
+        Returns: Json
+      }
+      growth_attach_submission_default_deal: {
+        Args: { p_claim_attempt: number; p_submission_id: string }
+        Returns: Json
       }
       growth_claim_submission: {
         Args: { p_submission_id: string }
@@ -22001,6 +22013,10 @@ export type Database = {
       seed_starter_business: {
         Args: { _tenant_id: string }
         Returns: undefined
+      }
+      set_ad_creative_featured: {
+        Args: { p_content_id: string; p_featured: boolean }
+        Returns: Json
       }
       set_agency_login_default: { Args: { _pref: string }; Returns: Json }
       set_calendar_hosts: {

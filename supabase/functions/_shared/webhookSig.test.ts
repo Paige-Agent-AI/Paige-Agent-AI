@@ -4,7 +4,7 @@
 // base64 key, base64 v1 signature parts) so the tests oracle the protocol,
 // not the implementation.
 import { assertEquals } from "https://deno.land/std@0.190.0/testing/asserts.ts";
-import { sha256Hex, verifySvix } from "./webhookSig.ts";
+import { sha256Hex, verifySendgridEvent, verifySvix } from "./webhookSig.ts";
 
 const encoder = new TextEncoder();
 
@@ -178,4 +178,52 @@ Deno.test("sha256Hex matches the known digest of 'abc'", async () => {
     d,
     "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
   );
+});
+
+// ─── SendGrid (Twilio) signed Event Webhook verification ──────────────────────
+function p1363ToDer(raw: Uint8Array): Uint8Array {
+  const trim = (n: Uint8Array) => {
+    let s = 0;
+    while (s < n.length - 1 && n[s] === 0) s += 1;
+    let v = n.subarray(s);
+    if (v[0] > 0x7f) v = new Uint8Array([0, ...v]);
+    return v;
+  };
+  const r = trim(raw.subarray(0, 32));
+  const s = trim(raw.subarray(32));
+  const body = new Uint8Array(2 + r.length + 2 + s.length);
+  let p = 0;
+  body[p++] = 0x02; body[p++] = r.length; body.set(r, p); p += r.length;
+  body[p++] = 0x02; body[p++] = s.length; body.set(s, p);
+  return new Uint8Array([0x30, body.length, ...body]);
+}
+function toB64(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes));
+}
+
+Deno.test("verifySendgridEvent accepts a correctly signed ES256 (DER) request", async () => {
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const spki = new Uint8Array(await crypto.subtle.exportKey("spki", kp.publicKey));
+  const pem = `-----BEGIN PUBLIC KEY-----\n${toB64(spki).replace(/(.{64})/g, "$1\n").trim()}\n-----END PUBLIC KEY-----`;
+  const body = JSON.stringify([{ event: "delivered", sg_message_id: "abc.def" }]);
+  const p1363 = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, kp.privateKey, new TextEncoder().encode(body)));
+  const sig = toB64(p1363ToDer(p1363));
+  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, body });
+  assertEquals(v, { ok: true });
+});
+
+Deno.test("verifySendgridEvent rejects a tampered body, wrong key, and malformed input", async () => {
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const other = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const spki = new Uint8Array(await crypto.subtle.exportKey("spki", other.publicKey));
+  const pem = `-----BEGIN PUBLIC KEY-----\n${toB64(spki)}\n-----END PUBLIC KEY-----`;
+  const body = JSON.stringify([{ event: "delivered" }]);
+  const p1363 = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, kp.privateKey, new TextEncoder().encode(body)));
+  const sig = toB64(p1363ToDer(p1363));
+  assertEquals((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, body: body + " " })).ok, false);
+  const wrongKey = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, body });
+  assertEquals(wrongKey.ok === false && wrongKey.reason, "signature_invalid");
+  const v_unset = (await verifySendgridEvent({ publicKeyPem: null, signatureB64: sig, body })); assertEquals(v_unset.ok === false && v_unset.reason, "unconfigured_or_unsigned");
+  const v_badb64 = (await verifySendgridEvent({ publicKeyPem: pem, signatureB64: "!!!not-b64!!!", body })); assertEquals(v_badb64.ok === false && v_badb64.reason, "signature_malformed");
+  const v_badder = (await verifySendgridEvent({ publicKeyPem: pem, signatureB64: toB64(new Uint8Array([1, 2, 3])), body })); assertEquals(v_badder.ok === false && v_badder.reason, "signature_der_malformed");
 });

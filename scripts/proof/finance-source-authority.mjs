@@ -9,9 +9,10 @@ if (!Number.isSafeInteger(port) || port < 1024 || port > 65535 || (port === 5432
 const psql = process.env.FINANCE_PROOF_PSQL ?? 'psql';
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('PG')));
 const args = database => ['-X', '--no-password', '-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', '-d', database, '-At', '-v', 'ON_ERROR_STOP=1'];
-const fixture = fileURLToPath(new URL('../../supabase/tests/finance_source_authority.sql', import.meta.url));
 const suite = process.argv[2] ?? 'source';
-if (!['source', 'accounts', 'liabilities', 'accounting'].includes(suite)) throw new Error('Closed Finance proof suite required');
+const fixtures = { source: 'finance_source_authority.sql', accounts: 'finance_source_authority.sql', liabilities: 'finance_source_authority.sql', accounting: 'finance_source_authority.sql', quickbooks: 'quickbooks_oauth_authority.sql' };
+if (!Object.hasOwn(fixtures, suite)) throw new Error('Unknown Finance fixture suite');
+const fixture = fileURLToPath(new URL(`../../supabase/tests/${fixtures[suite]}`, import.meta.url));
 const accountFixture = fileURLToPath(new URL('../../supabase/tests/finance_account_source_projections.sql', import.meta.url));
 const obligationFixture = fileURLToPath(new URL('../../supabase/tests/finance_accounting_obligation_projections.sql', import.meta.url));
 const liabilityFixture = fileURLToPath(new URL('../../supabase/tests/finance_liability_source_projections.sql', import.meta.url));
@@ -73,13 +74,12 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
   const database = `finance_fixture_${process.pid}_${leg}`;
   sql('postgres', `CREATE DATABASE ${database};`);
   try {
-    // Actual canonical disposition definition; role/archive authority remains an
-    // explicit fixture dependency, never authenticated Operator acceptance.
+    // Read the actual canonical retirement policy; authority remains a fixture.
     const canonical = readFileSync(new URL('../../supabase/migrations/20270602000302_operator_provider_retirement.sql', import.meta.url), 'utf8');
     const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
     assert.ok(disposition, 'Canonical retirement disposition missing');
     sql(database, disposition);
-    let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && suite === 'source' ? 0 : 1}`, '-f', fixture]);
+    let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && suite === 'source' ? 0 : 1}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
     if (leg === 'absent' && suite === 'accounts') {
       assert.equal(result.status, 0, result.stderr);
       result = run(database, undefined, ['-v', 'apply_account_migration=0', '-f', accountFixture]);
@@ -92,32 +92,43 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     }
     if (leg === 'absent') {
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, suite === 'source' ? /read_finance_source_catalog.*does not exist/ : suite === 'accounts' ? /read_finance_account_source.*does not exist/ : suite === 'accounting' ? /read_finance_accounting_obligations.*does not exist/ : /read_finance_liability_source.*does not exist/);
+      assert.match(result.stderr, suite === 'source' ? /read_finance_source_catalog.*does not exist/ : suite === 'accounts' ? /read_finance_account_source.*does not exist/ : suite === 'quickbooks' ? /begin_quickbooks_company_authorization.*does not exist/ : suite === 'accounting' ? /read_finance_accounting_obligations.*does not exist/ : /read_finance_liability_source.*does not exist/);
       console.log(`PASS failing-first: Finance ${suite} contract does not exist before migration`);
       continue;
     }
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Finance source authority PASS/);
+    if (suite === 'quickbooks') assert.match(result.stdout, /QuickBooks OAuth authority PASS/);
+    if (suite === 'quickbooks') {
+      const input = sql(database, 'SELECT public.fixture_qb_input();').trim();
+      const consume = `SELECT public.quickbooks_oauth_attempt_service('consume',$input$${input}$input$::jsonb);`;
+      const claim = holding(database, `RESET ROLE; SET ROLE service_role; ${consume}`);
+      await claim.held;
+      await blockedCompetitor(database, `SET ROLE service_role; SELECT public.fixture_expect_error($q$${consume}$q$,'42501');`, claim.release);
+      await claim.done;
+      assert.equal(sql(database, "SELECT count(*) FROM quickbooks_oauth_attempts WHERE status='exchanging';").trim(), '1');
+    }
+    const startingReceipts = Number(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim());
     const first = holding(database, save('Test Concurrent Company A'));
     await first.held;
     await blockedCompetitor(database, `${actor} SELECT public.fixture_expect_error($q$${save('Test Concurrent Company B')}$q$,'40001');`, first.release);
     await first.done;
     assert.equal(sql(database, "SELECT version||':'||legal_name FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000003';").trim(), '2:Test Concurrent Company A');
-    assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '4');
+    assert.equal(Number(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim()), startingReceipts + 1);
     // Same version/request replays the one committed result, without a second receipt.
     sql(database, `${actor} ${save('Test Concurrent Company A')}`);
-    assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '4');
+    assert.equal(Number(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim()), startingReceipts + 1);
     const create = `SELECT public.save_finance_company_entity('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000005',0,'managed_entity','Test Concurrent Creation');`;
     const creation = holding(database, create);
     await creation.held;
     const replay = await blockedCompetitor(database, `${actor} ${create}`, creation.release);
     await creation.done;
     assert.match(replay, /"replayed": true/);
-    assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '5');
+    assert.equal(Number(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim()), startingReceipts + 2);
     // An unchanged current-version save must preserve bindings and the receipt.
     sql(database, `${actor} SELECT public.save_finance_company_entity('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000005',1,'managed_entity','Test Concurrent Creation');`);
     assert.equal(sql(database, "SELECT version FROM finance_company_entities WHERE id='30000000-0000-0000-0000-000000000005';").trim(), '1');
-    assert.equal(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim(), '5');
+    assert.equal(Number(sql(database, 'SELECT count(*) FROM fixture_receipts;').trim()), startingReceipts + 2);
     sql(database, `
       INSERT INTO quickbooks_connections(id,user_id,is_active,qb_realm_id) VALUES('40000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000001',true,'test-realm-2');
       INSERT INTO finance_source_bindings(id,tenant_id,entity_id,provider,quickbooks_connection_id,environment,source_namespace,verification_state,verification_reference,verified_at)

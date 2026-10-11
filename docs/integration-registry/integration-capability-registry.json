@@ -723,7 +723,12 @@
         {
           "path": "supabase/functions/quickbooks-oauth-callback/index.ts",
           "role": "provider_adapter",
-          "note": "OAuth handshake callback (provider plumbing)."
+          "note": "Legacy HTTP OAuth callback remains unverified; new company-bound consent state alone does not repair or activate this handler."
+        },
+        {
+          "path": "supabase/migrations/20270602000436_quickbooks_company_oauth_attempts.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company/version/actor-bound accounting-only one-use consent correlation. No token exchange, native company proof or provider activation; HTTP binding and production acceptance owed."
         },
         {
           "path": "supabase/functions/quickbooks-sync-financials/index.ts",

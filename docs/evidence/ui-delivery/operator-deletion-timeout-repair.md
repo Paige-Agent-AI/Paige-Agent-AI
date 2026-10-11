@@ -40,6 +40,10 @@ ANT-47 production defect (2026-10-11): two archived standalone scopes could not 
 
 The repair is the honest performance fix: (1) `20271020000400` re-emits `operator_account_deletion_plan` with a **worklist frontier** — each foreign key is probed only when its parent relation changed in the previous round (or just entered the plan) instead of re-probing every candidate FK every round; fixpoint, 30-round ceiling, dispositions, blockers and every other line are byte-identical. (2) `20271020000401` adds the audited tenant-column indexes (31 relations, led by `paige_llm_trace.working_context_tenant_id` and `paige_chat_turns.interactive_tenant_id`) so plan probes and tenant-scoped reads stop sequential-scanning. Entry points, guard, Edge, UI and the authority split are untouched.
 
+## Round 2 (20271020000420 + 20271020000421)
+
+Post-deploy re-time: the worst scope's plan walk improved 8342ms to 5198ms — preview fits the 8s budget, but the delete path's three walks still exceeded it. The measured remainder: ~17 information_schema queries inside the function (~45ms each as the definer) and unindexed FK columns on closure children (paige_actions carries seven). 20271020000420 rewrites the two information_schema queries to equivalent pg_catalog queries (same rows, same string_agg order); 20271020000421 adds 14 FK-column indexes. No algorithmic, contract or authority change. The proof's stage B applies 420 twice (replay) and asserts the plan is STILL byte-identical to the deployed 504 body with an unchanged probe count; the mini archive-to-delete runs under the final body.
+
 ## Evidence and reproduction
 
 - `node scripts/proof/operator-account-archive.mjs --postgres <dedicated-loopback-port>` — four PASS lines including the worklist section: old (deployed 504 body) vs new plan `deepEqual` equivalence, FK probe count 36→18 on the fixture graph through a counting `operator_retirement_fk_join` wrapper, and a fresh Worklist-Solo archive→delete executing atomically through the repaired function. With the migration files absent the run FAILS (ENOENT): failing-first control.

@@ -10,6 +10,7 @@ import { OperationsAssignee } from "./OperationsAssignee";
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
 import { OperationsWorkCreator } from "./OperationsWorkCreator";
 import { OperationsProjectCreator } from "./OperationsProjectCreator";
+import { OperationsProjectEditor } from "./OperationsProjectEditor";
 import { useOperationsPeople } from "./useOperationsPeople";
 import { OperationsWork } from "./OperationsWork";
 import { OperationsProjects } from "./OperationsProjects";
@@ -138,6 +139,9 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
             refresh={() => source.refresh({ silent: true })} />
         </div>}
         {selectedPlan && <div className="ops-detail-content"><p>Status: {selectedPlan.status}</p>
+          <OperationsAssignee member={people.members.find(person => person.user_id === selectedPlan.owner_user_id)} />
+          <OperationsProjectEditor key={`${tenantId}:${selectedPlan.id}`} plan={selectedPlan} actorId={userId} tenantId={tenantId}
+            members={people.members} refresh={() => source.refresh({ silent: true })} sourceError={Boolean(source.error) || !matches} />
           <button type="button" disabled={people.loading || Boolean(people.error) || Boolean(source.error) || !matches} onClick={() => {
             projectCreationInvoker.current = inspectionInvoker.current;
             setCreatingProject({ project: selectedPlan }); setInspection(null);

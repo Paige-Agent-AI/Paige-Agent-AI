@@ -25,7 +25,8 @@ path, modelled on `configure_campaign_brief`:
 - **Commands:**
   - `{type:'attach_asset'|'detach_asset', briefId, assetKind, assetId}`.
   - Kinds: `page`, `form`, `funnel`, `email_campaign`, `email_series`, `content`. Ad copy is library content with
-    channel `ad_copy`.
+    channel `ad_copy`. A series' own per-step emails (`email_campaigns.sequence_id` set) belong to the series and are
+    never offered or linked as campaigns on their own, as Mail's lists already treat them; link the series instead.
 - **Outcomes:**
   - `attached`, `already_attached`, `detached` and `not_attached`; repeats are reported, never duplicated.
   - Refusals (22023): `CAMPAIGN_BRIEF_NOT_FOUND` (another workspace's or archived), `CAMPAIGN_ASSET_NOT_FOUND`
@@ -43,7 +44,8 @@ path, modelled on `configure_campaign_brief`:
 `get_campaign_brief_assets(_tenant_id, _brief_id default null)` returns `{can_manage, links, available}`:
 
 - **`links`:** every live link on the workspace's non-archived briefs (or on one brief), plus social posts that name
-  the brief. Each has its kind, id, name, status, slug (pages, forms, funnels), channel (content), how it was
+  the brief (not archived or abandoned; `created_through` is `paige` when an agent made the post). No product path
+  sets a post's brief yet, so this shows what the social record already holds. Each has its kind, id, name, status, slug (pages, forms, funnels), channel (content), how it was
   linked and when, and whether this caller may detach it (never a social post; that is Social's link).
 - **Member visibility (§9):** members cannot read email campaigns, email series or library rows, so those links reach
   a member as their kind only (no name, status or channel). Pages, forms, funnels and social posts are readable by

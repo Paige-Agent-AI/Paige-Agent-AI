@@ -12,9 +12,9 @@ const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?:
 const REACH: readonly CampaignAssetKind[] = ["email_campaign", "email_series", "social_post", "content"];
 const LAND: readonly CampaignAssetKind[] = ["page", "form", "funnel"];
 
-function Lane({ id, title, help, kinds, links, available, canManage, addLabel, onAttach, onDetach }: {
+function Lane({ id, title, help, kinds, links, available, canManage, addLabel, makeWhere, onAttach, onDetach }: {
   id: string; title: string; help: string; kinds: readonly CampaignAssetKind[]; links: readonly CampaignAssetLink[];
-  available: readonly AttachableAsset[]; canManage: boolean; addLabel: string;
+  available: readonly AttachableAsset[]; canManage: boolean; addLabel: string; makeWhere: string;
   onAttach: (asset: AttachableAsset) => Promise<boolean>; onDetach: (link: CampaignAssetLink) => Promise<void>;
 }) {
   const [picking, setPicking] = React.useState(false);
@@ -37,7 +37,7 @@ function Lane({ id, title, help, kinds, links, available, canManage, addLabel, o
           {status && <span className="cc-s">{status}</span>}
           {canManage && link.detachable && <button type="button" className="btn btn-s" disabled={busy !== null}
             aria-label={`Remove ${link.name ?? label} from this campaign`}
-            onClick={async () => { setBusy(`${link.kind}:${link.id}`); try { await onDetach(link); } finally { setBusy(null); } }}>Remove</button>}
+            onClick={async () => { setBusy(`${link.kind}:${link.id}`); try { await onDetach(link); } finally { setBusy(null); requestAnimationFrame(() => addRef.current?.focus()); } }}>Remove</button>}
         </li>;
       })}</ul> : <p className="cc-empty">Nothing attached yet.</p>}
       {canManage && !picking && <button ref={addRef} type="button" className="cc-add" onClick={() => setPicking(true)}><Ic.plus size={13}/> {addLabel}</button>}
@@ -51,7 +51,7 @@ function Lane({ id, title, help, kinds, links, available, canManage, addLabel, o
             <span className="cc-k">{kindLabel(asset.kind, asset.channel)}</span><span className="cc-n">{asset.name}</span>
             {statusLabel(asset.kind, asset.status) && <span className="cc-s">{statusLabel(asset.kind, asset.status)}</span>}
           </button></li>)}</ul>
-          : <p className="cc-empty">{query.trim() ? "Nothing matches that name." : "Everything you've made of this kind is already attached, or there's nothing yet. Make it in Vibe Studio or Email."}</p>}
+          : <p className="cc-empty">{query.trim() ? "Nothing matches that name." : `Everything you've made of this kind is already attached, or there's nothing yet. Make it in ${makeWhere}.`}</p>}
         <button type="button" className="btn btn-s" onClick={close}>Cancel</button>
       </div>}
     </section>
@@ -67,10 +67,10 @@ export function CampaignComposition({ briefId, assets, onToast }: { briefId: str
   return (
     <div className="cc">
       <Lane id={`cc-reach-${briefId}`} title="Reach" help="How people hear about it" kinds={REACH} links={mine.filter((link) => REACH.includes(link.kind))}
-        available={assets.available} canManage={assets.canManage} addLabel="Add an email, series or ad copy" onAttach={attach} onDetach={detach}/>
+        available={assets.available} canManage={assets.canManage} addLabel="Add an email, series or library piece" makeWhere="Email, or save it to your library from Vibe Studio" onAttach={attach} onDetach={detach}/>
       <Lane id={`cc-land-${briefId}`} title="Land" help="Where they arrive and sign up" kinds={LAND} links={mine.filter((link) => LAND.includes(link.kind))}
-        available={assets.available} canManage={assets.canManage} addLabel="Add the page, form or funnel they land on" onAttach={attach} onDetach={detach}/>
-      <p className="cc-foot">Attaching a piece records that it's part of this campaign. Nothing is sent or published from here. Social posts join a campaign from Social.</p>
+        available={assets.available} canManage={assets.canManage} addLabel="Add the page, form or funnel they land on" makeWhere="Vibe Studio" onAttach={attach} onDetach={detach}/>
+      <p className="cc-foot">Attaching a piece records that it's part of this campaign. Nothing is sent or published from here. A social post that names this campaign shows here too.</p>
     </div>
   );
 }

@@ -48,7 +48,8 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
     WHEN 'page' THEN EXISTS(SELECT 1 FROM public.growth_pages a WHERE a.id=_id AND a.tenant_id=_tenant AND a.status<>'archived')
     WHEN 'form' THEN EXISTS(SELECT 1 FROM public.growth_forms a WHERE a.id=_id AND a.tenant_id=_tenant AND a.status<>'archived')
     WHEN 'funnel' THEN EXISTS(SELECT 1 FROM public.growth_funnels a WHERE a.id=_id AND a.tenant_id=_tenant AND a.status<>'archived')
-    WHEN 'email_campaign' THEN EXISTS(SELECT 1 FROM public.email_campaigns a WHERE a.id=_id AND a.tenant_id=_tenant AND a.status<>'cancelled')
+    -- A series' own per-step emails are part of the series, never campaigns on their own (Mail's rule).
+    WHEN 'email_campaign' THEN EXISTS(SELECT 1 FROM public.email_campaigns a WHERE a.id=_id AND a.tenant_id=_tenant AND a.sequence_id IS NULL AND a.status<>'cancelled')
     WHEN 'email_series' THEN EXISTS(SELECT 1 FROM public.email_sequences a WHERE a.id=_id AND a.tenant_id=_tenant AND a.status<>'stopped')
     WHEN 'content' THEN EXISTS(SELECT 1 FROM public.marketing_content a WHERE a.id=_id AND a.tenant_id=_tenant AND a.status<>'archived')
     ELSE false END
@@ -182,14 +183,14 @@ BEGIN
     LEFT JOIN public.growth_pages p ON l.asset_kind='page' AND p.id=l.asset_id AND p.tenant_id=_tenant
     LEFT JOIN public.growth_forms f ON l.asset_kind='form' AND f.id=l.asset_id AND f.tenant_id=_tenant
     LEFT JOIN public.growth_funnels u ON l.asset_kind='funnel' AND u.id=l.asset_id AND u.tenant_id=_tenant
-    LEFT JOIN public.email_campaigns e ON l.asset_kind='email_campaign' AND e.id=l.asset_id AND e.tenant_id=_tenant
+    LEFT JOIN public.email_campaigns e ON l.asset_kind='email_campaign' AND e.id=l.asset_id AND e.tenant_id=_tenant AND e.sequence_id IS NULL
     LEFT JOIN public.email_sequences s ON l.asset_kind='email_series' AND s.id=l.asset_id AND s.tenant_id=_tenant
     LEFT JOIN public.marketing_content c ON l.asset_kind='content' AND c.id=l.asset_id AND c.tenant_id=_tenant
     WHERE l.tenant_id=_tenant
     UNION ALL
-    SELECT sp.campaign_brief_id, 'social_post', sp.id, 'human', sp.created_at, sp.title, sp.status, NULL, NULL
+    SELECT sp.campaign_brief_id, 'social_post', sp.id, CASE WHEN sp.created_by_agent IS NOT NULL THEN 'paige' ELSE 'human' END, sp.created_at, sp.title, sp.status, NULL, NULL
     FROM public.paige_social_posts sp JOIN briefs ON briefs.id=sp.campaign_brief_id
-    WHERE sp.tenant_id=_tenant AND sp.status<>'archived'
+    WHERE sp.tenant_id=_tenant AND sp.status NOT IN ('archived','abandoned')
   )
   SELECT coalesce(jsonb_agg(jsonb_build_object(
       'brief_id', a.brief_id, 'kind', a.kind, 'id', a.id,
@@ -209,7 +210,7 @@ BEGIN
       (SELECT 'page' kind, id, title name, status, NULL::text channel, updated_at FROM public.growth_pages WHERE tenant_id=_tenant AND status<>'archived' ORDER BY updated_at DESC LIMIT 200)
       UNION ALL (SELECT 'form', id, name, status, NULL, updated_at FROM public.growth_forms WHERE tenant_id=_tenant AND status<>'archived' ORDER BY updated_at DESC LIMIT 200)
       UNION ALL (SELECT 'funnel', id, name, status, NULL, updated_at FROM public.growth_funnels WHERE tenant_id=_tenant AND status<>'archived' ORDER BY updated_at DESC LIMIT 200)
-      UNION ALL (SELECT 'email_campaign', id, name, status, NULL, updated_at FROM public.email_campaigns WHERE tenant_id=_tenant AND status<>'cancelled' ORDER BY updated_at DESC LIMIT 200)
+      UNION ALL (SELECT 'email_campaign', id, name, status, NULL, updated_at FROM public.email_campaigns WHERE tenant_id=_tenant AND sequence_id IS NULL AND status<>'cancelled' ORDER BY updated_at DESC LIMIT 200)
       UNION ALL (SELECT 'email_series', id, name, status, NULL, updated_at FROM public.email_sequences WHERE tenant_id=_tenant AND status<>'stopped' ORDER BY updated_at DESC LIMIT 200)
       UNION ALL (SELECT 'content', id, title, status, channel, updated_at FROM public.marketing_content WHERE tenant_id=_tenant AND status<>'archived' ORDER BY updated_at DESC LIMIT 200)
     ) x;

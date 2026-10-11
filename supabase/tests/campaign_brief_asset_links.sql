@@ -59,6 +59,9 @@ INSERT INTO public.email_campaigns(id,tenant_id,name,status) VALUES
  ('a2980300-0000-4000-8000-0000000000a5','a2980300-0000-4000-8000-000000000011','Spring announcement','draft');
 INSERT INTO public.email_sequences(id,tenant_id,name,status) VALUES
  ('a2980300-0000-4000-8000-0000000000a6','a2980300-0000-4000-8000-000000000011','Spring nurture','draft');
+-- A series' own step email: part of the series, never offered or linked as a campaign on its own.
+INSERT INTO public.email_campaigns(id,tenant_id,name,status,sequence_id,sequence_position) VALUES
+ ('a2980300-0000-4000-8000-0000000000a9','a2980300-0000-4000-8000-000000000011','Spring nurture · email 1','draft','a2980300-0000-4000-8000-0000000000a6',1);
 INSERT INTO public.marketing_content(id,tenant_id,title,channel,status) VALUES
  ('a2980300-0000-4000-8000-0000000000a7','a2980300-0000-4000-8000-000000000011','Spring ad copy','ad_copy','draft');
 INSERT INTO public.campaign_briefs(id,tenant_id,short_ref,name,lifecycle_status) VALUES
@@ -95,6 +98,7 @@ SELECT pg_temp.require_refused($$SELECT pg_temp.attach('a2980300-0000-4000-8000-
 SELECT pg_temp.require_refused($$SELECT pg_temp.attach('a2980300-0000-4000-8000-0000000000c2','page','a2980300-0000-4000-8000-0000000000a1','links-x3')$$,'CAMPAIGN_BRIEF_NOT_FOUND','an archived brief is refused');
 SELECT pg_temp.require_refused($$SELECT pg_temp.attach('a2980300-0000-4000-8000-0000000000c1','page','a2980300-0000-4000-8000-0000000000a2','links-x4')$$,'CAMPAIGN_ASSET_NOT_FOUND','an archived page is refused');
 SELECT pg_temp.require_refused($$SELECT pg_temp.attach('a2980300-0000-4000-8000-0000000000c1','page','a2980300-0000-4000-8000-0000000000a3','links-x5')$$,'CAMPAIGN_ASSET_NOT_FOUND','a form named as a page is refused');
+SELECT pg_temp.require_refused($$SELECT pg_temp.attach('a2980300-0000-4000-8000-0000000000c1','email_campaign','a2980300-0000-4000-8000-0000000000a9','links-x8')$$,'CAMPAIGN_ASSET_NOT_FOUND','a series step email is not a campaign on its own');
 SELECT pg_temp.require_refused($$SELECT pg_temp.attach('a2980300-0000-4000-8000-0000000000c1','video','a2980300-0000-4000-8000-0000000000a1','links-x6')$$,'CAMPAIGN_ASSET_KIND_INVALID','an unknown kind is refused');
 SELECT pg_temp.require_refused($$SELECT pg_temp.attach('a2980300-0000-4000-8000-0000000000c1','page','not-a-uuid','links-x7')$$,'CAMPAIGN_ASSET_ARGUMENTS_INVALID','a malformed id is refused');
 SELECT pg_temp.require_refused($$SELECT public.configure_campaign_brief_assets(NULL,'{"type":"attach_asset","briefId":"a2980300-0000-4000-8000-0000000000c1","assetKind":"page","assetId":"a2980300-0000-4000-8000-0000000000a1"}','  ','human')$$,'CAMPAIGN_BRIEF_IDEMPOTENCY_REQUIRED','a key is required');
@@ -112,7 +116,7 @@ DO $admin_read$ DECLARE r jsonb:=public.get_campaign_brief_assets(NULL); BEGIN
  IF (SELECT l->>'name' FROM jsonb_array_elements(r->'links') l WHERE l->>'kind'='email_campaign')<>'Spring announcement' THEN RAISE EXCEPTION 'FAIL: email name for admin'; END IF;
  IF (SELECT (l->>'detachable')::boolean FROM jsonb_array_elements(r->'links') l WHERE l->>'kind'='social_post') THEN RAISE EXCEPTION 'FAIL: a social post is detached through Social, not here'; END IF;
  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r->'available') x WHERE x->>'id'='a2980300-0000-4000-8000-0000000000a1')
-   OR EXISTS(SELECT 1 FROM jsonb_array_elements(r->'available') x WHERE x->>'id' IN ('a2980300-0000-4000-8000-0000000000b1','a2980300-0000-4000-8000-0000000000a2')) THEN
+   OR EXISTS(SELECT 1 FROM jsonb_array_elements(r->'available') x WHERE x->>'id' IN ('a2980300-0000-4000-8000-0000000000b1','a2980300-0000-4000-8000-0000000000a2','a2980300-0000-4000-8000-0000000000a9')) THEN
    RAISE EXCEPTION 'FAIL: available lists this workspace''s live assets only, got %',r->'available'; END IF;
  IF jsonb_array_length(public.get_campaign_brief_assets(NULL,'a2980300-0000-4000-8000-0000000000c2')->'links')<>0 THEN RAISE EXCEPTION 'FAIL: an archived brief shows no links'; END IF;
 END $admin_read$;

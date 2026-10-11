@@ -115,7 +115,15 @@ Deno.serve(async req => {
     backfilled = await classifyBackfill();
   } catch { /* best-effort by contract */ }
 
-  return json(200, { ok: true, mailboxes: report.length, followups_scheduled: followups, classification_backfill: backfilled, report });
+  // Case/follow-up engine backfill: the same tick also completes any inbound
+  // shared-support message whose intelligence call failed at receipt time (the
+  // Resend path has no per-connector sync to retry it — this sweep IS the retry).
+  let intelligenceCompleted = 0;
+  try {
+    intelligenceCompleted = await intelligenceBackfill();
+  } catch { /* best-effort; the next tick retries */ }
+
+  return json(200, { ok: true, mailboxes: report.length, followups_scheduled: followups, classification_backfill: backfilled, intelligence_backfill: intelligenceCompleted, report });
 });
 
 /**
@@ -146,6 +154,50 @@ async function classifyBackfill(): Promise<number> {
       snippet: ((message.body_text as string | null) ?? "").slice(0, 4000),
     });
     if (recorded) count += 1;
+  }
+  return count;
+}
+
+/**
+ * Complete the case/follow-up engine for recent inbound shared-support messages
+ * it never absorbed: a message whose thread's support case was last refreshed
+ * BEFORE the message arrived means the receipt-time engine call failed (the
+ * Resend inbound handler defers it on error and nothing else re-ran it). The
+ * engine is an idempotent upsert keyed (tenant_id, connector_id, thread_key) —
+ * re-running it only refreshes the case and cancels any follow-up that the
+ * customer's reply should already have cancelled. Service-role only, bounded
+ * (100), 3-day window, shared_support connectors only.
+ */
+async function intelligenceBackfill(): Promise<number> {
+  const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: pending, error } = await admin.from("messages")
+    .select("id, tenant_id, connector_id, thread_key, created_at")
+    .eq("direction", "inbound")
+    .gte("created_at", since)
+    .not("connector_id", "is", null)
+    .limit(100);
+  if (error || !pending?.length) return 0;
+  let count = 0;
+  for (const message of pending as Array<
+    { id: string; tenant_id: string; connector_id: string; thread_key: string; created_at: string }
+  >) {
+    const { data: connectorRow } = await admin.from("channel_connectors")
+      .select("mailbox_class").eq("id", message.connector_id).maybeSingle();
+    if (connectorRow?.mailbox_class !== "shared_support") continue;
+    const { data: existingCase } = await admin.from("support_cases")
+      .select("last_inbound_at")
+      .eq("tenant_id", message.tenant_id)
+      .eq("connector_id", message.connector_id)
+      .eq("thread_key", message.thread_key)
+      .maybeSingle();
+    const absorbed = existingCase?.last_inbound_at
+      ? new Date(existingCase.last_inbound_at as string).getTime() >= new Date(message.created_at).getTime()
+      : false;
+    if (absorbed) continue;
+    try {
+      const res = await admin.rpc("record_inbound_message_intelligence", { _message_id: message.id });
+      if (res && (res as { ok?: boolean }).ok !== false) count += 1;
+    } catch { /* leave for the next tick */ }
   }
   return count;
 }

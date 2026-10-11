@@ -429,7 +429,9 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
    - `_marketing_metric_bundle` with the LIVE and PARTIAL keys from H.
    - Analytics and Overview consume it; browser-side KPIs are removed.
    - Email rates move server-side, coordinated with the email dashboard.
-3. **S3: Campaign ↔ asset link (backend, needs owner approval as a new table).**
+3. **S3: Campaign ↔ asset link (backend, needs owner approval as a new table).** Authorized by the coordinator command
+   (owner-authorized, 2026-10-11) and built as MBC slice 3: `campaign_brief_asset_links` and the dossier's Reach and
+   Land lanes (`docs/delivery/campaign-asset-links-contract.md`). The roll-up metric per linked piece is still to come.
    - Pages, forms, funnels, email campaigns and series, and ad copy attach to a brief.
    - Campaigns shows real composition.
 4. **S4: Capture events.**

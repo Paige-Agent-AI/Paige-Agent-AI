@@ -763,7 +763,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-**2026-10-10 INT-342 / ANT-15 — Ads is its own Solo department, directly below Marketing — PR @@PR@@.** Owner ruling: Ads leaves Marketing and becomes a first-level destination; the existing desk is rehomed, not rebuilt.
+**2026-10-10 INT-342 / ANT-15 — Ads is its own Solo department, directly below Marketing — PR [#1949](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1949).** Owner ruling: Ads leaves Marketing and becomes a first-level destination; the existing desk is rehomed, not rebuilt.
 - **Navigation:** registry branch `ads` after `growth` (`tierBranches.ts`); Solo rail item `Ads` (Target icon) after Marketing (`tenantShellRoutes.ts`); route owner `src/solo/AdsWorkspace.tsx`. The five views are subtabs, `/solo/{account}/ads/{overview·campaigns·creative·audiences·performance}`, so each is a history entry and survives a reload. Marketing keeps seven tabs.
 - **§58:** the desk (`marketing-ads.tsx`) is unchanged, with the same reads, read policy, Ask PAIGE handoffs and not-read states. `/growth/ads[?view=X]` replaces into `/ads[/X]` before any Marketing reader mounts (`legacyAdsRoute`, `src/solo/ads-routing.ts`); Analytics' "Open Ads" opens the department.
 - **Status:** no data, permission, provider, spend or backend change. Sub-account and Agency menus gain nothing (same D4 gap as Marketing).

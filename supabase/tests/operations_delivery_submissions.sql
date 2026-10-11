@@ -53,6 +53,9 @@ select pg_temp.check_true(jsonb_array_length(public.operations_delivery_list_sco
 -- Exercise real database role privileges, not only owner impersonation by JWT.
 do $$ begin execute format('grant usage on schema %I to authenticated',
   (select nspname from pg_namespace where oid=pg_my_temp_schema())); end $$;
+-- Database-owner setup only; the selected unrelated actor cannot provision a foreign tenant.
+select set_config('request.jwt.claim.sub','',true);
+select set_config('request.jwt.claims','{}',true);
 insert into public.tenants(id,slug,name,status,account_type,account_number_prefix,account_number,features) values
  ('ed020000-0000-4000-8000-000000002222','test-ops-delivery-foreign','Test Foreign Delivery','active','standalone','ODF',9950022,'{}');
 insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id) values

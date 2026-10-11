@@ -1,0 +1,398 @@
+{
+  "boundary": "Native unsigned-in local Chrome zoom; actual shared shell/product with explicit synthetic Planning/CRM/Team source and refusal ports. No saved record or customer test.",
+  "results": [
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 1507,
+        "scrollHeight": 1507
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 277,
+        "scrollHeight": 1619,
+        "scrollTop": 1195.5,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 174.984375,
+        "bottom": 219.984375,
+        "workspaceTop": 59,
+        "workspaceBottom": 336,
+        "innerHeight": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 404,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 1507,
+        "scrollHeight": 1507
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 277,
+        "scrollHeight": 1619,
+        "scrollTop": 1195.5,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 174.984375,
+        "bottom": 219.984375,
+        "workspaceTop": 59,
+        "workspaceBottom": 336,
+        "innerHeight": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 404,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 1507,
+        "scrollHeight": 1507
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 277,
+        "scrollHeight": 1619,
+        "scrollTop": 1195.5,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 174.984375,
+        "bottom": 219.984375,
+        "workspaceTop": 59,
+        "workspaceBottom": 336,
+        "innerHeight": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 404,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 1507,
+        "scrollHeight": 1507
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 277,
+        "scrollHeight": 1619,
+        "scrollTop": 1195.5,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 174.984375,
+        "bottom": 219.984375,
+        "workspaceTop": 59,
+        "workspaceBottom": 336,
+        "innerHeight": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 404,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 2282,
+        "scrollHeight": 2282
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 109,
+        "scrollHeight": 2423,
+        "scrollTop": 1813.25,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 91.04296875,
+        "bottom": 136.04296875,
+        "workspaceTop": 59,
+        "workspaceBottom": 168,
+        "innerHeight": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 611.75,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 2282,
+        "scrollHeight": 2282
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 109,
+        "scrollHeight": 2423,
+        "scrollTop": 1813.25,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 91.04296875,
+        "bottom": 136.04296875,
+        "workspaceTop": 59,
+        "workspaceBottom": 168,
+        "innerHeight": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 611.75,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 2282,
+        "scrollHeight": 2282
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 109,
+        "scrollHeight": 2423,
+        "scrollTop": 1813.25,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 91.04296875,
+        "bottom": 136.04296875,
+        "workspaceTop": 59,
+        "workspaceBottom": 168,
+        "innerHeight": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 611.75,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 2282,
+        "scrollHeight": 2282
+      },
+      "scrollOwner": {
+        "selector": "ops-workspace",
+        "height": 109,
+        "scrollHeight": 2423,
+        "scrollTop": 1813.25,
+        "overflow": "auto"
+      },
+      "visibleRow": {
+        "top": 91.04296875,
+        "bottom": 136.04296875,
+        "workspaceTop": 59,
+        "workspaceBottom": 168,
+        "innerHeight": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 611.75,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "nativeDeadline": true,
+      "selectedPhoto": true,
+      "assignmentReview": true,
+      "dateClear": true,
+      "explicitConfirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    }
+  ],
+  "errors": []
+}

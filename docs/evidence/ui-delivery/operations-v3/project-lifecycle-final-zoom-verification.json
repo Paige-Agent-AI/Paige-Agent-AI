@@ -1,0 +1,318 @@
+{
+  "boundary": "Actual release/shared shell in new unsigned-in Chrome profiles; native persisted browser zoom verified by DPR and CSS/outer geometry, not CSS zoom or mobile emulation. Synthetic source/actor/refusal ports; no customer runtime.",
+  "results": [
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 277,
+        "scrollTop": 0,
+        "top": 294.890625,
+        "bottom": 327.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 457.5,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "canonical modal, folded before editing",
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 277,
+        "scrollTop": 0,
+        "top": 294.890625,
+        "bottom": 327.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 457.5,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 277,
+        "scrollTop": 0,
+        "top": 294.890625,
+        "bottom": 327.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 457.5,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "canonical modal, folded before editing",
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 277,
+        "scrollTop": 0,
+        "top": 294.890625,
+        "bottom": 327.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 457.5,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 109,
+        "scrollTop": 342.75,
+        "top": 83.546875,
+        "bottom": 143.546875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 686,
+        "bounds": {
+          "left": 84.25,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "canonical modal, folded before editing",
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 109,
+        "scrollTop": 342.75,
+        "top": 83.546875,
+        "bottom": 143.546875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 686,
+        "bounds": {
+          "left": 84.25,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 109,
+        "scrollTop": 342.75,
+        "top": 83.546875,
+        "bottom": 143.546875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 686,
+        "bounds": {
+          "left": 84.25,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "canonical modal, folded before editing",
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "scrollOwner": ".ops-workspace",
+        "height": 109,
+        "scrollTop": 342.75,
+        "top": 83.546875,
+        "bottom": 143.546875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 686,
+        "bounds": {
+          "left": 84.25,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "keyboardCreation": true,
+      "confirmation": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true,
+      "noPageOverflow": true
+    }
+  ],
+  "errors": []
+}

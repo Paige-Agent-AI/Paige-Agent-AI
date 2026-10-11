@@ -49,6 +49,50 @@ export type TenantEmailProviderConfig = {
 
 // ---------- Providers ----------
 
+// SendGrid Mail Send (v3). Bearer key; 202 Accepted is the success contract —
+// v3/mail/send returns an EMPTY body, so the provider id is the X-Message-Id
+// response header when present (it corresponds to the Event Webhook's
+// sg_message_id). The executor key is the platform's restricted Mail Send
+// credential (SENDGRID_MAIL_SEND_API_KEY) or a tenant's own key by secret name;
+// the full-access ADMIN key is NEVER acceptable here (CI-enforced).
+class SendGridProvider implements EmailProvider {
+  readonly key = "sendgrid";
+  #apiKey: string;
+  constructor(apiKey: string) {
+    if (!apiKey) throw new Error("sendgrid_api_key_missing");
+    this.#apiKey = apiKey;
+  }
+  async send(msg: OutboundEmail): Promise<SendResult> {
+    try {
+      const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.#apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: msg.to }] }],
+          from: msg.from,
+          subject: msg.subject,
+          content: [
+            ...(msg.html ? [{ type: "text/html", value: msg.html }] : []),
+            ...(msg.text ? [{ type: "text/plain", value: msg.text }] : []),
+          ],
+          ...(msg.replyTo ? { reply_to: { email: msg.replyTo } } : {}),
+          ...(msg.headers ? { headers: msg.headers } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        return { ok: false, provider: this.key, error: `sendgrid_${res.status}: ${body.slice(0, 300)}` };
+      }
+      return { ok: true, provider: this.key, id: res.headers.get("x-message-id") };
+    } catch (e) {
+      return { ok: false, provider: this.key, error: `sendgrid_exception: ${(e as Error).message}` };
+    }
+  }
+}
+
 class ResendProvider implements EmailProvider {
   readonly key = "resend";
   #apiKey: string;
@@ -127,6 +171,13 @@ export function buildProvider(config?: TenantEmailProviderConfig | null): EmailP
       // Wiring point for bring-your-own providers. Implement the class above
       // and swap this line for `return new XProvider(config)`.
       return new UnimplementedProvider(provider);
+    case "sendgrid": {
+      // Restricted Mail Send key only (see class doc); the full-access admin
+      // key is CI-forbidden everywhere and never read here.
+      const sendgridKey = tenantKey || (Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? "");
+      if (!sendgridKey) return new UnimplementedProvider("sendgrid");
+      return new SendGridProvider(sendgridKey);
+    }
     default:
       // Unknown provider string → fail safe to platform Resend.
       return new ResendProvider(platformResendKey);

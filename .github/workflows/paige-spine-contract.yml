@@ -208,6 +208,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/mailbox_solo_owner_authorization.sql
 
+      # ANT-40: messages is engine-written only — direct authenticated INSERT/UPDATE
+      # (owner, admin, mailbox owner, member) is denied by RLS while the SECURITY
+      # DEFINER engines and all reads keep working.
+      - name: Messages engine-only writes (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/messages_engine_only_writes.sql
+
       - name: Operations scoped manual work authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_plan_update.sql
@@ -219,6 +226,25 @@ jobs:
       - name: Operations scoped task creation authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_task_creation.sql
+
+      - name: Operations priority and bounded activity authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_priority_activity.sql
+      - name: Operations scoped project and milestone creation authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_project_creation.sql
+
+      - name: Operations project lifecycle authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_project_lifecycle.sql
+
+      - name: Operations native CRM work caller scope (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_native_crm_work_read.sql
+
+      - name: Operations signed engagement evidence caller scope (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_evidence_read.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
@@ -579,3 +605,5 @@ jobs:
         run: |
           node scripts/ci/reproduce-production-grants.mjs --self-test
           scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"
+
+

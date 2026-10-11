@@ -38,3 +38,11 @@ it("distinguishes an authoritative refusal from an unconfirmed network result", 
   mock.rpc.mockResolvedValue({ data: null, error: { code: "504" } });
   expect((await submitOperationsWorkUpdate(scope, { status: "done" })).kind).toBe("uncertain");
 });
+it("delegates priority edits with the original source version and scope", async () => {
+  mock.rpc.mockResolvedValue({ data: { ok: true, actor_id: scope.actorId, tenant_id: scope.tenantId, item_id: scope.itemId }, error: null });
+  expect((await submitOperationsWorkUpdate(scope, { priority: "high", status: "blocked" })).kind).toBe("acknowledged");
+  expect(mock.rpc).toHaveBeenCalledWith("plan_update_item_priority_versioned", expect.objectContaining({
+    p_priority: "high", p_status: "blocked", p_expected_updated_at: scope.expectedUpdatedAt,
+    p_expected_actor_id: scope.actorId, p_expected_tenant_id: scope.tenantId,
+  }));
+});

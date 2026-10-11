@@ -31,3 +31,8 @@ Production metadata-only inspection found Calendar `staff_calendar_settings.avai
 ## Contracts still absent or unproven
 
 Structured source-version-linked fulfillment obligations, replay-safe accepted-engagement handoff, deliverable revisions/review and Client-owned explicit acceptance, recorded working-hours authority and full governed conversational completion need implementation/proof. No default calendar window, signed agreement, paid invoice, catalog entry or internal completed card satisfies them. This packet grants no customer-data or provider authority.
+
+## Bounded signed-source fixture implementation
+A pure readiness inspector consumes only server-resolved Sales evidence and preserves agreement/client/terms/offer/version/content hash/sealed hash. It distinguishes unavailable, source mismatch, incomplete signing, missing sealed evidence and ready for scope review. Every result explicitly retains handoffAuthorized=false and clientAccepted=false. This is preparation, not a registered or callable handoff: the existing browser signing projection lacks this exact provenance, and approved structured fulfillment obligations/server persistence/replay identity are still owed. No Sales records, shared Chat path or provider connection changed.
+Failing-first module-import suite failed with zero tests before implementation; an initial dependency-junction command failed before tests and was corrected to an absolute target. Final isolated fixture suite22 assertions PASS and scoped ESLint PASS. No hosted SQL or authenticated acceptance claimed.
+

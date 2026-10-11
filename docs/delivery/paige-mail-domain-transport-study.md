@@ -2,7 +2,7 @@
 
 **Owner:** Mail agent lane (P-ANT-12, ANT-40..44). **Date:** 2026-10-11. **Status:** decision
 study and design — no DNS change, domain purchase, provider activation, or traffic routing is
-authorized by this document. Branding contract (owner clarification 2026-10-12) governs throughout:
+authorized by this document. Branding contract (owner clarification 2026-10-11) governs throughout:
 tenants see **PAIGE Email — Provided by PAIGE Agent AI**; the transport provider is invisible to
 tenants; PLATFORM_OPERATOR retains full provider administration.
 

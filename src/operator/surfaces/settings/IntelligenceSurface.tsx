@@ -13,6 +13,7 @@ import {
 import "./intelligence.css";
 import { DistributionChart, StatusComposition, LatencyPlot, EvaluationChart, GovernedPath } from "./IntelligenceVisuals";
 import { TrajectoryEvidence, trajectoryResult } from "./TrajectoryEvidence";
+import { TaskScorecard } from './TaskScorecard';
 
 const WORKSPACES = [
   ["executive", "Executive Flight Deck"], ["forensic", "Forensic Observatory"],
@@ -45,6 +46,8 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
   const [drafts, setDrafts] = useState({ improvement: newRecommendation("improvement"), opportunity: newRecommendation("opportunity") });
   const [notice, setNotice] = useState("");
   const [destination, setDestination] = useState<string | null>(null);
+  const [evaluationWork, setEvaluationWork] = useState<{ id: string; category: string } | null>(null);
+  const [returnToScorecard, setReturnToScorecard] = useState(false);
   const opener = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (!destination) return;
@@ -61,6 +64,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
     setDestination(kind === "forensic" ? "intel-call-filter" : "intel-evaluation-evidence");
   }
   function prepare(kind: Recommendation["kind"], evidence: string) {
+    setReturnToScorecard(false);
     setDrafts((d) => ({ ...d, [kind]: { ...d[kind], evidence: d[kind].evidence.includes(evidence)
       ? d[kind].evidence : [d[kind].evidence, evidence].filter(Boolean).join("\n") } }));
     setWorkspace(kind === "improvement" ? "studio" : "radar");
@@ -79,18 +83,20 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
     .some((value) => value?.toLowerCase().includes(search.toLowerCase())));
   const tasks = read.trajectories.error ? [] : read.trajectories.data?.items ?? [];
   const selectedTask = read.selectedTrajectory.error ? null : read.selectedTrajectory.data?.items[0] ?? null;
-  function inspectTask(request: TrajectoryRequest) {
+  function inspectTask(request: TrajectoryRequest, scorecardOrigin = false) {
+    setReturnToScorecard(scorecardOrigin);
     setTrace(null); setRun(null); setWorkspace("forensic"); read.inspectTrajectory(request);
   }
   function closeTask() {
     read.inspectTrajectory(null);
+    if (returnToScorecard) { setReturnToScorecard(false); setWorkspace('studio'); setDestination('intel-scorecard-heading'); return; }
     if (opener.current?.isConnected) opener.current.focus();
     else document.getElementById("intel-task-evidence")?.focus();
   }
   return (
     <section className="intelligence" data-workspace={workspace} aria-label="PAIGE Intelligence">
       <h2 className="sr-only">PAIGE Intelligence</h2>
-      <Tabs value={workspace} onValueChange={(v) => { setWorkspace(v as Workspace); setNotice(""); }}>
+      <Tabs value={workspace} onValueChange={(v) => { setReturnToScorecard(false); setWorkspace(v as Workspace); setNotice(""); }}>
         <TabsList className="intel-tabs" aria-label="Intelligence workspaces">
           {WORKSPACES.map(([id, name]) => { const Icon = WORKSPACE_ICONS[id]; return <TabsTrigger key={id} value={id} data-workspace={id}><Icon size={16} aria-hidden="true" />{name}</TabsTrigger>; })}
         </TabsList>
@@ -121,7 +127,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
             </Section>
             <Section title="Operational quality coverage" subtitle="What this source cannot yet measure">
               <Coverage label="Verified task completion" status="PARTIAL" detail="Inspect supported durable tasks in the Forensic Observatory. No platform-wide completion rate or business-impact denominator is established." />
-              <Coverage label="Approval / tenant integrity" status="UNAVAILABLE" detail="No task-level hard-gate scorecard is exposed here." />
+              <Coverage label="Approval evidence" status="PARTIAL" detail="Versioned task criteria are inspectable in Improvement Studio. Missing approval-requirement linkage remains indeterminate; no fleet-wide integrity claim." />
               <Coverage label="Cost per completed task" status="UNAVAILABLE" detail="Call spend has no verified completed-task denominator." />
               <Coverage label="Business effects" status="UNVERIFIED" detail="No attributable outcome link; no uplift or ROI claim." />
             </Section>
@@ -163,7 +169,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
           </Section>
           {read.trajectoryRequest && <Inspection title="Task evidence" onClose={closeTask}>
             <ReadStatus state={read.selectedTrajectory} name="Selected task evidence" />
-            {selectedTask && read.selectedTrajectory.data && <><TrajectoryEvidence task={selectedTask} observedAt={read.selectedTrajectory.data.observed_at} /><Button className="intel-task-action intel-task-recommend" variant="outline" onClick={() => { prepare("improvement", `paige_durable_work:${selectedTask.id}`); read.inspectTrajectory(null); }}>Prepare recommendation from this task <ArrowUpRight size={14} aria-hidden /></Button></>}
+            {selectedTask && read.selectedTrajectory.data && <><TrajectoryEvidence task={selectedTask} observedAt={read.selectedTrajectory.data.observed_at} /><Button className="intel-task-action intel-task-recommend" variant="outline" onClick={() => { setReturnToScorecard(false); setEvaluationWork({ id: selectedTask.id, category: selectedTask.category }); setWorkspace('studio'); setDestination('intel-scorecard-heading'); read.inspectTrajectory(null); }}>Evaluate task evidence</Button><Button className="intel-task-action intel-task-recommend" variant="outline" onClick={() => { prepare("improvement", `paige_durable_work:${selectedTask.id}`); read.inspectTrajectory(null); }}>Prepare recommendation from this task <ArrowUpRight size={14} aria-hidden /></Button></>}
             {!read.selectedTrajectory.loading && !read.selectedTrajectory.error && read.selectedTrajectory.data && !selectedTask && <Empty title="No server-proven trajectory link" detail="This reference has no supported scoped work correlation. No related task was guessed." />}
           </Inspection>}
           <Section title="Inspect the operational evidence" subtitle="Latest 50 recorded LLM calls · canonical metadata read on load and explicit refresh">
@@ -198,6 +204,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
         </TabsContent>
 
         <TabsContent value="studio">
+          <TaskScorecard read={read.scorecard} work={evaluationWork} onInspectTask={id => inspectTask({ workId: id }, true)} onBrowseTasks={() => { setReturnToScorecard(false); read.inspectTrajectory(null); setWorkspace('forensic'); setDestination('intel-task-evidence'); }} />
           <Section title="Evaluation and regression evidence" headingId="intel-evaluation-evidence" subtitle="Latest 25 canonical runs · target version, scorer set and case links · no paid evaluation is triggered">
             <ReadStatus state={read.evals} name="Evaluation history" />
             <EvaluationChart runs={runs} onInspect={(selected, button) => { opener.current = button; setRun(selected); }} />
@@ -219,12 +226,12 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
               <tbody>{validRun.results.map((result) => <tr key={result.id}><td>{result.scorer}<small>{result.scorer_kind}</small></td><td>{result.status}</td>
                 <td>{displayNumber(result.score)} · {result.passed === null ? "Unscored" : result.passed ? "Passed" : "Failed"}</td>
                 <td className="intel-id">{result.case_id ?? "No case"}<small>{result.source_trace_id ?? "No trace"}</small>{result.source_trace_id && <Button variant="ghost" size="sm" aria-label={`Find task for evaluation ${result.id}`} onClick={() => inspectTask({ traceId: result.source_trace_id! })}>Find linked task</Button>}</td></tr>)}</tbody></table></div>
-            <Coverage label="Reproducible task scorecard" status="UNAVAILABLE" detail="Target version and scorer names exist; an immutable dataset revision and complete runtime/evaluator fingerprint do not." />
+            <Coverage label="Legacy evaluation boundary" status="PARTIAL" detail="This legacy run is separate from immutable task scorecards above. A dataset reference or source trace does not establish a task evaluation or a versioned regression case." />
             <Button variant="outline" onClick={() => prepare("improvement", `paige_eval_run:${validRun.id}; dataset:${validRun.dataset_id ?? "not recorded"}`)}>Prepare recommendation from this run</Button>
           </Inspection>}
           <Section title="Controlled improvement path" subtitle="A recommendation confers no authority">
             <GovernedPath kind="improvement" />
-            <Coverage label="Clustering, experiments and releases" status="UNAVAILABLE" detail="Issue discovery, candidate records, controlled replay, canary and rollback seams remain subsequent INT-280 slices. Existing paige-eval is not invoked by this UI." />
+            <Coverage label="Clustering, experiments and releases" status="UNAVAILABLE" detail="Task scorecards support deterministic historical evidence replay. Issue discovery, versioned regression corpus, experiments, canary and rollback remain later slices. Existing paige-eval is not invoked by this UI." />
           </Section>
           <ProposalEditor draft={drafts.improvement} onChange={(draft) => setDrafts((d) => ({ ...d, improvement: draft }))} />
         </TabsContent>

@@ -194,6 +194,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_brief_asset_links.sql
 
+      # INT-298 MBC 4a: form.submitted fires once per matched submission through the real trigger,
+      # with ids and tags only, and never for another workspace's contact.
+      - name: Marketing form.submitted event (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/form_submitted_native_event.sql
+
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
       # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.
@@ -205,6 +211,10 @@ jobs:
       - name: Operations scoped manual work authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_plan_update.sql
+
+      - name: Operations versioned manual work authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_versioned_work_update.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.

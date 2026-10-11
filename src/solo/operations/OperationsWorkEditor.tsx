@@ -12,12 +12,13 @@ const STATUSES: PlanItemStatus[] = ["open", "in_progress", "blocked", "done"];
 type Readback = { original: PlanItem; update: WorkUpdate; acknowledged: boolean };
 
 /** Manual edits of existing work. No dispatch, approval bypass or alternate record store. */
-export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh, sourceError }: {
+export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh, sourceError, proposedStage }: {
   item: PlanItem; actorId: string; tenantId: string; members: TeamMemberRecord[];
   refresh: () => Promise<void>; sourceError: boolean;
+  proposedStage?: PlanItemStatus;
 }) {
   const [staff, setStaff] = useState<boolean | null>(null);
-  const [status, setStatus] = useState<PlanItemStatus>(item.status);
+  const [status, setStatus] = useState<PlanItemStatus>(proposedStage && STATUSES.includes(proposedStage) ? proposedStage : item.status);
   const [due, setDue] = useState("");
   const [assignee, setAssignee] = useState(item.assigned_to_user_id ?? "");
   const [phase, setPhase] = useState<"idle" | "saving" | "reading" | "uncertain" | "refused">("idle");
@@ -28,13 +29,15 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     if (message && ["idle", "uncertain", "refused"].includes(phase)) feedbackRef.current?.scrollIntoView?.({ block: "nearest", behavior: "auto" });
   }, [message, phase]);
   const readback = useRef<Readback | null>(null);
+  // An unsolicited refresh must not lend a newer version to an older draft.
+  const draftVersion = useRef(item.updated_at);
   const mounted = useRef(true);
   useEffect(() => {
     let current = true; mounted.current = true;
     void (async () => {
       try {
-        const { data, error } = await supabase.rpc("has_any_role", {
-          _user_id: actorId, _roles: ["admin", "super_admin"],
+        const { data, error } = await supabase.rpc("is_tenant_admin", {
+          _tenant: tenantId,
         });
         if (current) setStaff(!error && data === true);
       } catch { if (current) setStaff(false); }
@@ -51,7 +54,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
       && (!expected.update.dueAt || new Date(item.due_at ?? "").getTime() === new Date(expected.update.dueAt).getTime());
     setPhase(matches ? "idle" : "uncertain");
     setMessage(matches ? (expected.acknowledged ? "Saved and confirmed in current work." : "Current work refreshed. Review the details before making another change.") : "Current work differs from the requested change. Review it before editing again.");
-    if (matches) { setStatus(item.status); setAssignee(item.assigned_to_user_id ?? ""); setDue(""); readback.current = null; }
+    if (matches) { setStatus(item.status); setAssignee(item.assigned_to_user_id ?? ""); setDue(""); draftVersion.current = item.updated_at; readback.current = null; }
   }, [item, phase, sourceError]);
   const creator = item.created_by === actorId;
   const canStatus = staff === true || creator || item.assigned_to_user_id === actorId;
@@ -69,7 +72,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     }
     if (staff && assignee && assignee !== item.assigned_to_user_id) update.assigneeId = assignee;
     setPhase("saving"); setMessage("Saving your change…");
-    const result = await submitOperationsWorkUpdate({ actorId, tenantId, itemId: item.id }, update);
+    const result = await submitOperationsWorkUpdate({ actorId, tenantId, itemId: item.id, expectedUpdatedAt: draftVersion.current }, update);
     if (!mounted.current) return;
     if (result.kind !== "acknowledged") { setPhase(result.kind); setMessage(result.message); return; }
     readback.current = { original: item, update, acknowledged: true }; setPhase("reading"); setMessage("Checking current work…");
@@ -79,6 +82,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   }
   if (staff === null) return <p role="status">Checking your edit permissions…</p>;
   if (!canStatus) return <p>You can inspect this work. Its responsible person or an authorized manager can update it.</p>;
+  if (!item.updated_at) return <p>This work’s current version is unavailable. Refresh before editing.</p>;
   return <form className="ops-work-editor" onSubmit={(event) => {
     event.preventDefault();
     if (busy || !changed) return;

@@ -1,0 +1,42 @@
+{
+  "kind": "LOCAL SYNTHETIC mixed-origin browser regression",
+  "flows": [
+    {
+      "theme": "dark",
+      "exit": "Evaluate task evidence",
+      "workspace": "forensic",
+      "focus": "Inspect task 930a2fa9-6acc-46d4-953c-2a7b66265513"
+    },
+    {
+      "theme": "dark",
+      "exit": "Prepare recommendation from this task",
+      "workspace": "forensic",
+      "focus": "Inspect task 930a2fa9-6acc-46d4-953c-2a7b66265513"
+    },
+    {
+      "theme": "dark",
+      "exit": "Executive Flight Deck",
+      "workspace": "forensic",
+      "focus": "Inspect task 930a2fa9-6acc-46d4-953c-2a7b66265513"
+    },
+    {
+      "theme": "light",
+      "exit": "Evaluate task evidence",
+      "workspace": "forensic",
+      "focus": "Inspect task 930a2fa9-6acc-46d4-953c-2a7b66265513"
+    },
+    {
+      "theme": "light",
+      "exit": "Prepare recommendation from this task",
+      "workspace": "forensic",
+      "focus": "Inspect task 930a2fa9-6acc-46d4-953c-2a7b66265513"
+    },
+    {
+      "theme": "light",
+      "exit": "Executive Flight Deck",
+      "workspace": "forensic",
+      "focus": "Inspect task 930a2fa9-6acc-46d4-953c-2a7b66265513"
+    }
+  ],
+  "errors": []
+}

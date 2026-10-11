@@ -44,3 +44,13 @@ Fresh isolated product/shared-shell priority/activity matrix:18 configurations P
 Independent non-author static review PASS at c18ca7637, no material findings. Optional proof-strength finding adopted: explicit admin-B/member-A cohort and precondition now verify target authority before global-role visibility/priority refusals.24 rollback assertions remain UNEXECUTED. Removed extra EOF blank line. Product source unchanged; one review recheck owed.
 
 Fresh native unsigned-in Chrome8zoomcasesPASS at200/400percent,DPR2/4,CSS674/337,physical1366. Both worlds/PAIGE initialopenclosed, named activity, refused priority, reachable recovery/scroll/containment/focus, reduced motion,zero page errors. Source43379b unchangedprior386review; prior type and visual proofs remain historical, not current release proof. SQL24 UNEXECUTED/unallocated, no production/customer effects.
+
+### Current merged-parent short-viewport proof
+Eight genuine unsigned Chrome200/400percent configurations PASS both themes/PAIGE initial states, actual scrollable Work title entry, activity actors, refusal/recovery, focus and reduced motion, zero browser errors. At400percent the department is109CSSpx high and the title inside the task card is93.30..133.80 within59..168. Sixteen landscape/detail captures and report retained. Initial cold navigation timed out before assertions; a subsequent overly strict whole-card-fit assertion failed after four200percent cases because a215px card cannot entirely fit a109px viewport. Corrected the test to inspect the actual visible title/control within the scrollable card; no product change. Prior18 normal renders retained, SQL24 remains UNEXECUTED/unallocated; no production/customer claim.
+
+
+Proposed release allocation20271020000240 is a body-identical rename from unallocatedDEV00414. Current productionfrontier210, separately reviewed pendingOperations230 and INT280220; no240 in last touching-PR scan. This remains local/unapplied; recheck current applied/reserved frontier before opening or merging. Supplemental independent visual critic SHIP for all16 finalzoom captures; source parentde7 COMPLETE COMPATIBLE. No production/customer claim.
+
+
+Fresh local migration lint1245, definer guard and signature-ACL guard PASS after body-identical240rename. Required hostedCI andSQL24 execution are still owed.
+

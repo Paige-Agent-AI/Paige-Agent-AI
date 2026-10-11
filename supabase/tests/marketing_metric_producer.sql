@@ -136,14 +136,23 @@ SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.
 INSERT INTO public.growth_form_submissions(tenant_id,form_id,utm_json,processing_state,created_at)
  SELECT 'a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source','bulk'||g),'done',now()-interval '6 days' FROM generate_series(1,120) g;
 INSERT INTO public.growth_form_submissions(tenant_id,form_id,utm_json,processing_state,created_at) VALUES
+ -- Three leads, so the emoji tag ranks inside the named 98 and its key and label are actually emitted.
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source',repeat(U&'\+01F600',130),'utm_campaign',repeat(U&'\+01F600',130)),'done',now()-interval '6 days'),
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source',repeat(U&'\+01F600',130),'utm_campaign',U&'\2028\00A0'),'done',now()-interval '6 days'),
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source',repeat(U&'\+01F600',130)),'done',now()-interval '6 days'),
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',jsonb_build_object('utm_source',U&'\00A0\3000'),'done',now()-interval '6 days');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','a2980000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a2980000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 SELECT pg_temp.require_true(jsonb_array_length(b#>'{values,items}')=100
  AND (SELECT bool_and(char_length(i->>'key')<=80 AND char_length(i->>'label')<=120 AND btrim(i->>'label')<>'' AND (i->>'label')!~'[[:cntrl:]]') FROM jsonb_array_elements(b#>'{values,items}') i)
- AND b#>'{values,items}'@>'[{"key":"_untagged","count":3}]'::jsonb AND b#>'{values,items}' @> '[{"key":"_other"}]'::jsonb,'fold to 100 items with valid labels')
+ AND b#>'{values,items}'@>'[{"key":"_untagged","count":3}]'::jsonb AND b#>'{values,items}' @> '[{"key":"_other"}]'::jsonb
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(b#>'{values,items}') i WHERE (i->>'count')::int=3 AND char_length(i->>'key')=80 AND i->>'key' LIKE 'src:%'),'fold to 100 items with valid labels; the emoji tag is emitted at the key limit')
  FROM (SELECT public.issue_analytics_evidence_bundle('marketing.leads.by_utm_source','1.0.0','{}','month',now()-interval '30 days',now(),'a2980000-0000-4000-8000-000000000011') b) x;
+-- The campaign path cleans the same way: an emoji campaign tag is a valid key at the limit; a separator-only tag is no tag.
+SELECT pg_temp.require_true((SELECT bool_and(char_length(i->>'key')<=80 AND char_length(i->>'label')<=120 AND btrim(i->>'label')<>'' AND (i->>'label')!~'[[:cntrl:]]') FROM jsonb_array_elements(b#>'{values,items}') i)
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(b#>'{values,items}') i WHERE char_length(i->>'key')=80 AND i->>'key' LIKE 'tag:%' AND char_length(i->>'label')=120)
+ AND b#>'{values,items}'@>'[{"key":"_untagged"}]'::jsonb,'campaign tags with emoji and separators stay valid')
+ FROM (SELECT public.issue_analytics_evidence_bundle('marketing.leads.by_campaign_tag','1.0.0','{}','month',now()-interval '30 days',now(),'a2980000-0000-4000-8000-000000000011') b) x;
 
 -- Contract: unknown key, a dimension, and a daily range past 366 days are refused.
 SELECT pg_temp.require_invalid($q$SELECT public.issue_analytics_evidence_bundle('marketing.roas','1.0.0','{}','month',now()-interval '30 days',now(),'a2980000-0000-4000-8000-000000000011')$q$,'unknown marketing key');

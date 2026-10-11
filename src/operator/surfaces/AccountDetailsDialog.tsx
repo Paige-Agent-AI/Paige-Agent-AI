@@ -15,7 +15,7 @@ function Button({ variant = 'default', className, ...props }: ComponentProps<typ
       : 'bg-[var(--pg-gold-core)] text-[var(--pg-raised)] hover:bg-[var(--pg-gold-deep)]', className,
   )} />;
 }
-export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: { tenantId: string; onClose: () => void; onChanged: () => void }) {
+export default function AccountDetailsDialog({ tenantId, authority, onClose, onChanged }: { tenantId: string; authority: { archive: boolean; delete: boolean }; onClose: () => void; onChanged: () => void }) {
   const [details, setDetails] = useState<AccountDetails | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState('');
@@ -150,9 +150,9 @@ export default function AccountDetailsDialog({ tenantId, onClose, onChanged }: {
         {archived && !scopeRoot && <p>Archived with its parent scope. Open the parent account to restore or delete the complete archive.</p>}
         {details.execution_paused && <p>Provider and scheduled execution remains paused. Restoring access does not resume paid services.</p>}
         <div className="flex flex-wrap gap-3">
-          {!archived && <><Button disabled={busy || unknown} onClick={() => { setMode('edit'); setNotice(''); }}>Edit account</Button><Button variant="outline" disabled={busy || unknown || details.status === 'canceled'} onClick={() => { setName(details.name); setStatus('canceled'); setMode('confirm'); }}>Cancel account</Button><Button variant="outline" disabled={busy || unknown} onClick={() => void deletionPreview('archive')}>Archive account</Button></>}
-          {archived && <Button variant="outline" disabled={busy || unknown || !scopeRoot} onClick={() => setMode('restore')}>Restore archived account</Button>}
-          <Button variant="outline" className="text-[var(--pg-negative)]" disabled={busy || unknown || !scopeRoot} onClick={() => void deletionPreview()}>Permanently delete account</Button><Button variant="outline" disabled={busy || unknown} onClick={close}>Done</Button>
+          {!archived && <>{authority.delete && <><Button disabled={busy || unknown} onClick={() => { setMode('edit'); setNotice(''); }}>Edit account</Button><Button variant="outline" disabled={busy || unknown || details.status === 'canceled'} onClick={() => { setName(details.name); setStatus('canceled'); setMode('confirm'); }}>Cancel account</Button></>}{authority.archive && <Button variant="outline" disabled={busy || unknown} onClick={() => void deletionPreview('archive')}>Archive account</Button>}</>}
+          {archived && authority.archive && <Button variant="outline" disabled={busy || unknown || !scopeRoot} onClick={() => setMode('restore')}>Restore archived account</Button>}
+          {authority.delete && <Button variant="outline" className="text-[var(--pg-negative)]" disabled={busy || unknown || !scopeRoot} onClick={() => void deletionPreview()}>Permanently delete account</Button>}<Button variant="outline" disabled={busy || unknown} onClick={close}>Done</Button>
         </div>
       </>}
       {details && mode === 'edit' && <form onSubmit={e => { e.preventDefault(); if (!name.trim() || busy || unknown) return; setMode('confirm'); }}>

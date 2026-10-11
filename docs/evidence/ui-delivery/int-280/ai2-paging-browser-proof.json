@@ -1,0 +1,59 @@
+{
+  "kind": "LOCAL SYNTHETIC actual-source paging/focus regression",
+  "capturedAt": "2026-10-11T05:26:03.776Z",
+  "flows": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true,
+      "newestLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "olderLabel": "Inspect task evaluation 247c6f84-9c85-464d-904b-ec23e24d96b1",
+      "returnedLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "pairedCursorVerified": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true,
+      "newestLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "olderLabel": "Inspect task evaluation 247c6f84-9c85-464d-904b-ec23e24d96b1",
+      "returnedLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "pairedCursorVerified": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true,
+      "newestLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "olderLabel": "Inspect task evaluation 247c6f84-9c85-464d-904b-ec23e24d96b1",
+      "returnedLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "pairedCursorVerified": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true,
+      "newestLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "olderLabel": "Inspect task evaluation 247c6f84-9c85-464d-904b-ec23e24d96b1",
+      "returnedLabel": "Inspect task evaluation fc71ddd6-93dc-45df-9060-81520f9ac714",
+      "pairedCursorVerified": true
+    }
+  ],
+  "errors": []
+}

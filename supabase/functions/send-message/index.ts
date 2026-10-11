@@ -359,6 +359,16 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
               ...(msg.body_text ? [{ type: "text/plain", value: msg.body_text }] : []),
             ],
             ...(Object.keys(sgHeaders).length ? { headers: sgHeaders } : {}),
+            // Same attachments contract as every sibling arm — a sendgrid
+            // connector must never silently drop an invoice PDF.
+            ...(ctx.serverAttachments?.length ? {
+              attachments: ctx.serverAttachments.map((a) => ({
+                content: a.content, // EmailAttachment.content is already base64
+                filename: a.filename,
+                type: a.contentType,
+                disposition: "attachment",
+              })),
+            } : {}),
           }),
         });
         if (!res.ok) {

@@ -713,6 +713,12 @@ jobs:
       #
       # No continue-on-error, no `exit 0`, no advisory green, no per-PR exception. Both legs are
       # uploaded as evidence so a reviewer can read what each actually produced.
+      - name: Webhook signature suites (Svix + SendGrid ES256)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/webhookSig.test.ts
+      - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
+        run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
+      - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
+        run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
       - name: Deno ratchet (affected edge functions — fails on NEW or increased diagnostics)
         # `count != ''` as well as `!= '0'`: an empty count means the resolve step did not run or
         # produced no output, and an unbounded run is a configuration error, not a no-op pass.
@@ -815,10 +821,6 @@ jobs:
           # Owner addendum 6088460092: source-level boundary tests read the door's real
           # source, so this one line grants read (repo tree only); every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
-        - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
-          run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
-        - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
-          run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \

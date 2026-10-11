@@ -156,7 +156,9 @@ function pemToDer(pem: string): Uint8Array<ArrayBuffer> {
 /** DER ECDSA-SigValue (SEQUENCE { r INTEGER, s INTEGER }) → P-1363 r||s (32+32). */
 function derSignatureToP1363(der: Uint8Array): Uint8Array | null {
   if (der.length < 8 || der[0] !== 0x30) return null;
-  let pos = 2; // skip SEQUENCE header (length <= 0x7f assumed for P-256 sigs)
+  if (der[1] === 0x80 || der[1] & 0x80) return null; // long-form/undefined lengths never occur for P-256
+  if (2 + der[1] !== der.length) return null; // declared length must consume the input exactly
+  let pos = 2; // skip SEQUENCE header
   const readInt = (): Uint8Array | null => {
     if (der[pos] !== 0x02) return null;
     const len = der[pos + 1];
@@ -174,7 +176,7 @@ function derSignatureToP1363(der: Uint8Array): Uint8Array | null {
   };
   const r = readInt();
   const s = readInt();
-  if (!r || !s || pos > der.length) return null;
+  if (!r || !s || pos !== der.length) return null; // trailing bytes are not a signature
   const raw = new Uint8Array(64);
   raw.set(r, 0);
   raw.set(s, 32);

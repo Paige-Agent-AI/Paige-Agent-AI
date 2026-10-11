@@ -33,7 +33,7 @@ A **lead** is a form submission. Nothing here judges lead quality: "qualified le
 |---|---|---|---|
 | `marketing.leads.received` | Submissions with `created_at` in [start,end), every form in the workspace | count | none |
 | `marketing.leads.daily` | Same, one point per UTC day the range touches (zeros kept); range may touch at most 366 days | series | none |
-| `marketing.leads.by_utm_source` | Same, grouped by `lower(btrim(utm_source))` when a string; no tag → item `_untagged` ("No source tag"); beyond 99 tags → `_other` | distribution | none (untagged is an item, never dropped) |
+| `marketing.leads.by_utm_source` | Same, grouped by `lower(btrim(utm_source))` when a string (control characters become spaces), as item `src:<tag>`; no tag → item `_untagged` ("No source tag"); beyond 99 tags → `_other` | distribution | none (untagged is an item, never dropped) |
 | `marketing.leads.by_campaign_tag` | Same, `utm_campaign` matched case-insensitively to this workspace's `campaign_briefs.short_ref`: one match → `brief:<id>` labelled with the brief's name; no match → `tag:<tag>`; no tag → `_untagged` | distribution | `campaign_tag_matches_several_briefs` (never guessed) |
 | `marketing.leads.converted_to_opportunity` | Same; count those whose `deal_id` resolves to a deal in this workspace. Denominator = contributing leads | count | `opportunity_record_missing` (a `deal_id` with no deal here) |
 | `marketing.capture_points.published_current` | Forms with `status = active` now (pages and funnels capture through the forms they embed) | count, snapshot | none |

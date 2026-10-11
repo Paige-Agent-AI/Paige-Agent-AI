@@ -66,6 +66,9 @@ INSERT INTO public.growth_form_submissions(tenant_id,form_id,deal_id,utm_json,pr
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f2',null,'{"utm_source":"newsletter","utm_campaign":"DUP"}','pending',now()-interval '1 hour'),
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f2','a2980000-0000-4000-8000-0000000000d9','{"utm_source":7,"utm_campaign":"CB-OTHER"}','pending',now()-interval '2 minutes'),
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f2',null,'{"utm_source":"old"}','error',now()-interval '60 days'),
+ -- A real tag spelled like a sentinel stays its own item; control characters never reach a label; a blank tag is no tag.
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',null,'{"utm_source":"_untagged","utm_campaign":" \n "}','done',now()-interval '4 days'),
+ ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1',null,'{"utm_source":"news\tletter"}','done',now()-interval '5 days'),
  ('a2980000-0000-4000-8000-000000000012','a2980000-0000-4000-8000-0000000000f5',null,'{"utm_source":"foreign"}','error',now()-interval '1 day');
 
 CREATE TEMP TABLE marketing_results(key text PRIMARY KEY,bundle jsonb NOT NULL);
@@ -82,19 +85,19 @@ SELECT pg_temp.require_true(bundle->>'owner_department'='marketing' AND bundle->
  AND bundle#>>'{range,key}'='month' AND bundle->>'evidence_ref' ~ '^aneb_v1_[0-9a-f]{64}$' AND NOT bundle ? 'evidence_state'
  AND public.resolve_analytics_evidence_reference(bundle->>'evidence_ref')=bundle,'shared issuance and readback: '||key) FROM marketing_results;
 -- Leads in range, this workspace only (the 60-day-old and B's leads are outside).
-SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='LIVE' AND bundle#>>'{values,count}'='5' FROM marketing_results WHERE key='marketing.leads.received'),'leads received');
+SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='LIVE' AND bundle#>>'{values,count}'='7' FROM marketing_results WHERE key='marketing.leads.received'),'leads received');
 SELECT pg_temp.require_true((SELECT bundle#>>'{values,kind}'='series' AND jsonb_array_length(bundle#>'{values,points}') BETWEEN 30 AND 31
- AND (SELECT sum((p->>'value')::int) FROM jsonb_array_elements(bundle#>'{values,points}') p)=5 FROM marketing_results WHERE key='marketing.leads.daily'),'daily series sums to leads');
+ AND (SELECT sum((p->>'value')::int) FROM jsonb_array_elements(bundle#>'{values,points}') p)=7 FROM marketing_results WHERE key='marketing.leads.daily'),'daily series sums to leads');
 -- Tags fold case and whitespace; a non-string tag is no tag; untagged is its own item, never dropped.
 SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='LIVE' AND bundle#>'{values,items}'=
- '[{"key":"google","label":"Google","count":2},{"key":"newsletter","label":"newsletter","count":1},{"key":"_untagged","label":"No source tag","count":2}]'::jsonb
+ '[{"key":"src:google","label":"Google","count":2},{"key":"src:_untagged","label":"_untagged","count":1},{"key":"src:news letter","label":"news letter","count":1},{"key":"src:newsletter","label":"newsletter","count":1},{"key":"_untagged","label":"No source tag","count":2}]'::jsonb
  FROM marketing_results WHERE key='marketing.leads.by_utm_source'),'source distribution');
 -- A tag matching one brief in A is that brief; a tag matching two is excluded and disclosed; B's brief never matches.
 SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='PARTIAL' AND bundle->'exclusions'='[{"reason":"campaign_tag_matches_several_briefs","count":1}]'::jsonb
- AND bundle#>'{values,items}'@>'[{"label":"Spring intake","count":1},{"key":"tag:cb-other","label":"CB-OTHER","count":1},{"key":"_untagged","count":2}]'::jsonb
+ AND bundle#>'{values,items}'@>'[{"label":"Spring intake","count":1},{"key":"tag:cb-other","label":"CB-OTHER","count":1},{"key":"_untagged","count":4}]'::jsonb
  AND jsonb_array_length(bundle#>'{values,items}')=3 FROM marketing_results WHERE key='marketing.leads.by_campaign_tag'),'campaign tag distribution');
 -- A deal id that resolves to no deal in this workspace is excluded, not counted.
-SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='PARTIAL' AND bundle#>>'{values,count}'='0' AND bundle#>>'{coverage,contributing_count}'='4'
+SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='PARTIAL' AND bundle#>>'{values,count}'='0' AND bundle#>>'{coverage,contributing_count}'='6'
  AND bundle->'exclusions'='[{"reason":"opportunity_record_missing","count":1}]'::jsonb FROM marketing_results WHERE key='marketing.leads.converted_to_opportunity'),'opportunity link');
 SELECT pg_temp.require_true((SELECT bundle#>>'{values,count}'='2' AND bundle#>>'{range,semantics}'='current_snapshot' FROM marketing_results WHERE key='marketing.capture_points.published_current'),'live forms');
 -- A disabled pipeline automation does not route; another enabled automation is not a pipeline route.

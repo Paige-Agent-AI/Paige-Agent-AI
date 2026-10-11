@@ -495,7 +495,11 @@ async function runExecutor(
       });
       if (fileError) {
         const message = String(fileError.message ?? "");
-        if (fileError.code === "40001") {
+        // A stale claim, or a failure that never reached a database answer (no SQLSTATE: the
+        // request itself failed; or connection 08*, resource 53*, operator-intervention 57*), is
+        // retried: marking it "done" would leave a lead that was never refused unfiled for good.
+        const sqlState = fileError.code ? String(fileError.code) : "";
+        if (sqlState === "40001" || sqlState === "" || /^(08|53|57)/.test(sqlState)) {
           return { status: "error", result: {}, error: `submission_default_deal_failed: ${message.slice(0, 200)}` };
         }
         const code = /^[A-Z][A-Z0-9_]{2,63}/.exec(message)?.[0] ?? (fileError.code ? String(fileError.code) : "rpc_error");
@@ -745,8 +749,10 @@ function applyIntakeSettings(plan: any[], form: any): void {
 // marketing.forms.unrouted_current apply the same rule. Any unrouted form gets one unledgered default step,
 // after the contact step, that files the lead into the business's default pipeline. A retry re-runs it
 // safely: the database returns the deal already bound to the submission instead of making a second one.
-// deno-lint-ignore no-explicit-any
-function appendDefaultIntake(plan: any[], form: any, hasAutomationRows: boolean): void {
+function appendDefaultIntake(
+  plan: Array<{ executor: string } & Record<string, unknown>>, form: { auto_create_deal?: unknown; pipeline_id?: unknown },
+  hasAutomationRows: boolean,
+): void {
   if (plan.some((p) => p.executor === "pipeline_attach" || p.executor === "pipeline_attach_default")) return;
   if (!hasAutomationRows && form.auto_create_deal && form.pipeline_id) return;
   plan.push({

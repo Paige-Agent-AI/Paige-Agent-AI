@@ -53,13 +53,10 @@ const STATUS_LABEL: Record<StatusKey, string> = {
 };
 const STATUS_ORDER: StatusKey[] = ["running", "approved", "review", "draft", "paused", "blocked", "completed"];
 
-/** A form's OWN route to a pipeline, as the submission processor runs it: an enabled pipeline_attach
+/** A form's leads reach a pipeline as the submission processor runs them: an enabled pipeline_attach
  *  automation, or the form's own intake route, which applies only while the form has no enabled
- *  automation at all (growth-process-submission). Overview and Analytics judge routing with this.
- *  Since 20271021042001 a form with no own route still files its leads into the business's default
- *  pipeline when that pipeline has an open stage, and Marketing's server producer
- *  (marketing.forms.unrouted_current) counts such a form as routed; this client rule does not know about
- *  the default pipeline, so it can call a form unrouted that the server does not. */
+ *  automation at all (growth-process-submission). Overview and Analytics both judge routing with this, and
+ *  Marketing's server producer (marketing.forms.unrouted_current) uses the same rule. */
 export const sendsToPipeline = (form: Pick<CampaignArtifact, "routingTargets" | "intakePipelineId">) =>
   (form.routingTargets ?? []).includes("pipeline_attach") || (Boolean(form.intakePipelineId) && (form.routingTargets ?? []).length === 0);
 

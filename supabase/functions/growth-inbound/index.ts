@@ -103,7 +103,10 @@ Deno.serve(async (req) => {
       // top-level keys (after the field map), later sources winning. They are what lets the lead funnel
       // count this lead under its campaign and ad.
       const bodyUtm = mapped.utm && typeof mapped.utm === "object" && !Array.isArray(mapped.utm) ? mapped.utm : {};
-      const utm = sanitizeUtm({ ...Object.fromEntries(url.searchParams), ...bodyUtm, ...mapped });
+      // A blank or non-string later value never overrides a real earlier tag.
+      const present = (o: Record<string, unknown>) =>
+        Object.fromEntries(Object.entries(o).filter(([, v]) => typeof v === "string" && v.trim() !== ""));
+      const utm = sanitizeUtm({ ...Object.fromEntries(url.searchParams), ...present(bodyUtm), ...present(mapped) });
       await supabase.from("growth_form_submissions").insert({
         form_id: source.target_form_id,
         tenant_id: source.tenant_id,

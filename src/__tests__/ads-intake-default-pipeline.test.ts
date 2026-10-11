@@ -49,10 +49,15 @@ describe("pipeline_attach_default executor", () => {
     const h = ctx(async () => ({ data: { skipped: reason, pipeline_id: "p" }, error: null }));
     expect(await runExecutor(step(), h.ctx)).toEqual(notFiled(reason));
   });
-  it("retries only a stale claim (40001)", async () => {
-    const h = ctx(async () => ({ data: null, error: { code: "40001", message: "FORM_DEAL_STALE_CLAIM" } }));
+  it.each([
+    [{ code: "40001", message: "FORM_DEAL_STALE_CLAIM" }],
+    [{ code: "", message: "TypeError: fetch failed" }],
+    [{ code: "08006", message: "connection failure" }],
+    [{ code: "57014", message: "canceling statement due to statement timeout" }],
+  ])("retries a stale claim or a failure that never got a database answer (%#)", async (error) => {
+    const h = ctx(async () => ({ data: null, error }));
     const out = await runExecutor(step(), h.ctx);
-    expect(out).toEqual({ status: "error", result: {}, error: "submission_default_deal_failed: FORM_DEAL_STALE_CLAIM" });
+    expect(out).toEqual({ status: "error", result: {}, error: `submission_default_deal_failed: ${error.message}` });
     expect(h.writes).toEqual([]);
   });
   it.each([
@@ -60,7 +65,6 @@ describe("pipeline_attach_default executor", () => {
     [{ code: "42501", message: "FORM_DEAL_OPERATOR_REQUIRED" }, "FORM_DEAL_OPERATOR_REQUIRED"],
     [{ code: "42501", message: "FORM_DEAL_TENANT_INACTIVE" }, "FORM_DEAL_TENANT_INACTIVE"],
     [{ code: "PGRST202", message: "Could not find the function public.growth_attach_submission_default_deal" }, "PGRST202"],
-    [{ code: "", message: "TypeError: fetch failed" }, "rpc_error"],
   ])("never fails the submission on any other refusal (%#): done, not filed, with the reason", async (error, reason) => {
     const h = ctx(async () => ({ data: null, error }));
     expect(await runExecutor(step(), h.ctx)).toEqual(notFiled(reason));
@@ -161,6 +165,11 @@ describe("growth-inbound default pipeline", () => {
     );
     const [, row] = h.inserts[0] as [string, Record<string, unknown>];
     expect(row.utm_json).toEqual({ utm_source: "meta", utm_medium: "paid", utm_campaign: "Spring", utm_term: "kw", gclid: "g1", fbclid: "fb1" });
+  });
+  it("a blank body tag never overrides a real one from the link", async () => {
+    const h = inbound(src("form"), { data: {}, error: null });
+    await h.send({ email: "lead@example.test", utm_source: "", utm: { utm_campaign: "   " } }, "?utm_source=meta&utm_campaign=spring");
+    expect((h.inserts[0][1] as Record<string, unknown>).utm_json).toEqual({ utm_source: "meta", utm_campaign: "spring" });
   });
   it("writes an empty tag set when the lead carries none", async () => {
     const h = inbound(src("form"), { data: {}, error: null });

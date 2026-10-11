@@ -1,8 +1,9 @@
 /* Marketing › Ads (INT-342 S1c, owner-approved prototype v2). Builds on the Overview's card, head,
  * summary and link styles (marketing-overview.css). Solo tokens only; nothing here is an act that spends
  * or publishes, so no gold. No authored motion. */
-.paige-solo .mad .campaigns-segmented button{font-size:12px;padding:3px 10px;line-height:20px;color:var(--ink-2)}
-.paige-solo .mad .campaigns-segmented button[aria-pressed="true"]{color:var(--ink)}
+/* The Ads department strip (AdsWorkspace): a selected view scrolled into a narrow strip clears the
+ * strip's 28px end fade, so its label is never half-faded. */
+.campaigns-tabs[aria-label="Ads views"]{scroll-padding-inline:0 28px}
 .paige-solo .mad .pill-n{color:var(--ink-2)} /* the base pill-n ink-3 measures 3.58:1 on sunk in light */
 
 /* provider strip */

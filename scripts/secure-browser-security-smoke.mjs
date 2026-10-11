@@ -79,11 +79,20 @@ check((browserTypeBlock.match(/tenant_id:/g) || []).length >= 2, "generated brow
 
 const guard = read("services/paige-browser/ssrf-guard.mjs");
 const server = read("services/paige-browser/server.js");
+// PC-1: the browse path creates contexts through the ONE factory (browse-context.mjs); the
+// self-verify path (observe) still constructs inline. Both routes must end up fenced + sw-blocked:
+// observe inline, browse via the factory — so the assertions cover server inline occurrences AND
+// the factory's own fence/sw discipline.
+const factory = read("services/paige-browser/browse-context.mjs");
 check(/export function requestMethodBlockReason/.test(guard), "shared read-only request-method policy exists");
 check(/export async function installReadOnlyBrowserEgress/.test(guard), "shared browser-context egress installer exists");
-check((server.match(/installReadOnlyBrowserEgress\(ctx\)/g) || []).length >= 2, "both browser routes install the context egress fence");
-check((server.match(/installReadOnlyBrowserEgress\(ctx\);[\s\S]{0,80}ctx\.newPage\(\)/g) || []).length >= 2, "both browser contexts are fenced before their first page exists");
-check((server.match(/serviceWorkers:\s*"block"/g) || []).length >= 2, "both browser contexts block service workers");
+const inlineFenced = (server.match(/installReadOnlyBrowserEgress\(ctx\)/g) || []).length;
+const factoryFenced = /installReadOnlyBrowserEgress\(ctx\)/.test(factory);
+check(inlineFenced + (factoryFenced ? 1 : 0) >= 2, "both browser routes install the context egress fence (observe inline; browse via the factory)");
+check(/installReadOnlyBrowserEgress\(ctx\);[\s\S]{0,80}ctx\.newPage\(\)/.test(server) && /if \(installFences\) await installReadOnlyBrowserEgress\(ctx\);[\s\S]{0,200}return ctx;/.test(factory) && /createIsolatedBrowseContext\(browser/.test(server), "both browser contexts are fenced before their first page exists (server newPage after fence; factory fences before returning the context)");
+const inlineSw = (server.match(/serviceWorkers:\s*"block"/g) || []).length;
+const factorySw = /serviceWorkers:\s*"block"/.test(factory);
+check(inlineSw + (factorySw ? 1 : 0) >= 2, "both browser contexts block service workers (observe inline; browse via the factory)");
 check(/routeWebSocket\("\*\*\/\*"/.test(guard), "shared browser egress fence blocks WebSockets");
 
 if (failures) {

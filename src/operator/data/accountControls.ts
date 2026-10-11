@@ -9,14 +9,14 @@ export type LifecyclePreview = {
   tenant_id: string; accounts: ScopeAccount[]; blockers: string[]; execution_available: boolean; version?: string;
   archive_operation_id?: string; dependencies?: { relation: string; count: number; disposition: 'delete'|'preserve'|'blocked' }[];
   preserved?: string[]; storage_count?: number;
-  memberships?: number; shared_identities?: number;
+  memberships?: number; shared_identities?: number; warnings?: string[]; data_version?: string;
 };
 export type DeletionPreview = LifecyclePreview;
 export type LifecycleAction = 'archive' | 'restore' | 'delete';
-export type LifecycleReceipt = { tenant_id: string; operation_id: string; state: 'archived'|'restored'|'deleted'; account_count: number };
+export type LifecycleReceipt = { tenant_id: string; operation_id: string; state: 'archived'|'restored'|'deleted'; account_count: number; external_cleanup_pending?: boolean };
 export type ResourceMode = 'archive'|'delete';
 export type ResourcePreview = LifecyclePreview & {mode:ResourceMode;resources:{provider:'twilio'|'n8n'|'tts_cache'|'generated_media';tenant_id:string;action:'suspend'|'close'|'disconnect'|'remove_cache'|'remove_media';external_retention?:boolean;object_count?:number}[]};
-export type ResourceReceipt = {tenant_id:string;operation_id:string;mode:ResourceMode;state:'resources_preparing'|'resources_ready'|'resources_unknown'|'resources_failed';account_count:number;results:{provider:'twilio'|'n8n'|'tts_cache'|'generated_media';state:'verified'|'blocked'|'unknown';provider_status:string|null;reason:string|null}[]};
+export type ResourceReceipt = {tenant_id:string;operation_id:string;mode:ResourceMode;file_only?:boolean;state:'resources_preparing'|'resources_ready'|'resources_unknown'|'resources_failed';account_count:number;results:{provider:'twilio'|'n8n'|'tts_cache'|'generated_media';state:'verified'|'blocked'|'unknown';provider_status:string|null;reason:string|null}[]};
 export class AccountRpcError extends Error {
   constructor(message: string, public readonly code?: string,public readonly beforeExecution=false) { super(message); }
 }
@@ -31,6 +31,8 @@ export function parseAccountDeletionPreview(id: string, row: unknown): Lifecycle
   const v = row as LifecyclePreview;
   if (v.tenant_id !== id || !Array.isArray(v.accounts) || !v.accounts.length || !Array.isArray(v.blockers)
     || !v.blockers.every(isString) || typeof v.execution_available !== 'boolean'
+    || (v.warnings !== undefined && (!Array.isArray(v.warnings) || !v.warnings.every(isString)))
+    || (v.data_version !== undefined && (!isString(v.data_version) || !v.data_version))
     || !v.accounts.every(a => a && isString(a.id) && isString(a.name) && isString(a.account_type))
     || new Set(v.accounts.map(a => a.id)).size !== v.accounts.length || !v.accounts.some(a => a.id === id)
     || (v.execution_available && (!isString(v.version) || !v.version || v.blockers.length))
@@ -43,7 +45,7 @@ export function parseLifecycleReceipt(id: string, operation: string, row: unknow
   if (!row || typeof row !== 'object') throw new Error('Operation outcome is unknown. Read the operation before another change.');
   const v = row as LifecycleReceipt;
   if (v.tenant_id !== id || v.operation_id !== operation || !['archived','restored','deleted'].includes(v.state)
-    || !Number.isSafeInteger(v.account_count) || v.account_count < 1)
+    || !Number.isSafeInteger(v.account_count) || v.account_count < 1 || (v.external_cleanup_pending !== undefined && typeof v.external_cleanup_pending !== 'boolean'))
     throw new Error('Operation outcome is unknown. Read the operation before another change.');
   return v;
 }
@@ -106,6 +108,7 @@ export function parseResourceReceipt(id:string, operation:string|null, row:unkno
   if(!row||typeof row!=='object')throw new Error('Provider outcome is unknown. Read the operation.');
   const r=row as ResourceReceipt;
   if(r.tenant_id!==id||(operation!==null&&r.operation_id!==operation)||!isString(r.operation_id)
+    || (r.file_only !== undefined && typeof r.file_only !== 'boolean')
     ||!['archive','delete'].includes(r.mode)||!['resources_preparing','resources_ready','resources_unknown','resources_failed'].includes(r.state)
     ||!Number.isSafeInteger(r.account_count)||r.account_count<1||!Array.isArray(r.results)
     ||!r.results.every(v=>v&&['twilio','n8n','tts_cache','generated_media'].includes(v.provider)&&['verified','blocked','unknown'].includes(v.state)

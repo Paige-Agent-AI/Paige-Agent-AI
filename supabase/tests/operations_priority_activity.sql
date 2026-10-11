@@ -56,7 +56,40 @@ select pg_temp.refused($s$select public.plan_item_activity_scoped('ee020000-0000
 update public.plan_items set assigned_to_user_id=null where id='ee010000-0000-4000-8000-00000000a001';
 select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000002',true);
 select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000002','ee010000-0000-4000-8000-000000001111')$s$,'42501','null assignee cannot admit unrelated member');
+insert into public.user_roles(user_id,role) values ('ee010000-0000-4000-8000-000000000002','admin') on conflict do nothing;
+select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000002','ee010000-0000-4000-8000-000000001111')$s$,'42501','global role cannot grant target-tenant activity visibility');
+select pg_temp.refused($s$select public.plan_update_item_priority_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000002','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'urgent')$s$,'42501','global role cannot grant target-tenant priority management');
+delete from public.user_roles where user_id='ee010000-0000-4000-8000-000000000003';
+insert into public.user_roles(user_id,role) values ('ee010000-0000-4000-8000-000000000003','admin');
+select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000003',true);
+select pg_temp.check_true((public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')->>'ok')='true','admin retains canonical Planning read visibility without new write authority');
 select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000001',true);
+
+-- Operations only serves the canonical top-level standalone shell.
+select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000001',true);
+update public.tenants set account_type='agency' where id='ee010000-0000-4000-8000-000000001111';
+select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')$s$,'42501','agency Operations capability refused');
+select pg_temp.refused($s$select public.plan_update_item_priority_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'urgent')$s$,'42501','agency secondary Operations capability refused');
+-- Database-owner setup of rollback-owned hierarchy only; restore caller before API checks.
+do $fixture$ declare prior_sub text := current_setting('request.jwt.claim.sub',true);
+ prior_claims text := current_setting('request.jwt.claims',true); begin
+ perform set_config('request.jwt.claim.sub','',true);
+ perform set_config('request.jwt.claims','{}',true);
+ update public.tenants set account_type='standalone',parent_tenant_id='ee020000-0000-4000-8000-000000002222' where id='ee010000-0000-4000-8000-000000001111';
+ perform set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
+ perform set_config('request.jwt.claims',coalesce(prior_claims,'{}'),true);
+end $fixture$;
+select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')$s$,'42501','parented standalone Operations capability refused');
+select pg_temp.refused($s$select public.plan_update_item_priority_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'urgent')$s$,'42501','parented standalone secondary Operations capability refused');
+-- Database-owner setup of rollback-owned hierarchy only; restore caller before API checks.
+do $fixture$ declare prior_sub text := current_setting('request.jwt.claim.sub',true);
+ prior_claims text := current_setting('request.jwt.claims',true); begin
+ perform set_config('request.jwt.claim.sub','',true);
+ perform set_config('request.jwt.claims','{}',true);
+ update public.tenants set parent_tenant_id=null where id='ee010000-0000-4000-8000-000000001111';
+ perform set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
+ perform set_config('request.jwt.claims',coalesce(prior_claims,'{}'),true);
+end $fixture$;
 delete from public.tenant_members where user_id='ee010000-0000-4000-8000-000000000001';
 select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')$s$,'42501','revoked membership denied');
 rollback;

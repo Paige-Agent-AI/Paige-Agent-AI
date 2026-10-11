@@ -21,6 +21,20 @@ Inspect work, see current priority and recent source-recorded activity. Authoriz
 
 Twenty assertions PASS across WorkEditor, work-update adapter and Activity tests. Priority success requires matching canonical readback; mismatched readback remains uncertain. Activity refuses foreign scope, changed sessions and malformed projections; explicit retry can recover to an honest empty record.
 
-`docs/evidence/ui-delivery/operations-v3/priority-activity-verification.json` records ten shared-shell browser cases in Obsidian and Mineral at 1536×770, 1366×768, 1024×768, 900×1000 and 390×844. Named source actors render, priority refusal never becomes success, detail containment and invoker focus PASS. Image tiles are synthetic fixture assets, not real employee photo acceptance. Source, identity, audit and RPC-refusal ports are explicitly synthetic. Desktop dark and phone light captures accompany the record.
+`docs/evidence/ui-delivery/operations-v3/priority-activity-verification.json` records eighteen shared-shell browser cases in Obsidian and Mineral at 1536×770, 1366×768, 1024×768, 900×1000 and 390×844, with PAIGE open and closed at the four required desktop/tablet sizes. Named source actors render, priority refusal never becomes success, detail containment and invoker focus PASS. Image tiles are synthetic fixture assets, not real employee photo acceptance. Source, identity, audit and RPC-refusal ports are explicitly synthetic. Desktop dark and phone light captures accompany the record.
 
-Sixteen rollback SQL assertions are registered in the existing database-contract CI job, including ACL, stale version, canonical writer/audit, bounded payload projection, cross-tenant and null-assignee refusal, and revoked membership. Execution remains UNVERIFIED until run; registration alone is not SQL proof. This local slice is not merged, deployed or authenticated-runtime accepted. Exact-head CI and completed non-author review remain owed.
+Seventeen rollback SQL assertions are registered in the existing database-contract CI job, including ACL, stale version, canonical writer/audit, bounded payload projection, cross-tenant and null-assignee refusal, and revoked membership. Execution remains UNVERIFIED until run; registration alone is not SQL proof. This local slice is not merged, deployed or authenticated-runtime accepted. Exact-head CI and completed non-author review remain owed.
+
+
+## Solo API scope pre-edit follow-up
+
+Match the canonical isSoloStandalone registry boundary (literal standalone, no parent) before Operations record access or canonical delegation. Preserve current membership/tenant administration, creator/assignee authority, validation, CAS, audit and effective legacy permission intersection. No lifecycle entitlement inference or non-Solo expansion. Add disposable excluded-account SQL refusals; new SQL remains UNEXECUTED until rebuilt-schema CI, with independent review required. No customer workspace testing.
+
+Current registered rollback SQL assertions: 23; new Solo-scope assertions UNEXECUTED pending fresh rebuilt-schema CI.
+
+Guarded-read/Solo-boundary local follow-up: complete Operations plus tenant-switch suite PASS, 91 tests in 16 files; scoped shared-hook/Workspace lint and definer/ACL-signature lint PASS. New rollback SQL execution remains UNVERIFIED pending rebuilt-schema CI. No customer runtime or production acceptance inferred.
+
+
+## Isolated promotion preparation — October 11
+
+Prepared above reviewed task-creation head fb82f03df, without opening a parallel PR. Preserved creator-specific phone fit and released version authority; excluded unpromoted project-creation imports and CI registration. Carried latest literal-Solo authority and enabled role-sync fixture corrections from the existing development tree. Fresh21 assertions in three files PASS. Development00414 remains unapplied and is not a release allocation. No production/customer mutation, no provider effect, no new backend engine. Final review, current rendered proof, migration allocation and exact-head CI are owed.

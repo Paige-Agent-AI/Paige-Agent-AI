@@ -14,8 +14,9 @@
 --   tenants AND agency tenants (PRESERVED, never weakened) · platform-owner
 --   install fan-out with child ownership/refs/ledger · deferred Knowledge
 --   embedding + finalize/orphan-reconcile · idempotent reinstall · full
---   reversible teardown · shared-child refcounts in BOTH orders (standalone→
---   bundle and bundle→standalone) · cross-tenant install denial · preservation
+--   reversible teardown · shared-child holds in BOTH orders (standalone→bundle
+--   and bundle→standalone; the multi-bundle refcount path is a recorded
+--   follow-up — only one bundle exists today) · cross-tenant install denial · preservation
 --   of a grandfathered funding tenant's entitlement through the whole cycle.
 --
 -- IDIOM (matches supabase/tests/calendar_booking_preset_seam.sql and the
@@ -345,6 +346,8 @@ CREATE OR REPLACE FUNCTION public.is_company_workspace(t uuid)
 \ir ../migrations/20260805170000_marketplace_items_tier_metadata_substrate.sql
 \ir ../migrations/20260805221722_w272c_agency_preset_academy_enterprise_only.sql
 \ir ../migrations/20260805230000_w277_slice1_agency_item_allowlist.sql
+\ir ../migrations/20260807020000_marketplace_tenant_tier_allowlist_visibility_slice2.sql
+\ir ../migrations/20260808180000_w277_slice3_agency_allowlist_per_child_override.sql
 -- The candidate under test (this PR's own seed; applied twice below to prove
 -- its own replay idempotence — ON CONFLICT DO NOTHING must hold on re-run).
 \ir ../migrations/20271020000000_funding_coach_blueprint_bundle_seed.sql
@@ -393,7 +396,7 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, is_owner)
 SELECT id, '00000000-0000-4000-8000-000000000006', 'owner', true FROM t;
 
 -- ═══════════════════════════════════════════════════════════════════════════
-SELECT plan(68);
+SELECT plan(69);
 
 -- ── §1 REGISTRY TRUTH — the candidate is exactly what FCB-2a authorizes ─────
 SELECT ok(
@@ -600,6 +603,10 @@ SELECT is(
   (SELECT count(*)::int FROM public.tenant_knowledge_docs
     WHERE tenant_id='10000000-0000-4000-8000-000000000001'), 0,
   '6.5 the embedded Knowledge docs were removed with the child');
+SELECT is(
+  (SELECT count(*)::int FROM public.marketplace_install_bundle_links
+    WHERE tenant_id='10000000-0000-4000-8000-000000000001'), 0,
+  '6.6 teardown leaves no bundle links behind');
 
 -- ── §7 SHARED CHILD OWNERSHIP — standalone→bundle (T2) ──────────────────────
 SELECT lives_ok(

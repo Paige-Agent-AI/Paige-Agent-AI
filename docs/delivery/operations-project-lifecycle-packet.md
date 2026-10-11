@@ -42,3 +42,7 @@ Independent non-author visual critic COMPLETE:SHIP at f6450909b; six actual capt
 Full18 lifecycle viewport captures now retained in project-lifecycle-matrix; evidence-only recapture passedall18, no product changes. Type ratchetbaseline10/current10 and UIevidenceguardPASS. Nativezoom8 and originalboundedcriticSHIP preserved; expandedcapturecritique requested independently.
 
 Expanded independent visual critique COMPLETE SHIP at4a39f327:all18viewport and8nativezoomcaptures valid/readable, no material findings; syntheticboundary retained. Clean reconciliation with currentprojectPR1982/taskproduction123a at311bed1ab19cbc4a16e1bf661a5527378ccd4492 preserves product, lifecycle SQL19 and allincomingmain; Workspace-onlyblanklinechange, no interaction redesign. Development00415 remains unallocated and SQL19UNEXECUTED; no lifecyclePR/push/deployment.
+
+### First hosted SQL execution — fixture correction
+Exact head 2c127228 database-contract job 114416881762 failed after eight passing lifecycle assertions at the draft-preservation assertion. The rollback-owned plans fixture omitted status and inherited canonical active; it now explicitly supplies draft to test draft activation and unchanged state on refusal. Product migration, canonical creation default and authority remain unchanged. Fresh hosted SQL execution is required; nineteen assertions are not claimed passing. Automatic preview initially failed duplicate historical version 20260729210000, then provider reported success check 114417265219; that does not replace database-contract proof.
+

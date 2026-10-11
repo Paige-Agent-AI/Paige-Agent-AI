@@ -31,9 +31,10 @@ insert into public.profiles(user_id,active_tenant_id) values
  ('ec020000-0000-4000-8000-000000000001','ec020000-0000-4000-8000-000000002222')
 on conflict(user_id) do update set active_tenant_id=excluded.active_tenant_id;
 insert into public.user_roles(user_id,role) values ('ec010000-0000-4000-8000-000000000003','admin') on conflict do nothing;
-insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id) values
- ('ec010000-0000-4000-8000-00000000a001','ec010000-0000-4000-8000-000000001111','Test project one','custom',current_date,current_date+30,'team','ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000000003'),
- ('ec010000-0000-4000-8000-00000000a002','ec010000-0000-4000-8000-000000001111','Test project two','custom',current_date,current_date+30,'team','ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000000003');
+-- Explicit draft fixtures exercise activation; canonical creation defaults remain active.
+insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id,status) values
+ ('ec010000-0000-4000-8000-00000000a001','ec010000-0000-4000-8000-000000001111','Test project one','custom',current_date,current_date+30,'team','ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000000003','draft'),
+ ('ec010000-0000-4000-8000-00000000a002','ec010000-0000-4000-8000-000000001111','Test project two','custom',current_date,current_date+30,'team','ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000000003','draft');
 insert into public.plan_items(id,tenant_id,plan_id,item_type,title,created_by,assigned_to_user_id) values
  ('ec010000-0000-4000-8000-00000000b001','ec010000-0000-4000-8000-000000001111','ec010000-0000-4000-8000-00000000a001','milestone','Test first milestone','ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000000003'),
  ('ec010000-0000-4000-8000-00000000b002','ec010000-0000-4000-8000-000000001111','ec010000-0000-4000-8000-00000000a002','milestone','Test other milestone','ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000000003');

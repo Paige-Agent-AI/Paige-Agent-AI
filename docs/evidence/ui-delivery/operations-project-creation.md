@@ -1,7 +1,7 @@
 # Project and milestone creation — bounded local evidence
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: e240014213807e6f7001256a08b9fae15733a19a; deployment=none-local-development; environment=development; migrations=PROOF_OWED(20271020000120-Operations-project-creation-rebuilt-schema-and-deployment); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-project-creation-packet.md
+INTERNAL_BUILD_IDENTITY: e240014213807e6f7001256a08b9fae15733a19a; deployment=none-local-development; environment=development; migrations=PROOF_OWED(20271020000210-Operations-project-creation-rebuilt-schema-and-deployment); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-project-creation-packet.md
 RELEASE_CHANNEL: development: isolated canonical project-creation implementation and synthetic flow proof, no hosted deployment claim.
 RELEASE_CLASSIFICATION: internal-only: bounded owner-authorized backend implementation; full Operations outcome remains incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated operational outcome has not earned a customer release identity or announcement.
@@ -25,12 +25,12 @@ SOLO_UI: YES: Shared Projects surface, no tenant shortcut or non-Solo expansion.
 UNVERIFIED: Full rebuilt-schema CI, final review, production migration/source/persistence and authenticated acceptance owed. SQL22 remains UNEXECUTED until full rebuilt-schema CI.
 
 
-Current build is supporting development evidence only. Proposed migration120 is unapplied and must be rechecked against production and active claims before promotion. SQL22 UNEXECUTED; customer acceptance remains UNVERIFIED under OWNER_LOGIN_HOLD. No provider or client-acceptance effects.
+Current build is supporting development evidence only. Proposed migration210 is unapplied and must be rechecked against production and active claims before promotion. SQL22 UNEXECUTED; customer acceptance remains UNVERIFIED under OWNER_LOGIN_HOLD. No provider or client-acceptance effects.
 
 OWNER_INTENT: Create accountable canonical projects and source-linked milestones.
 MUST_NOT_HAPPEN: Duplicate project/task engine, replay after unknown save, fabricated acceptance or cross-tenant identity.
 MUST_PRESERVE: Planning writers/audit, Team identity/photos, tenant fences, source progress and provider restrictions.
-ACCEPTANCE_CRITERIA: Authorized creation independently reads matching draft/milestone; refused drafts remain; unknown responses prohibit replay.
+ACCEPTANCE_CRITERIA: Authorized creation independently reads matching active project/milestone; refused drafts remain; unknown responses prohibit replay.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: Planning and Team ownership; Sales and Clients acceptance; Chat executor untouched.
 RELEASE_NOTE_REQUIRED: NO: Internal-only supporting development, full outcome unverified.
@@ -52,3 +52,6 @@ SOLO_1024X768_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full 
 SOLO_900X1000_PAIGE_CLOSED: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
 
 SOLO_900X1000_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+Short-viewport refinement: <=420px uses the Operations workspace as scrollowner so controls cannot consume the body. Fresh actual release8nativeChrome200/400percent cases PASS, actual visible project bounds/scrollowner, both themes/PAIGEinitialstates, keyboard creation/Active confirmation/refusal/recovery/focus/containment/reducedmotion. Tracked project-short-viewport captures/report. Prior navigation-only landscape proof is not used. Final review/exact-head CI remain required; authenticated customer runtimeUNVERIFIED.
+

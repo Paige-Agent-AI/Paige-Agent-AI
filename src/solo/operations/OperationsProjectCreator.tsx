@@ -81,7 +81,7 @@ export function OperationsProjectCreator({ actorId, tenantId, members, project, 
               <div className="ops-create-pair"><label>Start<input required type="date" value={startsOn} onChange={event => setStartsOn(event.target.value)} /></label><label>Finish<input required type="date" min={startsOn || undefined} value={endsOn} onChange={event => setEndsOn(event.target.value)} /></label></div></>}
         </fieldset>
         <div ref={feedback} role={result?.kind === "refused" ? "alert" : "status"} aria-live="polite">
-          {result?.kind === "verified" ? <p>{project ? "Milestone saved and verified." : "Project saved and verified as a draft."}</p> : result && <p>{result.message}</p>}
+          {result?.kind === "verified" ? <p>{project ? "Milestone saved and verified." : "Project saved and verified as active."}</p> : result && <p>{result.message}</p>}
           {notice && <p>{notice}</p>}{staff !== null && !allowed && <p>{project ? "Milestone creation requires an authorized workspace administrator." : "Your active team identity is unavailable."}</p>}
           {result?.kind === "uncertain" && <button type="button" disabled={busy} onClick={() => void recover()}>{busy ? "Checking current work…" : result.id ? `Inspect saved ${noun}` : "Refresh current work"}</button>}
         </div>
@@ -90,7 +90,7 @@ export function OperationsProjectCreator({ actorId, tenantId, members, project, 
       </form>
     </SheetContent></Sheet>
     <AlertDialog open={reviewing} onOpenChange={setReviewing}><AlertDialogContent className="paige-solo ops-detail-sheet" {...attrs}><AlertDialogHeader>
-      <AlertDialogTitle>Create this {noun}?</AlertDialogTitle><AlertDialogDescription>{title.trim()} · Owned by {person?.full_name || "your selected person"}{project ? ` · ${project.title} · ${priority} priority · ${due ? `Due ${new Date(due).toLocaleString()}` : "No deadline"}` : ` · ${startsOn} to ${endsOn} · ${scope} · Draft`}</AlertDialogDescription>
+      <AlertDialogTitle>Create this {noun}?</AlertDialogTitle><AlertDialogDescription>{title.trim()} · Owned by {person?.full_name || "your selected person"}{project ? ` · ${project.title} · ${priority} priority · ${due ? `Due ${new Date(due).toLocaleString()}` : "No deadline"}` : ` · ${startsOn} to ${endsOn} · ${scope} · Active`}</AlertDialogDescription>
     </AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={() => void save()}>Create {noun}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     <AlertDialog open={discarding} onOpenChange={setDiscarding}><AlertDialogContent className="paige-solo ops-detail-sheet" {...attrs}><AlertDialogHeader>
       <AlertDialogTitle>{result?.kind === "uncertain" ? "Close an unconfirmed record?" : "Discard this draft?"}</AlertDialogTitle><AlertDialogDescription>{result?.kind === "uncertain" ? "It may have been saved. Inspect current work before creating it again." : "Your unsaved details will be cleared."}</AlertDialogDescription>

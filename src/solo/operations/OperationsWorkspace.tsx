@@ -166,3 +166,4 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
       }} />}
   </section>;
 }
+

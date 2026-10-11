@@ -223,6 +223,13 @@ jobs:
       - name: Operations priority and bounded activity authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_priority_activity.sql
+      - name: Operations scoped project and milestone creation authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_project_creation.sql
+
+      - name: Operations project lifecycle authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_project_lifecycle.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
@@ -583,3 +590,5 @@ jobs:
         run: |
           node scripts/ci/reproduce-production-grants.mjs --self-test
           scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"
+
+

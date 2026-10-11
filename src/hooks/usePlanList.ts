@@ -48,6 +48,8 @@ export interface Plan {
   owner_user_id: string | null;
   created_by: string | null;
   items: PlanItem[];
+  /** Raw canonical project version; missing versions remain inspect-only. */
+  updated_at?: string;
 }
 
 export type PlanScope = "mine" | "by_me" | "team";

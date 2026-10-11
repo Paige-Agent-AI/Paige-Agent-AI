@@ -1,0 +1,36 @@
+# Operations O3b — canonical project lifecycle
+
+Pre-edit contract. This extends existing Planning plans; no separate project engine.
+
+1. Outcome: activate a recorded draft project, manage its accountable owner/date window and mark internal completion only when unresolved work is absent.
+2. Domain: Operations manages canonical Planning records. Team owns identities; Sales and Clients own commercial commitments and acceptance. No shared Chat executor edits.
+3. Harness/Gateway: manual caller JWT. Conversation execution remains governed by existing Harness/Trust and is not activated by this slice.
+4. Spine: `planning.create` and `planning.list` exist. Project lifecycle mutation is UNAVAILABLE: no existing canonical plan-update capability was found. Add a narrow source-owned Planning RPC; callable Spine registration and modality proof remain later O6 work, never implied here.
+5. Provider: none. No notification, provider activation or expense.
+6. Authority: canonical `is_tenant_admin(selectedTenant)`, or accountable owner/creator for eligible own plan. The helper preserves target owner/admin and existing governed company-workspace Platform Operator authority; a global admin in another workspace grants no target authority. Coach is retired and grants no permission. Reassigning owner requires target administration. Current member, actor/tenant lock and raw row version are mandatory. Existing shared confirmation components review consequential changes; this is not a second Trust system.
+7. Durable work: none for synchronous internal record edit. No new scheduler, action bus, audit store or execution ledger.
+8. Readback: lock existing plan, check version and permission, update same source row and append existing audit. Bounded acknowledgement plus independently refreshed plan fields are required before saved success. Existing audit is not Rail or client outcome evidence.
+9. Surface: existing canonical Projects detail. Keep draft/active/completed/archived source vocabulary; preserve V3. Completion and archive refuse unresolved task/milestone work, never hide or cancel children automatically. Client acceptance remains separate.
+10. Proof: actor/tenant/role/owner/version/date/unresolved-work negatives, no partial writes, UI confirmation/refusal/concurrency/readback, responsive/focus, independent review and exact-head CI. Hosted migration and authenticated runtime remain UNVERIFIED under owner restrictions.
+
+Inspect project; edit recorded status/date/owner; review and confirm; save through server authority; refresh and compare. Background updates cannot lend a new version to an old draft. Refusal and uncertain results lock repeat save until refreshed review. Missing version is inspect-only. No fabricated deadlines, capacity or delivery acceptance.
+
+Local verification at core 111f2fd6: sixteen unit assertions and eighteen shared-shell browser cases passed, including both worlds, all four required sizes with PAIGE open/closed, and phone reflow. Independent static and visual reviews returned bounded SHIP. Later owner-unavailable copy, warning, promise and retired-role corrections passed seventeen focused unit assertions; final tenant-admin correction requires fresh checks/review. Seventeen registered SQL assertions are UNEXECUTED, including the cross-workspace global-admin negative. Full-schema CI, hosted source/persistence and authenticated acceptance remain owed. Completion refusal is point-in-time against locked current work; it does not claim later work cannot reopen or be added by existing authorities. Client acceptance is always separate.
+
+## Solo API scope pre-edit follow-up
+
+Match the canonical isSoloStandalone registry boundary (literal standalone, no parent) before Operations record access or canonical delegation. Preserve current membership/tenant administration, creator/assignee authority, validation, CAS, audit and effective legacy permission intersection. No lifecycle entitlement inference or non-Solo expansion. Add disposable excluded-account SQL refusals; new SQL remains UNEXECUTED until rebuilt-schema CI, with independent review required. No customer workspace testing.
+
+Current registered rollback SQL assertions: 19; new Solo-scope assertions UNEXECUTED pending fresh rebuilt-schema CI.
+
+Guarded-read/Solo-boundary local follow-up: complete Operations plus tenant-switch suite PASS, 91 tests in 16 files; scoped shared-hook/Workspace lint and definer/ACL-signature lint PASS. New rollback SQL execution remains UNVERIFIED pending rebuilt-schema CI. No customer runtime or production acceptance inferred.
+
+Local release preparation based on reviewed project preparationdfda943e1/currenttask95: latest DEVtarget-tenant administration and Solo scope retained; cherry-pick conflict excluded the separate unreleased priority/activity step/import. Canonical task/project creation and uncertain recovery unchanged. Project source exposes current updated_at, editor confirms owner/dates/status and independently reads matching refreshed project, refuses stale versions and unresolved work at completion/archive. Closed-project views surface subsequent unfinished work rather than implying client acceptance. Local17editor/adapter +oneclosed-project testsPASS; scopedESLintPASS. Historical rendered evidence retained, not a fresh final-head claim. SQL19UNEXECUTED, development00415unallocated; no PR/deployment/customer testing/provider effect. Independent final-head static review requested, fresh UI/zoom and full-schema CI owed before promotion.
+
+Fresh October11 shared-shell rendering at reviewed7209:18 configurations PASS, Obsidian/Mineral,1536x770/1366x768/1024x768/900x1000 with PAIGE initial open/closed plus390phone, reduced motion. Genuine narrow PAIGE fold precedes keyboard entry. Review cancellation retains draft, explicit server refusal never reports completion, drawer containment/scroll and invoker focus restore PASS, zero page errors. Six screenshots and JSON retained; this is synthetic refusal/source proof only, not persistence or customer acceptance. Native zoom and visual final review still owed.
+
+Independent non-author visual critic COMPLETE:SHIP at f6450909b; six actual captures inspected, no material fixes. Fresh native unsigned-in Chrome zoom8configsPASS at200/400percent in both worlds/PAIGE initialopenclosed;DPR2/4,CSS674/337,physical1366. Confirmation focus/refusal/recovery reachable/actual scrolling/containment/invoker focus/zero errorsPASS. Synthetic source/refusal only; no production mutation or customer acceptance. Product source unchanged7209.
+
+Full18 lifecycle viewport captures now retained in project-lifecycle-matrix; evidence-only recapture passedall18, no product changes. Type ratchetbaseline10/current10 and UIevidenceguardPASS. Nativezoom8 and originalboundedcriticSHIP preserved; expandedcapturecritique requested independently.
+
+Expanded independent visual critique COMPLETE SHIP at4a39f327:all18viewport and8nativezoomcaptures valid/readable, no material findings; syntheticboundary retained. Clean reconciliation with currentprojectPR1982/taskproduction123a at311bed1ab19cbc4a16e1bf661a5527378ccd4492 preserves product, lifecycle SQL19 and allincomingmain; Workspace-onlyblanklinechange, no interaction redesign. Development00415 remains unallocated and SQL19UNEXECUTED; no lifecyclePR/push/deployment.

@@ -18,6 +18,7 @@ vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], loading
 vi.mock("./OperationsDelivery", () => ({ default: () => <div>Delivery test seam</div> }));
 vi.mock("./OperationsPlaybooks", () => ({ OperationsPlaybooks: () => <div>Playbook test seam</div> }));
 vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: () => <div>Work edit test seam</div> }));
+vi.mock("./OperationsProjectCreator", () => ({ OperationsProjectCreator: ({ onRecover }: { onRecover: (id?: string) => Promise<void> }) => <div data-testid="project-creator"><button onClick={() => void onRecover()}>Refresh unknown project</button><button onClick={() => void onRecover("test-project")}>Inspect acknowledged project</button></div> }));
 import { OperationsWorkspace } from "./OperationsWorkspace";
 let container: HTMLDivElement;
 let root: Root;
@@ -69,4 +70,14 @@ it("hands a bounded review draft to existing PAIGE after clearing old customer s
   expect(paige.clearClient).toHaveBeenCalledOnce(); expect(paige.clearPublic).toHaveBeenCalledOnce();
   expect(paige.handoff).toHaveBeenCalledWith(expect.stringContaining("Use current work records"));
   expect(open).toHaveBeenCalledOnce();
+});
+
+it("retains uncertain project creation after refresh without an identity", async () => {
+  await act(async () => root.render(<OperationsWorkspace view="projects" onViewChange={vi.fn()} />));
+  await click("New project");
+  await click("Refresh unknown project");
+  expect(container.querySelector('[data-testid="project-creator"]')).not.toBeNull();
+  await click("Inspect acknowledged project");
+  expect(container.querySelector('[data-testid="project-creator"]')).toBeNull();
+  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
 });

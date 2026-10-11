@@ -77,7 +77,8 @@ export function parseRegressionCase(value: unknown): Readonly<RegressionCaseV1> 
   for (const [key, fact] of Object.entries(facts)) {
     if (key === 'outcome') { if (!['complete', 'partial', 'failed'].includes(fact as string)) invalid(); }
     else if (key === 'audit_recorded' || key === 'write_failure_reported') { if (typeof fact !== 'boolean') invalid(); }
-    else if (!Number.isSafeInteger(fact) || (fact as number) < 0 || (fact as number) > 999) invalid();
+    else if (key === 'http_status') { if (!Number.isSafeInteger(fact) || (fact as number) < 100 || (fact as number) > 599) invalid(); }
+    else if (key === 'disputes_auto_created' && fact !== 0) invalid();
   }
   const t = fields(o.trajectory, ['state', 'reason']);
   if (t.state !== 'unlinked' || t.reason !== 'historical_identity_unavailable') invalid();

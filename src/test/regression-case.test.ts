@@ -59,6 +59,18 @@ describe('immutable regression-case metadata contract', () => {
     value.source.issue = 999;
     expect(value.source.issue).toBe(999);
   });
+  it.each([0, 99, 600, 999])('rejects invalid HTTP status %i', http_status => {
+    const value = manifest(); value.expected.http_status = http_status;
+    expect(() => parseRegressionCase(value)).toThrow('invalid_regression_case');
+  });
+  it.each([100, 599])('accepts HTTP protocol boundary %i', http_status => {
+    const value = manifest(); value.expected.http_status = http_status;
+    expect(parseRegressionCase(value).expected.http_status).toBe(http_status);
+  });
+  it.each([1, 999])('rejects automatic dispute count %i against the frozen §194 rule', disputes_auto_created => {
+    const value = manifest(); value.expected.disputes_auto_created = disputes_auto_created;
+    expect(() => parseRegressionCase(value)).toThrow('invalid_regression_case');
+  });
 });
 
 describe('existing Eval score and AI-2 verdict reuse', () => {

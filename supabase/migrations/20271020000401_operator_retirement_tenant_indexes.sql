@@ -6,7 +6,6 @@
 CREATE INDEX IF NOT EXISTS idx_paige_llm_trace_working_context_tenant ON public.paige_llm_trace (working_context_tenant_id);
 CREATE INDEX IF NOT EXISTS idx_paige_llm_trace_retired_tenant ON public.paige_llm_trace (retired_tenant_id);
 CREATE INDEX IF NOT EXISTS idx_paige_llm_trace_retired_working_context_tenant ON public.paige_llm_trace (retired_working_context_tenant_id);
-CREATE INDEX IF NOT EXISTS idx_paige_chat_turns_tenant ON public.paige_chat_turns (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_paige_chat_turns_interactive_tenant ON public.paige_chat_turns (interactive_tenant_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_evidence_reference_tenant ON public.analytics_evidence_reference (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tenants_parent ON public.tenants (parent_tenant_id);

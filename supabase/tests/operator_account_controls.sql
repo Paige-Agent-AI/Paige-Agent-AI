@@ -1,6 +1,6 @@
 -- Isolated pgTAP contract proof; never run against customer production records.
 BEGIN;
-SELECT plan(17);
+SELECT plan(16);
 SELECT has_function('public','operator_read_account_details',ARRAY['uuid'],'read seam exists');
 SELECT has_function('public','operator_edit_account_details',ARRAY['uuid','text','text','text'],'edit seam exists');
 SELECT has_function('public','operator_preview_account_deletion',ARRAY['uuid'],'deletion preview seam exists');
@@ -12,7 +12,6 @@ SELECT ok(NOT has_function_privilege('anon','public.operator_can_archive_account
 SELECT ok(NOT has_function_privilege('service_role','public.operator_can_permanently_delete_accounts()','execute'),'service role cannot impersonate deletion authority');
 SELECT ok(NOT has_function_privilege('anon','public.operator_can_permanently_delete_accounts()','execute'),'anonymous deletion authority denied');
 SELECT has_index('public','paige_llm_trace','idx_paige_llm_trace_working_context_tenant','working-context tenant probes indexed');
-SELECT has_index('public','paige_chat_turns','idx_paige_chat_turns_tenant','chat-turn tenant probes indexed');
 SELECT has_index('public','analytics_evidence_reference','idx_analytics_evidence_reference_tenant','evidence-reference tenant probes indexed');
 SELECT has_index('public','tenants','idx_tenants_parent','tenant tree parent lookups indexed');
 SET LOCAL ROLE authenticated;

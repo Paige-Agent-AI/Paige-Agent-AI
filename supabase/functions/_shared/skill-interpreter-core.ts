@@ -224,6 +224,58 @@ export function foldPublicBrowse(obs: PublicBrowseObservation): string {
   return lines.length > 1 ? lines.join("\n") : "";
 }
 
+// ── PC-1 redaction — URLs and secret-shaped text never reach the rail or the model fold ──────────
+/**
+ * Redact a URL for audit persistence (paige_browser_usage) BEFORE it is written. Query strings and
+ * fragments can carry tokens/session ids/one-time codes; userinfo can carry basic-auth credentials.
+ * The auditable shape is scheme + host + path, with a COUNT marker where a query/fragment existed
+ * so analysts still know a parameterized URL was requested. Over-redaction is the safe direction.
+ */
+export function redactUrlForAudit(raw: string): string {
+  try {
+    const u = new URL(String(raw));
+    const params = [...u.searchParams.keys()];
+    const q = params.length ? `?_redacted=${params.length}` : "";
+    const frag = u.hash ? "#_redacted" : "";
+    const path = u.pathname.length > 300 ? `${u.pathname.slice(0, 300)}…` : u.pathname;
+    return `${u.protocol}//${u.host}${path}${q}${frag}`;
+  } catch {
+    return "_unparseable_url_redacted";
+  }
+}
+
+// Secret-shaped patterns scrubbed from page-derived text before it is folded into the model context.
+// Deliberately broad: a false positive costs a cosmetic "[redacted]" in research text; a false
+// negative costs a credential in a transcript. Bounded replacements so a hostile page cannot
+// balloon the work; the count is reported so truncation is visible.
+const SECRET_KEY_VALUE_RE = /\b(api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|client[_-]?secret|secret|token|password|passwd|pwd|authorization|session[_-]?id|sessionid|csrf|xsrf|otp|verification[_-]?code|one[_-]?time[_-]?code|magic[_-]?link|sig|signature|nonce|credential)s?["']?\s*[:=]\s*["']?[^&\s"'<>]{4,}/gi;
+const BEARER_RE = /\b(Bearer|Basic)\s+[A-Za-z0-9\-._~+/]+=*/gi;
+const OPAQUE_RUN_RE = /\b[A-Za-z0-9+/_-]{40,}={0,2}\b/g;
+const CARDISH_RE = /\b(?:\d[ -]*?){13,19}\b/g;
+// JWTs literally start "eyJ" (base64 of '{"') as three dot-separated base64url segments — catches
+// tokens UNDER the 40-char opaque threshold (proven leak class: the kv rule eats the "Bearer"
+// scheme word and orphans the bare token).
+const JWT_SHAPE_RE = /\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\b/g;
+
+export function scrubSecretLikeText(text: string, maxReplacements = 200): { scrubbed: string; replacements: number; truncated: boolean } {
+  let replacements = 0;
+  let out = String(text ?? "");
+  // Order matters (proven by the failing-first harness run): Bearer/Basic FIRST — otherwise the
+  // key=value rule consumes the scheme word ("Authorization: Bearer") and orphans the bare token.
+  out = out.replace(BEARER_RE, (_m, scheme: string) => {
+    replacements++;
+    return `${scheme} [redacted]`;
+  });
+  if (replacements < maxReplacements) out = out.replace(JWT_SHAPE_RE, () => { replacements++; return "[redacted]"; });
+  out = out.replace(SECRET_KEY_VALUE_RE, (_m, keyName: string) => {
+    replacements++;
+    return `${keyName}=[redacted]`;
+  });
+  if (replacements < maxReplacements) out = out.replace(OPAQUE_RUN_RE, () => { replacements++; return "[redacted]"; });
+  if (replacements < maxReplacements) out = out.replace(CARDISH_RE, () => { replacements++; return "[redacted]"; });
+  return { scrubbed: out, replacements, truncated: replacements > maxReplacements };
+}
+
 // ── resolveExecutionMode — the §16 autonomy clamp ────────────────────────────────────────────────
 /**
  * Map a skill's autonomy_lane (+ a STRUCTURAL risk floor) to how the run resolves. Two guarantees:

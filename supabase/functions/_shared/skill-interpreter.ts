@@ -34,9 +34,13 @@ import {
   pickPublicBrowseStep,
   isHttpUrl,
   foldPublicBrowse,
+  redactUrlForAudit,
+  scrubSecretLikeText,
   FORMAT_OPTIONS,
   FORMAT_PROMPT,
 } from "./skill-interpreter-core.ts";
+// PC-1 — canonical Rail receipt for the browse capability run (one home for HOW, executor for WHAT).
+import { recordCapabilityRun } from "./capability-record.ts";
 
 export type InterpretStatus =
   | "succeeded"        // auto lane — output produced and returned
@@ -361,6 +365,72 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         steps_log: stepsLog,
       };
     } else {
+      // PC-1 — bounded usage: consult the secure-browser control plane BEFORE dispatching. No row =
+      // no bound configured (the tenant capability flag remains the outer gate); a row with
+      // enabled=false, an UNREADABLE control plane, or an exhausted daily seconds budget blocks the
+      // browse honestly (one rail row with the reason — same discipline as a guard block).
+      let controlPlaneReason: string | null = null;
+      try {
+        const { data: limitsRow, error: limitsErr } = await deps.admin
+          .from("secure_browser_tenant_limits")
+          .select("enabled,max_daily_session_seconds")
+          .eq("tenant_id", tenantId)
+          .maybeSingle();
+        if (limitsErr) {
+          controlPlaneReason = "control_plane:unreadable";
+        } else if (limitsRow && limitsRow.enabled !== true) {
+          controlPlaneReason = "control_plane:disabled";
+        } else if (limitsRow && limitsRow.enabled === true && Number(limitsRow.max_daily_session_seconds) > 0) {
+          const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00+00:00`;
+          const { data: usage, error: usageErr } = await deps.admin
+            .from("paige_browser_usage")
+            .select("response_time_ms")
+            .eq("tenant_id", tenantId)
+            .eq("endpoint", "browse-public-url")
+            .gte("called_at", dayStart)
+            .limit(2000);
+          const usedMs = usageErr
+            ? null
+            : (usage ?? []).reduce(
+                (acc: number, r: { response_time_ms?: number | null }) => acc + (Number(r?.response_time_ms) || 0),
+                0,
+              );
+          if (usedMs === null) controlPlaneReason = "control_plane:unreadable";
+          else if (usedMs / 1000 >= Number(limitsRow.max_daily_session_seconds)) controlPlaneReason = "control_plane:daily_budget";
+        }
+      } catch {
+        controlPlaneReason = "control_plane:unreadable";
+      }
+      if (controlPlaneReason) {
+        stepsLog.push({ step: "browse_public", dispatched: false, ok: false, blocked_reason: controlPlaneReason });
+        try {
+          const { error: auditErr } = await deps.admin.from("paige_browser_usage").insert({
+            tenant_id: tenantId,
+            endpoint: "browse-public-url",
+            url_requested: redactUrlForAudit(url),
+            url_resolved: null,
+            blocked_reason: controlPlaneReason,
+            http_status: null,
+            content_bytes: null,
+            response_time_ms: null,
+            created_by: actorUserId,
+          });
+          if (auditErr) console.error(`skill-interpreter[${skill.slug}] control-plane audit insert failed:`, auditErr?.message);
+        } catch (e) {
+          console.error(`skill-interpreter[${skill.slug}] control-plane audit insert threw:`, (e as Error)?.message);
+        }
+        if (tenantId && actorUserId) {
+          await recordCapabilityRun(deps.admin, {
+            tenantId, actorId: actorUserId, capabilityKey: "browse_public_url",
+            outcome: "capability_refused", runId,
+          }).catch(() => {}); // receipt miss never masks the refusal (§13)
+        }
+        return {
+          status: "needs_config",
+          outputs: { reason: "browser_budget_or_control_plane", note: "The workspace's secure-browser control plane blocked this browse." },
+          steps_log: stepsLog,
+        };
+      }
       let observed: PublicBrowseObservation | null = null;
       try {
         const result = await deps.browsePublic({
@@ -408,8 +478,10 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         const { error: auditErr } = await deps.admin.from("paige_browser_usage").insert({
           tenant_id: tenantId,
           endpoint: "browse-public-url",
-          url_requested: url,
-          url_resolved: observed.final_url ?? null,
+          // PC-1 redaction: query strings/fragments/userinfo never persist (tokens, one-time codes,
+          // basic-auth) — scheme+host+path plus a param-count marker is the auditable shape.
+          url_requested: redactUrlForAudit(url),
+          url_resolved: observed.final_url ? redactUrlForAudit(observed.final_url) : null,
           blocked_reason: auditBlockedReason,
           http_status: typeof observed.http_status === "number" ? observed.http_status : null,
           content_bytes: typeof observed.content_bytes === "number" ? observed.content_bytes : null,
@@ -427,7 +499,31 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         stepsLog.push({ step: "browse_public_audit", ok: false, error: (e as Error)?.message });
       }
 
-      const folded = foldPublicBrowse(observed);
+      // PC-1 — canonical Rail receipt with truthful outcome states, recorded at the executor where
+      // the taxonomy is in hand: succeeded / refused (a guard or control-plane reason) / failed (a
+      // host fault). A receipt miss is logged inside the helper and never blocks the observation —
+      // the same discipline as the rail write above.
+      if (tenantId && actorUserId) {
+        const browseOutcome = observed.ok
+          ? "capability_succeeded"
+          : observed.blocked_reason
+            ? "capability_refused"
+            : "capability_failed";
+        await recordCapabilityRun(deps.admin, {
+          tenantId, actorId: actorUserId, capabilityKey: "browse_public_url",
+          outcome: browseOutcome, runId,
+        }).catch((e: unknown) => console.error(`skill-interpreter[${skill.slug}] capability receipt failed:`, (e as Error)?.message));
+      }
+
+      // PC-1 redaction: page-derived text is scrubbed of secret-shaped material (bearer/basic
+      // headers, key=value secrets, opaque 40+ char runs, card-like digit runs) BEFORE it is folded
+      // into the model context. Over-redaction is the safe direction.
+      const foldRaw = foldPublicBrowse(observed);
+      const foldScrub = scrubSecretLikeText(foldRaw);
+      if (foldScrub.replacements > 0) {
+        stepsLog.push({ step: "browse_public_scrub", ok: true, replacements: foldScrub.replacements, truncated: foldScrub.truncated });
+      }
+      const folded = foldScrub.scrubbed;
       if (folded) contextText = contextText ? `${contextText}\n\n${folded}` : folded;
       stepsLog.push({
         step: "browse_public",

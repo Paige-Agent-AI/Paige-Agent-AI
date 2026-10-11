@@ -222,6 +222,12 @@ INT-340 is live: `issue_analytics_evidence_bundle` → `_analytics_metric_produc
 `docs/delivery/marketing-metric-server-contract.md`: untagged leads are an item of the source distribution (so it is LIVE,
 not PARTIAL), and failed/stalled submissions are one distribution (stalled = waiting more than 15 minutes).
 
+**2026-10-11 (MBC slice 2b):** Analytics consumes four of the keys for owners/admins (leads received, by source tag, by
+campaign tag, converted to opportunity), through `parseMetricResult`, for the range and the period before. The browser no
+longer computes those figures for an owner; it still draws the trend, outcome ring, capture points and heatmap from its
+own read, and a member (refused by the server) keeps the browser's counts. The daily series and the snapshot/email keys
+are produced but not yet drawn from the server; that is slice 6's Chat/Live work and later Analytics passes.
+
 **Plan:**
 - Marketing adds a private `_marketing_metric_bundle` with its own allowlist.
 - The dispatcher branch is an INT-340-owned seam. Coordinate with its owner as Sales did

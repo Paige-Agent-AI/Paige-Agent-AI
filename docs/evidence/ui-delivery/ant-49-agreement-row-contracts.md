@@ -19,13 +19,13 @@ STATE_COVERAGE: PASS: Valid records persist; invalid tenant/client/offer/price/t
 TRUTHFUL_STATE_LABELS: PASS: Local database verification is separate from hosted CI, merge, deployment, production source verification, and authenticated acceptance.
 SOLO_UI: NO: Canonical Solo persistence repair; no UI file or geometry changed.
 UNVERIFIED: Hosted exact-head CI, production migration persistence/source readback, and authenticated customer-facing acceptance are separate release evidence; no provider or money action occurs.
-INTERNAL_BUILD_IDENTITY: base=099a6b04e3bb3a9bb143798a7a1a69ab168b72e5; deployment=local-postgresql-proof; environment=local; migrations=PROOF_OWED(production persistence of 20271020000280_sales_agreement_trigger_contracts); edge=NOT_APPLICABLE; evidence=supabase/tests/sales_agreement_trigger_contracts.sql
+INTERNAL_BUILD_IDENTITY: base=099a6b04e3bb3a9bb143798a7a1a69ab168b72e5; deployment=local-postgresql-proof; environment=local; migrations=PROOF_OWED(production persistence of 20271020000310_sales_agreement_trigger_contracts); edge=NOT_APPLICABLE; evidence=supabase/tests/sales_agreement_trigger_contracts.sql
 RELEASE_CHANNEL: development: Candidate repair has local PostgreSQL proof; production state requires the normal migration deployment and independent catalog readback.
 RELEASE_CLASSIFICATION: patch: Restore the existing commercial row contract and isolate the unchanged signing validator.
 CUSTOMER_RELEASE_IDENTITY: none: Internal source correction recorded under ANT-49, without a customer release name.
 RELEASE_NOTE_REQUIRED: NO: No new customer feature or interface; bounded defect correction.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: Production persistence/readback and authenticated acceptance; local tests do not claim either.
-RELEASE_RECOVERY: position=transactional forward repair with five-second lock timeout; reference=supabase/migrations/20271020000280_sales_agreement_trigger_contracts.sql
+RELEASE_RECOVERY: position=transactional forward repair with five-second lock timeout; reference=supabase/migrations/20271020000310_sales_agreement_trigger_contracts.sql
 
 ## Cause and preservation
 

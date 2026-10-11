@@ -57,3 +57,5 @@ Fresh local migration lint1245, definer guard and signature-ACL guard PASS after
 
 Actual lifecycle production release1988 is verified (recordoperations-project-lifecycle-production-record.md). This priorityhead4552 reconciles actualsquasha138 cleanly; non-author finaladdendumCOMPLETE COMPATIBLE, treeidenticalreviewed061. Priority240remainsproposed/unapplied andSQL24unexecuted. Closeout/Master additions report priorrelease only.
 
+
+PR1989 exact05dfe database-contract114422185046 FAILED: priority fixture line60 attempted active-workspace B before its synthetic membership existed; canonical profile guard correctly refused 'active_tenant_id must be a tenant you belong to or manage'. Product SQL unchanged. Reordered rollback-owned membership creation before workspace switch, preserving enabled role synchronization/precondition and all24 assertions. Full fresh CI and non-author fixture recheck remain owed; the failed run is not passing proof.

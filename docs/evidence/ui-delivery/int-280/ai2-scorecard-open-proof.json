@@ -1,0 +1,92 @@
+{
+  "kind": "LOCAL SYNTHETIC shell open/closed and keyboard",
+  "geometry": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "overflow": false,
+      "scorecardWidth": 832.640625
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "overflow": false,
+      "scorecardWidth": 712.90625
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "open unavailable at existing shell breakpoint; canvas stays contained",
+      "overflow": false
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "open unavailable at existing shell breakpoint; canvas stays contained",
+      "overflow": false
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "overflow": false,
+      "scorecardWidth": 832.640625
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "overflow": false,
+      "scorecardWidth": 712.90625
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "open unavailable at existing shell breakpoint; canvas stays contained",
+      "overflow": false
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "open unavailable at existing shell breakpoint; canvas stays contained",
+      "overflow": false
+    }
+  ],
+  "flows": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "action": "keyboard selector and version-separated read",
+      "value": "Durable task evidence · 1.0.0"
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "action": "keyboard selector and version-separated read",
+      "value": "Durable task evidence · 1.0.0"
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "action": "keyboard selector and version-separated read",
+      "value": "Durable task evidence · 1.0.0"
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "action": "keyboard selector and version-separated read",
+      "value": "Durable task evidence · 1.0.0"
+    }
+  ],
+  "errors": []
+}

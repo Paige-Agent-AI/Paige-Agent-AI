@@ -1,4 +1,5 @@
 /** Metadata only. Mirrors the existing Operator RPCs and the additive eval projection. */
+import type { TaskScorecardRead } from './taskScorecardContract';
 export type Breakdown = { provider?: string; tier?: string; status?: string; modality?: string; count: number; cost_estimate_usd?: number | null };
 export type IntelligenceMetrics = {
   traces?: { total?: number | null; window_days?: number | null; tokens_in?: number | null; tokens_out?: number | null; cost_estimate_usd?: number | null; avg_latency_ms?: number | null; error_count?: number | null; needs_config?: number | null; by_provider?: Breakdown[]; by_tier?: Breakdown[]; by_status?: Breakdown[] } | null;
@@ -38,6 +39,7 @@ export type IntelligenceRead = {
   trajectoryRequest: TrajectoryRequest | null;
   inspectTrajectory: (request: TrajectoryRequest | null) => void;
   pageTrajectories: (cursor: TrajectoryPage['next_cursor']) => void;
+  scorecard?: TaskScorecardRead;
 };
 export type TrajectoryRequest = { workId: string } | { traceId: string };
 export type TrajectoryHistory = { version: number; complete: boolean; truncated: boolean; events: {

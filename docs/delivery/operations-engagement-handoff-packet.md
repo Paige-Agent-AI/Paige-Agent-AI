@@ -1,0 +1,24 @@
+# Accepted engagement handoff — pre-edit contract
+
+1. Outcome: an authorized owner turns an eligible signed client promise into one accountable canonical project with reviewed milestones, without duplicates.
+2. Operations owns fulfillment; Sales owns signing/commercial facts, Clients owns identity/acceptance, Team owns staff. No other domain implementation changes.
+3. Existing authenticated SQL/Planning wrappers retain target authority, active Team and legacy action-bus intersections. No gateway/orchestration bypass.
+4. Reuse planning.create/add_milestone writers. New Operations handoff capability is UNAVAILABLE until reviewed, registered and legitimately integrated; no Chat executor edit.
+5. No provider or connection. No financial/communication/external effects.
+6. Ordinary internal Planning writes require existing server authority; human confirmation uses canonical UI review, later PAIGE execution uses existing Trust. No new approval channel or model-supplied authority boolean.
+7. No scheduler/drainer. Event retries must resolve the same original agreement/version and project; no blind project recreation.
+8. Transaction returns original project/milestone IDs and immutable source references, then independently scoped readback is owed. Canonical Planning audit remains history; no invented Rail receipt or client outcome.
+9. Existing approved Delivery/Projects surfaces, binding remains PARTIAL. This preparation is unmounted/unregistered, no production claim.
+10. Rollback SQL must prove target/role/Solo/source/version/duplicate/stale/atomic-failure negatives and canonical writes. Authenticated customer testing/provider effects/INT-346 activation stay gated.
+
+Existing plans.metadata is reusable and authenticated direct writes are denied by canonical Planning policy. A source-linked metadata entry and unique per-tenant original agreement constraint can preserve handoff provenance without a second project/task/receipt store. Owner-reviewed milestone scope must be labeled as such, never falsely extracted from unstructured contract text. Commercial terms active plus completed sealed signing is eligibility evidence, not client acceptance. Missing source or scope refuses, no assumed obligations. DEV00418 is local/unallocated/unapplied; fresh applied/reserved frontier and independent review are required before promotion.
+
+Independent precommit review NOT COMPLETE caught unbound alternate retry IDs, immutable signing-fixture mutation and normalized impossible browser dates. Repairs: only the original request may replay the original engagement; alternate request IDs refuse for explicit inspection. Separate legitimate sealed/draft fixtures preserve Sales triggers. Strict calendar/time/offset validation refuses impossible request timestamps. Focused first pass: 25 unit assertions PASS; expanded regression and fresh review pending. SQL rollback assertions remain UNEXECUTED. No handoff production activation.
+
+Second independent non-author static review COMPLETE after repairs. Expanded27 focused unit tests PASS; scoped ESLint PASS. DEV00418 and rollback SQL still UNEXECUTED/unallocated/unapplied; no release or customer acceptance claim. Preparation reconciled native production main9672 at parent049379aa2; workflow conflict retained both canonical native and queued signing regression steps. Source links retain Sales commercial authority and Clients acceptance ownership.
+
+Added source-ID CAS for reviewed client/terms/offer and canonical milestone contact/version linkage. Unmounted write adapter requires actor-fenced scoped acknowledgement and independent caller-RLS project/milestone readback; source/assignment mismatches and lost outcomes stay uncertain, never auto replayed or called client acceptance.49 focused tests/2files PASS and fresh independent static review COMPLETE. UI submission/workspace fencing, persistent recovery, capability registration, actual SQL execution and authenticated customer runtime are still owed. A malformed quoted new-version fixture statement was corrected before execution; no SQL PASS is claimed.
+
+Forward allocation preparation: production readback frontier250, queued signing260, all26 active PR file lists without truncation show no270 reservation. DEV00418 promoted to proposed20271020000270, unapplied. Rollback handoff assertions registered in the existing database-contract job; none executed locally. Recheck applied/reserved frontier and released signing parent before promotion/merge.
+
+Fresh direct TypeScript compiler completed with ten existing diagnostics, exact committed baseline match and no Operations diagnostics; plain compiler remains exit1, not clean PASS.49 focused assertions PASS, scopedlint PASS, signature/definer/migrationversion guards PASS. Readback source IDs and milestones remain independently confirmed only in synthetic tests; actual SQL/CI/UI/production/authentication still owed.

@@ -42,7 +42,7 @@ function record(value: unknown): Record<string, unknown> {
 }
 function fields(value: unknown, names: string[]): Record<string, unknown> {
   const o = record(value);
-  if (Object.keys(o).length !== names.length || names.some(k => !Object.hasOwn(o, k))) invalid();
+  if (Object.keys(o).length !== names.length || names.some(k => !Object.prototype.hasOwnProperty.call(o, k))) invalid();
   return o;
 }
 function matches(value: unknown, pattern: RegExp) { if (typeof value !== 'string' || !pattern.test(value)) invalid(); }

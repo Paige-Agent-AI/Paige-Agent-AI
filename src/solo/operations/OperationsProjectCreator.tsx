@@ -27,10 +27,10 @@ export function OperationsProjectCreator({ actorId, tenantId, members, project, 
   useBeforeUnloadGuard(busy || (dirty && result?.kind !== "verified"));
   useEffect(() => {
     mounted.current = true;
-    void supabase.rpc("has_any_role", { _user_id: actorId, _roles: ["admin", "super_admin"] })
+    void supabase.rpc("is_tenant_admin", { _tenant: tenantId })
       .then(({ data, error }) => { if (mounted.current) setStaff(!error && data === true); }, () => { if (mounted.current) setStaff(false); });
     return () => { mounted.current = false; };
-  }, [actorId]);
+  }, [actorId, tenantId]);
   useEffect(() => registerAccountSwitchGuard(() => {
     if (busy || (dirty && result?.kind !== "verified")) { setNotice("Finish or discard this draft before switching workspaces."); return false; }
     return true;

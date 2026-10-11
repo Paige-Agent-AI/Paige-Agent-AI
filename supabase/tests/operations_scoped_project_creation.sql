@@ -44,4 +44,38 @@ create temporary table ops_created_milestone(id uuid);
 insert into ops_created_milestone select (public.plan_add_milestone_scoped('ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000001111',(select id from ops_created_plan),'Test review',null,null,'ed010000-0000-4000-8000-000000000001','high')->>'item_id')::uuid;
 select pg_temp.check_true((select count(*)=1 from public.plan_items where id=(select id from ops_created_milestone) and plan_id=(select id from ops_created_plan) and item_type='milestone' and status='open' and priority='high' and assigned_to_user_id='ed010000-0000-4000-8000-000000000001'),'canonical milestone parent/person/readback');
 select pg_temp.check_true((select count(*)=2 from public.audit_logs where entity_id in (select id from ops_created_plan union all select id from ops_created_milestone) and action in ('plan_create','plan_add_milestone')),'canonical project/milestone audit preserved');
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000001',true);
+insert into public.user_roles(user_id,role) values ('ed010000-0000-4000-8000-000000000001','admin') on conflict do nothing;
+select pg_temp.refused($s$select public.plan_create_scoped('ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111','Test forbidden team','custom',current_date,current_date+10,'team','ed010000-0000-4000-8000-000000000001')$s$,'42501','global role cannot grant target-tenant team creation');
+select pg_temp.refused(format($s$select public.plan_add_milestone_scoped('ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111',%L,'Test forbidden milestone',null,null,'ed010000-0000-4000-8000-000000000001')$s$,(select id from ops_created_plan)),'42501','global role cannot grant target-tenant milestone administration');
+
+-- Operations only serves the canonical top-level standalone shell.
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000001',true);
+update public.tenants set account_type='agency' where id='ed010000-0000-4000-8000-000000001111';
+select pg_temp.refused($s$select public.plan_create_scoped('ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111','Test excluded project','custom',current_date,current_date+10,'individual','ed010000-0000-4000-8000-000000000001')$s$,'42501','agency Operations capability refused');
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000002',true);
+select pg_temp.refused($s$select public.plan_add_milestone_scoped('ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000001111',(select id from ops_created_plan),'Test excluded milestone',null,null,'ed010000-0000-4000-8000-000000000001')$s$,'42501','agency secondary Operations capability refused');
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000001',true);
+-- Database-owner setup of rollback-owned hierarchy only; restore caller before API checks.
+do $fixture$ declare prior_sub text := current_setting('request.jwt.claim.sub',true);
+ prior_claims text := current_setting('request.jwt.claims',true); begin
+ perform set_config('request.jwt.claim.sub','',true);
+ perform set_config('request.jwt.claims','{}',true);
+ update public.tenants set account_type='standalone',parent_tenant_id='ed020000-0000-4000-8000-000000002222' where id='ed010000-0000-4000-8000-000000001111';
+ perform set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
+ perform set_config('request.jwt.claims',coalesce(prior_claims,'{}'),true);
+end $fixture$;
+select pg_temp.refused($s$select public.plan_create_scoped('ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111','Test excluded project','custom',current_date,current_date+10,'individual','ed010000-0000-4000-8000-000000000001')$s$,'42501','parented standalone Operations capability refused');
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000002',true);
+select pg_temp.refused($s$select public.plan_add_milestone_scoped('ed010000-0000-4000-8000-000000000002','ed010000-0000-4000-8000-000000001111',(select id from ops_created_plan),'Test excluded milestone',null,null,'ed010000-0000-4000-8000-000000000001')$s$,'42501','parented standalone secondary Operations capability refused');
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000001',true);
+-- Database-owner setup of rollback-owned hierarchy only; restore caller before API checks.
+do $fixture$ declare prior_sub text := current_setting('request.jwt.claim.sub',true);
+ prior_claims text := current_setting('request.jwt.claims',true); begin
+ perform set_config('request.jwt.claim.sub','',true);
+ perform set_config('request.jwt.claims','{}',true);
+ update public.tenants set parent_tenant_id=null where id='ed010000-0000-4000-8000-000000001111';
+ perform set_config('request.jwt.claim.sub',coalesce(prior_sub,''),true);
+ perform set_config('request.jwt.claims',coalesce(prior_claims,'{}'),true);
+end $fixture$;
 rollback;

@@ -154,8 +154,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
       onClose={() => setCreatingProject(null)} onCreated={() => source.refresh({ silent: true })}
       onRecover={async id => {
         await source.refresh({ silent: true });
-        setCreatingProject(null);
         if (id) {
+          setCreatingProject(null);
           inspectionInvoker.current = projectCreationInvoker.current;
           setInspection({ kind: creatingProject.project ? "item" : "plan", id, view: destination });
         }

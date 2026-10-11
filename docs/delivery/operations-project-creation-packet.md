@@ -24,6 +24,22 @@ Busy flows reject abandonment. Unsaved drafts guard workspace switching and relo
 - Adapter: 12 tests PASS for independently read draft/milestone fields, foreign acknowledgement, actor changes, canonical refusal and lost response without replay.
 - Creator: four tests PASS for review/cancel retention, verified-only draft success, uncertain inspection lock and nonstaff milestone refusal. Initial test helper selected Start twice; corrected Finish selection and rerun passed.
 - Product/shared-shell browser: 12 cases PASS across Obsidian/Mineral and required four sizes plus phone: project review cancellation, canonical refusal, actual scrolling/containment and focus; milestone refusal and focus in each theme. Explicit synthetic reads/role/refusal ports, not saved-record or authenticated proof.
-- Scoped source ESLint, definer grant lint and signature ACL lint PASS. Typecheck is pending.
-- Sixteen SQL rollback assertions are registered in database-contract CI. Native PostgreSQL could not start because local loopback binding returned permission denied: SQL execution is UNVERIFIED, not PASS. No customer database write or provider effect was attempted.
-- Non-author review, exact-head rebuilt-schema CI, hosted migration/readback and authenticated acceptance remain owed. Project lifecycle editing, arbitrary dependencies and delivery acceptance are later slices, not implied by creation.
+- Scoped source ESLint, definer grant lint and signature ACL lint PASS. Type ratchet PASS (baseline 10/current 10) before guarded-read follow-up.
+- Eighteen SQL rollback assertions are registered in database-contract CI. Native PostgreSQL could not start because local loopback binding returned permission denied: SQL execution is UNVERIFIED, not PASS. No customer database write or provider effect was attempted.
+- Independent bounded static and visual reviews PASS for the prior core; target-tenant authority follow-up static review PASS. Fresh Solo-boundary review, exact-head rebuilt-schema CI, hosted migration/readback and authenticated acceptance remain owed. Project lifecycle editing, arbitrary dependencies and delivery acceptance are later slices, not implied by creation.
+
+## Solo API scope pre-edit follow-up
+
+Match the canonical isSoloStandalone registry boundary (literal standalone, no parent) before Operations record access or canonical delegation. Preserve current membership/tenant administration, creator/assignee authority, validation, CAS, audit and effective legacy permission intersection. No lifecycle entitlement inference or non-Solo expansion. Add disposable excluded-account SQL refusals; new SQL remains UNEXECUTED until rebuilt-schema CI, with independent review required. No customer workspace testing.
+
+Current registered rollback SQL assertions: 22; new Solo-scope assertions UNEXECUTED pending fresh rebuilt-schema CI.
+
+Guarded-read/Solo-boundary local follow-up: complete Operations plus tenant-switch suite PASS, 91 tests in 16 files; scoped shared-hook/Workspace lint and definer/ACL-signature lint PASS. New rollback SQL execution remains UNVERIFIED pending rebuilt-schema CI. No customer runtime or production acceptance inferred.
+
+Fresh current-scope rendered proof: 22 project/milestone cases PASS; both worlds, all four required sizes with PAIGE open/closed plus phone closed, explicit synthetic target-tenant administration/refusal ports. JSON records flags, focus, scrolling and containment. Type ratchet PASS baseline10/current10. Native/hosted SQL, runtime and customer acceptance are not inferred.
+
+Fresh independent non-author rendered creator critique: bounded SHIP, no material fixes; screenshots prove synthetic visual/refusal behavior only, not authenticated permissions, saved records or genuine employee photographs.
+
+## Release preparation after task-creation a40245ea
+
+Prepared on current task-creation head a40245eac4b4824e0ab940f58f2a57919ccfae66. Preserved its uncertain-task recovery lock. Unknown project acknowledgements likewise refresh without closing/re-enabling creation; only a known identity opens source detail, or an explicit warned abandonment closes. Target-tenant administrator UI read replaces global role inference and refreshes when actor/tenant changes. SQL wrappers retain literal standalone membership scope and canonical writers. Local adapters/creator/workspace: 22 focused tests PASS (16 adapter/creator and six workspace); scoped ESLint PASS. SQL 22 assertions remain UNEXECUTED. Historical rendered evidence is retained, not claimed as a fresh final-head proof. Development migration 20270602000413 is unallocated and must be renumbered against production and reservations before opening the bounded release PR. No production project or customer write occurred.

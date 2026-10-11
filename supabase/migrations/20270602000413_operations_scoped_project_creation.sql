@@ -14,13 +14,18 @@ begin
   perform 1 from public.profiles where user_id=v_actor for update;
   if not found then raise exception 'PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
   v_tenant := public.current_user_tenant_id();
-  if v_tenant is distinct from p_expected_tenant_id then raise exception 'PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
+  if v_tenant is distinct from p_expected_tenant_id or not public.is_tenant_member(v_tenant) then raise exception 'PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
+  if not exists(select 1 from public.tenants t where t.id=v_tenant and t.account_type::text='standalone' and t.parent_tenant_id is null) then
+    raise exception 'PLAN_FORBIDDEN: Solo Operations unavailable' using errcode='42501'; end if;
+
   if p_title is null or length(btrim(p_title)) not between 1 and 500
     or coalesce(length(p_summary),0)>10000 or p_scope is null or p_scope not in ('individual','team')
     or p_horizon is null or p_horizon not in ('week','month','quarter','semiannual','year','custom')
     or p_starts_on is null or p_ends_on is null or p_ends_on<p_starts_on or p_owner_user_id is null then
     raise exception 'PLAN_PROJECT_INPUT_INVALID' using errcode='22023';
   end if;
+  if (p_scope='team' or p_owner_user_id is distinct from v_actor) and not coalesce(public.is_tenant_admin(v_tenant),false) then
+    raise exception 'PLAN_PROJECT_FORBIDDEN' using errcode='42501'; end if;
   v_result := public.plan_create(p_title:=btrim(p_title), p_horizon:=p_horizon,
     p_starts_on:=p_starts_on, p_ends_on:=p_ends_on, p_scope:=p_scope,
     p_owner_user_id:=p_owner_user_id, p_summary:=p_summary, p_campaign_ref:=null, p_tenant_id:=v_tenant);
@@ -45,7 +50,10 @@ begin
   perform 1 from public.profiles where user_id=v_actor for update;
   if not found then raise exception 'PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
   v_tenant := public.current_user_tenant_id();
-  if v_tenant is distinct from p_expected_tenant_id then raise exception 'PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
+  if v_tenant is distinct from p_expected_tenant_id or not public.is_tenant_member(v_tenant) then raise exception 'PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
+  if not exists(select 1 from public.tenants t where t.id=v_tenant and t.account_type::text='standalone' and t.parent_tenant_id is null) then
+    raise exception 'PLAN_FORBIDDEN: Solo Operations unavailable' using errcode='42501'; end if;
+
   if p_title is null or length(btrim(p_title)) not between 1 and 500
     or coalesce(length(p_summary),0)>10000 or p_priority is null or p_priority not in ('low','normal','high','urgent')
     or p_plan_id is null or p_assigned_to_user_id is null then
@@ -53,6 +61,8 @@ begin
   end if;
   perform 1 from public.plans where id=p_plan_id and tenant_id=v_tenant for update;
   if not found then raise exception 'PLAN_PROJECT_UNAVAILABLE' using errcode='42501'; end if;
+  if not coalesce(public.is_tenant_admin(v_tenant),false) then
+    raise exception 'PLAN_PROJECT_UNAVAILABLE' using errcode='42501'; end if;
   v_result := public.plan_add_milestone(p_plan_id:=p_plan_id, p_title:=btrim(p_title),
     p_summary:=p_summary, p_due_at:=p_due_at, p_assigned_to_user_id:=p_assigned_to_user_id,
     p_priority:=p_priority, p_tenant_id:=v_tenant);

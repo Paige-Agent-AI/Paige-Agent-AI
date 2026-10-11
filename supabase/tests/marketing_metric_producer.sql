@@ -43,14 +43,23 @@ INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
  ('a2980000-0000-4000-8000-000000000002','a2980000-0000-4000-8000-000000000011')
  ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
 
+-- A real pipeline for the intake-route forms (the routing guard admits only this workspace's pipelines).
+-- The real actor supplies creation provenance, as shared_metric_evidence does.
+CREATE TEMP TABLE marketing_pipeline(id uuid NOT NULL);
+SELECT set_config('request.jwt.claim.sub','a2980000-0000-4000-8000-000000000001',true),
+ set_config('request.jwt.claims','{"sub":"a2980000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+WITH generated AS (
+ INSERT INTO public.pipelines(tenant_id,name,is_default) VALUES ('a2980000-0000-4000-8000-000000000011','Marketing proof',true) RETURNING id
+) INSERT INTO marketing_pipeline(id) SELECT id FROM generated;
+SELECT set_config('request.jwt.claims','{}',true),set_config('request.jwt.claim.sub','',true);
 -- Records the producer reads, written directly by the server role (the Studio publish guard admits it).
 INSERT INTO public.growth_forms(id,tenant_id,slug,name,status,auto_create_deal,pipeline_id) VALUES
  ('a2980000-0000-4000-8000-0000000000f1','a2980000-0000-4000-8000-000000000011','routed-automation','Routed by automation','active',false,null),
  ('a2980000-0000-4000-8000-0000000000f2','a2980000-0000-4000-8000-000000000011','unrouted','Unrouted','active',false,null),
  ('a2980000-0000-4000-8000-0000000000f4','a2980000-0000-4000-8000-000000000011','archived','Archived','archived',false,null),
  -- Intake columns route a form only while it has no enabled automation (as growth-process-submission runs it).
- ('a2980000-0000-4000-8000-0000000000f6','a2980000-0000-4000-8000-000000000011','intake-only','Intake only','active',true,gen_random_uuid()),
- ('a2980000-0000-4000-8000-0000000000f7','a2980000-0000-4000-8000-000000000011','intake-and-notify','Intake and notify','active',true,gen_random_uuid()),
+ ('a2980000-0000-4000-8000-0000000000f6','a2980000-0000-4000-8000-000000000011','intake-only','Intake only','active',true,(SELECT id FROM marketing_pipeline)),
+ ('a2980000-0000-4000-8000-0000000000f7','a2980000-0000-4000-8000-000000000011','intake-and-notify','Intake and notify','active',true,(SELECT id FROM marketing_pipeline)),
  ('a2980000-0000-4000-8000-0000000000f5','a2980000-0000-4000-8000-000000000012','foreign','Foreign','active',false,null);
 INSERT INTO public.growth_form_automations(tenant_id,form_id,target_slug,enabled) VALUES
  ('a2980000-0000-4000-8000-000000000011','a2980000-0000-4000-8000-0000000000f1','pipeline_attach',true),

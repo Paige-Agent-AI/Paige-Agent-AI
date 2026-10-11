@@ -41,7 +41,7 @@ export async function createOperationsProjectRecord(scope: WorkCreationScope, dr
     if (draft.kind === "project") {
       if (!("owner_user_id" in row) || row.owner_user_id !== draft.ownerId || row.scope !== draft.scope
         || row.horizon !== draft.horizon || row.starts_on !== draft.startsOn || row.ends_on !== draft.endsOn
-        || row.status !== "draft") return uncertain();
+        || row.status !== "active") return uncertain();
     } else if (!("assigned_to_user_id" in row) || row.assigned_to_user_id !== draft.ownerId
       || row.plan_id !== draft.planId || row.item_type !== "milestone" || row.priority !== draft.priority
       || row.status !== "open" || (draft.dueAt ? typeof row.due_at !== "string" || Date.parse(row.due_at) !== Date.parse(draft.dueAt) : row.due_at !== null)) return uncertain();

@@ -25,12 +25,12 @@ SOLO_UI: YES: Shared Projects surface, no tenant shortcut or non-Solo expansion.
 UNVERIFIED: Full rebuilt-schema CI, final review, production migration/source/persistence and authenticated acceptance owed. SQL22 remains UNEXECUTED until full rebuilt-schema CI.
 
 
-Current build is supporting development evidence only. Proposed migration120 is unapplied and must be rechecked against production and active claims before promotion. SQL22 UNEXECUTED; customer acceptance remains UNVERIFIED under OWNER_LOGIN_HOLD. No provider or client-acceptance effects.
+Current build is supporting development evidence only. Proposed migration210 is unapplied and must be rechecked against production and active claims before promotion. SQL22 UNEXECUTED; customer acceptance remains UNVERIFIED under OWNER_LOGIN_HOLD. No provider or client-acceptance effects.
 
 OWNER_INTENT: Create accountable canonical projects and source-linked milestones.
 MUST_NOT_HAPPEN: Duplicate project/task engine, replay after unknown save, fabricated acceptance or cross-tenant identity.
 MUST_PRESERVE: Planning writers/audit, Team identity/photos, tenant fences, source progress and provider restrictions.
-ACCEPTANCE_CRITERIA: Authorized creation independently reads matching draft/milestone; refused drafts remain; unknown responses prohibit replay.
+ACCEPTANCE_CRITERIA: Authorized creation independently reads matching active project/milestone; refused drafts remain; unknown responses prohibit replay.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: Planning and Team ownership; Sales and Clients acceptance; Chat executor untouched.
 RELEASE_NOTE_REQUIRED: NO: Internal-only supporting development, full outcome unverified.

@@ -60,3 +60,21 @@ select set_config('request.jwt.claim.role','service_role',true);
 select pg_temp.check_cont('service role not user proof',pg_temp.cont() is null);
 select set_config('request.jwt.claim.role','anon',true);
 select pg_temp.check_cont('anon not user proof',pg_temp.cont() is null);
+
+-- C4e: research-kind work reads its objective from the frozen question on the same
+-- lineage contract. The blocked preparation seam is untouched; no dispatch, worker or
+-- provider is introduced or implied.
+select set_config('request.jwt.claim.role','authenticated',true);
+reset role;
+insert into paige_durable_work(id,tenant_id,initiating_user_id,intent_id,thread_id,capability_key,work_kind,authority_context,scope_epoch,idempotency_key,request_payload,status,error_code,terminal_outcome,settled_at)values('00000000-0000-4000-8000-000000000014','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000015','00000000-0000-4000-8000-000000000003','deep_research','research','{}','epoch','research-key','{"question":"Which channel converts best for solo agencies?"}','failed','research_provider_error','{"failed":true}',now());
+update paige_chat_turns set bundle_ref=jsonb_set(bundle_ref,'{interactive,effects}',(bundle_ref->'interactive'->'effects')||'[{"tool":"deep_research","outcome":"durable_accepted","work_id":"00000000-0000-4000-8000-000000000014"}]'::jsonb);
+create function pg_temp.research_cont()returns jsonb language sql as $$select read_paige_durable_continuation('00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000014')$$;
+set local role authenticated;
+select pg_temp.check_cont('research work reads its frozen question',
+ (pg_temp.research_cont()->>'canonicalObjective')='Which channel converts best for solo agencies?'
+ and (pg_temp.research_cont()->>'workKind')='research'
+ and (pg_temp.research_cont()->>'capabilityKey')='deep_research'
+ and (pg_temp.research_cont()->>'errorCode')='research_provider_error'
+ and (pg_temp.research_cont()->'approvalPending')='false');
+-- The document work on the same thread is unaffected by the research effect beside it.
+select pg_temp.check_cont('document work unaffected beside the research effect',pg_temp.cont() is not null);

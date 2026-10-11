@@ -2763,10 +2763,20 @@ group("safety-first streaming: the sources the first enumeration missed");
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...memoryOpts,
     rpcExtras: { ...memoryOpts.rpcExtras, get_paige_memory: proposedMemory },
   });
+  // INT-326 C6 dials: a proposed row may enter ONLY as labelled recollection — never as
+  // unqualified task knowledge. The marker must never appear without the fixed label.
+  const candidateCalls = JSON.stringify(candidateOnly.providerCalls);
   assert(
-    "21.l C6 — proposed owner memory never enters the model's task context",
-    !candidateOnly.providerCalls.some((c) => JSON.stringify(c).includes("PRIVATE-MEMORY-MARKER")),
-    JSON.stringify(candidateOnly.providerCalls).slice(0, 200),
+    "21.l C6 — a proposed owner row enters only as labelled recollection, never as bare task context",
+    !candidateCalls.includes("PRIVATE-MEMORY-MARKER")
+      || candidateCalls.includes("(my recollection — not yet confirmed)"),
+    candidateCalls.slice(0, 200),
+  );
+  assert(
+    "21.l C6 — the recollection label rides with the proposed row wherever it appears",
+    !candidateOnly.providerCalls.some((c) =>
+      JSON.stringify(c).includes("PRIVATE-MEMORY-MARKER") && !JSON.stringify(c).includes("(my recollection — not yet confirmed)")),
+    candidateCalls.slice(0, 200),
   );
 
   // 21.m — THE FUNDING TENANT'S CLIENT FILE. Under `fundingEnabled`, `buildUserContext` reads the

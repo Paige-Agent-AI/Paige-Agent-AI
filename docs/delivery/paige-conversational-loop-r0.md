@@ -1,5 +1,38 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-10 CL-7 slice — the C6 memory consumption dials (INT-326 contract applied)
+
+The INT-326 C6 consumption contract reserved the exact dials to the consuming implementer
+(clarification 3). As the Conversational Loop implementer I set them from the Memory
+lane's measured evidence: **max items 10** (range 8–12; measured max subject rows 8),
+**proposed/unconfirmed capped at 3 per turn**, precedence **confirmed > corrected >
+proposed** (retired/unclassified never admitted; a missing confirmation_state is
+UNCONFIRMED — a candidate, per clarification 1), **no freshness window** at measured
+scale (1–4 rows/week, no decay), and the owner arm's memory block budget tightened
+1000→**700 tokens** (range 600–800; the client arm keeps 1000). `resolveOwnerMemoryContext`
+now admits corrected rows as knowledge and proposed rows as labelled candidates; the
+prompt block labels each candidate "(my recollection — not yet confirmed)" with an
+explicit never-assert-as-fact instruction (clause 8). The authz harness's C6 scenarios
+were updated to the new contract (C6.1/C6.3/C6.5) and the full suite passes **1013/0**
+through the real handler; projection unit tests 16/16; deno 9=9 baseline; tsc 10=10.
+SQL owns supersession as before: a corrected row here is the LATEST correction.
+
+## 2026-10-10 CL-4 slice — C4e research-kind continuation coverage; the gated boundary stated
+
+C4e's merged preparation (#1862, `prepare_paige_research_work` always blocked with
+`research_execution_not_enabled`) is unchanged. What this adds is the research half of the
+CL-3 continuation read's coverage: research-kind work now proven at SQL level (frozen
+`question` objective, provider-error terminal context, deep_research effect lineage on the
+same thread beside document work without cross-reading) and at adapter level (18/18). The
+pure citation-lineage projection (`projectResearchContinuation`) stays the C4e runtime
+contract, unit-tested and unwired — its inputs (`research_runs.work_id` linkage + canonical
+sources) do not exist until the producer adopts the envelope. THE GATED BOUNDARY, stated
+plainly: connecting the Research execution owner to the durable substrate (producer
+`work_id` population, dispatch, wake, verified-result continuation) remains behind #1822
+(security clearance), #1832 (QA principal) and coordination with the Deep Research lane's
+provider/result/cost controls. No scheduler, worker, provider route or dispatch path is
+introduced. INT-346 stays DRAINING.
+
 ## 2026-10-10 CL-3 slice — the authorized durable-continuation eligibility read (C4d)
 
 The C4d foundation's missing runtime half: `projectDurableContinuation` had zero runtime

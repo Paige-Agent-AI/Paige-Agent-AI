@@ -9,7 +9,7 @@ DO $$ BEGIN
 END $$;
 SELECT set_config('test.source_retirement_disposition',public.operator_retirement_disposition('finance_source_observations'),false);
 \if :apply_budget_migration
-\ir ../migrations/20271020000310_finance_budget_versions.sql
+\ir ../migrations/20271020000330_finance_budget_versions.sql
 \endif
 SET ROLE authenticated;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);

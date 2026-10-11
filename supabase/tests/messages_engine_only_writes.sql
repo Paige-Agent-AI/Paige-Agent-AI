@@ -2,7 +2,7 @@
 -- ANT-40 — messages is ENGINE-WRITTEN ONLY (direct PostgREST writes denied).
 --
 -- Failing-first contract: before the paired migration
--- (20271020000020_messages_engine_only_writes), assertions 1-5 FAIL — the
+-- (20271020000040_messages_engine_only_writes), the write assertions FAIL — the
 -- ANT-38-shaped messages_insert/messages_update policies allow a tenant
 -- owner/admin (and platform owner) to insert and edit message rows directly.
 -- After the migration every authenticated direct write is denied by RLS while
@@ -18,17 +18,6 @@ BEGIN;
 
 CREATE FUNCTION pg_temp.require_true(value boolean, label text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF value IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: %', label; END IF; END $$;
-
--- Expect a row-level-security denial: swallow 42501 / "row-level security"
--- messages, re-raise anything else, and FAIL loudly when the write SUCCEEDS.
-CREATE FUNCTION pg_temp.require_rls_denial(label text) RETURNS void LANGUAGE plpgsql AS $$
-BEGIN
-  RAISE EXCEPTION 'FAIL: % was ALLOWED', label;
-EXCEPTION
-  WHEN insufficient_privilege THEN NULL;
-  WHEN OTHERS THEN
-    IF SQLERRM NOT ILIKE '%row-level security%' THEN RAISE; END IF;
-END $$;
 
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
 
@@ -125,7 +114,8 @@ SELECT pg_temp.require_true(
 -- Reads are unchanged by the write-narrowing: the owner still sees both rows.
 SELECT pg_temp.require_true((SELECT count(*) FROM public.messages WHERE tenant_id = 'b4a00000-0000-4000-8000-0000000000a1') = 2, 'owner reads unchanged (shared + own personal)');
 
--- ── 4. The plain member cannot write either ──────────────────────────────────
+-- ── 4. The plain member cannot write either (owner+member denials prove no
+--     permissive WITH CHECK policy remains for ANY authenticated role) ────────
 SELECT set_config('request.jwt.claims', '{"sub":"b4a00000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 
 DO $$

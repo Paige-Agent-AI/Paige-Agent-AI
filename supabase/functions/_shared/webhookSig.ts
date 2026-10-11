@@ -113,6 +113,10 @@ export async function verifySvix(opts: {
     const raw = secret.startsWith("whsec_") ? secret.slice(6) : secret;
     let keyBytes: Uint8Array<ArrayBuffer>;
     try { keyBytes = b64ToBytes(raw); } catch { continue; /* try next secret */ }
+    // A stripped/decoded secret of zero bytes makes importKey throw (DataError).
+    // Treat a non-usable secret as absent — the verdict is a clean rejection,
+    // never an unhandled throw at the door.
+    if (keyBytes.length === 0) continue;
     const key = await crypto.subtle.importKey(
       "raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
     );

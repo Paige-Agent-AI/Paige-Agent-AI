@@ -36,3 +36,19 @@ PROTECTED_SEAMS: Planning and Team ownership; Sales and Clients acceptance; Chat
 RELEASE_NOTE_REQUIRED: NO: Internal-only supporting development, full outcome unverified.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: Synthetic UI and adapters; production persistence and customer runtime unverified.
 RELEASE_RECOVERY: position=reviewed forward repair preserving records; reference=docs/delivery/operations-project-creation-packet.md.
+
+SOLO_1536X770_PAIGE_CLOSED: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+SOLO_1536X770_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+SOLO_1366X768_PAIGE_CLOSED: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+SOLO_1366X768_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+SOLO_1024X768_PAIGE_CLOSED: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+SOLO_1024X768_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+SOLO_900X1000_PAIGE_CLOSED: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+SOLO_900X1000_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.

@@ -65,7 +65,7 @@ try {
   try { db.run('SELECT public.operator_intelligence_regression_corpus()'); } catch(error) { corpusAbsent=error.code==='42883'; }
   if(!corpusAbsent)throw new Error('Corpus failing-first absence proof missing');
   const authorityBefore=db.run("SELECT md5(pg_get_functiondef('public._guard_paige_task_evaluation()'::regprocedure))");
-  const corpus=await readFile('supabase/migrations/20271020000220_int280_regression_corpus.sql','utf8');
+  const corpus=await readFile('supabase/migrations/20271020000300_int280_regression_corpus.sql','utf8');
   await db.exec(corpus);await db.exec(corpus);
   if(db.run("SELECT md5(pg_get_functiondef('public._guard_paige_task_evaluation()'::regprocedure))")!==authorityBefore)throw new Error('Existing AI-2 guard authority changed');
   const corpusProof=db.run(await readFile('supabase/tests/int280_regression_corpus.sql','utf8'));

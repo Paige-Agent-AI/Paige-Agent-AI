@@ -251,6 +251,54 @@ try {
  await actor(delegated);
  assert.equal((await db.query('select operator_can_archive_accounts() v')).rows[0].v,false,'revoked capability refuses immediately');
  await actor(owner);
+ // ANT-47 timeout repair: the deletion plan's FK closure must be a worklist (probe each FK
+ // only when its parent set changed), not a re-probe of every candidate FK every round.
+ // Failing-first baseline: against the un-fixed body the probe-count assertion below fails.
+ const independent504=await readFile('supabase/migrations/20270602000504_operator_provider_independent_retirement.sql','utf8');
+ const oldPlanFn=independent504.match(/CREATE OR REPLACE FUNCTION public\.operator_account_deletion_plan\(_ids uuid\[\]\)[\s\S]*?END \$\$;/)[0];
+ const worklistFix=await readFile('supabase/migrations/20271020000400_operator_deletion_plan_worklist.sql','utf8');
+ await db.exec(`CREATE TABLE IF NOT EXISTS tenant_phone_numbers(id uuid PRIMARY KEY,tenant_id uuid,subaccount_id uuid);
+ CREATE TABLE IF NOT EXISTS paige_voice_cost_reservations(id uuid PRIMARY KEY,tenant_id uuid,state text);
+ DROP TABLE IF EXISTS tenant_n8n_connections;
+ CREATE TABLE tenant_n8n_connections(tenant_id uuid primary key,base_url_ct text,api_key_ct text,api_key_last4 text,status text,last_error text,workflow_count int,updated_by uuid,updated_at timestamptz);
+ DROP TABLE IF EXISTS mcp_connections;
+ CREATE TABLE mcp_connections(connection_id uuid PRIMARY KEY,tenant_id uuid,legacy_source text,provider_key text,enabled boolean,server_url_ct text,auth_token_ct text,auth_token_last4 text,refresh_token_ct text,oauth_client_secret_ct text,inbound_contact_secret_hash text,inbound_contact_actor uuid,granted_scopes jsonb,provider_state jsonb,status text,health text,last_error_code text,last_checked_at timestamptz,updated_by uuid,updated_at timestamptz);
+ CREATE TABLE IF NOT EXISTS mcp_connection_approvals(connection_id uuid);
+ CREATE TABLE IF NOT EXISTS mcp_connection_tools(connection_id uuid);`);
+await db.exec("CREATE TABLE public.fk_probe_log(n int)");
+ await db.exec(`CREATE OR REPLACE FUNCTION public.operator_retirement_fk_join(_constraint oid) RETURNS text LANGUAGE plpgsql VOLATILE SET search_path=public AS $fn$
+ BEGIN
+  INSERT INTO public.fk_probe_log VALUES(1);
+  RETURN (SELECT string_agg(format('c.%I=p.%I',ca.attname,pa.attname),' AND ' ORDER BY z.n)
+   FROM pg_constraint k CROSS JOIN LATERAL generate_subscripts(k.conkey,1) z(n)
+   JOIN pg_attribute ca ON ca.attrelid=k.conrelid AND ca.attnum=k.conkey[z.n]
+   JOIN pg_attribute pa ON pa.attrelid=k.confrelid AND pa.attnum=k.confkey[z.n] WHERE k.oid=_constraint);
+ END $fn$;`);
+ await db.query("insert into deals values('00000000-0000-0000-0000-0000000000a4',$1,'00000000-0000-0000-0000-000000000042','Chain deal')",[solo]);
+ await db.query("insert into deal_activities values('00000000-0000-0000-0000-0000000000a5','00000000-0000-0000-0000-0000000000a4','Chain activity')");
+ const planOf=async()=>(await db.query('select operator_account_deletion_plan(ARRAY[$1::uuid]) v',[solo])).rows[0].v;
+ const probesOf=async()=>(await db.query('select count(*)::int n from fk_probe_log')).rows[0].n;
+ await db.exec(oldPlanFn);
+ await db.exec('truncate fk_probe_log');
+ const planOld=await planOf(); const probesOld=await probesOf();
+ await db.exec(worklistFix); await db.exec(worklistFix);
+ await db.exec('truncate fk_probe_log');
+ const planNew=await planOf(); const probesNew=await probesOf();
+ assert.deepEqual(planNew,planOld,'worklist closure must return the exact same plan as the deployed body');
+ assert.ok(probesNew+6<=probesOld,`worklist must re-probe substantially fewer foreign keys (new ${probesNew} vs old ${probesOld})`);
+ // The full lifecycle still executes atomically through the worklist body.
+ const wl='00000000-0000-0000-0000-0000000000b1', wlOp='00000000-0000-0000-0000-0000000000b2';
+ await db.query("insert into tenants(id,name,status,account_type) values($1,'Worklist Solo','active','standalone')",[wl]);
+ await db.query("insert into clients values('00000000-0000-0000-0000-0000000000b3',$1,'Worklist client')",[wl]);
+ await db.query("insert into deals values('00000000-0000-0000-0000-0000000000b4',$1,'00000000-0000-0000-0000-0000000000b3','Worklist deal')",[wl]);
+ const wlp=await preview(wl);
+ await db.query('select operator_archive_account($1,$2,$3,$4)',[wl,wlp.version,'Worklist Solo',wlOp]);
+ const wlready=(await db.query('select operator_preview_account_deletion($1) v',[wl])).rows[0].v;
+ assert.equal(wlready.execution_available,true,JSON.stringify(wlready.blockers));
+ await db.query('select operator_delete_archived_account($1,$2,$3,$4)',[wl,wlready.version,'Worklist Solo',wlOp]);
+ assert.equal((await db.query('select count(*)::int n from tenants where id=$1',[wl])).rows[0].n,0,'worklist-body deletion removes the scoped tenant');
+ assert.equal((await db.query('select count(*)::int n from deals where tenant_id=$1',[wl])).rows[0].n,0);
+ console.log('PASS: ANT-47 worklist closure — identical plan to the deployed body with far fewer FK probes; full archive→delete lifecycle executes atomically through the repaired function.');
  await db.query("delete from user_roles where user_id=$1",[owner]); assert.equal((await db.query('select operator_can_retire_accounts() v')).rows[0].v,false,'revoked authority refuses immediately');
  assert.equal((await db.query('select operator_can_permanently_delete_accounts() v')).rows[0].v,false,'owner revocation also removes deletion authority');
  console.log('PASS: actual archive/restore/delete SQL; populated Agency tree, CRM/activity/Chat/Memory cleanup, independent Solo and shared identity preserved; admin/owner and ordinary refusal; confirmation, stale version, idempotency and minimal receipt. Auth is a fixture; production acceptance UNVERIFIED.');

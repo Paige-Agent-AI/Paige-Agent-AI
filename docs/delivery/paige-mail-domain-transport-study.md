@@ -1,6 +1,6 @@
 # PAIGE Mail — Domain Architecture, Transport Independence, Compliance Matrix, and Pilot Prerequisites
 
-**Owner:** Mail agent lane (P-ANT-12, ANT-40..44). **Date:** 2026-10-12. **Status:** decision
+**Owner:** Mail agent lane (P-ANT-12, ANT-40..44). **Date:** 2026-10-11. **Status:** decision
 study and design — no DNS change, domain purchase, provider activation, or traffic routing is
 authorized by this document. Branding contract (owner clarification 2026-10-12) governs throughout:
 tenants see **PAIGE Email — Provided by PAIGE Agent AI**; the transport provider is invisible to
@@ -116,8 +116,10 @@ flags. No content is rewritten to dodge policy — the AUP is complied with, not
 
 The bounded pilot (controlled PAIGE test identities/domains/recipients; no customer campaigns; no
 broad activation) is approved in principle. Engineering side is ready end-to-end at the source
-level: two-mailbox substrate (#1880), tenant-scoped authority (#1944), inbound completion (#1978:
-canonical Svix verification, retry-true dedup, durable engine sweep), engine-only writes. The
+level: two-mailbox substrate (#1880), tenant-scoped authority (#1944), inbound completion (PR #1978, branch
+ant40-inbound-completion — open at this writing: canonical Svix verification,
+retry-true dedup, durable engine sweep) and the engine-only-writes decision it
+carries. The
 following remain, each a separately authorized external action:
 
 1. **Dedicated organizational domain** — owner selects/approves the domain (purchase + registration
@@ -150,7 +152,7 @@ The One-PAIGE Capability Integration & Proof Matrix remains the one in
 there with INT-342's owner at that doc's next update. Until then this lane table is the working
 status, subordinate to M3's status vocabulary:
 
-| Surface | Capability seam | State after #1978 | Proof owed for LIVE |
+| Surface | Capability seam | State after PR #1978 (open at this writing) | Proof owed for LIVE |
 |---|---|---|---|
 | Settings → Connections | `comms.mailbox_*` read/organize + BYOD domain design (this doc) | PARTIAL (readiness signals + Gmail personal OAuth inert; BYOD unbuilt) | Authenticated tenant drive; verified BYOD domain on a test tenant |
 | Clients → Conversations | unified `messages` + inbound engine | PARTIAL (inbound complete + inert; two-way reply via action bus filed) | Authorized inbound round-trip; draft/reply/undo receipts |

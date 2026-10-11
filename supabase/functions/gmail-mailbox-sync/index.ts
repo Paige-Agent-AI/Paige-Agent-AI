@@ -172,8 +172,10 @@ async function classifyBackfill(): Promise<number> {
  * error and nothing else re-ran it. Per thread only the NEWEST candidate is
  * re-run (one idempotent engine call; last_inbound_at lands at the thread max,
  * so re-runs can only ADVANCE it, never regress it). Service-role only,
- * bounded (100 threads), 3-day window, shared_support connectors only, and a
- * sweep error never fails the tick.
+ * 3-day window, shared_support connectors only, and a sweep error never fails
+ * the tick. Bounds: the candidate scan is capped at 500 newest-of-thread rows
+ * and at most 100 SUCCESSFUL engine re-runs happen per tick (failed attempts
+ * are retried by the next tick, not counted).
  */
 async function intelligenceBackfill(): Promise<number> {
   const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
@@ -225,9 +227,21 @@ async function intelligenceBackfill(): Promise<number> {
     const caseFreshMs = existingCase?.last_inbound_at
       ? new Date(existingCase.last_inbound_at as string).getTime()
       : null;
-    // No sent_at at all (should not happen on the inbound path) — re-run only
-    // when no case exists, staying conservative rather than looping forever.
-    const absorbed = newest.sentAtMs !== null && caseFreshMs !== null && caseFreshMs >= newest.sentAtMs;
+    // NULL-sent_at truth: the engine stamps last_inbound_at = the message's
+    // sent_at, so a case whose last_inbound_at IS NULL was written by a
+    // null-sent_at run (a FAILED engine call leaves no case write at all).
+    // Absorption therefore reads:
+    //   case exists + NULL-stamped + newest NULL-sent_at -> absorbed (engine
+    //     ran; NULL is the best knowable stamp — never loops);
+    //   case exists + NULL-stamped + newest has a real sent_at -> exactly one
+    //     advance re-run (stamps the real value), absorbed thereafter;
+    //   case exists + fresh >= newest.sent_at (either side NULL-adjusted) ->
+    //     absorbed; a later processed message absorbs an earlier one;
+    //   no case -> one run creates it.
+    const hasCase = !!existingCase;
+    const absorbed = hasCase && (caseFreshMs === null
+      ? newest.sentAtMs === null
+      : (newest.sentAtMs === null || caseFreshMs >= newest.sentAtMs));
     if (absorbed) continue;
     try {
       const res = await admin.rpc("record_inbound_message_intelligence", { _message_id: newest.id });

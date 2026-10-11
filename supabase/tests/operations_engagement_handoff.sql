@@ -77,8 +77,12 @@ set local role authenticated;
 select pg_temp.refused($s$select pg_temp.handoff(agreement=>'eb810000-0000-4000-8000-00000000a003')$s$,'42501','unsealed draft cannot authorize operational handoff');
 reset role;
 
-insert into public.tenant_client_agreements(id,tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,starts_on,status,created_by) select 'eb810000-0000-4000-8000-00000000d002',tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,starts_on,'active',created_by from public.tenant_client_agreements where id='eb810000-0000-4000-8000-00000000d001';
-insert into public.paige_agreements(id,tenant_id,contact_id,offer_id,commercial_terms_id,title,body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by) select 'eb810000-0000-4000-8000-00000000a004',tenant_id,contact_id,offer_id,'eb810000-0000-4000-8000-00000000d002','Test separate engagement',body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by from public.paige_agreements where id='eb810000-0000-4000-8000-00000000a001';
+-- A genuinely different engagement needs a different offer: Sales permits only one
+-- active commercial commitment per client/offer. Do not weaken that constraint.
+insert into public.tenant_products(id,tenant_id,name,status,product_type,created_by) values
+ ('eb810000-0000-4000-8000-00000000f002','eb810000-0000-4000-8000-000000001111','Test separate engagement','active','service','eb810000-0000-4000-8000-000000000002');
+insert into public.tenant_client_agreements(id,tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,starts_on,status,created_by) select 'eb810000-0000-4000-8000-00000000d002',tenant_id,contact_id,'eb810000-0000-4000-8000-00000000f002',term_kind,price_basis,agreed_amount_minor,agreed_currency,starts_on,'active',created_by from public.tenant_client_agreements where id='eb810000-0000-4000-8000-00000000d001';
+insert into public.paige_agreements(id,tenant_id,contact_id,offer_id,commercial_terms_id,title,body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by) select 'eb810000-0000-4000-8000-00000000a004',tenant_id,contact_id,'eb810000-0000-4000-8000-00000000f002','eb810000-0000-4000-8000-00000000d002','Test separate engagement',body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by from public.paige_agreements where id='eb810000-0000-4000-8000-00000000a001';
 set local role authenticated;
 select pg_temp.refused($s$select pg_temp.handoff(agreement=>'eb810000-0000-4000-8000-00000000a004')$s$,'40001','original request cannot authorize a second engagement');
 reset role;

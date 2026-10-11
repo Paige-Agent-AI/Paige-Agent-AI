@@ -26,3 +26,5 @@ Fresh direct TypeScript compiler completed with ten existing diagnostics, exact 
 ## Current-head fixture recovery
 
 Sales310 is independently verified. The rollback fixture now supplies the existing committed-agreement starts_on requirement and preserves every refusal assertion. Hosted preview execution reached authenticated role but stopped on missing ambient clients SELECT grant; production catalog confirms that grant exists. Required database-contract reproduces the production ACL baseline before running assertions. No PostgreSQL PASS claimed from this attempt; no Sales function or grant changed.
+
+Current-head CI run38177843157 reproduced production grants and passed19 handoff assertions before duplicate live client/offer fixture ERROR23505. The separate-engagement fixture now uses a separate legitimate synthetic offer, preserving Sales uniqueness and all refusal tests; no Sales function or constraint changed. Fresh final-head review/full PostgreSQL and CI remain required.

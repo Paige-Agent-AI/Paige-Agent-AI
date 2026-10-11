@@ -79,3 +79,7 @@ Fresh full Operations regression145 tests/23 files PASS; scoped ESLint PASS; fin
 
 Integration source3f1c04e4e92d6c71ea271e042973f799ad31cb82 received independent non-author COMPLETE COMPATIBLE, no material findings. Assignment visibility loss correctly remains uncertain rather than successful. Actual shared-shell18 normal configurations PASS: both worlds, all four required sizes with PAIGE initial open/closed and phone390; selected Team image/name in confirmation, cancelled reassignment leaves source unchanged, explicit deadline clear, server refusal, no false saved feedback, keyboard/invoker focus, actual scrolling/containment and reduced motion, zero browser errors. Thirty-six captures/report under native-work-edit evidence. Sources and image are explicitly synthetic; no saved assignment, actual photograph, customer login or provider effect. New native zoom and independent visual review remain owed.
 
+
+### Assignment and due-date supplemental rendered evidence
+Eight genuine unsigned Chrome 200/400 percent zoom configurations passed in both themes with PAIGE initially open/closed, actual Overview row reachability, assignment/photo review, cancellation, explicit date removal, server refusal, keyboard focus restoration and reduced motion. Twenty-four zoom captures and the report are retained. Four additional desktop/phone editor-form configurations passed in both themes; independent visual review is pending. These use synthetic fixtures and refused execution; no authenticated customer or production persistence claim.
+

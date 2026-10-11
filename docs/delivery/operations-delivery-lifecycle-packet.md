@@ -66,3 +66,6 @@ Sales owner acknowledged ANT-49 and is fixing a synthetic fixture creator constr
 ## Routine Release Self-Recovery — current production frontier
 Sales1996 merged e0b047d3cae51820f7b1450269582d129680d513. Independent production catalog confirms distinct signing/commercial trigger contracts and applied310; Finance300 also applied. Current main incorporated without discarding work. Owned unapplied Delivery290 renamed to320 after current open-PR/applied scan. Handoff330 and client-review340 proposed separately; no production history rewritten. Fresh final-head review/CI and current PostgreSQL assertions remain required. Earlier290 proof is historical isolated evidence, not an applied production version.
 
+## Preview recovery evidence
+
+Exact d077 head received independent COMPLETE. Its owned no-data preview reset failed SQLSTATE 53200 (out of shared memory) inside Supabase reset, before migration proof. The failed owned preview was deleted for clean automatic recreation; production was untouched. Required verify/database-contract remain pending. No new PostgreSQL PASS or release is claimed.

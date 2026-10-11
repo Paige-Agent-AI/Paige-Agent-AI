@@ -277,7 +277,7 @@
         "rail_evidence": {
           "producer": "none",
           "read": "none",
-          "note": "No Ads act exists, so no receipt or Rail event is produced."
+          "note": "Ad-copy saves keep Marketing's existing content_save receipt; no Ads-owned producer or receipt exists."
         },
         "mind_eligibility": {
           "axis_a": "n/a",
@@ -701,7 +701,7 @@
       "intended_capability": {
         "read": "Once a metrics source exists: real performance metrics with provenance.",
         "draft": "Interpret performance and recommend actions.",
-        "auto": "Within the owner's standing delegated policy and its budget caps and stop conditions, take the pre-approved performance-driven action on the connected ad platform — e.g. pause a campaign breaching a CPA ceiling, or shift spend within the approved budget — recording the basis and the action, Rail-logged. Blocked today only by the absent metrics source.",
+        "auto": "Within the owner's standing delegated policy and its budget caps and stop conditions, take the pre-approved performance-driven action on the connected ad platform — e.g. pause a campaign breaching a CPA ceiling, or shift spend within the approved budget — recording the basis and the action, Rail-logged. Blocked today only by the absent metrics source. The ad-platform action itself executes through the Ads department's capability (`ads.department`), never a second executor here.",
         "confirm": "A performance-driven change above the granted caps, or one not on the pre-approved action list, escalates to owner confirmation (high).",
         "prohibited": "Never infer or fabricate a metric (§13). Spend actions execute on the tenant's own connected ad account (§38).",
         "completion_criterion": "Real performance data drives a Paige-prepared, owner-approved action with a verified result — blocked today on the absent metrics source."
@@ -726,7 +726,7 @@
       "state": "UNAVAILABLE",
       "state_reason": "No metrics source exists. Performance is the right model for how Mind should DECLINE, and must not be given data to look otherwise. Mind must be pointed away from it.",
       "evidence_class": ["source_read"],
-      "linked": [],
+      "linked": ["ads.department"],
       "next_slice": "None. Mind must be pointed away from this surface.",
       "sources": ["docs/architecture/paige-mind-integration-matrix.md#campaigns-social-performance"]
     },

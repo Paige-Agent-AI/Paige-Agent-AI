@@ -1,0 +1,46 @@
+name: Funding Coach bundle proof (ANT-29 / FCB-2a)
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20271020000000_funding_coach_blueprint_bundle_seed.sql'
+      - 'supabase/tests/funding_coach_bundle_proof.sql'
+      - '.github/workflows/funding-coach-bundle-proof.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20271020000000_funding_coach_blueprint_bundle_seed.sql'
+      - 'supabase/tests/funding_coach_bundle_proof.sql'
+      - '.github/workflows/funding-coach-bundle-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle-lifecycle-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Stock image: the suite needs only pgcrypto (standard-contrib). Fixtures are
+        # synthetic; the suite's isolated-DB guard refuses to run anywhere but its
+        # disposable funding_coach_bundle_proof database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: ''
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run the funding_coach bundle lifecycle suite (real migration chain + candidate seed)
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -c "CREATE DATABASE funding_coach_bundle_proof"
+          psql -X -v ON_ERROR_STOP=1 -d funding_coach_bundle_proof -f supabase/tests/funding_coach_bundle_proof.sql

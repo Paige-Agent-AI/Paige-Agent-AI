@@ -56,7 +56,12 @@ select pg_temp.refused($s$select public.plan_item_activity_scoped('ee020000-0000
 update public.plan_items set assigned_to_user_id=null where id='ee010000-0000-4000-8000-00000000a001';
 select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000002',true);
 select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000002','ee010000-0000-4000-8000-000000001111')$s$,'42501','null assignee cannot admit unrelated member');
+-- Explicit admin-B/member-A cohort; preserve enabled canonical role synchronization.
+update public.profiles set active_tenant_id='ee020000-0000-4000-8000-000000002222' where user_id='ee010000-0000-4000-8000-000000000002';
+insert into public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) values ('ee020000-0000-4000-8000-000000002222','ee010000-0000-4000-8000-000000000002','admin','active',false,now());
 insert into public.user_roles(user_id,role) values ('ee010000-0000-4000-8000-000000000002','admin') on conflict do nothing;
+update public.profiles set active_tenant_id='ee010000-0000-4000-8000-000000001111' where user_id='ee010000-0000-4000-8000-000000000002';
+select pg_temp.check_true(not public.is_tenant_admin('ee010000-0000-4000-8000-000000001111') and public.is_tenant_admin('ee020000-0000-4000-8000-000000002222'),'activity fixture actor is member A and admin B');
 select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000002','ee010000-0000-4000-8000-000000001111')$s$,'42501','global role cannot grant target-tenant activity visibility');
 select pg_temp.refused($s$select public.plan_update_item_priority_versioned('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000002','ee010000-0000-4000-8000-000000001111',(select updated_at from public.plan_items where id='ee010000-0000-4000-8000-00000000a001'),'urgent')$s$,'42501','global role cannot grant target-tenant priority management');
 delete from public.user_roles where user_id='ee010000-0000-4000-8000-000000000003';
@@ -93,5 +98,3 @@ end $fixture$;
 delete from public.tenant_members where user_id='ee010000-0000-4000-8000-000000000001';
 select pg_temp.refused($s$select public.plan_item_activity_scoped('ee010000-0000-4000-8000-00000000a001','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')$s$,'42501','revoked membership denied');
 rollback;
-
-

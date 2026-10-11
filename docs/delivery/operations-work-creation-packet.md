@@ -68,3 +68,8 @@ Current type ratchet PASS: baseline10/current10. Independent fixture audit found
 ## Promotion after UI release — October 11
 
 PR #1922 is merged as cf11661f39c0b67ae37ee9ab3062b73c5939b998. This slice is reconciled with that squash merge at 301c1c107. Production migration20 and reviewed function hashes/ACLs are verified. Fresh active reservation scan finds030 and100 already claimed; the unapplied development00412 is renamed to20271020000110, above the applied frontier20 and all observed active claims. SQL body is unchanged. Recheck frontier and reservations before merge; never reset applied history. Sixteen rollback assertions and fresh final-head CI remain owed. Historical pending type/zoom/review notes above are superseded by the completed evidence below them.
+
+
+## Rebuilt-schema failure disposition — October 11
+
+Exact-head database-contract job114393353798 failed at test line52 with ACTION_FORBIDDEN: admin or coach required. The positive fixture incorrectly assumed ordinary-member self creation could traverse the canonical action bus. Existing plan_assign_task files owner.planning_task through file_action, which retains its own staff authority. Do not bypass it or set file_to_bus=false. Product/SQL wrapper unchanged. The positive case now uses a target-tenant administrator assigning a real fixture member; two new assertions explicitly require ordinary-member refusal and rollback of the tentative item.18 assertions await fresh rebuilt-schema CI. Allowed creation is the intersection of Operations scope and existing canonical Planning/action-bus authority, not all members. Local UI refusals remain honest; no authority or customer record was changed.

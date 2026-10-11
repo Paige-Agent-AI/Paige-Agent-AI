@@ -47,3 +47,8 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: Local synthetic UI and isolated native SQL, no 
 RELEASE_RECOVERY: position=preserve source records and reviewed forward repair or scoped UI rollback; reference=docs/delivery/operations-work-creation-packet.md.
 
 Native PostgreSQL proof: twelve rolled-back assertions, authenticated database-role creation and four caller-RLS visibility cases passed with actual Planning writer/member/scope/RLS and explicit platform/action-bus fixture ports. Synthetic rows cleared and owned server stopped. This does not establish provider effects, notification delivery, complete action bus or customer authenticated runtime.
+
+
+## Rebuilt-schema failure disposition — October 11
+
+Exact-head database-contract job114393353798 failed at test line52 with ACTION_FORBIDDEN: admin or coach required. The positive fixture incorrectly assumed ordinary-member self creation could traverse the canonical action bus. Existing plan_assign_task files owner.planning_task through file_action, which retains its own staff authority. Do not bypass it or set file_to_bus=false. Product/SQL wrapper unchanged. The positive case now uses a target-tenant administrator assigning a real fixture member; two new assertions explicitly require ordinary-member refusal and rollback of the tentative item.18 assertions await fresh rebuilt-schema CI. Allowed creation is the intersection of Operations scope and existing canonical Planning/action-bus authority, not all members. Local UI refusals remain honest; no authority or customer record was changed.

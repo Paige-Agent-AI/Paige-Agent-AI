@@ -25,17 +25,17 @@ MUST_PRESERVE: Executive landing, five workspaces, Settings placement, both them
 ACCEPTANCE_CRITERIA: Inspect a run, select either page control, reload a page containing that same run; no inspector until explicitly selected again and heading focus remains stable.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Existing actor/epoch/version fences and matched readback tested; SQL, Spine, Harness, Trust, Rail, providers, Chat/Live and routing unchanged.
-INTERNAL_BUILD_IDENTITY: source commit recorded in PR; deployment=UNVERIFIED until normal release; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and exact PR/CI/review
+INTERNAL_BUILD_IDENTITY: f3246ad46dadfd718b50214e4daffebfcfc427e0 original source correction; final reviewed head in PR1977; deployment=local-controlled-source; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/int-280/ai2-paging-browser-proof.json and PR1977 exact-head checks
 RELEASE_CHANNEL: development: reviewed forward fix pending independent exact-head review and full mandatory CI
 RELEASE_CLASSIFICATION: internal-only: bounded focus/navigation repair
 CUSTOMER_RELEASE_IDENTITY: none: no owner-authorized customer announcement/version
 RELEASE_NOTE_REQUIRED: no: internal Operator correction
-RELEASE_TRUTH_BOUNDARY: PARTIAL supported source; authenticated acceptance PROOF OWED under OWNER_LOGIN_HOLD; Intelligence Chat/Live UNAVAILABLE
+RELEASE_TRUTH_BOUNDARY: PARTIAL: supported source; authenticated acceptance PROOF OWED under OWNER_LOGIN_HOLD; Intelligence Chat/Live UNAVAILABLE
 RELEASE_RECOVERY: position=normal reviewed revert/forward fix preserving immutable evidence; reference=release governance policy and #1969
 
 ## Scope, evidence and review
 
-Independent automated source finding: [#1969 review4240337831](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1969#discussion_r4240337831). It surfaced in the postmerge scan; neither original release history nor prior review evidence is rewritten. Separate forward-fix PR receives its own independent non-author exact-head reviews and required CI.
+Independent automated source finding: [#1969 review4240337831](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1969#discussion_r4240337831) was published at 05:04:50Z, before merge at 05:06:07Z on October 11, 2026. It was discovered and reproduced after release. The final premerge scan preceded its publication; original release history and prior review evidence are preserved. Separate forward-fix PR receives its own independent non-author exact-head reviews and required CI.
 
 Source change clears selection before both existing page calls. The isolated harness pages only existing controlled SQL records; it runs in the separate review root, never production. No migration, provider/model call, customer data, new agent or shared execution file. Binding Ledger operator.platform stays PARTIAL; integration/Spine/tier registries N/A because their seams are unchanged.
 

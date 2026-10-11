@@ -7,20 +7,20 @@ MATERIAL_FLOW_CHANGE: YES: Reviewed real task creation through the existing Plan
 FLOW_PROTOTYPE: PASS: Owner approved V3 and implementation October 10.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Responsible owner prepares, reviews and creates an assigned task.
 VISUAL_DIRECTION: PASS: Approved Obsidian/Mineral V3, Team identity and restrained actions.
-AUTOMATED_EVIDENCE: PASS: Eleven adapter and six component tests at prior bounded local heads; final release-head run owed.
-STATIC_EVIDENCE: PASS: Prior scoped lint, ACL/signature lint, baseline-ten type ratchet and non-author review; final release-head verification owed.
-RENDERED_EVIDENCE: PASS: Prior synthetic creator and uncertain recovery captures; refreshed work-create-dark-1366-paige-open.png and work-create-light-390.png recorded with explicit synthetic boundary.
-BEHAVIORAL_EVIDENCE: PASS: Prior theme/viewport draft, refusal, discard cancellation, scroll and focus checks plus four uncertain-outcome recovery cases. Latest explicitly labeled eighteen-case run PASS, operations-v3/work-create-verification.json.
+AUTOMATED_EVIDENCE: PASS: Fresh 23 tests in three files at reconciled source; seven creator tests PASS after the isolated phone fit correction. Final promoted release-head CI remains owed.
+STATIC_EVIDENCE: PASS: Current scoped lint, definer/ACL-signature lint and bounded non-author source review. Current type check and final promoted release-head review remain owed.
+RENDERED_EVIDENCE: PASS: Fresh actual product/shared-shell synthetic creator, confirmation, refusal, discard and zoom captures. Independent visual re-check SHIP for the bounded fixes.
+BEHAVIORAL_EVIDENCE: PASS: Corrected eighteen-case matrix uses genuine narrow PAIGE fold before entry; four uncertain recovery cases and eight native browser zoom cases PASS. Reports preserve explicit synthetic boundaries.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No named customer workspace accessed or tested.
-KEYBOARD_FOCUS: PASS: Prior Enter opens creator and close restores invoker in both worlds.
-ZOOM_REFLOW: UNVERIFIED: Responsive phone containment passed; actual zoom owed.
-REDUCED_MOTION: PASS: No animation added; inherited V3 motion proof historical.
+KEYBOARD_FOCUS: PASS: Current Enter entry, confirmation focus and invoker restoration in both worlds, including native zoom.
+ZOOM_REFLOW: PASS: Eight genuine unsigned-in local Chrome cases at 200%/400%, measured DPR2/4 and CSS width674/337. Actual scrolling and containment passed; no customer runtime claim.
+REDUCED_MOTION: PASS: Fresh creator matrix and native zoom honor reduced motion; no new animation added.
 STATE_COVERAGE: PASS: Local matching/mismatched readback, scope loss, refusal and uncertain identity recovery, no automatic replay.
 TRUTHFUL_STATE_LABELS: PASS: Acknowledgement is not saved-task proof; only matching independent caller-RLS readback earns confirmation.
 SOLO_UI: YES: Shared Work surface, no tenant shortcut or non-Solo expansion.
 UNVERIFIED: Full rebuilt-schema CI, final review, production migration/source/persistence and authenticated acceptance owed. Native SQL proof used explicit fixture ports and is not full hosted-schema acceptance.
 
-Current isolated-release checkpoint: the latest seven creator tests PASS in the development tree with SHA-256-identical creator/test files, including late permission responses from a prior tenant. Scoped creator lint PASS with zero warnings. Earlier 22-test release run predates this refinement. Current isolated rendered verification failed with ERR_INSUFFICIENT_RESOURCES; the captures and viewport PASS entries below remain historical synthetic evidence. Current type verification and all fifteen release SQL assertions remain UNVERIFIED. Development migration00412 requires a new unclaimed release number above the production frontier before promotion.
+Historical isolated-release checkpoint (superseded by October 11 proof in the creation packet): the latest seven creator tests PASS in the development tree with SHA-256-identical creator/test files, including late permission responses from a prior tenant. Scoped creator lint PASS with zero warnings. Earlier 22-test release run predates this refinement. Current isolated rendered verification failed with ERR_INSUFFICIENT_RESOURCES; the captures and viewport PASS entries below remain historical synthetic evidence. Current type verification and all fifteen release SQL assertions remain UNVERIFIED. Development migration00412 requires a new unclaimed release number above the production frontier before promotion.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: Refreshed work-create-verification.json records synthetic containment in both themes.
 SOLO_1536X770_PAIGE_OPEN: PASS: Refreshed work-create-verification.json records PAIGE open containment in both themes.

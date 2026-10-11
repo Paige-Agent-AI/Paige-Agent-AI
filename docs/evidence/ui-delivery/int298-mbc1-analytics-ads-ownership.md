@@ -16,7 +16,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner reads how their owned channe
 VISUAL_DIRECTION: PASS: unchanged Solo tokens and classes; the foot uses the existing .mov-foot; both themes; no gold
 AUTOMATED_EVIDENCE: PASS: growth2.render.test.tsx Analytics test now asserts the channel rows are exactly Email, Social, Your pages, no ad-account or spend text, no Open Ads button, and the paid-source foot line; shown to fail before the change (expected Email, Social, Your pages; received Email, Ads, Social, Your pages). growth2.render, growth2.contract, marketing-analytics-model and sales-ops.contract: 176 of 176
 STATIC_EVIDENCE: PASS: tsc 10 errors on the change and 10 on origin/main measured in a separate worktree (none in changed files); eslint clean on changed files; impeccable@4.1.0 detect exit 0 on the changed UI files
-RENDERED_EVIDENCE: PASS: DRIVE_TABS=analytics 370/370, now asserting three channels, no Ads row and the paid-source line, at 4 viewports x 3 PAIGE postures x 2 themes, with the contrast check on new small text; frames in both themes looked at
+RENDERED_EVIDENCE: PASS: DRIVE_TABS=analytics 370/370 on the final build, asserting three channels, no Ads row and the paid-source line, at 4 viewports x 3 PAIGE postures x 2 themes, with the contrast check on new small text; frames in both themes looked at
 BEHAVIORAL_EVIDENCE: PASS: the drive and render tests change the range and open Email from Channels; no route into Ads remains in Analytics
 AUTHENTICATED_RUNTIME: UNVERIFIED: no tenant login in this session
 KEYBOARD_FOCUS: PASS: one fewer button; the remaining Open Email and Try again keep the shared focus ring
@@ -42,7 +42,7 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens Marketing › Analytics 
 MOTION_PURPOSE: none added
 PROTECTED_SEAMS: tested - the Analytics render test and the drive; unaffected and named - Overview, Campaigns, Audience, Content, Social, Email, Ads (marketing-ads.tsx untouched), the analytics model
 
-INTERNAL_BUILD_IDENTITY: 6cc60b9f5dc01a476eeef6be047a438bb2375883; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: a6f1783ce9d512e5e3bd3cef2621e9db235aa544; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production on merge per the pre-launch stance (CLAUDE.md §4)
 RELEASE_CLASSIFICATION: internal-only: a Solo Marketing view change, no backend change
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version

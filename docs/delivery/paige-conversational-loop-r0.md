@@ -101,8 +101,10 @@ handler: `actual: 'outcome_unknown'`), adapter unit 18/18, family vitest 71/71, 
 
 **Merged and deployed:** #1925 (main `d3008b78b`), #1926 (`ffdca0a88`), #1929 (`ff795b15a`),
 #1932 (`3e72f58a2`). Migrations `20270602000430`/`20270602000431` applied through the
-successful deploy-migrations chain (readback: both recorded in `schema_migrations`); the
-chat Edge deployed (deploy-edge SUCCESS at the `3e72f58a2` merge). Production readback
+successful deploy-migrations chain (runs through 38174947753 and 38176446113 green;
+readback: both recorded in `schema_migrations`); the chat Edge deployed (deploy-edge
+SUCCESS at the `3e72f58a2` merge, observed green on the 2026-10-11 run listing;
+subsequent edge runs 38156970856+ stayed green). Production readback
 (read-only): all three new functions live (`record_pipeline_metadata_non_application`,
 `read_pipeline_metadata_observation`, `read_paige_durable_continuation`); rollout row
 `active=false`, activation fields NULL, ZERO held executors. Every review completed and

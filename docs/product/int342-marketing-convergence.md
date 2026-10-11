@@ -212,6 +212,10 @@ write.
 INT-340 is live: `issue_analytics_evidence_bundle` → `_analytics_metric_produce` (33 keys; `sales.*`,
 `business.*`, `operations.*`, `team.*`, `ai.*`). There is **no `marketing.*` producer**.
 
+**2026-10-11 (MBC slice 2a):** the producer below is built as specified, with two deliberate departures recorded in
+`docs/delivery/marketing-metric-server-contract.md`: untagged leads are an item of the source distribution (so it is LIVE,
+not PARTIAL), and failed/stalled submissions are one distribution (stalled = waiting more than 15 minutes).
+
 **Plan:**
 - Marketing adds a private `_marketing_metric_bundle` with its own allowlist.
 - The dispatcher branch is an INT-340-owned seam. Coordinate with its owner as Sales did

@@ -184,7 +184,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
-          for proof in analytics_storage_minimization analytics_referral_authorization analytics_evidence_authorization settings_analytics_metric_producers shared_metric_evidence; do
+          for proof in analytics_storage_minimization analytics_referral_authorization analytics_evidence_authorization settings_analytics_metric_producers shared_metric_evidence marketing_metric_producer; do
             psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f "supabase/tests/$proof.sql"
           done
 

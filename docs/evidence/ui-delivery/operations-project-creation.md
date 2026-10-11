@@ -52,3 +52,6 @@ SOLO_1024X768_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full 
 SOLO_900X1000_PAIGE_CLOSED: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
 
 SOLO_900X1000_PAIGE_OPEN: PASS: Fresh project-create-verification.json and full matrix captures, both themes, genuine narrow fold when modal, synthetic refusal/confirmation/focus/containment.
+
+Short-viewport refinement: <=420px uses the Operations workspace as scrollowner so controls cannot consume the body. Fresh actual release8nativeChrome200/400percent cases PASS, actual visible project bounds/scrollowner, both themes/PAIGEinitialstates, keyboard creation/Active confirmation/refusal/recovery/focus/containment/reducedmotion. Tracked project-short-viewport captures/report. Prior navigation-only landscape proof is not used. Final review/exact-head CI remain required; authenticated customer runtimeUNVERIFIED.
+

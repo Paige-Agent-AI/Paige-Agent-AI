@@ -53,6 +53,7 @@ export function AdsWorkspace({ tenantId, businessName }: { tenantId: string | nu
         onOpenAnalytics={() => go("growth", "analytics")}
         onOpenCampaigns={() => go("growth", "campaigns")}
         onOpenSales={account ? () => go("sales", "overview") : null}
+        onOpenFormRouting={account ? () => navigate(`${subtabPath("solo", account, "growth", "overview")}?capture=form`) : null}
       />
     </div>
   </div>;

@@ -33,26 +33,35 @@ const briefs = { phase: "ready", canManage: true, briefs: [] as Array<Record<str
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => briefs }));
 // The Sales pipelines, as the canonical workspace read returns them (scope "pipeline" only: Ads never
 // mounts Marketing's whole read).
-const sales = { phase: "ready", pipelineWorkspace: { canManage: true, canArchiveFolders: false, folders: [], automationRules: [], pipelines: [] as unknown[], stages: [] as unknown[], deals: [] as unknown[] } };
+const sales = { phase: "ready", retry: vi.fn(), artifacts: [] as unknown[], pipelineWorkspace: { canManage: true, canArchiveFolders: false, folders: [], automationRules: [], pipelines: [] as unknown[], stages: [] as unknown[], deals: [] as unknown[] } };
 const salesScopes: unknown[] = [];
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: (options?: { scope?: string }) => { salesScopes.push(options?.scope); return sales; } }));
 const upload = vi.fn();
 vi.mock("@/components/admin/studio/studio", () => ({ uploadToLibrary: (...args: unknown[]) => upload(...args) }));
 
 import { MarketingAds, parseAdCopy, type AdsView } from "./marketing-ads";
+import { resetAdsIntakeCapability } from "./ads-intake-capability";
+import fs from "node:fs";
+import path from "node:path";
+
+// A deployed get_pipeline_lead_funnel refuses a pipeline it can't find, a null id included: that is
+// how the page learns the ads-intake functions are there (ads-intake-capability.ts).
+const FORBIDDEN = (): Answer => ({ data: null, error: { code: "42501", message: "PIPELINE_FORBIDDEN" } });
 
 let host: HTMLDivElement;
 let root: Root;
 const flush = async () => { await act(async () => { for (let i = 0; i < 4; i++) await Promise.resolve(); }); };
 const text = () => host.textContent ?? "";
 const button = (label: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === label) as HTMLButtonElement | undefined;
-const handlers = { onView: vi.fn(), onOpenIntegrations: vi.fn(), onOpenAudience: vi.fn(), onOpenAnalytics: vi.fn(), onOpenCampaigns: vi.fn() };
+const handlers = { onView: vi.fn(), onOpenIntegrations: vi.fn(), onOpenAudience: vi.fn(), onOpenAnalytics: vi.fn(), onOpenCampaigns: vi.fn(), onOpenFormRouting: vi.fn() };
 const render = async (view: AdsView = "overview", tenantId = "t-1") => { act(() => root.render(<MarketingAds tenantId={tenantId} view={view} {...handlers}/>)); await flush(); };
 const AD = { id: "a1", title: "Spring planning session", status: "draft", updated_at: "2026-10-01T10:00:00Z", body: "**Headline:** Plan your quarter in 30 minutes\n**Primary text:** Book a strategy session and leave with a plan.\n**CTA:** Book a session" };
 
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  db.tables = {}; db.calls = []; db.rpc = {}; db.rpcCalls = [];
+  db.tables = {}; db.calls = []; db.rpc = { get_pipeline_lead_funnel: FORBIDDEN }; db.rpcCalls = [];
+  resetAdsIntakeCapability();
+  sales.artifacts = [];
   briefs.phase = "ready"; briefs.canManage = true; briefs.briefs = [];
   sales.phase = "ready"; sales.pipelineWorkspace.pipelines = []; sales.pipelineWorkspace.stages = []; sales.pipelineWorkspace.deals = [];
   salesScopes.length = 0; upload.mockReset();
@@ -231,9 +240,11 @@ const MEDIA = [pic("m-new", "Newest pic", 0), pic("m-old", "Old pic", 20), pic("
 const SERVER_FUNNEL = {
   pipeline: { id: "p1", name: "Discovery calls", is_default: true },
   stages: [{ id: "s1", name: "New lead", order_index: 1, stage_type: "open", deals: 12 }, { id: "s2", name: "Call booked", order_index: 2, stage_type: "open", deals: 5 }, { id: "s4", name: "Won", order_index: 3, stage_type: "won", deals: 3 }, { id: "s5", name: "Lost", order_index: 4, stage_type: "lost", deals: 2 }],
-  leads: { total: 9, tagged: 7, untagged: 2 },
+  stages_window: "current",
+  leads: { total: 9, tagged: 7, untagged: 2, unfiled: 0 },
   campaigns: [{ campaign: "CB-SPRING", leads: 6, open: 3, won: 2, lost: 1, by_stage: { s1: 3, s4: 2, s5: 1 } }],
-  ads: [{ ad: "m-old", campaign: "CB-SPRING", leads: 1, open: 1, won: 0, lost: 0 }, { ad: "M-PERF", campaign: "CB-SPRING", leads: 5, open: 2, won: 2, lost: 1 }],
+  // Contract v2: one row per ad, with the library picture the server matched (any letter case).
+  ads: [{ ad: "m-old", campaign: "CB-SPRING", content_id: "m-old", kind: "image", image_url: "https://cdn.example/m-old.png", leads: 1, open: 1, won: 0, lost: 0 }, { ad: "M-PERF", campaign: "CB-SPRING", content_id: "m-perf", kind: "image", image_url: "https://cdn.example/m-perf.png", leads: 5, open: 2, won: 2, lost: 1 }],
   since: null,
 };
 const withSales = () => { sales.pipelineWorkspace.pipelines = PIPELINES; sales.pipelineWorkspace.stages = STAGES; sales.pipelineWorkspace.deals = DEALS; };
@@ -284,7 +295,7 @@ describe("Ads › Overview showroom: the business's own pictures", () => {
     act(() => root.unmount()); root = createRoot(host);
     await render("creative");
     expect(text()).not.toContain("Feature in showroom");
-    expect(text()).not.toContain("Copy tracking tag");
+    expect(text()).not.toContain("Copy tagged link");
   });
 });
 
@@ -307,6 +318,7 @@ describe("Ads › Overview: the pipeline lead funnel", () => {
 
   it("falls back to the records it can read when the server count isn't there yet, and says so", async () => {
     withSales();
+    delete db.rpc.get_pipeline_lead_funnel; // not deployed: PGRST202
     db.tables.media = { data: MEDIA, error: null };
     db.tables.growth_form_submissions = { data: [
       { created_at: day(1), deal_id: "d1", utm_json: { utm_campaign: "CB-SPRING", utm_content: "m-new" } },
@@ -354,7 +366,97 @@ describe("Ads › Overview: the pipeline lead funnel", () => {
     await render();
     await settle();
     expect(host.querySelector(".plf-empty h3")?.textContent).toBe("No Sales pipeline yet");
+    // The only read is the one-shot question whether the ads-intake functions are deployed: they are,
+    // so the page may say a form's lead starts in the pipeline's first stage.
+    expect(db.rpcCalls).toEqual([["get_pipeline_lead_funnel", { p_pipeline_id: null, p_since: null }]]);
+    expect(host.querySelector(".plf-empty p")?.textContent).toBe("Once Sales has a pipeline, your forms’ leads start in its first stage, and every lead and where it stands shows here.");
+  });
+
+  it("with the ads-intake functions not deployed, never claims a lead lands in the default pipeline", async () => {
+    delete db.rpc.get_pipeline_lead_funnel; // answers PGRST202
+    await render();
+    await settle();
+    expect(host.querySelector(".plf-empty p")?.textContent).toBe("Once Sales has a pipeline and your forms send leads to it, every lead and where it stands shows here.");
+    expect(text()).not.toMatch(/start in its first stage|default pipeline/);
+  });
+
+  it("a member gets a short note that campaign results are for owners and admins: no zeros, and nothing read", async () => {
+    briefs.canManage = false;
+    withSales();
+    await render();
+    await settle();
+    const panel = host.querySelector(".plf")!;
+    expect(panel.getAttribute("data-funnel-source")).toBe("restricted");
+    expect(panel.querySelector(".plf-empty h3")?.textContent).toBe("Campaign results are for owners and admins");
+    expect(panel.querySelectorAll(".plf-stage, table, .plf-picker-btn").length).toBe(0);
+    expect(panel.textContent).not.toMatch(/\b0 (deals|leads)\b/);
     expect(db.rpcCalls).toHaveLength(0);
+    expect(db.calls.some((c) => c.table === "growth_form_submissions")).toBe(false);
+    // The showroom still stands, in samples.
+    expect(Object.values(frames()).map((f) => f.chip)).toEqual(["Sample", "Sample", "Sample", "Sample"]);
+  });
+
+  it("says the stages are deals now, and names the leads that reached no pipeline with a way to their routing", async () => {
+    withSales();
+    db.rpc.get_pipeline_lead_funnel = () => ({ data: { ...SERVER_FUNNEL, leads: { ...SERVER_FUNNEL.leads, unfiled: 3 } }, error: null });
+    await render();
+    await settle();
+    const panel = host.querySelector(".plf")!;
+    expect(panel.querySelector(".plf-sub")?.textContent).toBe("Deals in each stage now");
+    expect(panel.querySelector(".plf-stages")?.getAttribute("aria-label")).toBe("Deals in each stage of Discovery calls now");
+    expect(panel.querySelector(".plf-unfiled span")?.textContent).toBe("3 leads in the last 90 days didn’t reach a pipeline, counting any still being filed.");
+    act(() => ([...panel.querySelectorAll(".plf-unfiled button")].find((b) => b.textContent === "See where your forms send leads") as HTMLButtonElement).click());
+    expect(handlers.onOpenFormRouting).toHaveBeenCalled();
+    expect(panel.querySelector(".plf-def")?.textContent).toContain("Stages show every deal on the pipeline now.");
+  });
+
+  it("while another window loads, keeps the figures and the showroom's ranking, marked as updating", async () => {
+    withSales();
+    db.tables.media = { data: MEDIA, error: null };
+    db.rpc.get_pipeline_lead_funnel = () => ({ data: SERVER_FUNNEL, error: null });
+    await render();
+    await settle();
+    const before = frames();
+    let release: (value: Answer) => void = () => {};
+    db.rpc.get_pipeline_lead_funnel = () => new Promise<Answer>((resolve) => { release = resolve; });
+    act(() => [...host.querySelectorAll(".plf-acts button")].find((b) => b.textContent === "All time")!.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    await settle();
+    const panel = host.querySelector(".plf")!;
+    expect(panel.classList.contains("is-stale")).toBe(true);
+    expect(panel.querySelector(".plf-updating")?.textContent).toBe("Updating…");
+    expect([...panel.querySelectorAll(".plf-stage-n")].map((b) => b.textContent)).toEqual(["12", "5", "3", "2"]);
+    expect(frames()).toEqual(before);
+    expect(host.querySelector(".asr-intro p")?.textContent).toContain("(updating…)");
+    // The new answer ranks a different picture first among the performing ones.
+    release({ data: { ...SERVER_FUNNEL, ads: [{ ad: "m-new", campaign: null, content_id: "m-new", kind: "image", image_url: null, leads: 8, open: 4, won: 4, lost: 0 }] }, error: null });
+    await settle();
+    expect(panel.classList.contains("is-stale")).toBe(false);
+    expect(panel.querySelector(".plf-updating")).toBeNull();
+    expect(frames().story).toMatchObject({ label: "Story with your picture “Newest pic”", chip: "4 won · 8 leads" });
+  });
+
+  it("from a capped records read, every showroom figure is a floor, as the tables are", async () => {
+    withSales();
+    delete db.rpc.get_pipeline_lead_funnel;
+    db.tables.media = { data: MEDIA, error: null };
+    db.tables.growth_form_submissions = { data: Array.from({ length: 200 }, (_, i) => ({ created_at: day(1), deal_id: i === 0 ? "d3" : "d1", utm_json: { utm_content: "m-perf" } })), error: null };
+    await render();
+    await settle();
+    expect(frames().story).toMatchObject({ label: "Story with your picture “Performing pic”", chip: "1+ won · 200+ leads" });
+    expect(host.querySelector(".plf-note")?.textContent).toContain("each lead count is a floor");
+  });
+
+  it("draws one row per ad, keyed by the ad, when it ran under two campaigns", async () => {
+    withSales();
+    db.tables.media = { data: MEDIA, error: null };
+    const spy = vi.spyOn(console, "error");
+    db.rpc.get_pipeline_lead_funnel = () => ({ data: { ...SERVER_FUNNEL, ads: [{ ad: "M-PERF", campaign: "CB-SPRING", content_id: "m-perf", kind: "image", image_url: null, leads: 5, open: 2, won: 2, lost: 1 }, { ad: "m-perf", campaign: "CB-FALL", content_id: "m-perf", kind: "image", image_url: null, leads: 2, open: 1, won: 1, lost: 0 }] }, error: null });
+    await render();
+    await settle();
+    const rows = [...host.querySelectorAll(".plf-table.is-ad tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent));
+    expect(rows).toEqual([["Performing picCampaign CB-SPRING", "7", "3", "3", "1"]]);
+    expect(spy.mock.calls.some((call) => /same key/.test(String(call[0])))).toBe(false);
+    spy.mockRestore();
   });
 });
 
@@ -379,28 +481,56 @@ describe("Ads › Creative: feature in showroom and the tracking tag", () => {
     expect(host.querySelector("#mad-media-h + p")?.textContent).toContain("2 of 6 featured");
   });
 
-  it("takes the feature back off when the save fails, naming the limit or the missing seam", async () => {
+  it("takes the feature back off when the save fails, naming the limit, an archived picture, or the missing seam", async () => {
     db.tables.media = { data: MEDIA, error: null };
-    db.rpc.set_ad_creative_featured = () => ({ data: null, error: { code: "P0001", message: "AD_FEATURED_LIMIT" } });
+    db.rpc.set_ad_creative_featured = () => ({ data: null, error: { code: "22023", message: "AD_FEATURED_LIMIT" } });
     const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
     await render("creative");
     await settle();
-    const toggle = () => [...host.querySelector('[data-media-id="m-old"]')!.querySelectorAll("button")].find((b) => b.hasAttribute("aria-pressed"))!;
-    act(() => toggle().click());
+    const toggle = () => [...host.querySelector('[data-media-id="m-old"]')!.querySelectorAll("button")].find((b) => b.hasAttribute("aria-pressed"));
+    act(() => toggle()!.click());
     await settle();
-    expect(toggle().getAttribute("aria-pressed")).toBe("false");
+    expect(toggle()!.getAttribute("aria-pressed")).toBe("false");
     expect(text()).toContain("You can feature up to 6 pictures and videos.");
-    delete db.rpc.set_ad_creative_featured; // the RPC isn't deployed: the mock answers PGRST202
-    act(() => toggle().click());
+    db.rpc.set_ad_creative_featured = () => ({ data: null, error: { code: "22023", message: "AD_CREATIVE_ARCHIVED" } });
+    act(() => toggle()!.click());
     await settle();
-    expect(toggle().getAttribute("aria-pressed")).toBe("false");
-    expect(text()).toContain("Featuring isn’t available yet. Nothing was changed.");
+    expect(text()).toContain("That picture is archived, so it can’t stand in the showroom. Nothing was changed.");
     // Unfeaturing a featured one that fails puts it back as featured.
-    const fav = () => [...host.querySelector('[data-media-id="m-fav"]')!.querySelectorAll("button")].find((b) => b.hasAttribute("aria-pressed"))!;
-    act(() => fav().click());
+    db.rpc.set_ad_creative_featured = () => ({ data: null, error: { code: "XX000", message: "boom" } });
+    const fav = () => [...host.querySelector('[data-media-id="m-fav"]')!.querySelectorAll("button")].find((b) => b.hasAttribute("aria-pressed"));
+    act(() => fav()!.click());
     await settle();
-    expect(fav().getAttribute("aria-pressed")).toBe("true");
+    expect(fav()!.getAttribute("aria-pressed")).toBe("true");
+    // The server says the function isn't there: the change is taken back, and the control is withdrawn
+    // rather than left to fail again.
+    delete db.rpc.set_ad_creative_featured;
+    act(() => toggle()!.click());
+    await settle();
+    expect(text()).toContain("Featuring isn’t available yet. Nothing was changed.");
+    expect(toggle()).toBeUndefined();
+    expect(text()).not.toContain("Feature in showroom");
     quiet.mockRestore();
+  });
+
+  it("asks once whether featuring is deployed: when it isn't, nothing that can never succeed is offered", async () => {
+    db.tables.media = { data: MEDIA, error: null };
+    delete db.rpc.get_pipeline_lead_funnel; // the ads-intake functions answer PGRST202
+    await render("creative");
+    await settle();
+    expect(db.rpcCalls).toEqual([["get_pipeline_lead_funnel", { p_pipeline_id: null, p_since: null }]]);
+    expect(host.querySelectorAll("[aria-pressed]").length).toBe(0);
+    expect(text()).not.toMatch(/Feature in showroom|featured in the showroom/);
+    expect(host.querySelector(".mad-mflag")).toBeNull();
+    // Tagging still works: it needs nothing new on the server.
+    expect(host.querySelectorAll(".mad-mcard .btn-p").length).toBe(MEDIA.length);
+    // And with them deployed, featuring is offered.
+    act(() => root.unmount()); root = createRoot(host);
+    resetAdsIntakeCapability();
+    db.rpc.get_pipeline_lead_funnel = FORBIDDEN;
+    await render("creative");
+    await settle();
+    expect([...host.querySelectorAll(".mad-mcard button[aria-pressed]")]).toHaveLength(MEDIA.length);
   });
 
   it("at six featured, the rest can't be featured until one comes out", async () => {
@@ -413,16 +543,80 @@ describe("Ads › Creative: feature in showroom and the tracking tag", () => {
     expect(extra.title).toContain("up to 6");
   });
 
-  it("copies a picture's tracking tag and says how a lead gets credited", async () => {
+  it("copies the tag only, as the secondary choice, and says how a lead gets credited", async () => {
     db.tables.media = { data: MEDIA, error: null };
     const writeText = vi.fn(() => Promise.resolve());
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
     await render("creative");
     await settle();
-    act(() => [...host.querySelector('[data-media-id="m-perf"]')!.querySelectorAll("button")].find((b) => b.textContent === "Copy tracking tag")!.click());
+    // The live region is in the page before anything is copied, so the first outcome is announced.
+    const live = host.querySelectorAll(".mad-media > .mad-notice[role=status]");
+    expect(live).toHaveLength(2);
+    expect([...live].every((node) => node.textContent === "")).toBe(true);
+    act(() => [...host.querySelector('[data-media-id="m-perf"]')!.querySelectorAll("button")].find((b) => b.textContent === "Copy tag only")!.click());
     await settle();
     expect(writeText).toHaveBeenCalledWith("utm_content=m-perf");
     expect(text()).toContain("Copied utm_content=m-perf. Add it to the link this ad points at; leads that arrive on it are credited to “Performing pic”.");
+    expect(host.querySelectorAll(".mad-media > .mad-notice[role=status]")[1]).toBe(live[1]);
+  });
+
+  it("copies a full tagged link to one of the business's live pages or forms, with an optional campaign tag", async () => {
+    db.tables.media = { data: MEDIA, error: null };
+    sales.artifacts = [
+      { id: "pg1", type: "page", name: "Spring workshop", publicHref: "/p/harbor/spring?ref=home#book" },
+      { id: "fm1", type: "form", name: "Discovery call form", publicHref: "/form/fm1" },
+      { id: "pg2", type: "page", name: "No address yet", publicHref: "" },
+    ];
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    await render("creative");
+    await settle();
+    const card = host.querySelector('[data-media-id="m-perf"]')!;
+    const open = [...card.querySelectorAll("button")].find((b) => b.textContent === "Copy tagged link")!;
+    expect(open.className).toContain("btn-p");
+    act(() => open.click());
+    await settle();
+    expect(open.getAttribute("aria-expanded")).toBe("true");
+    const panel = host.querySelector(".mad-linker")!;
+    expect(open.getAttribute("aria-controls")).toBe(panel.id);
+    expect(panel.querySelector("h3")?.textContent).toBe("Tagged link for “Performing pic”");
+    // Only live work with an address is offered; the first is chosen, and focus is on it.
+    const radios = [...panel.querySelectorAll("[role=radio]")] as HTMLButtonElement[];
+    expect(radios.map((r) => [r.textContent, r.getAttribute("aria-checked")])).toEqual([["PageSpring workshop", "true"], ["FormDiscovery call form", "false"]]);
+    expect(document.activeElement).toBe(radios[0]);
+    const origin = window.location.origin;
+    expect(panel.querySelector("[data-tagged-link]")?.textContent).toBe(`${origin}/p/harbor/spring?ref=home&utm_content=m-perf#book`);
+    // Arrow keys move the choice, as a radio group does.
+    act(() => radios[0].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })));
+    expect(radios[1].getAttribute("aria-checked")).toBe("true");
+    const input = panel.querySelector("input") as HTMLInputElement;
+    act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "Spring Promo"); input.dispatchEvent(new Event("input", { bubbles: true })); });
+    expect(panel.querySelector("[data-tagged-link]")?.textContent).toBe(`${origin}/form/fm1?utm_content=m-perf&utm_campaign=Spring+Promo`);
+    act(() => [...panel.querySelectorAll("button")].find((b) => b.textContent === "Copy link")!.click());
+    await settle();
+    expect(writeText).toHaveBeenCalledWith(`${origin}/form/fm1?utm_content=m-perf&utm_campaign=Spring+Promo`);
+    expect(text()).toContain("Copied the link to Discovery call form tagged for “Performing pic”.");
+    expect(host.querySelector(".mad-linker")).toBeNull();
+    expect(document.activeElement).toBe(open);
+    // The list of live work is the Marketing read, asked for only while choosing.
+    expect(salesScopes).toContain(undefined);
+  });
+
+  it("with nothing live, says so and points to the tag only; Escape closes", async () => {
+    db.tables.media = { data: MEDIA, error: null };
+    await render("creative");
+    await settle();
+    act(() => [...host.querySelector('[data-media-id="m-new"]')!.querySelectorAll("button")].find((b) => b.textContent === "Copy tagged link")!.click());
+    await settle();
+    const panel = host.querySelector(".mad-linker")!;
+    expect(panel.textContent).toContain("No page, funnel or form is live yet");
+    act(() => panel.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    expect(host.querySelector(".mad-linker")).toBeNull();
+  });
+
+  it("never hides the live regions with display:none", () => {
+    const css = fs.readFileSync(path.join(import.meta.dirname, "marketing-ads.css"), "utf8");
+    expect(css).not.toMatch(/\.mad-notice:empty\s*\{[^}]*display\s*:\s*none/);
   });
 });
 

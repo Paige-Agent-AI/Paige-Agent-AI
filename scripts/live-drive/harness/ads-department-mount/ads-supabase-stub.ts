@@ -4,7 +4,7 @@
 // ads-fixtures.ts. Only those modules are pointed here (vite.config.ts).
 import { mode } from "../marketing-mount/mode";
 import { supabase as planned } from "../marketing-mount/planned-supabase-stub";
-import { funnelAnswer, funnelMissing, media, submissionRows } from "./ads-fixtures";
+import { funnelAnswer, funnelMissing, media, pipelines, submissionRows } from "./ads-fixtures";
 
 type Answer = { data: unknown; error: unknown };
 const FEATURED_LIMIT = 6;
@@ -40,9 +40,13 @@ function from(table: string) {
 function rpc(name: string, args: Record<string, unknown>): Promise<Answer> {
   if (name === "get_pipeline_lead_funnel") {
     if (funnelMissing) return Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.get_pipeline_lead_funnel(p_pipeline_id, p_since) in the schema cache" } });
+    // The deployed function refuses a member, and a pipeline it can't find (the capability question asks
+    // for a null one), with PIPELINE_FORBIDDEN.
+    if (mode === "readonly" || !pipelines.some((row) => row.id === args.p_pipeline_id)) return Promise.resolve({ data: null, error: { code: "42501", message: "PIPELINE_FORBIDDEN" } });
     return answer(funnelAnswer(String(args.p_pipeline_id), (args.p_since as string | null) ?? null));
   }
   if (name === "set_ad_creative_featured") {
+    if (funnelMissing) return Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.set_ad_creative_featured(p_content_id, p_featured) in the schema cache" } });
     const row = media.find((item) => item.id === args.p_content_id);
     if (!row) return Promise.resolve({ data: null, error: { message: "AD_CREATIVE_NOT_FOUND" } });
     const featured = args.p_featured === true;

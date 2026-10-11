@@ -94,8 +94,11 @@ vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
 // the read never leaves the test (it draws the records the hub holds).
 vi.mock("./pipeline-lead-funnel", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./pipeline-lead-funnel")>();
-  return { ...actual, useLeadFunnel: () => ({ phase: "idle", funnel: null, source: null, reason: null, capped: false, retry: () => {} }) };
+  return { ...actual, useLeadFunnel: () => ({ phase: "idle", funnel: null, stale: false, source: null, reason: null, capped: false, retry: () => {} }) };
 });
+// Whether the ads-intake functions are deployed is asked once by the funnel's empty state; proven in
+// marketing-ads.render.test.tsx and marketing-analytics-funnel.render.test.tsx. Here they are deployed.
+vi.mock("./ads-intake-capability", () => ({ useAdsIntakeCapability: () => "present", noteAdsIntakeAnswer: () => {}, resetAdsIntakeCapability: () => {} }));
 
 // What each campaign uses reads and writes through governed RPCs; their contract is proven by
 // supabase/tests/campaign_brief_asset_links.sql and useCampaignAssets.test.tsx. Here it answers what a test sets.

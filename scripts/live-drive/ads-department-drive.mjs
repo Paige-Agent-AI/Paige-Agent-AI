@@ -21,8 +21,13 @@
 //   - every frame: the placements show the business's own pictures in rank order (featured, then most
 //     won deals and leads, then newest) and the funnel draws the default pipeline from the server read;
 //   - a showroom frame and a funnel frame at each size, both themes;
-//   - a member sees samples only, with no upload or feature control;
+//   - a member sees samples only, with no upload or feature control, and a note in place of the funnel's
+//     counts (the server keeps them to owners and admins);
+//   - the funnel says its stages are deals now and names the leads that reached no pipeline;
 //   - featuring a picture in Creative moves it to the first placement;
+//   - "Copy tagged link" builds a full link to a live page or form with the picture's tag (and a
+//     campaign tag) and puts it on the clipboard;
+//   - with the ads-intake functions missing, Creative offers no "Feature in showroom";
 //   - uploading a picture files it into the library and it appears in the showroom;
 //   - choosing another pipeline redraws the funnel; with the server read missing, the records fallback
 //     draws and says so;
@@ -111,6 +116,9 @@ const showroom = (page) => page.evaluate(() => ({
   pipeline: document.querySelector(".plf-picker strong")?.textContent ?? null,
   stages: [...document.querySelectorAll(".plf-stage")].map((li) => [li.querySelector(".plf-stage-t")?.firstChild?.textContent, li.querySelector(".plf-stage-n")?.textContent]),
   note: document.querySelector(".plf-note")?.textContent ?? null,
+  sub: document.querySelector(".plf-sub")?.textContent ?? null,
+  unfiled: document.querySelector(".plf-unfiled span")?.textContent ?? null,
+  restricted: document.querySelector('.plf[data-funnel-source="restricted"] .plf-empty h3')?.textContent ?? null,
   adRows: [...document.querySelectorAll(".plf-table.is-ad tbody tr")].map((tr) => tr.querySelector("th")?.firstChild?.textContent),
 }));
 const waitFunnel = (page) => page.waitForSelector(".plf[data-funnel-source], .plf .plf-empty", { timeout: 15000 }).then(() => page.waitForTimeout(400));
@@ -153,6 +161,7 @@ async function main() {
           check(room.frames.feed?.chip === "Featured" && room.frames.feed?.loaded === true && room.frames.story?.chip === "3 won · 11 leads" && room.frames.story?.loaded === true && room.frames.search?.label === "Search ad with your copy", `${id}: the placements show the business's own pictures, featured first, then by won deals and leads, and the saved ad copy`, JSON.stringify(room.frames));
           check(room.frames.display?.visible ? room.frames.display.chip === "1 won · 4 leads" && room.frames.display.loaded === true : true, `${id}: the display banner, where it shows, carries the third-ranked picture`, JSON.stringify(room.frames.display));
           check(room.funnel === "server" && room.pipeline === "Client intake" && room.stages.length === 5 && room.upload, `${id}: the funnel draws the default pipeline from the server read, and the owner can add a picture`, JSON.stringify({ funnel: room.funnel, pipeline: room.pipeline, stages: room.stages.length, upload: room.upload }));
+          check(room.sub === "Deals in each stage now" && room.unfiled === "3 leads in the last 90 days didn’t reach a pipeline, counting any still being filed.", `${id}: the stages read as deals now, and the leads that reached no pipeline are named`, JSON.stringify({ sub: room.sub, unfiled: room.unfiled }));
           await page.screenshot({ path: path.join(OUT, `frame-${frame.name}-${folded ? "folded" : "open"}-${theme}.png`) });
           if (!folded) {
             await page.locator(".plf").scrollIntoViewIfNeeded();
@@ -221,17 +230,21 @@ async function main() {
 
     // Showroom and funnel flows at 1366, both themes.
     for (const theme of ["light", "dark"]) {
-      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce", permissions: ["clipboard-read", "clipboard-write"] });
       const page = await ctx.newPage();
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e.message)));
 
-      // A member: samples in every placement, no upload or feature control, the funnel still readable.
+      // A member: samples in every placement, no upload or feature control, and a note where the counts
+      // would be (never zeros).
       await open(page, { theme, mode: "readonly" });
       await waitFunnel(page);
       let room = await showroom(page);
       check(Object.values(room.frames).every((f) => f.chip === "Sample") && !room.upload && /owners and admins/.test(room.lede ?? ""), `${theme}/member: every placement is a sample and there is no upload`, JSON.stringify({ frames: room.frames, upload: room.upload }));
+      check(room.funnel === "restricted" && room.restricted === "Campaign results are for owners and admins" && room.stages.length === 0, `${theme}/member: the funnel is a note that campaign results are for owners and admins, with no zeros`, JSON.stringify({ funnel: room.funnel, restricted: room.restricted, stages: room.stages.length }));
       await page.screenshot({ path: path.join(OUT, `showroom-member-${theme}.png`) });
+      await page.locator(".plf").scrollIntoViewIfNeeded();
+      await page.screenshot({ path: path.join(OUT, `funnel-member-${theme}.png`) });
 
       // Featuring a picture in Creative puts it in the first placement.
       await open(page, { path: "/solo/review/ads/creative", theme });
@@ -245,6 +258,35 @@ async function main() {
       await waitFunnel(page);
       room = await showroom(page);
       check(room.frames.feed?.label === "Feed post with your picture “Scorecard banner”" && room.frames.feed?.chip === "Featured" && room.frames.story?.chip === "Featured", `${theme}/flow: the newly featured picture takes the first placement`, JSON.stringify(room.frames));
+
+      // "Copy tagged link": a live page or form, a campaign tag, and the full link on the clipboard.
+      await open(page, { path: "/solo/review/ads/creative", theme });
+      await page.waitForSelector(".mad-mcard", { timeout: 15000 });
+      const card = page.locator(".mad-mcard", { hasText: "Planning session story" });
+      await card.getByRole("button", { name: "Copy tagged link" }).click();
+      await page.waitForSelector(".mad-linker [role=radio]", { timeout: 15000 });
+      const radios = page.locator(".mad-linker [role=radio]");
+      const destinations = await radios.allTextContents();
+      await radios.nth(1).click();
+      await page.locator(".mad-linker input").fill("Spring Promo");
+      const built = await page.locator(".mad-linker [data-tagged-link]").textContent();
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: path.join(OUT, `creative-tagged-link-${theme}.png`) });
+      await page.locator(".mad-linker").getByRole("button", { name: "Copy link" }).click();
+      await page.waitForTimeout(250);
+      const clip = await page.evaluate(() => navigator.clipboard.readText().catch(() => null));
+      const linkUrl = (() => { try { return new URL(built ?? ""); } catch { return null; } })();
+      check(destinations.length >= 2 && Boolean(linkUrl) && linkUrl.searchParams.get("utm_content") === "7c1d0000-0000-4000-8000-000000000002" && linkUrl.searchParams.get("utm_campaign") === "Spring Promo" && linkUrl.origin === `http://127.0.0.1:${PORT}` && clip === built, `${theme}/creative: Copy tagged link puts a full link to a live page or form, tagged with the picture and the campaign, on the clipboard`, JSON.stringify({ destinations, built, clip }));
+      const copiedNotice = await page.locator(".mad-media > .mad-notice").nth(1).textContent();
+      check(/^Copied the link to .+ tagged for “Planning session story”/.test(copiedNotice ?? "") && (await page.locator(".mad-linker").count()) === 0, `${theme}/creative: the copy is announced and the chooser closes`, copiedNotice ?? "");
+
+      // With the ads-intake functions not deployed, Creative offers no feature switch that could only fail.
+      await open(page, { path: "/solo/review/ads/creative", theme, funnel: "missing" });
+      await page.waitForSelector(".mad-mcard", { timeout: 15000 });
+      await page.waitForTimeout(400);
+      const missingState = await page.evaluate(() => ({ feature: document.querySelectorAll(".mad-mcard button[aria-pressed]").length, tagged: document.querySelectorAll(".mad-mcard .btn-p").length, head: document.querySelector("#mad-media-h + p")?.textContent ?? "" }));
+      check(missingState.feature === 0 && missingState.tagged === 4 && !/featured in the showroom/.test(missingState.head), `${theme}/creative: without the ads-intake functions there is no feature switch, and tagging still works`, JSON.stringify(missingState));
+      await page.screenshot({ path: path.join(OUT, `creative-unavailable-${theme}.png`) });
 
       // Uploading a picture files it into the library and it appears in the showroom.
       await open(page, { theme });

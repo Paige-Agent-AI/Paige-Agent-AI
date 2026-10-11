@@ -15,9 +15,10 @@ export default defineConfig({
     name: "planned-tabs-supabase",
     enforce: "pre",
     resolveId(source, importer) {
-      // The Ads desk and the pipeline lead funnel: the business's pictures, its submissions and the two
-      // contracted server reads (ads-fixtures.ts); saved ad copy still answers from Marketing's fixture.
-      if ((importer?.endsWith("marketing-ads.tsx") || importer?.endsWith("pipeline-lead-funnel.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "ads-supabase-stub.ts");
+      // The Ads desk, the pipeline lead funnel and the ads-intake capability question: the business's
+      // pictures, its submissions and the two contracted server reads (ads-fixtures.ts); saved ad copy
+      // still answers from Marketing's fixture.
+      if ((importer?.endsWith("marketing-ads.tsx") || importer?.endsWith("pipeline-lead-funnel.tsx") || importer?.endsWith("ads-intake-capability.ts")) && source.endsWith("integrations/supabase/client")) return path.join(here, "ads-supabase-stub.ts");
       if (importer?.endsWith("marketing-ads.tsx") && source.endsWith("components/admin/studio/studio")) return path.join(here, "studio-stub.ts");
       if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-content.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(marketing, "planned-supabase-stub.ts");
       if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx") || importer?.endsWith("marketing-email-series.tsx") || importer?.endsWith("marketing-analytics-email.ts")) && source.endsWith("integrations/supabase/client")) return path.join(marketing, "email-supabase-stub.ts");

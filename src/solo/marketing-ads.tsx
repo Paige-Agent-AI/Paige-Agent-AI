@@ -16,9 +16,13 @@
 // Writes, each through an existing or contracted seam, owners and admins only:
 //   uploadToLibrary (studio.ts)                        "Add a picture or video": files into the library
 //   set_ad_creative_featured                           "Feature in showroom" (meta.ads_featured, max 6)
+// "Copy tagged link" joins a picture's tag onto one of the business's live pages or forms, read by the
+// same Marketing read that lists them (useSoloCampaigns), only while the owner is choosing one.
+// The server functions above ship before this page; if they turn out not to be deployed
+// (ads-intake-capability.ts), "Feature in showroom" is withdrawn rather than offered to fail.
 // Nothing on this page runs, pauses, pays for or publishes anything.
 import React from "react";
-import { Copy, Star, Upload } from "lucide-react";
+import { Copy, Link2, Star, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadToLibrary } from "@/components/admin/studio/studio";
 import { GROWTH_MEDIA_ACCEPT } from "@/lib/growth";
@@ -26,7 +30,8 @@ import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { useSoloCampaigns } from "./useSoloCampaigns";
 import { AskPaigeButton, LIBRARY_DENIED, useLibraryAccess, useTenantRead } from "./marketing-planned";
 import { safeMediaUrl } from "./marketing-content-model";
-import { FEATURED_LIMIT, deriveLeadFunnel, isFeatured, isMissingFunction, pipelineChoices, rankShowroomMedia, trackingTag, type FunnelSubmission, type MediaRow, type ShowroomPick } from "./ads-model";
+import { FEATURED_LIMIT, deriveLeadFunnel, isFeatured, isMissingFunction, pipelineChoices, rankShowroomMedia, taggedLink, trackingTag, type FunnelSubmission, type MediaRow, type ShowroomPick } from "./ads-model";
+import { noteAdsIntakeAnswer, useAdsIntakeCapability } from "./ads-intake-capability";
 import { LeadFunnelPanel, sinceFor, useLeadFunnel, type AdName, type FunnelFallback, type PipelineChoice } from "./pipeline-lead-funnel";
 import "./marketing-overview.css";
 import "./marketing-ads.css";
@@ -127,9 +132,11 @@ export type MarketingAdsProps = {
   onOpenAnalytics: () => void;
   onOpenCampaigns: () => void;
   onOpenSales?: (() => void) | null;
+  /** Marketing's list of forms and where each sends its leads. */
+  onOpenFormRouting?: (() => void) | null;
 };
 
-export function MarketingAds({ tenantId, businessName, view, onView, onOpenIntegrations, onOpenAudience, onOpenAnalytics, onOpenCampaigns, onOpenSales }: MarketingAdsProps) {
+export function MarketingAds({ tenantId, businessName, view, onView, onOpenIntegrations, onOpenAudience, onOpenAnalytics, onOpenCampaigns, onOpenSales, onOpenFormRouting }: MarketingAdsProps) {
   const access = useLibraryAccess();
   const ads = useTenantRead(tenantId, NO_ADS, access === "allowed" ? readAdCopy : null);
   const library = useMediaLibrary(tenantId, access === "allowed");
@@ -148,7 +155,7 @@ export function MarketingAds({ tenantId, businessName, view, onView, onOpenInteg
       <p className="mov-sum" tabIndex={-1}>Paige can’t read an ad account yet, so nothing here is estimated. {drafts}</p>
     </div>
     {view === "overview" && <OverviewStage tenantId={tenantId} brand={businessName || "Your business"} access={access} library={library}
-      copyRow={access === "allowed" && adsPhase === "ready" ? ads.rows[0] ?? null : null} copyCount={count} onCreative={() => onView("creative")} onOpenSales={onOpenSales ?? null}/>}
+      copyRow={access === "allowed" && adsPhase === "ready" ? ads.rows[0] ?? null : null} copyCount={count} onCreative={() => onView("creative")} onOpenSales={onOpenSales ?? null} onOpenRouting={onOpenFormRouting ?? null}/>}
     <section className="mov-card mad-prov" aria-label="Ad account">
       <span className="mad-logo" aria-hidden="true"><PlugIcon/></span>
       <div className="mad-prov-b"><strong>No ad account is read here</strong><small>Campaigns, spend and results from Meta, Google, LinkedIn, TikTok or YouTube can’t be read yet, even with an account connected in Integrations.</small></div>
@@ -283,6 +290,7 @@ const FEATURE_WORDS = {
   missing: "Featuring isn’t available yet. Nothing was changed.",
   forbidden: "Only the workspace owner or an admin can choose what the showroom shows. Nothing was changed.",
   failed: "That didn’t save. Nothing was changed; try again.",
+  archived: "That picture is archived, so it can’t stand in the showroom. Nothing was changed.",
 };
 
 function useMediaLibrary(tenantId: string | null, enabled: boolean): MediaLibrary {
@@ -315,6 +323,7 @@ function useMediaLibrary(tenantId: string | null, enabled: boolean): MediaLibrar
     setNotice(null);
     try {
       const { data, error } = await supabase.rpc("set_ad_creative_featured" as never, { p_content_id: row.id, p_featured: next } as never);
+      noteAdsIntakeAnswer(error);
       if (error) throw error;
       if (tenantRef.current !== started) return;
       const saved = (data ?? {}) as { featured?: unknown };
@@ -326,7 +335,7 @@ function useMediaLibrary(tenantId: string | null, enabled: boolean): MediaLibrar
       if (tenantRef.current !== started) return;
       setFlags((current) => { const copy = { ...current }; if (previous) copy[row.id] = previous; else delete copy[row.id]; return copy; });
       const message = String((error as { message?: unknown })?.message ?? "");
-      setNotice({ tone: "bad", text: /AD_FEATURED_LIMIT/.test(message) ? FEATURE_WORDS.limit : isMissingFunction(error) ? FEATURE_WORDS.missing : /forbidden|permission|not allowed|42501/i.test(message) || (error as { code?: unknown })?.code === "42501" ? FEATURE_WORDS.forbidden : FEATURE_WORDS.failed });
+      setNotice({ tone: "bad", text: /AD_FEATURED_LIMIT/.test(message) ? FEATURE_WORDS.limit : /AD_CREATIVE_ARCHIVED/.test(message) ? FEATURE_WORDS.archived : isMissingFunction(error) ? FEATURE_WORDS.missing : /forbidden|permission|not allowed|42501/i.test(message) || (error as { code?: unknown })?.code === "42501" ? FEATURE_WORDS.forbidden : FEATURE_WORDS.failed });
     } finally {
       if (tenantRef.current === started) setPending((current) => { const copy = new Set(current); copy.delete(row.id); return copy; });
     }
@@ -368,20 +377,23 @@ function UploadButton({ library, label = "Add a picture or video" }: { library: 
   </>;
 }
 
-/** The outcome of the last upload or featuring, in a live region, with the next step when there is one. */
-function LibraryNotice({ library, placed }: { library: MediaLibrary; placed?: boolean | null | undefined }) {
+/** The outcome of the last upload or featuring, in a live region, with the next step when there is one.
+ *  Always mounted, empty or not, so a screen reader hears each new outcome. */
+function LibraryNotice({ library, placed, canFeature }: { library: MediaLibrary; placed?: boolean | null | undefined; canFeature: boolean }) {
   const notice = library.notice;
-  const offer = notice?.featureId ? library.rows.find((row) => row.id === notice.featureId) : undefined;
+  const offer = canFeature && notice?.featureId ? library.rows.find((row) => row.id === notice.featureId) : undefined;
   return <p className={`mad-notice${notice ? ` is-${notice.tone}` : ""}`} role="status" aria-live="polite">{notice && <>
     {notice.text}
-    {notice.featureId && typeof placed === "boolean" && <> {placed ? "It stands in the first placement while you’re here; feature it to keep it there." : "It isn’t in the showroom; feature it to put it there."}</>}
+    {notice.featureId && typeof placed === "boolean" && <> {placed
+      ? canFeature ? "It stands in the first placement while you’re here; feature it to keep it there." : "It stands in the first placement while you’re here."
+      : canFeature ? "It isn’t in the showroom; feature it to put it there." : "It isn’t in the showroom’s placements."}</>}
     {offer && !isFeatured(offer) && typeof placed === "boolean" && <button type="button" className="mov-lnk" disabled={library.pending.has(offer.id)} onClick={() => void library.toggleFeatured(offer)}>Feature it</button>}
   </>}</p>;
 }
 
 /* ───────── Overview: the showroom and the pipeline funnel under it ───────── */
 
-function OverviewStage({ tenantId, brand, access, library, copyRow, copyCount, onCreative, onOpenSales }: { tenantId: string | null; brand: string; access: string; library: MediaLibrary; copyRow: AdCopyRow | null; copyCount: number; onCreative: () => void; onOpenSales: (() => void) | null }) {
+function OverviewStage({ tenantId, brand, access, library, copyRow, copyCount, onCreative, onOpenSales, onOpenRouting }: { tenantId: string | null; brand: string; access: string; library: MediaLibrary; copyRow: AdCopyRow | null; copyCount: number; onCreative: () => void; onOpenSales: (() => void) | null; onOpenRouting: (() => void) | null }) {
   const sales = useSoloCampaigns({ scope: "pipeline" });
   const workspace = sales.pipelineWorkspace;
   const choices = React.useMemo<PipelineChoice[]>(() => pipelineChoices(workspace.pipelines), [workspace.pipelines]);
@@ -390,22 +402,37 @@ function OverviewStage({ tenantId, brand, access, library, copyRow, copyCount, o
   const chosen = choices.find((choice) => choice.id === pipelineId) ?? choices[0] ?? null;
   const days = PERIODS.find((option) => option.key === period)!.days;
   const since = React.useMemo(() => sinceFor(days), [days]);
+  const content = library.rows;
   const fallback = React.useCallback<FunnelFallback>(async (pipeline, from) => {
     const { rows, capped } = tenantId ? await readFunnelSubmissions(tenantId, from) : { rows: [], capped: false };
-    return { funnel: deriveLeadFunnel({ pipeline, stages: workspace.stages, deals: workspace.deals, submissions: rows, since: from }), capped };
-  }, [tenantId, workspace.stages, workspace.deals]);
-  const funnel = useLeadFunnel({ tenantId, pipeline: chosen, since, fallback });
-
+    return { funnel: deriveLeadFunnel({ pipeline, stages: workspace.stages, deals: workspace.deals, submissions: rows, since: from, content }), capped };
+  }, [tenantId, workspace.stages, workspace.deals, content]);
   const own = access === "allowed";
-  const picks = own && library.phase === "ready" ? rankShowroomMedia(library.rows, funnel.funnel?.ads ?? null, 3, library.lastUpload) : [];
+  // The counts are the owners' and admins' (the server refuses anyone else), so a member's page asks for none.
+  const funnel = useLeadFunnel({ tenantId, pipeline: chosen, since, fallback, restricted: access === "denied" });
+  // The funnel read answers whether the ads-intake functions are deployed; nothing extra is asked here.
+  const canFeature = useAdsIntakeCapability(false) !== "missing";
+
+  // What ranks the pictures: the last funnel read that finished. While the next pipeline or window loads,
+  // useLeadFunnel keeps those figures (marked stale), so the placements keep their ranking and say they
+  // are updating instead of reshuffling.
+  const ranking = { ads: funnel.funnel?.ads ?? null, capped: funnel.capped, pipeline: funnel.funnel?.pipeline.name ?? null };
+  const updating = funnel.stale;
+
+  const picks = own && library.phase === "ready" ? rankShowroomMedia(library.rows, ranking.ads, 3, library.lastUpload) : [];
   const recentIndex = picks.findIndex((pick) => pick.reason === "recent");
-  const media: ShowroomMedia[] = picks.map((pick, index) => ({ src: pick.src, kind: pick.kind, title: pick.row.title || "Untitled", badge: badgeOf(pick, index === recentIndex) }));
+  const media: ShowroomMedia[] = picks.map((pick, index) => ({ src: pick.src, kind: pick.kind, title: pick.row.title || "Untitled", badge: badgeOf(pick, index === recentIndex, ranking.capped) }));
   const parsed = copyRow ? parseAdCopy(copyRow.body) : null;
   const copy = copyRow && parsed ? { title: copyRow.title || "Untitled", headline: parsed.headline, primary: parsed.primary, cta: parsed.cta } : null;
   // Where the last upload went, once the library read includes it (undefined while it is still loading).
   const placed = !library.lastUpload ? null : !library.rows.some((row) => row.id === library.lastUpload) ? undefined : picks.some((pick) => pick.row.id === library.lastUpload);
 
-  const ranked = funnel.funnel ? <>, then the ones whose tracking tag brought the most won deals and leads on <b>{funnel.funnel.pipeline.name}</b> {periodWords(days)}</> : null;
+  // The order, said as the page applies it: featured (when featuring is offered), performing, newest.
+  const order: React.ReactNode[] = [
+    ...(canFeature ? ["the ones you feature first"] : []),
+    ...(ranking.pipeline ? [<React.Fragment key="perf">the ones whose tracking tag brought the most won deals and leads on <b>{ranking.pipeline}</b> {periodWords(days)}{updating ? " (updating…)" : ""}</React.Fragment>] : []),
+    "your newest",
+  ].map((part, index) => <React.Fragment key={index}>{index ? ", then " : ""}{part}</React.Fragment>);
   const lede = !own
     ? access === "denied"
       ? <>Each placement shows a sample. Your workspace’s pictures and saved ads are visible to its owners and admins.</>
@@ -413,7 +440,7 @@ function OverviewStage({ tenantId, brand, access, library, copyRow, copyCount, o
     : library.phase === "error"
       ? <>Your pictures couldn’t load, so each placement shows a sample. Nothing was changed.</>
       : media.length
-        ? <>Your own pictures stand in the placements: the ones you feature first{ranked}, then your newest.{media.length < 3 ? " Samples fill what is left." : ""}{copy ? <> The words are from your saved ad <b>{copy.title}</b>.</> : null}</>
+        ? <>Your own pictures stand in the placements: {order}.{media.length < 3 ? " Samples fill what is left." : ""}{copy ? <> The words are from your saved ad <b>{copy.title}</b>.</> : null}</>
         : copy
           ? <>Your saved ad <b>{copy.title}</b> is set into each placement. Add a picture or video and it takes the first placement; samples hold the rest.</>
           : <>Each placement shows a sample until you add a picture or video, or save ad copy.</>;
@@ -425,20 +452,25 @@ function OverviewStage({ tenantId, brand, access, library, copyRow, copyCount, o
         {own && (copyCount > 0 || library.rows.length > 0) && <button type="button" className="btn btn-s" onClick={onCreative}>Open Creative</button>}
         {own && library.phase === "error" && <button type="button" className="btn btn-s" onClick={library.retry}>Try again</button>}
       </>}
-      status={own ? <LibraryNotice library={library} placed={placed}/> : null}/>
+      status={own ? <LibraryNotice library={library} placed={placed} canFeature={canFeature}/> : null}/>
     <LeadFunnelPanel title="Leads through your pipeline" periodWords={periodWords(days)} choices={choices}
       choicesReady={sales.phase === "ready"} choicesFailed={sales.phase === "error" || sales.phase === "unavailable"}
       pipelineId={chosen?.id ?? null} onPipeline={setPipelineId} read={funnel}
       controls={<div className="campaigns-segmented" role="group" aria-label="Period">{PERIODS.map((option) => <button type="button" key={option.key} aria-pressed={period === option.key} onClick={() => setPeriod(option.key)}>{option.label}</button>)}</div>}
-      adNames={adNamesOf(library.rows)} recordLimit={FUNNEL_RECORD_LIMIT} onOpenSales={onOpenSales}
-      adHint={own ? "None of these leads carried an ad tag (utm_content). In Creative, copy a picture’s tracking tag and add it to the link its ad points at; leads from that link are credited to that picture." : "None of these leads carried an ad tag (utm_content)."}/>
+      adNames={adNamesOf(library.rows)} recordLimit={FUNNEL_RECORD_LIMIT} onOpenSales={onOpenSales} onOpenRouting={onOpenRouting}
+      adHint={own ? "None of these leads carried an ad tag (utm_content). In Creative, copy a picture’s tagged link and use it as the link its ad points at; leads from that link are credited to that picture." : "None of these leads carried an ad tag (utm_content)."}/>
   </>;
 }
 
-function badgeOf(pick: ShowroomPick, newest: boolean): string {
+/** Why a picture stands in its placement. A capped records count is a floor, so its figures carry "+". */
+function badgeOf(pick: ShowroomPick, newest: boolean, capped: boolean): string {
   if (pick.reason === "added") return isFeatured(pick.row) ? "Featured" : "Just added";
   if (pick.reason === "featured") return "Featured";
-  if (pick.reason === "performing") return pick.won ? `${pick.won} won · ${plural(pick.leads, "lead")}` : plural(pick.leads, "lead");
+  if (pick.reason === "performing") {
+    const plus = capped ? "+" : "";
+    const leads = `${pick.leads}${plus} ${pick.leads === 1 && !capped ? "lead" : "leads"}`;
+    return pick.won ? `${pick.won}${plus} won · ${leads}` : leads;
+  }
   return newest ? "Newest" : "Recent";
 }
 
@@ -446,27 +478,47 @@ function adNamesOf(rows: readonly MediaRow[]): Map<string, AdName> {
   return new Map(rows.map((row) => [row.id.toLowerCase(), { title: row.title || "Untitled", thumb: safeMediaUrl(row.image_url), kind: row.kind === "video" ? "video" : "image" }]));
 }
 
-/* ───────── Creative: the pictures and videos, each with its feature switch and tracking tag ───────── */
+/* ───────── Creative: the pictures and videos, each with its feature switch and tagged link ───────── */
+
+type Copied = { id: string; ok: boolean; text: string; what: "link" | "tag"; where?: string };
 
 function MediaSection({ library }: { library: MediaLibrary }) {
-  const [copied, setCopied] = React.useState<{ id: string; ok: boolean } | null>(null);
+  // Creative is where featuring is offered, so it asks once whether the server can do it.
+  const canFeature = useAdsIntakeCapability(true) !== "missing";
+  const [copied, setCopied] = React.useState<Copied | null>(null);
+  const [linkFor, setLinkFor] = React.useState<string | null>(null);
+  const openers = React.useRef(new Map<string, HTMLButtonElement | null>());
+  const panelId = React.useId();
+  const write = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); return true; } catch (error) { console.error("[ads] copying failed", error); return false; }
+  };
   const copyTag = async (row: MediaRow) => {
     const tag = trackingTag(row.id);
-    let ok = false;
-    try { await navigator.clipboard.writeText(tag); ok = true; } catch (error) { console.error("[ads] copying the tag failed", error); }
-    setCopied({ id: row.id, ok });
+    setCopied({ id: row.id, ok: await write(tag), text: tag, what: "tag" });
+  };
+  const closeLink = (focus = true) => {
+    const id = linkFor;
+    setLinkFor(null);
+    if (focus && id) openers.current.get(id)?.focus();
+  };
+  const copyLink = async (row: MediaRow, url: string, where: string) => {
+    const ok = await write(url);
+    setCopied({ id: row.id, ok, text: url, what: "link", where });
+    if (ok) closeLink();
   };
   const copiedRow = copied ? library.rows.find((row) => row.id === copied.id) : undefined;
   const atLimit = library.featuredCount >= FEATURED_LIMIT;
   return <section className="mov-card mad-media" aria-labelledby="mad-media-h">
     <header className="mov-head">
-      <div><h2 id="mad-media-h">Pictures and videos</h2><p>{library.phase === "ready" ? `${library.featuredCount} of ${FEATURED_LIMIT} featured in the showroom. ` : ""}A tracking tag on an ad’s link credits its leads to that picture.</p></div>
+      <div><h2 id="mad-media-h">Pictures and videos</h2><p>{canFeature && library.phase === "ready" ? `${library.featuredCount} of ${FEATURED_LIMIT} featured in the showroom. ` : ""}When an ad’s link carries a picture’s tag, the leads it brings are credited to that picture.</p></div>
       <UploadButton library={library}/>
     </header>
-    <LibraryNotice library={library}/>
-    {copiedRow && <p className="mad-notice is-ok" role="status">{copied!.ok
-      ? <>Copied <code>{trackingTag(copiedRow.id)}</code>. Add it to the link this ad points at; leads that arrive on it are credited to “{copiedRow.title || "Untitled"}”.</>
-      : <>Couldn’t copy. The tag is <code>{trackingTag(copiedRow.id)}</code>; add it to the link this ad points at.</>}</p>}
+    <LibraryNotice library={library} canFeature={canFeature}/>
+    <p className={`mad-notice${copiedRow ? copied!.ok ? " is-ok" : " is-bad" : ""}`} role="status" aria-live="polite">{copiedRow && (copied!.ok
+      ? copied!.what === "link"
+        ? <>Copied the link to <b>{copied!.where}</b> tagged for “{copiedRow.title || "Untitled"}”. Use it as the link your ad points at; leads that arrive on it are credited to that picture.</>
+        : <>Copied <code>{copied!.text}</code>. Add it to the link this ad points at; leads that arrive on it are credited to “{copiedRow.title || "Untitled"}”.</>
+      : <>Couldn’t copy. Select it and copy it yourself: <code>{copied!.text}</code></>)}</p>
     {library.phase === "loading" ? <div className="campaigns-skeleton mad-skel" role="status" aria-busy="true" aria-label="Loading pictures and videos"><span/><span/></div>
       : library.phase === "error" ? <div className="mad-row mad-retry" role="alert"><div className="mad-row-b"><strong>Your pictures and videos couldn’t load.</strong><small>Nothing was changed.</small></div><button type="button" className="btn btn-s" onClick={library.retry}>Try again</button></div>
       : !library.rows.length ? <div className="mad-empty"><h2>No pictures or videos yet.</h2><p>Add one and it stands in your showroom straight away, ahead of the samples. Adding never publishes or pays for anything.</p></div>
@@ -474,17 +526,79 @@ function MediaSection({ library }: { library: MediaLibrary }) {
         const src = safeMediaUrl(row.image_url);
         const featured = isFeatured(row);
         const busy = library.pending.has(row.id);
-        return <li key={row.id} className="mad-mcard" data-media-id={row.id}>
-          <span className="mad-mthumb">{src ? row.kind === "video" ? <video src={src} muted playsInline preload="metadata" aria-label={row.title || "Video"}/> : <img src={src} alt={row.title || "Picture"} loading="lazy"/> : <span className="mad-missing">No file saved</span>}{featured && <span className="mad-mflag"><Star size={11} aria-hidden="true"/>Featured</span>}</span>
-          <span className="mad-mmeta"><strong title={row.title ?? undefined}>{row.title || "Untitled"}</strong><small>{row.kind === "video" ? "Video" : "Picture"} · saved {formatDay(row.updated_at)}</small></span>
-          <span className="mad-macts">
-            <button type="button" className="btn btn-s" aria-pressed={featured} disabled={busy || (!featured && atLimit)} title={!featured && atLimit ? FEATURE_WORDS.limit : undefined} onClick={() => void library.toggleFeatured(row)}>
-              <Star size={13} aria-hidden="true"/>{featured ? "Featured" : "Feature in showroom"}
-            </button>
-            <button type="button" className="btn btn-s" onClick={() => void copyTag(row)}><Copy size={13} aria-hidden="true"/>Copy tracking tag</button>
-          </span>
-        </li>;
+        const linking = linkFor === row.id;
+        return <React.Fragment key={row.id}>
+          <li className={`mad-mcard${linking ? " is-linking" : ""}`} data-media-id={row.id}>
+            <span className="mad-mthumb">{src ? row.kind === "video" ? <video src={src} muted playsInline preload="metadata" aria-label={row.title || "Video"}/> : <img src={src} alt={row.title || "Picture"} loading="lazy"/> : <span className="mad-missing">No file saved</span>}{featured && canFeature && <span className="mad-mflag"><Star size={11} aria-hidden="true"/>Featured</span>}</span>
+            <span className="mad-mmeta"><strong title={row.title ?? undefined}>{row.title || "Untitled"}</strong><small>{row.kind === "video" ? "Video" : "Picture"} · saved {formatDay(row.updated_at)}</small></span>
+            <span className="mad-macts">
+              <button type="button" className="btn btn-p btn-s" ref={(node) => { openers.current.set(row.id, node); }} aria-expanded={linking} aria-controls={linking ? panelId : undefined} onClick={() => setLinkFor(linking ? null : row.id)}><Link2 size={13} aria-hidden="true"/>Copy tagged link</button>
+              {canFeature && <button type="button" className="btn btn-s" aria-pressed={featured} disabled={busy || (!featured && atLimit)} title={!featured && atLimit ? FEATURE_WORDS.limit : undefined} onClick={() => void library.toggleFeatured(row)}>
+                <Star size={13} aria-hidden="true"/>{featured ? "Featured" : "Feature in showroom"}
+              </button>}
+              <button type="button" className="mov-lnk mad-tagonly" onClick={() => void copyTag(row)}><Copy size={12} aria-hidden="true"/>Copy tag only</button>
+            </span>
+          </li>
+          {linking && <li className="mad-linker-row"><TaggedLinkPanel id={panelId} row={row} onClose={() => closeLink()} onCopy={(url, where) => void copyLink(row, url, where)}/></li>}
+        </React.Fragment>;
       })}</ul>}
   </section>;
 }
 
+const DEST_TYPE: Record<string, string> = { page: "Page", funnel: "Funnel", form: "Form" };
+
+/** Choose one live page, funnel or form and an optional campaign tag; the link is built as the owner
+ *  types, shown in full, and copied with the picture's tag joined on. The list comes from the read that
+ *  lists them in Marketing (useSoloCampaigns), mounted only while this panel is open. */
+function TaggedLinkPanel({ id, row, onClose, onCopy }: { id: string; row: MediaRow; onClose: () => void; onCopy: (url: string, where: string) => void }) {
+  const campaigns = useSoloCampaigns();
+  const live = React.useMemo(() => (campaigns.artifacts ?? []).filter((item) => item.publicHref), [campaigns.artifacts]);
+  const [destination, setDestination] = React.useState<string | null>(null);
+  const [campaign, setCampaign] = React.useState("");
+  const chosen = live.find((item) => item.id === destination) ?? live[0] ?? null;
+  const url = chosen ? taggedLink(chosen.publicHref, window.location.origin, { content: row.id, campaign }) : null;
+  const headingId = `${id}-h`;
+  const options = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const first = React.useRef<HTMLElement | null>(null);
+  const ready = campaigns.phase === "ready";
+  React.useEffect(() => { first.current?.focus(); }, [ready]);
+  const onRadioKey = (event: React.KeyboardEvent, index: number) => {
+    const last = live.length - 1;
+    const next = event.key === "ArrowDown" || event.key === "ArrowRight" ? Math.min(last, index + 1) : event.key === "ArrowUp" || event.key === "ArrowLeft" ? Math.max(0, index - 1) : event.key === "Home" ? 0 : event.key === "End" ? last : null;
+    if (next === null) return;
+    event.preventDefault();
+    setDestination(live[next].id);
+    options.current[next]?.focus();
+  };
+  return <div id={id} className="mad-linker" role="group" aria-labelledby={headingId} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); onClose(); } }}>
+    <header><h3 id={headingId}>Tagged link for “{row.title || "Untitled"}”</h3><button type="button" className="mad-linker-x" aria-label="Close" onClick={onClose}><X size={14} aria-hidden="true"/></button></header>
+    {!ready && campaigns.phase !== "error" && campaigns.phase !== "unavailable"
+      ? <div className="campaigns-skeleton" role="status" aria-busy="true" aria-label="Loading your live pages and forms"><span/><span/></div>
+      : !ready
+        ? <div className="mad-linker-msg" role="alert"><p>Your pages and forms couldn’t load. Nothing was changed.</p><button type="button" className="btn btn-s" ref={(node) => { first.current = node; }} onClick={() => campaigns.retry?.()}>Try again</button></div>
+        : !live.length
+          ? <div className="mad-linker-msg"><p>No page, funnel or form is live yet, so there is no link to tag. Publish one in Vibe Studio, or copy the tag only and add it to a link of your own.</p></div>
+          : <>
+            <div className="mad-linker-f">
+              <span className="mad-linker-k" id={`${id}-dest`}>Where the ad sends people</span>
+              <div className="mad-dests" role="radiogroup" aria-labelledby={`${id}-dest`}>{live.map((item, index) => {
+                const on = item.id === chosen?.id;
+                return <button type="button" key={item.id} role="radio" aria-checked={on} tabIndex={on ? 0 : -1}
+                  ref={(node) => { options.current[index] = node; if (on) first.current = node; }}
+                  onClick={() => setDestination(item.id)} onKeyDown={(event) => onRadioKey(event, index)}>
+                  <small>{DEST_TYPE[item.type] ?? "Page"}</small><span>{item.name || "Untitled"}</span>
+                </button>;
+              })}</div>
+            </div>
+            <label className="mad-linker-f"><span className="mad-linker-k">Campaign tag <small>optional</small></span>
+              <input type="text" value={campaign} maxLength={80} placeholder="spring-workshop" autoComplete="off" spellCheck={false} onChange={(event) => setCampaign(event.target.value)} aria-describedby={`${id}-camp`}/>
+              <small id={`${id}-camp`}>Added as utm_campaign, so this ad’s leads also count under that campaign.</small>
+            </label>
+            <div className="mad-linker-f"><span className="mad-linker-k">The link</span><code className="mad-linker-url" data-tagged-link>{url ?? "This link can’t be tagged."}</code></div>
+            <div className="mad-linker-a">
+              <button type="button" className="btn btn-p btn-s" disabled={!url} onClick={() => url && chosen && onCopy(url, chosen.name || "Untitled")}><Copy size={13} aria-hidden="true"/>Copy link</button>
+              <button type="button" className="btn btn-s" onClick={onClose}>Cancel</button>
+            </div>
+          </>}
+  </div>;
+}

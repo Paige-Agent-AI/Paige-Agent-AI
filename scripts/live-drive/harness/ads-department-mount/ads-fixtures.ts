@@ -51,30 +51,35 @@ export const submissions = seed.submissions.map((s, i) => ({ ...s, trackingConte
 export const submissionRows = submissions.map((s) => ({ id: s.id, created_at: s.createdAt, deal_id: s.dealId, utm_json: { ...(s.trackingSource ? { utm_source: s.trackingSource } : {}), ...(s.trackingCampaign ? { utm_campaign: s.trackingCampaign } : {}), ...(s.trackingContent ? { utm_content: s.trackingContent } : {}) } }));
 
 /* get_pipeline_lead_funnel, as the server answers it (snake_case jsonb). */
+// Contract v2 (src/solo/__fixtures__/lead-funnel.contract.json): stages are CURRENT deals, everything else
+// is the window; one row per ad, with content_id/kind/image_url when the tag is a library picture's id.
 export function funnelAnswer(pipelineId: string, since: string | null) {
   const p = pipelines.find((row) => row.id === pipelineId) ?? pipelines[1];
   const s = (id: string, name: string, order: number, type: string, deals: number) => ({ id, name, order_index: order, stage_type: type, deals });
+  const own = (id: string) => { const row = media.find((item) => String(item.id).toLowerCase() === id.toLowerCase()); return row ? { content_id: row.id, kind: row.kind, image_url: row.image_url } : { content_id: null, kind: null, image_url: null }; };
+  const unfiled = since ? 3 : 5;
   if (p.id === "p-intake") return {
     pipeline: { id: p.id, name: p.name, is_default: true },
+    stages_window: "current",
     stages: [s("s-new", "New lead", 1, "open", 14), s("s-call", "Discovery call", 2, "open", 6), s("s-proposal", "Proposal sent", 3, "open", 4), s("s-won", "Signed", 4, "won", 5), s("s-lost", "Not now", 5, "lost", 3)],
-    leads: since ? { total: 26, tagged: 19, untagged: 7 } : { total: 41, tagged: 29, untagged: 12 },
+    leads: since ? { total: 26, tagged: 19, untagged: 7, unfiled } : { total: 41, tagged: 29, untagged: 12, unfiled },
     campaigns: [
       { campaign: "CB-SPRING", leads: 12, open: 7, won: 4, lost: 1, by_stage: { "s-new": 4, "s-call": 2, "s-proposal": 1, "s-won": 4, "s-lost": 1 } },
       { campaign: "CB-PODCAST", leads: 5, open: 4, won: 1, lost: 0, by_stage: { "s-new": 3, "s-call": 1, "s-won": 1 } },
       { campaign: "partner-site", leads: 2, open: 2, won: 0, lost: 0, by_stage: { "s-new": 2 } },
     ],
     ads: [
-      { ad: MEDIA_IDS.session, campaign: "CB-SPRING", leads: 11, open: 7, won: 3, lost: 1 },
-      { ad: MEDIA_IDS.story, campaign: "CB-PODCAST", leads: 4, open: 3, won: 1, lost: 0 },
-      { ad: MEDIA_IDS.workshop, campaign: "CB-SPRING", leads: 3, open: 3, won: 0, lost: 0 },
-      { ad: "summer-reel", campaign: null, leads: 1, open: 1, won: 0, lost: 0 },
+      { ad: MEDIA_IDS.session, campaign: "CB-SPRING", ...own(MEDIA_IDS.session), leads: 11, open: 7, won: 3, lost: 1 },
+      { ad: MEDIA_IDS.story.toUpperCase(), campaign: "CB-PODCAST", ...own(MEDIA_IDS.story), leads: 4, open: 3, won: 1, lost: 0 },
+      { ad: MEDIA_IDS.workshop, campaign: "CB-SPRING", ...own(MEDIA_IDS.workshop), leads: 3, open: 3, won: 0, lost: 0 },
+      { ad: "summer-reel", campaign: null, ...own("summer-reel"), leads: 1, open: 1, won: 0, lost: 0 },
     ],
     since,
   };
   if (p.id === "p-retainers") return {
     pipeline: { id: p.id, name: p.name, is_default: false },
     stages: [s("r-talk", "Talking", 1, "open", 1), s("r-won", "Renewed", 2, "won", 2)],
-    leads: { total: 0, tagged: 0, untagged: 0 }, campaigns: [], ads: [], since,
+    stages_window: "current", leads: { total: 0, tagged: 0, untagged: 0, unfiled }, campaigns: [], ads: [], since,
   };
-  return { pipeline: { id: p.id, name: p.name, is_default: false }, stages: p.id === "p-audits" ? [s("a-scope", "Scoping", 1, "open", 0), s("a-done", "Delivered", 2, "won", 0)] : [s("x-intro", "Introduced", 1, "open", 2)], leads: { total: 0, tagged: 0, untagged: 0 }, campaigns: [], ads: [], since };
+  return { pipeline: { id: p.id, name: p.name, is_default: false }, stages_window: "current", stages: p.id === "p-audits" ? [s("a-scope", "Scoping", 1, "open", 0), s("a-done", "Delivered", 2, "won", 0)] : [s("x-intro", "Introduced", 1, "open", 2)], leads: { total: 0, tagged: 0, untagged: 0, unfiled }, campaigns: [], ads: [], since };
 }

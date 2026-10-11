@@ -20,6 +20,7 @@ vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
 }));
 
 import { MarketingAnalytics } from "./marketing-analytics";
+import { resetAdsIntakeCapability } from "./ads-intake-capability";
 import type { CampaignSubmission } from "./useSoloCampaigns";
 
 const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
@@ -49,6 +50,7 @@ const rows = (caption: string) => [...[...panel().querySelectorAll(".plf-table")
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   net.calls = []; net.answer = null;
+  resetAdsIntakeCapability();
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
@@ -60,12 +62,14 @@ describe("Marketing › Analytics: where the range's leads stand in Sales", () =
     net.answer = (args) => ({ data: {
       pipeline: { id: args.p_pipeline_id, name: "Client intake", is_default: true },
       stages: [{ id: "a1", name: "New", order_index: 1, stage_type: "open", deals: 7 }, { id: "a2", name: "Signed", order_index: 2, stage_type: "won", deals: 2 }],
-      leads: { total: 5, tagged: 4, untagged: 1 },
+      stages_window: "current",
+      leads: { total: 5, tagged: 4, untagged: 1, unfiled: 2 },
       campaigns: [{ campaign: "CB-SPRING", leads: 4, open: 2, won: 2, lost: 0, by_stage: { a1: 2, a2: 2 } }],
-      ads: [{ ad: "img-1", campaign: "CB-SPRING", leads: 3, open: 1, won: 2, lost: 0 }],
+      ads: [{ ad: "img-1", campaign: "CB-SPRING", content_id: null, kind: null, image_url: null, leads: 3, open: 1, won: 2, lost: 0 }],
       since: args.p_since,
     }, error: null });
-    await render();
+    const onOpenRouting = vi.fn();
+    await render({ onOpenRouting });
     expect(net.calls).toHaveLength(1);
     expect(net.calls[0][0]).toBe("get_pipeline_lead_funnel");
     expect(net.calls[0][1].p_pipeline_id).toBe("p-a");
@@ -79,6 +83,20 @@ describe("Marketing › Analytics: where the range's leads stand in Sales", () =
     expect(rows("By campaign")).toEqual([["CB-SPRING2 in New · 2 in Signed", "4", "2", "2", "0"]]);
     // Marketing holds no picture library, so an ad tag reads as the tag itself.
     expect(rows("By ad")).toEqual([["img-1Campaign CB-SPRING", "3", "1", "2", "0"]]);
+    // The stages are deals now; the leads that reached no pipeline are named, with their routing a click away.
+    expect(panel().querySelector(".plf-sub")?.textContent).toBe("Deals in each stage now");
+    expect(panel().querySelector(".plf-unfiled span")?.textContent).toBe("2 leads in the last 30 days didn’t reach a pipeline, counting any still being filed.");
+    act(() => (panel().querySelector(".plf-unfiled button") as HTMLButtonElement).click());
+    expect(onOpenRouting).toHaveBeenCalled();
+    // Won counts are read from Sales; value and revenue stay there.
+    expect(host.querySelector(".mva-foot span")?.textContent).toBe("Won counts below are read from your Sales pipelines; deal value and revenue stay in Sales.");
+  });
+
+  it("draws a picture the server matched by its id, with its thumbnail, even with no library on this page", async () => {
+    net.answer = (args) => ({ data: { pipeline: { id: args.p_pipeline_id, name: "Client intake", is_default: true }, stages: [], leads: { total: 1, tagged: 1, untagged: 0, unfiled: 0 }, campaigns: [], ads: [{ ad: "AC000000-0000-0000-0000-000000000002", campaign: null, content_id: "ac000000-0000-0000-0000-000000000002", kind: "image", image_url: "https://cdn.example/c2.png", leads: 1, open: 0, won: 1, lost: 0 }] }, error: null });
+    await render();
+    expect(rows("By ad")).toEqual([["Library picture …0002", "1", "0", "1", "0"]]);
+    expect(panel().querySelector(".plf-thumb img")?.getAttribute("src")).toBe("https://cdn.example/c2.png");
   });
 
   it("names an ad tag that is a library picture's id as a picture, never as a raw id", async () => {
@@ -97,19 +115,38 @@ describe("Marketing › Analytics: where the range's leads stand in Sales", () =
     expect(panel().querySelector(".plf-note")?.textContent).toContain("The server count isn’t available yet");
   });
 
-  it("a failed server read is named as failed, and a full submissions read makes every lead count a floor", async () => {
+  it("someone the server refuses sees a note that campaign results are for owners and admins, never zeros or a fallback", async () => {
     net.answer = () => ({ data: null, error: { code: "42501", message: "PIPELINE_FORBIDDEN" } });
+    await render();
+    expect(panel().getAttribute("data-funnel-source")).toBe("restricted");
+    expect(panel().querySelector(".plf-empty h3")?.textContent).toBe("Campaign results are for owners and admins");
+    expect(panel().querySelectorAll(".plf-stage, table, .plf-picker-btn").length).toBe(0);
+    expect(net.calls).toHaveLength(1);
+  });
+
+  it("a failed server read is named as failed, and a full submissions read makes every lead count a floor", async () => {
+    net.answer = () => ({ data: null, error: { code: "XX000", message: "boom" } });
     const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
     const full = Array.from({ length: 200 }, (_, i) => sub(`f${i}`, 2, "d1", "CB-SPRING", null));
     await render({ submissions: full });
     expect(panel().querySelector(".plf-note")?.textContent).toBe("The server count couldn’t load, so these figures are counted from the latest 200 leads read here; each lead count is a floor. Deals by stage count every deal in the pipeline.");
-    expect(rows("By campaign")[0].slice(1)).toEqual(["200+", "200+", "0+", "0+"]);
+    // Last touch: the 200 leads are one deal, counted once.
+    expect(rows("By campaign")[0].slice(1)).toEqual(["200+", "1+", "0+", "0+"]);
+    expect(panel().querySelector(".plf-sum")?.textContent).toBe("3 deals on this pipeline now. 200+ leads in the last 30 days reached it, and 200+ carried a campaign or ad tag.");
     quiet.mockRestore();
   });
 
-  it("with no Sales pipeline, says where leads will land and reads nothing", async () => {
+  it("with no Sales pipeline, asks only whether the ads-intake functions are deployed, and words where leads go by the answer", async () => {
     await render({ pipelineWorkspace: { pipelines: [], stages: [], deals: [] } });
     expect(panel().querySelector(".plf-empty h3")?.textContent).toBe("No Sales pipeline yet");
-    expect(net.calls).toHaveLength(0);
+    expect(net.calls).toEqual([["get_pipeline_lead_funnel", { p_pipeline_id: null, p_since: null }]]);
+    // Not deployed (PGRST202): no claim that a lead starts in the pipeline.
+    expect(panel().querySelector(".plf-empty p")?.textContent).toBe("Once Sales has a pipeline and your forms send leads to it, every lead and where it stands shows here.");
+    act(() => root.unmount()); root = createRoot(host);
+    resetAdsIntakeCapability();
+    net.calls = [];
+    net.answer = () => ({ data: null, error: { code: "42501", message: "PIPELINE_FORBIDDEN" } });
+    await render({ pipelineWorkspace: { pipelines: [], stages: [], deals: [] } });
+    expect(panel().querySelector(".plf-empty p")?.textContent).toBe("Once Sales has a pipeline, your forms’ leads start in its first stage, and every lead and where it stands shows here.");
   });
 });

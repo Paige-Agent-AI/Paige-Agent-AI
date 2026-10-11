@@ -64,9 +64,11 @@ export type MarketingAnalyticsProps = {
   studioLauncher?: React.ReactNode;
   /** The Sales pipelines, stages and deals (the same read Sales draws from). Omitted, no funnel is drawn. */
   pipelineWorkspace?: Pick<PipelineWorkspace, "pipelines" | "stages" | "deals"> | null;
+  /** Marketing's list of forms and where each sends its leads, offered when leads reached no pipeline. */
+  onOpenRouting?: (() => void) | null;
 };
 
-export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher, pipelineWorkspace }: MarketingAnalyticsProps) {
+export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher, pipelineWorkspace, onOpenRouting }: MarketingAnalyticsProps) {
   const current = rangeOf(range);
   const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days }), [submissions, briefs, forms, current.days]);
   // The headline figures, the funnel and the source mix are counted on the server over every lead in the
@@ -123,7 +125,7 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
       <OutcomesCard model={records} floor={recordFloor}/>
     </div>
     <Funnel model={model} floor={floor} days={current.days} briefsKnown={briefsShown} onOpenSales={onOpenSales}/>
-    {pipelineWorkspace && <PipelineStages tenantId={tenantId} workspace={pipelineWorkspace} submissions={submissions} days={current.days} onOpenSales={onOpenSales}/>}
+    {pipelineWorkspace && <PipelineStages tenantId={tenantId} workspace={pipelineWorkspace} submissions={submissions} days={current.days} onOpenSales={onOpenSales} onOpenRouting={onOpenRouting ?? null}/>}
     <div className="mva-pair">
       <Coverage model={model} floor={floor} days={current.days} briefsKnown={briefsShown}/>
       <Capture model={records} floor={recordFloor} onOpenForm={onOpenForm} studioLauncher={studioLauncher}/>
@@ -257,12 +259,12 @@ function Funnel({ model, floor, days, briefsKnown, onOpenSales }: { model: Model
         </div>
       </li>;
     })}</ol>
-    <p className="mov-foot mva-foot"><span>Won deals, value and revenue are Sales numbers. Marketing links to them and never recalculates them.</span><button type="button" className="mov-lnk" onClick={onOpenSales}>Open Sales performance</button></p>
+    <p className="mov-foot mva-foot"><span>Won counts below are read from your Sales pipelines; deal value and revenue stay in Sales.</span><button type="button" className="mov-lnk" onClick={onOpenSales}>Open Sales performance</button></p>
   </section>;
 }
 
 /** The leads of this range, by the stage they stand in on one Sales pipeline (the default first). */
-function PipelineStages({ tenantId, workspace, submissions, days, onOpenSales }: { tenantId: string | null; workspace: Pick<PipelineWorkspace, "pipelines" | "stages" | "deals">; submissions: CampaignSubmission[]; days: number; onOpenSales: () => void }) {
+function PipelineStages({ tenantId, workspace, submissions, days, onOpenSales, onOpenRouting }: { tenantId: string | null; workspace: Pick<PipelineWorkspace, "pipelines" | "stages" | "deals">; submissions: CampaignSubmission[]; days: number; onOpenSales: () => void; onOpenRouting: (() => void) | null }) {
   const choices = React.useMemo(() => pipelineChoices(workspace.pipelines), [workspace.pipelines]);
   const [pipelineId, setPipelineId] = React.useState<string | null>(null);
   const chosen = choices.find((choice) => choice.id === pipelineId) ?? choices[0] ?? null;
@@ -274,8 +276,8 @@ function PipelineStages({ tenantId, workspace, submissions, days, onOpenSales }:
   }), [workspace.stages, workspace.deals, submissions]);
   const read = useLeadFunnel({ tenantId, pipeline: chosen, since, fallback });
   return <LeadFunnelPanel title="Where these leads stand in Sales" periodWords={`in the last ${days} days`} choices={choices} choicesReady
-    pipelineId={chosen?.id ?? null} onPipeline={setPipelineId} read={read} recordLimit={SUBMISSION_READ_LIMIT} onOpenSales={onOpenSales}
-    adHint="None of these leads carried an ad tag (utm_content). In Ads › Creative each picture has a tracking tag to add to its ad’s link."/>;
+    pipelineId={chosen?.id ?? null} onPipeline={setPipelineId} read={read} recordLimit={SUBMISSION_READ_LIMIT} onOpenSales={onOpenSales} onOpenRouting={onOpenRouting}
+    adHint="None of these leads carried an ad tag (utm_content). In Ads › Creative, copy a picture’s tagged link and use it as its ad’s link."/>;
 }
 
 function Coverage({ model, floor, days, briefsKnown }: { model: Model; floor: (n: number) => string; days: number; briefsKnown: boolean }) {

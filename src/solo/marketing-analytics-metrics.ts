@@ -81,11 +81,14 @@ export type ServerRead = {
 
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string; message?: string } | null }>;
 
-/** Reads the headline figures for [start, now) and the period just before it, both on the server. */
-export function useMarketingServerFigures(tenantId: string | null, rangeKey: "week" | "month" | "quarter", periodStart: number): ServerRead {
+/** Reads the headline figures for [start, now) and, unless `previous` is false, the period just before it, both
+ *  on the server. A page that shows no comparison (Overview) skips the second read: four fewer calls, and its
+ *  figures don't depend on a read it never draws. */
+export function useMarketingServerFigures(tenantId: string | null, rangeKey: "week" | "month" | "quarter", periodStart: number, options: { previous?: boolean } = {}): ServerRead {
+  const withPrevious = options.previous !== false;
   const [attempt, setAttempt] = React.useState(0);
   const [state, setState] = React.useState<{ key: string; phase: ServerRead["phase"]; current: ServerFigures | null; previous: ServerFigures | null }>({ key: "", phase: "loading", current: null, previous: null });
-  const key = `${tenantId}:${rangeKey}:${periodStart}:${attempt}`;
+  const key = `${tenantId}:${rangeKey}:${periodStart}:${withPrevious}:${attempt}`;
   React.useEffect(() => {
     if (!tenantId) return;
     let live = true;
@@ -116,7 +119,7 @@ export function useMarketingServerFigures(tenantId: string | null, rangeKey: "we
     // A device clock running ahead of the server's makes it refuse the end (22023); one retry with a wider margin.
     const later = new Date(Math.floor((Date.now() - 5 * 60_000) / 60_000) * 60_000).toISOString();
     const readCurrent = read(start, end).catch((error: { code?: string }) => (error?.code === "22023" && later > start ? read(start, later) : Promise.reject(error)));
-    Promise.all([readCurrent, read(before, start)]).then(([current, previous]) => {
+    Promise.all([readCurrent, withPrevious ? read(before, start) : Promise.resolve(null)]).then(([current, previous]) => {
       if (live) setState({ key, phase: "ready", current, previous });
     }, (error: { code?: string }) => {
       if (!live) return;
@@ -166,3 +169,48 @@ export function withServerFigures(model: MarketingAnalyticsModel, current: Serve
     previous: previous && { leads: previous.leads, tagged: previous.tagged, matched: previous.matched, opportunities: previous.opportunities },
   };
 }
+
+/** Submissions the processor could not finish, as the server counts them now, at any age: `failed` ended in
+ *  an error; `stalled` is still waiting more than 15 minutes after arriving (marketing.submissions.failed_current). */
+export type ProcessingHealth = { failed: number; stalled: number };
+
+export function healthFrom(result: MetricResult): ProcessingHealth {
+  const rows = items(result);
+  const of = (key: string) => rows.find((row) => row.key === key)?.count ?? 0;
+  return { failed: of("failed"), stalled: of("stalled") };
+}
+
+export type HealthRead = { phase: "loading" | "ready" | "denied" | "error"; health: ProcessingHealth | null };
+
+/** One current-state read of submission processing through the same shared seam. A member is refused and
+ *  gets `denied`; the caller then keeps what its own records show. */
+export function useMarketingProcessingHealth(tenantId: string | null, periodStart: number): HealthRead {
+  const key = `${tenantId}:${periodStart}`;
+  const [state, setState] = React.useState<{ key: string; read: HealthRead }>({ key: "", read: { phase: "loading", health: null } });
+  React.useEffect(() => {
+    if (!tenantId) return;
+    let live = true;
+    const metricKey = "marketing.submissions.failed_current";
+    const start = new Date(periodStart).toISOString();
+    const end = new Date(Math.floor((Date.now() - 5 * 60_000) / 60_000) * 60_000).toISOString();
+    if (end <= start) { setState({ key, read: { phase: "error", health: null } }); return; }
+    const rpc = (supabase as unknown as { rpc: Rpc }).rpc.bind(supabase);
+    Promise.resolve(rpc("issue_analytics_evidence_bundle", {
+      p_metric_key: metricKey, p_metric_version: "1.0.0", p_dimensions: {}, p_range_key: "month",
+      p_range_start: start, p_range_end: end, p_account_epoch: tenantId,
+    })).then(({ data, error }) => {
+      if (error) throw Object.assign(new Error(error.message ?? "read refused"), { code: error.code });
+      const result = parseMetricResult(data, { metricKey, metricVersion: "1.0.0", accountEpoch: tenantId, rangeKey: "month", rangeStart: start, rangeEnd: end, dimensions: {} });
+      if (result.owner_department !== "marketing") throw new Error("unexpected metric owner");
+      if (live) setState({ key, read: { phase: "ready", health: healthFrom(result) } });
+    }).catch((error: { code?: string }) => {
+      if (!live) return;
+      const denied = error?.code === "42501" || error?.code === "28000";
+      if (!denied) console.error("[marketing-overview] processing health failed", error);
+      setState({ key, read: { phase: denied ? "denied" : "error", health: null } });
+    });
+    return () => { live = false; };
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  return state.key === key ? state.read : { phase: "loading", health: null };
+}
+

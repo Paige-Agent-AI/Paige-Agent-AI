@@ -30,6 +30,28 @@
 .intel-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--pg-line); min-width: 0; }
 .intel-section header { margin-bottom: 14px; }
 .intel-section header p { margin-top: 6px; font-size: var(--pg-t-body); }
+.intel-score-toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.intel-scorecard button { min-height: 44px; white-space: normal; height: auto; color: var(--pg-ink); background: var(--pg-raised); border-color: var(--pg-line); }
+.intel-scorecard button:hover { color: var(--pg-ink); background: var(--pg-surface); }
+.intel-scorecard button:disabled { opacity: .55; }
+.intel-scorecard section:focus-visible { outline: 2px solid var(--intel-accent); outline-offset: 4px; }
+.intel-score-toolbar [role="combobox"] { min-height: 44px; width: 280px; max-width: 100%; background: var(--pg-raised); color: var(--pg-ink); }
+.intel-score-bars, .intel-score-results { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.intel-score-bars li > div:first-child { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.intel-score-bars p { margin-top: 8px; color: var(--pg-muted); font-size: var(--pg-t-label); }
+.intel-score-track { display: flex; height: 12px; background: var(--pg-graphite); }
+.intel-score-track span[data-verdict="pass"] { background: var(--pg-positive); }
+.intel-score-track span[data-verdict="fail"] { background: var(--pg-negative); }
+.intel-score-track span[data-verdict="indeterminate"] { background: var(--pg-warning); }
+.intel-score-track span[data-verdict="not_applicable"] { background: var(--pg-muted); }
+.intel-score-participant { padding: 16px 0; border-top: 1px solid var(--pg-line); border-bottom: 1px solid var(--pg-line); }
+.intel-score-participant p { color: var(--pg-muted); margin-top: 6px; }
+.intel-definitions details { padding: 12px 0; border-bottom: 1px solid var(--pg-line); }
+.intel-definitions summary { cursor: pointer; min-height: 44px; }
+.intel-definitions p, .intel-definitions dd { color: var(--pg-muted); margin: 8px 0 14px; overflow-wrap: anywhere; }
+.intel-score-results li { display: grid; gap: 4px; border-bottom: 1px solid var(--pg-line); padding-bottom: 12px; }
+.intel-score-results span { font-weight: 600; }
+@media (max-width: 760px) { .intel-score-toolbar { align-items: stretch; flex-direction: column; } .intel-score-toolbar [role="combobox"] { width: 100%; } }
 .intel-columns { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; }
 .intel-measures { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; margin: 16px 0; }
 .intel-measures dt { color: var(--pg-muted); font-size: var(--pg-t-body); }

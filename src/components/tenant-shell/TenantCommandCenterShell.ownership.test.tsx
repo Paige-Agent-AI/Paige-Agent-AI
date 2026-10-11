@@ -62,6 +62,12 @@ vi.mock("@/solo/useSoloCampaigns", () => ({
   }),
 }));
 // Keep the real Studio navigation while its independently tested media seam is unavailable.
+// Marketing › Overview's server reads (MBC 2c): a refused seat, so it keeps its record counts and nothing leaves the test.
+vi.mock("@/solo/marketing-analytics-metrics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/solo/marketing-analytics-metrics")>()),
+  useMarketingServerFigures: () => ({ phase: "denied", current: null, previous: null, retry: () => {} }),
+  useMarketingProcessingHealth: () => ({ phase: "denied", health: null }),
+}));
 vi.mock("@/solo/useMediaJobs", () => ({
   useMediaJobs: () => ({
     capabilities: null, jobs: [], assets: {}, loading: false, actionError: null,

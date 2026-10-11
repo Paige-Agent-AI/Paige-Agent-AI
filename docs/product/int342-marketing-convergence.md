@@ -441,7 +441,8 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
    - Pages, forms, funnels, email campaigns and series, and ad copy attach to a brief.
    - Campaigns shows real composition.
 4. **S4: Capture events.**
-   - A `form.submitted` native event and §67 trigger.
+   - A `form.submitted` native event and §67 trigger. Built as MBC slice 4a
+     (`docs/delivery/form-submitted-event-contract.md`): once per submission matched to a contact, ids and tags only.
    - Wire `growth_funnel_session_upsert`.
    - A tenant-scoped public-route view producer, which reopens Content B.
 5. **S5: Ads read (owner provider choice + backend).**

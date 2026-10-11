@@ -28,13 +28,13 @@ async function fillProject() { await input('input:not([type="date"])', "Client l
 async function review() { await act(async () => document.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))); }
 it("reviews project scope and dates before saving and retains canceled drafts", async () => {
   await render(); await fillProject(); await review(); expect(mock.create).not.toHaveBeenCalled();
-  expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("Draft");
+  expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("Active");
   await click("Keep editing"); expect(document.querySelector<HTMLInputElement>("input")?.value).toBe("Client launch");
 });
-it("reports draft creation only after verified source result", async () => {
+it("reports active creation only after verified source result", async () => {
   mock.create.mockResolvedValue({ kind: "verified", id: "test-plan-a" }); const created = vi.fn();
   await render(undefined, vi.fn(), created); await fillProject(); await review(); await click("Create project");
-  expect(created).toHaveBeenCalledOnce(); expect(document.body.textContent).toContain("Project saved and verified as a draft");
+  expect(created).toHaveBeenCalledOnce(); expect(document.body.textContent).toContain("Project saved and verified as active");
 });
 it("keeps repeat submission locked and offers exact project inspection after uncertainty", async () => {
   mock.create.mockResolvedValue({ kind: "uncertain", id: "test-plan-a", message: "Readback unavailable" }); const recover = vi.fn();

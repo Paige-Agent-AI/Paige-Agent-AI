@@ -6,14 +6,14 @@ const scope = { actorId: "test-actor-a", tenantId: "test-tenant-a" };
 const draft: ProjectDraft = { kind: "project", title: " New delivery ", summary: " Clear outcome ", ownerId: scope.actorId,
   scope: "individual", horizon: "custom", startsOn: "2026-10-20", endsOn: "2026-11-20" };
 const row = { id: "test-plan-a", tenant_id: scope.tenantId, created_by: scope.actorId, title: "New delivery", summary: "Clear outcome",
-  owner_user_id: scope.actorId, scope: draft.scope, horizon: draft.horizon, starts_on: draft.startsOn, ends_on: draft.endsOn, status: "draft" };
+  owner_user_id: scope.actorId, scope: draft.scope, horizon: draft.horizon, starts_on: draft.startsOn, ends_on: draft.endsOn, status: "active" };
 beforeEach(() => {
   vi.resetAllMocks(); mock.getSession.mockResolvedValue({ data: { session: { user: { id: scope.actorId } } }, error: null });
   mock.rpc.mockResolvedValue({ data: { ok: true, plan_id: row.id, actor_id: scope.actorId, tenant_id: scope.tenantId }, error: null });
   mock.from.mockReturnValue({ select: mock.select }); mock.select.mockReturnValue({ eq: mock.eq });
   mock.eq.mockReturnValue({ eq: mock.eq, maybeSingle: mock.read }); mock.read.mockResolvedValue({ data: row, error: null });
 });
-it("verifies the canonical draft project only after scoped readback", async () => {
+it("verifies the canonical active project only after scoped readback", async () => {
   expect(await createOperationsProjectRecord(scope, draft)).toEqual({ kind: "verified", id: row.id });
   expect(mock.rpc.mock.calls[0][0]).toBe("plan_create_scoped"); expect(mock.from).toHaveBeenCalledWith("plans");
   expect(mock.eq).toHaveBeenCalledWith("tenant_id", scope.tenantId);

@@ -21,7 +21,7 @@ Deno.serve(async(req)=>{
  const caller=createClient(url,anon,{global:{headers:{Authorization:authorization}},auth:{persistSession:false,autoRefreshToken:false}});
  const {data:{user},error:authError}=await caller.auth.getUser();
  if(authError||!user)return json({error:'unauthorized'},401);
- const authority=await caller.rpc('operator_can_retire_accounts');
+ const authority=await caller.rpc('operator_can_permanently_delete_accounts');
  if(authority.error||authority.data!==true)return json({error:'platform_administrator_only'},403);
  let input:Record<string,unknown>;
  try{const text=await req.text();if(text.length>8192)return json({error:'request_too_large'},413);input=JSON.parse(text);}

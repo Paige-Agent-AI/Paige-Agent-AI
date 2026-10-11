@@ -10,6 +10,20 @@ function source(): TaskScorecardRead { return { version: '1.1.0', page: { data: 
 async function mount(read = source()) { host = document.createElement('div'); document.body.append(host); root = createRoot(host); await act(async () => root.render(<TaskScorecard read={read} work={{ id: canonical.v2.items[0].work_ref, category: 'document' }} onInspectTask={vi.fn()} onBrowseTasks={vi.fn()} />)); return read; }
 async function click(text: string) { const button = [...host.querySelectorAll('button')].find(b => b.textContent === text)!; await act(async () => button.click()); return button; }
 afterEach(async () => { if (root) await act(async () => root.unmount()); host?.remove(); });
+it.each(['Older evaluations', 'Newest evaluations'])('clears inspection when paging through %s and never resurrects it on reload', async (pageButton) => {
+  const read = source(); read.page.data!.next_cursor = { at: canonical.v2.items[0].created_at, id: canonical.v2.items[0].run_ref };
+  await mount(read); await click('Inspect evaluation');
+  const heading = host.querySelector('#intel-scorecard-heading');
+  await click(pageButton);
+  expect(read.pageOlder).toHaveBeenCalled();
+  expect(host.querySelector('[aria-label="Task evaluation inspection"]')).toBeNull();
+  expect(document.activeElement).toBe(heading);
+  const render = async () => act(async () => root.render(<TaskScorecard read={{ ...read }} work={null} onInspectTask={vi.fn()} onBrowseTasks={vi.fn()} />));
+  read.page.data = undefined; read.page.loading = true; await render();
+  read.page.data = parseTaskScorecard(canonical.v2, '1.1.0'); read.page.loading = false; await render();
+  expect(host.querySelector('[aria-label="Task evaluation inspection"]')).toBeNull();
+  expect(document.activeElement).toBe(heading);
+});
 it('renders actual returned sample, all evidence states and unknown pass rate', async () => {
   await mount(); expect(host.textContent).toContain('37.5%'); expect(host.textContent).toContain('3 / 8 applicable checks resolved'); expect(host.textContent).toContain('criterion pass rate unavailable'); expect(host.textContent).toContain('Historical replay'); expect(host.textContent).not.toContain('75%');
 });

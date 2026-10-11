@@ -9,6 +9,7 @@ import canonicalScorecard from '@/test/fixtures/canonical-task-scorecard.json';
 import { parseTaskScorecard } from '@/operator/data/taskScorecardContract';
 import type { TrajectoryPage } from '@/operator/data/intelligenceContract';
 vi.mock("@/operator/data/useIntelligence", () => ({ useIntelligence: vi.fn() }));
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const source = <T,>(data: T): ReadState<T> => ({ data, loading: false, fetching: false, error: false, updatedAt: 1791604800000, refresh: vi.fn() });
 const trace: IntelligenceTrace = { id: "test-trace-1", created_at: "2026-10-10T04:00:00Z", tenant_label: "Test workspace", agent_id: "test-agent", provider: "test-provider", model: "test-model", job_kind: "test-job", modality: "text", tier: "operational", status: "error", tokens_in: null, tokens_out: null, latency_ms: 240, cost_estimate_usd: null, error_class: "test_failure", account_type: "standalone", parent_name: null, working_context_label: null };
@@ -30,6 +31,16 @@ async function click(text: string) {
 }
 afterEach(async () => { if (root) await act(async () => root.unmount()); node?.remove(); });
 describe("INT-280 supported Operator flows", () => {
+  it.each(['Evaluate task evidence', 'Prepare recommendation from this task', 'Executive Flight Deck'])('clears an abandoned scorecard return origin after %s before a direct Forensic inspection', async exit => {
+    const data = read(); const trajectory = canonicalScorecard.trajectory as unknown as TrajectoryPage;
+    data.scorecard = { version: '1.1.0', page: source(parseTaskScorecard(canonicalScorecard.v2, '1.1.0')), selectVersion: vi.fn(), pageOlder: vi.fn(), evaluate: vi.fn(), stopWaiting: vi.fn(), action: { status: 'idle' } };
+    data.trajectories = source(trajectory);
+    data.inspectTrajectory = vi.fn(request => { data.trajectoryRequest = request; data.selectedTrajectory = source(trajectory); root.render(<IntelligenceWorkspace read={{ ...data }} />); });
+    await mount(data); await click('Improvement Studio'); await click('Inspect evaluation'); await click('Inspect canonical task evidence');
+    await click(exit); await click('Forensic Observatory'); await click('Inspect task'); await click('Close inspection');
+    expect(node.querySelector('[role="tab"][data-state="active"]')?.textContent).toBe('Forensic Observatory');
+    expect(document.activeElement?.getAttribute('aria-label')).toBe(`Inspect task ${trajectory.items[0].id}`);
+  });
   it('connects a canonical evaluation to Forensic evidence and returns focus to its scorecard home', async () => {
     const data = read();
     data.scorecard = { version: '1.1.0', page: source(parseTaskScorecard(canonicalScorecard.v2, '1.1.0')), selectVersion: vi.fn(), pageOlder: vi.fn(), evaluate: vi.fn(), stopWaiting: vi.fn(), action: { status: 'idle' } };

@@ -64,6 +64,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
     setDestination(kind === "forensic" ? "intel-call-filter" : "intel-evaluation-evidence");
   }
   function prepare(kind: Recommendation["kind"], evidence: string) {
+    setReturnToScorecard(false);
     setDrafts((d) => ({ ...d, [kind]: { ...d[kind], evidence: d[kind].evidence.includes(evidence)
       ? d[kind].evidence : [d[kind].evidence, evidence].filter(Boolean).join("\n") } }));
     setWorkspace(kind === "improvement" ? "studio" : "radar");
@@ -82,7 +83,8 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
     .some((value) => value?.toLowerCase().includes(search.toLowerCase())));
   const tasks = read.trajectories.error ? [] : read.trajectories.data?.items ?? [];
   const selectedTask = read.selectedTrajectory.error ? null : read.selectedTrajectory.data?.items[0] ?? null;
-  function inspectTask(request: TrajectoryRequest) {
+  function inspectTask(request: TrajectoryRequest, scorecardOrigin = false) {
+    setReturnToScorecard(scorecardOrigin);
     setTrace(null); setRun(null); setWorkspace("forensic"); read.inspectTrajectory(request);
   }
   function closeTask() {
@@ -94,7 +96,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
   return (
     <section className="intelligence" data-workspace={workspace} aria-label="PAIGE Intelligence">
       <h2 className="sr-only">PAIGE Intelligence</h2>
-      <Tabs value={workspace} onValueChange={(v) => { setWorkspace(v as Workspace); setNotice(""); }}>
+      <Tabs value={workspace} onValueChange={(v) => { setReturnToScorecard(false); setWorkspace(v as Workspace); setNotice(""); }}>
         <TabsList className="intel-tabs" aria-label="Intelligence workspaces">
           {WORKSPACES.map(([id, name]) => { const Icon = WORKSPACE_ICONS[id]; return <TabsTrigger key={id} value={id} data-workspace={id}><Icon size={16} aria-hidden="true" />{name}</TabsTrigger>; })}
         </TabsList>
@@ -167,7 +169,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
           </Section>
           {read.trajectoryRequest && <Inspection title="Task evidence" onClose={closeTask}>
             <ReadStatus state={read.selectedTrajectory} name="Selected task evidence" />
-            {selectedTask && read.selectedTrajectory.data && <><TrajectoryEvidence task={selectedTask} observedAt={read.selectedTrajectory.data.observed_at} /><Button className="intel-task-action intel-task-recommend" variant="outline" onClick={() => { setEvaluationWork({ id: selectedTask.id, category: selectedTask.category }); setWorkspace('studio'); setDestination('intel-scorecard-heading'); read.inspectTrajectory(null); }}>Evaluate task evidence</Button><Button className="intel-task-action intel-task-recommend" variant="outline" onClick={() => { prepare("improvement", `paige_durable_work:${selectedTask.id}`); read.inspectTrajectory(null); }}>Prepare recommendation from this task <ArrowUpRight size={14} aria-hidden /></Button></>}
+            {selectedTask && read.selectedTrajectory.data && <><TrajectoryEvidence task={selectedTask} observedAt={read.selectedTrajectory.data.observed_at} /><Button className="intel-task-action intel-task-recommend" variant="outline" onClick={() => { setReturnToScorecard(false); setEvaluationWork({ id: selectedTask.id, category: selectedTask.category }); setWorkspace('studio'); setDestination('intel-scorecard-heading'); read.inspectTrajectory(null); }}>Evaluate task evidence</Button><Button className="intel-task-action intel-task-recommend" variant="outline" onClick={() => { prepare("improvement", `paige_durable_work:${selectedTask.id}`); read.inspectTrajectory(null); }}>Prepare recommendation from this task <ArrowUpRight size={14} aria-hidden /></Button></>}
             {!read.selectedTrajectory.loading && !read.selectedTrajectory.error && read.selectedTrajectory.data && !selectedTask && <Empty title="No server-proven trajectory link" detail="This reference has no supported scoped work correlation. No related task was guessed." />}
           </Inspection>}
           <Section title="Inspect the operational evidence" subtitle="Latest 50 recorded LLM calls · canonical metadata read on load and explicit refresh">
@@ -202,7 +204,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
         </TabsContent>
 
         <TabsContent value="studio">
-          <TaskScorecard read={read.scorecard} work={evaluationWork} onInspectTask={id => { setReturnToScorecard(true); inspectTask({ workId: id }); }} onBrowseTasks={() => { setWorkspace('forensic'); setDestination('intel-task-evidence'); }} />
+          <TaskScorecard read={read.scorecard} work={evaluationWork} onInspectTask={id => inspectTask({ workId: id }, true)} onBrowseTasks={() => { setReturnToScorecard(false); read.inspectTrajectory(null); setWorkspace('forensic'); setDestination('intel-task-evidence'); }} />
           <Section title="Evaluation and regression evidence" headingId="intel-evaluation-evidence" subtitle="Latest 25 canonical runs · target version, scorer set and case links · no paid evaluation is triggered">
             <ReadStatus state={read.evals} name="Evaluation history" />
             <EvaluationChart runs={runs} onInspect={(selected, button) => { opener.current = button; setRun(selected); }} />

@@ -1,7 +1,7 @@
 # Task creation — bounded local evidence
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: 7eb8e4f1f1c1fc5c1b7227862e8a6ba2070b98cd; deployment=none-local-development; environment=development; migrations=PROOF_OWED(unallocated-task-creation-migration-and-rebuilt-schema-proof); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-work-creation-packet.md
+INTERNAL_BUILD_IDENTITY: 7eb8e4f1f1c1fc5c1b7227862e8a6ba2070b98cd; deployment=none-local-development; environment=development; migrations=PROOF_OWED(20271020000110-Operations-task-creation-rebuilt-schema-and-deployment); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-work-creation-packet.md
 RELEASE_CHANNEL: development: isolated canonical task-creation implementation and synthetic flow proof, no hosted deployment claim.
 RELEASE_CLASSIFICATION: internal-only: bounded owner-authorized backend implementation; full Operations outcome remains incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated operational outcome has not earned a customer release identity or announcement.
@@ -12,7 +12,7 @@ FLOW_PROTOTYPE: PASS: Owner approved V3 and implementation October 10.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Responsible owner prepares, reviews and creates an assigned task.
 VISUAL_DIRECTION: PASS: Approved Obsidian/Mineral V3, Team identity and restrained actions.
 AUTOMATED_EVIDENCE: PASS: Fresh 23 tests in three files at reconciled source; seven creator tests PASS after the isolated phone fit correction. Final promoted release-head CI remains owed.
-STATIC_EVIDENCE: PASS: Current scoped lint, definer/ACL-signature lint and bounded non-author source review. Current type check and final promoted release-head review remain owed.
+STATIC_EVIDENCE: PASS: Current scoped lint, definer/ACL-signature lint and bounded non-author source review. Baseline type ratchet PASS (10/10); final promoted release-head review remains owed.
 RENDERED_EVIDENCE: PASS: Fresh actual product/shared-shell synthetic creator, confirmation, refusal, discard and zoom captures. Independent visual re-check SHIP for the bounded fixes.
 BEHAVIORAL_EVIDENCE: PASS: Corrected eighteen-case matrix uses genuine narrow PAIGE fold before entry; four uncertain recovery cases and eight native browser zoom cases PASS. Reports preserve explicit synthetic boundaries.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No named customer workspace accessed or tested.

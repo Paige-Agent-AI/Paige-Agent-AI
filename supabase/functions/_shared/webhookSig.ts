@@ -185,15 +185,28 @@ function derSignatureToP1363(der: Uint8Array): Uint8Array | null {
 
 export type SendgridEventVerdict = { ok: true } | { ok: false; reason: string };
 
-/** Verify a Twilio/SendGrid signed Event Webhook request. Fail-closed by construction. */
+/**
+ * Verify a Twilio/SendGrid signed Event Webhook request. Fail-closed by construction.
+ *
+ * ANT-148 P1: the official protocol signs `timestamp + raw request body` — the
+ * timestamp carried by the X-Twilio-Email-Webhook-Event-Timestamp header is
+ * PART of the signed content (Twilio's reference verification updates the
+ * digest with the timestamp first, then the raw body, no separator). Verifying
+ * the body alone (the pre-correction defect) accepts a replayed body under a
+ * captured signature regardless of the timestamp header.
+ */
 export async function verifySendgridEvent(opts: {
   publicKeyPem: string | null;
   signatureB64: string | null;
+  timestamp: string | null;
   body: string;
 }): Promise<SendgridEventVerdict> {
   const pem = (opts.publicKeyPem ?? "").trim();
   const sigB64 = (opts.signatureB64 ?? "").trim();
+  const ts = (opts.timestamp ?? "").trim();
   if (!pem || !sigB64) return { ok: false, reason: "unconfigured_or_unsigned" };
+  if (!ts) return { ok: false, reason: "timestamp_missing" };
+  if (ts.length > 32) return { ok: false, reason: "timestamp_too_large" };
   if (sigB64.length > 2048) return { ok: false, reason: "signature_too_large" };
   let der: Uint8Array<ArrayBuffer>;
   try { der = b64ToBytes(sigB64); } catch { return { ok: false, reason: "signature_malformed" }; }
@@ -211,7 +224,8 @@ export async function verifySendgridEvent(opts: {
       { name: "ECDSA", hash: "SHA-256" },
       key,
       p1363 as unknown as ArrayBuffer,
-      new TextEncoder().encode(opts.body),
+      // Signed content per the official protocol: timestamp THEN raw body.
+      new TextEncoder().encode(`${ts}${opts.body}`),
     );
     return valid ? { ok: true } : { ok: false, reason: "signature_invalid" };
   } catch {

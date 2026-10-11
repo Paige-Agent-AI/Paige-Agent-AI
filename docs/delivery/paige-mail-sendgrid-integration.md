@@ -40,6 +40,50 @@ ES256 verifier accepts a correctly-signed DER request and rejects tampered bodie
 malformed base64, malformed DER, and unconfigured keys — 2 new webhookSig test functions (6 assertions; suite totals 15) + 3 provider tests,
 all mocked (no network, no real credentials; the test key value is synthetic).
 
+## ANT-148 corrections (2026-10-12)
+
+Two P1s corrected before any owner configuration: (1) the canonical verifier now
+signs **timestamp + raw body** per the official Twilio protocol (the timestamp
+header is part of the signed content — body-only verification accepted replayed
+bodies); (2) the acknowledgment contract — HTTP 200 only when every recognized
+event is durably committed, already committed, or ignored by mapping; RPC
+errors, thrown calls, and `pending` results return **503 retriable**; batches
+over 1000 refused 413; event identities are batch-index-stamped so same-second
+distinct events never collapse while identical redeliveries dedup. `unsubscribe`
+is acknowledged and NOT recorded (no canonical unsubscribed receipt status;
+suppression/complaint propagation is an explicit deferred decision until tenant
+routing — the resend path writes `paige_suppressions` from resolved campaign
+context the SendGrid receipt path does not yet have). Actual-handler regression
+suite: `src/solo/sendgrid-webhook-handler.test.ts` (12 cases: the ack matrix,
+partial batches, oversized, tampered/absent timestamp, unsigned, unconfigured).
+
+## Revised owner-console acceptance procedure (post-ANT-148)
+
+**Preferred: automated configuration** (owner continuity ruling 2026-10-12).
+The platform manages Event Webhooks through SendGrid's v3 API from an
+operator-only function — inspecting existing settings first (reuse, never
+duplicate), preparing the webhook with signature enabled in a disabled state,
+and surfacing the verification public key for `SENDGRID_WEBHOOK_PUBLIC_KEY`.
+**Credential requirement (the one escalation):** this needs a SendGrid API key
+with webhook-management scopes. The Mail Send executor key must NOT be used
+(it cannot manage webhooks) and the full-access admin key must NOT be exposed
+to Edge functions. The single owner action: create a **scoped key**
+(webhook read/write only) in the SendGrid console and install it as
+`SENDGRID_WEBHOOK_ADMIN_API_KEY` — the automation function is its only reader
+and the full-access key stays untouched (and remains owed rotation on its own
+track). Until that key exists, the manual sequence below remains valid.
+
+Manual sequence (fallback): Settings → Mail Settings → Event Webhook →
+Post URL `https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/handle-sendgrid-webhook`,
+HTTP auth None, Signed events ON, deliver the ECDSA public key PEM as
+`SENDGRID_WEBHOOK_PUBLIC_KEY`, select delivered/deferred/open/click/bounce/
+dropped/spamreport (unsubscribe acknowledged-unrecorded; processed unmapped).
+**Acceptance truth:** SendGrid's console *Send test event* is synthetic — it
+proves signed connectivity only, NEVER correlation with a real sent message.
+Correlation proof requires an actual authorized send recording `X-Message-Id`
+and a subsequent event whose `sg_message_id` first segment equals it — that
+round-trip remains separately authorized.
+
 ## Remaining acceptance requirements (precise)
 
 1. Owner invokes `comms-sendgrid-scopes` (or the check is scheduled) to record the executor key's

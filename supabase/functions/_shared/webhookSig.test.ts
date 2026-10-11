@@ -180,7 +180,9 @@ Deno.test("sha256Hex matches the known digest of 'abc'", async () => {
   );
 });
 
-// ─── SendGrid (Twilio) signed Event Webhook verification ──────────────────────
+// ─── SendGrid (Twilio) signed Event Webhook verification ─────────────────────
+// Oracle: the official protocol signs timestamp + raw body (timestamp first,
+// no separator) with ES256, delivered DER-encoded.
 function p1363ToDer(raw: Uint8Array): Uint8Array {
   const trim = (n: Uint8Array) => {
     let s = 0;
@@ -200,30 +202,60 @@ function p1363ToDer(raw: Uint8Array): Uint8Array {
 function toB64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes));
 }
+async function sgSign(kp: CryptoKey, timestamp: string, body: string): Promise<string> {
+  const p1363 = new Uint8Array(await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" }, kp, new TextEncoder().encode(`${timestamp}${body}`)));
+  return toB64(p1363ToDer(p1363));
+}
+async function sgPem(publicKey: CryptoKey): Promise<string> {
+  const spki = new Uint8Array(await crypto.subtle.exportKey("spki", publicKey));
+  return `-----BEGIN PUBLIC KEY-----
+${toB64(spki)}
+-----END PUBLIC KEY-----`;
+}
 
-Deno.test("verifySendgridEvent accepts a correctly signed ES256 (DER) request", async () => {
+Deno.test("verifySendgridEvent accepts a correctly signed timestamp+body request", async () => {
   const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
-  const spki = new Uint8Array(await crypto.subtle.exportKey("spki", kp.publicKey));
-  const pem = `-----BEGIN PUBLIC KEY-----\n${toB64(spki).replace(/(.{64})/g, "$1\n").trim()}\n-----END PUBLIC KEY-----`;
+  const pem = await sgPem(kp.publicKey);
   const body = JSON.stringify([{ event: "delivered", sg_message_id: "abc.def" }]);
-  const p1363 = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, kp.privateKey, new TextEncoder().encode(body)));
-  const sig = toB64(p1363ToDer(p1363));
-  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, body });
+  const ts = "1788480000";
+  const sig = await sgSign(kp.privateKey, ts, body);
+  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: ts, body });
   assertEquals(v, { ok: true });
 });
 
-Deno.test("verifySendgridEvent rejects a tampered body, wrong key, and malformed input", async () => {
+Deno.test("verifySendgridEvent rejects a tampered body (signature covers body)", async () => {
   const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
-  const other = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
-  const spki = new Uint8Array(await crypto.subtle.exportKey("spki", other.publicKey));
-  const pem = `-----BEGIN PUBLIC KEY-----\n${toB64(spki)}\n-----END PUBLIC KEY-----`;
+  const pem = await sgPem(kp.publicKey);
   const body = JSON.stringify([{ event: "delivered" }]);
-  const p1363 = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, kp.privateKey, new TextEncoder().encode(body)));
-  const sig = toB64(p1363ToDer(p1363));
-  assertEquals((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, body: body + " " })).ok, false);
-  const wrongKey = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, body });
-  assertEquals(wrongKey.ok === false && wrongKey.reason, "signature_invalid");
-  const v_unset = (await verifySendgridEvent({ publicKeyPem: null, signatureB64: sig, body })); assertEquals(v_unset.ok === false && v_unset.reason, "unconfigured_or_unsigned");
-  const v_badb64 = (await verifySendgridEvent({ publicKeyPem: pem, signatureB64: "!!!not-b64!!!", body })); assertEquals(v_badb64.ok === false && v_badb64.reason, "signature_malformed");
-  const v_badder = (await verifySendgridEvent({ publicKeyPem: pem, signatureB64: toB64(new Uint8Array([1, 2, 3])), body })); assertEquals(v_badder.ok === false && v_badder.reason, "signature_der_malformed");
+  const ts = "1788480000";
+  const sig = await sgSign(kp.privateKey, ts, body);
+  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: ts, body: body + " " });
+  assertEquals(v.ok, false);
+});
+
+Deno.test("verifySendgridEvent rejects a tampered timestamp (signature covers timestamp)", async () => {
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const pem = await sgPem(kp.publicKey);
+  const body = JSON.stringify([{ event: "delivered" }]);
+  const sig = await sgSign(kp.privateKey, "1788480000", body);
+  // The PRE-CORRECTION defect: body-only verification accepted this replay.
+  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: "1788480099", body });
+  assertEquals(v.ok, false);
+});
+
+Deno.test("verifySendgridEvent rejects an absent timestamp and an invalid signature", async () => {
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const pem = await sgPem(kp.publicKey);
+  const body = JSON.stringify([{ event: "delivered" }]);
+  const ts = "1788480000";
+  const sig = await sgSign(kp.privateKey, ts, body);
+  const absentTs = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: null, body });
+  assertEquals(absentTs.ok === false && (absentTs as { reason?: string }).reason === "timestamp_missing", true);
+  const other = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const wrongSig = await sgSign(other.privateKey, ts, body);
+  const invalid = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: wrongSig, timestamp: ts, body });
+  assertEquals(invalid.ok === false && (invalid as { reason?: string }).reason === "signature_invalid", true);
+  assertEquals(((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: "!!!", timestamp: ts, body })) as { reason?: string }).reason, "signature_malformed");
+  assertEquals(((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: toB64(new Uint8Array([1, 2, 3])), timestamp: ts, body })) as { reason?: string }).reason, "signature_der_malformed");
 });

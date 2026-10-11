@@ -8,7 +8,7 @@
 //
 // Event vocabulary (mapped truthfully onto email_send_log statuses; unknown
 // events are acknowledged and ignored, never guessed at):
-//   processed→sent, delivered→delivered, deferred→delivery_delayed,
+//   delivered→delivered, deferred→delivery_delayed,
 //   open→opened, click→clicked, bounce→bounced, spamreport→complained,
 //   dropped→dropped. 'unsubscribe' and anything unknown: ack, no row.
 // 202-vs-delivered honesty: a receipt here is a PROVIDER-REPORTED outcome.

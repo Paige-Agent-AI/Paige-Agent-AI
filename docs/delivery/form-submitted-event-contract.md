@@ -29,14 +29,26 @@ Migration `20271020000030_int298_form_submitted_native_event.sql`:
 - **Subject:** the contact (`clients`), as for `contact.created`, so the existing dispatcher, its subject-tenant
   integrity check and the act engine run unchanged.
 - **Workspace check:** a contact that is not in the submission's workspace fires nothing.
-- **Payload:** `submission_id`, `form_id`, `contact_id`, `source`, `utm_source`, `utm_campaign`,
-  `funnel_session_id`, `submitted_at`. Never the form's answers, consent, IP, user agent or referrer. A process
-  reads more by id, inside the workspace.
-- **Once only:** the dedup key is `form.submitted:<submission id>`. A later re-pin to another contact (a merge)
-  is the same submission and never a second event.
+- **Paused or archived workspace:** no event, and the submission is kept. Such a workspace runs no processes, and
+  the event table's own guard (`a01_archived_tenant_work`) would otherwise refuse the write and roll back the
+  submission with it. A submission received while paused starts nothing later.
+- **Payload:** `submission_id`, `form_id`, `contact_id`, `source`, `utm_source`, `utm_campaign`, `submitted_at`.
+  Never the form's answers, consent, IP, user agent, referrer or the funnel session token (a bearer key for the
+  funnel's own advance call). A process reads more by id, inside the workspace.
+- **Once only:** the dedup key is `form.submitted:<submission id>`. No writer re-pins a submission today; if one
+  ever does, it is the same submission and never a second event.
 - **Outbox:** the event row is written in the same statement as the insert or the pin, and a failure is not
-  swallowed; the processor's pin then fails and retries. Only the dispatch HTTP fire is best-effort, with the
-  sweeper as its backstop (as `contact.created`).
+  swallowed. On the processor's route the pin then fails and the submission retries. External intake
+  (`growth-inbound`) inserts with the contact; a failure there fails that insert. Only the dispatch HTTP fire is
+  best-effort, with the sweeper as its backstop (as `contact.created`).
+- **Who may set a submission's contact (§37):** external intake on insert and the processor's pin, both as the
+  service role. `authenticated` still holds UPDATE on the table and its policy admits any member of the
+  business, so a member could otherwise pin a contact of their choosing and start the business's processes. A
+  browser-role (`authenticated`/`anon`) change of `contact_id` is refused (42501) by
+  `growth_submission_guard_contact`, the same pattern as `growth_forms_guard_notify_email`. No browser code
+  writes this table.
+- **Alongside `contact.created`:** a brand-new lead from a form that creates its contact produces both events. A
+  business with processes on both triggers runs both.
 
 The update guard (`OLD.contact_id IS NOT NULL`) and the null-contact guard are cheap early exits. The dedup key
 and the workspace check already enforce the same outcomes, so removing either guard alone does not change the
@@ -70,10 +82,13 @@ rolled back:
 2. A submission with no contact fires nothing; pinning the contact fires once; a later state update and a re-pin
    to another contact never fire again.
 3. A contact from another workspace fires nothing.
+4. A member of the business, who can see the submission, is refused when pinning a contact directly; the row and
+   the event table are unchanged.
+5. A paused workspace keeps a submission that arrives with its contact, and gets no event.
 
 Run locally against a stub schema with each guard mutated: removing the workspace check, dropping the update
-event, adding the answers to the payload, dropping the campaign tag, or keying dedup per contact each fails the
-proof. The two early-exit guards survive alone, as above.
+event, adding the answers or the funnel token to the payload, dropping the campaign tag, keying dedup per contact,
+removing the browser guard, or removing the paused-workspace skip each fails the proof. The two early-exit guards survive alone, as above.
 
 `src/__tests__/form-submitted-native-event.test.ts` keeps the static contract: the catalogue row, the trigger
 events, the dedup key, the workspace check, the payload allowlist, no swallowed write, the revoke, the

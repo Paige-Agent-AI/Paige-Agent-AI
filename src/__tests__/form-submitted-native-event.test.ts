@@ -47,10 +47,11 @@ describe("the producer", () => {
   });
 
   it("carries ids and link tags only, never the form's answers or the visitor's network details", () => {
-    for (const key of ["submission_id", "form_id", "contact_id", "source", "utm_source", "utm_campaign", "funnel_session_id", "submitted_at"]) {
+    for (const key of ["submission_id", "form_id", "contact_id", "source", "utm_source", "utm_campaign", "submitted_at"]) {
       expect(fnBody).toContain(`'${key}'`);
     }
-    for (const forbidden of ["payload_json", "consent_json", "NEW.ip", "user_agent", "referrer"]) {
+    // The funnel session token is a bearer key for the funnel's own advance call.
+    for (const forbidden of ["payload_json", "consent_json", "NEW.ip", "user_agent", "referrer", "funnel_session_id"]) {
       expect(fnBody).not.toContain(forbidden);
     }
   });
@@ -58,6 +59,19 @@ describe("the producer", () => {
   it("is a transactional outbox like contact.created: no exception handler swallows the event write", () => {
     expect(fnBody).not.toMatch(/EXCEPTION\s+WHEN/);
     expect(fnBody).toContain("PERFORM public.paige_fire_event_processor(_event_id, NEW.tenant_id)");
+  });
+
+  it("starts nothing for a paused or archived workspace, and keeps the submission", () => {
+    expect(fnBody).toMatch(/t\.archived_at IS NOT NULL OR t\.lifecycle_execution_paused\)\) THEN\s+RETURN NEW;/);
+  });
+
+  it("refuses a browser-role change of a submission's contact, so a member cannot start processes", () => {
+    expect(mig).toContain("BEFORE UPDATE OF contact_id ON public.growth_form_submissions");
+    const guard = mig.slice(mig.indexOf("FUNCTION public.growth_submission_guard_contact"));
+    expect(guard).toContain("current_user IN ('authenticated', 'anon') AND NEW.contact_id IS DISTINCT FROM OLD.contact_id");
+    expect(guard).toContain("ERRCODE = '42501'");
+    expect(guard.slice(0, guard.indexOf("$function$;"))).not.toContain("SECURITY DEFINER");
+    expect(proof).toContain("a member cannot pin a contact");
   });
 
   it("is not callable by app roles", () => {

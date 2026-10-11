@@ -21,13 +21,15 @@ BEGIN
 END $$;
 GRANT EXECUTE ON FUNCTION pg_temp.check_true(boolean,text),pg_temp.refused(text,text,text) TO service_role;
 
+INSERT INTO auth.users(id,email) VALUES
+ ('af490000-0000-4000-8000-000000000003','ant49-creator@tests.invalid');
 INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,account_number,features) VALUES
  ('af490000-0000-4000-8000-000000000001','test-ant49-a','Test agreement A','active','standalone','TAA',9949001,'{}'),
  ('af490000-0000-4000-8000-000000000002','test-ant49-b','Test agreement B','active','standalone','TAB',9949002,'{}');
-INSERT INTO public.clients(id,tenant_id,first_name,last_name,account_number) VALUES
- ('af490000-0000-4000-8000-000000000011','af490000-0000-4000-8000-000000000001','Test','Client A','ANT49-A'),
- ('af490000-0000-4000-8000-000000000012','af490000-0000-4000-8000-000000000001','Test','Client A2','ANT49-A2'),
- ('af490000-0000-4000-8000-000000000021','af490000-0000-4000-8000-000000000002','Test','Client B','ANT49-B');
+INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,account_number) VALUES
+ ('af490000-0000-4000-8000-000000000011','af490000-0000-4000-8000-000000000001','af490000-0000-4000-8000-000000000003','Test','Client A','ANT49-A'),
+ ('af490000-0000-4000-8000-000000000012','af490000-0000-4000-8000-000000000001','af490000-0000-4000-8000-000000000003','Test','Client A2','ANT49-A2'),
+ ('af490000-0000-4000-8000-000000000021','af490000-0000-4000-8000-000000000002','af490000-0000-4000-8000-000000000003','Test','Client B','ANT49-B');
 INSERT INTO public.tenant_products(id,tenant_id,name,status) VALUES
  ('af490000-0000-4000-8000-000000000031','af490000-0000-4000-8000-000000000001','Test offer A','active'),
  ('af490000-0000-4000-8000-000000000032','af490000-0000-4000-8000-000000000001','Test offer A2','active'),

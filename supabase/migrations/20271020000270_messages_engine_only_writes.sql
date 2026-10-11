@@ -1,0 +1,31 @@
+-- =============================================================================
+-- ANT-40 / #1089 — public.messages is engine-written only; direct PostgREST
+-- writes are closed for every authenticated caller, including platform owner.
+--
+-- Evidence (grounded 2026-10-11 on main 298c5b687 + production schema):
+--   * Every legitimate writer is a service-role edge engine (handle-inbound-email,
+--     send-message, comms-scheduled-drain, gmail-mailbox-sync, the legacy
+--     dual-write), which bypasses RLS entirely, or a SECURITY DEFINER
+--     trigger/RPC (tg_comms_file_outbound_draft, cancel_scheduled_message,
+--     claim_due_scheduled_messages, mark_message_removed_by_provider,
+--     record_mailbox_organize, record_inbound_message_intelligence), which runs
+--     as its owner.
+--   * Client code performs ZERO direct writes: all five src/ usages of the
+--     messages table are selects (useCommsSummary, ClientsConversations,
+--     solo/useConversations). Users act through the governed doors
+--     (comms-mailbox-command, comms-email-command, the send door), never by
+--     writing rows.
+-- The ANT-38-shaped messages_insert / messages_update policies therefore
+-- authorized a direct write path that nothing legitimate uses — a tenant
+-- owner/admin (or platform owner) inserting or editing message history outside
+-- the engines, their triggers and their receipts. Least privilege removes it:
+-- with no INSERT/UPDATE WITH CHECK policy remaining, RLS denies direct writes
+-- for all authenticated roles. Reads (messages_select), the engine path, and
+-- every governed door are unchanged; no new writer is created.
+--
+-- Paired proof: supabase/tests/messages_engine_only_writes.sql
+-- (denials for owner/admin/mailbox-owner/platform-owner; engine + reads intact).
+-- =============================================================================
+
+DROP POLICY IF EXISTS messages_insert ON public.messages;
+DROP POLICY IF EXISTS messages_update ON public.messages;

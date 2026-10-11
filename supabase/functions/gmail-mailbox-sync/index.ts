@@ -115,7 +115,16 @@ Deno.serve(async req => {
     backfilled = await classifyBackfill();
   } catch { /* best-effort by contract */ }
 
-  return json(200, { ok: true, mailboxes: report.length, followups_scheduled: followups, classification_backfill: backfilled, report });
+  // Case/follow-up engine backfill: completes threads whose newest inbound
+  // shared-support message the engine never absorbed (receipt-time failure on
+  // the Resend path — this sweep IS that path's retry; see its header for the
+  // absorption semantics).
+  let intelligenceCompleted = 0;
+  try {
+    intelligenceCompleted = await intelligenceBackfill();
+  } catch { /* best-effort; the next tick retries */ }
+
+  return json(200, { ok: true, mailboxes: report.length, followups_scheduled: followups, classification_backfill: backfilled, intelligence_backfill: intelligenceCompleted, report });
 });
 
 /**
@@ -146,6 +155,98 @@ async function classifyBackfill(): Promise<number> {
       snippet: ((message.body_text as string | null) ?? "").slice(0, 4000),
     });
     if (recorded) count += 1;
+  }
+  return count;
+}
+
+/**
+ * Complete the case/follow-up engine for recent inbound shared-support messages
+ * it never absorbed. ABSORPTION TRUTH: the engine stamps
+ * support_cases.last_inbound_at = the MESSAGE's sent_at (provider timestamp),
+ * not its run time — so a message is absorbed iff the thread's case exists and
+ * case.last_inbound_at >= message.sent_at (a LATER processed message absorbs an
+ * earlier unprocessed one: its engine effects supersede the older message's).
+ * A candidate is therefore a message whose sent_at is NEWER than its thread's
+ * case freshness (or whose thread has no case) — exactly the receipt-time
+ * failure case, since the Resend inbound handler defers the engine call on
+ * error and nothing else re-ran it. Per thread only the NEWEST candidate is
+ * re-run (one idempotent engine call; last_inbound_at lands at the thread max,
+ * so re-runs can only ADVANCE it, never regress it). Service-role only,
+ * 3-day window, shared_support connectors only, and a sweep error never fails
+ * the tick. Bounds: the candidate scan is capped at 500 newest-of-thread rows
+ * and at most 100 SUCCESSFUL engine re-runs happen per tick (failed attempts
+ * are retried by the next tick, not counted).
+ */
+async function intelligenceBackfill(): Promise<number> {
+  const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: sharedConnectors } = await admin.from("channel_connectors")
+    .select("id")
+    .eq("channel_type", "email")
+    .eq("mailbox_class", "shared_support")
+    .eq("active", true)
+    .limit(500);
+  const connectorIds = (sharedConnectors ?? []).map((c: { id: string }) => c.id);
+  if (!connectorIds.length) return 0;
+  const { data: pending, error } = await admin.from("messages")
+    .select("id, tenant_id, connector_id, thread_key, created_at, sent_at")
+    .eq("direction", "inbound")
+    .in("connector_id", connectorIds)
+    .gte("created_at", since)
+    .order("sent_at", { ascending: false, nullsFirst: false })
+    .limit(500);
+  if (error || !pending?.length) return 0;
+
+  // Newest candidate per thread (sent_at desc above makes the first sighting
+  // the newest; nulls-last keeps provider-less rows out of the head).
+  type Candidate = { id: string; connectorId: string; sentAtMs: number | null };
+  const newestByThread = new Map<string, Candidate>();
+  for (const message of pending as Array<
+    { id: string; tenant_id: string; connector_id: string; thread_key: string; sent_at: string | null }
+  >) {
+    const key = `${message.tenant_id}:${message.thread_key}`;
+    if (!newestByThread.has(key)) {
+      newestByThread.set(key, {
+        id: message.id,
+        connectorId: message.connector_id,
+        sentAtMs: message.sent_at ? new Date(message.sent_at).getTime() : null,
+      });
+    }
+  }
+
+  let count = 0;
+  for (const [key, newest] of newestByThread) {
+    if (count >= 100) break;
+    const [tenantId, ...rest] = key.split(":");
+    const threadKey = rest.join(":");
+    const { data: existingCase } = await admin.from("support_cases")
+      .select("last_inbound_at")
+      .eq("tenant_id", tenantId)
+      .eq("connector_id", newest.connectorId)
+      .eq("thread_key", threadKey)
+      .maybeSingle();
+    const caseFreshMs = existingCase?.last_inbound_at
+      ? new Date(existingCase.last_inbound_at as string).getTime()
+      : null;
+    // NULL-sent_at truth: the engine stamps last_inbound_at = the message's
+    // sent_at, so a case whose last_inbound_at IS NULL was written by a
+    // null-sent_at run (a FAILED engine call leaves no case write at all).
+    // Absorption therefore reads:
+    //   case exists + NULL-stamped + newest NULL-sent_at -> absorbed (engine
+    //     ran; NULL is the best knowable stamp — never loops);
+    //   case exists + NULL-stamped + newest has a real sent_at -> exactly one
+    //     advance re-run (stamps the real value), absorbed thereafter;
+    //   case exists + fresh >= newest.sent_at (either side NULL-adjusted) ->
+    //     absorbed; a later processed message absorbs an earlier one;
+    //   no case -> one run creates it.
+    const hasCase = !!existingCase;
+    const absorbed = hasCase && (caseFreshMs === null
+      ? newest.sentAtMs === null
+      : (newest.sentAtMs === null || caseFreshMs >= newest.sentAtMs));
+    if (absorbed) continue;
+    try {
+      const res = await admin.rpc("record_inbound_message_intelligence", { _message_id: newest.id });
+      if (res && (res as { ok?: boolean }).ok !== false) count += 1;
+    } catch { /* leave for the next tick */ }
   }
   return count;
 }

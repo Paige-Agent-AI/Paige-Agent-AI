@@ -1,0 +1,70 @@
+{
+  "boundary": "Actual shared Solo shell/product; explicit synthetic Planning/CRM/Team sources. No customer login, real photograph, capacity hours, persisted task mutation or provider effects. Native browser zoom not exercised by this script.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "reducedMotion": true,
+      "recordedEstimate": true,
+      "deadlineVisible": true,
+      "sourceDetail": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paigeInitiallyOpen": false,
+      "reducedMotion": true,
+      "recordedEstimate": true,
+      "deadlineVisible": true,
+      "sourceDetail": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "reducedMotion": true,
+      "recordedEstimate": true,
+      "deadlineVisible": true,
+      "sourceDetail": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paigeInitiallyOpen": false,
+      "reducedMotion": true,
+      "recordedEstimate": true,
+      "deadlineVisible": true,
+      "sourceDetail": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": false
+      }
+    }
+  ],
+  "errors": []
+}

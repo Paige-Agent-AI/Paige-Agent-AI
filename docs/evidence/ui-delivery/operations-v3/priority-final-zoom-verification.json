@@ -1,0 +1,286 @@
+{
+  "boundary": "Native unsigned-in local Chrome zoom; real shared shell/product with synthetic identity/activity/refusal ports. No saved record or customer test.",
+  "results": [
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 277,
+        "scrollTop": 331,
+        "top": 177.390625,
+        "bottom": 217.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 783,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 277,
+        "scrollTop": 331,
+        "top": 177.390625,
+        "bottom": 217.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 783,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 277,
+        "scrollTop": 331,
+        "top": 177.390625,
+        "bottom": 217.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 783,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 674,
+        "outerWidth": 1366,
+        "innerHeight": 336,
+        "devicePixelRatio": 2,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 277,
+        "scrollTop": 331,
+        "top": 177.390625,
+        "bottom": 217.890625,
+        "ownerTop": 59,
+        "ownerBottom": 336
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 783,
+        "bounds": {
+          "left": 194,
+          "right": 674,
+          "width": 674
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 109,
+        "scrollTop": 576.5,
+        "top": 93.296875,
+        "bottom": 133.796875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 912.25,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 109,
+        "scrollTop": 576.5,
+        "top": 93.296875,
+        "bottom": 133.796875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 912.25,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": false,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 109,
+        "scrollTop": 576.5,
+        "top": 93.296875,
+        "bottom": 133.796875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 912.25,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "paigeInitiallyOpen": true,
+      "zoom": {
+        "innerWidth": 337,
+        "outerWidth": 1366,
+        "innerHeight": 168,
+        "devicePixelRatio": 4,
+        "visualScale": 1
+      },
+      "landscape": {
+        "height": 109,
+        "scrollTop": 576.5,
+        "top": 93.296875,
+        "bottom": 133.796875,
+        "ownerTop": 59,
+        "ownerBottom": 168
+      },
+      "geometry": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 912.25,
+        "bounds": {
+          "left": 0,
+          "right": 337,
+          "width": 337
+        }
+      },
+      "reducedMotion": true,
+      "activityNamed": true,
+      "refusal": true,
+      "recoveryReachable": true,
+      "focusRestored": true
+    }
+  ],
+  "errors": []
+}

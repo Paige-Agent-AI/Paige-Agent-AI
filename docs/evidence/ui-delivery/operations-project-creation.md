@@ -1,7 +1,7 @@
 # Project and milestone creation — bounded local evidence
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: e240014213807e6f7001256a08b9fae15733a19a; deployment=none-local-development; environment=development; migrations=PROOF_OWED(20271020000120-Operations-project-creation-rebuilt-schema-and-deployment); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-project-creation-packet.md
+INTERNAL_BUILD_IDENTITY: e240014213807e6f7001256a08b9fae15733a19a; deployment=none-local-development; environment=development; migrations=PROOF_OWED(20271020000210-Operations-project-creation-rebuilt-schema-and-deployment); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-project-creation-packet.md
 RELEASE_CHANNEL: development: isolated canonical project-creation implementation and synthetic flow proof, no hosted deployment claim.
 RELEASE_CLASSIFICATION: internal-only: bounded owner-authorized backend implementation; full Operations outcome remains incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated operational outcome has not earned a customer release identity or announcement.

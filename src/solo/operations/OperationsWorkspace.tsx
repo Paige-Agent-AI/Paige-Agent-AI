@@ -66,7 +66,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   useEffect(() => { setInspection(null); }, [destination]);
   const inspectionInvoker = useRef<HTMLElement | null>(null);
   const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
-  const readsCrm = destination === "Work" || destination === "Capacity";
+  const readsCrm = destination === "Work" || destination === "Capacity" || destination === "Overview";
   const crm = useOperationsCrmWork(readsCrm ? userId : null, readsCrm ? tenantId : null);
   const [crmReview,setCrmReview] = useState<CrmWorkStageOperation|null>(null);
   const [pendingCrmRecovery,setPendingCrmRecovery] = useState<CrmWorkStageOperation|null>(null);
@@ -128,6 +128,16 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
     <p className="ops-source-limit">This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.{crm.hasMore&&" More CRM tasks exist beyond this read."}</p>
   </>;
   const isPlanning = !["Delivery", "Playbooks"].includes(destination);
+  const overviewView = <>
+    {people.error && <div className="ops-inline-notice" role="status">Team names and photos couldn’t be loaded. <button type="button" onClick={()=>void people.refresh()}>Retry profiles</button></div>}
+    {!planningAvailable && !source.loading && <div className="ops-inline-notice" role="status">Project work is unavailable. <button type="button" onClick={()=>void source.refresh()}>Retry planning work</button></div>}
+    {source.loading && <p role="status">Reading project work…</p>}
+    {crm.loading && <p role="status">Reading CRM tasks…</p>}
+    {!crmAvailable && !crm.loading && <div className="ops-inline-notice" role="status">CRM tasks couldn’t be verified for this workspace. <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
+    {workReadable ? <OperationsOverview {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm} />
+      : source.loading || crm.loading ? <OperationsLoading /> : <div className="ops-state" role="alert"><h1>Current work isn’t available</h1><p>Retry a source above or ask your workspace owner to review access.</p></div>}
+    <p className="ops-source-limit">Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."}</p>
+  </>;
   const capacityView = <>
     {people.error && <div className="ops-inline-notice" role="status">Team names and photos couldn’t be loaded. <button type="button" onClick={()=>void people.refresh()}>Retry profiles</button></div>}
     {!planningAvailable && <div className="ops-inline-notice" role="status">Planning assignments are unavailable. <button type="button" onClick={()=>void source.refresh()}>Retry planning work</button></div>}
@@ -173,12 +183,12 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
         : destination === "Playbooks" ? <OperationsPlaybooks tenantId={tenantId} />
         : destination === "Work" ? workView
         : destination === "Capacity" ? capacityView
+        : destination === "Overview" ? overviewView
         : source.loading ? <OperationsLoading />
         : source.forbidden ? <div className="ops-state" role="status"><h1>This work isn’t available to your role</h1><p>Ask your workspace owner to review your access.</p></div>
         : source.error || !matches ? <div className="ops-state" role="alert"><h1>Your work couldn’t be loaded</h1><p>Refresh to read the current workspace again.</p><button type="button" onClick={() => void source.refresh()}>Try again</button></div>
         : <>
           {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={() => void people.refresh()}>Retry profiles</button></div>}
-          {destination === "Overview" && <OperationsOverview {...props} />}
           {destination === "Projects" && <OperationsProjects {...props} />}
           <p className="ops-source-limit">Figures reflect the work loaded here: up to 200 plans and standalone items, with their visible work. {people.partial && "Some team profiles are outside the current read."}</p>
         </>}

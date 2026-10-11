@@ -51,7 +51,8 @@ it("removes old workspace work and the open detail drawer on switching", async (
 it("refuses an inconsistent source bundle instead of rendering foreign work", async () => {
   harness.foreign = true;
   await act(async () => root.render(<OperationsWorkspace />));
-  expect(container.textContent).toContain("Your work couldn’t be loaded");
+  expect(container.textContent).toContain("Project work is unavailable");
+  expect(container.textContent).not.toContain("test-tenant-a assigned work");
   expect(container.querySelector(".ops-work-card")).toBeNull();
 });
 it("does not mount the department while authenticated context is unresolved or failed", async () => {
@@ -97,6 +98,21 @@ it("keeps native CRM work usable while Planning is unavailable",async()=>{
  await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")?.click());
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("CRM task");
  expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain("Work edit test seam");
+});
+
+it("inspects overdue native work from Overview while disclosing the missing project source",async()=>{
+ harness.planningError="Explicit Planning refusal";
+ harness.crmTasks=[{id:"native-overdue",tenant_id:harness.tenant,user_id:harness.user,title:"Native overdue obligation",description:null,
+  status:"pending",due_date:"2000-01-01T12:00:00Z",updated_at:"2026-10-10T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
+ await act(async()=>root.render(<OperationsWorkspace view="overview"/>));
+ expect(container.textContent).toContain("Project work is unavailable");
+ expect(container.querySelector(".ops-decision-spotlight")?.textContent).toContain("Native overdue obligation");
+ await click("Inspect work");
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("CRM task");
+ harness.tenant="test-tenant-b";await act(async()=>root.render(<OperationsWorkspace view="overview"/>));
+ expect(document.querySelector('[role="dialog"]')).toBeNull();
+ expect(container.textContent).not.toContain("Native overdue obligation");
+ expect(container.textContent).toContain("CRM tasks couldn’t be verified for this workspace");
 });
 
 it("keeps native capacity assignments visible with an explicit Planning gap",async()=>{

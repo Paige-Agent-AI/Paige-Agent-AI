@@ -50,3 +50,7 @@ Fresh final type ratchet PASS baseline10/current10. Eight genuine unsigned-in na
 ### Canonical CRM stage contract correction
 Self-review of the actual CRM writer and generated patch allowlist found that task.update cannot write status. In-progress remains a readable recorded state, but entering it through Operations is UNAVAILABLE. Removed that unsupported proposal and recovery shape; canonical completion and reopening remain supported. No shared executor or authority changes. Failing-first tests exposed the unsupported path; corrected local suite: 128 tests across 20 files PASS, scoped lint PASS. SQL and authenticated runtime remain unverified.
 
+
+### Native Overview consumer
+Overview attention and upcoming deadlines now consume the same source-prefixed Planning/CRM projection as Work and Capacity. Each inspection retains its original source and detail callback; CRM tasks do not become project milestones or client outcomes. Unknown priority stays unknown; upcoming dates sort by actual instants across offsets. Independent source failures stay visible with retry, and legitimate remaining work remains inspectable. Mixed-tenant source bundles are excluded. Full local132tests/21files PASS, scopedlintPASS. Actual shared-shell18 synthetic configurations PASS in both themes/all required sizes/phone/PAIGE open-closed, reduced motion, keyboard native inspection, source detail, invoker restoration and containment, zero page errors. New nativeOverview zoom and final review remain owed. SQL/authenticated/customer persistence stillUNVERIFIED.
+

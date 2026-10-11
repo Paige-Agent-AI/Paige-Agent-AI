@@ -13,3 +13,12 @@ Internal approved-department foundation. No customer release name or publication
 - Communications mismatch parked in [#1916](https://github.com/Paige-Agent-AI/Paige-Agent-AI/issues/1916); no competing notifier or Chat hotfix changes.
 
 Recovery: retain real Planning records. Use reviewed forward repair or revert Operations registration for a confirmed introduced defect; never erase source records, loosen authority or bypass the login/executor restrictions to manufacture acceptance.
+
+
+## Reviewed stage persistence release — October 11
+
+PR [#1922](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1922), reviewed head `2e7475afb5fbd270b664e5b1c7564d33cb6ff2ab`, squash main `cf11661f39c0b67ae37ee9ab3062b73c5939b998`. Independent final-head and clean merged-tree compatibility reviews PASS; all applicable required exact-head CI PASS including verify and database-contract. Supabase Preview SKIPPED. Production channel, internal-only, no customer announcement.
+
+Vercel `dpl_3ZV71fEguSukEjdw6ZWA51Sa6R5s` READY for exact merge SHA and canonical aliases; public app build `cf11661f39c0b67ae37ee9ab3062b73c5939b998-mv3cnybi`. Main deploy-migrations run38113110906 succeeded. Read-only production registry confirms `20271020000020_operations_versioned_work_update`. Three production md5(prosrc) values match reviewed SQL: scoped update `11dd04ee0dda3881495f588f460b2a38`, versioned update `5d066b39c7e7fa926931f7e1b38d33bf`, scoped list `b476f7b9c801ad5732a32c5682489b3c`. All security definers have fixed empty search paths and authenticated-only execution; PUBLIC, anon and service_role are denied.
+
+Confirmed stage changes use canonical Planning writes, raw timestamp stale-edit refusal and independent readback. Production source/persistence is verified; authenticated customer interaction remains UNVERIFIED under the owner login and INT-346 restrictions. Local rendered evidence covers32 stage configurations, four workspace-switch cases and eight real Chrome zoom cases with explicit synthetic ports, not customer save proof. Canonical evidence: `docs/evidence/ui-delivery/operations-work-stage-versioning.md`. Task creation and the remaining department backend continue under ANT-11. Recovery preserves canonical records through reviewed forward repair; no migration history reset or executor bypass.

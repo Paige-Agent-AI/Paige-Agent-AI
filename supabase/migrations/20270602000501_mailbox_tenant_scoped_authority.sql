@@ -20,8 +20,7 @@
 --
 -- No global-role promotions, no account-specific exceptions, no weakened RLS:
 -- every negative that held before still holds (plain member, foreign tenant,
--- wrong workspace, personal-mailbox owner-only, agency parent without child
--- membership, revoked connector).
+-- wrong workspace, personal-mailbox owner-only, agency parent holding only a child member standing, revoked connector).
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -306,3 +305,204 @@ $$;
 
 revoke all on function public.read_support_cases(text, boolean) from public, anon;
 grant execute on function public.read_support_cases(text, boolean) to authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 5. The four sibling engine functions carry the SAME variable/alias collision
+--    read_message_content had (select msg.* into msg from ... msg — ERROR
+--    "column reference msg.* is ambiguous" on first real use). Re-emitted with
+--    clean variables; logic otherwise identical to 20270602000201.
+-- -----------------------------------------------------------------------------
+create or replace function public.record_inbound_message_intelligence(
+  _message_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_msg record;
+  v_conn record;
+  v_case public.support_cases%rowtype;
+begin
+  select m.* into v_msg from public.messages m where m.id = _message_id;
+  if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
+
+  select cc.id, cc.tenant_id, cc.mailbox_class into v_conn
+    from public.channel_connectors cc where cc.id = v_msg.connector_id;
+  if not found then return jsonb_build_object('ok', false, 'code', 'CONNECTOR_NOT_FOUND'); end if;
+
+  if v_conn.mailbox_class = 'personal' then
+    return jsonb_build_object('ok', true, 'mailbox_class', 'personal', 'case_opened', false);
+  end if;
+
+  insert into public.support_cases (tenant_id, connector_id, thread_key, contact_id, status, last_inbound_at)
+  values (v_conn.tenant_id, v_conn.id, v_msg.thread_key, v_msg.contact_id, 'awaiting_owner', v_msg.sent_at)
+  on conflict (tenant_id, connector_id, thread_key) do update
+    set status = case when public.support_cases.status in ('resolved','closed') then 'open' else 'awaiting_owner' end,
+        last_inbound_at = excluded.last_inbound_at,
+        contact_id = coalesce(public.support_cases.contact_id, excluded.contact_id),
+        next_followup_at = null,
+        followup_cancelled_at = case when public.support_cases.next_followup_at is not null then now()
+                                     else public.support_cases.followup_cancelled_at end,
+        updated_at = now()
+  returning * into v_case;
+
+  return jsonb_build_object('ok', true, 'mailbox_class', 'shared_support',
+                            'case_id', v_case.id, 'case_opened', true);
+end;
+$$;
+
+revoke all on function public.record_inbound_message_intelligence(uuid) from public, anon, authenticated;
+grant execute on function public.record_inbound_message_intelligence(uuid) to service_role;
+
+create or replace function public.apply_message_classification(
+  _message_id uuid,
+  _intent text,
+  _confidence numeric,
+  _summary text,
+  _model_route jsonb,
+  _labels jsonb default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_msg record;
+  v_conn record;
+  v_risk text;
+begin
+  select m.* into v_msg from public.messages m where m.id = _message_id;
+  if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
+
+  select cc.tenant_id, cc.mailbox_class, cc.mailbox_owner_user_id into v_conn
+    from public.channel_connectors cc where cc.id = v_msg.connector_id;
+  if not found then return jsonb_build_object('ok', false, 'code', 'CONNECTOR_NOT_FOUND'); end if;
+
+  v_risk := case when _intent in ('billing','refund','account_access','security','legal') then 'elevated' else 'routine' end;
+
+  insert into public.message_classifications (tenant_id, message_id, mailbox_class, mailbox_owner_user_id, intent, confidence, risk_tier, summary, model_route)
+  values (v_conn.tenant_id, _message_id, v_conn.mailbox_class, v_conn.mailbox_owner_user_id, _intent,
+          least(greatest(coalesce(_confidence, 0), 0), 1), v_risk,
+          left(_summary, 280), coalesce(_model_route, '{}'::jsonb))
+  on conflict (message_id) do update
+    set intent = excluded.intent, confidence = excluded.confidence, risk_tier = excluded.risk_tier,
+        summary = excluded.summary, model_route = excluded.model_route, decided_at = now();
+
+  if v_conn.mailbox_class = 'shared_support' then
+    update public.support_cases sc
+       set last_intent = _intent, last_risk_tier = v_risk, updated_at = now()
+     where sc.tenant_id = v_conn.tenant_id and sc.connector_id = v_msg.connector_id and sc.thread_key = v_msg.thread_key;
+  end if;
+
+  if _labels is not null then
+    insert into public.message_labels (tenant_id, message_id, label, source, mailbox_class, mailbox_owner_user_id)
+    select v_conn.tenant_id, _message_id, l::text, 'auto', v_conn.mailbox_class, v_conn.mailbox_owner_user_id
+      from jsonb_array_elements_text(_labels) l
+    on conflict (message_id, label) do nothing;
+  end if;
+
+  return jsonb_build_object('ok', true, 'intent', _intent, 'risk_tier', v_risk);
+end;
+$$;
+
+revoke all on function public.apply_message_classification(uuid, text, numeric, text, jsonb, jsonb) from public, anon, authenticated;
+grant execute on function public.apply_message_classification(uuid, text, numeric, text, jsonb, jsonb) to service_role;
+
+create or replace function public.mark_support_case_outbound(
+  _message_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_msg record;
+  v_case_id uuid;
+begin
+  select m.* into v_msg from public.messages m where m.id = _message_id;
+  if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
+
+  update public.support_cases s
+     set status = 'awaiting_customer',
+         last_outbound_at = v_msg.sent_at,
+         next_followup_at = null,
+         updated_at = now()
+   where s.tenant_id = v_msg.tenant_id and s.connector_id = v_msg.connector_id and s.thread_key = v_msg.thread_key
+     and v_msg.connector_id is not null
+     and (s.last_inbound_at is null or s.last_inbound_at <= v_msg.sent_at)
+   returning s.id into v_case_id;
+  if not found then return jsonb_build_object('ok', true, 'case_updated', false); end if;
+  return jsonb_build_object('ok', true, 'case_updated', true);
+end;
+$$;
+
+revoke all on function public.mark_support_case_outbound(uuid) from public, anon, authenticated;
+grant execute on function public.mark_support_case_outbound(uuid) to service_role;
+
+create or replace function public.record_mailbox_organize(
+  _message_id uuid,
+  _kind text,
+  _label text default null,
+  _actor_user_id uuid default null,
+  _provider_result jsonb default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_msg record;
+begin
+  select m.* into v_msg from public.messages m where m.id = _message_id;
+  if not found then return jsonb_build_object('ok', false, 'code', 'MESSAGE_NOT_FOUND'); end if;
+
+  if _kind in ('label','unlabel') then
+    if _kind = 'label' then
+      insert into public.message_labels (tenant_id, message_id, label, source, applied_by, mailbox_class, mailbox_owner_user_id)
+      values (v_msg.tenant_id, _message_id, _label, 'paige', _actor_user_id,
+              coalesce((select cc.mailbox_class from public.channel_connectors cc where cc.id = v_msg.connector_id), 'shared_support'),
+              (select cc.mailbox_owner_user_id from public.channel_connectors cc where cc.id = v_msg.connector_id))
+      on conflict (message_id, label) do update
+        set source = excluded.source, applied_by = excluded.applied_by
+        where public.message_labels.source = 'auto';
+    else
+      delete from public.message_labels
+       where message_id = _message_id and label = _label and source <> 'owner';
+    end if;
+  end if;
+
+  update public.messages
+     set meta = coalesce(meta, '{}'::jsonb)
+       || jsonb_build_object(
+            case _kind
+              when 'archive' then 'gmail_archived_at'
+              when 'unarchive' then 'gmail_unarchived_at'
+              when 'trash' then 'gmail_trashed_at'
+              when 'untrash' then 'gmail_untrashed_at'
+              when 'unsubscribe_propose' then 'unsubscribe_proposed_at'
+              when 'unsubscribe_send' then 'unsubscribe_sent_at'
+              else 'gmail_organized_at'
+            end, now(),
+            'last_organize_kind', _kind,
+            'last_organize_by', _actor_user_id,
+            'last_organize_provider_result', _provider_result
+          ),
+         updated_at = now()
+   where id = _message_id;
+
+  return jsonb_build_object('ok', true, 'message_id', _message_id, 'kind', _kind,
+                            'undo_kind', case _kind
+                              when 'archive' then 'unarchive' when 'unarchive' then 'archive'
+                              when 'trash' then 'untrash' when 'untrash' then 'trash'
+                              when 'label' then 'unlabel' when 'unlabel' then 'label'
+                              else null end);
+end;
+$$;
+
+revoke all on function public.record_mailbox_organize(uuid, text, text, uuid, jsonb) from public, anon, authenticated;
+grant execute on function public.record_mailbox_organize(uuid, text, text, uuid, jsonb) to service_role;

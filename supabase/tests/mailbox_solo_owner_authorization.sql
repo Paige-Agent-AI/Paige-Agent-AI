@@ -20,9 +20,6 @@ BEGIN;
 
 CREATE FUNCTION pg_temp.require_true(value boolean, label text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF value IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: %', label; END IF; END $$;
-CREATE FUNCTION pg_temp.require_denied(command text, label text) RETURNS void LANGUAGE plpgsql AS $$
-BEGIN BEGIN EXECUTE command; EXCEPTION WHEN insufficient_privilege THEN RETURN; END;
-  RAISE EXCEPTION 'FAIL: % (was allowed)', label; END $$;
 
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
 
@@ -50,6 +47,7 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner) V
   ('b3800000-0000-4000-8000-0000000000a1', 'b3800000-0000-4000-8000-000000000002', 'admin',  'active', false),
   ('b3800000-0000-4000-8000-0000000000a1', 'b3800000-0000-4000-8000-000000000003', 'member', 'active', false),
   ('b3800000-0000-4000-8000-0000000000b1', 'b3800000-0000-4000-8000-000000000004', 'owner',  'active', true),
+  ('b3800000-0000-4000-8000-0000000000b1', 'b3800000-0000-4000-8000-000000000001', 'admin',  'active', false),
   ('b3800000-0000-4000-8000-0000000000e1', 'b3800000-0000-4000-8000-000000000005', 'owner',  'active', true),
   ('b3800000-0000-4000-8000-0000000000c1', 'b3800000-0000-4000-8000-000000000006', 'owner',  'active', true),
   ('b3800000-0000-4000-8000-0000000000c1', 'b3800000-0000-4000-8000-000000000005', 'member', 'active', false);

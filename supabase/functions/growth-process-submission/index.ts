@@ -18,6 +18,8 @@
 // -- EXECUTOR MAP (growth_automation_targets.executor -> what runs) ----------------------------
 //   contact_upsert     -> resolve_contact_id, else create_contact; writes submission.contact_id
 //   pipeline_attach    -> create/advance a tenant-owned deal on the form's pipeline/stage
+//   pipeline_attach_default -> (synthesized, never a row) an unrouted form's lead -> the default
+//                         pipeline's first open stage; see appendDefaultIntake
 //   paige_action       -> file_action(<kind>) onto the action bus (owner draft/approve lane)
 //   surface_to_client  -> file_action(<kind>) (client-facing surface kind), same seam
 //   client_rail_event  -> record_rail_event onto the client's activity timeline
@@ -278,6 +280,7 @@ Deno.serve(async (req) => {
     }
 
     applyIntakeSettings(plan, form);
+    appendDefaultIntake(plan, form);
 
     // Existing dispatch ledger for this submission -> skip already-completed executors (idempotent).
     const { data: existingDispatches } = await admin
@@ -468,6 +471,30 @@ async function runExecutor(
       });
       if(attachError || !attached) return {status:"error",result:{},error:"submission_deal_admission_failed"};
       return {status:"done",result:attached};
+    }
+
+    // -- pipeline_attach_default: a form with no deal route of its own files its lead into the
+    // business's DEFAULT pipeline, first open stage (owner ruling 2026-10-11). The database decides:
+    // growth_attach_submission_default_deal refuses a routed form, reuses (never moves) an open deal,
+    // and answers {skipped} when there is no default pipeline or open stage — nothing to retry, so
+    // that is "done", reported as it is, never as a deal that was made. --
+    case "pipeline_attach_default": {
+      const contactId = ctx.contactId;
+      if (!contactId) {
+        // Nothing to hang a deal on. Where this form never creates contacts, that is the form's
+        // design, not a failure to retry; where it does, it is pipeline_attach's own outcome.
+        const idn = extractIdentity(payload, form.schema_json);
+        if (!idn.email && !idn.phone) return { status: "done", result: { note: "no_contact_for_pipeline" } };
+        if (p.config.creates_contact !== true) return { status: "done", result: { note: "no_contact_for_pipeline" } };
+        return { status: "error", result: {}, error: "no_contact_for_pipeline" };
+      }
+      const { data: filed, error: fileError } = await admin.rpc("growth_attach_submission_default_deal", {
+        p_submission_id: submissionId, p_claim_attempt: ctx.claimAttempt,
+      });
+      if (fileError || !filed) {
+        return { status: "error", result: {}, error: `submission_default_deal_failed: ${String(fileError?.message ?? "no result").slice(0, 200)}` };
+      }
+      return { status: "done", result: filed };
     }
 
     // -- paige_action / surface_to_client: file the action onto the bus (governed lane). --
@@ -698,6 +725,21 @@ function applyIntakeSettings(plan: any[], form: any): void {
   if (s(form.notify_email) && !plan.some((p) => p.executor === "email_alert")) {
     plan.push({ automationId: null, slug: "email_alert", executor: "email_alert", lane: null, config: {}, targetConfig: {} });
   }
+}
+
+// -- Every form lead lands in a pipeline (owner ruling 2026-10-11). --
+// A form that routes its own deals (an enabled pipeline_attach row, or auto_create_deal with a pipeline
+// on the form) keeps that one route. Any other form gets one unledgered default step, after the contact
+// step, that files the lead into the business's default pipeline. A retry re-runs it safely: the
+// database returns the deal already bound to the submission instead of making a second one.
+// deno-lint-ignore no-explicit-any
+function appendDefaultIntake(plan: any[], form: any): void {
+  if (plan.some((p) => p.executor === "pipeline_attach" || p.executor === "pipeline_attach_default")) return;
+  if (form.auto_create_deal && form.pipeline_id) return;
+  plan.push({
+    automationId: null, slug: "pipeline_attach_default", executor: "pipeline_attach_default", lane: null,
+    config: { creates_contact: plan.some((p) => p.executor === "contact_upsert") }, targetConfig: {},
+  });
 }
 
 // -- Who a public submission's contact and deal are recorded as created by. --

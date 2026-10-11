@@ -4,7 +4,8 @@
 // URL shape:  POST /functions/v1/growth-inbound/<webhook_token>
 // Body:       arbitrary JSON from the external builder
 // Behavior:   look up growth_external_sources, apply field_map_json, upsert
-//             contact, write growth_form_submissions, optional deal create.
+//             contact, write growth_form_submissions (the form processor routes its deal);
+//             with no target form, file the contact into the default pipeline.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
@@ -109,12 +110,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    // No target form means no submission for the form processor to route, so the lead is filed here:
+    // into the business's default pipeline, first open stage (owner ruling 2026-10-11). The contact is
+    // this request's outcome; a filing failure is logged and reported, never a failed request and
+    // never a deal that was not made.
+    let deal: Record<string, unknown> | null = null;
+    if (!source.target_form_id && contactId) {
+      try {
+        const { data: filed, error: dealErr } = await supabase.rpc("growth_attach_inbound_default_deal", {
+          p_tenant_id: source.tenant_id, p_contact_id: contactId, p_source: `external:${source.provider}`,
+        });
+        if (dealErr || !filed) {
+          console.error("[growth-inbound] default_pipeline_deal_failed", { code: dealErr?.code ?? null, message: dealErr?.message ?? "no result" });
+          deal = { filed: false, error: "default_pipeline_deal_failed" };
+        } else {
+          deal = filed as Record<string, unknown>;
+        }
+      } catch (e) {
+        console.error("[growth-inbound] default_pipeline_deal_failed", { message: String((e as Error)?.message ?? e) });
+        deal = { filed: false, error: "default_pipeline_deal_failed" };
+      }
+    }
+
     await supabase
       .from("growth_external_sources")
       .update({ last_seen_at: new Date().toISOString() })
       .eq("id", source.id);
 
-    return new Response(JSON.stringify({ ok: true, contact_id: contactId }), {
+    return new Response(JSON.stringify({ ok: true, contact_id: contactId, ...(deal ? { deal } : {}) }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

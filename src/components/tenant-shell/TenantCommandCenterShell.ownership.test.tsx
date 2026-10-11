@@ -271,7 +271,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(affectedTenant.workspaceClaim).toBe("Owner workspace");
     expect(knownGoodTenant.workspaceClaim).toBe("Team workspace");
     expect(affectedTenant.destinations.map(([id]) => id)).toEqual([
-      "command", "operations", "clients", "campaigns", "sales", "finance", "marketplace", "settings",
+      "command", "operations", "clients", "campaigns", "ads", "sales", "finance", "marketplace", "settings",
     ]);
     expect(affectedTenant.paigeWorkspaces).toBe(1);
     expect(affectedTenant.pipelineDomains).toBe(1);
@@ -593,7 +593,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(
       Array.from(host.querySelectorAll<HTMLElement>("[data-tenant-destination]"))
         .map((item) => item.textContent?.trim()),
-    ).toEqual(["Command Center", "Operations", "Clients", "Marketing", "Sales", "Finance", "Marketplace", "Settings"]);
+    ).toEqual(["Command Center", "Operations", "Clients", "Marketing", "Ads", "Sales", "Finance", "Marketplace", "Settings"]);
 
     await act(async () => root.unmount());
     host.remove();

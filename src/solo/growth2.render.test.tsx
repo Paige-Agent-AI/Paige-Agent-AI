@@ -632,7 +632,7 @@ describe("Solo Campaigns rendered flows", () => {
     const tabs = [...host.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
     // Lead capture retired into Overview (INT-342, owner-approved 2026-10-10). Content stays until
     // Vibe Studio lists every saved piece (owner ruling, same day).
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Analytics"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Analytics"]);
     expect(host.querySelector('[role="tablist"]')?.getAttribute("aria-label")).toBe("Marketing views");
     const dividers = [...host.querySelectorAll(".campaigns-tab-divider")];
     expect(dividers).toHaveLength(0);

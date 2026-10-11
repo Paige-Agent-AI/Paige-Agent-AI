@@ -130,7 +130,7 @@ The pure calculation grants no actor/company access, issues no evidence bundle o
 
 ### Controlled versioned budget persistence candidate
 
-Current-main reconciliation uses unapplied forward budget migration `20271020000040`, above verified production frontier `20271020000000`, and preserves source/account proof suites. Raw service INSERT/UPDATE/DELETE on planning headers and revisions are denied; service SELECT remains, and authenticated owner/admin saves use the validated definer and canonical atomic receipt. The actual preceding candidate fails the raw-DML regression; the repair passes two fresh budget and account replays, concurrency, receipt rollback, Auth erasure and canonical retirement. Full retained-history actor/company/version-scope FK indexes are included: a new control fails on the preceding candidate and passes after the bounded repair. Plans and assumptions remain distinct from accounting actuals and bank-verified cash. Hosted release, UI/Spine/Harness/Fabric adoption and authenticated acceptance remain owed.
+Current-main reconciliation uses unapplied forward budget migration `20271020000310`, above verified production frontier `20271020000000`, and preserves source/account proof suites. Raw service INSERT/UPDATE/DELETE on planning headers and revisions are denied; service SELECT remains, and authenticated owner/admin saves use the validated definer and canonical atomic receipt. The actual preceding candidate fails the raw-DML regression; the repair passes two fresh budget and account replays, concurrency, receipt rollback, Auth erasure and canonical retirement. Full retained-history actor/company/version-scope FK indexes are included: a new control fails on the preceding candidate and passes after the bounded repair. Plans and assumptions remain distinct from accounting actuals and bank-verified cash. Hosted release, UI/Spine/Harness/Fabric adoption and authenticated acceptance remain owed.
 
 Migration `20270602000437_finance_budget_versions.sql` adds company-scoped planning headers and immutable revisions. Authenticated owner/admin RPCs compose the existing Finance workspace gate, lock current company identity and refuse paused writes. Period and currency cannot silently change on an existing plan. Each revision preserves original owner-entered line labels, exact decimal targets, direction, assumptions, company version and atomic canonical receipt. Optimistic concurrency and same-payload retries preserve one revision/receipt; receipt failures roll back the write. Raw browser table access is denied. Historical reads explicitly flag changed company identity and return no actuals. Nullable actor references anonymize on Auth erasure; the history trigger permits only that exact FK change after the Auth row is absent. Planning fields stay immutable. Both tables extend the existing retirement disposition; history deletion requires the same canonical Operator role and exact archived/paused deleting operation. Disposable tests prove erasure, refusal outside retirement and preservation of a different workspace's plan.
 
@@ -181,9 +181,19 @@ Controlled proof runs the actual migration twice in fresh disposable PostgreSQL,
 
 Liability review repair: revolving-line limits and available capacity must match the coupled account snapshot whenever that account source supplies those fields. Missing account terms remain unknown and do not prohibit independently supplied lender terms; contradictory or dropped known capacity is refused. The actual preceding SQL accepts the new conflicting-limit control, while the repaired migration passes two fresh replays and identical concurrent retry. Multiple same-label credit products remain separate.
 
+<<<<<<< HEAD
 Current canonical-policy regression: database-contract job 114386100231 exposed
 the consent migration requiring an older Finance registration removed by the
 later Operator function replacement. The controlled runner now executes both
 actual historical and current canonical definitions. The new replay failed
 before the bounded extension correction and passed after it. No other table
 disposition is rewritten. Independent review and current-head CI remain owed.
+=======
+Budget current-main continuation (ANT-9, 2026-10-11): unapplied migration
+20271020000310 follows independently verified production frontier 20271020000270.
+The actual later canonical retirement definition removed earlier Finance
+registrations; budget only adds its own two tables and preserves every existing
+disposition. New current-policy replay fails before correction and passes after
+it. Both fresh SQL/concurrency/receipt/tenant/security replays PASS; focused
+TypeScript and ESLint PASS. This remains an unreviewed development candidate.
+>>>>>>> fd956eab6 (finance: reconcile budget source with current canonical policy)

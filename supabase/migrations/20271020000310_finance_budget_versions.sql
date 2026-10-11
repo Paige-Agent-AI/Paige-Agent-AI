@@ -29,7 +29,7 @@ GRANT SELECT ON public.finance_budgets,public.finance_budget_versions TO service
 
 DO $$ DECLARE body text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; at integer; BEGIN
  body:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure); at:=position(anchor IN body);
- IF at=0 OR position('finance_company_entities' IN body)=0 OR position('finance_budgets' IN body)>0 THEN
+ IF at=0 OR position('finance_budgets' IN body)>0 THEN
   RAISE EXCEPTION 'Canonical Finance retirement policy requires reviewed reconciliation'; END IF;
  EXECUTE left(body,at+length(anchor)-1)||'''finance_budgets'',''finance_budget_versions'','||substr(body,at+length(anchor));
 END $$;

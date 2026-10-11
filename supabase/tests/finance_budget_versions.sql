@@ -2,8 +2,14 @@
 \set apply_budget_migration :apply_finance_migration
 \set apply_finance_migration 1
 \ir finance_source_authority.sql
+DO $$ BEGIN
+ IF to_regclass('public.fixture_current_retirement') IS NOT NULL THEN
+  EXECUTE (SELECT definition FROM public.fixture_current_retirement);
+ END IF;
+END $$;
+SELECT set_config('test.source_retirement_disposition',public.operator_retirement_disposition('finance_source_observations'),false);
 \if :apply_budget_migration
-\ir ../migrations/20271020000040_finance_budget_versions.sql
+\ir ../migrations/20271020000310_finance_budget_versions.sql
 \endif
 SET ROLE authenticated;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
@@ -129,7 +135,7 @@ DO $$ BEGIN
   OR NOT EXISTS(SELECT 1 FROM finance_budgets WHERE id='60000000-0000-0000-0000-000000000990' AND tenant_id='20000000-0000-0000-0000-000000000002')
   OR public.operator_retirement_disposition('finance_budgets')<>'delete'
   OR public.operator_retirement_disposition('finance_budget_versions')<>'delete'
-  OR public.operator_retirement_disposition('finance_source_observations')<>'delete'
+  OR public.operator_retirement_disposition('finance_source_observations')<>current_setting('test.source_retirement_disposition')
   OR public.operator_retirement_disposition('profiles')<>'preserve'
  THEN RAISE EXCEPTION 'Budget canonical retirement failed'; END IF;
 END $$;

@@ -786,3 +786,28 @@
 .pipeline-desk-form input,.pipeline-desk-form select,.pipeline-desk-form textarea{min-height:44px;font-size:14px}
 .pipeline-client-picker :focus-visible,.pipeline-relationship-choice :focus-visible,.pipeline-relationship-review :focus-visible{outline:2px solid var(--purple);outline-offset:3px}
 @media(max-width:700px){.pipeline-desk-form input,.pipeline-desk-form select,.pipeline-desk-form textarea,.pipeline-client-picker input,.pipeline-client-picker select{font-size:16px}}
+
+/* Campaigns › dossier: what this campaign uses (INT-298 MBC 3b). The approved map's Reach and Land lanes. */
+.cc{display:grid;gap:10px}
+.cc-lane{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;display:grid;gap:8px}
+.cc-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cc-h h5{font-size:12.5px;font-weight:700;color:var(--ink)}
+.cc-h span{font-size:11px;color:var(--ink-3)}
+.cc-list,.cc-choices{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.cc .cc-row,.cc .cc-choices button{display:flex;align-items:center;gap:9px;min-width:0;font-size:12px}
+.cc-row{padding:7px 9px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2)}
+.cc-k{flex:none;font-size:10.5px;font-weight:600;color:var(--violet);background:var(--violet-tint, var(--surface-2));border-radius:6px;padding:2px 7px}
+.cc-n{flex:1;min-width:0;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-hidden{color:var(--ink-3);font-style:italic}
+.cc-s{flex:none;font-size:10.5px;color:var(--ink-3)}
+.cc-empty{font-size:11.5px;color:var(--ink-3);margin:0}
+.cc .cc-add{justify-self:start;display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--violet-line);border-radius:9px;background:transparent;color:var(--violet);font-size:12px;font-weight:600;padding:7px 11px;cursor:pointer}
+.cc .cc-add:hover{background:var(--surface-2)}
+.cc-pick{display:grid;gap:8px;border-top:1px solid var(--line-soft);padding-top:8px}
+.cc .cc-q{border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font-size:12px;padding:7px 10px}
+.cc-choices{max-height:240px;overflow:auto}
+.cc .cc-choices button{width:100%;text-align:left;padding:7px 9px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2);color:var(--ink);cursor:pointer}
+.cc .cc-choices button:hover{border-color:var(--violet-line);background:var(--surface)}
+.cc-pick > .btn{justify-self:start}
+.cc-foot{font-size:10.5px;color:var(--ink-3);line-height:1.45;margin:0}
+.cc .cc-add:focus-visible,.cc .cc-choices button:focus-visible,.cc .cc-q:focus-visible{outline:2px solid var(--ring, var(--violet));outline-offset:2px}

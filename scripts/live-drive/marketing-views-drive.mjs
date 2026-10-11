@@ -260,6 +260,46 @@ async function main() {
       await ctx.close();
     }
 
+    // Campaigns › dossier: what a campaign uses (MBC 3b). An admin attaches and removes a piece; a member reads.
+    for (const theme of ["light", "dark"]) {
+      for (const mode of ["populated", "readonly"]) {
+        const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+        const page = await ctx.newPage();
+        const errors = [];
+        page.on("pageerror", (e) => errors.push(String(e.message)));
+        await open(page, { tab: "campaigns", theme, mode });
+        await setContentWidth(page, contentWidth(1366, "docked"));
+        await page.locator(".pf-row", { hasText: "Spring advisory intake" }).locator("button", { hasText: "Open dossier" }).first().click();
+        await page.waitForSelector(".dw .cc-lane", { timeout: 8000 }).catch(() => {});
+        const id = `${theme}/${mode}/campaign-uses`;
+        const lanes = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll(".dw .cc-lane")].map((lane) => [lane.querySelector("h5")?.textContent, [...lane.querySelectorAll(".cc-row")].map((row) => [...row.querySelectorAll(".cc-k, .cc-n")].map((part) => part.textContent).join(" · "))])));
+        const fit = await page.evaluate(() => { const dw = document.querySelector(".dw"); if (!dw) return null; const r = dw.getBoundingClientRect(); return { sideways: dw.scrollWidth > dw.clientWidth + 1, offRight: [...dw.querySelectorAll(".cc *")].some((el) => el.getBoundingClientRect().right > r.right + 1) }; });
+        check(errors.length === 0 && fit && !fit.sideways && !fit.offRight, `${id}: the dossier's composition renders without error or overflow`, JSON.stringify({ errors, fit }));
+        await page.evaluate(() => document.querySelector(".dw .cc")?.scrollIntoView({ block: "start" }));
+        if (mode === "populated") {
+          check(JSON.stringify(lanes) === JSON.stringify({ Reach: ["Email · Spring advisory announcement", "Social post · Spring intake teaser"], Land: ["Form · Discovery call request", "Page · Advisory scorecard landing page"] }), `${id}: Reach and Land list what the campaign uses`, JSON.stringify(lanes));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-uses-${theme}.png`) });
+          await page.locator(".cc-lane", { hasText: "Land" }).locator(".cc-add").click();
+          const choices = await page.locator(".cc-lane", { hasText: "Land" }).locator(".cc-choices button").allTextContents();
+          check(choices.length === 1 && /Scorecard opt-in/.test(choices[0]), `${id}: Add offers only what isn't attached yet`, JSON.stringify(choices));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-uses-add-${theme}.png`) });
+          await page.locator(".cc-choices button", { hasText: "Scorecard opt-in" }).click();
+          await page.waitForFunction(() => [...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")), null, { timeout: 5000 }).catch(() => {});
+          const added = await page.evaluate(() => ({ row: [...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")), toast: document.querySelector(".campaign-toast")?.textContent ?? "", ready: document.querySelector(".dw")?.textContent?.includes("Attached: 2 forms, 1 page, 1 email, 1 social post.") ?? false }));
+          check(added.row && /Attached to the campaign/.test(added.toast) && added.ready, `${id}: attaching shows the piece, says so, and readiness counts it`, JSON.stringify(added));
+          await page.locator("button[aria-label='Remove Scorecard opt-in from this campaign']").click();
+          await page.waitForFunction(() => ![...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")), null, { timeout: 5000 }).catch(() => {});
+          const removed = await page.evaluate(() => [...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")));
+          check(!removed, `${id}: Remove takes it off the campaign`);
+        } else {
+          const controls = await page.evaluate(() => document.querySelectorAll(".dw .cc-add, .dw .cc-row button").length);
+          check(JSON.stringify(lanes.Reach) === JSON.stringify(["Email · Owners and admins can see which", "Social post · Spring intake teaser"]) && controls === 0, `${id}: a member reads it without names they can't see, and can't change it`, JSON.stringify({ lanes, controls }));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-uses-member-${theme}.png`) });
+        }
+        await ctx.close();
+      }
+    }
+
     // Retired addresses and the one form panel, both themes, at the ordinary 1366 docked session.
     for (const theme of ["light", "dark"]) {
       const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });

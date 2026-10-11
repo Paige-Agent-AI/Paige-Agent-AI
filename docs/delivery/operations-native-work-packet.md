@@ -90,3 +90,7 @@ Independent visual critique found the date-removal checkbox detached above its l
 Native preparation reconciled the current released project-lifecycle main and priority PR #1989 without product conflicts. Registered the existing rollback-only native caller-scope SQL fixture in database-contract; its 15 assertions remain UNEXECUTED until fresh CI. Development migration 20270602000416 remains unallocated and unapplied. No concurrent overlapping release PR opened.
 
 Independent merged-tree/CI-registration review ba18c45aa COMPLETE COMPATIBLE. Added a rollback-only revoked-member read refusal, bringing native SQL assertions to16, still UNEXECUTED. Product and authority function unchanged; new fixture review remains owed.
+
+Forward allocation preparation: fresh read-only production frontier230, current-main a138 and all26 open PR file lists inspected without pagination truncation. Priority1989 proposes240; other reserved220/40/Finance30 remain foreign-owner work. No250 found. Renamed development416 to proposed20271020000250 with byte-identical SQL. Unapplied; SQL16UNEXECUTED; no native release PR opened. Recheck frontier/reservations before release.
+
+Local UI-evidence grammar check atdb108 FAILED on legacy release metadata syntax and stale evidence fields. Updated the record to current governed metadata grammar, reviewed source identity and actual later assignment/date/zoom proof, retaining historical narratives and explicit SQL16/CI/runtime boundaries. No product or permission change.

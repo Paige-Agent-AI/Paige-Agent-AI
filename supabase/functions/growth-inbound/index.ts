@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     // No target form means no submission for the form processor to route, so the lead is filed here:
     // into the business's default pipeline, first open stage (owner ruling 2026-10-11). This path keeps
     // no retry record of its own, so a TRANSIENT filing failure (no database answer, a deadlock or a
-    // stale read, PostgREST's connection/pool codes, or the function not deployed yet) answers 503 and
+    // stale read, or PostgREST's connection/pool codes) answers 503 and
     // the sender re-delivers: the contact step finds the same contact by address and the filing
     // reuses its open deal, so a re-delivery never duplicates either. A PERMANENT refusal or a skip
     // (no default pipeline) is reported in the 200 body, never as a deal that was made. Such a lead
@@ -138,7 +138,9 @@ Deno.serve(async (req) => {
         });
         if (dealErr || !filed) {
           const code = dealErr?.code ? String(dealErr.code) : "";
-          transient = !!dealErr && (code === "" || code === "40001" || code === "40P01" || code === "PGRST202"
+          // PGRST202 (function not deployed yet) is permanent here, as in the form processor: a lagging
+          // migration must not turn every delivery into a 503 that used to answer 200 (§58).
+          transient = !!dealErr && (code === "" || code === "40001" || code === "40P01"
             || /^PGRST00[0-3]$/.test(code) || /^(08|53|57)/.test(code));
           console.error("[growth-inbound] default_pipeline_deal_failed", { code: code || null, transient, message: dealErr?.message ?? "no result" });
           deal = { filed: false, error: "default_pipeline_deal_failed" };

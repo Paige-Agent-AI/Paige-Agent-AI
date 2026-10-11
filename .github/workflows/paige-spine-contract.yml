@@ -248,6 +248,10 @@ jobs:
       - name: Operations delivery submission and review contracts
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_submissions.sql
 
+      - name: Operations explicit client review and acceptance (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_review.sql
+
       - name: Sales commercial and signing agreement row contracts (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sales_agreement_trigger_contracts.sql

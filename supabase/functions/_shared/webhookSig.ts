@@ -137,3 +137,84 @@ export async function sha256Hex(input: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+// ─── SendGrid (Twilio) signed Event Webhook verification ─────────────────────
+// Twilio/SendGrid signs the raw request body with ECDSA P-256 (ES256) and the
+// signature arrives DER-encoded (ASN.1 SEQUENCE of r,s). WebCrypto verifies the
+// IEEE P-1363 (raw r||s) form, so the DER is converted before comparing. The
+// public key is the provider console's verification key (SPKI PEM), delivered
+// via env — never fetched with the admin key.
+
+function pemToDer(pem: string): Uint8Array<ArrayBuffer> {
+  const b64 = pem
+    .replace(/-----BEGIN PUBLIC KEY-----/, "")
+    .replace(/-----END PUBLIC KEY-----/, "")
+    .replace(/\s+/g, "");
+  return b64ToBytes(b64);
+}
+
+/** DER ECDSA-SigValue (SEQUENCE { r INTEGER, s INTEGER }) → P-1363 r||s (32+32). */
+function derSignatureToP1363(der: Uint8Array): Uint8Array | null {
+  if (der.length < 8 || der[0] !== 0x30) return null;
+  if (der[1] === 0x80 || der[1] & 0x80) return null; // long-form/undefined lengths never occur for P-256
+  if (2 + der[1] !== der.length) return null; // declared length must consume the input exactly
+  let pos = 2; // skip SEQUENCE header
+  const readInt = (): Uint8Array | null => {
+    if (der[pos] !== 0x02) return null;
+    const len = der[pos + 1];
+    pos += 2;
+    let start = pos;
+    let length = len;
+    if (len > 32) { // strip sign-padding byte
+      start += len - 32;
+      length = 32;
+    }
+    pos += len;
+    const out = new Uint8Array(32);
+    out.set(der.subarray(start, start + length), 32 - length);
+    return out;
+  };
+  const r = readInt();
+  const s = readInt();
+  if (!r || !s || pos !== der.length) return null; // trailing bytes are not a signature
+  const raw = new Uint8Array(64);
+  raw.set(r, 0);
+  raw.set(s, 32);
+  return raw;
+}
+
+export type SendgridEventVerdict = { ok: true } | { ok: false; reason: string };
+
+/** Verify a Twilio/SendGrid signed Event Webhook request. Fail-closed by construction. */
+export async function verifySendgridEvent(opts: {
+  publicKeyPem: string | null;
+  signatureB64: string | null;
+  body: string;
+}): Promise<SendgridEventVerdict> {
+  const pem = (opts.publicKeyPem ?? "").trim();
+  const sigB64 = (opts.signatureB64 ?? "").trim();
+  if (!pem || !sigB64) return { ok: false, reason: "unconfigured_or_unsigned" };
+  if (sigB64.length > 2048) return { ok: false, reason: "signature_too_large" };
+  let der: Uint8Array<ArrayBuffer>;
+  try { der = b64ToBytes(sigB64); } catch { return { ok: false, reason: "signature_malformed" }; }
+  const p1363 = derSignatureToP1363(der);
+  if (!p1363) return { ok: false, reason: "signature_der_malformed" };
+  try {
+    const key = await crypto.subtle.importKey(
+      "spki",
+      pemToDer(pem) as unknown as ArrayBuffer,
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["verify"],
+    );
+    const valid = await crypto.subtle.verify(
+      { name: "ECDSA", hash: "SHA-256" },
+      key,
+      p1363 as unknown as ArrayBuffer,
+      new TextEncoder().encode(opts.body),
+    );
+    return valid ? { ok: true } : { ok: false, reason: "signature_invalid" };
+  } catch {
+    return { ok: false, reason: "key_or_signature_invalid" };
+  }
+}

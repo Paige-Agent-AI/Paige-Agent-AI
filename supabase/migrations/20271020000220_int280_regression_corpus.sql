@@ -1,5 +1,9 @@
 -- INT-280 AI-3B: immutable synthetic regression evidence in existing Evals.
 -- No runner, publication RPC, provider action, customer content or task identity is created.
+-- migration-lint-ignore: pattern-1
+-- The literal publication UUIDs identify Eval datasets/cases/runs/results created here,
+-- never auth.users. All tenant/actor/created_by/trace identities are NULL. Independently
+-- reviewed schema/proofs show no auth-user FK; other lint patterns remain enabled.
 ALTER TABLE public.paige_eval_dataset ADD COLUMN IF NOT EXISTS regression_corpus_version integer;
 ALTER TABLE public.paige_eval_case
   ADD COLUMN IF NOT EXISTS regression_key text,

@@ -52,3 +52,13 @@ Corrected presentation guard:12 tests PASS, scoped ESLint PASS, whitespace check
 | Chat/Live/customer acceptance | No Chat executor changes or customer login | Callable domain integration, authorized authenticated acceptance; INT-346 restrictions persist |
 
 Release channel development. No PR/head CI/merge/deployment/production readback for this lifecycle slice. Full Operations PARTIAL; customer acceptance UNVERIFIED.
+
+## Dated continuation — 2026-10-11 isolated proof
+
+The earlier entry states above record proof at development entry. Current draft PR1997 head1833e09a070202e8ceba88460fe50e57d77c02b8 is pushed and attached. Non-author static review passed at b8681272d1fa1cf30b6a7695905c961cb2463cc1; latest three-line fixture-only correction needs final-head disposition under the repository review-round ceiling. No source RPC changed after that review.
+
+Owned PR1997 Supabase preview, with_data=false and FUNCTIONS_DEPLOYED, executed all26 rollback PostgreSQL assertions successfully. Actual authenticated role submission, review and scoped readback passed without table grants, along with duplicate/stale refusal, immutable reference, real foreign work/artifact, agency/parented and revoked source-access assertions. Initial test setup correctly failed CHANNEL_CONNECTOR_TENANT_FORBIDDEN; foreign fixture provisioning now clears actor only during owner setup and restores the actor for authorization tests. One connector requestState error retried, not counted as SQL result. Post-run synthetic fixture tenant count0 confirms rollback.
+
+Matrix changes: Planning persistence and Team/Solo negative claims now have isolated PostgreSQL PASS; shared protected database-contract and verify remain pending on exact1833 head. Clients explicit release/artifact projection/acceptance remains UNAVAILABLE; full mounted rendered validation remains UNVERIFIED. All Spine/Harness/Trust/Rail/Orchestration/Operating Fabric/Agent Intelligence/Chat Live integrations remain owed. No production migration/deployment/readback or customer authentication performed.
+
+Sales owner acknowledged ANT-49 and is fixing a synthetic fixture creator constraint in PR1996, migration280; merge/production-safe proof not received. Handoff1992 remains blocked and its unapplied270 requires RRSR reallocation after Sales repair. Latest evidence recorded in ANT-11 comments and PR1997 conversation; no customer outcome claim.

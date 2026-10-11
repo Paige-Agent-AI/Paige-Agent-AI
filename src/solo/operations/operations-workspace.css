@@ -26,6 +26,7 @@
 
 .ops-work-editor :is(button,input,select):focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}
 .ops-work-editor-actions{display:flex;flex-wrap:wrap;gap:10px}.ops-work-editor button.ops-action-primary{background:var(--pg-gold-fill);color:hsl(var(--accent-foreground))}
+.ops-work-editor label.ops-work-editor-check{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}.ops-work-editor .ops-work-editor-check input[type=checkbox]{width:18px;height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:var(--pg-violet)}
 .ops-create-fields{display:grid;gap:16px;min-width:0;border:0;margin:0;padding:0}.ops-create-fields textarea{width:100%;min-width:0;resize:vertical;padding:10px;border:1px solid var(--pg-line-strong);border-radius:8px;background:var(--pg-raised);color:var(--pg-ink);font:inherit}.ops-create-fields textarea:focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}.ops-create-pair{display:grid;grid-template-columns:1fr;gap:16px}
 @media(max-width:600px){.ops-work-create-sheet{width:100%!important;padding:24px 16px}}
 @media(max-width:600px){.ops-detail-sheet{width:100%!important}}

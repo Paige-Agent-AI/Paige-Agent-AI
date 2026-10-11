@@ -52,7 +52,7 @@ export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailab
     </div>}
     <label>New due date and time<input aria-label="New CRM task due date" type="datetime-local" value={due} disabled={disabled||clearDate} onChange={event=>setDue(event.target.value)} /></label>
     <p>Time uses your device’s timezone. Review the exact date before confirming.</p>
-    {task.due_date&&<label><input type="checkbox" checked={clearDate} disabled={disabled} onChange={event=>setClearDate(event.target.checked)} />Remove the current due date</label>}
+    {task.due_date&&<label className="ops-work-editor-check"><input type="checkbox" checked={clearDate} disabled={disabled} onChange={event=>setClearDate(event.target.checked)} />Remove the current due date</label>}
     <button type="button" disabled={disabled||!due&&!clearDate} onClick={()=>propose("due")}>Review due date</button>
   </section>;
 }

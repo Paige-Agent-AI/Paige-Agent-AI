@@ -83,3 +83,6 @@ Integration source3f1c04e4e92d6c71ea271e042973f799ad31cb82 received independent 
 ### Assignment and due-date supplemental rendered evidence
 Eight genuine unsigned Chrome 200/400 percent zoom configurations passed in both themes with PAIGE initially open/closed, actual Overview row reachability, assignment/photo review, cancellation, explicit date removal, server refusal, keyboard focus restoration and reduced motion. Twenty-four zoom captures and the report are retained. Four additional desktop/phone editor-form configurations passed in both themes; independent visual review is pending. These use synthetic fixtures and refused execution; no authenticated customer or production persistence claim.
 
+
+Independent visual critique found the date-removal checkbox detached above its label in four original form captures. A dedicated inline row with intrinsic native checkbox and 44px label target resolves it. Four repaired desktop/phone recaptures passed; critic inspected all36 assignment/refusal and24zoom captures plus repaired forms, disposition SHIP, no other material findings. Native checked/focus semantics and confirmation remain unchanged. Original failed visual observation is retained here.
+

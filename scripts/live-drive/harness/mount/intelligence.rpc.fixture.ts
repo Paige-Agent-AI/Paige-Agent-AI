@@ -3,11 +3,18 @@ import canonical from '@/test/fixtures/canonical-task-scorecard.json';
 import { summarizeEvaluatorVerdicts } from '../../../../supabase/functions/_shared/eval/trajectory-registry';
 const pages = { '1.0.0': structuredClone(canonical.v1), '1.1.0': structuredClone(canonical.v2) };
 let serial = 100;
-function project(version: keyof typeof pages, run?: string, empty = false) {
+function project(version: keyof typeof pages, run?: string, empty = false, paging = false, before?: string) {
   const page = structuredClone(pages[version]);
   if (run) page.items = page.items.filter(i => i.run_ref === run);
   if (empty) page.items = [];
   page.next_cursor = null;
+  // Explicit isolated review state: page existing controlled SQL records, never invented task links.
+  if (paging && !run) {
+    if (before) page.items = page.items.filter(i => i.created_at < before);
+    const more = page.items.length > 1; page.items = page.items.slice(0, 1);
+    const last = page.items.at(-1);
+    if (more && last) page.next_cursor = { at: last.created_at, id: last.run_ref };
+  }
   page.sample = { evaluations: page.items.length, task_subjects: new Set(page.items.map(i => i.work_ref)).size, observations: page.items.filter(i => i.mode === 'observation').length, replays: page.items.filter(i => i.mode === 'replay').length };
   page.criteria = page.items.length ? page.criteria.map(c => ({ ...c, ...summarizeEvaluatorVerdicts(page.items.flatMap(i => i.results.filter(r => r.scorer === c.scorer).map(r => r.verdict)) as Parameters<typeof summarizeEvaluatorVerdicts>[0]) })) : [];
   return page;
@@ -22,7 +29,7 @@ export const supabase = {
       if (state === 'unavailable') return { data: null, error: { code: 'PGRST202' } };
       const version = args.p_set_version as keyof typeof pages;
       if (!pages[version]) return { data: null, error: { code: '22023' } };
-      if (name === 'operator_intelligence_task_scorecard') return { data: project(version, args.p_run_id, state === 'empty'), error: null };
+      if (name === 'operator_intelligence_task_scorecard') return { data: project(version, args.p_run_id, state === 'empty', state === 'paging', args.p_before_at), error: null };
       if (name === 'operator_intelligence_evaluate_task') {
         if (state === 'uncertain') throw new Error('LOCAL SYNTHETIC unconfirmed write');
         const prior = Object.values(pages).flatMap(p => p.items).find(i => i.run_ref === args.p_replay_run_id);

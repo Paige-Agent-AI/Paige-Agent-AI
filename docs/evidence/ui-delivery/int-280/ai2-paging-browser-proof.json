@@ -1,0 +1,43 @@
+{
+  "kind": "LOCAL SYNTHETIC actual-source paging/focus regression",
+  "capturedAt": "2026-10-11T05:17:48.609Z",
+  "flows": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "open": false,
+      "focus": "intel-scorecard-heading",
+      "overflow": false,
+      "reducedMotion": true,
+      "newestAlsoClears": true
+    }
+  ],
+  "errors": []
+}

@@ -13,10 +13,13 @@ begin
   v_tenant:=public.current_user_tenant_id();
   if v_tenant is distinct from p_expected_tenant_id or not public.is_tenant_member(v_tenant) then
     raise exception 'PLAN_SCOPE_CHANGED' using errcode='42501'; end if;
+  if not exists(select 1 from public.tenants t where t.id=v_tenant and t.account_type::text='standalone' and t.parent_tenant_id is null) then
+    raise exception 'PLAN_FORBIDDEN: Solo Operations unavailable' using errcode='42501'; end if;
+
   select * into v_plan from public.plans where id=p_plan_id for update;
   if not found or v_plan.tenant_id is distinct from v_tenant then
     raise exception 'PLAN_PROJECT_UNAVAILABLE' using errcode='42501'; end if;
-  v_staff:=public.has_any_role(v_actor,array['admin','super_admin','coach']);
+  v_staff:=public.is_tenant_admin(v_tenant);
   if not coalesce(v_staff or v_plan.created_by=v_actor or v_plan.owner_user_id=v_actor,false) then
     raise exception 'PLAN_PROJECT_UNAVAILABLE' using errcode='42501'; end if;
   if p_expected_updated_at is null or v_plan.updated_at is distinct from p_expected_updated_at then

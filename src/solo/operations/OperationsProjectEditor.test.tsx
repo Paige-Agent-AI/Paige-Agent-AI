@@ -21,6 +21,12 @@ it("requires confirmation and retains the draft when the owner keeps editing", a
   await act(async () => cancel.click()); expect(container.querySelector("select")?.value).toBe("active"); expect(mock.submit).not.toHaveBeenCalled();
 });
 it("withholds controls from unrelated people and ownership delegation from nonstaff owners", async () => { await render(plan, "observer"); expect(container.querySelector("form")).toBeNull(); await render(); expect(container.querySelector('select[aria-label="Accountable owner"]')).toBeNull(); });
+it("does not offer project administration from a global role in another workspace", async () => {
+  mock.rpc.mockImplementation(async (name) => ({ data: name === "has_any_role", error: null }));
+  await render(plan, "admin-elsewhere");
+  expect(container.querySelector("form")).toBeNull();
+  expect(mock.submit).not.toHaveBeenCalled();
+});
 it("requires matching refreshed project fields before saved success", async () => { mock.submit.mockResolvedValue({ kind: "acknowledged" }); await render(); await changeStatus(); await review(); await confirm(); expect(container.textContent).not.toContain("Saved and confirmed"); await render({ ...plan, status: "active" }); expect(container.textContent).toContain("Saved and confirmed in current projects"); });
 it("rejects a mismatched source readback", async () => { mock.submit.mockResolvedValue({ kind: "acknowledged" }); await render(); await changeStatus(); await review(); await confirm(); await render({ ...plan, status: "archived" }); expect(container.textContent).toContain("differs from the requested change"); expect(container.textContent).not.toContain("Saved and confirmed"); });
 it("pins an old draft version despite background refresh", async () => { mock.submit.mockResolvedValue({ kind: "refused", message: "Concurrent edit" }); await render(); await changeStatus(); await render({ ...plan, updated_at: "2026-10-10T12:01:00Z" }); await review(); await confirm(); expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: plan.updated_at }), expect.objectContaining({ status: "active" })); });

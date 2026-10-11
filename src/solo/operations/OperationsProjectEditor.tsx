@@ -14,7 +14,7 @@ export function OperationsProjectEditor({ plan, actorId, tenantId, members, refr
   const version = useRef(plan.updated_at), mounted = useRef(true), submitted = useRef(false);
   const readback = useRef<{ original: Plan; intended: ProjectUpdate | null } | null>(null);
   useEffect(() => { let current = true; mounted.current = true;
-    void supabase.rpc("has_any_role", { _user_id: actorId, _roles: ["admin", "super_admin", "coach"] })
+    void Promise.resolve(supabase.rpc("is_tenant_admin", { _tenant: tenantId }))
       .then(({ data, error }) => { if (current) setStaff(!error && data === true); }).catch(() => { if (current) setStaff(false); });
     return () => { current = false; mounted.current = false; };
   }, [actorId, tenantId]);

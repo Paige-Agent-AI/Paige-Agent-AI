@@ -7,7 +7,9 @@
 // opportunity; the source mix; which forms collected them; when leads arrive; and how each channel did. Every figure comes from a read that already
 // exists: submissions, published forms and briefs (passed in from the Marketing hub) and, for the email
 // row only, read_email_marketing_dashboard. Nothing is estimated. Where a channel has no source
-// (ads, social, page visits) it says so instead of showing a zero.
+// (social, page visits) it says so instead of showing a zero. Ad accounts, spend and ad performance
+// belong to the Ads department (coordinator, 2026-10-11); a lead from a paid link is still counted here
+// by its source tag, in the Source mix.
 //
 // The prototype's Year range is left out: the email read serves 7, 30 or 90 days, and a year of leads
 // would almost always exceed the submissions read, so a year figure would be mostly a floor.
@@ -50,12 +52,11 @@ export type MarketingAnalyticsProps = {
   onOpenForm: (formId: string) => void;
   onOpenSales: () => void;
   onOpenEmail: () => void;
-  onOpenAds: () => void;
   /** Vibe Studio's launcher, for someone who may build there; offered when no form is live. */
   studioLauncher?: React.ReactNode;
 };
 
-export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, onOpenAds, studioLauncher }: MarketingAnalyticsProps) {
+export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher }: MarketingAnalyticsProps) {
   const current = rangeOf(range);
   const model = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days }), [submissions, briefs, forms, current.days]);
   const email = useEmailStats(tenantId, current.days);
@@ -104,7 +105,7 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
       <Capture model={model} floor={floor} onOpenForm={onOpenForm} studioLauncher={studioLauncher}/>
     </div>
     <HeatCard model={model} days={current.days}/>
-    <Channels days={current.days} email={email} onOpenEmail={onOpenEmail} onOpenAds={onOpenAds}/>
+    <Channels days={current.days} email={email} onOpenEmail={onOpenEmail}/>
     {model.capped && <p className="mva-cap">Counted from the latest {SUBMISSION_READ_LIMIT} submissions, all inside this range, so each count is a floor and nothing is compared with the period before.</p>}
   </div>;
 }
@@ -280,7 +281,7 @@ function Capture({ model, floor, onOpenForm, studioLauncher }: { model: Model; f
   </section>;
 }
 
-function Channels({ days, email, onOpenEmail, onOpenAds }: { days: number; email: EmailRead; onOpenEmail: () => void; onOpenAds: () => void }) {
+function Channels({ days, email, onOpenEmail }: { days: number; email: EmailRead; onOpenEmail: () => void }) {
   const s = email.stats;
   const opened = s ? rate(s.opened, s.tracked) : null;
   const emailLine = email.phase === "loading" ? "Reading email…"
@@ -290,7 +291,6 @@ function Channels({ days, email, onOpenEmail, onOpenAds }: { days: number; email
     : `${n(s.sent)} sent · ${n(s.opened)} opened${opened === null ? "" : ` (${opened}% of ${n(s.tracked)} tracked)`} · ${n(s.clicked)} clicked${s.sent > s.tracked ? ` · ${n(s.sent - s.tracked)} sent through your own mail, not tracked` : ""}`;
   const rows: { name: string; line: string; flag?: string; act?: React.ReactNode }[] = [
     { name: "Email", line: emailLine, act: email.phase === "error" ? <button type="button" className="btn btn-s" onClick={email.retry}>Try again</button> : <button type="button" className="mov-lnk" onClick={onOpenEmail}>Open Email</button> },
-    { name: "Ads", line: "Ad accounts aren’t read here, so no spend or ad leads are shown", flag: "Not available", act: <button type="button" className="mov-lnk" onClick={onOpenAds}>Open Ads</button> },
     { name: "Social", line: "Reach and engagement aren’t read from any provider", flag: "Not available" },
     { name: "Your pages", line: "Visits aren’t recorded on public pages", flag: "Not available" },
   ];
@@ -302,5 +302,6 @@ function Channels({ days, email, onOpenEmail, onOpenAds }: { days: number; email
       <span className="mva-row-t">{row.name}<small aria-live={row.name === "Email" ? "polite" : undefined}>{row.line}</small></span>
       <span className="mva-ch-a">{row.flag && <span className="pill pill-n">{row.flag}</span>}{row.act}</span>
     </li>)}</ul>
+    <p className="mov-foot">Leads from links with a source tag, paid ones included, are counted in Source mix.</p>
   </section>;
 }

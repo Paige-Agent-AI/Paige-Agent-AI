@@ -317,14 +317,14 @@ function OverviewTab({ data, moved, onDismissMoved, onCanManage, ...rest }) {
 
 // Analytics reads the briefs itself (only this tab and Overview pay for it). A failed briefs read never
 // hides the page: campaign matching says it can't be done, and every other figure still shows.
-function AnalyticsTab({ data, range, onRange, onOpenForm, onOpenSales, onOpenEmail, onOpenAds, studioLauncher }) {
+function AnalyticsTab({ data, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher }) {
   const briefsState = useSoloCampaignBriefs();
   const briefsKnown = briefsState.phase === "ready";
   const briefsFailed = briefsState.phase === "error" || briefsState.phase === "unavailable";
   const phase = data.phase === "ready" && !briefsKnown && !briefsFailed ? "loading" : data.phase;
   const notice = briefsFailed ? <div className="mov-briefs-off" role="status"><p>Campaign briefs couldn’t load, so leads can’t be matched to a campaign right now.</p>{briefsState.retry && <button className="btn btn-s" onClick={() => briefsState.retry()}>Try again</button>}</div> : null;
   return <StateFrame phase={phase} retry={() => { data.retry?.(); briefsState.retry?.(); }} noun="marketing analytics">
-    <MarketingAnalytics notice={notice} tenantId={data.tenantId} submissions={data.submissions || []} forms={data.artifacts} briefs={briefsKnown ? briefsState.briefs || [] : []} briefsKnown={briefsKnown} range={range} onRange={onRange} onOpenForm={onOpenForm} onOpenSales={onOpenSales} onOpenEmail={onOpenEmail} onOpenAds={onOpenAds} studioLauncher={briefsKnown && briefsState.canManage ? studioLauncher : null}/>
+    <MarketingAnalytics notice={notice} tenantId={data.tenantId} submissions={data.submissions || []} forms={data.artifacts} briefs={briefsKnown ? briefsState.briefs || [] : []} briefsKnown={briefsKnown} range={range} onRange={onRange} onOpenForm={onOpenForm} onOpenSales={onOpenSales} onOpenEmail={onOpenEmail} studioLauncher={briefsKnown && briefsState.canManage ? studioLauncher : null}/>
   </StateFrame>;
 }
 
@@ -536,7 +536,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   let body=<OverviewTab data={data} moved={moved} scrollToCapture={Boolean(moved&&moved!=="missing-form")||captureFilter!=="all"} onDismissMoved={()=>setOverviewQuery({moved:null})} onCanManage={setOverviewCanManage} captureFilter={captureFilter} onCaptureFilter={(filter)=>setOverviewQuery({capture:filter==="all"?null:filter})} onGo={goTo} onCreateBrief={createBrief} onOpenSales={toSales} onOpenForm={openForm} onOpenAsset={openAsset} onOpenContact={openContact} onOpenDeal={openDeal}/>;
   if(redirectTo) body=null;
   else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
-  else if(tab==="analytics") body=<AnalyticsTab data={data} range={rangeOf(query.get("range")).key} onRange={(range)=>setOverviewQuery({range:range===DEFAULT_RANGE?null:range})} onOpenForm={openForm} onOpenSales={()=>{ if(!params.account) return; if(salesInShell) navigate(subtabPath("solo",params.account,"sales","performance")); else toSales(); }} studioLauncher={<StudioLauncher/>} onOpenEmail={()=>setTab("email")} onOpenAds={()=>setTab("ads")}/>;
+  else if(tab==="analytics") body=<AnalyticsTab data={data} range={rangeOf(query.get("range")).key} onRange={(range)=>setOverviewQuery({range:range===DEFAULT_RANGE?null:range})} onOpenForm={openForm} onOpenSales={()=>{ if(!params.account) return; if(salesInShell) navigate(subtabPath("solo",params.account,"sales","performance")); else toSales(); }} studioLauncher={<StudioLauncher/>} onOpenEmail={()=>setTab("email")}/>;
   else if(tab==="catalog") body=<Catalog setDetail={setDetail}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;

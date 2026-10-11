@@ -819,21 +819,21 @@ describe("Solo Marketing department views", () => {
     expect(chain()[1]).toBe("412Leads receivedLast 30 days");
     expect(sources()).toEqual(["newsletter200", "podcast100", "No tracking tag112"]);
     expect(host.textContent).not.toContain("so lead counts are a floor");
-    expect(host.textContent).toContain("The totals count every lead in the last 30 days. The chart and top forms are drawn from the latest 200 submissions, so they show fewer.");
+    expect(host.textContent).toContain("The totals count every lead in the last 30 days. The chart and each form’s recent submissions are drawn from the latest 200 submissions, so they show fewer.");
   });
 
-  it("Needs you shows older failures and stalled submissions the server counts, and a member's Overview claims only the latest records", () => {
+  it("Needs you states older failures and waiting submissions the server counts, and a member's Overview claims only the latest records", () => {
     useWorkspace({ submissions: [submission("s1", 1, { state: "error" })] });
     harness.health = { phase: "ready", health: { failed: 4, stalled: 2 } };
     renderAt("/solo/42/growth/overview");
     const needs = [...host.querySelectorAll(".mov-att li")].map((row) => row.querySelector(".mov-att-main")?.textContent);
-    expect(needs.slice(0, 3)).toEqual([
-      "Discovery call request1 submission couldn’t be processed",
-      "Older submissions3 more submissions couldn’t be processed",
-      "Waiting to be processed2 submissions still waiting more than 15 minutes after arriving",
-    ]);
+    // The form the records name stays an item with its Review; what the server counts beyond it is a statement, not a dead act.
+    expect(needs[0]).toBe("Discovery call request1 submission couldn’t be processed");
+    expect(needs.some((text) => /older|waiting/i.test(text ?? ""))).toBe(false);
+    expect([...host.querySelectorAll("[aria-labelledby='mov-att-h'] .mov-note")].map((n) => n.textContent)).toContain(
+      "Across every submission: 3 older submissions couldn’t be processed, and 2 submissions are still waiting more than 15 minutes after arriving. The processor retries a waiting one; each form’s submissions are in its panel.");
     act(() => root.unmount()); host.remove();
-    // Routed, nothing failed in what the page read; the server was not asked (a member).
+    // Routed, nothing failed in what the page read; the server refused (a member), so only the records are claimed.
     harness.health = { phase: "denied", health: null };
     useWorkspace({ submissions: [submission("s2", 1)], drafts: [], artifacts: [{ ...form, intakePipelineId: "pipeline-1" }] });
     renderAt("/solo/42/growth/overview");

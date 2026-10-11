@@ -86,15 +86,18 @@ CPL, CAC, ROAS (Ads department), revenue (Sales), qualified leads.
   - 42501 is a member: the page keeps its own counts. Any other failure is logged and the page keeps its own counts.
   - Tests: `src/solo/marketing-analytics-metrics.test.tsx` (shapes against the real validator, the eight issued reads,
     refusal, a foreign epoch) and `src/solo/growth2.render.test.tsx` (owner, member).
-- Slice 2c consumes the same four keys on Marketing › Overview, over its 30 days and the 30 before, plus
-  `marketing.submissions.failed_current` once (`useMarketingProcessingHealth`):
-  - leads, opportunities, their deltas and the source mix become the server's (`withServerOverview`); the daily chart,
-    top forms and recent leads stay on the records, and when those are a floor the chart says so;
-  - processing health adds to Needs you the failures older than the records hold ("Older submissions") and any
-    submission still waiting more than 15 minutes ("Waiting to be processed"); the range for this current-state key is
-    the period start to five minutes before now, so a device clock ahead of the server's is not refused;
+- Slice 2c consumes the same four keys on Marketing › Overview for its 30 days only (`previous: false`: Overview shows
+  no comparison, so it issues four reads, not eight), plus `marketing.submissions.failed_current` once
+  (`useMarketingProcessingHealth`):
+  - leads, opportunities and the source mix become the server's (`withServerOverview`); the daily chart, each form's
+    recent submissions and the latest leads stay on the records, and when those are a floor the chart says so;
+  - processing health is stated under Needs you ("Across every submission: …"): failures older than the records hold
+    and submissions still waiting more than 15 minutes. They have no form to open from Overview, so they are a
+    statement, not an item to act on. The range for this current-state key is the period start to five minutes before
+    now, so a device clock ahead of the server's is not refused;
   - a member (42501), no session (28000) or a failed read keeps the record counts; with no health read, "nothing has
     failed" is claimed only of the latest 200 submissions;
   - Tests: `src/solo/marketing-overview-model.test.ts` (the overlay, the shared period start),
-    `src/solo/marketing-analytics-metrics.test.tsx` (the health answer) and `src/solo/growth2.render.test.tsx` (owner on a
-    full read, older and stalled submissions, a member).
+    `src/solo/marketing-analytics-metrics.test.tsx` (the health answer; both hooks against the real validator: the
+    current-only read, the health read's arguments and five-minute end, a member, another department's answer, a
+    foreign epoch) and `src/solo/growth2.render.test.tsx` (owner on a full read, older and waiting submissions, a member).

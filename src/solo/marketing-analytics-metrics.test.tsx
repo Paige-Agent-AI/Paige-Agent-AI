@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 
-import { HEADLINE_KEYS, figuresFrom, healthFrom, useMarketingServerFigures, withServerFigures, type ServerRead } from "./marketing-analytics-metrics";
+import { HEADLINE_KEYS, figuresFrom, healthFrom, useMarketingProcessingHealth, useMarketingServerFigures, withServerFigures, type HealthRead, type ServerRead } from "./marketing-analytics-metrics";
 import { deriveMarketingAnalytics } from "./marketing-analytics-model";
 import type { MetricResult } from "@/lib/analytics/metric-contract";
 
@@ -144,6 +144,20 @@ describe("useMarketingServerFigures", () => {
     spy.mockRestore();
   });
 
+  it("Overview's read (previous: false) issues the four keys for its own period only, and has no comparison", async () => {
+    let probe: ServerRead | null = null;
+    function Current() { probe = useMarketingServerFigures(TENANT, "month", start, { previous: false }); return null; }
+    rpc.mockImplementation(async (name: string, args: Parameters<typeof bundle>[0]) => ({ data: answers[args.p_metric_key](args), error: null }));
+    host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+    await act(async () => { root.render(<Current/>); });
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    expect(probe!.phase).toBe("ready");
+    expect(probe!.current?.leads).toBe(412);
+    expect(probe!.previous).toBeNull();
+    expect(rpc).toHaveBeenCalledTimes(4);
+    expect(new Set(rpc.mock.calls.map(([, args]) => args.p_range_start))).toEqual(new Set([new Date(start).toISOString()]));
+  });
+
   it("no session (28000) is treated like a refused seat", async () => {
     rpc.mockResolvedValue({ data: null, error: { code: "28000", message: "not authenticated" } });
     await mount(start);
@@ -166,6 +180,56 @@ describe("processing health (MBC 2c)", () => {
     const result = bundle(args, { kind: "distribution", items: [{ key: "failed", label: "Processing failed", count: 3 }, { key: "stalled", label: "Still waiting after 15 minutes", count: 2 }] }) as unknown as MetricResult;
     expect(healthFrom(result)).toEqual({ failed: 3, stalled: 2 });
     expect(healthFrom(bundle(args, { kind: "distribution", items: [{ key: "stalled", label: "x", count: 1 }] }) as unknown as MetricResult)).toEqual({ failed: 0, stalled: 1 });
+  });
+});
+
+describe("useMarketingProcessingHealth", () => {
+  let host: HTMLDivElement; let root: Root; let read: HealthRead;
+  const start = new Date(2026, 8, 11).getTime();
+  function Probe() { read = useMarketingProcessingHealth(TENANT, start); return null; }
+  const health = (args: Parameters<typeof bundle>[0]) => bundle(args, { kind: "distribution", items: [
+    { key: "failed", label: "Processing failed", count: 3 }, { key: "stalled", label: "Still waiting after 15 minutes", count: 1 },
+  ] }, { range: { key: args.p_range_key, start: args.p_range_start, end: args.p_range_end, bounds: "[start,end)", timezone: "UTC", semantics: "current_snapshot" } } as Partial<MetricResult>);
+  afterEach(() => { act(() => root.unmount()); host.remove(); rpc.mockReset(); });
+  const mount = async () => {
+    host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+    await act(async () => { root.render(<Probe/>); });
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+  };
+
+  it("reads the one current-state key through the shared issuer, ending five minutes before now, and passes the real validator", async () => {
+    rpc.mockImplementation(async (name: string, args: Parameters<typeof bundle>[0]) => ({ data: health(args), error: null }));
+    const before = Date.now();
+    await mount();
+    expect(read).toEqual({ phase: "ready", health: { failed: 3, stalled: 1 } });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    const [name, args] = rpc.mock.calls[0];
+    expect(name).toBe("issue_analytics_evidence_bundle");
+    expect(args).toMatchObject({ p_metric_key: "marketing.submissions.failed_current", p_metric_version: "1.0.0", p_range_key: "month", p_range_start: new Date(start).toISOString(), p_account_epoch: TENANT, p_dimensions: {} });
+    const end = Date.parse(args.p_range_end);
+    expect(end).toBeLessThanOrEqual(before - 5 * 60_000);
+    expect(end).toBeGreaterThan(before - 6 * 60_000 - 1000);
+  });
+
+  it("a member's refused read is 'denied' and logs nothing", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "ANALYTICS_EVIDENCE_UNAVAILABLE" } });
+    await mount();
+    expect(read).toEqual({ phase: "denied", health: null });
+    expect(spy.mock.calls.some(([message]) => String(message).startsWith("[marketing-overview]"))).toBe(false);
+    spy.mockRestore();
+  });
+
+  it("an answer owned by another department, or that fails the validator, is an error and never drawn", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    rpc.mockImplementation(async (name: string, args: Parameters<typeof bundle>[0]) => ({ data: { ...(health(args) as object), owner_department: "sales" }, error: null }));
+    await mount();
+    expect(read).toEqual({ phase: "error", health: null });
+    act(() => root.unmount()); host.remove();
+    rpc.mockImplementation(async (name: string, args: Parameters<typeof bundle>[0]) => ({ data: { ...(health(args) as object), account_epoch: "someone-else" }, error: null }));
+    await mount();
+    expect(read).toEqual({ phase: "error", health: null });
+    spy.mockRestore();
   });
 });
 

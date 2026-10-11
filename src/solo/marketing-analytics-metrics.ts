@@ -81,11 +81,14 @@ export type ServerRead = {
 
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string; message?: string } | null }>;
 
-/** Reads the headline figures for [start, now) and the period just before it, both on the server. */
-export function useMarketingServerFigures(tenantId: string | null, rangeKey: "week" | "month" | "quarter", periodStart: number): ServerRead {
+/** Reads the headline figures for [start, now) and, unless `previous` is false, the period just before it, both
+ *  on the server. A page that shows no comparison (Overview) skips the second read: four fewer calls, and its
+ *  figures don't depend on a read it never draws. */
+export function useMarketingServerFigures(tenantId: string | null, rangeKey: "week" | "month" | "quarter", periodStart: number, options: { previous?: boolean } = {}): ServerRead {
+  const withPrevious = options.previous !== false;
   const [attempt, setAttempt] = React.useState(0);
   const [state, setState] = React.useState<{ key: string; phase: ServerRead["phase"]; current: ServerFigures | null; previous: ServerFigures | null }>({ key: "", phase: "loading", current: null, previous: null });
-  const key = `${tenantId}:${rangeKey}:${periodStart}:${attempt}`;
+  const key = `${tenantId}:${rangeKey}:${periodStart}:${withPrevious}:${attempt}`;
   React.useEffect(() => {
     if (!tenantId) return;
     let live = true;
@@ -116,7 +119,7 @@ export function useMarketingServerFigures(tenantId: string | null, rangeKey: "we
     // A device clock running ahead of the server's makes it refuse the end (22023); one retry with a wider margin.
     const later = new Date(Math.floor((Date.now() - 5 * 60_000) / 60_000) * 60_000).toISOString();
     const readCurrent = read(start, end).catch((error: { code?: string }) => (error?.code === "22023" && later > start ? read(start, later) : Promise.reject(error)));
-    Promise.all([readCurrent, read(before, start)]).then(([current, previous]) => {
+    Promise.all([readCurrent, withPrevious ? read(before, start) : Promise.resolve(null)]).then(([current, previous]) => {
       if (live) setState({ key, phase: "ready", current, previous });
     }, (error: { code?: string }) => {
       if (!live) return;

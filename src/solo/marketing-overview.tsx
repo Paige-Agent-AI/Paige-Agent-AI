@@ -8,9 +8,9 @@
 // one form panel (`?form=`), addressable so any surface can link to it.
 //
 // The lead and opportunity figures and the source mix are counted on the server over every lead in the
-// last 30 days (Marketing's producer, MBC 2c), with the period before; so is processing health. A member,
-// or a failed read, keeps the counts from the records this hub already reads (useSoloCampaigns), floors
-// when that read is full. The chart, top forms and latest leads are always drawn from those records.
+// last 30 days (Marketing's producer, MBC 2c); so is processing health. A member, or a failed read, keeps
+// the counts from the records this hub already reads (useSoloCampaigns), floors when that read is full. The
+// chart, each form's recent submissions and the latest leads are always drawn from those records.
 // Nothing is estimated: no visits, spend, reach or revenue exist here, so none is shown.
 import React from "react";
 import { Ic as SharedIcons } from "./_shared";
@@ -86,7 +86,7 @@ export function MarketingOverview(props: OverviewProps) {
   const today = new Date().toDateString(); // re-derive when the day turns
   const records = React.useMemo(() => deriveMarketingOverview({ briefs, artifacts, drafts, submissions, periodDays: WINDOW_DAYS }), [briefs, artifacts, drafts, submissions, today]); // eslint-disable-line react-hooks/exhaustive-deps
   const periodStart = React.useMemo(() => periodStartOf(WINDOW_DAYS), [today]); // eslint-disable-line react-hooks/exhaustive-deps
-  const { phase: serverPhase, current: serverNow, previous: serverBefore } = useMarketingServerFigures(data.tenantId, "month", periodStart);
+  const { phase: serverPhase, current: serverNow, previous: serverBefore } = useMarketingServerFigures(data.tenantId, "month", periodStart, { previous: false });
   const processing = useMarketingProcessingHealth(data.tenantId, periodStart);
   const model = React.useMemo(() => (serverPhase === "ready" && serverNow ? withServerOverview(records, serverNow, serverBefore) : records), [records, serverPhase, serverNow, serverBefore]);
   // The chart is drawn from the records; when they are a floor and the totals are the server's, say so.
@@ -185,7 +185,7 @@ function LeadFlow({ model, floor, onGo, chartFloor }: { model: Model; floor: (n:
         <button className="mov-lnk" onClick={() => onGo("analytics")}>All sources in Analytics</button>
       </div>}
     </div>
-    {chartFloor && <p className="mov-note">The totals count every lead in the last {WINDOW_DAYS} days. The chart and top forms are drawn from the latest {SUBMISSION_READ_LIMIT} submissions, so they show fewer.</p>}
+    {chartFloor && <p className="mov-note">The totals count every lead in the last {WINDOW_DAYS} days. The chart and each form’s recent submissions are drawn from the latest {SUBMISSION_READ_LIMIT} submissions, so they show fewer.</p>}
     <table className="campaigns-sr-only"><caption>Leads and opportunities by day, last {WINDOW_DAYS} days</caption><thead><tr><th>Day</th><th>Leads</th><th>Became opportunities</th></tr></thead><tbody>{model.daily.map((point) => <tr key={point.day}><td>{point.label}</td><td>{point.leads}</td><td>{point.opportunities}</td></tr>)}</tbody></table>
   </section>;
 }
@@ -246,11 +246,13 @@ function Attention({ data, briefs, canManage, unrouted, drafts, submissions, pro
   const formName = (id: string) => [...data.artifacts, ...drafts].find((item) => item.id === id)?.name;
   const items: AttentionItem[] = [];
   for (const [formId, count] of failed) items.push({ key: `fail-${formId}`, tone: "bad", title: formName(formId) ?? "A form", detail: `${plural(count, "submission")} couldn’t be processed`, action: canManage ? <button className="btn btn-s" onClick={() => onOpenForm(formId)}>Review</button> : undefined });
-  // The server counts every submission, not just the latest the records hold: older failures, and ones
-  // still waiting after the processor's retry, would otherwise go unseen.
+  // The server counts every submission, not just the latest the records hold. Failures older than those, and
+  // submissions still waiting after the processor's retry, have no form to open from here, so they are stated
+  // below the list rather than offered as something to act on.
   const listedFailed = [...failed.values()].reduce((sum, count) => sum + count, 0);
-  if (processing && processing.failed > listedFailed) items.push({ key: "fail-older", tone: "bad", title: "Older submissions", detail: `${plural(processing.failed - listedFailed, "more submission")} couldn’t be processed` });
-  if (processing && processing.stalled > 0) items.push({ key: "stalled", tone: "warn", title: "Waiting to be processed", detail: `${plural(processing.stalled, "submission")} still waiting more than 15 minutes after arriving` });
+  const olderFailed = processing ? Math.max(0, processing.failed - listedFailed) : 0;
+  const stalled = processing?.stalled ?? 0;
+  const health = [olderFailed && `${plural(olderFailed, "older submission")} couldn’t be processed`, stalled && `${plural(stalled, "submission")} ${stalled === 1 ? "is" : "are"} still waiting more than 15 minutes after arriving`].filter(Boolean).join(", and ");
   // The broken link in the chain comes first: it is what the chain lights.
   for (const form of unrouted) items.push({ key: `route-${form.id}`, tone: "warn", title: form.name, detail: unroutedDetail(form), action: canManage ? <button className="btn btn-s" onClick={() => onOpenForm(form.id)}>Route it</button> : undefined });
   for (const brief of briefs.filter((item) => item.lifecycleStatus === "ready_for_review")) items.push({ key: `review-${brief.id}`, tone: "v", title: brief.name, detail: "A campaign brief is waiting for your decision", action: <button className="btn btn-s" onClick={() => onGo("campaigns")}>Review</button> });
@@ -260,7 +262,8 @@ function Attention({ data, briefs, canManage, unrouted, drafts, submissions, pro
   return <section className="mov-card" aria-labelledby="mov-att-h">
     <header className="mov-head"><div><h2 id="mov-att-h">Needs you</h2><p>{items.length ? `${plural(items.length, "thing")}, most urgent first` : "Nothing right now"}</p></div></header>
     {shown.length ? <ul className="mov-att">{shown.map((item) => <li key={item.key}><span className={`mov-sev is-${item.tone}`} aria-hidden="true"/><span className="mov-att-main"><strong>{item.title}</strong><small>{item.detail}</small></span>{item.action}</li>)}</ul>
-      : <p className="mov-empty">{data.artifacts.some((item) => item.type === "form") ? (processing ? "Every live form is routed and nothing has failed." : `Every live form is routed, and none of the latest ${SUBMISSION_READ_LIMIT} submissions failed.`) : "Nothing needs you yet."}</p>}
+      : <p className="mov-empty">{data.artifacts.some((item) => item.type === "form") ? (!processing ? `Every live form is routed, and none of the latest ${SUBMISSION_READ_LIMIT} submissions failed.` : health ? "Every live form is routed." : "Every live form is routed and nothing has failed.") : "Nothing needs you yet."}</p>}
+    {health && <p className="mov-note">Across every submission: {health}. The processor retries a waiting one; each form’s submissions are in its panel.</p>}
     {items.length > shown.length && <p className="mov-note">{items.length - shown.length} more below and in Campaigns.</p>}
   </section>;
 }

@@ -78,8 +78,10 @@ const state = (page) => page.evaluate(() => ({
   adsTitle: document.querySelector('[data-tenant-destination="ads"]')?.getAttribute("title") ?? null,
   lit: document.querySelector('[data-tenant-destination][aria-current="page"]')?.textContent?.trim() ?? null,
   context: document.querySelector(".tcs-context strong")?.textContent?.trim() ?? null,
-  pressed: document.querySelector('.mad [aria-pressed="true"]')?.textContent ?? null,
+  pressed: document.querySelector('.campaigns-tabs[aria-label="Ads views"] [aria-selected="true"]')?.textContent ?? null,
   strip: [...document.querySelectorAll(".campaigns-tabs [role=tab]")].map((t) => t.textContent?.trim()),
+  // The strip's geometry, compared against Marketing's: same height, same place, same type.
+  navBox: (() => { const n = document.querySelector(".campaigns-nav"); const t = document.querySelector(".campaigns-tabs [role=tab]"); if (!n || !t) return null; const r = n.getBoundingClientRect(); const cs = getComputedStyle(t); return { top: Math.round(r.top), h: Math.round(r.height), font: cs.fontSize, weight: cs.fontWeight, icons: document.querySelectorAll(".campaigns-tabs [role=tab] svg").length }; })(),
   sideways: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
   scrollOverflow: (() => { const s = document.querySelector(".campaigns-scroll"); return s ? s.scrollWidth - s.clientWidth : null; })(),
   shellDark: document.querySelector(".tcs-nav-action")?.getAttribute("aria-label") === "Use Mineral theme",
@@ -117,7 +119,7 @@ async function main() {
           check(s.lit === "Ads" && s.context === "Ads", `${id}: Ads is lit and named in the command row`, JSON.stringify({ lit: s.lit, context: s.context }));
           check(s.shellDark === (theme === "dark"), `${id}: the shell and the desk share the ${theme} theme`);
           check(s.adsIcon && !s.sameIcon, `${id}: Ads carries its own icon, distinct from Marketing's`);
-          check(s.pressed === "Overview" && s.strip.length === 0, `${id}: the desk opens on Overview with no Marketing strip`, JSON.stringify({ pressed: s.pressed, strip: s.strip }));
+          check(s.pressed === "Overview" && s.strip.join("|") === "Overview|Campaigns|Creative|Audiences|Performance", `${id}: the desk opens on Overview under the Ads department strip`, JSON.stringify({ pressed: s.pressed, strip: s.strip }));
           check(!s.sideways && (s.scrollOverflow ?? 0) <= 0, `${id}: nothing overflows sideways`, JSON.stringify({ sideways: s.sideways, overflow: s.scrollOverflow }));
           await page.screenshot({ path: path.join(OUT, `frame-${frame.name}-${folded ? "folded" : "open"}-${theme}.png`) });
           await ctx.close();
@@ -136,21 +138,25 @@ async function main() {
       await open(page, { path: "/solo/review/growth/overview", theme });
       let s = await state(page);
       check(s.lit === "Marketing" && !s.strip.includes("Ads") && s.strip.length === 7, `${theme}/flow: Marketing is lit with seven tabs and no Ads tab`, JSON.stringify({ lit: s.lit, strip: s.strip }));
+      const marketingNav = s.navBox;
       await page.click('[data-tenant-destination="ads"]');
       await page.waitForSelector(".mad", { timeout: 15000 });
       s = await state(page);
       check(s.path === "/solo/review/ads" && s.lit === "Ads", `${theme}/flow: the rail's Ads opens the department`, JSON.stringify({ path: s.path, lit: s.lit }));
+      // Same standard as the other departments: the Ads strip sits where Marketing's does, at its height,
+      // in its type, with an icon on every tab.
+      check(Boolean(marketingNav && s.navBox) && s.navBox.top === marketingNav.top && s.navBox.h === marketingNav.h && s.navBox.font === marketingNav.font && s.navBox.weight === marketingNav.weight && s.navBox.icons === 5, `${theme}/flow: the Ads strip matches Marketing's strip (place, height, type, icons)`, JSON.stringify({ ads: s.navBox, marketing: marketingNav }));
 
       // Every view by click: each is its own address and stays inside Ads.
       for (const [label, address] of VIEWS) {
-        await page.locator(".mad .campaigns-segmented button", { hasText: label }).click();
+        await page.locator('.campaigns-tabs[aria-label="Ads views"] [role=tab]', { hasText: label }).click();
         await page.waitForTimeout(120);
         s = await state(page);
         check(s.path === address && s.pressed === label && s.lit === "Ads", `${theme}/flow: ${label} opens at ${address}`, JSON.stringify({ path: s.path, pressed: s.pressed }));
         await page.screenshot({ path: path.join(OUT, `view-${label.toLowerCase()}-${theme}.png`) });
       }
       const creative = await page.evaluate(() => document.querySelectorAll(".mad-card").length);
-      await page.locator(".mad .campaigns-segmented button", { hasText: "Creative" }).click();
+      await page.locator('.campaigns-tabs[aria-label="Ads views"] [role=tab]', { hasText: "Creative" }).click();
       await page.waitForTimeout(120);
       check((await page.evaluate(() => document.querySelectorAll(".mad-card").length)) === 3, `${theme}/flow: Creative previews the three saved ads`, String(creative));
 
@@ -158,7 +164,7 @@ async function main() {
       await open(page, { path: "/solo/review/growth/ads?view=creative&utm_source=mail", theme });
       await page.waitForSelector(".mad", { timeout: 15000 });
       s = await state(page);
-      check(s.path === "/solo/review/ads/creative?utm_source=mail" && s.pressed === "Creative" && s.lit === "Ads" && s.strip.length === 0, `${theme}/flow: /growth/ads?view=creative opens Ads › Creative with its tracking tag kept`, JSON.stringify(s));
+      check(s.path === "/solo/review/ads/creative?utm_source=mail" && s.pressed === "Creative" && s.lit === "Ads" && s.strip.join("|") === "Overview|Campaigns|Creative|Audiences|Performance", `${theme}/flow: /growth/ads?view=creative opens Ads › Creative with its tracking tag kept`, JSON.stringify(s));
       await page.screenshot({ path: path.join(OUT, `flow-legacy-bookmark-${theme}.png`) });
 
       // Links out land in the department that owns each piece.

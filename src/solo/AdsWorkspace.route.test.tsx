@@ -39,7 +39,7 @@ let go: ((delta: number) => void) | null = null;
 const flush = async () => { await act(async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); }); };
 const text = () => host.textContent ?? "";
 const button = (label: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === label) as HTMLButtonElement | undefined;
-const pressed = () => host.querySelector('[aria-label="Ads views"] [aria-pressed="true"]')?.textContent;
+const pressed = () => host.querySelector('[role="tablist"][aria-label="Ads views"] [aria-selected="true"]')?.textContent;
 
 function Where() {
   const location = useLocation();
@@ -98,8 +98,9 @@ describe("Ads, its own department below Marketing", () => {
     expect(where).toBe("/solo/42/ads/performance?utm_source=mail#figures");
     expect(pressed()).toBe("Performance");
     expect(text()).toContain("Every figure and where it comes from");
-    // No Marketing strip: Ads is not a Marketing tab any more.
-    expect(host.querySelector(".campaigns-tabs")).toBeNull();
+    // Ads carries its own department strip, like Marketing and Sales; it is not a Marketing tab any more.
+    expect(host.querySelector('[role="tablist"][aria-label="Marketing views"]')).toBeNull();
+    expect(host.querySelector(".campaigns-nav .campaigns-tabs")?.getAttribute("aria-label")).toBe("Ads views");
     expect(host.querySelector("h1")?.textContent).toBe("Ads");
     // A replace, not a push: Back does not bounce through the old address.
     act(() => go?.(-1));
@@ -119,7 +120,7 @@ describe("Ads, its own department below Marketing", () => {
   it("keeps each view in the address: a switch is a history entry, and Back and Forward walk it", async () => {
     await mount("/solo/42/ads");
     expect(pressed()).toBe("Overview");
-    expect([...host.querySelectorAll('[aria-label="Ads views"] button')].map((b) => b.textContent)).toEqual(["Overview", "Campaigns", "Creative", "Audiences", "Performance"]);
+    expect([...host.querySelectorAll('[aria-label="Ads views"] [role="tab"]')].map((b) => b.textContent)).toEqual(["Overview", "Campaigns", "Creative", "Audiences", "Performance"]);
     for (const [label, path, proof] of [
       ["Campaigns", "/solo/42/ads/campaigns", "No ad campaigns to show."],
       ["Creative", "/solo/42/ads/creative", "No ad copy yet."],
@@ -191,5 +192,34 @@ describe("Ads, its own department below Marketing", () => {
     expect(text()).toContain("Return on ad spend isn’t shown");
     expect([...host.querySelectorAll(".mad-nums dd")].map((dd) => dd.textContent)).toEqual(["—", "—", "—"]);
     expect(text()).not.toMatch(/\$\s?\d/);
+  });
+  it("is a real tab strip: one tab in the Tab order, arrow keys move between views, and the panel names its tab", async () => {
+    await mount("/solo/42/ads/creative");
+    const tabs = [...host.querySelectorAll<HTMLButtonElement>('[aria-label="Ads views"] [role="tab"]')];
+    expect(tabs.map((t) => t.tabIndex)).toEqual([-1, -1, 0, -1, -1]);
+    expect(host.querySelector('[role="tabpanel"]')?.getAttribute("aria-labelledby")).toBe("ads-tab-creative");
+    act(() => { tabs[2].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })); });
+    await flush();
+    expect(where).toBe("/solo/42/ads/audiences");
+    expect(pressed()).toBe("Audiences");
+    act(() => { host.querySelector<HTMLButtonElement>("#ads-tab-audiences")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true })); });
+    await flush();
+    expect(where).toBe("/solo/42/ads/overview");
+    expect(pressed()).toBe("Overview");
+  });
+
+  it("puts Ask PAIGE for ad copy in the strip's action slot, on every view", async () => {
+    const asks: string[] = [];
+    const listen = (event: Event) => asks.push((event as CustomEvent).detail?.prompt);
+    window.addEventListener("paige:open", listen);
+    for (const path of ["/solo/42/ads", "/solo/42/ads/campaigns", "/solo/42/ads/performance"]) {
+      await mount(path);
+      const ask = host.querySelector<HTMLButtonElement>(".campaigns-nav .campaigns-studio");
+      expect(ask?.textContent).toBe("Ask PAIGE for ad copy");
+      act(() => ask!.click());
+    }
+    window.removeEventListener("paige:open", listen);
+    expect(asks).toHaveLength(3);
+    expect(asks[0]).toMatch(/do not run or publish anything/);
   });
 });

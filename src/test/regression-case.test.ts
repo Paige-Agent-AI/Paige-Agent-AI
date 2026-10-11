@@ -37,7 +37,7 @@ describe('immutable regression-case metadata contract', () => {
   it.each(['prompt', 'tenant_id', 'actor_id', 'raw_conversation', 'credentials', 'source_payload'])('rejects unexpected customer-content field %s', key => {
     expect(() => parseRegressionCase({ ...manifest(), [key]: 'private' })).toThrow('invalid_regression_case');
   });
-  it.each([
+  it.each<(m: ReturnType<typeof manifest>) => unknown>([
     (m: ReturnType<typeof manifest>) => ({ ...m, fixture: { ...m.fixture, kind: 'customer_export' } }),
     (m: ReturnType<typeof manifest>) => ({ ...m, fixture: { ...m.fixture, path: '../../secrets.json' } }),
     (m: ReturnType<typeof manifest>) => ({ ...m, fixture: { ...m.fixture, hash: 'unknown' } }),
@@ -50,7 +50,7 @@ describe('immutable regression-case metadata contract', () => {
   ])('fails closed for unsafe, unsupported or incomplete identity', change => {
     expect(() => parseRegressionCase(change(manifest()))).toThrow('invalid_regression_case');
   });
-  it.each([undefined, NaN, Infinity, { missing: undefined }, { constructor: true }, Array(1)])('rejects noncanonical JSON %j', value => {
+  it.each<unknown>([undefined, NaN, Infinity, { missing: undefined }, { constructor: true }, Array(1)])('rejects noncanonical JSON %j', value => {
     expect(() => canonicalRegressionJson(value)).toThrow('invalid_regression_json');
   });
   it('does not freeze or rewrite the caller when it returns immutable metadata', () => {

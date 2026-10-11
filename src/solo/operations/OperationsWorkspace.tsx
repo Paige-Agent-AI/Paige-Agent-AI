@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { OperationsAssignee } from "./OperationsAssignee";
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
 import { OperationsWorkCreator } from "./OperationsWorkCreator";
+import { OperationsProjectCreator } from "./OperationsProjectCreator";
 import { useOperationsPeople } from "./useOperationsPeople";
 import { OperationsWork } from "./OperationsWork";
 import { OperationsProjects } from "./OperationsProjects";
@@ -52,6 +53,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
   const [inspection, setInspection] = useState<Inspection>(null);
   const [creatingWork, setCreatingWork] = useState(false);
   const creationInvoker = useRef<HTMLButtonElement | null>(null);
+  const [creatingProject, setCreatingProject] = useState<{ project?: Plan } | null>(null);
+  const projectCreationInvoker = useRef<HTMLElement | null>(null);
   const contentRef = useRef<HTMLElement | null>(null);
   useEffect(() => { setInspection(null); }, [destination]);
   const inspectionInvoker = useRef<HTMLElement | null>(null);
@@ -88,7 +91,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
         aria-current={destination === name ? "page" : undefined}
         onClick={() => { setDestination(name); setInspection(null); }}>{name}</button>)}</nav>
       <div className="ops-department-actions">
-        {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event=>{creationInvoker.current=event.currentTarget;setCreatingWork(true);}}>New task</button>}
+        {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { creationInvoker.current = event.currentTarget; setCreatingWork(true); }}>New task</button>}
+        {destination === "Projects" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
         {isPlanning && <button type="button" aria-label="Refresh work and team profiles"
           disabled={source.loading || people.loading} onClick={() => { void source.refresh(); void people.refresh(); }}><RefreshCw size={16} /></button>}
         {openPaige && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with PAIGE</button>}
@@ -134,6 +138,10 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
             refresh={() => source.refresh({ silent: true })} />
         </div>}
         {selectedPlan && <div className="ops-detail-content"><p>Status: {selectedPlan.status}</p>
+          <button type="button" disabled={people.loading || Boolean(people.error) || Boolean(source.error) || !matches} onClick={() => {
+            projectCreationInvoker.current = inspectionInvoker.current;
+            setCreatingProject({ project: selectedPlan }); setInspection(null);
+          }}>Add milestone</button>
           <ol className="ops-detail-work">{selectedPlan.items.map((item) => <li key={item.id}><button type="button" onClick={() => inspectItem(item)}>{item.title}</button><span>{item.status.replace(/_/g, " ")}</span></li>)}</ol></div>}
       </SheetContent>
     </Sheet>
@@ -141,5 +149,17 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
       theme={portalTheme} invoker={creationInvoker.current} onClose={()=>setCreatingWork(false)}
       onCreated={async()=>{await source.refresh({silent:true});}}
       onRecover={async itemId=>{await source.refresh({silent:true});if(itemId){setCreatingWork(false);inspectionInvoker.current=creationInvoker.current;setInspection({kind:"item",id:itemId,view:destination});}}} />}
+    {creatingProject && <OperationsProjectCreator actorId={userId} tenantId={tenantId} members={people.members}
+      project={creatingProject.project} theme={portalTheme} invoker={projectCreationInvoker.current}
+      onClose={() => setCreatingProject(null)} onCreated={() => source.refresh({ silent: true })}
+      onRecover={async id => {
+        await source.refresh({ silent: true });
+        if (id) {
+          setCreatingProject(null);
+          inspectionInvoker.current = projectCreationInvoker.current;
+          setInspection({ kind: creatingProject.project ? "item" : "plan", id, view: destination });
+        }
+      }} />}
   </section>;
 }
+

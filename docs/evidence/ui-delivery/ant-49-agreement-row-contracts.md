@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: Restore legitimate agreement inserts under existing au
 FLOW_PROTOTYPE: NOT_REQUIRED: Bounded schema repair preserves the approved flow and all existing interfaces.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Authorized Solo commercial writers can save valid terms; signing writers preserve their separate row contract.
 VISUAL_DIRECTION: NOT_APPLICABLE: No visual files or design tokens changed.
-AUTOMATED_EVIDENCE: PASS: 36 actual PostgreSQL assertions on a source-extracted local schema; required database-contract job runs the same rolled-back test against full migration replay and reproduced production grants.
+AUTOMATED_EVIDENCE: PASS: 38 actual PostgreSQL assertions on a source-extracted local schema with required client creator and commercial service-DML revokes; required database-contract job runs the same rolled-back test against full migration replay and reproduced production grants.
 STATIC_EVIDENCE: PASS: Definer function lint, signature ACL guard, and migration collision guard passed locally.
 RENDERED_EVIDENCE: NOT_APPLICABLE: No interface implementation changed; no screenshot claimed.
 BEHAVIORAL_EVIDENCE: PASS: Legitimate commercial/signing inserts and updates, 22 exact-SQLSTATE scope denials, and seven snapshot/signing immutability denials in the PostgreSQL fixture.
@@ -46,17 +46,23 @@ untouched. Direct execution of the new trigger helpers is revoked.
 
 Before the forward migration, the PostgreSQL fixture fails its legitimate
 commercial insert with `record "new" has no field "commercial_terms_id"` in
-`enforce_agreement_tenant_links()`. After the migration it produces 36 PASS
+`enforce_agreement_tenant_links()`. After the migration it produces 38 PASS
 assertions and rolls every fixture row back. Applying the migration twice also
 succeeds. The local schema extracts canonical table/guard definitions but uses
-reduced upstream dependency shapes and an isolated service-role grant setup;
+reduced upstream dependency shapes and production-equivalent commercial service-DML revokes;
 the hosted database-contract job is the full-schema/grant proof.
 
-Scope negatives run as `service_role`, challenging link validation even when RLS
-is bypassed. Both INSERT and UPDATE are covered. Same-tenant wrong-offer prices
+Raw commercial INSERT/UPDATE refusals run as `service_role`. Row-contract proof
+runs as the canonical definer-writer database owner, challenging link validation
+even when RLS is bypassed. Both INSERT and UPDATE are covered. Same-tenant wrong-offer prices
 and wrong-client terms refuse as well as foreign-tenant references. Optional
 signing links and optional commercial price remain supported. Tests also check
 enabled, distinct trigger bindings and denied public caller helper execution.
+
+Initial hosted runs exposed two fixture assumptions: required `clients.created_by`
+was omitted, and commercial service-role DML was assumed available. The fixture
+now supplies a synthetic creator and proves the production raw-write refusal.
+Neither correction changes the migration or grants additional production access.
 
 ## Ownership and release
 

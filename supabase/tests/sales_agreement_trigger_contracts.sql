@@ -42,9 +42,13 @@ INSERT INTO public.tenant_agreement_versions(id,tenant_id,template_slug,source_m
  ('af490000-0000-4000-8000-000000000071','af490000-0000-4000-8000-000000000001','test-ant49','tenant_fork','Test template A','Synthetic terms'),
  ('af490000-0000-4000-8000-000000000081','af490000-0000-4000-8000-000000000002','test-ant49','tenant_fork','Test template B','Synthetic terms');
 
--- All writers, including privileged adapters, must meet the row relationship invariant.
--- This first valid INSERT reproduces the pre-fix missing-commercial_terms_id failure.
+-- Production commercial terms deny raw service DML; governed definer writers own mutation.
 SET LOCAL ROLE service_role;
+SELECT pg_temp.refused($s$INSERT INTO public.tenant_client_agreements(tenant_id,contact_id,offer_id,term_kind,price_basis) VALUES ('af490000-0000-4000-8000-000000000001','af490000-0000-4000-8000-000000000011','af490000-0000-4000-8000-000000000031','one_time','negotiated')$s$,'42501','raw service commercial insert remains denied');
+SELECT pg_temp.refused($s$UPDATE public.tenant_client_agreements SET notes='unauthorized' WHERE tenant_id='af490000-0000-4000-8000-000000000001'$s$,'42501','raw service commercial update remains denied');
+RESET ROLE;
+-- Execute row-contract proof as the canonical SECURITY DEFINER writer owner, without changing grants.
+-- This first valid INSERT reproduces the pre-fix missing-commercial_terms_id failure.
 INSERT INTO public.tenant_client_agreements(id,tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,catalog_price_id) VALUES
  ('af490000-0000-4000-8000-000000000091','af490000-0000-4000-8000-000000000001','af490000-0000-4000-8000-000000000011','af490000-0000-4000-8000-000000000031','one_time','negotiated',350000,'usd','af490000-0000-4000-8000-000000000051'),
  ('af490000-0000-4000-8000-000000000092','af490000-0000-4000-8000-000000000001','af490000-0000-4000-8000-000000000012','af490000-0000-4000-8000-000000000031','one_time','negotiated',350000,'usd',null),

@@ -31,16 +31,31 @@ function harness(result: unknown = { data: 'processed', error: null }, signingSe
   const source = ts.transpileModule(readFileSync('supabase/functions/handle-resend-webhook/index.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
+  // One frozen clock shared by the entry point AND the shared verifier it imports.
+  const frozenDate = class extends Date { static now() { return now; } };
   const requireTest = (name: string) => {
     if (name === 'npm:@supabase/supabase-js@2') return { createClient };
     if (name === './handler.ts') return persistence;
-    throw new Error('unexpected test import');
+    // The door's signature verification is the REAL shared verifier
+    // (supabase/functions/_shared/webhookSig.ts) — transpiled and executed here
+    // the same way the entry point is, so the suite keeps testing live code.
+    if (name === '../_shared/webhookSig.ts') return webhookSigExports;
+    throw new Error('unexpected test import: ' + name);
   };
+  const webhookSigExports: Record<string, unknown> = {};
+  {
+    const sharedSource = ts.transpileModule(readFileSync('supabase/functions/_shared/webhookSig.ts', 'utf8'), {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    // The verifier reads Date.now() for the replay window; it must see the SAME
+    // frozen clock the entry point does, or every fixture is "stale".
+    new Function('require', 'exports', 'Date', sharedSource)(requireTest, webhookSigExports, frozenDate);
+  }
   // Execute the real Deno entry point with isolated IO, not a second handler implementation.
   new Function('require', 'exports', 'Deno', 'Date', 'console', source)(requireTest, {}, {
     env: { get: (name: string) => name === 'RESEND_WEBHOOK_SECRET' ? signingSecret : 'isolated-config' },
     serve: (callback: typeof handle) => { handle = callback; },
-  }, class extends Date { static now() { return now; } }, { info: log, error: log });
+  }, frozenDate, { info: log, error: log });
   return { ingest, log, handle, createClient, settingsRead };
 }
 describe('verified shared receipt boundary', () => {

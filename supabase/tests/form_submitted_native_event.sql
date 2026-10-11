@@ -94,7 +94,11 @@ SELECT pg_temp.require_true(pg_temp.events('a2980400-0000-4000-8000-0000000000e4
   AND (SELECT contact_id FROM public.growth_form_submissions WHERE id='a2980400-0000-4000-8000-0000000000e4') IS NULL,'the refused pin left nothing behind');
 
 -- 5. A paused workspace keeps its submission and starts no process.
+-- Pausing goes through the operator's archive operation in the product; here the fixture pauses the row
+-- directly, so the archive guard is set aside for this one statement (rolled back with everything else).
+ALTER TABLE public.tenants DISABLE TRIGGER a01_operator_account_archive;
 UPDATE public.tenants SET lifecycle_execution_paused=true WHERE id='a2980400-0000-4000-8000-000000000013';
+ALTER TABLE public.tenants ENABLE TRIGGER a01_operator_account_archive;
 INSERT INTO public.growth_form_submissions(id,tenant_id,form_id,contact_id,payload_json,source) VALUES
  ('a2980400-0000-4000-8000-0000000000e5','a2980400-0000-4000-8000-000000000013','a2980400-0000-4000-8000-0000000000f3','a2980400-0000-4000-8000-0000000000c4','{}','external:test');
 SELECT pg_temp.require_true((SELECT count(*) FROM public.growth_form_submissions WHERE id='a2980400-0000-4000-8000-0000000000e5')=1

@@ -35,6 +35,15 @@ INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling
   ('platform_admin', 'fleet.account.permanent_delete', 'ANT-47 owner rule 2026-10-10', true, NULL)
 ON CONFLICT (role, capability) DO NOTHING;
 
+-- R0 convention (20270510000000): the slice that moves a gate flips its registry row in the
+-- same change. operator_set_tenant_status now moves with the archive lifecycle gate, which
+-- admits platform_admin, so the platform_admin tenant.status.set row records that truth. No
+-- enforcement consumes tenant.status.set; this keeps the registry the one honest answer.
+UPDATE public.platform_operator_role_capabilities
+   SET in_force = true, pending = NULL,
+       ruling = 'ANT-47 owner rule 2026-10-10; operator_set_tenant_status moves with the archive lifecycle gate'
+ WHERE role = 'platform_admin' AND capability = 'tenant.status.set';
+
 CREATE OR REPLACE FUNCTION public.operator_can_archive_accounts()
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$
  SELECT auth.uid() IS NOT NULL AND public.operator_may('fleet.account.archive')

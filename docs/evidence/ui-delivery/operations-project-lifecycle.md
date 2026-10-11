@@ -1,7 +1,7 @@
 # Project lifecycle — supporting local proof
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: 7209cdd3bddc29310265c5bd5a2bcf4b538c7b46; deployment=none-local-development; environment=development; migrations=PROOF_OWED(unallocated-Operations-project-lifecycle); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-project-lifecycle-packet.md
+INTERNAL_BUILD_IDENTITY: 89ebf6a5c; deployment=none-local-development; environment=development; migrations=PROOF_OWED(proposed-20271020000230); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-project-lifecycle-packet.md
 RELEASE_CHANNEL: development: isolated preparation, no production claim.
 RELEASE_CLASSIFICATION: internal-only: bounded Operations lifecycle; full department incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or authenticated acceptance.

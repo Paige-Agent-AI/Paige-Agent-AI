@@ -41,10 +41,7 @@ MUST_PRESERVE: Canonical writer/audit/bus, Team photo ownership, tenant/actor fe
 ACCEPTANCE_CRITERIA: Authorized creation independently reads back matching task; refusal preserves draft, unknown outcome locks replay and permits inspection/recovery.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: Planning and Team source ownership; shared Chat executor untouched; Communications mismatch parked #1916.
-INTERNAL_BUILD_IDENTITY: Local 6151f73e and d9b6c8319 plus supported-role corrections; deployment=none; migration=PROOF_OWED(20270602000412).
-RELEASE_CHANNEL: development.
-RELEASE_CLASSIFICATION: internal-only.
-CUSTOMER_RELEASE_IDENTITY: none.
+Historical supporting development heads: 6151f73e and d9b6c8319. These were local, undeployed, internally scoped proofs; development migration00412 was never a release allocation. The current build identity and proof boundary are recorded above.
 RELEASE_NOTE_REQUIRED: NO: Unreleased local slice.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: Local synthetic UI and isolated native SQL, no customer runtime proof.
 RELEASE_RECOVERY: position=preserve source records and reviewed forward repair or scoped UI rollback; reference=docs/delivery/operations-work-creation-packet.md.

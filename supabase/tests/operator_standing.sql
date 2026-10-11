@@ -33,10 +33,11 @@ SELECT results_eq(
 SELECT results_eq(
   $$SELECT capability, in_force FROM public.platform_operator_role_capabilities WHERE role = 'platform_admin' ORDER BY 1$$,
   $$VALUES ('autonomy.posture.raise'::text, false), ('billing.read', false), ('capability.administer', false),
-           ('console.enter', true), ('fleet.directory.read', true),
+           ('console.enter', true), ('fleet.account.archive', true), ('fleet.account.permanent_delete', true),
+           ('fleet.directory.read', true),
            ('operator.seat.platform_admin.grant', false), ('operator.seat.platform_admin.revoke', false),
            ('platform.health.read', true), ('tenant.act_as', true), ('tenant.act_as.write', false),
-           ('tenant.provision', false), ('tenant.status.set', false)$$,
+           ('tenant.provision', false), ('tenant.status.set', true)$$,
   'platform_admin holds exactly the revised R0 and G3 grants, in force only where enforcement admits it');
 SELECT results_eq(
   $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'super_admin' AND NOT in_force ORDER BY 1$$,
@@ -49,8 +50,8 @@ SELECT set_eq(
   $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'super_admin'$$,
   $$SELECT capability FROM public.platform_operator_capabilities$$,
   'super_admin is granted every listed capability explicitly');
-SELECT is((SELECT count(*)::int FROM public.platform_operator_capabilities), 16,
-  'the catalogue lists the sixteen ruled capabilities');
+SELECT is((SELECT count(*)::int FROM public.platform_operator_capabilities), 18,
+  'the catalogue lists the eighteen ruled capabilities');
 SELECT ok(obj_description('public.platform_operator_capabilities'::regclass, 'pg_class')
   LIKE '%DEFAULT RULE: a capability with no row here is held only by an operator role whose holds_unlisted is true (super_admin)%',
   'the catalogue states the default rule where the rows are');
@@ -127,9 +128,11 @@ SELECT ok(public.operator_may('console.enter'), 'platform_admin may enter the co
 SELECT ok(public.operator_may('fleet.directory.read'), 'platform_admin may read the directory');
 SELECT ok(public.operator_may('tenant.act_as'), 'platform_admin may act as a tenant');
 SELECT ok(public.operator_may('platform.health.read'), 'platform_admin may read platform health');
+-- ANT-47: the archive lifecycle gate moved operator_set_tenant_status, so platform_admin
+-- now holds tenant.status.set in force alongside the archive capability.
+SELECT ok(public.operator_may('tenant.status.set'), 'platform_admin may set status: ANT-47 moved operator_set_tenant_status with the archive lifecycle gate');
 -- Ruled, not yet in force: today's gates for these admit only super_admin.
 SELECT ok(NOT public.operator_may('tenant.provision'), 'platform_admin may not yet provision: operator_provision_tenant is owner-only');
-SELECT ok(NOT public.operator_may('tenant.status.set'), 'platform_admin may not yet set status: operator_set_tenant_status is owner-only');
 SELECT ok(NOT public.operator_may('billing.read'), 'platform_admin may not yet read billing: revenue classification is owner-only');
 SELECT ok(NOT public.operator_may('capability.administer'), 'platform_admin may not yet administer capabilities: not proven to admit it');
 -- Codex review of #1534 (third P1): the §53 lockdown still lets only super_admin write an operator

@@ -7,7 +7,7 @@ import {webcrypto} from 'node:crypto';
 for(const kind of ['tts_cache','generated_media'])test('the actual retirement handler removes server-bound '+kind+' before finalizing',async()=>{
  const tenant='00000000-0000-0000-0000-000000000011',actor='00000000-0000-0000-0000-000000000001',operation='00000000-0000-0000-0000-000000000031';
  let handler;const effects=[],writes=[];
- const caller={auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},rpc:async name=>({data:name==='operator_can_retire_accounts'?true:{},error:null})};
+ const caller={auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},rpc:async name=>({data:name==='operator_can_permanently_delete_accounts'?true:{},error:null})};
  const resource={key:kind+':'+tenant,provider:kind,tenant_id:tenant,objects:[{name:tenant+(kind==='tts_cache'?'/'+('a'.repeat(64))+'.mp3':'/1780000000000-abcdef12.png'),id:operation}]};
  const admin={rpc:async(name,args)=>{writes.push({name,args});return{data:name==='operator_claim_retirement_resources'?{complete:false,mode:'delete',resources:[resource],results:{}}:name==='operator_assert_retirement_resource'?true:null,error:null};}};
  const code=stripTypeScriptTypes(fs.readFileSync('supabase/functions/operator-account-retirement/index.ts','utf8').replace(/^import .*;\r?\n/gm,''),{mode:'transform'});

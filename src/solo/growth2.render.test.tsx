@@ -15,6 +15,10 @@ const harness = vi.hoisted(() => ({
   emailDays: [] as number[],
   email: { phase: "ready", stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 } } as Record<string, unknown>,
   emailRetry: vi.fn(),
+  // Analytics' server figures (marketing-analytics-metrics). A member's or a failed read is "denied" or
+  // "error" and the page keeps its record counts; a test sets "ready" with the server's answer.
+  server: { phase: "denied", current: null, previous: null } as Record<string, unknown>,
+  serverReads: [] as Array<[string | null, string, number]>,
   briefsPhase: "ready",
   briefs: [] as Array<Record<string, unknown>>,
   state: {
@@ -69,6 +73,14 @@ vi.mock("./useSoloCampaignBriefs", () => ({
 // proven with the Email tab (marketing-email.render.test.tsx). Here it answers what a test sets.
 vi.mock("./marketing-analytics-email", () => ({
   useEmailStats: (_tenantId: string, days: number) => { harness.emailDays.push(days); return { ...harness.email, retry: harness.emailRetry }; },
+}));
+
+// The headline figures' server read goes through the shared INT-340 seam; its contract is proven by
+// supabase/tests/marketing_metric_producer.sql and marketing-analytics-metrics.test.ts. Here it answers
+// what a test sets; the overlay (withServerFigures) is the real one.
+vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./marketing-analytics-metrics")>()),
+  useMarketingServerFigures: (tenantId: string | null, range: string, periodStart: number) => { harness.serverReads.push([tenantId, range, periodStart]); return { ...harness.server, retry: () => {} }; },
 }));
 
 // Content reads its library through Supabase; its own proof is marketing-content.render.test.tsx. Here it
@@ -141,6 +153,8 @@ afterEach(() => {
   harness.emailDays = [];
   harness.email = { phase: "ready", stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 } };
   harness.emailRetry.mockClear();
+  harness.server = { phase: "denied", current: null, previous: null };
+  harness.serverReads = [];
   harness.state.tenantId = "tenant-1";
   if (harness.state.pipelineWorkspace) {
     (harness.state.pipelineWorkspace as { canManage: boolean; canArchiveFolders: boolean }).canManage = true;
@@ -618,7 +632,7 @@ describe("Solo Campaigns rendered flows", () => {
     const tabs = [...host.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
     // Lead capture retired into Overview (INT-342, owner-approved 2026-10-10). Content stays until
     // Vibe Studio lists every saved piece (owner ruling, same day).
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Analytics"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Analytics"]);
     expect(host.querySelector('[role="tablist"]')?.getAttribute("aria-label")).toBe("Marketing views");
     const dividers = [...host.querySelectorAll(".campaigns-tab-divider")];
     expect(dividers).toHaveLength(0);
@@ -1013,10 +1027,45 @@ describe("Solo Marketing department views", () => {
       { ...form, id: "f-auto", name: "Automations only", routingConfigured: true, routingTargets: ["notify_team"] },
       { ...form, id: "f-alert", name: "Alert only", intakeAlert: true },
       { ...form, id: "f-pipe", name: "Own route", intakePipelineId: "pipeline-1" },
+      // The processor ignores a form's own route while any automation is enabled, so this one reaches no pipeline.
+      { ...form, id: "f-both", name: "Own route and a notice", intakePipelineId: "pipeline-1", routingConfigured: true, routingTargets: ["notify_team"] },
     ] });
     renderAt("/solo/42/growth/analytics");
     const routes = Object.fromEntries([...host.querySelectorAll(".mva-cap-row")].map((row) => [row.querySelector(".mva-row-t")!.firstChild!.textContent, row.querySelector("small")!.textContent]));
-    expect(routes).toEqual({ "Automations only": "No pipeline", "Alert only": "Email alert only, no pipeline", "Own route": "Routed to a pipeline", "Forms no longer live": "Leads in this range from a form since unpublished" });
+    expect(routes).toEqual({ "Automations only": "No pipeline", "Alert only": "Email alert only, no pipeline", "Own route": "Routed to a pipeline", "Own route and a notice": "No pipeline", "Forms no longer live": "Leads in this range from a form since unpublished" });
+  });
+
+  it("Analytics' headline figures, funnel and source mix are the server's exact counts for an owner; the record-drawn parts stay floors", () => {
+    // A full read of 200 submissions, all inside the range: the record counts are floors.
+    const many = Array.from({ length: 200 }, (_, index) => submission(`s${index}`, 1, { trackingSource: "newsletter" }));
+    const fig = (leads: number) => ({ leads, tagged: leads - 100, campaignTagged: 60, matched: 50, opportunities: 40, ambiguous: 0, missingDeals: 0,
+      sources: [{ key: "src:newsletter", label: "newsletter", count: leads - 100 }], untagged: 100, otherSources: 0,
+      campaignTags: [{ key: "brief:b-1", briefId: "b-1", label: "Spring intake", count: 50 }, { key: "tag:cb-old", briefId: null, label: "CB-OLD", count: 10 }] });
+    harness.server = { phase: "ready", current: fig(612), previous: fig(500) };
+    harness.briefs = [{ id: "b-1", shortRef: "CB-SPRING", name: "Spring intake" }];
+    useWorkspace({ submissions: many });
+    renderAt("/solo/42/growth/analytics");
+    expect(harness.serverReads.at(-1)?.slice(0, 2)).toEqual(["tenant-1", "month"]);
+    const tiles = [...host.querySelectorAll(".mva-kpi")].map((tile) => [tile.querySelector(".mva-kpi-v")?.textContent, tile.querySelector(".mva-kpi-d")?.textContent]);
+    expect(tiles).toEqual([
+      ["612", "+112 vs the previous 30 days"], ["84%", "+4 pts vs the previous 30 days"], ["50", "Same as the previous 30 days"], ["40", "Same as the previous 30 days"], ["7%", "−1 pts vs the previous 30 days"],
+    ]);
+    expect(host.querySelector(".mov-sum")?.textContent).toBe("612 leads in the last 30 days. 512 can be traced to a source, and 40 became opportunities.");
+    expect([...host.querySelectorAll(".mva-step .mva-n")].map((n) => n.textContent)).toEqual(["612", "512", "50", "40"]);
+    expect([...host.querySelectorAll(".mva-tags li")].map((row) => row.textContent)).toEqual(["CB-SPRINGBrief: Spring intake50", "CB-OLDNo brief uses this reference10"]);
+    // The outcome ring still counts the records it draws, and says they are a floor.
+    const outcomeKeys = [...host.querySelectorAll("[aria-labelledby='mva-out-h'] .mo-keys b")].map((b) => b.textContent);
+    expect(outcomeKeys.length).toBeGreaterThan(0);
+    expect(outcomeKeys.every((count) => count?.endsWith("+"))).toBe(true);
+    expect(host.querySelector(".mva-cap")?.textContent).toContain("The headline figures, the funnel and the source mix count every lead in this range.");
+  });
+
+  it("when the server refuses (a member) the page keeps its own counts, floors and all", () => {
+    harness.server = { phase: "denied", current: null, previous: null };
+    useWorkspace({ submissions: Array.from({ length: 200 }, (_, index) => submission(`s${index}`, 1)) });
+    renderAt("/solo/42/growth/analytics");
+    expect(host.querySelector(".mva-kpi .mva-kpi-v")?.textContent).toBe("200+");
+    expect(host.querySelector(".mva-cap")?.textContent).toContain("Counted from the latest 200 submissions");
   });
 
   it("a share with nothing to take a share of shows a dash, and a withheld comparison says why", () => {
@@ -1106,6 +1155,17 @@ describe("Solo Marketing department views", () => {
     renderAt("/solo/42/growth/overview");
     expect(chain()[2]).toMatch(/^1 of 1Forms that route leadsEvery live form routes its leads/);
     expect(host.querySelector("#mov-capture")?.textContent).toContain("Sent to a pipeline by an automation");
+  });
+
+  it("a form whose own route is skipped because an automation is on says so, and the panel says what to change", () => {
+    // The processor follows a form's enabled automations and ignores its own route, so this form reaches no pipeline.
+    useWorkspace({ artifacts: [{ ...form, intakePipelineId: "pipeline-1", routingConfigured: true, routingState: "Active", routingTargets: ["notify_team"] }] });
+    renderAt("/solo/42/growth/overview");
+    expect(attention()[0]).toBe("Discovery call requestIts own pipeline route is skipped while an automation is on; add a pipeline step to its automations in Vibe StudioRoute it");
+    act(() => button("Route it")!.click());
+    const dialog = host.querySelector('[role="dialog"]')?.textContent;
+    expect(dialog).toContain("No pipeline: the route below is skipped while an automation is on. Add a pipeline step to its automations in Vibe Studio");
+    expect(dialog).toContain("While the form has an automation turned on, leads follow the automations instead.");
   });
 
   it("a form that only emails its leads is not called silent, and is still not routed", () => {

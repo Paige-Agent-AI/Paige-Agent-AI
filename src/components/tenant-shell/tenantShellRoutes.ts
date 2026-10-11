@@ -7,6 +7,7 @@ import {
   Store,
   Settings,
   Sparkles,
+  Target,
   Users,
   WandSparkles,
   type LucideIcon,
@@ -17,6 +18,7 @@ type TenantDestination =
   | "operations"
   | "clients"
   | "campaigns"
+  | "ads"
   | "sales"
   | "finance"
   | "marketplace"
@@ -57,6 +59,7 @@ const TENANT_BRANCHES: Record<TenantBranch, { slug: string; aliases: string[] }>
   clients: { slug: "clients", aliases: ["client-support", "billing"] },
   calendar: { slug: "calendar", aliases: [] },
   campaigns: { slug: "growth", aliases: [] },
+  ads: { slug: "ads", aliases: [] },
   sales: { slug: "sales", aliases: [] },
   finance: { slug: "finance", aliases: [] },
   marketplace: { slug: "marketplace", aliases: [] },
@@ -165,6 +168,8 @@ const SOLO_SHELL_DESTINATIONS: TenantShellDestination[] = [
     aliases: ["", "", "", ""],
   },
   { id: "campaigns", label: "Marketing", href: "", icon: Megaphone, aliases: [] },
+  // Its own department directly below Marketing (owner ruling 2026-10-10, INT-342).
+  { id: "ads", label: "Ads", href: "", icon: Target, aliases: [] },
   { id: "sales", label: "Sales", href: "", icon: ChartNoAxesCombined, aliases: [] },
   { id: "finance", label: "Finance", href: "", icon: Landmark, aliases: [] },
   { id: "marketplace", label: "Marketplace", href: "", icon: Store, aliases: [] },

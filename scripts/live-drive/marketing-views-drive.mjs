@@ -166,6 +166,10 @@ async function main() {
               // Populated fixtures must render populated: a failed read here is a harness or code defect.
               const failed = await page.evaluate(() => [...document.querySelectorAll(".campaigns-scroll h2, .campaigns-scroll h3")].map((h) => h.textContent ?? "").filter((t) => /could not load/.test(t)));
               check(failed.length === 0, `${id}: every read lands (no error state on populated data)`, failed.join(" | "));
+              if (tab !== "ads") {
+                const strip = await page.evaluate(() => [...document.querySelectorAll(".campaigns-tabs [role=tab]")].map((t) => t.textContent?.trim()));
+                check(strip.join("|") === "Overview|Campaigns|Audience|Content|Social|Email|Analytics", `${id}: Marketing's seven tabs, with no Ads tab`, strip.join("|"));
+              }
               if (tab === "ads") {
                 const drawn = await page.evaluate(() => ({ sum: document.querySelector(".mad .mov-sum")?.textContent ?? "", views: document.querySelectorAll('.mad .campaigns-segmented button').length, prov: Boolean(document.querySelector(".mad-prov")), nums: [...document.querySelectorAll(".mad-nums dd")].map((dd) => dd.textContent), plan: document.querySelector(".mad-plan")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
                 check(/nothing here is estimated/.test(drawn.sum) && /3 ad copy drafts/.test(drawn.sum) && drawn.views === 5 && drawn.prov && drawn.nums.every((n) => n === "—") && /About \$2,000 for April/.test(drawn.plan) && drawn.h1 === 0, `${id}: the desk opens on nothing estimated, five views, the provider strip, a ghost spend card and the brief's budget quoted as a plan`, JSON.stringify(drawn));
@@ -187,8 +191,8 @@ async function main() {
                 check(drawn.nodes === 4 && drawn.broken === 1 && drawn.line && drawn.cards === 4 && drawn.leads === 6 && drawn.h1 === 0, `${id}: the chain (one broken link), the lead line, four capture points and six recent leads are drawn, with no page title`, JSON.stringify(drawn));
               }
               if (tab === "analytics") {
-                const drawn = await page.evaluate(() => ({ kpis: document.querySelectorAll(".mva-kpi").length, sparks: document.querySelectorAll(".mva-kpi .mva-spark").length, trend: document.querySelectorAll(".mva-chart-trend .recharts-bar-rectangle").length, rings: document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length, steps: document.querySelectorAll(".mva-step").length, bars: [...document.querySelectorAll(".mva-bar i")].filter((i) => i.getBoundingClientRect().width > 0).length, heat: document.querySelectorAll(".mva-heat i.is-on").length, emailChart: Boolean(document.querySelector(".mva-ch-chart .recharts-area-curve")), capture: document.querySelectorAll(".mva-cap-row").length, channels: document.querySelectorAll(".mva-ch li").length, adsRow: [...document.querySelectorAll(".mva-ch li")].some((li) => /Ad accounts|Open Ads/.test(li.textContent ?? "")), paidNote: document.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent ?? "", email: document.querySelector(".mva-ch li small")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
-                check(drawn.kpis === 5 && drawn.sparks === 5 && drawn.trend > 0 && drawn.rings >= 3 && drawn.steps === 4 && drawn.bars === 4 && drawn.heat > 0 && drawn.emailChart && drawn.capture > 0 && drawn.channels === 3 && !drawn.adsRow && /paid ones included/.test(drawn.paidNote) && /sent ·/.test(drawn.email) && drawn.h1 === 0, `${id}: five figures with sparklines, the leads chart, three rings, the funnel, the heatmap, the email chart and three channels (no Ads row; paid leads pointed to Source mix) are drawn, with no page title`, JSON.stringify(drawn));
+                const drawn = await page.evaluate(() => ({ kpis: document.querySelectorAll(".mva-kpi").length, sparks: document.querySelectorAll(".mva-kpi .mva-spark").length, trend: document.querySelectorAll(".mva-chart-trend .recharts-bar-rectangle").length, rings: document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length, steps: document.querySelectorAll(".mva-step").length, bars: [...document.querySelectorAll(".mva-bar i")].filter((i) => i.getBoundingClientRect().width > 0).length, heat: document.querySelectorAll(".mva-heat i.is-on").length, emailChart: Boolean(document.querySelector(".mva-ch-chart .recharts-area-curve")), capture: document.querySelectorAll(".mva-cap-row").length, channels: document.querySelectorAll(".mva-ch li").length, adsRow: [...document.querySelectorAll(".mva-ch li")].some((li) => /Ad accounts|Open Ads/.test(li.textContent ?? "")), paidNote: document.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent ?? "", email: document.querySelector(".mva-ch li small")?.textContent ?? "", leads: document.querySelector(".mva-kpi .mva-kpi-v")?.textContent ?? "", firstStep: document.querySelector(".mva-step .mva-n")?.textContent ?? "", ring: document.querySelector("[aria-labelledby='mva-out-h'] .mo-donut-center strong")?.textContent ?? "", serverReads: globalThis.__marketingMetricReads ?? 0, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(drawn.kpis === 5 && drawn.sparks === 5 && drawn.trend > 0 && drawn.rings >= 3 && drawn.steps === 4 && drawn.bars === 4 && drawn.heat > 0 && drawn.emailChart && drawn.capture > 0 && drawn.channels === 3 && !drawn.adsRow && /paid ones included/.test(drawn.paidNote) && /sent ·/.test(drawn.email) && drawn.serverReads >= 8 && drawn.leads !== "" && drawn.firstStep === drawn.leads && drawn.ring === drawn.leads && drawn.h1 === 0, `${id}: five figures with sparklines, the leads chart, three rings, the funnel, the heatmap, the email chart and three channels (no Ads row; paid leads pointed to Source mix) are drawn, the headline and funnel are the server's count and agree with the outcome ring when the read is complete, with no page title`, JSON.stringify(drawn));
               }
               if (tab === "audience") {
                 const drawn = await page.evaluate(() => ({ donut: Boolean(document.querySelector(".ma .mo-donut .recharts-pie-sector")), stages: document.querySelectorAll(".ma-chart-stages .recharts-bar-rectangle").length, growth: Boolean(document.querySelector(".ma-chart-growth .recharts-area-area")), stats: document.querySelectorAll(".ma-stats > *").length }));
@@ -224,6 +228,11 @@ async function main() {
           const text = await page.evaluate(() => document.querySelector(".campaigns-scroll")?.textContent ?? "");
           if (mode === "error") check(/could not load/.test(text), `${id}: a failed read says so`);
           if (mode === "loading") check(await page.$(".campaigns-skeleton") !== null, `${id}: loading shows a skeleton`);
+          if (mode === "readonly" && tab === "analytics") {
+            // A member is refused the server figures, so the page keeps the counts from its own records.
+            const member = await page.evaluate(() => ({ leads: document.querySelector(".mva-kpi .mva-kpi-v")?.textContent ?? "", reads: globalThis.__marketingMetricReads ?? 0 }));
+            check(member.leads !== "" && member.reads > 0, `${id}: the server refuses a member and the page keeps its own counts`, JSON.stringify(member));
+          }
           if (mode === "readonly" && tab === "overview") check(!/New campaign brief|Route it|Route the forms|Finish in Vibe/.test(text), `${id}: no create, route or finish act for a read-only member`);
           if (mode === "first" && tab === "overview") {
             check(/Nothing is being marketed yet/.test(text) && /Three steps to your first lead/.test(text), `${id}: first use is guided`);
@@ -233,6 +242,26 @@ async function main() {
           await ctx.close();
         }
       }
+    }
+
+    // A full read: the server counts every lead in the range; the record-drawn parts stay floors and the page says so.
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(String(e.message)));
+      await open(page, { tab: "analytics", theme, mode: "full" });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.waitForFunction(() => document.querySelector(".mva .mo-donut-center strong"), null, { timeout: 15000 }).catch(() => {});
+      const id = `${theme}/state-full/analytics`;
+      const full = await page.evaluate(() => ({ leads: document.querySelector(".mva-kpi .mva-kpi-v")?.textContent ?? "", firstStep: document.querySelector(".mva-step .mva-n")?.textContent ?? "", ring: document.querySelector("[aria-labelledby='mva-out-h'] .mo-donut-center strong")?.textContent ?? "", cap: document.querySelector(".mva-cap")?.textContent ?? "", sum: document.querySelector(".mva .mov-sum")?.textContent ?? "" }));
+      check(errors.length === 0 && full.leads === "340" && full.firstStep === "340" && /^340 leads in/.test(full.sum) && full.ring === "200+" && /count every lead in this range/.test(full.cap) && /so their counts are floors/.test(full.cap), `${id}: the headline, funnel and summary count all 340 leads; the outcome ring stays a floor (200+) and the note says which is which`, JSON.stringify(full));
+      const m = await measure(page);
+      if (m) check(m.overflowX <= 0 && !m.sideways, `${id}: no overflow`);
+      await page.screenshot({ path: path.join(OUT, `state-full-analytics-${theme}.png`), fullPage: false });
+      await page.evaluate(() => document.querySelector(".mva-cap")?.scrollIntoView({ block: "center" }));
+      await page.screenshot({ path: path.join(OUT, `state-full-analytics-note-${theme}.png`) });
+      await ctx.close();
     }
 
     // Retired addresses and the one form panel, both themes, at the ordinary 1366 docked session.
@@ -273,7 +302,14 @@ async function main() {
       await page.locator(".mad .campaigns-segmented button", { hasText: "Creative" }).click();
       const creative = await page.evaluate(() => ({ cards: document.querySelectorAll(".mad-card").length, first: document.querySelector(".mad-prev-f")?.textContent ?? "" }));
       check(creative.cards === 3 && /Plan your quarter in 30 minutes/.test(creative.first), `${theme}/ads: Creative previews each saved ad with its headline and call to action`, JSON.stringify(creative));
+      const creativePath = await page.evaluate(() => document.body.dataset.harnessPath);
+      check(creativePath === "/solo/review/ads/creative", `${theme}/ads: Creative is its own address in the Ads department`, String(creativePath));
       await page.screenshot({ path: path.join(OUT, `flow-ads-creative-${theme}.png`) });
+      // An old Marketing Ads bookmark opens the same view in the Ads department, with no Marketing strip.
+      await page.goto(`${BASE}?legacy=performance&theme=${theme}&mode=populated`, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".mad", { timeout: 30000 });
+      const moved = await page.evaluate(() => ({ path: document.body.dataset.harnessPath, pressed: document.querySelector('.mad [aria-pressed="true"]')?.textContent, strip: Boolean(document.querySelector(".campaigns-tabs")), h1: document.querySelector("h1")?.textContent }));
+      check(moved.path === "/solo/review/ads/performance" && moved.pressed === "Performance" && !moved.strip && moved.h1 === "Ads", `${theme}/ads: an old /growth/ads?view=performance link opens Ads › Performance`, JSON.stringify(moved));
       // Content: every control in the preview is live (the drawer must not sit inside the region it makes
       // inert); a document prints whole; an image downloads; the filter keeps to one kind.
       await open(page, { tab: "content", theme });

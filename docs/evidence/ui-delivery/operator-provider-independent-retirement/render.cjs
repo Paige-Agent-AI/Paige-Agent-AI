@@ -1,0 +1,24 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const dir=__dirname,base=process.env.OPERATOR_PROOF_URL||'http://127.0.0.1:5262/docs/evidence/ui-delivery/operator-provider-independent-retirement/fixture.html';
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true});try{
+ const page=await browser.newPage();page.setDefaultTimeout(60000);page.on('pageerror',e=>console.error('Fixture error:',e.message));await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());await page.emulateMedia({reducedMotion:'reduce'});
+ const results=[];
+ for(const context of ['solo','agency'])for(const theme of ['light','dark'])for(const [width,height]of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844]]){
+  await page.setViewportSize({width,height});await page.goto(base+'?'+(context==='solo'?'solo&':''),{waitUntil:'domcontentloaded',timeout:60000});
+  if(theme==='dark')await page.getByRole('button',{name:'Switch theme',exact:true}).click();
+  await page.getByRole('button',{name:'Account details',exact:true}).click();await page.getByRole('button',{name:'Archive account',exact:true}).click();await page.getByText('READY · Server preflight permits this scope.',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:/Prepare|Remove eligible files/}).count(),0);
+  const dialog=page.getByRole('dialog'),g=await dialog.evaluate(el=>({documentOverflow:document.documentElement.scrollWidth>innerWidth,dialogOverflow:el.scrollWidth>el.clientWidth,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}));assert(!g.documentOverflow&&!g.dialogOverflow);
+  const name=context==='solo'?'Example Solo':'Example Agency';await page.locator('#fleet-lifecycle-confirm').fill(name);const archive=page.getByRole('button',{name:'Archive listed accounts',exact:true});await archive.scrollIntoViewIfNeeded();assert(await archive.isEnabled());
+  await page.screenshot({path:path.join(dir,`${context}-${theme}-${width}.png`)});await archive.focus();assert(await archive.evaluate(el=>el===document.activeElement));await page.keyboard.press('Enter');await page.getByText(/COMPLETED · .* archived and independently read back/).waitFor();await page.getByRole('button',{name:'Done',exact:true}).click();
+  await page.getByRole('button',{name:'Account details',exact:true}).click();await page.getByRole('button',{name:'Permanently delete account',exact:true}).click();await page.locator('#fleet-lifecycle-confirm').fill(name);await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Permanently delete listed accounts',exact:true}).click();await page.getByText(/COMPLETED · .* permanently deleted and independently read back/).waitFor();
+  assert.equal(await page.evaluate(()=>window.fixtureCalls.some(c=>c.startsWith('files:'))),false);results.push({context,theme,width,height,...g,archiveDelete:true,providerRequests:0});
+ }
+ for(const mode of ['files','unknown','blocked']){
+  await page.setViewportSize({width:1366,height:768});await page.goto(base+'?solo&archived&'+mode,{waitUntil:'domcontentloaded',timeout:60000});await page.getByRole('button',{name:'Account details',exact:true}).click();await page.getByRole('button',{name:'Permanently delete account',exact:true}).click();
+  if(mode==='blocked'){await page.getByText('Independent legal retention must be resolved.',{exact:true}).waitFor();assert(await page.getByRole('button',{name:'Permanently delete listed accounts',exact:true}).isDisabled());await page.getByRole('button',{name:'Cancel',exact:true}).focus();await page.keyboard.press('Enter');await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>window.fixtureCalls.includes('operator_delete_archived_account')),false);}
+  else {await page.locator('#fleet-lifecycle-confirm').fill('Example Solo');await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Permanently delete listed accounts',exact:true}).click();if(mode==='unknown'){await page.getByRole('button',{name:'Read operation',exact:true}).click();}await page.getByText(/COMPLETED · .* permanently deleted and independently read back/).waitFor();const calls=await page.evaluate(()=>window.fixtureCalls);assert.equal(calls.filter(c=>c==='operator_delete_archived_account').length,1);if(mode==='files')assert.deepEqual(calls.filter(c=>c.startsWith('files:')),['files:prepare','files:continue']);}
+  results.push({mode,pass:true});await page.screenshot({path:path.join(dir,`${mode}-1366.png`)});
+ }
+ fs.writeFileSync(path.join(dir,'geometry.json'),JSON.stringify(results,null,2));console.log('PASS: 20 Chrome actual-source Solo/Agency light/dark sizes; Archive→Delete, file cleanup within Delete, interrupted receipt recovery, legal refusal, keyboard and reduced motion. Remote requests blocked.');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1);});

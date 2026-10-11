@@ -29,7 +29,8 @@ const URL = `http://127.0.0.1:${PORT}/`;
 const OUT = path.resolve(import.meta.dirname, "artifacts/campaigns-nav-fit");
 const REPO = path.resolve(import.meta.dirname, "../..");
 
-const TABS = ["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Analytics"];
+// Ads left Marketing for its own department below it (owner ruling 2026-10-10, INT-342 / ANT-15).
+const TABS = ["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Analytics"];
 
 // The four widths every Solo surface is proved at.
 const FRAMES = [

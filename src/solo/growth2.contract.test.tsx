@@ -35,7 +35,7 @@ const paigeChatSurface = readFileSync(resolve(process.cwd(), "src/components/das
 const paigeMcp = readFileSync(resolve(process.cwd(), "supabase/functions/paige-mcp/index.ts"), "utf8");
 
 describe("Solo Campaigns approved contract", () => {
-  it("renders the owner's eight Marketing tabs (Lead capture retired into Overview, INT-342), with no Planned marker in the strip", () => {
+  it("renders the owner's seven Marketing tabs (Lead capture retired into Overview, Ads its own department, INT-342), with no Planned marker in the strip", () => {
     // Owner ruling 2026-10-04: "these are the ones that I want dedicated to marketing". Audience,
     // Content, Email and Ads carry no marker in the strip (owner, 2026-10-04: no redundant words).
     const tabBlock = /const tabs=\[([\s\S]*?)\];/.exec(source)?.[1] ?? "";
@@ -46,9 +46,13 @@ describe("Solo Campaigns approved contract", () => {
       ["content", "Content"],
       ["social", "Social"],
       ["email", "Email"],
-      ["ads", "Ads"],
       ["analytics", "Analytics"],
     ]);
+    // Ads left Marketing for its own department below it (owner ruling 2026-10-10): no tab, no desk here.
+    expect(tabBlock).not.toMatch(/'ads'/);
+    expect(source).not.toContain("<MarketingAds");
+    // Old `/growth/ads` links replace into the Ads department before any Marketing reader mounts.
+    expect(source).toMatch(/legacySalesRoute\([^)]*\)\?\?legacyAdsRoute\(/);
     expect(tabBlock).not.toMatch(/'planned'/);
     expect([...tabBlock.matchAll(/\['([^']+)','[^']+',\(\)=>[^,\]]+,'sales'\]/g)].map((match) => match[1])).toEqual([]);
     expect(tabBlock).not.toMatch(/Active|Brand Kit|Pages|Funnels|Forms|Builders/);

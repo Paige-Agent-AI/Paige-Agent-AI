@@ -16,6 +16,12 @@ have `work_id` null, so none appears in Vibe Studio and retiring Content would h
 until Vibe Studio lists every saved piece, then retires as F describes. The tab strip is therefore eight tabs
 for now: Overview · Campaigns · Audience · Content · Social · Email · Ads · Analytics. The ad provider to read first was not ruled; Meta Ads is the recorded default, and it matters only at slice S5.
 
+**Amended by owner ruling, 2026-10-10 (Linear ANT-15): Ads is its own department.** Ads left the Marketing strip and
+is now a first-class Solo main-navigation destination directly below Marketing, at `/solo/{account}/ads/{view}`.
+Marketing keeps seven tabs: Overview · Campaigns · Audience · Content · Social · Email · Analytics. This supersedes
+only the earlier Ads-inside-Marketing placement; the approved desk design and everything else in Marketing are
+unchanged. The north star, the Capability Integration & Proof Matrix and the build sequence after the move are in **M**.
+
 **Prototype:** https://claude.ai/artifact/7jwwBxRswrCAPxQiZqc6RG. The record copy is
 `docs/prototypes/int342-marketing-convergence.html`.
 
@@ -215,6 +221,12 @@ INT-340 is live: `issue_analytics_evidence_bundle` → `_analytics_metric_produc
 **2026-10-11 (MBC slice 2a):** the producer below is built as specified, with two deliberate departures recorded in
 `docs/delivery/marketing-metric-server-contract.md`: untagged leads are an item of the source distribution (so it is LIVE,
 not PARTIAL), and failed/stalled submissions are one distribution (stalled = waiting more than 15 minutes).
+
+**2026-10-11 (MBC slice 2b):** Analytics consumes four of the keys for owners/admins (leads received, by source tag, by
+campaign tag, converted to opportunity), through `parseMetricResult`, for the range and the period before. The browser no
+longer computes those figures for an owner; it still draws the trend, outcome ring, capture points and heatmap from its
+own read, and a member (refused by the server) keeps the browser's counts. The daily series and the snapshot/email keys
+are produced but not yet drawn from the server; that is slice 6's Chat/Live work and later Analytics passes.
 
 **Plan:**
 - Marketing adds a private `_marketing_metric_bundle` with its own allowlist.
@@ -434,3 +446,164 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
    - Connection, adapter, insight store, `ads.read` key and receipts.
    - Ads writes come later, through M1 and approvals.
 6. **S6: Social posting**, when the provider is proven (outside this lane's first slices).
+
+## M. Ads as its own department: north star, Capability Integration & Proof Matrix, sequence
+
+**Owner rulings, 2026-10-10:**
+- **Relocation (Linear ANT-15).** Ads leaves Marketing and becomes a first-level destination directly below it.
+  The existing desk is rehomed, not rebuilt.
+- **Mandatory One-PAIGE integration (permanent North Star).** Every PAIGE department and capability uses the
+  one PAIGE operating architecture. Chat and Live consume the same canonical capabilities. **The Ads department
+  cannot be called end-to-end operational until the shared capabilities and the Chat/Live paths below are built
+  and verified.** The navigation move can ship on its own.
+
+### M1. What moved, and what did not (Phase A, this slice)
+
+**Routing:**
+- The registry branch `ads` (`src/lib/routing/tierBranches.ts`) sits directly after `growth` (Marketing). Its five
+  views are subtabs: `overview` (default) · `campaigns` · `creative` · `audiences` · `performance`.
+- Rail: `SOLO_SHELL_DESTINATIONS` gains `Ads` (Target icon) after `Marketing`
+  (`src/components/tenant-shell/tenantShellRoutes.ts`). Visible only in the authenticated Solo menu; the five-home
+  tenant menu (sub-account, agency) gains nothing, consistent with Marketing.
+- Route owner: `src/solo/AdsWorkspace.tsx`, mounted in `SoloApp.tsx` (`screens.ads`, keyed to the active
+  workspace).
+
+**What did not change:**
+- The desk itself (`src/solo/marketing-ads.tsx`, `marketing-ads.css`): its reads, read policy, Ask PAIGE prompts
+  and not-read states are byte-for-byte the shipped S1c behaviour.
+- **Old addresses:** `/solo/{n}/growth/ads[?view=X]` replaces into `/solo/{n}/ads[/X]` before any Marketing reader
+  mounts (`legacyAdsRoute`, `src/solo/ads-routing.ts`).
+  - Tracking tags (`utm_*`) and the hash travel with it; nothing else does.
+  - An unknown view lands on Overview.
+  - A `?view=` on the new address lands on that view's path.
+- **Links:**
+  - Marketing Analytics no longer links to Ads at all: Marketing removed its Ads row and "Open Ads" in #1952 (Marketing-owned file; Ads made no change there).
+  - The desk's links out (Integrations, Marketing › Campaigns, Audience, Analytics) point at the owning
+    department's canonical address.
+  - Nothing else linked to `growth/ads`: searched `growth/ads`, `"ads"`, `'ads'`, `onOpenAds`, `MarketingAds` and
+    `Marketing › Ads` across `src` and `supabase/functions`.
+
+**No data, permission, provider, spend or backend change.**
+
+### M2. North star: Ads is paid-acquisition operations
+
+Marketing owns demand-generation strategy, campaign briefs, offers and content. **Ads owns governed paid-media
+operations and the deployment of advertising capital.**
+
+The target, which is **not** operational today, is an owner able to say:
+
+> "PAIGE, I have $2,500 for advertising next month. Evaluate the opportunities, recommend channels, prepare the
+> campaigns and show me what needs approval."
+
+PAIGE should then, in text or voice:
+1. Understand the objective, offer, audience, timeframe and financial limits.
+2. Read authorized ad accounts and actual performance.
+3. Evaluate acquisition economics from attributed evidence.
+4. Recommend a channel mix and allocation with explicit assumptions.
+5. Prepare campaigns, ad sets, targeting and creative for inspection.
+6. Obtain the financial, publication and policy approvals.
+7. Execute approved provider actions through governed capabilities.
+8. Verify provider acceptance and the resulting state.
+9. Track spend, pacing and results.
+10. Recommend adjustments within authorized policy.
+
+**Recommendation authority is never spending authority.**
+
+**Boundaries against duplicate systems:**
+
+| Concern | Owner | What Ads does |
+|---|---|---|
+| Strategy and briefs | Marketing | Consumes canonical `campaign_briefs`; never a second campaign-definition system |
+| Contacts and lead source | CRM (Clients) | Uses existing records where attribution evidence supports the link |
+| Opportunities, closed revenue, collections | Sales | Consumes authorized projections; never invents revenue |
+| Company accounting and expenses | Finance | Authoritative books stay there. Ads owns provider-reported spend and ad budget operations, reconciled to Finance where supported |
+| Creative production | Vibe Studio | Remains the creative environment; Ads consumes campaign-ready creative |
+| Conversation | PAIGE Chat and Live | One governed tool loop; no Ads chatbot or Ads action controller |
+
+**What Ads must never create:** its own scheduler, approval engine, budget ledger, provider gateway, metric
+warehouse or orchestration.
+
+### M3. Capability Integration & Proof Matrix
+
+**Grounding:** read-only, against `main` `82bd888` on 2026-10-10 (static code and migration read; the production
+facts are from G, 2026-10-10).
+
+**Status words:**
+- **LIVE:** implemented and in use by the desk or by PAIGE today.
+- **PARTIAL:** some of the path exists.
+- **UNAVAILABLE:** nothing exists yet for Ads.
+- **GATED:** must not be built without an owner or provider gate.
+
+| Layer | Existing canonical contract | Implemented for Ads today | Missing | Owner | Evidence |
+|---|---|---|---|---|---|
+| Source records | `marketing_content` (channel `ad_copy`): RLS owner/admin, managing agency, platform owner; writer `save_marketing_content`. `campaign_briefs.budget_target` (owner text) via `get_campaign_briefs` / `configure_campaign_brief` | **LIVE (read):** the desk reads ad copy (owners and admins) and quotes a brief's budget as "a plan, never spend" | Ad-account connection, provider campaign / ad set / ad / creative records, dated insights, brief ↔ provider-campaign link. M1-b refuses `campaign_budget_usd` because ad accounts are external ids | vibe-studio (content save), campaign-brief-system (briefs), INT-342 (Ads data model, S5) | `marketing-ads.tsx:33-39,98,142`; `20261225000000_solo_campaign_briefs_foundation.sql:28`; `20270103000000_re2_m1b_scope_caps.sql:42-48` |
+| Spine | `_shared/paige-spine/registry.ts` (`PAIGE_SPINE_CAPABILITIES`), capability kit, `paige_action_kinds` | **PARTIAL:** `marketing_content.save` accepts `ad_copy` (maturity PARTIAL); `campaign.*` keys are planning-only | Any `ads.*` key (`ads.read`, and one per write); an ads action kind | Spine Change Request (`docs/architecture/paige-spine-foundation.md:152`); keys proposed by INT-342 | `_shared/paige-spine/domains/marketing_content.ts:28-33`; `domains/campaigns.ts:24,30`; no ads domain in `registry.ts` |
+| Harness | One Paige Runtime Harness; departments are domains, never their own Harness | **UNAVAILABLE** for Ads | The Ads path Harness → Spine → Trust → approval/autonomy → adapter → readback → Rail | Master §Harness; INT-342 for the Ads domain | `docs/PAIGE-MASTER-PROJECT-REFERENCE.md:240,256-262`; `docs/delivery/harness-completion-map.md` |
+| Orchestration | Action bus (`paige_action_kinds`, `paige_departments`), `delegate_to_subagent`, `_shared/durable-job`, `_shared/paige-orchestration` | **UNAVAILABLE** | Provider sync job, ads action kinds, routing of ads work to a specialist inside the Harness | Durable work program (Master :513) | grep for `ad_copy`, `ads`, `meta_ads`, `ad_spend` and `paid` in those dirs: zero |
+| Trust | `_shared/action-risk.ts`, `paige_pending_confirmations`, `auto/confirm/off` lanes, Trust Compass ceiling, M1 grant scope (`ad_account`, `campaign_id`) | **PARTIAL:** the ad-copy save is confirm-gated; drafting is exempt by owner ruling 2026-10-04 | A high-risk class for ads writes, an ads approval type, M1 reserve → confirm → reconcile for spend | Trust / M1 program | `_shared/action-risk.ts:338,614-617`; `20261230000000_re2_execution_substrate.sql:61-66` |
+| Rail and receipts | `record_capability_run`, `_shared/capability-record.ts` | **LIVE (ad copy only):** a `content_save` receipt, "Saved your marketing copy" | Receipts for provider sync and every ads write | Receipt/Rail contract owner (`docs/brain/paige-receipt-rail-contract.md`) | `scripts/ci/receipt-coverage-ledger.json:417-421`; `20270548000000_studio_publish_autonomy_catalogue.sql:81` |
+| Metrics and evidence | `paige_llm_trace`, `platform_metered_events` (M1 metering), INT-340 evidence bundle | **PARTIAL:** "Leads on your forms" by tracking tag (counts only, in Analytics). Gap: `content-draft` traces carry no tenant (no trace context), so ad-copy drafting skips the per-tenant budget gate | Provider spend, impressions, clicks, CTR, CPL, ROAS producers; ROAS stays withheld until click → lead → deal → payment is linked | INT-340 (metric contract), INT-342 | `content-draft/index.ts:93`; `_shared/model-router.ts:210,261`; `marketing-analytics-model.ts:108-121` |
+| Mind | Mind domains (`mind-orb/mindDomains.ts`), `SoloMindWorkspace` | **UNAVAILABLE:** `marketing_content.save` declares `mindBinding: UNAVAILABLE` | An eligibility decision for ads objectives and results as Mind facts (owner-confirmed only) | Mind program | `domains/marketing_content.ts:32`; no ads hits in `SoloMindWorkspace.tsx` |
+| Memory | `paige_owner_memory`, `paige_prompt_memory` | **UNAVAILABLE** | Owner-confirmed, source-backed ads learnings only (never raw provider data) | Memory program | no ads hits in `session-memory.ts`, `owner-context.ts`, `paige-context/` |
+| Knowledge / Second Brain | Workspace knowledge; repo `docs/brain/` | **PARTIAL:** brand voice from `tenants.brand` feeds ad-copy drafting | Ads playbooks and policy knowledge as tenant-scoped knowledge | Knowledge program | `content-draft/index.ts:70-73` |
+| Model / Intelligence Fabric | `_shared/model-router.ts` (`routedChatCompletion`, `callModel`), `_shared/model-fabric.ts` | **LIVE:** ad copy drafts on `internal_first_draft` then a voice polish; the ad_copy guide fixes headline, primary text and CTA | Ads reasoning tasks (allocation, pacing) routed through the fabric with tenant attribution | INT-334 | `content-draft/index.ts:25,90-111` |
+| Agent intelligence | `paige_skills`, `paige_subagents` | **PARTIAL:** skill `ad_copy_draft` (draft/confirm). Skill `ad_spend_efficiency` (read-only) exists but has no data source, and is required to say so | A data source for `ad_spend_efficiency`; no ads specialist (the content drafter covers email/SMS/social) | INT-280 (PAIGE Intelligence) | `20260902000000_skills_s2_cat5_marketing_content.sql:87-94`; `20260903000000_skills_s2_cat6_analytics_interpretation.sql:90-96` |
+| PAIGE Chat | `paige-ai-chat` governed tool loop; `paige:open` → `handOffPaigePrompt` (prefill only, never sends) | **LIVE:** `draft_marketing_content` (channel `ad_copy`) and `content_save`; the desk's "Ask PAIGE for ad copy" and "Revise with PAIGE" prefill the composer (unchanged by the move) | Any ad-platform tool; a connected generic MCP (Meta Ads, Metricool tiles) does not reach chat | Chat runtime owner; INT-342 for ads tools | `paige-ai-chat/index.ts:6977-7006,13796,14002-14018`; `src/lib/paigePromptHandoff.ts:7-35` |
+| PAIGE Live | `paige-live-relay` streams through the same `paige-ai-chat` loop and never executes a spoken approval | **PARTIAL:** Live can draft ad copy (approval-exempt). It cannot redeem the confirm-gated save (confirmation redemption is skipped in Live scope). Live ships closed; INT-346 is DRAINING | Live reaches ads capabilities only when Chat does, through the same keys; a spoken approval path, if ever, is a Live-program decision | INT-346 | `paige-live-relay/index.ts:11-12`; `paige-ai-chat/index.ts:9507,9791-9794` |
+| Provider adapters | Integration Capability Registry; `meta` entry PARTIAL (read/draft lane, publish UNAVAILABLE, M1 required for spend) | **UNAVAILABLE:** `meta-get-insights` and siblings are retired stubs (503 `social_capability_unavailable`); Google Ads appears only as a Zapier hint; no Metricool or Google Ads registry entry | One provider-neutral Ads capability contract with per-provider adapters (Meta first, subject to owner-approved scope) | Growth/Social workstream (Meta), INT-342 | `docs/integration-registry/integration-capability-registry.json:1781-1832`; `_shared/socialUnavailable.ts:12-27`; `settings-integrations-gateway.tsx:83,85,108` |
+
+**Truth note:** `src/solo/systems.tsx:16` is a fixture that says "Meta — active, $40/day cap". It is imported only
+by `healthmap.tsx`, which nothing imports, so no customer sees it. Searched: imports of `./healthmap`, `./systems`
+and `SC_CHECKS`. Delete it in a later cleanup; never revive it.
+
+### M4. The Ads Chat/Live contract (future; unavailable or gated today)
+
+**Shared contract:** Chat and Live call the same `ads.*` Spine capabilities, with the same records, approvals,
+receipts and execution authority. Live is a modality over the one loop, never a second implementation
+(`docs/doctrine/paige-modality-neutrality.md`).
+
+| Act | Capability (proposed) | Authority | Today |
+|---|---|---|---|
+| Inspect authorized ad accounts and performance | `ads.read` (sync and query) | Low risk, Rail receipt per sync | UNAVAILABLE (no adapter or store) |
+| Reason about objectives and economics | Fabric task over source-backed evidence, through INT-340 metric keys | Read-only | UNAVAILABLE (no provider evidence) |
+| Propose a budget and campaigns | Draft records linked to a `campaign_briefs` row | Draft-first; never spend | UNAVAILABLE |
+| Obtain approval | Trust high-risk class, ads approval type, M1 reserve | Owner approval; Live never redeems a spoken approval unless the Live program rules otherwise | GATED |
+| Execute: activate, pause/resume, budget, targeting, publish | One `ads.*` key per write, provider idempotency, M1 confirm | Approved and bounded; respects provider ad policies, including special categories (credit, housing, employment); never circumvented through targeting, account structure or misclassification | GATED |
+| Verify and report | Provider readback, M1 reconcile, Rail receipt, truthful text or voice outcome | What actually happened only | GATED |
+
+**Today's conversational handoffs are preserved:** "Ask PAIGE for ad copy" and "Revise with PAIGE" prefill the
+composer, and PAIGE drafts and saves ad copy draft-first. Nothing runs, pauses, pays for or publishes an ad.
+
+### M5. Sequence after the move
+
+Each phase sets direction only. None authorizes provider activation, extra engineering lanes or money movement.
+
+1. **A. First-class department UI.** This slice: relocation, links, redirects, documentation.
+2. **B. Read-only paid-platform intelligence.**
+   - Meta Ads first, subject to supported API permissions and owner-approved connection scope.
+   - Later candidates: Google, LinkedIn, TikTok and YouTube Ads.
+   - One provider-neutral contract, separate adapters, tenant-scoped account identity, and dated campaign / ad set
+     / ad / creative / insight records.
+   - A generic MCP connection is not an authorized Ads capability.
+   - This is S5 in L.
+3. **C. Performance and attribution.**
+   - Provider spend and campaign evidence first, then responsibly attributed CRM leads and Sales outcomes.
+   - These stay distinct: owner-planned budget · authorized platform budget · provider-reported spend ·
+     provider-reported leads · CRM-attributed leads · confirmed Sales conversions and collected revenue.
+   - Unknown values stay unavailable.
+4. **D. Governed execution.**
+   - Every write is its own `ads.*` capability: Trust approval, bounded Harness execution, M1 spend and budget
+     controls, provider idempotency, authoritative readback and a Rail receipt.
+5. **E. Bounded autonomous optimization.**
+   - Runs only under specifically authorized autonomy policies (§67/§68: granted to a process, decaying, never
+     permanent), with budget ceilings, stop and rollback conditions, audit and measured outcomes.
+
+**Operational status of the Ads department (2026-10-10):**
+- The new department navigation (menu item, five view addresses, old-link redirect): **PROOF OWED**. Automated
+  contracts and a local rendered harness pass; authenticated runtime is **UNVERIFIED** until a signed-in Solo
+  session opens it (§32.c). Binding Ledger row `ads.department` = `PROOF_OWED`.
+- The desk and its ad-copy handoffs are the same code Marketing shipped; the move changes no read, policy or
+  handoff. Their behaviour on the new route is **UNVERIFIED** in an authenticated session. The matrix's LIVE
+  cells above describe those existing contracts, not authenticated proof of this route.
+- Provider read, attribution, approvals, execution, Chat/Live ads capabilities: **UNAVAILABLE or GATED**.
+- **The department is NOT end-to-end operational.**

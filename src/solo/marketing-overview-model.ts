@@ -53,10 +53,12 @@ const STATUS_LABEL: Record<StatusKey, string> = {
 };
 const STATUS_ORDER: StatusKey[] = ["running", "approved", "review", "draft", "paused", "blocked", "completed"];
 
-/** A form's leads reach a pipeline: an enabled pipeline_attach automation, or the form's own intake
- *  route. Overview and Analytics both judge routing with this, so a form reads the same on both. */
+/** A form's leads reach a pipeline as the submission processor runs them: an enabled pipeline_attach
+ *  automation, or the form's own intake route, which applies only while the form has no enabled
+ *  automation at all (growth-process-submission). Overview and Analytics both judge routing with this, and
+ *  Marketing's server producer (marketing.forms.unrouted_current) uses the same rule. */
 export const sendsToPipeline = (form: Pick<CampaignArtifact, "routingTargets" | "intakePipelineId">) =>
-  (form.routingTargets ?? []).includes("pipeline_attach") || Boolean(form.intakePipelineId);
+  (form.routingTargets ?? []).includes("pipeline_attach") || (Boolean(form.intakePipelineId) && (form.routingTargets ?? []).length === 0);
 
 export function isBlockedBrief(brief: Pick<CampaignBrief, "lifecycleStatus" | "blocker">): boolean {
   return brief.lifecycleStatus === "blocked" || Boolean(brief.blocker);

@@ -5,7 +5,7 @@ deployment, production persistence, authenticated runtime and owner acceptance
 remain owed. This candidate is not an active provider integration or a complete
 Finance department.
 
-Migration `20271020000320` adds company-scoped, versioned owner planning inputs,
+Migration `20271020000340` adds company-scoped, versioned owner planning inputs,
 not actual bank balances or accounting records. It depends on the source/company
 authority and budget migrations. Save/read reuse the canonical workspace and
 current company gates. Browser table access is denied. Saves use an expected
@@ -13,7 +13,7 @@ revision, immutable history and an atomic canonical capability receipt. Currency
 cannot change within a scenario. Missing opening cash stays unknown.
 
 Current-main reconciliation preserves the released account proof and budget
-migration `20271020000310`. Service credentials have SELECT-only table access:
+migration `20271020000330`. Service credentials have SELECT-only table access:
 raw inserts, updates and deletes cannot bypass the authenticated save contract.
 The preceding raw-write grant failed the new six negative controls in disposable
 fixtures; the repaired schema passed both fresh scenario replays.
@@ -45,7 +45,7 @@ Auth anonymization.
 
 Current-main replay also executes the actual later canonical retirement policy.
 The preceding scenario guard fails this new control; the corrected forward
-20271020000320 migration passes both replays without changing unrelated table
+20271020000340 migration passes both replays without changing unrelated table
 dispositions. Focused lint and strict TypeScript completed successfully after
 the interrupted run. No hosted review, CI, release or runtime acceptance is
 inferred from these local results.

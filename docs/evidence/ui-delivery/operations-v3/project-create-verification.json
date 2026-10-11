@@ -5,6 +5,23 @@
       "theme": "dark",
       "width": 1536,
       "height": 770,
+      "paigeOpen": false,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": true,
+        "width": 480
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeOpen": true,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -20,6 +37,7 @@
       "theme": "dark",
       "width": 1366,
       "height": 768,
+      "paigeOpen": false,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -35,6 +53,32 @@
       "theme": "dark",
       "width": 1366,
       "height": 768,
+      "paigeOpen": false,
+      "flow": "milestone",
+      "refusalShown": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": true,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": true,
+        "width": 480
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": true,
       "flow": "milestone",
       "refusalShown": true,
       "focusRestored": true
@@ -43,6 +87,23 @@
       "theme": "dark",
       "width": 1024,
       "height": 768,
+      "paigeOpen": false,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": true,
+        "width": 480
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeOpen": true,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -58,6 +119,23 @@
       "theme": "dark",
       "width": 900,
       "height": 1000,
+      "paigeOpen": false,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": false,
+        "width": 480
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeOpen": true,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -73,6 +151,7 @@
       "theme": "dark",
       "width": 390,
       "height": 844,
+      "paigeOpen": false,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -88,6 +167,23 @@
       "theme": "light",
       "width": 1536,
       "height": 770,
+      "paigeOpen": false,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": true,
+        "width": 480
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeOpen": true,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -103,6 +199,7 @@
       "theme": "light",
       "width": 1366,
       "height": 768,
+      "paigeOpen": false,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -118,6 +215,32 @@
       "theme": "light",
       "width": 1366,
       "height": 768,
+      "paigeOpen": false,
+      "flow": "milestone",
+      "refusalShown": true,
+      "focusRestored": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": true,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": true,
+        "width": 480
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeOpen": true,
       "flow": "milestone",
       "refusalShown": true,
       "focusRestored": true
@@ -126,6 +249,23 @@
       "theme": "light",
       "width": 1024,
       "height": 768,
+      "paigeOpen": false,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": true,
+        "width": 480
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeOpen": true,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -141,6 +281,23 @@
       "theme": "light",
       "width": 900,
       "height": 1000,
+      "paigeOpen": false,
+      "flow": "project",
+      "reviewCancelRetains": true,
+      "refusalShown": true,
+      "focusRestored": true,
+      "noOverflow": true,
+      "geometry": {
+        "contained": true,
+        "canScroll": false,
+        "width": 480
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeOpen": true,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,
@@ -156,6 +313,7 @@
       "theme": "light",
       "width": 390,
       "height": 844,
+      "paigeOpen": false,
       "flow": "project",
       "reviewCancelRetains": true,
       "refusalShown": true,

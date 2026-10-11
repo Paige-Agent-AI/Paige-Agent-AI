@@ -64,7 +64,7 @@ export function OperationsProjectCreator({ actorId, tenantId, members, project, 
   };
   const attrs = { "data-pg": theme, "data-theme": theme }; const noun = project ? "milestone" : "project";
   return <>
-    <Sheet open onOpenChange={open => { if (!open) requestClose(); }}><SheetContent className="ops-detail-sheet paige-solo" {...attrs} onCloseAutoFocus={event => {
+    <Sheet open onOpenChange={open => { if (!open) requestClose(); }}><SheetContent className="ops-detail-sheet ops-work-create-sheet paige-solo" {...attrs} onCloseAutoFocus={event => {
       if (invoker?.isConnected) { event.preventDefault(); invoker.focus(); }
     }}><SheetHeader><SheetTitle>{project ? "Mark the next meaningful step" : "Give the work a clear path"}</SheetTitle>
       <SheetDescription>{project ? `Add a milestone to ${project.title}.` : "Create a project with an accountable owner and a real time window."}</SheetDescription></SheetHeader>

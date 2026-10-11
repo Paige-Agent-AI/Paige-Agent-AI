@@ -54,6 +54,9 @@ describe("pipeline_attach_default executor", () => {
     [{ code: "", message: "TypeError: fetch failed" }],
     [{ code: "08006", message: "connection failure" }],
     [{ code: "57014", message: "canceling statement due to statement timeout" }],
+    [{ code: "40P01", message: "deadlock detected" }],
+    [{ code: "PGRST003", message: "Timed out acquiring connection from connection pool." }],
+    [{ code: "PGRST001", message: "Could not connect with the database" }],
   ])("retries a stale claim or a failure that never got a database answer (%#)", async (error) => {
     const h = ctx(async () => ({ data: null, error }));
     const out = await runExecutor(step(), h.ctx);

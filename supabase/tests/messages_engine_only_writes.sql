@@ -2,7 +2,7 @@
 -- ANT-40 — messages is ENGINE-WRITTEN ONLY (direct PostgREST writes denied).
 --
 -- Failing-first contract: before the paired migration
--- (20271020000040_messages_engine_only_writes), the write assertions FAIL — the
+-- (20271020000270_messages_engine_only_writes), the write assertions FAIL — the
 -- ANT-38-shaped messages_insert/messages_update policies allow a tenant
 -- owner/admin (and platform owner) to insert and edit message rows directly.
 -- After the migration every authenticated direct write is denied by RLS while

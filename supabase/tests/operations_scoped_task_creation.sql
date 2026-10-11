@@ -53,8 +53,16 @@ insert into ops_created_identity select (public.plan_assign_task_scoped('ec01000
 select pg_temp.check_true((select count(*)=1 from public.plan_items where id=(select id from ops_created_identity) and title='Test self task' and priority='high' and parent_item_id='ec010000-0000-4000-8000-00000000b001' and created_by='ec010000-0000-4000-8000-000000000001'),'canonical creation fields readback');
 select pg_temp.check_true((select count(*)=1 from public.audit_logs where entity_id=(select id from ops_created_identity) and action='plan_assign_task'),'canonical creation audit preserved');
 -- All event/bus inserts, including any queued pg_net work, roll back here.
-insert into public.user_roles(user_id,role) values ('ec010000-0000-4000-8000-000000000001','admin') on conflict do nothing;
-select pg_temp.refused($s$select public.plan_assign_task_scoped('ec010000-0000-4000-8000-000000000001','ec010000-0000-4000-8000-000000001111','Test forbidden assignment','ec010000-0000-4000-8000-000000000002')$s$,'42501','global role cannot grant target-tenant task delegation');
+-- Preserve both canonical role-sync triggers: grant administration while in B,
+-- establish ordinary membership in A, then switch to A for the API assertion.
+select set_config('request.jwt.claim.sub','ec020000-0000-4000-8000-000000000001',true);
+update public.tenant_members set role='admin' where user_id='ec020000-0000-4000-8000-000000000001';
+insert into public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) values
+ ('ec010000-0000-4000-8000-000000001111','ec020000-0000-4000-8000-000000000001','member','active',false,now());
+insert into public.user_roles(user_id,role) values ('ec020000-0000-4000-8000-000000000001','admin') on conflict do nothing;
+update public.profiles set active_tenant_id='ec010000-0000-4000-8000-000000001111' where user_id='ec020000-0000-4000-8000-000000000001';
+select pg_temp.check_true(not public.is_tenant_admin('ec010000-0000-4000-8000-000000001111') and public.is_tenant_admin('ec020000-0000-4000-8000-000000002222'),'creation fixture actor is member A and admin B');
+select pg_temp.refused($s$select public.plan_assign_task_scoped('ec020000-0000-4000-8000-000000000001','ec010000-0000-4000-8000-000000001111','Test forbidden assignment','ec010000-0000-4000-8000-000000000002')$s$,'42501','global role cannot grant target-tenant task delegation');
 
 -- Operations only serves the canonical top-level standalone shell.
 select set_config('request.jwt.claim.sub','ec010000-0000-4000-8000-000000000001',true);

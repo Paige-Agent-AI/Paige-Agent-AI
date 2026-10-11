@@ -19,8 +19,8 @@ CREATE TABLE public.quickbooks_oauth_attempts (
 );
 CREATE UNIQUE INDEX quickbooks_current_oauth_attempt ON public.quickbooks_oauth_attempts(actor_id,entity_id,environment) WHERE status IN ('pending','launched','exchanging');
 ALTER TABLE public.quickbooks_oauth_attempts ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.quickbooks_oauth_attempts FROM PUBLIC,anon,authenticated;
-GRANT ALL ON public.quickbooks_oauth_attempts TO service_role;
+REVOKE ALL ON public.quickbooks_oauth_attempts FROM PUBLIC,anon,authenticated,service_role;
+GRANT SELECT ON public.quickbooks_oauth_attempts TO service_role;
 COMMENT ON TABLE public.quickbooks_oauth_attempts IS 'QuickBooks consent correlation only; existing Integrations retains connection lifecycle. No tokens/native-company verification. Preparing or consuming state is not a connected provider.';
 
 CREATE FUNCTION public._quickbooks_attempt_guard() RETURNS trigger
@@ -69,6 +69,8 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE entity public.finance_company_entities; state text; ticket text; proof text; attempt public.quickbooks_oauth_attempts;
 BEGIN
  PERFORM public._finance_assert_workspace(auth.uid(),_expected_tenant_id);
+ PERFORM 1 FROM public.tenants WHERE id=_expected_tenant_id AND NOT lifecycle_execution_paused FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Financial workspace paused' USING ERRCODE='42501'; END IF;
  IF _environment IS NULL OR _environment NOT IN ('sandbox','production') THEN RAISE EXCEPTION 'Invalid QuickBooks environment' USING ERRCODE='22023'; END IF;
  SELECT * INTO entity FROM public.finance_company_entities WHERE tenant_id=_expected_tenant_id AND id=_entity_id AND is_active FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Financial company unavailable' USING ERRCODE='42501'; END IF;

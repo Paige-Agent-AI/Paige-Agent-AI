@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
  SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub',nullif(current_setting('test.actor',true),''))::uuid
 $$;
 \if :apply_quickbooks_migration
-\ir ../migrations/20270602000427_quickbooks_company_oauth_attempts.sql
+\ir ../migrations/20270602000436_quickbooks_company_oauth_attempts.sql
 \endif
 CREATE TABLE public.fixture_qb_result(value jsonb);
 GRANT ALL ON fixture_qb_result TO authenticated,service_role;
@@ -32,6 +32,23 @@ DO $$ DECLARE result jsonb; BEGIN
  IF result->>'requested_scope'<>'com.intuit.quickbooks.accounting' OR (result->>'provider_connected')::boolean THEN RAISE EXCEPTION 'Prepared consent claimed provider/payment authority'; END IF;
  IF EXISTS(SELECT 1 FROM quickbooks_oauth_attempts WHERE state_hash=result->>'state' OR launch_hash=result->>'launch_ticket') THEN RAISE EXCEPTION 'Raw nonce persisted'; END IF;
 END $$;
+SET ROLE service_role;
+SELECT public.fixture_expect_error('INSERT INTO quickbooks_oauth_attempts SELECT * FROM quickbooks_oauth_attempts WHERE false','42501');
+SELECT public.fixture_expect_error('UPDATE quickbooks_oauth_attempts SET status=status WHERE false','42501');
+SELECT public.fixture_expect_error('DELETE FROM quickbooks_oauth_attempts WHERE false','42501');
+RESET ROLE;
+SELECT set_config('test.paused_receipt_count',(SELECT count(*) FROM fixture_receipts)::text,false);
+BEGIN;
+UPDATE tenants SET lifecycle_execution_paused=true WHERE id='20000000-0000-0000-0000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT public.fixture_expect_error('SELECT public.fixture_qb_prepare()','42501');
+RESET ROLE;
+DO $$ BEGIN
+ IF (SELECT count(*) FROM fixture_receipts)::text<>current_setting('test.paused_receipt_count')
+  OR (SELECT count(*) FROM quickbooks_oauth_attempts)<>1 OR (SELECT status FROM quickbooks_oauth_attempts)<>'pending' THEN
+  RAISE EXCEPTION 'Paused preparation changed prior attempt or receipt'; END IF;
+END $$;
+ROLLBACK;
 SET ROLE service_role;
 SELECT public.fixture_expect_error($q$SELECT public.quickbooks_oauth_attempt_service('consume',public.fixture_qb_input())$q$,'42501');
 SELECT public.fixture_expect_error($q$SELECT public.quickbooks_oauth_attempt_service('launch',public.fixture_qb_input()||jsonb_build_object('launch_proof_hash',repeat('d',64)))$q$,'42501');

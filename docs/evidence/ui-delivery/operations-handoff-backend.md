@@ -10,14 +10,14 @@ VISUAL_DIRECTION: NOT_APPLICABLE: No new rendered surface or visual change.
 AUTOMATED_EVIDENCE: PASS:49 focused synthetic request/acknowledgement/readback/authority tests.24 rollback SQL assertions registered but unexecuted; hosted CI owed.
 STATIC_EVIDENCE: PASS: Independent product and reconciled head COMPLETE COMPATIBLE; scoped ESLint and migration/signature guards PASS. Direct compiler retains exactly ten existing baseline diagnostics, no Operations diagnostic; plain tsc exit1.
 RENDERED_EVIDENCE: NOT_APPLICABLE: Unmounted adapter and SQL only; this record does not claim a usable handoff screen.
-BEHAVIORAL_EVIDENCE: PASS: Synthetic tests verify pinned source, active commercial status, people/date validation, actor fences, bounded acknowledgement, independent canonical readback and unknown-result recovery without auto replay.
+BEHAVIORAL_EVIDENCE: PASS: Synthetic tests verify pinned source, active commercial status, people/date validation, actor fences, bounded acknowledgement, independent canonical readback and lost-response handling without auto replay.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No customer login, handoff execution or authenticated client acceptance.
 KEYBOARD_FOCUS: NOT_APPLICABLE: No new rendered control; mounted handoff keyboard validation remains owed in the subsequent UI slice.
 ZOOM_REFLOW: NOT_APPLICABLE: No changed geometry; mounted handoff zoom proof remains owed.
 REDUCED_MOTION: NOT_APPLICABLE: No rendered transition or motion introduced.
 STATE_COVERAGE: PASS: Source refusal, stale source, wrong actor, lost response, malformed acknowledgement, mismatched project/milestone and unknown readback covered in synthetic tests. Actual database execution and mounted UI remain owed.
 TRUTHFUL_STATE_LABELS: PASS: Acknowledgement is not verified readback; client acceptance remains false; callable backend is not Chat/Live integration.
-SOLO_UI: NO: Server capability and unmounted modules; canonical standalone eligibility enforced server-side. No new browser flow in this slice.
+SOLO_UI: YES: Recognized canonical Solo source modules, currently unmounted; no browser layout or interaction changes.
 UNVERIFIED: SQL24, exact-head CI, deployment, persistence, mounted UI recovery, Spine/Trust integration and authenticated customer acceptance remain owed.
 OWNER_INTENT: Owner implementation authorization ANT-11: accepted engagement to canonical project, milestones and accountable work.
 MUST_NOT_HAPPEN: Duplicate projects, draft signing activation, invented client acceptance, foreign tenant authority or provider effects.
@@ -34,3 +34,19 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: Synthetic readback and static proof only; SQL, 
 RELEASE_RECOVERY: position=retain original request/source and inspect canonical records before retry, reviewed forward fix; reference=docs/delivery/operations-engagement-handoff-packet.md.
 
 The evidence gate recognizes source modules under the Operations directory. They are unmounted: no click, conversation, model tool, provider or scheduler activates this function here. This is an evidence record, not a waiver or a claim that the complete Operations handoff experience is delivered.
+
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.
+
+SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.
+
+SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.
+
+SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.
+
+SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.
+
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.
+
+SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.
+
+SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: Unmounted backend adapters have no rendered geometry; this slice claims no handoff browser interaction. Subsequent mounted UI must provide actual viewport proof.

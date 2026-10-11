@@ -19,6 +19,12 @@ project_id = "xygzykjyynhzqytbqnzu"
   # controlled proof: the gateway 401'd every */2 tick before the function ran.
   [functions.paige-media-sweeper]
     verify_jwt = false
+  # The model discovery watch is CRON-invoked (daily 03:17 UTC; the cron poster presents no
+  # Supabase JWT), so verify_jwt=false — it fails closed in-function to the same internal-caller
+  # gate as its siblings (service-role bearer OR a valid x-cron-token). Found live by the
+  # controlled beat: the gateway 401'd the cron-token POST before the function ran.
+  [functions.paige-model-watch]
+    verify_jwt = false
   # fal.ai completion callbacks carry no Supabase JWT — the ENTIRE auth model is
   # fal's own ED25519 callback signature verified in-function against fal's JWKS
   # (±300s replay window; completion-only — it can never create jobs or spend).

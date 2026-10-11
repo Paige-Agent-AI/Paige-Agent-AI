@@ -1,4 +1,5 @@
-// paige-model-watch — ANT-37: the Model Discovery Watch beat. Scheduled daily by the incumbent
+// paige-model-watch — ANT-37: the Model Discovery Watch beat.
+// (Redeploy bump 2026-10-11: config-only changes don't enter the deploy workflow's affected set, so this function must be touched to apply its verify_jwt=false config from supabase/config.toml — the gateway 401'd cron-token beats until the flag landed.) Scheduled daily by the incumbent
 // pg_cron pattern (migration-registered, like heartbeat/evaluator-daily), manually invocable by
 // the service role.
 //

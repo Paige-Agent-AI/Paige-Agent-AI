@@ -62,3 +62,7 @@ Owned PR1997 Supabase preview, with_data=false and FUNCTIONS_DEPLOYED, executed 
 Matrix changes: Planning persistence and Team/Solo negative claims now have isolated PostgreSQL PASS; shared protected database-contract and verify remain pending on exact1833 head. Clients explicit release/artifact projection/acceptance remains UNAVAILABLE; full mounted rendered validation remains UNVERIFIED. All Spine/Harness/Trust/Rail/Orchestration/Operating Fabric/Agent Intelligence/Chat Live integrations remain owed. No production migration/deployment/readback or customer authentication performed.
 
 Sales owner acknowledged ANT-49 and is fixing a synthetic fixture creator constraint in PR1996, migration280; merge/production-safe proof not received. Handoff1992 remains blocked and its unapplied270 requires RRSR reallocation after Sales repair. Latest evidence recorded in ANT-11 comments and PR1997 conversation; no customer outcome claim.
+
+## Routine Release Self-Recovery — current production frontier
+Sales1996 merged e0b047d3cae51820f7b1450269582d129680d513. Independent production catalog confirms distinct signing/commercial trigger contracts and applied310; Finance300 also applied. Current main incorporated without discarding work. Owned unapplied Delivery290 renamed to320 after current open-PR/applied scan. Handoff330 and client-review340 proposed separately; no production history rewritten. Fresh final-head review/CI and current PostgreSQL assertions remain required. Earlier290 proof is historical isolated evidence, not an applied production version.
+

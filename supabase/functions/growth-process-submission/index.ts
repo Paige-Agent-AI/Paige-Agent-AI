@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
     }
 
     applyIntakeSettings(plan, form);
-    appendDefaultIntake(plan, form);
+    appendDefaultIntake(plan, form, (rows?.length ?? 0) > 0);
 
     // Existing dispatch ledger for this submission -> skip already-completed executors (idempotent).
     const { data: existingDispatches } = await admin
@@ -476,25 +476,35 @@ async function runExecutor(
     // -- pipeline_attach_default: a form with no deal route of its own files its lead into the
     // business's DEFAULT pipeline, first open stage (owner ruling 2026-10-11). The database decides:
     // growth_attach_submission_default_deal refuses a routed form, reuses (never moves) an open deal,
-    // and answers {skipped} when there is no default pipeline or open stage — nothing to retry, so
-    // that is "done", reported as it is, never as a deal that was made. --
+    // and answers {skipped} when there is no default pipeline or open stage. This step was added to
+    // forms that already processed cleanly, so it must never fail one (§58): only a stale claim
+    // (40001) is retried; every other refusal or skip is "done" with the reason, reported as it is and
+    // never as a deal that was made. --
     case "pipeline_attach_default": {
+      const notFiled = (reason: string): ExecOutcome =>
+        ({ status: "done", result: { note: "default_pipeline_not_filed", reason } });
       const contactId = ctx.contactId;
       if (!contactId) {
-        // Nothing to hang a deal on. Where this form never creates contacts, that is the form's
-        // design, not a failure to retry; where it does, it is pipeline_attach's own outcome.
+        // Nothing to hang a deal on: a visitor who left no email or phone, or a contact step that did
+        // not produce one (that step reports its own outcome).
         const idn = extractIdentity(payload, form.schema_json);
-        if (!idn.email && !idn.phone) return { status: "done", result: { note: "no_contact_for_pipeline" } };
-        if (p.config.creates_contact !== true) return { status: "done", result: { note: "no_contact_for_pipeline" } };
-        return { status: "error", result: {}, error: "no_contact_for_pipeline" };
+        return notFiled(!idn.email && !idn.phone ? "no_identity" : "no_contact");
       }
       const { data: filed, error: fileError } = await admin.rpc("growth_attach_submission_default_deal", {
         p_submission_id: submissionId, p_claim_attempt: ctx.claimAttempt,
       });
-      if (fileError || !filed) {
-        return { status: "error", result: {}, error: `submission_default_deal_failed: ${String(fileError?.message ?? "no result").slice(0, 200)}` };
+      if (fileError) {
+        const message = String(fileError.message ?? "");
+        if (fileError.code === "40001") {
+          return { status: "error", result: {}, error: `submission_default_deal_failed: ${message.slice(0, 200)}` };
+        }
+        const code = /^[A-Z][A-Z0-9_]{2,63}/.exec(message)?.[0] ?? (fileError.code ? String(fileError.code) : "rpc_error");
+        return notFiled(code);
       }
-      return { status: "done", result: filed };
+      if (!filed || typeof filed !== "object") return notFiled("no_result");
+      const skipped = (filed as Record<string, unknown>).skipped;
+      if (typeof skipped === "string" && skipped) return notFiled(skipped);
+      return { status: "done", result: filed as Record<string, unknown> };
     }
 
     // -- paige_action / surface_to_client: file the action onto the bus (governed lane). --
@@ -728,17 +738,20 @@ function applyIntakeSettings(plan: any[], form: any): void {
 }
 
 // -- Every form lead lands in a pipeline (owner ruling 2026-10-11). --
-// A form that routes its own deals (an enabled pipeline_attach row, or auto_create_deal with a pipeline
-// on the form) keeps that one route. Any other form gets one unledgered default step, after the contact
-// step, that files the lead into the business's default pipeline. A retry re-runs it safely: the
-// database returns the deal already bound to the submission instead of making a second one.
+// A form routes its own deals exactly when the plan above runs a pipeline_attach step: an enabled
+// automation whose target executor is pipeline_attach, or — only while the form has NO enabled automation
+// rows — auto_create_deal with a pipeline on the form. Stale intake columns under enabled automations route
+// nothing (the plan ignores them), so such a form is unrouted. growth_attach_submission_default_deal and
+// marketing.forms.unrouted_current apply the same rule. Any unrouted form gets one unledgered default step,
+// after the contact step, that files the lead into the business's default pipeline. A retry re-runs it
+// safely: the database returns the deal already bound to the submission instead of making a second one.
 // deno-lint-ignore no-explicit-any
-function appendDefaultIntake(plan: any[], form: any): void {
+function appendDefaultIntake(plan: any[], form: any, hasAutomationRows: boolean): void {
   if (plan.some((p) => p.executor === "pipeline_attach" || p.executor === "pipeline_attach_default")) return;
-  if (form.auto_create_deal && form.pipeline_id) return;
+  if (!hasAutomationRows && form.auto_create_deal && form.pipeline_id) return;
   plan.push({
     automationId: null, slug: "pipeline_attach_default", executor: "pipeline_attach_default", lane: null,
-    config: { creates_contact: plan.some((p) => p.executor === "contact_upsert") }, targetConfig: {},
+    config: {}, targetConfig: {},
   });
 }
 

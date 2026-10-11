@@ -6,6 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
+import { sanitizeUtm } from "../../supabase/functions/_shared/growth-intake";
 
 const transpile = (src: string) => ts.transpileModule(src, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 
@@ -23,7 +24,7 @@ const runExecutor = new Function("s", "extractIdentity", "resolveIntakeOperator"
   () => ({}),
 ) as (plan: unknown, ctx: unknown) => Promise<Outcome>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const appendDefaultIntake = new Function(transpile(appendSrc) + ";return appendDefaultIntake;")() as (plan: any[], form: any) => void;
+const appendDefaultIntake = new Function(transpile(appendSrc) + ";return appendDefaultIntake;")() as (plan: any[], form: any, hasAutomationRows: boolean) => void;
 
 function ctx(rpc: (...args: unknown[]) => Promise<{ data: unknown; error: unknown }>, over: Record<string, unknown> = {}) {
   const writes: unknown[] = [];
@@ -31,8 +32,9 @@ function ctx(rpc: (...args: unknown[]) => Promise<{ data: unknown; error: unknow
   return { writes, ctx: { admin, tenantId: "tenant", submissionId: "submission", claimAttempt: 2, form: { schema_json: null },
     payload: {}, submission: {}, contactId: "client", setContactId: () => {}, ...over } };
 }
-const step = (creates_contact = true) => ({ automationId: null, slug: "pipeline_attach_default", executor: "pipeline_attach_default",
-  lane: null, config: { creates_contact }, targetConfig: {} });
+const step = () => ({ automationId: null, slug: "pipeline_attach_default", executor: "pipeline_attach_default",
+  lane: null, config: {}, targetConfig: {} });
+const notFiled = (reason: string) => ({ status: "done", result: { note: "default_pipeline_not_filed", reason } });
 
 describe("pipeline_attach_default executor", () => {
   it("files through the default-deal admission with the claimed attempt, and nothing else", async () => {
@@ -43,27 +45,36 @@ describe("pipeline_attach_default executor", () => {
     expect(calls).toEqual([["growth_attach_submission_default_deal", { p_submission_id: "submission", p_claim_attempt: 2 }]]);
     expect(h.writes).toEqual([]);
   });
-  it("reports a skipped filing as done, as it is — not as a deal", async () => {
-    const h = ctx(async () => ({ data: { skipped: "no_default_pipeline" }, error: null }));
-    expect(await runExecutor(step(), h.ctx)).toEqual({ status: "done", result: { skipped: "no_default_pipeline" } });
+  it.each(["no_default_pipeline", "no_open_stage"])("reports a skipped filing (%s) as done and not filed — never as a deal", async (reason) => {
+    const h = ctx(async () => ({ data: { skipped: reason, pipeline_id: "p" }, error: null }));
+    expect(await runExecutor(step(), h.ctx)).toEqual(notFiled(reason));
   });
-  it("reports a refusal as an error with the database's reason and makes no direct write", async () => {
-    const h = ctx(async () => ({ data: null, error: { message: "FORM_DEAL_STALE_CLAIM" } }));
+  it("retries only a stale claim (40001)", async () => {
+    const h = ctx(async () => ({ data: null, error: { code: "40001", message: "FORM_DEAL_STALE_CLAIM" } }));
     const out = await runExecutor(step(), h.ctx);
-    expect(out.status).toBe("error");
-    expect(out.error).toBe("submission_default_deal_failed: FORM_DEAL_STALE_CLAIM");
+    expect(out).toEqual({ status: "error", result: {}, error: "submission_default_deal_failed: FORM_DEAL_STALE_CLAIM" });
     expect(h.writes).toEqual([]);
   });
-  it("without a contact: nothing to file when there is no identity, or when the form never makes contacts", async () => {
+  it.each([
+    [{ code: "42501", message: "FORM_DEAL_ROUTE_INVALID" }, "FORM_DEAL_ROUTE_INVALID"],
+    [{ code: "42501", message: "FORM_DEAL_OPERATOR_REQUIRED" }, "FORM_DEAL_OPERATOR_REQUIRED"],
+    [{ code: "42501", message: "FORM_DEAL_TENANT_INACTIVE" }, "FORM_DEAL_TENANT_INACTIVE"],
+    [{ code: "PGRST202", message: "Could not find the function public.growth_attach_submission_default_deal" }, "PGRST202"],
+    [{ code: "", message: "TypeError: fetch failed" }, "rpc_error"],
+  ])("never fails the submission on any other refusal (%#): done, not filed, with the reason", async (error, reason) => {
+    const h = ctx(async () => ({ data: null, error }));
+    expect(await runExecutor(step(), h.ctx)).toEqual(notFiled(reason));
+    expect(h.writes).toEqual([]);
+  });
+  it("an empty answer is done, not filed", async () => {
+    expect(await runExecutor(step(), ctx(async () => ({ data: null, error: null })).ctx)).toEqual(notFiled("no_result"));
+  });
+  it("without a contact: done and not filed, whether or not the visitor left an address — and nothing is called", async () => {
     let called = false;
     const rpc = async () => { called = true; return { data: {}, error: null }; };
-    expect((await runExecutor(step(true), ctx(rpc, { contactId: null }).ctx)).status).toBe("done");
-    expect((await runExecutor(step(false), ctx(rpc, { contactId: null, payload: { email: "a@b.test" } }).ctx)).status).toBe("done");
+    expect(await runExecutor(step(), ctx(rpc, { contactId: null }).ctx)).toEqual(notFiled("no_identity"));
+    expect(await runExecutor(step(), ctx(rpc, { contactId: null, payload: { email: "a@b.test" } }).ctx)).toEqual(notFiled("no_contact"));
     expect(called).toBe(false);
-  });
-  it("without a contact where the form should have made one: an error the sweeper retries", async () => {
-    const out = await runExecutor(step(true), ctx(async () => ({ data: {}, error: null }), { contactId: null, payload: { email: "a@b.test" } }).ctx);
-    expect(out).toEqual({ status: "error", result: {}, error: "no_contact_for_pipeline" });
   });
 });
 
@@ -71,26 +82,29 @@ describe("appendDefaultIntake plan step", () => {
   const contact = { automationId: "c", slug: "contact_upsert", executor: "contact_upsert" };
   it("adds one unledgered default step after the contact step for an unrouted form", () => {
     const plan: Array<Record<string, unknown>> = [contact, { executor: "email_alert" }];
-    appendDefaultIntake(plan, { auto_create_deal: false, pipeline_id: null });
-    appendDefaultIntake(plan, { auto_create_deal: false, pipeline_id: null });
+    appendDefaultIntake(plan, { auto_create_deal: false, pipeline_id: null }, true);
+    appendDefaultIntake(plan, { auto_create_deal: false, pipeline_id: null }, true);
     expect(plan.map((p) => p.executor)).toEqual(["contact_upsert", "email_alert", "pipeline_attach_default"]);
-    expect(plan[2]).toMatchObject({ automationId: null, config: { creates_contact: true } });
-  });
-  it("records that a form without a contact step makes no contacts", () => {
-    const plan: Array<Record<string, unknown>> = [];
-    appendDefaultIntake(plan, { auto_create_deal: false, pipeline_id: "p" });
-    expect(plan).toEqual([expect.objectContaining({ executor: "pipeline_attach_default", config: { creates_contact: false } })]);
+    expect(plan[2]).toMatchObject({ automationId: null, slug: "pipeline_attach_default", config: {} });
   });
   it("leaves a routed form's one route alone", () => {
     const routedByRow: Array<Record<string, unknown>> = [contact, { executor: "pipeline_attach", automationId: "r" }];
-    appendDefaultIntake(routedByRow, { auto_create_deal: false, pipeline_id: null });
+    appendDefaultIntake(routedByRow, { auto_create_deal: false, pipeline_id: null }, true);
     expect(routedByRow.map((p) => p.executor)).toEqual(["contact_upsert", "pipeline_attach"]);
+    // No automation rows: the intake columns are the route.
     const routedByColumns: Array<Record<string, unknown>> = [contact];
-    appendDefaultIntake(routedByColumns, { auto_create_deal: true, pipeline_id: "p" });
+    appendDefaultIntake(routedByColumns, { auto_create_deal: true, pipeline_id: "p" }, false);
     expect(routedByColumns.map((p) => p.executor)).toEqual(["contact_upsert"]);
   });
-  it("is wired after the intake settings in the request path", () => {
-    expect(processor).toMatch(/applyIntakeSettings\(plan, form\);\s*appendDefaultIntake\(plan, form\);/);
+  it("stale intake columns under enabled automations route nothing: the form gets the default step", () => {
+    const plan: Array<Record<string, unknown>> = [{ executor: "notify_team", automationId: "n" }];
+    appendDefaultIntake(plan, { auto_create_deal: true, pipeline_id: "p" }, true);
+    expect(plan.map((p) => p.executor)).toEqual(["notify_team", "pipeline_attach_default"]);
+  });
+  it("is wired after the intake settings in the request path, told whether the form has enabled automation rows", () => {
+    expect(processor).toMatch(/applyIntakeSettings\(plan, form\);\s*appendDefaultIntake\(plan, form, \(rows\?\.length \?\? 0\) > 0\);/);
+    // rows is the enabled-automation read the plan is built from.
+    expect(processor).toMatch(/\.from\("growth_form_automations"\)[\s\S]{0,300}\.eq\("enabled", true\)/);
   });
 });
 
@@ -113,11 +127,11 @@ function inbound(source: Source, rpcResult: { data: unknown; error: unknown } | 
     return q;
   };
   const client = { from: table, rpc: async (...args: unknown[]) => { rpcCalls.push(args); if (rpcResult === "throw") throw new Error("network"); return rpcResult; } };
-  new Function("Deno", "createClient", "findClientIdByAddress", "insertClientWithAddresses", "console", transpile(inboundSource))(
-    Deno, () => client, async () => existingContact, async () => ({ data: { id: "new-contact" } }), { error: () => {} },
+  new Function("Deno", "createClient", "findClientIdByAddress", "insertClientWithAddresses", "sanitizeUtm", "console", transpile(inboundSource))(
+    Deno, () => client, async () => existingContact, async () => ({ data: { id: "new-contact" } }), sanitizeUtm, { error: () => {} },
   );
-  const send = async (body: unknown) => {
-    const res = await handler!(new Request("https://x.test/functions/v1/growth-inbound/tok", { method: "POST", body: JSON.stringify(body) }));
+  const send = async (body: unknown, query = "") => {
+    const res = await handler!(new Request(`https://x.test/functions/v1/growth-inbound/tok${query}`, { method: "POST", body: JSON.stringify(body) }));
     return { status: res.status, json: await res.json() };
   };
   return { send, rpcCalls, inserts };
@@ -138,6 +152,20 @@ describe("growth-inbound default pipeline", () => {
     expect(out.json).toEqual({ ok: true, contact_id: "new-contact" });
     expect(h.rpcCalls).toEqual([]);
     expect(h.inserts.map(([t]) => t)).toEqual(["growth_form_submissions"]);
+  });
+  it("records the lead's campaign and click tags on the submission, sanitized as public intake does", async () => {
+    const h = inbound(src("form"), { data: {}, error: null });
+    await h.send(
+      { email: "lead@example.test", utm_campaign: "  Spring  ", utm_content: 7, fbclid: "fb1", utm: { utm_source: "meta", utm_medium: "paid" }, contact_id: "x" },
+      "?utm_source=query-loses&utm_term=kw&gclid=g1&evil=1",
+    );
+    const [, row] = h.inserts[0] as [string, Record<string, unknown>];
+    expect(row.utm_json).toEqual({ utm_source: "meta", utm_medium: "paid", utm_campaign: "Spring", utm_term: "kw", gclid: "g1", fbclid: "fb1" });
+  });
+  it("writes an empty tag set when the lead carries none", async () => {
+    const h = inbound(src("form"), { data: {}, error: null });
+    await h.send({ email: "lead@example.test" });
+    expect((h.inserts[0][1] as Record<string, unknown>).utm_json).toEqual({});
   });
   it("does not file without a contact", async () => {
     const h = inbound(src(null), { data: {}, error: null });

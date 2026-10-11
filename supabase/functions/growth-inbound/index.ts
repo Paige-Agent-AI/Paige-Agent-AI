@@ -9,6 +9,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
+import { sanitizeUtm } from "../_shared/growth-intake.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -97,6 +98,12 @@ Deno.serve(async (req) => {
     // Record submission against the bridge's target form (if mapped) — else a
     // synthetic record by writing only to growth_form_submissions when target_form_id is set.
     if (source.target_form_id) {
+      // Campaign and click tags, read the way public intake reads them (sanitizeUtm: the same keys, each a
+      // short trimmed string): from the webhook URL's query, a `utm` object in the body, or the body's own
+      // top-level keys (after the field map), later sources winning. They are what lets the lead funnel
+      // count this lead under its campaign and ad.
+      const bodyUtm = mapped.utm && typeof mapped.utm === "object" && !Array.isArray(mapped.utm) ? mapped.utm : {};
+      const utm = sanitizeUtm({ ...Object.fromEntries(url.searchParams), ...bodyUtm, ...mapped });
       await supabase.from("growth_form_submissions").insert({
         form_id: source.target_form_id,
         tenant_id: source.tenant_id,
@@ -104,6 +111,7 @@ Deno.serve(async (req) => {
         source: `external:${source.provider}`,
         external_source_id: source.id,
         payload_json: mapped,
+        utm_json: utm,
         referrer: req.headers.get("referer") ?? null,
         ip: req.headers.get("x-forwarded-for") ?? null,
         user_agent: req.headers.get("user-agent") ?? null,
@@ -113,7 +121,8 @@ Deno.serve(async (req) => {
     // No target form means no submission for the form processor to route, so the lead is filed here:
     // into the business's default pipeline, first open stage (owner ruling 2026-10-11). The contact is
     // this request's outcome; a filing failure is logged and reported, never a failed request and
-    // never a deal that was not made.
+    // never a deal that was not made. Such a lead writes no submission, so the lead funnel counts its
+    // deal in the stage counts but not in leads (see growth_attach_inbound_default_deal's COMMENT).
     let deal: Record<string, unknown> | null = null;
     if (!source.target_form_id && contactId) {
       try {

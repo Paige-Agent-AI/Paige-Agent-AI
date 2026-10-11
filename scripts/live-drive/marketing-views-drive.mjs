@@ -166,6 +166,10 @@ async function main() {
               // Populated fixtures must render populated: a failed read here is a harness or code defect.
               const failed = await page.evaluate(() => [...document.querySelectorAll(".campaigns-scroll h2, .campaigns-scroll h3")].map((h) => h.textContent ?? "").filter((t) => /could not load/.test(t)));
               check(failed.length === 0, `${id}: every read lands (no error state on populated data)`, failed.join(" | "));
+              if (tab !== "ads") {
+                const strip = await page.evaluate(() => [...document.querySelectorAll(".campaigns-tabs [role=tab]")].map((t) => t.textContent?.trim()));
+                check(strip.join("|") === "Overview|Campaigns|Audience|Content|Social|Email|Analytics", `${id}: Marketing's seven tabs, with no Ads tab`, strip.join("|"));
+              }
               if (tab === "ads") {
                 const drawn = await page.evaluate(() => ({ sum: document.querySelector(".mad .mov-sum")?.textContent ?? "", views: document.querySelectorAll('.mad .campaigns-segmented button').length, prov: Boolean(document.querySelector(".mad-prov")), nums: [...document.querySelectorAll(".mad-nums dd")].map((dd) => dd.textContent), plan: document.querySelector(".mad-plan")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
                 check(/nothing here is estimated/.test(drawn.sum) && /3 ad copy drafts/.test(drawn.sum) && drawn.views === 5 && drawn.prov && drawn.nums.every((n) => n === "—") && /About \$2,000 for April/.test(drawn.plan) && drawn.h1 === 0, `${id}: the desk opens on nothing estimated, five views, the provider strip, a ghost spend card and the brief's budget quoted as a plan`, JSON.stringify(drawn));
@@ -273,7 +277,14 @@ async function main() {
       await page.locator(".mad .campaigns-segmented button", { hasText: "Creative" }).click();
       const creative = await page.evaluate(() => ({ cards: document.querySelectorAll(".mad-card").length, first: document.querySelector(".mad-prev-f")?.textContent ?? "" }));
       check(creative.cards === 3 && /Plan your quarter in 30 minutes/.test(creative.first), `${theme}/ads: Creative previews each saved ad with its headline and call to action`, JSON.stringify(creative));
+      const creativePath = await page.evaluate(() => document.body.dataset.harnessPath);
+      check(creativePath === "/solo/review/ads/creative", `${theme}/ads: Creative is its own address in the Ads department`, String(creativePath));
       await page.screenshot({ path: path.join(OUT, `flow-ads-creative-${theme}.png`) });
+      // An old Marketing Ads bookmark opens the same view in the Ads department, with no Marketing strip.
+      await page.goto(`${BASE}?legacy=performance&theme=${theme}&mode=populated`, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".mad", { timeout: 30000 });
+      const moved = await page.evaluate(() => ({ path: document.body.dataset.harnessPath, pressed: document.querySelector('.mad [aria-pressed="true"]')?.textContent, strip: Boolean(document.querySelector(".campaigns-tabs")), h1: document.querySelector("h1")?.textContent }));
+      check(moved.path === "/solo/review/ads/performance" && moved.pressed === "Performance" && !moved.strip && moved.h1 === "Ads", `${theme}/ads: an old /growth/ads?view=performance link opens Ads › Performance`, JSON.stringify(moved));
       // Content: every control in the preview is live (the drawer must not sit inside the region it makes
       // inert); a document prints whole; an image downloads; the filter keeps to one kind.
       await open(page, { tab: "content", theme });

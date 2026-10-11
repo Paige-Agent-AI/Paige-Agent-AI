@@ -23,6 +23,7 @@ import { TenantRelationshipsClientsWorkspace } from "@/components/tenant-relatio
 import { isLegacyRelationshipOwner } from "@/components/tenant-relationships/workspaceModel";
 import { ClientsHub } from "./conversations";
 import { GrowthHub } from "./growth2";
+import { AdsWorkspace } from "./AdsWorkspace";
 import { SalesWorkspace } from "./SalesWorkspace";
 import { FinanceWorkspace } from "./finance/FinanceWorkspace";
 import { OperationsRoute } from "./operations/OperationsRoute";
@@ -352,7 +353,7 @@ React.useEffect(()=>{clearPaigeClientScope();clearPaigePublicPresenceScope()},[a
 const full=route==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
-const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
+const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,ads:<AdsWorkspace key={accountEpochKey} tenantId={activeTenantId??null}/>,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{
   label:'Settings',

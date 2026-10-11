@@ -22,7 +22,7 @@ import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
 import { MarketingContent } from "./marketing-content";
 import { contentKindOf } from "./marketing-content-model";
-import { MarketingAds, adsViewOf } from "./marketing-ads";
+import { legacyAdsRoute } from "./ads-routing";
 import { CAPTURE_FILTERS, MarketingOverview, sendsToPipeline } from "./marketing-overview";
 import { MarketingEmail } from "./marketing-email";
 import { MarketingAudience } from "./marketing-audience";
@@ -371,15 +371,18 @@ export const Pipeline=()=>{
 export const GrowthHub=({ salesInShell = false } = {})=>{
   const params=useParams();
   const location=useLocation();
-  const target=legacySalesRoute(params.account ?? null,(params["*"]||"").split("/")[1]||"",location.search,location.hash);
+  const segment=(params["*"]||"").split("/")[1]||"";
+  // Sales and Ads each left Marketing for their own department; their old addresses replace there
+  // before any Marketing reader mounts.
+  const target=legacySalesRoute(params.account ?? null,segment,location.search,location.hash)??legacyAdsRoute(params.account ?? null,segment,location.search,location.hash);
   return target ? <Navigate to={target} replace/> : <MarketingWorkspace salesInShell={salesInShell}/>;
 };
 
 const MarketingWorkspace=({ salesInShell = false })=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
   // Commercial addresses resolve to Sales before Marketing readers mount.
-  // The owner's order (2026-10-04).
-  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['ads','Ads',()=><Ic.trend size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
+  // The owner's order (2026-10-04). Ads left for its own department (owner, 2026-10-10).
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();
@@ -536,7 +539,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   let body=<OverviewTab data={data} moved={moved} scrollToCapture={Boolean(moved&&moved!=="missing-form")||captureFilter!=="all"} onDismissMoved={()=>setOverviewQuery({moved:null})} onCanManage={setOverviewCanManage} captureFilter={captureFilter} onCaptureFilter={(filter)=>setOverviewQuery({capture:filter==="all"?null:filter})} onGo={goTo} onCreateBrief={createBrief} onOpenSales={toSales} onOpenForm={openForm} onOpenAsset={openAsset} onOpenContact={openContact} onOpenDeal={openDeal}/>;
   if(redirectTo) body=null;
   else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
-  else if(tab==="analytics") body=<AnalyticsTab data={data} range={rangeOf(query.get("range")).key} onRange={(range)=>setOverviewQuery({range:range===DEFAULT_RANGE?null:range})} onOpenForm={openForm} onOpenSales={()=>{ if(!params.account) return; if(salesInShell) navigate(subtabPath("solo",params.account,"sales","performance")); else toSales(); }} studioLauncher={<StudioLauncher/>} onOpenEmail={()=>setTab("email")} onOpenAds={()=>setTab("ads")}/>;
+  else if(tab==="analytics") body=<AnalyticsTab data={data} range={rangeOf(query.get("range")).key} onRange={(range)=>setOverviewQuery({range:range===DEFAULT_RANGE?null:range})} onOpenForm={openForm} onOpenSales={()=>{ if(!params.account) return; if(salesInShell) navigate(subtabPath("solo",params.account,"sales","performance")); else toSales(); }} studioLauncher={<StudioLauncher/>} onOpenEmail={()=>setTab("email")} onOpenAds={()=>params.account&&navigate(branchPath("solo",params.account,"ads"))}/>;
   else if(tab==="catalog") body=<Catalog setDetail={setDetail}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;
@@ -544,6 +547,5 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
   else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||[]).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>} kind={contentKindOf(query.get("kind"))} onKind={(kind)=>setOverviewQuery({kind:kind==="all"?null:kind})} piece={query.get("piece")} onPiece={(id)=>setOverviewQuery({piece:id})}/>;
-  else if(tab==="ads") body=<MarketingAds tenantId={data.tenantId} view={adsViewOf(query.get("view"))} onView={(view)=>setOverviewQuery({view:view==="overview"?null:view})} onOpenIntegrations={params.account?()=>navigate(subtabPath("solo",params.account,"settings","integrations")):null} onOpenAudience={()=>setTab("audience")} onOpenAnalytics={()=>setTab("analytics")} onOpenCampaigns={()=>setTab("campaigns")}/>;
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab==="capture"?"overview":tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab==="capture"?"overview":tab}`} className="campaigns-scroll">{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail||formDetail} onClose={detail?closeDetail:closeForm}/></div>;
 };

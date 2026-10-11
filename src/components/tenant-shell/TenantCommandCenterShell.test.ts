@@ -36,6 +36,7 @@ describe("tenant Command Center shell routing", () => {
       "Operations",
       "Clients",
       "Marketing",
+      "Ads",
       "Sales",
       "Finance",
       "Marketplace",
@@ -46,6 +47,7 @@ describe("tenant Command Center shell routing", () => {
       ["operations", "/solo/42/operations"],
       ["clients", "/solo/42/clients"],
       ["campaigns", "/solo/42/growth"],
+      ["ads", "/solo/42/ads"],
       ["sales", "/solo/42/sales"],
       ["finance", "/solo/42/finance"],
       ["marketplace", "/solo/42/marketplace"],
@@ -193,6 +195,17 @@ describe("tenant Command Center shell routing", () => {
       label: "Marketing",
       href: "/solo/42/growth",
     });
+    // Ads is its own department below Marketing (owner ruling 2026-10-10): its address lights Ads,
+    // never Marketing, and Marketing's own addresses never light Ads.
+    expect(resolveTenantShellDestination("/solo/42/ads/creative", "standalone")).toMatchObject({
+      id: "ads",
+      label: "Ads",
+      href: "/solo/42/ads",
+    });
+    expect(resolveTenantShellDestination("/solo/42/growth/analytics", "standalone").id).toBe("campaigns");
+    // Ads is a Solo department only: the five-home tenant menu (sub-account, agency) gains nothing.
+    expect(tenantShellDestinationsForPath("/business/42/command-center", "sub_account").some(({ id }) => id === "ads")).toBe(false);
+    expect(tenantShellDestinationsForPath("/solo/42/command-center").some(({ id }) => id === "ads")).toBe(false);
     expect(resolveTenantShellDestination("/solo/42/marketplace", "standalone")).toMatchObject({
       id: "marketplace",
       label: "Marketplace",

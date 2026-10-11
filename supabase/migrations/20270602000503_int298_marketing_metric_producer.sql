@@ -163,7 +163,7 @@ BEGIN
   LEFT JOIN per_day p ON p.d=g.day;
  ELSIF p_metric_key='marketing.leads.by_utm_source' THEN
   WITH grouped AS (
-   SELECT coalesce('src:'||left(lower(r->>'source'),76),'_untagged') k,min(r->>'source') lbl,count(*) n
+   SELECT coalesce('src:'||left(lower(r->>'source'),76),'_untagged') k,min(r->>'source' COLLATE "C") lbl,count(*) n
    FROM jsonb_array_elements(source_rows) r WHERE r->>'reason' IS NULL GROUP BY 1
   ), ranked AS (
    SELECT k,lbl,n,row_number() OVER (ORDER BY (k='_untagged'),n DESC,k COLLATE "C") rn FROM grouped
@@ -172,7 +172,7 @@ BEGIN
     CASE WHEN k='_untagged' THEN 'No source tag' WHEN rn>98 THEN 'Other sources' ELSE left(lbl,80) END lbl,n FROM ranked
   )
   SELECT jsonb_build_object('kind','distribution','items',coalesce(jsonb_agg(jsonb_build_object('key',left(k,80),'label',lbl,'count',n) ORDER BY (k IN ('_other','_untagged')),n DESC,k COLLATE "C"),'[]'::jsonb)) INTO vals
-  FROM (SELECT k,min(lbl) lbl,sum(n)::bigint n FROM folded GROUP BY k) x;
+  FROM (SELECT k,min(lbl COLLATE "C") lbl,sum(n)::bigint n FROM folded GROUP BY k) x;
  ELSIF p_metric_key='marketing.leads.by_campaign_tag' THEN
   WITH refs AS (
    SELECT lower(public._marketing_metric_text(b.short_ref,120)) ref,count(*) brief_count,min(b.id::text)::uuid brief_id
@@ -191,11 +191,11 @@ BEGIN
     CASE WHEN r->>'brief_id' IS NOT NULL THEN (SELECT public._marketing_metric_text(b.name,120) FROM public.campaign_briefs b WHERE b.id=(r->>'brief_id')::uuid AND b.tenant_id=p_tenant_id)
      WHEN r->>'campaign' IS NOT NULL THEN left(r->>'campaign',120) ELSE 'No campaign tag' END lbl
    FROM jsonb_array_elements(source_rows) r WHERE r->>'reason' IS NULL
-  ), counted AS (SELECT k,min(lbl) lbl,count(*) n FROM grouped GROUP BY k),
+  ), counted AS (SELECT k,min(lbl COLLATE "C") lbl,count(*) n FROM grouped GROUP BY k),
   ranked AS (SELECT k,lbl,n,row_number() OVER (ORDER BY (k='_untagged'),n DESC,k COLLATE "C") rn FROM counted),
   folded AS (SELECT CASE WHEN k<>'_untagged' AND rn>98 THEN '_other' ELSE k END k,CASE WHEN k<>'_untagged' AND rn>98 THEN 'Other tags' ELSE coalesce(nullif(btrim(lbl),''),'Untitled brief') END lbl,n FROM ranked)
   SELECT jsonb_build_object('kind','distribution','items',coalesce(jsonb_agg(jsonb_build_object('key',k,'label',lbl,'count',n) ORDER BY (k IN ('_other','_untagged')),n DESC,k COLLATE "C"),'[]'::jsonb)) INTO vals
-  FROM (SELECT k,min(lbl) lbl,sum(n)::bigint n FROM folded GROUP BY k) x;
+  FROM (SELECT k,min(lbl COLLATE "C") lbl,sum(n)::bigint n FROM folded GROUP BY k) x;
  ELSIF p_metric_key='marketing.submissions.failed_current' THEN
   SELECT jsonb_build_object('kind','distribution','items',jsonb_build_array(
    jsonb_build_object('key','failed','label','Processing failed','count',count(*) FILTER(WHERE r->>'state'='failed')),

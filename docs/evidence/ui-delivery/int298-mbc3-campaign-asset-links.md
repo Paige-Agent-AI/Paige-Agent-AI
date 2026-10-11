@@ -41,7 +41,7 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens a campaign's dossier, ad
 MOTION_PURPOSE: none added
 PROTECTED_SEAMS: tested - the brief seams unchanged (configure_campaign_brief, get_campaign_briefs), growth2 render and sales-ops contract with the new hook stubbed; unaffected and named - Overview, Analytics, Audience, Content, Social, Email, Ads
 
-INTERNAL_BUILD_IDENTITY: 71f56e8bdb31a4b58b2efcca425f663749127a58; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270602000504 is applied by deploy-migrations on merge and read back on production); edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: 71f56e8bdb31a4b58b2efcca425f663749127a58; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271020000010 (renumbered from 20270602000504, which collided with the operator retirement) is applied by deploy-migrations on merge and read back on production); edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production on merge per the pre-launch stance (CLAUDE.md §4)
 RELEASE_CLASSIFICATION: internal-only: a new planning link and its dossier section
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version

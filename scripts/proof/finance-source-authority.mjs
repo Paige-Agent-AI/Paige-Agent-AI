@@ -85,7 +85,7 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
       assert.ok(currentDisposition, 'Current canonical retirement disposition missing');
       sql(database, `CREATE TABLE public.fixture_current_retirement(definition text); INSERT INTO public.fixture_current_retirement VALUES ('${currentDisposition.replaceAll("'", "''")}');`);
     }
-    let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && suite === 'source' ? 0 : 1}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
+    let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && ['source', 'budgets'].includes(suite) ? 0 : 1}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
     if (leg === 'absent' && suite === 'accounts') {
       assert.equal(result.status, 0, result.stderr);
       result = run(database, undefined, ['-v', 'apply_account_migration=0', '-f', accountFixture]);

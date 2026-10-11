@@ -181,19 +181,19 @@ Controlled proof runs the actual migration twice in fresh disposable PostgreSQL,
 
 Liability review repair: revolving-line limits and available capacity must match the coupled account snapshot whenever that account source supplies those fields. Missing account terms remain unknown and do not prohibit independently supplied lender terms; contradictory or dropped known capacity is refused. The actual preceding SQL accepts the new conflicting-limit control, while the repaired migration passes two fresh replays and identical concurrent retry. Multiple same-label credit products remain separate.
 
-<<<<<<< HEAD
 Current canonical-policy regression: database-contract job 114386100231 exposed
 the consent migration requiring an older Finance registration removed by the
 later Operator function replacement. The controlled runner now executes both
 actual historical and current canonical definitions. The new replay failed
 before the bounded extension correction and passed after it. No other table
 disposition is rewritten. Independent review and current-head CI remain owed.
-=======
+
 Budget current-main continuation (ANT-9, 2026-10-11): unapplied migration
 20271020000310 follows independently verified production frontier 20271020000270.
 The actual later canonical retirement definition removed earlier Finance
 registrations; budget only adds its own two tables and preserves every existing
 disposition. New current-policy replay fails before correction and passes after
 it. Both fresh SQL/concurrency/receipt/tenant/security replays PASS; focused
-TypeScript and ESLint PASS. This remains an unreviewed development candidate.
->>>>>>> fd956eab6 (finance: reconcile budget source with current canonical policy)
+TypeScript and ESLint PASS. The initial independent source review passed; rebased exact-head corrective review and CI remain owed.
+
+QuickBooks successor #1967 merged at `a094a618b2a36127260b0c7488a6e813bee9da3a` after independent review and exact-head green CI. Production migration run `38174947753` succeeded; metadata readback confirms `20271020000300`, RLS and restricted begin/service RPC roles. This establishes the consent-attempt source contract, not real provider OAuth, ingestion, UI adoption or authenticated acceptance. Budget migration `20271020000310` follows this applied frontier and preserves both QuickBooks and budget security replay suites.

@@ -58,12 +58,17 @@ export function AdsWorkspace({ tenantId }: { tenantId: string | null }) {
 
 function AdsTabs({ current, onView }: { current: AdsView; onView: (view: AdsView) => void }) {
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  // As Marketing's strip does: when the strip scrolls (PAIGE expanded, narrow widths), the selected view
+  // is brought into it, so a bookmark to Performance never opens with its tab hidden past the edge.
+  React.useLayoutEffect(() => {
+    document.getElementById(`ads-tab-${current}`)?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [current]);
   const onKeyDown = (event: React.KeyboardEvent, index: number) => {
     if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     const next = event.key === "Home" ? 0 : event.key === "End" ? ADS_VIEWS.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + ADS_VIEWS.length) % ADS_VIEWS.length;
     onView(ADS_VIEWS[next].key);
-    refs.current[next]?.focus();
+    refs.current[next]?.focus({ preventScroll: true });
   };
   return <div className="campaigns-nav">
     <div className="campaigns-tabs" role="tablist" aria-label="Ads views">

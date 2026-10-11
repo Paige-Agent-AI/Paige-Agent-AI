@@ -350,6 +350,26 @@ async function main() {
       await page.waitForSelector(".mad", { timeout: 30000 });
       const moved = await page.evaluate(() => ({ path: document.body.dataset.harnessPath, pressed: document.querySelector('.campaigns-tabs[aria-label="Ads views"] [aria-selected="true"]')?.textContent, strip: document.querySelector(".campaigns-tabs")?.getAttribute("aria-label") ?? null, h1: document.querySelector("h1")?.textContent }));
       check(moved.path === "/solo/review/ads/performance" && moved.pressed === "Performance" && moved.strip === "Ads views" && moved.h1 === "Ads", `${theme}/ads: an old /growth/ads?view=performance link opens Ads › Performance`, JSON.stringify(moved));
+      // With PAIGE expanded the Ads strip scrolls; a link straight to Performance must open with that tab
+      // inside the strip's visible box, not clipped past its edge (as Marketing's strip already does).
+      {
+        const narrow = await browser.newPage({ viewport: { width: 1366, height: 768 } });
+        const width = contentWidth(1366, "wide");
+        await narrow.addInitScript((w) => { document.addEventListener("DOMContentLoaded", () => { const st = document.createElement("style"); st.textContent = `main.paige-solo{width:${w}px!important;max-width:${w}px!important}`; document.head.appendChild(st); }); }, width);
+        await narrow.goto(`${BASE}?legacy=performance&theme=${theme}&mode=populated`, { waitUntil: "domcontentloaded" });
+        await narrow.waitForSelector(".mad", { timeout: 30000 });
+        await narrow.waitForTimeout(250);
+        const seen = await narrow.evaluate(() => {
+          const strip = document.querySelector('.campaigns-tabs[aria-label="Ads views"]');
+          const tab = strip?.querySelector('[aria-selected="true"]');
+          if (!strip || !tab) return null;
+          const s = strip.getBoundingClientRect(); const t = tab.getBoundingClientRect();
+          return { scrolls: strip.scrollWidth > strip.clientWidth, scrollLeft: Math.round(strip.scrollLeft), inside: t.left >= s.left - 1 && t.right <= s.right - 27, tab: tab.textContent };
+        });
+        check(Boolean(seen && seen.scrolls && seen.inside && seen.tab === "Performance"), `${theme}/ads: with PAIGE expanded (${width}px) the strip scrolls and Performance opens in view`, JSON.stringify(seen));
+        await narrow.screenshot({ path: path.join(OUT, `flow-ads-strip-expanded-${theme}.png`) });
+        await narrow.close();
+      }
       // Content: every control in the preview is live (the drawer must not sit inside the region it makes
       // inert); a document prints whole; an image downloads; the filter keeps to one kind.
       await open(page, { tab: "content", theme });

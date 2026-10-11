@@ -218,8 +218,13 @@ describe("Ads, its own department below Marketing", () => {
       expect(ask?.textContent).toBe("Ask PAIGE for ad copy");
       act(() => ask!.click());
     }
+    // A member, who can't read the saved ad copy, still asks PAIGE from the strip (§58).
+    briefs.canManage = false;
+    await mount("/solo/42/ads");
+    expect(text()).toContain("Saved ad copy is visible to owners and admins.");
+    act(() => host.querySelector<HTMLButtonElement>(".campaigns-nav .campaigns-studio")!.click());
     window.removeEventListener("paige:open", listen);
-    expect(asks).toHaveLength(3);
+    expect(asks).toHaveLength(4);
     expect(asks[0]).toMatch(/do not run or publish anything/);
   });
 });

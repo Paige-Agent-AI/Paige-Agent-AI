@@ -4088,6 +4088,34 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
+### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)
+
+Grounded at `8b7f975` against read-only prod aggregates, with each LIVE claim adversarially verified. Full map and contract: [`brain/paige-operating-fabric-contract.md`](brain/paige-operating-fabric-contract.md). The gaps that block an owner asking *"give me a read on the last week"* in Chat or Live:
+
+- **PAIGE has no period-aware read of the business.** Tenant metrics already exist and are period-capable (`practice_dashboard_metrics(p_window_days)`, `practice_attention_queue()`, `issue_analytics_evidence_bundle`), but only the UI calls them. Nothing in `paige-ai-chat` reaches them.
+- **Stranded:**
+  - tenant Systems Check results (794 runs, 0 chat reach);
+  - Business Vault (`business_vault_get_context` has 0 callers);
+  - the governed memory seam (`record_/get_paige_memory`, `match_paige_owner_memory`: 0 runtime callers);
+  - missions (`business_missions`: 0 rows ever, no list tool);
+  - `integrations.health`, declared with a chat tool that does not exist.
+- **No substrate:** ads/paid acquisition, reviews/reputation, events/webinars/registrations, tenant promotions, SMS traffic (0 messages ever), and social results (posting and analytics refused).
+- **No windowed reads for:** Rail outcomes (`paige_workspace_events` is service-role only), receivables and collected-in-period, comms (`list_inbox_messages` caps at 50 with no window), and bookings.
+- **Context assembly is load-everything:**
+  - About 25 inline string blocks are built on every turn, 18 of them catch-to-empty or default.
+  - `_shared/paige-context/mod.ts` has one production adopter.
+  - The Turn Route chooses the model (INT-334 R4, #1789), but nothing yet uses it to choose context.
+  - About 95 tools are offered on every turn. R5b applies the route's tool exposure to cheap-class rounds only. Re-grounded at merge (2026-10-12): support cases, Ads lead counts, read-only browsing (PC-1) and Finance source reads moved since `8b7f975`; see the contract's re-grounding note.
+- **Live = Chat at the code level** (`index.ts:1131-1194`), and has been stale at runtime since 2026-09-24. It strips surface, client, and mission context and runs no conversational loop. Agency and sub-account tenants are excluded by predicate.
+- **Business-wide memory scope gap:** `paige_owner_memory` rows are owned and RLS-read by one `user_id`, so business facts told to PAIGE become one person's memory. The audience design is proposed in the contract (§G). It **needs an owner ruling, and comes after S5**.
+- **Game Plan has missions but no canonical goal, target, or KPI structure.** A target table is a material product decision. It is named, not built (§H, F7).
+- **Ledgers that cannot prove reach:**
+  - `paige_chat_turns.tool_calls` is null in 1445 of 1445 rows.
+  - Receipts never carry `llm_trace_id`.
+  - `platform_metered_events` has 0 rows.
+
+**F1 (this entry's PR)** adds the pure seam `_shared/paige-context/snapshot.ts`: periods with timezone and DST handling, the validated `DomainSnapshot`, the NOT-CONNECTED register, the bounded fail-closed composer, and a projection that tells the model unavailable ≠ zero. It reuses `mod.ts` types and ships unit tests. **Nothing calls it from a turn yet.** It is wired to Chat and Live in F2, behind one read-only Spine capability (`business.operating_snapshot`). Sequence F2–F9 is in the contract's §L.
+
 ### Finance backend — owner-resumed end-to-end mission (2026-10-10)
 
 Owner-authorized ANT-9 continuation (2026-10-11): a bounded current-main successor to unmerged #1950 preserves all four historical findings and corrected consent guards. Production metadata frontier is independently verified as 20271020000270; current-main candidate uses checked-free forward migration 20271020000300. Its prior unapplied 00030 filename was superseded after a peer release used it; no applied history changed. Both actual historical/current retirement definitions pass the new fail-before/pass-after consent regression. Actual local PostgreSQL missing-contract/two-fresh-replay and concurrent one-use consent proof PASS. Genuine independent non-author non-Codex review, exact-head required CI, merge, deployment and source readback remain owed. No provider/account activation, token exchange, customer ingestion or authenticated acceptance is claimed. The existing approved UI, shared Chat/Live execution authority and sole Settings → Integrations setup home are preserved; [capability integration/proof matrix](brain/finance-department.md) names the unavailable seams.

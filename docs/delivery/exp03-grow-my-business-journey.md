@@ -108,7 +108,17 @@ never guessed; a paused/archived workspace starts no process; nothing sends, pub
 
 - **One home (§18):** the Campaigns dossier in Marketing (`src/solo/campaign-desk.tsx`). No new tab, no new
   surface. The "Recorded outcome" loop stage becomes real when a campaign has attributed leads.
-- **S1 view — "Leads from this campaign"** inside the dossier, after "Steps and results":
+- **Approval coverage (checked 2026-10-12 against the record, not assumed).** The owner approved prototype v2
+  on 2026-10-10 (`docs/product/int342-marketing-convergence.md` line 3: "the campaign map" among what it
+  covers; record copy `docs/prototypes/int342-marketing-convergence.html`). That campaign map has three
+  lanes, Reach → Land → **Brought in** (leads, opportunities with "see them in Sales", "Revenue lives in
+  Sales", and a truth label). Reach and Land shipped in MBC 3b; **Brought in was never built**. It is covered
+  by the existing approval and is built first (S1d-1). Its approved copy says "leads tagged CB-…" because
+  campaign links did not exist yet; with the stamp, the count includes form-linked leads, so the words change
+  to stay true, and that change is disclosed in the evidence record.
+- **Not covered by any recorded approval:** the per-lead list below (names, how each was credited, stage per
+  lead). It was rendered and sent to the owner on 2026-10-12 and ships only after a ruling (S1d-2).
+- **S1d-2 proposal — "Leads from this campaign"** inside the dossier, after "Steps and results":
   - headline counts: leads · became opportunities · won · lost (server counts, never computed on screen);
   - each lead: when, how it was attributed in the owner's words ("Came through a form in this campaign",
     "Link tagged for this campaign", "Both"), its pipeline and stage, open/won/lost; owner/admin see names;

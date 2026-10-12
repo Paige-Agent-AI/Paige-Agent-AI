@@ -3316,3 +3316,34 @@ only because the timing happened to line up.
 - **A superseded run is not a green run.** With `cancel-in-progress` concurrency, rapid pushes cancel the
   earlier commits' runs. Only the head's own completed run is evidence, so read its conclusion, not
   the absence of a red one.
+
+## 2026-10-12 — A proof run only as the superuser passed a hole any member could use (Experience 03 S1, #2068)
+
+The campaign stamp on a lead (`growth_form_submissions.campaign_brief_id`) was meant to be fixed after
+capture. The trigger let a NULL through so that `ON DELETE SET NULL` could clear it when a campaign is
+deleted. The table's tenant update policy does not check role, so any workspace member could also set it
+to NULL and silently drop a lead out of its campaign. The author's proof was green: every immutability
+case ran as the superuser and only tried changing the campaign to another one. An independent reviewer
+ran the clear as the member under `SET ROLE authenticated` and it went through.
+
+- **A guard that relaxes for a system path must be proven from the browser role through the table's own
+  policies.** And the relaxation must key on a fact the browser cannot produce: the fix accepts the NULL
+  only once the campaign row no longer exists.
+- **A SQL test helper whose parameter shares a column's name matches every row.** `WHERE id = id::uuid`
+  compares the column with itself. The helper returned an arbitrary row and the first run "failed" for the
+  wrong reason. Name parameters `p_*`.
+- **A text assertion can be satisfied by unrelated copy.** "the member sees `A lead`" passed with names
+  leaking, because the footer begins "A lead is credited…". Only mutating the code exposed it. Assert on
+  the element that carries the value, and mutate every privacy assertion until it fails.
+
+## 2026-10-12 — `var(--ring, …)` as an outline colour removes the focus ring it means to draw
+
+`--ring` holds bare HSL components (`258 70% 50%`), read as `hsl(var(--ring))`. As a plain colour it is
+invalid at computed-value time, so `outline: 2px solid var(--ring, var(--violet))` computes to
+`outline-style: none`. Because such a rule is more specific than the working global
+`[data-pg] :focus-visible`, it actively removes the ring. Found by a keyboard drive that asserted the
+computed outline, not by reading the CSS (it looks correct). Four shipped Campaigns rules carry it: #2070.
+
+- **Use `var(--violet)` (or `hsl(var(--ring))`) for focus outlines in the Solo shell.**
+- **Measure focus after transitions settle.** `.paige-solo .btn` transitions every property for 150 ms,
+  outline included; a reading taken at once shows width 0 even when the rule is right.

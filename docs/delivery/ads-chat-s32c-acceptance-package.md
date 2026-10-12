@@ -106,7 +106,7 @@ order by occurred_at desc limit 10;
 
 | # | Case | Pass when |
 |---|---|---|
-| C1 | Unauthorized actor (member seat, preflight 3) asks either question | Refused by the workspace role gate before any card (`paige-ai-chat/index.ts:10899-10906`): funnel — "Looking this up needs this workspace's owner or an admin…"; feature — "This needs this workspace's owner or an admin. Nothing was changed…" (`workspace-authority.ts:224-229`) |
+| C1 | Unauthorized actor (member seat, preflight 3) asks either question | Refused by the workspace role gate before any card (`paige-ai-chat/index.ts:10899-10906`): funnel — "Looking this up needs this workspace's owner or an admin…"; feature — "This needs this workspace's owner or an admin. Nothing was changed…" (`workspace-authority.ts:224-229`); no Rail receipt, because the gate returns before the tool runs |
 | C2 | Wrong workspace: owner asks to feature a picture id from the second tenant → approve | "That picture is not in this business's library."; no change to `marketing_content` in either tenant; one refused receipt in the canonical workspace |
 | C3 | Missing approval: B5 | No write, no succeeded receipt |
 | C4 | Invalid creative: archived picture | "That picture is archived, so it cannot be featured…" |

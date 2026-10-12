@@ -286,6 +286,14 @@ await db.exec("CREATE TABLE public.fk_probe_log(n int)");
  const planNew=await planOf(); const probesNew=await probesOf();
  assert.deepEqual(planNew,planOld,'worklist closure must return the exact same plan as the deployed body');
  assert.ok(probesNew+6<=probesOld,`worklist must re-probe substantially fewer foreign keys (new ${probesNew} vs old ${probesOld})`);
+ // Round 2 (20271020000420): the two information_schema queries became pg_catalog queries
+ // plus FK-column indexes; the plan must STILL be byte-identical to the deployed original.
+ const catalogFix=await readFile('supabase/migrations/20271020000420_operator_deletion_plan_catalog.sql','utf8');
+ await db.exec(catalogFix); await db.exec(catalogFix);
+ await db.exec('truncate fk_probe_log');
+ const planThird=await planOf(); const probesThird=await probesOf();
+ assert.deepEqual(planThird,planOld,'catalog-direct rewrite must return the exact same plan as the deployed body');
+ assert.equal(probesThird,probesNew,'catalog rewrite must not change the closure probe count');
  // The full lifecycle still executes atomically through the worklist body.
  const wl='00000000-0000-0000-0000-0000000000b1', wlOp='00000000-0000-0000-0000-0000000000b2';
  await db.query("insert into tenants(id,name,status,account_type) values($1,'Worklist Solo','active','standalone')",[wl]);

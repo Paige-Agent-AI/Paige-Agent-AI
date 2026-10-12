@@ -6278,3 +6278,11 @@ selected one, so each read failed with 42703. They now read `user_contact_method
 - 2026-10-11: MBC slice 3 live: PR #1963 → main `8d64128`; deploy-migrations #451 applied `20271020000010`; prod readback shows the links table, writer, read, trigger and `delete` disposition. Operations #1922 unblocked.
 - 2026-10-11: MBC slice 4a: `form.submitted` native event (migration `20271020000030`, leaving `20271020000020` to Operations). One event per submission matched to a contact, subject the contact, ids and tags only; an addition beside the form's own on-submit automations, never a replacement. Process conditions are not authorable yet, so a process on it runs for every form until slice 6.
 - 2026-10-11: MBC slice 2c: Marketing › Overview reads the server's lead, opportunity and source figures (its own period only; no comparison is shown) and states processing health (older failures, waiting submissions) under Needs you; the chart and recent leads stay on the records. A member keeps the record counts. Frontend only.
+- 2026-10-11: **OWNER RULING (Ads showroom approved; leads land in pipelines):**
+  - **Showroom:** the Ads Overview showroom direction is approved. Its pictures must be the business's own ads, never one fixed image everyone sees.
+    - Order of what shows: ads the owner chooses (featured) first, then those performing best, then fixed sample art, labelled "Sample", only in slots nothing fills.
+    - "Performing" means real leads and won deals from tagged links (`utm_content`). Provider metrics (impressions, clicks, spend) do not exist and stay unavailable.
+  - **Pipelines:** Sales pipelines are the lifecycle of a lead, and Marketing, Sales and Ads read the same pipelines and stages.
+    - Leads from any form or outside source land in a pipeline: the form's routed pipeline if it has one, otherwise the default pipeline's first open stage.
+    - Contacts created by hand or by PAIGE are not auto-dealed.
+  - **Per-campaign and per-ad counts:** Ads and Marketing count leads by stage for each campaign (`utm_campaign`) and each ad (`utm_content`) through one new server read.

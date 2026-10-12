@@ -12,6 +12,8 @@ import {
   pickPublicBrowseStep,
   isHttpUrl,
   foldPublicBrowse,
+  redactUrlForAudit,
+  scrubSecretLikeText,
   type SkillRow,
   type BrowseObservation,
   type PublicBrowseObservation,
@@ -134,5 +136,59 @@ describe("foldBrowserObservation — §13 honest fold, never a fabricated result
   });
   it("emits nothing when there is no real content beyond the header", () => {
     expect(foldBrowserObservation({ ok: true })).toBe("");
+  });
+});
+
+describe("redactUrlForAudit — PC-1 audit redaction (secrets never reach the rail)", () => {
+  it("keeps scheme+host+path and replaces the query with a param-count marker", () => {
+    expect(redactUrlForAudit("https://portal.example.gov/filing/123?token=abc123&sig=xyz")).toBe(
+      "https://portal.example.gov/filing/123?_redacted=2",
+    );
+    expect(redactUrlForAudit("https://a.co/x")).toBe("https://a.co/x");
+  });
+  it("redacts fragments and userinfo (both can carry credentials)", () => {
+    expect(redactUrlForAudit("https://a.co/p#access_token=zzz")).toBe("https://a.co/p#_redacted");
+    expect(redactUrlForAudit("https://user:pass@a.co/p")).toBe("https://a.co/p");
+  });
+  it("redacts opaque token-shaped path segments but keeps readable slugs (review follow-up)", () => {
+    expect(redactUrlForAudit("https://a.co/invite/eNcRyPtEdToKeN123456")).toBe("https://a.co/invite/[token]");
+    expect(redactUrlForAudit("https://a.co/filing/6ba7b810-9dad-11d1-80b4-00c04fd430c8")).toBe("https://a.co/filing/[token]");
+    expect(redactUrlForAudit("https://a.co/annual-report-2026")).toBe("https://a.co/annual-report-2026");
+    expect(redactUrlForAudit("https://a.co/infrastructure-modernization")).toBe("https://a.co/infrastructure-modernization");
+    expect(redactUrlForAudit("https://a.co/filing/123")).toBe("https://a.co/filing/123");
+    // Round-2 fix: a full dotted JWT in a path segment redacts too (the plain charset rule missed ".").
+    expect(redactUrlForAudit("https://a.co/auth/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV"))
+      .toBe("https://a.co/auth/[token]");
+    expect(redactUrlForAudit("https://a.co/report.final.v2")).toBe("https://a.co/report.final.v2"); // short dotted names stay
+  });
+  it("caps runaway paths and answers unparseable input honestly", () => {
+    const long = "https://a.co/" + "x".repeat(400);
+    expect(redactUrlForAudit(long).length).toBeLessThanOrEqual("https://a.co/".length + 301);
+    expect(redactUrlForAudit("not a url")).toBe("_unparseable_url_redacted");
+    expect(redactUrlForAudit("https://a.co/x?token=1&code=2&state=3&nonce=4")).toBe("https://a.co/x?_redacted=4");
+  });
+});
+
+describe("scrubSecretLikeText — PC-1 model-fold scrubbing", () => {
+  it("scrubs key=value secrets, bearer headers, opaque runs and card-like digits", () => {
+    const page = "Sign in api_key=sk_live_9f3fabcd1234 then Authorization: Bearer eyJhbGciOi.9x card 4111 1111 1111 1111 ok";
+    const { scrubbed } = scrubSecretLikeText(page);
+    expect(scrubbed).not.toContain("sk_live_9f3fabcd1234");
+    expect(scrubbed).not.toContain("eyJhbGciOi.9x");
+    expect(scrubbed).not.toContain("4111");
+    expect(scrubbed).toContain("api_key=[redacted]");
+    expect(scrubbed).toContain("[redacted]"); // the bearer/jwt material is consumed too (double-scrubbed)
+  });
+  it("leaves ordinary research prose intact", () => {
+    const prose = "The Secretary of State portal charges a $50 filing fee and renews annually each April.";
+    const { scrubbed, replacements } = scrubSecretLikeText(prose);
+    expect(scrubbed).toBe(prose);
+    expect(replacements).toBe(0);
+  });
+  it("reports its replacement count and bounds hostile input", () => {
+    const hostile = Array.from({ length: 50 }, (_, i) => `token=abcdef0123456789${i}`).join(" ");
+    const { replacements, truncated } = scrubSecretLikeText(hostile, 10);
+    expect(replacements).toBeGreaterThanOrEqual(10);
+    expect(truncated).toBe(true);
   });
 });

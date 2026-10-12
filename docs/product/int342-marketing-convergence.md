@@ -697,7 +697,13 @@ genuine feature gaps"). This is Marketing's own matrix; the Ads matrix is §M3 a
    - the plan form: "A planned step waits for your approval." (`src/solo/campaign-actions.tsx`);
    - the empty state: "Plan the first one; it waits for your approval.";
    - the remove warning for a planned step: "will still come to you for approval" (`useCampaignActions.ts`);
-   - PAIGE's plan receipt: "It comes to you for approval once it is prepared" (migration `20271023100000`).
+   - PAIGE's plan receipt: "It comes to you for approval once it is prepared" (migration `20271023100000`);
+   - PAIGE's approval card for planning a step: "comes to you for approval once it is prepared"
+     (`supabase/functions/paige-ai-chat/index.ts`);
+   - the plan tool's description and result, which PAIGE repeats: "comes to the owner for approval once it is
+     prepared" (`_shared/paige-spine/registry.ts`, `_shared/campaign-steps-chat.ts`);
+   - the action kind's description: "Once prepared it goes to the owner for approval" (migration
+     `20271021200000`).
    This is the first Marketing fix after this matrix: either build the prepare-for-approval path or make the copy
    say what happens now. The QA run records the sentences as a finding (packet A4), never as a pass.
 6. **Shared registration and admission.**

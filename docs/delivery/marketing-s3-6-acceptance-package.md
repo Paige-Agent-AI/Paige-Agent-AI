@@ -91,7 +91,7 @@ query result. Evidence ledger 2 holds one row per executed step.
 |---|---|---|
 | B1 | Typed chat: "What steps does QA Spring have?" | Today **UNAVAILABLE** (no tools on a typed turn). Record the reply: PAIGE must not claim to have read them |
 | B2 | Live: the same question | PAIGE reads the steps (or says it cannot); nothing invented. Record whether Live admitted the tool |
-| B3 | Live: "Plan a step for QA Spring: email, win-back, thank everyone who booked" | An approval card; nothing filed until it is approved on the card; **a spoken yes does nothing**; after the card is approved, one step filed and read back; one receipt "PAIGE planned a campaign step" |
+| B3 | Live: "Plan a step for QA Spring: email, win-back, thank everyone who booked" | An approval card; nothing filed until it is approved on the card; **a spoken yes does nothing**; after the card is approved, one step filed and read back; one receipt "PAIGE planned a campaign step". Record the card's and PAIGE's exact words: they say the step "comes to you for approval once it is prepared", which is **not true today** (matrix §N3, item 5). Record that as a finding, never as part of the pass |
 | B4–B6 | Approve a prepared step, record its result ("twelve replies"), judge it ("met") | **UNAVAILABLE** (see above) unless §N3 item 5 has shipped |
 
 ### C. Member and foreign workspace

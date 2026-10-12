@@ -180,7 +180,10 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange }: W
       </div>
     </header>
     <div className="ops-department-body">
-      {destination === "Delivery" ? <OperationsDelivery openPaige={openPaige} />
+      {destination === "Delivery" ? <OperationsDelivery openPaige={openPaige} plans={source.plans} items={source.allItems}
+        planningReady={planningAvailable && !source.loading} members={people.members}
+        peopleReady={!people.loading && !people.error && !people.partial}
+        onVerified={async planId => { await source.refresh({ silent: true }); setInspection({ kind: "plan", id: planId, view: destination }); }} />
         : destination === "Playbooks" ? <OperationsPlaybooks tenantId={tenantId} />
         : destination === "Work" ? workView
         : destination === "Capacity" ? capacityView

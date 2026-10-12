@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OperationsEngagementEvidence } from './OperationsEngagementEvidence';
 const read = vi.hoisted(() => ({ evidence: null as unknown, loading: false, error: null as string | null, forbidden: false, refresh: vi.fn() }));
 vi.mock('./useOperationsEngagementEvidence', () => ({ useOperationsEngagementEvidence: () => read }));
+vi.mock('./OperationsEngagementHandoff', () => ({ OperationsEngagementHandoff: () => <div>Reviewed handoff controls</div> }));
 const props = { actorId: 'actor-a', tenantId: 'tenant-a', signingId: 'signing-a', contactId: 'client-a', commercialTermsId: 'terms-a', offerId: 'offer-a' };
 const evidence = { tenantId: 'tenant-a', agreementId: 'signing-a', contactId: 'client-a', commercialTermsId: 'terms-a', offerId: 'offer-a', version: 3, status: 'completed', completedAt: '2026-10-09T12:00:00Z', contentSha256: 'a'.repeat(64), sealedSha256: 'b'.repeat(64), sealedCopyRecorded: true };
 let host: HTMLDivElement; let root: Root;
@@ -26,5 +27,18 @@ describe('frozen engagement inspection', () => {
   it('does not promote incomplete signing or missing sealed evidence', async () => {
     read.evidence = { ...evidence, status: 'sent' }; await render(); expect(host.textContent).toContain('Signing is still in progress');
     read.evidence = { ...evidence, sealedCopyRecorded: false }; await render(); expect(host.textContent).toContain('The sealed signing evidence is incomplete');
+  });
+  it('offers reviewed handoff only for current matching frozen source, never an incomplete or foreign source', async () => {
+    const handoff = { scope: { actorId: props.actorId, tenantId: props.tenantId, contactId: props.contactId,
+      commercialTermsId: props.commercialTermsId, offerId: props.offerId, commercialStatus: 'active',
+      termsUpdatedAt: '2026-10-09T12:00:00Z' }, members: [], peopleReady: true, theme: 'dark', onVerified: vi.fn() };
+    await act(async () => root.render(<OperationsEngagementEvidence {...props} handoff={handoff} />));
+    expect(host.textContent).toContain('Reviewed handoff controls');
+    read.evidence = { ...evidence, contactId: 'foreign-client' };
+    await act(async () => root.render(<OperationsEngagementEvidence {...props} handoff={handoff} />));
+    expect(host.textContent).not.toContain('Reviewed handoff controls');
+    read.evidence = { ...evidence, status: 'draft' };
+    await act(async () => root.render(<OperationsEngagementEvidence {...props} handoff={handoff} />));
+    expect(host.textContent).not.toContain('Reviewed handoff controls');
   });
 });

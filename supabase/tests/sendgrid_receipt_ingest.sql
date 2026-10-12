@@ -73,6 +73,16 @@ SELECT pg_temp.require_true(
   public.ingest_sendgrid_receipt('sg:m9:open:1788480000:1','m9','opened','r@example.test','2026-10-11T01:00:00Z') = 'duplicate',
   'each identity dedups independently (redelivery of one is safe)');
 
+-- 6c. Provider sg_event_id-shaped identities (ANT-78): dedup + distinctness
+-- at the canonical DB level for the door's sg:<sg_event_id> construction.
+SELECT pg_temp.require_true(
+  public.ingest_sendgrid_receipt('sg:evQ1','m10','delivered','q@example.test','2026-10-12T01:00:00Z') = 'processed'
+  AND public.ingest_sendgrid_receipt('sg:evQ1','m10','delivered','q@example.test','2026-10-12T01:00:00Z') = 'duplicate',
+  'same sg_event_id redelivery dedups');
+SELECT pg_temp.require_true(
+  (SELECT count(*) FROM public.email_send_log WHERE message_id='m10' AND sender_account='sendgrid') = 1,
+  'one row for the redelivered provider event');
+
 -- 7. The journal is invisible to anon/authenticated (private processing state).
 RESET ROLE;
 SELECT set_config('request.jwt.claims', '{"sub":"b4a00000-0000-4000-8000-000000000003","role":"authenticated"}', true);

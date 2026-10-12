@@ -46,6 +46,189 @@ merged. Each change that moves a map row or the seam's own claims is listed here
   the data ("has not sent any messages"). A count can change under a constant; a capability statement
   does not go stale.
 
+## F2a (2026-10-12) — first adapters and the review entry point, not wired to any turn
+
+F2a answers one question end to end in code: *"How is my business performing this week, and what
+needs my attention?"* It is **read-only, unit-tested, and reachable from no turn yet.** Chat and Live
+reach it only after the two hand-offs below land.
+
+**What shipped (code):**
+
+- `_shared/paige-context/adapters/sales-metric.ts`: shared helpers with no domain math. It maps a
+  snapshot period to the issuer window `[start, min(end, now))`, picks the range key by window length
+  (≤7 days `week`, ≤31 `month`, ≤92 `quarter`, else `year`), and refuses a start more than ten years
+  back. It maps read outcomes to closed codes: `metric_read_refused`, `metric_request_incomplete`,
+  `metric_evidence_not_verified`, `metric_source_unavailable`, `metric_shape_unexpected`,
+  `metric_window_unreadable`, `aborted`, `adapter_scope_mismatch`. It splits currency totals into
+  one metric per currency.
+- `adapters/payments.ts` (`domain: payments`, `owner: sales`). It reads four figures:
+  - recorded receipts in the period, by currency (in period);
+  - the same figure for the previous window, used for `changes[]` only;
+  - outstanding receivables now (right now);
+  - overdue receivables now (right now). Any currency above zero adds an `act` risk.
+- `adapters/sales-pipeline.ts` (`domain: sales_pipeline`, `owner: sales`). It reads four figures:
+  - opportunities created in the period, plus the previous window for a change;
+  - open opportunities now;
+  - open pipeline value now, by currency.
+  - It does **not** read won or lost. Their producer counts by close date and refuses bounds that are
+    not UTC midnights, and a rolling week does not have them.
+- `_shared/paige-context/business-review.ts` → `composeBusinessReview(caller, who, request, opts)`. It
+  resolves the period (default `last_7_days`) and wraps the caller so every
+  `current_user_tenant_id()` answer becomes the composer's live scope epoch. It reads the workspace
+  once before composing; a mismatch reads nothing. It composes the two adapters (10 s timeout each)
+  and reads the workspace once more after every adapter settles; a switch voids every domain as
+  `scope_changed`. It then projects the result. Every other default domain is reported NOT
+  AVAILABLE with its reason.
+- `src/__tests__/operating-snapshot-business-review.test.ts`: 45 tests against a fake caller whose
+  issuer payloads pass `parseMetricResult`. Protective assertions were falsified on purpose (§71.4):
+  each defect was reinstated, the named test failed, and the code was restored. The list is in the
+  evidence table below.
+
+**Rules the adapters keep:**
+
+- **Separate currencies.** Each currency is its own metric (`payments.cash_recorded_received_usd`,
+  `…_eur`). Nothing sums across currencies.
+- **A failure is never zero.** A refused, unverified or source-unavailable read is a closed reason.
+  If every headline read fails, the domain is `unavailable` (refused) or `degraded` (anything else).
+  If some fail, it is `available` with partial coverage and a note naming each figure that could not
+  be read.
+- **Real zeros only.** A *complete* read with no amounts is shown as a real zero (`…_records`, "none
+  recorded in any currency"). A partial or failed read never is.
+- **Exact amounts or none.** An amount JavaScript cannot hold exactly (beyond 2^53) is dropped, never
+  rounded. The domain becomes partial and says so.
+- **Honest comparisons.** A change is built per currency only when the amount is known in both
+  windows. A currency absent from a window counts as zero only when that window's read was complete
+  with nothing dropped. A partial window yields no comparison, with a note. Receivables are current
+  balances, so they never carry a change; no historical balance exists.
+- **No evidence references in the snapshot.** The issuer's evidence reference is a short-lived,
+  bearer-like re-read token. Provenance is `metric_key@source_revision_ref`.
+- **Sequential reads.** Within an adapter, reads run one at a time and the abort signal is checked
+  before each. The issuer revokes the caller's previous live reference for the same metric and range
+  key, so reads of one key must not overlap.
+
+**Read-only carve-out (stated, not hidden).** The issuer *writes*. Each read inserts a short-lived
+evidence reference (15 minutes) and revokes the caller's previous one for the same metric, version,
+range key and dimensions. That write is the INT-340 evidence registry's own bookkeeping, and it is the
+only write this path causes. The Fabric reads sequentially, persists no metric value anywhere, and
+writes no Memory.
+
+**Adapter-location ruling (amends §I, *Location and ownership*).** There are two kinds of adapter:
+
+- **Projection adapters** shape a department's **already-governed** read (here, the INT-341 Sales
+  producer behind the INT-340 issuer). They live in `_shared/paige-context/adapters/`, and their
+  `owner` is the producing department (`sales`).
+- **Department-authored adapters**, which carry the department's own reads or logic, live in that
+  department's lane (`_shared/<domain>/snapshot-adapter.ts`), as §I says.
+
+In both cases the department owns the numbers. A projection adapter only names, splits and bounds them.
+
+**Tool-name recommendation.** Use `get_business_snapshot` for the chat tool. That retires the
+dangling label already in the runtime: `paige-ai-chat/index.ts:584` gives `get_business_snapshot` a
+step label, and `_shared/paige-turn/step-start.ts:130` records it as `"no dispatch"`. One name is
+better than three. This document previously proposed `read_business_snapshot` (§K) and `business_review` (§L F2);
+both are superseded.
+
+**Hand-off — Conversational Loop lane (not done here):**
+
+- Push one tool, `get_business_snapshot`, next to the existing `read_business_metric` push. It is
+  read-only, with parameters `period`, `custom_start`/`custom_end` and `focus`. The dispatch takes
+  the time zone from the turn request's `userTimezone` field (client-reported and length-bounded by
+  the `paige-ai-chat` request schema), never from the model. When the field is absent the dispatch
+  passes UTC explicitly; an unknown zone is refused by the period resolver as `invalid_timezone`,
+  never silently replaced. It moves only period boundaries, never tenant scope. (Wording corrected 2026-10-12 at closeout: this said
+  "server-resolved", which it is not.)
+- Budget the turn for the worst case: about three times the timeout (a bounded workspace read before,
+  the adapters, a bounded workspace read after) — 30 s at the 10 s default.
+- Add one dispatch branch:
+  `composeBusinessReview(supabaseClient /* caller JWT */, { actorId: user.id, tenantId: personaCtx.tenant_id, role, accountShape }, args)`.
+  Return `projection` to the model and keep `snapshot` for the turn trace. Write no Rail receipt
+  for this read unless a recorder is registered (none exists in F2a; see the Spine table below).
+- Dispatch `get_business_snapshot` **sequentially** with any `read_business_metric` call in the same
+  turn, never in parallel. The issuer revokes the caller's previous reference for the same metric
+  and range key. If one read issues between another read's issue and resolve, that resolve fails
+  with 42501, which `readBusinessMetric` maps to `refused`. The domain would then show as "not
+  authorized" (`metric_read_refused`) when the real cause was a race. Known limitation until the
+  dispatch is sequential: a parallel call can degrade a domain and mislabel why.
+- Do **not** copy the `callerTier === "tenant"` gate unchanged. Under §61, sub-accounts get this read.
+  Decide per tier on purpose.
+- Recompute the C0b fingerprints. Any legitimate chat-dispatch change shifts them.
+- Admit the tool under the read-only admission class while INT-346 is in force.
+
+**Hand-off — CC Spine lane (INT-179):** register `business.operating_snapshot`:
+
+| Field | Value |
+|---|---|
+| classification | `read` |
+| risk | `read_only` |
+| approval | `none` |
+| chatBinding | `PARTIAL` |
+| readiness | `none` |
+| seat authority | owner/admin. This matches the issuer, whose `_analytics_metric_authorized` admits only active `owner`/`admin` members. |
+| `receipt.rail` | set only if a recorder actually writes one. No recorder exists in F2a. |
+
+**Blocker — INT-346 reachability.** Per the coordinator brief, INT-346 restrictions are in force
+(DRAINING). A new chat tool is not reachable from a turn until it is admitted under the read-only
+admission class. F2a did not inspect or change INT-346 admission. Reachability is therefore
+**UNVERIFIED**, and an authenticated Chat drive is owed after the hand-off lands.
+
+**Named risk — edge and database clocks.** The issuer refuses a window end after the database clock
+(`clock_timestamp()` in `issue_analytics_evidence_bundle`); the window is cut on the edge function's
+clock. An in-progress window therefore ends `SALES_WINDOW_CLOCK_MARGIN_MS` (2 s) before the edge's
+`now`, and the figure's window note says it is counted up to just now. A skew larger than that
+margin still fails closed, as a uniform "metric evidence not verified" on every in-period figure.
+The owed authenticated Chat drive checks for exactly that symptom.
+
+**Bounded workspace reads.** The explicit workspace reads before and after composing share the
+per-adapter time budget. No answer in time is treated as an unreadable workspace, so every domain is
+voided as `scope_changed` rather than the review hanging. An adapter that times out keeps its current
+metric read running, because `readBusinessMetric` takes no cancel signal. It stops at its next abort
+check, and nothing from it reaches the snapshot.
+
+**Evidence classes.**
+
+| Class | State |
+|---|---|
+| Automated | 45 new tests; the F1 seam and analytics suites still pass. Every defect below was reinstated one at a time and caught by at least one failing test (§71.4): currency codes not upper-cased; an amount too large to hold exactly kept; a refusal reported as degraded; the source-unavailable check removed; a partial read shown as a zero; a fully-dropped read shown as a zero; a missing amount treated as zero in a comparison; a partial current or previous window compared (payments and pipeline); the evidence reference used as provenance; the window end not pulled back from now; an overdue amount of 0 treated as a risk; the abort checks removed (payments and pipeline); two reads overlapping; an unbounded workspace lookup; the workspace check before or after composing removed; a trimmed overdue figure; a comparison kept for a trimmed figure |
+| Static | the `tsc` ratchet shows no new errors (baseline 10, current 10); strict `tsc` is clean on the new files; eslint is clean |
+| Rendered / behavioural / authenticated runtime | **UNVERIFIED**: nothing is wired to a turn |
+
+### §13 corrections recorded by F2a (rows above are marked, not rewritten)
+
+1. **§A payments rows and §K Sales/Payments row are stale.** Collected-in-period
+   (`sales.cash.recorded_received`), outstanding (`sales.receivables.outstanding_current`) and
+   overdue (`sales.receivables.overdue_current`) **are** readable for PAIGE. They come through the
+   INT-340 shared issuer over the INT-341 Sales producer (producer and issuer merged 2026-10-07 in
+   #1809/#1814; the chat read `read_business_metric` merged 2026-10-08 in #1873; migrations
+   `20270601000002`, `20270601000006`), and through `readBusinessMetric`, which chat already
+   dispatches as `read_business_metric`. "No list, aging or collected-in-range read for PAIGE" and
+   "the adapter reports `no_adapter` until the lane ships a period read" no longer hold.
+2. **§L F2's sources were wrong. F2a uses the issuer keys, not `practice_dashboard_metrics` /
+   `practice_attention_queue`.** Grounded reasons, from
+   `supabase/migrations/20260713152601_tier_dashboard_metrics.sql`:
+   - **`practice_dashboard_metrics` sums money across currencies.** It sums `deals.value_cents` with
+     no currency grouping (L38–L51).
+   - **`practice_dashboard_metrics` cannot read a calendar window.** Its window is `now() − N days`
+     (L34–L35), so it can read neither "this quarter so far" nor a previous window.
+   - **`practice_attention_queue` misses PAIGE's own bookings.** It counts upcoming sessions from
+     `paige_bookings` (L73–L74). That table has a live writer, the Cal webhook
+     (`handle-cal-webhook/index.ts:81` upserts, `cal-cancel-booking/index.ts:27` updates). But
+     PAIGE's own booking path writes `internal_bookings` (§A row), so the count leaves those out.
+   - **Its tasks count misses CRM tasks written without a tenant id.** It counts tasks
+     `WHERE tenant_id = t` (L75–L76). PAIGE's MCP task writes do carry `tenant_id`
+     (`_shared/paige-mcp/capability-policy.ts:513`), but the current CRM task rows carry `tenant_id`
+     NULL (§A row), so those are not counted.
+   - These two are supporting reasons, not the ruling's basis. Neither count is always zero. The
+     ruling rests on the first two reasons. Row counts are from the dated §A map; this PR did not
+     re-query prod.
+   - *Corrected 2026-10-12 (F2a review):* an earlier draft of this correction called both counts
+     "structurally 0". That was wrong, for the reasons above.
+3. **§L F4 is superseded for these figures.** Payments' period read was never a new Sales-lane
+   migration to wait for; the Sales lane had already shipped it through INT-341.
+4. **§E's importer count is stale.** `_shared/paige-context/mod.ts` now has four direct production
+   importers outside its folder (`paige-ai-chat/index.ts:209`, `client-context.ts:314`,
+   `analytics-metrics/read.ts:4`, `research-history-context.ts:1`). It also has its siblings
+   `owner-memory.ts` and `snapshot.ts`. F2a adds `business-review.ts` and the adapters.
+
 ---
 
 ## The seven data classes this fabric keeps apart
@@ -90,7 +273,7 @@ re-enters the same handler, so its reach equals Chat's reach unless the table sa
 | Secure Browser / PAIGE Computer | `secure_browser_*` (all 0 rows) | `browser-use` edge (gated off) | none | none | no | UNAVAILABLE |
 | CRM / clients | `clients`, `client_contact_methods` | service-role reads filtered by persona tenant | `contact.*`, `company.*` via crm-command | search/summary tools; governed writes | fixed 7/30-day counts only | PARTIAL |
 | Sales / pipeline | `pipelines`, `pipeline_stages`, `deals` | `readPipelineWorkspace` (caller JWT, tenant bracketed) | `pipeline.deal_stage_evidence` + pipeline actions | `pipeline_catalogue`, `crm_pipeline_summary` | point-in-time; `practice_dashboard_metrics(p_window_days)` is **UI only** | PARTIAL |
-| Payments: invoices / receivables | `paige_invoices`, `paige_invoice_payments` | `read_sales_invoice(_expected_tenant,_id)` (single invoice) | `sales_invoice.*` | sales invoice tools (prod-proven 2026-10-04) | **no** (no list, aging, or collected-in-range read for PAIGE) | PROOF OWED |
+| Payments: invoices / receivables | `paige_invoices`, `paige_invoice_payments` | `read_sales_invoice(_expected_tenant,_id)` (single invoice) | `sales_invoice.*` | sales invoice tools (prod-proven 2026-10-04) | **no** (no list, aging, or collected-in-range read for PAIGE) | PROOF OWED **Corrected F2a (2026-10-12): see the F2a section, §13 correction 1.** |
 | Payments: collections / terms | `paige_sales_collection_operations` (0) | `read_sales_collections` | `sales_collections.*` | tools | no | UNVERIFIED |
 | Payments: Stripe direct-charge | `tenant_stripe_accounts` (0) | `read_sales_invoice_payment_request` | `sales_invoice.payment_request` | tool | no | UNAVAILABLE (no connected merchant) |
 | Platform billing (§38 L1) | `platform_subscriptions`, `tenant_revenue_classification` | operator RPCs | none | operator briefing only | `operator_mrr_history(p_days)` not chat-reachable | PARTIAL |
@@ -209,7 +392,7 @@ cell above is therefore UNVERIFIED at runtime**, even where the code path is sha
 ## E. Context Assembly adoption status
 
 - `_shared/paige-context/mod.ts` has **one** production importer: `client-context.ts`
-  (`resolveUserContext`). `paige-ai-chat` imports only `vp-address.ts`. The contract doc is still
+  (`resolveUserContext`). `paige-ai-chat` imports only `vp-address.ts`. **Stale; corrected F2a (2026-10-12), §13 correction 4.** The contract doc is still
   marked PROPOSAL, with its maturity gate PROOF OWED.
 - About 25 context blocks are inline string builders in `paige-ai-chat`. 18 of them catch to empty or
   fall back to a default: persona defaults to neutral (`:2374`), the working tenant defaults to null
@@ -365,7 +548,7 @@ DomainSnapshot {
 A domain joins the snapshot by shipping its own `DomainSnapshotAdapter` (`snapshot.ts`). The fabric
 does not compose for the domain, and the domain does not edit the composer. The contract:
 
-- **Location and ownership.** The adapter lives in the owning lane's code, e.g.
+- **Location and ownership** (amended F2a: projection adapters over an already-governed department read live in `_shared/paige-context/adapters/`; see the F2a section). The adapter lives in the owning lane's code, e.g.
   `_shared/<domain>/snapshot-adapter.ts`. It is registered with the composer by the one caller that
   assembles a review (F2). The domain owns its metric keys (`<domain>.<name>`), its reads, and its
   tests.
@@ -475,11 +658,11 @@ entry-point slice, not a new memory or context system.
 
 | Lane | What it owns | Collision with this fabric | Resolution |
 |---|---|---|---|
-| Intelligence Router INT-334 (R4 merged as #1789; R5–R8 open) | model and class selection in `paige-ai-chat` (Turn Route + `paige-turn/classify*.ts`), and the route's tool-exposure narrowing (carried to R5) | Fabric adds one tool and a dispatch branch; the router owns model choice and narrowing. No line overlap expected. | Fabric never selects models. It exposes `read_business_snapshot` as a read tool for the route's narrowing to include or exclude. Sync main before merge. |
+| Intelligence Router INT-334 (R4 merged as #1789; R5–R8 open) | model and class selection in `paige-ai-chat` (Turn Route + `paige-turn/classify*.ts`), and the route's tool-exposure narrowing (carried to R5) | Fabric adds one tool and a dispatch branch; the router owns model choice and narrowing. No line overlap expected. | Fabric never selects models. It exposes `read_business_snapshot` as a read tool for the route's narrowing to include or exclude. Sync main before merge. **Corrected F2a (2026-10-12): tool name is `get_business_snapshot`; see the F2a section.** |
 | Memory S5 (`s5-owner-memory-cutover`) + INT-326 | owner/workspace memory cutover, `record_paige_memory` body, memoryBlock region of chat | G's workspace and performance audiences change the same table and RPC | Fabric ships **no memory code**. G is a proposal sequenced after S5 merges and needs an owner ruling. |
 | Deep Research R-series (R3–R6, `docs/research-quality`) | `paige-deep-research`, dossier, cognitive-class map for research phases | The `research` domain adapter would read `list_workspace_research` | Read-only, later slice. Research results are reported as provisional, never as business facts. |
 | Conversational Loop C0–C4 (C4d/e paused) | turn contract, approvals, resume, claim guard | The tool is a read with no approval card. Live already refuses approvals. | None. A read needs no loop changes. |
-| Sales / Payments lane | `sales_invoice.*`, `sales_collections.*`, list RPCs | The `payments` adapter needs a period read the lane does not expose to PAIGE | The adapter reports `no_adapter` until the lane ships a domain-owned period read. Fabric does not query invoice tables directly. |
+| Sales / Payments lane | `sales_invoice.*`, `sales_collections.*`, list RPCs | The `payments` adapter needs a period read the lane does not expose to PAIGE | The adapter reports `no_adapter` until the lane ships a domain-owned period read. Fabric does not query invoice tables directly. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 1.** |
 | Communications (INT-328, comms substrate) | `messages`, `comms.*` | The `communications`/`email` adapters need a windowed read | Interim: email outcomes via the Rail outcomes read. Window read belongs to the comms lane. |
 | Game Plan / Missions | `business_mission.*` | The `game_plan` adapter reads `list_business_missions` | Read-only. Targets are a new structure that needs a ruling. |
 | Context Assembly (first adopter `client-context.ts`) | `_shared/paige-context/mod.ts` | Fabric adds a sibling module that **reuses** mod.ts types | Extends the seam, does not edit it. |
@@ -489,9 +672,10 @@ entry-point slice, not a new memory or context system.
 | # | Slice | Touches | Gate |
 |---|---|---|---|
 | **F1** (this PR) | Phase 0 map + contracts (this doc); the pure seam `_shared/paige-context/snapshot.ts` (periods, DomainSnapshot validator, NOT-CONNECTED register, composer, projection) + tests | docs, one new `_shared` module, one test | no runtime change |
-| **F2** | First adapters over **existing** tenant-derived reads: `sales_pipeline`/`clients`/`revenue` ← `practice_dashboard_metrics(p_window_days)`; `work`/`operations` ← `practice_attention_queue()` (+ tenant `systems_check_snapshot`); `game_plan` ← `list_business_missions`. Register Spine read `business.operating_snapshot` (chatBinding PARTIAL); one chat tool `business_review` + dispatch, caller-JWT client with the persona-tenant == `current_user_tenant_id()` bracket (the `pipelineWorkspaceRead` precedent) | `_shared/paige-context/adapters/*`, Spine domain file, `paige-ai-chat` (tool push + dispatch only) | unit + registry lint; authenticated Chat drive owed; Live drive owed |
+| **F2** | First adapters over **existing** tenant-derived reads: `sales_pipeline`/`clients`/`revenue` ← `practice_dashboard_metrics(p_window_days)`; `work`/`operations` ← `practice_attention_queue()` (+ tenant `systems_check_snapshot`); `game_plan` ← `list_business_missions`. Register Spine read `business.operating_snapshot` (chatBinding PARTIAL); one chat tool `business_review` + dispatch, caller-JWT client with the persona-tenant == `current_user_tenant_id()` bracket (the `pipelineWorkspaceRead` precedent) | `_shared/paige-context/adapters/*`, Spine domain file, `paige-ai-chat` (tool push + dispatch only) | unit + registry lint; authenticated Chat drive owed; Live drive owed. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 2.** |
+| **F2a** (2026-10-12) | `payments` + `sales_pipeline` projection adapters over the INT-340/INT-341 issuer keys; `composeBusinessReview` (observed scope before/after); 45 tests. No tool, no Spine, no turn wiring (hand-offs in the F2a section) | `_shared/paige-context/adapters/*`, `_shared/paige-context/business-review.ts`, one test | unit + §71.4 falsification; Chat/Live reach UNVERIFIED (INT-346) |
 | **F3** | Domain-owned windowed reads: Rail outcomes in [start,end) (SECURITY DEFINER, tenant from `current_user_tenant_id()`, §59 in-body check); bookings in window; comms counts in window | one migration per owning domain + adapter | §32 persisted-apply; §37 producer inventory |
-| **F4** | Payments period read (receivables, collected in period, overdue) by the Sales lane, consumed by the `payments` adapter | Sales lane migration + adapter | lane owner |
+| **F4** | Payments period read (receivables, collected in period, overdue) by the Sales lane, consumed by the `payments` adapter | Sales lane migration + adapter | lane owner. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 3.** |
 | **F5** | Context Assembly: move the snapshot and two inline blocks (business-context, team-authority) to typed resolvers selected by the Turn Route (R4 has merged) | `paige-ai-chat` context region | after F2; coordinate with R5 narrowing |
 | **F6** | Workspace and performance memory audiences (G) | `paige_owner_memory` + RLS + `record_paige_memory` | **owner ruling**; after S5 |
 | **F7** | Game Plan targets (H) + snapshot progress-against-target | new table + RPC + Spine | **owner ruling** (material product decision) |

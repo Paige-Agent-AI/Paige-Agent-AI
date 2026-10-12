@@ -444,7 +444,7 @@ function describeStep(
     case "set_ad_creative_featured": return { label: failed ? "Couldn't confirm the Ads showroom changed" : out?.changed === false ? "Your Ads showroom already had it that way" : out?.featured === false ? "Took a picture out of your Ads showroom" : "Featured a picture in your Ads showroom", group: "owner", detail: failed ? "no confirmed change" : out?.changed === false ? "nothing changed" : "nothing published or spent" };
     // Campaign steps and process scope (MBC 6c, owner): the same writer and reads the Campaigns dossier uses.
     case "read_campaign_steps": return { label: failed ? "Couldn't read the campaign's steps" : "Read the campaign's steps", group: "owner" };
-    case "campaign_step_plan": return { label: failed ? "Couldn't confirm the step was planned" : "Planned a campaign step", group: "owner", detail: failed ? "no confirmed change" : "waiting for your approval; nothing sent" };
+    case "campaign_step_plan": return { label: failed ? "Couldn't confirm the step was planned" : "Planned a campaign step", group: "owner", detail: failed ? "no confirmed change" : "nothing drafted or sent" };
     case "campaign_step_record_result": return { label: failed ? "Couldn't confirm the result was recorded" : "Recorded what came of a campaign step", group: "owner", detail: failed ? "no confirmed change" : "as you stated it" };
     case "campaign_step_judge": return { label: failed ? "Couldn't confirm the judgement was recorded" : "Recorded your judgement of a campaign step", group: "owner" };
     case "read_process_scope": return { label: failed ? "Couldn't read which form starts the process" : "Checked which form starts the process", group: "owner" };
@@ -8888,12 +8888,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "campaign_step_plan": {
           const step = String(a?.step ?? "").trim().slice(0, 120) || "a step";
           const tactic = String(a?.tactic ?? "").trim().slice(0, 80);
-          return `Plan “${step}”${tactic ? ` under ${tactic}` : ""} on this campaign. It goes on your action list waiting for your approval; nothing is drafted, sent, published or spent.`;
+          return `Plan “${step}”${tactic ? ` under ${tactic}` : ""} on this campaign. It goes on your action list as planned and comes to you for approval once it is prepared; nothing is drafted, sent, published or spent.`;
         }
         case "campaign_step_record_result": {
           const said = String(a?.what_happened ?? "").trim().slice(0, 160);
           const figure = typeof a?.figure === "number" && Number.isFinite(a.figure) ? ` (${a.figure.toLocaleString()})` : "";
-          return `Record what came of this campaign step: “${said}”${figure}. It is recorded as you stated it, not as a measured figure.`;
+          return `Record what came of this campaign step: “${said}”${figure}. It is recorded as you stated it, not as a measured figure${figure ? "; a figure is kept only if you wrote that number in this conversation" : ""}.`;
         }
         case "campaign_step_judge": {
           const verdict = a?.verdict === "met" ? "met its aim" : a?.verdict === "partly_met" ? "partly met its aim" : a?.verdict === "not_met" ? "did not meet its aim" : "has been judged";

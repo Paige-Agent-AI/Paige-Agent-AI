@@ -82,7 +82,7 @@ BEGIN
  IF _source_kind<>'capability_run' OR _outcome NOT IN ('capability_succeeded','capability_refused') THEN RETURN result; END IF;
  IF _capability='campaign_step_plan' THEN
   result:=result||jsonb_build_object('title',CASE WHEN ok THEN 'PAIGE planned a campaign step' ELSE 'PAIGE couldn''t plan a campaign step' END,
-   'summary',CASE WHEN ok THEN 'It waits for your approval. Nothing was drafted, sent or published.' ELSE 'Nothing was changed.' END);
+   'summary',CASE WHEN ok THEN 'It comes to you for approval once it is prepared. Nothing was drafted, sent or published.' ELSE 'Nothing was changed.' END);
  ELSIF _capability='campaign_step_record_result' THEN
   result:=result||jsonb_build_object('title',CASE WHEN ok THEN 'PAIGE recorded what came of a campaign step' ELSE 'PAIGE couldn''t record a campaign step''s result' END,
    'summary',CASE WHEN ok THEN 'Recorded as you stated it, not as a measured figure.' ELSE 'Nothing was changed.' END);
@@ -91,7 +91,7 @@ BEGIN
    'summary',CASE WHEN ok THEN 'Judged against its aim, as you decided.' ELSE 'Nothing was changed.' END);
  ELSIF _capability='process_scope_set' THEN
   result:=result||jsonb_build_object('title',CASE WHEN ok THEN 'PAIGE set which form starts a process' ELSE 'PAIGE couldn''t set which form starts a process' END,
-   'summary',CASE WHEN ok THEN 'It runs only for the forms you chose. It was not switched on or off.' ELSE 'Nothing was changed.' END);
+   'summary',CASE WHEN ok THEN 'It runs only for the form or campaign you chose. It was not switched on or off.' ELSE 'Nothing was changed.' END);
  END IF;
  RETURN result;
 END $$;

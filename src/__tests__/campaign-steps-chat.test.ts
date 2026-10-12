@@ -146,7 +146,11 @@ describe("planning a step", () => {
       dueAt: "2031-03-01T12:00:00.000Z", expectedResult: { summary: "Every booking thanked" } } });
     expect(String(write._idempotency_key)).toMatch(/^chat:[0-9a-f]{48}$/);
     expect((result.content.step as Row).planned_by).toBe("PAIGE");
-    expect(String(result.content.note)).toMatch(/waiting for the owner's approval.*Nothing was drafted, sent, published or spent/);
+    // Planned, not yet waiting: the step comes for approval once it is prepared (the server's own words).
+    expect(String(result.content.note)).toMatch(/as planned and comes to the owner for approval once it is prepared.*Nothing was drafted, sent, published or spent/);
+    expect(String(result.content.note)).not.toMatch(/waiting for the owner/);
+    // The receipt's run is the asked-for change itself, so a different later change never merges into it.
+    expect(result.runId).toBe(write._idempotency_key);
     // The same ask in the same conversation carries the same key, so the writer returns the step it planned.
     const again = database();
     await run(again, "campaign_step_plan", args);
@@ -165,6 +169,12 @@ describe("planning a step", () => {
       expect(result.outcome === "refused" || result.outcome === "invalid").toBe(true);
       expect(db.writes()).toHaveLength(0);
     }
+  });
+
+  it("a refusal that follows a switch of business is named as the switch", async () => {
+    let n = 0;
+    const db = database({ active: () => (n++ < 1 ? TENANT : OTHER), writeError: "CAMPAIGN_BRIEF_FORBIDDEN" });
+    expect((await run(db, "campaign_step_plan", { campaign_id: CAMPAIGN, step: "x", tactic: "t", kind: "email" })).content.code).toBe("active_account_changed");
   });
 
   it("names a bus refusal as the bus's, and never reports a write the read doesn't show", async () => {
@@ -193,6 +203,7 @@ describe("recording and judging a result", () => {
     const result = await run(database(), "campaign_step_record_result", { campaign_id: CAMPAIGN, step_id: S_FAILED, what_happened: "Nothing went out" });
     expect(result.outcome).toBe("succeeded");
     expect(String(result.content.note)).toMatch(/still reads as failed/);
+    // A result whose figure didn't land is not reported as recorded.
   });
 
   it("judges only a recorded result, once", async () => {
@@ -205,6 +216,11 @@ describe("recording and judging a result", () => {
     expect(judged.outcome).toBe("succeeded");
     expect(((judged.content.step as Row).judged as Row).verdict).toBe("met");
     expect((await run(db, "campaign_step_judge", { campaign_id: CAMPAIGN, step_id: S_DONE, verdict: "not_met" })).content.code).toBe("already_judged");
+    // A retry of the very same judgement (after an unclear answer) confirms it and writes nothing new.
+    const before = db.writes().length;
+    const retry = await run(db, "campaign_step_judge", { campaign_id: CAMPAIGN, step_id: S_DONE, verdict: "met", note: "Above the aim" });
+    expect(retry.outcome).toBe("succeeded");
+    expect(db.writes()).toHaveLength(before);
   });
 });
 
@@ -242,6 +258,9 @@ describe("helpers", () => {
     expect(ownerGaveFigure("12.5% replied", 12.5)).toBe(true);
     expect(ownerGaveFigure("twelve booked", 12)).toBe(false);
     expect(ownerGaveFigure("120 booked", 12)).toBe(false);
+    // A range is two numbers, never a negative one.
+    expect(ownerGaveFigure("10-12 replies", 12)).toBe(true);
+    expect(ownerGaveFigure("down by -3 this week", -3)).toBe(true);
   });
   it("a request key is stable for the same ask and differs for another", async () => {
     expect(await requestKey(["a", 1])).toBe(await requestKey(["a", 1]));

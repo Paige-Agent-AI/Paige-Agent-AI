@@ -157,12 +157,16 @@ Deno.serve(async (req) => {
       .select("recovery_scope, created_at")
       .eq("id", eventId)
       .maybeSingle();
-    if (evErr || !evRow) {
+    // 42703 = the column does not exist yet (this function deployed before its migration applied). Then no event
+    // can have been re-opened by recovery, so the drain is a normal one. Any other read failure retries.
+    const scopeColumnMissing = (evErr as { code?: string } | null)?.code === "42703";
+    if (!scopeColumnMissing && (evErr || !evRow)) {
       const msg = evErr?.message ?? "event row not readable";
       await failEvent(`event_scope_read_failed: ${msg}`);
       return json({ error: "event_scope_read_failed", detail: msg }, 500);
     }
-    const recoveryScope: string[] | null = Array.isArray(evRow.recovery_scope) ? evRow.recovery_scope : null;
+    const recoveryScope: string[] | null =
+      !scopeColumnMissing && Array.isArray(evRow?.recovery_scope) ? evRow.recovery_scope : null;
     const subscribers = (subs ?? []).filter((s: any) => recoveryScope === null || recoveryScope.includes(s.id));
 
     // -- 3. Skip subscribers already delivered (fire-once across retries). --
@@ -197,7 +201,7 @@ Deno.serve(async (req) => {
         id: s.id, name: s.name, granted_lane: s.granted_lane,
         conditions: s.conditions, created_by: s.created_by ?? null, state: s.state,
       })),
-      recoveryScope === null ? {} : { actsCreatedAtOrBefore: String(evRow.created_at) },
+      recoveryScope === null ? {} : { actsCreatedAtOrBefore: String(evRow?.created_at) },
     );
 
     // -- 5. Record DELIVERY per subscriber (paige_event_dispatches), now carrying the EXACT per-act

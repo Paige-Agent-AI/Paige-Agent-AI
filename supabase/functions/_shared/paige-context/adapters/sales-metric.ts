@@ -320,7 +320,10 @@ export function noteSalesSource(draft: SalesSnapshotDraft, adapterId: string, me
 /** Plain note text for one figure; kept short so several fit the 300-character note. */
 export const SALES_NOTE = {
   failed: (noun: string) => `${noun} could not be read`,
-  partial: (noun: string) => `${noun}: only some records could be counted`,
+  // The Sales producer marks a figure PARTIAL for more than one reason (some records excluded, zero-valued
+  // deals whose values may be unrecorded, test allocations touching a balance), so the note states only
+  // what is known: the source itself calls the figure incomplete.
+  partial: (noun: string) => `${noun}: the source marks this figure as incomplete`,
   dropped: (noun: string, n: number) =>
     `${noun}: ${n === 1 ? "one amount" : `${n} amounts`} could not be shown exactly and ${n === 1 ? "was" : "were"} left out`,
   noComparison: (noun: string) => `${noun}: no comparison with the previous period`,

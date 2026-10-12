@@ -249,7 +249,7 @@ describe('payments adapter', () => {
       : defaultScript(a) });
     const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
     expect(s.coverage).toBe('partial');
-    expect(s.coverage_note).toMatch(/outstanding receivables: only some records/i);
+    expect(s.coverage_note).toMatch(/outstanding receivables: the source marks this figure as incomplete/i);
     expect(s.headline.find((m) => m.key === 'payments.receivables_outstanding_usd')?.value).toBe(40000);
   });
 
@@ -323,7 +323,7 @@ describe('payments adapter', () => {
       const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
       expect(s.headline.some((m) => m.key.startsWith('payments.receivables_outstanding'))).toBe(false);
       expect(s.coverage).toBe('partial');
-      expect(s.coverage_note).toMatch(/outstanding receivables: only some records/i);
+      expect(s.coverage_note).toMatch(/outstanding receivables: the source marks this figure as incomplete/i);
     });
 
     it('a read whose every amount was dropped shows no zero either', async () => {
@@ -423,6 +423,23 @@ describe('sales pipeline adapter', () => {
     expect(f.issued().map((a) => a.p_metric_key).some((k) => /won|lost/.test(k))).toBe(false);
     expect(f.maxInFlight()).toBe(1);
     expect(validateDomainSnapshot(s, { domain: 'sales_pipeline', period: period(), notAfter: NOW }).ok).toBe(true);
+  });
+
+  it.each([
+    ['current', (a: IssueArgs) => !isPrevious(a)],
+    ['previous', (a: IssueArgs) => isPrevious(a)],
+  ] as const)('never compares opportunity counts when the %s window is partial', async (_label, partialWindow) => {
+    const f = fakeCaller({ script: (a) => {
+      if (a.p_metric_key === 'sales.opportunities.created') {
+        return { values: count(isPrevious(a) ? 3 : 5), truth: partialWindow(a) ? 'PARTIAL' : 'LIVE' };
+      }
+      if (a.p_metric_key === 'sales.opportunities.open_current') return { values: count(12) };
+      return { values: money(['usd', '2500000']) };
+    } });
+    const s = data(await createSalesPipelineSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.changes).toEqual([]);
+    expect(s.coverage).toBe('partial');
+    expect(s.coverage_note).toMatch(/new opportunities: no comparison with the previous period/i);
   });
 
   it.each([1, 2, 3])('stops before the next read when aborted after read %i', async (k) => {

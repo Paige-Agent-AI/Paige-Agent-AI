@@ -79,9 +79,10 @@ reach it only after the two hand-offs below land.
   and reads the workspace once more after every adapter settles; a switch voids every domain as
   `scope_changed`. It then projects the result. Every other default domain is reported NOT
   AVAILABLE with its reason.
-- `src/__tests__/operating-snapshot-business-review.test.ts`: 31 tests against a fake caller whose
-  issuer payloads pass `parseMetricResult`. Twelve protective assertions were falsified on purpose
-  (§71.4): each defect was reinstated, the named test failed, and the code was restored.
+- `src/__tests__/operating-snapshot-business-review.test.ts`: 45 tests against a fake caller whose
+  issuer payloads pass `parseMetricResult`. Protective assertions were falsified on purpose (§71.4):
+  each defect was reinstated, the named test failed, and the code was restored. The list is in the
+  evidence table below.
 
 **Rules the adapters keep:**
 
@@ -130,7 +131,11 @@ both are superseded.
 **Hand-off — Conversational Loop lane (not done here):**
 
 - Push one tool, `get_business_snapshot`, next to the existing `read_business_metric` push. It is
-  read-only, with parameters `period`, `timezone`, `custom_start`/`custom_end` and `focus`.
+  read-only, with parameters `period`, `custom_start`/`custom_end` and `focus`. The dispatch takes
+  the time zone from the server-resolved user or tenant setting (the turn's validated
+  `userTimezone`, falling back to UTC explicitly), never from the model.
+- Budget the turn for the worst case: about three times the timeout (a bounded workspace read before,
+  the adapters, a bounded workspace read after) — 30 s at the 10 s default.
 - Add one dispatch branch:
   `composeBusinessReview(supabaseClient /* caller JWT */, { actorId: user.id, tenantId: personaCtx.tenant_id, role, accountShape }, args)`.
   Return `projection` to the model and keep `snapshot` for the turn trace. Write no Rail receipt
@@ -180,7 +185,7 @@ check, and nothing from it reaches the snapshot.
 
 | Class | State |
 |---|---|
-| Automated | 43 new tests; the F1 seam and analytics suites still pass. Nine reinstated defects were each caught by a failing test (§71.4): a partial or fully-dropped read shown as a zero, a previous window's dropped amount treated as a zero, a partial current window compared, the pipeline's abort checks removed, the clock margin removed, an unbounded workspace lookup, a trimmed overdue figure, and a comparison kept for a trimmed figure |
+| Automated | 45 new tests; the F1 seam and analytics suites still pass. Every defect below was reinstated one at a time and caught by at least one failing test (§71.4): currency codes not upper-cased; an amount too large to hold exactly kept; a refusal reported as degraded; the source-unavailable check removed; a partial read shown as a zero; a fully-dropped read shown as a zero; a missing amount treated as zero in a comparison; a partial current or previous window compared (payments and pipeline); the evidence reference used as provenance; the window end not pulled back from now; an overdue amount of 0 treated as a risk; the abort checks removed (payments and pipeline); two reads overlapping; an unbounded workspace lookup; the workspace check before or after composing removed; a trimmed overdue figure; a comparison kept for a trimmed figure |
 | Static | the `tsc` ratchet shows no new errors (baseline 10, current 10); strict `tsc` is clean on the new files; eslint is clean |
 | Rendered / behavioural / authenticated runtime | **UNVERIFIED**: nothing is wired to a turn |
 
@@ -189,7 +194,8 @@ check, and nothing from it reaches the snapshot.
 1. **§A payments rows and §K Sales/Payments row are stale.** Collected-in-period
    (`sales.cash.recorded_received`), outstanding (`sales.receivables.outstanding_current`) and
    overdue (`sales.receivables.overdue_current`) **are** readable for PAIGE. They come through the
-   INT-340 shared issuer over the INT-341 Sales producer, since 2026-10-08 (migrations
+   INT-340 shared issuer over the INT-341 Sales producer (producer and issuer merged 2026-10-07 in
+   #1809/#1814; the chat read `read_business_metric` merged 2026-10-08 in #1873; migrations
    `20270601000002`, `20270601000006`), and through `readBusinessMetric`, which chat already
    dispatches as `read_business_metric`. "No list, aging or collected-in-range read for PAIGE" and
    "the adapter reports `no_adapter` until the lane ships a period read" no longer hold.
@@ -664,7 +670,7 @@ entry-point slice, not a new memory or context system.
 |---|---|---|---|
 | **F1** (this PR) | Phase 0 map + contracts (this doc); the pure seam `_shared/paige-context/snapshot.ts` (periods, DomainSnapshot validator, NOT-CONNECTED register, composer, projection) + tests | docs, one new `_shared` module, one test | no runtime change |
 | **F2** | First adapters over **existing** tenant-derived reads: `sales_pipeline`/`clients`/`revenue` ← `practice_dashboard_metrics(p_window_days)`; `work`/`operations` ← `practice_attention_queue()` (+ tenant `systems_check_snapshot`); `game_plan` ← `list_business_missions`. Register Spine read `business.operating_snapshot` (chatBinding PARTIAL); one chat tool `business_review` + dispatch, caller-JWT client with the persona-tenant == `current_user_tenant_id()` bracket (the `pipelineWorkspaceRead` precedent) | `_shared/paige-context/adapters/*`, Spine domain file, `paige-ai-chat` (tool push + dispatch only) | unit + registry lint; authenticated Chat drive owed; Live drive owed. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 2.** |
-| **F2a** (2026-10-12) | `payments` + `sales_pipeline` projection adapters over the INT-340/INT-341 issuer keys; `composeBusinessReview` (observed scope before/after); 31 tests. No tool, no Spine, no turn wiring (hand-offs in the F2a section) | `_shared/paige-context/adapters/*`, `_shared/paige-context/business-review.ts`, one test | unit + §71.4 falsification; Chat/Live reach UNVERIFIED (INT-346) |
+| **F2a** (2026-10-12) | `payments` + `sales_pipeline` projection adapters over the INT-340/INT-341 issuer keys; `composeBusinessReview` (observed scope before/after); 45 tests. No tool, no Spine, no turn wiring (hand-offs in the F2a section) | `_shared/paige-context/adapters/*`, `_shared/paige-context/business-review.ts`, one test | unit + §71.4 falsification; Chat/Live reach UNVERIFIED (INT-346) |
 | **F3** | Domain-owned windowed reads: Rail outcomes in [start,end) (SECURITY DEFINER, tenant from `current_user_tenant_id()`, §59 in-body check); bookings in window; comms counts in window | one migration per owning domain + adapter | §32 persisted-apply; §37 producer inventory |
 | **F4** | Payments period read (receivables, collected in period, overdue) by the Sales lane, consumed by the `payments` adapter | Sales lane migration + adapter | lane owner. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 3.** |
 | **F5** | Context Assembly: move the snapshot and two inline blocks (business-context, team-authority) to typed resolvers selected by the Turn Route (R4 has merged) | `paige-ai-chat` context region | after F2; coordinate with R5 narrowing |

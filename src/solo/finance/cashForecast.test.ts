@@ -1,8 +1,29 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { calculateCashForecast, type CashEvent, type CashForecastInput } from '../../../supabase/functions/_shared/finance/cash-forecast';
-const event = (id: string, overrides: Partial<CashEvent> = {}): CashEvent => ({ id, obligationId: null, date: '2026-10-11', currency: 'USD', amountMinor: '100', direction: 'outflow', basis: 'scheduled_obligation', sourceRef: 'controlled-source', sourceVersion: 'v1', ...overrides });
+const event = (id: string, overrides: Partial<CashEvent> = {}): CashEvent => ({ id, obligationId: null, date: '2026-10-11', currency: 'USD', amountMinor: '100', direction: 'outflow', basis: 'scheduled_obligation', sourceRef: 'controlled-source', sourceVersion: 'v1', ...overrides } as CashEvent);
 const input = (overrides: Partial<CashForecastInput> = {}): CashForecastInput => ({ companyId: 'controlled-company', currency: 'USD', minorUnitScale: 2, startDate: '2026-10-10', horizonDays: 30, openingCashMinor: '1000', cashFloorMinor: '500', openingEvidenceRef: 'controlled-cash-evidence', sourceAsOf: '2026-10-10', scenarioVersion: 1, coverage: 'complete', events: [], ...overrides });
 describe('reproducible cash scenarios, no provider calls or financial effects', () => {
+  it('encodes source basis and direction together in the typed contract', () => {
+    type Fields = Omit<CashEvent, 'basis' | 'direction'>;
+    expectTypeOf<Fields & { basis: 'scheduled_obligation'; direction: 'inflow' }>().not.toMatchTypeOf<CashEvent>();
+    expectTypeOf<Fields & { basis: 'collection_estimate'; direction: 'outflow' }>().not.toMatchTypeOf<CashEvent>();
+    expectTypeOf<Fields & { basis: 'scheduled_obligation'; direction: 'outflow' }>().toMatchTypeOf<CashEvent>();
+    expectTypeOf<Fields & { basis: 'collection_estimate'; direction: 'inflow' }>().toMatchTypeOf<CashEvent>();
+  });
+  it.each([
+    { basis: 'scheduled_obligation', direction: 'inflow' },
+    { basis: 'collection_estimate', direction: 'outflow' },
+  ] as const)('refuses $basis as $direction before projecting any cash', invalid => {
+    const invalidEvent = { ...event('invalid-direction'), ...invalid } as unknown as CashEvent;
+    expect(calculateCashForecast(input({ events: [invalidEvent] }))).toMatchObject({
+      status: 'unavailable', reason: 'invalid_event_basis_direction', daily: null,
+      endingCashMinor: null, minimumCashMinor: null, firstBelowFloor: null,
+    });
+  });
+  it.each(['inflow', 'outflow'] as const)('keeps owner-assumed %s attributable and partial', direction => {
+    expect(calculateCashForecast(input({ coverage: 'partial', events: [event('assumption', { basis: 'owner_assumption', direction })] })))
+      .toMatchObject({ status: 'partial_scenario', assumptions: [{ basis: 'owner_assumption', direction }], guaranteed: false, financialEffectsExecuted: false });
+  });
   it.each([30, 60, 90] as const)('produces exactly %i dated daily projections with explicit scenario provenance', horizonDays => {
     const result = calculateCashForecast(input({ horizonDays }));
     expect(result.daily).toHaveLength(horizonDays);
@@ -15,7 +36,7 @@ describe('reproducible cash scenarios, no provider calls or financial effects', 
     expect(result.daily?.[1]).toMatchObject({ openingCashMinor: '1000', outflowMinor: '900', closingCashMinor: '100' });
   });
   it('is order independent and does not mutate source events', () => {
-    const events = [event('b'), event('a', { direction: 'inflow' })];
+    const events = [event('b'), event('a', { basis: 'owner_assumption', direction: 'inflow' })];
     const before = JSON.stringify(events);
     expect(calculateCashForecast(input({ events }))).toEqual(calculateCashForecast(input({ events: [...events].reverse() })));
     expect(JSON.stringify(events)).toBe(before);

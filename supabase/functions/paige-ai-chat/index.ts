@@ -12,6 +12,7 @@ import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type
 import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxIntelligenceChat, dispatchOrganizeChat } from '../_shared/inbox-intelligence/chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
+import { ADS_FUNNEL_TOOLS, ADS_FUNNEL_TOOL_NAMES, dispatchAdsFunnelChat } from '../_shared/ads-funnel-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { PUBLISH_DOOR_CHAT_TOOLS } from '../_shared/growth-publish-command/contract.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
@@ -437,6 +438,9 @@ function describeStep(
     case "read_email_series": return { label: failed ? "Couldn't read your email series" : "Checked your email series", group: "owner" };
     case "email_series_draft": return { label: failed ? "Couldn't confirm the email series was saved" : "Saved an email series draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
     case "email_series_request_approval": return { label: failed ? "Couldn't confirm the series was filed for approval" : "Filed an email series for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
+    // Ads (owner) — the funnel is the business's own leads and deals; featuring changes only the showroom.
+    case "get_pipeline_lead_funnel": return { label: failed ? "Couldn't read your campaign results" : "Checked how your campaigns and ads are doing in Sales", group: "owner" };
+    case "set_ad_creative_featured": return { label: failed ? "Couldn't confirm the Ads showroom changed" : out?.changed === false ? "Your Ads showroom already had it that way" : out?.featured === false ? "Took a picture out of your Ads showroom" : "Featured a picture in your Ads showroom", group: "owner", detail: failed ? "no confirmed change" : out?.changed === false ? "nothing changed" : "nothing published or spent" };
     // Calendar booking presets (owner) — a preset is a bookable /book PAGE; only publish makes it public.
     // Each verb special-cases CALENDAR_PRESET_RAIL_WRITE_FAILED: there the mutation IS verified and
     // PERSISTED (only the Rail evidence did not finish), so the chip must state the TRUE persisted
@@ -1467,6 +1471,12 @@ serve(async (req) => {
     // approval this resume handled and what became of it before or at its claim; `resumeHandledActs`
     // / `resumeHandledSubjects` are what the model is refused from re-emitting in the same reply.
     const resumePin = new Map<string, string>();
+    // INT-1807 CL-8 — the gated model-emit counterpart of resumePin for the Pipeline
+    // non-application observation: when the general gate resolves an approved token for
+    // a re-emitted pipeline_configure call, the scoped token is kept here so a
+    // database-answered refusal at dispatch can be recorded for the ORIGINAL effect the
+    // same way the C4a pinned carry-forward already is. Server-only, never client-set.
+    const pipelineClaimToken = new Map<string, string>();
     const resumeTokens = new Map<string, { tool: string; state: "pending" | "expired" | "lost" | "unavailable" | "withheld" }>();
     // "here": this reply's resumed round carried the act forward. "elsewhere": the approval had
     // already been used before this request could (a second click, another tab) — the act may
@@ -8163,6 +8173,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // Marketing email series (E3c): read series, write a whole series as a draft, file it for the owner's one
     // approval. The same general gate governs them; PAIGE has no approve, start, pause, stop or send tool.
     toolDefs.push(...EMAIL_SERIES_TOOLS as any);
+    // Ads (2026-10-12): read the lead funnel (leads by Sales stage per campaign and ad tag) and feature a
+    // library picture in the Ads showroom. Tenant tier only, like the business metric read: both RPCs act on
+    // the caller's active business. The feature is governed by the general gate below (ordinary → confirm).
+    if (callerTier === "tenant") toolDefs.push(...ADS_FUNNEL_TOOLS as any);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -8519,6 +8533,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       read_email_series: "checking your email series",
       email_series_draft: "writing an email series",
       email_series_request_approval: "filing an email series for your approval",
+      get_pipeline_lead_funnel: "checking how your campaigns and ads are doing in Sales",
+      set_ad_creative_featured: "changing what your Ads showroom features",
       booking_preset_create: "creating a booking calendar (a private draft)",
       booking_preset_revise: "revising a booking calendar",
       booking_preset_publish: "publishing a booking calendar's public page",
@@ -8831,6 +8847,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         case "email_series_request_approval":
           return "File this email series for your decision. Its emails, waits, who enters, when people leave and the sender are locked. You approve it in Marketing › Email; nothing sends until you do. One approval covers everyone who enters this version, within the daily limit, until you pause or stop it. Any later change is a new version that needs its own approval.";
+        case "set_ad_creative_featured": {
+          // Name the picture the owner is approving, read on the caller's own session in this business. A
+          // card that cannot name it says "this picture" rather than guessing (§13).
+          const cid = typeof a?.content_id === "string" ? a.content_id.trim() : "";
+          let title: string | null = null;
+          if (UUIDISH.test(cid) && personaCtx?.tenant_id) {
+            try {
+              const { data } = await supabaseClient.from("marketing_content").select("title")
+                .eq("id", cid).eq("tenant_id", personaCtx.tenant_id).limit(1);
+              const raw = Array.isArray(data) ? data[0]?.title : null;
+              title = typeof raw === "string" && raw.trim() ? raw.trim().slice(0, 80) : null;
+            } catch { title = null; }
+          }
+          const named = title ? `“${title}”` : "this picture";
+          return a?.featured === false
+            ? `Take ${named} out of your Ads showroom. It stays in your library; nothing is published, sent or spent.`
+            : `Feature ${named} in your Ads showroom. Up to 6 can be featured; nothing is published, sent or spent.`;
+        }
         case "booking_preset_create":
           return `Create a booking calendar "${String(a?.name || "Untitled").slice(0, 80)}"${a?.model ? ` (${String(a.model).replaceAll("_", " ")})` : ""} as a PRIVATE DRAFT. Its public /book page is NOT live — publishing is a separate, explicit step.`;
         case "booking_preset_duplicate": {
@@ -11361,6 +11395,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const approvedArgs = approvedFingerprint !== undefined
               ? await claimConfirmation(approvedFingerprint, tc.function.name)
               : null;
+            // INT-1807 CL-8 — the token is FINAL here (pinned resume, direct scoped match, or
+            // the approved-set resolution above) and the claim has consumed the row, so a
+            // later database-answered door refusal can be recorded against the ORIGINAL
+            // effect. Captured after the claim by review: the first resolution alone misses
+            // the approved-set path, and a bare unscoped token cannot validate anyway.
+            if (approvedArgs && approvedFingerprint && tc.function.name === "pipeline_configure") {
+              pipelineClaimToken.set(tc.id, approvedFingerprint);
+            }
 
             if (!approvedArgs) {
               // C4a — A RESUMED ACT WHOSE CLAIM FAILED never becomes a fresh card. Read the row once
@@ -13553,20 +13595,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   _idempotency_key: args.idempotency_key,
                 });
                 if (configureError) {
-                  // INT-1807 CL-2 — a database-ANSWERED refusal of this single-RPC door call
-                  // rolled its one transaction back whole (approval-outcome.ts): nothing the
-                  // command would have written was written. Record that definite
-                  // non-application for the original effect so a later status read can
-                  // distinguish "definitely did not apply" from unknown. Only the C4a
-                  // pinned carry-forward holds the card token at this seam; recording the
-                  // gated model-emit path is a named follow-up. Best-effort by design: the
-                  // refusal itself is the answer and never waits on the observation.
-                  if (databaseAnswered(configureError) && interactive && resumePin.has(tc.id)) {
+                  // INT-1807 CL-2/CL-8 — a database-ANSWERED refusal of this single-RPC door
+                  // call (either the caller-JWT form a pinned C4a resume takes or the
+                  // as_paige form a gated model-emit claim takes) rolled its one transaction
+                  // back whole (approval-outcome.ts): nothing the command would have written
+                  // was written. Record that definite non-application for the ORIGINAL
+                  // effect so a later status read can distinguish "definitely did not apply"
+                  // from unknown. The token is the pinned carry-forward's, or the gate-resolved
+                  // approved token for a re-emitted call — both server-only, both validated
+                  // against the consumed card in SQL. Best-effort by design: the refusal itself
+                  // is the answer and never waits on the observation.
+                  const observedClaimToken = resumePin.get(tc.id) ?? pipelineClaimToken.get(tc.id);
+                  if (databaseAnswered(configureError) && interactive && observedClaimToken) {
                     try {
                       await admin.rpc("record_pipeline_metadata_non_application", {
                         p_thread: validatedData.threadId,
                         p_intent: validatedData.requestIntentId,
-                        p_token: resumePin.get(tc.id),
+                        p_token: observedClaimToken,
                         p_sqlstate: String((configureError as { code?: unknown }).code ?? ""),
                       });
                     } catch { /* the observation is best-effort; the refusal stands without it */ }
@@ -15529,6 +15574,36 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome: "outcome_unknown", error: "The email series action did not report back.", note: "Read the series before saying anything changed, and do not retry automatically." }) });
           }
+        } else if (ADS_FUNNEL_TOOL_NAMES.has(tc.function.name)) {
+          // Ads (2026-10-12): the lead funnel read and the showroom feature. The adapter runs on the CALLER's
+          // session (supabaseClient), never the service role, so get_pipeline_lead_funnel and
+          // set_ad_creative_featured decide owner/admin, agency and platform-owner authority in their own
+          // bodies; it checks the active business before and after, and reports a feature as done only after
+          // a fresh read shows it. The feature's receipt goes to the Rail through the existing recorder; the
+          // read records nothing.
+          let adsArgs: Record<string, unknown> = {};
+          try { adsArgs = JSON.parse(tc.function.arguments || "{}"); } catch { adsArgs = {}; }
+          const tid = personaCtx?.tenant_id ?? null;
+          try {
+            const result = await dispatchAdsFunnelChat({ tenantId: tid, toolName: tc.function.name, args: adsArgs }, { caller: supabaseClient });
+            if (tc.function.name === "set_ad_creative_featured" && tid
+                && (result.outcome === "succeeded" || result.outcome === "refused" || result.outcome === "outcome_unknown")) {
+              const recorded = await recordCapabilityRun(supabase, {
+                tenantId: tid, actorId: user.id, capabilityKey: tc.function.name,
+                outcome: result.outcome === "succeeded" ? "capability_succeeded" : result.outcome === "refused" ? "capability_refused" : "capability_outcome_unknown",
+                runId: await stableRunId([tc.function.name, tid, `${payloadThreadId ?? ""}:${tc.id}`]),
+              });
+              if (!recorded && result.outcome === "succeeded") {
+                result.content = { ...result.content, activity_recorded: false,
+                  note: `${String(result.content.note ?? "")} It is done, but it did not appear in the business's activity record; say so if asked what PAIGE did.`.trim() };
+              }
+            }
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
+          } catch {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(tc.function.name === "set_ad_creative_featured"
+              ? { success: false, outcome: "outcome_unknown", error: "The showroom change did not report back.", note: "Check Ads › Overview before saying anything changed, and do not retry automatically." }
+              : { success: false, error: "The campaign results could not be read right now." }) });
+          }
         } else if (tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise" || tc.function.name === "campaign_brief_list") {
           // Solo Tenant Brain — Campaign Brief planning records. The helper uses the CALLER JWT
           // for tenant/role resolution and the EXISTING configure RPC, then independently reopens
@@ -16173,6 +16248,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         campaign_brief_create: "campaign_briefs", campaign_brief_revise: "campaign_briefs",
         email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
         email_series_draft: "email_sequences", email_series_request_approval: "email_sequences",
+        set_ad_creative_featured: "marketing_content",
         // Calendar booking presets — every verb's durable subject is the calendars row (the
         // booking /book page). duplicate mints a new row; the rest act on the named one.
         booking_preset_create: "calendars", booking_preset_revise: "calendars",

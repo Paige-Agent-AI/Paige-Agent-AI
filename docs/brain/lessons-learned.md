@@ -3295,3 +3295,24 @@ commit status, and production kept serving the last build for about 20 hours (20
 `main` with **no** Vercel status at all (not a failed one); the API answers "The provided GitHub repository
 can't be found." The fix is granting Vercel's GitHub app access to the new organisation and relinking the
 project. After any repository transfer, check that the next merge produces a Vercel deployment.
+
+## 2026-10-06 — The conductor committed a crew's working tree mid-run and shipped a mutation
+
+During PAIGE Operating Fabric F1, the conductor committed and pushed the builder's in-progress files three
+times to satisfy a "working tree is dirty" stop hook. One of those commits (`9e315a16e`) was taken in the
+middle of the builder's §71.4 mutation run, so the branch briefly carried a deliberately broken guard
+(`owners.length > 99` in place of `> 1`: two adapters for one domain silently ran the first). CI did not
+catch it. That commit's `verify` run was **cancelled** by the workflow's concurrency group when the next
+push superseded it, so the suite never ran on it. The root vitest job does run the file: the next head's
+log shows `operating-snapshot.test.ts (68 tests)`. The broken guard was reverted by the next commit, but
+only because the timing happened to line up.
+
+- **A crew's working tree is not the conductor's to commit while the crew runs.** Commit only when the
+  workflow has returned, or when its files are known to be quiescent, and run the slice's own tests
+  first. A failing or half-mutated state is never pushed to satisfy a hook.
+- **The tell:** a commit whose message does not describe its diff. `d6defd750` was titled "partial
+  coverage without a note is refused" but contained only the duplicate-adapter guard — evidence the
+  conductor was committing a moving target.
+- **A superseded run is not a green run.** With `cancel-in-progress` concurrency, rapid pushes cancel the
+  earlier commits' runs. Only the head's own completed run is evidence, so read its conclusion, not
+  the absence of a red one.

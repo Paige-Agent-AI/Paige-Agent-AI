@@ -246,6 +246,11 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["email_campaign_request_approval", "ordinary", "freezes one draft and files the owner's single approval for it; PAIGE cannot approve, and nothing is sent until a person approves"],
   ["email_series_draft", "ordinary", "writes or changes an email series DRAFT in this business (who enters, each email and its wait, when people leave); nothing is sent, a running series keeps its approved version, and a series awaiting approval or stopped is refused"],
   ["email_series_request_approval", "ordinary", "freezes one series draft and files the owner's single approval for it; PAIGE cannot approve or start it, and nothing is sent until a person approves"],
+  // Ads showroom (2026-10-12). Marks one of the business's own library pictures/videos as featured
+  // (or not) in Ads › Overview through the same RPC the Ads desk calls; at most six, an archived item
+  // refused by the server. In-business and reversible by the same tool; it publishes, sends and spends
+  // nothing and touches no ad account — the same class as content_save.
+  ["set_ad_creative_featured", "ordinary", "features (or unfeatures) one of the business's own library pictures in its Ads showroom, at most six at once; reversible, and nothing is published, sent or spent"],
   // ── Calendar booking presets (E5, 2026-09-13). The SAME server-authorized RPCs the Settings ›
   // Connections › Calendars UI drives, adopted into Chat (no parallel model). Per-tool risk assumes
   // each tool's HIGHEST-impact use (the table is per-tool, not per-call): a tool that CAN change or

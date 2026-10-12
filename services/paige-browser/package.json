@@ -11,7 +11,9 @@
     "smoke:ssrf": "node smoke-ssrf.mjs",
     "smoke:readonly-egress": "node smoke-readonly-egress.mjs",
     "smoke:render": "node smoke-render.mjs",
-    "smoke:all": "node smoke-ssrf.mjs && node smoke-readonly-egress.mjs && node smoke.mjs && node smoke-render.mjs"
+    "smoke:isolation": "node smoke-isolation.mjs",
+    "smoke:egress-proxy": "node smoke-egress-proxy.mjs",
+    "smoke:all": "node smoke-ssrf.mjs && node smoke-readonly-egress.mjs && node smoke.mjs && node smoke-render.mjs && node smoke-isolation.mjs && node smoke-egress-proxy.mjs"
   },
   "dependencies": {
     "express": "^4.19.2",

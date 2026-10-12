@@ -97,6 +97,76 @@ idempotency, transport-code refusal, lineage-gated reads, drifted-record refusal
 handler: `actual: 'outcome_unknown'`), adapter unit 18/18, family vitest 71/71, tsc ratchet
 10=10, no new Deno diagnostics. Both checks are CI-wired beside their siblings.
 
+## 2026-10-11 CL-8 — the gated model-emit write path for the non-application record
+
+CL-2 left one named follow-up: only the C4a pinned carry-forward recorded a definite
+non-application when the Pipeline door refused. The general gate already resolves the
+approved token for a RE-EMITTED pipeline_configure call (the model-emit path); that
+resolution is now captured server-side (`pipelineClaimToken`, declared beside `resumePin`,
+never client-set) and the recorder accepts either token — pinned or gate-claimed — under
+the unchanged single guard: `databaseAnswered(configureError) && interactive && token`.
+Both door forms (`configure_tenant_pipeline` caller-JWT and `_as_paige` service) are single
+RPCs, so the rolled-back-whole doctrine covers both. The SQL validation is unchanged and
+path-agnostic: a consumed pipeline_configure card whose stored command is exactly an
+update-pipeline command with its idempotency key (the migration’s own shape rule) records
+once — other card shapes are refused by the SQL and the observation is skipped (the
+refusal answer itself is unaffected). A
+source-contract test pins the wiring (gate capture, observed-token composition, the
+dropped pin-only condition); runtime proof of the model-emit leg rides the C4f
+authenticated matrix (the C4a harness's pinned scenario stays green in CI). Corridor
+fingerprints recomputed for this tree (the documented per-tree procedure). Best-effort
+recording, refusal-first behavior, and every INT-346 boundary unchanged.
+
+## 2026-10-11 first-wave closeout — merged, deployed, production-verified; the live/gated distinction; #1837 and #1832 dispositions
+
+**Merged and deployed:** #1925 (main `d3008b78b`), #1926 (`ffdca0a88`), #1929 (`ff795b15a`),
+#1932 (`3e72f58a2`). Migrations `20270602000430`/`20270602000431` applied through the
+successful deploy-migrations chain (runs through 38174947753 and 38176446113 green;
+readback: both recorded in `schema_migrations`); the chat Edge deployed (deploy-edge
+SUCCESS at the `3e72f58a2` merge, observed green on the 2026-10-11 run listing;
+subsequent edge runs 38156970856+ stayed green). Production readback
+(read-only): all three new functions live (`record_pipeline_metadata_non_application`,
+`read_pipeline_metadata_observation`, `read_paige_durable_continuation`); rollout row
+`active=false`, activation fields NULL, ZERO held executors. Every review completed and
+dispositioned on-thread before merge (CL-1 SHIP; CL-2 CLEAN/Approve; CL-3 P1 found+fixed;
+CL-4/7 no P1, 4×P2 fixed).
+
+**The live/gated distinction, stated for the record:**
+- LIVE now: non-application OBSERVATION (a database-answered single-RPC door refusal is
+  recorded and later reads as confirmed_failure through full lineage validation);
+  continuation ELIGIBILITY (bounded terminal context in the status response — never
+  permission); the C6 memory dials (capped, labelled recollection, never asserted fact).
+- STILL GATED: every consequential continuation, executor settlement/release, retry, and
+  the effectful interactive protocol. #1822 provider cessation remains a separate HARD
+  STOP — zero held executors, elapsed time, and successful deployments prove NOTHING
+  about cessation and are never treated as evidence.
+
+**#1837 (INT-340 metric read) disposition:** the existing INT-346 protocol already carries
+exactly one authorized read path during DRAINING — the `interactive:{kind:"status"}`
+request, executor-independent by design (this program's CL-2/CL-3 observations ride it).
+A conversational metric ANSWER during DRAINING (what #1837's typed-chat slice needs)
+requires a NEW admission class offering only read-classified tools with per-call dispatch
+under a read guard, no executor claim, no approvals, no settlement beyond the existing
+conversational FINAL receipt — implementable WITHOUT touching the effectful protocol or
+the activation gate. It is NOT unilaterally taken: it widens the #1899-accepted zero-tool
+DRAINING contract, which is an owner-reserved security-posture decision. This record
+presents that bounded design; the Platform Reach lane owns the capability itself.
+
+**#1832 minimum QA handoff (archived session not reused; no identities provisioned by this
+lane, no replacement team; corrected 2026-10-11 per the coordinator's runner-verified
+readback — credentials alone are INSUFFICIENT):** the acceptance runner
+(`scripts/proof/int304-authenticated-observation.mjs`) requires ALL FOUR of — (1) an
+approved, genuinely signed-in synthetic SOLO tenant-owner account with PRIVATE
+`PROOF_EMAIL`/`PROOF_PASSWORD` (or `LIVE_DRIVE_EMAIL`/`LIVE_DRIVE_PASSWORD`) injection;
+(2) `PROOF_ANON_KEY` — the PUBLIC anon/publishable project key, never the service-role
+key; (3) a POSITIONAL fixture JSON path carrying `actorId`, `tenantId`, and at least one
+real fixture case (`threadId`, `intentId`, exactly one `pipelineEffectId` OR `workId`,
+plus expected-result fields); and (4) an actual trusted runner/environment binding. The
+existing replacement QA #1832 owner (with an authorized Auth admin and the trusted runner
+maintainer) arranges the private fixture — not the Conversational Loop engineer and not
+customer data. Every authenticated-runtime PASS in this program remains honestly blocked
+until those four inputs exist; authentic QA readiness is not claimed before evidence.
+
 ## 2026-10-10 program acceptance matrix — handoff grounding, before any code change
 
 INT-304 handoff grounding by the new Conversational Loop agent, verified read-only against

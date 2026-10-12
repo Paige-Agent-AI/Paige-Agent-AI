@@ -42,7 +42,7 @@ import {
   type ActOutcome,
   type EventFacts,
 } from "./decide.ts";
-import { FINAL_OUTCOME_SET } from "./outcomes.ts";
+import { actReceiptRunSeed, FINAL_OUTCOME_SET } from "./outcomes.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { resolveNativeCapabilityStatus } from "../paige-capability-status/gatherer.ts";
@@ -506,7 +506,7 @@ export async function runEventActs(
     if (rec.outcome === "executed" && plan) {
       const detail = (result.detail ?? {}) as Record<string, unknown>;
       const wasNoop = detail.already_at_requested_stage === true;
-      const runId = await stableRunId(["paige-cap", rec.event_id, rec.act_id]);
+      const runId = await stableRunId(actReceiptRunSeed(rec.event_id, rec.act_id));
       await recordCapabilityRun(db, {
         tenantId: event.tenant_id, actorId: plan.personUserId, capabilityKey: plan.capabilityKey,
         outcome: "capability_succeeded", runId,

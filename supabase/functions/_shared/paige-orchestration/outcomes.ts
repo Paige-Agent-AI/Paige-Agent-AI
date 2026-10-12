@@ -81,6 +81,13 @@ export const ADVANCEABLE_OUTCOMES: readonly ActOutcome[] =
 export const ACT_OUTCOME_SET: ReadonlySet<string> = new Set(ACT_OUTCOMES);
 export const FINAL_OUTCOME_SET: ReadonlySet<string> = new Set<string>(FINAL_OUTCOMES);
 
+/** The ONE run-id seed for a Layer-C act's capability receipt, shared by the engine's auto path and the
+ *  approval executor so an act has at most one receipt whichever path files it (record_capability_run folds
+ *  a repeat of the same run id). Pass it to `stableRunId`. */
+export function actReceiptRunSeed(eventId: string, actId: string): string[] {
+  return ["paige-cap", eventId, actId];
+}
+
 /** True when a persisted outcome is FINAL/SETTLED (never re-dispatched). Accepts a raw string so an
  *  already-persisted DB value can be tested directly. */
 export function isFinalOutcome(outcome: string | null | undefined): boolean {

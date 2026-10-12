@@ -22,7 +22,7 @@
 //   A' replay           → a second POST of the same event is not claimed; nothing new is written.
 //   A" re-drive         → the event is put back to pending (a lost acknowledgement): the drainer runs
 //                         the whole engine again and still writes no second effect, receipt or Rail.
-//   A* duplicate        → eight overlapping POSTs of a fresh event: exactly one claims it; one ledger row,
+//   A* duplicate        → eight concurrent POSTs of a fresh event: exactly one claims it; one ledger row,
 //                         one effect, one receipt, one Rail entry.
 //   B  confirm lane     → approval_pending, one companion approval, no effect. Then:
 //        - an owner of ANOTHER workspace approves  → 403, nothing redeemed;
@@ -31,6 +31,9 @@
 //          governed gate (governed_capability_not_for_tier), nothing redeemed;
 //        - the owner approves → executed, one transition, the approval stamped approved;
 //        - the owner approves again → already approved, no second effect.
+//   E  revoked after the hold (§68): the process paused, turned off, or the platform ceiling at 0 →
+//                         the owner's approval does not run it and it stays pending; restored, the same
+//                         approval runs it once.
 //   C  off lane         → held_by_lane, no effect, no approval.
 //   D  wrong subject    → an event that claims workspace D but whose subject belongs to workspace A
 //                         fails the integrity check: no ledger row, no effect, nothing in A touched.
@@ -268,7 +271,7 @@ async function main() {
     assert.deepEqual(evidence(A.tenantId, a.contactId), { transitions: 1, receipts: 1, rail: 1 });
   });
 
-  step("A* eight overlapping deliveries of one event: exactly one claims it, one effect, receipt and Rail", async () => {
+  step("A* eight concurrent deliveries of one event: exactly one claims it, one effect, receipt and Rail", async () => {
     const dup = newContact(A.tenantId, A.owner.id, "Grace");
     // Eight at once makes overlap at the claim likely; every outcome below would also hold if they had run
     // one after another, which is the point: duplicate delivery, concurrent or not, writes nothing twice.
@@ -373,6 +376,48 @@ async function main() {
     assert.deepEqual(evidence(B.tenantId, b.contactId), { transitions: 1, receipts: 1, rail: 1 });
   });
 
+  // ── E: authority revoked after the hold (§68) → the approval does not run it; restored → it does ──
+  const revocations = [
+    { mode: "paused", reason: "process_not_live",
+      revoke: (pid) => sql(`update public.paige_automations set state = 'paused' where id = ${q(pid)};`),
+      restore: (pid) => sql(`update public.paige_automations set state = 'live' where id = ${q(pid)};`) },
+    { mode: "off", reason: "process_lane_off",
+      revoke: (pid) => sql(`update public.paige_automations set granted_lane = 'off' where id = ${q(pid)};`),
+      restore: (pid) => sql(`update public.paige_automations set granted_lane = 'confirm' where id = ${q(pid)};`) },
+    { mode: "ceiling 0", reason: "platform_observe_only",
+      revoke: () => sql(`update public.admin_app_settings set value = value || jsonb_build_object('ceiling', 0) where key = 'paige_trust_compass';`),
+      restore: () => sql(`update public.admin_app_settings set value = value || jsonb_build_object('ceiling', 2) where key = 'paige_trust_compass';`) },
+  ];
+  for (const rv of revocations) {
+    const W = await workspace(`revoke-${rv.mode.replace(" ", "")}`);
+    const pid = processRecord(W.tenantId, W.owner.id, "confirm", "paid_tier");
+    const w = newContact(W.tenantId, W.owner.id, "Rev");
+    step(`E ${rv.mode} after the hold: the approval does not run it; restored, the same approval does`, async () => {
+      const r = await post(drainer.base, { event_id: w.eventId }, keys.service);
+      assert.deepEqual(r.json.act_outcomes, { approval_pending: 1 }, JSON.stringify(r.json));
+      const aid = one(`select id from public.paige_pending_approvals where source = 'paige_orchestration' and metadata->>'event_id' = ${q(w.eventId)};`);
+      rv.revoke(pid);
+      let refused;
+      try {
+        refused = await post(approver.base, { approval_id: aid }, W.owner.jwt);
+      } finally {
+        rv.restore(pid);
+      }
+      assert.equal(refused.status, 200, JSON.stringify(refused.json));
+      assert.equal(refused.json.executed, false, JSON.stringify(refused.json));
+      assert.equal(refused.json.reason, rv.reason, JSON.stringify(refused.json));
+      // the approval surfaces show `error`: a plain sentence naming the fix, never a raw code
+      assert.ok(typeof refused.json.error === "string" && !/_/.test(refused.json.error), JSON.stringify(refused.json));
+      assert.equal(ledger(w.eventId).outcome, "approval_pending");
+      assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(w.contactId)};`), 0);
+      assert.equal(one(`select status || ':' || (claimed_at is null) from public.paige_pending_approvals where id = ${q(aid)};`), "pending:true");
+      const ran = await post(approver.base, { approval_id: aid }, W.owner.jwt);
+      assert.equal(ran.json.executed, true, JSON.stringify(ran.json));
+      assert.equal(ledger(w.eventId).outcome, "executed");
+      assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(w.contactId)};`), 1);
+    });
+  }
+
   // ── C: off lane → held, nothing runs ───────────────────────────────────────────────────────────
   const C = await workspace("off");
   processRecord(C.tenantId, C.owner.id, "off", "paid_tier");
@@ -420,10 +465,12 @@ async function main() {
 
 // Returns false when anything could not be put back; the run then fails (a leftover synthetic workspace
 // or a leftover passing canary is a defect, not a footnote).
-let cleanedUp = false;
+let cleanupResult = null;
 function cleanup() {
-  if (cleanedUp) return true;
-  cleanedUp = true;
+  // A second call (the timeout or an uncaught error racing the normal exit) returns the FIRST result rather
+  // than reporting success for a cleanup that failed.
+  if (cleanupResult !== null) return cleanupResult;
+  cleanupResult = false;
   for (const s of servers) { try { s.kill("SIGKILL"); } catch { /* already gone */ } }
   // Each item is put back on its own, so one failure never skips the rest; any failure fails the run.
   let ok = true;
@@ -454,6 +501,7 @@ function cleanup() {
     });
   }
   for (const u of users) attempt(`user ${u}`, () => sql(`delete from auth.users where id = ${q(u)};`));
+  cleanupResult = ok;
   return ok;
 }
 

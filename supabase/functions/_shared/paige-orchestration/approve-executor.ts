@@ -65,6 +65,7 @@ import { decideGovernedExecution } from "../paige-spine/governedExecution.ts";
 import { resolveNativeCapabilityStatus } from "../paige-capability-status/gatherer.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
+import { actReceiptRunSeed } from "./outcomes.ts";
 
 /** The minimal client surface the executor needs (a read chain + rpc) — kept structural so a fake proves it.
  *  Mirrors EngineDb rather than reusing AdapterDb verbatim: the rpc `args` is OPTIONAL here so this type stays
@@ -178,9 +179,11 @@ async function advanceLedger(
   if (persisted === "executed") {
     const detail = (result.detail ?? {}) as Record<string, unknown>;
     const wasNoop = detail.already_at_requested_stage === true;
-    // The SAME run-id seed engine.ts phase 5 uses, so one act has at most one receipt whichever path files
-    // it (an engine re-drive adopting the act and an approval resume can otherwise both land one).
-    const runId = await stableRunId(["paige-cap", base.eventId, base.actId]);
+    // The SAME run-id seed engine.ts phase 5 uses (one shared helper). An engine re-drive that itself advances
+    // this act under an execute plan (its lane moved to auto after the hold) and an approval resume can both
+    // reach the receipt; the conflict key keeps the first and drops the second, so the act has one receipt and,
+    // in that narrow race, it names whichever path filed first.
+    const runId = await stableRunId(actReceiptRunSeed(base.eventId, base.actId));
     await recordCapabilityRun(db, {
       tenantId: base.tenantId, actorId: base.approverUserId, capabilityKey: base.receiptCapabilityKey,
       outcome: "capability_succeeded", runId,
@@ -205,14 +208,33 @@ const ambiguousFromThrow = (e: unknown, reason: string): DispatchResult =>
  *  stop-reason. Used on BOTH the FRESH approval AND the accepted-never-landed RESUME re-dispatch, so authority
  *  or availability revoked AFTER the hold (or after redemption but before the effect landed) STOPS the act
  *  rather than firing it blind (§68 "no authority is permanent"). The readback-confirm path is deliberately
- *  NOT gated — a landed effect is recorded truthfully regardless of the current posture (§13). */
+ *  NOT gated — a landed effect is recorded truthfully regardless of the current posture (§13).
+ *
+ *  THE PROCESS IS RE-READ TOO (INT-179). A human's yes approves one held act; it does not override what the
+ *  process and the platform say NOW. Before this check, a held act still executed on approval after its owner
+ *  PAUSED the process, turned it OFF, or the platform's trust ceiling dropped to 0 (Observe) — all three
+ *  proven against the real database. `resolve_automation_autonomy` (the one resolver the engine uses) is
+ *  re-read at approval time: a process that is not `live`, or whose effective lane is now `off`, STOPS here.
+ *  Nothing is redeemed and the approval stays pending, so it runs once the process is switched back on.
+ *  `confirm` and `auto` both proceed (the human's yes satisfies confirm; auto never needed one). */
 async function governedGate(
   db: ApproveExecutorDb,
   p: {
-    approverUserId: string; tenantId: string; actionKind: string; capability: AdapterCapability;
+    approverUserId: string; tenantId: string; automationId: string; actionKind: string; capability: AdapterCapability;
     governedArgs: Record<string, unknown>; resolveAvail: typeof resolveNativeCapabilityStatus;
   },
 ): Promise<{ ok: true; args: Record<string, unknown> } | { ok: false; reason: string }> {
+  // The process's CURRENT posture, through the same resolver the engine used when it held the act. Service
+  // role (auth.uid() null) is the resolver's trusted path. A read failure fails CLOSED and is not terminal.
+  const { data: posture, error: postureErr } = await db.rpc("resolve_automation_autonomy", { _automation_id: p.automationId });
+  if (postureErr || posture == null) return { ok: false, reason: "process_posture_read_error" };
+  const pst = posture as { found?: boolean; state?: string; effective?: string; capped_by?: string | null };
+  if (pst.found !== true) return { ok: false, reason: "process_not_found" };
+  if (pst.state !== "live") return { ok: false, reason: "process_not_live" };
+  if (pst.effective !== "auto" && pst.effective !== "confirm") {
+    // Name the bound that holds it, so the owner is told the fix that actually applies.
+    return { ok: false, reason: pst.capped_by === "ceiling" ? "platform_observe_only" : "process_lane_off" };
+  }
   const gw = await p.resolveAvail(db, { actorUserId: p.approverUserId, tenantId: p.tenantId, actionKind: p.actionKind });
   if (!gw.ok) return { ok: false, reason: "availability_infra_error" };
   const decision = decideGovernedExecution({
@@ -337,7 +359,7 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
       // Redeemed but no transition stamped with our correlation → it never dispatched. §68: re-resolve
       // availability + re-run the governed gate BEFORE re-dispatch. Not executable now → STOP; the row stays
       // accepted_for_execution (the caller consumes nothing → recoverable), never a blind re-fire.
-      const gate = await governedGate(db, { approverUserId, tenantId, actionKind, capability, governedArgs, resolveAvail });
+      const gate = await governedGate(db, { approverUserId, tenantId, automationId: row.automation_id, actionKind, capability, governedArgs, resolveAvail });
       // `gate.ok === false` (not `!gate.ok`): src tsc runs strictNullChecks:false and does NOT narrow a
       // discriminated union on the truthiness form, so `gate.reason` would not resolve (tsc-ratchet catches it).
       if (gate.ok === false) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: gate.reason };
@@ -355,7 +377,7 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
   //       pathway with the human's yes as the approval claim over the IMMUTABLE snapshot args → expect
   //       `execute`. An infra error or a governed refusal (availability/authority/effect/claim) surfaces
   //       honestly and the row stays approval_pending (nothing redeemed, nothing dispatched).
-  const gate = await governedGate(db, { approverUserId, tenantId, actionKind, capability, governedArgs, resolveAvail });
+  const gate = await governedGate(db, { approverUserId, tenantId, automationId: row.automation_id, actionKind, capability, governedArgs, resolveAvail });
   if (gate.ok === false) return { ok: false, outcome: "approval_pending", executed: false, reason: gate.reason };
 
   // 6 — REDEEM the approval atomically: approval_pending → accepted_for_execution (the sole sanctioned
@@ -381,6 +403,28 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
   try { dr = await adapter.dispatch({ ...dispatchInput, args: gate.args }); }
   catch (e) { dr = ambiguousFromThrow(e, "adapter_threw"); }
   return advanceLedger(db, base, dr, "accepted_for_execution");
+}
+
+/** What the owner is told when an approval does not run the held act. The raw `reason` stays in the response
+ *  for the record; this is the sentence the approval surfaces show (they display `error`). Unknown reasons fall
+ *  back to a plain, honest line rather than leaking a code. */
+export function approvalRefusalMessage(reason: string | undefined): string {
+  switch (reason) {
+    case "process_not_live":
+      return "This automation is paused, so PAIGE didn't run it. It stays here for you to approve once the automation is running again.";
+    case "process_lane_off":
+      return "This automation is turned off, so PAIGE didn't run it. It stays here for you to approve once the automation is on again.";
+    case "platform_observe_only":
+      return "PAIGE is set to observe only right now, so nothing runs. This stays here for you to approve once that setting is raised.";
+    case "process_not_found":
+      return "This automation no longer exists, so there is nothing to run.";
+    case "governed_capability_not_for_tier":
+      return "Only the workspace owner or an admin can approve this.";
+    case "reconcile_unconfirmed":
+      return "PAIGE couldn't confirm whether this already ran. She is checking and won't run it twice.";
+    default:
+      return "PAIGE couldn't complete that action. Nothing was changed.";
+  }
 }
 
 /** Exposed for unit tests. */

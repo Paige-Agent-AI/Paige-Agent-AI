@@ -84,18 +84,26 @@ type MockConfig = {
   laneError?: boolean;                              // resolve_automation_autonomy returns an infra error
   ledgerActs?: Array<{ event_id: string; automation_id: string; act_id: string }>; // existing ledger rows
 };
+type MockResult = { data: unknown; error: { message: string } | null };
+type MockQuery = PromiseLike<MockResult> & {
+  _table: string;
+  select(): MockQuery;
+  order(): MockQuery;
+  eq(k: string, v: unknown): MockQuery;
+  limit(): MockQuery;
+};
 function mockDb(cfg: MockConfig): EngineDb {
   const makeQuery = (table: string) => {
     const state: Record<string, unknown> = {};
-    const q: any = {
+    const q: MockQuery = {
       _table: table,
       select() { return q; },
       order() { return q; },
       eq(k: string, v: unknown) { state[k] = v; return q; },
       limit() { return q; },
-      then(onF: any, onR: any) {
+      then(onF, onR) {
         if (cfg.fromErrors?.has(table)) {
-          return Promise.resolve({ data: null, error: { message: `${table}_read_failed` } }).then(onF, onR);
+          return Promise.resolve<MockResult>({ data: null, error: { message: `${table}_read_failed` } }).then(onF, onR);
         }
         let data: unknown = [];
         if (table === "paige_automation_acts") data = cfg.acts[state.automation_id as string] ?? [];
@@ -105,7 +113,7 @@ function mockDb(cfg: MockConfig): EngineDb {
         else if (table === "tenant_members") {
           data = cfg.activeMembers.has(`${state.tenant_id}:${state.user_id}`) ? [{ user_id: state.user_id }] : [];
         }
-        return Promise.resolve({ data, error: null }).then(onF, onR);
+        return Promise.resolve<MockResult>({ data, error: null }).then(onF, onR);
       },
     };
     return q;

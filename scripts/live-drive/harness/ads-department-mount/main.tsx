@@ -35,7 +35,7 @@ function Screen() {
   return <TenantCommandCenterShell accountName="Northwind Studio" accountType="standalone" userRole="admin" onSignOut={() => {}}>
     <div className="paige-solo" data-theme={theme} style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <main data-solo-screen-host style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>
-        {branch === "ads" ? <AdsWorkspace tenantId="tenant-review"/> : branch === "growth" ? <GrowthHub/> : <p style={{ padding: 24 }}>{branch}</p>}
+        {branch === "ads" ? <AdsWorkspace tenantId="tenant-review" businessName="Northwind Studio"/> : branch === "growth" ? <GrowthHub/> : <p style={{ padding: 24 }}>{branch}</p>}
       </main>
     </div>
   </TenantCommandCenterShell>;

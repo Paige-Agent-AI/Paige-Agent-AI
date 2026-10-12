@@ -4,7 +4,7 @@ create function pg_temp.check_true(v boolean,label text) returns void language p
 begin if v is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
 create function pg_temp.refused(stmt text,code text,label text) returns void language plpgsql as $$
 begin begin execute stmt; exception when others then if sqlstate=code then raise notice 'PASS: %',label; return; end if;
-raise exception 'FAIL: % unexpected %',label,sqlstate; end; raise exception 'FAIL: % accepted',label; end $$;
+raise exception 'FAIL: % unexpected %: %',label,sqlstate,sqlerrm; end; raise exception 'FAIL: % accepted',label; end $$;
 insert into auth.users(id,aud,role,email) values
  ('eb810000-0000-4000-8000-000000000001','authenticated','authenticated','ops-project-member@tests.invalid'),
  ('eb810000-0000-4000-8000-000000000002','authenticated','authenticated','ops-project-admin@tests.invalid'),
@@ -27,8 +27,8 @@ insert into public.clients(id,tenant_id,created_by,first_name,last_name,account_
  ('eb810000-0000-4000-8000-00000000c001','eb810000-0000-4000-8000-000000001111','eb810000-0000-4000-8000-000000000002','Test','Handoff','OSH-1');
 insert into public.tenant_products(id,tenant_id,name,status,product_type,created_by) values
  ('eb810000-0000-4000-8000-00000000f001','eb810000-0000-4000-8000-000000001111','Test engagement','active','service','eb810000-0000-4000-8000-000000000002');
-insert into public.tenant_client_agreements(id,tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,status,created_by) values
- ('eb810000-0000-4000-8000-00000000d001','eb810000-0000-4000-8000-000000001111','eb810000-0000-4000-8000-00000000c001','eb810000-0000-4000-8000-00000000f001','one_time','negotiated',100,'usd','active','eb810000-0000-4000-8000-000000000002');
+insert into public.tenant_client_agreements(id,tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,starts_on,status,created_by) values
+ ('eb810000-0000-4000-8000-00000000d001','eb810000-0000-4000-8000-000000001111','eb810000-0000-4000-8000-00000000c001','eb810000-0000-4000-8000-00000000f001','one_time','negotiated',100,'usd',current_date,'active','eb810000-0000-4000-8000-000000000002');
 insert into public.paige_agreements(id,tenant_id,contact_id,offer_id,commercial_terms_id,title,body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by) values
  ('eb810000-0000-4000-8000-00000000a001','eb810000-0000-4000-8000-000000001111','eb810000-0000-4000-8000-00000000c001','eb810000-0000-4000-8000-00000000f001','eb810000-0000-4000-8000-00000000d001','Test signed commitment','PRIVATE_SOURCE_BODY','completed',3,repeat('a',64),repeat('b',64),'PRIVATE_SOURCE_KEY',now(),'eb810000-0000-4000-8000-000000000002');
 -- Test convenience wrapper is SECURITY INVOKER, not an authority shortcut.
@@ -77,8 +77,12 @@ set local role authenticated;
 select pg_temp.refused($s$select pg_temp.handoff(agreement=>'eb810000-0000-4000-8000-00000000a003')$s$,'42501','unsealed draft cannot authorize operational handoff');
 reset role;
 
-insert into public.tenant_client_agreements(id,tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,status,created_by) select 'eb810000-0000-4000-8000-00000000d002',tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,'active',created_by from public.tenant_client_agreements where id='eb810000-0000-4000-8000-00000000d001';
-insert into public.paige_agreements(id,tenant_id,contact_id,offer_id,commercial_terms_id,title,body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by) select 'eb810000-0000-4000-8000-00000000a004',tenant_id,contact_id,offer_id,'eb810000-0000-4000-8000-00000000d002','Test separate engagement',body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by from public.paige_agreements where id='eb810000-0000-4000-8000-00000000a001';
+-- A genuinely different engagement needs a different offer: Sales permits only one
+-- active commercial commitment per client/offer. Do not weaken that constraint.
+insert into public.tenant_products(id,tenant_id,name,status,product_type,created_by) values
+ ('eb810000-0000-4000-8000-00000000f002','eb810000-0000-4000-8000-000000001111','Test separate engagement','active','service','eb810000-0000-4000-8000-000000000002');
+insert into public.tenant_client_agreements(id,tenant_id,contact_id,offer_id,term_kind,price_basis,agreed_amount_minor,agreed_currency,starts_on,status,created_by) select 'eb810000-0000-4000-8000-00000000d002',tenant_id,contact_id,'eb810000-0000-4000-8000-00000000f002',term_kind,price_basis,agreed_amount_minor,agreed_currency,starts_on,'active',created_by from public.tenant_client_agreements where id='eb810000-0000-4000-8000-00000000d001';
+insert into public.paige_agreements(id,tenant_id,contact_id,offer_id,commercial_terms_id,title,body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by) select 'eb810000-0000-4000-8000-00000000a004',tenant_id,contact_id,'eb810000-0000-4000-8000-00000000f002','eb810000-0000-4000-8000-00000000d002','Test separate engagement',body_markdown,status,version,content_sha256,sealed_sha256,sealed_storage_key,completed_at,created_by from public.paige_agreements where id='eb810000-0000-4000-8000-00000000a001';
 set local role authenticated;
 select pg_temp.refused($s$select pg_temp.handoff(agreement=>'eb810000-0000-4000-8000-00000000a004')$s$,'40001','original request cannot authorize a second engagement');
 reset role;

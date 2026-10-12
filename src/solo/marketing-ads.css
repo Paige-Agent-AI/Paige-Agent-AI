@@ -66,3 +66,54 @@
 .mad-missing{color:var(--ink-2);font-style:italic;font-weight:400}
 .mad-cta.is-missing{background:none;border-style:dashed;color:var(--ink-2);font-weight:500}
 .mad-ini{color:color-mix(in srgb,var(--violet) 75%,var(--ink))}
+
+/* creative: the business's own pictures and videos, each with its feature switch and tracking tag */
+.mad-media .mov-head p{max-width:72ch}
+.mad-mgrid{list-style:none;margin:0;padding:16px 18px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr));gap:14px}
+.mad-mcard{display:grid;grid-template-rows:auto auto 1fr;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface-2);overflow:hidden;min-width:0}
+.mad-mthumb{position:relative;display:grid;place-items:center;aspect-ratio:4/3;background:var(--surface-sunk);border-bottom:1px solid var(--line-soft);overflow:hidden}
+.mad-mthumb img,.mad-mthumb video{display:block;width:100%;height:100%;object-fit:contain}
+.mad-mflag{position:absolute;top:8px;left:8px;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;color:var(--violet);background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--violet-line)}
+.mad-mmeta{display:grid;gap:2px;padding:10px 12px 4px;min-width:0}
+.mad-mmeta strong{font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mad-mmeta small{font-size:11.5px;color:var(--ink-2)}
+.mad-macts{display:flex;flex-wrap:wrap;gap:6px;align-content:end;padding:8px 12px 12px}
+.mad-macts .btn[aria-pressed="true"]{background:var(--violet-tint);border-color:var(--violet-line);color:var(--violet)}
+.mad-macts .btn:disabled{opacity:.55;cursor:not-allowed}
+.mad-macts .btn:focus-visible,.mad-notice .mov-lnk:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.mad-notice{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink-2)}
+/* A live region stays in the page when empty (a hidden one is not announced); it only takes no room. */
+.mad-media>.mad-notice{padding:10px 18px;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
+.mad-media>.mad-notice:empty{padding:0;border-bottom:0}
+.mad-notice.is-ok{color:var(--ink)}
+.mad-notice.is-bad{color:var(--bad)}
+.mad-notice .mov-lnk{margin-left:6px}
+.mad-notice code{font-family:var(--mono);font-size:11.5px;padding:1px 5px;border-radius:5px;background:var(--surface-sunk);color:var(--ink);overflow-wrap:anywhere}
+
+/* tagged link: the secondary "tag only", and the chooser that opens under the picture's row */
+.mad-tagonly{display:inline-flex;align-items:center;gap:4px;font-size:12px}
+.mad-mcard.is-linking{border-color:var(--violet-line);box-shadow:0 0 0 1px var(--violet-line)}
+.mad-linker-row{grid-column:1/-1;min-width:0}
+.mad-linker{display:grid;gap:12px;padding:14px 16px 16px;border:1px solid var(--violet-line);border-radius:var(--r-m);background:var(--surface)}
+.mad-linker>header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mad-linker h3{margin:0;font-size:13.5px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.mad-linker-x{display:grid;place-items:center;width:28px;height:28px;flex:none;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.mad-linker-x:hover{background:var(--surface-sunk)}
+.mad-linker-f{display:grid;gap:6px;min-width:0}
+.mad-linker-k{font-size:12px;font-weight:600;color:var(--ink)}
+.mad-linker-k small{font-weight:400;color:var(--ink-3)}
+.mad-linker-f>small{font-size:11.5px;color:var(--ink-3)}
+.mad-dests{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));gap:6px;max-height:212px;overflow:auto;padding:2px}
+.mad-dests button{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-height:38px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
+.mad-dests button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mad-dests button small{font-size:10.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+.mad-dests button:hover{background:var(--surface-sunk)}
+.mad-dests button[aria-checked="true"]{border-color:var(--violet-line);background:var(--violet-tint);color:var(--violet);font-weight:600}
+.mad-dests button[aria-checked="true"] small{color:var(--violet)}
+.mad-linker input{height:34px;max-width:360px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-sunk);color:var(--ink);font:inherit;font-size:12.5px}
+.mad-linker-url{display:block;padding:8px 10px;border-radius:8px;background:var(--surface-sunk);border:1px solid var(--line-soft);font-family:var(--mono);font-size:11.5px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere;user-select:all}
+.mad-linker-a{display:flex;flex-wrap:wrap;gap:8px}
+.mad-linker-msg{display:grid;justify-items:start;gap:8px}
+.mad-linker-msg p{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink-2);max-width:64ch}
+.mad-linker-x:focus-visible,.mad-dests button:focus-visible,.mad-linker input:focus-visible,.mad-tagonly:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+@media(forced-colors:active){.mad-dests button[aria-checked="true"]{outline:2px solid Highlight}}

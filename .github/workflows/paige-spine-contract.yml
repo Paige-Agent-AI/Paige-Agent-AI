@@ -53,6 +53,12 @@ on:
       - "supabase/tests/contact_methods_concurrency.sql"
       - "scripts/proof/contact-methods-add-race.mjs"
       - "scripts/proof/chat-answer-claim-race.mjs"
+      - "scripts/proof/layer-c-native-vertical.mjs"
+      - "scripts/proof/operator-postgres-fixture.mjs"
+      - "supabase/functions/paige-native-event-dispatch/**"
+      - "supabase/functions/_shared/capability-record.ts"
+      - "supabase/functions/_shared/railAutomation.ts"
+      - "supabase/functions/_shared/paige-capability-status/**"
       - "supabase/tests/contact_create_with_methods.sql"
       - "supabase/tests/user_primary_address.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
@@ -88,6 +94,7 @@ on:
       - "supabase/functions/_shared/paige-orchestration/**"
       - "supabase/functions/execute-approval/**"
       - "scripts/proof/resend-receipt-concurrency.mjs"
+      - "scripts/proof/secure-browser-browse-budget-concurrency.mjs"
       - "scripts/proof/business-mission-concurrency.mjs"
       - "src/__tests__/paige-spine-*.test.ts"
       - "src/__tests__/paige-orchestration-approve-executor.test.ts"
@@ -200,6 +207,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/form_submitted_native_event.sql
 
+      # INT-298 MBC 5: the Marketing Action contract through the real writer, the bus's own file_action
+      # and the read's derived lifecycle (planning waits at confirm, outcomes only after a finish).
+      - name: Marketing campaign actions (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_brief_actions.sql
+
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
       # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.
@@ -207,6 +220,19 @@ jobs:
       - name: Mailbox Solo-owner authorization (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/mailbox_solo_owner_authorization.sql
+
+      # ANT-40: messages is engine-written only — direct authenticated INSERT/UPDATE
+      # (owner, admin, mailbox owner, member) is denied by RLS while the SECURITY
+      # DEFINER engines and all reads keep working.
+      - name: Messages engine-only writes (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/messages_engine_only_writes.sql
+
+      # ANT-43/S7 slice 2: SendGrid receipt journal — validate, dedup (replay-safe),
+      # append-once into the one truth table; journal invisible to anon/authenticated.
+      - name: SendGrid receipt ingest (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sendgrid_receipt_ingest.sql
 
       - name: Operations scoped manual work authority (rolled back)
         if: ${{ !cancelled() }}
@@ -238,6 +264,23 @@ jobs:
       - name: Operations signed engagement evidence caller scope (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_evidence_read.sql
+      - name: Operations delivery submission and review contracts
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_submissions.sql
+
+      - name: Operations Delivery current item authorization (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_item_authority.sql
+
+      - name: Sales commercial and signing agreement row contracts (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sales_agreement_trigger_contracts.sql
+      - name: Operations accepted engagement handoff authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_handoff.sql
+
+      - name: Operations native concurrent engagement handoff
+        if: ${{ !cancelled() }}
+        run: node scripts/proof/operations-handoff-concurrency.mjs
 
       - name: Operations accepted engagement handoff authority (rolled back)
         if: ${{ !cancelled() }}
@@ -369,6 +412,11 @@ jobs:
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
+      # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day
+      # budget that admits 4; the gate's FOR UPDATE reservation must refuse the other 8.
+      - run: node scripts/proof/secure-browser-browse-budget-concurrency.mjs
+        env:
+          RECEIPT_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # The team.authority contract. Its load-bearing fixture is a caller who is the legal owner of
       # ANOTHER workspace while holding a plain member seat in their active one — the one shape that
       # makes a dropped is_tenant_owner() tenant argument, and a collapsed permission field, fail
@@ -461,6 +509,30 @@ jobs:
       - run: node scripts/proof/chat-answer-claim-race.mjs
         if: ${{ !cancelled() }}
         timeout-minutes: 2
+        env:
+          CI: "true"
+      # INT-179 Layer C end-to-end: the PRODUCTION native-event drainer and execute-approval files run
+      # unmodified under Deno against this rebuilt database (production's grants reproduced above), with
+      # synthetic SOLO workspaces only: auto lane executes once with its transition, canonical re-read,
+      # receipt and Rail; replay, re-drive and concurrent delivery write no second effect; confirm holds
+      # and only the workspace owner's approval runs it (foreign owner and plain member refused); off
+      # holds; a forged cross-workspace subject fails closed. No production or provider contact.
+      - uses: denoland/setup-deno@v2
+        id: deno
+        if: ${{ !cancelled() }}
+        with:
+          deno-version: v2.9.6
+      # Fetch both functions' remote modules once, with one retry, so a transient esm.sh blip is not
+      # mistaken for a proof failure. The proof itself only runs when Deno and its modules are in place.
+      - name: Cache the Layer C proof's Deno modules
+        id: deno_modules
+        if: ${{ !cancelled() && steps.deno.outcome == 'success' }}
+        run: |
+          deno cache supabase/functions/paige-native-event-dispatch/index.ts supabase/functions/execute-approval/index.ts \
+            || (sleep 10 && deno cache supabase/functions/paige-native-event-dispatch/index.ts supabase/functions/execute-approval/index.ts)
+      - run: node scripts/proof/layer-c-native-vertical.mjs
+        if: ${{ !cancelled() && steps.deno_modules.outcome == 'success' }}
+        timeout-minutes: 6
         env:
           CI: "true"
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres

@@ -7,7 +7,7 @@
 
 import type { CampaignArtifact, CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT, sendsToPipeline, submissionsInPeriod } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT, pipelineRouteOf, submissionsInPeriod } from "./marketing-overview-model";
 
 // Week, month and quarter: the periods the email read also serves (read_email_marketing_dashboard
 // accepts 7, 30 or 90). Email counts back from now; submissions count whole days ending today, so the two
@@ -25,8 +25,9 @@ export type SourceRow = { label: string; count: number };
 /** `note` replaces the brief line for rows that are not one tag (the server's folded rest, leads matching
  *  several briefs, a brief this page doesn't list); `key` keeps those rows distinct. */
 export type CampaignTagRow = { tag: string; count: number; brief: string | null; key?: string; note?: string };
-/** Where a form's leads go, in Overview's words: a pipeline, an email alert only, automations but no pipeline, or nowhere. */
-export type RouteState = "pipeline" | "alert" | "automations" | "none";
+/** Where a form's leads go, in Overview's words: its own pipeline route, the business's default pipeline
+ *  (no route of its own, owner ruling 2026-10-11), an email alert only, automations but no pipeline, or nowhere. */
+export type RouteState = "pipeline" | "default" | "alert" | "automations" | "none";
 export type CapturePoint = { id: string; name: string; count: number; route: RouteState; failed: number };
 
 /** One bar of the leads chart: a day (week and month ranges) or a week (quarter). */
@@ -91,14 +92,18 @@ type FormLike = Pick<CampaignArtifact, "id" | "type" | "name" | "routingTargets"
   intakeAlert?: boolean;
 };
 
-const routeOf = (form: FormLike): RouteState =>
-  sendsToPipeline(form) ? "pipeline" : form.intakeAlert ? "alert" : form.routingConfigured ? "automations" : "none";
+const routeOf = (form: FormLike, defaultReady: boolean): RouteState => {
+  const route = pipelineRouteOf(form, defaultReady);
+  return route === "own" ? "pipeline" : route === "default" ? "default" : form.intakeAlert ? "alert" : form.routingConfigured ? "automations" : "none";
+};
 
 export function deriveMarketingAnalytics(input: {
   submissions: readonly CampaignSubmission[];
   briefs: readonly Pick<CampaignBrief, "shortRef" | "name">[];
   forms: readonly FormLike[];
   days: number;
+  /** defaultPipelineReady(workspace): whether a form with no route of its own lands in the default pipeline. */
+  defaultReady?: boolean;
   now?: number;
 }): MarketingAnalyticsModel {
   const { within, capped } = submissionsInPeriod(input.submissions, input.days, input.now);
@@ -140,7 +145,7 @@ export function deriveMarketingAnalytics(input: {
       id: form.id,
       name: form.name,
       count: byForm.get(form.id) ?? 0,
-      route: routeOf(form),
+      route: routeOf(form, input.defaultReady ?? false),
       failed: form.recentDispatches?.failed ?? 0,
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));

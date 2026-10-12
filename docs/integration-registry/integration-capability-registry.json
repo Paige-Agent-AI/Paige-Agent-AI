@@ -683,8 +683,8 @@
       ],
       "status": "PROOF_OWED",
       "owner": "Integrations workstream",
-      "dependency": "Finance F1b candidate (2026-10-10): company/source identity and evidence metadata use existing workspace authority and controlled PostgreSQL proof. This is not provider verification; bindings default pending, legacy snapshots are not promoted, and QuickBooks sync remains fail-closed containment. One-use consent, actual company authorization, pagination, nullable figures, refresh/disconnect and authenticated provider proof remain owed.",
-      "next_slice": "Complete explicit company/source authority and OAuth integrity, then controlled provider read proof; preserve Settings Integrations as connection owner and separately authorize real activation.",
+      "dependency": "Released company/source and one-use accounting-only consent foundations and controlled read normalization do not establish native provider authorization. Legacy user-only OAuth initiation/callback, refresh and disconnect are contained before private connection/token operations or Intuit traffic. Existing accounting writes and financial sync remain fail-closed. A working company-bound HTTP consent, native company mapping, encrypted token lifecycle, safe ingestion and authenticated provider proof remain owed.",
+      "next_slice": "Bind the controlled readers to the canonical company/connection consent envelope, secure token lifecycle and atomic source projections; then prove Settings Integrations adoption with separately authorized provider activation.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -721,9 +721,34 @@
       },
       "code_anchors": [
         {
-          "path": "supabase/functions/quickbooks-oauth-callback/index.ts",
+          "path": "supabase/functions/quickbooks-oauth-initiate/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
+        },
+        {
+          "path": "supabase/functions/quickbooks-refresh-token/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
+        },
+        {
+          "path": "supabase/functions/quickbooks-disconnect/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
+        },
+        {
+          "path": "supabase/functions/_shared/finance/quickbooks-read-contract.ts",
           "role": "provider_adapter",
-          "note": "OAuth handshake callback (provider plumbing)."
+          "note": "Pure controlled normalization and bounded pagination/report metadata; no network, authority, credentials or live ingestion. Accounting balances never establish available bank cash."
+        },
+        {
+          "path": "supabase/functions/quickbooks-oauth-callback/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Legacy callback refuses before code/state inspection, token exchange, activation or private rows. New company-bound consent controller remains unmounted; no real provider behavior is proven."
+        },
+        {
+          "path": "supabase/migrations/20271020000300_quickbooks_company_oauth_attempts.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company/version/actor-bound accounting-only one-use consent correlation. No token exchange, native company proof or provider activation; HTTP binding and production acceptance owed."
         },
         {
           "path": "supabase/functions/quickbooks-sync-financials/index.ts",
@@ -747,6 +772,11 @@
         {
           "path": "supabase/functions/_shared/quickbooks-utils.ts",
           "role": "provider_adapter"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-spine/domains/finance_reads.ts",
+          "role": "provider_adapter",
+          "note": "Finance-owned unregistered caller-JWT source read candidate; server company/role/binding fences and closed projections. No network, credentials, native provider ingestion or Chat/Live adoption authority."
         }
       ],
       "sources": [
@@ -780,8 +810,8 @@
       "rail_mind_memory": "Rail: minimal. Mind: only safe summaries. Memory: no raw financial data.",
       "status": "PARTIAL",
       "owner": "Integrations workstream (finance lane, §2 opt-in)",
-      "dependency": "Finance F1b company/source metadata has controlled PostgreSQL proof, not provider acceptance. Legacy Plaid reads remain user scoped and item-wide transaction attribution/pagination are unproven. No Finance data is promoted from these rows; liabilities and commercial LOC coverage remain unverified. Preserve the separate §2/§194 Funding vertical and explicit connection consent.",
-      "next_slice": "Repair verified company/account authorization, item-to-account attribution, complete cursor pagination and safe source projection using controlled providers before separately authorized live connection proof. Settings Integrations retains activation ownership.",
+      "dependency": "Released company/account/liability source caches have controlled PostgreSQL proof, not provider acceptance. Controlled normalization preserves native type/subtype/currency/account identity and filters item-wide transaction mutations against a snapshotted authorized account selection. Incomplete or changed pagination discards staged mutations and retains the original cursor. Legacy user-scoped handlers are not promoted or activated; company consent, supported product eligibility, transport/persistence and institution freshness remain unverified.",
+      "next_slice": "Bind item/account-scoped controlled readers to the canonical company consent and credential lifecycle, then atomically persist complete batches/cursors with revocation fences and source readback. Settings Integrations retains activation; real provider access/spending requires separate authority.",
       "tier_eligibility": {
         "platform": "ineligible",
         "solo": "eligible",
@@ -818,6 +848,11 @@
       },
       "code_anchors": [
         {
+          "path": "supabase/functions/_shared/finance/plaid-read-contract.ts",
+          "role": "provider_adapter",
+          "note": "Pure controlled account/transaction normalization and item-wide pagination; immutable selected-account filtering, restart/refusal behavior, no network, authority or live provider ingestion."
+        },
+        {
           "path": "supabase/functions/paige-plaid-link-token-create/index.ts",
           "role": "provider_adapter",
           "note": "Plaid Link token creation."
@@ -850,6 +885,11 @@
           "path": "supabase/migrations/20270602000428_finance_liability_source_projections.sql",
           "role": "provider_adapter",
           "note": "Controlled company/native-account liability cache candidate, tied to exact account evidence version. No provider consent, product eligibility, live ingestion or verified institution freshness claim."
+        },
+        {
+          "path": "supabase/functions/_shared/paige-spine/domains/finance_reads.ts",
+          "role": "provider_adapter",
+          "note": "Finance-owned unregistered caller-JWT source read candidate; server company/role/binding fences and closed projections. No network, credentials, native provider ingestion or Chat/Live adoption authority."
         }
       ],
       "sources": [

@@ -7,8 +7,9 @@
 // TRUTH MODEL (§13/§70). A campaign is an OWNER-AUTHORED brief (useSoloCampaignBriefs), never proof
 // of a live campaign. Each growth-loop stage reads "Ready" ONLY where a real fact backs it: a
 // tenant-validated offer link, a tenant-validated pipeline link (with a LIVE deal count), or a
-// recorded workspace artifact. Distribution, Conversations and Recorded outcome are UNAVAILABLE —
-// no connected provider, no campaign attribution — and say so. No counts, revenue, reach, ad spend,
+// recorded workspace artifact. Distribution and Conversations are UNAVAILABLE (no connected provider) and
+// say so. Recorded outcome is PARTIAL since Experience 03 S1: each lead is credited to its campaign at
+// arrival (server-stamped, counted in the dossier's Brought in lane), revenue is not. No counts, revenue, reach, ad spend,
 // audience size, active status, or completion is invented.
 import React from "react";
 import { createPortal } from "react-dom";
@@ -47,7 +48,7 @@ const LOOP = [
   { k: "distribution",  name: "Distribution",     ic: "send",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "conversations", name: "Conversations",    ic: "mail",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "pipeline",      name: "Pipeline",         ic: "trend", owner: "Pipeline",  route: "pipeline",    src: "Deal workspace" },
-  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Analytics", route: "analytics",   src: "No campaign attribution" },
+  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Analytics", route: "analytics",   src: "Leads credited at arrival" },
 ];
 
 // Owner ruling 2026-09-23: the four capability states are said in the customer's words on a tenant
@@ -71,7 +72,7 @@ function briefLoop(b) {
     distribution:  "unavail",
     conversations: "unavail",
     pipeline:      b.pipelineId ? "ready" : "setup",
-    outcome:       "unavail",
+    outcome:       "partial",
   };
 }
 // Workspace-scope loop posture, derived ONLY from real reads. Every non-"setup"/"unavail" state
@@ -94,7 +95,7 @@ function workspaceLoop(data, offerSignal) {
     distribution:  "unavail",
     conversations: "unavail",
     pipeline:      pipelineFailed ? "blocked" : hasPipelines ? "ready" : "setup",
-    outcome:       "unavail",
+    outcome:       "partial",
   };
 }
 
@@ -107,7 +108,7 @@ function loopNeed(seg, stKey, b, data) {
   if (seg.k === "offer" && stKey === "ready" && b) return `Linked offer: ${b.offerName || "recorded in Offers"}.`;
   if (seg.k === "offer" && stKey === "partial" && !b) return "Your offers are recorded. Link one to a brief to make the ask concrete.";
   if (seg.k === "distribution" || seg.k === "conversations") return "No connected provider. Connect one in Social — no reach, queue or schedule is shown.";
-  if (seg.k === "outcome") return "Attribution needs a verified source; not available yet.";
+  if (seg.k === "outcome") return b ? "Leads are credited to this campaign as they arrive; see them under Brought in in its dossier. Revenue isn't credited to campaigns yet." : "Each lead is credited to its campaign as it arrives; open a campaign to see what it brought in. Revenue isn't credited to campaigns yet.";
   if (stKey === "ready") return "Source connected.";
   if (seg.k === "offer") return "Define or link what this campaign sells.";
   if (seg.k === "audience") return "Name the segment this reaches.";
@@ -580,7 +581,7 @@ function DossierDrawer({ brief: b, canManage, assets, tenantId, onToast, onClose
             {b.budgetTarget && <div className="dw-note" style={{ marginTop: 8 }}>The budget target is a figure you set — not actual ad spend, a forecast, or connected media buying.</div>}
           </div>
           {b.blocker && <div className="dw-note" style={{ borderColor: "var(--bad)", background: "var(--bad-tint)", color: "var(--bad)" }}><Ic.bell size={13}/> Blocker: {b.blocker}</div>}
-          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast}/></div>
+          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast} tenantId={tenantId} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Steps and results</h4><CampaignActions tenantId={tenantId} briefId={b.id} onToast={onToast}/></div>
           <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} links={links} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>

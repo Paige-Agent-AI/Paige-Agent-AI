@@ -16,7 +16,8 @@ import React from "react";
 import { Ic as SharedIcons } from "./_shared";
 import type { CampaignArtifact, CampaignDraft, CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, periodStartOf, sendsToPipeline, withServerOverview } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT, defaultPipelineHint, defaultPipelineTarget, defaultRouteLabel, deriveMarketingOverview, isBlockedBrief, periodStartOf, pipelineRouteOf, sendsToPipeline, withServerOverview } from "./marketing-overview-model";
+import { useAdsIntakeCapability } from "./ads-intake-capability";
 import { useMarketingProcessingHealth, useMarketingServerFigures, type ProcessingHealth } from "./marketing-analytics-metrics";
 import "./marketing-overview.css";
 
@@ -32,8 +33,8 @@ const RECENT_LEADS = 6;
 const STATE_WORDS: Record<string, string> = { pending: "Waiting to be processed", claimed: "Being processed", done: "Saved" };
 const ATTENTION_SHOWN = 5;
 
-type PipelineRef = { id: string; name: string };
-type StageRef = { id: string; label: string };
+type PipelineRef = { id: string; name: string; isDefault?: boolean; lifecycleStatus?: string; createdAt?: string };
+type StageRef = { id: string; label: string; pipelineId?: string; stageType?: string; archivedAt?: string | null; orderIndex?: number };
 
 export type OverviewProps = {
   data: {
@@ -65,15 +66,19 @@ export type OverviewProps = {
 
 /**
  * The chain's "forms that route leads" link means a lead reaches a pipeline: an enabled
- * pipeline_attach automation, or the form's own intake route. Other automations (alerts, contact
- * upserts, webhooks) still run, but they do not close the link (Codex review, PR #1900).
+ * pipeline_attach automation, the form's own intake route, or (owner ruling 2026-10-11) the business's
+ * default pipeline, which takes the leads of any form with no route of its own while it has an open
+ * stage. Other automations (alerts, contact upserts, webhooks) still run, but they do not close the
+ * link on their own (Codex review, PR #1900). Pass defaultPipelineReady(workspace) as the second
+ * argument; without it a form is judged on its own route only.
  */
 export { sendsToPipeline };
-const unroutedDetail = (form: CampaignArtifact) =>
-  form.intakeAlert ? "Leads are emailed to you but never reach a pipeline"
+
+const unroutedDetail = (form: CampaignArtifact, hint: string | null) =>
+  `${form.intakeAlert ? "Leads are emailed to you but never reach a pipeline"
     : form.intakePipelineId && form.routingConfigured ? "Its own pipeline route is skipped while an automation is on; add a pipeline step to its automations in Vibe Studio"
     : form.routingConfigured ? "Its automations run, but leads never reach a pipeline"
-      : "A lead from this form goes nowhere: no pipeline, no alert";
+      : "A lead from this form goes nowhere: no pipeline, no alert"}${hint ? `. ${hint}.` : ""}`;
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 const askPaige = (prompt: string) => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }));
@@ -92,14 +97,21 @@ export function MarketingOverview(props: OverviewProps) {
   // The chart is drawn from the records; when they are a floor and the totals are the server's, say so.
   const chartFloor = model !== records && records.capped;
   const liveForms = artifacts.filter((item) => item.type === "form");
-  const unrouted = liveForms.filter((item) => !sendsToPipeline(item));
+  // A form with no route of its own still reaches Sales while the default pipeline can take its leads. Only
+  // listen to the ads-intake question (no read of its own): if this page load learned the default-pipeline
+  // functions are not deployed, no form is said to land there, and no default pipeline is offered as a fix.
+  const intakeMissing = useAdsIntakeCapability(false) === "missing";
+  const defaultTarget = intakeMissing ? null : defaultPipelineTarget(data.pipelineWorkspace);
+  const hint = intakeMissing ? null : defaultPipelineHint(data.pipelineWorkspace);
+  const unrouted = liveForms.filter((item) => !sendsToPipeline(item, defaultTarget !== null));
+  const defaulted = liveForms.filter((item) => pipelineRouteOf(item, defaultTarget !== null) === "default");
   const floor = (count: number) => (model.capped ? `${count}+` : String(count));
   const leads = model.leads.count;
   const opportunities = model.opportunities.count;
   const firstUse = !briefs.length && !artifacts.length && !drafts.length && !submissions.length;
 
   const create = canManage ? <button className="btn btn-g" onClick={onCreateBrief}><Ic.plus size={14}/>New campaign brief</button> : null;
-  const ask = <button className="btn" onClick={() => askPaige(`Look at my Marketing for the last ${WINDOW_DAYS} days: ${floor(leads)} leads, ${floor(opportunities)} became opportunities, ${unrouted.length} of ${liveForms.length} live forms not routed. What should I do first? Use only what my records show; this workspace does not record visits, spend, reach or revenue.`)}><Ic.spark size={14}/>Ask PAIGE</button>;
+  const ask = <button className="btn" onClick={() => askPaige(`Look at my Marketing for the last ${WINDOW_DAYS} days: ${floor(leads)} leads, ${floor(opportunities)} became opportunities, ${unrouted.length} of ${liveForms.length} live forms not routed to any pipeline${defaultTarget && defaulted.length ? ` (${defaulted.length} with no route of their own file leads into my default pipeline, ${defaultRouteLabel(defaultTarget)})` : ""}. What should I do first? Use only what my records show; this workspace does not record visits, spend, reach or revenue.`)}><Ic.spark size={14}/>Ask PAIGE</button>;
 
   const viewOnly = canManage || !authorityKnown ? null : <p className="mov-ro">View only. An owner or admin can change this.</p>;
 
@@ -139,9 +151,9 @@ export function MarketingOverview(props: OverviewProps) {
     <Chain model={model} liveForms={liveForms} unrouted={unrouted} floor={floor} canManage={canManage} onOpenForm={onOpenForm} onOpenSales={onOpenSales}/>
     <div className={`mov-grid${leads ? "" : " is-quiet"}`}>
       <LeadFlow model={model} floor={floor} onGo={onGo} chartFloor={chartFloor}/>
-      <Attention {...props} drafts={drafts} submissions={submissions} unrouted={unrouted} processing={processing.health}/>
+      <Attention {...props} drafts={drafts} submissions={submissions} unrouted={unrouted} processing={processing.health} hint={hint}/>
     </div>
-    <Capture {...props} drafts={drafts}/>
+    <Capture {...props} drafts={drafts} defaultTarget={defaultTarget}/>
     {submissions.length > 0 && <RecentLeads {...props} submissions={submissions} drafts={drafts}/>}
   </div>;
 }
@@ -240,7 +252,7 @@ function FlowChart({ daily }: { daily: Model["daily"] }) {
 
 type AttentionItem = { key: string; tone: "bad" | "warn" | "v" | "n"; title: string; detail: string; action?: React.ReactNode };
 
-function Attention({ data, briefs, canManage, unrouted, drafts, submissions, processing, onGo, onOpenForm, studioLauncher }: OverviewProps & { unrouted: CampaignArtifact[]; drafts: CampaignDraft[]; submissions: CampaignSubmission[]; processing: ProcessingHealth | null }) {
+function Attention({ data, briefs, canManage, unrouted, drafts, submissions, processing, hint, onGo, onOpenForm, studioLauncher }: OverviewProps & { unrouted: CampaignArtifact[]; drafts: CampaignDraft[]; submissions: CampaignSubmission[]; processing: ProcessingHealth | null; hint: string | null }) {
   const failed = new Map<string, number>();
   for (const submission of submissions) if (submission.state === "error") failed.set(submission.formId, (failed.get(submission.formId) ?? 0) + 1);
   const formName = (id: string) => [...data.artifacts, ...drafts].find((item) => item.id === id)?.name;
@@ -254,7 +266,7 @@ function Attention({ data, briefs, canManage, unrouted, drafts, submissions, pro
   const stalled = processing?.stalled ?? 0;
   const health = [olderFailed && `${plural(olderFailed, "older submission")} couldn’t be processed`, stalled && `${plural(stalled, "submission")} ${stalled === 1 ? "is" : "are"} still waiting more than 15 minutes after arriving`].filter(Boolean).join(", and ");
   // The broken link in the chain comes first: it is what the chain lights.
-  for (const form of unrouted) items.push({ key: `route-${form.id}`, tone: "warn", title: form.name, detail: unroutedDetail(form), action: canManage ? <button className="btn btn-s" onClick={() => onOpenForm(form.id)}>Route it</button> : undefined });
+  for (const form of unrouted) items.push({ key: `route-${form.id}`, tone: "warn", title: form.name, detail: unroutedDetail(form, hint), action: canManage ? <button className="btn btn-s" onClick={() => onOpenForm(form.id)}>Route it</button> : undefined });
   for (const brief of briefs.filter((item) => item.lifecycleStatus === "ready_for_review")) items.push({ key: `review-${brief.id}`, tone: "v", title: brief.name, detail: "A campaign brief is waiting for your decision", action: <button className="btn btn-s" onClick={() => onGo("campaigns")}>Review</button> });
   for (const brief of briefs.filter(isBlockedBrief)) items.push({ key: `blocked-${brief.id}`, tone: "bad", title: brief.name, detail: brief.blocker || "Marked blocked on the brief", action: <button className="btn btn-s" onClick={() => onGo("campaigns")}>Open</button> });
   for (const draft of drafts) items.push({ key: `draft-${draft.type}-${draft.id}`, tone: "n", title: draft.name, detail: `Draft ${TYPE_LABEL[draft.type].toLowerCase()}: collects nothing until it’s published`, action: canManage ? studioLauncher("Finish in Vibe") : undefined });
@@ -268,10 +280,11 @@ function Attention({ data, briefs, canManage, unrouted, drafts, submissions, pro
   </section>;
 }
 
-function Capture({ data, drafts, captureFilter, onCaptureFilter, onOpenForm, onOpenAsset, canManage, studioLauncher }: OverviewProps & { drafts: CampaignDraft[] }) {
+function Capture({ data, drafts, defaultTarget, captureFilter, onCaptureFilter, onOpenForm, onOpenAsset, canManage, studioLauncher }: OverviewProps & { drafts: CampaignDraft[]; defaultTarget: ReturnType<typeof defaultPipelineTarget> }) {
   const pipelines = data.pipelineWorkspace?.pipelines ?? [];
   const stages = data.pipelineWorkspace?.stages ?? [];
   const routeOf = (item: CampaignArtifact) => {
+    if (pipelineRouteOf(item, defaultTarget !== null) === "default" && defaultTarget) return defaultRouteLabel(defaultTarget);
     const pipeline = pipelines.find((p) => p.id === item.intakePipelineId)?.name;
     const stage = stages.find((s) => s.id === item.intakeStageId)?.label;
     return pipeline ? [pipeline, stage].filter(Boolean).join(" → ") : "Sent to a pipeline by an automation";
@@ -285,7 +298,7 @@ function Capture({ data, drafts, captureFilter, onCaptureFilter, onOpenForm, onO
     {live.length + waiting.length === 0 ? <div className="mov-empty-block"><p>No {captureFilter === "all" ? "capture points" : FILTER_LABEL[captureFilter].toLowerCase()} yet. Build one in Vibe Studio and publish it.</p>{canManage && studioLauncher("Open Vibe Studio")}</div>
       : <div className="mov-gal">
         {live.map((item) => {
-          const issue = item.type === "form" && !sendsToPipeline(item);
+          const issue = item.type === "form" && !sendsToPipeline(item, defaultTarget !== null);
           return <button key={`${item.type}-${item.id}`} className={`mov-cp${issue ? " is-issue" : ""}`} onClick={() => item.type === "form" ? onOpenForm(item.id) : onOpenAsset(item)}>
             <Mini type={item.type}/>
             <span className="mov-cp-b">

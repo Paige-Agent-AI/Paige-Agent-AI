@@ -36,6 +36,9 @@ import { SalesWorkspace } from "./SalesWorkspace";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // Marketing › Analytics' email row reads through its own adapter; its RPC contract is proven with the Email tab.
+// The pipeline funnel's empty state asks once whether the ads-intake functions are deployed; that read is
+// proven in marketing-ads.render.test.tsx. Here they are deployed and nothing leaves the test.
+vi.mock('./ads-intake-capability', () => ({ useAdsIntakeCapability: () => 'present', noteAdsIntakeAnswer: () => {}, resetAdsIntakeCapability: () => {} }));
 vi.mock('./marketing-analytics-email', () => ({ useEmailStats: () => ({ phase: 'ready', stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 }, retry: () => {} }) }));
 vi.mock('./useCampaignAssets', async (importOriginal) => ({ ...(await importOriginal<typeof import('./useCampaignAssets')>()), useCampaignAssets: () => ({ phase: 'ready', canManage: false, links: [], available: [], retry: () => {}, attach: async () => ({ ok: false, message: '' }), detach: async () => ({ ok: false, message: '' }) }) }));
 vi.mock('./marketing-analytics-metrics', async (importOriginal) => ({ ...(await importOriginal<typeof import('./marketing-analytics-metrics')>()), useMarketingServerFigures: () => ({ phase: 'denied', current: null, previous: null }), useMarketingProcessingHealth: () => ({ phase: 'denied', health: null }) }));

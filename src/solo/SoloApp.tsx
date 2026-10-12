@@ -354,7 +354,7 @@ const full=route==='operations'||route==='finance'||route==='paige'||route==='au
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
 // Ads (its own department below Marketing) reads the active workspace like every Marketing screen.
-const adsScreen=<AdsWorkspace key={accountEpochKey} tenantId={activeTenantId??null}/>;
+const adsScreen=<AdsWorkspace key={accountEpochKey} tenantId={activeTenantId??null} businessName={accountContext.accountName}/>;
 const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,ads:adsScreen,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{

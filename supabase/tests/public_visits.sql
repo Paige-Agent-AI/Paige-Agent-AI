@@ -54,7 +54,11 @@ INSERT INTO public.growth_pages(id,tenant_id,slug,title,status) VALUES
  ('a2980700-0000-4000-8000-0000000007a4','a2980700-0000-4000-8000-000000000711','summer','Summer','published'),
  ('a2980700-0000-4000-8000-0000000007a5','a2980700-0000-4000-8000-000000000712','b-page','B page','published'),
  ('a2980700-0000-4000-8000-0000000007a6','a2980700-0000-4000-8000-000000000714','archived-page','Archived business page','published');
+-- Archiving goes through the canonical operation in production (a01_operator_account_archive); only this rolled-back
+-- fixture write steps around it, to put one archived business in front of the visit writer.
+ALTER TABLE public.tenants DISABLE TRIGGER a01_operator_account_archive;
 UPDATE public.tenants SET archived_at=now() WHERE id='a2980700-0000-4000-8000-000000000714';
+ALTER TABLE public.tenants ENABLE TRIGGER a01_operator_account_archive;
 INSERT INTO public.growth_forms(id,tenant_id,slug,name,status) VALUES
  ('a2980700-0000-4000-8000-0000000007f1','a2980700-0000-4000-8000-000000000711','intake','Intake','active'),
  ('a2980700-0000-4000-8000-0000000007f2','a2980700-0000-4000-8000-000000000711','other','Other form','active'),

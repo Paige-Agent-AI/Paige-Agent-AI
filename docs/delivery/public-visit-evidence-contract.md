@@ -44,7 +44,8 @@ The function answers `200 { recorded: false, reason }` and writes nothing for:
   `404 { recorded: false }`.
 - **someone signed in to Paige:** the browser module does not record a visit while a Paige session exists, so a
   business opening its own public link from its dashboard is not its own visitor. (A visitor who also happens to have
-  a Paige account of their own, and is signed in, is not counted either.)
+  a Paige account of their own and is signed in is not counted either — including a business's own clients signed in
+  to its client portal.)
 
 It also refuses a disallowed origin (`403`, the same allowlist as `growth-public-submit`) and rate-limits with `429`
 past 60 a minute per visitor IP or 300 a minute per page, funnel or form. The limiter fails closed.
@@ -53,6 +54,9 @@ past 60 a minute per visitor IP or 300 a minute per page, funnel or form. The li
 - The origin and user-agent checks are browser conventions. A script outside a browser can forge both.
 - Within the rate limits, such a script can still inflate a target's recorded visits, and a script spread across
   many addresses can grow the table.
+- The opposite is possible too. A script filling a page's per-target limit (300 a minute, fail-closed) leaves real
+  visitors to that page unrecorded for the rest of that minute, so a figure can also be undercounted. Slice 7b must
+  say so wherever the limiter refused.
 - No figure built on this data may be presented as tamper-proof.
 - A per-business retention window is not set here (see "Not in this slice").
 

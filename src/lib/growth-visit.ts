@@ -5,7 +5,8 @@
 // the visit token the server hands back, in this tab's sessionStorage, so the same tab continues the same visit
 // for 30 idle minutes; submitGrowthForm then hands the token back so the submission can be linked to the visit.
 // Nothing here identifies the visitor. A browser that sends Do Not Track or Global Privacy Control is never
-// recorded: it is not even asked, and the server refuses it too.
+// recorded: it is not even asked, and the server refuses it too. Nor is anyone signed in to Paige, so a business
+// looking at its own page does not count as its own visitor.
 import { supabase } from "@/integrations/supabase/client";
 
 export type GrowthVisitKind = "page" | "funnel" | "form";
@@ -17,6 +18,12 @@ let active: string | null = null;
 /** The visit the visitor is on now, for growth-public-submit to link a submission to; null when none was recorded. */
 export function activeVisitToken(): string | null {
   return active;
+}
+
+/** Make a recorded visit the one a submission links to. Called by the renderer that recorded it, only while it is
+ *  still on screen, so a late answer for a page the visitor has left never claims the next page's submission. */
+export function setActiveVisit(token: string | null): void {
+  active = token && TOKEN_RE.test(token) ? token : null;
 }
 
 /** Forget the active visit (the renderer that recorded it is gone). Only clears the token it was given. */
@@ -53,13 +60,37 @@ function store(key: string, token: string | null): void {
   } catch { /* storage unavailable: the visit still counts, this tab just starts a new one next time */ }
 }
 
+/** Someone signed in to Paige (the business's own people, checking their page) is not a visitor. */
+async function signedIn(): Promise<boolean> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data?.session);
+  } catch {
+    return false;
+  }
+}
+
+// One request at a time per target: a funnel visitor who moves on before the first answer arrives waits for its
+// token, so the whole funnel is one visit, never a second one starting at the later step.
+const inFlight = new Map<string, Promise<string | null>>();
+
 /** Record (or continue) a visit. Resolves to the visit token, or null when nothing was recorded. Never throws:
- *  a visit that could not be recorded must never break the page the visitor came to see. */
-export async function recordGrowthVisit(
+ *  a visit that could not be recorded must never break the page the visitor came to see. The caller decides
+ *  whether it becomes the active visit (setActiveVisit), because only the caller knows it is still on screen. */
+export function recordGrowthVisit(
   kind: GrowthVisitKind, targetId: string, opts: { step?: number; utm?: Record<string, string> } = {},
 ): Promise<string | null> {
-  if (visitorOptedOut()) { active = null; return null; }
   const key = storageKey(kind, targetId);
+  const next = (inFlight.get(key) ?? Promise.resolve(null)).then(() => send(kind, targetId, key, opts));
+  inFlight.set(key, next);
+  void next.finally(() => { if (inFlight.get(key) === next) inFlight.delete(key); });
+  return next;
+}
+
+async function send(
+  kind: GrowthVisitKind, targetId: string, key: string, opts: { step?: number; utm?: Record<string, string> },
+): Promise<string | null> {
+  if (visitorOptedOut() || await signedIn()) return null;
   try {
     const { data, error } = await supabase.functions.invoke("growth-public-visit", {
       body: {
@@ -74,15 +105,12 @@ export async function recordGrowthVisit(
     const token = (data as { recorded?: unknown; token?: unknown } | null)?.recorded === true ? (data as { token?: unknown }).token : null;
     if (error || typeof token !== "string" || !TOKEN_RE.test(token)) {
       store(key, null);
-      active = null;
       return null;
     }
     store(key, token);
-    active = token;
     return token;
   } catch (e) {
     console.warn("[growth-visit] not recorded:", e);
-    active = null;
     return null;
   }
 }

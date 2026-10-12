@@ -3,7 +3,7 @@
 // share; the rules live in src/lib/growth-visit.ts and on the server.
 import { useEffect, useRef } from "react";
 import { readUtm } from "@/lib/growth";
-import { clearActiveVisit, recordGrowthVisit, type GrowthVisitKind } from "@/lib/growth-visit";
+import { clearActiveVisit, recordGrowthVisit, setActiveVisit, type GrowthVisitKind } from "@/lib/growth-visit";
 
 export function useGrowthVisit(kind: GrowthVisitKind, targetId: string | null | undefined, step = 0): void {
   const token = useRef<string | null>(null);
@@ -15,6 +15,7 @@ export function useGrowthVisit(kind: GrowthVisitKind, targetId: string | null | 
     recordGrowthVisit(kind, targetId, { step, utm: readUtm() }).then((t) => {
       if (gone) return;
       token.current = t;
+      setActiveVisit(t);
     });
     return () => { gone = true; };
   }, [kind, targetId, step]);

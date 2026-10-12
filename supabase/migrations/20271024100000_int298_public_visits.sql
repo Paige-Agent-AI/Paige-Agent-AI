@@ -84,7 +84,7 @@ BEGIN
     SELECT f.tenant_id, f.status = 'active' INTO _tenant, _public FROM public.growth_forms f WHERE f.id = p_target_id;
   END IF;
   IF _tenant IS NULL OR NOT coalesce(_public, false)
-     OR NOT EXISTS (SELECT 1 FROM public.tenants t WHERE t.id = _tenant AND t.status::text IN ('trial','active','past_due')) THEN
+     OR NOT EXISTS (SELECT 1 FROM public.tenants t WHERE t.id = _tenant AND t.status::text IN ('trial','active','past_due') AND t.archived_at IS NULL) THEN
     RAISE EXCEPTION 'PUBLIC_VISIT_TARGET_UNAVAILABLE' USING ERRCODE = '22023';
   END IF;
   IF _host IS NOT NULL AND (_host !~ '^[a-z0-9.-]{1,253}$') THEN _host := NULL; END IF;
@@ -142,6 +142,24 @@ RETURNS TABLE(visit_id uuid, funnel_session_token text) LANGUAGE sql STABLE SECU
 $$;
 REVOKE ALL ON FUNCTION public.growth_public_visit_for_submission(uuid, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.growth_public_visit_for_submission(uuid, text) TO service_role;
+
+-- ── Funnel sessions are visit evidence now: only through a recorded visit ────────────────────────────
+-- growth_funnel_session_upsert was EXECUTE-granted to anon and authenticated (20260714090000) for a browser path that
+-- was never built: nothing outside growth_public_visit_record calls it (searched src, supabase/functions,
+-- supabase/tests, scripts and every migration). Left open, an anonymous caller could create or complete sessions
+-- directly, skipping the origin, privacy, agent and rate checks every visit passes. The writer above runs as the
+-- function owner, so it keeps working; the service role keeps its grant.
+REVOKE EXECUTE ON FUNCTION public.growth_funnel_session_upsert(uuid, text, int, boolean, jsonb, text, text, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.growth_funnel_session_upsert(uuid, text, int, boolean, jsonb, text, text, uuid) TO service_role;
+
+-- ── Account retirement: visits go with the account, like the pages they were made to ────────────────
+DO $$ DECLARE body text; anchor text:='SELECT CASE WHEN _table=ANY(ARRAY['; at integer; BEGIN
+ body:=pg_get_functiondef('public.operator_retirement_disposition(text)'::regprocedure); at:=position(anchor IN body);
+ IF position('growth_public_visits' IN body)>0 THEN RETURN; END IF;
+ IF at=0 OR position('''campaign_brief_actions''' IN body)=0 THEN
+  RAISE EXCEPTION 'Canonical retirement policy requires reconciliation before registering growth_public_visits'; END IF;
+ EXECUTE left(body,at+length(anchor)-1)||'''growth_public_visits'','||substr(body,at+length(anchor));
+END $$;
 
 COMMENT ON TABLE public.growth_public_visits IS
   'One browser tab viewing one published page, active funnel or active standalone form until 30 minutes idle. No IP, user agent or cookie; only referring host and utm tags. Do Not Track / Global Privacy Control browsers and known automated agents are never recorded, so counts are recorded visits. Written only by growth_public_visit_record (service role, via growth-public-visit). INT-298 MBC 7a.';

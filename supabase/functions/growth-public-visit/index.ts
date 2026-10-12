@@ -6,8 +6,8 @@
 //   2. privacy   — Do Not Track or Global Privacy Control: not recorded, answered 200 { recorded: false }
 //   3. agents    — a known automated agent, or none named: not recorded the same way (crawlers, link previews,
 //                  headless browsers, which includes PAIGE's own page screenshots)
-//   4. rate      — per visitor IP, on the shared durable limiter; fails CLOSED: if the limiter cannot answer,
-//                  nothing is recorded
+//   4. rate      — per visitor IP and per target, on the shared durable limiter; fails CLOSED: if the limiter
+//                  cannot answer, nothing is recorded
 //   5. the visit — growth_public_visit_record decides the business from the target row (never the request),
 //                  requires the target to be public now and the business live, and continues a visit only for the
 //                  same target within 30 idle minutes
@@ -23,6 +23,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const MAX_BODY_BYTES = 4 * 1024;
 const PER_IP_PER_MINUTE = 60;
+// Per page, funnel or form: caps how fast any one target's count can be inflated from many addresses.
+const PER_TARGET_PER_MINUTE = 300;
 
 function corsFor(origin: string | null): Record<string, string> {
   return {
@@ -61,7 +63,8 @@ Deno.serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false, autoRefreshToken: false } });
 
   // 4. Rate limit per visitor; a limiter that cannot answer records nothing.
-  if (await overRateLimit(admin, `gpv:ip:${trustedClientIp(req)}`, PER_IP_PER_MINUTE, 60, true)) {
+  if (await overRateLimit(admin, `gpv:ip:${trustedClientIp(req)}`, PER_IP_PER_MINUTE, 60, true)
+    || await overRateLimit(admin, `gpv:target:${visit.kind}:${visit.targetId}`, PER_TARGET_PER_MINUTE, 60, true)) {
     return reply({ recorded: false, reason: "rate_limited" }, 429);
   }
 

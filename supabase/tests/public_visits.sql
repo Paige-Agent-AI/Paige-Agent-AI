@@ -32,7 +32,8 @@ END $fixture_owner$;
 INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,features) VALUES
  ('a2980700-0000-4000-8000-000000000711','visits-a','Visits A','active','standalone','VSA','{"system_workspace":true}'),
  ('a2980700-0000-4000-8000-000000000712','visits-b','Visits B','active','standalone','VSB','{"system_workspace":true}'),
- ('a2980700-0000-4000-8000-000000000713','visits-closed','Visits closed','suspended','standalone','VSC','{"system_workspace":true}');
+ ('a2980700-0000-4000-8000-000000000713','visits-closed','Visits closed','suspended','standalone','VSC','{"system_workspace":true}'),
+ ('a2980700-0000-4000-8000-000000000714','visits-archived','Visits archived','active','standalone','VSD','{"system_workspace":true}');
 SELECT pg_temp.as_server();
 INSERT INTO auth.users(id,email) VALUES
  ('a2980700-0000-4000-8000-000000000701','visits-a-member@example.invalid'),
@@ -51,7 +52,9 @@ INSERT INTO public.growth_pages(id,tenant_id,slug,title,status) VALUES
  ('a2980700-0000-4000-8000-0000000007a2','a2980700-0000-4000-8000-000000000711','draft-page','Draft','draft'),
  ('a2980700-0000-4000-8000-0000000007a3','a2980700-0000-4000-8000-000000000713','closed-page','Closed','published'),
  ('a2980700-0000-4000-8000-0000000007a4','a2980700-0000-4000-8000-000000000711','summer','Summer','published'),
- ('a2980700-0000-4000-8000-0000000007a5','a2980700-0000-4000-8000-000000000712','b-page','B page','published');
+ ('a2980700-0000-4000-8000-0000000007a5','a2980700-0000-4000-8000-000000000712','b-page','B page','published'),
+ ('a2980700-0000-4000-8000-0000000007a6','a2980700-0000-4000-8000-000000000714','archived-page','Archived business page','published');
+UPDATE public.tenants SET archived_at=now() WHERE id='a2980700-0000-4000-8000-000000000714';
 INSERT INTO public.growth_forms(id,tenant_id,slug,name,status) VALUES
  ('a2980700-0000-4000-8000-0000000007f1','a2980700-0000-4000-8000-000000000711','intake','Intake','active'),
  ('a2980700-0000-4000-8000-0000000007f2','a2980700-0000-4000-8000-000000000711','other','Other form','active'),
@@ -82,6 +85,7 @@ SELECT pg_temp.require_true((SELECT count(*)=2 FROM public.growth_public_visits 
 -- 3. Only something public now, in a live business, is visited.
 SELECT pg_temp.require_error($$SELECT pg_temp.visit('page','a2980700-0000-4000-8000-0000000007a2')$$,'PUBLIC_VISIT_TARGET_UNAVAILABLE','a draft page records no visit');
 SELECT pg_temp.require_error($$SELECT pg_temp.visit('page','a2980700-0000-4000-8000-0000000007a3')$$,'PUBLIC_VISIT_TARGET_UNAVAILABLE','a suspended business records no visit');
+SELECT pg_temp.require_error($$SELECT pg_temp.visit('page','a2980700-0000-4000-8000-0000000007a6')$$,'PUBLIC_VISIT_TARGET_UNAVAILABLE','an archived business records no visit');
 SELECT pg_temp.require_error($$SELECT pg_temp.visit('page','a2980700-0000-4000-8000-0000000007f1')$$,'PUBLIC_VISIT_TARGET_UNAVAILABLE','a form id named as a page records nothing');
 SELECT pg_temp.require_error($$SELECT pg_temp.visit('video','a2980700-0000-4000-8000-0000000007a1')$$,'PUBLIC_VISIT_INVALID','an unknown kind is refused');
 INSERT INTO t SELECT 'badhost', pg_temp.visit('page','a2980700-0000-4000-8000-0000000007a1',NULL,0,'bad host/path')->>'visit_token';
@@ -126,5 +130,8 @@ SELECT pg_temp.require_true(NOT has_function_privilege('anon','public.growth_pub
   AND NOT has_function_privilege('anon','public.growth_public_visit_for_submission(uuid,text)','EXECUTE')
   AND NOT has_function_privilege('authenticated','public.growth_public_visit_for_submission(uuid,text)','EXECUTE')
   AND NOT has_table_privilege('anon','public.growth_public_visits','SELECT'),'only the service role records or links a visit; anonymous callers read nothing');
+SELECT pg_temp.require_true(NOT has_function_privilege('anon','public.growth_funnel_session_upsert(uuid,text,integer,boolean,jsonb,text,text,uuid)','EXECUTE')
+  AND NOT has_function_privilege('authenticated','public.growth_funnel_session_upsert(uuid,text,integer,boolean,jsonb,text,text,uuid)','EXECUTE'),'a funnel session moves only through a recorded visit, never a direct call');
+SELECT pg_temp.require_true(public.operator_retirement_disposition('growth_public_visits')='delete','an account''s visits are deleted with it at retirement, never blocking it');
 
 ROLLBACK;

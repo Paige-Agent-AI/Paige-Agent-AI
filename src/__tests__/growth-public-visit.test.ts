@@ -46,25 +46,55 @@ describe("what a visit may carry", () => {
 });
 
 const invoke = vi.fn();
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } } }));
+const session = { current: null as null | { user: { id: string } } };
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {
+  functions: { invoke: (...a: unknown[]) => invoke(...a) },
+  auth: { getSession: async () => ({ data: { session: session.current } }) },
+} }));
 
 describe("the browser records a visit, and nothing more", () => {
   beforeEach(() => {
     invoke.mockReset();
+    session.current = null;
     sessionStorage.clear();
     Object.defineProperty(navigator, "doNotTrack", { value: null, configurable: true });
     Object.defineProperty(navigator, "globalPrivacyControl", { value: undefined, configurable: true });
   });
   afterEach(() => vi.useRealTimers());
 
-  it("records once, keeps the token for this tab and hands it to the next submission", async () => {
-    const { recordGrowthVisit, activeVisitToken } = await import("@/lib/growth-visit");
+  it("records once, keeps the token for this tab, and only the caller makes it the active visit", async () => {
+    const { recordGrowthVisit, activeVisitToken, setActiveVisit, clearActiveVisit } = await import("@/lib/growth-visit");
     invoke.mockResolvedValue({ data: { recorded: true, token: TOKEN }, error: null });
     expect(await recordGrowthVisit("page", PAGE, { utm: { utm_source: "news" } })).toBe(TOKEN);
     expect(invoke).toHaveBeenCalledWith("growth-public-visit", { body: expect.objectContaining({ kind: "page", target_id: PAGE, token: null, step: 0, utm: { utm_source: "news" } }) });
+    // A late answer for a page already left must never claim the next page's submission: recording alone sets nothing.
+    expect(activeVisitToken()).toBeNull();
+    setActiveVisit(TOKEN);
     expect(activeVisitToken()).toBe(TOKEN);
+    clearActiveVisit(TOKEN);
     await recordGrowthVisit("page", PAGE);
     expect(invoke.mock.calls[1][1].body.token).toBe(TOKEN);
+  });
+
+  it("a funnel step taken before the first answer waits for it, so the funnel stays one visit", async () => {
+    const { recordGrowthVisit } = await import("@/lib/growth-visit");
+    let answer!: (v: unknown) => void;
+    invoke.mockImplementationOnce(() => new Promise((r) => { answer = r; }));
+    invoke.mockResolvedValue({ data: { recorded: true, token: TOKEN }, error: null });
+    const first = recordGrowthVisit("funnel", PAGE, { step: 0 });
+    const second = recordGrowthVisit("funnel", PAGE, { step: 1 });
+    await vi.waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
+    answer({ data: { recorded: true, token: TOKEN }, error: null });
+    await Promise.all([first, second]);
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke.mock.calls[1][1].body).toMatchObject({ token: TOKEN, step: 1 });
+  });
+
+  it("someone signed in to Paige, the business checking its own page, is not a visitor", async () => {
+    const { recordGrowthVisit } = await import("@/lib/growth-visit");
+    session.current = { user: { id: "owner" } };
+    expect(await recordGrowthVisit("page", PAGE)).toBeNull();
+    expect(invoke).not.toHaveBeenCalled();
   });
 
   it("an idle tab starts a new visit", async () => {
@@ -86,16 +116,14 @@ describe("the browser records a visit, and nothing more", () => {
   });
 
   it("a visit the server did not record leaves nothing to link, and never throws", async () => {
-    const { recordGrowthVisit, activeVisitToken, clearActiveVisit } = await import("@/lib/growth-visit");
-    invoke.mockResolvedValue({ data: { recorded: true, token: TOKEN }, error: null });
-    await recordGrowthVisit("page", PAGE);
+    const { recordGrowthVisit, activeVisitToken, clearActiveVisit, setActiveVisit } = await import("@/lib/growth-visit");
     invoke.mockResolvedValue({ data: { recorded: false, reason: "automated_agent" }, error: null });
     expect(await recordGrowthVisit("page", PAGE)).toBeNull();
-    expect(activeVisitToken()).toBeNull();
     invoke.mockRejectedValue(new Error("offline"));
     await expect(recordGrowthVisit("page", PAGE)).resolves.toBeNull();
-    invoke.mockResolvedValue({ data: { recorded: true, token: TOKEN }, error: null });
-    await recordGrowthVisit("page", PAGE);
+    setActiveVisit("pv_forged");
+    expect(activeVisitToken()).toBeNull();
+    setActiveVisit(TOKEN);
     clearActiveVisit("pv_" + "b".repeat(64));
     expect(activeVisitToken()).toBe(TOKEN);
     clearActiveVisit(TOKEN);
@@ -103,13 +131,12 @@ describe("the browser records a visit, and nothing more", () => {
   });
 
   it("a submission carries the active visit, and only then", async () => {
-    const { recordGrowthVisit, clearActiveVisit } = await import("@/lib/growth-visit");
+    const { setActiveVisit, clearActiveVisit } = await import("@/lib/growth-visit");
     const { submitGrowthForm } = await import("@/lib/growth");
     invoke.mockResolvedValue({ data: { submission_id: "s1" }, error: null });
     await submitGrowthForm({ formId: PAGE, answers: { a: 1 }, trap: "", startedAt: Date.now() - 5000 });
     expect(invoke.mock.calls.at(-1)[1].body.visit).toBeUndefined();
-    invoke.mockResolvedValue({ data: { recorded: true, token: TOKEN }, error: null });
-    await recordGrowthVisit("page", PAGE);
+    setActiveVisit(TOKEN);
     invoke.mockResolvedValue({ data: { submission_id: "s2" }, error: null });
     await submitGrowthForm({ formId: PAGE, answers: { a: 1 }, trap: "", startedAt: Date.now() - 5000 });
     expect(invoke.mock.calls.at(-1)[1].body.visit).toBe(TOKEN);

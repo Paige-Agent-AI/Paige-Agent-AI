@@ -40,10 +40,21 @@ The function answers `200 { recorded: false, reason }` and writes nothing for:
   or no user agent at all. That covers PAIGE's own page screenshots: `paige-browser` is headless, and its egress fence
   aborts every POST anyway.
 - **anything not public now:** a draft or archived page, an inactive funnel or form, or a business that is not live
-  (trial, active or past due — the same rule as `growth-public-submit`). The function answers `404 { recorded: false }`.
+  (trial, active or past due — the same rule as `growth-public-submit`) or is archived. The function answers
+  `404 { recorded: false }`.
+- **someone signed in to Paige:** the browser module does not record a visit while a Paige session exists, so a
+  business opening its own public link from its dashboard is not its own visitor. (A visitor who also happens to have
+  a Paige account of their own, and is signed in, is not counted either.)
 
-It also refuses a disallowed origin (`403`, the same allowlist as `growth-public-submit`) and, past 60 a minute per
-visitor IP, rate-limits with `429`. The limiter fails closed.
+It also refuses a disallowed origin (`403`, the same allowlist as `growth-public-submit`) and rate-limits with `429`
+past 60 a minute per visitor IP or 300 a minute per page, funnel or form. The limiter fails closed.
+
+**What this does not stop, said plainly:**
+- The origin and user-agent checks are browser conventions. A script outside a browser can forge both.
+- Within the rate limits, such a script can still inflate a target's recorded visits, and a script spread across
+  many addresses can grow the table.
+- No figure built on this data may be presented as tamper-proof.
+- A per-business retention window is not set here (see "Not in this slice").
 
 **So every count built on this is "recorded visits", and says so.** A conversion rate must divide submissions that
 carry a recorded visit by recorded visits. Dividing *all* submissions (including those from browsers that are never
@@ -66,6 +77,12 @@ Migration `20271024100000_int298_public_visits.sql`:
     token starts a new visit, so a stale or foreign token never moves someone else's record.
   - A new funnel visit opens its `growth_funnel_sessions` row through that table's own writer, and a further step
     advances it.
+- **`growth_funnel_session_upsert` is no longer callable by `anon` or `authenticated`.** It had been granted for a browser
+  path that was never built, and nothing else calls it (searched `src`, `supabase/functions`, `supabase/tests`,
+  `scripts` and every migration). Left open, it would let anyone create or complete funnel sessions while skipping
+  every visit check. The visit writer runs as the function's owner, and the service role keeps its grant.
+- **Account retirement:** `growth_public_visits` is registered `delete` in `operator_retirement_disposition`, like the
+  campaign tables. Unregistered, a business with a single visit could no longer be retired through the canonical path.
 - **`growth_public_visit_for_submission(form, token)`.** Service role only. It returns the visit and its funnel
   session token only when:
   - the visit was seen in the last two hours;
@@ -79,8 +96,11 @@ Migration `20271024100000_int298_public_visits.sql`:
   then calls the writer. The pure rules (`notRecordedReason`, `referrerHost`, `parseVisitRequest`, `visitTokenOf`)
   live in `_shared/growth-visit.ts`.
 - **Browser.** `src/lib/growth-visit.ts` records a visit and keeps the token in this tab's `sessionStorage` for 30
-  idle minutes. `useGrowthVisit` is used by the three public renderers. `submitGrowthForm` hands back the active
-  visit token.
+  idle minutes. Requests for one target run one at a time, so a funnel visitor who moves on before the first answer
+  arrives continues the same visit instead of starting a second one.
+  - Only the renderer still on screen makes a token the active visit (`useGrowthVisit` → `setActiveVisit`), so a late
+    answer for a page already left never claims the next page's submission.
+  - `submitGrowthForm` hands back the active visit token.
 
 ## What changed on screen
 
@@ -108,12 +128,16 @@ No figure is shown yet.
 
 - **Database:** `supabase/tests/public_visits.sql` (rolled back), in `paige-spine-contract.yml` → `database-contract`.
   - Locally on PG16 it applied, replayed idempotently and passed.
-  - Ten reinstated defects each failed it: no target pin, no idle limit, cross-business link, a form visit linking any
-    form, a rewinding step, every business reading every visit, a signed-in writer, a draft page, a closed business,
-    and a stepped page or malformed host (stopped by the table's checks).
-- **Unit:** `src/__tests__/growth-public-visit.test.ts`, 12 tests covering the server rules and the browser module.
-  Six reinstated defects each failed it: DNT/GPC ignored by the server, headless counted, opt-out ignored by the
-  browser, submission dropping the visit, no idle expiry, and clearing someone else's visit.
+  - Thirteen reinstated defects each failed it: no target pin, no idle limit, cross-business link, a form visit
+    linking any form, a rewinding step, every business reading every visit, a signed-in writer, a draft page, a closed
+    business, an archived business, the funnel-session writer left open to `anon`, visits blocking retirement, and a
+    stepped page or malformed host (stopped by the table's checks).
+- **Unit:** `src/__tests__/growth-public-visit.test.ts`, 14 tests covering the server rules and the browser module.
+  Nine reinstated defects each failed it: DNT/GPC ignored by the server, headless counted, opt-out ignored by the
+  browser, submission dropping the visit, no idle expiry, clearing someone else's visit, no in-flight chaining, a
+  signed-in owner counted, and recording setting the active visit by itself.
+- `GrowthFormRenderer.test.tsx` asserts the standalone form page records exactly one form visit and sends the answers
+  once.
 - **Not verified here:**
   - a real browser visiting a real published page on production, which is owed to the signed-out half of the ANT-87
     acceptance run;

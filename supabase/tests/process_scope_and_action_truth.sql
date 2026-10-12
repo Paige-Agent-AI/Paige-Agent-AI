@@ -56,6 +56,7 @@ INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,account_
 INSERT INTO public.growth_forms(id,tenant_id,slug,name,status) VALUES
  ('a2980600-0000-4000-8000-0000000000f1','a2980600-0000-4000-8000-000000000011','spring-intake','Spring intake','active'),
  ('a2980600-0000-4000-8000-0000000000f2','a2980600-0000-4000-8000-000000000011','newsletter','Newsletter sign-up','active'),
+ ('a2980600-0000-4000-8000-0000000000f3','a2980600-0000-4000-8000-000000000011','pop-up','Pop-up offer','active'),
  ('a2980600-0000-4000-8000-0000000000fb','a2980600-0000-4000-8000-000000000012','other-form','Other workspace form','active');
 INSERT INTO public.campaign_briefs(id,tenant_id,short_ref,name,lifecycle_status) VALUES
  ('a2980600-0000-4000-8000-0000000000b1','a2980600-0000-4000-8000-000000000011','CB-SC1','Spring intake','draft'),
@@ -98,9 +99,15 @@ SELECT pg_temp.require_true((pg_temp.scope('a2980600-0000-4000-8000-0000000000a1
   ='["a2980600-0000-4000-8000-0000000000f1","a2980600-0000-4000-8000-0000000000f2"]'::jsonb,'several forms, each once');
 SELECT pg_temp.require_true((SELECT conditions->1->'value' FROM public.paige_automations WHERE id='a2980600-0000-4000-8000-0000000000a1')
   ='["a2980600-0000-4000-8000-0000000000f1","a2980600-0000-4000-8000-0000000000f2"]'::jsonb,'the stored condition names each form once');
+-- Any spelling of an id is stored as the event carries it (the dispatcher compares strictly).
+SELECT pg_temp.require_true((pg_temp.scope('a2980600-0000-4000-8000-0000000000a1','{"formId":"A2980600-0000-4000-8000-0000000000F1"}')->'scope'->'form_ids')='["a2980600-0000-4000-8000-0000000000f1"]'::jsonb,'an upper-case id is accepted');
+SELECT pg_temp.require_true((SELECT conditions->1->>'value' FROM public.paige_automations WHERE id='a2980600-0000-4000-8000-0000000000a1')='a2980600-0000-4000-8000-0000000000f1','and stored canonical');
+SELECT pg_temp.scope('a2980600-0000-4000-8000-0000000000a1','{"formIds":["a2980600-0000-4000-8000-0000000000f1","a2980600-0000-4000-8000-0000000000f2"]}');
 SELECT pg_temp.as_server();
 UPDATE public.paige_automations SET state='live' WHERE id='a2980600-0000-4000-8000-0000000000a1';
 SELECT pg_temp.require_true((SELECT state='live' FROM public.paige_automations WHERE id='a2980600-0000-4000-8000-0000000000a1'),'a scoped form process goes live');
+SELECT pg_temp.require_refused($$UPDATE public.paige_automations SET conditions='[{"field":"payload.form_id","op":"eq","value":"A2980600-0000-4000-8000-0000000000F1"}]' WHERE id='a2980600-0000-4000-8000-0000000000a1'$$,'PROCESS_SCOPE_INVALID','a direct write cannot store an id the dispatcher would never match');
+SELECT pg_temp.require_refused($$UPDATE public.paige_automations SET conditions='[{"field":"form_id","op":"eq","value":"a2980600-0000-4000-8000-0000000000fb"}]' WHERE id='a2980600-0000-4000-8000-0000000000a1'$$,'PROCESS_SCOPE_NOT_FOUND','an unprefixed field is a scope too, and checked');
 
 -- 4. Refusals: other workspace, bad shape, two scopes, another trigger, a member.
 SELECT pg_temp.as_user('a2980600-0000-4000-8000-000000000001');
@@ -117,7 +124,19 @@ SELECT pg_temp.as_server();
 SELECT pg_temp.require_refused($$UPDATE public.paige_automations SET conditions='[{"field":"payload.form_id","op":"eq","value":"a2980600-0000-4000-8000-0000000000f1"},{"field":"payload.campaign_brief_ids","op":"contains","value":"a2980600-0000-4000-8000-0000000000b1"}]' WHERE id='a2980600-0000-4000-8000-0000000000a1'$$,'PROCESS_SCOPE_INVALID','a direct write cannot give two scopes');
 SELECT pg_temp.require_refused($$UPDATE public.paige_automations SET conditions='[{"field":"payload.form_id","op":"eq","value":"a2980600-0000-4000-8000-0000000000fb"}]' WHERE id='a2980600-0000-4000-8000-0000000000a1'$$,'PROCESS_SCOPE_NOT_FOUND','a direct write cannot name another workspace''s form');
 SELECT pg_temp.require_refused($$UPDATE public.paige_automations SET conditions='[]' WHERE id='a2980600-0000-4000-8000-0000000000a1'$$,'PROCESS_SCOPE_REQUIRED','a live form process cannot drop its scope');
-SELECT pg_temp.require_true((SELECT count(*)=3 FROM public.audit_logs WHERE action='process.scope' AND data->>'tenant_id'='a2980600-0000-4000-8000-000000000011'),'every scope change is audited once');
+-- The brake always works: a live process whose scope names a form that has since gone can still be paused.
+SELECT pg_temp.as_user('a2980600-0000-4000-8000-000000000001');
+SELECT pg_temp.scope('a2980600-0000-4000-8000-0000000000a1','{"formIds":["a2980600-0000-4000-8000-0000000000f1","a2980600-0000-4000-8000-0000000000f3"]}');
+SELECT pg_temp.as_server();
+DELETE FROM public.growth_forms WHERE id='a2980600-0000-4000-8000-0000000000f3';
+SELECT pg_temp.as_user('a2980600-0000-4000-8000-000000000001');
+SELECT pg_temp.require_true((public.get_process_scope('a2980600-0000-4000-8000-0000000000a1')->>'scope_valid')='false' AND (public.get_process_scope('a2980600-0000-4000-8000-0000000000a1')->>'can_go_live')='false','a scope naming a vanished form reads as invalid');
+SELECT pg_temp.as_server();
+UPDATE public.paige_automations SET state='paused' WHERE id='a2980600-0000-4000-8000-0000000000a1';
+SELECT pg_temp.require_true((SELECT state='paused' FROM public.paige_automations WHERE id='a2980600-0000-4000-8000-0000000000a1'),'a stale scope never blocks pausing');
+SELECT pg_temp.require_refused($$UPDATE public.paige_automations SET state='live' WHERE id='a2980600-0000-4000-8000-0000000000a1'$$,'PROCESS_SCOPE_NOT_FOUND','but it cannot go live again until re-scoped');
+
+SELECT pg_temp.require_true((SELECT count(*)=6 FROM public.audit_logs WHERE action='process.scope' AND data->>'tenant_id'='a2980600-0000-4000-8000-000000000011'),'every scope change is audited once');
 
 -- 5. A step marked done with nothing behind it takes no outcome and never reads as observed.
 INSERT INTO public.paige_actions(id,tenant_id,action_kind,from_department,to_department,title,status,result) VALUES
@@ -137,6 +156,7 @@ SELECT pg_temp.require_true((SELECT a->>'lifecycle'='recorded' AND a->'observed_
   FROM r1, jsonb_array_elements(v->'actions') a WHERE a->>'action_id'='a2980600-0000-4000-8000-0000000000d1'),'a planted outcome on a recorded step never reads as an evaluated success') FROM r1;
 SELECT pg_temp.require_true((SELECT a->>'lifecycle'='outcome_observed' AND a->'observed_result'->>'summary'='Twelve replies'
   FROM r1, jsonb_array_elements(v->'actions') a WHERE a->>'action_id'='a2980600-0000-4000-8000-0000000000d2'),'an approved step keeps its outcome') FROM r1;
+SELECT pg_temp.require_refused($$SELECT public.configure_campaign_brief_actions(NULL,'{"type":"evaluate_outcome","briefId":"a2980600-0000-4000-8000-0000000000b1","actionId":"a2980600-0000-4000-8000-0000000000d1","verdict":"met"}','e-1','human')$$,'CAMPAIGN_ACTION_NOT_PROVEN','a recorded step is never judged either');
 
 -- 6. Marketing admits on the tenant policy; a refusal by the action bus is reported as the bus's.
 SELECT pg_temp.as_server();

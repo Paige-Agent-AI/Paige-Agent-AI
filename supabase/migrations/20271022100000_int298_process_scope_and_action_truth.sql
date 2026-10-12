@@ -88,23 +88,30 @@ DECLARE _c jsonb; _scope jsonb; _ids uuid[]; _n integer := 0;
 BEGIN
   IF _conditions IS NULL OR jsonb_typeof(_conditions) <> 'array' THEN RETURN NULL; END IF;
   FOR _c IN SELECT value FROM jsonb_array_elements(_conditions) LOOP
-    IF jsonb_typeof(_c) <> 'object' OR _c->>'field' NOT IN ('payload.form_id','payload.campaign_brief_ids') THEN CONTINUE; END IF;
+    -- The dispatcher reads a field with or without its `payload.` prefix (decide.ts), so both spell a scope.
+    IF jsonb_typeof(_c) <> 'object' OR coalesce(_c->>'field','') NOT IN ('payload.form_id','form_id','payload.campaign_brief_ids','campaign_brief_ids') THEN CONTINUE; END IF;
     _n := _n + 1;
     BEGIN
-      IF _c->>'field' = 'payload.form_id' AND _c->>'op' = 'eq' AND jsonb_typeof(_c->'value') = 'string' THEN
+      -- Ids are stored exactly as the event carries them (lower-case canonical text): the dispatcher compares
+      -- strictly, so an upper-case or braced id would validate here and then never match a submission.
+      IF EXISTS (SELECT 1 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(_c->'value') = 'array' THEN _c->'value' ELSE jsonb_build_array(_c->'value') END) v
+                 WHERE jsonb_typeof(v) <> 'string' OR (v #>> '{}')::uuid::text <> (v #>> '{}')) THEN
+        RAISE EXCEPTION 'PROCESS_SCOPE_INVALID' USING ERRCODE='22023';
+      END IF;
+      IF _c->>'field' IN ('payload.form_id','form_id') AND _c->>'op' = 'eq' AND jsonb_typeof(_c->'value') = 'string' THEN
         _ids := ARRAY[(_c->>'value')::uuid];
         IF (SELECT count(*) FROM public.growth_forms f WHERE f.id = ANY(_ids) AND f.tenant_id = _tenant) <> 1 THEN
           RAISE EXCEPTION 'PROCESS_SCOPE_NOT_FOUND' USING ERRCODE='22023';
         END IF;
         _scope := jsonb_build_object('kind','form','form_ids',to_jsonb(_ids));
-      ELSIF _c->>'field' = 'payload.form_id' AND _c->>'op' = 'in' AND jsonb_typeof(_c->'value') = 'array'
+      ELSIF _c->>'field' IN ('payload.form_id','form_id') AND _c->>'op' = 'in' AND jsonb_typeof(_c->'value') = 'array'
             AND jsonb_array_length(_c->'value') BETWEEN 1 AND 50 THEN
         SELECT array_agg(DISTINCT v::uuid) INTO _ids FROM jsonb_array_elements_text(_c->'value') v;
         IF (SELECT count(*) FROM public.growth_forms f WHERE f.id = ANY(_ids) AND f.tenant_id = _tenant) <> cardinality(_ids) THEN
           RAISE EXCEPTION 'PROCESS_SCOPE_NOT_FOUND' USING ERRCODE='22023';
         END IF;
         _scope := jsonb_build_object('kind','form','form_ids',to_jsonb(_ids));
-      ELSIF _c->>'field' = 'payload.campaign_brief_ids' AND _c->>'op' = 'contains' AND jsonb_typeof(_c->'value') = 'string' THEN
+      ELSIF _c->>'field' IN ('payload.campaign_brief_ids','campaign_brief_ids') AND _c->>'op' = 'contains' AND jsonb_typeof(_c->'value') = 'string' THEN
         IF NOT EXISTS (SELECT 1 FROM public.campaign_briefs b WHERE b.id = (_c->>'value')::uuid AND b.tenant_id = _tenant) THEN
           RAISE EXCEPTION 'PROCESS_SCOPE_NOT_FOUND' USING ERRCODE='22023';
         END IF;
@@ -128,6 +135,12 @@ RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE _scope jsonb;
 BEGIN
   IF NEW.trigger_key <> 'form.submitted' THEN RETURN NEW; END IF;
+  -- Switching a process off (pause, draft) changes nothing it may fire on, so it is never refused, even when
+  -- a form its scope names has since gone: the brake must always work.
+  IF TG_OP = 'UPDATE' AND NEW.state <> 'live' AND NEW.conditions IS NOT DISTINCT FROM OLD.conditions
+     AND NEW.trigger_key = OLD.trigger_key AND NEW.tenant_id = OLD.tenant_id THEN
+    RETURN NEW;
+  END IF;
   _scope := public._process_form_scope(NEW.tenant_id, NEW.conditions);
   IF NEW.state = 'live' AND _scope IS NULL THEN
     RAISE EXCEPTION 'PROCESS_SCOPE_REQUIRED' USING ERRCODE='22023',
@@ -137,7 +150,7 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public._automation_form_scope_guard() FROM PUBLIC, anon, authenticated, service_role;
 DROP TRIGGER IF EXISTS automation_form_scope_guard ON public.paige_automations;
-CREATE TRIGGER automation_form_scope_guard BEFORE INSERT OR UPDATE OF state, conditions, trigger_key ON public.paige_automations
+CREATE TRIGGER automation_form_scope_guard BEFORE INSERT OR UPDATE OF state, conditions, trigger_key, tenant_id ON public.paige_automations
   FOR EACH ROW EXECUTE FUNCTION public._automation_form_scope_guard();
 
 -- ── 3. the governed seam: set or read a process's form/campaign scope ─────────────────────────
@@ -162,20 +175,26 @@ BEGIN
   IF _row.trigger_key <> 'form.submitted' THEN RAISE EXCEPTION 'PROCESS_NOT_FORM_STARTED' USING ERRCODE='22023'; END IF;
   IF _scope IS NULL OR jsonb_typeof(_scope) <> 'object' THEN RAISE EXCEPTION 'PROCESS_SCOPE_INVALID' USING ERRCODE='22023'; END IF;
 
-  IF _scope ? 'formId' AND NOT (_scope ? 'formIds') AND NOT (_scope ? 'briefId') THEN
-    _cond := jsonb_build_object('field','payload.form_id','op','eq','value',_scope->'formId');
-  ELSIF _scope ? 'formIds' AND NOT (_scope ? 'formId') AND NOT (_scope ? 'briefId') AND jsonb_typeof(_scope->'formIds') = 'array' THEN
-    SELECT jsonb_agg(DISTINCT v ORDER BY v) INTO _ids FROM jsonb_array_elements(_scope->'formIds') v;
-    _cond := jsonb_build_object('field','payload.form_id','op','in','value',coalesce(_ids,'[]'::jsonb));
-  ELSIF _scope ? 'briefId' AND NOT (_scope ? 'formId') AND NOT (_scope ? 'formIds') THEN
-    _cond := jsonb_build_object('field','payload.campaign_brief_ids','op','contains','value',_scope->'briefId');
-  ELSE
+  -- Ids are written in the canonical form the event carries, whatever spelling the caller used.
+  BEGIN
+    IF _scope ? 'formId' AND NOT (_scope ? 'formIds') AND NOT (_scope ? 'briefId') AND jsonb_typeof(_scope->'formId') = 'string' THEN
+      _cond := jsonb_build_object('field','payload.form_id','op','eq','value',((_scope->>'formId')::uuid)::text);
+    ELSIF _scope ? 'formIds' AND NOT (_scope ? 'formId') AND NOT (_scope ? 'briefId') AND jsonb_typeof(_scope->'formIds') = 'array'
+          AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(_scope->'formIds') v WHERE jsonb_typeof(v) <> 'string') THEN
+      SELECT jsonb_agg(DISTINCT to_jsonb((v::uuid)::text) ORDER BY to_jsonb((v::uuid)::text)) INTO _ids FROM jsonb_array_elements_text(_scope->'formIds') v;
+      _cond := jsonb_build_object('field','payload.form_id','op','in','value',coalesce(_ids,'[]'::jsonb));
+    ELSIF _scope ? 'briefId' AND NOT (_scope ? 'formId') AND NOT (_scope ? 'formIds') AND jsonb_typeof(_scope->'briefId') = 'string' THEN
+      _cond := jsonb_build_object('field','payload.campaign_brief_ids','op','contains','value',((_scope->>'briefId')::uuid)::text);
+    ELSE
+      RAISE EXCEPTION 'PROCESS_SCOPE_INVALID' USING ERRCODE='22023';
+    END IF;
+  EXCEPTION WHEN invalid_text_representation THEN
     RAISE EXCEPTION 'PROCESS_SCOPE_INVALID' USING ERRCODE='22023';
-  END IF;
+  END;
 
   SELECT coalesce(jsonb_agg(c), '[]'::jsonb) INTO _rest
   FROM jsonb_array_elements(CASE WHEN jsonb_typeof(_row.conditions) = 'array' THEN _row.conditions ELSE '[]'::jsonb END) c
-  WHERE NOT (jsonb_typeof(c) = 'object' AND c->>'field' IN ('payload.form_id','payload.campaign_brief_ids'));
+  WHERE NOT (jsonb_typeof(c) = 'object' AND coalesce(c->>'field','') IN ('payload.form_id','form_id','payload.campaign_brief_ids','campaign_brief_ids'));
   -- Validates the new scope (workspace, shape) before anything is written.
   _resolved := public._process_form_scope(_tenant, jsonb_build_array(_cond));
 
@@ -186,7 +205,7 @@ BEGIN
     jsonb_build_object('tenant_id', _tenant, 'actor_kind', _actor_kind, 'scope', _resolved));
   RETURN jsonb_build_object('ok', true, 'automation_id', _row.id, 'scope', _resolved, 'state', _row.state,
     'message', CASE WHEN _resolved->>'kind' = 'campaign'
-      THEN 'It runs only when someone fills in a form that is part of this campaign.'
+      THEN 'It runs only when someone fills in a form attached directly to this campaign.'
       ELSE 'It runs only when someone fills in this form.' END);
 END $$;
 REVOKE ALL ON FUNCTION public.configure_process_scope(uuid,jsonb,text) FROM PUBLIC, anon, service_role;
@@ -320,7 +339,7 @@ BEGIN
       -- Marketing admitted this caller on the tenant policy; the action bus keeps its own authority and
       -- refused. Say so, rather than surfacing the bus's raw error or pretending the step was planned.
       RAISE EXCEPTION 'CAMPAIGN_ACTION_BUS_REFUSED' USING ERRCODE='42501',
-        DETAIL = SQLERRM, HINT = 'The action bus did not accept this step from this account.';
+        HINT = 'The action bus did not accept this step from this account.';
     END;
     _action_id := (_filed->>'action_id')::uuid;
     INSERT INTO public.campaign_brief_actions(tenant_id, brief_id, action_id, tactic, family, automation_id, depends_on_action_id,
@@ -384,6 +403,9 @@ BEGIN
           'message','Outcome recorded, as stated. It is not counted as a measured figure.');
       ELSE
         IF _link.observed_at IS NULL THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NO_OUTCOME' USING ERRCODE='22023'; END IF;
+        IF _status IS NULL OR (_status = 'done' AND NOT _proven) OR _status NOT IN ('done','failed') THEN
+          RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_PROVEN' USING ERRCODE='22023';
+        END IF;
         UPDATE public.campaign_brief_actions
            SET evaluation=jsonb_strip_nulls(jsonb_build_object('verdict',_verdict,'note',_note)), evaluated_at=now(), evaluated_through=_actor_kind
          WHERE id=_link.id;

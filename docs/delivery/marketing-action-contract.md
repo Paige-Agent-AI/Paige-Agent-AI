@@ -126,7 +126,7 @@ Marketing admits the caller on the tenant policy: `is_tenant_admin` of the works
 action bus keeps its own authority unchanged: `file_action` additionally requires the global admin or coach
 role, which the membership sync gives every active owner and admin. If the bus ever refuses a caller Marketing
 admitted, the writer reports `CAMPAIGN_ACTION_BUS_REFUSED` (42501), never the bus's raw error and never a planned
-step. Bringing `file_action` onto the tenant policy is the bus owner's change, not Marketing's.
+step. A recorded step is never judged either (`evaluate_outcome` refuses it as `CAMPAIGN_ACTION_NOT_PROVEN`). Bringing `file_action` onto the tenant policy is the bus owner's change, not Marketing's.
 
 Two concurrent links of one action to the same campaign now answer `already_linked`; to another campaign,
 `CAMPAIGN_ACTION_IN_OTHER_CAMPAIGN`.

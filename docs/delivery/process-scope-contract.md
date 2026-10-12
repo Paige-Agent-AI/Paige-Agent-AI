@@ -32,14 +32,23 @@ fires, so a form attached to a campaign later is covered without touching any pr
 | Several forms (1–50) | `{field: "payload.form_id", op: "in", value: [<forms>]}` |
 | A campaign | `{field: "payload.campaign_brief_ids", op: "contains", value: <campaign>}` |
 
-Every form and campaign named must belong to the process's own workspace.
+Every form and campaign named must belong to the process's own workspace. Ids are stored exactly as the event
+carries them (lower-case canonical text): the dispatcher compares strictly, so the seam canonicalises any
+spelling it is given and the guard refuses a non-canonical id written directly. The dispatcher also reads a
+field without its `payload.` prefix, so `form_id` and `campaign_brief_ids` count as scope fields too.
+
+A campaign scope matches a form attached directly to the campaign (an `asset_kind='form'` link). A form reached
+only through a funnel or page that is attached does not match, and archiving the campaign stops the process
+matching; `get_process_scope` names the campaign so the owner can see which.
 
 **The rule, on every write.** A trigger on `paige_automations`, `automation_form_scope_guard`, refuses:
 - a `form.submitted` process becoming or being created `live` without a scope (`PROCESS_SCOPE_REQUIRED`);
 - conditions with more than one scope or a malformed one (`PROCESS_SCOPE_INVALID`);
 - a scope naming another workspace's form or campaign (`PROCESS_SCOPE_NOT_FOUND`).
 
-A draft may stay unscoped while it is built. Processes on any other trigger are untouched.
+A draft may stay unscoped while it is built. Switching a process off (pause, draft) is never refused, even when
+a form its scope names has since gone, so the brake always works; it cannot go live again until it is re-scoped.
+Processes on any other trigger are untouched.
 
 **The seam.**
 - `configure_process_scope(_automation_id, _scope, _actor_kind)`:
@@ -49,7 +58,7 @@ A draft may stay unscoped while it is built. Processes on any other trigger are 
   - Replaces any earlier scope and keeps every other condition. It is idempotent by construction.
 - `get_process_scope(_automation_id)` returns the scope with the form or campaign names, whether the process can
   go live, and its state.
-- The screen and PAIGE's chat tools both call these two functions.
+- The Campaigns screen (6b) and PAIGE's chat tools (6c) are to call these two functions; nothing calls them yet.
 
 **The engine is unchanged.** The scope conditions use operators the dispatcher already evaluates. A campaign scope
 does not match an event without `campaign_brief_ids`, such as one from before this slice; it fails closed.

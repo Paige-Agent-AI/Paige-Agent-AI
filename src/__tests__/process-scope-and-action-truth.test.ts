@@ -71,13 +71,26 @@ describe("the event names its campaigns", () => {
 describe("a form-started process names its form or campaign before it runs", () => {
   it("refuses to go live unscoped, on every write", () => {
     expect(guard).toContain("IF NEW.state = 'live' AND _scope IS NULL THEN");
-    expect(mig).toContain("BEFORE INSERT OR UPDATE OF state, conditions, trigger_key ON public.paige_automations");
   });
 
   it("accepts exactly one scope, naming only the process's own workspace", () => {
     expect(scopeOf).toContain("IF _n > 1 THEN RAISE EXCEPTION 'PROCESS_SCOPE_INVALID'");
     expect(scopeOf).toContain("f.tenant_id = _tenant");
     expect(scopeOf).toContain("b.tenant_id = _tenant");
+  });
+
+  it("stores ids exactly as the event carries them, since the dispatcher compares strictly", () => {
+    expect(scopeOf).toContain("(v #>> '{}')::uuid::text <> (v #>> '{}')");
+    const seam = section("CREATE OR REPLACE FUNCTION public.configure_process_scope", "REVOKE ALL ON FUNCTION public.configure_process_scope");
+    expect(seam).toContain("((_scope->>'formId')::uuid)::text");
+    expect(seam).toContain("((_scope->>'briefId')::uuid)::text");
+    // And a non-canonical spelling would indeed never match a submission in the engine.
+    expect(evaluateConditions([{ field: "payload.form_id", op: "eq", value: FORM.toUpperCase() }], facts({ form_id: FORM })).matched).toBe(false);
+  });
+
+  it("never refuses switching a process off, so the brake works even over a stale scope", () => {
+    expect(guard).toMatch(/IF TG_OP = 'UPDATE' AND NEW\.state <> 'live' AND NEW\.conditions IS NOT DISTINCT FROM OLD\.conditions[\s\S]*RETURN NEW;/);
+    expect(mig).toContain("BEFORE INSERT OR UPDATE OF state, conditions, trigger_key, tenant_id ON public.paige_automations");
   });
 
   it("the seam is owner/admin, tenant from auth, and audited", () => {
@@ -90,8 +103,9 @@ describe("a form-started process names its form or campaign before it runs", () 
 });
 
 describe("a recorded step is never shown as an evaluated success", () => {
-  it("takes no outcome unless its finish is proven or it failed", () => {
+  it("takes no outcome, and no judgement, unless its finish is proven or it failed", () => {
     expect(writer).toContain("IF _status = 'done' AND NOT _proven THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_PROVEN'");
+    expect(writer).toContain("IF _status IS NULL OR (_status = 'done' AND NOT _proven) OR _status NOT IN ('done','failed') THEN");
   });
 
   it("reads observed/evaluated only over a proven finish or a failure, and hides a planted outcome", () => {

@@ -74,5 +74,5 @@ grant execute on function public.paige_claim_act_dispatch(uuid, uuid, uuid, inte
 comment on function public.paige_claim_act_dispatch(uuid, uuid, uuid, interval) is
   'INT-179 Slice 2b: at-most-once dispatch gate for a Layer-C act. Stamps detail.dispatch_claim on an '
   'accepted_for_execution/retrying row that has no live claim and returns it; NULL otherwise. A claim older '
-  'than the stale window (min 7 minutes), or whose timestamp is missing, unparseable or in the future, may be '
+  'than the stale window (min 7 minutes), or whose timestamp is missing, unparseable or over a minute ahead, may be '
   're-taken after the caller''s own readback. Service-role only.';

@@ -149,12 +149,14 @@ update public.paige_act_executions
  where act_id = '00000000-0000-4000-8000-0000000000a1';
 select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-00000000000f'), null,
   'G8 a far-future timestamp is stale, never a claim held for years');
--- G9: the future check has a margin, so a claim written just now by another caller is still live.
+-- G9: the future check has a margin. A caller re-checking another caller's committed claim can read a stamp later
+-- than its own now() (the other transaction started later); stamping clock_timestamp() + 1 s reproduces that, and
+-- the claim must stay live. A future check against now() with no margin would re-take it (a double dispatch).
 update public.paige_act_executions
-   set detail = detail || jsonb_build_object('dispatch_claimed_at', now())
+   set detail = detail || jsonb_build_object('dispatch_claimed_at', clock_timestamp() + interval '1 second')
  where act_id = '00000000-0000-4000-8000-0000000000a1';
 select is(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-000000000010'), null,
-  'G9 a claim stamped now() is still live (the future check never re-takes a fresh claim)');
+  'G9 a claim stamped just ahead of this transaction''s now() is still live (the future check has a margin)');
 
 -- ── F. Service role only ─────────────────────────────────────────────────────────────────────────────────
 select ok(not has_function_privilege('authenticated', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval)', 'execute')

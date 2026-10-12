@@ -131,6 +131,10 @@ async function readOne<T>(db: ApproveExecutorDb, table: string, match: Record<st
 type AdvanceBase = {
   eventId: string; actId: string; automationId: string; actPosition: number; tenantId: string;
   capabilityKey: string | null; correlationRef: string | null; idempotencyKey: string;
+  /** The governed capability id (`capability.id`, e.g. `crm_advance_journey_stage`) the receipt is filed under —
+   *  the same key engine.ts phase 5 uses. Distinct from `capabilityKey`, the ledger's own dotted action-kind
+   *  snapshot, which `record_capability_run` refuses (its key must match ^[a-z][a-z0-9_]{1,63}$). */
+  receiptCapabilityKey: string;
   automationName: string; subjectId: string; approverUserId: string;
 };
 
@@ -176,7 +180,7 @@ async function advanceLedger(
     const wasNoop = detail.already_at_requested_stage === true;
     const runId = await stableRunId(["paige-cap-approve", base.eventId, base.actId]);
     await recordCapabilityRun(db, {
-      tenantId: base.tenantId, actorId: base.approverUserId, capabilityKey: base.capabilityKey ?? "",
+      tenantId: base.tenantId, actorId: base.approverUserId, capabilityKey: base.receiptCapabilityKey,
       outcome: "capability_succeeded", runId,
       detail: { correlation_ref: base.correlationRef, event_id: base.eventId, act_id: base.actId, contact_id: base.subjectId, approved: true, ...detail },
     });
@@ -305,7 +309,7 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
   const base: AdvanceBase = {
     eventId, actId, automationId: row.automation_id, actPosition: row.act_position, tenantId,
     capabilityKey: row.capability_key, correlationRef: row.correlation_ref, idempotencyKey: row.idempotency_key,
-    automationName, subjectId: evRes.row.subject_id, approverUserId,
+    receiptCapabilityKey: capability.id, automationName, subjectId: evRes.row.subject_id, approverUserId,
   };
 
   // The §68 gate resolver — declared once, used by BOTH the RESUME re-dispatch and the FRESH path below.

@@ -1,12 +1,12 @@
 -- INT-179 Slice 2b (20271023000000) — the act ledger never overwrites an act that is in flight, keeps its
--- detail, and grants a dispatch to exactly one claimant. plan(28).
+-- detail, and grants a dispatch to exactly one claimant. plan(35).
 -- Behavioural proof against the schema `supabase db reset` replayed from zero (house pgTAP style; synthetic
 -- opaque fixtures; the enclosing transaction is ALWAYS rolled back — no production/customer records).
 -- The ledger's FK constraints are dropped and its user triggers disabled inside the rolled-back transaction, so
 -- rows insert with synthetic ids; both functions are called as the service role (auth.uid() NULL), exactly as
 -- the drainer, the approval executor and the reconciler call them.
 begin;
-select plan(28);
+select plan(35);
 
 do $$
 declare r record;
@@ -117,6 +117,46 @@ update public.paige_act_executions
  where act_id = '00000000-0000-4000-8000-0000000000a1';
 select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-000000000009'), null,
   'G2 a missing or non-ISO claim timestamp is treated as stale, never a cast error that wedges the row');
+-- G3–G9 (20271023000100): G3/G4 values the prefix regex accepted but that do not parse (they raised on the old
+-- body); G5–G7 special inputs that must stay stale; G8 a far-future value; G9 a fresh claim stays live.
+update public.paige_act_executions
+   set detail = detail || '{"dispatch_claimed_at":"2026-99-99T99:99:99"}'::jsonb
+ where act_id = '00000000-0000-4000-8000-0000000000a1';
+select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-00000000000a'), null,
+  'G3 a timestamp-shaped value that does not parse is stale, never a cast error');
+update public.paige_act_executions
+   set detail = detail || '{"dispatch_claimed_at":"2026-01-01T00:00:00junk"}'::jsonb
+ where act_id = '00000000-0000-4000-8000-0000000000a1';
+select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-00000000000b'), null,
+  'G4 a valid timestamp prefix with trailing junk is stale, never a cast error');
+update public.paige_act_executions
+   set detail = detail || '{"dispatch_claimed_at":"infinity"}'::jsonb
+ where act_id = '00000000-0000-4000-8000-0000000000a1';
+select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-00000000000c'), null,
+  'G5 an infinite timestamp is stale, never a claim that holds forever');
+update public.paige_act_executions
+   set detail = detail || '{"dispatch_claimed_at":"now"}'::jsonb
+ where act_id = '00000000-0000-4000-8000-0000000000a1';
+select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-00000000000d'), null,
+  'G6 the special input now is stale (it parses to the current time and would never age out)');
+update public.paige_act_executions
+   set detail = detail || '{"dispatch_claimed_at":"tomorrow"}'::jsonb
+ where act_id = '00000000-0000-4000-8000-0000000000a1';
+select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-00000000000e'), null,
+  'G7 the special input tomorrow is stale (always in the future)');
+update public.paige_act_executions
+   set detail = detail || '{"dispatch_claimed_at":"9999-12-31 00:00:00+00"}'::jsonb
+ where act_id = '00000000-0000-4000-8000-0000000000a1';
+select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-00000000000f'), null,
+  'G8 a far-future timestamp is stale, never a claim held for years');
+-- G9: the future check has a margin. A caller re-checking another caller's committed claim can read a stamp later
+-- than its own now() (the other transaction started later); stamping clock_timestamp() + 1 s reproduces that, and
+-- the claim must stay live. A future check against now() with no margin would re-take it (a double dispatch).
+update public.paige_act_executions
+   set detail = detail || jsonb_build_object('dispatch_claimed_at', clock_timestamp() + interval '1 second')
+ where act_id = '00000000-0000-4000-8000-0000000000a1';
+select is(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-000000000010'), null,
+  'G9 a claim stamped just ahead of this transaction''s now() is still live (the future check has a margin)');
 
 -- ── F. Service role only ─────────────────────────────────────────────────────────────────────────────────
 select ok(not has_function_privilege('authenticated', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval)', 'execute')

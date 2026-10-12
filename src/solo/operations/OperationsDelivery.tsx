@@ -6,6 +6,9 @@ import { useSoloCommercialTerms, type ClientAgreement } from "@/solo/useSoloComm
 import { useSoloAgreementSignings, type AgreementSigning } from "@/solo/useSoloAgreementSignings";
 import { money } from "@/solo/catalog-offers";
 import { OperationsEngagementEvidence } from "./OperationsEngagementEvidence";
+import type { Plan, PlanItem } from "@/hooks/usePlanList";
+import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
+import { inspectEngagementProject } from "./operations-engagement-project";
 import "./operations-delivery.css";
 
 function date(value: string | null) {
@@ -20,15 +23,22 @@ function amount(row: ClientAgreement) {
   catch { return "Currency unavailable"; }
 }
 
-/** Read-only Sales evidence. Signature completion never implies fulfillment or client acceptance. */
-export default function OperationsDelivery({ openPaige }: { openPaige?: () => void }) {
+type Props = { openPaige?: () => void; plans?: Plan[]; items?: PlanItem[]; planningReady?: boolean;
+  members?: TeamMemberRecord[]; peopleReady?: boolean; onVerified?: (planId: string) => Promise<void> };
+/** Sales evidence stays source-owned; reviewed handoffs write through canonical Planning. */
+export default function OperationsDelivery({ openPaige, plans = [], items = [], planningReady = false,
+  members = [], peopleReady = false, onVerified }: Props) {
   const terms = useSoloCommercialTerms();
   const signing = useSoloAgreementSignings();
   const { activeTenantId, activeUserId, accountContextLoading } = useTenantContext();
   const epoch = useRef({ actor: activeUserId, tenant: activeTenantId, loading: accountContextLoading });
   if (epoch.current.actor !== activeUserId || epoch.current.tenant !== activeTenantId || epoch.current.loading !== accountContextLoading) epoch.current = { actor: activeUserId, tenant: activeTenantId, loading: accountContextLoading };
   const [selection, setSelection] = useState<{ id: string; epoch: typeof epoch.current } | null>(null);
+  const [signingSelection, setSigningSelection] = useState<{ id:string; engagementId:string; epoch:typeof epoch.current } | null>(null);
   const [inspectedEpoch, setInspectedEpoch] = useState<typeof epoch.current | null>(null);
+  const closeGuards = useRef(new Set<()=>boolean>());
+  const registerCloseGuard = (guard:()=>boolean) => { closeGuards.current.add(guard); return () => { closeGuards.current.delete(guard); }; };
+  const requestClose = () => { if(Array.from(closeGuards.current).every(guard=>guard())) setInspectedEpoch(null); };
   const [copy, setCopy] = useState<{ url?: string; message?: string; busy?: boolean; epoch: typeof epoch.current } | null>(null);
   const contentRef = useRef<HTMLElement | null>(null);
   const portalTheme = contentRef.current?.closest<HTMLElement>("[data-pg]")?.getAttribute("data-pg") ?? "dark";
@@ -46,6 +56,14 @@ export default function OperationsDelivery({ openPaige }: { openPaige?: () => vo
   const signaturesKnown = !accountContextLoading && signing.tenantId === activeTenantId && signing.phase === "ready" && signing.readable && !signing.authorityUnknown;
   const documents = engagement && signaturesKnown ? signing.signings.filter(document => document.agreementId === engagement.id && document.contactId === engagement.contactId) : [];
   const sealed = documents.find(document => document.signatureState === "completed" && document.hasSealedCopy);
+  // One explicitly selected source can own an unsaved draft. Other signing evidence remains readable.
+  const selectedSigningId = signingSelection?.epoch === epoch.current && signingSelection.engagementId === engagement?.id && documents.some(d=>d.id===signingSelection.id)
+    ? signingSelection.id : (sealed ?? documents[0])?.id;
+  const selectSigning = (id:string) => {
+    if(!engagement || id===selectedSigningId) return;
+    if(Array.from(closeGuards.current).every(guard=>guard()))
+      setSigningSelection({id,engagementId:engagement.id,epoch:epoch.current});
+  };
   const retry = () => { terms.retry(); signing.retry(); };
   async function prepareCopy(document: AgreementSigning) {
     const opened = epoch.current;
@@ -61,6 +79,13 @@ export default function OperationsDelivery({ openPaige }: { openPaige?: () => vo
   }
   const visibleCopy = copy?.epoch === epoch.current ? copy : null;
   const ready = scoped && terms.phase === "ready";
+  const projectLink = engagement && activeTenantId && engagement.offerId && planningReady
+    ? inspectEngagementProject(plans, items, { tenantId: activeTenantId, contactId: engagement.contactId,
+      termsId: engagement.id, offerId: engagement.offerId }) : null;
+  const handoffVerified = async (planId: string) => {
+    setInspectedEpoch(null);
+    await onVerified?.(planId);
+  };
   return <section ref={contentRef} className="op-delivery" aria-label="Client commitments">
     <header className="op-delivery-heading"><div><h1>Keep the promise.</h1><p>See the agreement behind the work—and the evidence still needed to close it.</p></div><button onClick={retry}><RefreshCw size={16} /> Refresh</button></header>
     {!ready ? <div className="op-delivery-state" role="status"><FileText size={32} /><h2>{terms.phase === "error" ? "Commitments could not be loaded" : terms.phase === "unavailable" ? "Choose a workspace to see its commitments" : "Loading client commitments…"}</h2>{terms.phase === "error" && <p>Refresh to read the current Sales records again.</p>}</div>
@@ -72,10 +97,16 @@ export default function OperationsDelivery({ openPaige }: { openPaige?: () => vo
           <section className="op-delivery-promise"><div className="op-delivery-client"><span>{clientName(engagement)}</span><span className="op-delivery-status">Engagement · {label(engagement.status)}</span></div><h2>{engagement.title || "Untitled engagement"}</h2><p className="op-delivery-description">{engagement.notes || "No engagement description has been recorded in Sales."}</p><dl className="op-delivery-dates"><div><dt>Starts</dt><dd>{date(engagement.startsOn)}</dd></div><div><dt>Ends</dt><dd>{date(engagement.endsOn)}</dd></div><div><dt>Renewal</dt><dd>{date(engagement.renewsOn)}</dd></div></dl><button onClick={(event) => { inspectionInvoker.current = event.currentTarget; setInspectedEpoch(epoch.current); }}>Inspect agreement <ArrowRight size={16} /></button></section>
           <section className="op-delivery-document" aria-label="Agreement evidence"><FileCheck2 size={30} /><h2>{sealed ? "The signed promise." : "The promise, on record."}</h2><p>{sealed ? sealed.documentTitle : "Review the commercial terms and the linked signing documents."}</p><dl><div><dt>Agreed price</dt><dd>{amount(engagement)}</dd></div><div><dt>Payment arrangement</dt><dd>{label(engagement.termKind)}</dd></div><div><dt>Signature evidence</dt><dd>{!signaturesKnown ? "Cannot be confirmed" : sealed ? `Sealed copy · ${date(sealed.completedAt)}` : documents.length ? "Signing incomplete or sealed copy unavailable" : "No linked signing recorded"}</dd></div></dl>{sealed && <button disabled={visibleCopy?.busy} onClick={() => void prepareCopy(sealed)}>{visibleCopy?.busy ? "Preparing signed copy…" : "Prepare signed copy"}</button>}{visibleCopy?.url && <a href={visibleCopy.url} target="_blank" rel="noopener noreferrer">Open signed copy <ArrowRight size={14} /></a>}{visibleCopy?.message && <p role="alert">{visibleCopy.message}</p>}</section>
         </div>
-        <ol className="op-delivery-path" aria-label="Promise to outcome"><li data-observed="true"><Check size={18} /><strong>Commercial terms</strong><span>{label(engagement.status)} engagement</span></li><li data-observed={Boolean(sealed)}><FileCheck2 size={18} /><strong>Signature</strong><span>{sealed ? "Sealed copy recorded" : signaturesKnown ? "Completion not evidenced" : "Evidence unavailable"}</span></li><li><ArrowRight size={18} /><strong>Delivery project</strong><span>Linked handoff unavailable</span></li><li><Check size={18} /><strong>Client outcome</strong><span>Acceptance unavailable</span></li></ol>
-        <div className="op-delivery-next"><div><h2>The next link in the promise</h2><p>This engagement has no readable Operations handoff or client acceptance record yet. Its commercial status and signature do not confirm delivery.</p></div>{openPaige && <button onClick={openPaige}>Discuss with PAIGE <ArrowRight size={16} /></button>}</div>
+        <ol className="op-delivery-path" aria-label="Promise to outcome"><li data-observed="true"><Check size={18} /><strong>Commercial terms</strong><span>{label(engagement.status)} engagement</span></li><li data-observed={Boolean(sealed)}><FileCheck2 size={18} /><strong>Signature</strong><span>{sealed ? "Sealed copy recorded" : signaturesKnown ? "Completion not evidenced" : "Evidence unavailable"}</span></li><li data-observed={projectLink?.kind === "linked"}><ArrowRight size={18} /><strong>Delivery project</strong><span>{projectLink?.kind === "linked" ? projectLink.link.project.title : projectLink?.kind === "not_shown" ? "No linked project in the work shown" : "Project source unavailable"}</span></li><li><Check size={18} /><strong>Client outcome</strong><span>Acceptance unavailable</span></li></ol>
+        <div className="op-delivery-next"><div><h2>The next link in the promise</h2><p>{projectLink?.kind === "linked" ? "The linked delivery project is on record. Review its milestones and work; client acceptance is still outstanding." : "Inspect the signed engagement to review its delivery plan. Commercial status and signature do not confirm delivery."}</p></div>{projectLink?.kind === "linked" && onVerified && <button onClick={() => void handoffVerified(projectLink.link.project.id)}>Review delivery project <ArrowRight size={16} /></button>}{openPaige && <button onClick={openPaige}>Discuss with PAIGE <ArrowRight size={16} /></button>}</div>
       </>}
-    <Sheet open={inspectedEpoch === epoch.current && Boolean(engagement) && ready && terms.agreementsReadable && !terms.authorityUnknown} onOpenChange={open => { if (!open) setInspectedEpoch(null); }}><SheetContent className="op-delivery-drawer paige-solo" data-pg={portalTheme} data-theme={portalTheme} onCloseAutoFocus={(event) => { if (inspectionInvoker.current?.isConnected) { event.preventDefault(); inspectionInvoker.current.focus(); } }}><SheetHeader><SheetTitle>{engagement?.title || "Engagement details"}</SheetTitle><SheetDescription>{engagement ? clientName(engagement) : ""} · Sales agreement</SheetDescription></SheetHeader>{engagement && <><dl className="op-delivery-detail"><div><dt>Engagement status</dt><dd>{label(engagement.status)}</dd></div><div><dt>Agreed price</dt><dd>{amount(engagement)}</dd></div><div><dt>Price basis</dt><dd>{label(engagement.priceBasis)}</dd></div><div><dt>Payment timing</dt><dd>{label(engagement.paymentSchedule)}</dd></div><div><dt>Billing interval</dt><dd>{label(engagement.billingInterval)}</dd></div><div><dt>Last updated</dt><dd>{date(engagement.updatedAt)}</dd></div></dl><h3>Linked signing documents</h3>{!signaturesKnown ? <p>Signing evidence cannot be confirmed. Refresh or ask your owner to check your access.</p> : documents.length === 0 ? <p>No signing document is linked to this engagement.</p> : documents.map(document => <article key={document.id} className="op-delivery-signing"><strong>{document.documentTitle}</strong><span>{label(document.displayState)}</span><p>{document.signerName ? `First signer: ${document.signerName}` : "Signer name unavailable"}</p><p>Completed: {date(document.completedAt)}</p><p>{document.hasSealedCopy ? "Sealed copy recorded" : "No sealed copy recorded"}</p>{inspectedEpoch === epoch.current && activeUserId && activeTenantId && <OperationsEngagementEvidence key={`${activeUserId}:${activeTenantId}:${document.id}`} actorId={activeUserId} tenantId={activeTenantId} signingId={document.id} contactId={engagement.contactId} commercialTermsId={engagement.id} offerId={engagement.offerId} />}</article>)}</>}</SheetContent></Sheet>
+    <Sheet open={inspectedEpoch === epoch.current && Boolean(engagement) && ready && terms.agreementsReadable && !terms.authorityUnknown} onOpenChange={open => { if (!open) requestClose(); }}><SheetContent className="op-delivery-drawer paige-solo" data-pg={portalTheme} data-theme={portalTheme} onCloseAutoFocus={(event) => { if (inspectionInvoker.current?.isConnected) { event.preventDefault(); inspectionInvoker.current.focus(); } }}><SheetHeader><SheetTitle>{engagement?.title || "Engagement details"}</SheetTitle><SheetDescription>{engagement ? clientName(engagement) : ""} · Sales agreement</SheetDescription></SheetHeader>{engagement && <><dl className="op-delivery-detail"><div><dt>Engagement status</dt><dd>{label(engagement.status)}</dd></div><div><dt>Agreed price</dt><dd>{amount(engagement)}</dd></div><div><dt>Price basis</dt><dd>{label(engagement.priceBasis)}</dd></div><div><dt>Payment timing</dt><dd>{label(engagement.paymentSchedule)}</dd></div><div><dt>Billing interval</dt><dd>{label(engagement.billingInterval)}</dd></div><div><dt>Last updated</dt><dd>{date(engagement.updatedAt)}</dd></div></dl><h3>Linked signing documents</h3>{!signaturesKnown ? <p>Signing evidence cannot be confirmed. Refresh or ask your owner to check your access.</p> : documents.length === 0 ? <p>No signing document is linked to this engagement.</p> : documents.map(document => <article key={document.id} className="op-delivery-signing"><strong>{document.documentTitle}</strong><span>{label(document.displayState)}</span><p>{document.signerName ? `First signer: ${document.signerName}` : "Signer name unavailable"}</p><p>Completed: {date(document.completedAt)}</p><p>{document.hasSealedCopy ? "Sealed copy recorded" : "No sealed copy recorded"}</p>{documents.length>1 && planningReady && projectLink?.kind === "not_shown" && engagement.offerId && onVerified && <button type="button" aria-pressed={document.id===selectedSigningId} onClick={()=>selectSigning(document.id)}>Plan from this signing</button>}{inspectedEpoch === epoch.current && activeUserId && activeTenantId && <OperationsEngagementEvidence key={`${activeUserId}:${activeTenantId}:${document.id}`} actorId={activeUserId} tenantId={activeTenantId} signingId={document.id} contactId={engagement.contactId} commercialTermsId={engagement.id} offerId={engagement.offerId}
+              handoff={document.id===selectedSigningId && planningReady && projectLink?.kind === "not_shown" && engagement.offerId && onVerified ? {
+                scope: { actorId: activeUserId, tenantId: activeTenantId, contactId: engagement.contactId,
+                  commercialTermsId: engagement.id, offerId: engagement.offerId, commercialStatus: engagement.status,
+                  termsUpdatedAt: engagement.updatedAt }, members, peopleReady, theme: portalTheme, onVerified: handoffVerified,
+                registerCloseGuard, onAbandon: () => setInspectedEpoch(null),
+              } : undefined} />}</article>)}</>}</SheetContent></Sheet>
   </section>;
 }
 

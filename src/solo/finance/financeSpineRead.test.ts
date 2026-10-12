@@ -19,6 +19,32 @@ function client(data: unknown = evidence()) {
     ? data&&typeof data==='object'&&'tenant_id' in data ? data : {tenant_id:tenant,entities:[{id:entity,is_active:true,version:1}],sources:[{id:binding,entity_id:entity,revision:1,verification_state:'verified',connection_active:true}]} : data, error: null })) };
 }
 describe('Finance Spine read candidate', () => {
+  it('preserves valid canonical liability rows with omitted unsupported optional fields as unknown', async () => {
+    const row: Record<string, unknown> = { ...debtEvidence().records[0] };
+    for (const key of ['principalPayment','interestPayment','collateralVerified','guaranteeVerified','institutionUpdatedAt']) delete row[key];
+    const r = await executeFinanceRead(client({ ...debtEvidence(), records: [row] }), debtCommand);
+    expect(r).toMatchObject({ outcome: 'read', evidence: { records: [{ outstandingBalance: '123.00',
+      principalPayment: null, interestPayment: null, collateralVerified: null, guaranteeVerified: null, institutionUpdatedAt: null }] } });
+  });
+  it('keeps omitted canonical APR terms unknown without discarding the balance', async () => {
+    const row: Record<string, unknown> = { ...debtEvidence().records[0] }; delete row.aprs;
+    expect(await executeFinanceRead(client({ ...debtEvidence(), records: [row] }), debtCommand))
+      .toMatchObject({ outcome: 'read', evidence: { records: [{ outstandingBalance: '123.00', aprs: null }] } });
+  });
+  it('keeps omitted canonical verification markers explicitly unverified', async () => {
+    const row: Record<string, unknown> = { ...debtEvidence().records[0] };
+    delete row.companyOwnershipVerified; delete row.accountingClassificationVerified;
+    expect(await executeFinanceRead(client({ ...debtEvidence(), records: [row] }), debtCommand))
+      .toMatchObject({ outcome: 'read', evidence: { records: [{ companyOwnershipVerified: false, accountingClassificationVerified: false }] } });
+  });
+  it.each(['companyOwnershipVerified','accountingClassificationVerified'])('refuses a positive unsupported %s verification', async key => {
+    const row = { ...debtEvidence().records[0], [key]: true };
+    expect((await executeFinanceRead(client({ ...debtEvidence(), records: [row] }), debtCommand)).outcome).toBe('unavailable');
+  });
+  it.each(['principalPayment','interestPayment','collateralVerified','guaranteeVerified','institutionUpdatedAt'])('still refuses a supplied unsupported %s claim', async key => {
+    const row = { ...debtEvidence().records[0], [key]: key.includes('Verified') ? true : '10' };
+    expect((await executeFinanceRead(client({ ...debtEvidence(), records: [row] }), debtCommand)).outcome).toBe('unavailable');
+  });
   it('reads distinct debt records without turning available credit into cash or a company aggregate', async () => {
     const c = client(debtEvidence()); const r = await executeFinanceRead(c, debtCommand);
     expect(c.rpc).toHaveBeenCalledWith('read_finance_liability_source',{ _expected_tenant: tenant, _entity_id: entity, _binding_id: binding });

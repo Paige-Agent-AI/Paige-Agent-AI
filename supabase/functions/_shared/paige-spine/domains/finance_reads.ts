@@ -103,10 +103,17 @@ function recordProjection(evidence: Record<string, unknown>, command: Record<str
     for (const key of amounts) if (Object.prototype.hasOwnProperty.call(row,key) && row[key] !== null && !money(row[key], debt)) throw new Error('Invalid source amount');
     if (debt) {
       if (!['credit_card','revolving_line','loan_obligation'].includes(String(row.product))) throw new Error('Invalid debt product');
-      if (row.accountingClassificationVerified !== false || row.companyOwnershipVerified !== false
-        || ['principalPayment','interestPayment','collateralVerified','guaranteeVerified','institutionUpdatedAt'].some(key=>row[key] !== null)) throw new Error('Unsupported lender conclusion');
-      if (row.aprs !== null && (!Array.isArray(row.aprs) || row.aprs.length > 50)) throw new Error('Invalid APR coverage');
-      projected.aprs = row.aprs === null ? null : (row.aprs as unknown[]).map(apr => pick(apr,['percentage','sourceType','subjectBalance','interestCharge']));
+      const unsupported = ['principalPayment','interestPayment','collateralVerified','guaranteeVerified','institutionUpdatedAt'];
+      if (row.accountingClassificationVerified != null && row.accountingClassificationVerified !== false
+        || row.companyOwnershipVerified != null && row.companyOwnershipVerified !== false
+        || unsupported.some(key=>row[key] != null)) throw new Error('Unsupported lender conclusion');
+      // Canonical SQL permits omitted optional terms. Absence is unknown, never
+      // a reason to discard a legitimate balance or infer an unsupported fact.
+      for (const key of unsupported) projected[key] = null;
+      projected.accountingClassificationVerified = false;
+      projected.companyOwnershipVerified = false;
+      if (row.aprs != null && (!Array.isArray(row.aprs) || row.aprs.length > 50)) throw new Error('Invalid APR coverage');
+      projected.aprs = row.aprs == null ? null : (row.aprs as unknown[]).map(apr => pick(apr,['percentage','sourceType','subjectBalance','interestCharge']));
     } else {
       if (row.bankSettlementVerified !== false || command.domain === 'expenses' && row.recognizedExpense !== null) throw new Error('Unsupported accounting conclusion');
       for (const key of ['vendor','entity','paymentAccount']) if (Object.prototype.hasOwnProperty.call(row,key)) projected[key] = row[key] === null ? null : pick(row[key],['nativeId','sourceLabel']);

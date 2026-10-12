@@ -1,4 +1,4 @@
-# Operations explicit client review — preparation contract
+# Operations explicit client review â€” preparation contract
 
 Approved ANT-11 continuation; V3 design preserved. This child branch is unmounted and depends on reviewed submission source290, not Sales handoff270. No customer login/provider effects.
 
@@ -61,3 +61,28 @@ Failing-first initial UI contract3 tests FAILED against unconnected component. I
 
 
 Client component recovery review checkpoint: source0c0f6efc1f6f8c62616c9241f1cc683ee3495cf5,37 local tests/two files and scopedESLint PASS. Independent review found note erasure on recorded-state reread and then an inaccessible clear path after revoked read; both reproduced as failing tests, corrected and independently source-rechecked COMPLETE. Notes remain tied to original submission/revision/digest; same-scope recovery preserves them, changed versions require explicit reconciliation, unknown outcomes cannot be replayed, and unavailable source conceals artifact/note contents while permitting explicit clearance and exit. Both consequential confirmations use scoped champagne; main Request changes remains secondary. Independent final visual disposition ship for the bounded repair batch after22captures. Fresh32 rendered component cases and eight native signed-out Chrome200/400percent cases PASS/errors0; proof in assets/operations-v3/client-artifact. No production portal import, shared shell/PAIGE continuity or authenticated acceptance is claimed. Full portal integration, staff preparation/reviewer/release controls and governed COO continuation remain owed.
+
+## Staff source picker preparation
+
+Operations-owned helper reads existing Studio session and immutable version contracts, with actual session actor/current database tenant before and after, returned tenant/session/lineage identity validation and scope fences. Only named content/text title/body/version fields are offered for this bounded client projection; unsupported saved kinds are counted explicitly. A readable empty result means no readable source was returned, not proof the business has no artifacts. No new artifact, profile, task or authority store.
+
+Three initial tests failed against the absent reader; a separate empty-wrong-workspace test failed before adding current-tenant fences. Implemented source helper passes12 focused tests and scoped lint. Staff controls, route binding, source discovery completeness, reviewer queue, full rendered journey and authenticated proof remain owed. This preparation is separate from #2052 and depends on its reviewed adapters.
+
+Staff-source independent review found eligibility mismatch: oversized/blank titles and blank bodies were offered although the released client-release/parser contract refuses them. Three added regressions failed, then the selectable projection was aligned to nonblank title<=500 and body<=200000. Valid but unsupported source is counted explicitly; malformed/foreign data stays unavailable.15 source tests now pass; no mutation, source edit or credential change.
+
+## Exact submitted-artifact inspection preparation
+
+Staff review needs to inspect the submitted content, not just a version UUID. The existing scoped submission reader grants nominated, Studio-authorized reviewers a per-submission projection without general Planning item access. A bounded Operations artifact reader reuses that exact projection, additionally checks current Studio source permission/digest and returns only named content/text title/body plus immutable submission/version/actor references. General task/client names, raw snapshot/briefs, storage URLs and unrelated source are not projected.
+
+The original capability-routing answers above apply: Operations owns the submission, Studio owns the immutable artifact, Team/Planning/Clients retain authority. This is a read with no approval/budget/provider/job effect; no Spine artifact-read capability is registered yet, so Chat/Live remains UNAVAILABLE for this preparation. Existing Delivery surface remains unmounted for staff content review; no binding state moves to authenticated LIVE. Proposed never-applied20271024000020 must be rechecked against production/peer reservations before any release.
+
+Native failing-first reader proof fails before the function exists. Implemented projection passes10 actual authenticated-role assertions in the disposable minimal-schema fixture: accountable source owner and nominated reviewer, exact content, no raw private metadata, backed admin, wrong actor/tenant, general item assignee without Studio source permission, unrelated plan owner with Studio access and revoked reviewer. Full-schema CI, independent review, mounted controls and protected QA remain owed. Existing applied migrations and direct table grants are unchanged.
+
+
+## Staff artifact-read bridge / release preparation
+
+Current source/helper/adapter tests53 PASS (15 source,38 staff); scoped ESLint PASS. The diff check caught an accidentally altered existing release RPC name before any release: a new outbound-call assertion FAILED (37 prior tests passed), the canonical name was restored, and all53 pass. This Operations-introduced defect was corrected in its own unreleased slice; no production call was affected. Reviewer/source/version/timestamp changes require fresh inspection; actor/tenant/work/plan/client/version/digest/submitter mismatch, revoked source and late workspace response cannot display content.
+
+Native current-shape rerun passes10 authenticated-role assertions on the disposable minimal PostgreSQL16 schema. Existing function was replaced only in that local disposable catalog to rerun the forward CREATE definition; committed forward migration remains CREATE, never-applied. Full canonical-schema CI is newly wired and remains required. Production catalog frontier is20271024000010; proposed20271024000020 not applied. Current main contains only own10 at that date; active peer2040/2032/2021/2043 and Knowledge1615/1608 file inventories contain no conflicting20 migration. ANT-11 reservation records the proposed version; fresh exact-head compatibility remains required.
+
+Source-only release boundary: no component, production route, shared shell, client portal, reviewer queue, source editing, automation, external artifact URL or mutation added. Staff inspects exact submitted title/body via existing submission visibility AND current Studio authority. Callable Spine artifact-read remains UNAVAILABLE; mount and authenticated acceptance remain PROOF OWED. Client portal owner/lease remains unresolved; that shared mount is parked while owned domain source proceeds. Existing #1832/ANT-7/ANT-86/single ANT-21 receives these safe native/helper fixtures; no credentials/customer data/provider effect/INT-346 activation.

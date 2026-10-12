@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type StaffDeliveryScope={actorId:string;tenantId:string;workItemId:string;planId:string;clientId:string;workUpdatedAt:string};
 export type StaffSubmission={id:string;tenant_id:string;work_item_id:string;plan_id:string;client_id:string;artifact_version_id:string;artifact_digest:string;revision_no:number;submitted_by:string;submitted_at:string;reviewer_user_id:string;state:"in_review"|"revision_requested"|"approved";review_note:string|null;reviewed_by:string|null;reviewed_at:string|null;updated_at:string};
 export type StaffClientRelease={release_id:string;submission_id:string;state:"awaiting_client"|"client_revision_requested"|"accepted";released_by:string;released_at:string;decision_by:string|null;decision_at:string|null;client_note:string|null;updated_at:string};
-type RpcName="operations_delivery_list_scoped"|"operations_delivery_client_status_scoped"|"operations_delivery_submit_scoped"|"operations_delivery_review_scoped"|"operations_delivery_release_scoped";
+type RpcName="operations_delivery_list_scoped"|"operations_delivery_client_status_scoped"|"operations_delivery_submit_scoped"|"operations_delivery_review_scoped"|"operations_delivery_release_scoped"|"operations_delivery_artifact_scoped";
 export type StaffDeliveryCaller={getActor:()=>Promise<string|null>;rpc:(name:RpcName,args:Record<string,unknown>)=>PromiseLike<{data:unknown;error:unknown}>};
 export const staffDeliveryCaller:StaffDeliveryCaller={getActor:async()=>{const result=await supabase.auth.getSession();return result.error?null:result.data.session?.user.id??null;},rpc:(name,args)=>(supabase as unknown as StaffDeliveryCaller).rpc(name,args)};
 const object=(value:unknown):Record<string,unknown>|null=>value&&typeof value==="object"&&!Array.isArray(value)?value as Record<string,unknown>:null;
@@ -79,4 +79,23 @@ export async function writeStaffDelivery(caller:StaffDeliveryCaller,scope:StaffD
    if(action.kind==="review"?(saved.state!==action.decision||saved.reviewed_by!==scope.actorId||saved.review_note!==(action.note?.trim()||null)):(saved.state!=="approved"||!readback.releases.some(r=>r.release_id===ack.release_id&&r.submission_id===saved.id&&r.released_by===scope.actorId)))return{kind:"unverified"};
   }return{kind:"verified",readback};
  }catch{return{kind:isCurrent()?"unverified":"scope_changed"};}
+}
+
+export type StaffArtifactRead = {kind:"ready";title:string;body:string}|{kind:"unavailable"|"refused"|"source_changed"|"scope_changed"};
+/** Exact original submission and immutable source; never substitutes another readable artifact. */
+export async function readStaffArtifact(caller:StaffDeliveryCaller,scope:StaffDeliveryScope,submission:StaffSubmission,current:()=>boolean):Promise<StaffArtifactRead>{
+ if(!current())return{kind:"scope_changed"};
+ if(!parseStaffSubmissions({work_item_id:scope.workItemId,submissions:[submission]},scope))return{kind:"unavailable"};
+ try{
+  if(await caller.getActor()!==scope.actorId)return{kind:"refused"};if(!current())return{kind:"scope_changed"};
+  const response=await caller.rpc("operations_delivery_artifact_scoped",{p_submission_id:submission.id,p_expected_actor_id:scope.actorId,p_expected_tenant_id:scope.tenantId});
+  if(!current())return{kind:"scope_changed"};if(response.error)return{kind:"unavailable"};
+  const r=object(response.data);
+  if(!r||r.actor_id!==scope.actorId||r.tenant_id!==scope.tenantId||r.submission_id!==submission.id||r.work_item_id!==scope.workItemId||r.plan_id!==scope.planId||r.client_id!==scope.clientId
+    ||r.artifact_version_id!==submission.artifact_version_id||r.artifact_digest!==submission.artifact_digest||r.revision_no!==submission.revision_no||r.submitted_by!==submission.submitted_by
+    ||typeof r.title!=="string"||!r.title.trim()||r.title.length>500||typeof r.body!=="string"||!r.body.trim()||r.body.length>200000)return{kind:"unavailable"};
+  if(r.state!==submission.state||r.updated_at!==submission.updated_at||r.reviewer_user_id!==submission.reviewer_user_id)return{kind:"source_changed"};
+  if(await caller.getActor()!==scope.actorId)return{kind:"refused"};
+  return current()?{kind:"ready",title:r.title,body:r.body}:{kind:"scope_changed"};
+ }catch{return{kind:current()?"unavailable":"scope_changed"};}
 }

@@ -22,13 +22,15 @@ seed = seed.replaceAll('@tests.invalid', `-${suffix}@tests.invalid`).replaceAll(
 const tenant = id('eb810000-0000-4000-8000-000000001111');
 const foreign = id('eb820000-0000-4000-8000-000000002222');
 const actor = id('eb810000-0000-4000-8000-000000000002');
+const peer = id('eb810000-0000-4000-8000-000000000001');
 const agreement = id('eb810000-0000-4000-8000-00000000a001');
 const contact = id('eb810000-0000-4000-8000-00000000c001');
 const terms = id('eb810000-0000-4000-8000-00000000d001');
 const offer = id('eb810000-0000-4000-8000-00000000f001');
 const users = ['eb810000-0000-4000-8000-000000000001','eb810000-0000-4000-8000-000000000002','eb820000-0000-4000-8000-000000000001'].map(id);
 const processes = new Set();
-const invoke = (request, name) => new Promise((resolve, reject) => {
+let signingVersion;
+const invoke = (request, name, caller) => new Promise((resolve, reject) => {
   const child = spawn(psql, args, { windowsHide: true });
   processes.add(child);
   let output = '', errors = '';
@@ -43,11 +45,11 @@ const invoke = (request, name) => new Promise((resolve, reject) => {
   });
   child.stdin.end(`BEGIN; SET LOCAL lock_timeout='10s'; SET LOCAL statement_timeout='12s';
     SET LOCAL application_name='${name}'; SET LOCAL ROLE authenticated;
-    SELECT set_config('request.jwt.claim.sub','${actor}',true);
+    SELECT set_config('request.jwt.claim.sub','${caller}',true);
     CREATE TEMP TABLE race_result(v text);
     DO $$ BEGIN
-      INSERT INTO race_result SELECT public.operations_engagement_handoff('${actor}','${tenant}','${agreement}',
-        '${contact}','${terms}','${offer}',1,repeat('a',64),repeat('b',64),
+      INSERT INTO race_result SELECT public.operations_engagement_handoff('${caller}','${tenant}','${agreement}',
+        '${contact}','${terms}','${offer}',${signingVersion},repeat('a',64),repeat('b',64),
         (select updated_at from public.tenant_client_agreements where id='${terms}'),'${request}',
         'Concurrent fulfillment','${actor}',current_date,current_date+10,
         jsonb_build_array(jsonb_build_object('title','One real milestone','assigned_to_user_id','${actor}')),
@@ -58,17 +60,19 @@ const invoke = (request, name) => new Promise((resolve, reject) => {
 const clearPlans = () => run(`DELETE FROM public.plan_items WHERE tenant_id='${tenant}'; DELETE FROM public.plans WHERE tenant_id='${tenant}';`);
 const observeWait = async names => {
   for (let i=0; i<40; i++) {
-    if (run(`SELECT count(*) FROM pg_stat_activity WHERE application_name IN ('${names[0]}','${names[1]}') AND wait_event_type='Lock'`) !== '0') return;
+    if (run(`SELECT count(*) FROM pg_stat_activity WHERE application_name IN ('${names[0]}','${names[1]}') AND wait_event_type='Lock' AND wait_event='advisory'`) !== '0') return;
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   throw new Error('Concurrent lock wait was not observed');
 };
 try {
-  run(`BEGIN; ${seed} COMMIT;`);
+  run(`BEGIN; ${seed} UPDATE public.tenant_members SET role='admin' WHERE tenant_id='${tenant}' AND user_id='${peer}'; COMMIT;`);
+  signingVersion = Number(run(`SELECT version FROM public.paige_agreements WHERE id='${agreement}'`));
+  assert.ok(Number.isSafeInteger(signingVersion) && signingVersion > 0, 'Frozen source version required');
   for (const sameRequest of [true, false]) {
     const first = randomUUID(), second = sameRequest ? first : randomUUID();
     const names = [`ops-handoff-${suffix}-a`,`ops-handoff-${suffix}-b`];
-    const attempts = [invoke(first,names[0]),invoke(second,names[1])];
+    const attempts = [invoke(first,names[0],actor),invoke(second,names[1],peer)];
     // Attach rejection handling before observing; preserve failures without unhandled promises.
     const completion = Promise.allSettled(attempts);
     await observeWait(names);

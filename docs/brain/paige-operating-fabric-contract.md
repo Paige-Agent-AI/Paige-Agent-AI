@@ -30,9 +30,11 @@ merged. Each change that moves a map row or the seam's own claims is listed here
 - **Ads.** #2011 counts leads by stage for each campaign and ad from UTM tags. There is still no ad-account
   connection, so ad **spend** and ad-platform results stay unreadable. The register's wording now says
   exactly that.
-- **Secure Browser / PAIGE Computer.** #2003 (PC-1) shipped a safe, read-only external browser
-  capability (`browse_public_url` Spine registration, receipts, bounded usage). The §A row's
-  "UNAVAILABLE" is superseded for read-only public browsing. Authenticated browsing is unchanged.
+- **Secure Browser / PAIGE Computer.** #2003 (PC-1) registered a governed, read-only public browse
+  path (`browse_public_url`: Spine declaration, receipts, bounded usage). Its activation is
+  owner-held and currently off (tenant flag, limits row and live drive; see
+  `docs/delivery/pc1-one-paige-proof-matrix.md`), and its chatBinding is UNAVAILABLE. So the §A
+  row stays **UNAVAILABLE** for PAIGE's turns until activation and a live drive.
 - **Model Fabric.** INT-334 R5a routes chat's streamed rounds through the shared Model Fabric. R5b
   applies the route's tool exposure to cheap-class rounds. Full per-route narrowing of the ~95-tool
   set is still not general.
@@ -375,7 +377,7 @@ does not compose for the domain, and the domain does not edit the composer. The 
   Money is `currency_minor` with an ISO code per value; mixed currencies are separate metrics, never
   a sum.
 - **Size.** It keeps within the validator's bounds: 24 headline metrics, 20 items per list, and short
-  single-line strings. A domain with a stricter envelope (Finance's 16 KiB bound) applies it before
+  single-line strings. A domain with a stricter envelope of its own applies it before
   returning. Anything over is withheld and marked `coverage: "partial"` with a note.
 - **Scope.** It does not cache across turns, and changing balances are not Memory. The composer
   re-checks the workspace epoch after every adapter settles, so a stale read is voided.
@@ -407,7 +409,7 @@ BusinessOperatingSnapshot {
   error becomes `adapter_error`, and the message is never leaked. A malformed snapshot becomes
   `invalid_shape:<reason>`.
 - **Missing domains are named.** A domain with no substrate gets a grounded NOT-CONNECTED reason
-  (ads, reviews, events, sms, social results, support tickets). A domain with no adapter yet gets
+  (ads, reviews, events, sms, social results). A domain with no adapter yet gets
   `no_adapter`.
 - **The projection is built LAST and bounded.** Every unavailable area appears as a NOT AVAILABLE
   line. The closing instruction forbids estimating, and states that an unavailable area is unknown,

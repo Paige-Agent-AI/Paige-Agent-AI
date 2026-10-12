@@ -776,7 +776,7 @@ export type DomainSnapshotAdapter = {
 export const NOT_CONNECTED_DOMAINS: Readonly<Partial<Record<SnapshotDomain, string>>> = Object.freeze({
   paid_acquisition: "No ad account is connected, so ad spend and ad-platform results cannot be read.",
   reviews: "Reviews and reputation are not connected to the platform yet.",
-  events: "Webinars and event registrations are not tracked on the platform yet.",
+  events: "Webinar and event registrations cannot be read for a business review yet.",
   sms: "Text messaging is not readable for a business review yet.",
   social: "Social accounts can be recorded, but posting and results are not connected, so reach and engagement cannot be read.",
 });

@@ -6,15 +6,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 
+import { readFileSync } from "node:fs";
 import { CampaignActions } from "./campaign-actions";
 import {
-  actionMessageFor, basisLine, canEvaluate, canRecordOutcome, lifecycleTone, readActions, useCampaignActions,
-  type CampaignAction, type CampaignActionsState,
+  RECORD_ONLY_KIND, actionMessageFor, basisLine, removeWarning, canEvaluate, canRecordOutcome, lifecycleTone, localDayStart, readActions, stateLabel,
+  useCampaignActions, type CampaignAction, type CampaignActionsState,
 } from "./useCampaignActions";
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const row = (action_id: string, lifecycle: string, extra: Record<string, unknown> = {}) => ({
-  brief_id: "b1", action_id, tactic: "Win-back email", family: "email", lifecycle, title: `Step ${action_id}`, summary: null,
+  brief_id: "b1", action_id, tactic: "Win-back email", family: "email", lifecycle, status: null, action_kind: "marketing.campaign_action", title: `Step ${action_id}`, summary: null,
   approval: { lane: "confirm" }, owner: { department: "marketing" }, due_at: null, waiting_on_dependency: false,
   expected_result: null, observed_result: null, observed_through: null, evaluation: null, evidence: {}, created_through: "human", ...extra,
 });
@@ -31,7 +32,50 @@ describe("readActions", () => {
     expect(action.observed).toBeNull();
     expect(action.basis).toBe("recorded");
     expect(canRecordOutcome(action)).toBe(false);
-    expect(basisLine(action.basis)).toMatch(/no run or approval/);
+    expect(basisLine(action)).toMatch(/no run or approval/);
+  });
+
+  it("keeps a failed step failed, even once a result is recorded or judged", () => {
+    const [failed, observed, judged] = readActions({ actions: [
+      row("a1", "failed", { status: "failed", evidence: { basis: "workflow_run", error: "The list was empty." } }),
+      row("a2", "outcome_observed", { status: "failed", observed_result: { summary: "Nothing went out" }, evidence: { basis: "workflow_run" } }),
+      row("a3", "evaluated", { status: "failed", observed_result: { summary: "Nothing went out" }, evaluation: { verdict: "met" }, evidence: { basis: "approval" } }),
+    ] }).actions;
+    expect(failed.failed && observed.failed && judged.failed).toBe(true);
+    expect([failed, observed, judged].map(lifecycleTone)).toEqual(["st-blocked", "st-blocked", "st-blocked"]);
+    expect(stateLabel(failed)).toBe("Failed");
+    expect(stateLabel(observed)).toBe("Failed · result recorded");
+    expect(stateLabel(judged)).toBe("Failed · judged: Met");
+    // Never "Done by the run" or "nothing was sent" over a failure; the admin sees why it failed.
+    expect(basisLine(failed)).toBe("It failed: The list was empty.");
+    expect(basisLine(judged)).toBe("It failed.");
+    expect(canRecordOutcome(failed)).toBe(true);
+  });
+
+  it("says nothing was sent only for the record-only campaign step", () => {
+    const [own, other] = readActions({ actions: [
+      row("a1", "completed", { evidence: { basis: "approval" } }),
+      row("a2", "completed", { action_kind: "crm.send_email", evidence: { basis: "approval" } }),
+    ] }).actions;
+    expect(own.actionKind).toBe(RECORD_ONLY_KIND);
+    expect(basisLine(own)).toMatch(/Nothing was sent or published/);
+    expect(basisLine(other)).toBe("Finished on your approval.");
+  });
+
+  it("warns before removing that a result goes with it and an action still waits in Approvals", () => {
+    const [waiting, judged] = readActions({ actions: [
+      row("a1", "approval_required"),
+      row("a2", "evaluated", { observed_result: { summary: "Twelve" }, evaluation: { verdict: "met" }, evidence: { basis: "approval" } }),
+    ] }).actions;
+    expect(removeWarning(waiting)).toMatch(/stays on your list and in Approvals/);
+    expect(removeWarning(judged)).toMatch(/recorded result and judgement go with it/);
+  });
+
+  it("sends a picked date as that day's local midnight, so it reads back as the same day", () => {
+    const sent = localDayStart("2031-03-01")!;
+    const back = new Date(sent);
+    expect([back.getFullYear(), back.getMonth(), back.getDate(), back.getHours()]).toEqual([2031, 2, 1, 0]);
+    expect(localDayStart("tomorrow")).toBeNull();
   });
 
   it("reads a judgement only on a judged step, and a member's step without its name", () => {
@@ -55,7 +99,16 @@ describe("readActions", () => {
     expect(tone("evaluated", "partly_met")).toBe("st-await");
   });
 
-  it("names every refusal the writer can raise in words a person can act on", () => {
+  it("names every refusal token the writer and its guard raise, read from the migrations themselves", () => {
+    const sql = ["20271021200000_int298_campaign_brief_actions.sql", "20271022100000_int298_process_scope_and_action_truth.sql"]
+      .map((file) => readFileSync(`supabase/migrations/${file}`, "utf8")).join("\n");
+    const tokens = [...new Set(sql.match(/'CAMPAIGN_[A-Z_]+'/g)!.map((token) => token.slice(1, -1)))];
+    expect(tokens.length).toBeGreaterThanOrEqual(20);
+    const generic = actionMessageFor("unknown");
+    expect(tokens.filter((token) => actionMessageFor(token) === generic)).toEqual([]);
+  });
+
+  it("names the common refusals in words a person can act on", () => {
     expect(actionMessageFor("CAMPAIGN_ACTION_NOT_PROVEN")).toMatch(/without a run or an approval/);
     expect(actionMessageFor("CAMPAIGN_ACTION_NOT_FINISHED")).toMatch(/hasn't finished/);
     expect(actionMessageFor("CAMPAIGN_ACTION_BUS_REFUSED")).toMatch(/Nothing was planned/);
@@ -84,12 +137,35 @@ describe("useCampaignActions", () => {
     await mount();
     expect(rpc.mock.calls[0]).toEqual(["get_campaign_brief_actions", { _tenant_id: TENANT, _brief_id: null }]);
     let result: { ok: boolean; message: string } | undefined;
-    await act(async () => { result = await state.plan("b1", { title: " Host the open hour ", tactic: "Launch event", family: "event", dueAt: "2031-03-01", expected: "Ten guests" }); });
+    await act(async () => { result = await state.plan("b1", { title: " Host the open hour ", tactic: "Launch event", family: "event", dueAt: "2031-03-01", expected: "Ten guests", key: "plan-key-1" }); });
     expect(result?.ok).toBe(true);
     const write = rpc.mock.calls.find(([name]) => name === "configure_campaign_brief_actions")!;
-    expect(write[1]).toMatchObject({ _tenant_id: TENANT, _actor_kind: "human",
+    // The plan form's own key: a retry after an unclear failure files the same step once.
+    expect(write[1]).toMatchObject({ _tenant_id: TENANT, _actor_kind: "human", _idempotency_key: "plan-key-1",
       _command: { type: "plan_action", briefId: "b1", title: "Host the open hour", tactic: "Launch event", family: "event", dueAt: "2031-03-01", expectedResult: { summary: "Ten guests" } } });
     expect(state.actions.map((action) => action.actionId)).toEqual(["a1", "a2"]);
+  });
+
+  it("a slow older readback never draws over a newer one", async () => {
+    let reads = 0;
+    const releases: Array<() => void> = [];
+    rpc.mockImplementation(async (name: string) => {
+      if (name !== "get_campaign_brief_actions") return { data: { ok: true }, error: null };
+      reads += 1;
+      if (reads === 1) return { data: { can_manage: true, actions: [row("a1", "completed", { evidence: { basis: "approval" } })] }, error: null };
+      const n = reads;
+      await new Promise<void>((resolve) => releases.push(resolve));
+      return { data: { can_manage: true, actions: [n === 2
+        ? row("a1", "completed", { evidence: { basis: "approval" } })
+        : row("a1", "outcome_observed", { observed_result: { summary: "Twelve" }, evidence: { basis: "approval" } })] }, error: null };
+    });
+    await mount();
+    let first: Promise<unknown> | undefined; let second: Promise<unknown> | undefined;
+    act(() => { first = state.recordOutcome("b1", "a1", "Twelve", null); second = state.recordOutcome("b1", "a1", "Twelve", null); });
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    await act(async () => { releases[1](); await second; });
+    await act(async () => { releases[0](); await first; });
+    expect(state.actions[0].lifecycle).toBe("outcome_observed");
   });
 
   it("does not claim a result the read does not show", async () => {
@@ -121,7 +197,7 @@ describe("useCampaignActions", () => {
       row("a3", "outcome_observed", { observed_result: { summary: "Five" } }),
     ];
     rpc.mockImplementation(async () => ({ data: { can_manage: true, actions }, error: null }));
-    function Owner() { return <CampaignActions tenantId={TENANT} briefId="b1" onToast={() => {}} onAsk={() => {}}/>; }
+    function Owner() { return <CampaignActions tenantId={TENANT} briefId="b1" onToast={() => {}}/>; }
     await mount(<Owner/>);
     // The dossier reads only the campaign it shows.
     expect(rpc.mock.calls[0]).toEqual(["get_campaign_brief_actions", { _tenant_id: TENANT, _brief_id: "b1" }]);
@@ -130,6 +206,8 @@ describe("useCampaignActions", () => {
     expect(stepText("a2").textContent).not.toContain("Record the result");
     expect(stepText("a2").textContent).toContain("Marked done, nothing shows it ran");
     expect(stepText("a3").textContent).toContain("Judge it");
+    // Nothing here promises a PAIGE ability the chat does not have yet (6c).
+    expect(host.textContent).not.toMatch(/Ask PAIGE/);
     act(() => root.unmount()); host.remove();
 
     rpc.mockImplementation(async () => ({ data: { can_manage: false, actions: actions.map((a) => ({ ...a, title: null })) }, error: null }));

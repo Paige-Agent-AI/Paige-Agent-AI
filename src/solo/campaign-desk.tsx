@@ -581,7 +581,7 @@ function DossierDrawer({ brief: b, canManage, assets, tenantId, onToast, onClose
           </div>
           {b.blocker && <div className="dw-note" style={{ borderColor: "var(--bad)", background: "var(--bad-tint)", color: "var(--bad)" }}><Ic.bell size={13}/> Blocker: {b.blocker}</div>}
           <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast}/></div>
-          <div className="dw-sec"><h4>Steps and results</h4><CampaignActions tenantId={tenantId} briefId={b.id} onToast={onToast} onAsk={onAsk}/></div>
+          <div className="dw-sec"><h4>Steps and results</h4><CampaignActions tenantId={tenantId} briefId={b.id} onToast={onToast}/></div>
           <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} links={links} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>
             <div className="dw-links">

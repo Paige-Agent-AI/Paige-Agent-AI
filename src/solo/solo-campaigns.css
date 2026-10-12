@@ -846,3 +846,10 @@
 .ca .ca-chip.is-on{border-color:var(--violet-line);background:var(--violet-tint, var(--surface));color:var(--violet)}
 .ca-hint{margin:0;font-size:10.5px;color:var(--ink-3);line-height:1.45}
 .ca .ca-chip:focus-visible,.ca .ca-field input:focus-visible{outline:2px solid var(--ring, var(--violet));outline-offset:2px}
+.ca .ca-add{justify-self:start;display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--violet-line);border-radius:9px;background:transparent;color:var(--violet);font-size:12px;font-weight:600;padding:7px 11px;cursor:pointer}
+.ca .ca-add:hover{background:var(--surface-2)}
+.ca .ca-add:focus-visible,.ca .btn:focus-visible,.ca-step:focus-visible{outline:2px solid var(--ring, var(--violet));outline-offset:2px}
+.ca-step:focus:not(:focus-visible){outline:none}
+.ca-basis.is-failed{color:var(--bad)}
+.ca .ca-bad{color:var(--bad)}
+.ca .ca-field input[aria-invalid="true"]{border-color:var(--bad)}

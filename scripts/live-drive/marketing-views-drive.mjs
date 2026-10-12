@@ -328,7 +328,8 @@ async function main() {
     }
 
     // Campaigns › dossier: steps and results (MBC 6b). Each step reads its real state; an admin plans a step,
-    // records a result over a proven finish and judges it; a recorded-only step offers no result; a member reads.
+    // records a result over a proven finish and judges it, removes one after a confirmation; a recorded-only step
+    // offers no result and shows none even when one was planted; a failed step stays failed; a member reads.
     for (const theme of ["light", "dark"]) {
       for (const mode of ["populated", "readonly"]) {
         const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
@@ -341,32 +342,48 @@ async function main() {
         await page.waitForSelector(".dw .ca-step", { timeout: 8000 }).catch(() => {});
         const id = `${theme}/${mode}/campaign-steps`;
         const read = () => page.evaluate(() => [...document.querySelectorAll(".dw .ca-step")].map((li) => ({
-          name: li.querySelector(".ca-title")?.textContent ?? li.querySelector(".ca-top")?.textContent ?? "",
+          name: li.querySelector(".ca-n")?.textContent ?? "",
           state: li.querySelector(".ca-state")?.textContent ?? "",
+          basis: li.querySelector(".ca-basis")?.textContent ?? "",
           text: li.textContent ?? "",
           buttons: [...li.querySelectorAll("button")].map((b) => b.textContent),
         })));
         const fit = () => page.evaluate(() => { const dw = document.querySelector(".dw"); if (!dw) return null; const r = dw.getBoundingClientRect(); return { sideways: dw.scrollWidth > dw.clientWidth + 1, offRight: [...dw.querySelectorAll(".ca *")].some((el) => el.getBoundingClientRect().right > r.right + 1) }; });
         const steps = await read();
         const f0 = await fit();
-        check(errors.length === 0 && steps.length === 6 && f0 && !f0.sideways && !f0.offRight, `${id}: six steps render without error or overflow`, JSON.stringify({ errors, n: steps.length, f0 }));
+        check(errors.length === 0 && steps.length === 7 && f0 && !f0.sideways && !f0.offRight, `${id}: seven steps render without error or overflow`, JSON.stringify({ errors, n: steps.length, f0 }));
         const tactics = await page.evaluate(() => [...document.querySelectorAll(".dw .ca-tactic")].map((t) => t.getAttribute("aria-label")));
         check(JSON.stringify(tactics) === JSON.stringify(["Tactic: Win-back email", "Tactic: Launch event"]), `${id}: steps are grouped under their tactic`, JSON.stringify(tactics));
         const recorded = steps.find((s) => /Marked done, nothing shows it ran/.test(s.state));
-        check(Boolean(recorded) && !recorded.buttons.includes("Record the result") && !/Judged|Result/.test(recorded.text.replace(/Record the result/g, "")), `${id}: a recorded-only step says nothing shows it ran, and carries no result`, JSON.stringify(recorded));
+        check(Boolean(recorded) && !recorded.buttons.includes("Record the result") && !/Planted result/.test(recorded.text) && /takes no result/.test(recorded.basis),
+          `${id}: a recorded-only step says nothing shows it ran and shows no result, even one planted in the row`, JSON.stringify(recorded));
+        const failed = steps.find((s) => /^Failed/.test(s.state));
+        check(Boolean(failed) && failed.state === "Failed · result recorded" && (mode === "populated" ? failed.basis === "It failed: The partner list was empty." : failed.basis === "It failed."),
+          `${id}: a failed step stays failed after its result is recorded${mode === "populated" ? ", and says why" : ""}`, JSON.stringify(failed));
         const waiting = steps.find((s) => /Waiting for your approval/.test(s.state));
-        check(Boolean(waiting), `${id}: a step awaiting approval says so`, JSON.stringify(steps.map((s) => s.state)));
+        check(Boolean(waiting) && (mode === "populated" ? /waiting in your approvals/.test(waiting.text) : /waiting for approval\./.test(waiting.text) && !/your approvals/.test(waiting.text)),
+          `${id}: a step awaiting approval says so, in words that fit the reader`, JSON.stringify(waiting?.text));
+        check(!(await page.evaluate(() => /Ask PAIGE to plan/.test(document.querySelector(".dw .ca")?.textContent ?? ""))), `${id}: nothing promises a PAIGE planning ability that isn't built`);
         await page.evaluate(() => document.querySelector(".dw .ca")?.scrollIntoView({ block: "start" }));
         if (mode === "populated") {
           const judged = steps.find((s) => /Twelve booked a call/.test(s.text));
           check(Boolean(judged) && /Ten replies/.test(judged.text) && /Met/.test(judged.text), `${id}: a judged step shows its aim, its result and the judgement`, JSON.stringify(judged));
           await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-${theme}.png`) });
 
-          await page.locator(".dw .cc-add", { hasText: "Plan a step" }).click();
+          const add = page.locator(".dw .ca-add");
+          const addLook = await add.evaluate((el) => ({ border: getComputedStyle(el).borderStyle, padding: getComputedStyle(el).paddingLeft }));
+          check(addLook.border === "dashed" && addLook.padding !== "0px", `${id}: Plan a step is drawn as the dashed add control`, JSON.stringify(addLook));
+          await add.click();
           const form = page.locator("form[aria-label='Plan a step']");
           await form.locator("label", { hasText: "Step" }).locator("input").fill("Send the event recap");
           await form.locator(".ca-chip", { hasText: "Launch event" }).click();
+          await form.locator("[role=radio][aria-checked=true]").focus();
+          await page.keyboard.press("ArrowRight");
+          const picked = await form.locator("[role=radio][aria-checked=true]").textContent();
+          const stops = await form.locator("[role=radio][tabindex='0']").count();
+          check(picked === "Social" && stops === 1, `${id}: the kind picker moves with the arrow keys and is one tab stop`, JSON.stringify({ picked, stops }));
           await form.locator("[role=radio]", { hasText: /^Email$/ }).click();
+          await form.locator("label", { hasText: "Due" }).locator("input").fill("2031-03-01");
           await form.locator("label", { hasText: "Aim" }).locator("input").fill("Twenty opens");
           const f1 = await fit();
           check(Boolean(f1) && !f1.sideways && !f1.offRight, `${id}: the plan form fits the dossier`, JSON.stringify(f1));
@@ -375,26 +392,45 @@ async function main() {
           await page.waitForFunction(() => [...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Send the event recap")), null, { timeout: 5000 }).catch(() => {});
           const planned = await page.evaluate(() => {
             const li = [...document.querySelectorAll(".dw .ca-step")].find((el) => el.textContent?.includes("Send the event recap"));
-            return { tactic: li?.closest(".ca-tactic")?.getAttribute("aria-label") ?? null, text: li?.textContent ?? "", toast: document.querySelector(".campaign-toast")?.textContent ?? "" };
+            return { tactic: li?.closest(".ca-tactic")?.getAttribute("aria-label") ?? null, text: li?.textContent ?? "", focus: document.activeElement?.className ?? "" };
           });
-          check(planned.tactic === "Tactic: Launch event" && /Twenty opens/.test(planned.text) && /Nothing is drafted, sent or published/.test(planned.toast), `${id}: planning files the step under its tactic, with its aim, and says nothing went out`, JSON.stringify(planned));
+          check(planned.tactic === "Tactic: Launch event" && /Twenty opens/.test(planned.text) && /Due 1 Mar 2031|Due Mar 1, 2031/.test(planned.text) && /ca-add/.test(planned.focus),
+            `${id}: planning files the step under its tactic with its aim and the day picked, and returns focus to Plan`, JSON.stringify(planned));
 
           const done = page.locator(".dw .ca-step", { hasText: "Thank-you note to everyone who booked" });
           await done.locator("button", { hasText: "Record the result" }).click();
+          await page.keyboard.press("Escape");
+          const escaped = await page.evaluate(() => ({ form: Boolean(document.querySelector("form[aria-label^='Record the result']")), dossier: Boolean(document.querySelector(".dw .ca")) }));
+          check(!escaped.form && escaped.dossier, `${id}: Escape closes the result form and leaves the dossier open`, JSON.stringify(escaped));
+          await done.locator("button", { hasText: "Record the result" }).click();
           await done.locator("label", { hasText: "What happened" }).locator("input").fill("Nine of nine thanked");
+          await done.locator("label", { hasText: "Figure" }).locator("input").fill("1,000");
+          const refused = await done.evaluate((li) => ({ hint: li.querySelector(".ca-bad")?.textContent ?? "", disabled: li.querySelector("form button[type=submit]")?.disabled ?? false }));
+          check(/digits only/.test(refused.hint) && refused.disabled, `${id}: a figure that isn't a number says why instead of silently blocking`, JSON.stringify(refused));
           await done.locator("label", { hasText: "Figure" }).locator("input").fill("9");
           await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-record-${theme}.png`) });
           await done.locator("button[type=submit]").click();
           await page.waitForFunction(() => [...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Nine of nine thanked")), null, { timeout: 5000 }).catch(() => {});
-          const observed = await done.evaluate((li) => ({ text: li.textContent ?? "", buttons: [...li.querySelectorAll("button")].map((b) => b.textContent) }));
-          check(/Nine of nine thanked/.test(observed.text) && observed.buttons.includes("Judge it") && !observed.buttons.includes("Record the result"), `${id}: a recorded result shows, and the step can now be judged`, JSON.stringify(observed));
+          const observed = await done.evaluate((li) => ({ text: li.textContent ?? "", buttons: [...li.querySelectorAll("button")].map((b) => b.textContent), toast: document.querySelector(".campaign-toast")?.textContent ?? "" }));
+          check(/Nine of nine thanked/.test(observed.text) && observed.buttons.includes("Judge it") && !observed.buttons.includes("Record the result") && /Outcome recorded, as stated/.test(observed.toast),
+            `${id}: a recorded result shows, the server's words confirm it, and the step can now be judged`, JSON.stringify(observed));
           await done.locator("button", { hasText: "Judge it" }).click();
           await done.locator("label", { hasText: "Note" }).locator("input").fill("Everyone thanked");
           await done.locator("button", { hasText: /^Met$/ }).click();
           await page.waitForFunction(() => [...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Everyone thanked")), null, { timeout: 5000 }).catch(() => {});
           const judgedNow = await done.evaluate((li) => ({ text: li.textContent ?? "", state: li.querySelector(".ca-state")?.textContent ?? "" }));
-          check(/Everyone thanked/.test(judgedNow.text) && /Met/.test(judgedNow.state + judgedNow.text), `${id}: judging records the verdict and its note`, JSON.stringify(judgedNow));
+          check(/Everyone thanked/.test(judgedNow.text) && judgedNow.state === "Judged: Met", `${id}: judging records the verdict and its note`, JSON.stringify(judgedNow));
           await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-judged-${theme}.png`) });
+
+          const recap = page.locator(".dw .ca-step", { hasText: "Send the event recap" });
+          await recap.locator("button[aria-label='Remove Send the event recap from this campaign']").click();
+          const warn = await recap.locator(".ca-confirm").textContent();
+          check(/stays on your list and in Approvals/.test(warn ?? ""), `${id}: Remove asks first and says the action stays in Approvals`, JSON.stringify(warn));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-remove-${theme}.png`) });
+          await recap.locator("button", { hasText: "Remove from campaign" }).click();
+          await page.waitForFunction(() => ![...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Send the event recap")), null, { timeout: 5000 }).catch(() => {});
+          const gone = await page.evaluate(() => ![...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Send the event recap")));
+          check(gone, `${id}: confirming takes the step off the campaign`);
         } else {
           const controls = await page.evaluate(() => document.querySelectorAll(".dw .ca button").length);
           const hidden = steps.every((s) => /owners and admins see its name/.test(s.text));

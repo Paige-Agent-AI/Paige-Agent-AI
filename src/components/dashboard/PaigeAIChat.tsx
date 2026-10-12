@@ -237,7 +237,7 @@ export interface PaigeAIChatProps {
   businessMissionId?: string | null;
   /** Prose describing the focused customer — added to the chat POST body. */
   clientContext?: string;
-  surfaceContext?: { kind: "public_presence"; step: "confirm_facts" | "verify_website" | "connect_venues" | "compare_facts" | "set_authority" | "maintain_presence"; intendedAction: "review" | "plan" | "prepare_connection" | "resolve_mismatch" };
+  surfaceContext?: { kind: "public_presence"; step: "confirm_facts" | "verify_website" | "connect_venues" | "compare_facts" | "set_authority" | "maintain_presence"; intendedAction: "review" | "plan" | "prepare_connection" | "resolve_mismatch" } | { kind: "solo_business_interview" };
   /** The chat is telling the surface that OWNS focus to let it go. Two reasons, both cases where
    *  continuing to assert a focus would make the UI say something untrue:
    *

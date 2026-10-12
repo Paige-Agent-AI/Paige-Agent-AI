@@ -102,3 +102,6 @@ docs/evidence/ui-delivery/solo-approval-recovery/*.html
 
 # Disposable local PostgreSQL package-read proof cluster (never shipped).
 /work/package-read-pg/
+
+# Existing local Setup SQL proof's disposable clusters/transcripts.
+/outputs/solo-setup-db-proof/

@@ -220,6 +220,7 @@ import {
 import { loadSpineEvidenceForChat } from "../_shared/paige-spine/chatEvidence.ts";
 import { buildBusinessContextReadinessBlock } from "../_shared/paige-spine/domains/businessContextChatEvidence.ts";
 import { buildPublicPresenceContextBlock } from "../_shared/paige-spine/domains/publicPresenceChatContext.ts";
+import { buildSoloBusinessInterviewContextBlock } from "../_shared/paige-spine/domains/soloBusinessInterviewContext.ts";
 import { buildTeamAuthorityBlock } from "../_shared/paige-spine/domains/teamAuthorityChatEvidence.ts";
 import { buildSocialPresenceBlock } from "../_shared/paige-spine/domains/socialPresenceChatEvidence.ts";
 import { loadN8nReadinessForChat, renderN8nReadinessForChat } from "../_shared/paige-spine/domains/n8nChatEvidence.ts";
@@ -779,11 +780,11 @@ const messageSchema = z.object({
     })
   ).optional(),
   clientId: z.string().uuid().nullable().optional(),
-  surfaceContext: z.object({
+  surfaceContext: z.union([z.object({
     kind: z.literal("public_presence"),
     step: z.enum(["confirm_facts", "verify_website", "connect_venues", "compare_facts", "set_authority", "maintain_presence"]),
     intendedAction: z.enum(["review", "plan", "prepare_connection", "resolve_mismatch"]),
-  }).optional(),
+  }), z.object({ kind: z.literal("solo_business_interview") }).strict()]).optional(),
   businessMissionId: z.string().uuid().nullable().optional(),
   // Owner "Your Paige" multi-chat: the persisted conversation this turn belongs to.
   // When set, paige-ai-chat persists both turns + rehydrates recall server-side (#94).
@@ -5498,6 +5499,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // ignores any tenant argument, exactly like get_paige_persona_context above.
     let businessContextReadinessBlock = "";
     let publicPresenceContextBlock = "";
+    let soloBusinessInterviewContextBlock = "";
     if (personaCtx.tenant_id) {
       try {
         businessContextReadinessBlock = await buildBusinessContextReadinessBlock(supabaseClient, personaCtx.tenant_id);
@@ -5509,6 +5511,11 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     if (personaCtx.tenant_id && callerTier !== "client" && surfaceContext?.kind === "public_presence") {
       publicPresenceContextBlock = await buildPublicPresenceContextBlock(supabaseClient, personaCtx.tenant_id, surfaceContext);
       if (publicPresenceContextBlock) markProtectedLate("public_presence_context");
+    }
+
+    if (personaCtx.tenant_id && callerTier !== "client" && surfaceContext?.kind === "solo_business_interview") {
+      soloBusinessInterviewContextBlock = await buildSoloBusinessInterviewContextBlock(supabaseClient, personaCtx.tenant_id, payloadThreadId ?? null);
+      if (soloBusinessInterviewContextBlock) markProtectedLate("solo_business_interview_context");
     }
 
     // Team Authority (Spine capability `team.authority`) — the caller's OWN seat role and legal
@@ -5672,6 +5679,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(tenantTeamContext ? [{ role: "system", content: tenantTeamContext }] : []),
       ...(businessContextReadinessBlock ? [{ role: "system", content: businessContextReadinessBlock }] : []),
       ...(publicPresenceContextBlock ? [{ role: "system", content: publicPresenceContextBlock }] : []),
+      ...(soloBusinessInterviewContextBlock ? [{ role: "system", content: soloBusinessInterviewContextBlock }] : []),
       ...(teamAuthorityBlock ? [{ role: "system", content: vouchForClientSeat(teamAuthorityBlock) }] : []),
       ...(socialPresenceBlock ? [{ role: "system", content: socialPresenceBlock }] : []),
       ...(businessMissionContextBlock ? [{ role: "system", content: businessMissionContextBlock }] : []),

@@ -596,6 +596,7 @@ export function useSoloBusinessContext() {
     canEditLegal: canEdit && accessScope === "owner_full",
     activeTenantId,
     resolvedTenantId,
+    contextRevision: tenantResolved ? contextRevision : null,
     brief: tenantResolved ? brief : EMPTY_BRIEF,
     businessOwners: tenantResolved ? businessOwners : EMPTY_OWNERS,
     primaryBusinessEmail: tenantResolved ? primaryBusinessEmail : "",

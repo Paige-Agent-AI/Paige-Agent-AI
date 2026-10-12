@@ -12,6 +12,7 @@ import { useSoloSkills } from "./data/useSoloSkills";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import "./solo-paige-workspace.css";
+import { SoloBusinessInterview } from "./SoloBusinessInterview";
 
 // Approved design lineage: 51D7A6F680DB83AEF6BFE1147E9FC1651E39206EFAED17963F2FC16EC294F117
 type SoloPaigeTab = "chat" | "knowledge" | "research" | "helpers" | "capabilities";
@@ -302,6 +303,23 @@ export function SoloPaigeWorkspace({
   const releaseScope = useCallback(() => { clearPaigeSurfaceScope(); clearPaigePublicPresenceScope(); }, []);
   const [routedTab, setRoutedTab] = useSubtabRoute("solo", "paige", "chat");
   const [localTab, setLocalTab] = useState<SoloPaigeTab>(dockedTab ?? "chat");
+  const [interviewOpen, setInterviewOpen] = useState(false);
+  const [interviewThreadId, setInterviewThreadId] = useState<string | null>(null);
+  const [chatBusy, setChatBusy] = useState(false);
+  const [interviewRefresh, setInterviewRefresh] = useState(0);
+  const wasChatBusy = useRef(false);
+  const observedThread = useRef<string | null>(null);
+  const observeChat = useCallback((_steps: unknown, loading: boolean) => {
+    setChatBusy(loading);
+    if (wasChatBusy.current && !loading) setInterviewRefresh(epoch => epoch + 1);
+    wasChatBusy.current = loading;
+  }, []);
+  const observeThread = useCallback((id: string | null) => {
+    if (observedThread.current && observedThread.current !== id) setInterviewOpen(false);
+    observedThread.current = id; setInterviewThreadId(id);
+  }, []);
+  useEffect(() => { setInterviewOpen(false); setInterviewThreadId(null); observedThread.current = null; setChatBusy(false); wasChatBusy.current = false; }, [activeTenantId]);
+  const interviewFocused = interviewOpen && !clientScope && !planScope && !presenceScope;
   const acceptedRoutedTab = (TABS.some((item) => item.id === routedTab) ? routedTab : "chat") as SoloPaigeTab;
   const acceptedDockedTab = dockedTab && TABS.some((item) => item.id === dockedTab) ? dockedTab : localTab;
   const tab = full ? acceptedRoutedTab : acceptedDockedTab;
@@ -353,12 +371,15 @@ export function SoloPaigeWorkspace({
           fill
           enableHistory
           soloTenantSafety
-          liveConversation={liveConversationAvailable}
+          liveConversation={liveConversationAvailable && !interviewFocused}
           composerAutonomyControl={<PaigeComposerAutonomyChip accountEpoch={activeTenantId} />}
           renderRail={(api) => <SoloHistoryRail api={api} />}
-          greeting="What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."
+          onActiveThreadIdChange={observeThread}
+          onTrace={observeChat}
+          greeting={interviewFocused ? "Welcome. Tell me about your business and what you’d most like to improve. We’ll build your profile together, and you can review, skip, or correct each detail." : "What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."}
+          chips={interviewFocused ? [{ label: "Start interview", prompt: "Help me introduce my business and build my Setup profile. Ask one useful question at a time." }, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }] : undefined}
           clientId={clientScope?.clientId ?? null}
-          surfaceContext={!clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}
+          surfaceContext={interviewFocused ? { kind: "solo_business_interview" } : !clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}
           businessMissionId={!clientScope ? planScope?.businessMissionId ?? null : null}
           onFocusRelease={releaseScope}
           focusBanner={clientScope ? (
@@ -380,7 +401,7 @@ export function SoloPaigeWorkspace({
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : undefined}
-          conversationHeader={<div className="spw-chat-head"><div><strong>PAIGE</strong><span>Active Solo account · tenant-scoped</span></div></div>}
+          conversationHeader={<><div className="spw-chat-head"><div><strong>PAIGE</strong><span>Active Solo account · tenant-scoped</span></div>{!clientScope && !planScope && !presenceScope && <button type="button" className="spw-link-button" aria-expanded={interviewOpen} onClick={() => setInterviewOpen(open => !open)}>{interviewOpen ? "Close profile" : "Business interview"}</button>}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} />}</>}
         />
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>

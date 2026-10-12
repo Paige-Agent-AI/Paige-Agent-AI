@@ -1,0 +1,20 @@
+.sbi { border-block-end:1px solid hsl(var(--border)); background:hsl(var(--background)); padding:12px 16px; max-height:48%; overflow:auto; flex:none; font-size:14px; color:hsl(var(--foreground)); }
+.sbi-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.sbi-head strong { display:block; font-size:16px; }
+.sbi-head span,.sbi-note,.sbi-facts small { color:hsl(var(--muted-foreground)); }
+.sbi p { margin:8px 0; }
+.sbi button { border:1px solid hsl(var(--border)); border-radius:6px; padding:7px 10px; min-height:36px; font-size:13px; background:hsl(var(--background)); color:hsl(var(--foreground)); }
+.sbi button:hover:enabled { background:hsl(var(--muted)); }
+.sbi button:disabled { opacity:.55; }
+.sbi button:focus-visible,.sbi textarea:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:2px; }
+.sbi-error { color:hsl(var(--destructive)); }
+.sbi-status,.sbi-proposal { border-inline-start:3px solid hsl(var(--primary)); padding-inline-start:10px; }
+.sbi-facts { margin:12px 0; }
+.sbi-facts>div { display:grid; grid-template-columns:minmax(140px,1fr) minmax(100px,2fr) auto; gap:12px; padding:8px 0; border-block-end:1px solid hsl(var(--border)); align-items:start; }
+.sbi-facts dt { font-weight:600; }
+.sbi-facts small { display:block; font-size:12px; font-weight:400; }
+.sbi-facts dd { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.sbi-actions { display:flex; flex-wrap:wrap; gap:8px; margin-block-start:10px; }
+.sbi label { display:block; margin-block:10px; font-weight:600; }
+.sbi textarea { display:block; width:100%; min-height:76px; margin-block-start:6px; padding:8px; border:1px solid hsl(var(--border)); border-radius:6px; background:hsl(var(--background)); color:hsl(var(--foreground)); font:inherit; resize:vertical; }
+@container (max-width:650px) { .sbi { padding:10px; max-height:45%; } .sbi button { min-height:44px; } .sbi-facts>div { grid-template-columns:minmax(0,1fr) auto; } .sbi-facts dd { grid-column:1; grid-row:auto; } .sbi-facts button { grid-column:2; grid-row:1 / span 2; } }

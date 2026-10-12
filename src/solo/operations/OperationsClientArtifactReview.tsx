@@ -14,6 +14,7 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  const key=JSON.stringify([actorId,tenantId,releaseId]);
  const live=useRef(key);live.current=key;const mounted=useRef(false);const requestNo=useRef(0);const writing=useRef(false);
  const [read,setRead]=useState<ReadState>({key,phase:"loading"});
+ const noteScope=useRef(key);const [noteSource,setNoteSource]=useState<string|null>(null);
  const [note,setNote]=useState("");const [busy,setBusy]=useState(false);
  const [decision,setDecision]=useState<"accepted"|"client_revision_requested"|null>(null);
  const [outcome,setOutcome]=useState<{key:string; kind:"verified"|"refused"|"unverified"|"invalid"}|null>(null);
@@ -25,7 +26,8 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
  useEffect(()=>{
   const sequence=++requestNo.current;let cancelled=false;
-  setRead({key,phase:"loading"});setNote("");setDecision(null);setBusy(writing.current);
+  setRead({key,phase:"loading"});setDecision(null);setBusy(writing.current);
+  if(noteScope.current!==key){noteScope.current=key;setNote("");setNoteSource(null);}
   const publish=(state:ReadState)=>{if(!cancelled&&current()&&sequence===requestNo.current)setRead(state);};
   void (async()=>{
    try{
@@ -45,8 +47,10 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  const result=outcome?.key===key?outcome:null;
  const artifact=visible?.phase==="ready"?visible.artifact:undefined;
  const awaiting=artifact?.state==="awaiting_client";
- const locked=busy||result?.kind==="unverified"||result?.kind==="refused";
- const dirty=Boolean(note)&&awaiting&&!result;
+ const artifactSource=artifact?JSON.stringify([artifact.submissionId,artifact.revisionNo,artifact.artifactDigest]):null;
+ const draftMismatch=Boolean(note)&&noteSource!==artifactSource;
+ const locked=busy||result?.kind==="unverified"||result?.kind==="refused"||draftMismatch;
+ const dirty=Boolean(note)&&result?.kind!=="verified";
  useBeforeUnloadGuard(busy||Boolean(dirty));
  useEffect(()=>registerAccountSwitchGuard(()=>!busy&&!dirty),[busy,dirty]);
  const review=(choice:"accepted"|"client_revision_requested",button:HTMLButtonElement)=>{
@@ -66,7 +70,7 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
    const after=await supabase.auth.getSession();
    if(!current())return;
    if(after.error||after.data.session?.user.id!==actorId){setRead({key,phase:"unavailable"});return;}
-   if(saved.kind==="verified"){setRead({key,phase:"ready",artifact:saved.artifact});setOutcome({key,kind:"verified"});setNote("");}
+   if(saved.kind==="verified"){setRead({key,phase:"ready",artifact:saved.artifact});setOutcome({key,kind:"verified"});setNote("");setNoteSource(null);}
    else if(saved.kind!=="scope_changed")setOutcome({key,kind:saved.kind==="invalid"?"invalid":saved.kind==="refused"?"refused":"unverified"});
   }catch{if(current())setOutcome({key,kind:"unverified"});}
   finally{writing.current=false;if(mounted.current)setBusy(false);}
@@ -76,10 +80,11 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
   {!visible||visible.phase==="loading"?<p role="status">Loading your deliverable...</p>:!artifact?<div role="status"><h1>Review unavailable</h1><p>This exact deliverable cannot be read with your current access. Refresh or ask your delivery team to check the review.</p><button type="button" onClick={refresh}>Check review again</button></div>:<>
    <header><p>Version {artifact.revisionNo} <span>{artifact.state==="accepted"?"Accepted":artifact.state==="client_revision_requested"?"Changes requested":"Ready for your review"}</span></p><h1>{artifact.title}</h1><p>Review the delivered work before accepting this version or requesting changes.</p></header>
    <article tabIndex={0} className="ops-client-artifact" aria-label="Released artifact content">{artifact.body}</article>
-   {awaiting&&<div className="ops-client-review-controls"><label>Review note<textarea aria-label="Review note" aria-describedby={reviewNoteHint} maxLength={4000} rows={4} value={note} disabled={locked} onChange={event=>{setNote(event.target.value);if(result?.kind==="invalid")setOutcome(null);}}/><small id={reviewNoteHint}>Describe the changes you need. A note is required when requesting changes.</small></label><div><button type="button" disabled={locked} onClick={event=>review("client_revision_requested",event.currentTarget)}>Request changes</button><button type="button" className="ops-client-primary" disabled={locked} onClick={event=>review("accepted",event.currentTarget)}>Accept this version</button></div></div>}
+   {awaiting&&<div className="ops-client-review-controls"><label>Review note<textarea aria-label="Review note" aria-describedby={reviewNoteHint} maxLength={4000} rows={4} value={note} disabled={locked} onChange={event=>{setNote(event.target.value);setNoteSource(event.target.value?artifactSource:null);if(result?.kind==="invalid")setOutcome(null);}}/><small id={reviewNoteHint}>Describe the changes you need. A note is required when requesting changes.</small></label><div><button type="button" disabled={locked} onClick={event=>review("client_revision_requested",event.currentTarget)}>Request changes</button><button type="button" className="ops-client-primary" disabled={locked} onClick={event=>review("accepted",event.currentTarget)}>Accept this version</button></div></div>}
+   {note&&!awaiting&&<section aria-label="Retained review note"><h2>Your retained review note</h2><p className="ops-client-confirm-note">{note}</p><p>Keep a copy or explicitly clear this note. The recorded decision is shown below.</p></section>}
    <div ref={feedback} tabIndex={-1} role="status" aria-live="polite">{busy&&<p>Saving and checking your decision...</p>}{artifact.state==="accepted"&&<p>Your acceptance is recorded for version {artifact.revisionNo}.</p>}{artifact.state==="client_revision_requested"&&<p>Your changes are recorded for version {artifact.revisionNo}. Your team must submit a new version for review.</p>}{result?.kind==="invalid"&&<p>Add a review note before requesting changes.</p>}{result?.kind==="refused"&&<p>Your decision was refused because the review or your access changed. Check the current review before continuing.</p>}{result?.kind==="unverified"&&awaiting&&<p>Your decision could not be confirmed. Check its recorded state; do not submit another decision while the outcome is unknown.</p>}</div>
-   <button type="button" disabled={busy||Boolean(dirty)} onClick={refresh}>Check recorded review</button>{dirty&&<p>Finish or clear your review note before checking the recorded state.</p>}
+   <button type="button" disabled={busy||(Boolean(dirty)&&!result)} onClick={refresh}>Check recorded review</button>{dirty&&!result&&<p>Finish or clear your review note before checking the recorded state.</p>}{draftMismatch&&<p>Your note belongs to the earlier released version. Review it and explicitly clear it before deciding on this version.</p>}{note&&<button type="button" disabled={busy} onClick={()=>{setNote("");setNoteSource(null);}}>Clear review note</button>}
   </>}
-  <AlertDialog open={Boolean(decision)&&Boolean(awaiting)&&!locked} onOpenChange={open=>{if(!open)setDecision(null);}}><AlertDialogContent className="paige-solo ops-client-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>{decision==="accepted"?`Accept version ${artifact?.revisionNo}?`:`Request changes to version ${artifact?.revisionNo}?`}</AlertDialogTitle><AlertDialogDescription>{artifact?.title}. {decision==="accepted"?"This records your explicit acceptance of this delivered version.":"Your review note will be recorded against this version. The team must prepare a new version for your next review."}</AlertDialogDescription></AlertDialogHeader>{note.trim()&&<p className="ops-client-confirm-note">{note}</p>}<AlertDialogFooter><AlertDialogCancel>Keep reviewing</AlertDialogCancel><AlertDialogAction className={decision==="accepted"?"ops-client-primary":undefined} onClick={()=>void save()}>{decision==="accepted"?"Confirm acceptance":"Confirm changes"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  <AlertDialog open={Boolean(decision)&&Boolean(awaiting)&&!locked} onOpenChange={open=>{if(!open)setDecision(null);}}><AlertDialogContent className="paige-solo ops-client-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>{decision==="accepted"?`Accept version ${artifact?.revisionNo}?`:`Request changes to version ${artifact?.revisionNo}?`}</AlertDialogTitle><AlertDialogDescription>{artifact?.title}. {decision==="accepted"?"This records your explicit acceptance of this delivered version.":"Your review note will be recorded against this version. The team must prepare a new version for your next review."}</AlertDialogDescription></AlertDialogHeader>{note.trim()&&<p className="ops-client-confirm-note">{note}</p>}<AlertDialogFooter><AlertDialogCancel>Keep reviewing</AlertDialogCancel><AlertDialogAction className="ops-client-primary" onClick={()=>void save()}>{decision==="accepted"?"Confirm acceptance":"Confirm changes"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
  </section>;
 }

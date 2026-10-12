@@ -23,8 +23,8 @@ function request(events: unknown[], headers: Record<string, string> = {}) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-twilio-email-webhook-signature': `v1,${sig.toString('base64')}`,
-      'x-twilio-email-webhook-event-timestamp': String(now),
+      'x-twilio-email-event-webhook-signature': sig.toString('base64'),
+      'x-twilio-email-event-webhook-timestamp': String(now),
       ...headers,
     },
     body,
@@ -32,7 +32,7 @@ function request(events: unknown[], headers: Record<string, string> = {}) {
 }
 function harness(rpcImpl: (args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>, env: Record<string, string> = { SENDGRID_WEBHOOK_PUBLIC_KEY: PEM }) {
   let handle!: (req: Request) => Promise<Response>;
-  const consoleSpy = { error: vi.fn(), warn: vi.fn() };
+  const consoleSpy = { error: (..._a: unknown[]) => {}, warn: (..._a: unknown[]) => {} };
   const requireTest = (name: string) => {
     if (name === 'npm:@supabase/supabase-js@2') {
       return {
@@ -73,17 +73,17 @@ describe('sendgrid webhook door (ANT-148 corrections)', () => {
 
   it('rejects a tampered timestamp (signature covers timestamp+body)', async () => {
     const h = harness(ok);
-    const res = await h.handle(request([event('delivered')], { 'x-twilio-email-webhook-event-timestamp': String(now + 99) }));
+    const res = await h.handle(request([event('delivered')], { 'x-twilio-email-event-webhook-timestamp': String(now + 99) }));
     expect(res.status).toBe(401);
   });
 
   it('rejects an absent timestamp header and an unsigned request', async () => {
     const h = harness(ok);
     const noTs = request([event('delivered')]);
-    noTs.headers.delete('x-twilio-email-webhook-event-timestamp');
+    noTs.headers.delete('x-twilio-email-event-webhook-timestamp');
     expect((await h.handle(noTs)).status).toBe(401);
     const noSig = request([event('delivered')]);
-    noSig.headers.delete('x-twilio-email-webhook-signature');
+    noSig.headers.delete('x-twilio-email-event-webhook-signature');
     expect((await h.handle(noSig)).status).toBe(401);
   });
 
@@ -139,8 +139,7 @@ describe('sendgrid webhook door (ANT-148 corrections)', () => {
 
   it('stamps the batch index into the identity so same-second events stay distinct', async () => {
     const ids: string[] = [];
-    const h = harness((args) => { ids.push(args._receipt_id as string); return Promise.resolve({ data: 'processed', error: null }); };
-    );
+    const h = harness((args) => { ids.push(args._receipt_id as string); return Promise.resolve({ data: 'processed', error: null }); });
     await h.handle(request([event('open', 0), event('open', 1)]));
     expect(ids).toEqual([`sg:msg1:open:${now}:0`, `sg:msg1:open:${now}:1`]);
   });

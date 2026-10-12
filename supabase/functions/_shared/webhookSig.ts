@@ -200,6 +200,10 @@ export async function verifySendgridEvent(opts: {
   signatureB64: string | null;
   timestamp: string | null;
   body: string;
+  /** Max age/skew of the timestamp in seconds (default 300, Twilio's reference). */
+  toleranceSeconds?: number;
+  /** Injectable clock for tests (ms since epoch). */
+  nowMs?: number;
 }): Promise<SendgridEventVerdict> {
   const pem = (opts.publicKeyPem ?? "").trim();
   const sigB64 = (opts.signatureB64 ?? "").trim();
@@ -207,6 +211,12 @@ export async function verifySendgridEvent(opts: {
   if (!pem || !sigB64) return { ok: false, reason: "unconfigured_or_unsigned" };
   if (!ts) return { ok: false, reason: "timestamp_missing" };
   if (ts.length > 32) return { ok: false, reason: "timestamp_too_large" };
+  if (!/^\d+$/.test(ts)) return { ok: false, reason: "timestamp_malformed" };
+  // Replay freshness: a captured (ts, body, signature) triple must not verify
+  // forever (Twilio's reference rejects >5 min old).
+  const toleranceSec = opts.toleranceSeconds ?? 300;
+  const nowSec = Math.floor((opts.nowMs ?? Date.now()) / 1000);
+  if (Math.abs(nowSec - Number(ts)) > toleranceSec) return { ok: false, reason: "timestamp_out_of_tolerance" };
   if (sigB64.length > 2048) return { ok: false, reason: "signature_too_large" };
   let der: Uint8Array<ArrayBuffer>;
   try { der = b64ToBytes(sigB64); } catch { return { ok: false, reason: "signature_malformed" }; }

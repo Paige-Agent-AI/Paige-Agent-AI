@@ -30,7 +30,9 @@ async function svixSign(
   return `v1,${b64mac}`;
 }
 
+
 const NOW = 1_800_000_000_000; // fixed injectable clock (ms)
+const NOWMS = 1788480000_000; // frozen clock matching the fixture timestamp
 const NOW_SEC = Math.floor(NOW / 1000);
 const KEY = "0123456789abcdef0123456789abcdef"; // raw key material (32 bytes)
 const SECRET = `whsec_${btoa(KEY)}`;
@@ -172,6 +174,22 @@ Deno.test("verifySvix accepts a non-whsec_-prefixed base64 secret", async () => 
   assertEquals(v, { ok: true });
 });
 
+Deno.test("verifySendgridEvent bounds replay freshness (default 300s, injectable)", async () => {
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const spki = new Uint8Array(await crypto.subtle.exportKey("spki", kp.publicKey));
+  const pem = `-----BEGIN PUBLIC KEY-----
+${toB64(spki)}
+-----END PUBLIC KEY-----`;
+  const body = JSON.stringify([{ event: "delivered" }]);
+  const sig = await sgSign(kp.privateKey, "1788480000", body);
+  const staleClock = 1788480000_000 + 3600_000; // one hour later
+  const stale = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: "1788480000", body, nowMs: staleClock });
+  assertEquals(stale.ok === false && (stale as { reason?: string }).reason, "timestamp_out_of_tolerance");
+  const loose = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: "1788480000", body, nowMs: staleClock, toleranceSeconds: 7200 });
+  assertEquals(loose, { ok: true });
+  assertEquals((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: "not-a-ts", body, nowMs: NOWMS })).ok, false);
+});
+
 Deno.test("sha256Hex matches the known digest of 'abc'", async () => {
   const d = await sha256Hex("abc");
   assertEquals(
@@ -220,7 +238,7 @@ Deno.test("verifySendgridEvent accepts a correctly signed timestamp+body request
   const body = JSON.stringify([{ event: "delivered", sg_message_id: "abc.def" }]);
   const ts = "1788480000";
   const sig = await sgSign(kp.privateKey, ts, body);
-  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: ts, body });
+  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: ts, body, nowMs: NOWMS });
   assertEquals(v, { ok: true });
 });
 
@@ -229,8 +247,9 @@ Deno.test("verifySendgridEvent rejects a tampered body (signature covers body)",
   const pem = await sgPem(kp.publicKey);
   const body = JSON.stringify([{ event: "delivered" }]);
   const ts = "1788480000";
+const NOWMS = 1788480000_000; // frozen clock matching the fixture timestamp
   const sig = await sgSign(kp.privateKey, ts, body);
-  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: ts, body: body + " " });
+  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: ts, body: body + " ", nowMs: NOWMS });
   assertEquals(v.ok, false);
 });
 
@@ -240,7 +259,7 @@ Deno.test("verifySendgridEvent rejects a tampered timestamp (signature covers ti
   const body = JSON.stringify([{ event: "delivered" }]);
   const sig = await sgSign(kp.privateKey, "1788480000", body);
   // The PRE-CORRECTION defect: body-only verification accepted this replay.
-  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: "1788480099", body });
+  const v = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: "1788480099", body, nowMs: NOWMS });
   assertEquals(v.ok, false);
 });
 
@@ -249,13 +268,14 @@ Deno.test("verifySendgridEvent rejects an absent timestamp and an invalid signat
   const pem = await sgPem(kp.publicKey);
   const body = JSON.stringify([{ event: "delivered" }]);
   const ts = "1788480000";
+const NOWMS = 1788480000_000; // frozen clock matching the fixture timestamp
   const sig = await sgSign(kp.privateKey, ts, body);
-  const absentTs = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: null, body });
+  const absentTs = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: sig, timestamp: null, body, nowMs: NOWMS });
   assertEquals(absentTs.ok === false && (absentTs as { reason?: string }).reason === "timestamp_missing", true);
   const other = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
   const wrongSig = await sgSign(other.privateKey, ts, body);
-  const invalid = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: wrongSig, timestamp: ts, body });
+  const invalid = await verifySendgridEvent({ publicKeyPem: pem, signatureB64: wrongSig, timestamp: ts, body, nowMs: NOWMS });
   assertEquals(invalid.ok === false && (invalid as { reason?: string }).reason === "signature_invalid", true);
-  assertEquals(((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: "!!!", timestamp: ts, body })) as { reason?: string }).reason, "signature_malformed");
-  assertEquals(((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: toB64(new Uint8Array([1, 2, 3])), timestamp: ts, body })) as { reason?: string }).reason, "signature_der_malformed");
+  assertEquals(((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: "!!!", timestamp: ts, body, nowMs: NOWMS })) as { reason?: string }).reason, "signature_malformed");
+  assertEquals(((await verifySendgridEvent({ publicKeyPem: pem, signatureB64: toB64(new Uint8Array([1, 2, 3])), timestamp: ts, body, nowMs: NOWMS })) as { reason?: string }).reason, "signature_der_malformed");
 });

@@ -36,7 +36,7 @@ import { verifySendgridEvent } from "../_shared/webhookSig.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, x-twilio-email-webhook-signature, x-twilio-email-webhook-event-timestamp",
+  "Access-Control-Allow-Headers": "content-type, x-twilio-email-event-webhook-signature, x-twilio-email-event-webhook-timestamp",
 };
 const STATUS_MAP: Record<string, string> = {
   delivered: "delivered",
@@ -84,8 +84,8 @@ Deno.serve(async (req) => {
   // ANT-148 P1-1: the timestamp header is part of the signed content.
   const verdict = await verifySendgridEvent({
     publicKeyPem: publicKey,
-    signatureB64: req.headers.get("x-twilio-email-webhook-signature"),
-    timestamp: req.headers.get("x-twilio-email-webhook-event-timestamp"),
+    signatureB64: req.headers.get("x-twilio-email-event-webhook-signature"),
+    timestamp: req.headers.get("x-twilio-email-event-webhook-timestamp"),
     body,
   });
   if (!verdict.ok) {
@@ -133,6 +133,11 @@ Deno.serve(async (req) => {
       }
       const state = typeof data === "string" ? data : "unknown";
       results[state] = (results[state] ?? 0) + 1;
+      if (state === "invalid") {
+        // Deterministic rejection (retrying cannot fix it) — ack, but LOUDLY:
+        // a silent invalid drops a verified event invisibly.
+        console.warn("[handle-sendgrid-webhook] rpc_invalid", JSON.stringify({ receiptId, status }).slice(0, 200));
+      }
       if (state !== "processed" && state !== "duplicate" && state !== "invalid") {
         // 'pending' = the RPC's outer failure path (journal rolled back);
         // anything unknown is equally not proven durable. Never acknowledge.

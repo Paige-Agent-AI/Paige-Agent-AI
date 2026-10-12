@@ -113,6 +113,18 @@ vi.mock("./useCampaignAssets", async (importOriginal) => ({
   }),
 }));
 
+// A campaign's steps read and write through governed RPCs; their contract is proven by
+// supabase/tests/campaign_brief_actions.sql and useCampaignActions.test.tsx. Here the dossier has none, and
+// the reader manages steps exactly when they manage what the campaign uses.
+vi.mock("./useCampaignActions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./useCampaignActions")>()),
+  useCampaignActions: () => ({
+    phase: "ready", canManage: harness.assets.canManage !== false, actions: [], retry: () => {},
+    plan: async () => ({ ok: true, message: "" }), remove: async () => ({ ok: true, message: "" }),
+    recordOutcome: async () => ({ ok: true, message: "" }), evaluate: async () => ({ ok: true, message: "" }),
+  }),
+}));
+
 // Content reads its library through Supabase; its own proof is marketing-content.render.test.tsx. Here it
 // shows only what the hub hands it, so the address wiring (?kind=, ?piece=) can be driven.
 vi.mock("./marketing-content", () => ({

@@ -55,7 +55,7 @@ INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
 
 -- A strategy, its campaigns, and a campaign in another workspace.
 INSERT INTO public.business_missions(id,tenant_id,requested_by,request_source,title) VALUES
- ('a2980500-0000-4000-8000-0000000000e1','a2980500-0000-4000-8000-000000000011','a2980500-0000-4000-8000-000000000001','owner','Fill the spring cohort');
+ ('a2980500-0000-4000-8000-0000000000e1','a2980500-0000-4000-8000-000000000011','a2980500-0000-4000-8000-000000000001','owner_ui','Fill the spring cohort');
 INSERT INTO public.campaign_briefs(id,tenant_id,short_ref,name,objective,lifecycle_status,mission_id) VALUES
  ('a2980500-0000-4000-8000-0000000000c1','a2980500-0000-4000-8000-000000000011','CB-ACT1','Spring intake','Twenty discovery calls','draft','a2980500-0000-4000-8000-0000000000e1'),
  ('a2980500-0000-4000-8000-0000000000c2','a2980500-0000-4000-8000-000000000011','CB-ACT2','Winter wrap-up',NULL,'archived',NULL),
@@ -65,7 +65,7 @@ INSERT INTO public.paige_automations(id,tenant_id,name,trigger_key) VALUES
  ('a2980500-0000-4000-8000-0000000000f1','a2980500-0000-4000-8000-000000000011','Welcome new form leads','form.submitted'),
  ('a2980500-0000-4000-8000-0000000000f8','a2980500-0000-4000-8000-000000000012','Other workspace process','form.submitted');
 INSERT INTO public.paige_workflow_registry(id,key,label,category,tenant_id) VALUES
- ('a2980500-0000-4000-8000-0000000000f2','actions-proof-send','Proof run','marketing','a2980500-0000-4000-8000-000000000011');
+ ('a2980500-0000-4000-8000-0000000000f2','actions-proof-send','Proof run','campaign','a2980500-0000-4000-8000-000000000011');
 INSERT INTO public.paige_workflow_runs(id,registry_id,tenant_id,status) VALUES
  ('a2980500-0000-4000-8000-0000000000f3','a2980500-0000-4000-8000-0000000000f2','a2980500-0000-4000-8000-000000000011','running'),
  ('a2980500-0000-4000-8000-0000000000f4','a2980500-0000-4000-8000-0000000000f2','a2980500-0000-4000-8000-000000000011','succeeded');

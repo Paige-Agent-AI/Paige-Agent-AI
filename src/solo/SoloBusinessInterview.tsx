@@ -24,6 +24,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
   const panel = useRef<HTMLElement | null>(null);
   const scope = `${activeTenantId}:${threadId}`;
   const liveScope = useRef(scope); liveScope.current = scope;
+  const progressGeneration = useRef(0);
   const [draft, setDraft] = useState<{ brief: SoloSetupBrief; revision: number | null; field: InterviewField; fields: InterviewField[]; proposalId: string | null } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,13 +36,14 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
   const setup = () => { if (activeTenant?.account_number) navigate(`/solo/${activeTenant.account_number}/settings/setup/business-profile`); };
   const refreshRef = useRef(context.refresh); refreshRef.current = context.refresh;
 
-  useEffect(() => { liveScope.current = scope; setDraft(null); setMessage(null); setError(null); setPaused(false); setNextField(undefined); setCheckpointBusy(false); return () => { liveScope.current = ""; }; }, [scope]);
+  useEffect(() => { liveScope.current = scope; progressGeneration.current++; setDraft(null); setMessage(null); setError(null); setPaused(false); setNextField(undefined); setCheckpointBusy(false); return () => { liveScope.current = ""; progressGeneration.current++; }; }, [scope]);
   useEffect(() => { if (refreshEpoch > 0) void refreshRef.current(); }, [refreshEpoch]);
   useEffect(() => {
     if (!activeTenantId || !threadId) return;
     let current = true;
+    const generation = ++progressGeneration.current;
     void checkpointRpc("get_solo_business_interview_checkpoint", { _thread_id: threadId }).then(result => {
-      if (!current || liveScope.current !== scope) return;
+      if (!current || liveScope.current !== scope || generation !== progressGeneration.current) return;
       if (result.error) { setError("Interview progress could not be loaded. Your Setup records are still the source of truth."); return; }
       const saved = cleanInterviewCheckpoint(result.data, activeTenantId, threadId);
       if (saved) { setNextField(saved.nextField); setPaused(saved.phase === "paused"); }
@@ -51,11 +53,13 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
 
   async function checkpoint(phase: "active" | "paused" | "completed", field: InterviewField | null, revision: number | null) {
     if (!activeTenantId || !threadId) return false;
+    // A deliberate navigation/save supersedes any earlier read in this scope.
+    const generation = ++progressGeneration.current;
     const result = await checkpointRpc("save_solo_business_interview_checkpoint", {
       _expected_tenant_id: activeTenantId, _thread_id: threadId,
       _checkpoint: { phase, nextField: field }, _expected_context_revision: revision,
     });
-    return !result.error && !!cleanInterviewCheckpoint(result.data, activeTenantId, threadId);
+    return generation === progressGeneration.current && !result.error && !!cleanInterviewCheckpoint(result.data, activeTenantId, threadId);
   }
   function edit(field: InterviewField) {
     if (!ready || locked) return;
@@ -74,7 +78,9 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
     if (draft.revision !== context.contextRevision || draft.brief.updatedAt !== context.brief.updatedAt) {
       setError("Setup changed while you were reviewing. Cancel this edit and reload before saving."); return;
     }
-    const confirmed = prepareOwnerConfirmedBrief(draft.brief, undefined, context.brief, Object.fromEntries(draft.fields.map(field => [field, "adopt" as const])));
+    const confirmed = prepareOwnerConfirmedBrief(draft.brief, undefined, context.brief, Object.fromEntries(draft.fields.map(field => [field,
+      context.brief.provenance[field]?.source === "connection_sourced" && draft.brief[field].trim() !== context.brief[field].trim() ? "override" as const : "adopt" as const,
+    ])));
     const validation = validateSoloSetupBrief(confirmed);
     if (Object.keys(validation).length) { setError(Object.values(validation)[0] ?? "Review the business details in Setup before saving."); return; }
     const capturedScope = scope;
@@ -121,7 +127,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
       {!draft ? <dl className="sbi-facts">{INTERVIEW_FIELDS.map(([field, label]) => <div key={field}><dt>{label}<small>{setupSourceLabel(context.brief.provenance[field]?.source)}</small></dt><dd>{context.brief[field] || "Not yet recorded"}</dd><button data-interview-field={field} type="button" disabled={locked} onClick={() => edit(field)} aria-label={`${context.brief[field] ? "Correct" : "Add"} ${label}`}>{context.brief[field] ? "Correct" : "Add"}</button></div>)}</dl> : <form onSubmit={event => { event.preventDefault(); void save(); }}>
         <h3>{draft.proposalId ? "Review PAIGE’s suggestion" : "Review this detail"}</h3>
         {INTERVIEW_FIELDS.filter(([field]) => draft.fields.includes(field)).map(([field, label], index) => <label key={field}>{label}<textarea autoFocus={index === 0} maxLength={4000} value={draft.brief[field]} disabled={locked} onChange={event => { const value = event.target.value; setDraft(current => current ? { ...current, brief: { ...current.brief, [field]: value } } : null); }} /></label>)}
-        <p>Your review saves only through the existing Setup controls.</p><div className="sbi-actions"><button type="submit" disabled={locked}>{context.saving ? "Saving…" : "Confirm and save to Setup"}</button><button type="button" disabled={locked} onClick={() => { const field = draft.field; setDraft(null); requestAnimationFrame(() => panel.current?.querySelector<HTMLButtonElement>(`[data-interview-field="${field}"]`)?.focus()); }}>Cancel</button></div>
+        <p>{draft.fields.some(field => context.brief.provenance[field]?.source === "connection_sourced" && draft.brief[field].trim() !== context.brief[field].trim()) ? "This review replaces changed connection-sourced details with your confirmed values." : "Your review saves only through the existing Setup controls."}</p><div className="sbi-actions"><button type="submit" disabled={locked}>{context.saving ? "Saving…" : "Confirm and save to Setup"}</button><button type="button" disabled={locked} onClick={() => { const field = draft.field; setDraft(null); requestAnimationFrame(() => panel.current?.querySelector<HTMLButtonElement>(`[data-interview-field="${field}"]`)?.focus()); }}>Cancel</button></div>
       </form>}
       <div className="sbi-actions"><button type="button" disabled={locked || !!draft} onClick={() => void context.refresh()}>Reload Setup</button>{threadId && <><button type="button" disabled={locked || !!draft || !pending} onClick={() => void move("active", pending ? nextInterviewField(context.brief, pending) : null)}>Skip this topic</button><button type="button" disabled={locked || !!draft} onClick={() => void move(paused ? "active" : "paused", pending)}>{paused ? "Resume interview" : "Pause interview"}</button></>}</div>
       {!threadId && <p className="sbi-note">Send your first message to keep interview progress with this conversation.</p>}

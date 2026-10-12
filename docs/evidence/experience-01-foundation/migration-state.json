@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T19:33:02.322Z",
+  "generatedAt": "2026-10-12T19:53:08.153Z",
   "environment": "new disposable local PostgreSQL cluster; synthetic records only",
   "assurance": "Scoped fixture replay and exact function extraction; not the full production migration chain.",
   "trackedMigrations": [

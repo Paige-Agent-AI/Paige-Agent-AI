@@ -30,7 +30,7 @@ describe("owner interview review over canonical Setup", () => {
     expect(state.save).not.toHaveBeenCalled(); await click(button("Confirm and save to Setup")); await render();
     const saved = state.save.mock.calls[0][0];
     expect(saved.knowledgeSources).toBe(state.context.knowledgeSources); expect(saved.voiceExamples).toBe(state.context.voiceExamples); expect(saved.businessOwners).toBe(state.context.businessOwners);
-    expect(saved.brief.provenance.industry.source).toBe("owner_confirmed"); expect(saved.brief.sourceDecisions.industry).toBe("adopt");
+    expect(saved.brief.provenance.industry.source).toBe("owner_confirmed"); expect(saved.brief.sourceDecisions.industry).toBe("override");
     expect(host.textContent).toContain("Design consultancy"); expect(host.textContent).toContain("read back from the server");
     expect(state.rpc).toHaveBeenCalledWith("save_solo_business_interview_checkpoint", expect.objectContaining({ _thread_id: "thread-a", _expected_context_revision: 8 }));
     await click(host.querySelector('[aria-label="Correct Industry"]')!); await input("Architecture practice"); await click(button("Confirm and save to Setup")); await render();
@@ -39,6 +39,23 @@ describe("owner interview review over canonical Setup", () => {
   it("blocks a stale review rather than overwrite a newer Setup snapshot", async () => {
     await render(); await click(host.querySelector('[aria-label="Correct Industry"]')!); state.context.contextRevision = 9; await render(); await click(button("Confirm and save to Setup"));
     expect(state.save).not.toHaveBeenCalled(); expect(host.textContent).toContain("Setup changed while you were reviewing");
+  });
+  it("adopts an unchanged connection-sourced fact after explicit review", async () => {
+    state.save.mockResolvedValue({ ok: false, kind: "failed", error: "Synthetic writer unavailable." });
+    await render(); await click(host.querySelector('[aria-label="Correct Industry"]')!); await click(button("Confirm and save to Setup"));
+    expect(state.save.mock.calls[0][0].brief.sourceDecisions.industry).toBe("adopt");
+  });
+  it("ignores an earlier checkpoint read after the owner records newer navigation", async () => {
+    let resolveGet!: (value: unknown) => void;
+    state.rpc.mockImplementation(async (name, args) => name === "get_solo_business_interview_checkpoint"
+      ? await new Promise(resolve => { resolveGet = resolve; })
+      : { data: { tenantId: "tenant-a", threadId: "thread-a", ...args._checkpoint, contextRevisionAtCheckpoint: args._expected_context_revision }, error: null });
+    await render(); await click(button("Skip this topic"));
+    await act(async () => resolveGet({ data: { tenantId: "tenant-a", threadId: "thread-a", phase: "paused", nextField: "offers", contextRevisionAtCheckpoint: 7 }, error: null }));
+    expect(button("Resume interview")).toBeUndefined(); expect(button("Pause interview")).toBeTruthy();
+    await click(button("Skip this topic"));
+    const writes = state.rpc.mock.calls.filter(([name]) => name === "save_solo_business_interview_checkpoint");
+    expect(writes[1][1]._checkpoint.nextField).toBe("offers");
   });
   it("does not claim success after a failed writer", async () => {
     state.save.mockResolvedValue({ ok: false, kind: "conflict", error: "Reload before retrying." });

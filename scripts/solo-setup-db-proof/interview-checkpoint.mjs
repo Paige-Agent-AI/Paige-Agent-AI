@@ -275,6 +275,35 @@ export async function runInterviewCheckpointProof({psql,json,asUser,rejected,tes
     assert(JSON.stringify(hint)===JSON.stringify(await get(11,11)),'Stale save changed conversational checkpoint');
     await rejected(asUser(11,saveSql(11,11,position,before.contextRevision-1)),'40001');
   });
+  await test('actual connection-sourced industry correction rejects adopt atomically and explicit override confirms fresh canonical truth',async()=>{
+    // Fixture seeding simulates already-canonical connection provenance. It
+    // does not invoke or establish any real provider connection.
+    await psql(`update public.tenants set brand=jsonb_set(brand,'{business_brief,provenance,industry}',
+      '{"source":"connection_sourced","confidence":"observed"}'::jsonb) where id='${tid(11)}';`);
+    const observed=await getContext();
+    assert(observed.brief.provenance.industry.source==='connection_sourced'&&observed.brief.provenance.industry.confidence==='observed','Connection provenance fixture was not canonically read');
+    const canonicalSnapshot=()=>json(`select jsonb_build_object(
+      'brand',(select brand from public.tenants where id='${tid(11)}'),
+      'meta',(select to_jsonb(m) from public.tenant_setup_business_context_meta m where tenant_id='${tid(11)}'),
+      'private',(select to_jsonb(p) from public.tenant_setup_private_context p where tenant_id='${tid(11)}'),
+      'profile',(select to_jsonb(p) from public.tenant_setup_paige_profiles p where tenant_id='${tid(11)}'),
+      'audit',(select jsonb_agg(to_jsonb(a) order by created_at,id) from public.paige_audit_log a where tenant_id='${tid(11)}'));`);
+    const before=await canonicalSnapshot();const checkpoint=await get(11,11);
+    const correctedIndustry='Engineering services';
+    await rejected(asUser(11,canonicalSave({...observed.brief,industry:correctedIndustry,sourceDecisions:{industry:'adopt'}},observed.contextRevision)),'22023');
+    assert(JSON.stringify(before)===JSON.stringify(await canonicalSnapshot()),'Changed connection fact with adopt left a partial canonical write');
+    assert(JSON.stringify(observed)===JSON.stringify(await getContext()),'Refused adopt changed canonical readback');
+    assert(JSON.stringify(checkpoint)===JSON.stringify(await get(11,11)),'Refused adopt changed conversational position');
+    await psql(asUser(11,canonicalSave({...observed.brief,industry:correctedIndustry,sourceDecisions:{industry:'override'}},observed.contextRevision)));
+    current=await getContext(); // Separate fresh connection after committed save.
+    assert(current.brief.industry===correctedIndustry,'Explicit override did not persist corrected industry');
+    assert(current.brief.offers===observed.brief.offers,'Industry override lost unrelated offers');
+    assert(current.contextRevision===observed.contextRevision+1,'Industry override did not advance canonical revision');
+    const provenance=current.brief.provenance.industry;
+    assert(provenance.source==='owner_confirmed'&&provenance.confidence==='confirmed'&&typeof provenance.confirmedAt==='string','Explicit override did not stamp canonical Owner confirmation');
+    const stored=await json(`select brand->'business_brief' from public.tenants where id='${tid(11)}';`);
+    assert(stored.industry===current.brief.industry&&stored.offers===current.brief.offers&&stored.provenance.industry.source==='owner_confirmed','Fresh override readback disagrees with actual stored canonical record');
+  });
   await test('current DRAINING typed user admission accepts checkpoint without changing intent columns or retry',async()=>{
     await psql(`insert into public.paige_chat_threads(id,caller_user_id,tenant_id,lens) values('${thread(13)}','${uid(11)}','${tid(11)}','coach');`);
     const intent='70000000-0000-0000-0000-000000000013';

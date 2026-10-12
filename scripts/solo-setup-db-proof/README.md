@@ -10,7 +10,7 @@ Each run writes `proof.json`, `commands.json`, and `postgres.log`. The proof rec
 
 All three new migrations are actually executed, as are the existing sender/access functions extracted from tracked migrations. The dependency schema is a deliberately minimal synthetic fixture matching relevant columns and uniqueness constraints; this is not a replay of the entire production migration history.
 
-The existing `get_solo_setup_context` and `save_solo_setup_context` legal/business-brief seam is stubbed. Its save stub records invocation so rejected supplemental writes can prove transaction rollback. These tests **do not prove existing legal-owner, representative, protected tax/Vault, or legacy operational-brief behavior**. Agency authorization helpers are also inert fixture stubs; non-Solo coverage compares connector helper outputs, not complete Agency application flows.
+Initial supplemental cases stub `get_solo_setup_context` and `save_solo_setup_context`; the save stub records invocation to prove rollback. The later Experience 01 cases replace that stub with verbatim tracked canonical writers/getters and current begin/settle/turn guards, and assert committed operational `tenants.brand.business_brief` values, fresh readback, correction and same-thread progress. Synthetic dependency infrastructure is still not full-schema replay. Protected tax/Vault, legal-owner/representative and production behavior remain unproven. Agency authorization helpers remain inert fixture stubs.
 
 ## Coverage
 
@@ -21,3 +21,5 @@ The existing `get_solo_setup_context` and `save_solo_setup_context` legal/busine
 Latest development run on 2026-09-03: **22/22 PASS**, test cluster stopped, no test-owned PostgreSQL process remained. Evidence: `outputs/solo-setup-db-proof/run-QiXg5f/proof.json`.
 
 This is automated local SQL runtime evidence, **not authenticated browser acceptance, provider delivery, production schema proof, or a LIVE claim**. Re-run whenever the tested SQL changes and attach the exact final-head result.
+
+Experience 01 additionally executes migration `20271026000000_solo_business_interview_checkpoint.sql` and exercises caller Owner/private USER-turn scope, isolation/revocation, metadata preservation, replay/concurrency, canonical save/fresh read/correction and current DRAINING begin/assistant-settle compatibility. Source contract and retained evidence: `docs/delivery/experience-01-foundation.md`, `docs/evidence/experience-01-foundation/sql-proof.json`. Historical22-case result above remains historical; current proof lists each additional assertion and exact source hashes.

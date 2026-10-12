@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-12T19:33:02.322Z",
+  "generatedAt": "2026-10-12T19:53:08.153Z",
   "status": "PASS",
   "environment": "new disposable local PostgreSQL cluster; synthetic records only",
   "host": "127.0.0.1",
-  "port": 54756,
+  "port": 60211,
   "clusterStopped": true,
   "assurance": "Real PostgreSQL execution of tracked migrations, extracted sender/access functions, canonical Setup save/get functions and checkpoint RPCs. Initial supplemental cases use the explicitly stubbed base seam; interview cases replace it with verbatim real base functions and assert real tenants.brand writes. Synthetic dependency schema; NOT full production schema replay, protected Vault/provider delivery, or authenticated browser proof.",
   "interviewFunctions": [
@@ -260,6 +260,10 @@
     },
     {
       "name": "actual canonical stale correction refuses atomically before facts or checkpoint change",
+      "status": "PASS"
+    },
+    {
+      "name": "actual connection-sourced industry correction rejects adopt atomically and explicit override confirms fresh canonical truth",
       "status": "PASS"
     },
     {

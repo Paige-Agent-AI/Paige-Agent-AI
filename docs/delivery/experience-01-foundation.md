@@ -48,6 +48,8 @@ Only real USER rows with NULL terminal state and NULL work_id are eligible. Ordi
 
 Missing/denied context returns an honest inability to verify before protected model egress. Invalid field input, stale Setup, unavailable checkpoint, account/thread change and lost checkpoint response have separate visible recovery. Save is not automatically retried. While progress is unavailable, the owner retains canonical Setup truth and the existing conversation; no fake resume guarantee.
 
+Reviewed changed connection-sourced fields use the existing explicit override decision; unchanged reviewed facts use adopt. The owner sees replacement wording before confirming. Progress reads/writes share an operation generation, so an older initial read cannot undo a later Skip/Pause/Save. Independent review found these two defects on0787229; both have targeted unit and actual SQL regressions.
+
 INT-346 remains DRAINING/zero-tool: fresh model proposal staging and structured ask_choices remain unavailable. Natural typed conversation and explicit manual review/save are source-supported. No model/parser writes or admission workaround. Live does not carry this new context; its launch affordance is hidden while interview mode is active, without altering shared tier/Live authority.
 
 ## Verification and release boundary

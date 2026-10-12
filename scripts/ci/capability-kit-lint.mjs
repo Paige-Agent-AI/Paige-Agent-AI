@@ -89,6 +89,24 @@ function adsFunnelReadDoorBound(resolver) {
     && chat.includes('dispatchAdsFunnelChat({ tenantId: tid, toolName: tc.function.name, args: adsArgs }, { caller: supabaseClient })');
 }
 
+// Exact business-operating-snapshot read door (E2-1, 2026-10-12). Same shape as the Ads carve-out: the
+// executor is the INT-340 issuer (issue_analytics_evidence_bundle), not a read_* symbol, and the issuer is
+// deliberately not renamed, wrapped or duplicated to satisfy the naming heuristic. Only this declaration in
+// this file may project its exact input, and only while the adapter composes through the fabric's own
+// composer on the caller's own session and Chat mounts that adapter with the caller-JWT client. Never
+// clears risk debt.
+const BUSINESS_SNAPSHOT_DECLARATION_FILE='supabase/functions/_shared/paige-spine/domains/business-review.ts';
+const BUSINESS_SNAPSHOT_ADAPTER_FILE='supabase/functions/_shared/paige-context/business-review-chat.ts';
+function businessSnapshotReadDoorBound(resolver) {
+  const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
+  const adapter=read(BUSINESS_SNAPSHOT_ADAPTER_FILE);
+  const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  return adapter.includes('parameters: BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.input')
+    && adapter.includes('composeBusinessReview(deps.caller')
+    && chat.includes('toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS')
+    && chat.includes('dispatchBusinessSnapshotChat(');
+}
+
 /**
  * Every `actionRiskKey` declared through `defineCapability()` in the scanned tree. A key here has a
  * governed declaration, so its `RISK` entry is the declaration's dependency rather than debt.
@@ -145,6 +163,11 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='ads.lead_funnel'&&owner.name.text==='ADS_LEAD_FUNNEL_READ_CAPABILITY'
                   && adsFunnelReadDoorBound(resolver))readTools.set('get_pipeline_lead_funnel',owner.name.text);
+              }
+              else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)===BUSINESS_SNAPSHOT_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='business.operating_snapshot'&&owner.name.text==='BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY'
+                  && businessSnapshotReadDoorBound(resolver))readTools.set('get_business_snapshot',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);

@@ -6,8 +6,8 @@ counts as a pass, and what is already proven without a sign-in.
 
 ## Identity — the one canonical account (ANT-21; do not create others)
 
-- Auth user `0640f8f9-30a7-49c7-ac4e-53f68b77381d`, workspace `bcefc207-4ac6-42af-83b8-3abe3e897649`
-  ("PC-1 QA Shared Synthetic", standalone, active, single member: owner). Nonsecret identifiers only.
+- The one shared synthetic SOLO QA account registered in ANT-21 (standalone, active, single member: owner). Its
+  identifiers live in ANT-21, not in this file; below, `:qa_user` and `:qa_workspace` stand for them (psql variables in the SQL).
 - Its password was generated and consumed inside the provisioning session (ANT-21 comment, 2026-10-12 03:34 UTC).
   No agent holds it; issuing or rotating it is a coordinator/owner action (vault only, never chat/Linear/Drive).
 - Read-only state on 2026-10-12: 0 pipelines, 0 stages, 0 deals, 0 forms, 0 submissions, 0 library pictures, no
@@ -17,12 +17,12 @@ counts as a pass, and what is already proven without a sign-in.
 ## Already proven without a sign-in (2026-10-12)
 
 Production database, read-only or rolled back, as the canonical user's claims (`set local role authenticated`,
-`request.jwt.claims.sub = 0640f8f9…`); every call ran inside `begin … rollback`, nothing persisted. Evidence class:
+`request.jwt.claims.sub = :qa_user`); every call ran inside `begin … rollback`, nothing persisted. Evidence class:
 **database-level, simulated session** — not authenticated runtime.
 
 | Probe | Result |
 |---|---|
-| Who the canonical user resolves to | `current_user_tenant_id()` = `bcefc207…`, `is_tenant_admin` = true |
+| Who the canonical user resolves to | `current_user_tenant_id()` = `:qa_workspace`, `is_tenant_admin` = true |
 | Funnel, pipeline id that does not exist | `42501 PIPELINE_FORBIDDEN` (no existence oracle) |
 | Funnel, null pipeline | `42501 PIPELINE_FORBIDDEN` |
 | Feature, picture id that does not exist | `42501 AD_CREATIVE_FORBIDDEN`, nothing written |
@@ -53,7 +53,7 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 3. **Second identities for refusal cases (ANT-21 exception record needed first).**
    - *Unauthorized actor:* a **member** (non-admin) seat in the canonical workspace — a role addition, which the
      standing rules forbid without owner authorization and an ANT-21 exception entry.
-   - *Wrong workspace:* a separately authorized second tenant. `test-agency-preview` (`2de8ca80…`, agency, active)
+   - *Wrong workspace:* a separately authorized second tenant. an existing agency preview test tenant
      exists but is **not** registered in ANT-21 for isolation tests; it may be used only if the owner registers it,
      and C2 also needs one picture in that tenant (its id is what the canonical owner asks to feature).
 
@@ -84,7 +84,7 @@ reply then explains why nothing changed.
 
 | # | Action | Pass when |
 |---|---|---|
-| B1 | "Feature <picture title> in my Ads showroom" | An approval card naming the picture; nothing changed yet |
+| B1 | "Feature that picture in my Ads showroom", right after A2, about the tagged picture A2 returned (or a picture generated in this conversation). PAIGE has no tool to find a picture by title, so a picture named only by title is expected to get "point me to one" instead of a card | An approval card naming the picture; nothing changed yet |
 | B2 | Approve the card | PAIGE reports it featured only after readback; Ads › Overview shows it in the first placement as "Featured" |
 | B3 | Ask again for the same picture → approve the card | Reply says it is already featured and nothing was changed (tool note, `ads-funnel-chat.ts:202`; the action chip reads "already had it that way", `paige-ai-chat/index.ts:443`); no write, no receipt |
 | B4 | "Take it out of the showroom" → approve | Unfeatured; Overview falls back to performance/newest |
@@ -93,11 +93,12 @@ reply then explains why nothing changed.
 Readback after B2/B4:
 ```sql
 select id, title, kind, status, meta->>'ads_featured' featured, meta->>'ads_featured_at' featured_at
-from marketing_content where tenant_id = 'bcefc207-4ac6-42af-83b8-3abe3e897649' and kind in ('image','video');
--- receipts: one capability run per approved write (and one refused receipt per refusal) on the workspace Rail.
+from marketing_content where tenant_id = :'qa_workspace' and kind in ('image','video');
+-- receipts: one per approved write, and one refused receipt per refusal the tool itself returns (C2, C4-C6).
+-- C1's role-gate refusal happens before the tool runs and records no receipt.
 -- This table is not readable by a signed-in session: run as service role / in the SQL editor.
 select occurred_at, capability_key, outcome from paige_workspace_events
-where tenant_id = 'bcefc207-4ac6-42af-83b8-3abe3e897649' and capability_key = 'set_ad_creative_featured'
+where tenant_id = :'qa_workspace' and capability_key = 'set_ad_creative_featured'
 order by occurred_at desc limit 10;
 ```
 

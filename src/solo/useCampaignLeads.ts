@@ -83,6 +83,23 @@ export function readCampaignLeads(data: unknown): Omit<CampaignLeadsState, "phas
   };
 }
 
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** What the lane's foot says: how a lead reaches this campaign, true to the server's rules. */
+export function broughtInNote(leads: Pick<CampaignLeadsState, "counts" | "uncredited" | "captureForms">, archived: boolean): string {
+  const live = leads.captureForms.some((form) => form.live);
+  const how = archived
+    ? "This campaign is archived, so its forms no longer credit leads to it; a lead arriving by its tagged link still is."
+    : leads.counts.leads
+      ? "Each lead was credited once, when it arrived, through this campaign’s form or its tagged link."
+      : live ? "No leads yet. A lead is credited when someone fills in this campaign’s form or arrives by its tagged link."
+        : "No leads yet. Attach a live form people sign up on, or share the campaign’s tagged link, and leads are credited as they arrive.";
+  const fits = leads.uncredited > 0
+    ? ` ${plural(leads.uncredited, "lead", "leads")} on this campaign’s forms also fit another campaign, so ${leads.uncredited === 1 ? "it isn’t" : "they aren’t"} counted here.`
+    : "";
+  return how + fits;
+}
+
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message?: string } | null }>;
 const rpc: Rpc = (fn, args) => (supabase as unknown as { rpc: Rpc }).rpc(fn, args);
 

@@ -8,7 +8,7 @@
 // are Sales' records, so the lane counts and routes there; it never values a deal or claims revenue.
 import React from "react";
 import { Ic as SharedIcons } from "./_shared";
-import { useCampaignLeads, type CampaignLeadsState } from "./useCampaignLeads";
+import { broughtInNote, useCampaignLeads, type CampaignLeadsState } from "./useCampaignLeads";
 import { kindLabel, statusLabel, type AttachableAsset, type CampaignAssetKind, type CampaignAssetLink, type CampaignAssetsState, type LinkableKind } from "./useCampaignAssets";
 
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
@@ -60,23 +60,6 @@ function Lane({ id, title, help, kinds, links, available, canManage, addLabel, m
       </div>}
     </section>
   );
-}
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-/** What the lane's foot says: how a lead reaches this campaign, true to the server's rules. */
-export function broughtInNote(leads: Pick<CampaignLeadsState, "counts" | "uncredited" | "captureForms">, archived: boolean): string {
-  const live = leads.captureForms.some((form) => form.live);
-  const how = archived
-    ? "This campaign is archived, so its forms no longer credit leads to it; a lead arriving by its tagged link still is."
-    : leads.counts.leads
-      ? "Each lead was credited once, when it arrived, through this campaign’s form or its tagged link."
-      : live ? "No leads yet. A lead is credited when someone fills in this campaign’s form or arrives by its tagged link."
-        : "No leads yet. Attach a live form people sign up on, or share the campaign’s tagged link, and leads are credited as they arrive.";
-  const fits = leads.uncredited > 0
-    ? ` ${plural(leads.uncredited, "lead", "leads")} on this campaign’s forms also fit another campaign, so ${leads.uncredited === 1 ? "it isn’t" : "they aren’t"} counted here.`
-    : "";
-  return how + fits;
 }
 
 /** The outcome lane. Counts are the server's, over every lead credited to this campaign. */

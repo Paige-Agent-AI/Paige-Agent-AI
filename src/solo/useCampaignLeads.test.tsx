@@ -6,8 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 
-import { BroughtIn, broughtInNote } from "./campaign-composition";
-import { readCampaignLeads, useCampaignLeads } from "./useCampaignLeads";
+import { BroughtIn } from "./campaign-composition";
+import { broughtInNote, readCampaignLeads, useCampaignLeads } from "./useCampaignLeads";
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const lead = (submission_id: string, extra: Record<string, unknown> = {}) => ({

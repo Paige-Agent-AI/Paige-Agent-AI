@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   collectionContactWindow,
   type RecipientContactFacts,
@@ -96,3 +97,14 @@ describe('automated collections contact — refusals', () => {
       state: 'blocked', reason: 'calling_not_authorized', request_verification: false });
   });
 });
+
+describe('stays in step with the shared pre-send gate', () => {
+  it('uses the same quiet window as the pre-send gate (pinned reviewed source, so compared by text)', () => {
+    const gate = readFileSync('supabase/functions/_shared/pre-send-pipeline.ts', 'utf8');
+    expect(gate).toMatch(/QUIET_HOURS_START = "20:00"/);
+    expect(gate).toMatch(/QUIET_HOURS_END = "08:00"/);
+    const mine = readFileSync('supabase/functions/_shared/sales-collections/contact-window.ts', 'utf8');
+    expect(mine).toMatch(/US: \{ start: '08:00', end: '20:00' \}/);
+  });
+});
+

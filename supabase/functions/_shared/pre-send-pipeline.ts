@@ -30,8 +30,8 @@ import type { SupabaseAdminLike } from "./twilio.ts";
 import type { ChannelType } from "./channel-adapters.ts";
 
 // --- Tunable compliance constants (named so they are auditable / adjustable) ---
-export const QUIET_HOURS_START = "20:00"; // TCPA quiet window begins (local, 8pm)
-export const QUIET_HOURS_END = "08:00"; // TCPA quiet window ends (local, 8am)
+const QUIET_HOURS_START = "20:00"; // TCPA quiet window begins (local, 8pm)
+const QUIET_HOURS_END = "08:00"; // TCPA quiet window ends (local, 8am)
 // Conservative default when a recipient's IANA tz is unknown: Eastern reaches the
 // 20:00 boundary first, so an unknown-tz recipient is the earliest-protected. A
 // follow-up (area-code inference / timezone_verified) can tighten this.
@@ -155,7 +155,7 @@ function parseHm(hm: string): { h: number; mi: number } {
 }
 
 /** Is `now` inside [startHM, endHM) in `tz`? Handles midnight-crossing windows. */
-export function inWindow(now: Date, tz: string, startHM: string, endHM: string): boolean {
+function inWindow(now: Date, tz: string, startHM: string, endHM: string): boolean {
   const p = partsInTz(now, tz);
   const t = p.h * 60 + p.mi;
   const s = parseHm(startHM);
@@ -168,7 +168,7 @@ export function inWindow(now: Date, tz: string, startHM: string, endHM: string):
 }
 
 /** Next LOCAL occurrence of boundary HM after `now`, as a UTC ISO string. */
-export function nextLocalBoundaryUtc(now: Date, tz: string, boundaryHM: string): string {
+function nextLocalBoundaryUtc(now: Date, tz: string, boundaryHM: string): string {
   const b = parseHm(boundaryHM);
   const p = partsInTz(now, tz);
   let candidate = makeZonedUtc(p.y, p.mo, p.d, b.h, b.mi, tz);

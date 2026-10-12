@@ -663,8 +663,10 @@ event.
   - `business_time_zone_unset` is raised.
   Contractual due dates and payment timestamps pass through unchanged.
 - `_shared/sales-collections/contact-window.ts` is the pure recipient-side decision for automated
-  collections contact. It reuses the pre-send gate's own window math, now exported with no
-  behaviour change.
+  collections contact. Its local-time math is two new helpers in the shared zone module
+  (`localMinutesInZone`, `nextLocalTimeInZone`). Its hours are the pre-send gate's quiet window;
+  that file is pinned reviewed source (Spine registry lint), so it is not edited, and a test keeps
+  the two windows equal.
   - **Order:** calls blocked → opt-out → DND → consent withdrawn → SMS consent missing → recipient
     zone unverified or invalid → location unverified → jurisdiction rules unknown → recipient-local
     hours.
@@ -700,7 +702,8 @@ event.
   - calls refused.
   - Mutants caught: unverified zone accepted, New York fallback, opt-out ignored, unknown
     jurisdiction cleared, calls allowed.
-- **Pre-send smoke:** 15/15 unchanged.
+- **Pre-send gate:** untouched (an export-only edit first tripped the pinned-source lint and was
+  reverted). Smoke 15/15.
 
 **Still owed.**
 - A way for the owner to set their time zone in the product. `set_coach_fields` writes it, but it

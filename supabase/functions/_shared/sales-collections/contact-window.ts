@@ -14,13 +14,13 @@
 // Communications pre-send gate (_shared/pre-send-pipeline.ts), which every send still passes through;
 // it is the stricter Collections pre-check an automated reminder must clear BEFORE it may be proposed.
 // (That shared gate still falls back to the business zone or New York for SMS quiet hours: #2083.)
-// The local-time arithmetic is the pre-send gate's own (inWindow / nextLocalBoundaryUtc, DST-correct),
-// and the zone check is the shared IANA validator — neither is re-implemented here.
+// The zone check and the DST-correct local-time arithmetic are the shared time-zone module's
+// (_shared/paige-context/snapshot.ts). The contact hours are the pre-send gate's quiet window; that
+// file is pinned reviewed source, so a test keeps these values equal to its constants.
 //
 // Real sends and AI calls stay behind their separate compliance and activation controls; a `clear`
 // result here authorizes nothing by itself.
-import { inWindow, nextLocalBoundaryUtc, QUIET_HOURS_END, QUIET_HOURS_START } from '../pre-send-pipeline.ts';
-import { localDateInZone } from '../paige-context/snapshot.ts';
+import { localMinutesInZone, nextLocalTimeInZone } from '../paige-context/snapshot.ts';
 
 export type CollectionChannel = 'email' | 'sms' | 'call';
 
@@ -61,8 +61,9 @@ export type ContactWindowDecision =
  * an unknown legal regime is never treated as permission.
  */
 const CONTACT_HOURS: Record<string, { start: string; end: string }> = {
-  US: { start: QUIET_HOURS_END, end: QUIET_HOURS_START },
+  US: { start: '08:00', end: '20:00' }, // = pre-send QUIET_HOURS_END / QUIET_HOURS_START
 };
+const minutesOf = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 
 export function collectionContactWindow(
   channel: CollectionChannel,
@@ -79,7 +80,8 @@ export function collectionContactWindow(
     return { state: 'blocked', reason: 'consent_missing', request_verification: true };
   }
   const zone = recipient.timezone?.trim() ?? '';
-  if (!recipient.timezone_verified || !zone || localDateInZone(now.getTime(), zone) === null) {
+  const localMinutes = zone ? localMinutesInZone(now.getTime(), zone) : null;
+  if (!recipient.timezone_verified || localMinutes === null) {
     return { state: 'blocked', reason: 'recipient_time_zone_unverified', request_verification: true };
   }
   if (!recipient.jurisdiction?.verified || !/^[A-Z]{2}$/.test(recipient.jurisdiction.country)) {
@@ -87,7 +89,10 @@ export function collectionContactWindow(
   }
   const hours = CONTACT_HOURS[recipient.jurisdiction.country];
   if (!hours) return { state: 'blocked', reason: 'jurisdiction_rules_unavailable', request_verification: false };
-  if (inWindow(now, zone, hours.start, hours.end)) return { state: 'clear', recipient_zone: zone, window: hours };
-  return { state: 'wait', recipient_zone: zone, next_allowed_at: nextLocalBoundaryUtc(now, zone, hours.start),
+  if (localMinutes >= minutesOf(hours.start) && localMinutes < minutesOf(hours.end)) {
+    return { state: 'clear', recipient_zone: zone, window: hours };
+  }
+  const next = nextLocalTimeInZone(now.getTime(), zone, minutesOf(hours.start))!;
+  return { state: 'wait', recipient_zone: zone, next_allowed_at: new Date(next).toISOString(),
     reason: 'outside_recipient_hours' };
 }

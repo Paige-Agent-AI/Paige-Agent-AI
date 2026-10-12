@@ -17,6 +17,7 @@ import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { useCatalogOffers } from "./useCatalogOffers";
 import { kindLabel, useCampaignAssets } from "./useCampaignAssets";
 import { CampaignComposition } from "./campaign-composition";
+import { CampaignActions } from "./campaign-actions";
 
 // ── vocab ──────────────────────────────────────────────────────────────────────────────────────
 const ST = {
@@ -323,7 +324,7 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
   const drawers = (
     <>
       {drawer?.kind === "dossier" && portalHost && (() => { const b = briefs.find((x) => x.id === drawer.briefId); return b
-        ? createPortal(<DossierDrawer brief={b} canManage={canManage} assets={assets} onToast={showToast} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
+        ? createPortal(<DossierDrawer brief={b} canManage={canManage} assets={assets} tenantId={briefsState.tenantId} onToast={showToast} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
             onEdit={() => setDrawer({ kind: "brief", briefId: b.id })}
             onTransition={async (status, blocker, idem) => { const r = await briefsState.transitionBrief(b.id, status, b.version, blocker, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
             onArchive={async (idem) => { const r = await briefsState.archiveBrief(b.id, b.version, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
@@ -552,7 +553,7 @@ function useDrawerA11y(onClose) {
 }
 
 // ── dossier drawer ─────────────────────────────────────────────────────────────────────────────
-function DossierDrawer({ brief: b, canManage, assets, onToast, onClose, onRoute, onAsk, onEdit, onTransition, onArchive }) {
+function DossierDrawer({ brief: b, canManage, assets, tenantId, onToast, onClose, onRoute, onAsk, onEdit, onTransition, onArchive }) {
   const links = assets.phase === "ready" ? assets.links.filter((link) => link.briefId === b.id) : [];
   const attached = attachedSummary(links);
   const ref = useDrawerA11y(onClose);
@@ -580,6 +581,7 @@ function DossierDrawer({ brief: b, canManage, assets, onToast, onClose, onRoute,
           </div>
           {b.blocker && <div className="dw-note" style={{ borderColor: "var(--bad)", background: "var(--bad-tint)", color: "var(--bad)" }}><Ic.bell size={13}/> Blocker: {b.blocker}</div>}
           <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast}/></div>
+          <div className="dw-sec"><h4>Steps and results</h4><CampaignActions tenantId={tenantId} briefId={b.id} onToast={onToast}/></div>
           <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} links={links} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>
             <div className="dw-links">

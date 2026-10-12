@@ -42,7 +42,8 @@ import {
   type ActOutcome,
   type EventFacts,
 } from "./decide.ts";
-import { FINAL_OUTCOME_SET } from "./outcomes.ts";
+import { actReceiptRunSeed, FINAL_OUTCOME_SET } from "./outcomes.ts";
+import { claimActDispatch } from "./dispatch-claim.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { resolveNativeCapabilityStatus } from "../paige-capability-status/gatherer.ts";
@@ -200,6 +201,20 @@ async function loadActs(db: EngineDb, automationId: string): Promise<LoadActsRes
  *  so the engine's "never re-dispatch a final row" set can no longer drift from the RPC's. Once a row holds one
  *  of these, phase 5 adopts it and NEVER re-dispatches (idempotency across re-drains). */
 const FINAL_OR_SETTLED: ReadonlySet<string> = FINAL_OUTCOME_SET;
+
+/** A process's CURRENT posture, as `resolve_automation_autonomy` returns it (grant ∧ most-restrictive act floor
+ *  ∧ Trust-Compass ceiling ∧ §68 decay). */
+export type ProcessPosture = { found?: boolean; state?: string; effective?: string; capped_by?: string | null };
+
+/** The ONE posture read. The engine reads it when it decides an act; the approval executor re-reads it when a
+ *  held act is approved (INT-179), so the two can never read a process's posture differently. */
+export async function readProcessPosture(
+  db: { rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> },
+  automationId: string,
+): Promise<{ data: ProcessPosture | null; error: unknown }> {
+  const { data, error } = await db.rpc("resolve_automation_autonomy", { _automation_id: automationId });
+  return { data: (data ?? null) as ProcessPosture | null, error };
+}
 
 /** Read the CURRENT ledger outcome for one (event, act). `outcome:null` = the row does not exist yet.
  *  An infra read error returns `{ ok:false }` so phase 5 retries rather than acting blind (§13/§32). */
@@ -382,7 +397,7 @@ export async function runEventActs(
     // 2 — effective autonomy lane = grant ∧ most-restrictive act floor ∧ Trust-Compass ceiling ∧ §68 decay.
     //     An INFRA/malformed resolve is a RETRYABLE subscriber — NEVER coerced to a false `off`/held_by_lane
     //     (a FINAL state that would bake a transient error as a permanent governance verdict, §13/§32 F2).
-    const { data: laneRow, error: laneErr } = await db.rpc("resolve_automation_autonomy", { _automation_id: automation.id });
+    const { data: laneRow, error: laneErr } = await readProcessPosture(db, automation.id);
     if (laneErr || !laneRow || typeof laneRow.effective !== "string") { subscriber_retry.push(automation.id); continue; }
     const effectiveLane: string = laneRow.effective;
     const laneOutcome = laneNonExecuteOutcome(effectiveLane); // null → auto proceeds
@@ -506,7 +521,7 @@ export async function runEventActs(
     if (rec.outcome === "executed" && plan) {
       const detail = (result.detail ?? {}) as Record<string, unknown>;
       const wasNoop = detail.already_at_requested_stage === true;
-      const runId = await stableRunId(["paige-cap", rec.event_id, rec.act_id]);
+      const runId = await stableRunId(actReceiptRunSeed(rec.event_id, rec.act_id));
       await recordCapabilityRun(db, {
         tenantId: event.tenant_id, actorId: plan.personUserId, capabilityKey: plan.capabilityKey,
         outcome: "capability_succeeded", runId,
@@ -548,6 +563,11 @@ export async function runEventActs(
       if (cur.outcome === "ambiguous") { rec.outcome = "ambiguous"; continue; }                // owner: never blind re-dispatch
       // an `accepted`/`retrying` row whose correlation shows NO landed transition → it never dispatched.
       if (plan && typeof plan.adapter.dispatch === "function") {
+        // At most once (Slice 2b): only the caller holding the dispatch claim fires. A live claim held by
+        // another runner means a dispatch may be in flight — leave the row for a later drain/sweep.
+        const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
+        if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
+        if (!claim.claimed) { rec.outcome = cur.outcome as ActOutcome; continue; }
         let dr: DispatchResult;
         try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
         await advanceNative(rec, plan, dr); continue;
@@ -559,6 +579,12 @@ export async function runEventActs(
     if (plan && typeof plan.adapter.dispatch === "function") {
       const acc = await persistNative(rec, "accepted_for_execution", { error: null }); // durable pre-dispatch record FIRST
       if (!acc.ok) { persist_failures.push(rec.act_id); continue; }
+      // The ledger returns what actually persisted: a concurrent runner may already have advanced this act.
+      if (rec.outcome !== "accepted_for_execution") continue;
+      // At most once (Slice 2b): of concurrent runners that both read ABSENT, only the claim holder fires.
+      const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
+      if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
+      if (!claim.claimed) continue; // another runner holds the dispatch; the row stays reconcilable
       let dr: DispatchResult;
       try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
       await advanceNative(rec, plan, dr); continue;

@@ -21,7 +21,7 @@
 // not a second. (Dormant until the engine mints those rows — the companion-minting is the next slice; this
 // branch fires only for orchestration-sourced rows and changes nothing for existing approvals, §58.)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
+import { approvalRefusalMessage, executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
     const attempted = res.outcome === "executed" || res.outcome === "failed";
     if (!attempted) {
       await releaseClaim();
-      return json(200, { ok: false, executed: false, act_outcome: res.outcome, reason: res.reason, approval_id: approvalId });
+      return json(200, { ok: false, executed: false, act_outcome: res.outcome, reason: res.reason, error: approvalRefusalMessage(res.reason, res.outcome), approval_id: approvalId });
     }
     // A real attempt — the ledger records the outcome. Stamp the approval with it (metadata.act_outcome also
     // satisfies the DB direct-approve guard that blocks a bypass approve on an orchestration row, slice 2).

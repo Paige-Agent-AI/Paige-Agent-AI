@@ -1,8 +1,11 @@
 import { inspectEngagementReadiness } from "./operations-engagement-readiness";
 import { useOperationsEngagementEvidence } from "./useOperationsEngagementEvidence";
+import type { ComponentProps } from "react";
+import { OperationsEngagementHandoff } from "./OperationsEngagementHandoff";
 
 type Props = { actorId: string; tenantId: string; signingId: string; contactId: string;
-  commercialTermsId: string; offerId: string | null };
+  commercialTermsId: string; offerId: string | null;
+  handoff?: Omit<ComponentProps<typeof OperationsEngagementHandoff>, "evidence"> };
 
 /** Inspect frozen Sales provenance; this read never creates a project or authorizes fulfillment. */
 export function OperationsEngagementEvidence(props: Props) {
@@ -21,5 +24,8 @@ export function OperationsEngagementEvidence(props: Props) {
     <strong>{titles[result.state]}</strong>
     {result.source && <p>Version {result.source.version} · sealed copy recorded</p>}
     <p>No delivery project or client acceptance is confirmed by this signing check.</p>
+    {result.state === "ready_for_scope_review" && read.evidence && props.handoff
+      && <OperationsEngagementHandoff key={JSON.stringify([props.handoff.scope, read.evidence])}
+        {...props.handoff} evidence={read.evidence} />}
   </section>;
 }

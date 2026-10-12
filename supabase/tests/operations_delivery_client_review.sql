@@ -55,6 +55,22 @@ select public.operations_delivery_review_scoped((select value::uuid from deliver
 reset role;
 update delivery_test_values set value=(select updated_at::text from public.operations_delivery_submissions) where key='submission_updated';
 select pg_temp.check_true(not exists(select 1 from public.operations_delivery_client_releases),'internal approval creates no client acceptance');
+-- A plan owner with independent Studio access still lacks the current item's
+-- authority. This isolates the client-release gate from the artifact gate.
+select set_config('request.jwt.claim.sub','',true);
+select set_config('request.jwt.claims','{}',true);
+update public.plans set owner_user_id='ed010000-0000-4000-8000-000000000003'
+ where id='ed010000-0000-4000-8000-00000000a001';
+update public.studio_sessions set owner_user_id='ed010000-0000-4000-8000-000000000003'
+ where id='ed010000-0000-4000-8000-00000000d001';
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000003',true);
+set local role authenticated;
+select pg_temp.check_true(not exists(select 1 from public.plan_items where id='ed010000-0000-4000-8000-00000000b001'),'unrelated plan owner lacks canonical item visibility');
+select pg_temp.refused($s$select public.operations_delivery_release_scoped((select value::uuid from delivery_test_values where key='submission'),'ed010000-0000-4000-8000-000000000003','ed010000-0000-4000-8000-000000001111',(select value::timestamptz from delivery_test_values where key='submission_updated'))$s$,'42501','plan owner with Studio authority cannot release unrelated work');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+update public.studio_sessions set owner_user_id='ed010000-0000-4000-8000-000000000001'
+ where id='ed010000-0000-4000-8000-00000000d001';
 select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000001',true);
 set local role authenticated;
 select public.operations_delivery_release_scoped((select value::uuid from delivery_test_values where key='submission'),'ed010000-0000-4000-8000-000000000001','ed010000-0000-4000-8000-000000001111',(select value::timestamptz from delivery_test_values where key='submission_updated'));

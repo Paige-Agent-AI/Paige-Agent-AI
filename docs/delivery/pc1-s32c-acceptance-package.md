@@ -13,7 +13,7 @@ Date: 2026-10-12 · Status: PREPARED, NOT EXECUTED. Every action in "Preflight" 
 
 1. **Fly flag**: set `PAIGE_BROWSER_WILDCARD_ENABLED=true` on the `paige-browser` Fly app (owner action in Fly; triggers a redeploy of the live host — `/pdf`,`/render` consumers unaffected by the flag; verify `healthz` 200 after).
 2. **Tenant flag**: set `features.secure_browser=true` on tenant `bcefc207-4ac6-42af-83b8-3abe3e897649` (owner/platform-operator console or SQL).
-3. **Limits row**: call `configure_secure_browser_limits(expected_tenant, enabled:=true, 1, 900, 1800, 0)` from the tenant's workspace-admin context (note: 60s minimum validation on session seconds; the browse gate itself reserves 61s per call — `max_session_seconds` ≥ 61 required, 900 default satisfies).
+3. **Limits row**: call `configure_secure_browser_limits(expected_tenant, true, 1, 900, 1800, 0)` (all-positional; mixed named/positional is a PostgreSQL error) from the tenant's workspace-admin context (note: 60s minimum validation on session seconds; the browse CALLER reserves 61s worst-case per browse — `max_session_seconds` ≥ 61 required, 900 default satisfies).
 4. **Run the drive** (owner-initiated, authenticated as the synthetic tenant's owner user): `run_skill browse_public_url` with `inputs.url = https://example.com`.
 5. **Negative controls** (same session): (a) second drive to the same URL — assert no first-drive cookies/storage visible (isolation); (b) a drive while the limits row is `enabled=false` — assert refusal `control_plane:disabled`; (c) an unauthenticated direct POST to `skill-runner` — assert 401.
 

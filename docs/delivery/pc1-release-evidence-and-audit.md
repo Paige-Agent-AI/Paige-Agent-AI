@@ -14,9 +14,9 @@ Date: 2026-10-12 · Release identity: PR #2003, merge commit `bc4763987ba2b4933c
 
 ## 2. The Finance `20271021100010` ordering issue — timeline
 
-1. **[DIRECT]** #2003's open-PR version scan (2026-10-11 ~23:00Z) cleared the ceiling at `20271021042001`; my migration took `20271021100000`.
-2. **[DIRECT]** The Finance lane's `20271021100010_finance_cash_scenario_versions` deployed to production at 00:10Z (deploy-migrations run `38187029125`, attempt 2, SUCCESS on `ac71b564b`) — BEFORE #2003 merged.
-3. **[DIRECT]** #2003 merged 01:20Z (`bc4763987`); its deploy-migrations run `38191736717` (01:24Z) was **correctly REFUSED** by the plain `db push` policy: the unrecorded `20271021100000` was older than production's newest recorded `20271021100010`. Nothing was applied by that run (the refusal aborts the whole push by design — no `--include-all` escape).
+1. **[ASSERTED — point-in-time, not replayable]** #2003's open-PR version scan (2026-10-11 ~23:00Z) cleared the ceiling at `20271021042001`; my migration took `20271021100000`.
+2. **[DIRECT]** The Finance lane's `20271021100010_finance_cash_scenario_versions` reached production first (run `38187029125` created 00:10:54Z; the successful attempt-2 apply completed 00:16:49Z on `ac71b564b`) — BEFORE #2003 merged.
+3. **[DIRECT]** #2003 merged 01:24:02Z (`bc4763987`); its deploy-migrations run `38191736717` (01:24:05Z) was **correctly REFUSED** by the plain `db push` policy: the unrecorded `20271021100000` was older than production's newest recorded `20271021100010`. Nothing was applied by that run (the refusal aborts the whole push by design — no `--include-all` escape).
 4. **[ASSERTED→DIRECT]** My first repair (renumber PR #2014) was closed as superseded: renaming an already-recorded migration is wrong, and the renumber turned out unnecessary (see §3).
 
 ## 3. The out-of-band reconciliation — what the evidence shows
@@ -31,7 +31,7 @@ Date: 2026-10-12 · Release identity: PR #2003, merge commit `bc4763987ba2b4933c
 | Surface | Identifier | Class |
 |---|---|---|
 | PR / merge / reviewed head | #2003 / `bc4763987` / `7d5d6dc49` | **[DIRECT]** |
-| Edge deploy | deploy-edge-functions run `38191736706` SUCCESS on `bc4763987`; `edge-live` tag = `bc4763987`; live `browser-use` unauth POST → 401 `UNAUTHORIZED_NO_AUTH_HEADER` | **[DIRECT]** |
+| Edge deploy | deploy-edge-functions run `38191736706` SUCCESS on `bc4763987`; `edge-live` tag read `bc4763987` at audit time (01:46Z 2026-10-12 — it is a ROLLING tag advanced by later function-touching merges); live `browser-use` unauth POST → 401 `UNAUTHORIZED_NO_AUTH_HEADER` | **[DIRECT]** |
 | Fly deploy | deploy-fly-services run `38191736713` SUCCESS on `bc4763987`; `https://paige-browser.fly.dev/healthz` → HTTP 200 (0.86s, 2026-10-12) | **[DIRECT]** |
 | Migration deploy | refused run `38191736717` (policy-correct); out-of-band apply (§3); parity no-op run `38193210075` GREEN | **[DIRECT]** |
 | Grants | §1 proacl readbacks | **[DIRECT]** |
@@ -46,4 +46,6 @@ Date: 2026-10-12 · Release identity: PR #2003, merge commit `bc4763987ba2b4933c
 
 ## 6. Standing prohibitions (unchanged)
 
-`PAIGE_BROWSER_WILDCARD_ENABLED` off; zero tenants flagged; zero limits rows; no credentials, live browsing, filings, or payments anywhere in PC-1. Activation steps are owner-controlled and listed in `pc1-s32c-acceptance-package.md`.
+- **[DIRECT]** Zero tenants flagged `secure_browser`; zero `secure_browser_tenant_limits` rows; zero `paige_browser_usage` rows (psql readback at audit time).
+- **[ASSERTED — owner-attested Fly-app fact, no read-only verification path in this audit]** `PAIGE_BROWSER_WILDCARD_ENABLED` is off on the Fly host.
+- No credentials, live browsing, filings, or payments anywhere in PC-1. Activation steps are owner-controlled and listed in `pc1-s32c-acceptance-package.md`.

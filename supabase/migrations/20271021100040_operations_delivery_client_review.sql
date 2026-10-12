@@ -46,7 +46,9 @@ begin
     or v_c.tenant_id is distinct from v_s.tenant_id or v_a.tenant_id is distinct from v_s.tenant_id
     or v_w.plan_id is distinct from v_s.plan_id or v_w.contact_id is distinct from v_s.client_id
     or v_w.status='cancelled' or v_p.status='archived' or v_c.merged_into_contact_id is not null
-    or not coalesce(public.is_tenant_admin(v_s.tenant_id) or v_p.owner_user_id=v_actor or v_p.created_by=v_actor,false)
+    or not coalesce(v_w.created_by=v_actor or v_w.assigned_to_user_id=v_actor
+      or (public.is_tenant_admin(v_s.tenant_id)
+        and (public.has_any_role(v_actor,array['admin','super_admin']) or public.is_platform_owner())),false)
     or not coalesce(public.is_tenant_admin(v_s.tenant_id) or exists(select 1 from public.studio_sessions
       where id=v_a.session_id and tenant_id=v_s.tenant_id and owner_user_id=v_actor),false) then
     raise exception 'DELIVERY_RELEASE_UNAVAILABLE' using errcode='42501'; end if;
@@ -190,8 +192,9 @@ begin
   if v_work.id is null or v_plan.id is null or v_work.plan_id is distinct from v_plan.id
     or v_work.tenant_id is distinct from p_expected_tenant_id or v_plan.tenant_id is distinct from p_expected_tenant_id
     or v_work.item_type not in ('task','milestone') or v_work.status='cancelled' or v_plan.status='archived'
-    or not coalesce(public.is_tenant_admin(p_expected_tenant_id) or v_plan.created_by=v_actor
-      or v_plan.owner_user_id=v_actor or v_work.assigned_to_user_id=v_actor,false) then
+    or not coalesce(v_work.created_by=v_actor or v_work.assigned_to_user_id=v_actor
+      or (public.is_tenant_admin(p_expected_tenant_id)
+        and (public.has_any_role(v_actor,array['admin','super_admin']) or public.is_platform_owner())),false) then
     raise exception 'DELIVERY_WORK_UNAVAILABLE' using errcode='42501'; end if;
   if p_expected_work_updated_at is null or v_work.updated_at is distinct from p_expected_work_updated_at then
     raise exception 'DELIVERY_WORK_CHANGED' using errcode='40001'; end if;

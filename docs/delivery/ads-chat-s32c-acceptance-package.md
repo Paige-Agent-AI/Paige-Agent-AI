@@ -46,7 +46,7 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 |---|---|---|
 | Canonical account confirmed | **Done (readback)** — SOLO `standalone`, `active`; only member is its owner (`owner`, `is_owner`, `active`); never signed in. Recorded in ANT-21; Auth-administrator sign-off **pending** | database read |
 | Second business | **Verified distinct** — `test-agency-preview`: `agency`, `active`, no parent, no children, its own single owner, no shared member, no data. Owner-ruled throwaway pending deletion (`route-and-url-taxonomy.md` §7.2). The agency shell has no Sales, Marketing or Studio screens, so no test record can be placed in it through the product; it serves as the database-level isolation baseline only (ledger 1). Nothing is created in it and no sign-in to it is needed | database read |
-| Runner credentials | **Outstanding** — Auth administrators install them privately in the trusted runner; nothing in code, GitHub, Linear, logs or chat | — |
+| Runner credentials | **Outstanding** — Auth administrators install them privately as environment variables of the trusted runner (in this cloud environment: environment settings → environment variables; a new session picks them up): `LIVE_DRIVE_EMAIL` / `LIVE_DRIVE_PASSWORD` for the QA owner, later `LIVE_DRIVE_MEMBER_EMAIL` / `LIVE_DRIVE_MEMBER_PASSWORD` for the temporary member (`live-drive.mjs` takes `auth.emailEnv` / `auth.passwordEnv`). Never in code, GitHub, Linear, logs or chat. Checked 2026-10-12 14:38 UTC: not set; the live app answers HTTP 200 from the runner sandbox and Chromium is present | runner check |
 | Synthetic fixtures | **Not created** — every step needs the canonical owner signed in (runner) | — |
 | Temporary member | **Not created** — needs the runner and an inbox the Auth administrators control | — |
 | Signed-in acceptance | **Not started** | — |
@@ -63,7 +63,7 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
   (forms can only be unpublished). This affects C4 and clean-up — see the decisions below.
 - An agency business carries the `pipeline` feature but not Marketing or Studio (§61), and the agency shell mounts
   no Sales or pipeline screen, so nothing can be created in `test-agency-preview` through the product.
-- PAIGE has no tool that lists pictures or pipelines, so any id used in A4 or C2–C6 is pasted into the chat.
+- PAIGE has no tool that lists pictures or pipelines, so any id used in A4, C5 or C6 is pasted into the chat.
 
 ### Runner runbook — fixtures (canonical owner, signed in, Solo)
 
@@ -92,20 +92,16 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
   its credential in the runner only.
 - Run C1 as that member. Record the member's user id and the invite id in ANT-21 with timestamps.
 
-### Decisions still needed (owner)
+### Owner decisions (resolved 2026-10-12)
 
-1. **C4 archived picture.** No product control archives a picture. Either (a) authorize one service-role update
-   setting `QA picture 8` to `archived` in the canonical workspace, with readback before and after, or (b) leave C4
-   as `UNAVAILABLE` in the signed-in run.
-2. **C2 foreign picture.** The agency-preview business cannot hold a picture through the product. Either
-   (a) authorize using the one existing picture in the cancelled test business `vibe-proof-test` as a read-only
-   foreign id (no sign-in, no write — already used in the rolled-back probe below), or (b) leave C2 as
-   database-level evidence only.
-3. **Fixture retirement.** Pictures, ad copy and the form cannot be archived through the product, and the QA
-   pipeline cannot be archived once it holds the two deals (`PIPELINE_DEPENDENCIES_UNRESOLVED`). Step 6 also
-   creates two synthetic contacts, two deals and two submissions. Either (a) keep all of them in the canonical
-   workspace as recorded, reusable synthetic fixtures, or (b) authorize a service-role retirement of exactly the
-   recorded ids, with readback.
+1. **C4 archived picture — `UNAVAILABLE`.** No product control archives a picture, and production records are not
+   modified through service-role access to manufacture the case. `QA picture 8` is a spare.
+2. **C2 foreign picture — database-level only.** The rolled-back refusal in ledger 1 stands; no other business's
+   records are used, and C2 is not reported as signed-in acceptance.
+3. **Fixtures — retained.** The pipeline, pictures, ad copy, form, tagged submissions and the contacts and deals
+   they create stay in the canonical QA business, labelled synthetic, for future authorized regression runs. Their
+   ids and custodian are registered in ANT-21 after creation. The temporary member's access is revoked after the
+   run and the revocation is verified.
 
 ## Acceptance run (signed in as the canonical owner, in Solo)
 
@@ -127,7 +123,7 @@ Take `<since>` from the tool result's `window.since`; the 7-day window starts at
 
 **Order of checks for B and C.** `set_ad_creative_featured` asks first (`confirm`). Before the card, only the role
 gate runs. The "already featured" check and the not-found / archived / not-a-picture / limit checks run after
-approval, inside the tool. So for B3, C2, C4, C5 and C6 the tester sees an approval card first, approves it, and the
+approval, inside the tool. So for B3, C5 and C6 the tester sees an approval card first, approves it, and the
 reply then explains why nothing changed.
 
 ### B. Featured-picture flow
@@ -144,7 +140,7 @@ Readback after B2/B4:
 ```sql
 select id, title, kind, status, meta->>'ads_featured' featured, meta->>'ads_featured_at' featured_at
 from marketing_content where tenant_id = :'qa_workspace' and kind in ('image','video');
--- receipts: one per approved write, and one refused receipt per refusal the tool itself returns (C2, C4-C6).
+-- receipts: one per approved write, and one refused receipt per refusal the tool itself returns (C5, C6).
 -- C1's role-gate refusal happens before the tool runs and records no receipt.
 -- This table is not readable by a signed-in session: run as service role / in the SQL editor.
 select occurred_at, capability_key, outcome from paige_workspace_events
@@ -155,14 +151,14 @@ order by occurred_at desc limit 10;
 ### C. Refusals
 
 C5 set-up, after B4 has unfeatured `QA picture 1`: on Ads › Creative feature `QA picture 2`…`QA picture 7` by hand
-(six featured), then ask for `QA picture 1`. C2, C4, C5 and C6 need the item's id pasted into the chat.
+(six featured), then ask for `QA picture 1`. C5 and C6 need the item's id pasted into the chat.
 
 | # | Case | Pass when |
 |---|---|---|
 | C1 | Unauthorized actor (temporary member) asks either question | Refused by the workspace role gate before any card (`paige-ai-chat/index.ts:10899-10906`): funnel — "Looking this up needs this workspace's owner or an admin…"; feature — "This needs this workspace's owner or an admin. Nothing was changed…" (`workspace-authority.ts:224-229`); no Rail receipt, because the gate returns before the tool runs |
-| C2 | Wrong workspace: owner asks to feature a picture id from the second tenant → approve | "That picture is not in this business's library."; no change to `marketing_content` in either tenant; one refused receipt in the canonical workspace |
+| C2 | Wrong workspace | **Not run signed in (owner decision 2).** Evidence is the rolled-back refusal in ledger 1 |
 | C3 | Missing approval: B5 | No write, no succeeded receipt |
-| C4 | Invalid creative: archived picture | "That picture is archived, so it cannot be featured…" |
+| C4 | Invalid creative: archived picture | **`UNAVAILABLE` (owner decision 1)** — no product control archives a picture |
 | C5 | Invalid creative: a seventh picture while six are featured | "You can feature up to 6; unfeature one first." plus the six currently featured |
 | C6 | Invalid creative: an id that is not a picture or video | "Only a picture or a video can be featured…" |
 
@@ -202,7 +198,8 @@ path, readback result, pass/fail. Never copy ledger 1 rows here.
    invite.
 3. Auth administrator retires the temporary sign-in (delete or ban) and removes its runner credential.
 4. Studio Publish panel → **Unpublish** the QA form.
-5. Pictures, ad copy, the QA pipeline, contacts, deals and submissions: per decision 3.
+5. Pictures, ad copy, the QA pipeline, contacts, deals and submissions: retained as labelled synthetic fixtures
+   (decision 3); record their ids, creation times and custodian in ANT-21.
 
 Proof (service role; paste results into ANT-21):
 ```sql

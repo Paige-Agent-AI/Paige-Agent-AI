@@ -1,5 +1,5 @@
 -- ============================================================================
--- Ads from chat — repeatable proof for 20271021130000_ads_paige_chat_tools_catalogue.sql.
+-- Ads from chat — repeatable proof for 20271021210000_ads_paige_chat_tools_catalogue.sql.
 --
 -- Run against the REAL migration (\ir, twice: clean application + replay) on an isolated database with
 -- synthetic fixtures only (§63). The whole run is one transaction that ROLLS BACK.
@@ -98,10 +98,10 @@ SELECT set_config('test.tenant','00000000-0000-4000-8000-00000000b001',true);
 CREATE TEMP TABLE before_b AS SELECT row_number() OVER () AS n, * FROM public.list_tool_autonomy(NULL);
 
 -- ── Apply the REAL migration: clean, then replay. ─────────────────────────────────────────────────
-\ir ../migrations/20271021130000_ads_paige_chat_tools_catalogue.sql
+\ir ../migrations/20271021210000_ads_paige_chat_tools_catalogue.sql
 CREATE TEMP TABLE first_def AS SELECT md5(pg_get_functiondef('public.list_tool_autonomy(uuid)'::regprocedure)) AS wrapper,
   md5(pg_get_functiondef('public._list_tool_autonomy_before_ads_chat(uuid)'::regprocedure)) AS predecessor;
-\ir ../migrations/20271021130000_ads_paige_chat_tools_catalogue.sql
+\ir ../migrations/20271021210000_ads_paige_chat_tools_catalogue.sql
 
 SELECT plan(18);
 

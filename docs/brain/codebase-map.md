@@ -15,7 +15,7 @@ client (never service role), checking the active business before and after. The 
 default pipeline (oldest non-archived `is_default`), answers "no Sales pipeline yet" plainly, and maps
 stage ids to names; it carries no ad-provider data. The feature asks first through the one approval gate
 (card names the picture), is read back before it is reported, and records a Rail receipt; its Autonomy
-catalogue row is `20271021130000_ads_paige_chat_tools_catalogue.sql` (proof
+catalogue row is `20271021210000_ads_paige_chat_tools_catalogue.sql` (proof
 `supabase/tests/ads_chat_tools_catalogue.sql`). No tool lists the whole content library; the model gets
 picture ids from the funnel's `ads[].content_id` or a picture generated/on the canvas in the chat.
 Authenticated runtime is UNVERIFIED (§32.c).

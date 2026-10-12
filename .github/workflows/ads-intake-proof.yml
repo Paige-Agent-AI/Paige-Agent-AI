@@ -8,7 +8,7 @@ on:
       - 'supabase/migrations/20270588326001_solo_form_deal_identity.sql'
       - 'supabase/migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql'
       - 'supabase/tests/ads_intake_default_pipeline.sql'
-      - 'supabase/migrations/20271021130000_ads_paige_chat_tools_catalogue.sql'
+      - 'supabase/migrations/20271021210000_ads_paige_chat_tools_catalogue.sql'
       - 'supabase/tests/ads_chat_tools_catalogue.sql'
       - '.github/workflows/ads-intake-proof.yml'
   push:
@@ -17,7 +17,7 @@ on:
       - 'supabase/migrations/20270588326001_solo_form_deal_identity.sql'
       - 'supabase/migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql'
       - 'supabase/tests/ads_intake_default_pipeline.sql'
-      - 'supabase/migrations/20271021130000_ads_paige_chat_tools_catalogue.sql'
+      - 'supabase/migrations/20271021210000_ads_paige_chat_tools_catalogue.sql'
       - 'supabase/tests/ads_chat_tools_catalogue.sql'
       - '.github/workflows/ads-intake-proof.yml'
   workflow_dispatch:

@@ -159,7 +159,7 @@ describe("Ads chat tools — declaration and governance", () => {
   });
 
   it("catalogues the feature for Autonomy settings, forwarding every earlier row", () => {
-    const sql = fs.readFileSync("supabase/migrations/20271021130000_ads_paige_chat_tools_catalogue.sql", "utf8");
+    const sql = fs.readFileSync("supabase/migrations/20271021210000_ads_paige_chat_tools_catalogue.sql", "utf8");
     expect(sql).toMatch(/RETURN QUERY SELECT \* FROM public\._list_tool_autonomy_before_ads_chat\(_tenant_id\);/);
     expect(sql).toMatch(/\('set_ad_creative_featured','Feature a picture in your Ads showroom','Content'\)/);
     expect(sql).toMatch(/coalesce\(a\.mode,'confirm'\)/);

@@ -1,4 +1,4 @@
-# Operations explicit client review — preparation contract
+# Operations explicit client review â€” preparation contract
 
 Approved ANT-11 continuation; V3 design preserved. This child branch is unmounted and depends on reviewed submission source290, not Sales handoff270. No customer login/provider effects.
 

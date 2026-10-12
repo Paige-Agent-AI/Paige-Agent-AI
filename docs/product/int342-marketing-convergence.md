@@ -449,6 +449,8 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
      (`docs/delivery/marketing-action-contract.md`): the action stays the bus's `paige_actions` row; a
      `campaign_brief_actions` link names its campaign, tactic, family, dependency, expected result, outcome and
      evaluation; the lifecycle is derived on read. The Campaigns dossier view and Chat/Live tools are slice 6.
+   - **S4c: process scope (MBC 6a).** A process on `form.submitted` goes live only for one form, several forms
+     or one campaign (`docs/delivery/process-scope-contract.md`).
 5. **S5: Ads read (owner provider choice + backend).**
    - Connection, adapter, insight store, `ads.read` key and receipts.
    - Ads writes come later, through M1 and approvals.

@@ -164,7 +164,7 @@ export async function executeFinanceRead(client: FinanceCallerClient, input: unk
       : await client.rpc(command.capability === 'finance.liability_source' ? 'read_finance_liability_source' : obligations ? 'read_finance_accounting_obligations' : 'read_finance_account_source',
         { _expected_tenant: workspace.data, _entity_id: command.entity_id, _binding_id: command.binding_id, ...(obligations ? { _domain: command.domain } : {}) });
     if (read.error) return result('unavailable', 'finance_source_read_failed');
-    const evidence = object(read.data);
+    let evidence = object(read.data);
     if (!evidence) return result('unavailable', 'invalid_finance_evidence');
     // A workspace switch during the read invalidates the result; no old-account
     // result is returned after the canonical caller scope changes.
@@ -172,6 +172,31 @@ export async function executeFinanceRead(client: FinanceCallerClient, input: unk
     if (after.error || after.data !== workspace.data) return result('refused', 'workspace_changed');
     const afterActor = await client.auth.getUser();
     if (afterActor.error || afterActor.data.user?.id !== actor.data.user?.id) return result('refused', 'actor_changed');
+    // Re-resolve the canonical owner/admin, company and connection authority after
+    // the data read. An unchanged tenant/user alone does not prove current role.
+    const finalRead = await client.rpc('read_finance_source_catalog', { _expected_tenant_id: workspace.data });
+    if (finalRead.error) return result('refused', 'finance_authority_changed');
+    const finalCatalog = object(finalRead.data);
+    if (finalCatalog?.tenant_id !== workspace.data || !Array.isArray(finalCatalog.entities) || finalCatalog.entities.length > 200
+      || !Array.isArray(finalCatalog.sources) || finalCatalog.sources.length > 1000) return result('unavailable','invalid_finance_evidence');
+    if (command.capability !== 'finance.source_catalog') {
+      const companies = finalCatalog.entities.map(object).filter(row=>row?.id===command.entity_id);
+      const company = companies.length === 1 ? companies[0] : null;
+      if (!company || company.is_active !== true || !Number.isSafeInteger(company.version) || (company.version as number)<1
+        || planning && company.version !== entityVersion) return result('refused','finance_company_changed');
+      if (!planning && evidence.coverage !== 'unavailable') {
+        const bindings = finalCatalog.sources.map(object).filter(row=>row?.id===command.binding_id);
+        const source = bindings.length === 1 ? bindings[0] : null;
+        if (!source || source.entity_id !== command.entity_id || source.verification_state !== 'verified' || source.connection_active !== true
+          || !Number.isSafeInteger(evidence.binding_revision) || (evidence.binding_revision as number)<1
+          || source.revision !== evidence.binding_revision) return result('refused','finance_source_changed');
+      }
+    }
+    const finalWorkspace = await client.rpc('current_user_tenant_id');
+    if (finalWorkspace.error || finalWorkspace.data !== workspace.data) return result('refused','workspace_changed');
+    const finalActor = await client.auth.getUser();
+    if (finalActor.error || finalActor.data.user?.id !== actor.data.user?.id) return result('refused','actor_changed');
+    if(command.capability === 'finance.source_catalog') evidence=finalCatalog;
     if (planning) return result('read', null, planningProjection(evidence, command));
     if (command.capability === 'finance.liability_source' || obligations) return result('read', null, recordProjection(evidence, command));
     if (command.capability === 'finance.source_catalog') {

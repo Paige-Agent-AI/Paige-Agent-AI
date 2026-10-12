@@ -4,7 +4,7 @@ const actor = '10000000-0000-0000-0000-000000000001', tenant = '20000000-0000-00
 const command = { capability: 'finance.account_source', entity_id: entity, binding_id: binding };
 const debtCommand = { ...command, capability: 'finance.liability_source' };
 const billCommand = { ...command, capability: 'finance.accounting_obligations', domain: 'bills' };
-const sourceBase = () => ({ binding_id: binding, coverage: 'partial', temporal_basis: 'source_snapshot', institution_freshness_verified: false });
+const sourceBase = () => ({ binding_id: binding, binding_revision: 1, coverage: 'partial', temporal_basis: 'source_snapshot', institution_freshness_verified: false });
 const debtEvidence = () => ({ ...sourceBase(), company_wide_debt: null, scheduled_debt_service: null,
   records: [{ nativeId: 'card-a', sourceLabel: 'Original institution label', product: 'credit_card', currency: 'USD',
     outstandingBalance: '123.00', availableCredit: '0', principalBalance: null, aprs: null,
@@ -13,9 +13,10 @@ const debtEvidence = () => ({ ...sourceBase(), company_wide_debt: null, schedule
 const billEvidence = () => ({ ...sourceBase(), domain: 'bills', recognized_expenses: null, bank_settlement_verified: false, payment_execution_supported: false,
   records: [{ nativeId: 'bill-a', currency: 'EUR', recordedTotal: '250', recordedOutstanding: '0', accountingStatus: 'recorded_zero_balance',
     bankSettlementVerified: false, paymentExecutionSupported: false, vendor: { nativeId: 'vendor-a', sourceLabel: 'Original vendor wording' }, issues: [] }] });
-const evidence = () => ({ binding_id: binding, coverage: 'partial', accounts: [{ native_id: 'native-a', source_label: 'Owner label', current_balance: null, available_cash: '0', currency: 'USD' }], temporal_basis: 'source_snapshot', institution_freshness_verified: false });
+const evidence = () => ({ binding_id: binding, binding_revision: 1, coverage: 'partial', accounts: [{ native_id: 'native-a', source_label: 'Owner label', current_balance: null, available_cash: '0', currency: 'USD' }], temporal_basis: 'source_snapshot', institution_freshness_verified: false });
 function client(data: unknown = evidence()) {
-  return { auth: { getUser: vi.fn(async () => ({ data: { user: { id: actor } }, error: null })) }, rpc: vi.fn(async (name: string, _args?: Record<string, unknown>): Promise<{ data: unknown; error: unknown }> => ({ data: name === 'current_user_tenant_id' ? tenant : data, error: null })) };
+  return { auth: { getUser: vi.fn(async () => ({ data: { user: { id: actor } }, error: null })) }, rpc: vi.fn(async (name: string, _args?: Record<string, unknown>): Promise<{ data: unknown; error: unknown }> => ({ data: name === 'current_user_tenant_id' ? tenant : name==='read_finance_source_catalog'
+    ? data&&typeof data==='object'&&'tenant_id' in data ? data : {tenant_id:tenant,entities:[{id:entity,is_active:true,version:1}],sources:[{id:binding,entity_id:entity,revision:1,verification_state:'verified',connection_active:true}]} : data, error: null })) };
 }
 describe('Finance Spine read candidate', () => {
   it('reads distinct debt records without turning available credit into cash or a company aggregate', async () => {
@@ -173,4 +174,56 @@ it('keeps validated source selectors stable during actor resolution',async()=>{
   c.auth.getUser.mockImplementation(async()=>{mutable.binding_id=entity;return {data:{user:{id:actor}},error:null};});
   await executeFinanceRead(c,mutable);
   expect(c.rpc).toHaveBeenCalledWith('read_finance_account_source',{_expected_tenant:tenant,_entity_id:entity,_binding_id:binding});
+});
+
+
+describe('Finance read final authority and source fence',()=>{
+ it('withholds prior facts when owner/admin authority is revoked after the source read',async()=>{
+  const c=client();const ordinary=c.rpc.getMockImplementation()!;
+  c.rpc.mockImplementation(async(name,args)=>name==='read_finance_source_catalog'
+   ?{data:null,error:{code:'42501',message:'private membership detail'}}:ordinary(name,args));
+  expect(await executeFinanceRead(c,command)).toMatchObject({outcome:'refused',reason:'finance_authority_changed',evidence:null});
+ });
+ it('withholds prior facts when the selected company becomes inactive after the source read',async()=>{
+  const c=client();const ordinary=c.rpc.getMockImplementation()!;
+  c.rpc.mockImplementation(async(name,args)=>name==='read_finance_source_catalog'
+   ?{data:{tenant_id:tenant,entities:[{id:entity,is_active:false,version:1}],sources:[]},error:null}:ordinary(name,args));
+  expect(await executeFinanceRead(c,command)).toMatchObject({outcome:'refused',reason:'finance_company_changed',evidence:null});
+ });
+ it('withholds a source snapshot when binding authority changes after the read',async()=>{
+  const c=client({...evidence(),binding_revision:3});const ordinary=c.rpc.getMockImplementation()!;
+  c.rpc.mockImplementation(async(name,args)=>name==='read_finance_source_catalog'
+   ?{data:{tenant_id:tenant,entities:[{id:entity,is_active:true,version:1}],sources:[{id:binding,entity_id:entity,revision:4,verification_state:'verified',connection_active:true}]},error:null}:ordinary(name,args));
+  expect(await executeFinanceRead(c,command)).toMatchObject({outcome:'refused',reason:'finance_source_changed',evidence:null});
+ });
+ it('withholds an owner plan when company identity changes after its historical read',async()=>{
+  const c=planningClient();const ordinary=c.rpc.getMockImplementation()!;let catalogs=0;
+  c.rpc.mockImplementation(async(name,args)=>name==='read_finance_source_catalog'&&++catalogs===2
+   ?{data:{tenant_id:tenant,entities:[{id:entity,is_active:true,version:8}],sources:[]},error:null}:ordinary(name,args));
+  expect(await executeFinanceRead(c,planningCommand)).toMatchObject({outcome:'refused',reason:'finance_company_changed',evidence:null});
+ });
+});
+
+
+it('voids source evidence if workspace switching occurs during the final authority read',async()=>{
+ const c=client();const ordinary=c.rpc.getMockImplementation()!;let reads=0;
+ c.rpc.mockImplementation(async(name,args)=>name==='current_user_tenant_id'&&++reads===3
+  ?{data:entity,error:null}:ordinary(name,args));
+ expect(await executeFinanceRead(c,command)).toMatchObject({outcome:'refused',reason:'workspace_changed',evidence:null});
+});
+it('voids source evidence if actor switching occurs during the final authority read',async()=>{
+ const c=client();c.auth.getUser.mockResolvedValueOnce({data:{user:{id:actor}},error:null})
+  .mockResolvedValueOnce({data:{user:{id:actor}},error:null}).mockResolvedValueOnce({data:{user:{id:entity}},error:null});
+ expect(await executeFinanceRead(c,command)).toMatchObject({outcome:'refused',reason:'actor_changed',evidence:null});
+});
+it.each([{verification_state:'revoked'},{connection_active:false},{entity_id:tenant}])('refuses final binding lifecycle mismatch %j',async(change)=>{
+ const c=client();const ordinary=c.rpc.getMockImplementation()!;
+ c.rpc.mockImplementation(async(name,args)=>name==='read_finance_source_catalog'
+  ?{data:{tenant_id:tenant,entities:[{id:entity,is_active:true,version:1}],sources:[{id:binding,entity_id:entity,revision:1,verification_state:'verified',connection_active:true,...change}]},error:null}:ordinary(name,args));
+ expect(await executeFinanceRead(c,command)).toMatchObject({outcome:'refused',reason:'finance_source_changed',evidence:null});
+});
+it('does not leak final authority transport failures or return prior financial facts',async()=>{
+ const c=client();const ordinary=c.rpc.getMockImplementation()!;
+ c.rpc.mockImplementation(async(name,args)=>{if(name==='read_finance_source_catalog')throw new Error('SECRET private transport');return ordinary(name,args);});
+ const r=await executeFinanceRead(c,command);expect(r).toMatchObject({outcome:'unavailable',reason:'finance_source_read_failed',evidence:null});expect(JSON.stringify(r)).not.toContain('SECRET');
 });

@@ -152,7 +152,8 @@ opportunity, and Clients owns the person.
   has `published_at`, and none carries metrics.
 - **No visit or engagement data:** no tenant-scoped page-view producer exists, and the public renderers record
   nothing. `analytics_events` has no `tenant_id` and 0 `page_view` rows. `growth_funnel_sessions` has a writer
-  RPC that is never called.
+  RPC that is never called. *(2026-10-12: MBC slice 7a records tenant-scoped visits and wires the funnel-session
+  writer — `docs/delivery/public-visit-evidence-contract.md`; the figures are slice 7b.)*
 - **Mostly dashes:** Option B ("Web & content") can fill only status, date, link and leads per item. Visits,
   unique visitors, conversion, search, engagement and campaign would all be dashes, and blogs, resources and
   videos have no record at all.
@@ -443,8 +444,10 @@ Chat looks for `provider_key==="gohighlevel"` (`paige-ai-chat/index.ts:14688-146
 4. **S4: Capture events.**
    - A `form.submitted` native event and §67 trigger. Built as MBC slice 4a
      (`docs/delivery/form-submitted-event-contract.md`): once per submission matched to a contact, ids and tags only.
-   - Wire `growth_funnel_session_upsert`.
-   - A tenant-scoped public-route view producer, which reopens Content B.
+   - Wire `growth_funnel_session_upsert`. Built as MBC slice 7a.
+   - A tenant-scoped public-route view producer, which reopens Content B. Built as MBC slice 7a
+     (`docs/delivery/public-visit-evidence-contract.md`); the figures (visits, visit conversion, funnel step-through)
+     are slice 7b through the INT-340 seam.
    - **S4b: Marketing Action contract (coordinator §4 M-A1).** Built as MBC slice 5
      (`docs/delivery/marketing-action-contract.md`): the action stays the bus's `paige_actions` row; a
      `campaign_brief_actions` link names its campaign, tactic, family, dependency, expected result, outcome and

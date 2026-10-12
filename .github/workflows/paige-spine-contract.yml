@@ -93,6 +93,8 @@ on:
       - "supabase/tests/paige_orchestration_companion_minting.sql"
       # INT-179 Slice 2b — the ledger's in-flight guard and the at-most-once dispatch claim.
       - "supabase/tests/paige_act_dispatch_claim.sql"
+      # INT-298 MBC 7a — public visit evidence.
+      - "supabase/tests/public_visits.sql"
       - "supabase/migrations/20271023000000_paige_act_dispatch_claim.sql"
       - "supabase/migrations/20271023000200_paige_act_dispatch_claim_stale_parse.sql"
       - "supabase/functions/_shared/paige-orchestration/**"
@@ -225,6 +227,10 @@ jobs:
       - name: Marketing campaign steps and process scope from chat (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_steps_chat_tools.sql
+
+      - name: Public visits — recorded for the page's own business, read only by it (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/public_visits.sql
 
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/

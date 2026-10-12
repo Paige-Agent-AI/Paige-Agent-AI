@@ -34,9 +34,13 @@ import {
   pickPublicBrowseStep,
   isHttpUrl,
   foldPublicBrowse,
+  redactUrlForAudit,
+  scrubSecretLikeText,
   FORMAT_OPTIONS,
   FORMAT_PROMPT,
 } from "./skill-interpreter-core.ts";
+// PC-1 — canonical Rail receipt for the browse capability run (one home for HOW, executor for WHAT).
+import { recordCapabilityRun } from "./capability-record.ts";
 
 export type InterpretStatus =
   | "succeeded"        // auto lane — output produced and returned
@@ -361,6 +365,77 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         steps_log: stepsLog,
       };
     } else {
+      // PC-1 — bounded usage (coordinator P1+P2 fix, #2003): the governed reservation contract.
+      // secure_browser_browse_budget_gate is the ONLY authorized door to the tenant limits (direct
+      // table reads are REVOKEd from service_role by 20270419000000 — the earlier direct read could
+      // never succeed); it fails closed on a MISSING limits row (not_configured) and reserves
+      // worst-case seconds ATOMICALLY (limits-row FOR UPDATE + the day usage window), so concurrent
+      // browses cannot together exceed the daily budget. settleBudget runs on EVERY exit — block,
+      // success, fault, cancel — releasing the reservation and recording actual seconds; a crashed
+      // caller strands at most one reservation until the UTC day window rolls over (documented).
+      // Retry-aware worst case: the host makes up to TWO 30s attempts + a 400ms backoff (~60.4s
+      // wall) — the reservation must cover the retry or the daily budget under-counts (round-2 fix).
+      const BROWSE_RESERVE_SECONDS = 61;
+      let gateReservedSeconds = 0;
+      let controlPlaneReason: string | null = null;
+      try {
+        const { data: gate, error: gateErr } = await deps.admin.rpc("secure_browser_browse_budget_gate", {
+          p_tenant: tenantId,
+          p_reserved_seconds: BROWSE_RESERVE_SECONDS,
+        });
+        const g = (gate ?? null) as { allowed?: boolean; reason?: string } | null;
+        if (gateErr || !g || typeof g.allowed !== "boolean") controlPlaneReason = "control_plane:unreadable";
+        else if (!g.allowed) controlPlaneReason = String(g.reason ?? "control_plane:unreadable");
+        else gateReservedSeconds = BROWSE_RESERVE_SECONDS;
+      } catch {
+        controlPlaneReason = "control_plane:unreadable";
+      }
+      const settleBudget = async (consumedSeconds: number) => {
+        if (!gateReservedSeconds) return;
+        try {
+          await deps.admin.rpc("secure_browser_browse_budget_settle", {
+            p_tenant: tenantId,
+            p_reserved_seconds: gateReservedSeconds,
+            p_consumed_seconds: Math.max(0, Math.min(gateReservedSeconds, Math.ceil(consumedSeconds))),
+          });
+        } catch (e) {
+          console.error(`skill-interpreter[${skill.slug}] browse budget settle failed:`, (e as Error)?.message);
+        }
+      };
+      if (controlPlaneReason) {
+        // The gate REFUSED (feature flag off, limits missing/disabled, budget exhausted, or the
+        // control plane unreadable): the browse NEVER dispatches. One rail row with the reason and
+        // a capability_refused receipt — same discipline as a guard block (round-2 review fix: the
+        // verdict must be enforced, not advisory). Nothing was reserved, so nothing settles.
+        stepsLog.push({ step: "browse_public", dispatched: false, ok: false, blocked_reason: controlPlaneReason });
+        try {
+          const { error: auditErr } = await deps.admin.from("paige_browser_usage").insert({
+            tenant_id: tenantId,
+            endpoint: "browse-public-url",
+            url_requested: redactUrlForAudit(url),
+            url_resolved: null,
+            blocked_reason: controlPlaneReason,
+            http_status: null,
+            content_bytes: null,
+            response_time_ms: null,
+            created_by: actorUserId,
+          });
+          if (auditErr) console.error(`skill-interpreter[${skill.slug}] control-plane audit insert failed:`, auditErr?.message);
+        } catch (e) {
+          console.error(`skill-interpreter[${skill.slug}] control-plane audit insert threw:`, (e as Error)?.message);
+        }
+        if (tenantId && actorUserId) {
+          await recordCapabilityRun(deps.admin, {
+            tenantId, actorId: actorUserId, capabilityKey: "browse_public_url",
+            outcome: "capability_refused", runId,
+          }).catch(() => {});
+        }
+        return {
+          status: "needs_config",
+          outputs: { reason: "browser_budget_or_control_plane", note: "The workspace's secure-browser control plane blocked this browse." },
+          steps_log: stepsLog,
+        };
+      }
       let observed: PublicBrowseObservation | null = null;
       try {
         const result = await deps.browsePublic({
@@ -369,7 +444,9 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
           maxContentBytes: typeof publicStep.maxContentBytes === "number" ? publicStep.maxContentBytes : undefined,
         });
         if ((result as { needs_config?: boolean })?.needs_config) {
-          // Seam reported unconfigured — honest needs_config, and NO audit row (no call reached the endpoint).
+          // Seam reported unconfigured — honest needs_config, and NO audit row (no call reached the
+          // endpoint). The reservation settles first — this exit must not strand budget (round-2 fix).
+          await settleBudget(gateReservedSeconds);
           stepsLog.push({ step: "browse_public", dispatched: false, needs_config: true });
           return {
             status: "needs_config",
@@ -380,6 +457,8 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         observed = result as PublicBrowseObservation;
       } catch (e) {
         // A dispatch throw is a real fault — degrade honestly, write NO fabricated row (§13/§32).
+        // The reservation settles at worst case first (unknown duration — no double spend, no leak).
+        await settleBudget(gateReservedSeconds);
         console.error(`skill-interpreter[${skill.slug}] public-browse threw:`, (e as Error)?.message);
         stepsLog.push({ step: "browse_public", dispatched: true, ok: false, error: (e as Error)?.message });
         return {
@@ -408,8 +487,10 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         const { error: auditErr } = await deps.admin.from("paige_browser_usage").insert({
           tenant_id: tenantId,
           endpoint: "browse-public-url",
-          url_requested: url,
-          url_resolved: observed.final_url ?? null,
+          // PC-1 redaction: query strings/fragments/userinfo never persist (tokens, one-time codes,
+          // basic-auth) — scheme+host+path plus a param-count marker is the auditable shape.
+          url_requested: redactUrlForAudit(url),
+          url_resolved: observed.final_url ? redactUrlForAudit(observed.final_url) : null,
           blocked_reason: auditBlockedReason,
           http_status: typeof observed.http_status === "number" ? observed.http_status : null,
           content_bytes: typeof observed.content_bytes === "number" ? observed.content_bytes : null,
@@ -427,7 +508,37 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         stepsLog.push({ step: "browse_public_audit", ok: false, error: (e as Error)?.message });
       }
 
-      const folded = foldPublicBrowse(observed);
+      // PC-1 — settle the budget reservation with the ACTUAL duration (blocked observations carry
+      // duration too; a null duration settles at worst case — never less than honest).
+      await settleBudget(
+        typeof observed.duration_ms === "number" ? observed.duration_ms / 1000 : gateReservedSeconds,
+      );
+
+      // PC-1 — canonical Rail receipt with truthful outcome states, recorded at the executor where
+      // the taxonomy is in hand: succeeded / refused (a guard or control-plane reason) / failed (a
+      // host fault). A receipt miss is logged inside the helper and never blocks the observation —
+      // the same discipline as the rail write above.
+      if (tenantId && actorUserId) {
+        const browseOutcome = observed.ok
+          ? "capability_succeeded"
+          : observed.blocked_reason
+            ? "capability_refused"
+            : "capability_failed";
+        await recordCapabilityRun(deps.admin, {
+          tenantId, actorId: actorUserId, capabilityKey: "browse_public_url",
+          outcome: browseOutcome, runId,
+        }).catch((e: unknown) => console.error(`skill-interpreter[${skill.slug}] capability receipt failed:`, (e as Error)?.message));
+      }
+
+      // PC-1 redaction: page-derived text is scrubbed of secret-shaped material (bearer/basic
+      // headers, key=value secrets, opaque 40+ char runs, card-like digit runs) BEFORE it is folded
+      // into the model context. Over-redaction is the safe direction.
+      const foldRaw = foldPublicBrowse(observed);
+      const foldScrub = scrubSecretLikeText(foldRaw);
+      if (foldScrub.replacements > 0) {
+        stepsLog.push({ step: "browse_public_scrub", ok: true, replacements: foldScrub.replacements, truncated: foldScrub.truncated });
+      }
+      const folded = foldScrub.scrubbed;
       if (folded) contextText = contextText ? `${contextText}\n\n${folded}` : folded;
       stepsLog.push({
         step: "browse_public",

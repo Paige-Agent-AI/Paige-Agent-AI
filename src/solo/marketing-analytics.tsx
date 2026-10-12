@@ -11,14 +11,22 @@
 // belong to the Ads department (coordinator, 2026-10-11); a lead from a paid link is still counted here
 // by its source tag, in the Source mix.
 //
+// Where those leads stand in Sales (owner ruling 2026-10-11: Marketing, Sales and Ads read the SAME
+// pipelines and stages): the shared pipeline lead funnel (pipeline-lead-funnel.tsx), counted on the
+// server by campaign tag and ad tag, or from the submissions read here when that count isn't available.
+//
 // The prototype's Year range is left out: the email read serves 7, 30 or 90 days, and a year of leads
 // would almost always exceed the submissions read, so a year figure would be mostly a floor.
 import React from "react";
 import { Ic as SharedIcons } from "./_shared";
-import type { CampaignArtifact, CampaignSubmission } from "./useSoloCampaigns";
+import type { CampaignArtifact, CampaignSubmission, PipelineWorkspace } from "./useSoloCampaigns";
+import { deriveLeadFunnel, pipelineChoices } from "./ads-model";
+import { LeadFunnelPanel, sinceFor, useLeadFunnel, type FunnelFallback } from "./pipeline-lead-funnel";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
 import { SUBMISSION_READ_LIMIT } from "./marketing-overview-model";
 import { RANGES, deriveMarketingAnalytics, rangeOf, type RangeKey } from "./marketing-analytics-model";
+import { defaultPipelineTarget, defaultRouteLabel } from "./marketing-overview-model";
+import { useAdsIntakeCapability } from "./ads-intake-capability";
 import { useMarketingServerFigures, withServerFigures } from "./marketing-analytics-metrics";
 import { submissionsInPeriod } from "./marketing-overview-model";
 import { rate, ratePoints } from "./marketing-email-model";
@@ -36,7 +44,7 @@ type Token = DonutSlice["colorToken"];
 const SERIES: Token[] = ["--chart-1", "--chart-2", "--chart-3", "--chart-4"];
 
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
-const ROUTE_WORDS = { pipeline: "Routed to a pipeline", alert: "Email alert only, no pipeline", automations: "No pipeline", none: "Not routed" } as const;
+const ROUTE_WORDS = { pipeline: "Routed to a pipeline", default: "Default pipeline", alert: "Email alert only, no pipeline", automations: "No pipeline", none: "Not routed" } as const;
 const plural = (count: number, noun: string) => `${count.toLocaleString()} ${noun}${count === 1 ? "" : "s"}`;
 const n = (count: number) => count.toLocaleString();
 
@@ -56,11 +64,19 @@ export type MarketingAnalyticsProps = {
   onOpenEmail: () => void;
   /** Vibe Studio's launcher, for someone who may build there; offered when no form is live. */
   studioLauncher?: React.ReactNode;
+  /** The Sales pipelines, stages and deals (the same read Sales draws from). Omitted, no funnel is drawn. */
+  pipelineWorkspace?: Pick<PipelineWorkspace, "pipelines" | "stages" | "deals"> | null;
+  /** Marketing's list of forms and where each sends its leads, offered when leads reached no pipeline. */
+  onOpenRouting?: (() => void) | null;
 };
 
-export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher }: MarketingAnalyticsProps) {
+export function MarketingAnalytics({ tenantId, submissions, forms, briefs, briefsKnown, notice, range, onRange, onOpenForm, onOpenSales, onOpenEmail, studioLauncher, pipelineWorkspace, onOpenRouting }: MarketingAnalyticsProps) {
   const current = rangeOf(range);
-  const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days }), [submissions, briefs, forms, current.days]);
+  // A form with no route of its own files its leads into the default pipeline while it has an open stage.
+  // Not while this page load knows the default-pipeline functions are undeployed (the funnel below asks).
+  const intakeMissing = useAdsIntakeCapability(false) === "missing";
+  const defaultTarget = React.useMemo(() => (intakeMissing ? null : defaultPipelineTarget(pipelineWorkspace)), [intakeMissing, pipelineWorkspace]);
+  const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days, defaultReady: defaultTarget !== null }), [submissions, briefs, forms, current.days, defaultTarget]);
   // The headline figures, the funnel and the source mix are counted on the server over every lead in the
   // range (owners and admins); anyone else, or a read that fails, keeps the counts from the records read
   // here. The trend, the outcome ring, the heatmap and the capture points always draw from the records.
@@ -115,9 +131,10 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
       <OutcomesCard model={records} floor={recordFloor}/>
     </div>
     <Funnel model={model} floor={floor} days={current.days} briefsKnown={briefsShown} onOpenSales={onOpenSales}/>
+    {pipelineWorkspace && <PipelineStages tenantId={tenantId} workspace={pipelineWorkspace} submissions={submissions} days={current.days} onOpenSales={onOpenSales} onOpenRouting={onOpenRouting ?? null}/>}
     <div className="mva-pair">
       <Coverage model={model} floor={floor} days={current.days} briefsKnown={briefsShown}/>
-      <Capture model={records} floor={recordFloor} onOpenForm={onOpenForm} studioLauncher={studioLauncher}/>
+      <Capture model={records} floor={recordFloor} onOpenForm={onOpenForm} studioLauncher={studioLauncher} defaultLabel={defaultTarget ? defaultRouteLabel(defaultTarget) : null}/>
     </div>
     <HeatCard model={records} days={current.days}/>
     <Channels days={current.days} email={email} onOpenEmail={onOpenEmail}/>
@@ -248,8 +265,25 @@ function Funnel({ model, floor, days, briefsKnown, onOpenSales }: { model: Model
         </div>
       </li>;
     })}</ol>
-    <p className="mov-foot mva-foot"><span>Won deals, value and revenue are Sales numbers. Marketing links to them and never recalculates them.</span><button type="button" className="mov-lnk" onClick={onOpenSales}>Open Sales performance</button></p>
+    <p className="mov-foot mva-foot"><span>Won counts below are read from your Sales pipelines; deal value and revenue stay in Sales.</span><button type="button" className="mov-lnk" onClick={onOpenSales}>Open Sales performance</button></p>
   </section>;
+}
+
+/** The leads of this range, by the stage they stand in on one Sales pipeline (the default first). */
+function PipelineStages({ tenantId, workspace, submissions, days, onOpenSales, onOpenRouting }: { tenantId: string | null; workspace: Pick<PipelineWorkspace, "pipelines" | "stages" | "deals">; submissions: CampaignSubmission[]; days: number; onOpenSales: () => void; onOpenRouting: (() => void) | null }) {
+  const choices = React.useMemo(() => pipelineChoices(workspace.pipelines), [workspace.pipelines]);
+  const [pipelineId, setPipelineId] = React.useState<string | null>(null);
+  const chosen = choices.find((choice) => choice.id === pipelineId) ?? choices[0] ?? null;
+  const since = React.useMemo(() => sinceFor(days), [days]);
+  const fallback = React.useCallback<FunnelFallback>(async (pipeline, from) => ({
+    funnel: deriveLeadFunnel({ pipeline, stages: workspace.stages, deals: workspace.deals, since: from,
+      submissions: submissions.map((row) => ({ createdAt: row.createdAt, dealId: row.dealId, campaign: row.trackingCampaign, ad: row.trackingContent ?? null })) }),
+    capped: submissions.length >= SUBMISSION_READ_LIMIT,
+  }), [workspace.stages, workspace.deals, submissions]);
+  const read = useLeadFunnel({ tenantId, pipeline: chosen, since, fallback });
+  return <LeadFunnelPanel title="Where these leads stand in Sales" periodWords={`in the last ${days} days`} choices={choices} choicesReady
+    pipelineId={chosen?.id ?? null} onPipeline={setPipelineId} read={read} recordLimit={SUBMISSION_READ_LIMIT} onOpenSales={onOpenSales} onOpenRouting={onOpenRouting}
+    adHint="None of these leads carried an ad tag. In Ads › Creative, copy a picture’s tagged link and use it as its ad’s link."/>;
 }
 
 function Coverage({ model, floor, days, briefsKnown }: { model: Model; floor: (n: number) => string; days: number; briefsKnown: boolean }) {
@@ -273,7 +307,7 @@ function Coverage({ model, floor, days, briefsKnown }: { model: Model; floor: (n
   </section>;
 }
 
-function Capture({ model, floor, onOpenForm, studioLauncher }: { model: Model; floor: (n: number) => string; onOpenForm: (formId: string) => void; studioLauncher?: React.ReactNode }) {
+function Capture({ model, floor, onOpenForm, studioLauncher, defaultLabel }: { model: Model; floor: (n: number) => string; onOpenForm: (formId: string) => void; studioLauncher?: React.ReactNode; defaultLabel: string | null }) {
   const [active, setActive] = React.useState<string | null>(null);
   const counted = model.capture.filter((form) => form.count > 0);
   const named = counted.slice(0, SERIES.length);
@@ -288,7 +322,7 @@ function Capture({ model, floor, onOpenForm, studioLauncher }: { model: Model; f
       {model.leads > 0 && <div className="mva-body mva-body-tight"><RingWithKeys slices={slices} total={floor(model.leads)} caption="Leads" label="Leads by form" active={active} setActive={setActive} floor={floor} whole={model.leads} onPick={(key) => { if (key !== "rest") onOpenForm(key); }}/></div>}
       <ul className="mva-cap-list">{model.capture.map((form) => <li key={form.id}>
         <button type="button" className="mva-cap-row" onClick={() => onOpenForm(form.id)}>
-          <span className="mva-row-t">{form.name}<small className={form.route === "pipeline" ? undefined : "is-warn"}>{ROUTE_WORDS[form.route]}{form.failed ? ` · ${plural(form.failed, "automation run")} failed recently` : ""}</small></span>
+          <span className="mva-row-t">{form.name}<small className={form.route === "pipeline" || form.route === "default" ? undefined : "is-warn"}>{form.route === "default" && defaultLabel ? defaultLabel : ROUTE_WORDS[form.route]}{form.failed ? ` · ${plural(form.failed, "automation run")} failed recently` : ""}</small></span>
           <b>{floor(form.count)}</b>
         </button>
       </li>)}

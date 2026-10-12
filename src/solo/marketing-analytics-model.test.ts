@@ -53,3 +53,16 @@ describe("deriveMarketingAnalytics", () => {
     expect(model.sourceSlices.map((s) => [s.label, s.count, s.kind])).toEqual([["a", 2, "tag"], ["b", 1, "tag"], ["c", 1, "tag"], ["d", 1, "tag"], ["Other sources", 2, "other"], ["No tracking tag", 1, "untagged"]]);
   });
 });
+
+describe("deriveMarketingAnalytics routes (default pipeline, owner ruling 2026-10-11)", () => {
+  const form = (id: string, extra: Record<string, unknown> = {}) => ({ id, type: "form" as const, name: id, routingTargets: [] as string[], routingConfigured: false, recentDispatches: { succeeded: 0, failed: 0, other: 0 }, ...extra });
+  const forms = [form("none"), form("alert", { intakeAlert: true }), form("auto", { routingTargets: ["notify_team"], routingConfigured: true }), form("own", { intakePipelineId: "p" })];
+  const routes = (defaultReady?: boolean) => Object.fromEntries(deriveMarketingAnalytics({ submissions: [], briefs: [], forms, days: 30, defaultReady }).capture.map((row) => [row.id, row.route]));
+  it("a form with no route of its own is 'default' while the default pipeline can take its leads", () => {
+    expect(routes(true)).toEqual({ none: "default", alert: "default", auto: "default", own: "pipeline" });
+  });
+  it("without a usable default pipeline, the old states stand", () => {
+    expect(routes(false)).toEqual({ none: "none", alert: "alert", auto: "automations", own: "pipeline" });
+    expect(routes()).toEqual(routes(false));
+  });
+});

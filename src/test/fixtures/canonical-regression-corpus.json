@@ -1,0 +1,161 @@
+{
+  "items": [
+    {
+      "history": [
+        {
+          "mode": "historical",
+          "output": {
+            "http_status": 500,
+            "audit_recorded": false,
+            "disputes_auto_created": null
+          },
+          "run_ref": "60000000-0000-4000-8000-000000000010",
+          "verdict": "fail",
+          "evaluator": {
+            "id": "offline-write-integrity",
+            "hash": "9752339ed600dbb73f80702970fce68e4fc0f78c63ae454652f4ca31d4e25496",
+            "version": "1.0.0"
+          },
+          "result_ref": "60000000-0000-4000-8000-000000000020",
+          "proof_class": "controlled_offline_real_handler",
+          "recorded_at": "2026-10-11T01:57:31.578-04:00",
+          "source_hash": "2d122eb9966c944aefc4ed790000e6ff43f78adc922c2ceab70c27c583a2adb3",
+          "applicability": "applicable",
+          "evidence_hash": "d433708a99884e002eb8844b43e99d9ccd428afdec4b1cd344c39004951f459e",
+          "hash_encoding": "sha256_postgresql_jsonb_text_utf8",
+          "evidence_state": "complete",
+          "baseline_source_hash": "2d122eb9966c944aefc4ed790000e6ff43f78adc922c2ceab70c27c583a2adb3"
+        },
+        {
+          "mode": "current",
+          "output": {
+            "http_status": 200,
+            "audit_recorded": true,
+            "disputes_auto_created": 0
+          },
+          "run_ref": "60000000-0000-4000-8000-000000000011",
+          "verdict": "pass",
+          "evaluator": {
+            "id": "offline-write-integrity",
+            "hash": "9752339ed600dbb73f80702970fce68e4fc0f78c63ae454652f4ca31d4e25496",
+            "version": "1.0.0"
+          },
+          "result_ref": "60000000-0000-4000-8000-000000000021",
+          "proof_class": "controlled_offline_real_handler",
+          "recorded_at": "2026-10-11T01:57:32.213-04:00",
+          "source_hash": "30bef5518c9c3ae99628f3b8d544ce79cf9e8259e4e7ac928cf4ca3bb0dba45d",
+          "applicability": "applicable",
+          "evidence_hash": "f2b301838d8797cc2a79618242c2821af2948d5f0a1581b239d43017a6fd4f54",
+          "hash_encoding": "sha256_postgresql_jsonb_text_utf8",
+          "evidence_state": "complete",
+          "baseline_source_hash": "30bef5518c9c3ae99628f3b8d544ce79cf9e8259e4e7ac928cf4ca3bb0dba45d"
+        },
+        {
+          "mode": "reintroduced",
+          "output": {
+            "http_status": 500,
+            "audit_recorded": false,
+            "disputes_auto_created": null
+          },
+          "run_ref": "60000000-0000-4000-8000-000000000012",
+          "verdict": "fail",
+          "evaluator": {
+            "id": "offline-write-integrity",
+            "hash": "9752339ed600dbb73f80702970fce68e4fc0f78c63ae454652f4ca31d4e25496",
+            "version": "1.0.0"
+          },
+          "result_ref": "60000000-0000-4000-8000-000000000022",
+          "proof_class": "controlled_offline_real_handler",
+          "recorded_at": "2026-10-11T01:57:32.953-04:00",
+          "source_hash": "20e46eb3691853901054993a873936c869b31d349988f9e8108b776e1d7ae7db",
+          "applicability": "applicable",
+          "evidence_hash": "2b77438a90b1e09d520c0991d93f1c53df0ad06617e85e9a585737039b7421a7",
+          "hash_encoding": "sha256_postgresql_jsonb_text_utf8",
+          "evidence_state": "complete",
+          "baseline_source_hash": "30bef5518c9c3ae99628f3b8d544ce79cf9e8259e4e7ac928cf4ca3bb0dba45d"
+        }
+      ],
+      "case_ref": "60000000-0000-4000-8000-000000000002",
+      "case_hash": "b05861170c206ba6afae9c0849526bc7348babd715d4cd56d38399c4bc9c7606",
+      "definition": {
+        "scope": "platform_synthetic",
+        "runner": "scripts/int280-regression/credit-sync.mjs",
+        "source": {
+          "issue": 734,
+          "fix_pr": 1917,
+          "repository": "Paige-Agent-AI/Paige-Agent-AI",
+          "source_path": "supabase/functions/sync-credit-report-data/index.ts",
+          "fixed_commit": "e648864ad9ae277ab24b5f4eb49dd14027aeafea",
+          "merge_commit": "9512e649ba347bf6335540d38f8bb9d9b0ef0661",
+          "faulty_commit": "6c76675dc57d1595ff9160e736a0d3723ac8010e",
+          "review_comment": 6101464003,
+          "fixed_source_hash": "30bef5518c9c3ae99628f3b8d544ce79cf9e8259e4e7ac928cf4ca3bb0dba45d",
+          "faulty_source_hash": "2d122eb9966c944aefc4ed790000e6ff43f78adc922c2ceab70c27c583a2adb3"
+        },
+        "fixture": {
+          "hash": "ac1f5cdd4dee885af6a982e5412931ac8c48a548f69b4cc17211dd3b96c304aa",
+          "kind": "synthetic_offline",
+          "path": "scripts/int280-regression/fixtures/credit-sync-audit-reference.v1.json"
+        },
+        "version": "1.0.0",
+        "case_key": "credit-sync-audit-reference",
+        "category": "write_integrity",
+        "expected": {
+          "http_status": 200,
+          "audit_recorded": true,
+          "disputes_auto_created": 0
+        },
+        "authority": "observe_only",
+        "evaluator": {
+          "id": "exact_match",
+          "set_id": "offline-write-integrity",
+          "version": "1.0.0",
+          "set_version": "1.0.0",
+          "definition_hash": "9752339ed600dbb73f80702970fce68e4fc0f78c63ae454652f4ca31d4e25496"
+        },
+        "trajectory": {
+          "state": "unlinked",
+          "reason": "historical_identity_unavailable"
+        },
+        "contract_version": 1
+      },
+      "published_at": "2026-10-12T00:16:46.759187-04:00",
+      "source_basis": "offline_reproduction_not_production_execution",
+      "history_limit_reached": false,
+      "latest_corrected_result": {
+        "mode": "current",
+        "output": {
+          "http_status": 200,
+          "audit_recorded": true,
+          "disputes_auto_created": 0
+        },
+        "run_ref": "60000000-0000-4000-8000-000000000011",
+        "verdict": "pass",
+        "evaluator": {
+          "id": "offline-write-integrity",
+          "hash": "9752339ed600dbb73f80702970fce68e4fc0f78c63ae454652f4ca31d4e25496",
+          "version": "1.0.0"
+        },
+        "result_ref": "60000000-0000-4000-8000-000000000021",
+        "proof_class": "controlled_offline_real_handler",
+        "recorded_at": "2026-10-11T01:57:32.213-04:00",
+        "source_hash": "30bef5518c9c3ae99628f3b8d544ce79cf9e8259e4e7ac928cf4ca3bb0dba45d",
+        "applicability": "applicable",
+        "evidence_hash": "f2b301838d8797cc2a79618242c2821af2948d5f0a1581b239d43017a6fd4f54",
+        "hash_encoding": "sha256_postgresql_jsonb_text_utf8",
+        "evidence_state": "complete",
+        "baseline_source_hash": "30bef5518c9c3ae99628f3b8d544ce79cf9e8259e4e7ac928cf4ca3bb0dba45d"
+      },
+      "authenticated_acceptance": "UNVERIFIED",
+      "historical_customer_effect": "UNKNOWN",
+      "latest_corrected_result_scope": "returned_history_at_reproduction"
+    }
+  ],
+  "limit": 25,
+  "execution": "offline_ci_only",
+  "collection": "reviewed_platform_synthetic",
+  "next_cursor": null,
+  "observed_at": "2026-10-12T00:16:48.154127-04:00",
+  "publication": "reviewed_migration_only",
+  "contract_version": 1
+}

@@ -8,6 +8,9 @@ import { syntheticTrajectory, syntheticTrajectoryPage } from "@/test/fixtures/tr
 import canonicalScorecard from '@/test/fixtures/canonical-task-scorecard.json';
 import { parseTaskScorecard } from '@/operator/data/taskScorecardContract';
 import type { TrajectoryPage } from '@/operator/data/intelligenceContract';
+import canonicalCorpus from '@/test/fixtures/canonical-regression-corpus.json';
+import { parseRegressionCorpus } from '@/operator/data/regressionCorpusContract';
+import { webcrypto } from 'node:crypto';
 vi.mock("@/operator/data/useIntelligence", () => ({ useIntelligence: vi.fn() }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -31,6 +34,16 @@ async function click(text: string) {
 }
 afterEach(async () => { if (root) await act(async () => root.unmount()); node?.remove(); });
 describe("INT-280 supported Operator flows", () => {
+  it('opens Executive first and reaches the protected Corpus Inspector only inside Improvement Studio', async () => {
+    Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
+    const data = read(); data.corpus = { cursor: null, pageOlder: vi.fn(), page: source(await parseRegressionCorpus(canonicalCorpus)) };
+    await mount(data); expect(node.querySelector('[role="tab"][data-state="active"]')?.textContent).toBe('Executive Flight Deck');
+    expect(node.textContent).not.toContain('Regression Corpus Inspector');
+    await click('Improvement Studio'); await click('Inspect case'); expect(node.textContent).toContain('Regression Corpus Inspector');
+    expect(node.textContent).toContain('Expected FAIL:'); expect(data.inspectTrajectory).not.toHaveBeenCalled();
+    await click('Forensic Observatory'); await click('Improvement Studio'); expect(node.querySelector('[aria-label="Regression case inspection"]')).toBeNull();
+    expect(node.querySelectorAll('[role="tab"][data-workspace]')).toHaveLength(5);
+  });
   it.each(['Evaluate task evidence', 'Prepare recommendation from this task', 'Executive Flight Deck'])('clears an abandoned scorecard return origin after %s before a direct Forensic inspection', async exit => {
     const data = read(); const trajectory = canonicalScorecard.trajectory as unknown as TrajectoryPage;
     data.scorecard = { version: '1.1.0', page: source(parseTaskScorecard(canonicalScorecard.v2, '1.1.0')), selectVersion: vi.fn(), pageOlder: vi.fn(), evaluate: vi.fn(), stopWaiting: vi.fn(), action: { status: 'idle' } };

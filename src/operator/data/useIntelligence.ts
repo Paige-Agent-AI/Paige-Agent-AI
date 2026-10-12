@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaskScorecard } from './useTaskScorecard';
+import { useRegressionCorpus } from './useRegressionCorpus';
 import type { EvalRun, IntelligenceMetrics, IntelligenceRead, IntelligenceTrace, ReadState, TrajectoryPage, TrajectoryRequest } from "./intelligenceContract";
 
 /** Each identity/authority resolution has its own query keys; no inherited fleet cache. */
@@ -105,7 +106,8 @@ export function useIntelligence(): IntelligenceRead {
       updatedAt: query.dataUpdatedAt, refresh: () => { void query.refetch(); } };
   }
   const scorecard = useTaskScorecard(scope, refuse);
-  return { ...scope, scorecard, retryAccess: () => setRetry((n) => n + 1), metrics: state(metrics), traces: state(traces), evals: state(evals),
+  const corpus = useRegressionCorpus(scope, refuse);
+  return { ...scope, scorecard, corpus, retryAccess: () => setRetry((n) => n + 1), metrics: state(metrics), traces: state(traces), evals: state(evals),
     trajectories: state(trajectories), selectedTrajectory: state(selectedTrajectory), trajectoryRequest: request,
     inspectTrajectory: (next) => setTaskSelection({ subject: scope.subject, epoch: scope.epoch, request: next, cursor }),
     pageTrajectories: (next) => setTaskSelection({ subject: scope.subject, epoch: scope.epoch, request: null, cursor: next }),

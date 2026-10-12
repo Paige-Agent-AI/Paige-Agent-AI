@@ -41,3 +41,5 @@ jobs:
 
       - name: Actual lender source projection, account-version evidence and liability meaning
         run: node scripts/proof/finance-source-authority.mjs liabilities
+      - name: Finance cash scenarios, versioned assumptions and concurrent isolation
+        run: node scripts/proof/finance-source-authority.mjs scenarios

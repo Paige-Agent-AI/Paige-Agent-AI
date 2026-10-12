@@ -66,6 +66,7 @@ import { resolveNativeCapabilityStatus } from "../paige-capability-status/gather
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { actReceiptRunSeed } from "./outcomes.ts";
+import { readProcessPosture } from "./engine.ts";
 
 /** The minimal client surface the executor needs (a read chain + rpc) — kept structural so a fake proves it.
  *  Mirrors EngineDb rather than reusing AdapterDb verbatim: the rpc `args` is OPTIONAL here so this type stays
@@ -226,9 +227,8 @@ async function governedGate(
 ): Promise<{ ok: true; args: Record<string, unknown> } | { ok: false; reason: string }> {
   // The process's CURRENT posture, through the same resolver the engine used when it held the act. Service
   // role (auth.uid() null) is the resolver's trusted path. A read failure fails CLOSED and is not terminal.
-  const { data: posture, error: postureErr } = await db.rpc("resolve_automation_autonomy", { _automation_id: p.automationId });
-  if (postureErr || posture == null) return { ok: false, reason: "process_posture_read_error" };
-  const pst = posture as { found?: boolean; state?: string; effective?: string; capped_by?: string | null };
+  const { data: pst, error: postureErr } = await readProcessPosture(db, p.automationId);
+  if (postureErr || pst == null) return { ok: false, reason: "process_posture_read_error" };
   if (pst.found !== true) return { ok: false, reason: "process_not_found" };
   if (pst.state !== "live") return { ok: false, reason: "process_not_live" };
   if (pst.effective !== "auto" && pst.effective !== "confirm") {

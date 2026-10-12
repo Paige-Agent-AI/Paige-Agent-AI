@@ -150,6 +150,13 @@ describe("redactUrlForAudit — PC-1 audit redaction (secrets never reach the ra
     expect(redactUrlForAudit("https://a.co/p#access_token=zzz")).toBe("https://a.co/p#_redacted");
     expect(redactUrlForAudit("https://user:pass@a.co/p")).toBe("https://a.co/p");
   });
+  it("redacts opaque token-shaped path segments but keeps readable slugs (review follow-up)", () => {
+    expect(redactUrlForAudit("https://a.co/invite/eNcRyPtEdToKeN123456")).toBe("https://a.co/invite/[token]");
+    expect(redactUrlForAudit("https://a.co/filing/6ba7b810-9dad-11d1-80b4-00c04fd430c8")).toBe("https://a.co/filing/[token]");
+    expect(redactUrlForAudit("https://a.co/annual-report-2026")).toBe("https://a.co/annual-report-2026");
+    expect(redactUrlForAudit("https://a.co/infrastructure-modernization")).toBe("https://a.co/infrastructure-modernization");
+    expect(redactUrlForAudit("https://a.co/filing/123")).toBe("https://a.co/filing/123");
+  });
   it("caps runaway paths and answers unparseable input honestly", () => {
     const long = "https://a.co/" + "x".repeat(400);
     expect(redactUrlForAudit(long).length).toBeLessThanOrEqual("https://a.co/".length + 301);

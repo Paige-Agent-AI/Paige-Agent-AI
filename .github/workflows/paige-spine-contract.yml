@@ -88,6 +88,7 @@ on:
       - "supabase/functions/_shared/paige-orchestration/**"
       - "supabase/functions/execute-approval/**"
       - "scripts/proof/resend-receipt-concurrency.mjs"
+      - "scripts/proof/secure-browser-browse-budget-concurrency.mjs"
       - "scripts/proof/business-mission-concurrency.mjs"
       - "src/__tests__/paige-spine-*.test.ts"
       - "src/__tests__/paige-orchestration-approve-executor.test.ts"
@@ -384,6 +385,11 @@ jobs:
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
+      # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day
+      # budget that admits 4; the gate's FOR UPDATE reservation must refuse the other 8.
+      - run: node scripts/proof/secure-browser-browse-budget-concurrency.mjs
+        env:
+          RECEIPT_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # The team.authority contract. Its load-bearing fixture is a caller who is the legal owner of
       # ANOTHER workspace while holding a plain member seat in their active one — the one shape that
       # makes a dropped is_tenant_owner() tenant argument, and a collapsed permission field, fail

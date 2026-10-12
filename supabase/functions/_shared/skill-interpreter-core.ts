@@ -235,6 +235,20 @@ export function foldPublicBrowse(obs: PublicBrowseObservation): string {
  * The auditable shape is scheme + host + path, with a COUNT marker where a query/fragment existed
  * so analysts still know a parameterized URL was requested. Over-redaction is the safe direction.
  */
+// A path SEGMENT that looks like an opaque token (≥20 chars, token charset, contains a digit —
+// uuids, random ids, verification fragments; plain words/slug-numbers stay readable). Over-redaction
+// is the safe direction; the count marker keeps the shape auditable.
+const PATH_TOKEN_SEGMENT_RE = /^[A-Za-z0-9_-]{20,}$/;
+function pathSegmentIsToken(seg: string): boolean {
+  return PATH_TOKEN_SEGMENT_RE.test(seg) && /[0-9]/.test(seg);
+}
+function redactPathTokens(pathname: string): string {
+  return pathname
+    .split("/")
+    .map((seg) => (seg && pathSegmentIsToken(seg) ? "[token]" : seg))
+    .join("/");
+}
+
 export function redactUrlForAudit(raw: string): string {
   try {
     const u = new URL(String(raw));
@@ -242,7 +256,7 @@ export function redactUrlForAudit(raw: string): string {
     const q = params.length ? `?_redacted=${params.length}` : "";
     const frag = u.hash ? "#_redacted" : "";
     const path = u.pathname.length > 300 ? `${u.pathname.slice(0, 300)}…` : u.pathname;
-    return `${u.protocol}//${u.host}${path}${q}${frag}`;
+    return `${u.protocol}//${u.host}${redactPathTokens(path)}${q}${frag}`;
   } catch {
     return "_unparseable_url_redacted";
   }

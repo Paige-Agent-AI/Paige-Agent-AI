@@ -365,74 +365,41 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         steps_log: stepsLog,
       };
     } else {
-      // PC-1 — bounded usage: consult the secure-browser control plane BEFORE dispatching. No row =
-      // no bound configured (the tenant capability flag remains the outer gate); a row with
-      // enabled=false, an UNREADABLE control plane, or an exhausted daily seconds budget blocks the
-      // browse honestly (one rail row with the reason — same discipline as a guard block).
+      // PC-1 — bounded usage (coordinator P1+P2 fix, #2003): the governed reservation contract.
+      // secure_browser_browse_budget_gate is the ONLY authorized door to the tenant limits (direct
+      // table reads are REVOKEd from service_role by 20270419000000 — the earlier direct read could
+      // never succeed); it fails closed on a MISSING limits row (not_configured) and reserves
+      // worst-case seconds ATOMICALLY (limits-row FOR UPDATE + the day usage window), so concurrent
+      // browses cannot together exceed the daily budget. settleBudget runs on EVERY exit — block,
+      // success, fault, cancel — releasing the reservation and recording actual seconds; a crashed
+      // caller strands at most one reservation until the UTC day window rolls over (documented).
+      const BROWSE_RESERVE_SECONDS = 45; // the Fly host's RUN_CAP_MS worst case (ms/1000, ceil)
+      let gateReservedSeconds = 0;
       let controlPlaneReason: string | null = null;
       try {
-        const { data: limitsRow, error: limitsErr } = await deps.admin
-          .from("secure_browser_tenant_limits")
-          .select("enabled,max_daily_session_seconds")
-          .eq("tenant_id", tenantId)
-          .maybeSingle();
-        if (limitsErr) {
-          controlPlaneReason = "control_plane:unreadable";
-        } else if (limitsRow && limitsRow.enabled !== true) {
-          controlPlaneReason = "control_plane:disabled";
-        } else if (limitsRow && limitsRow.enabled === true && Number(limitsRow.max_daily_session_seconds) > 0) {
-          const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00+00:00`;
-          const { data: usage, error: usageErr } = await deps.admin
-            .from("paige_browser_usage")
-            .select("response_time_ms")
-            .eq("tenant_id", tenantId)
-            .eq("endpoint", "browse-public-url")
-            .gte("called_at", dayStart)
-            .limit(2000);
-          if (usageErr) controlPlaneReason = "control_plane:unreadable";
-          else if (!Array.isArray(usage)) controlPlaneReason = "control_plane:unreadable";
-          else if (usage.length >= 2000) controlPlaneReason = "control_plane:unreadable"; // row-cap hit: the sum may undercount — fail closed (review fix)
-          else {
-            const usedMs = usage.reduce(
-              (acc: number, r: { response_time_ms?: number | null }) => acc + (Number(r?.response_time_ms) || 0),
-              0,
-            );
-            if (usedMs / 1000 >= Number(limitsRow.max_daily_session_seconds)) controlPlaneReason = "control_plane:daily_budget";
-          }
-        }
+        const { data: gate, error: gateErr } = await deps.admin.rpc("secure_browser_browse_budget_gate", {
+          p_tenant: tenantId,
+          p_reserved_seconds: BROWSE_RESERVE_SECONDS,
+        });
+        const g = (gate ?? null) as { allowed?: boolean; reason?: string } | null;
+        if (gateErr || !g || typeof g.allowed !== "boolean") controlPlaneReason = "control_plane:unreadable";
+        else if (!g.allowed) controlPlaneReason = String(g.reason ?? "control_plane:unreadable");
+        else gateReservedSeconds = BROWSE_RESERVE_SECONDS;
       } catch {
         controlPlaneReason = "control_plane:unreadable";
       }
-      if (controlPlaneReason) {
-        stepsLog.push({ step: "browse_public", dispatched: false, ok: false, blocked_reason: controlPlaneReason });
+      const settleBudget = async (consumedSeconds: number) => {
+        if (!gateReservedSeconds) return;
         try {
-          const { error: auditErr } = await deps.admin.from("paige_browser_usage").insert({
-            tenant_id: tenantId,
-            endpoint: "browse-public-url",
-            url_requested: redactUrlForAudit(url),
-            url_resolved: null,
-            blocked_reason: controlPlaneReason,
-            http_status: null,
-            content_bytes: null,
-            response_time_ms: null,
-            created_by: actorUserId,
+          await deps.admin.rpc("secure_browser_browse_budget_settle", {
+            p_tenant: tenantId,
+            p_reserved_seconds: gateReservedSeconds,
+            p_consumed_seconds: Math.max(0, Math.min(gateReservedSeconds, Math.ceil(consumedSeconds))),
           });
-          if (auditErr) console.error(`skill-interpreter[${skill.slug}] control-plane audit insert failed:`, auditErr?.message);
         } catch (e) {
-          console.error(`skill-interpreter[${skill.slug}] control-plane audit insert threw:`, (e as Error)?.message);
+          console.error(`skill-interpreter[${skill.slug}] browse budget settle failed:`, (e as Error)?.message);
         }
-        if (tenantId && actorUserId) {
-          await recordCapabilityRun(deps.admin, {
-            tenantId, actorId: actorUserId, capabilityKey: "browse_public_url",
-            outcome: "capability_refused", runId,
-          }).catch(() => {}); // receipt miss never masks the refusal (§13)
-        }
-        return {
-          status: "needs_config",
-          outputs: { reason: "browser_budget_or_control_plane", note: "The workspace's secure-browser control plane blocked this browse." },
-          steps_log: stepsLog,
-        };
-      }
+      };
       let observed: PublicBrowseObservation | null = null;
       try {
         const result = await deps.browsePublic({
@@ -452,6 +419,8 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         observed = result as PublicBrowseObservation;
       } catch (e) {
         // A dispatch throw is a real fault — degrade honestly, write NO fabricated row (§13/§32).
+        // The reservation settles at worst case first (unknown duration — no double spend, no leak).
+        await settleBudget(gateReservedSeconds);
         console.error(`skill-interpreter[${skill.slug}] public-browse threw:`, (e as Error)?.message);
         stepsLog.push({ step: "browse_public", dispatched: true, ok: false, error: (e as Error)?.message });
         return {
@@ -500,6 +469,12 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
         console.error(`skill-interpreter[${skill.slug}] paige_browser_usage insert threw:`, (e as Error)?.message);
         stepsLog.push({ step: "browse_public_audit", ok: false, error: (e as Error)?.message });
       }
+
+      // PC-1 — settle the budget reservation with the ACTUAL duration (blocked observations carry
+      // duration too; a null duration settles at worst case — never less than honest).
+      await settleBudget(
+        typeof observed.duration_ms === "number" ? observed.duration_ms / 1000 : gateReservedSeconds,
+      );
 
       // PC-1 — canonical Rail receipt with truthful outcome states, recorded at the executor where
       // the taxonomy is in hand: succeeded / refused (a guard or control-plane reason) / failed (a

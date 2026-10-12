@@ -273,6 +273,9 @@ const browserProof = (() => {
   if (!/browsePublic:\s*(\(a\)\s*=>\s*browsePublicViaHost\(a,\s*req\.signal\)|browsePublicViaHost)/.test(src)) findings.push("skill-runner no longer injects the browsePublic interpreter seam");
   if (!/\/browse-public-url/.test(src)) findings.push("the public-browse seam no longer targets /browse-public-url");
   if (!/redactUrlForAudit|scrubSecretLikeText/.test(readFileSync(join(root, "supabase/functions/_shared/skill-interpreter.ts"), "utf8"))) findings.push("the browse rail/fold no longer applies PC-1 redaction");
+  const interpSrc = readFileSync(join(root, "supabase/functions/_shared/skill-interpreter.ts"), "utf8");
+  if (!/secure_browser_browse_budget_gate/.test(interpSrc)) findings.push("the browse path no longer consults the governed budget gate");
+  if (/secure_browser_tenant_limits"\)\.select|from\("secure_browser_tenant_limits"\)/.test(interpSrc)) findings.push("the browse path reads the limits table directly (revoked from service_role)");
   return { findings };
 })();
 function provenBrowserSymbol(capability, role, symbol) {

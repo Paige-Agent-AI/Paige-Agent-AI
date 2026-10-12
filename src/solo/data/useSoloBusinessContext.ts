@@ -139,7 +139,17 @@ export type BusinessContextSaveInput = {
 };
 
 export type BusinessContextSaveResult =
-  | { ok: true; kind: "saved" }
+  | {
+      ok: true;
+      kind: "saved";
+      /** Caller-facing Setup readback, not a receipt or a model-context grant.
+       * Never use the submitted draft as evidence that a fact was stored. */
+      readback: {
+        tenantId: string;
+        brief: SoloSetupBrief;
+        contextRevision: number | null;
+      };
+    }
   | { ok: false; kind: "failed" | "conflict" | "stale"; error: string };
 
 export function useSoloBusinessContext() {
@@ -348,7 +358,17 @@ export function useSoloBusinessContext() {
         if (typeof refreshTenant === "function") {
           void Promise.resolve(refreshTenant()).catch(() => {});
         }
-        return { ok: true, kind: "saved" };
+        return {
+          ok: true,
+          kind: "saved",
+          readback: {
+            tenantId: tenantAtStart,
+            brief: cleanSoloSetupBrief(row.brief, row.tenantName ?? ""),
+            contextRevision: Number.isSafeInteger(row.contextRevision) && Number(row.contextRevision) >= 0
+              ? Number(row.contextRevision)
+              : null,
+          },
+        };
       } catch (caught) {
         if (
           epoch !== saveEpoch.current ||

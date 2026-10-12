@@ -66,6 +66,72 @@ describe("Solo business context data boundary", () => {
     state.rpc.mockReset();
   });
 
+  it("returns the canonical saved brief and revision instead of treating the interview draft as readback", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({
+      data: {
+        ...loaded().data,
+        contextRevision: 5,
+        brief: {
+          publicName: "Stored business name",
+          currentPriority: "Follow up with warm leads",
+          updatedAt: "2026-10-12T18:00:00Z",
+          provenance: {
+            currentPriority: { source: "owner_confirmed", confidence: "confirmed" },
+          },
+        },
+      },
+      error: null,
+    });
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    const draft = currentDraft();
+    draft.brief = { ...draft.brief, currentPriority: "  Follow up with warm leads  " };
+    await act(async () => {
+      const result = await latest.save(draft);
+      expect(result).toMatchObject({
+        ok: true,
+        kind: "saved",
+        readback: {
+          tenantId: "tenant-a",
+          contextRevision: 5,
+          brief: { publicName: "Stored business name", currentPriority: "Follow up with warm leads" },
+        },
+      });
+    });
+    expect(latest.brief.currentPriority).toBe("Follow up with warm leads");
+    expect(state.rpc).toHaveBeenCalledTimes(2);
+    await act(async () => root.unmount());
+  });
+
+  it("does not return a foreign workspace's save payload as interview readback", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce(loaded("tenant-b"));
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    await act(async () => {
+      const result = await latest.save(currentDraft());
+      expect(result).toMatchObject({ ok: false, kind: "failed" });
+      expect(result).not.toHaveProperty("readback");
+    });
+    expect(latest.brief.publicName).toBe("tenant-a");
+    await act(async () => root.unmount());
+  });
+
+  it("keeps an absent saved revision unknown rather than inventing a verified revision", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({
+      data: { tenantId: "tenant-a", brief: { publicName: "Stored name" }, accessScope: "owner_full" },
+      error: null,
+    });
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    await act(async () => {
+      expect(await latest.save(currentDraft())).toMatchObject({
+        ok: true,
+        readback: { contextRevision: null },
+      });
+    });
+    await act(async () => root.unmount());
+  });
+
   it("shows a safe retryable load failure instead of spinning forever or leaking database detail", async () => {
     state.rpc.mockResolvedValue({
       data: null,

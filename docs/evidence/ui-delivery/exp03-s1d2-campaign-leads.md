@@ -40,7 +40,7 @@ ACCEPTANCE_CRITERIA: an owner opens a campaign's dossier, presses "Show the 7 ne
 MOTION_PURPOSE: NONE: no motion
 PROTECTED_SEAMS: the Brought in lane's existing render tests and its 5 drive states pass unchanged; get_campaign_brief_leads unchanged
 
-INTERNAL_BUILD_IDENTITY: branch claude/stoic-archimedes-pv4r8u; deployment=none-pre-merge; environment=development; migrations=none; edge=none; evidence=scripts/live-drive/brought-in-drive.mjs
+INTERNAL_BUILD_IDENTITY: 14df8036352b5f1ac0cb6c495e0e71f6aac53a9f; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/brought-in-drive.mjs
 RELEASE_CHANNEL: development: production on merge (pre-launch, §4)
 RELEASE_CLASSIFICATION: internal-only: a read-only view inside an unreleased journey; a customer version is earned by Experience 03 as a whole
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version until Experience 03 earns one

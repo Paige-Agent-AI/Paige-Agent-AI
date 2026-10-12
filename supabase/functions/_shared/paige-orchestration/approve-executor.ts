@@ -66,7 +66,7 @@ import { resolveNativeCapabilityStatus } from "../paige-capability-status/gather
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { actReceiptRunSeed } from "./outcomes.ts";
-import { claimActDispatch } from "./dispatch-claim.ts";
+import { ambiguousFromThrow, dispatchUnderClaim } from "./dispatch-claim.ts";
 import { readProcessPosture } from "./engine.ts";
 
 /** The minimal client surface the executor needs (a read chain + rpc) — kept structural so a fake proves it.
@@ -201,8 +201,6 @@ async function advanceLedger(
   return { ok: persisted === "executed", outcome: persisted, executed: persisted === "executed", detail: (result.detail ?? {}) as Record<string, unknown> };
 }
 
-const ambiguousFromThrow = (e: unknown, reason: string): DispatchResult =>
-  ({ outcome: "ambiguous", providerRef: null, detail: { reason }, error: e instanceof Error ? e.message : String(e) });
 
 /** §68 (slice 2) — the ONE availability + governed gate, re-resolved THROUGH the canonical Gateway (never
  *  cached) and re-run through the ONE governed pathway (`decideGovernedExecution`) with the human's yes as the
@@ -367,13 +365,12 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
       // `gate.ok === false` (not `!gate.ok`): src tsc runs strictNullChecks:false and does NOT narrow a
       // discriminated union on the truthiness form, so `gate.reason` would not resolve (tsc-ratchet catches it).
       if (gate.ok === false) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: gate.reason };
-      // At most once (Slice 2b): a stale claim is re-taken only here, after the readback above found nothing landed.
-      const claim = await claimActDispatch(db, eventId, actId);
-      if (!claim.ok) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
-      if (!claim.claimed) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
-      let dr: DispatchResult;
-      try { dr = await adapter.dispatch({ ...dispatchInput, args: gate.args }); } catch (e) { dr = ambiguousFromThrow(e, "adapter_threw"); }
-      return advanceLedger(db, base, dr, "accepted_for_execution");
+      // At most once (Slice 2b): a stale claim is re-taken only here, after the readback above found nothing landed,
+      // and only for an adapter whose readback proves absence (the seam enforces it).
+      const d = await dispatchUnderClaim(db, eventId, actId, adapter, { ...dispatchInput, args: gate.args });
+      if (d.kind === "claim_error") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
+      if (d.kind === "held") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
+      return advanceLedger(db, base, d.result, "accepted_for_execution");
     }
     // ambiguous, still unconfirmed → report honestly and consume NOTHING (the caller keeps it reclaimable; the
     // durable reconciler sweeps it to executed once a correlation transition lands, or to failed after its bound).
@@ -404,17 +401,13 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
     return { ok: apprOutcome === "executed", outcome: apprOutcome, executed: apprOutcome === "executed", reason: "already_redeemed" };
   }
 
-  const claim = await claimActDispatch(db, eventId, actId);
-  if (!claim.ok) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
-  if (!claim.claimed) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
-
-  // 7 — DISPATCH through the native adapter, then advance the ledger + file receipt/Rail on a confirmed executed.
-  //     The row is now accepted_for_execution (redeemed) — that is the priorOutcome reported if the advance
+  // 7 — CLAIM, then DISPATCH through the native adapter, then advance the ledger + file receipt/Rail on a confirmed
+  //     executed. The row is now accepted_for_execution (redeemed) — that is the priorOutcome reported if the advance
   //     write itself fails (§P3), so the caller never consumes an outcome the ledger did not persist.
-  let dr: DispatchResult;
-  try { dr = await adapter.dispatch({ ...dispatchInput, args: gate.args }); }
-  catch (e) { dr = ambiguousFromThrow(e, "adapter_threw"); }
-  return advanceLedger(db, base, dr, "accepted_for_execution");
+  const d = await dispatchUnderClaim(db, eventId, actId, adapter, { ...dispatchInput, args: gate.args });
+  if (d.kind === "claim_error") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
+  if (d.kind === "held") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
+  return advanceLedger(db, base, d.result, "accepted_for_execution");
 }
 
 /** What the owner is told when an approval does not run the held act. The raw `reason` stays in the response

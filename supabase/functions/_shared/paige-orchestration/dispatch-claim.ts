@@ -1,11 +1,18 @@
-// INT-179 Slice 2b — the ONE at-most-once dispatch gate for a Layer-C act.
+// INT-179 Slice 2b — the ONE at-most-once dispatch seam for a Layer-C act.
 //
-// Both callers that fire an act — the engine (phase 5) and the approval executor — take this claim
-// immediately before dispatching. `paige_claim_act_dispatch` (20271023000000) is a single guarded UPDATE that
-// stamps `detail.dispatch_claim` only when no live claim exists, so of any number of concurrent callers exactly
-// one is told `claimed: true`. Everyone else must NOT dispatch: the act stays accepted_for_execution and is
-// picked up by the normal reconcile path. A claim older than the RPC's stale window may be re-taken, so a
-// caller re-claims only after its own readback has shown the earlier dispatch did not land.
+// Every caller that fires an act — the engine (phase 5) and the approval executor — dispatches ONLY through
+// `dispatchUnderClaim`. It takes the claim (`paige_claim_act_dispatch`, a single guarded UPDATE that stamps
+// `detail.dispatch_claim` only when no live claim exists, so of any number of concurrent callers exactly one is
+// told `claimed: true`), and only then calls the adapter. Everyone else dispatches nothing: the act stays
+// accepted_for_execution and is picked up again by the normal drain or the reconciler's recovery pass.
+//
+// A claim older than the RPC's stale window belongs to a dispatcher that died. Whether it may be taken over is the
+// ADAPTER's declaration (`lostClaimRecovery`): an adapter whose readback proves absence may re-take it (callers
+// re-dispatch only after that readback found nothing); any other adapter may claim an act nobody ever claimed but
+// never a lost claim, because the dead holder may already have fired — that act is left for the reconciler to
+// record ambiguous, never replayed.
+
+import type { ActionAdapter, DispatchInput, DispatchResult } from "./adapters.ts";
 
 type ClaimDb = { rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> };
 
@@ -14,14 +21,18 @@ type ClaimDb = { rpc: (fn: string, args?: Record<string, unknown>) => PromiseLik
 export const DISPATCH_CLAIM_STALE = "10 minutes";
 
 /** `ok:false` = the claim could not be read or written (infra) — dispatch nothing and retry later.
- *  `ok:true, claimed:false` = another caller holds the dispatch, or the act is not dispatchable. */
+ *  `ok:true, claimed:false` = another caller holds the dispatch, the act is not dispatchable, or a lost claim this
+ *  adapter may not take over. */
 export type DispatchClaim = { ok: boolean; claimed: boolean };
 
-export async function claimActDispatch(db: ClaimDb, eventId: string, actId: string): Promise<DispatchClaim> {
+export async function claimActDispatch(
+  db: ClaimDb, eventId: string, actId: string, opts: { allowRetake?: boolean } = {},
+): Promise<DispatchClaim> {
   let res: { data: unknown; error: unknown };
   try {
     res = await db.rpc("paige_claim_act_dispatch", {
       _event_id: eventId, _act_id: actId, _claim: crypto.randomUUID(), _stale_after: DISPATCH_CLAIM_STALE,
+      _allow_retake: opts.allowRetake ?? true,
     });
   } catch {
     return { ok: false, claimed: false };
@@ -31,4 +42,31 @@ export async function claimActDispatch(db: ClaimDb, eventId: string, actId: stri
   // object) — only a row with an id is a claim.
   const id = (res.data as { id?: unknown } | null)?.id;
   return { ok: true, claimed: typeof id === "string" && id.length > 0 };
+}
+
+/** The result of a dispatch attempt through the seam. `claim_error` and `held` dispatched NOTHING. */
+export type ClaimedDispatch =
+  | { kind: "claim_error" }
+  | { kind: "held" }
+  | { kind: "dispatched"; result: DispatchResult };
+
+/** A dispatch that THREW is unconfirmed, never failed and never executed: the call may have gone out. */
+export function ambiguousFromThrow(e: unknown, reason: string): DispatchResult {
+  return { outcome: "ambiguous", providerRef: null, detail: { reason }, error: e instanceof Error ? e.message : String(e) };
+}
+
+/** Claim the act, then dispatch it through its adapter — the only sanctioned way to fire a Layer-C act. */
+export async function dispatchUnderClaim(
+  db: ClaimDb, eventId: string, actId: string,
+  adapter: Pick<ActionAdapter, "dispatch" | "lostClaimRecovery">, input: DispatchInput,
+): Promise<ClaimedDispatch> {
+  if (typeof adapter.dispatch !== "function") return { kind: "held" };
+  const claim = await claimActDispatch(db, eventId, actId, {
+    allowRetake: adapter.lostClaimRecovery === "readback_proves_absence",
+  });
+  if (!claim.ok) return { kind: "claim_error" };
+  if (!claim.claimed) return { kind: "held" };
+  let result: DispatchResult;
+  try { result = await adapter.dispatch(input); } catch (e) { result = ambiguousFromThrow(e, "adapter_threw"); }
+  return { kind: "dispatched", result };
 }

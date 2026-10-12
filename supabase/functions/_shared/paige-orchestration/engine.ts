@@ -43,7 +43,7 @@ import {
   type EventFacts,
 } from "./decide.ts";
 import { actReceiptRunSeed, FINAL_OUTCOME_SET } from "./outcomes.ts";
-import { claimActDispatch } from "./dispatch-claim.ts";
+import { ambiguousFromThrow, dispatchUnderClaim } from "./dispatch-claim.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { resolveNativeCapabilityStatus } from "../paige-capability-status/gatherer.ts";
@@ -537,8 +537,6 @@ export async function runEventActs(
     return true;
   };
 
-  const ambiguousResult = (e: unknown, reason: string): DispatchResult =>
-    ({ outcome: "ambiguous", providerRef: null, error: e instanceof Error ? e.message : String(e), detail: { reason } });
 
   for (const rec of records) {
     if (rec.adapter_kind !== "native") continue;
@@ -558,19 +556,18 @@ export async function runEventActs(
       const rb = adapter?.readback;
       if (typeof rb !== "function") { rec.outcome = cur.outcome as ActOutcome; continue; } // can't reconcile; leave advanceable
       let recon: DispatchResult;
-      try { recon = await rb(null, nativeInput); } catch (e) { recon = ambiguousResult(e, "readback_threw"); }
+      try { recon = await rb(null, nativeInput); } catch (e) { recon = ambiguousFromThrow(e, "readback_threw"); }
       if (recon.outcome === "executed") { await advanceNative(rec, plan, recon); continue; }   // our write landed
       if (cur.outcome === "ambiguous") { rec.outcome = "ambiguous"; continue; }                // owner: never blind re-dispatch
       // an `accepted`/`retrying` row whose correlation shows NO landed transition → it never dispatched.
       if (plan && typeof plan.adapter.dispatch === "function") {
         // At most once (Slice 2b): only the caller holding the dispatch claim fires. A live claim held by
-        // another runner means a dispatch may be in flight — leave the row for a later drain/sweep.
-        const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
-        if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
-        if (!claim.claimed) { rec.outcome = cur.outcome as ActOutcome; continue; }
-        let dr: DispatchResult;
-        try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
-        await advanceNative(rec, plan, dr); continue;
+        // another runner — or a lost one this adapter may not take over — leaves the row for a later
+        // drain or the reconciler's recovery pass.
+        const d = await dispatchUnderClaim(db, rec.event_id, rec.act_id, plan.adapter, nativeInput);
+        if (d.kind === "claim_error") { persist_failures.push(rec.act_id); continue; }
+        if (d.kind === "held") { rec.outcome = cur.outcome as ActOutcome; continue; }
+        await advanceNative(rec, plan, d.result); continue;
       }
       rec.outcome = cur.outcome as ActOutcome; continue; // no plan this drain → leave for a later drain/sweep
     }
@@ -582,12 +579,10 @@ export async function runEventActs(
       // The ledger returns what actually persisted: a concurrent runner may already have advanced this act.
       if (rec.outcome !== "accepted_for_execution") continue;
       // At most once (Slice 2b): of concurrent runners that both read ABSENT, only the claim holder fires.
-      const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
-      if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
-      if (!claim.claimed) continue; // another runner holds the dispatch; the row stays reconcilable
-      let dr: DispatchResult;
-      try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
-      await advanceNative(rec, plan, dr); continue;
+      const d = await dispatchUnderClaim(db, rec.event_id, rec.act_id, plan.adapter, nativeInput);
+      if (d.kind === "claim_error") { persist_failures.push(rec.act_id); continue; }
+      if (d.kind === "held") continue; // another runner holds the dispatch; the row stays reconcilable
+      await advanceNative(rec, plan, d.result); continue;
     }
     // a native record with a NON-execute decision (condition/held/approval/refused) — record it now.
     const w = await persistNative(rec, rec.outcome, { error: rec.error });

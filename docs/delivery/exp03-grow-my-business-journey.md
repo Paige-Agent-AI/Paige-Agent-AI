@@ -147,15 +147,22 @@ What S1 adds:
 
 **S1a — attribution at capture (migration).** `growth_form_submissions` gains `campaign_brief_id` (FK, set null on
 delete) and `campaign_attribution`. A `BEFORE INSERT` trigger stamps both from the two definitions the platform
-already uses, so attribution never disagrees with Analytics or the `form.submitted` payload:
+already uses (the same rules, evaluated at insert; differences are listed below):
 - `L` = the workspace's non-archived campaigns this form is attached to (`campaign_brief_asset_links`, kind `form`);
 - `T` = the workspace's campaigns whose reference equals the link's `utm_campaign`, case-insensitive (as
-  `marketing.leads.by_campaign_tag`).
+  `marketing.leads.by_campaign_tag`), archived campaigns included as the metric includes them; a tag that names
+  several campaigns names none, as the metric excludes it.
 - Exactly one campaign in both → `form_and_tag`; else exactly one in `L` and none in `T` → `form_link`; else none in
   `L` and exactly one in `T` → `campaign_tag`; nothing in either → `none`; anything else → `ambiguous` (no campaign;
   never guessed).
 - Covers both writers (`growth-public-submit`, `growth-inbound`) without changing them. The pair is immutable after
-  insert (only a deleted campaign may clear it). Rows from before this release keep `NULL` = "not evaluated".
+  insert: a change, or a clear to nothing while the campaign exists, is refused for every role, including a member
+  through the table's own update policy (a §39 review finding, fixed before merge). Only deleting the campaign
+  clears it. Rows from before this release keep `NULL` = "not evaluated".
+- Where two figures can still differ, by design: the `form.submitted` payload reads the form's links again when the
+  contact is pinned (a link changed in between can differ); Analytics' per-campaign figure counts by tag alone,
+  including leads saved before this release; a form linked only to an archived campaign credits none by its link,
+  while a tag still matches an archived campaign.
 
 **S1b — the campaign's pipeline (its own follow-up PR, decided 2026-10-12).** For a form with no route of its own,
 file the lead into its campaign's pipeline (first open stage) when that pipeline can take it; otherwise the default
@@ -168,7 +175,10 @@ lead goes where the form's route or the default pipeline sends it — the same p
 
 **S1c — the read.** `get_campaign_brief_leads(_tenant_id, _brief_id)`: the campaign's attributed leads with their
 contact, opportunity, pipeline, stage and status; server counts; member view without names; refuses another
-workspace (`42501`).
+workspace (`42501`). Withholding names from members is a presentation rule of this read, not a security boundary:
+the table's existing read policy already lets a member read submissions. Narrowing that is an owner call. An agency
+manager acting inside a sub-account reads the member view (`is_tenant_admin` counts only that workspace's own
+members), the same as campaign assets.
 
 **S1d — the view** (§6), shown to the owner before it merges.
 

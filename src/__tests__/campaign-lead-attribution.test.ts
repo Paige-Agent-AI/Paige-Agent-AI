@@ -23,6 +23,8 @@ describe("the stamp uses the platform's existing definitions", () => {
     expect(metric).toContain("lower(public._marketing_metric_text(b.short_ref,120))");
     expect(stamp).toContain("lower(public._marketing_metric_text(NEW.utm_json ->> 'utm_campaign', 120))");
     expect(stamp).toContain("lower(public._marketing_metric_text(b.short_ref, 120)) = _tag");
+    // A tag several campaigns share names none, as the metric excludes it.
+    expect(stamp).toContain("IF cardinality(_tagged) > 1 THEN _tagged := '{}'; END IF;");
     // Only a string tag is matched, as the metric reads only string tags.
     expect(stamp).toContain("jsonb_typeof(NEW.utm_json -> 'utm_campaign') = 'string'");
   });
@@ -43,9 +45,11 @@ describe("the stamp uses the platform's existing definitions", () => {
   it("is set at insert by a trigger, whatever the writer sent, and fixed afterwards", () => {
     expect(mig).toContain("BEFORE INSERT OR UPDATE OF campaign_brief_id, campaign_attribution ON public.growth_form_submissions");
     expect(stamp).toContain("SUBMISSION_ATTRIBUTION_IMMUTABLE");
-    // Only a deleted campaign (ON DELETE SET NULL) may clear it.
-    expect(stamp).toContain("NEW.campaign_brief_id IS DISTINCT FROM OLD.campaign_brief_id AND NEW.campaign_brief_id IS NOT NULL");
+    // Only a deleted campaign (ON DELETE SET NULL) may clear it: a NULL is refused while the campaign exists,
+    // because the table's tenant update policy lets any member UPDATE the row (§39 finding on #2068).
+    expect(stamp).toContain("OR EXISTS (SELECT 1 FROM public.campaign_briefs b WHERE b.id = OLD.campaign_brief_id)");
     expect(mig).toContain("REFERENCES public.campaign_briefs(id) ON DELETE SET NULL");
+    expect(mig).toMatch(/CREATE INDEX IF NOT EXISTS growth_form_submissions_campaign_fk\s+ON public\.growth_form_submissions \(campaign_brief_id\)/);
   });
 
   it("changes no Sales table: deals, contacts and pipelines are untouched", () => {
@@ -68,7 +72,7 @@ describe("the campaign's leads read", () => {
     expect(mig).toContain("GRANT EXECUTE ON FUNCTION public.get_campaign_brief_leads(uuid, uuid) TO authenticated");
   });
 
-  it("withholds names and record ids from members (§9), as campaign assets and steps do", () => {
+  it("withholds names and record ids from members on this read, as campaign assets and steps do", () => {
     for (const field of ["contact_id", "contact_name", "deal_id", "deal_title"]) {
       expect(read).toMatch(new RegExp(`'${field}', CASE WHEN _admin THEN`));
     }
@@ -97,6 +101,7 @@ describe("the proof runs", () => {
       "→ none", "A''s is never chosen", "replaced by the decision", "cannot be changed after capture",
       "growth_attach_submission_default_deal", "a member never sees names or ids", "naming another workspace is refused",
       "anon cannot read", "a deleted campaign leaves the method",
+      "a member cannot clear a lead''s campaign", "a member cannot rewrite how a lead was credited", "a tag shared by two campaigns names neither",
     ]) {
       expect(proof).toContain(label);
     }

@@ -83,10 +83,10 @@ INSERT INTO public.campaign_briefs(id,tenant_id,short_ref,name,lifecycle_status,
 
 -- The owner attaches forms through the real writer: f1 → Spring; f2 → Spring AND Fall; f4 → Old (then archived).
 SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000001');
-SELECT pg_temp.require_true((pg_temp.attach('a3e30100-0000-4000-8000-0000000000c1','a3e30100-0000-4000-8000-0000000000f1','exp03-a1')->>'ok')::boolean IS NOT FALSE,'attach f1 to Spring');
-SELECT pg_temp.attach('a3e30100-0000-4000-8000-0000000000c1','a3e30100-0000-4000-8000-0000000000f2','exp03-a2');
-SELECT pg_temp.attach('a3e30100-0000-4000-8000-0000000000c2','a3e30100-0000-4000-8000-0000000000f2','exp03-a3');
-SELECT pg_temp.attach('a3e30100-0000-4000-8000-0000000000c3','a3e30100-0000-4000-8000-0000000000f4','exp03-a4');
+SELECT pg_temp.require_true(pg_temp.attach('a3e30100-0000-4000-8000-0000000000c1','a3e30100-0000-4000-8000-0000000000f1','exp03-a1')->>'ok'='true','attach f1 to Spring');
+SELECT pg_temp.require_true(pg_temp.attach('a3e30100-0000-4000-8000-0000000000c1','a3e30100-0000-4000-8000-0000000000f2','exp03-a2')->>'ok'='true','attach f2 to Spring');
+SELECT pg_temp.require_true(pg_temp.attach('a3e30100-0000-4000-8000-0000000000c2','a3e30100-0000-4000-8000-0000000000f2','exp03-a3')->>'ok'='true','attach f2 to Fall');
+SELECT pg_temp.require_true(pg_temp.attach('a3e30100-0000-4000-8000-0000000000c3','a3e30100-0000-4000-8000-0000000000f4','exp03-a4')->>'ok'='true','attach f4 to Old');
 SELECT pg_temp.require_true((SELECT count(*) FROM public.campaign_brief_asset_links WHERE tenant_id='a3e30100-0000-4000-8000-000000000011' AND asset_kind='form')=4,'four form links exist');
 SELECT pg_temp.as_service();
 UPDATE public.campaign_briefs SET lifecycle_status='archived' WHERE id='a3e30100-0000-4000-8000-0000000000c3';
@@ -116,6 +116,14 @@ SELECT pg_temp.require_true(pg_temp.stamp('a3e30100-0000-4000-8000-0000000000ea'
 INSERT INTO public.growth_form_submissions(id,tenant_id,form_id,payload_json,utm_json,campaign_brief_id,campaign_attribution)
 VALUES('a3e30100-0000-4000-8000-0000000000eb','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000f3','{}','{}','a3e30100-0000-4000-8000-0000000000c9','form_link');
 SELECT pg_temp.require_true(pg_temp.stamp('a3e30100-0000-4000-8000-0000000000eb')='none:-','a supplied campaign (even another workspace''s) is replaced by the decision');
+-- A reference two campaigns share names neither, as the metric excludes it (campaign_tag_matches_several_briefs).
+INSERT INTO public.campaign_briefs(id,tenant_id,short_ref,name,lifecycle_status) VALUES
+ ('a3e30100-0000-4000-8000-0000000000c4','a3e30100-0000-4000-8000-000000000011','cb-spring','A copy with the same reference','draft');
+SELECT pg_temp.submit('a3e30100-0000-4000-8000-0000000000ec','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000f1','{"utm_campaign":"CB-SPRING"}');
+SELECT pg_temp.require_true(pg_temp.stamp('a3e30100-0000-4000-8000-0000000000ec')='form_link:a3e30100-0000-4000-8000-0000000000c1','a tag shared by two campaigns names neither; the form''s one link still credits Spring');
+SELECT pg_temp.submit('a3e30100-0000-4000-8000-0000000000ed','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000f3','{"utm_campaign":"CB-SPRING"}');
+SELECT pg_temp.require_true(pg_temp.stamp('a3e30100-0000-4000-8000-0000000000ed')='none:-','a shared tag on an unattached form credits no campaign');
+DELETE FROM public.campaign_briefs WHERE id='a3e30100-0000-4000-8000-0000000000c4';
 
 -- 2. The stamp is fixed after capture.
 DO $immutable$ BEGIN
@@ -126,9 +134,31 @@ DO $immutable$ BEGIN
 END $immutable$;
 DO $immutable2$ BEGIN
  BEGIN UPDATE public.growth_form_submissions SET campaign_attribution='none' WHERE id='a3e30100-0000-4000-8000-0000000000e2';
- EXCEPTION WHEN insufficient_privilege THEN RETURN; END;
+ EXCEPTION WHEN insufficient_privilege THEN
+   IF SQLERRM<>'SUBMISSION_ATTRIBUTION_IMMUTABLE' THEN RAISE; END IF; RETURN; END;
  RAISE EXCEPTION 'FAIL: the attribution method cannot be changed after capture';
 END $immutable2$;
+-- The same holds for a workspace member through the browser role and the table's own update policy, which
+-- does not check role: clearing the campaign to nothing is refused, not only changing it.
+SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000002');
+SET LOCAL ROLE authenticated;
+DO $member_clear$ DECLARE n int; BEGIN
+ BEGIN UPDATE public.growth_form_submissions SET campaign_brief_id=NULL WHERE id='a3e30100-0000-4000-8000-0000000000e2';
+   GET DIAGNOSTICS n = ROW_COUNT;
+   IF n=0 THEN RAISE EXCEPTION 'FAIL: FIXTURE: the member''s update reached no row, so nothing was tested'; END IF;
+ EXCEPTION WHEN insufficient_privilege THEN
+   IF SQLERRM<>'SUBMISSION_ATTRIBUTION_IMMUTABLE' THEN RAISE; END IF; RETURN; END;
+ RAISE EXCEPTION 'FAIL: a member cannot clear a lead''s campaign';
+END $member_clear$;
+DO $member_method$ BEGIN
+ BEGIN UPDATE public.growth_form_submissions SET campaign_attribution='ambiguous',campaign_brief_id=NULL WHERE id='a3e30100-0000-4000-8000-0000000000e2';
+ EXCEPTION WHEN insufficient_privilege THEN
+   IF SQLERRM<>'SUBMISSION_ATTRIBUTION_IMMUTABLE' THEN RAISE; END IF; RETURN; END;
+ RAISE EXCEPTION 'FAIL: a member cannot rewrite how a lead was credited';
+END $member_method$;
+RESET ROLE;
+SELECT pg_temp.as_service();
+SELECT pg_temp.require_true(pg_temp.stamp('a3e30100-0000-4000-8000-0000000000e2')='form_link:a3e30100-0000-4000-8000-0000000000c1','after both refusals the lead is still Spring''s');
 -- Ordinary processing updates still work.
 UPDATE public.growth_form_submissions SET processing_state='done' WHERE id='a3e30100-0000-4000-8000-0000000000e8';
 SELECT pg_temp.require_true(pg_temp.stamp('a3e30100-0000-4000-8000-0000000000e8')='none:-','processing updates leave the stamp as it was');
@@ -150,8 +180,8 @@ SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000001');
 DO $read_admin$ DECLARE r jsonb; l jsonb; BEGIN
  r := public.get_campaign_brief_leads(NULL,'a3e30100-0000-4000-8000-0000000000c1');
  IF (r->>'can_manage')::boolean IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: admin can manage, got %',r; END IF;
- IF (r->'counts'->>'leads')::int<>2 OR (r->'counts'->>'with_opportunity')::int<>1 OR (r->'counts'->>'open')::int<>1 OR (r->'counts'->>'with_contact')::int<>1 THEN
-   RAISE EXCEPTION 'FAIL: Spring has 2 leads (e1, e2), 1 contact, 1 open opportunity; got %',r->'counts'; END IF;
+ IF (r->'counts'->>'leads')::int<>3 OR (r->'counts'->>'with_opportunity')::int<>1 OR (r->'counts'->>'open')::int<>1 OR (r->'counts'->>'with_contact')::int<>1 THEN
+   RAISE EXCEPTION 'FAIL: Spring has 3 leads (e1, e2, ec), 1 contact, 1 open opportunity; got %',r->'counts'; END IF;
  IF (r->>'ambiguous_on_campaign_forms')::int<>2 THEN RAISE EXCEPTION 'FAIL: e4 and e6 on Spring''s forms could not be credited, got %',r->>'ambiguous_on_campaign_forms'; END IF;
  IF jsonb_array_length(r->'capture_forms')<>2 THEN RAISE EXCEPTION 'FAIL: Spring captures through f1 and f2, got %',r->'capture_forms'; END IF;
  SELECT x INTO l FROM jsonb_array_elements(r->'leads') x WHERE x->>'submission_id'='a3e30100-0000-4000-8000-0000000000e1';
@@ -166,7 +196,7 @@ END $read_admin$;
 SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000002');
 DO $read_member$ DECLARE r jsonb; l jsonb; BEGIN
  r := public.get_campaign_brief_leads(NULL,'a3e30100-0000-4000-8000-0000000000c1');
- IF (r->>'can_manage')::boolean IS DISTINCT FROM false OR (r->'counts'->>'leads')::int<>2 THEN RAISE EXCEPTION 'FAIL: member sees counts, got %',r; END IF;
+ IF (r->>'can_manage')::boolean IS DISTINCT FROM false OR (r->'counts'->>'leads')::int<>3 THEN RAISE EXCEPTION 'FAIL: member sees counts, got %',r; END IF;
  SELECT x INTO l FROM jsonb_array_elements(r->'leads') x WHERE x->>'submission_id'='a3e30100-0000-4000-8000-0000000000e1';
  IF l->>'contact_name' IS NOT NULL OR l->>'contact_id' IS NOT NULL OR l->>'deal_title' IS NOT NULL OR l->>'deal_id' IS NOT NULL THEN
    RAISE EXCEPTION 'FAIL: a member never sees names or ids, got %',l; END IF;

@@ -6,12 +6,14 @@
 -- form is attached to (campaign_brief_asset_links) never reached the lead at all.
 --
 -- After: every NEW submission is stamped once, at insert, with the campaign it belongs to and how that was
--- decided. The decision uses only the two definitions the platform already ships, so it can never disagree
--- with them:
+-- decided. The decision uses the two definitions the platform already ships (it is evaluated at insert; the
+-- form.submitted payload reads the links again when the contact is pinned, so a link changed in between can
+-- differ, and Analytics' per-campaign figure counts by tag alone, including leads saved before this):
 --   L = the workspace's non-archived campaigns this form is attached to (the form.submitted payload's
 --       campaign_brief_ids, 20271022100000);
 --   T = the workspace's campaigns whose reference equals the link's utm_campaign, normalized exactly as
---       marketing.leads.by_campaign_tag does (lower(_marketing_metric_text(x,120)), string tags only).
+--       marketing.leads.by_campaign_tag does (lower(_marketing_metric_text(x,120)), string tags only),
+--       archived campaigns included as the metric includes them; a tag naming several campaigns names none.
 --   exactly one campaign in L∩T            -> form_and_tag
 --   else exactly one in L and none in T     -> form_link
 --   else none in L and exactly one in T     -> campaign_tag
@@ -45,6 +47,9 @@ COMMENT ON COLUMN public.growth_form_submissions.campaign_attribution IS
 
 CREATE INDEX IF NOT EXISTS growth_form_submissions_campaign
   ON public.growth_form_submissions (tenant_id, campaign_brief_id, created_at DESC) WHERE campaign_brief_id IS NOT NULL;
+-- Led by the foreign key, so deleting a campaign (or retiring an account) finds its leads without a scan.
+CREATE INDEX IF NOT EXISTS growth_form_submissions_campaign_fk
+  ON public.growth_form_submissions (campaign_brief_id) WHERE campaign_brief_id IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION public.growth_submission_stamp_campaign()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
@@ -55,9 +60,13 @@ DECLARE
   _both uuid[];
 BEGIN
   IF TG_OP = 'UPDATE' THEN
-    -- The stamp records what was true at capture. Only a deleted campaign (ON DELETE SET NULL) may clear it.
+    -- The stamp records what was true at capture. Only a deleted campaign (ON DELETE SET NULL) may clear it:
+    -- a NULL is accepted only once the campaign it named no longer exists, so no member's UPDATE (the table's
+    -- tenant update policy does not check role) can quietly drop a lead out of its campaign.
     IF NEW.campaign_attribution IS DISTINCT FROM OLD.campaign_attribution
-       OR (NEW.campaign_brief_id IS DISTINCT FROM OLD.campaign_brief_id AND NEW.campaign_brief_id IS NOT NULL) THEN
+       OR (NEW.campaign_brief_id IS DISTINCT FROM OLD.campaign_brief_id
+           AND (NEW.campaign_brief_id IS NOT NULL
+                OR EXISTS (SELECT 1 FROM public.campaign_briefs b WHERE b.id = OLD.campaign_brief_id))) THEN
       RAISE EXCEPTION 'SUBMISSION_ATTRIBUTION_IMMUTABLE' USING ERRCODE = '42501';
     END IF;
     RETURN NEW;
@@ -77,6 +86,8 @@ BEGIN
     SELECT coalesce(array_agg(b.id), '{}') INTO _tagged
     FROM public.campaign_briefs b
     WHERE b.tenant_id = NEW.tenant_id AND lower(public._marketing_metric_text(b.short_ref, 120)) = _tag;
+    -- A tag that names several campaigns names none, as the metric excludes it (campaign_tag_matches_several_briefs).
+    IF cardinality(_tagged) > 1 THEN _tagged := '{}'; END IF;
   END IF;
 
   _both := ARRAY(SELECT unnest(_linked) INTERSECT SELECT unnest(_tagged));
@@ -103,8 +114,9 @@ CREATE TRIGGER trg_growth_submission_stamp_campaign
 
 -- ── read seam: the leads a campaign brought in ───────────────────────────────────────────────
 -- Same caller rule as get_campaign_brief_assets: the caller's own workspace (or the platform owner).
--- A member reads counts, attribution, stages and statuses; names and opportunity titles are withheld (§9),
--- as for campaign assets and steps. Counts cover every attributed lead; the list is the newest 200.
+-- A member reads counts, attribution, stages and statuses; names and opportunity titles are withheld on this
+-- read, as for campaign assets and steps. That is presentation, not a boundary: the table's existing read
+-- policy already lets a member read submissions (narrowing it is an owner call). Counts cover every attributed lead; the list is the newest 200.
 CREATE OR REPLACE FUNCTION public.get_campaign_brief_leads(_tenant_id uuid, _brief_id uuid)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
 DECLARE

@@ -86,3 +86,19 @@ Current source/helper/adapter tests53 PASS (15 source,38 staff); scoped ESLint P
 Native current-shape rerun passes10 authenticated-role assertions on the disposable minimal PostgreSQL16 schema. Existing function was replaced only in that local disposable catalog to rerun the forward CREATE definition; committed forward migration remains CREATE, never-applied. Full canonical-schema CI is newly wired and remains required. Production catalog frontier is20271024000010; proposed20271024000020 not applied. Current main contains only own10 at that date; active peer2040/2032/2021/2043 and Knowledge1615/1608 file inventories contain no conflicting20 migration. ANT-11 reservation records the proposed version; fresh exact-head compatibility remains required.
 
 Source-only release boundary: no component, production route, shared shell, client portal, reviewer queue, source editing, automation, external artifact URL or mutation added. Staff inspects exact submitted title/body via existing submission visibility AND current Studio authority. Callable Spine artifact-read remains UNAVAILABLE; mount and authenticated acceptance remain PROOF OWED. Client portal owner/lease remains unresolved; that shared mount is parked while owned domain source proceeds. Existing #1832/ANT-7/ANT-86/single ANT-21 receives these safe native/helper fixtures; no credentials/customer data/provider effect/INT-346 activation.
+
+
+## Staff review controls pre-edit routing
+
+1. Human outcome: inspect the exact submitted work, see who prepared/reviews it, approve internally or document changes, and explicitly release approved work to the linked client without claiming client acceptance.
+2. Operations owns submission and controls; Team owns authorized names/photos, Studio immutable source, Clients identity/client decisions. Sole existing Operations coder; shared portal/router remains untouched.
+3. Manual scoped domain RPCs are real. Governed Harness/Trust/Chat execution is not registered for these controls; no competing confirmation/assistant engine.
+4. Operations artifact read/review/release Spine capability is UNAVAILABLE until original shared owner coordination; existing Chat/Live remains untouched.
+5. No provider/integration connection or expense; no outbound notifications, storage URL fetch or source editing.
+6. Internal review/client release are consequential manual mutations with exact version/reviewer/reason confirmation and existing server authority. UI never accepts on behalf of a client; conversational approval remains unavailable.
+7. Synchronous existing writers only, no scheduler/job/event producer added.
+8. Existing staff adapter performs independent scoped readback. Unknown persistence locks repeated writes and allows only recorded-state inspection. Existing domain audit is not a Rail receipt.
+9. Existing Operations Work/Delivery detail, prepared as an unmounted component first; current Binding Ledger state stays PARTIAL/PROOF OWED. No shared shell or client route edit in this preparation.
+10. Failing-first component, rendered accessibility/responsive/state/recovery, non-author review, exact-head CI and released prerequisite artifact reader are required before mounting. Protected authenticated QA remains #1832/ANT-7/ANT-86/single ANT-21; no customer login/data/provider/INT-346 authority.
+
+Approved V3 is retained: connected review-to-client progression, exact work document, authorized Team photos with names, focused meaningful actions, restrained champagne confirmation, indigo focus and differentiated source/decision layout. Existing Flow-by-Flow, Flow Prototype, PAIGE UI and Impeccable routed context/craft floor are applied; no prototype restart.

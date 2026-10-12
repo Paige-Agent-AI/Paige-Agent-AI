@@ -11,12 +11,17 @@
 //   * Facts the platform does not record (disputes, refunds, an "effective" transition,
 //     installment-level allocation) are declared as not recorded — never inferred as zero.
 //   * Unreadable or inconsistent sources degrade to a named state, never to a confident number.
+//   * "Today" is the calendar date in the BUSINESS OWNER's configured time zone (owner ruling,
+//     2026-10-12) — never UTC, server time or the viewer's zone. Without a usable zone every due,
+//     upcoming and overdue judgement is withheld (null) and `business_time_zone_unset` is raised.
+//     Contractual due dates and payment timestamps are passed through unchanged.
 //   * An invoice bound to the terms always carries the WHOLE agreed amount (the Sales writer refuses
 //     anything else: _sales_validate_invoice_terms_reference), so what is past due on it comes from
 //     the agreed schedule, never from the invoice total against its first due date.
 // The schedule is expanded by the canonical Collections model; nothing here re-derives it.
 import { parseCollectionTerms, MAX_SCHEDULE } from '../sales-collections/contract.ts';
 import { previewCollectionSchedule } from '../sales-collections/model.ts';
+import { localDateInZone } from '../paige-context/snapshot.ts';
 
 type Json = Record<string, unknown>;
 
@@ -47,7 +52,11 @@ export type SourceWorkItem = {
   due_at: string | null; completed_at: string | null; assigned: boolean;
 };
 export type ClientEngagementSource = {
-  tenant_id: string; contact_id: string; client_name: string | null; read_at: string; as_of_date: string;
+  tenant_id: string; contact_id: string; client_name: string | null; read_at: string;
+  /** The business owner's configured zone, resolved by the read for the workspace (not the caller). */
+  business_time_zone: { state: TimeZoneState; zone: string | null };
+  /** Owner-local date computed by the database; informational. The composer computes its own. */
+  as_of_date: string | null;
   terms: SourceTerms[]; terms_has_more: boolean;
   signings: SourceSigning[]; signings_has_more: boolean;
   invoices: SourceInvoice[]; invoices_has_more: boolean;
@@ -56,6 +65,7 @@ export type ClientEngagementSource = {
   not_recorded: string[]; receipt_id: string;
 };
 
+export type TimeZoneState = 'configured' | 'missing' | 'ambiguous' | 'invalid';
 export type AgreementState = 'none' | 'draft' | 'sent' | 'viewed' | 'partially_signed' | 'signed'
   | 'declined' | 'voided' | 'expired';
 export type TermsState = 'absent' | 'current' | 'stale' | 'unreadable';
@@ -65,13 +75,17 @@ export type WorkState = 'none' | 'complete' | 'on_schedule' | 'behind' | 'undate
 export type Attention = 'agreement_not_signed' | 'agreement_not_bound_to_terms' | 'terms_stale'
   | 'terms_unreadable' | 'payment_overdue' | 'behind_schedule' | 'payment_outcome_unknown'
   | 'payment_request_failed' | 'invoice_status_legacy' | 'work_overdue' | 'work_blocked'
-  | 'mixed_currency' | 'list_truncated' | 'terms_invoiced_more_than_once' | 'other_terms_not_shown';
+  | 'mixed_currency' | 'list_truncated' | 'terms_invoiced_more_than_once' | 'other_terms_not_shown'
+  | 'business_time_zone_unset';
 
-export type ScheduleRow = { sequence: number; due_date: string; amount_minor: number; due: boolean; label: string | null };
+/** `due` is true when the row falls due on or before today in the owner's zone; null when today is unknown. */
+export type ScheduleRow = { sequence: number; due_date: string; amount_minor: number; due: boolean | null; label: string | null };
 
 export type ClientEngagementStatus = {
   client: { id: string; name: string | null };
-  as_of_date: string;
+  /** Today in the business owner's zone; null when that zone is missing, ambiguous or invalid. */
+  as_of_date: string | null;
+  time_zone: { state: TimeZoneState; zone: string | null };
   agreement: {
     state: AgreementState; signing_id: string | null; title: string | null; sent_at: string | null;
     completed_at: string | null; sealed: boolean; bound_to_terms: boolean;
@@ -127,7 +141,7 @@ export type ClientEngagementStatus = {
     outstanding_minor: number; verified_minor: number; recorded_by_owner_minor: number; test_environment_minor: number;
     /** What is past due on this invoice; null for a bound invoice whose schedule cannot be read. */
     past_due_minor: number | null;
-    due_date: string | null; overdue: boolean; bound_to_terms: boolean; legacy_status: boolean;
+    due_date: string | null; overdue: boolean | null; bound_to_terms: boolean; legacy_status: boolean;
   }>;
   work: {
     state: WorkState; total: number; done: number; open: number; overdue: number; blocked: number;
@@ -158,7 +172,7 @@ function pickTerms(rows: SourceTerms[]): SourceTerms | null {
   return ranked[0] ?? null;
 }
 
-function composeTerms(row: SourceTerms | null, asOf: string): ClientEngagementStatus['terms'] {
+function composeTerms(row: SourceTerms | null, asOf: string | null): ClientEngagementStatus['terms'] {
   if (!row) return null;
   const base = {
     id: row.id, status: row.status, version: row.collection_terms_version, offer_name: row.offer_name, title: row.title,
@@ -176,7 +190,7 @@ function composeTerms(row: SourceTerms | null, asOf: string): ClientEngagementSt
   return {
     ...base, state: current ? 'current' : 'stale', kind: terms.kind, recurring: terms.kind === 'recurring',
     schedule: preview.rows.map(r => ({ sequence: r.sequence, due_date: r.due_date, amount_minor: r.amount_cents,
-      due: r.due_date <= asOf, label: r.label })),
+      due: asOf === null ? null : r.due_date <= asOf, label: r.label })),
     schedule_has_more: preview.has_more,
   };
 }
@@ -212,8 +226,18 @@ function invoicePaymentState(row: SourceInvoice, outstanding: number): InvoicePa
 }
 
 export function composeClientEngagementStatus(source: ClientEngagementSource): ClientEngagementStatus {
-  if (!source || typeof source !== 'object' || !/^\d{4}-\d{2}-\d{2}$/.test(String(source.as_of_date))) fail('envelope');
-  const asOf = source.as_of_date;
+  if (!source || typeof source !== 'object') fail('envelope');
+  const readAt = Date.parse(String(source.read_at));
+  if (!Number.isFinite(readAt)) fail('read_at');
+  const zoneSource = source.business_time_zone;
+  if (!zoneSource || !['configured', 'missing', 'ambiguous', 'invalid'].includes(zoneSource.state)) fail('time_zone');
+  // Today is the owner's calendar date. A zone the database accepted but this runtime cannot resolve
+  // is reported as invalid, never replaced by UTC or by whatever zone this code happens to run in.
+  const localToday = zoneSource.state === 'configured' && typeof zoneSource.zone === 'string'
+    ? localDateInZone(readAt, zoneSource.zone) : null;
+  const timeZone = { state: localToday === null && zoneSource.state === 'configured' ? 'invalid' as const : zoneSource.state,
+    zone: localToday === null ? null : zoneSource.zone };
+  const asOf = localToday;
   const termsRow = pickTerms(source.terms);
   const terms = composeTerms(termsRow, asOf);
   const agreement = composeAgreement(source.signings, termsRow?.id ?? null);
@@ -226,9 +250,10 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   const usable = terms?.state === 'current';
   const lastShown = terms?.schedule.at(-1)?.due_date;
   // A truncated schedule can only be summed exactly if every unseen row falls after as_of.
-  const scheduleKnown = usable && (!terms!.schedule_has_more || (lastShown !== undefined && lastShown > asOf));
+  const scheduleKnown = usable && asOf !== null
+    && (!terms!.schedule_has_more || (lastShown !== undefined && lastShown > asOf));
   const pastDueOnSchedule = scheduleKnown
-    ? terms!.schedule.filter(r => r.due_date < asOf).reduce((sum, r) => sum + r.amount_minor, 0) : null;
+    ? terms!.schedule.filter(r => r.due_date < asOf!).reduce((sum, r) => sum + r.amount_minor, 0) : null;
   const billedBound = termsRow ? source.invoices.filter(i => BILLED.has(i.status)
     && i.commercial_terms_reference?.id === termsRow.id).length : 0;
   // Two billed invoices each carrying the whole agreed amount cannot both be the obligation.
@@ -256,8 +281,9 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
       if (bound) {
         pastDue = pastDueOnSchedule === null || billedBound > 1 ? null
           : Math.min(owed, Math.max(0, pastDueOnSchedule - live - manual));
-      } else if (row.due_date !== null && row.due_date < asOf) {
-        pastDue = owed;
+      } else if (row.due_date !== null) {
+        // Without the owner's today, whether a dated invoice is late is unknown, not "not late".
+        pastDue = asOf === null ? null : row.due_date < asOf ? owed : 0;
       }
     }
     if (billed) {
@@ -284,7 +310,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     return {
       id: row.id, number: row.invoice_number, status: row.status, payment_state: paymentState, amount_minor: amount,
       outstanding_minor: owed, verified_minor: live, recorded_by_owner_minor: manual, test_environment_minor: testMinor,
-      past_due_minor: pastDue, due_date: row.due_date, overdue: (pastDue ?? 0) > 0,
+      past_due_minor: pastDue, due_date: row.due_date, overdue: pastDue === null ? null : pastDue > 0,
       bound_to_terms: bound,
       legacy_status: LEGACY.has(row.status),
     };
@@ -295,7 +321,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   const finite = termsUsable && !terms!.recurring && !terms!.schedule_has_more;
   const contracted = finite ? terms!.agreed_minor : null;
   const dueToDate = termsUsable && scheduleKnown
-    ? terms!.schedule.filter(r => r.due).reduce((sum, r) => sum + r.amount_minor, 0) : null;
+    ? terms!.schedule.filter(r => r.due === true).reduce((sum, r) => sum + r.amount_minor, 0) : null;
   const behind = dueToDate === null ? null : dueToDate - (termsVerified + termsRecorded);
 
   const truncated = { terms: source.terms_has_more, signings: source.signings_has_more,
@@ -315,6 +341,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   if (unknown > 0) attention.add('payment_outcome_unknown');
   if (failed > 0) attention.add('payment_request_failed');
   if (mixed) attention.add('mixed_currency');
+  if (asOf === null) attention.add('business_time_zone_unset');
 
   const w = source.work;
   const upcoming = w.items
@@ -333,6 +360,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   return {
     client: { id: source.contact_id, name: source.client_name },
     as_of_date: asOf,
+    time_zone: timeZone,
     agreement,
     terms,
     money: {

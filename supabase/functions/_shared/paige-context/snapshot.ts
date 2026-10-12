@@ -171,6 +171,17 @@ function isoDate(p: { year: number; month: number; day: number }): string {
   return `${String(p.year).padStart(4, "0")}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
 }
 
+/**
+ * The calendar date (YYYY-MM-DD) an instant falls on in an IANA zone, or null for an unknown zone or a
+ * non-finite instant. Never falls back to UTC or to the process's own zone: the caller decides what an
+ * unknown zone means. Shares this module's zone validation so there is one IANA check, not two.
+ */
+export function localDateInZone(instantMs: number, timezone: string): string | null {
+  if (!Number.isFinite(instantMs)) return null;
+  const fmt = zoneFormatter(timezone);
+  return fmt ? isoDate(localParts(instantMs, fmt)) : null;
+}
+
 const ISO_DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ISO_INSTANT =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(?:Z|[+-](\d{2}):(\d{2}))$/;

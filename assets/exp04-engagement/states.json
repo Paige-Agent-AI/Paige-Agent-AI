@@ -5,12 +5,16 @@
       "name": "Test Consulting Client"
     },
     "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
     "agreement": {
       "state": "signed",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:37:17.420944+00:00",
-      "completed_at": "2026-09-01T21:37:17.420944+00:00",
+      "sent_at": "2026-08-28T23:22:26.07933+00:00",
+      "completed_at": "2026-09-01T23:22:26.07933+00:00",
       "sealed": true,
       "bound_to_terms": true,
       "effective": "not_recorded"
@@ -208,14 +212,14 @@
       "blocked": 0,
       "next": {
         "title": "Draft discovery report",
-        "due_at": "2026-10-10T21:37:17.420944+00:00",
+        "due_at": "2026-10-10T23:22:26.07933+00:00",
         "item_type": "task"
       },
       "items": [
         {
           "id": "e4000000-0000-4000-8000-000000090002",
           "title": "Draft discovery report",
-          "due_at": "2026-10-10T21:37:17.420944+00:00",
+          "due_at": "2026-10-10T23:22:26.07933+00:00",
           "status": "in_progress",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
@@ -225,7 +229,7 @@
         {
           "id": "e4000000-0000-4000-8000-000000090003",
           "title": "Strategy review",
-          "due_at": "2026-10-26T21:37:17.420944+00:00",
+          "due_at": "2026-10-26T23:22:26.07933+00:00",
           "status": "open",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": false,
@@ -235,12 +239,12 @@
         {
           "id": "e4000000-0000-4000-8000-000000090001",
           "title": "Kickoff workshop",
-          "due_at": "2026-09-12T21:37:17.420944+00:00",
+          "due_at": "2026-09-12T23:22:26.07933+00:00",
           "status": "done",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
           "item_type": "milestone",
-          "completed_at": "2026-09-13T21:37:17.420944+00:00"
+          "completed_at": "2026-09-13T23:22:26.07933+00:00"
         }
       ]
     },
@@ -263,7 +267,7 @@
       "invoices": false,
       "work": false
     },
-    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
+    "receipt_id": "8966017f-8f0e-464a-8d63-84e4b6f0d9d7"
   },
   "early": {
     "client": {
@@ -271,11 +275,15 @@
       "name": "Test Consulting Client"
     },
     "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
     "agreement": {
       "state": "sent",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:37:17.420944+00:00",
+      "sent_at": "2026-08-28T23:22:26.07933+00:00",
       "completed_at": null,
       "sealed": false,
       "bound_to_terms": true,
@@ -444,7 +452,7 @@
       "invoices": false,
       "work": false
     },
-    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
+    "receipt_id": "8966017f-8f0e-464a-8d63-84e4b6f0d9d7"
   },
   "empty": {
     "client": {
@@ -452,6 +460,10 @@
       "name": "Test Empty Client"
     },
     "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
     "agreement": {
       "state": "none",
       "signing_id": null,
@@ -513,6 +525,6 @@
       "invoices": false,
       "work": false
     },
-    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
+    "receipt_id": "8966017f-8f0e-464a-8d63-84e4b6f0d9d7"
   }
 }

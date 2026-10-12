@@ -37,6 +37,10 @@ const m = status.money;
 //   schedule due before today: deposit 50000 (today-40) + month 1 30000 (today-10) = 80000
 //   past due: E4-0001 80000-60000 = 20000; E4-0002 past its due date, 12000 -> 32000
 //   due to date 80000 -> behind by 80000 - 60000 = 20000; agreed but not invoiced = 0
+// Two independent date computations agree: the database's owner-local date and the composer's own
+// (shared IANA helper over read_at). Both use the owner's configured zone, never UTC.
+assert.deepEqual(status.time_zone, { state: 'configured', zone: 'America/New_York' });
+assert.equal(status.as_of_date, raw.as_of_date, 'composer and database agree on the owner-local date');
 assert.equal(m.currency, 'usd');
 assert.equal(m.mixed_currency, false);
 assert.equal(m.contracted_minor, 350000, 'contracted');

@@ -1,0 +1,194 @@
+{
+  "boundary": "Native signed-out Chrome200/400%, isolated unmounted preparation component with synthetic ports; no portal shell, customer acceptance, provider or INT-346 effects.",
+  "results": [
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "decision": "source",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "confirmation": null,
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "decision": "confirmation",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": false,
+        "scrollTop": 0,
+        "height": 202
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "decision": "source",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "confirmation": null,
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "decision": "confirmation",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": false,
+        "scrollTop": 0,
+        "height": 202
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "decision": "source",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "confirmation": null,
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "decision": "confirmation",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 133,
+        "height": 144
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "decision": "source",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "confirmation": null,
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "decision": "confirmation",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 133,
+        "height": 144
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    }
+  ],
+  "errors": []
+}

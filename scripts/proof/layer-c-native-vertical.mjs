@@ -26,6 +26,8 @@
 //   B  confirm lane     → approval_pending, one companion approval, no effect. Then:
 //        - an owner of ANOTHER workspace approves  → 403, nothing redeemed;
 //        - a plain member of this workspace approves → 403, nothing redeemed;
+//        - the owner of another workspace, seated here as a plain member, approves → refused by the
+//          governed gate (governed_capability_not_for_tier), nothing redeemed;
 //        - the owner approves → executed, one transition, the approval stamped approved;
 //        - the owner approves again → already approved, no second effect.
 //   C  off lane         → held_by_lane, no effect, no approval.
@@ -35,7 +37,8 @@
 // Disposable databases only: the CI Supabase stack (CI=true, 127.0.0.1:54322), or a local stack named
 // with LAYER_C_E2E_DISPOSABLE=1. Fixture rows are committed (the drainer runs in other sessions) and
 // every synthetic workspace is retired at the end. The trust-compass setting is platform-wide, so its
-// prior value is saved and restored. The run exits 1 past LAYER_C_E2E_TIMEOUT_MS (180s).
+// prior value is saved and restored, and the proof's passing canary is deleted. A cleanup failure fails
+// the run. The run exits 1 past LAYER_C_E2E_TIMEOUT_MS (180s).
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
@@ -46,7 +49,7 @@ import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const dbUrl = new URL(process.env.LAYER_C_E2E_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres");
 assert.ok(
-  (process.env.CI === "true" && dbUrl.hostname === "127.0.0.1" && dbUrl.port === "54322")
+  (process.env.CI === "true" && dbUrl.hostname === "127.0.0.1" && dbUrl.port === "54322" && dbUrl.pathname === "/postgres")
     || process.env.LAYER_C_E2E_DISPOSABLE === "1",
   "Disposable test database required (the CI Supabase stack, or LAYER_C_E2E_DISPOSABLE=1 for a local throwaway stack)",
 );
@@ -78,13 +81,21 @@ const keys = stackKeys();
 
 const servers = [];
 async function serve(fnDir, port) {
-  const child = spawn(denoBin, ["run", "--allow-env", "--allow-net", "--allow-read", `supabase/functions/${fnDir}/index.ts`], {
+  // Network is limited to loopback: the function may listen on its port and reach the local stack, and
+  // any other outbound call fails loudly. (Remote module downloads are governed separately by Deno's
+  // import permission, so the esm.sh imports still resolve.)
+  const child = spawn(denoBin, ["run", "--allow-env", "--allow-net=127.0.0.1", "--allow-read", `supabase/functions/${fnDir}/index.ts`], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],
+    // Only variables that are actually set are passed on: an empty DENO_CERT makes Deno try to open a
+    // CA file named "" and fail every TLS fetch, which is how the first CI run of this proof died.
     env: {
-      PATH: process.env.PATH, HOME: process.env.HOME, DENO_DIR: process.env.DENO_DIR ?? "",
-      HTTPS_PROXY: process.env.HTTPS_PROXY ?? "", HTTP_PROXY: process.env.HTTP_PROXY ?? "",
-      NO_PROXY: "127.0.0.1,localhost", DENO_CERT: process.env.DENO_CERT ?? "",
+      ...Object.fromEntries(
+        ["PATH", "HOME", "DENO_DIR", "DENO_CERT", "HTTPS_PROXY", "HTTP_PROXY"]
+          .filter((k) => process.env[k])
+          .map((k) => [k, process.env[k]]),
+      ),
+      NO_PROXY: "127.0.0.1,localhost",
       DENO_SERVE_ADDRESS: `tcp:127.0.0.1:${port}`,
       SUPABASE_URL: API_URL, SUPABASE_SERVICE_ROLE_KEY: keys.service, SUPABASE_ANON_KEY: keys.anon,
     },
@@ -182,6 +193,7 @@ const evidence = (tenantId, contactId, ledgerId) => ({
 });
 
 let savedCompass = null;
+let canaryRunId = null;
 const results = [];
 const step = (name, fn) => results.push({ name, fn });
 
@@ -189,11 +201,12 @@ async function main() {
   // The trust compass is platform-wide. Rung 2 (auto) needs a fresh attestation and a passing operator
   // cross-tenant canary (§68); a plain replay has neither, so the default effective lane is confirm.
   savedCompass = one(`select coalesce(value::text, '') from public.admin_app_settings where key = 'paige_trust_compass';`);
+  // The passing canary is the proof's own and is removed in cleanup: a fabricated passing isolation
+  // check must not outlive the run and keep rung 2 satisfied for anything that runs after it.
+  canaryRunId = one(`insert into public.paige_systems_check_run (tenant_id, scan_flavor, completed_at) values (null, 'scheduled', now()) returning id;`);
   sql(`
-    with run as (
-      insert into public.paige_systems_check_run (tenant_id, scan_flavor, completed_at) values (null, 'scheduled', now()) returning id
-    ) insert into public.paige_systems_check_finding (run_id, check_id, tenant_id, status)
-      select id, 'operator_cross_tenant_canary', null, 'pass' from run;
+    insert into public.paige_systems_check_finding (run_id, check_id, tenant_id, status)
+      values (${q(canaryRunId)}, 'operator_cross_tenant_canary', null, 'pass');
     update public.admin_app_settings set value = value || jsonb_build_object('ceiling', 2, 'attested_at', now()) where key = 'paige_trust_compass';
   `);
 
@@ -297,7 +310,27 @@ async function main() {
   step("B a plain member of the workspace cannot approve it", async () => {
     const r = await post(approver.base, { approval_id: approvalId }, member.jwt);
     assert.equal(r.status, 403, JSON.stringify(r.json));
+    assert.equal(r.json.error, "forbidden");
     assert.equal(ledger(b.eventId).outcome, "approval_pending");
+  });
+
+  // The §59 global-role trap: the door's first check is the GLOBAL admin role, which every workspace
+  // owner holds. The owner of workspace A, seated in B only as a plain member, passes that check and
+  // the membership check; what B's own authority says about a plain member must still refuse.
+  step("B the owner of another workspace, seated here as a plain member, cannot approve it", async () => {
+    sql(`insert into public.tenant_members (tenant_id, user_id, role, status, joined_at) values (${q(B.tenantId)}, ${q(A.owner.id)}, 'member', 'active', now() - interval '1 day');`);
+    try {
+      const r = await post(approver.base, { approval_id: approvalId }, A.owner.jwt);
+      // The door admits them (global admin + an active seat); the governed gate the executor re-runs for
+      // the approver refuses, because a plain member is not owner-ops eligible for this capability.
+      assert.equal(r.json.executed, false, JSON.stringify(r.json));
+      assert.equal(r.json.reason, "governed_capability_not_for_tier", JSON.stringify(r.json));
+      assert.equal(ledger(b.eventId).outcome, "approval_pending", JSON.stringify(r.json));
+      assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(b.contactId)};`), 0);
+      assert.equal(one(`select status || ':' || (claimed_at is null) from public.paige_pending_approvals where id = ${q(approvalId)};`), "pending:true");
+    } finally {
+      sql(`delete from public.tenant_members where tenant_id = ${q(B.tenantId)} and user_id = ${q(A.owner.id)};`);
+    }
   });
 
   step("B the owner approves → executed with transition, receipt, Rail; approval stamped", async () => {
@@ -369,9 +402,15 @@ async function main() {
   return failed;
 }
 
+// Returns false when anything could not be put back; the run then fails (a leftover synthetic workspace
+// or a leftover passing canary is a defect, not a footnote).
 function cleanup() {
   for (const s of servers) { try { s.kill("SIGKILL"); } catch { /* already gone */ } }
   try {
+    if (canaryRunId) {
+      sql(`delete from public.paige_systems_check_finding where run_id = ${q(canaryRunId)};
+           delete from public.paige_systems_check_run where id = ${q(canaryRunId)};`);
+    }
     if (savedCompass !== null) {
       sql(savedCompass
         ? `update public.admin_app_settings set value = ${q(savedCompass)}::jsonb where key = 'paige_trust_compass';`
@@ -392,7 +431,9 @@ function cleanup() {
     for (const u of users) sql(`delete from auth.users where id = ${q(u)};`);
   } catch (e) {
     console.error(`cleanup failed: ${e instanceof Error ? e.message : e}`);
+    return false;
   }
+  return true;
 }
 
 const timer = setTimeout(() => { console.error(`timed out after ${RUN_TIMEOUT_MS}ms`); cleanup(); process.exit(1); }, RUN_TIMEOUT_MS);
@@ -403,6 +444,6 @@ try {
   console.error(e instanceof Error ? e.stack : e);
 } finally {
   clearTimeout(timer);
-  cleanup();
+  if (!cleanup()) exitCode = 1;
 }
 process.exit(exitCode);

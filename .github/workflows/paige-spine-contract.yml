@@ -55,7 +55,6 @@ on:
       - "scripts/proof/chat-answer-claim-race.mjs"
       - "scripts/proof/layer-c-native-vertical.mjs"
       - "supabase/functions/paige-native-event-dispatch/**"
-      - "supabase/functions/execute-approval/**"
       - "supabase/tests/contact_create_with_methods.sql"
       - "supabase/tests/user_primary_address.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`

@@ -3,7 +3,8 @@
  * and what needs my attention?" (Operating Fabric F2a).
  *
  * WHAT IT IS. A read-only assembly: resolve the period, build the domain adapters that exist today
- * (`payments`, `sales_pipeline`, both over the Sales department's governed measurements), compose the
+ * (`payments` and `sales_pipeline` over the Sales department's governed measurements — F2a; `operations`
+ * over Operations' and `clients` over Client Experience's — F2b; all through the one metric issuer), compose the
  * Business Operating Snapshot through the F1 seam (`./snapshot.ts`), and render its bounded projection.
  * Every other requested domain is reported honestly by the composer: not connected, or not wired yet.
  *
@@ -32,6 +33,8 @@ import {
   type BusinessOperatingSnapshot,
   type DomainSnapshot,
 } from "./snapshot.ts";
+import { createClientsSnapshotAdapter } from "./adapters/clients.ts";
+import { createOperationsSnapshotAdapter } from "./adapters/operations.ts";
 import { createPaymentsSnapshotAdapter } from "./adapters/payments.ts";
 import { createSalesPipelineSnapshotAdapter } from "./adapters/sales-pipeline.ts";
 
@@ -173,6 +176,8 @@ export async function composeBusinessReview(
   const adapters = [
     createPaymentsSnapshotAdapter(scope.caller, { tenantId }, clock),
     createSalesPipelineSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createOperationsSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createClientsSnapshotAdapter(scope.caller, { tenantId }, clock),
   ];
   // Clamped the way the composer clamps it, so the workspace reads share the adapters' budget.
   const asked = opts?.timeoutMs;

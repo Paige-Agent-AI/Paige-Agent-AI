@@ -19,6 +19,11 @@
  *   - READS ARE SEQUENTIAL. The issuer revokes the caller's previous live reference for the same metric
  *     and range key, so two reads of one key must not overlap. Callers await one read before the next.
  *
+ * F2b GENERALISED THESE IN PLACE rather than forking them: the interpreter accepts distribution and
+ * diagnostic-event values, an expected owning department, and a per-key list of exclusions that are part
+ * of a figure's definition. The Sales adapters pass exactly what they passed before. Non-Sales adapters
+ * import the same functions under neutral names from `./issuer-metric.ts`.
+ *
  * Pure apart from the injected caller: no Deno globals, no hidden clock. Deno and vitest import it.
  */
 
@@ -51,6 +56,8 @@ export const SALES_METRIC_REASON = {
   windowUnreadable: "metric_window_unreadable",
   aborted: "aborted",
   scopeMismatch: "adapter_scope_mismatch",
+  /** The measurement came back owned by a department other than the one the adapter projects. */
+  ownerUnexpected: "metric_owner_unexpected",
 } as const;
 export type SalesMetricReason = (typeof SALES_METRIC_REASON)[keyof typeof SALES_METRIC_REASON];
 
@@ -133,27 +140,69 @@ export function readSalesMetric(
 
 // ── Outcome → closed result ──────────────────────────────────────────────────────────────────────────
 
+/** The value kinds the Sales adapters read. Kept as its own name so they read exactly as before. */
 export type SalesValueKind = "count" | "currency_totals";
+
+/**
+ * Every issuer value kind a snapshot adapter projects (F2b widened this beyond Sales). `decimal` and
+ * `series` are deliberately absent: no adapter reads them yet, so asking for one is a type error.
+ */
+export type IssuerValueKind = SalesValueKind | "distribution" | "diagnostic_events";
+
+/**
+ * What an adapter expects from one read, beyond its value kind (F2b).
+ *
+ * `ownerDepartment`: `readBusinessMetric` checks the owning department only for `sales.*` keys
+ * (`analytics-metrics/read.ts`), so an adapter projecting another department's figures states the
+ * owner it expects and anything else is refused as `metric_owner_unexpected`.
+ *
+ * `definitionalExclusions`: some producers report PARTIAL because their own definition leaves records
+ * out (passing checks are not "unresolved findings"; a paused client is not an "active client"). For
+ * such a key the read is partial only when an exclusion carries a reason OUTSIDE this list, or when the
+ * producer marked it partial with nothing excluded at all. An empty list or none keeps the plain rule.
+ */
+export type IssuerMetricExpectation = {
+  readonly kind: IssuerValueKind;
+  readonly ownerDepartment?: string;
+  readonly definitionalExclusions?: readonly string[];
+};
 
 /** `metric` present = a usable read; `failure` present = a closed reason. Narrow with `in`. */
 export type SalesMetricResult =
   | { readonly metric: SalesMetric; readonly partial: boolean }
   | { readonly failure: SalesMetricReason };
 
+/** Whether the source's PARTIAL means "incomplete", given the reasons its definition always excludes. */
+function sourcePartial(metric: SalesMetric, definitional: readonly string[] | undefined): boolean {
+  const marked = metric.truth_state === "PARTIAL" || metric.coverage.state === "partial";
+  if (!marked || definitional === undefined || definitional.length === 0) return marked;
+  // Marked partial with nothing excluded: the producer knows something it did not itemise. Fail closed.
+  if (metric.coverage.excluded_count === 0) return true;
+  return metric.exclusions.some((e) => e.count > 0 && !definitional.includes(e.reason));
+}
+
 /**
  * Map a read outcome to a usable metric or a closed reason. An available read whose source reported
- * UNAVAILABLE (or returned no values) is a failure, never a zero; a value of an unexpected kind is too.
+ * UNAVAILABLE (or returned no values) is a failure, never a zero; a value of an unexpected kind, or a
+ * figure owned by an unexpected department, is too.
  */
-export function interpretSalesMetric(outcome: MetricReadOutcome, expect: SalesValueKind): SalesMetricResult {
+export function interpretSalesMetric(
+  outcome: MetricReadOutcome,
+  expect: IssuerValueKind | IssuerMetricExpectation,
+): SalesMetricResult {
+  const want: IssuerMetricExpectation = typeof expect === "string" ? { kind: expect } : expect;
   if (outcome.status === "refused") return { failure: SALES_METRIC_REASON.refused };
   if (outcome.status === "needs_input") return { failure: SALES_METRIC_REASON.incomplete };
   if (outcome.status !== "available" || !outcome.metric) return { failure: SALES_METRIC_REASON.notVerified };
   const metric = outcome.metric;
+  if (want.ownerDepartment !== undefined && metric.owner_department !== want.ownerDepartment) {
+    return { failure: SALES_METRIC_REASON.ownerUnexpected };
+  }
   if (metric.truth_state === "UNAVAILABLE" || metric.values === null) {
     return { failure: SALES_METRIC_REASON.sourceUnavailable };
   }
-  if (metric.values.kind !== expect) return { failure: SALES_METRIC_REASON.shapeUnexpected };
-  return { metric, partial: metric.truth_state === "PARTIAL" || metric.coverage.state === "partial" };
+  if (metric.values.kind !== want.kind) return { failure: SALES_METRIC_REASON.shapeUnexpected };
+  return { metric, partial: sourcePartial(metric, want.definitionalExclusions) };
 }
 
 /** Window + read + interpretation in one call. A window with nothing readable is a closed failure. */
@@ -163,7 +212,7 @@ export async function readSalesFigure(
   metricKey: string,
   period: SnapshotPeriod,
   now: Date,
-  expect: SalesValueKind,
+  expect: IssuerValueKind | IssuerMetricExpectation,
   clock: () => number = Date.now,
 ): Promise<SalesMetricResult & { readonly window: SalesMetricWindow | null }> {
   const window = salesMetricWindow(period, now);
@@ -307,11 +356,19 @@ export function pushSalesHeadline(draft: SalesSnapshotDraft, metric: SnapshotMet
   draft.nouns[metric.key] = noun;
 }
 
-/** Record where a usable metric came from. The evidence reference is deliberately NOT used. */
-export function noteSalesSource(draft: SalesSnapshotDraft, adapterId: string, metric: SalesMetric): void {
+/**
+ * Record where a usable metric came from. The evidence reference is deliberately NOT used. `system`
+ * names the producing department (default `sales`, the F2a adapters).
+ */
+export function noteSalesSource(
+  draft: SalesSnapshotDraft,
+  adapterId: string,
+  metric: SalesMetric,
+  system = "sales",
+): void {
   const reference = `${metric.metric_key}@${metric.source_revision_ref}`;
   if (!draft.sources.some((s) => s.reference === reference)) {
-    draft.sources.push({ system: "sales", adapter: adapterId, reference });
+    draft.sources.push({ system, adapter: adapterId, reference });
   }
   const asOf = Date.parse(metric.as_of);
   if (Number.isFinite(asOf)) draft.asOf.push(asOf);

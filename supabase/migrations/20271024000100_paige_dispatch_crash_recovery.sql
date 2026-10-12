@@ -163,12 +163,18 @@ begin
     select ae.id
       from public.paige_act_executions ae
       join public.tenants t on t.id = ae.tenant_id
+      left join public.paige_native_events ev on ev.id = ae.event_id
      where ae.outcome::text in ('ambiguous', 'accepted_for_execution', 'retrying')
        and ae.updated_at < now() - interval '10 minutes'
        and t.archived_at is null
        and not coalesce(t.lifecycle_execution_paused, false)
-       and (ae.adapter_kind = 'native'
-            or (ae.outcome::text <> 'ambiguous' and ae.provider_ref is null and ae.detail ? 'dispatch_claim'))
+       and (
+             -- native: an unconfirmed (ambiguous) act only where the readback can settle it
+             (ae.adapter_kind = 'native'
+              and (ae.outcome::text <> 'ambiguous' or (ev.subject_table = 'clients' and ae.correlation_ref is not null)))
+             or (ae.adapter_kind <> 'native'
+                 and ae.outcome::text <> 'ambiguous' and ae.provider_ref is null and ae.detail ? 'dispatch_claim')
+           )
      order by ae.updated_at asc
      limit 50
   loop
@@ -223,10 +229,11 @@ begin
         if _claim_live then
           null; -- a runner may still be dispatching
         elsif not _readable then
-          -- The scan admits a non-readable act only when it was CLAIMED and carries no provider reference: a
-          -- dispatcher took it and died, and nothing can prove the effect absent. Recorded as unknown — never replayed.
+          -- The scan admits a non-readable act only when it was CLAIMED and carries no provider reference: either a
+          -- dispatcher took it and died, or its dispatch returned without one. Nothing can prove the effect absent or
+          -- present, so it is recorded as unknown — never replayed.
           if _cur.provider_ref is null and _cur.detail ? 'dispatch_claim' then
-            _new := 'ambiguous'; _code := 'dispatch_outcome_unknown'; _err := 'dispatch_claim_lost_outcome_unknown';
+            _new := 'ambiguous'; _code := 'dispatch_outcome_unknown'; _err := 'claimed_without_provider_ref';
           end if;
         elsif _cur.detail ? 'approved_by' then
           -- An approved act. The human's approval is the authority to run it, so recovery hands it back to them:

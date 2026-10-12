@@ -7,7 +7,7 @@
 -- House pgTAP style: synthetic opaque fixtures, FK constraints dropped and seeding triggers disabled inside the
 -- transaction, which is ALWAYS rolled back. The reconciler runs as the cron/service role (auth.uid() NULL).
 begin;
-select plan(61);
+select plan(62);
 
 insert into public.tenants(id, slug, name, status, account_type, account_number_prefix, features) values
   ('22222222-2222-4222-8222-222222222222', 'paige-2b-recovery-proof-tenant', 'Paige 2b Recovery Proof Tenant', 'active', 'standalone', 'P2B', '{}'::jsonb),
@@ -167,6 +167,11 @@ select pg_temp.ev('22', 'done', 1);
 select pg_temp.act('22', 'native', 'approval_pending', '{}'::jsonb, '1 day', '30 minutes');
 select pg_temp.approval('22', '30 minutes');
 
+-- 24 a native unconfirmed (ambiguous) act the readback cannot settle (no correlation reference)
+select pg_temp.ev('24', 'done', 1);
+select pg_temp.act('24', 'native', 'ambiguous', '{}'::jsonb, '20 minutes', '15 minutes');
+update public.paige_act_executions set correlation_ref = null where id = 'ad000000-0000-4000-8000-000000000024';
+
 -- The reconciler's own ledger writes must move updated_at (that is what paces a second pass); the mint stays off.
 alter table public.paige_act_executions enable trigger trg_paige_act_executions_touch;
 
@@ -244,6 +249,7 @@ select is(pg_temp.evstate('09'), 'error:5', '09 and never re-driven (an external
 select is((pg_temp.row('10')).outcome::text, 'accepted_for_execution', '10 with a provider reference the adapter''s own readback owns it');
 select is((pg_temp.row('18')).outcome::text, 'accepted_for_execution', '18 an n8n act never claimed is not recorded as a lost claim');
 select ok(not ((pg_temp.row('18')).detail ? 'recovery_checked_at'), '18 and is not scanned at all');
+select ok(not ((pg_temp.row('24')).detail ? 'recovery_checked_at'), '24 a native ambiguous act the readback cannot settle is not scanned (it would rotate forever)');
 
 -- ── A second pass is paced ────────────────────────────────────────────────────────────────────────────────────────
 select public.paige_reconcile_orchestration_acts();

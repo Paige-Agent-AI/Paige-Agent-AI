@@ -185,16 +185,29 @@ async function resolveAuthorizingPerson(
 /** Load an automation's acts. DISTINGUISHES an infra error (retry) from a genuinely empty act list — a
  *  swallowed read error must never look like "no acts" and let the event complete silently (§13/§32). */
 type LoadActsResult = { ok: true; acts: ActRow[] } | { ok: false; error: string };
-async function loadActs(db: EngineDb, automationId: string, createdAtOrBefore?: string): Promise<LoadActsResult> {
-  let q = db
+async function loadActs(db: EngineDb, automationId: string, recovery?: RecoveryScope): Promise<LoadActsResult> {
+  const { data, error } = await db
     .from("paige_automation_acts")
-    .select("id, position, action_kind, tool_key, config")
-    .eq("automation_id", automationId);
-  if (createdAtOrBefore) q = q.lte("created_at", createdAtOrBefore);
-  const { data, error } = await q.order("position", { ascending: true });
+    .select(recovery ? "id, position, action_kind, tool_key, config, created_at" : "id, position, action_kind, tool_key, config")
+    .eq("automation_id", automationId)
+    .order("position", { ascending: true });
   if (error) return { ok: false, error: error.message ?? String(error) };
   if (!Array.isArray(data)) return { ok: false, error: "paige_automation_acts returned a non-array" };
-  return { ok: true, acts: data as ActRow[] };
+  if (!recovery) return { ok: true, acts: data as ActRow[] };
+  // A recovery drain governs an act only if it existed when the event happened, or it was already governed for this
+  // event (it has a ledger row — e.g. added after the event but before the first drain, which then stranded it).
+  const { data: led, error: ledErr } = await db
+    .from("paige_act_executions")
+    .select("act_id")
+    .eq("event_id", recovery.eventId)
+    .eq("automation_id", automationId);
+  if (ledErr) return { ok: false, error: ledErr.message ?? String(ledErr) };
+  if (!Array.isArray(led)) return { ok: false, error: "paige_act_executions returned a non-array" };
+  const governed = new Set(led.map((r: { act_id?: unknown }) => String(r.act_id)));
+  const cutoff = Date.parse(recovery.actsCreatedAtOrBefore);
+  const kept = (data as Array<ActRow & { created_at?: string }>).filter((a) =>
+    governed.has(a.id) || (Number.isFinite(cutoff) && Date.parse(a.created_at ?? "") <= cutoff));
+  return { ok: true, acts: kept.map(({ created_at: _c, ...a }) => a as ActRow) };
 }
 
 /** Outcomes that are FINAL for the drainer. DERIVED from the one canonical home (outcomes.ts `FINAL_OUTCOMES`,
@@ -357,8 +370,10 @@ export type EngineResult = {
 
 /** Orchestrate all acts for a claimed event across its live subscribers, writing the exact per-act
  *  outcome to paige_act_executions (fire-once). Returns a summary for the drainer's response. */
-/** `actsCreatedAtOrBefore` (Slice 2b recovery): govern only acts that existed at that time — set by the drainer
- *  when the reconciler re-opened a finished event, so an act added after the event never runs for it. */
+/** Slice 2b recovery: set by the drainer when the reconciler re-opened a finished event. The engine then governs only
+ *  acts that existed when the event happened (`actsCreatedAtOrBefore`) or already have a ledger row for it, so an act
+ *  added since never runs for the old event, while a stranded act is always recoverable. */
+type RecoveryScope = { eventId: string; actsCreatedAtOrBefore: string };
 export type RunEventActsOptions = { actsCreatedAtOrBefore?: string };
 
 export async function runEventActs(
@@ -382,7 +397,9 @@ export async function runEventActs(
 
   for (const automation of subscribers) {
     // Load acts. An INFRA error is a RETRYABLE subscriber — never a false "no acts" that completes silently.
-    const actsRes = await loadActs(db, automation.id, opts.actsCreatedAtOrBefore);
+    const actsRes = await loadActs(db, automation.id, opts.actsCreatedAtOrBefore
+      ? { eventId: event.event_id, actsCreatedAtOrBefore: opts.actsCreatedAtOrBefore }
+      : undefined);
     if (!actsRes.ok) { subscriber_retry.push(automation.id); continue; }
     const acts = actsRes.acts;
     if (acts.length === 0) continue;   // genuinely no acts to govern — nothing to record

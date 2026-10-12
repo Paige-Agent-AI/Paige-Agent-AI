@@ -82,6 +82,7 @@ type MockConfig = {
   persistOutcomeOverride?: Record<string, string>;  // act_id → the outcome the RPC actually persisted (monotonic)
   fromErrors?: Set<string>;                         // table names whose READ returns an infra error
   laneError?: boolean;                              // resolve_automation_autonomy returns an infra error
+  ledgerActs?: Array<{ event_id: string; automation_id: string; act_id: string }>; // existing ledger rows
 };
 function mockDb(cfg: MockConfig): EngineDb {
   const makeQuery = (table: string) => {
@@ -91,17 +92,15 @@ function mockDb(cfg: MockConfig): EngineDb {
       select() { return q; },
       order() { return q; },
       eq(k: string, v: unknown) { state[k] = v; return q; },
-      lte(k: string, v: unknown) { state[`lte:${k}`] = v; return q; },
       limit() { return q; },
       then(onF: any, onR: any) {
         if (cfg.fromErrors?.has(table)) {
           return Promise.resolve({ data: null, error: { message: `${table}_read_failed` } }).then(onF, onR);
         }
         let data: unknown = [];
-        if (table === "paige_automation_acts") {
-          const cutoff = state["lte:created_at"] as string | undefined;
-          data = (cfg.acts[state.automation_id as string] ?? [])
-            .filter((a: any) => !cutoff || !a.created_at || a.created_at <= cutoff);
+        if (table === "paige_automation_acts") data = cfg.acts[state.automation_id as string] ?? [];
+        else if (table === "paige_act_executions") {
+          data = (cfg.ledgerActs ?? []).filter((r) => r.event_id === state.event_id && r.automation_id === state.automation_id);
         }
         else if (table === "tenant_members") {
           data = cfg.activeMembers.has(`${state.tenant_id}:${state.user_id}`) ? [{ user_id: state.user_id }] : [];
@@ -239,6 +238,18 @@ describe("runEventActs — a recovery re-open governs only acts that existed whe
     const r = await runEventActs(mockDb(c), event, [auto({})], { actsCreatedAtOrBefore: "2026-10-02T00:00:00Z" });
     expect(r.records.map((x) => x.act_id)).toEqual(["old"]);
     expect(c.recorded.map((x) => x._act_id)).toEqual(["old"]);
+  });
+  it("an act added after the event that the first drain already governed (and stranded) is still recovered", async () => {
+    const c = cfg();
+    c.ledgerActs = [{ event_id: "e1", automation_id: "a1", act_id: "late" }];
+    const r = await runEventActs(mockDb(c), event, [auto({})], { actsCreatedAtOrBefore: "2026-10-02T00:00:00Z" });
+    expect(r.records.map((x) => x.act_id)).toEqual(["old", "late"]);
+  });
+  it("a failed ledger read during a recovery drain retries the subscriber, never governs blind", async () => {
+    const c = cfg(); c.fromErrors = new Set(["paige_act_executions"]);
+    const r = await runEventActs(mockDb(c), event, [auto({})], { actsCreatedAtOrBefore: "2026-10-02T00:00:00Z" });
+    expect(r.subscriber_retry).toEqual(["a1"]);
+    expect(r.records).toEqual([]);
   });
   it("without it (a normal event) every configured act is governed, as before", async () => {
     const r = await runEventActs(mockDb(cfg()), event, [auto({})]);

@@ -4,6 +4,22 @@
 
 `_shared/analytics-metrics/read.ts` declares the single `analytics.metric_read` / `read_business_metric` capability. `paige-ai-chat` binds it after existing runtime gates using the real caller-JWT client; Live reaches the same handler. The canonical issuer/resolver and shared pure validator own values, scope and evidence. The frontend validator import reexports the same implementation. Current-turn evidence uses `paige-context/mod.ts`, without extending Pipeline Mind signals or persisting metrics as Memory. Source wiring is not authenticated acceptance. Exact integration/proof boundaries: `docs/delivery/int340-conversational-metric-read.md`.
 
+## Ads from chat — lead funnel read + Ads showroom feature (2026-10-12)
+
+`_shared/paige-spine/domains/ads.ts` declares `ads.lead_funnel` (chat tool `get_pipeline_lead_funnel`,
+read) and `ads.creative_feature` (chat tool `set_ad_creative_featured`, `ordinary` mutation), both
+`workspace-admin`, over the RPCs the Ads department already calls (migration `20271021042001`).
+`_shared/ads-funnel-chat.ts` holds the tool JSON (`ADS_FUNNEL_TOOLS`, parameters from the Kit input) and
+`dispatchAdsFunnelChat`; `paige-ai-chat` mounts it for the tenant tier and dispatches with the caller-JWT
+client (never service role), checking the active business before and after. The read resolves the
+default pipeline (oldest non-archived `is_default`), answers "no Sales pipeline yet" plainly, and maps
+stage ids to names; it carries no ad-provider data. The feature asks first through the one approval gate
+(card names the picture), is read back before it is reported, and records a Rail receipt; its Autonomy
+catalogue row is `20271021130000_ads_paige_chat_tools_catalogue.sql` (proof
+`supabase/tests/ads_chat_tools_catalogue.sql`). No tool lists the whole content library; the model gets
+picture ids from the funnel's `ads[].content_id` or a picture generated/on the canvas in the chat.
+Authenticated runtime is UNVERIFIED (§32.c).
+
 > **Route topology correction — 2026-09-06:** the legacy privileged router and page described in
 > historical sections below are retired. Current product entry lives in `src/App.tsx`; tenant shells are
 > account-addressed under `/solo/{account}`, `/business/{account}`, and `/agency/{account}`; platform

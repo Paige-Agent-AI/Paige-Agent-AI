@@ -8,6 +8,8 @@ on:
       - 'supabase/migrations/20270588326001_solo_form_deal_identity.sql'
       - 'supabase/migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql'
       - 'supabase/tests/ads_intake_default_pipeline.sql'
+      - 'supabase/migrations/20271021130000_ads_paige_chat_tools_catalogue.sql'
+      - 'supabase/tests/ads_chat_tools_catalogue.sql'
       - '.github/workflows/ads-intake-proof.yml'
   push:
     branches: [main]
@@ -15,6 +17,8 @@ on:
       - 'supabase/migrations/20270588326001_solo_form_deal_identity.sql'
       - 'supabase/migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql'
       - 'supabase/tests/ads_intake_default_pipeline.sql'
+      - 'supabase/migrations/20271021130000_ads_paige_chat_tools_catalogue.sql'
+      - 'supabase/tests/ads_chat_tools_catalogue.sql'
       - '.github/workflows/ads-intake-proof.yml'
   workflow_dispatch:
 permissions:
@@ -43,3 +47,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Default pipeline filing, routed forms unchanged, funnel counts and tenant refusals (rolled back)
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/ads_intake_default_pipeline.sql
+      - name: PAIGE's Ads showroom feature in the Autonomy catalogue — forwards every earlier row, asks first by default (rolled back)
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -d postgres -c 'CREATE DATABASE ads_chat_tools_catalogue_contract'
+          psql -X -v ON_ERROR_STOP=1 -d ads_chat_tools_catalogue_contract -f supabase/tests/ads_chat_tools_catalogue.sql

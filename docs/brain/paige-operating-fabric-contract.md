@@ -356,8 +356,10 @@ The other keys keep the plain rule.
    roles are exactly owner, admin and member, per the 2026-09-26 owner ruling in
    `docs/brain/decision-log.md`.) A revision change between issue and resolve (a client edited
    mid-read) also arrives as 42501 and is reported the same way, which is why the wording never says
-   "you lack access". **Owner to rule** whether members should get the review, or owner/admin is the
-   intended reach.
+   "you lack access". ~~**Owner to rule** whether members should get the review, or owner/admin is the
+   intended reach.~~ **Ruled 2026-10-12 (owner):** the full executive business snapshot stays
+   owner/admin; a member-scoped capability needs its own separate owner approval. See the F2
+   integration section below.
 4. **Operations / Planning (before F2c):** `plan_list`'s staff check uses the global
    `has_any_role`; no `has_more`; `p_status` filters plan status, not item status; the DATE /
    time-zone cast; the lock taken by a read.
@@ -390,6 +392,223 @@ The other keys keep the plain rule.
    ruled out).
 3. **§A "Plans / plan items" row and §H say 4 plan items.** Prod read-only aggregate, 2026-10-12
    03:48 UTC: `plan_items` 3, `plans` 0.
+
+---
+
+## F2 cross-lane integration (2026-10-12) — the chat seam in Fabric code, and the exact hand-offs
+
+F2a and F2b are merged; the review reads four domains (`payments`, `sales_pipeline`, `operations`,
+`clients`) and is reachable from no turn. This section is the **one canonical hand-off** to the lanes
+that own the rest. Every line below was re-grounded read-only against `main` `d7888b612` on 2026-10-12
+(file:line cited at that commit). Linear posts point here rather than restating it.
+
+**Owner ruling recorded (2026-10-12).** Coach is a title, not an access role; managed access roles are
+owner, admin and member. **The full executive business snapshot stays owner/admin.** A member-scoped
+capability needs a separate owner approval. This closes F2b hand-off 3; nothing in the issuer changes.
+
+### What the Fabric now owns in code (this PR, still not wired)
+
+`_shared/paige-context/business-snapshot-chat.ts` — the domain-module half of the chat seam, split the
+way the Ads lead funnel splits it (`_shared/ads-funnel-chat.ts` + `paige-spine/domains/ads.ts`):
+
+| Export | What it is |
+|---|---|
+| `BUSINESS_SNAPSHOT_TOOL_NAME` | `"get_business_snapshot"` |
+| `BUSINESS_SNAPSHOT_CAPABILITY_KEY` | `"business.operating_snapshot"` |
+| `BUSINESS_SNAPSHOT_INPUT_DEFINITION` | A plain `objectInputSchema` definition: `period` (enum `today`, `last_7_days`, `last_30_days`, `current_quarter`, `custom`), `custom_start`/`custom_end` (strings ≤ 40), `focus` (≤ 12 strings ≤ 40). Nothing required. No tenant, actor, role or time-zone field. |
+| `BUSINESS_SNAPSHOT_TOOL_DESCRIPTION` | Model-facing text: what is read, unavailable ≠ zero, recorded cash ≠ settlement, no ad spend/CPL/ROAS, no currency sums, no memory writes, not in parallel with `read_business_metric`. |
+| `parseBusinessSnapshotArgs` | Strict: an unknown field is refused; an identity-shaped field (tenant, workspace, account, actor, user, role, seat, time zone, scope) is refused with "comes from the signed-in session". Custom bounds only with `period: custom`. |
+| `accountShapeForCallerTier` | Chat's `callerTier` → `AccountShape`: `tenant` → `solo`, `subaccount` → `sub_account`, everything else `null`. |
+| `dispatchBusinessSnapshotChat(ctx, { caller }, opts?)` | One call → one `composeBusinessReview`. Never throws. Returns `{ outcome, content, snapshot? }`. |
+
+**Response contract.** `content` is exactly what the model receives (`JSON.stringify(result.content)`);
+`snapshot` is the structured record for the turn trace only and must never be sent to the model.
+
+| `outcome` | When | `content` |
+|---|---|---|
+| `succeeded` | at least one of the four read areas is available | `{ success: true, period, review, note }` — `review` is the bounded projection (≤ 6000 chars of areas plus the honesty lines), naming every NOT AVAILABLE area |
+| `refused` | every read area returned `metric_read_refused` | `{ success: false, code: "review_not_authorized", error, note }` — no figures; never "you lack access" (a mid-read revision change also arrives as 42501); "do not retry under another identity" |
+| `unavailable` | the workspace changed during the read | `{ success: false, code: "active_business_changed", error, note }` — nothing reported |
+| `unavailable` | nothing readable, or only areas not read here were asked for | `{ success: false, code: "review_unavailable", error, period, review, note }` — the review names every unknown area |
+| `invalid` | wrong tool name, no active business, no signed-in person, a bad argument, or a period the resolver refuses | `{ success: false, error, fix, note }` — nothing read, no RPC made |
+| `failed` | the composition threw | `{ success: false, error, note }` — "do not state any figure" |
+
+The content carries no tenant id and no evidence reference (asserted end to end). 54 unit tests:
+`src/__tests__/operating-snapshot-business-snapshot-chat.test.ts`.
+
+### Hand-off A — Conversational Loop lane (Chat/Live admission; owner of `paige-ai-chat` and `_shared/paige-turn`)
+
+The exact invocation, at the Ads branch's pattern (`paige-ai-chat/index.ts:15560-15571`):
+
+```ts
+import { BUSINESS_SNAPSHOT_TOOL_NAME, accountShapeForCallerTier, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-snapshot-chat.ts';
+// … in executeToolCalls:
+} else if (tc.function.name === BUSINESS_SNAPSHOT_TOOL_NAME) {
+  let args: unknown = {};
+  try { args = JSON.parse(tc.function.arguments || "{}"); } catch { args = null; }   // null → `invalid`, not a default review
+  const result = await dispatchBusinessSnapshotChat({
+    actorId: user.id,                                   // index.ts:1056
+    tenantId: personaCtx?.tenant_id ?? null,            // index.ts:2696-2713 — never from args
+    role: null,                                         // Chat has no role string; the issuer re-resolves the seat
+    accountShape: accountShapeForCallerTier(callerTier),// index.ts:2263-2265
+    userTimezone,                                       // index.ts:799/1431 — client-reported, ≤ 80 chars; absent → UTC
+    toolName: tc.function.name,
+    args,
+  }, { caller: supabaseClient });                       // index.ts:1049-1054 — the caller's own JWT client, never `supabase`
+  toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
+}
+```
+
+Requirements, each grounded:
+
+1. **Offer it to `callerTier` `tenant` and `subaccount` only** (§61: Solo and Sub-account YES; Agency
+   RESELL; operator separate). Do **not** copy `if (callerTier === "tenant")` from `index.ts:8158`
+   unchanged — `subaccount` is a distinct tier (`_shared/actorTier.ts:15`) and that gate drops it. The
+   issuer still refuses any seat that is not an active owner/admin of the active workspace.
+2. **Declare the tool in a domain module and spread-push it.** `chat-tool-registry-lint` fails an inline
+   `name:` in `index.ts` (baseline 95). The tool array is
+   `[{ type: 'function', function: { name: BUSINESS_SNAPSHOT_TOOL_NAME, description: BUSINESS_SNAPSHOT_TOOL_DESCRIPTION, parameters: <Spine capability>.input } }]`,
+   with the input built by the Spine lane (hand-off B). The Fabric will add it as `BUSINESS_SNAPSHOT_TOOLS`
+   in the joint PR, once the capability symbol exists to import.
+3. **Read-only admission while INT-346 is inactive — this is new work, not a switch.** There is no
+   read-only admission class today. Conversational mode (`interactiveConversational`) removes every tool
+   (`index.ts:9275-9284`), refuses every call at dispatch with `CONVERSATIONAL_MODE`
+   (`index.ts:10331-10339`), and tells the model it has no tools (`PAIGE_CONVERSATIONAL_MODE_BLOCK`,
+   `index.ts:294-296`, injected at `:5672`). The only admission value is `'conversational'`
+   (`20270602000301:13,108`). Admitting a read means coordinated changes at all three points, for an
+   explicit allowlist of read-only tools (not "everything not in `mutatingTools()`"), without touching the
+   effectful protocol. The later Turn Route `read` exposure (`_shared/paige-turn/exposure.ts:53-66`,
+   applied `index.ts:9974`) runs after the splice and cannot add a tool back.
+4. **Sequencing.** `executeToolCalls` already awaits each call in order (`index.ts:10327`); there is no
+   `Promise.all` over tool calls. Keep it so: the issuer revokes the caller's previous reference for the
+   same metric and range, so an overlap with `read_business_metric` reads as a refusal.
+5. **Turn budget:** about three times the per-adapter timeout (workspace read, adapters, workspace
+   read): 30 s at the 10 s default.
+6. **Step label.** Move `get_business_snapshot` out of `STEP_NO_START` (`_shared/paige-turn/step-start.ts:132-133`,
+   "no dispatch") into the started set; `src/__tests__/paige-step-start.test.ts:70-101` enforces parity
+   with `describeStep` (`index.ts:588`, "Taking stock of your business").
+7. **C0b fingerprints.** Any edit inside the handler body changes all 29 contracts in
+   `scripts/ci/c0b-incumbent-resource-binding.mjs` (`CONTRACTS`, `:91`). There is no regeneration
+   script: recompute with the validator's own `inspectIncumbentSource` on the exact tree and have the
+   values independently reviewed (precedent: the Ads commit `4e93b2949`).
+8. **No receipt.** A read is not a business action; record nothing to the Rail for this call.
+9. **Live.** Live is Chat at the code level (§F); the same branch serves it. Spoken-turn proof is owed
+   separately.
+
+### Hand-off B — CC Platform Reach / Spine lane (INT-179; owner of `_shared/paige-spine`)
+
+Register `business.operating_snapshot`. CC writes the declaration; the Fabric does not duplicate it.
+
+| Field | Value |
+|---|---|
+| key / domain / owner | `business.operating_snapshot` / `business` / `operating_fabric` (or the Spine lane's owner vocabulary) |
+| humanSurface | the Solo Command Center (the review has no settings page of its own) |
+| readiness | must be declared (`capability-declaration-lint` rule 5); `none` matches the metric read |
+| action.classification | `read` |
+| action.executor | a `public.*` SQL symbol that exists in migrations — the lint requires one (`paige-spine-registry-lint.mjs:330-334`). The review's only database calls are `public.issue_analytics_evidence_bundle` / `public.resolve_analytics_evidence_reference`, as `analytics.metric_read` declares; or a new proof path the Spine lane owns |
+| action.chatTool | `get_business_snapshot` |
+| action.riskPolicyKey / approvalAuthority | `read_only` / `none` (`validateSpineRegistry`, `registry.ts:144-147`) |
+| action.seatAuthority | `workspace-admin` — owner/admin per the 2026-10-12 ruling. Note `analytics.metric_read` is registered `member` (`registry.ts:77`) although its issuer admits owner/admin only; the snapshot should not inherit that mismatch |
+| outcome.kinds | `succeeded`, `refused`, `unavailable`, `invalid`, `failed` |
+| chatBinding / maturity | `PARTIAL` / `PARTIAL` until the authenticated drive (hand-off F) |
+| receipt.rail | none: no recorder writes for this read |
+| capability-kit twin | `defineCapability({ …, input: objectInputSchema(BUSINESS_SNAPSHOT_INPUT_DEFINITION), effect: 'read', governance: { risk: 'read_only', approval: 'none', … } })` |
+
+Constraints that make B and A **one joint PR**: `capability-declaration-lint` fails a model-offered tool
+with no Spine capability (rule 1) **and** a Spine `chatTool` never offered to the model (rule 6,
+dead binding). Neither half can merge alone. `workspace-admin` also requires adding
+`get_business_snapshot` to the `outsideBefore` list in `src/__tests__/c0b-read-registration.test.ts:28-33`
+(as the Ads read did).
+
+### Hand-off C — Operations & Delivery lane (F2c `work`; ANT-11)
+
+The Fabric cannot read work or delivery obligations from today's source. Re-verified on `main`:
+
+| # | Defect | Where |
+|---|---|---|
+| W1 | Solo-only: refuses `sub_account` and parented standalone, so §61 parity fails | `20271020000020:152-154` |
+| W2 | A read takes a row lock: VOLATILE (no volatility clause) + `profiles … FOR UPDATE` | `20271020000020:140,145` |
+| W3 | Day precision in the session time zone (`due_at::date`, `remind_at::date`); a review period is two instants | `20260712040000:46-48,61-62` |
+| W4 | Undated items vanish when **either** bound is set; loose items are date-filtered even with `p_by_item_date=false` | same lines |
+| W5 | No `has_more`/total. Plans cap at 200 including done; per-plan items uncapped; the loose-items `LIMIT` sits on a no-GROUP-BY aggregate and limits nothing (loose items are unbounded) | `20260712040000:24,37,39-50,52-63` |
+| W6 | `p_status` means plan status for plans and item status for loose items; the vocabularies do not overlap | `:33,:59`; `20260711340000:38,61-62` |
+| W7 | `plan_list` staff check is the global `has_any_role(['admin','super_admin','coach'])` (tenant-agnostic, and names the retired coach role); the wrapper narrows to tenant admin **after** the cap, so a visible plan can be cut by invisible ones | `20260712040000:22`; `20271020000020:157,161-175` |
+
+**What the Fabric needs (either one):** (preferred) Operations-owned metric keys behind the INT-340 issuer,
+e.g. open, overdue, blocked and due-in-period work items and milestones, with `current_snapshot` or
+`event_timestamp_cohort` semantics and honest PARTIAL — then the Fabric reads them exactly like the
+other four areas; or a STABLE, non-locking, tenant-scoped list read with half-open `timestamptz` bounds,
+an explicit undated rule, item-status filtering, a bounded result with `has_more`, and Solo +
+Sub-account parity. Operations owns the choice and the source; the Fabric adds the adapter after.
+
+### Hand-off D — Business mission / Game Plan source (F2c `game_plan`)
+
+No Linear issue names an owner for `business_missions`; the surface ledger names
+`command-center.business-game-plan` (`docs/binding-ledger/surface-binding-ledger.json:370`, PARTIAL,
+PRs #1038 #1016 #983 #647 #639). Routed through ANT-138 for the coordinator to assign.
+
+| # | Defect | Where |
+|---|---|---|
+| M1 | `list_business_missions` returns no `closed_at` (nor `paused_at`, `outcome_unknowns`), though the table has it and a CHECK requires it for completed/stopped | `20260907001343:69-74`; `20260905221203:19,23-24` |
+| M2 | Owner-only gate (admins refused), standalone top-level only, refusal by message text (`MISSION_OWNER_REQUIRED`) that callers substring-match | `20260905221203:90-92`; `useBusinessGamePlanMissions.ts:38-47,95`; `paige-ai-chat/index.ts:15471` |
+| M3 | Heartbeat filters `lifecycle_state not in ('closed','abandoned')`, states that do not exist (allowed: proposed, active, blocked, paused, completed, stopped), so a completed or stopped mission is sent to a client as "Current focus: …" | `20270111000000:47-54`; CHECK `20260905221203:11`; `paige-heartbeat/index.ts:97,107` |
+| M4 | Heartbeat idempotency: `A OR B AND NOT EXISTS(…)` — AND binds tighter, so the "no open follow-up" guard covers only the never-engaged branch; an engaged stale client can be re-filed while a follow-up is open | `20270111000000:55-66` |
+
+M3 and M4 are live defects in a client-facing path, independent of the Fabric (prod had 0 missions on
+2026-10-12, so no observed impact yet). For the Fabric: M1 plus an owner/admin read with a closed-state
+signal is enough for `game_plan`.
+
+### Hand-off E — Marketing / Analytics allowlist (campaigns and leads; Platform Reach MBC slice 6, INT-340 ANT-23, Marketing ANT-15)
+
+The server already serves all 11 `marketing.*` keys (dispatcher `20270602000503:231-268`; producer
+latest `20271021042001:449ff`, owner `marketing`, owner/admin). The only gate is the client allowlist in
+`_shared/analytics-metrics/read.ts`, which Platform Reach owns (`docs/delivery/marketing-metric-server-contract.md:16-17`,
+`int340-shared-metric-consumer-contract.md:41`).
+
+1. **A separate `MARKETING_METRIC_KEYS`**, accepted by `request()` (`read.ts:68-92`) as the union with
+   `BUSINESS_METRIC_KEYS`, while the `read_business_metric` schema enum (`read.ts:24`) keeps only
+   `BUSINESS_METRIC_KEYS` — adding to that array changes the Chat tool enum (a §37 consumer change).
+2. **An owner/kind check for `marketing.*`**, as `sales.*` has at `read.ts:129-130`: owner `marketing`;
+   kinds `count`, `distribution` and `series` (`marketing.leads.daily` is a series; admitting only
+   count/distribution silently excludes it — either admit `series` or leave the key out on purpose).
+3. **Keys the review needs first:** `marketing.leads.received` (count, period),
+   `marketing.leads.by_campaign_tag`, `marketing.leads.by_utm_source` (distributions, period),
+   `marketing.leads.converted_to_opportunity` (count, period), `marketing.forms.unrouted_current` and
+   `marketing.submissions.failed_current` (current; operational problems).
+4. **Periods:** marketing windows are not truncated to the UTC day (`read.ts:82` truncates `sales.*`
+   only); the producer refuses `range_end > as_of` and a daily series over 366 days with 22023, which
+   `read.ts` maps to `unavailable`, not `needs_input`.
+5. **PARTIAL by definition:** no producer emits a flag. `not_tracked_own_mail` (email opened/clicked)
+   is definitional; `campaign_tag_matches_several_briefs` and `opportunity_record_missing` are data
+   gaps. A producer flag would let adapters stop matching exclusion text (also F2b hand-off 1).
+6. **Tests:** keep `marketing.roas` → `needs_input` (`src/lib/analytics/metric-read.test.ts:75-78`); add
+   one per admitted key and a test for the owner/kind rejection (none exists for sales either). Keep
+   the exact strings `capability-kit-lint.mjs:137-142` requires.
+7. **Never invented:** there is no ad-spend, CPL, CAC, ROAS or attribution key anywhere
+   (`marketing-metric-server-contract.md:57-58`); the review keeps `paid_acquisition` NOT CONNECTED.
+
+### Hand-off F — authenticated acceptance (ANT-21)
+
+When the joint PR is live, the first integrated read-only proof is: the canonical protected SOLO QA
+account from ANT-21's register (currently **NOT YET VERIFIED**; no identifiers recorded), signed in,
+typed Solo Chat, "How is my business doing this week?" → one `get_business_snapshot` call, the four
+areas with their period, currency and freshness, every other area NOT AVAILABLE, no figure invented;
+plus a member seat refused and a workspace switch voiding the result. No test account is created for
+this. Until then authenticated runtime is **UNVERIFIED**.
+
+### §13 corrections to the F2a hand-off (marked, not rewritten above)
+
+1. *"Admit the tool under the read-only admission class"* — no such class exists; it is new work
+   (hand-off A3).
+2. *"Recompute the C0b fingerprints"* — there is no script; it is a hand recomputation with independent
+   review (A7).
+3. *"Dispatch `get_business_snapshot` sequentially"* — the loop already is sequential; the requirement is
+   to keep it so (A4).
+4. Line references `paige-ai-chat/index.ts:584` and `step-start.ts:130` are now `:588` and `:132-133`.
+5. *"seat authority owner/admin"* — the Spine value is `workspace-admin`, which also moves the tool into
+   `outsideBefore` (B).
+6. *"Do not copy the `callerTier === "tenant"` gate"* — the concrete rule is `tenant` + `subaccount`
+   (A1).
 
 ---
 

@@ -73,9 +73,15 @@ export const SALES_COLLECTION_KIT_BY_ACTION = {
   sales_record_manual_payment:SALES_COLLECTION_RECORD_RECEIPT_CAPABILITY,
   sales_reverse_manual_payment:SALES_COLLECTION_REVERSE_RECEIPT_CAPABILITY,
 } as const;
+const fixedRepaymentReadSchema = {
+ type:'object',additionalProperties:false,
+ description:'Principal-only preview for an exact commercial-terms ID in this bounded agreement page. Total and currency come from authenticated records. No save, payment consent or authority is granted.',
+ properties:{agreement_id:{type:'string',format:'uuid'},deposit_cents:minor,deposit_date:str,installment_cents:{type:'integer',minimum:1,maximum:2147483647},first_installment_date:str,cadence:{type:'string',enum:['monthly','quarterly','custom']},custom_dates:{type:'array',items:str,maxItems:240}},
+ required:['agreement_id'],
+} as const;
 export const SALES_COLLECTION_READ_CAPABILITY = defineCapability({
  identity:{id:'sales_collections.read',version:1,domain:'sales_collections',owner:'sales',humanSurface:'/solo/:account/sales/payments?view=collections',description:'Read a bounded scoped collection register or agreements, with no mutation or provider claim.'},
- input:objectInputSchema({properties:{entity:{type:'string',enum:['invoice','receipt','agreement']},limit:{type:'integer',minimum:1,maximum:50},before_id:{anyOf:[{type:'string',format:'uuid'},{type:'null'}]},cursor:{anyOf:[{type:'object',properties:{snapshot_id:{type:'string',format:'uuid'},after_position:{type:'integer',minimum:0},entity:{type:'string',enum:['invoice','receipt']}},required:['snapshot_id','after_position','entity'],additionalProperties:false},{type:'null'}]}},required:['entity']}),
+ input:objectInputSchema({properties:{fixed_repayment:fixedRepaymentReadSchema,entity:{type:'string',enum:['invoice','receipt','agreement']},limit:{type:'integer',minimum:1,maximum:50},before_id:{anyOf:[{type:'string',format:'uuid'},{type:'null'}]},cursor:{anyOf:[{type:'object',properties:{snapshot_id:{type:'string',format:'uuid'},after_position:{type:'integer',minimum:0},entity:{type:'string',enum:['invoice','receipt']}},required:['snapshot_id','after_position','entity'],additionalProperties:false},{type:'null'}]}},required:['entity']}),
  effect:'read',governance:{actionRiskKey:null,risk:'read_only',approval:'none',requiredPermission:ownerGrantablePermission('sales_collections.read')},
  tenantScope:scope,availability,providerBinding:{kind:'internal',operation:'public.read_sales_collections',connectionResolver:null},
  idempotency:{mode:'not_applicable'},

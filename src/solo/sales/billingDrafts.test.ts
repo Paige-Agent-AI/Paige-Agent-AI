@@ -44,3 +44,13 @@ describe('canonical draft response boundary',()=>{
     expect(rpc).toHaveBeenCalledWith('list_sales_billing_drafts',{_expected_tenant_id:tenant,_limit:50,_before_id:null});
   });
 });
+
+it('explains only recognized commercial-plan refusals without leaking arbitrary server errors',async()=>{
+ const {billingDraftFailure}=await import('./billingDrafts');
+ expect(billingDraftFailure({code:'40001',message:'Commercial terms version changed'})).toMatchObject({outcome:'refused',message:expect.stringContaining('payment plan changed')});
+ expect(billingDraftFailure({code:'22023',message:'Invoice and commercial terms initial obligation disagree'})).toMatchObject({outcome:'refused',message:expect.stringContaining('deposit amount or due date')});
+ for(const error of [{code:'42501',message:'Commercial terms unavailable'},{code:'22023',message:'private tenant detail'},{code:'42501',message:'Commercial terms version changed'}]){
+  const result=billingDraftFailure(error);expect(result.ok).toBe(false);
+  if(result.ok===false)expect(result.message).not.toContain(error.message);
+ }
+});

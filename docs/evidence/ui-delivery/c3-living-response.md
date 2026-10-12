@@ -72,3 +72,19 @@ Purpose: the owner always knows whether PAIGE is working, waiting on them, or do
 - The 6 pre-existing src/index.css Impeccable findings are waived inline, not fixed (fixing them restyles unrelated surfaces); a follow-up owns them.
 - Independent review ran once (adversarial verifier, Impeccable critic, compliance officer — all FIX_FIRST); every blocking and should-fix finding was applied in the second round; a re-review of the second round is owed.
 - Residual risks are listed in docs/delivery/paige-conversational-loop-c3.md.
+
+## 2026-10-08 composition update — bounded C5 specialist labels
+
+This section records the current C5 composition change. The C3 evidence above is historical evidence for its original candidate; its rendered screenshots, detector result and owner approval do not prove the new C5 frames.
+
+C5_MATERIAL_FLOW_CHANGE: NO: presentation-only correction within the approved C3 START/DONE/ERROR step flow; no new action, choice, destination, confirmation, layout or consequence.
+C5_FLOW_PROTOTYPE: NOT_REQUIRED: incumbent owner-approved C3 interaction retained; dynamic safe specialist identity and truthful finish wording only.
+C5_AUTOMATED_EVIDENCE: PASS: failure-first dynamic-name assertion returned generic wording and exited 1; after implementation, specialist-step-label.test.ts 8/8 and paige-step-start.test.ts 9/9 passed (17/17). Actual shared helper and transpiled Chat describeStep are exercised; these are behavioral unit tests, not authenticated orchestration proof.
+C5_STATIC_EVIDENCE: PASS: strict TypeScript check of the new helper and focused test; git diff --check clean. Full Edge typecheck, exact-head hosted CI and independent review are not established by this section.
+C5_RENDERED_EVIDENCE: PROOF OWED: no fresh four-viewport C5 rendering or authenticated specialist invocation captured.
+C5_AUTHENTICATED_EVIDENCE: PROOF OWED: no provider invocation, production deployment or owner acceptance claimed.
+C5_IMPECCABLE: PARTIAL: installed SKILL.md and clarify route applied to existing Operate-mode copy; concise state-specific wording, safe scoped names, no fabricated completion, percentages or provider labels. Detector package is absent from this local dependency set; detector run and finish review remain owed. No typography, geometry, motion, focus or control change was made; prior C3 checks cannot stand in for fresh composition checks.
+
+The existing scoped roster supplies canonical slug and tenant-safe rail_display_name. Internal names, model arguments and provider labels cannot supply a display fallback. Disabled, foreign, funding-ineligible and internal seats remain excluded by the existing reader; missing or ambiguous names use generic specialist wording. Synchronous success reports hearing back; failed invocation reports inability to hear back; LangGraph acceptance reports dispatch rather than completion. Unconfirmed results never claim success. High-risk delegation, the role gate, stored approval path and canonical orchestrator dispatch remain unchanged.
+
+D2 remains owner-reserved: approval-free tool-less consultations and parallel consult authority are not implemented. The broader composition also contains root-owned C4 status-only and C6 owner-memory work; this C5 evidence does not attest their tests, authority or runtime behavior. No new visual layout is introduced by this section.

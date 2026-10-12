@@ -1102,6 +1102,30 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "prepare_sales_invoice_payment_request and allocate_verified_sales_invoice_payment in 20270597000001_sales_invoice_provider_operations.sql atomically record existing public.record_capability_run and canonical Rail with provider operation, actor and tenant. Real PostgreSQL proof verifies receipt failure rolls allocation back."
+    },
+    {
+      "tool": "sales_start_merchant_onboarding",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "tenant-stripe-connect/index.ts calls canonical recordCapabilityRun using the admitted operation UUID, tenant and actor before releasing the hosted handoff. Existing merchant reservation/readback RPCs record canonical Rail transactionally; merchant-endpoint.test.ts refuses hosted success on receipt failure. No hosted URL or credential is persisted in receipt detail."
+    },
+    {
+      "tool": "sales_create_merchant_login_link",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "tenant-stripe-connect/index.ts records the exact admitted portal-link act through canonical recordCapabilityRun before releasing the hosted URL, with tenant/actor/operation identity and closed result facts. merchant-endpoint.test.ts proves single-use approval and unrecorded failure behavior; canonical fresh merchant readback persists through the existing Rail RPC."
+    },
+    {
+      "tool": "comms_setup_calling",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat recordCommsRun -> classifyCommsRun -> record_capability_run (the comms truth table: provisioned/adopted recorded; skipped_existing is a no-act and records nothing)"
+    },
+    {
+      "tool": "gmail_organize",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "comms-mailbox-command/index.ts records the executed organize act through canonical recordCapabilityRun after the provider round answers and the canonical mirror lands (governance payload carries actor/tenant/tool/approval channel), so every approved mailbox change has a Rail receipt; the door refuses before dispatch when the receipt cannot be written."
     }
   ]
 }

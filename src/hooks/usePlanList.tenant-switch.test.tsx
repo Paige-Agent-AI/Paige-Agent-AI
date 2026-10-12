@@ -12,12 +12,13 @@ const deferred = (): Deferred => {
   return { promise, resolve };
 };
 
-const harness = vi.hoisted(() => ({ calls: [] as Array<{ promise: Promise<unknown>; resolve: (value: unknown) => void }> }));
+const harness = vi.hoisted(() => ({ calls: [] as Array<{ promise: Promise<unknown>; resolve: (value: unknown) => void }>, requests: [] as Array<{ name: string; parameters: Record<string, unknown> }> }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { getUser: () => Promise.resolve({ data: { user: { id: "qa-user" } } }) },
-    rpc: () => {
+    rpc: (name: string, parameters: Record<string, unknown>) => {
+      harness.requests.push({ name, parameters });
       const call = harness.calls.shift();
       if (!call) throw new Error("No plan_list response queued");
       return call.promise;
@@ -50,9 +51,10 @@ function item(id: string, tenantId: string) {
   };
 }
 
-function Probe({ tenantId }: { tenantId: string | null }) {
-  const result = usePlanList({ tenantScopeKey: tenantId, enabled: tenantId !== null });
-  return <output data-loading={String(result.loading)}>{result.allItems.map((entry) => entry.id).join(",")}</output>;
+function Probe({ tenantId, guarded = false, actorId = "qa-user" }: { tenantId: string | null; guarded?: boolean; actorId?: string }) {
+  const result = usePlanList({ tenantScopeKey: tenantId, enabled: tenantId !== null,
+    ...(guarded ? { operationsActorId: actorId, operationsTenantId: tenantId } : {}) });
+  return <output data-loading={String(result.loading)} data-forbidden={String(result.forbidden)}>{result.allItems.map((entry) => entry.id).join(",")}</output>;
 }
 
 let container: HTMLDivElement;
@@ -60,6 +62,7 @@ let root: Root;
 
 beforeEach(() => {
   harness.calls = [];
+  harness.requests = [];
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -77,12 +80,12 @@ describe("usePlanList tenant epoch", () => {
     harness.calls = [a, b];
 
     await act(async () => {
-      root.render(<Probe tenantId="tenant-a" />);
+      root.render(<Probe tenantId="tenant-a" guarded />);
       await Promise.resolve();
     });
 
     await act(async () => {
-      root.render(<Probe tenantId="tenant-b" />);
+      root.render(<Probe tenantId="tenant-b" guarded />);
       await Promise.resolve();
     });
     expect(container.textContent).toBe("");
@@ -101,6 +104,8 @@ describe("usePlanList tenant epoch", () => {
     });
     expect(container.textContent).toBe("item-b");
     expect(container.textContent).not.toContain("item-a");
+    expect(harness.requests.map(request => request.name)).toEqual(["plan_list_operations_scoped", "plan_list_operations_scoped"]);
+    expect(harness.requests[1].parameters).toMatchObject({ p_expected_actor_id: "qa-user", p_expected_tenant_id: "tenant-b" });
   });
 
   it("clears accepted items when tenant scope becomes unavailable", async () => {
@@ -122,5 +127,18 @@ describe("usePlanList tenant epoch", () => {
       await Promise.resolve();
     });
     expect(container.textContent).toBe("");
+    expect(harness.requests[0].name).toBe("plan_list");
+  });
+  it("refuses a changed actor before requesting Operations records", async () => {
+    await act(async () => root.render(<Probe tenantId="tenant-a" guarded actorId="different-user" />));
+    expect(harness.requests).toEqual([]);
+    expect(container.querySelector("output")?.getAttribute("data-forbidden")).toBe("true");
+    expect(container.textContent).toBe("");
+  });
+  it("clears Operations work and reports a server authority refusal", async () => {
+    harness.calls = [{ promise: Promise.resolve({ data: null, error: { message: "PLAN_FORBIDDEN: scope changed" } }), resolve: vi.fn() }];
+    await act(async () => root.render(<Probe tenantId="tenant-a" guarded />));
+    expect(container.textContent).toBe("");
+    expect(container.querySelector("output")?.getAttribute("data-forbidden")).toBe("true");
   });
 });

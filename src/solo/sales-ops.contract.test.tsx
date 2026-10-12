@@ -35,6 +35,13 @@ import { SalesOps } from "./sales-ops";
 import { SalesWorkspace } from "./SalesWorkspace";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+// Marketing › Analytics' email row reads through its own adapter; its RPC contract is proven with the Email tab.
+// The pipeline funnel's empty state asks once whether the ads-intake functions are deployed; that read is
+// proven in marketing-ads.render.test.tsx. Here they are deployed and nothing leaves the test.
+vi.mock('./ads-intake-capability', () => ({ useAdsIntakeCapability: () => 'present', noteAdsIntakeAnswer: () => {}, resetAdsIntakeCapability: () => {} }));
+vi.mock('./marketing-analytics-email', () => ({ useEmailStats: () => ({ phase: 'ready', stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 }, retry: () => {} }) }));
+vi.mock('./useCampaignAssets', async (importOriginal) => ({ ...(await importOriginal<typeof import('./useCampaignAssets')>()), useCampaignAssets: () => ({ phase: 'ready', canManage: false, links: [], available: [], retry: () => {}, attach: async () => ({ ok: false, message: '' }), detach: async () => ({ ok: false, message: '' }) }) }));
+vi.mock('./marketing-analytics-metrics', async (importOriginal) => ({ ...(await importOriginal<typeof import('./marketing-analytics-metrics')>()), useMarketingServerFigures: () => ({ phase: 'denied', current: null, previous: null }), useMarketingProcessingHealth: () => ({ phase: 'denied', health: null }) }));
 vi.mock('./useSalesInvoiceDrafts', () => ({ useSalesInvoiceDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
 vi.mock('./sales/useInvoiceBillingSources',()=>({useInvoiceBillingSources:()=>({tenantId:'test-tenant-billing',phase:'ready',customers:[],agreements:[]})}));
 vi.mock('./useSalesBillingDrafts', () => ({ useSalesBillingDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
@@ -84,10 +91,8 @@ vi.mock("./data/useSoloTrust", () => ({
 }));
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.state }));
 // Audience, Content, Email and Ads read Supabase directly; this suite only needs them mounted, not reading.
-vi.mock("./marketing-planned", () => {
-  const view = (name: string) => () => <div data-planned-view={name}/>;
-  return { MarketingContent: view("content"), MarketingAds: view("ads") };
-});
+vi.mock("./marketing-content", () => ({ MarketingContent: () => <div data-planned-view="content"/> }));
+vi.mock("./marketing-ads", () => ({ MarketingAds: () => <div data-planned-view="ads"/>, adsViewOf: () => "overview" }));
 vi.mock("./marketing-email", () => ({ MarketingEmail: () => <div data-planned-view="email"/> }));
 vi.mock("./marketing-audience", () => ({ MarketingAudience: () => <div data-planned-view="audience"/> }));
 vi.mock("./useCatalogOffers", () => ({ useCatalogOffers: () => harness.offers }));
@@ -327,14 +332,14 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
     expect(host.querySelector(".campaigns-skeleton")).not.toBeNull();
   });
 
-  it("keeps the owner's nine-tab Marketing strip after commercial cutover", () => {
+  it("keeps the owner's seven-tab Marketing strip after commercial cutover (Ads is its own department)", () => {
     // Campaigns became the Marketing department (owner ruling 2026-10-03). Sales stays reachable
     // here, in the Sales lane's group, until its own top-level home ships.
     renderAt("/solo/42/growth/overview");
     const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Marketing views"] [role="tab"]')]
       .map((t) => t.textContent?.trim())
       .filter(Boolean);
-    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Lead capture", "Analytics"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Analytics"]);
   });
 
   it("keeps SalesOps' own four load phases distinct from the Campaigns snapshot's", () => {
@@ -887,7 +892,7 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
   });
 
   it("renders no masthead above the work on any tab, and moves truth onto the desk", () => {
-    for (const slug of ["overview", "campaigns", "audience", "content", "social", "email", "ads", "lead-capture", "analytics", "catalog", "sales", "pipeline"]) {
+    for (const slug of ["overview", "campaigns", "audience", "content", "social", "email", "lead-capture", "analytics", "catalog", "sales", "pipeline"]) {
       renderAt(`/solo/42/growth/${slug}`);
       expect(host.querySelector(".pg-hd"), `masthead returned on ${slug}`).toBeNull();
     }

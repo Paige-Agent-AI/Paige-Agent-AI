@@ -633,10 +633,14 @@ describe('composeOperatingSnapshot', () => {
       domains: ['paid_acquisition', 'reviews', 'events', 'sms', 'social', 'support', 'knowledge'],
       adapters: [],
     });
-    for (const d of ['paid_acquisition', 'reviews', 'events', 'sms', 'social', 'support'] as const) {
+    for (const d of ['paid_acquisition', 'reviews', 'events', 'sms', 'social'] as const) {
       expect(s.domains[d]).toEqual({ status: 'unavailable', reason: NOT_CONNECTED_DOMAINS[d], data: null });
     }
-    expect(NOT_CONNECTED_DOMAINS.support).toBe('There is no support-ticket system on the platform yet.');
+    expect(NOT_CONNECTED_DOMAINS.paid_acquisition).toBe('No ad account is connected, so ad spend and ad-platform results cannot be read.');
+    // Support cases gained a store and a Spine read on main (comms.support_cases_read): an un-adapted
+    // support domain is no longer "missing", it is simply not wired into the review yet.
+    expect(NOT_CONNECTED_DOMAINS.support).toBeUndefined();
+    expect(s.domains.support).toEqual({ status: 'unavailable', reason: 'no_adapter: support', data: null });
     expect(s.domains.knowledge).toEqual({ status: 'unavailable', reason: 'no_adapter: knowledge', data: null });
   });
 

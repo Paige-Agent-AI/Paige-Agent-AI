@@ -147,3 +147,49 @@ Deno.test("fallback: provider health only; never on an answer; never after outpu
   assert(!mayFallback("provider_outage", { emittedToolCalls: true, emittedText: true, sideEffectProvenNone: true }), "text the person saw cannot be unsaid");
   assertEquals(PROVIDER_FAILURES.length, 7);
 });
+
+// ── R5b: the escalation fact (the rescue contract's route half) ────────────────────────────────
+
+const freshConverse: TurnClassification = {
+  intent: "converse", research: "none", difficulty: "trivial", image: "none",
+  needs_workspace_data: false, confidence: 0.9,
+};
+const baseFresh = (classification: TurnClassification | null): TurnRouteFacts => ({
+  surface: "chat", approvedCard: false, answerBinding: false, foreground: FG.none as TurnRouteFacts["foreground"],
+  acceptedOfferKind: null, attachments: { document: false, image: false }, classification,
+});
+
+Deno.test("escalation: a cheap turn's signal re-routes to operational with the governed tools", () => {
+  const plain = resolveTurnRoute(baseFresh(freshConverse));
+  assert(plain.cognitive_class === "cheap" && plain.capability.tools === "none", "the fixture really is a cheap toolless turn");
+  const up = resolveTurnRoute({ ...baseFresh(freshConverse), capabilityEscalation: true });
+  assertEquals(up.cognitive_class, "operational");
+  assertEquals(up.capability.tools, "act");
+  assert(up.reasons.includes("capability_escalation"));
+});
+
+Deno.test("escalation: an ambiguous offer still ends at a question — the cap outranks the widening", () => {
+  const facts: TurnRouteFacts = {
+    surface: "chat", approvedCard: false, answerBinding: false,
+    foreground: FG.ambiguous as TurnRouteFacts["foreground"],
+    acceptedOfferKind: null, attachments: { document: false, image: false }, classification: null,
+    capabilityEscalation: true,
+  };
+  const r = resolveTurnRoute(facts);
+  assertEquals(r.capability.tools, "read");
+  assert(RANK[r.cognitive_class] >= RANK.operational);
+  assert(r.reasons.includes("capability_escalation"));
+});
+
+Deno.test("escalation: an approved card never sees a model — the deterministic return is untouched", () => {
+  const r = resolveTurnRoute({ ...baseFresh(null), approvedCard: true, capabilityEscalation: true });
+  assertEquals(r.cognitive_class, "deterministic");
+  assertEquals(r.reasons, ["approved_card"]);
+});
+
+Deno.test("escalation: without the fact, nothing changes (the rescue adds a path, never a default)", () => {
+  assertEquals(resolveTurnRoute(baseFresh(freshConverse)), resolveTurnRoute(baseFresh(freshConverse)));
+  const unclassified = resolveTurnRoute(baseFresh(null));
+  assertEquals(unclassified.cognitive_class, "operational");
+  assert(!unclassified.reasons.includes("capability_escalation"));
+});

@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Sends an SMS via Twilio with preference checks and logging.
 // Called by the notification dispatcher (send-notification) and triggers.
 // Fails closed on Campaign class and durable platform consent, then applies the
@@ -90,6 +91,10 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await authed.auth.getUser()
     if (userError || !user) return jsonResp({ error: 'Unauthorized' }, 401)
     if (user.id !== body.user_id) return jsonResp({ error: 'Forbidden' }, 403)
+  }
+
+  if (!await commsProviderExecutionAllowed(supabase, { actorUserId: body.user_id })) {
+    return jsonResp({ error: 'COMMS_PROVIDER_EXECUTION_DISABLED' }, 403)
   }
 
   // Load preferences (always — needed to find phone if not provided)

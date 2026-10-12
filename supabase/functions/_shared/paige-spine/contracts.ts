@@ -4,6 +4,7 @@ export const SPINE_ACTION_CLASSIFICATIONS = ["read", "mutate", "external_effect"
 export type SpineActionClassification = (typeof SPINE_ACTION_CLASSIFICATIONS)[number];
 export type SpineApprovalAuthority = "chat-canonical" | "none";
 export type SpineRiskPolicy = "read_only" | "ordinary" | "high";
+export type SpineSeatAuthority = "member" | "workspace-admin" | "door-seat";
 export type SpineFact = boolean | number | string | null;
 
 export type SpineCapability = {
@@ -11,6 +12,9 @@ export type SpineCapability = {
   readonly domain: string;
   readonly owner: string;
   readonly humanSurface: string;
+  /** False preserves an existing callable internal read without self-description.
+   * Omitted preserves the current registered-capability projection. */
+  readonly selfDescribe?: boolean;
   /**
    * What this capability depends on being there before PAIGE can use it (C0a). Read by the per-turn
    * capability projection; a capability that declares a provider resolver reads "needs setup" when
@@ -38,6 +42,9 @@ export type SpineCapability = {
     readonly classification: SpineActionClassification;
     readonly executor: string;
     readonly chatTool?: string;
+    /** Declares the EXISTING admission gate, never grants a seat. Optional only for
+     * shrink-only grandfathered declarations; every new Chat registration must name it. */
+    readonly seatAuthority?: SpineSeatAuthority;
     readonly idempotency: string;
     readonly riskPolicyKey: SpineRiskPolicy;
     readonly approvalAuthority: SpineApprovalAuthority;

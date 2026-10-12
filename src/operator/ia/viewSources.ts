@@ -41,6 +41,11 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
     bespoke: "FleetHistorySurface",
     carries: ["fleet/history", "provisioning/history", "settings/governance/act-as-history"],
   },
+  // Owner INT-280 continuation: Mind moves to Fleet; its existing read and source ledger survive.
+  "fleet/mind": {
+    bespoke: "KnowledgeSurface",
+    carries: ["paige/knowledge", "paige/memory", "paige/documents", "paige/playbooks", "paige/research", "paige/sandbox"],
+  },
 
   // ── Relationships ──────────────────────────────────────────────────────────────────────────
   /**
@@ -193,6 +198,12 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
     panels: ["settings/setup/feature-flags", "settings/setup/api-mcp"],
     carries: ["settings/setup/feature-flags", "settings/setup/api-mcp"],
   },
+  // INT-280 restores the unmounted PlatformIntelligence read capabilities into Settings.
+  // The pre-six-slot /admin/platform/intelligence address is redirected in App.tsx.
+  "settings/paige-intelligence": { bespoke: "IntelligenceSurface", carries: [] },
+  "settings/connections": { bespoke: "ConnectionsSettings", carries: [] },
+  "settings/analytics": { bespoke: "AnalyticsSettings", carries: [] },
+  "settings/billing": { bespoke: "BillingSettings", carries: [] },
   "settings/integrations": {
     // v3 intVals L7928-L8082 over the L1473-L1538 catalogue, ported as IntegrationsSurface.
     bespoke: "IntegrationsSurface",
@@ -205,10 +216,6 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
    * empty inventory. It carries no old address because the thirteen-branch console never had one.
    */
   "settings/numbers": { carries: [] },
-  "settings/mind": {
-    bespoke: "KnowledgeSurface",
-    carries: ["paige/knowledge", "paige/memory", "paige/documents", "paige/playbooks", "paige/research", "paige/sandbox"],
-  },
   "settings/automations": {
     panels: ["automations/library", "automations/runs", "automations/build"],
     carries: ["automations/library", "automations/runs", "automations/build"],
@@ -248,7 +255,7 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
     carries: ["settings/governance/approvals", "settings/governance/audit-log", "settings/governance/security"],
   },
   "settings/team": {
-    panels: ["settings/team/seats", "settings/team/roles"],
+    bespoke: "TeamSettings",
     carries: ["settings/team/seats", "settings/team/roles", "paige/team"],
   },
 };

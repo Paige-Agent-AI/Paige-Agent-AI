@@ -99,3 +99,6 @@ docs/evidence/ui-delivery/solo-approval-recovery/*.html
 .impeccable/mocks/decision/*
 !.impeccable/mocks/decision/comp-a.png
 !.impeccable/mocks/decision/comp-a.json
+
+# Disposable local PostgreSQL package-read proof cluster (never shipped).
+/work/package-read-pg/

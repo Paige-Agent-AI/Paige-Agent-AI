@@ -1,0 +1,458 @@
+{
+  "browser": "154.0.8037.95",
+  "classification": "synthetic local components; no authenticated production claim",
+  "errors": [],
+  "checks": [
+    {
+      "width": 1310,
+      "height": 704,
+      "open": false,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1107,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 1310,
+      "height": 704,
+      "open": false,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 775,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 1310,
+      "height": 704,
+      "open": false,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1145,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "width": 788,
+      "height": 704,
+      "open": true,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1298,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 788,
+      "height": 704,
+      "open": true,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1207,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 788,
+      "height": 704,
+      "open": true,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1760,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "width": 1284,
+      "height": 702,
+      "open": false,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1107,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 1284,
+      "height": 702,
+      "open": false,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 775,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 1284,
+      "height": 702,
+      "open": false,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1145,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "width": 820,
+      "height": 702,
+      "open": true,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1298,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 820,
+      "height": 702,
+      "open": true,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1207,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 820,
+      "height": 702,
+      "open": true,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1760,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "width": 942,
+      "height": 702,
+      "open": false,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1194,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 942,
+      "height": 702,
+      "open": false,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 760,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 942,
+      "height": 702,
+      "open": false,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1130,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "width": 942,
+      "height": 702,
+      "open": true,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1194,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 942,
+      "height": 702,
+      "open": true,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 760,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 942,
+      "height": 702,
+      "open": true,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1130,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "width": 818,
+      "height": 934,
+      "open": false,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1256,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 818,
+      "height": 934,
+      "open": false,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 934,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 818,
+      "height": 934,
+      "open": false,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1124,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "width": 818,
+      "height": 934,
+      "open": true,
+      "view": "overview",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1256,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "view": "overview",
+      "endKey": true
+    },
+    {
+      "width": 818,
+      "height": 934,
+      "open": true,
+      "view": "operations",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 934,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "view": "operations",
+      "endKey": true
+    },
+    {
+      "width": 818,
+      "height": 934,
+      "open": true,
+      "view": "ai-usage",
+      "horizontalOverflow": false,
+      "overflow": "auto",
+      "scrollHeight": 1124,
+      "navReachable": true,
+      "scrollbarShown": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "view": "ai-usage",
+      "endKey": true
+    },
+    {
+      "view": "business-health",
+      "reload": "Business Health"
+    },
+    {
+      "view": "team",
+      "reload": "Team"
+    },
+    {
+      "view": "data-health",
+      "reload": "Data Health"
+    },
+    {
+      "evidenceDialog": "systems check latest\n\nMeasurement evidence and coverage\n\nLIVE\nDefinition\nSynthetic harness measurement; not production data.\nDate range\n9/30/2026, 1:44:45 PM – 10/7/2026, 1:44:45 PM (UTC boundaries)\nReading as of\n10/7/2026, 1:44:45 PM\nSource current through\n10/7/2026, 1:44:45 PM\nCoverage\n23 contributing; 0 excluded of 23 candidate records\nSource systems\nSynthetic harness\nCalculation\nSynthetic fixture projection\nVersion\n1.0.0\nSynthetic render fixture only\n\nEvidence identity: aneb_v1_cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nClose",
+      "evidenceHorizontalOverflow": false
+    },
+    {
+      "escapeClosesEvidence": true
+    }
+  ]
+}

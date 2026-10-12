@@ -78,6 +78,24 @@ vi.mock("./data/useSoloBusinessContext", () => ({
 vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => ({ confirm: state.confirm, dialog: null }),
 }));
+// Setup navigation mounts the real Knowledge library. Document persistence is
+// proved by its own hook suite; this flow supplies the explicit empty read state.
+vi.mock("@/hooks/useKnowledgeDocuments", () => ({
+  useKnowledgeDocuments: () => ({
+    docs: [], loading: false, error: null, hasMore: false,
+    reload: vi.fn().mockResolvedValue(undefined),
+    loadMore: vi.fn().mockResolvedValue(undefined),
+    isCurrent: () => true,
+  }),
+}));
+vi.mock("@/components/contact-methods/useUserContactMethods", () => ({
+  useUserContactMethods: () => ({
+    methods: [], loading: false, error: null, saving: false,
+    refresh: vi.fn().mockResolvedValue(undefined),
+    reread: vi.fn().mockResolvedValue([]),
+    save: vi.fn().mockRejectedValue(new Error("Unexpected contact write in Setup navigation proof")),
+  }),
+}));
 vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: state.theme }),
 }));

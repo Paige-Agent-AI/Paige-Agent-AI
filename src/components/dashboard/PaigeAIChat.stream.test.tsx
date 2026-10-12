@@ -139,7 +139,9 @@ afterEach(async () => {
 function server(...replies: Array<ReturnType<typeof body>>) {
   const bodies: Array<Record<string, unknown>> = [];
   vi.stubGlobal("fetch", vi.fn(async (_url: unknown, init?: { body?: unknown }) => {
-    bodies.push(JSON.parse(String(init?.body ?? "{}")));
+    const request = JSON.parse(String(init?.body ?? "{}"));
+    if (request.interactive?.kind === "stop") return new Response("{}", { status: 200 });
+    bodies.push(request);
     return replies[bodies.length - 1] ?? body([say("Okay."), DONE]);
   }));
   return bodies;
@@ -164,6 +166,7 @@ async function mount(extra: Record<string, unknown> = {}): Promise<Mounted> {
         fill
         enableHistory
         soloTenantSafety
+        liveConversation={false}
         onTrace={(steps) => { trace.push(steps); }}
         onFocusRelease={(reason: string) => { released.push(reason); }}
         {...extra}
@@ -199,7 +202,7 @@ const lineRows = (host: HTMLElement) => Array.from(line(host)?.querySelectorAll<
 const buttons = (host: HTMLElement, label: RegExp) =>
   Array.from(host.querySelectorAll<HTMLButtonElement>("button")).filter((b) => label.test(b.textContent ?? ""));
 const reports = (host: HTMLElement) => Array.from(host.querySelectorAll<HTMLElement>('[data-card-mode="report"]'));
-const SERVER_ISSUE = "Something went wrong on our side and PAIGE didn't get to answer.";
+const SERVER_ISSUE = "Check what finished before repeating any action";
 const LIVE_ISSUE = "Paige's answer was interrupted.";
 const composerFree = (host: HTMLElement) => !host.querySelector("textarea")!.disabled;
 /** The question as a sent bubble in the transcript (not the composer, which a rollback refills). */
@@ -242,13 +245,13 @@ describe("PaigeAIChat stream — framing", () => {
     expect(composerFree(host)).toBe(true);
   });
 
-  it("rolls the turn back when the body ends without [DONE]", async () => {
+  it("preserves received truth when the body ends without [DONE]", async () => {
     server(body([say("Half an answer")]));
     const { host } = await mount();
     await ask(host, "my question");
-    expect(host.textContent).not.toContain("Half an answer");
-    expect(sentBubble(host, "my question")).toBe(false);
-    expect(host.querySelector("textarea")!.value).toBe("my question");
+    expect(host.textContent).toContain("Half an answer");
+    expect(sentBubble(host, "my question")).toBe(true);
+    expect(host.querySelector("textarea")!.value).toBe("");
     expect(host.textContent).toContain(SERVER_ISSUE);
     expect(composerFree(host)).toBe(true);
   });
@@ -258,10 +261,10 @@ describe("PaigeAIChat stream — framing", () => {
     const { host, trace } = await mount();
     await ask(host, "my question");
     expect(host.textContent).not.toContain("Second.");
-    expect(host.textContent).not.toContain("First.");
+    expect(host.textContent).toContain("First.");
     expect(trace.flat().some((s) => s.label === "Later step")).toBe(false);
-    expect(sentBubble(host, "my question")).toBe(false);
-    expect(host.querySelector("textarea")!.value).toBe("my question");
+    expect(sentBubble(host, "my question")).toBe(true);
+    expect(host.querySelector("textarea")!.value).toBe("");
     expect(host.textContent).toContain(SERVER_ISSUE);
     expect(composerFree(host)).toBe(true);
   });
@@ -276,7 +279,8 @@ describe("PaigeAIChat stream — framing", () => {
     // Mid-stream, after the bad line: nothing rolled back, no error, the composer still busy.
     expect(host.textContent).toContain("First.");
     expect(host.textContent).not.toContain(SERVER_ISSUE);
-    expect(composerFree(host)).toBe(false);
+    expect(composerFree(host)).toBe(true);
+    expect(host.querySelector('button[aria-label="Stop PAIGE response"]')).not.toBeNull();
     await act(async () => { gate.resolve(); await flush(); });
     expect(host.textContent).not.toContain("Second.");
     expect(host.textContent).toContain(SERVER_ISSUE);
@@ -289,7 +293,8 @@ describe("PaigeAIChat stream — framing", () => {
     const { host } = await mount();
     await ask(host);
     expect(host.textContent).toContain("First.");
-    expect(composerFree(host)).toBe(false);
+    expect(composerFree(host)).toBe(true);
+    expect(host.querySelector('button[aria-label="Stop PAIGE response"]')).not.toBeNull();
     await act(async () => { gate.resolve(); await flush(); });
     expect(host.textContent).not.toContain("Second.");
     expect(host.textContent).toContain(SERVER_ISSUE);
@@ -302,7 +307,8 @@ describe("PaigeAIChat stream — framing", () => {
     await ask(host);
     expect(host.textContent).toContain("First.");
     expect(host.textContent).not.toContain(SERVER_ISSUE);
-    expect(composerFree(host)).toBe(false);
+    expect(composerFree(host)).toBe(true);
+    expect(host.querySelector('button[aria-label="Stop PAIGE response"]')).not.toBeNull();
     await act(async () => { gate.resolve(); await flush(); });
     expect(host.textContent).not.toContain("Second.");
     expect(host.textContent).toContain(SERVER_ISSUE);
@@ -381,7 +387,7 @@ describe("PaigeAIChat stream — a frame carrying more than one key keeps this s
 
   it("takes a Live output before a step in the same frame", async () => {
     server(body([frame({ paige_step: step("s", 1, "Hidden step"), paige_live_output: "signed" }), say("Ok."), DONE]));
-    const { host, trace } = await mount();
+    const { host, trace } = await mount({ liveConversation: true });
     const s = { challenge: "c", proof: vi.fn(), done: vi.fn(), failed: vi.fn() };
     await act(async () => { await harness.liveVoiceTurn!("spoken", s); await flush(); });
     expect(s.proof.mock.calls).toEqual([["signed"]]);
@@ -507,7 +513,7 @@ describe("PaigeAIChat stream — the work she shows", () => {
     expect(second.trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["c", "running"]]);
     expect(lineText(second.host)).toBe("Saving the form");
     expect(line(second.host)?.dataset.kind).toBe("work");
-    const cancel = second.host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    const cancel = second.host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!;
     await act(async () => { cancel.click(); await flush(); });
     expect(second.trace.at(-1)).toEqual([]);
     // C3a: the line stops, and the step that had started is kept as stopped — it may still finish.
@@ -530,7 +536,7 @@ describe("PaigeAIChat stream — the work she shows", () => {
     const { host, trace } = await mount();
     await ask(host, "save it");
     expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["a", "running"]]);
-    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!;
     await act(async () => { cancel.click(); await flush(); });
     expect(trace.at(-1)).toEqual([]);
 
@@ -593,7 +599,7 @@ describe("PaigeAIChat stream — the work she shows", () => {
       say("Here."),
       DONE,
     ]));
-    const { host } = await mount();
+    const { host } = await mount({ liveConversation: true });
     await ask(host);
     expect(harness.liveCard?.title).toBe("Deal A");
   });
@@ -743,11 +749,12 @@ describe("PaigeAIChat stream — a refused client", () => {
 });
 
 describe("PaigeAIChat stream — Live voice", () => {
+  const mountVoice = () => mount({ liveConversation: true });
   const sink = () => ({ challenge: "test-challenge", proof: vi.fn(), done: vi.fn(), failed: vi.fn() });
 
   it("passes signed output to the sink and settles it done at [DONE]", async () => {
     server(body([frame({ paige_live_output: "signed-1" }), say("Spoken."), frame({ paige_live_output: "signed-2" }), DONE]));
-    const { host } = await mount();
+    const { host } = await mountVoice();
     const s = sink();
     await act(async () => { await harness.liveVoiceTurn!("my spoken question", s); await flush(); });
     expect(s.proof.mock.calls).toEqual([["signed-1"], ["signed-2"]]);
@@ -759,7 +766,7 @@ describe("PaigeAIChat stream — Live voice", () => {
 
   it("stops at a Live error, keeps what arrived, and settles the sink failed once", async () => {
     server(body([say("First."), frame({ paige_live_error: "answer_interrupted" }), say(" Later."), frame({ paige_live_output: "late" }), DONE]));
-    const { host } = await mount();
+    const { host } = await mountVoice();
     const s = sink();
     await act(async () => { await harness.liveVoiceTurn!("my spoken question", s); await flush(); });
     expect(host.textContent).toContain("First.");
@@ -772,7 +779,7 @@ describe("PaigeAIChat stream — Live voice", () => {
 
   it("treats a line that is not JSON as an interrupted Live answer", async () => {
     server(body([frame({ paige_live_output: "signed-1" }), say("First."), "data: {broken\n\n", frame({ paige_live_output: "signed-2" }), say(" Second."), DONE]));
-    const { host } = await mount();
+    const { host } = await mountVoice();
     const s = sink();
     await act(async () => { await harness.liveVoiceTurn!("my spoken question", s); await flush(); });
     expect(s.proof.mock.calls).toEqual([["signed-1"]]);
@@ -788,7 +795,7 @@ describe("PaigeAIChat stream — Live voice", () => {
     // The old loop stalled on the throwing line and never saw the [DONE] behind it.
     const gate = deferred();
     server(body([frame({ paige_live_output: "signed-1" }), say("First."), "data: null\n\n", say(" Second."), DONE, gate.promise]));
-    const { host } = await mount();
+    const { host } = await mountVoice();
     const s = sink();
     let settled = false;
     let turn!: Promise<void>;
@@ -807,7 +814,7 @@ describe("PaigeAIChat stream — Live voice", () => {
 
   it("treats a body that ends without [DONE] as an interrupted Live answer", async () => {
     server(body([say("First.")]));
-    const { host } = await mount();
+    const { host } = await mountVoice();
     const s = sink();
     await act(async () => { await harness.liveVoiceTurn!("my spoken question", s); await flush(); });
     expect(s.done).not.toHaveBeenCalled();

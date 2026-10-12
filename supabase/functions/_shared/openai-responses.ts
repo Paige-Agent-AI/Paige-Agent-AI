@@ -23,6 +23,7 @@
 // DORMANT IN R2: nothing routes to this yet. R5–R7 put it behind the fabric's route policy.
 
 import { NeedsConfigError } from "./provider-types.ts";
+import { classifyProviderFailure, type ProviderFailureClass } from "./provider-failure.ts";
 import { envKey } from "./env-key.ts";
 import { traceLLMCall, type TraceCtx } from "./llm-trace.ts";
 import { assertModelAllowed } from "./model-allowlist.ts";
@@ -306,14 +307,17 @@ function emitTrace(trace: TraceCtx | undefined, row: {
   });
 }
 
-async function failureDetail(resp: Response): Promise<string> {
-  try {
-    const j = await resp.json();
-    const e = j?.error;
-    return [e?.type, e?.code, e?.message].filter((x) => typeof x === "string").join(": ").slice(0, 500) || `http_${resp.status}`;
-  } catch {
-    return `http_${resp.status}`;
-  }
+/** The failure, read once: a short detail for the trace, and the class the provider's response proves. */
+async function failureOf(resp: Response): Promise<{ detail: string; failureClass: ProviderFailureClass }> {
+  let e: any = null;
+  try { e = (await resp.json())?.error ?? null; } catch { /* not JSON */ }
+  const detail = e ? [e.type, e.code, e.message].filter((x) => typeof x === "string").join(": ").slice(0, 500) || `http_${resp.status}` : `http_${resp.status}`;
+  const failureClass = classifyProviderFailure({
+    provider: "openai", status: resp.status,
+    errorType: typeof e?.type === "string" ? e.type : null, errorCode: typeof e?.code === "string" ? e.code : null,
+    message: typeof e?.message === "string" ? e.message : null,
+  });
+  return { detail, failureClass };
 }
 
 /** Non-streaming Responses call, returned in chat-completion shape. Throws on any failure. */
@@ -335,9 +339,12 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
     throw e;
   }
   if (!resp.ok) {
-    const detail = await failureDetail(resp);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: detail });
-    throw new Error(`OpenAI ${resp.status}: ${detail}`);
+    // failureOf reads the body ONCE: the trace's short detail and the fabric's closed class.
+    const f = await failureOf(resp);
+    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: `http_${resp.status}`, error_message: f.detail });
+    // INT-334 — carry the closed failure class (and the status) ON the throw, so the fabric's
+    // consumer seam can classify a failed non-stream leg without parsing the message text.
+    throw Object.assign(new Error(`OpenAI ${resp.status}: ${f.detail}`), { status: resp.status, failureClass: f.failureClass });
   }
   let data: any;
   try {
@@ -370,7 +377,7 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
  * readers that do not know it ignore it. A failure mid-stream is reported (trace status "error") and the
  * stream still terminates with [DONE] — never a hang, never a fabricated finish.
  */
-export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOpts, trace?: TraceCtx): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; error?: string }> {
+export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOpts, trace?: TraceCtx): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; error?: string; failureClass?: ProviderFailureClass }> {
   const req = buildResponsesRequest(body, opts);
   const key = openaiKey();
   const started = Date.now();
@@ -386,12 +393,12 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
   } catch (e) {
     const m = String((e as Error)?.message ?? e).slice(0, 500);
     emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: "network", error_message: m });
-    return { ok: false, status: 0, error: m };
+    return { ok: false, status: 0, error: m, failureClass: classifyProviderFailure({ provider: "openai", status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" }) };
   }
   if (!resp.ok || !resp.body) {
-    const detail = resp.ok ? "missing_body" : await failureDetail(resp);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: detail });
-    return { ok: false, status: resp.status, error: detail };
+    const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass } : await failureOf(resp);
+    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: resp.ok ? "missing_body" : `http_${resp.status}`, error_message: f.detail });
+    return { ok: false, status: resp.status, error: f.detail, failureClass: f.failureClass };
   }
 
   const enc = new TextEncoder();

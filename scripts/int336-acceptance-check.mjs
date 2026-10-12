@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {interactiveAcceptanceBoundary} from '../supabase/functions/_shared/paige-turn/interactive.ts';
+assert.equal(interactiveAcceptanceBoundary(null,true).message_accepted,true);
+assert.equal(interactiveAcceptanceBoundary({status:'accepted',turn_id:'a'},false).message_accepted,true);
+assert.equal(interactiveAcceptanceBoundary({status:'accepted',turn_id:null},false).message_accepted,false);
+assert.equal(interactiveAcceptanceBoundary({status:'duplicate'},false).message_accepted,true);
+assert.equal(interactiveAcceptanceBoundary({status:'superseded'},false).message_accepted,false);
+assert.equal(interactiveAcceptanceBoundary({status:'stopped'},false).message_accepted,false);
+assert.equal(interactiveAcceptanceBoundary({status:'stopped'},false).status,200);
+console.log('PASS: acceptance transport uncertainty, canonical ordinary turn, deferred bound answer, dedupe, delayed rejection, Stop');

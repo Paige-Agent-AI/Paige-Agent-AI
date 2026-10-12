@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
 import {renderDocumentPdf} from '../_shared/document-pdf.ts';
@@ -333,6 +334,53 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
       // §13: SMTP submission returns no durable id (data.messageId is honestly null); record
       // the send with a null provider_message_id rather than fabricating one.
       return { ok: true, status: "sent" as const, provider_message_id: sent.data?.messageId ?? null };
+    }
+
+    if (ctx.provider === "sendgrid") {
+      const sgKey = ctx.providerApiKey as string;
+      const name0 = ctx.from.display_name?.replace(/[^\w \-.@'"]/g, " ").replace(/\s+/g, " ").trim();
+      const sgHeaders: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
+      if (msg.in_reply_to_provider_id) sgHeaders["In-Reply-To"] = msg.in_reply_to_provider_id;
+      try {
+        const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sgKey}`,
+            "Content-Type": "application/json",
+            ...(ctx.idempotencyKey ? { "X-Idempotency-Key": ctx.idempotencyKey } : {}),
+          },
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email: ctx.to }] }],
+            from: name0 ? { email: ctx.from.address, name: name0 } : { email: ctx.from.address },
+            ...(ctx.replyTo ? { reply_to: { email: ctx.replyTo } } : {}),
+            subject: msg.subject || "(no subject)",
+            content: [
+              ...(msg.body_html ? [{ type: "text/html", value: msg.body_html }] : []),
+              ...(msg.body_text ? [{ type: "text/plain", value: msg.body_text }] : []),
+            ],
+            ...(Object.keys(sgHeaders).length ? { headers: sgHeaders } : {}),
+            // Same attachments contract as every sibling arm — a sendgrid
+            // connector must never silently drop an invoice PDF.
+            ...(ctx.serverAttachments?.length ? {
+              attachments: ctx.serverAttachments.map((a) => ({
+                content: a.content, // EmailAttachment.content is already base64
+                filename: a.filename,
+                type: a.contentType,
+                disposition: "attachment",
+              })),
+            } : {}),
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => "");
+          return { ok: false, status: "failed" as const, error: `sendgrid_${res.status}: ${errBody.slice(0, 200)}` };
+        }
+        // v3/mail/send returns an EMPTY 202 body; X-Message-Id is the durable id
+        // (it corresponds to the Event Webhook's sg_message_id).
+        return { ok: true, status: "sent" as const, provider_message_id: res.headers.get("x-message-id") };
+      } catch (e) {
+        return { ok: false, status: "failed" as const, error: `sendgrid_exception: ${(e as Error).message}` };
+      }
     }
 
     const resendKey = ctx.providerApiKey;
@@ -921,6 +969,18 @@ Deno.serve(async (req) => {
   // the queued row's own.)
   if (!isInternal && !tenantId && !isOwner) tenantId = callerTenant ?? null;
 
+  // Server-owned execution floor applies independently of approvals, active connectors,
+  // sender fallback and the service-role queue/retry caller. No provider or schedule admission.
+  if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user?.id ?? null })) {
+    if (commsBinding) return await refuseCommsEmail(COMMS_PROVIDER_EXECUTION_DISABLED);
+    if (isInternal && draftRow?.status === "queued") return await terminalizeScheduledRelease(COMMS_PROVIDER_EXECUTION_DISABLED);
+    if (body.message_id && tenantId) {
+      const { error } = await admin.from("messages").update({ status: "blocked", scheduled_for: null }).eq("id", body.message_id).eq("tenant_id", tenantId);
+      if (error) return new Response(JSON.stringify({ status: "failed", outcome: "outcome_unknown", error: "boundary_readback_failed" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    return new Response(JSON.stringify({ status: "blocked", outcome: "refused", error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   // ── §9 (#141b): bind the CONNECTOR to the resolved tenant ────────────────────
   // connectorRow was fetched via the SERVICE-ROLE admin client (RLS bypassed) keyed by
   // effectiveConnectorId — which can come straight from body.connector_id (L408). The
@@ -1249,8 +1309,15 @@ Deno.serve(async (req) => {
       // also NOT needing RESEND_API_KEY. Only the Resend path requires it.
       const isGmail = connectorRow?.provider === "gmail";
       const isSmtp = connectorRow?.provider === "smtp";
+      // ANT-43/S7: a sendgrid connector sends through the platform's restricted
+      // Mail Send executor credential (SENDGRID_MAIL_SEND_API_KEY) — never the
+      // full-access admin key, and never a caller-supplied key. Platform default
+      // stays Resend; SendGrid is selected ONLY by an explicit connector.
+      const isSendgrid = connectorRow?.provider === "sendgrid";
       const resendKey = Deno.env.get("RESEND_API_KEY");
-      if (!resendKey && !isGmail && !isSmtp) throw new Error("RESEND_API_KEY missing");
+      if (!resendKey && !isGmail && !isSmtp && !isSendgrid) throw new Error("RESEND_API_KEY missing");
+      const sendgridKey = isSendgrid ? Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") : null;
+      if (isSendgrid && !sendgridKey) throw new Error("SENDGRID_MAIL_SEND_API_KEY missing");
 
       // §38 PRIMARY: tenant-owned sender identity via the shared RPC (service role =>
       // auth.uid() NULL => trusted cross-tenant resolve of the passed tenant).
@@ -1367,7 +1434,7 @@ Deno.serve(async (req) => {
         from: { address: resolvedSenderEmail, display_name: senderName ?? undefined },
         to: body.to,
         replyTo,
-        providerApiKey: resendKey,
+        providerApiKey: isSendgrid ? sendgridKey : resendKey,
         // #141c: thread the connector's non-secret SMTP transport config (host/port/secure) so
         // the provider==='smtp' branch can send through the tenant's own host. null for Resend/Gmail.
         connectorConfig: isSmtp ? (connectorRow?.config ?? null) : null,

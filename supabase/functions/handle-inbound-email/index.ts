@@ -25,6 +25,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
+import { classifyAndRecordMessage, type ClassifyAdmin } from "../_shared/inbox-intelligence/classify-message.ts";
+import { sha256Hex, verifySvix } from "../_shared/webhookSig.ts";
 import {
   getInboundAdapter,
   registerInboundAdapter,
@@ -93,9 +95,13 @@ const emailInboundAdapter: InboundChannelAdapter = {
     const subject = (data.subject ?? "").toString();
     const bodyText = (data.text ?? data.body ?? "").toString();
     const bodyHtml = (data.html ?? "").toString();
-    const providerMessageId = (
-      data.message_id ?? data.id ?? evt.id ?? crypto.randomUUID()
-    ).toString();
+    // NO synthetic fallback here: a crypto.randomUUID() would break retry dedup
+    // (each redelivery mints a fresh id) and replay protection. When the payload
+    // carries no provider id the HANDLER derives a deterministic identity from
+    // the signed webhook envelope (constant across Svix retries of one event).
+    const providerMessageId = (data.message_id ?? data.id ?? evt.id ?? null) !== null
+      ? (data.message_id ?? data.id ?? evt.id ?? "").toString()
+      : null;
 
     // In-reply-to (threading) — best-effort across payload/header shapes.
     const headers = (data.headers ?? {}) as Record<string, unknown>;
@@ -190,34 +196,22 @@ Deno.serve(async (req) => {
     console.error("[handle-inbound-email] no webhook secret configured (env or settings)");
     return new Response("webhook_not_configured", { status: 500 });
   }
-  try {
-    const svixId = req.headers.get("svix-id") ?? "";
-    const svixTs = req.headers.get("svix-timestamp") ?? "";
-    const svixSig = req.headers.get("svix-signature") ?? "";
-    const signedContent = `${svixId}.${svixTs}.${rawBody}`;
-    // Any ONE configured secret verifying is enough (multi-webhook accounts).
-    const passed = await (async () => {
-      for (const s of secretList) {
-        try {
-          const secretBytes = s.startsWith("whsec_")
-            ? Uint8Array.from(atob(s.slice(6)), (c) => c.charCodeAt(0))
-            : new TextEncoder().encode(s);
-          const key = await crypto.subtle.importKey(
-            "raw", secretBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
-          );
-          const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signedContent));
-          const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
-          if (svixSig.split(" ").some((part) => part.split(",")[1] === sigB64)) return true;
-        } catch { /* try the next secret */ }
-      }
-      return false;
-    })();
-    if (!passed) {
-      console.warn("[handle-inbound-email] svix_signature_invalid");
-      return new Response("invalid_signature", { status: 401 });
-    }
-  } catch (e) {
-    console.error("[handle-inbound-email] signature_check_error", (e as Error).message);
+  // Canonical Svix verification (shared with handle-resend-webhook): constant-time
+  // v1 comparison, any-one-secret pass, and a timestamp tolerance window so an
+  // old validly-signed event cannot be replayed forever (env-tunable; 300s is the
+  // Svix receiver convention).
+  const svixId = req.headers.get("svix-id") ?? "";
+  const toleranceSeconds = Number(Deno.env.get("SVIX_TOLERANCE_SECONDS") ?? "") || 300;
+  const verdict = await verifySvix({
+    secrets: secretList,
+    svixId,
+    svixTimestamp: req.headers.get("svix-timestamp"),
+    svixSignature: req.headers.get("svix-signature"),
+    body: rawBody,
+    toleranceSeconds,
+  });
+  if (!verdict.ok) {
+    console.warn("[handle-inbound-email] svix_rejected", verdict.reason);
     return new Response("invalid_signature", { status: 401 });
   }
 
@@ -235,6 +229,17 @@ Deno.serve(async (req) => {
     });
   }
   const msg = adapter.onEvent(evt);
+
+  // Deterministic retry identity when the provider payload carried no message id:
+  // Svix redelivers one event with the SAME svix-id and body, so this hash is
+  // stable across retries (dedup via uq_messages_provider_message_id) and distinct
+  // across genuinely different events. Truthfully flagged in meta.
+  let providerMessageId: string | null = msg.provider_message_id ?? null;
+  let derivedProviderId = false;
+  if (!providerMessageId) {
+    providerMessageId = `resend-derived:${await sha256Hex(`${svixId}.${rawBody}`)}`;
+    derivedProviderId = true;
+  }
 
   const fromEmail = msg.sender?.address ?? "";
   if (!fromEmail || (!msg.body_text && !msg.body_html)) {
@@ -368,9 +373,11 @@ Deno.serve(async (req) => {
       body_text: msg.body_text ?? null,
       body_html: msg.body_html ?? null,
       attachments: msg.attachments ?? [],
-      provider_message_id: msg.provider_message_id ?? null,
+      provider_message_id: providerMessageId,
       in_reply_to_provider_id: msg.in_reply_to_provider_id ?? null,
-      meta: msg.meta ?? {},
+      meta: derivedProviderId
+        ? { ...(msg.meta ?? {}), provider_message_id_derived: true }
+        : (msg.meta ?? {}),
       sent_at: msg.sent_at ?? new Date().toISOString(),
     })
     .select("id")
@@ -389,6 +396,38 @@ Deno.serve(async (req) => {
     });
   }
   const messageId = inserted!.id as string;
+
+  // -- 5b. The ONE shared inbound-intelligence engine (#1140 two-mailbox pilot). ----------
+  // Both inbound paths (Resend here, the Gmail sync for a shared connector) call the same
+  // service RPC: shared_support connectors get case upsert + follow-up cancellation; personal
+  // connectors are refused-by-construction inside it (no cases ever open on a private mailbox).
+  // Best-effort and NON-BLOCKING: a failure here must never drop or delay the inbound row that
+  // already landed — the next sync tick re-runs the classification side of the engine.
+  try {
+    await admin.rpc("record_inbound_message_intelligence", { _message_id: messageId });
+  } catch (intelErr) {
+    console.warn("[handle-inbound-email] intelligence_engine_deferred", (intelErr as Error)?.message);
+  }
+  // Classification rides the SAME shared helper the Gmail sync uses (the classify
+  // lane of the model router): the shared support mailbox gets intent + risk tier
+  // + auto labels exactly like the personal one. Best-effort and non-blocking —
+  // the sync tick's backfill sweep retries what fails here.
+  try {
+    const { data: connectorRow } = await admin.from("channel_connectors")
+      .select("mailbox_class").eq("id", connector.id).maybeSingle();
+    if (connectorRow?.mailbox_class) {
+      await classifyAndRecordMessage({
+        admin: admin as unknown as ClassifyAdmin,
+        messageId,
+        mailboxClass: connectorRow.mailbox_class === "personal" ? "personal" : "shared_support",
+        subject: (msg.subject as string | null) ?? null,
+        fromAddress: (msg.sender?.address as string | null) ?? null,
+        snippet: ((msg.body_text as string | null) ?? "").slice(0, 4000),
+      });
+    }
+  } catch (classifyErr) {
+    console.warn("[handle-inbound-email] classification_deferred", (classifyErr as Error)?.message);
+  }
 
   // -- 6. File the comms-draft-reply action (§8 action bus). ----------------------
   // tenant_id is set EXPLICITLY here — paige_actions has NO tenant-deriving trigger

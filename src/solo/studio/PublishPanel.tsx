@@ -223,7 +223,7 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
     return (
       <div ref={panelRef} className="vs-pop" role="dialog" aria-label="It's live">
         <h2>It's live</h2>
-        <p>Anyone with the link can open it, and it's in Marketing › Lead capture.</p>
+        <p>Anyone with the link can open it, and it's in Marketing › Overview.</p>
         <a href={url} target="_blank" rel="noreferrer" className="vs-link" style={{ wordBreak: "break-all" }}>{url}</a>
         <div className="vs-pop-foot"><button ref={doneRef} type="button" className="vs-btn" onClick={onClose}>Done</button></div>
       </div>
@@ -304,7 +304,7 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
   return (
     <div ref={panelRef} className="vs-pop" role="dialog" aria-label={heading}>
       <h2>{heading}</h2>
-      <p>{republish ? "Each page and form in it goes live at its latest saved version." : pending ? "Visitors keep seeing the current version until you do." : "It gets a public link and moves to Marketing › Lead capture."}</p>
+      <p>{republish ? "Each page and form in it goes live at its latest saved version." : pending ? "Visitors keep seeing the current version until you do." : "It gets a public link and moves to Marketing › Overview."}</p>
       {notPublishable ? (
         <ul className="vs-checks">
           <li>

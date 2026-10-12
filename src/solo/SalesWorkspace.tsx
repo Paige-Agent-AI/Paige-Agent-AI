@@ -8,7 +8,7 @@ import { useSoloCampaigns } from "./useSoloCampaigns";
 import { PipelineSurface, DetailDrawer } from "./growth2";
 import { CatalogOffers } from "./catalog-offers";
 import { SalesOps } from "./sales-ops";
-import { Analytics2 } from "./analytics2";
+import { SalesPerformanceWorkspace } from "./sales/performance/SalesPerformanceWorkspace";
 import { SalesOverview } from "./sales/SalesOverview";
 import { CollectionsWorkspace } from "./sales/collections/CollectionsWorkspace";
 import { dealInSalesPeriod, salesPeriodFromQuery } from "./sales/deriveSalesOverview";
@@ -59,6 +59,6 @@ export function SalesWorkspace({ accountContext, accountEpoch, openPaige }: { ac
   else if (tab === "offers") body = <>{query.get("resume") === "terms" && <div className="sales-return"><button className="btn" onClick={() => open("agreements", "resume=terms")}>Return to terms editor</button></div>}<CatalogOffers setDetail={onDetail}/></>;
   else if (tab === "agreements") body = operations("terms");
   else if (tab === "payments") body = <><nav className="sales-payments-tabs" aria-label="Customer money views">{[["invoices", "Invoices"], ["collections", "Collections"]].map(([key, label]) => <button key={key} aria-pressed={paymentsView === key} onClick={() => open("payments", `view=${key}`)}>{label}</button>)}<button aria-pressed={paymentsView === "scenarios"} onClick={() => open("payments", "view=scenarios")}>Model a scenario</button></nav>{paymentsView === "collections" ? <CollectionsWorkspace key={`${data.tenantId}:${accountEpoch ?? params.account}`} tenantId={data.tenantId} initialBuilderIntent={query.get("view") === "recurring" ? "recurring" : undefined} onOpenInvoices={() => open("payments", "view=invoices")}/> : operations(paymentsView)}</>;
-  else body = <Analytics2 accountContext={accountContext} accountEpoch={accountEpoch} openPaige={openPaige} controlledView="money" hideNavigation/>;
+  else body = <SalesPerformanceWorkspace epoch={accountEpoch} onNavigate={destination => open(destination.tab, destination.query)}/>;
   return <div className="solo-campaigns sales-department" data-sales-view={tab}><h1 className="campaigns-sr-only">Sales</h1><nav className="campaigns-nav sales-tabs" role="tablist" aria-label="Sales departments">{TABS.map(([key, label, Icon], index) => <button key={key} ref={node => { refs.current[index] = node; }} id={`sales-tab-${key}`} role="tab" aria-controls="sales-department-panel" aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} onClick={() => requestSalesNavigation(()=>setTab(key))} onKeyDown={event => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return; event.preventDefault(); const next = event.key === "Home" ? 0 : event.key === "End" ? TABS.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + TABS.length) % TABS.length; refs.current[next]?.click(); refs.current[next]?.focus(); }}><Icon size={15}/><span>{label}</span></button>)}</nav><div id="sales-department-panel" role="tabpanel" aria-labelledby={`sales-tab-${tab}`} className="campaigns-scroll sales-department-body">{body}</div><DetailDrawer detail={visibleDetail} onClose={closeDetail}/></div>;
 }

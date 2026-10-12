@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { DAY_MS, deriveMarketingOverview } from "./marketing-overview-model";
+import { DAY_MS, defaultPipelineReady, defaultPipelineTarget, defaultRouteLabel, deriveMarketingOverview, periodStartOf, pipelineRouteOf, sendsToPipeline, withServerOverview } from "./marketing-overview-model";
 import type { CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
 
@@ -103,5 +103,78 @@ describe("Marketing Overview model edges", () => {
     expect(model.leads.count).toBe(190);
     // ...and still a floor when a future-stamped row sits in an otherwise full in-period read.
     expect(derive([...Array.from({ length: 199 }, (_, index) => sub(`f${index}`, 2)), sub("ahead", -0.01)]).capped).toBe(true);
+  });
+});
+
+describe("withServerOverview (MBC 2c)", () => {
+  it("takes the server's counts, deltas and source mix, and keeps the record-drawn chart and top forms", () => {
+    const records = deriveMarketingOverview({ briefs: [], artifacts: [], drafts: [], submissions: Array.from({ length: 200 }, (_, i) => sub(`s${i}`, 1)), periodDays: 30, now: NOW });
+    expect(records.capped).toBe(true);
+    const sources = ["a", "b", "c", "d", "e"].map((tag, i) => ({ key: `src:${tag}`, label: tag, count: 50 - i }));
+    const merged = withServerOverview(records, { leads: 412, tagged: 250, opportunities: 31, sources, otherSources: 10, untagged: 152 }, { leads: 350, tagged: 0, opportunities: 31, sources: [], otherSources: 0, untagged: 0 });
+    expect(merged.capped).toBe(false);
+    expect(merged.leads).toEqual({ count: 412, tagged: 250, delta: { previous: 350, change: 62, percent: 18 } });
+    expect(merged.opportunities).toEqual({ count: 31, delta: { previous: 31, change: 0, percent: 0 } });
+    expect(merged.sources.map((s) => [s.label, s.count, s.kind])).toEqual([["a", 50, "tag"], ["b", 49, "tag"], ["c", 48, "tag"], ["d", 47, "tag"], ["Other sources", 56, "other"], ["No tracking tag", 152, "untagged"]]);
+    expect(merged.daily).toBe(records.daily);
+    expect(merged.topContent).toBe(records.topContent);
+    expect(withServerOverview(records, { leads: 1, tagged: 0, opportunities: 0, sources: [], otherSources: 0, untagged: 1 }, null).leads.delta).toBeNull();
+  });
+
+  it("starts the server's period on the same local midnight as the records' period", () => {
+    const start = periodStartOf(30, NOW);
+    expect(new Date(start).getHours()).toBe(0);
+    expect(Math.round((NOW - start) / DAY_MS)).toBe(30);
+  });
+});
+
+
+// Owner ruling 2026-10-11 (20271021042001): a form with no route of its own files its leads into the
+// business's DEFAULT pipeline, first open stage. These mirror growth_attach_submission_default_deal and
+// marketing.forms.unrouted_current's default_ready.
+describe("default pipeline routing", () => {
+  const pipeline = (id: string, extra: Record<string, unknown> = {}) => ({ id, name: `Pipeline ${id}`, isDefault: true, lifecycleStatus: "active", createdAt: "2026-09-01T00:00:00Z", ...extra });
+  const stage = (id: string, pipelineId: string, extra: Record<string, unknown> = {}) => ({ id, pipelineId, label: `Stage ${id}`, stageType: "open", archivedAt: null, orderIndex: 0, ...extra });
+
+  it("is ready only with a non-archived default pipeline that has a non-archived open stage", () => {
+    expect(defaultPipelineReady(null)).toBe(false);
+    expect(defaultPipelineReady(undefined)).toBe(false);
+    expect(defaultPipelineReady({ pipelines: [], stages: [] })).toBe(false);
+    // No default at all.
+    expect(defaultPipelineReady({ pipelines: [pipeline("p", { isDefault: false })], stages: [stage("s", "p")] })).toBe(false);
+    // The default pipeline is archived.
+    expect(defaultPipelineReady({ pipelines: [pipeline("p", { lifecycleStatus: "archived" })], stages: [stage("s", "p")] })).toBe(false);
+    // Its only open stage is archived.
+    expect(defaultPipelineReady({ pipelines: [pipeline("p")], stages: [stage("s", "p", { archivedAt: "2026-10-01T00:00:00Z" })] })).toBe(false);
+    // Only won and lost stages.
+    expect(defaultPipelineReady({ pipelines: [pipeline("p")], stages: [stage("w", "p", { stageType: "won" }), stage("l", "p", { stageType: "lost" })] })).toBe(false);
+    // An open stage in a different pipeline does not count.
+    expect(defaultPipelineReady({ pipelines: [pipeline("p"), pipeline("q", { isDefault: false })], stages: [stage("s", "q")] })).toBe(false);
+    // A draft default pipeline is not archived, so the server files into it.
+    expect(defaultPipelineReady({ pipelines: [pipeline("p", { lifecycleStatus: "draft" })], stages: [stage("s", "p")] })).toBe(true);
+    expect(defaultPipelineReady({ pipelines: [pipeline("p")], stages: [stage("s", "p")] })).toBe(true);
+  });
+
+  it("picks the oldest live default pipeline, then its first open stage by order, as the server does", () => {
+    const target = defaultPipelineTarget({
+      pipelines: [pipeline("new", { createdAt: "2026-10-01T00:00:00Z" }), pipeline("old", { name: "Client work", createdAt: "2026-08-01T00:00:00Z" }), pipeline("gone", { lifecycleStatus: "archived", createdAt: "2026-01-01T00:00:00Z" })],
+      stages: [stage("won", "old", { stageType: "won", orderIndex: 0 }), stage("later", "old", { orderIndex: 5 }), stage("first", "old", { label: "New enquiry", orderIndex: 2 }), stage("x", "gone"), stage("y", "new")],
+    });
+    expect(target).toEqual({ pipelineId: "old", pipelineName: "Client work", stageId: "first", stageLabel: "New enquiry" });
+    expect(defaultRouteLabel(target!)).toBe("Client work (default) → New enquiry");
+    // The server checks only that oldest default: an open stage in a newer default does not make it ready.
+    expect(defaultPipelineReady({ pipelines: [pipeline("new", { createdAt: "2026-10-01T00:00:00Z" }), pipeline("old", { createdAt: "2026-08-01T00:00:00Z" })], stages: [stage("y", "new")] })).toBe(false);
+  });
+
+  it("routes a form by its own route first, then the default pipeline, then nowhere", () => {
+    const none = { routingTargets: [], intakePipelineId: null };
+    const own = { routingTargets: [], intakePipelineId: "p" };
+    const auto = { routingTargets: ["pipeline_attach"], intakePipelineId: null };
+    const skipped = { routingTargets: ["notify_team"], intakePipelineId: "p" };
+    expect([none, own, auto, skipped].map((form) => pipelineRouteOf(form, true))).toEqual(["default", "own", "own", "default"]);
+    expect([none, own, auto, skipped].map((form) => pipelineRouteOf(form, false))).toEqual(["none", "own", "own", "none"]);
+    // sendsToPipeline keeps its old meaning when the caller does not say the default is ready.
+    expect([none, own, auto, skipped].map((form) => sendsToPipeline(form))).toEqual([false, true, true, false]);
+    expect([none, own, auto, skipped].map((form) => sendsToPipeline(form, true))).toEqual([true, true, true, true]);
   });
 });

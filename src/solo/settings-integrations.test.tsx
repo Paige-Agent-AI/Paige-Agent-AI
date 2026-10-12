@@ -195,6 +195,18 @@ describe("canonical OAuth return through the real Integrations route", () => {
 });
 
 describe("Truth boundary", () => {
+  it("makes PayPal discoverable without inventing seller authorization or a connect action", async () => {
+    world(); const p = await render();
+    const tile = p.host.querySelector('.ig-card[data-provider="paypal"]');
+    expect(tile?.textContent).toContain("PayPal"); expect(tile?.textContent).toContain("Not available");
+    await openCard(p.host, "paypal");
+    const panel = p.host.querySelector('[role="dialog"]');
+    expect(panel?.textContent).toContain("approved seller-onboarding");
+    expect(panel?.querySelector('input')).toBeNull();
+    expect(buttons(panel as HTMLElement).some(button => /connect paypal/i.test(button.textContent ?? ""))).toBe(false);
+    expect(invoke.mock.calls.some(([name]) => /paypal/.test(name))).toBe(false);
+    await act(async () => p.root.unmount()); p.host.remove();
+  });
   it("calls only server-resolved safe status RPCs, with no tenant argument, and renders no payload", async () => {
     world({ n8n: { configured: true, status: "connected", label: "Workflow bridge", workflow_count: 3, secret: "must-not-survive", raw_payload: "must-not-survive", last_error: "must-not-survive" } });
     const { host } = await render();
@@ -355,10 +367,11 @@ describe("Truth boundary", () => {
     // Opening a card that owns no n8n seam must not read the n8n connection. Counted
     // across the open, not against zero: the view itself legitimately reads the caller's
     // write permission once on mount for the gateway section, and that read is not the
-    // n8n panel's. What this proves is that STRIPE mounts no seam of its own.
+    // n8n panel's. QuickBooks still has no tenant-safe connection seam.
     const adminReads = () => rpc.mock.calls.filter((c) => c[0] === "is_current_user_tenant_admin").length;
     const before = adminReads();
-    await openCard(host, "stripe");
+    // Stripe now owns a canonical merchant contract. QuickBooks still lacks one.
+    await openCard(host, "quickbooks");
     expect(host.querySelector('[role="dialog"]')?.textContent).toMatch(/not claimed|not offered here yet/i);
     expect(host.querySelector(".ig-form")).toBeNull();
     expect(adminReads()).toBe(before);

@@ -55,7 +55,9 @@ describe("the approved pipeline card executes its stored proposal", () => {
   it("strips executed pipeline fingerprints from the model echo — no re-emission", () => {
     // The exact stripping statement inside the pipeline block (the CRM block's own stripping
     // would satisfy a looser match).
-    expect(ui).toMatch(/for \(const item of pipelineItems\)[\s\S]{0,4200}echoFingerprints = echoFingerprints\.filter/);
+    const pipeline = ui.slice(ui.indexOf("const pipelineItems:"), ui.indexOf("// The turn carries the card"));
+    expect(pipeline).toContain("for (const item of pipelineItems)");
+    expect(pipeline).toContain("echoFingerprints = echoFingerprints.filter((f) => !executed.has(f));");
   });
 
   it("classifies rpc failures by the answered-or-ambiguous rule", () => {
@@ -74,7 +76,7 @@ describe("the approved pipeline card executes its stored proposal", () => {
     // handleSend, never from message text. Pin: its loop reads the approved set.
     // The pipeline collector lives inside the approvedFingerprints-guarded block and reads the
     // approved card confirmations, not message text.
-    expect(ui).toMatch(/echoFingerprints\?\.length\) \{[\s\S]{0,1100}pipeline_configure[\s\S]{0,1100}paige_pending_confirmations/);
+    expect(ui).toMatch(/echoFingerprints\?\.length && !soloTenantSafety\) \{[\s\S]{0,1100}pipeline_configure[\s\S]{0,1100}paige_pending_confirmations/);
     expect(ui).toMatch(/for \(const m of messages\) \{[\s\S]{0,400}echoFingerprints\.includes\(c\.fingerprint\)/);
   });
 });

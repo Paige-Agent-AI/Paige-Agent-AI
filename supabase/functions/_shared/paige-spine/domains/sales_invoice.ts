@@ -1,5 +1,6 @@
 import {SALES_COMMERCIAL_OFFERS_SPINE} from '../../sales-commercial/offers-read.ts';
 import {SALES_DRAFT_SPINE} from '../../sales-commercial/draft-capabilities.ts';
+import {SALES_COMMERCIAL_PACKAGE_SPINE} from '../../sales-commercial/package-read.ts';
 import type { SpineCapability } from '../contracts.ts';
 import {defineCapability, objectInputSchema, ownerGrantablePermission} from '../../capability-kit/mod.ts';
 
@@ -10,7 +11,7 @@ const mutations = [
   ['reverse_manual_payment', 'sales_reverse_manual_payment'], ['void', 'sales_void_invoice'],
 ] as const;
 export const SALES_INVOICE_CAPABILITIES: readonly SpineCapability[] = [
- ...SALES_DRAFT_SPINE, SALES_COMMERCIAL_OFFERS_SPINE,
+ ...SALES_DRAFT_SPINE, SALES_COMMERCIAL_OFFERS_SPINE, SALES_COMMERCIAL_PACKAGE_SPINE,
  {key:'sales_invoice.payment_request',readiness:'sales_merchant',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',
   action:{classification:'external_effect',executor:'public.prepare_sales_invoice_payment_request',chatTool:'sales_create_payment_request',riskPolicyKey:'high',approvalAuthority:'chat-canonical',idempotency:'Exact server-resolved tenant/customer/invoice/version/amount/currency/merchant/environment, immutable operation and one persisted dispatch claim; uncertain response only reconciles.'},
   outcome:{kinds:['prepared','dispatching','provider_accepted','customer_action_required','outcome_unknown','settled','failed','expired','cancelled','refused'],projector:'public.read_sales_invoice_payment_request',railVisibility:'Request/readback/verified settlement and allocation are distinct. Hosted request never claims payment. Authenticated provider acceptance is PROOF_OWED.'},

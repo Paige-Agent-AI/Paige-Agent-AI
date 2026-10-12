@@ -462,15 +462,16 @@
         "platform subscription checkout/portal",
         "Marketplace paid install",
         "read safe billing status for a workspace",
-        "(future, §38 direct-charge) facilitate a tenant->client charge on the tenant's own account"
+        "(future, §38 direct-charge) facilitate a tenant->client charge on the tenant's own account",
+        "Tenant-scoped merchant status/refresh and canonically approved Stripe Express onboarding or hosted dashboard handoff through the shared tenant-stripe-connect door; human setup stays in Integrations."
       ],
-      "connection_prerequisite": "Platform Stripe account for Paige-held rails; per-tenant Stripe Connect for facilitated tenant->client charges.",
+      "connection_prerequisite": "Platform Stripe account for Paige-held rails; per-tenant Stripe Connect for facilitated tenant->client charges. The current Sales setup seam creates a new tenant-owned Stripe Express connected account; it does not implement OAuth for an existing Stripe account. The human completes hosted setup and the server verifies readiness separately.",
       "required_scopes": [
         "Stripe API (platform)",
         "Connect (direct-charge on tenant account) — future"
       ],
-      "safe_readable_context": "Safe billing-status fields per the platform-billing source contract; never card data or raw payloads.",
-      "allowed_writes_external_effects": "Platform charges/subscriptions (Paige-held). §38: Paige is NEVER merchant-of-record for a tenant->client charge and never holds tenant funds — those run on the tenant's own rails (prohibited lane).",
+      "safe_readable_context": "Safe platform billing-status fields remain separate from tenant Sales merchant readiness. Solo Settings Integrations reads a closed tenant-scoped projection of merchant environment, binding version, provider-checked charges/payouts/details/payment permission and freshness; never secrets, raw requirements or card data. Four Sales merchant Spine declarations (sales_merchant.status, sales_merchant.refresh, sales_merchant.onboarding_start, sales_merchant.portal_link) bind read_sales_merchant_status, read_sales_merchant_refresh, sales_start_merchant_onboarding and sales_create_merchant_login_link. Chat uses a closed status projection and downgrades stale, future-dated or incomplete readiness; hosted setup/dashboard URLs and provider errors never enter the transcript or Rail.",
+      "allowed_writes_external_effects": "Platform charges/subscriptions (Paige-held). §38: Paige is NEVER merchant-of-record for a tenant->client charge and never holds tenant funds — those run on the tenant's own rails (prohibited lane). Sales merchant setup and dashboard handoff use the existing shared high/confirm Trust decision and exact stored canonical proposal; tenant-stripe-connect is the sole approval consumer. A hosted handoff is not completed human login or payment readiness.",
       "authority_lane": [
         "read",
         "confirm",
@@ -478,11 +479,11 @@
       ],
       "m1_dependency": "M1 real-money spend control (see cost_tracks): payments/charges are real money movement — currency-aware caps + atomic reserve/adjust/release + provider-confirmed actuals + reconciliation + receipt + Rail; NEVER satisfied by LLM-token metering. §38 fences merchant-of-record.",
       "canonical_provider_receipt": "Stripe payment_intent / invoice / subscription id and webhook event id.",
-      "rail_mind_memory": "Rail: billing outcome events (no sender/secret). Mind: safe billing-status only (platform-billing-spine-source-contract). Memory: none of card/PII.",
+      "rail_mind_memory": "Rail: billing outcome events (no sender/secret). Mind: safe billing-status only (platform-billing-spine-source-contract). Memory: none of card/PII. Merchant handoff uses record_capability_run with bounded safe outcomes; no hosted URLs, credentials or raw provider errors. New merchant declarations add no Mind or Memory writer.",
       "status": "PARTIAL",
       "owner": "Money Spine workstream",
-      "dependency": "Platform acquisition/Billing proof obligations remain separate. Sales S3/S4 implements shared tenant-connected direct-charge hosted requests, GET-only ambiguous-outcome recovery, provider readback and atomic verified allocation into the existing invoice ledger/Rail. PR #1769/#1779 records production persistence and deployment of the substrate. Deployed substrate does not establish authenticated merchant/payment acceptance: that remains PROOF OWED. Each current/future Solo tenant supplies its own merchant binding; no global or owner-account fallback. PayPal parity and production payment acceptance remain outstanding. Legacy destination-charge storefront is unchanged.",
-      "next_slice": "Complete Stripe authenticated sandbox/payment acceptance and PayPal canonical parity before closing S4; then shared recurring lifecycle and conversational Collections under existing Spine/Trust/durable work/Rail. No Sales application fee; PAIGE Billing remains separate. Existing platform enrollment proof obligations remain.",
+      "dependency": "Platform acquisition/Billing proof obligations remain separate. Sales S3/S4 implements shared tenant-connected direct-charge hosted requests, GET-only ambiguous-outcome recovery, provider readback and atomic verified allocation into the existing invoice ledger/Rail. PR #1769/#1779 records production persistence and deployment of the substrate. Deployed substrate does not establish authenticated merchant/payment acceptance: that remains PROOF OWED. Each current/future Solo tenant supplies its own merchant binding; no global or owner-account fallback. PayPal parity and production payment acceptance remain outstanding. Legacy destination-charge storefront is unchanged. INT-311 merchant Spine/Chat wiring adds the four declarations and shared governed setup/resume. Unknown account creation is recovered with bounded GET-only reconciliation; a pending unknown reservation does not authorize another creation. Local automated tests prove the bounded contracts only; authenticated merchant setup and TEST payment acceptance remain PROOF OWED. This work does not claim production release of the new merchant wiring.",
+      "next_slice": "Prove authenticated tenant merchant onboarding/resume, actor/workspace changes, approved secure handoff and provider readback, then TEST payment acceptance; existing Billing and deployed direct-charge substrate claims remain separate. PayPal approved partner access/onboarding is absent. Continue shared recurring lifecycle and conversational Collections under existing Spine/Trust/durable work/Rail after the payment proof boundary closes.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -556,6 +557,31 @@
           "path": "supabase/functions/_shared/sales-payments/merchant.ts",
           "role": "callback_readback",
           "note": "S1 tenant/account/environment/version readiness; requires provider tenant provenance. No charge/settlement writer."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-capability.ts",
+          "role": "provider_adapter",
+          "note": "Four merchant Spine declarations and two high/confirm Kit declarations route to the existing tenant-stripe-connect door; no provider acceptance claim."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-chat.ts",
+          "role": "fail_closed_containment",
+          "note": "C4b exact stored proposal selection; scoped approval readback and fresh readiness; bearer URLs omitted from all Chat results."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-admission.ts",
+          "role": "fail_closed_containment",
+          "note": "Shared canonical approval admission and stored merchant binding; no second approval system."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant-onboarding.ts",
+          "role": "callback_readback",
+          "note": "Existing Express creation reservation and bounded GET-only unknown recovery; returned hosted link is human-only."
+        },
+        {
+          "path": "src/solo/settings-integrations.tsx",
+          "role": "provider_adapter",
+          "note": "Finance Stripe merchant handoff and visible disabled PayPal tile; listing is not connection proof."
         }
       ],
       "sources": [
@@ -579,7 +605,7 @@
         "Seller PAYMENT delegated permissions, actual partner app authorization and merchant-integration readback",
         "Refund/recurring permissions must be grounded per capability before activation"
       ],
-      "safe_readable_context": "Future tenant-scoped merchant identity/readiness and canonical invoice/balance references; no PAN/CVV, tokens or raw payloads.",
+      "safe_readable_context": "A non-executing GET-only payment readback normalizer exists for the canonical payment contract; provider/tenant delegated transport and seller setup are unavailable. The visible Finance tile states that boundary; no PAN/CVV, tokens or raw payloads enter Chat.",
       "allowed_writes_external_effects": "None implemented. Future customer payment requests and verified outcomes require shared Spine/Trust/provider readback/Rail.",
       "authority_lane": [
         "prohibited"
@@ -589,7 +615,7 @@
       "rail_mind_memory": "Future canonical Sales execution receipts on Rail; no mutable financial truth in Memory/Mind.",
       "status": "UNAVAILABLE",
       "owner": "Sales execution program INT-311",
-      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. No PayPal adapter or onboarding activation exists.",
+      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. A non-executing GET readback normalizer reuses the canonical payment contract; hosted dispatch, delegated transport and onboarding activation remain unavailable. Deterministic tests do not establish provider acceptance. Solo Settings Integrations shows a Finance PayPal tile with connectable:false and an explicit unavailable explanation. That visible tile is not a connector or seller authorization. Secure approved partner seller onboarding remains absent; the GET-only normalizer does not grant delegated transport, create a merchant binding or execute a payment.",
       "next_slice": "Ground partner app access and merchant-integrations permissions; implement the same Sales hosted request to verified settlement/allocation vertical as Stripe.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -627,7 +653,9 @@
       "code_anchors": [],
       "sources": [
         "https://developer.paypal.com/platforms/seller-onboarding/before-payment",
-        "docs/delivery/sales-provider-s1.md"
+        "docs/delivery/sales-provider-s1.md",
+        "src/solo/settings-integrations.tsx",
+        "supabase/functions/_shared/sales-payments/paypal-readback.ts"
       ]
     },
     {
@@ -655,8 +683,8 @@
       ],
       "status": "PROOF_OWED",
       "owner": "Integrations workstream",
-      "dependency": "Grounded capability audit; not yet driven end-to-end.",
-      "next_slice": "Catalogue the real wired capability and scopes, then a governed read proof.",
+      "dependency": "Finance F1b candidate (2026-10-10): company/source identity and evidence metadata use existing workspace authority and controlled PostgreSQL proof. This is not provider verification; bindings default pending, legacy snapshots are not promoted, and QuickBooks sync remains fail-closed containment. One-use consent, actual company authorization, pagination, nullable figures, refresh/disconnect and authenticated provider proof remain owed.",
+      "next_slice": "Complete explicit company/source authority and OAuth integrity, then controlled provider read proof; preserve Settings Integrations as connection owner and separately authorize real activation.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -695,12 +723,27 @@
         {
           "path": "supabase/functions/quickbooks-oauth-callback/index.ts",
           "role": "provider_adapter",
-          "note": "OAuth handshake callback (provider plumbing)."
+          "note": "Legacy HTTP OAuth callback remains unverified; new company-bound consent state alone does not repair or activate this handler."
+        },
+        {
+          "path": "supabase/migrations/20271020000300_quickbooks_company_oauth_attempts.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company/version/actor-bound accounting-only one-use consent correlation. No token exchange, native company proof or provider activation; HTTP binding and production acceptance owed."
         },
         {
           "path": "supabase/functions/quickbooks-sync-financials/index.ts",
-          "role": "provider_adapter",
-          "note": "read seam / Intuit API client."
+          "role": "fail_closed_containment",
+          "note": "Authenticate first; authorized requests return FINANCE_SOURCE_UNAVAILABLE without privileged data or provider traffic until the company-bound read adapter is proven."
+        },
+          {
+            "path": "supabase/migrations/20270602000423_finance_account_source_projections.sql",
+            "role": "provider_adapter",
+            "note": "Controlled company-bound account projection cache only: exact observation identity, nullable source values and revocation. No provider activation, fresh institution balance proof or live ingestion."
+          },
+        {
+          "path": "supabase/functions/quickbooks-update-transaction-category/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Candidate: authenticated accounting changes are unavailable; no privileged reads, token operations or provider write is performed without a future governed company-scoped contract."
         },
         {
           "path": "supabase/functions/quickbooks-webhook/index.ts",
@@ -720,12 +763,14 @@
       "id": "plaid",
       "name": "Plaid",
       "taxonomy": "finance_accounting_payments",
-      "business_reason": "Banking-data connectivity for owner finance context; opt-in, §2-constrained. A 'Settings → Integrations → Financial' connection and a capability of the OPT-IN 'Funding & Coaching Tools' Marketplace package (owner ruling 2026-09-13) — never a platform default, never a universal Solo feature.",
+      "business_reason": "Optional company banking-data connectivity for the canonical Solo Finance department (owner backend directive, 2026-10-10), activated only through Settings Integrations with explicit company/account consent. It also remains a provider for the separate opt-in Funding & Coaching Tools Marketplace vertical (2026-09-13). A Finance destination does not automatically link Plaid or grant product permissions.",
       "marketplace_package": "Funding & Coaching Tools (owner ruling 2026-09-13) — package surface NOT built/available yet. Plaid is a per-tenant Financial connection the package uses; it already requires an explicit per-tenant Plaid link + consent (the connection template the other package providers follow).",
       "paige_use_cases": [
-        "(package-entitled + linked only) read authorized banking/financial-account context"
+        "(company-authorized + explicitly linked only) read banking balances and transactions for Solo Finance",
+        "Read liabilities only for actually supported products and separately approved provider coverage",
+        "(package-entitled + linked only) financial-account context for the separate Funding & Coaching Tools vertical"
       ],
-      "connection_prerequisite": "Per-tenant Plaid link + consent (the existing per-tenant connection model — encrypted, revocable, never cross-tenant); plus the Funding & Coaching Tools package entitlement (is_finance/funding_enabled, owner ruling 2026-09-13). Opt-in only, never a platform default (R9).",
+      "connection_prerequisite": "Explicit tenant/company/account Plaid Link consent through existing Settings Integrations, verified native account identity and encrypted revocable credentials; no user/CRM identity substitution. Company Finance reads do not require the separate Funding package under the 2026-10-10 owner directive. Funding-vertical use retains its package entitlement. No default activation, new consent or provider spending is authorized by implementation.",
       "required_scopes": [
         "auth / transactions (per product)"
       ],
@@ -740,8 +785,8 @@
       "rail_mind_memory": "Rail: minimal. Mind: only safe summaries. Memory: no raw financial data.",
       "status": "PARTIAL",
       "owner": "Integrations workstream (finance lane, §2 opt-in)",
-      "dependency": "§2/§194 lane-separation; opt-in gating.",
-      "next_slice": "Confirm opt-in gating and safe-read boundary; park deeper finance-vertical work (R9).",
+      "dependency": "Finance F1b company/source metadata has controlled PostgreSQL proof, not provider acceptance. Legacy Plaid reads remain user scoped and item-wide transaction attribution/pagination are unproven. No Finance data is promoted from these rows; liabilities and commercial LOC coverage remain unverified. Preserve the separate §2/§194 Funding vertical and explicit connection consent.",
+      "next_slice": "Repair verified company/account authorization, item-to-account attribution, complete cursor pagination and safe source projection using controlled providers before separately authorized live connection proof. Settings Integrations retains activation ownership.",
       "tier_eligibility": {
         "platform": "ineligible",
         "solo": "eligible",
@@ -795,6 +840,21 @@
           "path": "supabase/functions/plaid-webhook/index.ts",
           "role": "callback_readback",
           "note": "legacy Plaid webhook variant."
+        },
+        {
+          "path": "supabase/migrations/20270602000423_finance_account_source_projections.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company-account projection candidate; exact native account identity and observation provenance. No provider activation, live ingestion or verified institution freshness."
+        },
+        {
+          "path": "supabase/migrations/20270602000429_finance_accounting_obligation_projections.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company-bound Bill/Purchase cache; original native references and unknown amounts. No verified bank settlement, automatic expense recognition, provider activation or live ingestion claim."
+        },
+        {
+          "path": "supabase/migrations/20270602000428_finance_liability_source_projections.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company/native-account liability cache candidate, tied to exact account evidence version. No provider consent, product eligibility, live ingestion or verified institution freshness claim."
         }
       ],
       "sources": [
@@ -1160,27 +1220,29 @@
         "operator voice both directions (live)",
         "send/receive SMS once A2P approves",
         "per-tenant subaccount routing",
-        "governed issued-invoice SMS delivery with exact recipient consent/A2P readiness; provider acceptance and authenticated proof remain PROOF_OWED"
+        "governed issued-invoice SMS delivery with exact recipient consent/A2P readiness; provider acceptance and authenticated proof remain PROOF_OWED",
+        "Admin/Platform Owner PAIGE Archive and Delete are independent of Twilio permission or availability. PAIGE pauses access/execution and removes eligible tenant data/credentials; external service retirement and charges are tracked separately in the protected canonical journal. Optional verified Twilio termination remains provider/authenticated PROOF_OWED."
       ],
       "connection_prerequisite": "Master account + per-tenant subaccount (provisioned at Twilio console); A2P registration for tenant SMS.",
       "required_scopes": [
         "Twilio account/subaccount API",
         "Messaging Service (A2P)",
-        "Voice (TwiML app)"
+        "Voice (TwiML app)",
+        "Optional Twilio-side termination needs Parent Auth Token or Main API key with Accounts status-management authority; a Standard key is insufficient. Main API keys cannot inspect child Calls. Suspended-child provider retirement/readback requires protected parent TWILIO_AUTH_TOKEN for call inventory. This never gates PAIGE Archive or Delete. Missing provider authority refuses only the external operation; platform parent/main number remains separate and preserved."
       ],
       "safe_readable_context": "Number inventory, registration status (via provider-result-contract), call/message metadata; never auth tokens.",
-      "allowed_writes_external_effects": "Number purchase, outbound SMS/voice — confirm-gated; sends run through the one approval path.",
+      "allowed_writes_external_effects": "Number purchase, outbound SMS/voice — confirm-gated; sends run through the one approval path. Explicit Operator Admin/Owner confirmation may suspend/close only the bound tenant subaccount; never the platform parent or an ambiguous/shared binding.",
       "authority_lane": [
         "read",
         "draft",
         "confirm"
       ],
       "m1_dependency": "M1 real-money spend control (see cost_tracks): number purchase is a real purchase and per-message/minute usage is metered real spend — currency-aware caps + reserve/confirm/reconcile + receipt + Rail; message/engagement VOLUME caps via M1-b. NEVER satisfied by LLM-token metering.",
-      "canonical_provider_receipt": "Twilio Message SID / Call SID / purchased number SID.",
+      "canonical_provider_receipt": "Twilio Message SID / Call SID / purchased number SID. Retirement: independent exact-child/parent Account status GET and call-quiescence readback; transport acceptance is not completion.",
       "rail_mind_memory": "Rail: send/purchase outcomes. Mind: no message bodies (Clients->Conversations forbids bodies to Mind). Memory: none of raw message content.",
       "status": "PARTIAL",
       "owner": "Comms workstream",
-      "dependency": "Per-tenant A2P approval; vanity/premium number search (task #27).",
+      "dependency": "Per-tenant A2P approval; vanity/premium number search (task #27). Account-retirement adapter reuses the canonical private Operator archive journal and provider client. See docs/delivery/operator-account-lifecycle.md; provider/authenticated acceptance remains PROOF_OWED under the owner login hold.",
       "next_slice": "Per-tenant A2P go-live; complete number-search scope.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -1205,19 +1267,24 @@
         "rate_limits_quotas": "Messaging Service throughput (MPS) tied to A2P registration; Voice concurrency limits; backoff on 429. Verify at source.",
         "usage_review_cadence": "Monthly (message/minute volume + number inventory cost).",
         "renewal_deprecation_review": "A2P registration upkeep; number renewals (per-number monthly); track Twilio API deprecations.",
-        "data_privacy_retention": "No auth tokens recorded; message bodies never enter Mind; call/message metadata only.",
+        "data_privacy_retention": "No auth tokens recorded; message bodies never enter Mind; call/message metadata only. Account suspension does not stop number charges. Closure follows Twilio retention (default 30-day closed-subaccount deletion); scheduled backups are not represented as immediately erased.",
         "money_movement": {
           "can_move_real_money": true,
           "m1_dependency_track": "m1_real_money_spend_control",
           "detail": "Number purchase = a real purchase; SMS/voice usage = metered real spend. Reserve/confirm/reconcile + receipt + Rail; send/engagement volume additionally capped by M1-b."
         },
-        "receipt_reconciliation": "Message SID / Call SID / number SID; reconcile against Twilio usage records.",
+        "receipt_reconciliation": "Message SID / Call SID / number SID; reconcile against Twilio usage records. Retirement requires fresh Account identity/state and call readback; unknown outcomes reconcile read-only, with no automatic consequential retry.",
         "rail_outcome": "send/purchase outcome.",
         "pause_revoke_path": "Suspend the subaccount / disable the send path; M1 caps + emergency-stop halt autonomous sends and purchases.",
         "next_owner": "Comms workstream",
         "next_slice": "Decide + wire L3 metered pass-through billing to the tenant (currently platform_paid)."
       },
       "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/comms-provider-boundary.ts",
+          "role": "fail_closed_containment",
+          "note": "QA #1832 protected synthetic identity/tenant provider refusal floor; grants no provider authority. Merge/deployed proof remains owed until release closeout; ordinary provider maturity and authenticated proof are unchanged."
+        },
         {
           "path": "supabase/functions/_shared/twilio.ts",
           "role": "provider_adapter",
@@ -1236,6 +1303,11 @@
         {
           "path": "supabase/functions/twilio-inbound-webhook/index.ts",
           "role": "callback_readback"
+        },
+        {
+          "path": "supabase/functions/operator-account-retirement/index.ts",
+          "role": "provider_adapter",
+          "note": "Authenticated Admin/Owner, exact private server-bound scope, one provider resource per invocation; no provider identity accepted from browser. Controlled tests only, not live provider proof."
         }
       ],
       "sources": [
@@ -1390,6 +1462,11 @@
       },
       "code_anchors": [
         {
+          "path": "supabase/functions/_shared/comms-provider-boundary.ts",
+          "role": "fail_closed_containment",
+          "note": "QA #1832 protected synthetic identity/tenant provider refusal floor; grants no provider authority. Merge/deployed proof remains owed until release closeout; ordinary provider maturity and authenticated proof are unchanged."
+        },
+        {
           "path": "supabase/functions/_shared/email/providers.ts",
           "role": "provider_adapter",
           "note": "provider-specific: providers.ts carries the Resend send branch."
@@ -1480,7 +1557,8 @@
       "business_reason": "Expressive streaming playback may carry Paige's approved spoken character while Paige remains the sole owner of reasoning, tenant context, authority, records, and actions.",
       "paige_use_cases": [
         "future streaming text-to-speech for Paige-authored responses",
-        "server-profile-resolved per-message speech playback"
+        "server-profile-resolved per-message speech playback",
+        "Operator permanent account retirement can remove only eligible private generated-audio cache through the existing Storage API/journal; this grants no ElevenLabs provider authority. Controlled proof PASS; production byte deletion/authenticated use PROOF_OWED."
       ],
       "connection_prerequisite": "Server-side credential, exact Jessica entitlement and canonical scoped pilot authorization. Default provider retention may be explicitly authorized for the restricted pilot; verified zero retention remains unavailable. Broader client use still requires the owner-held retention and speaker-identity decisions. Adapter tests do not prove provider eligibility.",
       "required_scopes": [
@@ -1520,7 +1598,7 @@
         "rate_limits_quotas": "Account concurrency and quota are unverified. Provider refusal, rate limits and disconnects fail honestly without a live-state claim; this adapter adds no billing or allowance gate.",
         "usage_review_cadence": "Review observed provider usage during the bounded owner pilot; the Budget lane owns platform-wide usage and cost policy, and this voice adapter asserts no spending-control claim.",
         "renewal_deprecation_review": "Quarterly provider API/model/privacy review and before changing an approved voice-profile revision.",
-        "data_privacy_retention": "ElevenLabs receives Paige-authored text, not microphone audio. Live dialogue requests use explicit enable_logging=true only after scoped default-retention authorization. The unchanged HTTP read-aloud transport still requests enable_logging=false; its active profile remains OpenAI. Zero Retention Mode is Enterprise-only; verified zero retention remains UNAVAILABLE. Owner authorization and vendor documentation are not provider verification.",
+        "data_privacy_retention": "ElevenLabs receives Paige-authored text, not microphone audio. Live dialogue requests use explicit enable_logging=true only after scoped default-retention authorization. The unchanged HTTP read-aloud transport still requests enable_logging=false; its active profile remains OpenAI. Zero Retention Mode is Enterprise-only; verified zero retention remains UNAVAILABLE. Owner authorization and vendor documentation are not provider verification. Eligible private tenant-generated cache is irreversibly removed only after exact Admin/Owner resource confirmation, API removal and absence readback. Platform/foreign audio and independent file obligations are preserved; this does not claim provider-side audio or backups were destroyed.",
         "money_movement": {
           "can_move_real_money": false,
           "m1_dependency_track": "none",
@@ -1542,6 +1620,11 @@
           "path": "supabase/functions/paige-tts/index.ts",
           "role": "provider_adapter",
           "note": "Existing profile-resolved read-aloud seam; active profile remains OpenAI and no ElevenLabs playback is activated by the Jessica candidate correction."
+        },
+        {
+          "path": "supabase/functions/_shared/operator-storage-retirement.ts",
+          "role": "fail_closed_containment",
+          "note": "Existing generated-audio cache substrate only, exact protected tenant manifest; no ElevenLabs call or new credentials. Real Storage byte absence remains PROOF_OWED."
         }
       ],
       "sources": [
@@ -2179,7 +2262,8 @@
       "business_reason": "Tenants run automations in n8n; Paige dispatches governed work to it as a worker under her authority (R7).",
       "paige_use_cases": [
         "connect/read workflow inventory (OAuth read/write)",
-        "(future) activate a workflow whose capability_run Rail row renders"
+        "(future) activate a workflow whose capability_run Rail row renders",
+        "Confirmed PAIGE whole-account Delete removes its canonical encrypted API credential and exact legacy MCP projection without calling n8n. External workflows and hosting remain independently managed and explicitly pending; Archive pauses PAIGE execution without a separate provider-preparation screen. Authenticated proof PROOF_OWED."
       ],
       "connection_prerequisite": "Per-tenant n8n OAuth (workflow:read + workflow:write); a saved key does not prove health. The connection is also represented 1:1 in the canonical mcp_connections gateway registry that the PR-1 outbound connection-loader reads.",
       "required_scopes": [
@@ -2198,7 +2282,7 @@
       "rail_mind_memory": "Rail: capability_run outcome (zero rows in prod today). Mind: only safe workflow facts. Memory: none of payloads.",
       "status": "PARTIAL",
       "owner": "Integrations workstream",
-      "dependency": "decideGovernedExecution wiring + downstream governance (capability-system slice 5). Outbound-gateway connection seam: the canonical single source is now mcp_connections (Phase S registry, migration 20270319000000, backfilled 1:1 non-destructively from tenant_mcp_connections + tenant_n8n_connections, which remain the sole LIVE path until a later cutover), read via get_mcp_connection_secret and loaded by the PR-1 generic gateway runner (_shared/mcp-gateway/connection.ts) so one row backs BOTH consent and dispatch. PR-1 is LIBRARY-ONLY — the runner is imported by no deployed function, zero live-provider execution; listing the loader never means this provider is connected or live. The n8n REST api_key facet (backfilled from tenant_n8n_connections, a REST base URL) is refused connection_unusable by the gateway's executable-facet gate as a non-MCP-http endpoint; an n8n MCP http endpoint would be drivable. INT-079 (url-auth RPC false-refuse) is CLOSED by MCP PR-1B-a (migration 20270326000000 — get_mcp_connection_secret now returns configured:true for a url-auth row whose endpoint is present, so the loader's existing url allow-list resolves it; still library-only, zero deployed importer). INT-078 (bind consent to the loaded endpoint version/hash) is CLOSED by MCP PR-1B-b (migration 20270327000000 — get_mcp_connection_secret now returns the loaded endpoint_hash and verify_mcp_connection_approval requires it, refusing endpoint_load_mismatch when the loaded endpoint differs from the approved one even if the row's current endpoint still matches; still library-only, zero deployed importer). INT-082 (owner_only visibility enforced at the resolution boundary — get_mcp_connection_secret returns visibility and the runner refuses a non-owner/admin caller for an owner_only row; needs an RPC migration + a new server-derived caller-authority input) is CLOSED by MCP PR-1B-c (migration 20270328000000 — get_mcp_connection_secret now returns visibility, still carrying INT-079's url exemption and INT-078's endpoint_hash; the runner enforces owner_only against a REQUIRED server-derived caller authority modeled as the capability mcp.connections.use_restricted, resolved by the single re-pointable mapping _mcp_caller_capabilities [owner + admin + platform owner today; a delegated grant is added there alone, per INT-089], refusing owner_only_forbidden on prepare AND execute after foreign_tenant and before any approval/dispatch, fail-closed with no silent service-role bypass; still library-only, zero deployed importer) — the migration-backed connection/consent contract closure, BEFORE the endpoint setter (PR-2). The endpoint setter is CLOSED by MCP PR-2 (INT-099, migration 20270330000000 — the new set_mcp_connection_endpoint RPC writes a connection's endpoint + full credential bundle in ONE atomic UPDATE, sourcing every credential column from the arguments so a changed endpoint can NEVER inherit the old secret; the derived endpoint_hash follows and the 20270322000000 trigger revokes endpoint-bound consent on a real change (A→B→A cannot resurrect it); it REFUSES a legacy-projected row (D1 — no cutover, the legacy tables remain the sole live write path); authority is the mcp.connections.manage capability resolved server-side via _mcp_caller_capabilities (owner/tenant-admin only; a platform owner is EXCLUDED from manage, A2), fail-closed with no service-role bypass; a hashes-only audit is written to paige_audit_log in the SAME transaction with audit-fail⇒no-commit (A1); the return is write-only (A3); URL validation is static https/SSRF only, runtime egress SSRF stays in mcp-client.ts (A4); EXECUTE to authenticated only (A5); still library-only, zero deployed importer). The gateway-native connection WRITERS are added by G1a-1 (migration 20270331000000): create_mcp_connection (generic MCP / Zapier-OAuth / n8n-OAuth facets), create_mcp_rest_connection + set_mcp_rest_connection_endpoint (n8n REST api_key), disconnect_mcp_connection (soft disable + history-preserving hard delete), and the capability mcp.connections.delete (owner/tenant-admin only, platform owner excluded); a successful re-key restores enabled (re-key = reconnect), the soft-disable scrubs the url-embedded credential, and get_mcp_connections_v2.configured is honest for url/none rows; library-only, zero deployed importer, execution unverified. READ-only is a staged certification milestone, NOT the final authority model: the final gateway architecture is MUTATION-CAPABLE — Paige may execute any server-advertised tool the tenant authorizes — with consequential mutations governed by policy/approval, idempotency, readback, Rail, revocation, and tenant isolation.",
+      "dependency": "decideGovernedExecution wiring + downstream governance (capability-system slice 5). Outbound-gateway connection seam: the canonical single source is now mcp_connections (Phase S registry, migration 20270319000000, backfilled 1:1 non-destructively from tenant_mcp_connections + tenant_n8n_connections, which remain the sole LIVE path until a later cutover), read via get_mcp_connection_secret and loaded by the PR-1 generic gateway runner (_shared/mcp-gateway/connection.ts) so one row backs BOTH consent and dispatch. PR-1 is LIBRARY-ONLY — the runner is imported by no deployed function, zero live-provider execution; listing the loader never means this provider is connected or live. The n8n REST api_key facet (backfilled from tenant_n8n_connections, a REST base URL) is refused connection_unusable by the gateway's executable-facet gate as a non-MCP-http endpoint; an n8n MCP http endpoint would be drivable. INT-079 (url-auth RPC false-refuse) is CLOSED by MCP PR-1B-a (migration 20270326000000 — get_mcp_connection_secret now returns configured:true for a url-auth row whose endpoint is present, so the loader's existing url allow-list resolves it; still library-only, zero deployed importer). INT-078 (bind consent to the loaded endpoint version/hash) is CLOSED by MCP PR-1B-b (migration 20270327000000 — get_mcp_connection_secret now returns the loaded endpoint_hash and verify_mcp_connection_approval requires it, refusing endpoint_load_mismatch when the loaded endpoint differs from the approved one even if the row's current endpoint still matches; still library-only, zero deployed importer). INT-082 (owner_only visibility enforced at the resolution boundary — get_mcp_connection_secret returns visibility and the runner refuses a non-owner/admin caller for an owner_only row; needs an RPC migration + a new server-derived caller-authority input) is CLOSED by MCP PR-1B-c (migration 20270328000000 — get_mcp_connection_secret now returns visibility, still carrying INT-079's url exemption and INT-078's endpoint_hash; the runner enforces owner_only against a REQUIRED server-derived caller authority modeled as the capability mcp.connections.use_restricted, resolved by the single re-pointable mapping _mcp_caller_capabilities [owner + admin + platform owner today; a delegated grant is added there alone, per INT-089], refusing owner_only_forbidden on prepare AND execute after foreign_tenant and before any approval/dispatch, fail-closed with no silent service-role bypass; still library-only, zero deployed importer) — the migration-backed connection/consent contract closure, BEFORE the endpoint setter (PR-2). The endpoint setter is CLOSED by MCP PR-2 (INT-099, migration 20270330000000 — the new set_mcp_connection_endpoint RPC writes a connection's endpoint + full credential bundle in ONE atomic UPDATE, sourcing every credential column from the arguments so a changed endpoint can NEVER inherit the old secret; the derived endpoint_hash follows and the 20270322000000 trigger revokes endpoint-bound consent on a real change (A→B→A cannot resurrect it); it REFUSES a legacy-projected row (D1 — no cutover, the legacy tables remain the sole live write path); authority is the mcp.connections.manage capability resolved server-side via _mcp_caller_capabilities (owner/tenant-admin only; a platform owner is EXCLUDED from manage, A2), fail-closed with no service-role bypass; a hashes-only audit is written to paige_audit_log in the SAME transaction with audit-fail⇒no-commit (A1); the return is write-only (A3); URL validation is static https/SSRF only, runtime egress SSRF stays in mcp-client.ts (A4); EXECUTE to authenticated only (A5); still library-only, zero deployed importer). The gateway-native connection WRITERS are added by G1a-1 (migration 20270331000000): create_mcp_connection (generic MCP / Zapier-OAuth / n8n-OAuth facets), create_mcp_rest_connection + set_mcp_rest_connection_endpoint (n8n REST api_key), disconnect_mcp_connection (soft disable + history-preserving hard delete), and the capability mcp.connections.delete (owner/tenant-admin only, platform owner excluded); a successful re-key restores enabled (re-key = reconnect), the soft-disable scrubs the url-embedded credential, and get_mcp_connections_v2.configured is honest for url/none rows; library-only, zero deployed importer, execution unverified. READ-only is a staged certification milestone, NOT the final authority model: the final gateway architecture is MUTATION-CAPABLE — Paige may execute any server-advertised tool the tenant authorizes — with consequential mutations governed by policy/approval, idempotency, readback, Rail, revocation, and tenant isolation. Account-retirement adapter reuses the canonical private Operator archive journal and provider client. See docs/delivery/operator-account-lifecycle.md; provider/authenticated acceptance remains PROOF_OWED under the owner login hold.",
       "next_slice": "Authenticated drive -> first capability_run Rail row.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -2222,13 +2306,13 @@
         "rate_limits_quotas": "n8n instance-dependent; downstream node providers impose their own limits/backoff.",
         "usage_review_cadence": "On each governed-execution change; monthly once workflows can run.",
         "renewal_deprecation_review": "Tenant plan renewal (n8n Cloud); track n8n API + node deprecations.",
-        "data_privacy_retention": "Workflow inventory + health only; never credentials (fenced as untrusted data); no payloads to Mind/Memory.",
+        "data_privacy_retention": "Workflow inventory + health only; never credentials (fenced as untrusted data); no payloads to Mind/Memory. Operator retirement removes the exact PAIGE encrypted API credential and its read-only legacy MCP projection. External workflows and n8n hosting remain independently managed; visible counts do not prove tenant-exclusive ownership.",
         "money_movement": {
           "can_move_real_money": true,
           "m1_dependency_track": "m1_real_money_spend_control",
           "detail": "A workflow node can trigger downstream real spend (a payment, a purchase, an ad buy) — the executed act binds the real-money track; trigger-workflow is fail-closed disabled until decideGovernedExecution wraps it (slice 5)."
         },
-        "receipt_reconciliation": "n8n execution id / workflow run id + the downstream provider's own receipt.",
+        "receipt_reconciliation": "n8n execution id / workflow run id + the downstream provider's own receipt. Retirement records canonical credential/legacy projection absence and explicit external workflow retention; no claim of external workflow termination or provider-spend cancellation.",
         "rail_outcome": "capability_run outcome (zero rows in prod today).",
         "pause_revoke_path": "Revoke the n8n OAuth grant / keep trigger-workflow fail-closed; M1 caps + emergency-stop halt autonomous runs.",
         "next_owner": "Integrations workstream",
@@ -2252,6 +2336,11 @@
         {
           "path": "supabase/functions/_shared/n8n-oauth.ts",
           "role": "provider_adapter"
+        },
+        {
+          "path": "supabase/functions/operator-account-retirement/index.ts",
+          "role": "provider_adapter",
+          "note": "Authenticated Admin/Owner, exact private server-bound scope, one provider resource per invocation; no provider identity accepted from browser. Controlled tests only, not live provider proof."
         }
       ],
       "sources": [

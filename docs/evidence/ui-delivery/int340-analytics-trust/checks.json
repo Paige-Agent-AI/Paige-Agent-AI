@@ -1,0 +1,85 @@
+{
+  "fixture": "synthetic actual-component harness; not authenticated",
+  "checks": [
+    {
+      "name": "1536x770-closed.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 1310,
+        "scrollWidth": 1310,
+        "height": 704,
+        "scrollHeight": 1131
+      }
+    },
+    {
+      "name": "1536x770-open.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 788,
+        "scrollWidth": 788,
+        "height": 704,
+        "scrollHeight": 1326
+      }
+    },
+    {
+      "name": "1366x768-closed.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 1284,
+        "scrollWidth": 1284,
+        "height": 702,
+        "scrollHeight": 1131
+      }
+    },
+    {
+      "name": "1366x768-open.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 820,
+        "scrollWidth": 820,
+        "height": 702,
+        "scrollHeight": 1292
+      }
+    },
+    {
+      "name": "1024x768-closed.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 942,
+        "scrollWidth": 942,
+        "height": 702,
+        "scrollHeight": 1184
+      }
+    },
+    {
+      "name": "1024x768-open.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 942,
+        "scrollWidth": 942,
+        "height": 702,
+        "scrollHeight": 1184
+      }
+    },
+    {
+      "name": "900x1000-closed.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 818,
+        "scrollWidth": 818,
+        "height": 934,
+        "scrollHeight": 1280
+      }
+    },
+    {
+      "name": "900x1000-open.png",
+      "status": "PASS",
+      "geometry": {
+        "width": 818,
+        "scrollWidth": 818,
+        "height": 934,
+        "scrollHeight": 1280
+      }
+    }
+  ]
+}

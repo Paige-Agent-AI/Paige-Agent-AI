@@ -116,6 +116,7 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   comms_draft_registration: { capability: "comms", risk: "ordinary" },
   comms_buy_number: { capability: "comms", risk: "high" },
   comms_set_primary_number: { capability: "comms", risk: "high" },
+  comms_setup_calling: { capability: "comms", risk: "high" },
   calendar_book_meeting: { capability: "comms", risk: "high" },
 
   // ── Content & Studio ──────────────────────────────────────────────────────────────────────

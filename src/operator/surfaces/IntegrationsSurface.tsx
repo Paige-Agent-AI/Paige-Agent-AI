@@ -128,7 +128,7 @@ export const INTEGRATIONS: readonly IntegrationShelf[] = [
 
 /** Pack L7936–L7946 — `[label, tone, note]` per state, plus the two derived consequence axes. */
 const ST = {
-  live: ["Connected", "var(--pg-positive)", "A seam exists and runs today"],
+  live: ["Implemented adapter", "var(--pg-positive)", "Catalogue readiness; account access and health unverified"],
   stub: ["Half-wired", "var(--pg-warning)", "The adapter is written and waiting on credentials"],
   planned: ["Not built", "var(--pg-faint)", "Nothing exists yet"],
   blocking: ["Blocking", "var(--pg-negative)", "A built surface is dark without this"],
@@ -148,7 +148,7 @@ const KIND_TONE: Readonly<Record<IntegrationKind, string>> = {
 
 /** Pack L8078 — the words the result line uses for each active filter. */
 const FILTER_WORD: Readonly<Record<Axis, string>> = {
-  live: "connected",
+  live: "marked ready / implemented",
   stub: "half-wired",
   planned: "not built",
   blocking: "blocking a built surface",
@@ -157,9 +157,9 @@ const FILTER_WORD: Readonly<Record<Axis, string>> = {
 
 /** Pack L8081 — the closing paragraph, verbatim. */
 const INT_FOOT =
-  "Connected means a seam exists today. Half-wired means the adapter is written and waiting on credentials. Blocking is the one that ranks the list: a surface already built in this shell is dark without it — the call bar has no Twilio Voice webhook, every money figure waits on Stripe, the marketplace cannot pay a publisher without Stripe Connect, and three social channels have no DM seam. Everything else is a nice-to-have however much we want it, and saying so is what makes the first group a plan rather than a wish list.";
+  "Catalogue readiness describes implementation, not verified account access or provider health. Half-wired describes an adapter awaiting its remaining setup. Blocking is the one that ranks the list: the catalogue identifies dependencies of built surfaces. Those descriptions need runtime revalidation. A supplied connection read overrides only the vendors it actually reports; other vendors keep catalogue-only provenance.";
 
-type Row = IntegrationItem & { readonly cat: string };
+type Row = IntegrationItem & { readonly cat: string; readonly reported: boolean };
 
 export type IntegrationsSurfaceProps = {
   /** The pack's catalogue by default; a caller may narrow it. Structure, not a fixture. */
@@ -187,7 +187,7 @@ export default function IntegrationsSurface({
   const all: readonly Row[] = useMemo(
     () =>
       shelves.flatMap((sh) =>
-        sh.items.map((i) => ({ ...i, cat: sh.cat, state: connectionStates?.[i.name] ?? i.state })),
+        sh.items.map((i) => ({ ...i, cat: sh.cat, state: connectionStates?.[i.name] ?? i.state, reported: connectionStates?.[i.name] !== undefined })),
       ),
     [shelves, connectionStates],
   );
@@ -212,7 +212,7 @@ export default function IntegrationsSurface({
 
   /** Pack L7970–L7981 — State row, then Consequence row. Values derived, never typed. */
   const stats: ReadonlyArray<[Axis, string, string, string]> = [
-    ["live", String(n("live")), "Connected", "A seam runs today"],
+    ["live", String(n("live")), connectionStates ? "Ready / implemented adapters" : "Implemented adapters", connectionStates ? "Mixed source readiness; not an account count" : "Catalogue readiness; access unverified"],
     ["stub", String(n("stub")), "Half-wired", "Waiting on credentials"],
     ["planned", String(n("planned")), "Not built", "Nothing behind it"],
   ];
@@ -223,10 +223,11 @@ export default function IntegrationsSurface({
 
   const shown = all.filter(matches).length;
   const liveShown = all.filter((i) => matches(i) && i.state === "live").length;
+  const reportedLiveShown = all.filter((i) => matches(i) && i.state === "live" && i.reported).length;
   /** Pack L8072–L8080 — composed, so the sentence moves with the list (corrections §6, rule 3). */
   const intResult = !shown
     ? `Nothing matches. ${all.length} integrations exist across ${shelves.length} shelves.`
-    : `${shown} of ${all.length} shown · ${liveShown} connected` +
+    : `${shown} of ${all.length} shown · ${connectionStates ? `${reportedLiveShown} reported connected · ${liveShown - reportedLiveShown} catalogue-only implemented` : `${liveShown} adapters described as implemented`}` +
       (kindFilter ? ` · ${kindFilter} only` : "") +
       (stateFilter ? ` · ${FILTER_WORD[stateFilter]} only` : "");
 
@@ -244,6 +245,7 @@ export default function IntegrationsSurface({
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
       {/* ── controls · pack L1578–L1620 ─────────────────────────────────── */}
       <div className="flex-none border-b border-[var(--pg-line)] pb-3.5">
+        {!connectionStates && <p role="status" className="mb-4 max-w-[72ch] text-[length:var(--pg-t-body)] text-[var(--pg-muted)]">PARTIAL · Adapter catalogue. Verified account connections and current provider health are not loaded. Catalogue readiness may need revalidation.</p>}
         <AxisRow label="State" rows={stats} active={stateFilter} onPick={setStateFilter} />
         <div className="mt-[11px]">
           <AxisRow label="Consequence" rows={conseq} active={stateFilter} onPick={setStateFilter} />
@@ -321,7 +323,7 @@ export default function IntegrationsSurface({
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <b className="text-[length:var(--pg-t-body)] font-medium">{sh.cat}</b>
               <small className="min-w-0 text-[length:var(--pg-t-label)] text-[var(--pg-faint)]">
-                {`${sh.items.length} of ${sh.total} shown · ${sh.live} connected`}
+                {`${sh.items.length} of ${sh.total} shown · ${sh.live} marked ready / implemented`}
               </small>
             </div>
             <div className="mt-[11px] grid gap-px bg-[var(--pg-line-soft)] [grid-template-columns:repeat(auto-fill,minmax(min(100%,192px),1fr))]">
@@ -393,7 +395,9 @@ function AxisRow({
 
 /** Pack L1628–L1652 + L8034–L8056. */
 function Tile({ item, onOpen }: { item: Row; onOpen?: (i: Row) => void }) {
-  const st = ST[item.state];
+  const st = item.reported && item.state === "live"
+    ? ["Reported connected", "var(--pg-positive)", "Supplied connection state; provider health unverified"] as const
+    : ST[item.state];
   const live = item.state === "live";
   const planned = item.state === "planned";
   const hasBlock = !!item.blocks && !live;

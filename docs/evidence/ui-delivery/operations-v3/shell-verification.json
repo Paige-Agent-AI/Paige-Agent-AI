@@ -1,0 +1,746 @@
+{
+  "boundary": "Actual canonical shell and OperationsRoute, synthetic data and mocked PAIGE body; no live account acceptance",
+  "matrix": [
+    {
+      "width": 1536,
+      "height": 770,
+      "requestedOpen": false,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 1464,
+      "mainBottom": 770,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "requestedOpen": true,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 941.765625,
+      "mainBottom": 770,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "requestedOpen": false,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 1294,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "requestedOpen": true,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 829.5625,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "requestedOpen": false,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 952,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "requestedOpen": true,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 952,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "requestedOpen": false,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 828,
+      "mainBottom": 1000,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "requestedOpen": true,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 828,
+      "mainBottom": 1000,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "requestedOpen": false,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 318,
+      "mainBottom": 844,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "requestedOpen": true,
+      "theme": "dark",
+      "overflow": false,
+      "mainWidth": 318,
+      "mainBottom": 844,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "requestedOpen": false,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 1464,
+      "mainBottom": 770,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "requestedOpen": true,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 941.765625,
+      "mainBottom": 770,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "requestedOpen": false,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 1294,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "requestedOpen": true,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 829.5625,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "requestedOpen": false,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 952,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "requestedOpen": true,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 952,
+      "mainBottom": 768,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "requestedOpen": false,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 828,
+      "mainBottom": 1000,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "requestedOpen": true,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 828,
+      "mainBottom": 1000,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "requestedOpen": false,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 318,
+      "mainBottom": 844,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "closed"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "requestedOpen": true,
+      "theme": "light",
+      "overflow": false,
+      "mainWidth": 318,
+      "mainBottom": 844,
+      "nav": [
+        "command",
+        "operations",
+        "clients",
+        "campaigns",
+        "sales",
+        "finance",
+        "marketplace",
+        "settings"
+      ],
+      "attributes": [
+        [
+          "data-paige",
+          "open"
+        ],
+        [
+          "data-paige-full",
+          "false"
+        ],
+        [
+          "data-solo-paige",
+          "true"
+        ],
+        [
+          "data-paige-size",
+          "docked"
+        ]
+      ]
+    }
+  ],
+  "errors": []
+}

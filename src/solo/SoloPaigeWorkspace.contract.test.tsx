@@ -211,7 +211,7 @@ describe("Solo PAIGE workspace contract", () => {
     expect(chat).toContain("createComposerRequestFence()");
     expect(composerScope).toContain("new AbortController()");
     expect(chat).toContain("signal: requestTicket.signal");
-    expect(chat).toContain("Cancel PAIGE response");
+    expect(chat).toContain("Stop PAIGE response");
     expect(shell).not.toContain("soloTenantSafety");
     expect(operator).not.toContain("soloTenantSafety");
     expect(sharedWorkspace).not.toContain("soloTenantSafety");
@@ -343,8 +343,8 @@ describe("Solo PAIGE workspace contract", () => {
     // Bounded so it cannot reach the LATER abort calls (startNewChat, unmount). The
     // unbounded `[\s\S]*` version could not fail: inverting the accept/abort order left the
     // whole 507-test suite green.
-    expect(chat).toMatch(/acceptedEpochRef\.current = scopeEpoch;(?:[^\n]*\n){0,10}\s*abortActiveRequest\(\);/);
-    expect(chat).toMatch(/const abortActiveRequest = useCallback\(\(\) => \{(?:[^\n]*\n){0,3}\s*if \(requestFenceRef\.current\.invalidate\(\)\) setIsLoading\(false\);/);
+    expect(chat).toMatch(/acceptedEpochRef\.current = scopeEpoch;(?:[^\n]*\n){0,16}\s*abortActiveRequest\(\);/);
+    expect(chat).toMatch(/const abortActiveRequest = useCallback\(\(\) => \{(?:[^\n]*\n){0,6}\s*if \(requestFenceRef\.current\.invalidate\(\)\) setIsLoading\(false\);/);
     // §13 — THIS ASSERTION HAD GONE VACUOUS. The reset now seeds `scopeNotice ?? openingGreeting`,
     // so the old literal no longer matched the reset at all — it was satisfied by the unrelated
     // `startNewChat` and controlled-sync sites, and deleting the reset's `setMessages` entirely
@@ -409,7 +409,7 @@ describe("Solo PAIGE workspace contract", () => {
     expect(workspace).toContain("Search conversations");
     expect(workspace).toContain("renderRail");
     expect(chat).toContain('navigator.onLine === false');
-    expect(chat).toContain('setConnectionIssue("timeout")');
+    expect(chat).toContain('setConnectionIssue(typedInteractive && !decisionTurn ? "interactive-unconfirmed" : "timeout")');
     // C3a (declared change): the jargon cancel notice is replaced by the Stop footer on the answer.
     // Its truth is kept — Stop does not confirm that started work was cancelled on the server.
     expect(chat).toContain('settleLiveTurn("cancelled", undefined, { stopFocus: !opts?.fromVoice });');

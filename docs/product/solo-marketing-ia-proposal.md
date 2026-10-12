@@ -135,7 +135,7 @@ waits for the Sales branch to land.
 
 Only one of the six lenses reads real data today: the Sales funnel (`analytics2.tsx:268-272`; it
 fetches evidence only when the `money` lens is open). The other five render fixed empty frames.
-Production has never written an `analytics_evidence_reference` row.
+Production has never written an `analytics_evidence_reference` row. *(Superseded 2026-10-10, §13: INT-340 is live and 620 rows existed on that date; see `docs/product/int342-marketing-convergence.md` §H.)*
 
 | Lens | Live? | Goes to | Address handling |
 |---|---|---|---|

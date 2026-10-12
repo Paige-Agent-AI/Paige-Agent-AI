@@ -28,6 +28,9 @@ const h = vi.hoisted(() => ({
   /** The DECLARED active workspace (`profiles.active_tenant_id`). Defaults to agreeing with the
    *  resolver; a scenario sets it to a different tenant to model the stale-pointer case. */
   profileTenant: null as string | null,
+  /** S5: the owner-memory rows the governed read returns (scenario-controlled; the hook's
+   *  declared∧validated gate decides whether the read happens at all). */
+  ownerRows: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => h.ctx }));
@@ -61,10 +64,14 @@ vi.mock("@/integrations/supabase/client", () => {
   return {
     supabase: {
       from: (t: string) => builder(t),
-      rpc: async (name: string) => {
+      rpc: async (name: string, args?: Record<string, unknown>) => {
         h.rpcs.push(name);
         if (name === "current_user_tenant_id" && h.hold) await h.hold;
-        return name === "current_user_tenant_id" ? h.active : { data: null, error: null };
+        if (name === "current_user_tenant_id") return h.active;
+        // S5: the governed owner-memory read (JWT caller; no ids passed). Rows are the
+        // scenario's ownerRows — the conjunction gate in the hook decides whether to call at all.
+        if (name === "get_paige_memory") return { data: h.ownerRows.slice(0, (args?.p_limit as number) ?? 5), error: null };
+        return { data: null, error: null };
       },
     },
   };
@@ -123,22 +130,20 @@ beforeEach(() => {
   h.hold = null;
   const now = new Date().toISOString();
   h.rows = [
-    { client_user_id: ME, client_id: null, tenant_id: WS_A, is_active: true, memory_type: "user_preference", content: "WRITTEN-IN-A", created_at: now },
-    { client_user_id: ME, client_id: null, tenant_id: WS_B, is_active: true, memory_type: "user_preference", content: "WRITTEN-IN-B", created_at: now },
-    // A row this person wrote ABOUT a client (client_user_id = the actor). Not their own memory.
     { client_user_id: ME, client_id: CLIENT, tenant_id: WS_A, is_active: true, memory_type: "coach_note", content: "ABOUT-A-CLIENT", created_at: now },
+  ];
+  h.ownerRows = [
+    { id: "pom-a1", user_id: ME, tenant_id: WS_A, memory_type: "preference", content: "WRITTEN-IN-A", created_at: now, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
+    { id: "pom-b1", user_id: ME, tenant_id: WS_B, memory_type: "preference", content: "WRITTEN-IN-B", created_at: now, metadata: { audience: "owner_personal", confirmation_state: "proposed" } },
   ];
 });
 
 describe("useClientChatContext — own memory is read in the active workspace only (INT-326)", () => {
-  it("in workspace A, reads only A's own rows and shows only them", async () => {
+  it("in workspace A, the governed owner read is called and shows only A's own rows", async () => {
+    h.ownerRows = [h.ownerRows[0]];
     const { result } = renderHook(null, ME);
     await waitFor(() => expect(result.current.contextBlock).toContain("Recent Memory"));
-    const read = memoryReads()[0];
-    expect(read).toBeDefined();
-    expect(has(read.filters, "eq", "client_user_id", ME)).toBe(true);
-    expect(has(read.filters, "eq", "tenant_id", WS_A)).toBe(true);
-    expect(has(read.filters, "is", "client_id", null)).toBe(true);
+    expect(h.rpcs).toContain("get_paige_memory");
     expect(result.current.contextBlock).toContain("WRITTEN-IN-A");
     expect(result.current.contextBlock).not.toContain("WRITTEN-IN-B");
     expect(result.current.contextBlock).not.toContain("ABOUT-A-CLIENT");
@@ -147,9 +152,10 @@ describe("useClientChatContext — own memory is read in the active workspace on
   it("the same person in workspace B never sees what they wrote in A", async () => {
     h.active = { data: WS_B, error: null };
     h.profileTenant = WS_B; // a real switch moves the declared pointer with it (the stale case is its own test below)
+    h.ownerRows = [h.ownerRows[1]];
     const { result } = renderHook(null, ME);
     await waitFor(() => expect(result.current.contextBlock).toContain("Recent Memory"));
-    expect(has(memoryReads()[0].filters, "eq", "tenant_id", WS_B)).toBe(true);
+    expect(h.rpcs).toContain("get_paige_memory");
     expect(result.current.contextBlock).toContain("WRITTEN-IN-B");
     expect(result.current.contextBlock).not.toContain("WRITTEN-IN-A");
   });
@@ -177,27 +183,32 @@ describe("useClientChatContext — own memory is read in the active workspace on
     expect(read.filters.some((f) => f[1] === "tenant_id")).toBe(false);
   });
 
-  it("a workspace switch while the chat stays mounted re-reads own memory with the NEW workspace filter", async () => {
+  it("a workspace switch while the chat stays mounted re-reads own memory through the governed read", async () => {
+    const [rowA, rowB] = h.ownerRows;
     h.ctx = { activeTenantId: WS_A };
+    h.ownerRows = [rowA];
     const { result, rerender } = renderHook(null, ME);
     await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-A"));
-    expect(memoryReads()).toHaveLength(1);
+    const readsAfterA = h.rpcs.filter((r) => r === "get_paige_memory").length;
+    expect(readsAfterA).toBeGreaterThanOrEqual(1);
 
     // The user switches to workspace B (another tab, or the switcher). PaigeChat is NOT remounted:
     // only the tenant context changes, and the server-side active workspace moves with it.
     h.active = { data: WS_B, error: null };
     h.profileTenant = WS_B;
     h.ctx = { activeTenantId: WS_B };
+    h.ownerRows = [rowB];
     rerender();
 
-    await waitFor(() => expect(memoryReads()).toHaveLength(2));
-    expect(has(memoryReads()[1].filters, "eq", "tenant_id", WS_B)).toBe(true);
     await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-B"));
     expect(result.current.contextBlock).not.toContain("WRITTEN-IN-A");
+    expect(h.rpcs.filter((r) => r === "get_paige_memory").length).toBeGreaterThan(readsAfterA);
   });
 
   it("while the post-switch re-read is still in flight, the block no longer carries A's own memory", async () => {
+    const [rowA, rowB] = h.ownerRows;
     h.ctx = { activeTenantId: WS_A };
+    h.ownerRows = [rowA];
     const { result, rerender } = renderHook(null, ME);
     await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-A"));
 
@@ -207,6 +218,7 @@ describe("useClientChatContext — own memory is read in the active workspace on
     h.active = { data: WS_B, error: null };
     h.profileTenant = WS_B;
     h.ctx = { activeTenantId: WS_B };
+    h.ownerRows = [rowB];
     rerender();
 
     await waitFor(() => expect(result.current.isLoading).toBe(true));
@@ -230,13 +242,16 @@ describe("useClientChatContext — own memory is read in the active workspace on
   });
 
   it("A → B → A: the return to A re-reads A fresh and B never bleeds back", async () => {
+    const [rowA, rowB] = h.ownerRows;
     h.ctx = { activeTenantId: WS_A };
+    h.ownerRows = [rowA];
     const { result, rerender } = renderHook(null, ME);
     await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-A"));
 
     h.active = { data: WS_B, error: null };
     h.profileTenant = WS_B;
     h.ctx = { activeTenantId: WS_B };
+    h.ownerRows = [rowB];
     rerender();
     await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-B"));
     expect(result.current.contextBlock).not.toContain("WRITTEN-IN-A");
@@ -245,10 +260,8 @@ describe("useClientChatContext — own memory is read in the active workspace on
     h.active = { data: WS_A, error: null };
     h.profileTenant = WS_A;
     h.ctx = { activeTenantId: WS_A };
+    h.ownerRows = [rowA];
     rerender();
-    await waitFor(() => expect(memoryReads().length).toBeGreaterThanOrEqual(3));
-    const last = memoryReads()[memoryReads().length - 1];
-    expect(has(last.filters, "eq", "tenant_id", WS_A)).toBe(true);
     await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-A"));
     expect(result.current.contextBlock).not.toContain("WRITTEN-IN-B");
   });

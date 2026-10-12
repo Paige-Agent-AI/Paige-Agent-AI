@@ -12,6 +12,8 @@ const HARNESS_TENANT = SECOND_CONTEXT
 export function useTenantContext() {
   return {
     activeTenantId: HARNESS_TENANT.id,
+    activeUserId: "harness-user",
+    accountContextStatus: "ready",
     loading: false,
     activeTenant: HARNESS_TENANT,
     // The roster, because the surface resolves an account's ROUTE ADDRESS by

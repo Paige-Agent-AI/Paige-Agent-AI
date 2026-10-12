@@ -1,0 +1,206 @@
+{
+  "fixture": "CONTROLLED LOCAL SYNTHETIC: actual canonical completion and projection, no production evidence",
+  "page": {
+    "items": [
+      {
+        "id": "5a13db0e-27bc-4fe2-b1ec-ab23eb8ced4b",
+        "turns": [
+          {
+            "id": "15b904ed-6bc1-4afa-94d4-1cc35334e17f",
+            "role": "assistant",
+            "created_at": "2026-10-10T13:40:54.582812-04:00",
+            "intent_ref": "40000000-0000-4000-8000-000000000002",
+            "processing_state": "completed"
+          },
+          {
+            "id": "361ba5ad-e871-443d-94df-bc621b723db2",
+            "role": "assistant",
+            "created_at": "2026-10-10T13:40:54.582812-04:00",
+            "intent_ref": null,
+            "processing_state": null
+          },
+          {
+            "id": "3ae94ea8-c9dd-43f7-8e2a-94d1d912da1a",
+            "role": "user",
+            "created_at": "2026-10-10T13:40:54.582812-04:00",
+            "intent_ref": "40000000-0000-4000-8000-000000000002",
+            "processing_state": null
+          }
+        ],
+        "limits": {
+          "turns": 100,
+          "models": 100,
+          "receipts": 100,
+          "approvals": 100,
+          "executions": 100,
+          "evaluations": 100
+        },
+        "models": [
+          {
+            "id": "6b918827-9e46-40b5-947b-d15e09edf0bb",
+            "tier": null,
+            "model": "test-model",
+            "status": "error",
+            "provider": "test-provider",
+            "tokens_in": null,
+            "cost_basis": null,
+            "created_at": "2026-10-10T13:40:54.582812-04:00",
+            "full_count": 2,
+            "latency_ms": null,
+            "tokens_out": null,
+            "route_class": null,
+            "route_model": null,
+            "route_fallback": null,
+            "route_provider": null,
+            "router_version": null,
+            "cost_estimate_usd": null,
+            "cache_read_input_tokens": null,
+            "cache_creation_input_tokens": null
+          },
+          {
+            "id": "f9372d0f-34d5-481b-a012-3019dbdc48ac",
+            "tier": "frontier",
+            "model": "test-model",
+            "status": "success",
+            "provider": "test-provider",
+            "tokens_in": 10,
+            "cost_basis": null,
+            "created_at": "2026-10-10T13:40:54.582812-04:00",
+            "full_count": 2,
+            "latency_ms": 40,
+            "tokens_out": 20,
+            "route_class": "astra",
+            "route_model": null,
+            "route_fallback": null,
+            "route_provider": null,
+            "router_version": "trace-2",
+            "cost_estimate_usd": 0.001,
+            "cache_read_input_tokens": null,
+            "cache_creation_input_tokens": null
+          }
+        ],
+        "attempt": 2,
+        "history": {
+          "events": [
+            {
+              "at": "2026-10-10T13:40:54.678179-04:00",
+              "state": "claimed",
+              "attempt": 1,
+              "version": 1,
+              "blocked_code": null,
+              "dispatch_attempt": 0,
+              "readback_claimed": null
+            },
+            {
+              "at": "2026-10-10T13:40:54.703135-04:00",
+              "state": "blocked",
+              "attempt": 1,
+              "version": 2,
+              "blocked_code": "approval_expired",
+              "dispatch_attempt": 0,
+              "readback_claimed": null
+            },
+            {
+              "at": "2026-10-10T13:40:54.706319-04:00",
+              "state": "claimed",
+              "attempt": 2,
+              "version": 3,
+              "blocked_code": null,
+              "dispatch_attempt": 0,
+              "readback_claimed": null
+            },
+            {
+              "at": "2026-10-10T13:40:54.70689-04:00",
+              "state": "claimed",
+              "attempt": 2,
+              "version": 4,
+              "blocked_code": null,
+              "dispatch_attempt": 2,
+              "readback_claimed": null
+            },
+            {
+              "at": "2026-10-10T13:40:54.735872-04:00",
+              "state": "succeeded",
+              "attempt": 2,
+              "version": 5,
+              "blocked_code": null,
+              "dispatch_attempt": 2,
+              "readback_claimed": true
+            }
+          ],
+          "version": 1,
+          "complete": true,
+          "truncated": false
+        },
+        "category": "document_authoring",
+        "coverage": {
+          "business_outcome": "unavailable",
+          "cross_work_parent": "unavailable",
+          "objective_content": "private",
+          "research_execution": "unavailable",
+          "full_runtime_fingerprint": "partial",
+          "historical_unlinked_records": "excluded"
+        },
+        "receipts": [
+          {
+            "id": "bb0a19ae-6985-4aba-a7d1-73e5161723bb",
+            "attempt": 2,
+            "outcome": "capability_succeeded",
+            "release_id": null,
+            "occurred_at": "2026-10-10T13:40:54.582812-04:00",
+            "llm_trace_id": null,
+            "capability_key": "document_generate"
+          }
+        ],
+        "approvals": [
+          {
+            "id": "80000000-0000-4000-8000-000000000001",
+            "status": "approved",
+            "created_at": "2026-10-10T13:40:54.582812-04:00",
+            "reviewed_at": "2026-10-10T13:40:54.582812-04:00"
+          }
+        ],
+        "created_at": "2026-10-10T13:40:54.582812-04:00",
+        "executions": [
+          {
+            "id": "50000000-0000-4000-8000-000000000001",
+            "outcome": "executed",
+            "decided_at": "2026-10-10T13:40:54.582812-04:00",
+            "settled_at": "2026-10-10T13:40:54.582812-04:00",
+            "dispatched_at": "2026-10-10T13:40:54.582812-04:00",
+            "capability_key": "test_capability",
+            "effective_lane": "confirm",
+            "provider_reference_recorded": true
+          }
+        ],
+        "intent_ref": "40000000-0000-4000-8000-000000000002",
+        "settled_at": "2026-10-10T13:40:54.582812-04:00",
+        "thread_ref": "30000000-0000-4000-8000-000000000001",
+        "updated_at": "2026-10-10T13:40:54.582812-04:00",
+        "work_state": "succeeded",
+        "evaluations": [],
+        "model_count": 2,
+        "artifact_ref": "5a13db0e-27bc-4fe2-b1ec-ab23eb8ced4b",
+        "work_version": 5,
+        "limit_reached": {
+          "turns": false,
+          "models": false,
+          "receipts": false,
+          "approvals": false,
+          "executions": false,
+          "evaluations": false
+        },
+        "capability_key": "document_generate",
+        "contract_version": 1,
+        "dispatch_attempt": 2,
+        "receipt_conflict": false,
+        "scope_consistent": true,
+        "terminal_verified": true,
+        "terminal_condition": "artifact"
+      }
+    ],
+    "next_cursor": null,
+    "observed_at": "2026-10-10T13:40:54.582812-04:00",
+    "contract_version": 1
+  }
+}

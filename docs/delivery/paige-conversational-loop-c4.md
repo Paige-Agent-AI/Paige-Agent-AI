@@ -1,5 +1,294 @@
 # PAIGE conversational loop — C4: one resume for a paused objective
 
+PR #1878 read-only original discovery is MERGED (`35fbb19aa8892862f8dfd5c34325fcf8565141c7`), DEPLOYED and production catalog/source readback PASS. Independent SHIP on `e3873d6a5` and eleven required exact-head checks passed. Migration15/function body/ACL, Chat v374 changed sources and exact-merge Vercel READY are verified; full evidence is in R0's original-operation discovery release entry and PR #1878. Rollout remains inactive/DRAINING. Genuine signed-in Solo/Live and owner acceptance remain UNVERIFIED; automatic settlement and consequential continuation remain disabled. The candidate and failing-first notes below preserve the implementation history.
+
+## 2026-10-08 authenticated read-acceptance driver preparation
+
+`scripts/proof/int304-authenticated-observation.mjs <explicit-QA-fixture.json>` uses the existing
+synthetic `PROOF_EMAIL`/`PROOF_PASSWORD`/`PROOF_ANON_KEY` injection pattern (existing `LIVE_DRIVE`
+email/password names also accepted). Identity/QA owns provisioning and approved secure injection;
+this runner searches no secret stores and creates no account, thread, intent, operation or artifact.
+Without an explicit fixture it reports BLOCKED before credential/environment or network use.
+
+The fixture contains only pinned actorId, tenantId and a bounded list of existing thread/intent
+and effect/work references, named expected observations and expected held-executor state. It grants
+no permission. A genuine session is minted with the public key on the fixed canonical project;
+service keys/tokens are rejected. Server user/current-tenant reads surround every status-only
+request, and each case is reread. Session logout is local to this fresh proof session. Neither
+activation nor executor admission, release, retry, effect dispatch or fixture mutation is called.
+Output contains bounded case states, not passwords, tokens, account email or raw business payloads.
+
+Eleven recording-double controls PASS, covering actor/tenant drift, service keys/sessions, uncertainty,
+unavailable durable evidence, replay reads and held ownership. The returned-service-token control failed first (an unauthorized logout request), then passed after validation before token assignment. These are driver regressions, not
+authenticated production proof. A production PASS of unavailable-only cases establishes only those
+negative read contracts; positive authoritative outcomes/artifacts require their own fixture cases.
+The driver always reports Solo UI and security clearance UNVERIFIED and continuation NOT_RUN.
+It cannot establish C4f Chat/Live acceptance or waive INT-346. No production drive occurred here.
+## 2026-10-09 automatic original-operation discovery in read-only status
+
+Independent review of0c716d88 found a freshness gap after the receipt/catalogue awaits: the incumbent original-operation RPC does not require current unarchived/latest-intent authority. A real loaded-handler late-revocation control returned confirmed_success (RED). The automatic path now revalidates canonical discovery equality after classification and withholds the verified result when membership/tenant/archive/intent authority changes. Existing explicit-id historical readback retains its original contract, granting no execution or continuation. Eleven automatic-status scenarios now PASS; fresh non-author review is required on the fix head.
+
+Ordinary typed Chat already sends thread/intent status without an effect UUID. Failing-first actual-handler proof confirmed it could not observe a verified Pipeline update on that path. The caller-bound resolver now derives exactly one original effect from the protected terminal approval token and consumed canonical Pipeline confirmation, then reuses the existing original command/hash and authoritative receipt/business-record classifier. Issuance request identity alone is never execution lineage. No protected terminal, multiple references, conflicting outcomes, stale intent, revoked authority or insufficient evidence remain unavailable/unknown; no success or failure is invented.
+
+The existing status result can carry that verified observation without requiring an owner-supplied operation UUID. Its ordinary no-original response shape stays unchanged. Every awaited lookup/classification is followed by the existing final executor-state read; a confirmed Pipeline update cannot release ownership, issue a terminal receipt, retry a write or authorize continuation. No UI markup, visible controls, scheduler, receipt store, approval engine, model/provider routing or department writer changes.
+
+CLI-created local migration20261009011259 is reserved as15 after verified production/main14 and active-PR migration inventory (modern14 only; other reservations older). SQL is read-only, stable, SECURITY DEFINER with empty search path and authenticated-only execute. Real authenticated acceptance, deployment and runtime continuation remain separate gates. Rollout stays DRAINING.
+
+Failing-first evidence: lookup stub returned null (17 units:2 FAIL/15 PASS), then17 PASS after implementation; the actual loaded ordinary-status case lacked original_operation before integration (RED), then all existing and nine automatic-status scenarios PASS. Native missing-function and malformed mixed-frame controls failed before implementation/repair;44 native cases plus caller ACL, replay-read/database snapshots, unchanged held executor and inactive rollout PASS. Native actor/token mutant controls explicitly remove mirrored checks in both fixture functions; migration10 source is unchanged. Four focused adapter/observation suites61 PASS and strict helper types PASS. Fresh immutable non-author review and exact-head required CI are owed before release. Customer/authenticated/owner acceptance and original-program completion are not claimed.
+
+
+## Required-CI correction before release
+
+Required Supabase Preview failed after collision renumbering because this PR’s disposable, data-free preview retained the earlier unmerged migration12. Its function body was an older candidate, so no byte-identical history rename was asserted. The official reset request did not remove obsolete12. The database connector repair returned Invalid or expired requestState, and the official CLI repair was denied login-role access; neither established a successful repair. The owned, data-free PR preview was then deleted through the official branch API for clean integration recreation. Recreation, current Sales13 and observation14 application, source readback and the required check remain pending. Production schema and migration history were not changed by this preview repair.
+
+Fresh main163cca44c6994aac72c136cc6b19ec7835e24673 and production migration history both contain the separately owned Sales migration13. The unmerged observation migration is therefore renumbered14 before release; its SQL is unchanged. Initial12 was never merged or applied to production. No out-of-order deployment or production migration-history rewrite is permitted. Both existing delivery rows are preserved during fresh-main reconciliation.
+
+Exact-head CI rejected an observation-only retired coach role exemption. The initially reserved migration12, now collision-free migration14, uses the current Document owner/admin permissions established by the canonical retirement migration; native permission controls failed first and pass34/34 after repair. No title-authority exemption or required-check waiver was added. Two incumbent MCP tests now assert actual registry membership and validation instead of a closed three-domain source string, retaining field-for-field checks and adding forged-tool/class/risk/approval rejection controls;24 tests PASS. Fresh non-author review and exact-head CI are required on the repaired composition before merge.
+
+Fresh main f2fc41666178c60c2a1c639548f71043a22b556c adds the separately owned metric read. Registry composition retains both registrations and declares only its incumbent tenant/member Chat seat, fixing an actual missing-authority lint failure without editing Analytics implementation or extending the issuer permission. The issuer retains its narrower owner-grantable permission. Combined metric/registration/MCP tests54 PASS and actual Chat status handler PASS; all hosted checks and non-author review must be repeated on this fresh composition.
+
+## 2026-10-08 durable observation in the canonical authenticated status consumer
+
+This candidate adds read-only `interactive.workId` observation to the existing status branch.
+It creates no scheduler, worker, receipt, approval or continuation executor. Ten routing answers:
+(1) preserve the original conversation's durable identity; (2) Conversational Loop owns consumption,
+Document/Research own artifact production; (3) reuse `paige_durable_work` and protected Chat turns;
+(4) authenticated `read_paige_durable_observation` is an observation seam only; (5) no provider/model
+call; (6) current JWT actor, tenant, owned thread, latest intent and current seat are revalidated;
+(7) no dispatch, transition, wake, retry or settlement; (8) terminal lineage and canonical artifacts
+are checked without returning raw payloads; (9) incumbent status presentation remains unchanged;
+(10) rollback PostgreSQL and actual-handler doubles prove behavior, not production authentication.
+
+The caller supplies only UUID references. Document work uses its existing derived domain intent;
+the original protected assistant turn binds that work to the conversational intent. Research uses
+the same envelope and requires an exact work-linked canonical result. Legacy Research runs without
+`work_id` remain unavailable. Missing, stale, foreign or contradictory evidence grants no authority.
+Pending approval authority is unavailable; a cancelled or expired work record cannot authorize
+resumption. `durable_work` is separate from executor settlement; executor state is reread after all
+awaited observations. Neither observation nor a verified artifact releases the execution lock.
+
+Failing-first: the two new status assertions failed against the original six-test helper, then
+eight passed after integration; combined-observation/concurrent-authority controls bring status
+coverage to ten tests. Independent review identified stale readback and numeric Research findings:
+ten new adapter race controls failed first, then eighteen adapter tests passed after a final
+caller-bound canonical reread; the numeric-finding native control also failed first. All thirty
+native checks pass, and the artifact-success bypass mutant is rejected. Actual loaded-handler regressions
+exercise DRAINING and caller-JWT-only durable reads with no provider call, insert, preparation,
+dispatch, receipt append, state transition, admission or release. Native rollback tests exercise
+the real migration against an isolated dependency schema, including artifact-success mutants.
+Final immutable-head review, required hosted CI, merge, deployment and production readback remain pending.
+Authenticated Solo acceptance, automatic reconciliation and consequential C4d/C4e continuation
+remain UNVERIFIED. This is an independently safe consumer, not completion of runtime continuation.
+
+## 2026-10-08 original-operation observation in the existing status path
+
+PR #1871 merged as `466a33dd33ae59d3a6c5d170355c0447f3d13068`, exact reviewed head
+`33021e46039a44b89e209a9713986ed6106856b7`, fresh base
+`539ed407acb7ff23ad6bd53ec64c3017f6bdc506`. Independent NON-AUTHOR SHIP (`6069967618`);
+nine check runs and both Vercel statuses SUCCESS. Verify `37850825613`/`113563131252`,
+database-contract `37850825583`/`113563009319`. Production Edge workflow
+`37852543308`/`113568823842` SUCCESS, Chat version369/verify_jwt=true; returned source for Chat
+and the three new helpers matches normalized SHA256 of reviewed source. Exact-SHA Vercel
+`dpl_7VM4mygKKgZ5sCSJazjEJJfoavxT` production READY. Production rollout active=false,
+activated_at=null. Readback record: PR comment `6070188351`.
+This is an observation consumer, not automatic settlement or C4d/C4e runtime completion.
+Authenticated acceptance, fresh specialist rendering and security clearance remain UNVERIFIED.
+
+Pre-edit routing: (1) the owner wants PAIGE to verify the original Pipeline operation;
+(2) Conversational Loop owns this status consumer, Pipeline owns its records;
+(3) the existing authenticated interactive status path consumes the reviewed canonical readers;
+(4) the original protected card/intent resolver and existing catalogue/operation ledger remain the
+callable seams, with no new capability or execution binding;
+(5) no provider connection or model call is used;
+(6) fresh caller, current tenant, owned thread, original actor/intent/effect and current admin permission
+are required by the existing resolver;
+(7) no job, event, scheduler, receipt or retry is created;
+(8) exact receipt hash and business-record version establish readback, contradictory evidence stays unknown;
+(9) existing Solo status polling retains its executor semantics, with no UI/layout change;
+(10) handler doubles and deterministic regressions prove code behavior, not authenticated production acceptance.
+
+An optional UUID `interactive.pipelineEffectId` references the existing server-issued operation;
+it supplies no command, tenant, actor or permission. Status requests can read while DRAINING.
+`original_operation` is separate from `executor_active` and `settled`; executor state is reread
+after awaited observations. No observation releases ownership, issues a terminal receipt, retries,
+activates execution or relaxes the `outcome_unknown` successor-write brake. Responses are no-store.
+Ordinary status requests preserve their prior response shape.
+
+Failing-first: extracted legacy status behavior failed three of six behavioral assertions, then all
+six passed after enrichment. The actual loaded handler proves DRAINING successful readback with a held
+executor, foreign tenant/actor, stale version, absent original and missing receipt, without inserts,
+provider calls, admission, append, settlement or release. Resolver/catalogue calls are caller JWT-bound.
+Existing canonical readback tests retain actor-switch, stale-intent, concurrent observation and replay
+coverage. Revoked-permission and forged-effect handler controls are included in the final regression.
+
+Runtime continuation and automatic settlement remain gated by INT-346. This consumer does not turn
+the historical closure of #1807 into completion. Provider cessation (#1822), synthetic authenticated
+Solo access (#1832), and C5 consultation authority D2 remain with their existing owners.
+
+## 2026-10-08 C4e preparation-only durable adoption
+
+**Preparation implementation MERGED; migration PERSISTED. Runtime activation, authenticated Solo
+acceptance, owner acceptance and INT-346 security clearance remain UNVERIFIED.**
+PR #1862, exact reviewed head `71d293d6bc46f98c235f8f40dd657386b4991d05`, merged as
+`e633b13651b6916120cf7f7cf96dbe19eca2ee44` after composition on fresh main
+`ccc3ee995a9bdfe906a433ac7b3e186282efbb77`. Independent non-author SHIP:
+PR comment `6067296062`. All 11 hosted checks SUCCESS, including Supabase Preview job
+`113488834668`. Verify run `37828630182`, job `113488568415`: 674 files / 10156 tests,
+Sales 319, invoice 69 and native C4e 37 checks PASS. Database-contract run `37828630259`,
+job `113487888587` SUCCESS. Migration deployment run `37830974520`, lint job
+`113495916629` and deployment job `113496082375` SUCCESS.
+
+Production read-only verification found migration `20270601000011` persisted; function body MD5
+`f80f0a582a4bb921888326ac374bb1f3` matches merged source, SECURITY DEFINER with empty search path,
+service execute true and authenticated/anonymous execute false. `interactive_active=false` remains.
+Vercel `dpl_CqRciNpVdiLZQr2gbSX83dX5jjaV` READY at the exact merge. Production channel,
+internal preparation patch; no customer version or announcement. Edge deployment NOT_APPLICABLE;
+no worker, UI or runtime activation. Recovery must preserve blocked preparation and immutable identity;
+use a reviewed forward migration rather than promote stored audit snapshots into permission.
+
+QA handoff #1832 is NOT READY: its owner must provision the approved synthetic account and inject
+credentials into the existing runner. No secret search is authorized. Provider-cessation proof #1822
+is separate; deployment or a blocked prepared envelope does not establish that clearance.
+
+This is a service-only preparation seam on the existing Harness envelope,
+not a research scheduler, worker, approval engine, model router or receipt system.
+
+Owner outcome: preserve the original research assignment and canonical durable identity so a future
+authorized continuation can finish it in the original conversation. Shared Harness/Conversational
+Loop owns preparation; Deep Research retains its existing provider/results architecture. The existing
+`deep_research` tool's durable/Spine continuation binding remains UNAVAILABLE; no new model tool or
+surface-ledger state is declared. Provider connections are not used. This performs an internal
+reversible work-metadata write, not a provider effect; no new mutation approval channel is added.
+Authority/budget/approval context is an audit snapshot and must be revalidated before any later
+dispatch. Existing Trust/approval/budget controls remain mandatory. Signed-in/provider acceptance is
+owed; fixtures establish persistence semantics only.
+
+`prepare_paige_research_work` validates a bounded original question/options payload, preserves
+tenant/actor/thread/intent/scope epoch and canonical authority snapshot, then uses the existing
+`create_paige_durable_work` and `transition_paige_durable_work` inside one transaction. New work is
+blocked with `research_execution_not_enabled` before commit. Exact retries return the same work ID;
+changed payload/scope/authority conflicts, revoked membership/archive scope and dispatched/terminal
+replays fail closed. The payload uses the existing immutable request fields. Browser execution is
+denied; the private dispatch key is not returned. No wake, cron, provider request, fake research run,
+success receipt, conversation resume or executor activation is added.
+
+Local baseline without the preparation RPC failed at the actual call. The completed migration passed
+37 real PostgreSQL checks in an empty localhost rollback fixture: identity/objective pinning, exact
+replay, changed inputs/scope/budget snapshot, foreign actor/tenant/thread, removed membership,
+archived conversation, immutable payload, terminal/dispatched replay, browser denial, one blocked
+envelope and zero results/dispatch. The native runner is in the required CI database step.
+Migration 11 was CLI-created and follows verified main/production 10; active future-tail PR migration
+lists contained no collision. SQL authority linters and script syntax passed.
+
+Runtime follow-through remains gated: a genuine server consumer must freshly resolve authority,
+approval/capability/budget, dispatch using canonical ownership, bind actual `research_runs.work_id`,
+verify run/source persistence and consume continuation exactly once. Current document recovery
+excludes research and is not repurposed. Original inline findings/citations and saved Research library
+remain governed by the approved R2b design (`docs/evidence/ui-delivery/e-deep-research-r2b-inline.md`)
+and the frozen C3 turn prototype. No visible interaction or design changes are made here.
+
+## 2026-10-08 independent safe slice — #1807 readback and C4d/C4e foundation
+
+**Read-only implementation MERGED/DEPLOYED; authenticated acceptance UNVERIFIED.**
+PR #1859 merged as `af5df1c8a2a6da336dffc4c2d045e1b56ade2c29`; independent non-author SHIP on
+`44eec75c462c710cf86c0d0d3fc87bbeadbf19ec`, base `d85d5e607ae924646bf48420b214e643c47b1dd6`.
+All 11 hosted checks and both Vercel statuses SUCCESS. CI run `37824303704`, verify job
+`113473151128`: 672 files / 10138 tests PASS, plus Sales 319 and invoice 69; build, TypeScript,
+new Edge Deno check and the new native PostgreSQL read-only proof PASS. Database-contract run
+`37824303663`, job `113473025856` SUCCESS. Independent review: PR comment `6066418468`.
+Migration deployment `37825798813` and Edge deployment `37825798702` SUCCESS; migration 10 persisted.
+Production endpoint ACTIVE v1, JWT verification true, bundle
+`135d900501ce930577d57b761613669794d00e637defcc72434baa4b642db33f`; all five deployed files match
+merged source. Function body MD5 `aa45019746eeb0d313091f81a1e959e1` matches; authenticated execute
+true, anon/service execute false, empty search path, stable read-only function. Unauthenticated POST
+401 is gateway refusal only, not signed-in acceptance. Vercel `dpl_J6kfitq9nW498zD3UmP5Q8JAFpUA`
+READY at exact product merge. C4d/C4e pure foundations are merged; no runtime consumer is deployed.
+
+INT-346 #1823 is accepted merged
+at `c43eeec244967b4711dbfe44b7bc8802755fb460`; DRAINING and security clearance UNVERIFIED remain.
+This change does not activate or alter that protocol. Production read-only foundation patch;
+interactive execution stays staged DRAINING. No customer version, name, announcement or visible flow change.
+
+### Routing and shared-platform contract
+
+1. Owner outcome: independently check whether an exact Pipeline metadata action actually applied,
+   without repeating it. This is the business-action-to-evidence seam for the shared COO architecture.
+2. Domain: Pipeline owns canonical metadata/operation semantics; Harness/Conversational Loop owns
+   the readback adapter and durable-context foundations. No Sales, Marketing or Operator edits.
+3. Shared layer: existing canonical Pipeline command ledger and protected INT-346 transcript;
+   C4d uses the existing `paige_durable_work` internal envelope and C4 resume architecture.
+4. Spine discovery: automatic Pipeline metadata reconciliation and continuation remain UNAVAILABLE
+   as callable Chat/Live/specialist bindings. The new read endpoint does not invent a model tool.
+5. Provider requirement: internal canonical database records; no new connection, Integration Registry
+   provider or external operation. Research provider execution/adoption is unchanged.
+6. Risk: read_only, no mutation verb or new approval/budget/autonomy lane. Existing Trust and one
+   approval gate remain controlling; projections never confer consequential authority.
+7. Jobs/events: no scheduler or event producer added. Durable continuation contracts consume the
+   existing envelope only; no wake, claim, cancellation write or new receipt store.
+8. Proof: exact tenant/actor/operation/hash plus current Pipeline UUID/reference/version/metadata.
+   Missing, conflicting, newer or insufficient evidence stays unknown. No Rail/receipt is issued.
+9. Surface: existing `campaigns.pipeline` / PAIGE workspace ledger states do not change. No UI change.
+10. Acceptance: synthetic deterministic and real localhost PostgreSQL proofs establish code behavior
+    only. Legitimate signed-in Solo acceptance remains UNVERIFIED, never inferred from service fixtures.
+
+### Implemented code
+
+`read_pipeline_metadata_original` resolves only the signed-in actor's currently selected tenant,
+owned thread, protected original intent and exact server-issued consumed Pipeline approval row.
+One protected approval observation must reference that exact token. It derives command/key and
+PostgreSQL `md5(command::jsonb::text)` independently of the operation receipt; legacy client JSON,
+foreign scope and contradictory token observations resolve unavailable. This authenticated read-only
+RPC grants no execution authority. Migration `20270601000010` follows verified main/production 09
+and active-PR collision checks.
+
+`paige-pipeline-outcome` validates a real user through `getUser`, derives actor/tenant server-side,
+accepts only thread/intent/effect UUID references, bounds input and returns a bounded no-store result.
+Its shared adapter revalidates scope around canonical operation/catalogue reads and independently
+re-resolves the original command after them. Exact atomic success plus exact current metadata gives
+confirmed_success; lost responses/missing receipts/conflict/stale version give outcome_unknown.
+It does not settle, release, retry, continue a model turn or change admission.
+
+The internal observation projection distinguishes authoritative refusal before dispatch and explicit
+non-application from unknown. It is not an authentication boundary: request booleans cannot establish
+authority. The metadata writer persists no canonical failed receipt, so timeout/absence/unchanged rows
+never produce confirmed_failure. Runtime failure/refusal integration still needs a canonical protected
+producer; this endpoint currently returns only verified success or unknown.
+
+C4d's pure continuation contract pins canonical work/actor/tenant/thread/intent/epoch/capability/kind
+and original objective, revalidates authorization/budget/capability context and denies approval-pending,
+interruptions, supersession, replay, unknown and unverified terminal state. C4e adds exact research
+work/run/source/citation lineage, rejecting duplicate source indices even when excluded rows appear
+first. Returned eligibility is context-only, never dispatch or atomic continuation permission.
+
+### Executed local proof
+
+- Pipeline observation missing implementation: 16 failing-first tests; implementation: 16 PASS.
+- Read adapter: behavioral RED then GREEN; concurrent original-command replacement: 1 RED / 14 PASS,
+  repaired to 15 PASS. Canonical resolver: 2 RED / 13 PASS, repaired 15 PASS.
+- Actual shared endpoint handler: 10 RED / 1 PASS, repaired and expanded 13 PASS (auth rejection,
+  body authority forgery, missing effect, malformed/oversized input and real adapter success path).
+- Durable/research deny-all stubs: 4 RED / 38 PASS; implementation 42 PASS. Independent review found
+  excluded-first duplicate citation ambiguity; added regression RED 1 / 17 PASS, repaired to 44 PASS.
+- Native PostgreSQL negative control omitted the new RPC and failed at its first real call; migration
+  then PASS: PostgreSQL command hash, exact identities, replay, switched actor/tenant, unissued/unspent
+  proposals, conflicting observations, forged legacy JSON, role ACL and unchanged DRAINING/executor.
+  This runs in the required CI native database step, not just a structural test.
+
+### Remaining integration gaps and ownership
+
+Conversational Loop: consume readback inside the original objective and perform governed settlement
+only after INT-346 clearance. Durable continuation: canonical authorized server adapter and existing
+atomic consumption/recovery/cancellation seams still need runtime adoption; no fixture boolean is
+fresh authorization. Deep Research currently omits `research_runs.work_id` in its producer; this
+assignment owns canonical durable adoption, original budget/approval preservation and verified result
+delivery. Shared Chat/Live/specialist discovery/context and authenticated modality acceptance remain
+owed; no independent chat-specific orchestration was added. Provider Operations #1822 and Platform
+Identity/QA #1832 retain their external handoffs; neither is polled or bypassed by this slice.
+
+Next authorized slice: complete canonical failure/refusal observation producers and non-activating
+Deep Research durable adoption, preserving the same protected outcome/continuation contract. Gated
+executor settlement and consequential resume stay unavailable until trusted release clearance.
+
 Owner order (Antonio Cook, 2026-10-05, binding): WAIT_APPROVAL, ASK_USER and WAIT_WORK are three
 reasons ONE objective paused — not three workflow systems. A resume keeps the thread, the objective,
 the active workspace and its scope, the prior tool/result state, the exact pending dependency, the

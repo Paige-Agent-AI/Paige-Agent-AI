@@ -1,3 +1,5 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
+import { lookupMcpCapability } from "../_shared/paige-mcp/capability-policy.ts";
 // Paige MCP Server — Phase 2 (API-key auth, 30 tools across CRM/Workflows/BTF/Admin).
 // Hosted at https://<project>/functions/v1/paige-mcp (custom domain mcp.paigeagent.ai later).
 // Auth: Bearer PAIGE_MCP_PLATFORM_KEY in Authorization header.
@@ -5738,6 +5740,13 @@ async function governMcpToolCall(
     tenantId = await actorStore.run(actor, () => actorTenantId());
   } catch (e) {
     console.error("[paige-mcp] governed door: tenant resolution failed", (e as Error)?.message);
+  }
+
+  // Reuse the verified canonical effect/category mapping.
+  const capability = lookupMcpCapability(toolName);
+  if (capability && ["external_send", "provider", "access"].includes(capability.category) &&
+      !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: actor.user_id })) {
+    return { ok: false, status: 403, code: COMMS_PROVIDER_EXECUTION_DISABLED, message: "Provider execution is unavailable in this workspace." };
   }
 
   const { outcome, audit: record } = decideMcpToolCall({

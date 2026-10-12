@@ -1,0 +1,13 @@
+{
+  "kind": "actual Chrome default browser zoom 200 percent; isolated profile; synthetic source only",
+  "codeCommit": "5e39e97a9e591dcab976e367f8bff90bc7b5aea0",
+  "geometry": {
+    "width": 759,
+    "dpr": 2,
+    "bodyWidth": 759,
+    "scrollOwner": "auto"
+  },
+  "tabs": 6,
+  "drawerClosed": true,
+  "errors": []
+}

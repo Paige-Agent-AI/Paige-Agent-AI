@@ -551,3 +551,21 @@ describe("privacy-first exact-width attribution credentials", () => {
     for(const label of ["3f2504e0-4f89-11d3-9a0c-0305e82c3301","SUMMER20","BlackFridayPromo2026","black_friday_2026_launch","spring-into-growth-2026-cohort"]){expect(redactAttributionValue(label)).toBe(label);}
   });
 });
+
+describe("credential minimization across unknown navigation", () => {
+  const sentinels = ["A".repeat(15) + "/" + "B".repeat(16), "a".repeat(15) + "/" + "b".repeat(16)];
+  it.each(sentinels)("removes an opaque credential from the actual emitted payload", async (sentinel) => {
+    const location = `/future-flow/${sentinel}`;
+    atLocation(`https://app.example.com${location}`);
+    withReferrer(`https://app.example.com${location}`);
+    const { trackEvent } = await import("./useAnalytics");
+    expect(redactSecretPath(location)).not.toContain(sentinel);
+    expect(redactSecretPath(`${location}/details`)).not.toContain(sentinel);
+    expect(redactSecretPath(`/future-flow/${encodeURIComponent(sentinel)}/details`)).not.toContain(encodeURIComponent(sentinel));
+    expect(redactSecretUrl(`https://app.example.com${location}`)).not.toContain(sentinel);
+    expect(redactSecretSearch(`?next=${encodeURIComponent(location)}`)).not.toContain(encodeURIComponent(sentinel));
+    await trackEvent("page_view", "engagement", { path: location, next: location });
+    expect(sent.length).toBeGreaterThan(0);
+    expect(sent.join("\n")).not.toContain(sentinel);
+  });
+});

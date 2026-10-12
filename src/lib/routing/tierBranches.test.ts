@@ -127,7 +127,7 @@ describe("Sub-tab tree (§65 3-level, agency verified 2026-08-17)", () => {
   it("verified counts + first-is-default per the live-screen audit", () => {
     const count = (slug: string) => branchBySlug("agency", slug)?.subtabs?.length ?? 0;
     expect(count("command-center")).toBe(4);
-    expect(count("paige")).toBe(6);
+        expect(count("paige")).toBe(6);
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(7);
     expect(count("calendar")).toBe(6);
@@ -158,7 +158,7 @@ describe("Sub-tab tree (§65 3-level, agency verified 2026-08-17)", () => {
 });
 
 describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", () => {
-  it("keeps the seven contextual Settings destinations after notification retirement", () => {
+  it("keeps eight contextual Settings destinations with Analytics after Integrations", () => {
     const settings = branchBySlug("solo", "settings");
     expect(settings?.key).toBe("settings");
     expect(settings?.subtabs?.filter(({ hidden }) => !hidden).map(({ slug, label }) => [slug, label])).toEqual([
@@ -166,6 +166,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["team", "Team"],
       ["connections", "Connections"],
       ["integrations", "Integrations"],
+      ["analytics", "Analytics"],
       ["security-data", "Security & data"],
       ["vault", "Vault"],
       ["billing", "Billing"],
@@ -197,24 +198,27 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     // redirects into the Command Center path. Vault is an owner-locked Settings destination.
     const noSub = SOLO_BRANCHES.filter((b) => !b.subtabs).map((b) => b.slug).sort();
     expect(noSub).toEqual([]);
-    expect(SOLO_BRANCHES.filter((b) => b.subtabs).length).toBe(10);
+    expect(SOLO_BRANCHES.filter((b) => b.subtabs).length).toBe(12);
     expect(branchBySlug("solo", "trust-compass")).toBeFalsy(); // no longer a top-level branch
   });
 
   it("verified Solo counts + first-is-default per the live-screen audit", () => {
     const count = (slug: string) => branchBySlug("solo", slug)?.subtabs?.length ?? 0;
+    expect(count("operations")).toBe(6);
     expect(count("command-center")).toBe(4);
     expect(count("paige")).toBe(5); // +Deep Research (INT-303)
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(6);
     expect(count("calendar")).toBe(6);
-    expect(count("growth")).toBe(12);
+    expect(count("growth")).toBe(11);
+    expect(count("ads")).toBe(5);
     expect(count("sales")).toBe(7);
-    expect(count("analytics")).toBe(6);
+    expect(count("finance")).toBe(7);
+    expect(count("analytics")).toBe(0);
     expect(count("marketplace")).toBe(4);
-    expect(count("settings")).toBe(7);
+    expect(count("settings")).toBe(8);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(60); // main's 59 + Deep Research (INT-303)
+    expect(total).toBe(72); // Operations adds six; one Settings Analytics destination; Ads moves out of Marketing with its five views
     // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
@@ -247,7 +251,6 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     roundTrip("growth", "audience", "audience");
     roundTrip("growth", "content", "content");
     roundTrip("growth", "email", "email");
-    roundTrip("growth", "ads", "ads");
     roundTrip("growth", "lead-capture", "capture");
     roundTrip("growth", "social", "social");
     roundTrip("growth", "analytics", "analytics");
@@ -264,23 +267,39 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["content", "Content"],
       ["social", "Social"],
       ["email", "Email"],
-      ["ads", "Ads"],
-      ["lead-capture", "Lead capture"],
       ["analytics", "Analytics"],
     ]);
-    // Previously shipped addresses keep resolving (§58).
+    // Ads is its own department directly below Marketing (owner ruling 2026-10-10, INT-342). Its old
+    // Marketing subtab is gone from the registry: GrowthHub replaces `/growth/ads` into this branch.
+    expect(subtabBySlug("solo", "growth", "ads")).toBeFalsy();
+    const order = SOLO_BRANCHES.map((b) => b.slug);
+    expect(order.indexOf("ads")).toBe(order.indexOf("growth") + 1);
+    expect(branchBySlug("solo", "ads")).toMatchObject({ key: "ads", label: "Ads", group: "main" });
+    expect(branchBySlug("solo", "ads")?.subtabs?.map(({ slug, label, hidden }) => [slug, label, hidden ?? false])).toEqual([
+      ["overview", "Overview", false],
+      ["campaigns", "Campaigns", false],
+      ["creative", "Creative", false],
+      ["audiences", "Audiences", false],
+      ["performance", "Performance", false],
+    ]);
+    for (const view of ["overview", "campaigns", "creative", "audiences", "performance"]) roundTrip("ads", view, view);
+    expect(defaultSubtabSlug("solo", "ads")).toBe("overview");
+    expect(subtabPath("solo", "42", "ads", "creative")).toBe("/solo/42/ads/creative");
+    // Previously shipped addresses keep resolving (§58). Lead capture retired into Overview
+    // (INT-342, owner-approved 2026-10-10) but its address and aliases still resolve.
+    expect(subtabBySlug("solo", "growth", "lead-capture")?.key).toBe("capture");
     expect(subtabBySlug("solo", "growth", "active")?.key).toBe("campaigns");
     expect(subtabBySlug("solo", "growth", "performance")?.key).toBe("analytics");
     for (const legacy of ["brand-kit", "pages", "funnels", "forms", "builders"]) {
       expect(subtabBySlug("solo", "growth", legacy)?.key, legacy).toBe("capture");
     }
-    roundTrip("analytics", "market-watch", "mkt");
+    roundTrip("settings", "analytics", "analytics");
     roundTrip("settings", "connections", "connections");
     roundTrip("settings", "integrations", "integrations");
     roundTrip("settings", "security-data", "security-data");
     roundTrip("settings", "billing", "billing");
-    expect(subtabBySlug("solo", "analytics", "money")?.label).toBe("Sales funnel");
-    expect(subtabBySlug("solo", "analytics", "market-watch")?.label).toBe("Acquisition");
+    expect(subtabBySlug("solo", "analytics", "money")).toBeNull();
+    expect(subtabBySlug("solo", "analytics", "market-watch")).toBeNull();
     expect(subtabBySlug("solo", "paige", "nope")).toBeNull();
     expect(subtabBySlug("solo", "paige", "sub-agents")).toBeNull();
     expect(subtabBySlug("solo", "paige", "actions")).toBeNull();
@@ -336,9 +355,6 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["calendar", "requests", "agenda", "agenda"],
       ["calendar", "settings", "connections", "connections"],
       ["growth", "brand-kit", "capture", "brand"],
-      ["analytics", "retention", "ret", "retain"],
-      ["analytics", "decisions", "dec", "decide"],
-      ["analytics", "market-watch", "mkt", "market"],
     ];
     for (const [branch, slug, soloKey, agencyKey] of perTierKeys) {
       expect(subtabBySlug("solo", branch, slug)?.key, `solo ${branch}/${slug}`).toBe(soloKey);
@@ -381,12 +397,14 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
 describe("Solo sub-tab registry ↔ screen source contract (§39 #1)", () => {
   const SCREEN_FOR_BRANCH: Record<string, string> = {
     "command-center": "src/solo/CommandCenter.tsx",
+    operations: "src/solo/operations/OperationsRoute.tsx",
     paige: "src/solo/SoloPaigeWorkspace.tsx",
     automations: "src/solo/automations-build.tsx",
     calendar: "src/pages/admin/CalendarAdmin.tsx",
     growth: "src/solo/growth2.tsx",
+    ads: "src/solo/AdsWorkspace.tsx",
     sales: "src/solo/SalesWorkspace.tsx",
-    analytics: "src/solo/analytics2.tsx",
+    finance: "src/solo/finance/FinanceWorkspace.tsx",
     marketplace: "src/solo/marketplace.tsx",
     settings: "src/solo/settings.tsx",
   };
@@ -418,6 +436,24 @@ describe("Solo sub-tab registry ↔ screen source contract (§39 #1)", () => {
     ).exec(src);
     if (!hook) throw new Error(`no useSubtabRoute("solo","${branchSlug}") in ${file}`);
     const after = src.slice(hook.index);
+    if (branchSlug === "operations") {
+      const workspace = readFileSync(resolve(process.cwd(), "src/solo/operations/OperationsWorkspace.tsx"), "utf8");
+      const declaration = workspace.indexOf("const DESTINATIONS =");
+      const array = balancedArray(workspace, workspace.indexOf("[", declaration));
+      return [...array.matchAll(/"([A-Za-z]+)"/g)].map(match => match[1].toLowerCase());
+    }
+    if (branchSlug === "ads") {
+      // AdsWorkspace routes the views; the desk renders them from ADS_VIEWS, in that order.
+      const desk = readFileSync(resolve(process.cwd(), "src/solo/marketing-ads.tsx"), "utf8");
+      const declaration = desk.indexOf("export const ADS_VIEWS =");
+      const array = balancedArray(desk, desk.indexOf("[", declaration));
+      return [...array.matchAll(/key:\s*["']([a-z-]+)["']/g)].map((match) => match[1]);
+    }
+    if (branchSlug === "finance") {
+      const declaration = src.indexOf("export const FINANCE_TABS =");
+      const array = balancedArray(src, src.indexOf("[", declaration));
+      return [...array.matchAll(/\[\s*["']([A-Za-z0-9_-]+)["']/g)].map(match => match[1]);
+    }
     if (branchSlug === "command-center" || branchSlug === "sales") {
       const tabs = /const\s+TABS\s*=\s*\[([\s\S]*?)\]\s*(?:as const)?;/.exec(src)?.[1] ?? "";
       return [...tabs.matchAll(/\[\s*["']([A-Za-z0-9_-]+)["']/g)].map((match) => match[1]);
@@ -504,15 +540,27 @@ describe("OPERATOR_BRANCHES (Super Admin pack substrate)", () => {
     expect(branchPath("agency", "1924546", "command-center")).toBe("/agency/1924546/command-center");
   });
 
-  it("only the operator settings branch uses the third level", () => {
+  it("preserves operator Settings nesting and permits only Solo Settings Analytics nesting", () => {
     const withThird = OPERATOR_BRANCHES.filter((b) =>
       (b.subtabs ?? []).some((s) => s.subtabs?.length),
     ).map((b) => b.slug);
     expect(withThird).toEqual(["settings"]);
     for (const tier of ["agency", "solo", "sub_account", "enterprise"] as const) {
       for (const b of TIER_TREES[tier].branches) {
-        for (const s of b.subtabs ?? []) expect(s.subtabs, `${tier}/${b.slug}/${s.slug}`).toBeUndefined();
+        for (const s of b.subtabs ?? []) {
+          if (tier === "solo" && b.slug === "settings" && s.slug === "analytics") {
+            expect(s.subtabs?.map(({ slug, label }) => [slug, label])).toEqual([
+              ["overview", "Overview"], ["business-health", "Business Health"], ["operations", "Operations"],
+              ["team", "Team"], ["ai-usage", "AI & Usage"], ["data-health", "Data Health"],
+            ]);
+            expect(leafPath("solo", "42", "settings", "analytics", "operations")).toBe("/solo/42/settings/analytics/operations");
+          } else expect(s.subtabs, `${tier}/${b.slug}/${s.slug}`).toBeUndefined();
+        }
       }
     }
+    expect(branchBySlug("solo", "analytics")).toBeNull();
+    expect(subtabBySlug("agency", "analytics", "retention")?.key).toBe("retain");
+    expect(subtabBySlug("agency", "analytics", "decisions")?.key).toBe("decide");
+    expect(subtabBySlug("agency", "analytics", "market-watch")?.key).toBe("market");
   });
 });

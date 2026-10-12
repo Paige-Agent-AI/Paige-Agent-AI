@@ -17,6 +17,33 @@
 > aggregates only. Two verifier refutations changed rows (Deep Research and CRM tasks), and one
 > changed a cross-cutting claim (Live admission). All three are applied below.
 
+## Re-grounding at merge (2026-10-12, `main` `fc5388833`)
+
+The Phase 0 map below is a dated snapshot of `8b7f975`. 662 commits landed on `main` before this PR
+merged. Each change that moves a map row or the seam's own claims is listed here. The rows below are
+**not** silently rewritten.
+
+- **Support.** Support cases now have a store (`support_cases`, from #1140's two-mailbox inbox
+  intelligence) and a Spine read, `comms.support_cases_read` (chat tool `read_support_cases`,
+  chatBinding PARTIAL). The seam's NOT-CONNECTED register no longer lists `support`; an un-adapted
+  support domain reports `no_adapter`.
+- **Ads.** #2011 counts leads by stage for each campaign and ad from UTM tags. There is still no ad-account
+  connection, so ad **spend** and ad-platform results stay unreadable. The register's wording now says
+  exactly that.
+- **Secure Browser / PAIGE Computer.** #2003 (PC-1) shipped a safe, read-only external browser
+  capability (`browse_public_url` Spine registration, receipts, bounded usage). The §A row's
+  "UNAVAILABLE" is superseded for read-only public browsing. Authenticated browsing is unchanged.
+- **Model Fabric.** INT-334 R5a routes chat's streamed rounds through the shared Model Fabric. R5b
+  applies the route's tool exposure to cheap-class rounds. Full per-route narrowing of the ~95-tool
+  set is still not general.
+- **Finance.** Finance F1a/F1b (#1905, #1918) and the ANT-9 continuation added company-bound source
+  authority and canonical company, account, liability, accounting, budget and scenario reads. The
+  `revenue`/`payments` rows' "no period read for PAIGE" stands until Finance ships its source
+  adapter (see §I, *Contributing a domain*).
+- **Register wording.** SMS and social reasons now state what cannot be **read**, never a fact about
+  the data ("has not sent any messages"). A count can change under a constant; a capability statement
+  does not go stale.
+
 ---
 
 ## The seven data classes this fabric keeps apart
@@ -330,6 +357,30 @@ DomainSnapshot {
 - The composer never adds, compares, or ranks across domains.
 - Each adapter returns `ContextSourceResult<DomainSnapshot>`, so `unavailable` and `degraded` carry
   reasons, per the Context Assembly Contract.
+
+### Contributing a domain (for owning lanes, e.g. Finance)
+
+A domain joins the snapshot by shipping its own `DomainSnapshotAdapter` (`snapshot.ts`). The fabric
+does not compose for the domain, and the domain does not edit the composer. The contract:
+
+- **Location and ownership.** The adapter lives in the owning lane's code, e.g.
+  `_shared/<domain>/snapshot-adapter.ts`. It is registered with the composer by the one caller that
+  assembles a review (F2). The domain owns its metric keys (`<domain>.<name>`), its reads, and its
+  tests.
+- **Reads.** The adapter makes caller-JWT reads only, with the tenant derived server-side
+  (`current_user_tenant_id()` or the domain's own §59 in-body check). It never takes a tenant from the
+  model. It honours `ctx.signal` (abort on timeout) and returns `ContextSourceResult<DomainSnapshot>`.
+- **Honesty.** On a read it cannot complete, it returns `degraded` with a closed reason code
+  (`[A-Za-z0-9_:.-]`, ≤120 characters). Free text is never passed through. It never catches to empty.
+  Money is `currency_minor` with an ISO code per value; mixed currencies are separate metrics, never
+  a sum.
+- **Size.** It keeps within the validator's bounds: 24 headline metrics, 20 items per list, and short
+  single-line strings. A domain with a stricter envelope (Finance's 16 KiB bound) applies it before
+  returning. Anything over is withheld and marked `coverage: "partial"` with a note.
+- **Scope.** It does not cache across turns, and changing balances are not Memory. The composer
+  re-checks the workspace epoch after every adapter settles, so a stale read is voided.
+- **Removal from the register.** A domain listed in `NOT_CONNECTED_DOMAINS` is removed from it in the
+  same change that registers its adapter.
 
 ## J. Business Operating Snapshot contract (implemented: same module)
 

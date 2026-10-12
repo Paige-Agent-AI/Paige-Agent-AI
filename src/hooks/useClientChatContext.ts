@@ -690,16 +690,30 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
             ? ((profile as { active_tenant_id?: unknown } | null)?.active_tenant_id as string) : null;
           ownMemoryTenant = declared && declared === validated ? declared : null;
         }
-        const memFilter = clientId
-          ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_id", clientId).eq("is_active", true).order("created_at", { ascending: false }).limit(5)
-          : resolvedUserId && ownMemoryTenant
-            ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", resolvedUserId).eq("tenant_id", ownMemoryTenant).is("client_id", null).eq("is_active", true).order("created_at", { ascending: false }).limit(5)
-            : null;
-
-        if (memFilter) {
-          const { data: memories } = await memFilter;
+        // S5: OWNER/WORKSPACE continuity is read from the canonical owner-memory home through
+        // the governed read. As a JWT caller the seam resolves scope in-body from the resolver,
+        // so this hook keeps its OWN declared∧validated gate (computed above): when the declared
+        // pointer and the resolver disagree, ownMemoryTenant is null and no line renders at all —
+        // the conjunction stays enforced client-side around the governed call. Client-scoped
+        // memory is unchanged.
+        if (clientId) {
+          const { data: memories } = await supabase
+            .from("client_memory").select("memory_type, content, created_at")
+            .eq("client_id", clientId).eq("is_active", true)
+            .order("created_at", { ascending: false }).limit(5);
           if (memories && memories.length > 0) {
-            const memLines = memories.slice(0, 3).map(m => {
+            const memLines = memories.slice(0, 3).map((m: { memory_type: string; content: string; created_at: string }) => {
+              const date = new Date(m.created_at).toLocaleDateString();
+              const typeLabel = m.memory_type.replace(/_/g, " ");
+              const short = m.content.length > 100 ? m.content.substring(0, 100) + "..." : m.content;
+              return `[${typeLabel}] (${date}): ${short}`;
+            });
+            parts.push(`Recent Memory: ${memLines.join(" | ")}`);
+          }
+        } else if (resolvedUserId && ownMemoryTenant) {
+          const { data: memories } = await supabase.rpc("get_paige_memory", { p_limit: 5 });
+          if (Array.isArray(memories) && memories.length > 0) {
+            const memLines = memories.slice(0, 3).map((m: { memory_type: string; content: string; created_at: string }) => {
               const date = new Date(m.created_at).toLocaleDateString();
               const typeLabel = m.memory_type.replace(/_/g, " ");
               const short = m.content.length > 100 ? m.content.substring(0, 100) + "..." : m.content;

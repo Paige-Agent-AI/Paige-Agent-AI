@@ -1,10 +1,13 @@
 import {
+  BriefcaseBusiness,
   BarChart3,
   ChartNoAxesCombined,
+  Landmark,
   Megaphone,
   Store,
   Settings,
   Sparkles,
+  Target,
   Users,
   WandSparkles,
   type LucideIcon,
@@ -12,9 +15,12 @@ import {
 
 type TenantDestination =
   | "command"
+  | "operations"
   | "clients"
   | "campaigns"
+  | "ads"
   | "sales"
+  | "finance"
   | "marketplace"
   | "analytics"
   | "studio"
@@ -49,10 +55,13 @@ const AGENCY_ACTING_CHILD_ROUTE_PATTERN = /^\/agency\/([^/]+)\/sub\/(\d+)(?:\/|$
 
 const TENANT_BRANCHES: Record<TenantBranch, { slug: string; aliases: string[] }> = {
   command: { slug: "command-center", aliases: ["paige", "trust-compass", "automations"] },
+  operations: { slug: "operations", aliases: [] },
   clients: { slug: "clients", aliases: ["client-support", "billing"] },
   calendar: { slug: "calendar", aliases: [] },
   campaigns: { slug: "growth", aliases: [] },
+  ads: { slug: "ads", aliases: [] },
   sales: { slug: "sales", aliases: [] },
+  finance: { slug: "finance", aliases: [] },
   marketplace: { slug: "marketplace", aliases: [] },
   analytics: { slug: "analytics", aliases: [] },
   studio: { slug: "growth", aliases: [] },
@@ -150,6 +159,7 @@ export const TENANT_SHELL_DESTINATIONS: TenantShellDestination[] = [
 /** Solo's approved durable work homes. Existing route owners remain unchanged. */
 const SOLO_SHELL_DESTINATIONS: TenantShellDestination[] = [
   { id: "command", label: "Command Center", href: "", icon: Sparkles, aliases: [""] },
+  { id: "operations", label: "Operations", href: "", icon: BriefcaseBusiness, aliases: [] },
   {
     id: "clients",
     label: "Clients",
@@ -158,9 +168,11 @@ const SOLO_SHELL_DESTINATIONS: TenantShellDestination[] = [
     aliases: ["", "", "", ""],
   },
   { id: "campaigns", label: "Marketing", href: "", icon: Megaphone, aliases: [] },
+  // Its own department directly below Marketing (owner ruling 2026-10-10, INT-342).
+  { id: "ads", label: "Ads", href: "", icon: Target, aliases: [] },
   { id: "sales", label: "Sales", href: "", icon: ChartNoAxesCombined, aliases: [] },
+  { id: "finance", label: "Finance", href: "", icon: Landmark, aliases: [] },
   { id: "marketplace", label: "Marketplace", href: "", icon: Store, aliases: [] },
-  { id: "analytics", label: "Analytics", href: "", icon: BarChart3, aliases: [] },
   {
     id: "settings",
     label: "Settings",

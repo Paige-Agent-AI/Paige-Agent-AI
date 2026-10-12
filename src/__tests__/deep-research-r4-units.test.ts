@@ -41,6 +41,8 @@ const extractFn = (name: string): string => {
 // STOP literal for tokens()
 import { match } from "node:assert";
 const STOP_LIT = (core.match(/const STOP = new Set\(\[[\s\S]*?\]\);/) ?? [""])[0];
+// R6-A: aggregateUnits reads the class map (telemetry); a stub lets behavioral evals execute.
+const R6_STUB = 'const RESEARCH_COGNITIVE_CLASSES = { unit_synthesis: "operational" };';
 
 describe("R4 — the synthesis-unit contract", () => {
   it("the coverage vocabulary is the six ruled kinds, and nothing vertical", () => {
@@ -89,7 +91,9 @@ describe("R4 — bounds (no unbounded retry)", () => {
 });
 
 describe("R4 — aggregation/dedupe (behavioral, on the real extracted functions)", () => {
-  const aggJs = js(STOP_LIT + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("numericTokens") + "\n" + extractFn("sameClaim") + "\n" + extractFn("aggregateUnits"));
+  // R6-A: aggregateUnits now reads RESEARCH_COGNITIVE_CLASSES (telemetry only) — supply a
+  // stub record in the eval body so the extraction executes against a defined symbol.
+  const aggJs = js(STOP_LIT + "\n" + R6_STUB + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("numericTokens") + "\n" + extractFn("sameClaim") + "\n" + extractFn("aggregateUnits"));
   type AggIn = Array<{ unit: { unit_id: string; objective: string; coverage_kind: string; source_refs: number[]; status: string }; out: { findings: Array<{ summary: string; citations: number[]; values?: string[] }> ; insufficient?: boolean } | null }>;
   type AggOut = { findings: Array<{ summary: string; citations: number[]; values?: string[] }>; unitDiagnostics: Array<Record<string, unknown>> };
   const agg = (new Function(`${aggJs}\nreturn aggregateUnits;`) as () => (u: AggIn) => AggOut)();
@@ -182,23 +186,23 @@ describe("R4 — the unchanged-validator guarantee (causal measurement)", () => 
 
   it("dossier (entity) mode keeps its single specialized call — no silent behavior fork", () => {
     expect(core).toContain("if (entityTarget) {");
-    expect(core).toContain("const mono = await synthesize(question, domainHint, citable, entityTarget);");
+    expect(core).toContain("await synthesize(question, domainHint, citable, entityTarget, fabricCtx);");
   });
 
-  it("same route/model class for every unit call (doc_draft reasoning tier)", () => {
+  it("same route/model class for every unit call (doc_draft tier; R6-B: through the research adapter, dormant)", () => {
     const fn = extractFn("synthesizeUnit");
-    expect(fn).toContain('routedChatCompletion("doc_draft"');
+    expect(fn).toContain('researchCompletion("unit_synthesis"');
     expect(fn).not.toContain("featherless");
   });
 });
 
 describe("R4 mutation proof", () => {
   it("executed mutant: a 0.05 threshold erases the conflict — the real pin forbids exactly this", () => {
-    const mutated = js(STOP_LIT + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("numericTokens") + "\n" + extractFn("sameClaim") + "\n" + extractFn("aggregateUnits")).replace(">= 0.8", ">= 0.05");
+    const mutated = js(STOP_LIT + "\n" + R6_STUB + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("numericTokens") + "\n" + extractFn("sameClaim") + "\n" + extractFn("aggregateUnits")).replace(">= 0.8", ">= 0.05");
     // with a 0.05 threshold near-everything merges through sameClaim's prose leg — run the
     // mutant on a NUMERIC-FREE conflict (the prose leg is the only surviving guard there)
     // and prove the consequence the real-code conflict pin forbids.
-    const aggMut = (new Function(`${mutated}\nreturn aggregateUnits;`) as unknown as () => (u: Array<{ unit: { unit_id: string; objective: string; coverage_kind: string; source_refs: number[]; status: string }; out: { findings: Array<{ summary: string; citations: number[] }>; insufficient?: boolean } | null }>) => { findings: Array<{ summary: string; citations: number[]; values?: string[] }>; unitDiagnostics: Array<Record<string, unknown>> })();
+    const aggMut = (new Function(mutated + "\nreturn aggregateUnits;") as unknown as () => (u: Array<{ unit: { unit_id: string; objective: string; coverage_kind: string; source_refs: number[]; status: string }; out: { findings: Array<{ summary: string; citations: number[] }>; insufficient?: boolean } | null }>) => { findings: Array<{ summary: string; citations: number[]; values?: string[] }>; unitDiagnostics: Array<Record<string, unknown>> })();
     const mut = aggMut([{ unit: { unit_id: "u1", objective: "o", coverage_kind: "position", source_refs: [], status: "pending" }, out: { findings: [
       { summary: "Amazon employs about one point five million people in the United States according to its latest disclosure figures", citations: [1] },
       { summary: "Amazon employs about one point five million people in the United States according to its latest disclosure figures plus warehouse staff", citations: [2] },

@@ -26,6 +26,9 @@ const TITLE_BY_CODE: Record<string, string> = {
   ASK_ALREADY_ANSWERED: "PAIGE already has your answer",
   ASK_ANSWER_IN_PROGRESS: "PAIGE already has your answer",
   ASK_REOPENED: "PAIGE asked again",
+  // INT-346 — approvals cannot be consumed while the interactive rollout is staged; the
+  // decision stays on its card (nothing was spent).
+  INTERACTIVE_EFFECTS_UNAVAILABLE: "Actions are paused",
 };
 
 /**

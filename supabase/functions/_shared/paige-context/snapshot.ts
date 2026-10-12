@@ -763,18 +763,22 @@ export type DomainSnapshotAdapter = {
 };
 
 /**
- * Domains whose substrate does not exist on the platform yet (Phase 0 grounding, 2026-10-06, HEAD
- * 8b7f975). When one is requested and no adapter is supplied, the composer reports it unavailable with
- * this reason, verbatim — so PAIGE says what is missing instead of implying a zero. Owner-legible words;
- * no table names. Remove an entry in the same change that ships its adapter.
+ * Domains with no readable substrate on the platform. Re-grounded at merge against main fc5388833
+ * (2026-10-12); first grounded 2026-10-06 at 8b7f975. When one is requested and no adapter is
+ * supplied, the composer reports it unavailable with this reason, verbatim, so PAIGE says what is
+ * missing instead of implying a zero. Owner-legible words, no table names. Each sentence states what
+ * cannot be READ, never a fact about the data (a count changes; a capability statement does not go
+ * stale). Remove an entry in the same change that ships its adapter.
+ *
+ * `support` left this list at re-grounding: support cases now have a store and a Spine read
+ * (comms.support_cases_read), so an un-adapted support domain reports `no_adapter`, not missing.
  */
 export const NOT_CONNECTED_DOMAINS: Readonly<Partial<Record<SnapshotDomain, string>>> = Object.freeze({
-  paid_acquisition: "No ad-account connection exists on the platform yet, so ad spend and results cannot be read.",
+  paid_acquisition: "No ad account is connected, so ad spend and ad-platform results cannot be read.",
   reviews: "Reviews and reputation are not connected to the platform yet.",
   events: "Webinars and event registrations are not tracked on the platform yet.",
-  sms: "Business texting has not sent or received any messages through the platform yet, and no texting read is connected.",
-  social: "Social accounts can be recorded, but no social account is connected for posting or results, so reach and engagement cannot be read.",
-  support: "There is no support-ticket system on the platform yet.",
+  sms: "Text messaging is not readable for a business review yet.",
+  social: "Social accounts can be recorded, but posting and results are not connected, so reach and engagement cannot be read.",
 });
 
 // ── D. Composer ──────────────────────────────────────────────────────────────────────────────────────

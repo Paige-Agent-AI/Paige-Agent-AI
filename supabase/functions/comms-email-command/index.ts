@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
@@ -49,6 +50,7 @@ Deno.serve(async req => {
 
   const { data: tenantId, error: tenantError } = await caller.rpc("current_user_tenant_id");
   if (tenantError || typeof tenantId !== "string" || tenantId !== body.expected_tenant_id) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
+  if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return refusedBeforeDispatch(403, COMMS_PROVIDER_EXECUTION_DISABLED);
   const stillCurrent = async () => {
     const { data, error } = await caller.rpc("current_user_tenant_id");
     return !error && data === tenantId;
@@ -118,6 +120,15 @@ Deno.serve(async req => {
   };
   const reconcile = (operationId: string) => reconcileCommsEmailSend(operationId, tenantId, { readResult, readBinding, send, stillCurrent });
 
+  // #1140: a governed send that the provider accepted moves the thread's support
+  // case (if any) to awaiting_customer and clears its pending follow-up — the
+  // bounded no-chase rule. Best-effort and NEVER blocking: a failure here changes
+  // nothing about the send's own result, which the readback below still owns.
+  const settleSupportCase = async (settled: Record<string, unknown>) => {
+    if (settled.ok !== true || typeof settled.message_id !== "string" || !UUID.test(settled.message_id)) return;
+    try { await admin.rpc("mark_support_case_outbound", { _message_id: settled.message_id }); } catch { /* next inbound re-syncs the case */ }
+  };
+
   // 2 — Replay first: a recorded outcome is returned before any current fact or approval is read.
   // An operation whose provider outcome is unknown is reconciled under its own id, never re-run.
   if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
@@ -129,9 +140,11 @@ Deno.serve(async req => {
   if (replay && !preparedRecovery) {
     if (replay.outcome === "unknown" || replay.outcome === "dispatching") {
       const settled = await reconcile(body.operation_id);
+      await settleSupportCase(settled);
       return response(statusOf(settled), { ...settled, replayed: true });
     }
     const recorded = commsEmailSafeResult(replay, { replayed: true });
+    await settleSupportCase(recorded);
     return response(statusOf(recorded), recorded);
   }
 
@@ -157,6 +170,7 @@ Deno.serve(async req => {
       if (error instanceof Error && error.message === REPLAY_MISMATCH) return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_TEAMMATE_IN_FLIGHT", operation_id: body.operation_id });
     }
     const settled = await reconcile(pending);
+    await settleSupportCase(settled);
     return response(statusOf(settled), { ...settled, reconciled_operation_id: pending });
   }
 
@@ -258,6 +272,7 @@ Deno.serve(async req => {
     approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting",
     approved_fingerprint: decision.audit.laneEffective === "confirm" ? body.approved_fingerprint : null,
     decision_receipt_recorded: true };
+
   const result = await executeCommsEmailSend({ actorUserId: user.id, tenantId, operationId: stored.operationId, stored, governance }, {
     stillCurrent, readResult, send, readBinding,
     resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }),
@@ -265,5 +280,6 @@ Deno.serve(async req => {
     prepare: async args => { const { data, error } = await admin.rpc("prepare_comms_email_send", args); return { data, error }; },
   });
   const settled = await notAdmitted(result, stored.operationId);
+  await settleSupportCase(settled);
   return response(statusOf(settled), { ...settled, capability: COMMS_EMAIL_TOOL });
 });

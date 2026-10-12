@@ -11,6 +11,12 @@ export default defineConfig({
     },
   },
   test: {
+    // Unit tests never inherit the committed production backend environment (#1486).
+    env: {
+      VITE_SUPABASE_URL: "https://unit-test.invalid",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "unit-test-public-key",
+    },
+    setupFiles: ["./src/test/unit-network.setup.ts"],
     environment: "jsdom",
     globals: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],

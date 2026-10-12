@@ -259,14 +259,14 @@ describe("Settings gets one visible, usable scroll owner", () => {
     expect(settings).not.toMatch(/:has\(> \.solo-settings\)/);
   });
 
-  it("authorizes the visible scrollbar on exactly Setup, Connections and Integrations", () => {
+  it("authorizes visible scroll only for Setup, Connections, Integrations and approved Analytics", () => {
     // Owner ruling 2026-09-02: Setup joins the authorized visible-scroll set,
     // because its real configuration content materially exceeds the viewport at
     // every supported Solo height. Measured before the ruling: 3,973-4,174px of
     // content in a 702-934px host, 78-82% below the fold, no scrollbar drawn.
     expect([...SETTINGS_VISIBLE_SCROLL_DESTINATIONS].sort())
-      .toEqual(["connections", "integrations", "setup"]);
-    for (const dest of ["setup", "connections", "integrations"]) {
+      .toEqual(["analytics", "connections", "integrations", "setup"]);
+    for (const dest of ["setup", "connections", "integrations", "analytics"]) {
       expect(settingsDestinationShowsScrollbar(dest), `${dest} must show its scrollbar`).toBe(true);
     }
   });

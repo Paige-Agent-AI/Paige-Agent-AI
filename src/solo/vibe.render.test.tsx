@@ -32,6 +32,16 @@ vi.mock("@/hooks/useTenantContext", () => ({
 vi.mock("./studio/studio-data", async (orig) => ({
   ...(await orig<typeof import("./studio/studio-data")>()),
   listSessions: async () => [],
+  // Studio home also reads the brand on mount. This render harness has no stored
+  // brand; keep that seam explicit rather than catching a real backend failure.
+  loadBrand: async () => ({
+    floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
+    name: null,
+    logoUrl: null,
+  }),
+  createSession: async () => {
+    throw new Error("Unexpected Studio session mutation in media render harness");
+  },
 }));
 
 const { VibeStudio } = await import("./vibe");

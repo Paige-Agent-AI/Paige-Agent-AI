@@ -22,9 +22,9 @@ function Harness() {
     <div data-tenant-shell data-nav="expanded" data-paige={paige}>
       <nav className="tcs-nav" />
       <section className="tcs-canvas">
-        <header className="tcs-command-row"><div className="tcs-context"><span>Marketing / Lead capture · structural harness</span></div></header>
+        <header className="tcs-command-row"><div className="tcs-context"><span>Marketing / Overview · structural harness</span></div></header>
         <main id="tenant-shell-main" className="tcs-main paige-solo" data-theme={theme}>
-          <MemoryRouter initialEntries={["/solo/review/growth/lead-capture?type=form"]}>
+          <MemoryRouter initialEntries={["/solo/review/growth/overview?capture=form"]}>
             <Routes><Route path="/solo/:account/*" element={<GrowthHub />} /></Routes>
           </MemoryRouter>
         </main>

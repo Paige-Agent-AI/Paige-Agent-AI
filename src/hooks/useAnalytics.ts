@@ -254,26 +254,15 @@ export function looksLikeMintedCredential(value: string): boolean {
  * sales` rejoins to 22 characters of `[A-Za-z0-9/]` and would score three classes, so the ordinary
  * rule would redact half the product's routes.
  *
- * THE MIXED-CASE REQUIREMENT IS THE WHOLE DISCRIMINATOR. DO NOT RELAX IT — it is not incidental
- * tidying, and removing it is not a loosening, it is a removal. Two facts make it work, and they
- * are the only two:
- *
- *   · This platform's routes are LOWERCASE SLUGS. `/solo/3855/growth/sales`,
- *     `/clients/people`, `/signup` — verified against all 79 `path=` entries in `src/App.tsx`,
- *     none of which this predicate touches.
- *   · A 32-character token drawn from the 64-symbol base64 alphabet contains an uppercase letter
- *     with probability 1 - (38/64)^32 ≈ 1 - 5.7e-8. That rounds to certainty at this width.
- *
- * So requiring BOTH cases costs essentially no coverage against a real token and buys back every
- * lowercase route. Drop the uppercase requirement and the rule immediately starts eating ordinary
- * paths; drop the lowercase one and it stops distinguishing anything. If a future token scheme
- * mints in a single case, this predicate is blind to it — widen it then, deliberately, with a
- * fresh measurement, rather than by loosening this clause in passing.
+ * Exact mint-width runs are privacy-sensitive regardless of case. Longer runs retain the
+ * existing mixed-case heuristic to preserve ordinary lowercase navigation. Route and
+ * attribution preservation are covered separately by the real-route corpus.
+
  */
 function looksLikeSplitCredential(rejoined: string): boolean {
   if (rejoined.length < 28) return false;
   if (!/^[A-Za-z0-9+/=]+$/.test(rejoined)) return false;
-  return /[a-z]/.test(rejoined) && /[A-Z]/.test(rejoined);
+  return isMintWidthBase64(rejoined) || (/[a-z]/.test(rejoined) && /[A-Z]/.test(rejoined));
 }
 
 /** Redact a credential-bearing PATHNAME. Returns a stable shape so analytics can still group it. */
@@ -290,7 +279,11 @@ export function redactSecretPath(pathname: string): string {
   const out: string[] = [];
   for (let i = 0; i < segments.length; i++) {
     // Whole-run check FIRST: a token split by its own `/` is only visible once rejoined.
-    if (i > 0 && looksLikeSplitCredential(segments.slice(i).join("/"))) {
+    const remaining = segments.slice(i).map(safeDecode);
+    const hasMintWidthRun = remaining.some((_segment, end) =>
+      isMintWidthBase64(remaining.slice(0, end + 1).join("/")),
+    );
+    if (i > 0 && (hasMintWidthRun || looksLikeSplitCredential(remaining.join("/")))) {
       out.push(REDACTED);
       return out.join("/");
     }

@@ -170,6 +170,8 @@ export type ComposerScopeResolverInput = Readonly<{
   displayedIdentity: ComposerScopeIdentity | null;
   conversation: ComposerConversationState;
   busy: boolean;
+  /** Solo text remains editable while its interactive generation works. */
+  allowWhileBusy?: boolean;
 }>;
 
 export type ComposerScopeState = Readonly<{
@@ -259,14 +261,14 @@ export function resolveComposerScopeState(input: ComposerScopeResolverInput): Co
     ? "ready-new"
     : "ready-thread";
   const readyHandle = handleFor(currentIdentity, conversation.requested);
-  const writable = !busy;
+  const writable = !busy || input.allowWhileBusy === true;
 
   return {
     status,
     writable,
     visibleHandle: readyHandle,
     writableHandle: writable ? readyHandle : null,
-    unavailableReason: busy ? "PAIGE is finishing the current response." : null,
+    unavailableReason: writable ? null : "PAIGE is finishing the current response.",
   };
 }
 
@@ -374,6 +376,7 @@ export function shouldClearComposerDraft(input: Readonly<{
 
 type Listener = () => void;
 const drafts = new Map<string, string>();
+const draftRevisions = new Map<string, number>();
 const listeners = new Map<string, Set<Listener>>();
 
 export function composerDraftKey(handle: ComposerDraftHandle): string {
@@ -395,6 +398,7 @@ function emit(key: string): void {
 }
 
 function writeKey(key: string, value: string): void {
+  draftRevisions.set(key, (draftRevisions.get(key) ?? 0) + 1);
   if (value.length === 0) drafts.delete(key);
   else drafts.set(key, value);
   emit(key);
@@ -412,13 +416,35 @@ export function clearComposerDraft(handle: ComposerDraftHandle): void {
   writeComposerDraft(handle, "");
 }
 
+export type ComposerDraftSubmission = Readonly<{ text: string; revision: number }>;
+
+/** Consume synchronously so a second Enter cannot submit the same draft twice. */
+export function takeComposerDraft(handle: ComposerDraftHandle): ComposerDraftSubmission {
+  const text = readComposerDraft(handle);
+  clearComposerDraft(handle);
+  return { text, revision: draftRevisions.get(composerDraftKey(handle)) ?? 0 };
+}
+
+/** A refused send restores only its own untouched slot, never a newer thought. */
+export function restoreComposerDraft(handle: ComposerDraftHandle, submission: ComposerDraftSubmission): boolean {
+  const key = composerDraftKey(handle);
+  if (readKey(key) !== "" || draftRevisions.get(key) !== submission.revision) return false;
+  writeKey(key, submission.text);
+  return true;
+}
+
 export function moveComposerDraft(from: ComposerDraftHandle, to: ComposerDraftHandle): void {
   const fromKey = composerDraftKey(from);
   const toKey = composerDraftKey(to);
   if (fromKey === toKey) return;
 
   const value = drafts.get(fromKey);
-  if (value === undefined) return;
+  if (value === undefined) {
+    if (!drafts.has(toKey) && !draftRevisions.has(toKey) && draftRevisions.has(fromKey)) {
+      draftRevisions.set(toKey, draftRevisions.get(fromKey)!);
+    }
+    return;
+  }
 
   const destinationValue = drafts.get(toKey);
   if (destinationValue !== undefined) {
@@ -431,6 +457,7 @@ export function moveComposerDraft(from: ComposerDraftHandle, to: ComposerDraftHa
 
   drafts.delete(fromKey);
   drafts.set(toKey, value);
+  draftRevisions.set(toKey, (draftRevisions.get(toKey) ?? 0) + 1);
   emit(fromKey);
   emit(toKey);
 }

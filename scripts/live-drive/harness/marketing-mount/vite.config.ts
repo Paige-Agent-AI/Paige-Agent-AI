@@ -14,8 +14,10 @@ export default defineConfig({
     name: "planned-tabs-supabase",
     enforce: "pre",
     resolveId(source, importer) {
-      if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "planned-supabase-stub.ts");
-      if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx") || importer?.endsWith("marketing-email-series.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "email-supabase-stub.ts");
+      if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-content.tsx") || importer?.endsWith("marketing-ads.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "planned-supabase-stub.ts");
+      if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx") || importer?.endsWith("marketing-email-series.tsx") || importer?.endsWith("marketing-analytics-email.ts")) && source.endsWith("integrations/supabase/client")) return path.join(here, "email-supabase-stub.ts");
+      if (importer?.endsWith("useCampaignAssets.ts") && source.endsWith("integrations/supabase/client")) return path.join(here, "assets-supabase-stub.ts");
+      if (importer?.endsWith("marketing-analytics-metrics.ts") && source.endsWith("integrations/supabase/client")) return path.join(here, "metrics-supabase-stub.ts");
       return null;
     },
   }],
@@ -24,6 +26,7 @@ export default defineConfig({
       { find: "./useSoloCampaigns", replacement: path.join(here, "stubs.ts") },
       { find: "./useSoloCampaignBriefs", replacement: path.join(here, "briefs-stub.ts") },
       { find: "./useCatalogOffers", replacement: path.join(here, "../catalog-mount/useCatalogOffers-stub.ts") },
+      { find: /^\.\/useFormIntake$/, replacement: path.join(here, "form-intake-stub.ts") },
       { find: "@", replacement: path.join(repo, "src") },
     ],
   },

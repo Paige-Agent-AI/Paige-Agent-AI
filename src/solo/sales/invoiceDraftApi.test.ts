@@ -40,6 +40,28 @@ describe('dual-schema durable invoice API',()=>{
     edited.billing_address!.line1='Override'; edited.delivery_channel_intents.pop(); edited.items[0].item='Edit';
     expect(snapshot.billing_address!.line1).toBe('Example St'); expect(snapshot.delivery_channel_intents).toHaveLength(2); expect(snapshot.items[0].item).toBe('Service');
   });
+  it('isolates commercial-condition edits from the saved invoice snapshot',()=>{
+    const conditions={schema_version:1 as const,tax:{state:'recorded' as const,source:'Recorded policy',policy:'Included in line 1',charges:[{line_index:0,amount_minor:100,currency:'usd' as const}]},fees:{state:'unknown' as const,source:null,policy:null,charges:[]}};
+    const saved={...snapshot,commercial_conditions:conditions};
+    const edited=snapshotEditInput(saved);
+    edited.commercial_conditions!.tax.charges[0].amount_minor=200;
+    expect(saved.commercial_conditions.tax.charges[0].amount_minor).toBe(100);
+  });
+  it('saves and reopens explicit conditions with an exact deposit without changing obligation amounts',async()=>{
+    const exact:InvoiceSnapshot={...snapshot,schema_version:3,kind:'deposit',deposit_basis_points:null,deposit_minor:50000,
+      items:[{...snapshot.items[0],unit_minor:350000,quantity:1}],total_minor:350000,due_now_minor:50000,remainder_minor:300000,
+      commercial_conditions:{schema_version:1,tax:{state:'not_applicable',source:'Synthetic reviewed terms',policy:'No tax applies',charges:[]},fees:{state:'recorded',source:'Synthetic recorded invoice line',policy:'Fee already included in principal',charges:[{line_index:0,amount_minor:1000,currency:'usd'}]}}};
+    const persisted=row({billing_draft:exact,amount_total_cents:350000});
+    const rpc=vi.fn().mockResolvedValue({data:{row:persisted},error:null});
+    const exactRequest={...request,draft:snapshotEditInput(exact)};
+    const result=await saveInvoiceDraft(rpc,exactRequest);
+    expect(result).toMatchObject({ok:true,value:{snapshot:{commercial_conditions:exact.commercial_conditions,due_now_minor:50000,remainder_minor:300000}}});
+    expect(rpc.mock.calls[0][1]._draft.commercial_conditions).toEqual(exact.commercial_conditions);
+    const reopened=readInvoiceDraft(structuredClone(persisted),tenant)!;
+    expect(snapshotEditInput(reopened.snapshot).commercial_conditions).toEqual(exact.commercial_conditions);
+    expect(readInvoiceDraft({...persisted,status:'issued'},tenant)).toBeNull();
+    expect(readInvoiceDraft({...persisted,tenant_id:id},tenant)).toBeNull();
+  });
   it.each([{tenant_id:id},{status:'paid'},{billing_draft_version:0},{amount_total_cents:2000},{billing_draft:{...snapshot,schema_version:3}}])('refuses untrusted rows instead of dropping fields',patch=>expect(readInvoiceDraft(row(patch),tenant)).toBeNull());
   it('fails the whole list for unsupported schemas and cross-tenant rows',async()=>{
     for(const bad of [row({tenant_id:id}),row({billing_draft:{...snapshot,schema_version:3}})]) {

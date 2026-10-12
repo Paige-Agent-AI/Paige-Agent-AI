@@ -3,7 +3,7 @@
 //
 // WHAT IT PROVES. It mounts the REAL GrowthHub (src/solo/growth2.tsx) with only the Campaigns read,
 // the owner-briefs read and the offers read stubbed (scripts/live-drive/harness/marketing-mount), and
-// renders Overview, Campaigns, Lead capture and Analytics at the four Solo sizes, in both themes,
+// renders every Marketing tab (Lead capture retired into Overview, INT-342) at the four Solo sizes, in both themes,
 // with PAIGE docked, expanded and closed, at the content-column widths the shell actually hands this
 // surface. For each frame it asserts: no page error, no harness crash, no horizontal overflow inside
 // the scroll owner (.campaigns-scroll), no element pushed past its right edge, and no sideways
@@ -29,7 +29,8 @@ const FRAMES = [
   { name: "900x1000", width: 900, height: 1000 },
 ];
 const POSTURES = ["docked", "wide", "closed"];
-const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "lead-capture", "analytics"];
+// DRIVE_TABS=analytics,ads re-runs the frames for only those tabs (the full set takes ~20 min).
+const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "analytics"].filter((tab) => !process.env.DRIVE_TABS || process.env.DRIVE_TABS.split(",").includes(tab));
 
 // Same model as campaigns-nav-fit-drive.mjs (TenantCommandCenterShell.tsx:483, verified there).
 function contentWidth(viewport, posture) {
@@ -105,7 +106,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th")) {
+        for (const el of document.querySelectorAll(".mov-sum, .mov-k, .mov-s, .mov-head p, .mov-src h3, .mov-srcrow span:first-child, .mov-n, .mov-rate, .mov-lnk, .mov-att small, .mov-cp-s, .mov-cp-m, .mov-cp-r, .mov-foot, .mov-note, .mov-lead-main small, .mov-moved p, .mov-chart text, .mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small, .me-starters small, .me-total span, .me-name small, .me-cell small, .me-kind, .me-activity time, .me-auto-empty p, .me-table thead th, .mva-step-l small, .mva-step-t, .mva-bar em, .mva-row-t small, .mva-cov-l span, .mva-sub, .mva .pill-n, .mva-cap, .mva .mov-foot code, .mva-kpi-h, .mva-kpi-f, .mva-kpi-d, .mva-legend li, .mva-heat-x, .mva-heat-y, .mva-heat-key, .mva .mo-keys span, .mva .mo-keys em, .mad .pill-n, .mad-prov-b small, .mad-row-b small, .mad-nums dt, .mad-nums dd, .mad-plan, .mad-plan small, .mad-prev-h small, .mad-cta, .mad-meta small, .mad-note, .mad-empty p, .campaigns-tabs[aria-label='Ads views'] [role=tab], .mad-missing, .mad-cta.is-missing, .mad-ini, .mct-sum, .mct .campaigns-segmented button, .mct-n, .mct-note, .mct-kind, .mct-meta small, .mct-cover small, .mct-cover span, .mct-cover em, .mct-words, .mct-foot, .mct-pub dt, .mct-missing, .mct .mo-keys span, .mct .mo-keys em, .mct-facts, .mct-asked span, .mct-act-note, .mct-pub-h p, .mct-channels, .mct-ad i, .mct-adfull small")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -134,7 +135,9 @@ async function main() {
     browser = await chromium.launch(buildLaunchOptions());
     const warm = await browser.newPage(); await open(warm, { tab: "overview" }); await warm.close();
 
-    for (const theme of ["light", "dark"]) {
+    // DRIVE_ONLY=flows re-runs only the retired-address and form-panel flows (the frames take ~20 min).
+    const only = process.env.DRIVE_ONLY;
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
       for (const frame of FRAMES) {
         for (const posture of POSTURES) {
           const width = contentWidth(frame.width, posture);
@@ -146,10 +149,12 @@ async function main() {
             page.on("pageerror", (e) => errors.push(String(e.message)));
             await open(page, { tab, theme });
             await setContentWidth(page, width);
-            // The Overview's charts load lazily: wait until both donuts and the time chart have drawn.
-            if (tab === "overview") await page.waitForFunction(() => document.querySelectorAll(".mo-donut .recharts-pie-sector").length > 0 && document.querySelector(".mo-chart-time .recharts-bar-rectangle"), null, { timeout: 15000 }).catch(() => {});
+            // Overview's one chart is inline SVG: wait for its line.
+            if (tab === "overview") await page.waitForSelector(".mov-line", { timeout: 15000 }).catch(() => {});
             // Audience: the composition donut, the stage bars and the growth area also load lazily.
             if (tab === "audience") await page.waitForFunction(() => document.querySelector(".ma .mo-donut .recharts-pie-sector") && document.querySelector(".ma-chart-stages .recharts-bar-rectangle") && document.querySelector(".ma-chart-growth .recharts-area-area"), null, { timeout: 15000 }).catch(() => {});
+            // Analytics: the leads chart, the rings and the email chart load lazily.
+            if (tab === "analytics") await page.waitForFunction(() => document.querySelector(".mva-chart-trend .recharts-bar-rectangle") && document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length >= 3 && document.querySelector(".mva-ch-chart .recharts-area-curve"), null, { timeout: 15000 }).catch(() => {});
             // Email: the rate chart loads lazily too.
             if (tab === "email") await page.waitForFunction(() => document.querySelector(".me-chart-rates .recharts-area-curve"), null, { timeout: 15000 }).catch(() => {});
             const id = `${theme}/${frame.name}/paige-${posture}@${width}px/${tab}`;
@@ -161,9 +166,18 @@ async function main() {
               // Populated fixtures must render populated: a failed read here is a harness or code defect.
               const failed = await page.evaluate(() => [...document.querySelectorAll(".campaigns-scroll h2, .campaigns-scroll h3")].map((h) => h.textContent ?? "").filter((t) => /could not load/.test(t)));
               check(failed.length === 0, `${id}: every read lands (no error state on populated data)`, failed.join(" | "));
+              if (tab !== "ads") {
+                const strip = await page.evaluate(() => [...document.querySelectorAll(".campaigns-tabs [role=tab]")].map((t) => t.textContent?.trim()));
+                check(strip.join("|") === "Overview|Campaigns|Audience|Content|Social|Email|Analytics", `${id}: Marketing's seven tabs, with no Ads tab`, strip.join("|"));
+              }
               if (tab === "ads") {
-                const kinds = await page.evaluate(() => [...document.querySelectorAll(".mp-list .mk-flag")].map((el) => el.textContent).filter((t) => t !== "Not available"));
-                check(kinds.length > 0 && kinds.every((k) => k === "Ad copy"), `${id}: lists only ad copy`, kinds.join(","));
+                const drawn = await page.evaluate(() => ({ sum: document.querySelector(".mad .mov-sum")?.textContent ?? "", views: document.querySelectorAll('.campaigns-tabs[aria-label="Ads views"] [role=tab]').length, prov: Boolean(document.querySelector(".mad-prov")), nums: [...document.querySelectorAll(".mad-nums dd")].map((dd) => dd.textContent), plan: document.querySelector(".mad-plan")?.textContent ?? "", h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(/nothing here is estimated/.test(drawn.sum) && /3 ad copy drafts/.test(drawn.sum) && drawn.views === 5 && drawn.prov && drawn.nums.every((n) => n === "—") && /About \$2,000 for April/.test(drawn.plan) && drawn.h1 === 0, `${id}: the desk opens on nothing estimated, five views, the provider strip, a ghost spend card and the brief's budget quoted as a plan`, JSON.stringify(drawn));
+              }
+              if (tab === "content") {
+                await page.waitForFunction(() => [...document.querySelectorAll(".mct-frame img")].every((img) => img.complete), null, { timeout: 5000 }).catch(() => {});
+                const drawn = await page.evaluate(() => ({ first: document.querySelector(".mct > section h2")?.textContent ?? "", cards: document.querySelectorAll(".mct-card").length, pictures: [...document.querySelectorAll(".mct-frame img")].filter((img) => img.naturalWidth > 0).length, covers: document.querySelectorAll(".mct-cover").length, words: document.querySelectorAll(".mct-words").length, ads: document.querySelectorAll(".mct-ad").length, ring: Boolean(document.querySelector(".mct-ring")), pub: [...document.querySelectorAll(".mct-pub dd")].map((dd) => dd.textContent), sum: document.querySelector(".mct .mov-sum")?.textContent ?? "", missing: document.querySelectorAll(".mct-missing").length, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(drawn.first === "Your library" && drawn.cards === 11 && drawn.pictures === 3 && drawn.covers === 2 && drawn.words === 6 && drawn.ads === 2 && drawn.ring && drawn.pub.length === 3 && /11 pieces in your library/.test(drawn.sum) && drawn.missing === 0 && drawn.h1 === 0, `${id}: the gallery leads and draws every piece as itself (three pictures, two document covers, six pieces of copy, the two with labels laid out as ads) with the mix ring and published work`, JSON.stringify(drawn));
               }
               if (tab === "email") {
                 const drawn = await page.evaluate(() => ({ stats: document.querySelectorAll(".me-stats > *").length, starters: document.querySelectorAll(".me-starters button").length, rows: document.querySelectorAll(".me-table tbody tr").length, rates: Boolean(document.querySelector(".me-chart-rates .recharts-area-curve")) }));
@@ -173,8 +187,15 @@ async function main() {
               check(!m.sideways, `${id}: document does not scroll sideways`);
               check(!m.launcherSpills, `${id}: the Vibe Studio launcher contains its label`);
               if (tab === "overview") {
-                const drawn = await page.evaluate(() => ({ donuts: [...document.querySelectorAll(".mo-donut")].filter((d) => d.querySelector(".recharts-pie-sector")).length, bars: document.querySelectorAll(".mo-chart-time .recharts-bar-rectangle").length, line: Boolean(document.querySelector(".mo-chart-time .recharts-line-curve")) }));
-                check(drawn.donuts === 2 && drawn.bars > 0 && drawn.line, `${id}: both donuts, the bars and the opportunities line are drawn`, JSON.stringify(drawn));
+                const drawn = await page.evaluate(() => ({ nodes: document.querySelectorAll(".mov-node").length, broken: document.querySelectorAll(".mov-node.is-broken").length, line: Boolean(document.querySelector(".mov-line")?.getAttribute("d")), cards: document.querySelectorAll(".mov-cp").length, leads: document.querySelectorAll(".mov-leads li").length, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(drawn.nodes === 4 && drawn.broken === 1 && drawn.line && drawn.cards === 4 && drawn.leads === 6 && drawn.h1 === 0, `${id}: the chain (one broken link), the lead line, four capture points and six recent leads are drawn, with no page title`, JSON.stringify(drawn));
+                // MBC 2c: the figures are the server's, and Needs you carries what the server counts beyond the records.
+                const counted = await page.evaluate(() => ({ reads: globalThis.__marketingMetricReads ?? 0, health: [...document.querySelectorAll("[aria-labelledby='mov-att-h'] .mov-note")].map((n) => n.textContent).join(" ") }));
+                check(counted.reads >= 5 && /2 older submissions couldn’t be processed, and 1 submission is still waiting/.test(counted.health), `${id}: the server was read for the figures and processing health, and Needs you states the older failures and the waiting submission`, JSON.stringify(counted));
+              }
+              if (tab === "analytics") {
+                const drawn = await page.evaluate(() => ({ kpis: document.querySelectorAll(".mva-kpi").length, sparks: document.querySelectorAll(".mva-kpi .mva-spark").length, trend: document.querySelectorAll(".mva-chart-trend .recharts-bar-rectangle").length, rings: document.querySelectorAll(".mva .mo-donut .recharts-pie-sector").length, steps: document.querySelectorAll(".mva-step").length, bars: [...document.querySelectorAll(".mva-bar i")].filter((i) => i.getBoundingClientRect().width > 0).length, heat: document.querySelectorAll(".mva-heat i.is-on").length, emailChart: Boolean(document.querySelector(".mva-ch-chart .recharts-area-curve")), capture: document.querySelectorAll(".mva-cap-row").length, channels: document.querySelectorAll(".mva-ch li").length, adsRow: [...document.querySelectorAll(".mva-ch li")].some((li) => /Ad accounts|Open Ads/.test(li.textContent ?? "")), paidNote: document.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent ?? "", email: document.querySelector(".mva-ch li small")?.textContent ?? "", leads: document.querySelector(".mva-kpi .mva-kpi-v")?.textContent ?? "", firstStep: document.querySelector(".mva-step .mva-n")?.textContent ?? "", ring: document.querySelector("[aria-labelledby='mva-out-h'] .mo-donut-center strong")?.textContent ?? "", serverReads: globalThis.__marketingMetricReads ?? 0, h1: document.querySelectorAll(".campaigns-scroll h1:not(.campaigns-sr-only)").length }));
+                check(drawn.kpis === 5 && drawn.sparks === 5 && drawn.trend > 0 && drawn.rings >= 3 && drawn.steps === 4 && drawn.bars === 4 && drawn.heat > 0 && drawn.emailChart && drawn.capture > 0 && drawn.channels === 3 && !drawn.adsRow && /paid ones included/.test(drawn.paidNote) && /sent ·/.test(drawn.email) && drawn.serverReads >= 8 && drawn.leads !== "" && drawn.firstStep === drawn.leads && drawn.ring === drawn.leads && drawn.h1 === 0, `${id}: five figures with sparklines, the leads chart, three rings, the funnel, the heatmap, the email chart and three channels (no Ads row; paid leads pointed to Source mix) are drawn, the headline and funnel are the server's count and agree with the outcome ring when the read is complete, with no page title`, JSON.stringify(drawn));
               }
               if (tab === "audience") {
                 const drawn = await page.evaluate(() => ({ donut: Boolean(document.querySelector(".ma .mo-donut .recharts-pie-sector")), stages: document.querySelectorAll(".ma-chart-stages .recharts-bar-rectangle").length, growth: Boolean(document.querySelector(".ma-chart-growth .recharts-area-area")), stats: document.querySelectorAll(".ma-stats > *").length }));
@@ -194,9 +215,9 @@ async function main() {
     }
 
     // States, at the ordinary 1366 docked session, both themes.
-    for (const theme of ["light", "dark"]) {
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
       for (const mode of ["first", "loading", "error", "readonly"]) {
-        for (const tab of ["overview", "lead-capture", "analytics", "audience", "content", "email", "ads"]) {
+        for (const tab of ["overview", "analytics", "audience", "content", "email", "ads"]) {
           const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
           const page = await ctx.newPage();
           const errors = [];
@@ -210,15 +231,213 @@ async function main() {
           const text = await page.evaluate(() => document.querySelector(".campaigns-scroll")?.textContent ?? "");
           if (mode === "error") check(/could not load/.test(text), `${id}: a failed read says so`);
           if (mode === "loading") check(await page.$(".campaigns-skeleton") !== null, `${id}: loading shows a skeleton`);
-          if (mode === "readonly" && tab === "overview") check(!/Create campaign brief/.test(text), `${id}: no create act for a read-only member`);
+          if (mode === "readonly" && tab === "analytics") {
+            // A member is refused the server figures, so the page keeps the counts from its own records.
+            const member = await page.evaluate(() => ({ leads: document.querySelector(".mva-kpi .mva-kpi-v")?.textContent ?? "", reads: globalThis.__marketingMetricReads ?? 0 }));
+            check(member.leads !== "" && member.reads > 0, `${id}: the server refuses a member and the page keeps its own counts`, JSON.stringify(member));
+          }
+          if (mode === "readonly" && tab === "overview") check(!/New campaign brief|Route it|Route the forms|Finish in Vibe/.test(text), `${id}: no create, route or finish act for a read-only member`);
           if (mode === "first" && tab === "overview") {
-            check(/Nothing is being marketed yet/.test(text), `${id}: first use is guided`);
+            check(/Nothing is being marketed yet/.test(text) && /Three steps to your first lead/.test(text), `${id}: first use is guided`);
             check((await page.$$(".btn-g")).length === 1, `${id}: exactly one gold act`);
           }
           await page.screenshot({ path: path.join(OUT, `state-${mode}-${tab}-${theme}.png`) });
           await ctx.close();
         }
       }
+    }
+
+    // MBC 2c: Overview on a full read: the summary and chain count all 340 leads; the chart says it is drawn from the latest 200.
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(String(e.message)));
+      await open(page, { tab: "overview", theme, mode: "full" });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.waitForFunction(() => /^340 leads/.test(document.querySelector(".mov-sum")?.textContent ?? ""), null, { timeout: 15000 }).catch(() => {});
+      const id = `${theme}/state-full/overview`;
+      const full = await page.evaluate(() => ({ sum: document.querySelector(".mov-sum")?.textContent ?? "", chainLeads: document.querySelectorAll(".mov-node .mov-v")[1]?.textContent ?? "", notes: [...document.querySelectorAll(".mov-note")].map((n) => n.textContent) }));
+      check(errors.length === 0 && /^340 leads in the last 30 days/.test(full.sum) && full.chainLeads === "340" && full.notes.some((n) => /The totals count every lead in the last 30 days/.test(n)) && !full.notes.some((n) => /so lead counts are a floor/.test(n)), `${id}: the summary and chain count all 340 leads, and the chart's note says it is drawn from the latest 200`, JSON.stringify(full));
+      const m = await measure(page);
+      if (m) check(m.overflowX <= 0 && !m.sideways, `${id}: no overflow`);
+      await page.screenshot({ path: path.join(OUT, `state-full-overview-${theme}.png`), fullPage: false });
+      await page.evaluate(() => document.querySelector("[aria-labelledby='mov-att-h']")?.scrollIntoView({ block: "center" }));
+      await page.screenshot({ path: path.join(OUT, `state-full-overview-needs-${theme}.png`) });
+      await ctx.close();
+    }
+
+    // A full read: the server counts every lead in the range; the record-drawn parts stay floors and the page says so.
+    for (const theme of only === "flows" ? [] : ["light", "dark"]) {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(String(e.message)));
+      await open(page, { tab: "analytics", theme, mode: "full" });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.waitForFunction(() => document.querySelector(".mva .mo-donut-center strong"), null, { timeout: 15000 }).catch(() => {});
+      const id = `${theme}/state-full/analytics`;
+      const full = await page.evaluate(() => ({ leads: document.querySelector(".mva-kpi .mva-kpi-v")?.textContent ?? "", firstStep: document.querySelector(".mva-step .mva-n")?.textContent ?? "", ring: document.querySelector("[aria-labelledby='mva-out-h'] .mo-donut-center strong")?.textContent ?? "", cap: document.querySelector(".mva-cap")?.textContent ?? "", sum: document.querySelector(".mva .mov-sum")?.textContent ?? "" }));
+      check(errors.length === 0 && full.leads === "340" && full.firstStep === "340" && /^340 leads in/.test(full.sum) && full.ring === "200+" && /count every lead in this range/.test(full.cap) && /so their counts are floors/.test(full.cap), `${id}: the headline, funnel and summary count all 340 leads; the outcome ring stays a floor (200+) and the note says which is which`, JSON.stringify(full));
+      const m = await measure(page);
+      if (m) check(m.overflowX <= 0 && !m.sideways, `${id}: no overflow`);
+      await page.screenshot({ path: path.join(OUT, `state-full-analytics-${theme}.png`), fullPage: false });
+      await page.evaluate(() => document.querySelector(".mva-cap")?.scrollIntoView({ block: "center" }));
+      await page.screenshot({ path: path.join(OUT, `state-full-analytics-note-${theme}.png`) });
+      await ctx.close();
+    }
+
+    // Campaigns › dossier: what a campaign uses (MBC 3b). An admin attaches and removes a piece; a member reads.
+    for (const theme of ["light", "dark"]) {
+      for (const mode of ["populated", "readonly"]) {
+        const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+        const page = await ctx.newPage();
+        const errors = [];
+        page.on("pageerror", (e) => errors.push(String(e.message)));
+        await open(page, { tab: "campaigns", theme, mode });
+        await setContentWidth(page, contentWidth(1366, "docked"));
+        await page.locator(".pf-row", { hasText: "Spring advisory intake" }).locator("button", { hasText: "Open dossier" }).first().click();
+        await page.waitForSelector(".dw .cc-lane", { timeout: 8000 }).catch(() => {});
+        const id = `${theme}/${mode}/campaign-uses`;
+        const lanes = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll(".dw .cc-lane")].map((lane) => [lane.querySelector("h5")?.textContent, [...lane.querySelectorAll(".cc-row")].map((row) => [...row.querySelectorAll(".cc-k, .cc-n")].map((part) => part.textContent).join(" · "))])));
+        const fit = await page.evaluate(() => { const dw = document.querySelector(".dw"); if (!dw) return null; const r = dw.getBoundingClientRect(); return { sideways: dw.scrollWidth > dw.clientWidth + 1, offRight: [...dw.querySelectorAll(".cc *")].some((el) => el.getBoundingClientRect().right > r.right + 1) }; });
+        check(errors.length === 0 && fit && !fit.sideways && !fit.offRight, `${id}: the dossier's composition renders without error or overflow`, JSON.stringify({ errors, fit }));
+        await page.evaluate(() => document.querySelector(".dw .cc")?.scrollIntoView({ block: "start" }));
+        if (mode === "populated") {
+          check(JSON.stringify(lanes) === JSON.stringify({ Reach: ["Email · Spring advisory announcement", "Social post · Spring intake teaser"], Land: ["Form · Discovery call request", "Page · Advisory scorecard landing page"] }), `${id}: Reach and Land list what the campaign uses`, JSON.stringify(lanes));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-uses-${theme}.png`) });
+          await page.locator(".cc-lane", { hasText: "Land" }).locator(".cc-add").click();
+          const choices = await page.locator(".cc-lane", { hasText: "Land" }).locator(".cc-choices button").allTextContents();
+          check(choices.length === 1 && /Scorecard opt-in/.test(choices[0]), `${id}: Add offers only what isn't attached yet`, JSON.stringify(choices));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-uses-add-${theme}.png`) });
+          await page.locator(".cc-choices button", { hasText: "Scorecard opt-in" }).click();
+          await page.waitForFunction(() => [...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")), null, { timeout: 5000 }).catch(() => {});
+          const added = await page.evaluate(() => ({ row: [...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")), toast: document.querySelector(".campaign-toast")?.textContent ?? "", ready: document.querySelector(".dw")?.textContent?.includes("Attached: 2 forms, 1 page, 1 email, 1 social post.") ?? false }));
+          check(added.row && /Attached to the campaign/.test(added.toast) && added.ready, `${id}: attaching shows the piece, says so, and readiness counts it`, JSON.stringify(added));
+          await page.locator("button[aria-label='Remove Scorecard opt-in from this campaign']").click();
+          await page.waitForFunction(() => ![...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")), null, { timeout: 5000 }).catch(() => {});
+          const removed = await page.evaluate(() => [...document.querySelectorAll(".dw .cc-row")].some((row) => row.textContent?.includes("Scorecard opt-in")));
+          check(!removed, `${id}: Remove takes it off the campaign`);
+        } else {
+          const controls = await page.evaluate(() => document.querySelectorAll(".dw .cc-add, .dw .cc-row button").length);
+          check(JSON.stringify(lanes.Reach) === JSON.stringify(["Email · Owners and admins can see which", "Social post · Spring intake teaser"]) && controls === 0, `${id}: a member reads it without names they can't see, and can't change it`, JSON.stringify({ lanes, controls }));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-uses-member-${theme}.png`) });
+        }
+        await ctx.close();
+      }
+    }
+
+    // Retired addresses and the one form panel, both themes, at the ordinary 1366 docked session.
+    for (const theme of ["light", "dark"]) {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(String(e.message)));
+      await open(page, { tab: "lead-capture?type=form", theme });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      const notice = await page.textContent(".mov-moved").catch(() => "");
+      check(/Lead capture moved here/.test(notice ?? ""), `${theme}/moved: an old Lead capture link lands on Overview and says so`);
+      const pressed = await page.evaluate(() => document.querySelector('#mov-capture [aria-pressed="true"]')?.textContent);
+      check(pressed === "Forms", `${theme}/moved: its form filter is kept`, String(pressed));
+      await page.screenshot({ path: path.join(OUT, `flow-moved-${theme}.png`) });
+      await page.locator("button.mov-cp", { hasText: "Scorecard opt-in" }).click();
+      await page.waitForSelector(".campaigns-drawer", { timeout: 5000 }).catch(() => {});
+      const panel = await page.textContent(".campaigns-drawer").catch(() => "");
+      check(/Not routed: no pipeline, no alert/.test(panel ?? "") && /When someone submits/.test(panel ?? ""), `${theme}/form panel: an unrouted form opens its routing and submissions`);
+      await page.screenshot({ path: path.join(OUT, `flow-form-panel-${theme}.png`) });
+      await page.keyboard.press("Escape");
+      const closed = await page.$(".campaigns-drawer");
+      check(!closed, `${theme}/form panel: Escape closes it`);
+      // Analytics: the range moves every figure and stays in the address; a capture point opens its form panel.
+      await open(page, { tab: "analytics", theme });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.locator(".mva .campaigns-segmented button", { hasText: "Week" }).click();
+      const week = await page.evaluate(() => ({ sum: document.querySelector(".mva .mov-sum")?.textContent ?? "", pressed: document.querySelector('.mva .campaigns-segmented [aria-pressed="true"]')?.textContent, email: document.querySelector(".mva-ch li small")?.textContent ?? "" }));
+      check(/last 7 days/.test(week.sum) && week.pressed === "Week" && /sent ·/.test(week.email), `${theme}/analytics: Week moves the summary and the email row to 7 days`, JSON.stringify(week));
+      await page.screenshot({ path: path.join(OUT, `flow-analytics-week-${theme}.png`) });
+      await page.locator(".mva-cap-row", { hasText: "Scorecard opt-in" }).click();
+      await page.waitForSelector(".campaigns-drawer", { timeout: 5000 }).catch(() => {});
+      const opened = await page.textContent(".campaigns-drawer").catch(() => "");
+      check(/Scorecard opt-in/.test(opened ?? "") && /When someone submits/.test(opened ?? ""), `${theme}/analytics: a capture point opens that form's panel`);
+      // Ads: Creative previews each saved ad; the view stays in the address.
+      await open(page, { tab: "ads", theme });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      await page.locator('.campaigns-tabs[aria-label="Ads views"] [role=tab]', { hasText: "Creative" }).click();
+      const creative = await page.evaluate(() => ({ cards: document.querySelectorAll(".mad-card").length, first: document.querySelector(".mad-prev-f")?.textContent ?? "" }));
+      check(creative.cards === 3 && /Plan your quarter in 30 minutes/.test(creative.first), `${theme}/ads: Creative previews each saved ad with its headline and call to action`, JSON.stringify(creative));
+      const creativePath = await page.evaluate(() => document.body.dataset.harnessPath);
+      check(creativePath === "/solo/review/ads/creative", `${theme}/ads: Creative is its own address in the Ads department`, String(creativePath));
+      await page.screenshot({ path: path.join(OUT, `flow-ads-creative-${theme}.png`) });
+      // An old Marketing Ads bookmark opens the same view in the Ads department, under the Ads strip, not Marketing's.
+      await page.goto(`${BASE}?legacy=performance&theme=${theme}&mode=populated`, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".mad", { timeout: 30000 });
+      const moved = await page.evaluate(() => ({ path: document.body.dataset.harnessPath, pressed: document.querySelector('.campaigns-tabs[aria-label="Ads views"] [aria-selected="true"]')?.textContent, strip: document.querySelector(".campaigns-tabs")?.getAttribute("aria-label") ?? null, h1: document.querySelector("h1")?.textContent }));
+      check(moved.path === "/solo/review/ads/performance" && moved.pressed === "Performance" && moved.strip === "Ads views" && moved.h1 === "Ads", `${theme}/ads: an old /growth/ads?view=performance link opens Ads › Performance`, JSON.stringify(moved));
+      // With PAIGE expanded the Ads strip scrolls; a link straight to Performance must open with that tab
+      // inside the strip's visible box, not clipped past its edge (as Marketing's strip already does).
+      {
+        const narrow = await browser.newPage({ viewport: { width: 1366, height: 768 } });
+        const width = contentWidth(1366, "wide");
+        await narrow.addInitScript((w) => { document.addEventListener("DOMContentLoaded", () => { const st = document.createElement("style"); st.textContent = `main.paige-solo{width:${w}px!important;max-width:${w}px!important}`; document.head.appendChild(st); }); }, width);
+        await narrow.goto(`${BASE}?legacy=performance&theme=${theme}&mode=populated`, { waitUntil: "domcontentloaded" });
+        await narrow.waitForSelector(".mad", { timeout: 30000 });
+        await narrow.waitForTimeout(250);
+        const seen = await narrow.evaluate(() => {
+          const strip = document.querySelector('.campaigns-tabs[aria-label="Ads views"]');
+          const tab = strip?.querySelector('[aria-selected="true"]');
+          if (!strip || !tab) return null;
+          const s = strip.getBoundingClientRect(); const t = tab.getBoundingClientRect();
+          return { scrolls: strip.scrollWidth > strip.clientWidth, scrollLeft: Math.round(strip.scrollLeft), inside: t.left >= s.left - 1 && t.right <= s.right - 27, tab: tab.textContent };
+        });
+        check(Boolean(seen && seen.scrolls && seen.inside && seen.tab === "Performance"), `${theme}/ads: with PAIGE expanded (${width}px) the strip scrolls and Performance opens in view`, JSON.stringify(seen));
+        await narrow.screenshot({ path: path.join(OUT, `flow-ads-strip-expanded-${theme}.png`) });
+        await narrow.close();
+      }
+      // Content: every control in the preview is live (the drawer must not sit inside the region it makes
+      // inert); a document prints whole; an image downloads; the filter keeps to one kind.
+      await open(page, { tab: "content", theme });
+      await setContentWidth(page, contentWidth(1366, "docked"));
+      const openPiece = async (name, ready) => {
+        // The first open loads the Studio renderer; in the dev harness Vite may reload the page once while
+        // it prepares that code, so open again if the panel was lost.
+        for (let attempt = 0; attempt < 3; attempt++) {
+          await page.locator(".mct-card", { hasText: name }).click();
+          if (await page.waitForSelector(ready, { timeout: 8000, state: "attached" }).catch(() => null)) return true;
+          await page.waitForSelector(".mct-card", { timeout: 15000 }).catch(() => {});
+        }
+        return false;
+      };
+      await openPiece("Spring advisory offer", ".campaigns-drawer [data-paige-doc-sheet]");
+      const docPanel = await page.evaluate(() => ({ wide: document.querySelector(".campaigns-drawer")?.getBoundingClientRect().width ?? 0, inert: Boolean(document.querySelector(".campaigns-drawer")?.closest("[inert]")), focus: document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName, acts: [...document.querySelectorAll(".campaigns-detail-actions .btn")].map((b) => b.textContent), facts: document.querySelector(".mct-facts")?.textContent ?? "" }));
+      check(docPanel.wide > 600 && !docPanel.inert && docPanel.focus === "Close details" && docPanel.acts.join("|") === "Print / Save as PDF|Revise with PAIGE" && /^Document · Sales offer/.test(docPanel.facts), `${theme}/content: a document opens wide and live (not inert, focus on Close), with Print / Save as PDF beside Revise`, JSON.stringify(docPanel));
+      await page.screenshot({ path: path.join(OUT, `flow-content-document-${theme}.png`) });
+      // Print: the same class the button sets, then the page as a PDF; the whole document must be in it.
+      await page.evaluate(() => document.documentElement.classList.add("paige-doc-printing"));
+      await page.emulateMedia({ media: "print" });
+      const pdf = await page.pdf({ format: "Letter", printBackground: true });
+      await page.emulateMedia({ media: "screen" });
+      await page.evaluate(() => document.documentElement.classList.remove("paige-doc-printing"));
+      const pdfPath = path.join(OUT, `flow-content-print-${theme}.pdf`);
+      fs.writeFileSync(pdfPath, pdf);
+      const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+      check(pages >= 2, `${theme}/content: Print / Save as PDF carries the whole long document, not one clipped page`, `pages=${pages}`);
+      await page.locator(".campaigns-drawer button[aria-label='Close details']").click({ timeout: 5000 }).catch(() => {});
+      check(!(await page.$(".campaigns-drawer")), `${theme}/content: the Close button closes the preview`);
+      await openPiece("Spring workshop hero", ".mct-full img");
+      await page.waitForFunction(() => { const img = document.querySelector(".mct-full img"); return img && img.complete && img.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
+      const download = page.waitForEvent("download", { timeout: 8000 }).catch(() => null);
+      await page.locator(".campaigns-detail-actions button", { hasText: "Download" }).click({ timeout: 5000 }).catch(() => {});
+      const file = await download;
+      const imgPanel = await page.evaluate(() => ({ img: (document.querySelector(".mct-full img")?.naturalWidth ?? 0) > 0, acts: [...document.querySelectorAll(".campaigns-detail-actions .btn")].map((b) => b.textContent), note: document.querySelector(".mct-act-note")?.textContent ?? "" }));
+      check(imgPanel.img && imgPanel.acts.join("|") === "Download|Open full size|Revise with PAIGE" && Boolean(file) && /\.svg$/.test(file?.suggestedFilename() ?? "") && imgPanel.note === "Download started.", `${theme}/content: an image opens full size and Download really downloads it`, JSON.stringify({ ...imgPanel, file: file?.suggestedFilename() ?? null }));
+      await page.screenshot({ path: path.join(OUT, `flow-content-image-${theme}.png`) });
+      await page.keyboard.press("Escape");
+      await page.locator(".mct .campaigns-segmented button", { hasText: "Documents" }).click();
+      await page.waitForFunction(() => document.querySelectorAll(".mct-card").length === 2, null, { timeout: 5000 }).catch(() => {});
+      const filtered = await page.evaluate(() => ({ cards: document.querySelectorAll(".mct-card").length, covers: document.querySelectorAll(".mct-cover").length, pressed: document.querySelector('.mct .campaigns-segmented [aria-pressed="true"]')?.textContent ?? "" }));
+      check(filtered.cards === 2 && filtered.covers === 2 && /^Documents/.test(filtered.pressed), `${theme}/content: Documents shows only documents`, JSON.stringify(filtered));
+      check(errors.length === 0, `${theme}/flows: no page errors`, errors[0] ?? "");
+      await ctx.close();
     }
 
     // Keyboard: the Overview's act is reachable by Tab and shows a visible focus indicator.
@@ -229,9 +448,9 @@ async function main() {
       let found = false;
       for (let i = 0; i < 40 && !found; i++) {
         await page.keyboard.press("Tab");
-        found = await page.evaluate(() => document.activeElement?.textContent?.includes("Create campaign brief") ?? false);
+        found = await page.evaluate(() => document.activeElement?.textContent?.includes("New campaign brief") ?? false);
       }
-      check(found, "keyboard: Create campaign brief is reachable by Tab");
+      check(found, "keyboard: New campaign brief is reachable by Tab");
       const ring = await page.evaluate(() => { const s = getComputedStyle(document.activeElement); return s.outlineStyle !== "none" || s.boxShadow !== "none"; });
       check(ring, "keyboard: focused act shows a focus indicator");
       await ctx.close();
@@ -240,7 +459,7 @@ async function main() {
     if (browser) await browser.close().catch(() => {});
     await stopTree(vite);
   }
-  fs.writeFileSync(path.join(OUT, "geometry.json"), JSON.stringify(geometry, null, 2));
+  if (process.env.DRIVE_ONLY !== "flows") fs.writeFileSync(path.join(OUT, "geometry.json"), JSON.stringify(geometry, null, 2));
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
   if (failed.length) process.exitCode = 1; else console.log(`frames written to ${OUT}`);

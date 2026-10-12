@@ -21,6 +21,7 @@
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
+import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const url = new URL(process.env.CHAT_ANSWER_RACE_TEST_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres");
 assert.ok(
@@ -132,7 +133,7 @@ try {
   try {
     run(`DELETE FROM public.paige_chat_turns WHERE thread_id IN ('${threadA}', '${threadB}');
          DELETE FROM public.paige_chat_threads WHERE id IN ('${threadA}', '${threadB}');
-         DELETE FROM public.tenants WHERE id = '${tenantId}';
+         ${retireSyntheticTenantSQL(tenantId)}
          DELETE FROM auth.users WHERE id = '${userId}';`);
   } catch (e) { console.error("chat-answer-claim-race: cleanup failed", e?.message ?? e); failures += 1; }
   clearTimeout(runTimer);

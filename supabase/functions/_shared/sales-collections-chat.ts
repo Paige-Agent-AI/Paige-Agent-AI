@@ -1,4 +1,5 @@
 import { projectCollectionAgreement } from './sales-collections/agreement-context.ts';
+import { parseRepaymentRead, previewRepaymentRead } from './sales-collections/repayment-read.ts';
 import { SALES_COLLECTION_KIT_BY_ACTION, SALES_COLLECTION_READ_CAPABILITY } from './paige-spine/domains/sales_collections.ts';
 import { parseCollectionCommand,COLLECTION_ACTIONS,UUID } from './sales-collections/contract.ts';
 import { CRM_APPROVAL_CANDIDATE_LIMIT,resolveCrmApprovedFingerprint } from './crm-command/approval-resolution.ts';
@@ -60,7 +61,12 @@ export function salesCollectionsSafeResult(value:unknown):Record<string,unknown>
  return out;
 }
 async function readCollections(ctx:Context,deps:Dependencies):Promise<Result>{
- if(Object.keys(ctx.args).some(k=>!['entity','limit','cursor','before_id'].includes(k))||!['invoice','receipt','agreement'].includes(String(ctx.args.entity)))return {content:{success:false,error:'Invalid collection register request.'}};
+ if(Object.keys(ctx.args).some(k=>!['entity','limit','cursor','before_id','fixed_repayment'].includes(k))||!['invoice','receipt','agreement'].includes(String(ctx.args.entity)))return {content:{success:false,error:'Invalid collection register request.'}};
+ let repayment:Record<string,unknown>|undefined;
+ if(Object.prototype.hasOwnProperty.call(ctx.args,'fixed_repayment')){
+   try{if(ctx.args.entity!=='agreement')throw Error('entity');repayment=parseRepaymentRead(ctx.args.fixed_repayment);}
+   catch{return {content:{success:false,error:'Invalid principal repayment preview request.'}};}
+ }
  const limit=ctx.args.limit??(ctx.args.entity==='agreement'?5:25);if(!Number.isInteger(limit)||Number(limit)<1||Number(limit)>50)return {content:{success:false,error:'Collection reads are bounded to 50 records.'}};
  const entity=String(ctx.args.entity),cursor=object(ctx.args.cursor);
  if(ctx.args.cursor!=null&&(!cursor||Object.keys(cursor).some(k=>!['snapshot_id','after_position','entity'].includes(k))||typeof cursor.snapshot_id!=='string'||!UUID.test(cursor.snapshot_id)||!Number.isSafeInteger(cursor.after_position)||Number(cursor.after_position)<0||cursor.entity!==entity))return {content:{success:false,error:'Invalid collection cursor.'}};
@@ -71,7 +77,7 @@ async function readCollections(ctx:Context,deps:Dependencies):Promise<Result>{
  const data=object(reply.data);if(reply.error||!data||!Array.isArray(data.rows)||data.rows.length>Number(limit)||typeof data.has_more!=='boolean'||data.tenant_id!==ctx.tenantId||typeof data.receipt_id!=='string'||!UUID.test(data.receipt_id))throw Error('unverified');
  const rows=data.rows.map(value=>{if(entity==='agreement')return projectCollectionAgreement(value,ctx.tenantId!);const r=object(value);if(!r||typeof r.id!=='string'||!UUID.test(r.id))throw Error('unverified');const safe:Record<string,unknown>={id:r.id,...salesCollectionsSafeResult(r)};if(typeof r.record_kind==='string'&&['managed','imported','provider_or_legacy'].includes(r.record_kind))safe.record_kind=r.record_kind;if(typeof r.collection_terms_version==='number')safe.version=r.collection_terms_version;if(typeof r.agreed_currency==='string'&&/^[a-z]{3}$/.test(r.agreed_currency))safe.currency=r.agreed_currency;if(Number.isSafeInteger(r.agreed_amount_minor))safe.amount_cents=r.agreed_amount_minor;if(typeof r.terms_current==='boolean')safe.terms_current=r.terms_current;for(const k of ['invoice_id','reverses_payment_id'])if(typeof r[k]==='string'&&UUID.test(r[k] as string))safe[k]=r[k];for(const k of ['kind','provenance'])if(typeof r[k]==='string'&&['receipt','reversal','owner_imported_unverified','human_recorded','canonical_record','full','installment','recurring','deposit','milestone','custom'].includes(r[k] as string))safe[k]=r[k];return safe;});
  const next=data.next_cursor;if(next!==null&&next!==undefined){if(entity==='agreement'){if(typeof next!=='string'||!UUID.test(next))throw Error('cursor');}else{const n=object(next);if(!n||typeof n.snapshot_id!=='string'||!UUID.test(n.snapshot_id)||!Number.isSafeInteger(n.after_position)||n.entity!==entity||Object.keys(n).some(k=>!['snapshot_id','after_position','entity'].includes(k)))throw Error('cursor');}}
- return {content:{success:true,entity,receipt_id:data.receipt_id,rows,has_more:data.has_more,next_cursor:next??null,note:'These are bounded canonical business records. Commercial terms are separate from signed documents; absent/stale terms need owner resolution. Schedule preview is deterministic recorded intent, not a payment mandate, accrued fee or settlement. Imported/manual receipts do not verify processor payment.'}};
+ return {content:{success:true,entity,receipt_id:data.receipt_id,rows,has_more:data.has_more,next_cursor:next??null,...(repayment?{repayment_preview:previewRepaymentRead(repayment,rows)}:{}),note:'These are bounded canonical business records. Commercial terms are separate from signed documents; absent/stale terms need owner resolution. Schedule preview is deterministic recorded intent, not a payment mandate, accrued fee or settlement. Imported/manual receipts do not verify processor payment.'}};
  }catch{return {content:{success:false,error:'Collection register unavailable in this workspace.'}};}
 }
 /** Selection only. The action endpoint is the sole atomic approval consumer and execution gate. */

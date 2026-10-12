@@ -16,7 +16,13 @@ const common={
  agreement_id:nullableId,processor_intent:nullableText(80),payment_method_intents:{type:'array',maxItems:12,items:{type:'string',pattern:'^[a-z][a-z0-9_]{0,63}$'}},
  delivery_channel_intents:{type:'array',maxItems:2,items:{type:'string',enum:['email','sms']}},due_date:{type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}$'},memo:nullableText(2000),
 } as const satisfies Readonly<Record<string,NestedInputSchema>>;
-const draft:NestedInputSchema={type:'object',properties:{...common,deposit_minor:{type:'integer',minimum:1,maximum:2147483647}},required:Object.keys(common),additionalProperties:false};
+const treatment:NestedInputSchema={type:'object',additionalProperties:false,properties:{
+ state:{type:'string',enum:['unknown','not_applicable','recorded']},source:nullableText(200),policy:nullableText(1000),
+ charges:{type:'array',maxItems:10,items:{type:'object',additionalProperties:false,properties:{line_index:{type:'integer',minimum:0,maximum:49},amount_minor:{type:'integer',minimum:1,maximum:2147483647},currency:{type:'string',enum:['usd']}},required:['line_index','amount_minor','currency']}},
+ },required:['state','source','policy','charges']};
+const draft:NestedInputSchema={type:'object',properties:{...common,deposit_minor:{type:'integer',minimum:1,maximum:2147483647},
+ commercial_terms_reference:{type:'object',additionalProperties:false,properties:{id:{type:'string',format:'uuid'},version:{type:'integer',minimum:0}},required:['id','version']},
+ commercial_conditions:{type:'object',additionalProperties:false,properties:{schema_version:{type:'integer',minimum:1,maximum:1},tax:treatment,fees:treatment},required:['schema_version','tax','fees']}},required:Object.keys(common),additionalProperties:false};
 export const SALES_DRAFT_CREATE=defineCapability({
   identity:{id:'sales_invoice.draft_create',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Save and read back an unissued canonical invoice draft. No publication, delivery, mandate or payment.'},
   input:objectInputSchema({properties:{action:{type:'string',enum:['invoice.draft_create']},draft,},required:['action','draft']}),

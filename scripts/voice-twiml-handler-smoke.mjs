@@ -71,7 +71,7 @@ let failWriteTable = null;
 // scope now honours it and returns [] on a mismatch, so a §9 scoping error surfaces
 // as a missing value rather than as silence. OTHER_TENANT exists to be a wrong
 // answer that is nonetheless a well-formed one.
-function makeAdmin() {
+function makeAdmin({ providerAllowed = true } = {}) {
   const reads = [];
   const rowsFor = (table, filters, inFilter) => {
     if (table === "tenant_phone_numbers") {
@@ -162,6 +162,7 @@ function makeAdmin() {
       // unassertable: create_and_attach_conversation's p_tenant_id is, by this
       // function's own comments, "the ONLY way to stamp the correct tenant".
       rpcs.push({ name, args });
+      if (name === "comms_provider_execution_allowed") return { data: providerAllowed, error: null };
       if (name === "create_and_attach_conversation") {
         return { data: { contact_id: CONTACT, conversation_id: "conv-1" }, error: null };
       }
@@ -224,6 +225,13 @@ let n = 0;
 const check = (label, cond) => { n++; assert.ok(cond, `FAILED: ${label}`); console.log(`  ok  ${label}`); };
 
 console.log("voice-twiml handler smoke (real handler, fail-closed tenant auth)\n");
+{
+  const r = await post(new URLSearchParams({ From: `client:${TENANT}.${SEAT}`, To: "+15559990000", CallSid: "CArestricted" }), { admin: makeAdmin({ providerAllowed: false }), secret: WEBHOOK_SECRET });
+  check("restricted workspace gets a hangup", r.status === 200 && r.xml.includes("<Hangup"));
+  check("restricted workspace grants no dial or media stream", !r.xml.includes("<Dial") && !r.xml.includes("<Stream") && !r.xml.includes("statusCallback"));
+  check("restricted workspace creates no call history", r.admin.writes.length === 0 && !r.admin.rpcs.some(x => x.name === "create_and_attach_conversation"));
+}
+
 
 // ── 1. INBOUND, unsigned. The cheap attack: the dialed number is PUBLIC. ─────
 {

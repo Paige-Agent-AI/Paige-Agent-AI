@@ -44,6 +44,34 @@ const KIT_FILES = [
   "scripts/fixtures/capability-kit/type-contract.fixture.ts",
 ];
 
+// Exact human/PAIGE merchant read door. This is not a generic edge-read exception:
+// only the two scoped, GET-only reader declarations may project their exact input.
+const MERCHANT_READ_DECLARATIONS = new Map([
+  ['sales_merchant.status',['read_sales_merchant_status','MERCHANT_STATUS_READ_CAPABILITY']],
+  ['sales_merchant.refresh',['read_sales_merchant_refresh','MERCHANT_REFRESH_READ_CAPABILITY']],
+]);
+function merchantReadDoorBound(resolver) {
+  const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
+  const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  const aggregate=read('supabase/functions/_shared/sales-invoice-chat.ts');
+  const adapter=read('supabase/functions/_shared/sales-payments/merchant-chat.ts');
+  const edge=read('supabase/functions/tenant-stripe-connect/index.ts');
+  return /from\s*['"]\.\.\/_shared\/sales-invoice-chat\.ts['"]/.test(chat)
+    && chat.includes('toolDefs.push(...SALES_INVOICE_TOOLS')
+    && chat.includes('await dispatchSales({')
+    && chat.includes('SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name) ? dispatchSalesCollectionsChat : dispatchSalesInvoiceChat')
+    && /from\s*['"]\.\/sales-payments\/merchant-chat\.ts['"]/.test(aggregate)
+    && aggregate.includes('...SALES_MERCHANT_TOOLS')
+    && aggregate.includes('if(SALES_MERCHANT_TOOL_NAMES.has(ctx.toolName))return dispatchMerchantChat(ctx,deps,')
+    && adapter.includes("deps.caller.functions.invoke('tenant-stripe-connect',{body})")
+    && adapter.includes("const read=action==='merchant.status'||action==='merchant.refresh_status'")
+    && edge.includes("if(action==='status'){await scope();return json(200,{...output(),ok:true,outcome:'available'});}")
+    && edge.includes("row=await recoverPendingMerchant(action,row,")
+    && edge.includes("const facts=await around('account_readback',()=>readStripeMerchant(")
+    && edge.includes("admin.rpc('_sales_invoice_actor',")
+    && edge.includes("admin.rpc('record_sales_merchant_onboarding_readback',");
+}
+
 /**
  * Every `actionRiskKey` declared through `defineCapability()` in the scanned tree. A key here has a
  * governed declaration, so its `RISK` entry is the declaration's dependency rather than debt.
@@ -81,8 +109,27 @@ function collectDeclaredCapabilityNames(files, resolver) {
             const operation = literalProperty(objectProperties(binding, sourceFile), "operation");
             if (gov.get("actionRiskKey")?.initializer?.kind === ts.SyntaxKind.NullKeyword &&
                 literalProperty(gov, "risk") === "read_only" && literalProperty(gov, "approval") === "none" &&
-                operation && /^public\.read_[a-z0-9_]+$/.test(operation)) {
-              readTools.set(operation.slice(7), owner.name.text);
+                operation) {
+              if(/^public\.read_[a-z0-9_]+$/.test(operation))readTools.set(operation.slice(7), owner.name.text);
+              else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)==='supabase/functions/_shared/analytics-metrics/read.ts'){
+                // The existing issuer is deliberately not renamed or duplicated to satisfy a
+                // read_* naming heuristic. Admit this exact read tuple and schema only when
+                // the actual caller-JWT door and resolver are bound; never clear risk debt.
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                const chat=resolver.sourceFile(path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'))?.text??'';
+                if(identity&&literalProperty(identity,'id')==='analytics.metric_read'&&owner.name.text==='BUSINESS_METRIC_READ'
+                  && sourceFile.text.includes("caller.rpc('issue_analytics_evidence_bundle'")
+                  && sourceFile.text.includes("caller.rpc('resolve_analytics_evidence_reference'")
+                  && sourceFile.text.includes("caller.rpc('current_user_tenant_id')")
+                  && chat.includes('toolDefs.push(...BUSINESS_METRIC_TOOLS)')
+                  && chat.includes('readBusinessMetric(supabaseClient,'))readTools.set('read_business_metric',owner.name.text);
+              }
+              else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                const id=identity&&literalProperty(identity,'id');
+                const exact=MERCHANT_READ_DECLARATIONS.get(id);
+                if(exact&&exact[1]===owner.name.text&&merchantReadDoorBound(resolver))readTools.set(exact[0],owner.name.text);
+              }
             }
           }
           for (const property of argument.properties) {
@@ -970,6 +1017,23 @@ function runSelfTest() {
       "declaration-contradicts-constructor"],
   ];
   let failed = 0;
+  const merchantFiles=['supabase/functions/_shared/sales-payments/merchant-capability.ts','supabase/functions/paige-ai-chat/index.ts','supabase/functions/_shared/sales-invoice-chat.ts','supabase/functions/_shared/sales-payments/merchant-chat.ts','supabase/functions/tenant-stripe-connect/index.ts'];
+  const merchantText=new Map(merchantFiles.map(p=>[path.join(ROOT,p),fs.readFileSync(path.join(ROOT,p),'utf8')]));
+  const merchantReads=text=>collectDeclaredCapabilityNames([path.join(ROOT,merchantFiles[0])],{sourceFile:p=>text.has(p)?ts.createSourceFile(p,text.get(p),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined}).readTools;
+  if(merchantReads(merchantText).size!==2){failed++;console.error('  FAIL exact mounted merchant reads not discovered');}
+  for(const [index,before,after]of [
+    [0,"id:'sales_merchant.status'","id:'sales_merchant.unknown'"],
+    [0,"operation:'edge.tenant-stripe-connect'","operation:'edge.other'"],
+    [1,'toolDefs.push(...SALES_INVOICE_TOOLS','toolDefs.push(...OTHER_TOOLS'],
+    [2,'...SALES_MERCHANT_TOOLS','...OTHER_TOOLS'],
+    [2,'return dispatchMerchantChat(ctx,deps,','return missingDispatch(ctx,deps,'],
+    [3,"invoke('tenant-stripe-connect'","invoke('other-edge'"],
+    [4,"const facts=await around('account_readback',()=>readStripeMerchant(","const facts=await missingReadback("],
+  ]){
+    const key=path.join(ROOT,merchantFiles[index]);if(!merchantText.get(key).includes(before))throw Error(`merchant read negative target absent: ${before}`);
+    const broken=new Map(merchantText);broken.set(key,broken.get(key).replaceAll(before,after));
+    if(merchantReads(broken).has('read_sales_merchant_status')){failed++;console.error(`  FAIL merchant read accepted missing/foreign binding ${before}`);}else console.log(`  ok   merchant read refuses ${before}`);
+  }
   for (const [name, source, expected] of cases) {
     const actual = scanSource(source, "fixture.ts").map((item) => item.rule);
     if (!actual.includes(expected)) {
@@ -1086,6 +1150,25 @@ function runSelfTest() {
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }
   const readAst=ts.createSourceFile(declarationFile,readSource,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const metricPath=path.join(ROOT,'supabase/functions/_shared/analytics-metrics/read.ts');
+  const metricSource=readSource.replace('READ_CAP','BUSINESS_METRIC_READ').replace('public.read_probe','public.issue_analytics_evidence_bundle').replace('effect:"read"','identity:{id:"analytics.metric_read"},effect:"read"')
+    + `;caller.rpc('issue_analytics_evidence_bundle');caller.rpc('resolve_analytics_evidence_reference');caller.rpc('current_user_tenant_id');`;
+  const metricTool=readTool.replace('READ_CAP','BUSINESS_METRIC_READ').replace('read_probe','read_business_metric');
+  const metricChat='toolDefs.push(...BUSINESS_METRIC_TOOLS);readBusinessMetric(supabaseClient, scope, input);';
+  for(const [name,source,chat,file,expected] of [
+    ['metric exact existing read door',metricSource,metricChat,metricPath,false],
+    ['metric wrong declaration',metricSource.replace('analytics.metric_read','analytics.other'),metricChat,metricPath,true],
+    ['metric missing resolver',metricSource.replace('resolve_analytics_evidence_reference','other'),metricChat,metricPath,true],
+    ['metric missing scope',metricSource.replace('current_user_tenant_id','other'),metricChat,metricPath,true],
+    ['metric missing caller JWT binding',metricSource,metricChat.replace('supabaseClient','admin'),metricPath,true],
+    ['metric wrong source path',metricSource,metricChat,declarationFile,true],
+    ['metric mutation cannot clear',metricSource.replace('effect:"read"','effect:"mutation"'),metricChat,metricPath,true],
+  ]){
+    const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:ts.createSourceFile(p,chat,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS)});
+    const found=scanSource(metricTool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
   const readNames=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>readAst});
   if(readNames.riskKeys.size || scanSource(readTool,"src/read-probe.ts",{declaredReadTools:readNames.readTools,riskPolicy:new Map([["read_probe","high"]])}).every(item=>item.rule!=="direct-tool-definition")){failed++;console.error("  FAIL read declaration cleared a classified mutation");}else console.log("  ok   read declaration never clears risk debt or classified mutation");
   // A cast must not hide an incomplete declaration from the strict rule. Before the shared

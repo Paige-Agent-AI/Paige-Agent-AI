@@ -1,0 +1,99 @@
+{
+  "capturedAt": "2026-10-10T18:55:58.228Z",
+  "proofClass": "production catalog metadata only, no tenant rows or RPC invocation",
+  "project": "xygzykjyynhzqytbqnzu",
+  "proof": {
+    "trigger": "CREATE TRIGGER trg_paige_trajectory_history BEFORE INSERT OR UPDATE ON public.paige_durable_work FOR EACH ROW EXECUTE FUNCTION _capture_paige_trajectory_history()",
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres}",
+        "name": "_capture_paige_trajectory_history",
+        "definer": false,
+        "body_md5": "8f99c2e2797927d7cffbd623fd149c54",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "",
+        "volatility": "v",
+        "normalized_body_md5": "745d1f477f54d5fc760151e4f735d497"
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "name": "operator_intelligence_eval_history",
+        "definer": true,
+        "body_md5": "9d68716774b8f9de00b7d80e5b05913b",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_limit integer",
+        "volatility": "v",
+        "normalized_body_md5": "0b3f6fc9a0576bc4d9c0ce5fb4e20506"
+      },
+      {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+        "name": "operator_intelligence_trajectories",
+        "definer": true,
+        "body_md5": "2c6f15832a98ca35728a22391eddba00",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_limit integer, p_before_at timestamp with time zone, p_before_id uuid, p_work_id uuid, p_trace_id uuid, p_subject_tenant uuid",
+        "volatility": "v",
+        "normalized_body_md5": "6c3b093b6496cdc188356f8a410cffd4"
+      }
+    ],
+    "migrations": [
+      {
+        "name": "operator_intelligence_eval_history",
+        "version": "20270602000204"
+      },
+      {
+        "name": "int280_durable_trajectory_history",
+        "version": "20270602000400"
+      },
+      {
+        "name": "int280_operator_trajectories",
+        "version": "20270602000401"
+      }
+    ],
+    "history_column": {
+      "type": "jsonb",
+      "nullable": "YES"
+    },
+    "durable_boundary": {
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "rls": true,
+      "forced": true
+    },
+    "durable_raw_access": [
+      {
+        "role": "anon",
+        "any_dml": false
+      },
+      {
+        "role": "authenticated",
+        "any_dml": false
+      },
+      {
+        "role": "service_role",
+        "any_dml": false
+      }
+    ],
+    "trajectory_execute": [
+      {
+        "role": "anon",
+        "execute": false
+      },
+      {
+        "role": "authenticated",
+        "execute": true
+      },
+      {
+        "role": "service_role",
+        "execute": false
+      }
+    ],
+    "normalization": "remove all whitespace, preserving every non-whitespace character; raw prosrc hashes retained separately"
+  },
+  "authenticatedAcceptance": "UNVERIFIED - OWNER_LOGIN_HOLD"
+}

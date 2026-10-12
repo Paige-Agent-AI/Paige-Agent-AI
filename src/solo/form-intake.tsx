@@ -26,6 +26,8 @@ type Props = {
   workspace: PipelineWorkspace;
   onOpenContact: (contactId: string) => void;
   onOpenDeal: (dealId: string) => void;
+  /** Called after a save succeeds, so the surface that opened the panel can re-read what changed. */
+  onSaved?: () => void;
 };
 
 type Draft = { enabled: boolean; pipelineId: string; stageId: string; email: string };
@@ -41,8 +43,16 @@ const sameDraft = (a: Draft, b: Draft) =>
   a.enabled === b.enabled && a.email.trim() === b.email.trim() &&
   (!a.enabled || (a.pipelineId === b.pipelineId && a.stageId === b.stageId));
 
-export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, onOpenDeal }: Props) {
+export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, onOpenDeal, onSaved }: Props) {
   const intake = useFormIntake(tenantId, formId);
+  const onSavedRef = React.useRef(onSaved);
+  onSavedRef.current = onSaved;
+  const intakeSave = intake.save;
+  const save = React.useCallback(async (next: FormIntakeSettings) => {
+    const result = await intakeSave(next);
+    if (result.ok) onSavedRef.current?.();
+    return result;
+  }, [intakeSave]);
   if (intake.phase === "loading") {
     return <div className="intake-skeleton" aria-busy="true" aria-label="Loading this form's settings and submissions"><span /><span /><span /></div>;
   }
@@ -60,7 +70,7 @@ export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, on
   return (
     <>
       {intake.canEdit
-        ? <IntakeEditor key={formId} settings={intake.settings} workspace={workspace} save={intake.save} />
+        ? <IntakeEditor key={formId} settings={intake.settings} workspace={workspace} save={save} />
         : <IntakeReadOnly settings={intake.settings} workspace={workspace} />}
       <Submissions
         fields={intake.fields}

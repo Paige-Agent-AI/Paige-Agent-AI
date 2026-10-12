@@ -36,6 +36,7 @@ export interface EmittedTool {
 export interface SpineDeclarationLike {
   key: string;
   domain: string;
+  selfDescribe?: boolean;
   readiness?: ReadinessResolverId;
   action?: { classification: "read" | "mutate" | "external_effect"; chatTool?: string };
 }
@@ -132,7 +133,7 @@ export function projectCapabilities(input: ProjectionInput): ProjectedCapability
     const spine = byTool.get(t.name);
     const legacy = spine ? undefined : input.legacy[t.name];
     // An internal helper (e.g. a preview step) stays callable but is not part of her self-description.
-    if (legacy && !legacy.selfDescribe) continue;
+    if (spine?.selfDescribe === false || (legacy && !legacy.selfDescribe)) continue;
 
     const mutating = input.isMutating(t.name);
     const effect = spine?.action?.classification ?? legacy?.effect ?? null;

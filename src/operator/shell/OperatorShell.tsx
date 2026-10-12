@@ -37,11 +37,12 @@
  * `/operator/*` they are NOT reachable. Wiring them into the slots is the next round's work.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NavLink, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { NavLink, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { PlatformTrustProvider } from "@/operator/data/usePlatformTrust";
 import { useReducedMotion } from "framer-motion";
 import { AgentPresenceProvider, useAgentPresence } from "@/components/ui/paige";
 import { OPERATOR_SLOTS } from "@/operator/ia/operatorIA";
+import { settingsGroupForView } from "@/operator/ia/settingsIA";
 import {
   canonicalPath, resolveOperatorAddress, slotPath, viewPath, type OperatorAddress,
 } from "@/operator/shell/operatorAddress";
@@ -134,6 +135,7 @@ export default function OperatorShell() {
 function OperatorShellBody() {
   const params = useParams();
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const address = resolveOperatorAddress(params.section, params["*"] ?? "");
   const [search] = useSearchParams();
 
@@ -277,7 +279,7 @@ function OperatorShellBody() {
   // screen, rather than rendering one view while the address bar names another. An unknown SLOT
   // is a different failure and is NOT redirected — see the 404 below.
   if (address.kind === "resolved" && address.stale) {
-    return <Navigate to={canonicalPath(address)} replace />;
+    return <Navigate to={{ pathname: canonicalPath(address), search: routeLocation.search, hash: routeLocation.hash }} replace />;
   }
 
   const columns = [
@@ -308,6 +310,7 @@ function OperatorShellBody() {
         }}
       >
         <SlotRail
+          settingsGroup={address.kind === "resolved" && address.slot.id === "settings" ? settingsGroupForView(address.view)?.slug : undefined}
           compact={railCompact}
           onToggleCompact={() => setRailFolded((v) => !v)}
           isDark={isDark}
@@ -497,16 +500,19 @@ function OperatorCanvas({
 
 function SlotSurface({ address }: { address: Extract<OperatorAddress, { kind: "resolved" }> }) {
   const { slot, view } = address;
+  const settingsGroup = slot.id === "settings" ? settingsGroupForView(view) : undefined;
+  const offeredViews = settingsGroup?.views ?? slot.views;
+  const intelligenceCategory = settingsGroup?.slug === "paige-intelligence";
   return (
     <>
-      <header className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-8 border-b border-border pb-5">
+      {intelligenceCategory ? <h1 className="sr-only">PAIGE Intelligence</h1> : <header className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-8 border-b border-border pb-5">
         <h1 className="min-w-0 truncate text-[21px] font-medium leading-[1.1] tracking-[-0.022em] text-foreground">
-          {slot.label}
+          {settingsGroup?.label ?? slot.label}
         </h1>
         <code className="hidden flex-none font-mono text-[11px] text-muted-foreground md:block">
           {canonicalPath(address)}
         </code>
-      </header>
+      </header>}
 
       {/* The view row. `z-12` is the pack's own value (`viewRowStyle` L10803) and it stays. What
           changed is what sits above it: the pack's comment there claims the row is "Raised above
@@ -515,12 +521,12 @@ function SlotSurface({ address }: { address: Extract<OperatorAddress, { kind: "r
           summoned layer is read through by nothing — so the command row (13) and
           `SummonedSurface` (14) now clear this 12. It scrolls sideways within itself and never
           widens the column (min-w-0 + overflow-x). */}
-      {slot.views.length > 0 && (
+      {offeredViews.length > 1 && (
         <nav
-          aria-label={`${slot.label} views`}
+          aria-label={settingsGroup ? `${settingsGroup.label} tabs` : `${slot.label} views`}
           className="relative z-[12] my-2.5 flex min-w-0 flex-none flex-nowrap gap-0.5 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {slot.views.map((name) => (
+          {offeredViews.map((name) => (
             <NavLink
               key={name}
               to={viewPath(slot.id, name)}
@@ -534,7 +540,7 @@ function SlotSurface({ address }: { address: Extract<OperatorAddress, { kind: "r
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {name}
+              {name === "Governance" && settingsGroup ? "Governance & security" : name}
               {name === view && (
                 <span aria-hidden className="absolute inset-x-2 bottom-0 h-0.5 rounded-t-full bg-cd-gold" />
               )}

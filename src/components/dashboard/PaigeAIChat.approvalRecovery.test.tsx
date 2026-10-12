@@ -321,7 +321,7 @@ describe("PAIGE chat, Solo — after Approve the card answers for what happened"
     expect(reports(host)[0].getAttribute("aria-label")).toBe("Running…");
 
     const stop = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
-      .find((b) => b.getAttribute("aria-label") === "Cancel PAIGE response");
+      .find((b) => b.getAttribute("aria-label") === "Stop PAIGE response");
     await press(stop);
 
     // The approval may already have run: no card to approve twice, the record and the turn stay.

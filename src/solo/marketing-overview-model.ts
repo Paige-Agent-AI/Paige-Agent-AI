@@ -53,6 +53,62 @@ const STATUS_LABEL: Record<StatusKey, string> = {
 };
 const STATUS_ORDER: StatusKey[] = ["running", "approved", "review", "draft", "paused", "blocked", "completed"];
 
+type FormRouteFields = Pick<CampaignArtifact, "routingTargets" | "intakePipelineId">;
+
+/** The pipeline fields the default-route rule reads. Structural, so any read of the Sales workspace fits. */
+export type DefaultPipelineWorkspace = {
+  pipelines?: readonly { id: string; name?: string; isDefault?: boolean; lifecycleStatus?: string; createdAt?: string }[];
+  stages?: readonly { id: string; pipelineId?: string; label?: string; stageType?: string; archivedAt?: string | null; orderIndex?: number }[];
+} | null | undefined;
+
+/** Where a form with no deal route of its own files its leads: the business's DEFAULT pipeline, first open
+ *  stage. The same pick growth_attach_submission_default_deal makes (20271021042001): the oldest
+ *  non-archived default pipeline, then its first non-archived open stage by order. Null when there is no
+ *  such pipeline or it has no open stage (the server skips with no_default_pipeline / no_open_stage). A
+ *  missing workspace is null too: never claim a destination the records don't show. */
+export function defaultPipelineTarget(ws: DefaultPipelineWorkspace): { pipelineId: string; pipelineName: string; stageId: string; stageLabel: string } | null {
+  const byAge = (a: { id: string; createdAt?: string }, b: { id: string; createdAt?: string }) =>
+    (Date.parse(a.createdAt ?? "") || 0) - (Date.parse(b.createdAt ?? "") || 0) || a.id.localeCompare(b.id);
+  const pipeline = [...(ws?.pipelines ?? [])].filter((p) => p.isDefault === true && p.lifecycleStatus !== "archived").sort(byAge)[0];
+  if (!pipeline) return null;
+  const stage = [...(ws?.stages ?? [])]
+    .filter((s) => s.pipelineId === pipeline.id && s.stageType === "open" && !s.archivedAt)
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0) || a.id.localeCompare(b.id))[0];
+  if (!stage) return null;
+  return { pipelineId: pipeline.id, pipelineName: pipeline.name || "Untitled pipeline", stageId: stage.id, stageLabel: stage.label || "its first open stage" };
+}
+
+/** True when the default pipeline can take a lead: exactly the server's default_ready
+ *  (marketing.forms.unrouted_current) and growth_attach_submission_default_deal's precondition. */
+export const defaultPipelineReady = (ws: DefaultPipelineWorkspace) => defaultPipelineTarget(ws) !== null;
+
+/** What a default pipeline in Sales would change for a form that reaches no pipeline today. */
+export function defaultPipelineHint(ws: DefaultPipelineWorkspace): string {
+  const hasDefault = (ws?.pipelines ?? []).some((p) => p.isDefault === true && p.lifecycleStatus !== "archived");
+  return hasDefault ? "Your default pipeline in Sales has no open stage to take them" : "Setting a default pipeline in Sales would catch them";
+}
+
+/** How a form's default destination reads to the owner: "<Pipeline> (default) → <first open stage>". */
+export const defaultRouteLabel = (target: NonNullable<ReturnType<typeof defaultPipelineTarget>>) =>
+  `${target.pipelineName} (default) → ${target.stageLabel}`;
+
+/** "own": the form routes its own deals (an enabled pipeline_attach automation, or its intake route while
+ *  it has no enabled automation at all, as growth-process-submission plans it). "default": it has no own
+ *  route, so the processor files its leads into the default pipeline, which can take them. "none": no own
+ *  route and no usable default pipeline, so its leads reach no pipeline. */
+export function pipelineRouteOf(form: FormRouteFields, defaultReady: boolean): "own" | "default" | "none" {
+  const targets = form.routingTargets ?? [];
+  if (targets.includes("pipeline_attach") || (Boolean(form.intakePipelineId) && targets.length === 0)) return "own";
+  return defaultReady ? "default" : "none";
+}
+
+/** A form's leads reach a pipeline when it routes its own deals, or (owner ruling 2026-10-11) when it has
+ *  no own route and the business's default pipeline has an open stage to take them. This mirrors
+ *  growth_attach_submission_default_deal and Marketing's server producer marketing.forms.unrouted_current,
+ *  which counts such a form as routed. `defaultReady` defaults to false so a caller that does not know the
+ *  pipelines never claims a destination; Overview and Analytics pass defaultPipelineReady(workspace). */
+export const sendsToPipeline = (form: FormRouteFields, defaultReady = false) => pipelineRouteOf(form, defaultReady) !== "none";
+
 export function isBlockedBrief(brief: Pick<CampaignBrief, "lifecycleStatus" | "blocker">): boolean {
   return brief.lifecycleStatus === "blocked" || Boolean(brief.blocker);
 }
@@ -212,3 +268,35 @@ export function deriveMarketingOverview(input: {
     status,
   };
 }
+
+/** The first midnight of the period Overview and its server read share: whole local days ending today. */
+export const periodStartOf = (periodDays: number, now = Date.now()) => midnight(now, -(periodDays - 1));
+
+/** The server's counts over every lead in the period, with the period before (Marketing's producer, read
+ *  through the shared INT-340 seam). Only the figures change: the daily chart and top forms stay on the
+ *  records they are drawn from. Structural, so this file needs nothing from the read itself. */
+export type OverviewServerFigures = {
+  leads: number;
+  tagged: number;
+  opportunities: number;
+  sources: readonly { key: string; label: string; count: number }[];
+  otherSources: number;
+  untagged: number;
+};
+
+export function withServerOverview(model: MarketingOverviewModel, current: OverviewServerFigures, previous: OverviewServerFigures | null): MarketingOverviewModel {
+  const named = current.sources.slice(0, NAMED_SOURCES);
+  const rest = current.sources.slice(NAMED_SOURCES).reduce((sum, row) => sum + row.count, 0) + current.otherSources;
+  return {
+    ...model,
+    capped: false,
+    leads: { count: current.leads, tagged: current.tagged, delta: previous ? deltaOf(current.leads, previous.leads) : null },
+    opportunities: { count: current.opportunities, delta: previous ? deltaOf(current.opportunities, previous.opportunities) : null },
+    sources: [
+      ...named.map((row) => ({ key: row.key, label: row.label, count: row.count, kind: "tag" as const })),
+      ...(rest ? [{ key: "__other", label: "Other sources", count: rest, kind: "other" as const }] : []),
+      ...(current.untagged ? [{ key: "__untagged", label: "No tracking tag", count: current.untagged, kind: "untagged" as const }] : []),
+    ],
+  };
+}
+

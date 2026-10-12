@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // send-portal-invite — emails a customer their branded invite to a tenant's
 // client portal (roadmap #2). The token is minted by create_tenant_invite_token
 // (admin-gated RPC) on the client; this function validates it server-side, reads
@@ -122,6 +123,10 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!tok || tok.revoked_at || new Date(tok.expires_at as string) <= new Date()) {
     return json({ ok: false, error: "invite is not valid" }, 400);
+  }
+
+  if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id }))) {
+    return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
   }
 
   // Anti-relay: a token bound to a recipient at mint time can ONLY email that

@@ -1,4 +1,4 @@
-# Finance planning catalogue — private source candidate
+# Finance planning catalogue — source candidate
 
 Owner outcome: rediscover existing authorized company budgets and cash scenarios after refresh, before reading a selected version. Finance owns this read over the existing Finance planning tables; no new records, ledger or provider manager. Company/source identity, budgets and scenario foundations in #1918/#2000/#2004 are dependencies.
 
@@ -8,7 +8,7 @@ Both plan kinds retain original labels, UUIDs, currencies, reporting/start perio
 
 The `finance.department` surface remains **PROOF_OWED** and the approved UI is unchanged. Controlled PostgreSQL absent-contract control and two fresh replay legs PASS: owner/admin/company/tenant/version/membership negatives, mixed currencies, duplicate labels, historical identity, payload bounds and actual concurrent company-change/membership-revocation/pause locking. Subsequent reads refuse the changed identity, revoked role or paused workspace. Source helper authority dependencies and retirement policies are real migration SQL; actor/JWT fixtures are synthetic. Signed-in UI/Chat/Live/source/provider acceptance remains UNVERIFIED under existing holds. Independent non-author review, exact-head CI, merge, deployment and actual production persistence are NOT_DONE. No new Finance agent, credits or real financial effects.
 
-Initial private migration allocation (historical): CLI-created empty unapplied template20261012051938 renamed ONLY within its verified workspace migration directory to **20271023000100**. Read-only production frontier20271022000060; all27 active PR file inventories inspected, highest forward peer reservation20271022100000(#2038). Current main2f05537e1139d60825922ddac993b4294693a356 has no catalogue function or reservation for110000. Recheck frontier/reservations before publishing; no applied migration rewritten.
+Initial private migration allocation (historical): CLI-created empty unapplied template20261012051938 renamed ONLY within its verified workspace migration directory to **20271022110000**. Read-only production frontier20271022000060; all27 active PR file inventories inspected, highest forward peer reservation20271022100000(#2038). Current main2f05537e1139d60825922ddac993b4294693a356 has no catalogue function or reservation for110000. Recheck frontier/reservations before publishing; no applied migration rewritten.
 
 Internal development source only; no customer release identity or announcement.
 

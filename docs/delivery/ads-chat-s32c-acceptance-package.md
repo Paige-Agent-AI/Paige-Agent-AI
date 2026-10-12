@@ -12,7 +12,7 @@ counts as a pass, and what is already proven without a sign-in.
   No agent holds it; issuing or rotating it is a coordinator/owner action (vault only, never chat/Linear/Drive).
 - Read-only state on 2026-10-12: 0 pipelines, 0 stages, 0 deals, 0 forms, 0 submissions, 0 library pictures, no
   autonomy override for `set_ad_creative_featured` (so PAIGE asks first). Scope: the owner approved the restricted
-  synthetic preparation for ANT-45 on 2026-10-12 (fixtures through the product, one temporary member, temporary
+  synthetic preparation for ANT-45 on 2026-10-12 (recorded in the ANT-21 register comment of 05:06 UTC) (fixtures through the product, one temporary member, temporary
   reuse of the agency-preview business); no ad spend, provider publishing, customer data or INT-346.
 
 ## Evidence ledger 1 — database-level, rolled back (2026-10-12)
@@ -45,7 +45,7 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 | Item | State | Evidence class |
 |---|---|---|
 | Canonical account confirmed | **Done (readback)** — SOLO `standalone`, `active`; only member is its owner (`owner`, `is_owner`, `active`); never signed in. Recorded in ANT-21; Auth-administrator sign-off **pending** | database read |
-| Second business | **Verified distinct** — `test-agency-preview`: `agency`, `active`, no parent, no children, its own single owner, no shared member, no data. Owner-ruled throwaway pending deletion (`route-and-url-taxonomy.md` §7.2) — reuse is temporary | database read |
+| Second business | **Verified distinct** — `test-agency-preview`: `agency`, `active`, no parent, no children, its own single owner, no shared member, no data. Owner-ruled throwaway pending deletion (`route-and-url-taxonomy.md` §7.2). The agency shell has no Sales, Marketing or Studio screens, so no test record can be placed in it through the product; it serves as the database-level isolation baseline only (ledger 1). Nothing is created in it and no sign-in to it is needed | database read |
 | Runner credentials | **Outstanding** — Auth administrators install them privately in the trusted runner; nothing in code, GitHub, Linear, logs or chat | — |
 | Synthetic fixtures | **Not created** — every step needs the canonical owner signed in (runner) | — |
 | Temporary member | **Not created** — needs the runner and an inbox the Auth administrators control | — |
@@ -61,8 +61,9 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 - Ad copy is saved only through PAIGE chat (channel `ad_copy`); there is no direct save button.
 - **No product control archives or deletes a picture, ad-copy item or form**, and none sets a form to archived
   (forms can only be unpublished). This affects C4 and clean-up — see the decisions below.
-- An agency business has Sales pipelines but no Marketing or Studio (§61), so `test-agency-preview` can hold a
-  pipeline but cannot get a picture through the product.
+- An agency business carries the `pipeline` feature but not Marketing or Studio (§61), and the agency shell mounts
+  no Sales or pipeline screen, so nothing can be created in `test-agency-preview` through the product.
+- PAIGE has no tool that lists pictures or pipelines, so any id used in A4 or C2–C6 is pasted into the chat.
 
 ### Runner runbook — fixtures (canonical owner, signed in, Solo)
 
@@ -70,19 +71,18 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 2. **Pipeline** — Sales › Opportunities › Board → **Create pipeline**: name `QA Ads Intake`, one stage
    `New lead` (Active work), one `Won` (Won outcome), one `Lost` (Lost / closed outcome) → create → **Manage
    pipeline** → **Activate**. Readback: one pipeline, `is_default = true`.
-3. **Pictures** — Ads › Creative → **Add a picture or video** eight times with synthetic images titled
-   `QA picture 1`…`QA picture 8`. Readback: 8 `image` rows, none featured.
+3. **Pictures** — Ads › Creative → **Add a picture or video** eight times with synthetic image files named
+   `QA picture 1.png`…`QA picture 8.png` (the title comes from the file name). Readback: 8 `image` rows, none featured.
 4. **Ad copy** — ask PAIGE in chat: "Write one short ad headline for a spring offer and save it as ad copy."
    Readback: one `text` row, channel `ad_copy`.
-5. **Form** — Marketing → **Vibe Studio** → "A one-question lead form asking for name and email" → **Build it**
+5. **Form** — Marketing → **Vibe Studio** → "A short lead form asking for name and email" → **Build it**
    → **Publish** → **Publish now**. Do not add an automation or pipeline route. Readback: one form, `active`.
 6. **Submissions** — as a signed-out visitor, submit the form twice with synthetic names/emails
    (`qa-lead-1@tests.invalid`, `qa-lead-2@tests.invalid`) at
    `/form/<form id>?utm_campaign=QA-SPRING&utm_content=<QA picture 1 id>` and
    `/form/<form id>?utm_campaign=QA-SPRING`. Readback: two submissions with `deal_id` set in the QA pipeline.
-7. **C5 set-up** — on Ads › Creative, feature `QA picture 2`…`QA picture 7` by hand (six featured).
-8. **Second business (A4 only)** — signed in as the agency-preview owner: Sales → create one pipeline
-   `QA Foreign Pipeline`. Record its id.
+7. Nothing is featured before the acceptance run (B2 needs room under the limit of 6). The C5 set-up is part of
+   the run, below.
 
 ### Runner runbook — temporary member (C1)
 
@@ -101,9 +101,11 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
    (a) authorize using the one existing picture in the cancelled test business `vibe-proof-test` as a read-only
    foreign id (no sign-in, no write — already used in the rolled-back probe below), or (b) leave C2 as
    database-level evidence only.
-3. **Fixture retirement.** Pictures, ad copy and the form cannot be archived through the product. Either (a) keep
-   them in the canonical workspace as recorded, reusable synthetic fixtures, or (b) authorize a service-role
-   archive of exactly the recorded ids, with readback.
+3. **Fixture retirement.** Pictures, ad copy and the form cannot be archived through the product, and the QA
+   pipeline cannot be archived once it holds the two deals (`PIPELINE_DEPENDENCIES_UNRESOLVED`). Step 6 also
+   creates two synthetic contacts, two deals and two submissions. Either (a) keep all of them in the canonical
+   workspace as recorded, reusable synthetic fixtures, or (b) authorize a service-role retirement of exactly the
+   recorded ids, with readback.
 
 ## Acceptance run (signed in as the canonical owner, in Solo)
 
@@ -116,7 +118,7 @@ Record for each step: the PAIGE reply text, a screenshot, and the readback query
 | A1 | before any pipeline exists: "Where do my leads stand by campaign?" | Says there is no Sales pipeline yet; no numbers invented |
 | A2 | after the fixtures: same question | Names the default pipeline; deals per stage; leads/open/won/lost under campaign `QA-SPRING`; one row for the tagged picture; leads that reached no pipeline named |
 | A3 | "Same for the last 7 days" | Uses the 7-day window |
-| A4 | "Show it for pipeline <QA Foreign Pipeline id>" | Refused: "That pipeline is not in this business…"; nothing from the other business is shown |
+| A4 | "Show it for pipeline <an id that is not in this business>" (any UUID outside the business; by design a foreign pipeline and a missing one get the same answer — ledger 1 covers the foreign case at database level) | Refused: "That pipeline is not in this business…"; no figures shown |
 | A5 | "How much did I spend? What's my ROAS? Clicks?" | States those are not available — no ad account is connected; no figure, no zero |
 
 Readback: `select public.get_pipeline_lead_funnel(<pipeline id>, <since>)` as the same session must match the reply.
@@ -151,6 +153,9 @@ order by occurred_at desc limit 10;
 ```
 
 ### C. Refusals
+
+C5 set-up, after B4 has unfeatured `QA picture 1`: on Ads › Creative feature `QA picture 2`…`QA picture 7` by hand
+(six featured), then ask for `QA picture 1`. C2, C4, C5 and C6 need the item's id pasted into the chat.
 
 | # | Case | Pass when |
 |---|---|---|
@@ -196,15 +201,15 @@ path, readback result, pass/fail. Never copy ledger 1 rows here.
 2. Settings › Team: **Remove from workspace** → **Confirm removal** for the temporary member; **Revoke** any pending
    invite.
 3. Auth administrator retires the temporary sign-in (delete or ban) and removes its runner credential.
-4. Agency-preview owner archives `QA Foreign Pipeline` (**Manage pipeline** → **Archive pipeline**).
-5. Studio Publish panel → **Unpublish** the QA form.
-6. Pictures, ad copy and the QA pipeline: per decision 3.
+4. Studio Publish panel → **Unpublish** the QA form.
+5. Pictures, ad copy, the QA pipeline, contacts, deals and submissions: per decision 3.
 
 Proof (service role; paste results into ANT-21):
 ```sql
 select user_id, role, is_owner, status from tenant_members where tenant_id = :'qa_workspace';  -- owner only
 select count(*) from marketing_content where tenant_id = :'qa_workspace' and meta->>'ads_featured' = 'true';  -- 0
-select id, deleted_at, banned_until from auth.users where id = :'temp_member';  -- deleted or banned
-select id, lifecycle_status from pipelines where tenant_id = :'agency_preview';  -- archived or none
+select id, revoked_at, archived_at, uses from tenant_invite_tokens where tenant_id = :'qa_workspace';  -- none pending: used, revoked or archived
+select id, deleted_at, banned_until from auth.users where id = :'temp_member';  -- no row, or deleted_at / banned_until set
+select count(*) from pipelines where tenant_id = :'agency_preview';  -- 0, unchanged
 select id, status from growth_forms where tenant_id = :'qa_workspace';  -- draft (unpublished)
 ```

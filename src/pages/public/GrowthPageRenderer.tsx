@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 import { GrowthPageView } from "@/components/growth/GrowthPageView";
 import { resolveGrowthTheme } from "@/components/growth/growth-theme";
+import { useGrowthVisit } from "@/hooks/useGrowthVisit";
 
 interface PageRow {
   id: string;
@@ -92,6 +93,9 @@ export default function GrowthPageRenderer() {
   useEffect(() => {
     if (page?.title) document.title = page.title;
   }, [page?.title]);
+
+  // A visit is recorded once the published page has loaded (MBC 7a); the server decides whether it counts.
+  useGrowthVisit("page", page?.id);
 
   if (loading) return <PageSkeleton />;
   if (loadError) return <><LoadFailed /><PageReadyMarker state="error" /></>;

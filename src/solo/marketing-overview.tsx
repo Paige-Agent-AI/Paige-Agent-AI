@@ -111,7 +111,7 @@ export function MarketingOverview(props: OverviewProps) {
   const firstUse = !briefs.length && !artifacts.length && !drafts.length && !submissions.length;
 
   const create = canManage ? <button className="btn btn-g" onClick={onCreateBrief}><Ic.plus size={14}/>New campaign brief</button> : null;
-  const ask = <button className="btn" onClick={() => askPaige(`Look at my Marketing for the last ${WINDOW_DAYS} days: ${floor(leads)} leads, ${floor(opportunities)} became opportunities, ${unrouted.length} of ${liveForms.length} live forms not routed to any pipeline${defaultTarget && defaulted.length ? ` (${defaulted.length} with no route of their own file leads into my default pipeline, ${defaultRouteLabel(defaultTarget)})` : ""}. What should I do first? Use only what my records show; this workspace does not record visits, spend, reach or revenue.`)}><Ic.spark size={14}/>Ask PAIGE</button>;
+  const ask = <button className="btn" onClick={() => askPaige(`Look at my Marketing for the last ${WINDOW_DAYS} days: ${floor(leads)} leads, ${floor(opportunities)} became opportunities, ${unrouted.length} of ${liveForms.length} live forms not routed to any pipeline${defaultTarget && defaulted.length ? ` (${defaulted.length} with no route of their own file leads into my default pipeline, ${defaultRouteLabel(defaultTarget)})` : ""}. What should I do first? Use only what my records show; page visits are recorded but not yet counted here, and this workspace does not record spend, reach or revenue.`)}><Ic.spark size={14}/>Ask PAIGE</button>;
 
   const viewOnly = canManage || !authorityKnown ? null : <p className="mov-ro">View only. An owner or admin can change this.</p>;
 

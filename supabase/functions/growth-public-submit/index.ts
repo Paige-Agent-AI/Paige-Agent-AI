@@ -12,6 +12,8 @@
 //                  growth_public_form(). The business comes from the form row, never the request.
 //   5. content   — only the form's own fields, each in the shape its field type allows
 //                  (_shared/growth-intake.ts); unknown and invalid keys are dropped and reported back
+//   6. the visit — an optional visit token links the submission to the recorded visit it came from, only when
+//                  growth_public_visit_for_submission confirms it (MBC 7a); it never decides whether to save
 // The row is written with the service role, so nothing the browser sends can set tenant_id,
 // contact_id, deal_id or processing state. The AFTER INSERT trigger hands it to
 // growth-process-submission, which creates the lead, attaches the deal and sends the owner's alert.
@@ -22,6 +24,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 import { isAllowedOrigin, looksLikeBot, sanitizeAnswers, sanitizeUtm } from "../_shared/growth-intake.ts";
+import { visitTokenOf } from "../_shared/growth-visit.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -115,6 +118,22 @@ Deno.serve(async (req) => {
   }
   if (Object.keys(answers).length === 0) return reply({ error: "no_answers" }, 422);
 
+  // The recorded visit this submission came from (MBC 7a), when the browser hands one back and the server confirms
+  // it: a live visit in this same business, to this form or to a page or funnel. Anything else links nothing, and the
+  // submission is still saved — a visit is evidence, never a gate.
+  let visitId: string | null = null;
+  let funnelSessionToken: string | null = null;
+  const visitToken = visitTokenOf(body.visit);
+  if (visitToken) {
+    const { data: link, error: linkErr } = await admin.rpc("growth_public_visit_for_submission", { p_form_id: form.id, p_visit_token: visitToken });
+    if (linkErr) console.warn("growth-public-submit: visit link not checked", linkErr.message);
+    const found = Array.isArray(link) ? link[0] : null;
+    if (found && typeof found.visit_id === "string") {
+      visitId = found.visit_id;
+      funnelSessionToken = typeof found.funnel_session_token === "string" ? found.funnel_session_token : null;
+    }
+  }
+
   const referrer = (req.headers.get("referer") ?? "").slice(0, 500) || null;
   const userAgent = (req.headers.get("user-agent") ?? "").slice(0, 500) || null;
 
@@ -129,6 +148,8 @@ Deno.serve(async (req) => {
       source: "paige_form",
       referrer,
       user_agent: userAgent,
+      visit_id: visitId,
+      funnel_session_id: funnelSessionToken,
     })
     .select("id")
     .single();

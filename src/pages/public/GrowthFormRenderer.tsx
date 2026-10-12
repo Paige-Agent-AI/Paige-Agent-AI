@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import type { GrowthField, GrowthSubmitOutcome, PublicGrowthForm } from "@/lib/growth";
 import { loadPublicGrowthForm, submitGrowthForm, readUtm, growthOptionValue, growthOptionLabel } from "@/lib/growth";
 import { Input } from "@/components/ui/input";
+import { useGrowthVisit } from "@/hooks/useGrowthVisit";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,6 +41,9 @@ export default function GrowthFormPage() {
   }, [id]);
 
   useEffect(() => { if (form?.name) document.title = form.name; }, [form?.name]);
+
+  // The standalone form page records its own visit (MBC 7a); a form embedded in a page or funnel uses theirs.
+  useGrowthVisit("form", form?.id);
 
   if (loading) {
     return (

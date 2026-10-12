@@ -50,8 +50,12 @@ export const BUSINESS_SNAPSHOT_FOCUS_MAX_LENGTH = 40;
 export const BUSINESS_SNAPSHOT_BOUND_MAX_LENGTH = 40;
 /** The time zone used when the turn request carries none. Never a guess from the model. */
 export const BUSINESS_SNAPSHOT_FALLBACK_TIMEZONE = "UTC";
-/** Longest client-reported zone name passed on; longer is treated as unreadable, not truncated. */
-const TIMEZONE_MAX_LENGTH = 64;
+/**
+ * Longest client-reported zone name passed on — the `paige-ai-chat` request schema's own bound
+ * (`userTimezone: z.string().max(80)`). Anything within it goes to the period resolver, which refuses an
+ * unknown zone as `invalid_timezone`; only a value the schema itself would reject falls back to UTC.
+ */
+const TIMEZONE_MAX_LENGTH = 80;
 
 /**
  * A plain `objectInputSchema` definition (root keys `description`, `properties`, `required` only). The
@@ -113,7 +117,14 @@ export type BusinessSnapshotArgsResult =
 const ALLOWED_ARG_KEYS = new Set(Object.keys(BUSINESS_SNAPSHOT_INPUT_DEFINITION.properties));
 const IDENTITY_ARG = /tenant|workspace|account|actor|user|role|seat|time_?zone|tz|scope/i;
 
-const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+const PLAIN_PERIOD_CHOICES = "Choose today, the last 7 days, the last 30 days, this quarter so far, or a custom range with a start and an end.";
+
+/** A plain object only: not an array, and not a Date, Map or other class instance. */
+const isRecord = (v: unknown): v is Record<string, unknown> => {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+};
 const boundText = (v: unknown, max: number): v is string => typeof v === "string" && v.trim() !== "" && v.length <= max;
 
 /**
@@ -128,14 +139,14 @@ export function parseBusinessSnapshotArgs(raw: unknown): BusinessSnapshotArgsRes
   for (const key of Object.keys(raw)) {
     if (ALLOWED_ARG_KEYS.has(key)) continue;
     return IDENTITY_ARG.test(key)
-      ? { ok: false, fix: "The business, the person and the time zone come from the signed-in session; they cannot be supplied. Ask again without them." }
-      : { ok: false, fix: "Use only a period, custom start and end, and a focus." };
+      ? { ok: false, fix: "The business and the person come from the signed-in session, and the time zone from the owner's device; none of them can be supplied. Ask again without them." }
+      : { ok: false, fix: "Use only a period, a custom start and end, and the areas to focus on." };
   }
 
   const out: { period?: string; customStart?: string; customEnd?: string; focus?: string[] } = {};
   if (raw.period !== undefined) {
     if (typeof raw.period !== "string" || !(SNAPSHOT_PERIOD_KEYS as readonly string[]).includes(raw.period)) {
-      return { ok: false, fix: "Choose a period: today, last_7_days, last_30_days, current_quarter or custom." };
+      return { ok: false, fix: PLAIN_PERIOD_CHOICES };
     }
     out.period = raw.period;
   }
@@ -167,8 +178,11 @@ export type BusinessSnapshotChatContext = {
   readonly tenantId: string | null;
   /** Chat has no role string today; null is fine — the issuer re-resolves the seat on every read. */
   readonly role?: string | null;
-  /** Use `accountShapeForCallerTier(callerTier)`; null when the tier has no tenant shape. */
-  readonly accountShape?: AccountShape | null;
+  /**
+   * Use `accountShapeForCallerTier(callerTier)`. Required: a shape outside
+   * `BUSINESS_SNAPSHOT_ACCOUNT_SHAPES` (or null) is refused before anything is read.
+   */
+  readonly accountShape: AccountShape | null;
   /** The turn request's client-reported `userTimezone`, as received. Absent → UTC. */
   readonly userTimezone?: unknown;
   readonly toolName: string;
@@ -198,6 +212,13 @@ export type BusinessSnapshotChatResult = {
   readonly snapshot?: BusinessOperatingSnapshot;
 };
 
+/**
+ * §61: the review is for a business's own operators — Solo, Sub-account and Enterprise. An agency, operator
+ * or client lens (or an unknown shape) is not offered it; the domain module holds that rule too, so a Chat
+ * gate that drifts cannot widen it.
+ */
+export const BUSINESS_SNAPSHOT_ACCOUNT_SHAPES: readonly AccountShape[] = Object.freeze(["solo", "sub_account", "enterprise"]);
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NOTHING_READ = "Nothing was read and nothing was changed.";
 const NOTHING_CHANGED = "It read only; nothing was changed.";
@@ -212,7 +233,7 @@ const PERIOD_FIX: Readonly<Record<string, string>> = Object.freeze({
   custom_range_inverted: "The custom start must come before the custom end.",
   custom_range_too_long: "A custom period can be at most a year long.",
   custom_range_in_future: "A custom period cannot end in the future. For a period through today, end it now.",
-  unknown_period: "Choose a period: today, last_7_days, last_30_days, current_quarter or custom.",
+  unknown_period: PLAIN_PERIOD_CHOICES,
 });
 
 /**
@@ -262,18 +283,23 @@ function fromReview(result: BusinessReviewResult): BusinessSnapshotChatResult {
       note: `It is available to the business's owners and admins. Do not retry under another identity or a broader scope. ${NOTHING_CHANGED}`,
     } };
   }
+  // The composer voids every area when the workspace check changed, failed or timed out; it cannot tell
+  // which, so this never asserts that the owner switched businesses.
   if (allScopeChanged(snapshot)) {
     return { outcome, snapshot, content: {
       success: false,
-      code: "active_business_changed",
-      error: "The active business changed while the review was being read, so none of it is reported.",
-      note: `Ask again in the business you mean. ${NOTHING_CHANGED}`,
+      code: "active_business_unconfirmed",
+      error: "The active business could not be confirmed for this review, so none of it is reported.",
+      note: `If the owner switched businesses, ask again there; otherwise try again. ${NOTHING_CHANGED}`,
     } };
   }
+  const onlyUnread = snapshot.requested.every((d) => !BUSINESS_SNAPSHOT_READ_DOMAINS.includes(d));
   return { outcome, snapshot, content: {
     success: false,
     code: "review_unavailable",
-    error: "None of the requested business areas could be read just now.",
+    error: onlyUnread
+      ? "None of the requested business areas can be read in a business review yet."
+      : "None of the requested business areas could be read just now.",
     period: snapshot.period.label,
     review: projection,
     note: `Every area listed is unknown, not zero. ${NOTHING_CHANGED}`,
@@ -297,10 +323,13 @@ export async function dispatchBusinessSnapshotChat(
   if (typeof ctx.actorId !== "string" || ctx.actorId === "") {
     return invalid("The business review needs a signed-in person.", "Sign in, then ask again.");
   }
+  if (ctx.accountShape === null || !BUSINESS_SNAPSHOT_ACCOUNT_SHAPES.includes(ctx.accountShape)) {
+    return invalid("The business review is for a business's own workspace.", "Open the business's own workspace, then ask again.");
+  }
   const parsed = parseBusinessSnapshotArgs(ctx.args);
   if ("fix" in parsed) return invalid("That review request could not be used.", parsed.fix);
 
-  const who: BusinessReviewWho = { actorId: ctx.actorId, tenantId: ctx.tenantId, role: ctx.role ?? null, accountShape: ctx.accountShape ?? null };
+  const who: BusinessReviewWho = { actorId: ctx.actorId, tenantId: ctx.tenantId, role: ctx.role ?? null, accountShape: ctx.accountShape };
   const compose = deps.compose ?? composeBusinessReview;
   try {
     const result = await compose(deps.caller, who, {
@@ -311,7 +340,9 @@ export async function dispatchBusinessSnapshotChat(
       focus: parsed.args.focus,
     }, opts);
     return fromReview(result);
-  } catch {
+  } catch (error) {
+    // §32: loud, but the error's name only — never its message or any payload.
+    console.error("[business-snapshot] compose failed:", error instanceof Error ? error.name : typeof error);
     return { outcome: "failed", content: {
       success: false,
       error: "The business review did not complete.",

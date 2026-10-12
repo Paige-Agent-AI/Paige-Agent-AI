@@ -4166,7 +4166,7 @@ Currencies are never summed, a failure is never a zero, and evidence references 
 `_shared/paige-context/business-snapshot-chat.ts`: the `get_business_snapshot` argument contract (period,
 custom bounds, focus; no tenant, actor, role or time-zone field), a strict parser, and a dispatch that maps
 one call to one `composeBusinessReview` with a closed result (`succeeded`, `refused`, `unavailable`,
-`invalid`, `failed`). It follows the Ads funnel split and is **still not wired to any turn**. **Owner ruling
+`invalid`, `failed`), and refuses any workspace that is not Solo, Sub-account or Enterprise. It follows the Ads funnel split and is **still not wired to any turn**. **Owner ruling
 (2026-10-12):** coach is a title; the full executive snapshot stays owner/admin, and a member-scoped
 capability needs a separate approval. The exact hand-offs are in the contract's "F2 cross-lane
 integration" section:

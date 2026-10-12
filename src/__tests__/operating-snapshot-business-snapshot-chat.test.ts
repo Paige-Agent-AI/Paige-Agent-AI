@@ -106,7 +106,7 @@ describe('parseBusinessSnapshotArgs', () => {
   });
 
   it.each([
-    ['tenant_id', TENANT], ['workspace_id', TENANT], ['actor_id', 'x'], ['user_id', 'x'], ['role', 'owner'],
+    ['tenant_id', TENANT], ['workspace_id', TENANT], ['actor_id', 'x'], ['user_id', 'x'], ['role', 'super_admin'],
     ['timezone', 'Asia/Tokyo'], ['time_zone', 'UTC'], ['tz', 'UTC'], ['account_id', TENANT],
   ])('refuses a model-supplied identity field (%s) and says it comes from the session', (key, value) => {
     const r = parseBusinessSnapshotArgs({ [key]: value });
@@ -139,6 +139,8 @@ describe('parseBusinessSnapshotArgs', () => {
     ['payments'],
     [['payments']],
     [null],
+    [new Date(0)],
+    [new Map([['period', 'today']])],
   ])('refuses a malformed request %#', (raw) => {
     expect(parseBusinessSnapshotArgs(raw).ok).toBe(false);
   });
@@ -158,7 +160,10 @@ describe('snapshotTimezone', () => {
     expect(snapshotTimezone(undefined)).toBe(BUSINESS_SNAPSHOT_FALLBACK_TIMEZONE);
     expect(snapshotTimezone('')).toBe('UTC');
     expect(snapshotTimezone(42)).toBe('UTC');
-    expect(snapshotTimezone('A'.repeat(65))).toBe('UTC');
+    // Within the request schema's 80 characters the zone is passed on, so an unknown one is REFUSED by the
+    // period resolver rather than silently replaced; only a value the schema would reject becomes UTC.
+    expect(snapshotTimezone('Etc/' + 'A'.repeat(76))).toBe('Etc/' + 'A'.repeat(76));
+    expect(snapshotTimezone('A'.repeat(81))).toBe('UTC');
   });
 });
 
@@ -170,6 +175,9 @@ describe('dispatch refuses before reading', () => {
     ['no active business', { tenantId: null }],
     ['a workspace that is not an id', { tenantId: 'acme' }],
     ['no signed-in person', { actorId: '' }],
+    ['no account shape (agency, operator or client lens)', { accountShape: null }],
+    ['an agency lens (§61: resell, not operator use)', { accountShape: 'agency' }],
+    ['the platform operator lens', { accountShape: 'operator' }],
     ['a model-supplied tenant', { args: { tenant_id: OTHER } }],
     ['a model-supplied time zone', { args: { timezone: 'Asia/Tokyo' } }],
     ['a malformed period', { args: { period: 'forever' } }],
@@ -198,11 +206,17 @@ describe('dispatch passes only session identity and the reported zone', () => {
     expect(opts).toEqual({ now: NOW });
   });
 
-  it('a context without role or account shape passes nulls, never a guess', async () => {
+  it('a context without a role passes null, never a guess (the issuer re-resolves the seat)', async () => {
     const compose = composeReturning(reviewOf(snapshotWith({})));
-    const { role: _r, accountShape: _a, ...bare } = ctx();
+    const { role: _r, ...bare } = ctx();
     await dispatchBusinessSnapshotChat(bare, { caller: noCaller, compose });
-    expect((compose.mock.calls[0] as unknown as [unknown, Record<string, unknown>])[1]).toEqual({ actorId: 'actor-chat', tenantId: TENANT, role: null, accountShape: null });
+    expect((compose.mock.calls[0] as unknown as [unknown, Record<string, unknown>])[1]).toEqual({ actorId: 'actor-chat', tenantId: TENANT, role: null, accountShape: 'solo' });
+  });
+
+  it.each(['sub_account', 'enterprise'] as const)('a %s workspace is read', async (shape) => {
+    const compose = composeReturning(reviewOf(snapshotWith({})));
+    await dispatchBusinessSnapshotChat(ctx({ accountShape: shape }), { caller: noCaller, compose });
+    expect(compose).toHaveBeenCalledTimes(1);
   });
 
   it('an absent reported zone becomes UTC explicitly', async () => {
@@ -247,12 +261,13 @@ describe('outcome mapping', () => {
     expect(classifyBusinessSnapshot(s)).toBe('unavailable');
   });
 
-  it('the workspace changed during the read → unavailable, active_business_changed, nothing reported', async () => {
+  it('the workspace check voided every area → unavailable, active_business_unconfirmed, never "you switched"', async () => {
     const changed = Object.fromEntries([...BUSINESS_SNAPSHOT_READ_DOMAINS, 'campaigns'].map((d) => [d, contextDegraded(SNAPSHOT_REASON.scopeChanged)]));
     const r = await dispatchBusinessSnapshotChat(ctx(), { caller: noCaller, compose: composeReturning(reviewOf(snapshotWith(changed))) });
     expect(r.outcome).toBe('unavailable');
-    expect(r.content.code).toBe('active_business_changed');
+    expect(r.content.code).toBe('active_business_unconfirmed');
     expect(r.content.review).toBeUndefined();
+    expect(JSON.stringify(r.content)).not.toMatch(/business changed|you switched/i);
   });
 
   it('nothing readable → unavailable WITH the review, which names every unknown area', async () => {
@@ -264,13 +279,21 @@ describe('outcome mapping', () => {
     expect(String(r.content.note)).toMatch(/unknown, not zero/);
   });
 
-  it('only areas that are not read here were asked for → unavailable, not succeeded', () => {
-    expect(classifyBusinessSnapshot(snapshotWith({}, ['campaigns', 'paid_acquisition']))).toBe('unavailable');
+  it('only areas that are not read here were asked for → unavailable, worded as not readable here, not "just now"', async () => {
+    const s = snapshotWith({}, ['campaigns', 'paid_acquisition']);
+    expect(classifyBusinessSnapshot(s)).toBe('unavailable');
+    const r = await dispatchBusinessSnapshotChat(ctx(), { caller: noCaller, compose: composeReturning(reviewOf(s)) });
+    expect(String(r.content.error)).toMatch(/can be read in a business review yet/);
+    expect(String(r.content.error)).not.toMatch(/just now/);
   });
 
-  it('a composition that throws → failed, never a figure', async () => {
-    const compose = vi.fn(async () => { throw new Error('boom'); });
+  it('a composition that throws → failed, never a figure, and logged by error name only (§32)', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const compose = vi.fn(async () => { throw new TypeError('secret payload ' + TENANT); });
     const r = await dispatchBusinessSnapshotChat(ctx(), { caller: noCaller, compose });
+    expect(spy).toHaveBeenCalledWith('[business-snapshot] compose failed:', 'TypeError');
+    expect(JSON.stringify(spy.mock.calls)).not.toContain(TENANT);
+    spy.mockRestore();
     expect(r.outcome).toBe('failed');
     expect(r.snapshot).toBeUndefined();
     expect(String(r.content.note)).toMatch(/do not state any figure/);
@@ -302,7 +325,7 @@ function values(key: string): Values {
   return { kind: 'count', count: 3 };
 }
 
-function fakeIssuer(opts: { refuseIssue?: boolean; scope?: (n: number) => string } = {}) {
+function fakeIssuer(opts: { refuseIssue?: boolean; scope?: (n: number) => string; scopeError?: (n: number) => boolean; scopeHang?: (n: number) => boolean } = {}) {
   const calls: string[] = [];
   const store = new Map<string, Record<string, unknown>>();
   let scopeCalls = 0;
@@ -312,6 +335,8 @@ function fakeIssuer(opts: { refuseIssue?: boolean; scope?: (n: number) => string
       calls.push(name);
       if (name === 'current_user_tenant_id') {
         scopeCalls += 1;
+        if (opts.scopeHang?.(scopeCalls)) return new Promise<never>(() => {});
+        if (opts.scopeError?.(scopeCalls)) return { data: null, error: { code: '57014' } };
         return { data: opts.scope ? opts.scope(scopeCalls) : TENANT, error: null };
       }
       if (name === 'issue_analytics_evidence_bundle') {
@@ -364,12 +389,16 @@ describe('end to end over the real composition', () => {
     expect(r.content.code).toBe('review_not_authorized');
   });
 
-  it('the active business switches after the reads → active_business_changed, no figure survives', async () => {
-    const f = fakeIssuer({ scope: (n) => (n === 1 ? TENANT : OTHER) });
-    const r = await dispatchBusinessSnapshotChat(ctx(), { caller: f.caller }, e2e);
+  it.each([
+    ['the active business switches after the reads', { scope: (n: number) => (n === 1 ? TENANT : OTHER) }],
+    ['the workspace check errors', { scopeError: (n: number) => n > 1 }],
+    ['the workspace check never answers', { scopeHang: (n: number) => n > 1 }],
+  ])('%s → active_business_unconfirmed, no figure survives, no claim of a switch', async (_label, opts) => {
+    const f = fakeIssuer(opts);
+    const r = await dispatchBusinessSnapshotChat(ctx(), { caller: f.caller }, { ...e2e, timeoutMs: 50 });
     expect(r.outcome).toBe('unavailable');
-    expect(r.content.code).toBe('active_business_changed');
-    expect(JSON.stringify(r.content)).not.toMatch(/125000|1,250/);
+    expect(r.content.code).toBe('active_business_unconfirmed');
+    expect(JSON.stringify(r.content)).not.toMatch(/125000|1,250|business changed/);
   });
 
   it('a focus on an area that is not read here issues no metric read at all', async () => {

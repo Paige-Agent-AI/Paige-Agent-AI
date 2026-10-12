@@ -419,6 +419,7 @@ way the Ads lead funnel splits it (`_shared/ads-funnel-chat.ts` + `paige-spine/d
 | `BUSINESS_SNAPSHOT_TOOL_DESCRIPTION` | Model-facing text: what is read, unavailable ≠ zero, recorded cash ≠ settlement, no ad spend/CPL/ROAS, no currency sums, no memory writes, not in parallel with `read_business_metric`. |
 | `parseBusinessSnapshotArgs` | Strict: an unknown field is refused; an identity-shaped field (tenant, workspace, account, actor, user, role, seat, time zone, scope) is refused with "comes from the signed-in session". Custom bounds only with `period: custom`. |
 | `accountShapeForCallerTier` | Chat's `callerTier` → `AccountShape`: `tenant` → `solo`, `subaccount` → `sub_account`, everything else `null`. |
+| `BUSINESS_SNAPSHOT_ACCOUNT_SHAPES` | `solo`, `sub_account`, `enterprise` (§61). The dispatch refuses any other shape, or none, before reading — the module holds the tier rule as well as the Chat gate. |
 | `dispatchBusinessSnapshotChat(ctx, { caller }, opts?)` | One call → one `composeBusinessReview`. Never throws. Returns `{ outcome, content, snapshot? }`. |
 
 **Response contract.** `content` is exactly what the model receives (`JSON.stringify(result.content)`);
@@ -428,12 +429,12 @@ way the Ads lead funnel splits it (`_shared/ads-funnel-chat.ts` + `paige-spine/d
 |---|---|---|
 | `succeeded` | at least one of the four read areas is available | `{ success: true, period, review, note }` — `review` is the bounded projection (≤ 6000 chars of areas plus the honesty lines), naming every NOT AVAILABLE area |
 | `refused` | every read area returned `metric_read_refused` | `{ success: false, code: "review_not_authorized", error, note }` — no figures; never "you lack access" (a mid-read revision change also arrives as 42501); "do not retry under another identity" |
-| `unavailable` | the workspace changed during the read | `{ success: false, code: "active_business_changed", error, note }` — nothing reported |
-| `unavailable` | nothing readable, or only areas not read here were asked for | `{ success: false, code: "review_unavailable", error, period, review, note }` — the review names every unknown area |
-| `invalid` | wrong tool name, no active business, no signed-in person, a bad argument, or a period the resolver refuses | `{ success: false, error, fix, note }` — nothing read, no RPC made |
-| `failed` | the composition threw | `{ success: false, error, note }` — "do not state any figure" |
+| `unavailable` | the workspace check before or after the reads changed, errored or timed out (the composer cannot tell which) | `{ success: false, code: "active_business_unconfirmed", error, note }` — nothing reported; never claims the owner switched businesses |
+| `unavailable` | nothing readable, or only areas not read here were asked for | `{ success: false, code: "review_unavailable", error, period, review, note }` — the review names every unknown area; "not readable here yet" when nothing asked for is wired, "just now" otherwise |
+| `invalid` | wrong tool name, no active business, no signed-in person, an account shape outside the three, a bad argument, or a period the resolver refuses | `{ success: false, error, fix, note }` — nothing read, no RPC made |
+| `failed` | the composition threw | `{ success: false, error, note }` — "do not state any figure"; logged by error name only (§32) |
 
-The content carries no tenant id and no evidence reference (asserted end to end). 54 unit tests:
+The content carries no tenant id and no evidence reference (asserted end to end). 63 unit tests:
 `src/__tests__/operating-snapshot-business-snapshot-chat.test.ts`.
 
 ### Hand-off A — Conversational Loop lane (Chat/Live admission; owner of `paige-ai-chat` and `_shared/paige-turn`)
@@ -451,7 +452,7 @@ import { BUSINESS_SNAPSHOT_TOOL_NAME, accountShapeForCallerTier, dispatchBusines
     tenantId: personaCtx?.tenant_id ?? null,            // index.ts:2696-2713 — never from args
     role: null,                                         // Chat has no role string; the issuer re-resolves the seat
     accountShape: accountShapeForCallerTier(callerTier),// index.ts:2263-2265
-    userTimezone,                                       // index.ts:799/1431 — client-reported, ≤ 80 chars; absent → UTC
+    userTimezone,                                       // index.ts:799/1431 — client-reported, ≤ 80 chars; absent → UTC; unknown → refused
     toolName: tc.function.name,
     args,
   }, { caller: supabaseClient });                       // index.ts:1049-1054 — the caller's own JWT client, never `supabase`
@@ -487,8 +488,10 @@ Requirements, each grounded:
 6. **Step label.** Move `get_business_snapshot` out of `STEP_NO_START` (`_shared/paige-turn/step-start.ts:132-133`,
    "no dispatch") into the started set; `src/__tests__/paige-step-start.test.ts:70-101` enforces parity
    with `describeStep` (`index.ts:588`, "Taking stock of your business").
-7. **C0b fingerprints.** Any edit inside the handler body changes all 29 contracts in
-   `scripts/ci/c0b-incumbent-resource-binding.mjs` (`CONTRACTS`, `:91`). There is no regeneration
+7. **C0b fingerprints.** Each of the 29 contracts in `scripts/ci/c0b-incumbent-resource-binding.mjs`
+   (`CONTRACTS`, `:91`) fingerprints its branch, the enclosing conditions, the statements before it, the
+   handler's auth prefix and its helpers — so adding a dispatch branch changed all 29 in the Ads
+   precedent. There is no regeneration
    script: recompute with the validator's own `inspectIncumbentSource` on the exact tree and have the
    values independently reviewed (precedent: the Ads commit `4e93b2949`).
 8. **No receipt.** A read is not a business action; record nothing to the Rail for this call.
@@ -551,7 +554,7 @@ PRs #1038 #1016 #983 #647 #639). Routed through ANT-138 for the coordinator to a
 |---|---|---|
 | M1 | `list_business_missions` returns no `closed_at` (nor `paused_at`, `outcome_unknowns`), though the table has it and a CHECK requires it for completed/stopped | `20260907001343:69-74`; `20260905221203:19,23-24` |
 | M2 | Owner-only gate (admins refused), standalone top-level only, refusal by message text (`MISSION_OWNER_REQUIRED`) that callers substring-match | `20260905221203:90-92`; `useBusinessGamePlanMissions.ts:38-47,95`; `paige-ai-chat/index.ts:15471` |
-| M3 | Heartbeat filters `lifecycle_state not in ('closed','abandoned')`, states that do not exist (allowed: proposed, active, blocked, paused, completed, stopped), so a completed or stopped mission is sent to a client as "Current focus: …" | `20270111000000:47-54`; CHECK `20260905221203:11`; `paige-heartbeat/index.ts:97,107` |
+| M3 | Heartbeat filters `lifecycle_state not in ('closed','abandoned')`, states that do not exist (allowed: proposed, active, blocked, paused, completed, stopped), so a completed or stopped mission is drafted into a client follow-up's key points as "Current focus: …" | `20270111000000:47-54`; CHECK `20260905221203:11`; `paige-heartbeat/index.ts:97,107` |
 | M4 | Heartbeat idempotency: `A OR B AND NOT EXISTS(…)` — AND binds tighter, so the "no open follow-up" guard covers only the never-engaged branch; an engaged stale client can be re-filed while a follow-up is open | `20270111000000:55-66` |
 
 M3 and M4 are live defects in a client-facing path, independent of the Fabric (prod had 0 missions on

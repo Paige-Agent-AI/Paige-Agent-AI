@@ -46,8 +46,8 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
    - one Marketing form with no route of its own, submitted twice with tagged links
      (`?utm_campaign=QA-SPRING&utm_content=<picture id>` and `?utm_campaign=QA-SPRING`), which files two deals into
      the default pipeline;
-   - seven library pictures uploaded in Ads › Creative: two for the positive flow, one archived later for C4, and
-     enough that six can be featured at once for C5;
+   - eight library pictures uploaded in Ads › Creative: seven usable ones (six featured at once, then a seventh asked
+     for in C5) plus one archived for C4 (the limit counts only pictures that are not archived);
    - one non-picture library item (e.g. saved ad copy, `kind = 'text'`) for C6.
    All of it is synthetic and stays in the canonical workspace; nothing is published, spent, or sent to a provider.
 3. **Second identities for refusal cases (ANT-21 exception record needed first).**

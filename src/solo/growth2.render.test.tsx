@@ -125,17 +125,6 @@ vi.mock("./useCampaignActions", async (importOriginal) => ({
   }),
 }));
 
-// A campaign's leads read through a governed RPC; their contract is proven by
-// supabase/tests/campaign_lead_attribution.sql and useCampaignLeads.test.tsx. Here the dossier has none.
-vi.mock("./useCampaignLeads", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./useCampaignLeads")>()),
-  useCampaignLeads: () => ({
-    phase: "ready", canManage: harness.assets.canManage !== false,
-    counts: { leads: 0, opportunities: 0, won: 0, lost: 0, waiting: 0, failed: 0 },
-    leads: [], uncredited: 0, captureForms: [], truncated: false, retry: () => {},
-  }),
-}));
-
 // Content reads its library through Supabase; its own proof is marketing-content.render.test.tsx. Here it
 // shows only what the hub hands it, so the address wiring (?kind=, ?piece=) can be driven.
 vi.mock("./marketing-content", () => ({

@@ -853,35 +853,3 @@
 .ca-basis.is-failed{color:var(--bad)}
 .ca .ca-bad{color:var(--bad)}
 .ca .ca-field input[aria-invalid="true"]{border-color:var(--bad)}
-
-/* Campaigns › dossier: leads from this campaign (Experience 03 S1d). The composition lane's row language
-   (.cc-*), the desk's state palette for where each lead stands (never gold on status, §11), and a single
-   tally line rather than tiles: the dossier is a reading surface, the numbers are facts within it. */
-.cl{display:grid;gap:8px}
-.cl-tally{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin:0;padding:2px 2px 4px;font-size:11.5px;color:var(--ink-2)}
-.cl-tally b{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:3px}
-.cl-tally .is-won b{color:var(--ok)}
-.cl-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-/* Desktop: name over its credit line on the left, date and stage on the right. Phone: one column. */
-.cl-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who when" "via state";align-items:baseline;column-gap:12px;row-gap:2px;padding:8px 11px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2);min-width:0}
-.cl-when{grid-area:when;justify-self:end;font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
-.cl-n{grid-area:who;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cl-n.cl-pending{font-weight:500;color:var(--ink-2)}
-.cl-via{grid-area:via;min-width:0;font-size:11px;line-height:1.4;color:var(--ink-2);overflow-wrap:anywhere}
-.cl-state{grid-area:state;justify-self:end;max-width:220px;text-align:right}
-.cl-tally .cl-in{font-size:11.5px;color:var(--ink-2)}
-/* Small status text on the row surface: the warn hue alone measures 3.8:1 in light, so it is mixed toward ink
-   (as .mk-flag.is-warn); the diamond keeps the pure hue. */
-.cl .cl-state.st-await{color:color-mix(in srgb,var(--warn) 62%,var(--ink))}
-.cl .cl-state.st-unavail{color:var(--ink-2)}
-.cl .btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
-.cl .cc-foot{color:var(--ink-2)}
-.cl-empty{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;padding:11px 12px;border:1px dashed var(--line);border-radius:12px;color:var(--ink-3)}
-.cl-empty p{margin:0;font-size:12px;line-height:1.5;color:var(--ink-2)}
-.cl-empty b,.cl-note b{color:var(--ink);font-weight:650}
-.cl-note{display:flex;gap:7px;align-items:flex-start;margin:0;padding:8px 10px;border-radius:9px;background:var(--warn-tint);font-size:11.5px;line-height:1.45;color:color-mix(in srgb,var(--warn) 62%,var(--ink))}
-.cl-note svg{flex:none;margin-top:2px}
-@media (max-width:520px){
-  .cl-row{grid-template-areas:"who when" "via via" "state state";row-gap:3px}
-  .cl-state{justify-self:start;max-width:none;text-align:left;margin-top:2px}
-}

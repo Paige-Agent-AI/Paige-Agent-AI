@@ -289,6 +289,10 @@ L = LIVE · P = PARTIAL · U = UNAVAILABLE. A dash means the column doesn't appl
 - **Social execute and measure:** a proven provider, a posting Spine key, a receipt, readback and a metric.
 - **Attribution:** a campaign key on assets, contacts and deals; `form.submitted`, `page.viewed` and
   `email.opened/clicked/replied` event producers; and a marketing metric producer.
+  *Corrected 2026-10-12 (Experience 03 S1, #2068, once released): each new lead (form submission) carries
+  the campaign it came from (`campaign_brief_id`, `campaign_attribution`), and its contact and opportunity are
+  reached through the lead. Contacts and deals themselves still carry no campaign; leads saved before the
+  release are not evaluated.*
 - **Campaign management:** a campaign ↔ asset link and a roll-up metric.
 - **Lead routing:** a `form.submitted` §67 trigger and Rail kind.
 - **Learning:** every marketing capability has `mindBinding: UNAVAILABLE`.
@@ -296,6 +300,8 @@ L = LIVE · P = PARTIAL · U = UNAVAILABLE. A dash means the column doesn't appl
 **What the COO can answer today, from evidence:**
 - **Which campaigns are active?** None: 1 draft brief and 1 draft email.
 - **Which leads came from which campaign?** Cannot answer (no link, 0 submissions).
+  *Corrected 2026-10-12: answerable for leads captured after #2068 is released, through
+  `get_campaign_brief_leads`; production still holds 0 submissions.*
 - **Which channel produces qualified leads?** Cannot answer.
 - **What is our CPL?** Cannot answer (no spend).
 - **Which page converts best?** Cannot answer (no visits).
@@ -655,6 +661,7 @@ genuine feature gaps"). This is Marketing's own matrix; the Ads matrix is §M3 a
 | Process scope; a recorded-only step can never read as an accepted result (MBC 6a) | #2038 → `a60d1ffb` | `20271022100000` recorded; four functions, trigger enabled, `campaign_brief_ids` in the payload, NOT_PROVEN refusal, `finish_counts` read, 0 automations affected | UNVERIFIED | — |
 | Campaign dossier: Steps and results (MBC 6b) | #2045 → `0c1cbb91` | Vercel `dpl_8KwK…` READY on paigeagent.ai; the served bundle carries the new strings | UNVERIFIED | — |
 | PAIGE tools for steps and process scope, Chat and Live (MBC 6c) | #2050 → `16fb9adf` | `20271023100000` recorded; read wrappers authenticated-only; four Autonomy rows, ask first; activity wording; `paige-ai-chat` deployed (`edge-live` = merge) | **UNAVAILABLE on typed Solo chat** while INT-346 is DRAINING (production `paige_chat_interactive_protocol` = version 2, `active: false`, 2026-10-12): every typed turn runs with no tools. Live: UNVERIFIED | — |
+| A lead carries the campaign it came from; a campaign reads its leads (Experience 03 S1, `docs/delivery/exp03-grow-my-business-journey.md`) | #2068 | owed at release (`deploy-migrations`, migration `20271025100000`, then read back) | UNVERIFIED (PC-1 blocked, ANT-21) | — |
 | Public visit evidence (MBC 7a) | #2064 → `be8d9278` | see N4 | UNVERIFIED (a signed-out visit is part of the packet) | — |
 | Email: campaigns, dashboard and editor, chat tools, series (E1, E2, E2b, E3) | #1700, #1704, #1725, #1731 | recorded and read back at release | UNVERIFIED | — |
 

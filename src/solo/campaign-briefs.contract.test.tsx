@@ -90,7 +90,11 @@ describe("Campaign brief seam — client contract", () => {
     // budget target is explicitly disclaimed as NOT actual spend on the surface.
     expect(desk).toContain("not</b> actual ad spend");
     expect(desk).toContain("Recorded outcome");
-    expect(desk).toContain("No campaign attribution");
+    // Since Experience 03 S1 a lead's campaign is stamped by the server at arrival; revenue still is not,
+    // and the stage says both (it reads "Partly available", never "Available").
+    expect(desk).toContain("Leads credited at arrival");
+    expect(desk).toContain("Revenue isn't credited to campaigns yet.");
+    expect(desk).not.toMatch(/outcome:\s+"ready"/);
   });
 });
 

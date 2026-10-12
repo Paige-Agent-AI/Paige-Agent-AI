@@ -7,6 +7,7 @@ import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
+import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
 import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxIntelligenceChat, dispatchOrganizeChat } from '../_shared/inbox-intelligence/chat.ts';
@@ -593,7 +594,7 @@ function describeStep(
     }
     case "list_subagents": return { label: "Finding the right specialist", group: "shared" };
     // Research (shared)
-    case "get_business_snapshot": return { label: "Taking stock of your business", group: "shared" };
+    case "get_business_snapshot": return { label: failed ? "Couldn't take stock of your business" : "Taking stock of your business", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
 }
@@ -8170,6 +8171,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     toolDefs.push(...SALES_COLLECTIONS_TOOLS);
     // Canonical actor-tier resolver, not a client-selected lens. Operator/Agency stay separate.
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_METRIC_TOOLS);
+    // E2-1 business snapshot: same Solo-workspace lens as the metric read. Under INT-346's staged
+    // rollout a conversational turn is offered ZERO tools, so this stays dark until the read-only
+    // admission class admits it.
+    if (callerTier === "tenant") toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
@@ -11563,6 +11568,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             ? await readBusinessMetric(supabaseClient, { tenantId: personaCtx?.tenant_id ?? null }, JSON.parse(tc.function.arguments))
             : { status: "refused", message: "This measurement capability is available only in the authorized Solo workspace lens. No values were read." };
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ status: result.status, message: result.message, context: metricReadContext(result) }) });
+        } else if (tc.function.name === "get_business_snapshot") {
+          // E2-1 business snapshot — same finished-round, scope, cancellation and read-only Harness
+          // gates as every tool above, and the caller-JWT client is mandatory for the same reason:
+          // the composer reads every domain through the INT-340 issuer, which re-proves workspace,
+          // membership and the owner/admin seat in its own body. The corridor executes calls one at
+          // a time, so this read is sequential with any read_business_metric call in the same turn,
+          // as the issuer's evidence-reference revocation requires. No Rail receipt is written
+          // (no recorder is registered). Only the bounded projection reaches the model.
+          const result = callerTier === "tenant"
+            ? await dispatchBusinessSnapshotChat(
+                { who: { actorId: user.id, tenantId: personaCtx?.tenant_id ?? null, role: null, accountShape: null }, timezone: userTimezone ?? "UTC" },
+                { caller: supabaseClient },
+                JSON.parse(tc.function.arguments))
+            : { status: "refused" as const, message: "This business review capability is available only in the authorized Solo workspace lens. No values were read." };
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else if (tc.function.name === "update_client_data") {
           try {
             // §9 — same class as the credit-sync and summary-memory findings: falling back to

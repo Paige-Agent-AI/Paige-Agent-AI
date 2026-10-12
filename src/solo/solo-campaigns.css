@@ -792,7 +792,7 @@
 .cc-lane{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;display:grid;gap:8px}
 .cc-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .cc-h h5{font-size:12.5px;font-weight:700;color:var(--ink)}
-.cc-h span{font-size:11px;color:var(--ink-3)}
+.cc-h span{font-size:11px;color:var(--ink-2)}
 .cc-list,.cc-choices{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .cc .cc-row,.cc .cc-choices button{display:flex;align-items:center;gap:9px;min-width:0;font-size:12px}
 .cc-row{padding:7px 9px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2)}
@@ -810,6 +810,20 @@
 .cc .cc-choices button:hover{border-color:var(--violet-line);background:var(--surface)}
 .cc-pick > .btn{justify-self:start}
 .cc-foot{font-size:10.5px;color:var(--ink-3);line-height:1.45;margin:0}
+/* Brought in — the map's outcome lane (Experience 03 S1d-1). Counts lead; words stay quiet; no gold (§11). */
+.cc-outs{margin:0;display:grid;gap:6px}
+.cc-outv{display:flex;align-items:baseline;gap:10px;min-width:0;padding:7px 9px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2)}
+.cc .cc-outv dt{flex:none;min-width:2.2ch;font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
+.cc-outv dd{margin:0;min-width:0;font-size:12px;color:var(--ink-2)}
+.cc-outv.cc-muted{background:transparent;border-style:dashed}
+.cc .cc-outv.cc-muted dt{color:var(--ink-2);font-weight:500}
+/* --ink-3 measures 4.15:1 on the dossier's light surface, under AA for text this small, so the dossier's
+   quiet lines use --ink-2 (measured by scripts/live-drive/brought-in-drive.mjs). Scoped to the campaign
+   dossier (.dw), which also covers Steps and results; Calendars reuses these class names and is untouched.
+   The token-wide question is #2073. */
+.dw .cc-foot,.dw .cc-empty{color:var(--ink-2)}
+.cc .cc-lnk{border:0;background:none;padding:0;font:inherit;color:var(--violet);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.cc .cc-lnk:focus-visible,.cc-out .btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:3px}
 .cc .cc-add:focus-visible,.cc .cc-choices button:focus-visible,.cc .cc-q:focus-visible{outline:2px solid var(--ring, var(--violet));outline-offset:2px}
 
 /* Campaigns › dossier: steps and results (INT-298 MBC 6b). Reuses the composition lane's language (.cc-*);

@@ -28,5 +28,9 @@ describe('controlled native QuickBooks statement summary',()=>{
  it('refuses ambiguous columns, missing source dates and changed reporting periods',()=>{
   for(const changed of [{...report,Columns:undefined},{...report,Header:{...report.Header,Time:undefined}},{...report,Header:{...report.Header,StartPeriod:'2026-08-01'}}])expect(readQuickBooksStatementSummary(changed,expected).status).toBe('unavailable');
  });
+ it.each(['Customer','Vendor','Employee','Item','Class','Department','Account'])('does not treat a report filtered by %s as the whole company statement',key=>{
+  const scoped={...report,Header:{...report.Header,[key]:'controlled-filter-reference'}};
+  expect(readQuickBooksStatementSummary(scoped,expected)).toMatchObject({status:'unavailable',reason:'statement_source_filter_not_supported',figures:null});
+ });
  it('refuses a balance sheet presented as an income statement',()=>expect(readQuickBooksStatementSummary({...report,Header:{...report.Header,ReportName:'BalanceSheet'}},expected).status).toBe('unavailable'));
 });

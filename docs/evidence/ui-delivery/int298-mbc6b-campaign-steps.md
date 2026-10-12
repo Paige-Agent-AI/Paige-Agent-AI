@@ -22,7 +22,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no tenant login in this session; the read and
 KEYBOARD_FOCUS: PASS: every act is a button; the family picker is a radiogroup; Escape closes the record form without closing the dossier; focus returns to Plan a step after planning or cancelling
 ZOOM_REFLOW: PASS: step names truncate with an ellipsis beside the state chip; result rows and form fields wrap at every drive width
 REDUCED_MOTION: PASS: no motion added
-STATE_COVERAGE: PASS: loading (skeleton), failed read (says so, Try again), no steps yet, owner, member, every lifecycle the read returns (planned, prepared, waiting for approval, approved, scheduled, running, unknown, done, marked done with nothing behind it, failed, blocked, stopped, result recorded, judged)
+STATE_COVERAGE: PASS: loading (skeleton), failed read (says so, Try again), no steps yet, owner, member, every lifecycle the read returns (planned, prepared, waiting for approval, approved, scheduled, running, state not reported, done, marked done with nothing behind it, failed, blocked, stopped, result recorded, judged)
 TRUTHFUL_STATE_LABELS: PASS: the state is the server's lifecycle, never computed on screen; a step marked done with no run or approval reads "Marked done, nothing shows it ran" and offers no result; a recorded result says it was recorded as stated, not measured; planning says nothing is drafted, sent or published; a change counts only once the server's read shows it
 SOLO_UI: YES: Solo Marketing, /solo/{account}/growth/campaigns (the dossier)
 
@@ -48,5 +48,5 @@ RELEASE_CLASSIFICATION: internal-only: a dossier section over an existing read a
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version
 RELEASE_NOTE_REQUIRED: no: pre-launch, no customers
 RELEASE_TRUTH_BOUNDARY: PARTIAL: authenticated production behaviour is PROOF OWED
-RELEASE_RECOVERY: position=revert the merge commit; the section reads and writes through slice-5 seams only; reference=git revert of this PR merge
+RELEASE_RECOVERY: position=revert the merge commit - the section reads and writes through slice-5 seams only; reference=git revert of this PR merge
 UNVERIFIED: authenticated production runtime (§32.c): plan, approve, record and judge against a real Solo account; no tenant login in this session. Not built here: the Chat and Live tools (6c), linking an existing action from the dossier (the writer supports it; PAIGE is its first caller in 6c), setting a step's dependency.

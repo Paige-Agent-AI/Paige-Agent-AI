@@ -63,10 +63,15 @@ describe("the order is own route, then campaign, then default", () => {
     expect(tail(filing)).toBe(tail(priorFiling));
   });
 
+  it("lists the campaign tables among the unrouted metric's sources", () => {
+    expect(bundle).toContain('"public.pipeline_stages","public.campaign_brief_asset_links","public.campaign_briefs"]');
+  });
+
   it("changes the carried metric only in the unrouted branch", () => {
     const strip = (src: string) => src
       .replace(/\n {5}-- 20271026100000[^\n]*\n {5}--[^\n]*\n {5}OR EXISTS\(SELECT 1 FROM public\._growth_form_campaign_route\(p_tenant_id,f\.id\)\)/, "")
-      .replace(/ {3}definition:='Live forms whose leads reach no pipeline[^\n]*\n {3}formula:='COUNT\(live forms WHERE NOT[^\n]*/, "");
+      .replace(/ {3}definition:='Live forms whose leads reach no pipeline[^\n]*\n {3}formula:='COUNT\(live forms WHERE NOT[^\n]*/, "")
+      .replace(',"public.campaign_brief_asset_links","public.campaign_briefs"]', "]");
     expect(strip(bundle)).toBe(strip(priorBundle));
     expect(strip(bundle)).not.toBe(bundle);
   });

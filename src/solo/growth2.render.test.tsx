@@ -940,6 +940,9 @@ describe("Solo Marketing department views", () => {
         { kind: "form", id: "f-1", name: "Discovery call request", status: "active", channel: null },
         { kind: "content", id: "c-1", name: "Spring ad", status: "draft", channel: "ad_copy" },
       ] };
+    // Experience 03 S1b: a form's campaign link decides where its leads go, so changing one re-reads Marketing.
+    const reread = vi.fn();
+    harness.state = { ...harness.state, retry: reread };
     renderAt("/solo/42/growth/campaigns");
     act(() => button("Open dossier")!.click());
     const dialog = () => document.querySelector('[role="dialog"]')!;
@@ -956,12 +959,17 @@ describe("Solo Marketing department views", () => {
     expect([...lane("Land").querySelectorAll(".cc-choices button")].map((choice) => choice.textContent)).toEqual(["PageSpring landingPublished"]);
     await act(async () => { (lane("Land").querySelector(".cc-choices button") as HTMLButtonElement).click(); });
     expect(harness.assetWrites).toEqual([["attach", "b1", "page", "p-1"]]);
+    expect(reread).not.toHaveBeenCalled(); // a page never decides where leads go
     expect(document.querySelector(".campaign-toast")?.textContent).toContain("Attached to the campaign. Nothing is sent or published.");
     await act(async () => { (lane("Reach").querySelector("button[aria-label='Remove Spring announcement from this campaign']") as HTMLButtonElement).click(); });
     expect(harness.assetWrites.at(-1)).toEqual(["detach", "b1", "email_campaign", "e-1"]);
     // Focus doesn't fall out of the dossier when the removed row's button goes: it returns to the lane's Add.
     await act(async () => { await new Promise((resolve) => requestAnimationFrame(() => resolve(null))); });
     expect(document.activeElement).toBe(lane("Reach").querySelector(".cc-add"));
+    // Removing the form does: Overview, Analytics and the form panel must stop naming this campaign's pipeline.
+    await act(async () => { (lane("Land").querySelector("button[aria-label='Remove Discovery call request from this campaign']") as HTMLButtonElement).click(); });
+    expect(harness.assetWrites.at(-1)).toEqual(["detach", "b1", "form", "f-1"]);
+    expect(reread).toHaveBeenCalledTimes(1);
   });
 
   it("a member reads what a campaign uses without the names they can't see, and can't change it", () => {

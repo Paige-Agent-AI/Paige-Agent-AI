@@ -11,7 +11,14 @@
 --   4. nowhere (the processor finishes the lead as not filed, with the reason) — unchanged.
 -- The rule keys on the form's campaign link, never on a lead's own tag, so it is the same for every lead from a
 -- form and the screens can state it per form. A form attached to two campaigns has no campaign route (never
--- guessed) and falls through to the default pipeline.
+-- guessed) and falls through to the default pipeline. Any non-archived campaign counts (draft, approved, active,
+-- paused, blocked, completed): the same set the S1a stamp and the form.submitted payload read; archiving a
+-- campaign is how an owner stops its forms filing there.
+--
+-- Where the S1a credit and this destination can differ (by design, both deterministic): the credit also reads a
+-- lead's own tag, the destination never does. A form attached to campaign A whose lead arrives on a link tagged
+-- B is credited to no campaign (ambiguous) yet files into A's pipeline; a form attached to A and B whose lead is
+-- tagged A is credited to A yet files into the default pipeline (no single campaign route).
 --
 -- 1. _growth_form_campaign_route — the rule above, step 2, as ONE definition. No grants: it is read only by
 --    the three functions below, each of which checks its own caller.
@@ -134,7 +141,9 @@ BEGIN
            pipeline,stage,sub.contact_id,'open','paige_form',sub.tenant_id,creator) RETURNING * INTO deal;
   END IF;
   UPDATE public.growth_form_submissions SET deal_id=deal.id WHERE id=sub.id;
-  RETURN jsonb_build_object('deal_id',deal.id,'stage_id',deal.stage_id,'default_pipeline',campaign IS NULL,'campaign_brief_id',campaign);
+  -- default_pipeline says whether the pipeline used is the business's default, as the replay above reads it.
+  RETURN jsonb_build_object('deal_id',deal.id,'stage_id',deal.stage_id,
+    'default_pipeline',coalesce((SELECT p.is_default FROM public.pipelines p WHERE p.id=pipeline),false),'campaign_brief_id',campaign);
 END $$;
 REVOKE ALL ON FUNCTION public.growth_attach_submission_default_deal(uuid,integer) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.growth_attach_submission_default_deal(uuid,integer) TO service_role;
@@ -145,8 +154,8 @@ COMMENT ON FUNCTION public.growth_attach_submission_default_deal(uuid,integer) I
 -- ─────────────────────────────────────────────────────────────────────────────
 -- _marketing_metric_bundle — carried forward VERBATIM from 20271021042001 (the newest definition; its
 -- production function body hash matched the repository's on 2026-10-12) except the marked 20271026100000
--- lines in the unrouted branch: a form with a campaign route is routed, and the definition and formula say
--- so. Grants (none) and the comment are re-asserted unchanged.
+-- lines in the unrouted branch: a form with a campaign route is routed, the definition and formula say so, and
+-- the branch's sources list the two campaign tables it now reads. Grants (none) and the comment are re-asserted unchanged.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public._marketing_metric_bundle(
  p_tenant_id uuid,p_metric_key text,p_metric_version text,
@@ -243,7 +252,7 @@ BEGIN
      OR default_ready,
    'reason',NULL) ORDER BY f.id),'[]'::jsonb) INTO source_rows
   FROM public.growth_forms f WHERE f.tenant_id=p_tenant_id AND f.status='active';
-  sources:='["public.growth_forms","public.growth_form_automations","public.growth_automation_targets","public.pipelines","public.pipeline_stages"]';
+  sources:='["public.growth_forms","public.growth_form_automations","public.growth_automation_targets","public.pipelines","public.pipeline_stages","public.campaign_brief_asset_links","public.campaign_briefs"]';
   IF p_metric_key='marketing.capture_points.published_current' THEN
    label:='Live forms'; sources:='["public.growth_forms"]';
    definition:='Forms live now that can capture a lead. Pages and funnels capture leads through the forms they embed, so they are not counted again.';

@@ -240,8 +240,8 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // write, which is the exact model the correction forbids. The honest boundary is not softened by
   // the class: a brief is intent, never proof — the "active" lifecycle state is a planning label the
   // owner sets, not evidence a campaign is running.
-  ["campaign_brief_create", "ordinary", "saves a campaign PLANNING brief the operator can edit or archive; it launches, sends, and publishes nothing"],
-  ["campaign_brief_revise", "ordinary", "edits a campaign PLANNING brief; nothing is launched, sent, or published"],
+  ["campaign_brief_create", "ordinary", "saves a campaign PLANNING brief the operator can edit or archive; it launches, sends, and publishes nothing. A linked pipeline also receives future leads from forms attached only to this campaign with no route of their own (Experience 03 S1b): deals open in the business's own pipeline, nothing is sent, and it is reversed by unlinking"],
+  ["campaign_brief_revise", "ordinary", "edits a campaign PLANNING brief; nothing is launched, sent, or published. Changing its pipeline changes where future leads from forms attached only to this campaign with no route of their own are filed (Experience 03 S1b); nothing is sent and it is reversible"],
   ["email_campaign_draft", "ordinary", "writes or changes an email campaign DRAFT in this business; nothing is sent, and a version awaiting approval, approved or sent is refused"],
   ["email_campaign_request_approval", "ordinary", "freezes one draft and files the owner's single approval for it; PAIGE cannot approve, and nothing is sent until a person approves"],
   ["email_series_draft", "ordinary", "writes or changes an email series DRAFT in this business (who enters, each email and its wait, when people leave); nothing is sent, a running series keeps its approved version, and a series awaiting approval or stopped is refused"],

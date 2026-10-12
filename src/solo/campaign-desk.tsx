@@ -173,7 +173,7 @@ function readinessRows(b, links = []) {
     ["Conversations / follow-up path", "unavail", "social", "No connected messaging provider on this workspace."],
     // Experience 03 S1b: the server files a form's leads here when the form has no route of its own and is
     // attached to this campaign only (_growth_form_campaign_route). Stated as the rule, never per lead.
-    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live). A form attached only to this campaign, with no route of its own, files its leads here.` : "Not routed to a pipeline."],
+    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live). ${b.lifecycleStatus === "archived" ? "" : " While it has an open stage, a form attached only to this campaign, with no route of its own, files its leads here."}` : "Not routed to a pipeline."],
     ["Tracking / attribution evidence", "partial", "analytics", "Leads are credited to this campaign as they arrive, through its form or its tagged link (see Brought in above). Analytics’ per-campaign figure still counts tagged links only. No order names a campaign, so revenue is never attributed to one."],
     ["Approvals complete", b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "ready" : b.lifecycleStatus === "ready_for_review" ? "await" : "planned", "overview",
       b.lifecycleStatus === "ready_for_review" ? "Awaiting your review." : b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "Approved." : "Not sent for review yet."],
@@ -203,7 +203,18 @@ function Readiness({ brief, links, onRoute }) {
 
 export default function CampaignOverview({ data, onRoute, autoOpenBrief = false, onAutoOpenConsumed = undefined }) {
   const briefsState = useSoloCampaignBriefs();
-  const assets = useCampaignAssets(briefsState.tenantId);
+  const rawAssets = useCampaignAssets(briefsState.tenantId);
+  // Experience 03 S1b: where a form's leads go now depends on its campaign link and the campaign's pipeline,
+  // and Overview, Analytics and the form panel state it from the shared Marketing read. A successful change
+  // here re-reads it (a silent refresh: a ready page stays ready). Production publishes none of these tables
+  // to realtime, so a change made elsewhere (PAIGE in chat) shows on the next load.
+  const refreshRoutes = React.useCallback(() => { if (typeof data.retry === "function") data.retry(); }, [data]);
+  const assets = React.useMemo(() => ({
+    ...rawAssets,
+    attach: async (...args) => { const r = await rawAssets.attach(...args); if (r.ok && args[1] === "form") refreshRoutes(); return r; },
+    detach: async (...args) => { const r = await rawAssets.detach(...args); if (r.ok && args[1] === "form") refreshRoutes(); return r; },
+  }), [rawAssets, refreshRoutes]);
+  const afterBriefWrite = async (write) => { const r = await write; if (r && r.ok) refreshRoutes(); return r; };
   // A REAL tenant-scoped Catalog read — the honest backing for the workspace-scope "Offer" loop
   // stage (§13). Only EXISTENCE is needed here, so a single-row page is enough (never the whole
   // catalog). "has" only when offers truly exist; "error" when the read failed; else unknown.
@@ -331,13 +342,13 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
       {drawer?.kind === "dossier" && portalHost && (() => { const b = briefs.find((x) => x.id === drawer.briefId); return b
         ? createPortal(<DossierDrawer brief={b} canManage={canManage} assets={assets} tenantId={briefsState.tenantId} onToast={showToast} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
             onEdit={() => setDrawer({ kind: "brief", briefId: b.id })}
-            onTransition={async (status, blocker, idem) => { const r = await briefsState.transitionBrief(b.id, status, b.version, blocker, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
-            onArchive={async (idem) => { const r = await briefsState.archiveBrief(b.id, b.version, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
+            onTransition={async (status, blocker, idem) => { const r = await afterBriefWrite(briefsState.transitionBrief(b.id, status, b.version, blocker, idem)); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
+            onArchive={async (idem) => { const r = await afterBriefWrite(briefsState.archiveBrief(b.id, b.version, idem)); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
         : null; })()}
       {drawer?.kind === "brief" && portalHost && createPortal(
         <BriefBuilder existing={drawer.briefId ? briefs.find((x) => x.id === drawer.briefId) : null} data={data}
           onClose={closeDrawer} onRoute={onRoute}
-          onSave={(draft, idem) => briefsState.saveBrief(draft, idem)}
+          onSave={(draft, idem) => afterBriefWrite(briefsState.saveBrief(draft, idem))}
           onRequestReview={async (briefId, version, idem) => briefsState.transitionBrief(briefId, "ready_for_review", version, undefined, idem)}
           onDone={(msg, kind = "ok") => { closeDrawer(); showToast(msg, kind); }}/>,
         portalHost,

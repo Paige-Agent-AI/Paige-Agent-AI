@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isMissingFunction } from "./ads-model";
 
 export type CampaignRecord = {
   id: string;
@@ -752,9 +753,9 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
             { _tenant_id: activeTenantId } as never,
           ),
         ]);
-        // Before its migration is applied the read does not exist (PGRST202), and neither does campaign
+        // Before its migration is applied the read does not exist (isMissingFunction: PGRST202, 42883), and neither does campaign
         // routing on the server, so "no campaign routes" is then the truth. Any other failure fails the read.
-        const campaignRouteError = campaignRouteResponse.error && (campaignRouteResponse.error as { code?: string }).code !== "PGRST202"
+        const campaignRouteError = campaignRouteResponse.error && !isMissingFunction(campaignRouteResponse.error)
           ? campaignRouteResponse.error : null;
         const firstError = [
           pageResponse.error,

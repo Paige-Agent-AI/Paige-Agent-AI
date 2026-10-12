@@ -1,0 +1,478 @@
+{
+  "boundary": "Unmounted Operations-owned client review component with explicit local synthetic source/caller ports; no real client acceptance, customer login, portal shell, provider effects or INT-346. Shared portal mount and authenticated QA remain owed.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 442
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 442
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 387
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 387
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 481
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 230
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 481
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 287.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 442
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 442
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 441
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 387
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 182
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 387
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 239.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "decision": "accepted",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 481
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 230
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "decision": "revision",
+      "geo": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 481
+      },
+      "confirmation": {
+        "contained": true,
+        "height": 287.6875
+      },
+      "keyboard": true,
+      "returnFocus": true,
+      "explicitConfirmation": true,
+      "exactSyntheticReadback": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unavailable",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "foreign",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "loading",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "refused",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unknown",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "dark",
+      "mode": "revoked-recovery",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "unavailable",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "foreign",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "loading",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "refused",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "unknown",
+      "honestState": true,
+      "noAutomaticReplay": true
+    },
+    {
+      "theme": "light",
+      "mode": "revoked-recovery",
+      "honestState": true,
+      "noAutomaticReplay": true
+    }
+  ],
+  "errors": []
+}

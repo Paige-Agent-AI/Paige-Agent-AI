@@ -82,6 +82,7 @@ type DbConfig = {
   lanes?: Record<string, { effective: string }>; // resolve_automation_autonomy
   persistOutcomeOverride?: Record<string, string>;
   failAdvance?: boolean;              // fail a phase-5 ledger advance (a call carrying _dispatched_at)
+  claim?: "held" | "error";   // paige_claim_act_dispatch: another runner holds it / infra error (default: claimed)
   failAcceptedWrite?: boolean;        // fail the phase-5 accepted pre-dispatch write (_dispatched_at null)
   // capture
   rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
@@ -161,6 +162,10 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       }
       if (fn === "resolve_automation_autonomy") {
         return { data: cfg.lanes?.[args._automation_id as string] ?? { effective: "off" }, error: null };
+      }
+      if (fn === "paige_claim_act_dispatch") {
+        if (cfg.claim === "error") return { data: null, error: { message: "claim_failed" } };
+        return { data: cfg.claim === "held" ? null : { id: `row-${args._act_id as string}` }, error: null };
       }
       if (fn === "paige_record_act_execution") {
         const actId = args._act_id as string;
@@ -372,6 +377,43 @@ describe("runEventActs — native auto-execute: Gateway availability gate + phas
     expect(receipt?.args._capability_key).toBe(TOOL);
     expect(receipt?.args._actor_id).toBe("owner1");
     expect(cfg.rpcCalls.some((c) => c.fn === "record_rail_event")).toBe(true);
+  });
+
+  // ── INT-179 Slice 2b: at most once. Only the dispatch-claim holder fires; everyone else leaves the act alone.
+  it("another runner holds the dispatch claim → NO dispatch; the act stays accepted and owes a reconcile", async () => {
+    const cfg = happy({ claim: "held" });
+    const res = await runEventActs(mockDb(cfg), event, [journeyAuto()]);
+    expect(res.records[0].outcome).toBe("accepted_for_execution");
+    expect(cfg.rpcCalls.some((c) => c.fn === "paige_claim_act_dispatch" && c.args._act_id === "act1")).toBe(true);
+    expect(cfg.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+    expect(cfg.rpcCalls.some((c) => c.fn === "paige_record_act_execution" && c.args._dispatched_at != null)).toBe(false);
+    expect(cfg.rpcCalls.some((c) => c.fn === "record_capability_run")).toBe(false);
+    expect(res.persist_failures).toEqual([]);
+    expect(res.reconcile_pending).toEqual(["a1"]); // kept reclaimable for a later drain
+  });
+  it("the claim cannot be read or written → NO dispatch, and the act is retried", async () => {
+    const cfg = happy({ claim: "error" });
+    const res = await runEventActs(mockDb(cfg), event, [journeyAuto()]);
+    expect(cfg.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+    expect(res.persist_failures).toEqual(["act1"]);
+  });
+  it("the accepted write lands on a row another runner already advanced → adopt it, never claim or dispatch", async () => {
+    const cfg = happy({ persistOutcomeOverride: { act1: "executed" } });
+    const res = await runEventActs(mockDb(cfg), event, [journeyAuto()]);
+    expect(res.records[0].outcome).toBe("executed");
+    expect(cfg.rpcCalls.some((c) => c.fn === "paige_claim_act_dispatch")).toBe(false);
+    expect(cfg.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+  });
+  it("an accepted row that never landed is re-dispatched only by the claim holder", async () => {
+    const held = happy({ currentActOutcome: "accepted_for_execution", transitionExists: false, claim: "held" });
+    const r1 = await runEventActs(mockDb(held), event, [journeyAuto()]);
+    expect(held.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+    expect(r1.records[0].outcome).toBe("accepted_for_execution");
+    const free = happy({ currentActOutcome: "accepted_for_execution", transitionExists: false });
+    await runEventActs(mockDb(free), event, [journeyAuto()]);
+    const order = free.rpcCalls.map((c) => c.fn);
+    expect(order.indexOf("paige_claim_act_dispatch")).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf("paige_claim_act_dispatch")).toBeLessThan(order.indexOf("set_journey_stage")); // claim BEFORE dispatch
   });
 
   it("a TIER-INELIGIBLE actor (client) → refused at the Gateway availability gate, NEVER dispatched", async () => {

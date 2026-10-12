@@ -12,6 +12,14 @@ The governing chain is:
 
 Every lane remains unavailable at the first stage it cannot prove. Chat prose can propose a fact; it cannot become durable truth without the owning canonical record, confirmation and provenance.
 
+## Experience 01 interview foundation — source candidate, 2026-10-12
+
+ANT-50 extends the existing private SOLO Chat with an inline operational profile review. REUSE canonical Setup readers/writers/provenance and the same Chat/history/Trust; EXTEND the caller-JWT per-turn operational projection and an existing USER-turn `bundle_ref.solo_business_interview` namespace; NEW only the missing editor; REPAIR the existing proof harness gaps. Contract: [`../delivery/experience-01-foundation.md`](../delivery/experience-01-foundation.md).
+
+Checkpoint contains phase/field/source-turn/revision references only, never facts or authority. Current canonical Owner membership and private coach-thread scope are enforced; Platform Operator does not receive private conversation access. Issued assistant receipts, turn ordering, authority columns, approvals and ASK metadata are preserved. Each resumed turn re-reads owner-confirmed operational Setup facts; private identity/contact/Vault fields never enter this projection. Save is the existing explicit human Setup control, not a new AI writer or automatic Memory/Rail promotion.
+
+Source candidate is not shipped or authenticated acceptance. INT-346 remains DRAINING: model proposal staging is unavailable; human entry/review/save is supported by existing Setup. Protected PC-1 Auth recovery and production workflow proof remain owed. Evidence is separated into actual isolated PostgreSQL function execution, detached component tests, rendered synthetic component/shell, exact-head CI/review and later deployment/authenticated acceptance.
+
 ## First vertical slice — Business Mission
 
 Current source implementation:

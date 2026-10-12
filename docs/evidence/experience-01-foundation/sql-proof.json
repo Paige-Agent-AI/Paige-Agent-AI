@@ -1,0 +1,282 @@
+{
+  "generatedAt": "2026-10-12T19:33:02.322Z",
+  "status": "PASS",
+  "environment": "new disposable local PostgreSQL cluster; synthetic records only",
+  "host": "127.0.0.1",
+  "port": 54756,
+  "clusterStopped": true,
+  "assurance": "Real PostgreSQL execution of tracked migrations, extracted sender/access functions, canonical Setup save/get functions and checkpoint RPCs. Initial supplemental cases use the explicitly stubbed base seam; interview cases replace it with verbatim real base functions and assert real tenants.brand writes. Synthetic dependency schema; NOT full production schema replay, protected Vault/provider delivery, or authenticated browser proof.",
+  "interviewFunctions": [
+    {
+      "name": "20270521000000_operator_authority_in_company_workspaces.sql",
+      "fn": "is_company_workspace",
+      "sha256": "e362b00823e70b3f44a16faee217f0d4be86e6a9e9aa0f8abf2aecb087857873"
+    },
+    {
+      "name": "20270521000000_operator_authority_in_company_workspaces.sql",
+      "fn": "is_tenant_owner",
+      "sha256": "1e8c07083a5e1fbae7ef8c122696a39f4a50f140070467a635b590428601c25b"
+    },
+    {
+      "name": "20260803190000_slice_a_multi_owner_is_owner.sql",
+      "fn": "can_manage_tenant_brand",
+      "sha256": "cc6e4382cc46d39caa50270735dc98216b3f4d9c7192fd9172bbd8bf3393fd63"
+    },
+    {
+      "name": "20261019000000_solo_setup_business_brief.sql",
+      "fn": "get_solo_business_brief",
+      "sha256": "3a8a3ba86e410aa2ed259c0ae5e0653b9e6bb0b6233f350300ed0238da3f914b"
+    },
+    {
+      "name": "20261020020000_setup_a2p_legal_identity_contract.sql",
+      "fn": "get_solo_setup_identity",
+      "sha256": "8c5e5483aa2516932e65c26e914f17824b7040eabd086bb60a2a5ffe6d9973f9"
+    },
+    {
+      "name": "20261046000000_solo_setup_persistence_repair.sql",
+      "fn": "save_solo_business_brief",
+      "sha256": "d2d1f149e31e1af53e6cb837db4d046d1b75a8cfba216154f7b061b947dd5b15"
+    },
+    {
+      "name": "20261046000000_solo_setup_persistence_repair.sql",
+      "fn": "save_solo_setup_identity",
+      "sha256": "07f9fbee4c248f8d90f2f5e1b461df0f038b5c44da207816b668ef2cb9f7adec"
+    },
+    {
+      "name": "20261046000000_solo_setup_persistence_repair.sql",
+      "fn": "get_solo_setup_context",
+      "sha256": "317e375b4890600d4b12e98b8560934533d7f566423a4ff412d36e62d9b486a4"
+    },
+    {
+      "name": "20261046000000_solo_setup_persistence_repair.sql",
+      "fn": "save_solo_setup_context",
+      "sha256": "16f35d4caaadaee5ce2ac109ade53d43caa058f5eceabd017fb11fa1c43d7455"
+    },
+    {
+      "name": "20261020100000_chat_turn_append_tenant_scope.sql",
+      "fn": "paige_chat_turn_append",
+      "sha256": "a8f453cb403148a0b5897969fbade72dcac6e427faea45ae8b06dc5938fe8c07"
+    },
+    {
+      "name": "20270601000008_int346_server_issued_interactive_receipts.sql",
+      "fn": "paige_chat_turn_authority_guard",
+      "sha256": "7d608b45b0478582115df55133dcceb8df0b91b234a9712bc8efabcb79a01f7f"
+    },
+    {
+      "name": "20270601000008_int346_server_issued_interactive_receipts.sql",
+      "fn": "paige_chat_interactive_evidence",
+      "sha256": "cf0307f623424ffb1b0c417976682d819826712e0167fddd2c38db7e744dfbe4"
+    },
+    {
+      "name": "20270602000301_int346_conversational_admission.sql",
+      "fn": "paige_chat_interactive_columns_guard",
+      "sha256": "1397810056d40a9526e213834d4217dbe02239f475c0828e62263c2fafd54b3d"
+    },
+    {
+      "name": "20270602000301_int346_conversational_admission.sql",
+      "fn": "paige_chat_interactive_begin_v2",
+      "sha256": "b2a92b8fb4f57ce635f25594644df05723781b14e43763f64fcce64f1f8bd749"
+    },
+    {
+      "name": "20270602000301_int346_conversational_admission.sql",
+      "fn": "paige_chat_interactive_settle",
+      "sha256": "79664c4f155175a39c5ea15013a6e7e9f5ebd7406f800223b397347c129ea1aa"
+    }
+  ],
+  "migrations": [
+    {
+      "name": "20261102010000_official_2022_naics_reference.sql",
+      "sha256": "6efdaf7b123df9ed7cb16b71a378a0304490bc66c7637a1a63f5c2de13b52e20"
+    },
+    {
+      "name": "20261103000000_solo_setup_business_context.sql",
+      "sha256": "ebdbc0f19fabc25b1ae85e1cc14267445af9518e21d99a298dca65270a973ecd"
+    },
+    {
+      "name": "20261104000000_solo_managed_sender_lifecycle.sql",
+      "sha256": "22cd3dd70b0c41251e7deb81aaa83918d2c77cdd68849bba08aef1bcb02a1f44"
+    },
+    {
+      "name": "20271026000000_solo_business_interview_checkpoint.sql",
+      "sha256": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274"
+    }
+  ],
+  "results": [
+    {
+      "name": "all three new migrations compile and apply on isolated real PostgreSQL",
+      "status": "PASS"
+    },
+    {
+      "name": "Agency, Enterprise, child standalone, sub-account, system and suspended behavior is preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "missing tenant is rejected by managed connector helper",
+      "status": "PASS"
+    },
+    {
+      "name": "anonymous, Member, Admin and non-Solo actors cannot register",
+      "status": "PASS"
+    },
+    {
+      "name": "expected-tenant mismatch refuses before mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "Solo owner registration updates registry marker and connector atomically and is repeatable",
+      "status": "PASS"
+    },
+    {
+      "name": "tenant rename preserves registered Solo address through the actual lifecycle trigger",
+      "status": "PASS"
+    },
+    {
+      "name": "verified custom sender priority is unchanged while managed identity stays independently visible",
+      "status": "PASS"
+    },
+    {
+      "name": "registry, inbound-only and reserved collisions refuse with complete rollback",
+      "status": "PASS"
+    },
+    {
+      "name": "two tenants racing for one address yield exactly one complete winner",
+      "status": "PASS"
+    },
+    {
+      "name": "held registration and tenant rename resolve without deadlock or sender drift",
+      "status": "PASS"
+    },
+    {
+      "name": "new sealed context tables refuse direct authenticated reads and writes",
+      "status": "PASS"
+    },
+    {
+      "name": "disabled existing sender refuses registration without silently reactivating",
+      "status": "PASS"
+    },
+    {
+      "name": "later authoritative registry changes survive the Solo lifecycle",
+      "status": "PASS"
+    },
+    {
+      "name": "supplement first use creates real tenant-scoped knowledge profile and voice records",
+      "status": "PASS"
+    },
+    {
+      "name": "stable-id edits upsert existing supplemental records without duplicates",
+      "status": "PASS"
+    },
+    {
+      "name": "no-op supplement save preserves knowledge voice timestamps and all field provenance",
+      "status": "PASS"
+    },
+    {
+      "name": "stale revision and expected-tenant save failures rollback every supplement and base seam",
+      "status": "PASS"
+    },
+    {
+      "name": "cross-tenant source and voice IDs are refused with complete transaction rollback",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid source content and unsupported profile fields fail atomically",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin null supplements preserve owner records while nonnull changes and Member saves refuse",
+      "status": "PASS"
+    },
+    {
+      "name": "owner removal persists and never creates Team access records",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint baseline: existing source has no checkpoint contract",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint forward migration applies twice to isolated real PostgreSQL",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint first use returns empty and refuses synthetic turn creation",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint ACL denies anonymous service and direct private-helper callers",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint persists only latest genuine user namespace and preserves ask/approval/transcript/thread fields",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint replay and two concurrent identical writes are harmless",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint pause resume and complete retain the same private thread",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint input refuses values raw conversation authority foreign fields and invalid types atomically",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint accepts only canonical operational pointers and metadata never writes business facts",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint owner role tenant thread and non-Solo isolation refuse without effect",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint refuses archived client Studio platform and inactive tenant shapes",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint ownership revocation blocks despite lingering display owner and role",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint rejects malformed newest forged metadata without exposing raw payload or older fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint context revision is checked against actual sealed Setup meta",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint refuses threads containing only assistant system or protected receipt turns",
+      "status": "PASS"
+    },
+    {
+      "name": "actual canonical Setup owner save commits operational fact and fresh reader matches real brand record",
+      "status": "PASS"
+    },
+    {
+      "name": "actual correction updates canonical value preserves other facts and resumes the same real chat thread",
+      "status": "PASS"
+    },
+    {
+      "name": "actual canonical stale correction refuses atomically before facts or checkpoint change",
+      "status": "PASS"
+    },
+    {
+      "name": "current DRAINING typed user admission accepts checkpoint without changing intent columns or retry",
+      "status": "PASS"
+    },
+    {
+      "name": "checkpoint leaves issued assistant receipt byte-identical and current settle replay returns same receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "co-owner canonical Setup save and checkpoint serialize without meta/tenant deadlock",
+      "status": "PASS"
+    },
+    {
+      "name": "workspace switch cannot carry a private interview checkpoint into another legitimate membership",
+      "status": "PASS"
+    }
+  ]
+}

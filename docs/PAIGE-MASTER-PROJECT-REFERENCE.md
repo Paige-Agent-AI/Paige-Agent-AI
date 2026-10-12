@@ -4196,6 +4196,12 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
 - Not authorized: AI collection calls. Legal review and owner authorization are required.
 - Production has zero commercial terms, signings, plans or provider-settled payments, so none of this has run for a real business. Authenticated acceptance waits on PC-1 (#1832).
 
+### Experience 01 / ANT-50 — SOLO interview foundation candidate (2026-10-12)
+
+Approved outcome remains natural business interview → reviewed fact → canonical Setup save/readback → correction → same-thread resume. The source candidate reuses existing Chat/history, Setup writers/provenance and platform provisioning; extends the private USER turn bundle with navigation-only references and a server-resolved owner-confirmed operational context. No second onboarding store, engine, approval or registry. See [`delivery/experience-01-foundation.md`](delivery/experience-01-foundation.md) and [`brain/solo-tenant-brain.md`](brain/solo-tenant-brain.md).
+
+Development evidence is separate: isolated actual PostgreSQL functions/rows, component tests and rendered synthetic providers are not authenticated production proof. INT-346 remains DRAINING/zero-tool, so fresh model proposals cannot be staged; existing explicit human Setup review/save remains available. Protected PC-1 Auth recovery, exact-head review/CI, normal release and authenticated owner conversation/correction/resume acceptance remain required. Communications/integrations/Vault recommendations and first-value execution stay behind the foundation gate. No customer release identity or LIVE outcome claim. Section 4.0 Shipped Delivery Log: N/A until this candidate reaches main.
+
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)
 
 Grounded at `8b7f975` against read-only prod aggregates, with each LIVE claim adversarially verified. Full map and contract: [`brain/paige-operating-fabric-contract.md`](brain/paige-operating-fabric-contract.md). The gaps that block an owner asking *"give me a read on the last week"* in Chat or Live:

@@ -106,7 +106,24 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     assert.match(result.stdout, /Finance source authority PASS/);
     if (suite === 'plans') {
       assert.match(result.stdout, /Finance plan catalogue authority PASS/);
-      console.log(`PASS ${leg}: plan catalogue authority, native identity, currency, history and output bounds`);
+      const read = version => `SELECT public.read_finance_plan_catalog('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000009',${version});`;
+      const identity = holding(database, read(1));
+      await identity.held;
+      await blockedCompetitor(database, `${actor} SELECT public.save_finance_company_entity('20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000009',1,'managed_entity','Concurrent revised planning company');`, identity.release);
+      await identity.done;
+      sql(database, `${actor} SELECT public.fixture_expect_error($q$${read(1)}$q$,'40001');`);
+      const membership = holding(database, read(2));
+      await membership.held;
+      await blockedCompetitor(database, "UPDATE public.tenant_members SET role='member' WHERE tenant_id='20000000-0000-0000-0000-000000000001' AND user_id='10000000-0000-0000-0000-000000000001';", membership.release);
+      await membership.done;
+      sql(database, `${actor} SELECT public.fixture_expect_error($q$${read(2)}$q$,'42501');`);
+      sql(database, "UPDATE public.tenant_members SET role='owner' WHERE tenant_id='20000000-0000-0000-0000-000000000001' AND user_id='10000000-0000-0000-0000-000000000001';");
+      const pause = holding(database, read(2));
+      await pause.held;
+      await blockedCompetitor(database, "UPDATE public.tenants SET lifecycle_execution_paused=true WHERE id='20000000-0000-0000-0000-000000000001';", pause.release);
+      await pause.done;
+      sql(database, `${actor} SELECT public.fixture_expect_error($q$${read(2)}$q$,'42501');`);
+      console.log(`PASS ${leg}: plan catalogue authority, native identity, currency, history, output bounds and concurrent company/membership/pause fences`);
       continue;
     }
     if (suite === 'scenarios') {

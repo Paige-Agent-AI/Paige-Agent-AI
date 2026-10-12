@@ -3,7 +3,7 @@
 \set apply_finance_migration 1
 \ir finance_cash_scenarios.sql
 \if :apply_catalog_migration
-\ir ../migrations/20271022110000_finance_plan_catalog.sql
+\ir ../migrations/20271023000100_finance_plan_catalog.sql
 \endif
 SET ROLE authenticated;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);

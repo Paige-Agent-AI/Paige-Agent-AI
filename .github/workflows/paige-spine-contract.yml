@@ -91,6 +91,9 @@ on:
       - "supabase/tests/promotional_solo_grant.sql"
       # Layer C · C5 slice 2 — companion-minting + cancellation-sync + direct-approve guard + reconciler.
       - "supabase/tests/paige_orchestration_companion_minting.sql"
+      # INT-179 Slice 2b — the ledger's in-flight guard and the at-most-once dispatch claim.
+      - "supabase/tests/paige_act_dispatch_claim.sql"
+      - "supabase/migrations/20271023000000_paige_act_dispatch_claim.sql"
       - "supabase/functions/_shared/paige-orchestration/**"
       - "supabase/functions/execute-approval/**"
       - "scripts/proof/resend-receipt-concurrency.mjs"
@@ -406,6 +409,10 @@ jobs:
       # durable reconciler (landed correlation → executed; >24h unconfirmed → failed; fresh/recent left as-is;
       # §59 in-body JWT-caller refusal). Rides this replayed DB for the same §24 reason as the proofs above.
       - run: supabase test db supabase/tests/paige_orchestration_companion_minting.sql
+      # INT-179 Slice 2b: a decision never overwrites an act in flight, detail is merged, and the dispatch claim
+      # goes to exactly one claimant (never on a held, settled or ambiguous act; stale claims re-takeable above a
+      # floor; service role only). The eight-session race on real rows runs in the Layer C proof below (case F).
+      - run: supabase test db supabase/tests/paige_act_dispatch_claim.sql
       - run: supabase test db supabase/tests/resend_receipt_reliability.sql
       - run: node scripts/proof/resend-receipt-concurrency.mjs
         env:

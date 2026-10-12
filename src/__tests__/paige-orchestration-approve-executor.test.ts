@@ -88,6 +88,7 @@ const baseCfg = (over: Partial<Cfg["rows"]> = {}, rpcOver: Partial<Cfg["rpc"]> =
     // the process's CURRENT posture, re-read at approval (§68): live + confirm by default
     resolve_automation_autonomy: () => ({ data: { found: true, state: "live", effective: "confirm" }, error: null }),
     paige_approve_act_execution: () => ({ data: { outcome: "accepted_for_execution" }, error: null }),
+    paige_claim_act_dispatch: () => ({ data: { id: "exec1" }, error: null }),
     set_journey_stage: () => ({ data: { unchanged: false }, error: null }), // changed → reconcile by correlation
     paige_record_act_execution: (a: Record<string, unknown>) => ({ data: { id: "row1", outcome: a._outcome }, error: null }),
     ...rpcOver,
@@ -366,6 +367,14 @@ describe("approve-executor — RESUME (recovery): a redeemed-but-unadvanced / un
     expect(cfg.calls.rpc.filter((c) => c.fn === "paige_record_act_execution").at(-1)!.args._outcome).toBe("executed");
   });
 
+  it("accepted + NO landed transition, but another caller holds the dispatch claim → does NOT re-dispatch", async () => {
+    const cfg = accepted({ paige_journey_stage_transitions: [] }, { paige_claim_act_dispatch: () => ({ data: null, error: null }) });
+    const res = await run(cfg);
+    expect(res.reason).toBe("dispatch_in_progress");
+    expect(res.outcome).toBe("accepted_for_execution");
+    expect(cfg.calls.rpc.map((c) => c.fn)).not.toContain("set_journey_stage");
+  });
+
   it("accepted_for_execution + NO landed transition → RE-DISPATCHES (idempotent), never re-redeems", async () => {
     const cfg = accepted({ paige_journey_stage_transitions: [] }, { set_journey_stage: () => ({ data: { unchanged: true }, error: null }) });
     const res = await run(cfg);
@@ -417,5 +426,30 @@ describe("approve-executor — RESUME (recovery): a redeemed-but-unadvanced / un
     const fns = cfg.calls.rpc.map((c) => c.fn);
     expect(fns).not.toContain("paige_approve_act_execution");
     expect(fns).not.toContain("set_journey_stage");
+  });
+});
+
+describe("approve-executor — at most once (INT-179 Slice 2b)", () => {
+  it("a fresh approval dispatches only after taking the claim", async () => {
+    const cfg = baseCfg();
+    const res = await run(cfg);
+    expect(res.outcome).toBe("executed");
+    const fns = cfg.calls.rpc.map((c) => c.fn);
+    expect(fns.indexOf("paige_approve_act_execution")).toBeLessThan(fns.indexOf("paige_claim_act_dispatch"));
+    expect(fns.indexOf("paige_claim_act_dispatch")).toBeLessThan(fns.indexOf("set_journey_stage"));
+  });
+  it("redeemed, but another caller holds the claim → reports it and dispatches nothing", async () => {
+    const cfg = baseCfg({}, { paige_claim_act_dispatch: () => ({ data: null, error: null }) } as Partial<Cfg["rpc"]>);
+    const res = await run(cfg);
+    expect(res).toMatchObject({ ok: false, executed: false, outcome: "accepted_for_execution", reason: "dispatch_in_progress" });
+    expect(cfg.calls.rpc.map((c) => c.fn)).not.toContain("set_journey_stage");
+    expect(approvalRefusalMessage(res.reason, res.outcome)).toMatch(/may already be running this step.*approve it again/);
+  });
+  it("the claim cannot be taken (infra) → dispatches nothing and makes no claim about what changed", async () => {
+    const cfg = baseCfg({}, { paige_claim_act_dispatch: () => ({ data: null, error: { message: "boom" } }) } as Partial<Cfg["rpc"]>);
+    const res = await run(cfg);
+    expect(res).toMatchObject({ ok: false, executed: false, outcome: "accepted_for_execution", reason: "dispatch_claim_error" });
+    expect(cfg.calls.rpc.map((c) => c.fn)).not.toContain("set_journey_stage");
+    expect(approvalRefusalMessage(res.reason, res.outcome)).toBe("PAIGE couldn't complete that action.");
   });
 });

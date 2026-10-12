@@ -43,6 +43,7 @@ import {
   type EventFacts,
 } from "./decide.ts";
 import { actReceiptRunSeed, FINAL_OUTCOME_SET } from "./outcomes.ts";
+import { claimActDispatch } from "./dispatch-claim.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { resolveNativeCapabilityStatus } from "../paige-capability-status/gatherer.ts";
@@ -562,6 +563,11 @@ export async function runEventActs(
       if (cur.outcome === "ambiguous") { rec.outcome = "ambiguous"; continue; }                // owner: never blind re-dispatch
       // an `accepted`/`retrying` row whose correlation shows NO landed transition → it never dispatched.
       if (plan && typeof plan.adapter.dispatch === "function") {
+        // At most once (Slice 2b): only the caller holding the dispatch claim fires. A live claim held by
+        // another runner means a dispatch may be in flight — leave the row for a later drain/sweep.
+        const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
+        if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
+        if (!claim.claimed) { rec.outcome = cur.outcome as ActOutcome; continue; }
         let dr: DispatchResult;
         try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
         await advanceNative(rec, plan, dr); continue;
@@ -573,6 +579,12 @@ export async function runEventActs(
     if (plan && typeof plan.adapter.dispatch === "function") {
       const acc = await persistNative(rec, "accepted_for_execution", { error: null }); // durable pre-dispatch record FIRST
       if (!acc.ok) { persist_failures.push(rec.act_id); continue; }
+      // The ledger returns what actually persisted: a concurrent runner may already have advanced this act.
+      if (rec.outcome !== "accepted_for_execution") continue;
+      // At most once (Slice 2b): of concurrent runners that both read ABSENT, only the claim holder fires.
+      const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
+      if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
+      if (!claim.claimed) continue; // another runner holds the dispatch; the row stays reconcilable
       let dr: DispatchResult;
       try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
       await advanceNative(rec, plan, dr); continue;

@@ -6,7 +6,8 @@
 //   1. decide.ts `ActOutcome` — the TS outcome union.
 //   2. the SQL domain `public.paige_act_outcome` CHECK (migration 20270126000000).
 //   3. engine.ts `FINAL_OR_SETTLED` — the TS "a final row is never re-dispatched" set.
-//   4. the SQL `_final` array inside `paige_record_act_execution` (same migration).
+//   4. the SQL `_final` array inside `paige_record_act_execution` (now defined in 20271023000000, which also
+//      adds `_decision` — a decision never overwrites an act in flight).
 // A drift between (1)/(2) or (3)/(4) is a SILENT correctness bug of exactly the class C4 names: if a state is
 // FINAL in the RPC but advanceable in the engine, phase 5 reconciles a row the RPC refuses to update (a
 // phantom "still reconciling" that can never settle); if it is advanceable in the RPC but FINAL in the engine,
@@ -50,7 +51,7 @@ export type ActOutcome = typeof ACT_OUTCOMES[number];
 /**
  * The FINAL/SETTLED outcomes — the single source of truth for the TS side of the monotonic guard. Once a row
  * holds one of these, a re-drain or retry NEVER overwrites it and phase 5 adopts it (idempotency across
- * re-drains). Mirrors the SQL `_final` array in `paige_record_act_execution` (migration 20270126000000),
+ * re-drains). Mirrors the SQL `_final` array in `paige_record_act_execution` (effective definition 20271023000000),
  * pinned set-for-set by the drift guard.
  *   • executed / failed / cancelled are terminal.
  *   • the decision outcomes (condition_not_matched, held_by_lane, approval_pending, refused_*) are SETTLED

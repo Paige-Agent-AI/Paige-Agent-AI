@@ -264,6 +264,16 @@ jobs:
           npm run smoke:paige-browser-render
           node services/paige-browser/smoke-pdf.mjs
 
+      # PC-1 — the per-request context isolation proof (cross-request/cross-tenant state, with the
+      # storageState counterfactual proving the probe bites) and the connect-time egress proxy proof
+      # (#138 DNS-rebinding closure: private/mixed/denylisted targets refused over real sockets,
+      # loopback-only bind). Same Chromium the hostile-page proof installed.
+      - name: paige-browser PC-1 isolation + egress-proxy proofs
+        if: ${{ !cancelled() }}
+        run: |
+          node services/paige-browser/smoke-isolation.mjs
+          node services/paige-browser/smoke-egress-proxy.mjs
+
       - name: Tier-feature guard (§60 — render gates must not hardcode a tier; use useTierFeatures)
         if: ${{ !cancelled() }}
         run: npm run lint:tier-features
@@ -715,6 +725,8 @@ jobs:
       # uploaded as evidence so a reviewer can read what each actually produced.
       - name: Webhook signature suites (Svix + SendGrid ES256)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/webhookSig.test.ts
+      - name: SendGrid webhook-admin broker (mocked provider IO)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
       - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
         run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
       - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)

@@ -20,7 +20,7 @@ import "./solo-campaigns.css";
 // icon and label per view, the active one underlined, and the department's own action at the far end.
 const VIEW_ICONS: Record<AdsView, typeof Activity> = { overview: Activity, campaigns: Layers, creative: ImageIcon, audiences: Users, performance: TrendingUp };
 
-export function AdsWorkspace({ tenantId }: { tenantId: string | null }) {
+export function AdsWorkspace({ tenantId, businessName }: { tenantId: string | null; businessName?: string | null }) {
   const [view, setView] = useSubtabRoute("solo", "ads", "overview");
   const params = useParams();
   const location = useLocation();
@@ -45,12 +45,15 @@ export function AdsWorkspace({ tenantId }: { tenantId: string | null }) {
     <div id="ads-tabpanel" role="tabpanel" aria-labelledby={`ads-tab-${current}`} className="campaigns-scroll">
       <MarketingAds
         tenantId={tenantId}
+        businessName={businessName ?? null}
         view={current}
         onView={setView}
         onOpenIntegrations={account ? () => go("settings", "integrations") : null}
         onOpenAudience={() => go("growth", "audience")}
         onOpenAnalytics={() => go("growth", "analytics")}
         onOpenCampaigns={() => go("growth", "campaigns")}
+        onOpenSales={account ? () => go("sales", "overview") : null}
+        onOpenFormRouting={account ? () => navigate(`${subtabPath("solo", account, "growth", "overview")}?capture=form`) : null}
       />
     </div>
   </div>;

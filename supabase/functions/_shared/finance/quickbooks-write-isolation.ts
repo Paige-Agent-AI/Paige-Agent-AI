@@ -3,6 +3,7 @@ export async function refuseLegacyQuickBooksWrite(
   request: Request,
   resolveActor: () => Promise<string | null>,
   corsHeaders: Record<string, string>,
+  kind: 'accounting_write' | 'provider_lifecycle' = 'accounting_write',
 ): Promise<Response> {
   const headers = { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
@@ -19,6 +20,7 @@ export async function refuseLegacyQuickBooksWrite(
   // Never read provider rows, decrypt/refresh tokens, parse a target account,
   // or call accounting APIs. Authentication authorizes none of those effects.
   return new Response(JSON.stringify({
-    error: 'ACCOUNTING_WRITE_UNAVAILABLE', reason: 'Accounting changes are unavailable', provider_effect: false,
+    error: kind === 'provider_lifecycle' ? 'PROVIDER_LIFECYCLE_UNAVAILABLE' : 'ACCOUNTING_WRITE_UNAVAILABLE',
+    reason: kind === 'provider_lifecycle' ? 'Company connection authorization is unavailable' : 'Accounting changes are unavailable', provider_effect: false,
   }), { status: 503, headers });
 }

@@ -32,7 +32,8 @@ export type CampaignLeadsState = {
   readonly leads: readonly CampaignLead[];
   /** Leads on this campaign's own forms that matched more than one campaign, so none was credited. */
   readonly uncredited: number;
-  readonly captureForms: readonly { readonly id: string; readonly name: string }[];
+  /** The forms attached to this campaign; `live` means it accepts submissions (status `active`). */
+  readonly captureForms: readonly { readonly id: string; readonly name: string; readonly live: boolean }[];
   readonly truncated: boolean;
   readonly retry: () => void;
 };
@@ -70,7 +71,7 @@ export function readCampaignLeads(data: unknown): Omit<CampaignLeadsState, "phas
   const captureForms = (Array.isArray(payload.capture_forms) ? payload.capture_forms : []).flatMap((raw) => {
     const row = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     const id = str(row.form_id);
-    return id ? [{ id, name: str(row.name) ?? "Untitled form" }] : [];
+    return id ? [{ id, name: str(row.name) ?? "Untitled form", live: row.status === "active" }] : [];
   });
   return {
     canManage: payload.can_manage === true,
@@ -88,7 +89,10 @@ const rpc: Rpc = (fn, args) => (supabase as unknown as { rpc: Rpc }).rpc(fn, arg
 /** One campaign's leads. Read only where it is shown: the open dossier. */
 export function useCampaignLeads(tenantId: string | null, briefId: string | null): CampaignLeadsState {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [state, setState] = useState<Omit<CampaignLeadsState, "retry">>({ phase: "loading", canManage: false, counts: EMPTY, leads: [], uncredited: 0, captureForms: [], truncated: false });
+  // `key` names the campaign the state belongs to, so another campaign's counts are never drawn, even for the
+  // one render before the effect for the new campaign runs.
+  const key = tenantId && briefId ? `${tenantId}:${briefId}` : null;
+  const [state, setState] = useState<Omit<CampaignLeadsState, "retry"> & { key: string | null }>({ key: null, phase: "loading", canManage: false, counts: EMPTY, leads: [], uncredited: 0, captureForms: [], truncated: false });
   const retry = useCallback(() => setRefreshKey((key) => key + 1), []);
   // Only the newest read may draw, so a slow older read never replaces a newer one.
   const seq = useRef(0);
@@ -97,18 +101,19 @@ export function useCampaignLeads(tenantId: string | null, briefId: string | null
     if (!tenantId || !briefId) return;
     let live = true;
     const ticket = ++seq.current;
-    setState((current) => ({ ...current, phase: "loading" }));
+    setState((current) => ({ ...current, key: `${tenantId}:${briefId}`, phase: "loading" }));
     Promise.resolve(rpc("get_campaign_brief_leads", { _tenant_id: tenantId, _brief_id: briefId })).then(({ data, error }) => {
       if (!live || ticket !== seq.current) return;
       if (error) throw new Error(error.message ?? "read failed");
-      setState({ phase: "ready", ...readCampaignLeads(data) });
+      setState({ key: `${tenantId}:${briefId}`, phase: "ready", ...readCampaignLeads(data) });
     }).catch((error: unknown) => {
       if (!live || ticket !== seq.current) return;
       console.error("[campaign-leads] read failed", error);
-      setState({ phase: "error", canManage: false, counts: EMPTY, leads: [], uncredited: 0, captureForms: [], truncated: false });
+      setState({ key: `${tenantId}:${briefId}`, phase: "error", canManage: false, counts: EMPTY, leads: [], uncredited: 0, captureForms: [], truncated: false });
     });
     return () => { live = false; };
   }, [tenantId, briefId, refreshKey]);
 
-  return { ...state, phase: tenantId && briefId ? state.phase : "error", retry };
+  const { key: stateKey, ...rest } = state;
+  return { ...rest, phase: !key ? "error" : stateKey === key ? rest.phase : "loading", retry };
 }

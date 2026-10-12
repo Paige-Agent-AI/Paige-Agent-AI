@@ -38,10 +38,10 @@ const FRAMES = [
   { name: "phone-390", width: 390, height: 844, content: 390 },
 ];
 const STATES = [
-  { mode: "populated", query: "", expect: ["Brought in", "What came of it", "7leads credited to this campaign", "5opportunities · see them in Sales", "—Revenue lives in Sales", "2 leads on this campaign’s forms also fit another campaign, so they aren’t counted here."], forbid: ["won", "$"] },
+  { mode: "populated", query: "", expect: ["Brought in", "What came of it", "7leads credited to this campaign", "5opportunities · open Sales", "—No figure:Revenue lives in Sales", "2 leads on this campaign’s forms also fit another campaign, so they aren’t counted here."], forbid: ["won", "$"] },
   { mode: "readonly", query: "", expect: ["7leads credited to this campaign", "5opportunities"], forbid: ["Renée Okafor"] },
-  { mode: "populated", query: "&leads=empty", name: "empty", forbid: ["see them in Sales"], expect: ["0leads credited to this campaign", "0opportunities—", "No leads yet. A lead is credited when someone fills in this campaign’s form or arrives by its tagged link."] },
-  { mode: "populated", query: "&leads=noform", name: "noform", expect: ["No leads yet. Attach the form people sign up on, or share the campaign’s tagged link, and leads are credited as they arrive."] },
+  { mode: "populated", query: "&leads=empty", name: "empty", forbid: ["open Sales"], expect: ["0leads credited to this campaign", "0opportunities—No figure:", "No leads yet. A lead is credited when someone fills in this campaign’s form or arrives by its tagged link."] },
+  { mode: "populated", query: "&leads=noform", name: "noform", expect: ["No leads yet. Attach a live form people sign up on, or share the campaign’s tagged link, and leads are credited as they arrive."] },
   { mode: "populated", query: "&leads=error", name: "error", expect: ["The leads this campaign brought in couldn’t load.", "Try again"], forbid: ["0leads"] },
 ];
 
@@ -139,7 +139,7 @@ async function main() {
             await link.focus(); await page.keyboard.press("Shift+Tab"); await page.keyboard.press("Tab");
             await page.waitForTimeout(300);
             const ring = await link.evaluate((el) => ({ focused: document.activeElement === el, outline: getComputedStyle(el).outlineStyle, width: parseFloat(getComputedStyle(el).outlineWidth) }));
-            check(ring.focused && ring.outline !== "none" && ring.width >= 2, `${id}: see them in Sales is reached by keyboard and shows its focus ring`, JSON.stringify(ring));
+            check(ring.focused && ring.outline !== "none" && ring.width >= 2, `${id}: open Sales is reached by keyboard and shows its focus ring`, JSON.stringify(ring));
           }
           if (state.name === "error") {
             // Keyboard: reach the one control from the element before it, see its focus ring, and press it.

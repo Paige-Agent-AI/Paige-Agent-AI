@@ -817,9 +817,11 @@
 .cc-outv dd{margin:0;min-width:0;font-size:12px;color:var(--ink-2)}
 .cc-outv.cc-muted{background:transparent;border-style:dashed}
 .cc .cc-outv.cc-muted dt{color:var(--ink-2);font-weight:500}
-/* --ink-3 measures 4.15:1 on the dossier's light surface, under AA for text this small, so the lanes' quiet
-   lines use --ink-2 (measured by scripts/live-drive/brought-in-drive.mjs). Scoped to the dossier's lanes. */
-.cc .cc-foot,.cc .cc-empty{color:var(--ink-2)}
+/* --ink-3 measures 4.15:1 on the dossier's light surface, under AA for text this small, so the dossier's
+   quiet lines use --ink-2 (measured by scripts/live-drive/brought-in-drive.mjs). Scoped to the campaign
+   dossier (.dw), which also covers Steps and results; Calendars reuses these class names and is untouched.
+   The token-wide question is #2073. */
+.dw .cc-foot,.dw .cc-empty{color:var(--ink-2)}
 .cc .cc-lnk{border:0;background:none;padding:0;font:inherit;color:var(--violet);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .cc .cc-lnk:focus-visible,.cc-out .btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:3px}
 .cc .cc-add:focus-visible,.cc .cc-choices button:focus-visible,.cc .cc-q:focus-visible{outline:2px solid var(--ring, var(--violet));outline-offset:2px}

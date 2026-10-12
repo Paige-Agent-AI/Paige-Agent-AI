@@ -13,7 +13,10 @@ export default defineConfig({
     // Marketing's Planned tabs read Supabase directly; point only that module at fixed rows.
     name: "planned-tabs-supabase",
     enforce: "pre",
-    resolveId(source, importer) {
+    resolveId(source, rawImporter) {
+      // Match on the file, not its URL: after a source file changes, Vite imports it as `…/file.ts?t=<ms>`,
+      // and an endsWith on the raw id would quietly load the real Supabase client instead of the stub.
+      const importer = rawImporter?.split("?")[0];
       if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-content.tsx") || importer?.endsWith("marketing-ads.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "planned-supabase-stub.ts");
       if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx") || importer?.endsWith("marketing-email-series.tsx") || importer?.endsWith("marketing-analytics-email.ts")) && source.endsWith("integrations/supabase/client")) return path.join(here, "email-supabase-stub.ts");
       if (importer?.endsWith("useCampaignAssets.ts") && source.endsWith("integrations/supabase/client")) return path.join(here, "assets-supabase-stub.ts");

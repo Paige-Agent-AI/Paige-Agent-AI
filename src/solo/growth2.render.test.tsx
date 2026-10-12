@@ -909,6 +909,22 @@ describe("Solo Marketing department views", () => {
     expect(dialog?.textContent).toContain("New campaign brief");
   });
 
+  it("the Source filter keeps a bare brief under No live source: credited leads are not a source a brief is backed by", () => {
+    useWorkspace();
+    harness.briefs = [brief("b1", "Bare draft"), brief("b2", "Offer-backed brief", { offerId: "o-1", offerName: "Advisory retainer" })];
+    renderAt("/solo/42/growth/campaigns");
+    const select = document.querySelector<HTMLSelectElement>('select[aria-label="Filter by source state"]')!;
+    const choose = (value: string) => act(() => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(select, value);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const names = () => [...document.querySelectorAll(".pf-row")].map((row) => (row.textContent ?? "").includes("Bare draft") ? "Bare draft" : (row.textContent ?? "").includes("Offer-backed brief") ? "Offer-backed brief" : "?");
+    choose("unavail");
+    expect(names()).toEqual(["Bare draft"]);
+    choose("live");
+    expect(names()).toEqual(["Offer-backed brief"]);
+  });
+
   it("a campaign's dossier shows what it uses, in Reach and Land, and an admin attaches and removes pieces", async () => {
     useWorkspace();
     harness.briefs = [brief("b1", "Spring advisory intake", { lifecycleStatus: "active" })];

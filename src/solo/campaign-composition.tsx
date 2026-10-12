@@ -64,33 +64,47 @@ function Lane({ id, title, help, kinds, links, available, canManage, addLabel, m
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+/** What the lane's foot says: how a lead reaches this campaign, true to the server's rules. */
+export function broughtInNote(leads: Pick<CampaignLeadsState, "counts" | "uncredited" | "captureForms">, archived: boolean): string {
+  const live = leads.captureForms.some((form) => form.live);
+  const how = archived
+    ? "This campaign is archived, so its forms no longer credit leads to it; a lead arriving by its tagged link still is."
+    : leads.counts.leads
+      ? "Each lead was credited once, when it arrived, through this campaign’s form or its tagged link."
+      : live ? "No leads yet. A lead is credited when someone fills in this campaign’s form or arrives by its tagged link."
+        : "No leads yet. Attach a live form people sign up on, or share the campaign’s tagged link, and leads are credited as they arrive.";
+  const fits = leads.uncredited > 0
+    ? ` ${plural(leads.uncredited, "lead", "leads")} on this campaign’s forms also fit another campaign, so ${leads.uncredited === 1 ? "it isn’t" : "they aren’t"} counted here.`
+    : "";
+  return how + fits;
+}
+
 /** The outcome lane. Counts are the server's, over every lead credited to this campaign. */
-export function BroughtIn({ id, leads, onRoute }: { id: string; leads: CampaignLeadsState; onRoute?: (route: string) => void }) {
+export function BroughtIn({ id, leads, archived = false, onRoute }: { id: string; leads: CampaignLeadsState; archived?: boolean; onRoute?: (route: string) => void }) {
+  const headingRef = React.useRef<HTMLHeadingElement>(null);
+  // Try again unmounts while the read reloads, so focus moves to the lane's heading rather than the page.
+  const retry = () => { leads.retry(); requestAnimationFrame(() => headingRef.current?.focus()); };
   return (
     <section className="cc-lane cc-out" aria-labelledby={`${id}-h`} aria-busy={leads.phase === "loading"}>
-      <div className="cc-h"><h5 id={`${id}-h`}>Brought in</h5><span>What came of it</span></div>
+      <div className="cc-h"><h5 id={`${id}-h`} ref={headingRef} tabIndex={-1}>Brought in</h5><span>What came of it</span></div>
       {leads.phase === "loading" && <div className="campaigns-skeleton" style={{ padding: 0 }}><span style={{ height: 52 }}/></div>}
-      {leads.phase === "error" && <p className="cc-empty" role="alert">The leads this campaign brought in couldn’t load. <button type="button" className="btn btn-s" onClick={leads.retry}>Try again</button></p>}
+      {leads.phase === "error" && <p className="cc-empty" role="alert">The leads this campaign brought in couldn’t load. <button type="button" className="btn btn-s" onClick={retry}>Try again</button></p>}
       {leads.phase === "ready" && <>
         <dl className="cc-outs">
           <div className="cc-outv"><dt>{leads.counts.leads}</dt><dd>{leads.counts.leads === 1 ? "lead" : "leads"} credited to this campaign</dd></div>
           <div className="cc-outv"><dt>{leads.counts.opportunities}</dt><dd>{leads.counts.opportunities === 1 ? "opportunity" : "opportunities"}
-            {onRoute && leads.counts.opportunities > 0 && <> · <button type="button" className="cc-lnk" onClick={() => onRoute("sales")}>see them in Sales</button></>}</dd></div>
-          <div className="cc-outv cc-muted"><dt>—</dt><dd>Revenue lives in Sales</dd></div>
+            {onRoute && leads.counts.opportunities > 0 && <> · <button type="button" className="cc-lnk" onClick={() => onRoute("sales")}>open Sales</button></>}</dd></div>
+          <div className="cc-outv cc-muted"><dt><span aria-hidden="true">—</span><span className="campaigns-sr-only">No figure:</span></dt><dd>Revenue lives in Sales</dd></div>
         </dl>
-        <p className="cc-foot">{leads.counts.leads || leads.uncredited
-          ? "Each lead was credited once, when it arrived, through this campaign’s form or its tagged link."
-          : leads.captureForms.length ? "No leads yet. A lead is credited when someone fills in this campaign’s form or arrives by its tagged link."
-            : "No leads yet. Attach the form people sign up on, or share the campaign’s tagged link, and leads are credited as they arrive."}
-          {leads.uncredited > 0 && ` ${plural(leads.uncredited, "lead", "leads")} on this campaign’s forms also fit another campaign, so ${leads.uncredited === 1 ? "it isn’t" : "they aren’t"} counted here.`}</p>
+        <p className="cc-foot">{broughtInNote(leads, archived)}</p>
       </>}
     </section>
   );
 }
 
-export function CampaignComposition({ briefId, assets, onToast, tenantId = null, onRoute }: {
+export function CampaignComposition({ briefId, assets, onToast, tenantId = null, archived = false, onRoute }: {
   briefId: string; assets: CampaignAssetsState; onToast: (message: string, kind: "ok" | "err") => void;
-  tenantId?: string | null; onRoute?: (route: string) => void;
+  tenantId?: string | null; archived?: boolean; onRoute?: (route: string) => void;
 }) {
   const leads = useCampaignLeads(tenantId, briefId);
   if (assets.phase === "loading") return <div className="campaigns-skeleton" style={{ padding: 0 }}><span style={{ height: 64 }}/></div>;
@@ -104,7 +118,7 @@ export function CampaignComposition({ briefId, assets, onToast, tenantId = null,
         available={assets.available} canManage={assets.canManage} addLabel="Add an email, series or library piece" makeWhere="Email, or save it to your library from Vibe Studio" onAttach={attach} onDetach={detach}/>
       <Lane id={`cc-land-${briefId}`} title="Land" help="Where they arrive and sign up" kinds={LAND} links={mine.filter((link) => LAND.includes(link.kind))}
         available={assets.available} canManage={assets.canManage} addLabel="Add the page, form or funnel they land on" makeWhere="Vibe Studio" onAttach={attach} onDetach={detach}/>
-      {tenantId && <BroughtIn id={`cc-out-${briefId}`} leads={leads} onRoute={onRoute}/>}
+      {tenantId && <BroughtIn id={`cc-out-${briefId}`} leads={leads} archived={archived} onRoute={onRoute}/>}
       <p className="cc-foot">Attaching a piece records that it's part of this campaign. Nothing is sent or published from here. A social post that names this campaign shows here too.</p>
     </div>
   );

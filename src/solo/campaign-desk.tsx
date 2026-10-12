@@ -172,7 +172,7 @@ function readinessRows(b, links = []) {
     ["Publishing / distribution path", "unavail", "social", "Depends on a connected provider — not checked."],
     ["Conversations / follow-up path", "unavail", "social", "No connected messaging provider on this workspace."],
     ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."],
-    ["Tracking / attribution evidence", "unavail", "analytics", "Leads count toward a campaign only when their link carries its tag (see Analytics). No order names a campaign, so revenue is never attributed to one."],
+    ["Tracking / attribution evidence", "partial", "analytics", "Leads are credited to this campaign as they arrive, through its form or its tagged link (see Brought in above). Analytics’ per-campaign figure still counts tagged links only. No order names a campaign, so revenue is never attributed to one."],
     ["Approvals complete", b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "ready" : b.lifecycleStatus === "ready_for_review" ? "await" : "planned", "overview",
       b.lifecycleStatus === "ready_for_review" ? "Awaiting your review." : b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "Approved." : "Not sent for review yet."],
   ];
@@ -252,7 +252,9 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
     if (filters.q && !(b.name + " " + (b.objective || "")).toLowerCase().includes(filters.q.toLowerCase())) return false;
     if (filters.src !== "all") {
       const l = briefLoop(b);
-      const live = Object.values(l).some((v) => v === "ready" || v === "partial");
+      // A source the brief itself is backed by. Recorded outcome is a platform capability every brief shares
+      // (leads are credited at arrival), so it never makes a bare brief "live-backed".
+      const live = Object.entries(l).some(([k, v]) => k !== "outcome" && (v === "ready" || v === "partial"));
       if (filters.src === "live" && !live) return false;
       if (filters.src === "unavail" && live) return false;
     }
@@ -581,7 +583,7 @@ function DossierDrawer({ brief: b, canManage, assets, tenantId, onToast, onClose
             {b.budgetTarget && <div className="dw-note" style={{ marginTop: 8 }}>The budget target is a figure you set — not actual ad spend, a forecast, or connected media buying.</div>}
           </div>
           {b.blocker && <div className="dw-note" style={{ borderColor: "var(--bad)", background: "var(--bad-tint)", color: "var(--bad)" }}><Ic.bell size={13}/> Blocker: {b.blocker}</div>}
-          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast} tenantId={tenantId} onRoute={onRoute}/></div>
+          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast} tenantId={tenantId} archived={b.lifecycleStatus === "archived"} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Steps and results</h4><CampaignActions tenantId={tenantId} briefId={b.id} onToast={onToast}/></div>
           <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} links={links} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>

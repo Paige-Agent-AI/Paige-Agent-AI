@@ -53,7 +53,7 @@ const STATUS_LABEL: Record<StatusKey, string> = {
 };
 const STATUS_ORDER: StatusKey[] = ["running", "approved", "review", "draft", "paused", "blocked", "completed"];
 
-type FormRouteFields = Pick<CampaignArtifact, "routingTargets" | "intakePipelineId">;
+type FormRouteFields = Pick<CampaignArtifact, "routingTargets" | "intakePipelineId"> & Partial<Pick<CampaignArtifact, "campaignRoute">>;
 
 /** The pipeline fields the default-route rule reads. Structural, so any read of the Sales workspace fits. */
 export type DefaultPipelineWorkspace = {
@@ -93,17 +93,28 @@ export const defaultRouteLabel = (target: NonNullable<ReturnType<typeof defaultP
   `${target.pipelineName} (default) → ${target.stageLabel}`;
 
 /** "own": the form routes its own deals (an enabled pipeline_attach automation, or its intake route while
- *  it has no enabled automation at all, as growth-process-submission plans it). "default": it has no own
- *  route, so the processor files its leads into the default pipeline, which can take them. "none": no own
- *  route and no usable default pipeline, so its leads reach no pipeline. */
-export function pipelineRouteOf(form: FormRouteFields, defaultReady: boolean): "own" | "default" | "none" {
+ *  it has no enabled automation at all, as growth-process-submission plans it). "campaign": it has no own
+ *  route and is attached to exactly one campaign whose pipeline can take its leads, so they are filed there
+ *  (Experience 03 S1b; the server's _growth_form_campaign_route, read through get_form_campaign_routes).
+ *  "default": no own route and no campaign route, so the processor files its leads into the default
+ *  pipeline, which can take them. "none": none of those, so its leads reach no pipeline. The same order
+ *  growth_attach_submission_default_deal and marketing.forms.unrouted_current apply. */
+export function pipelineRouteOf(form: FormRouteFields, defaultReady: boolean): "own" | "campaign" | "default" | "none" {
   const targets = form.routingTargets ?? [];
   if (targets.includes("pipeline_attach") || (Boolean(form.intakePipelineId) && targets.length === 0)) return "own";
+  if (form.campaignRoute) return "campaign";
   return defaultReady ? "default" : "none";
 }
 
-/** A form's leads reach a pipeline when it routes its own deals, or (owner ruling 2026-10-11) when it has
- *  no own route and the business's default pipeline has an open stage to take them. This mirrors
+/** How a form's campaign destination reads to the owner: "Campaign: <Pipeline> → <first open stage>". The
+ *  word comes first because the Overview card clips a long route to one line, and the clipped line must still
+ *  say what it is. */
+export const campaignRouteLabel = (route: NonNullable<CampaignArtifact["campaignRoute"]>) =>
+  `Campaign: ${route.pipelineName} → ${route.stageLabel}`;
+
+/** A form's leads reach a pipeline when it routes its own deals, when its campaign's pipeline takes them
+ *  (Experience 03 S1b), or (owner ruling 2026-10-11) when it has no own route and the business's default
+ *  pipeline has an open stage to take them. This mirrors
  *  growth_attach_submission_default_deal and Marketing's server producer marketing.forms.unrouted_current,
  *  which counts such a form as routed. `defaultReady` defaults to false so a caller that does not know the
  *  pipelines never claims a destination; Overview and Analytics pass defaultPipelineReady(workspace). */

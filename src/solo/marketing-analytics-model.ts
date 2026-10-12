@@ -7,7 +7,7 @@
 
 import type { CampaignArtifact, CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT, pipelineRouteOf, submissionsInPeriod } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT, campaignRouteLabel, pipelineRouteOf, submissionsInPeriod } from "./marketing-overview-model";
 
 // Week, month and quarter: the periods the email read also serves (read_email_marketing_dashboard
 // accepts 7, 30 or 90). Email counts back from now; submissions count whole days ending today, so the two
@@ -27,8 +27,12 @@ export type SourceRow = { label: string; count: number };
 export type CampaignTagRow = { tag: string; count: number; brief: string | null; key?: string; note?: string };
 /** Where a form's leads go, in Overview's words: its own pipeline route, the business's default pipeline
  *  (no route of its own, owner ruling 2026-10-11), an email alert only, automations but no pipeline, or nowhere. */
-export type RouteState = "pipeline" | "default" | "alert" | "automations" | "none";
-export type CapturePoint = { id: string; name: string; count: number; route: RouteState; failed: number };
+export type RouteState = "pipeline" | "campaign" | "default" | "alert" | "automations" | "none";
+export type CapturePoint = {
+  id: string; name: string; count: number; route: RouteState; failed: number;
+  /** "<Pipeline> (campaign) → <stage>" when route is "campaign" (Experience 03 S1b). */
+  routeLabel?: string;
+};
 
 /** One bar of the leads chart: a day (week and month ranges) or a week (quarter). */
 /** `days` is how many days the point covers: 1, 7, or fewer for the newest week of a quarter, which ends today. */
@@ -90,11 +94,12 @@ function outcomeOf(submission: CampaignSubmission): OutcomeKey {
 type FormLike = Pick<CampaignArtifact, "id" | "type" | "name" | "routingTargets" | "routingConfigured" | "recentDispatches"> & {
   intakePipelineId?: string | null;
   intakeAlert?: boolean;
+  campaignRoute?: CampaignArtifact["campaignRoute"];
 };
 
 const routeOf = (form: FormLike, defaultReady: boolean): RouteState => {
   const route = pipelineRouteOf(form, defaultReady);
-  return route === "own" ? "pipeline" : route === "default" ? "default" : form.intakeAlert ? "alert" : form.routingConfigured ? "automations" : "none";
+  return route === "own" ? "pipeline" : route === "campaign" ? "campaign" : route === "default" ? "default" : form.intakeAlert ? "alert" : form.routingConfigured ? "automations" : "none";
 };
 
 export function deriveMarketingAnalytics(input: {
@@ -147,6 +152,7 @@ export function deriveMarketingAnalytics(input: {
       count: byForm.get(form.id) ?? 0,
       route: routeOf(form, input.defaultReady ?? false),
       failed: form.recentDispatches?.failed ?? 0,
+      ...(routeOf(form, input.defaultReady ?? false) === "campaign" && form.campaignRoute ? { routeLabel: campaignRouteLabel(form.campaignRoute) } : {}),
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   const fromRetired = within.filter((submission) => !liveIds.has(submission.formId)).length;

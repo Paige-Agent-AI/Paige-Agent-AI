@@ -93,6 +93,11 @@ describe("Campaign brief seam — client contract", () => {
     // Since Experience 03 S1 a lead's campaign is stamped by the server at arrival; revenue still is not,
     // and the stage says both (it reads "Partly available", never "Available").
     expect(desk).toContain("Leads credited at arrival");
+    // Experience 03 S1b: the pipeline row states the routing rule, never a per-lead claim.
+    expect(desk).toContain("While it has an open stage, a form attached only to this campaign, with no route of its own, files its leads here.");
+    // A change made here re-reads the shared Marketing read, so Overview, Analytics and the panel follow it.
+    expect(desk).toMatch(/if \(r\.ok && args\[1\] === "form"\) refreshRoutes\(\)/);
+    expect(desk).toContain("onSave={(draft, idem) => afterBriefWrite(briefsState.saveBrief(draft, idem))}");
     expect(desk).toContain("Revenue isn't credited to campaigns yet.");
     expect(desk).not.toMatch(/outcome:\s+"ready"/);
   });

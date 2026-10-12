@@ -3347,3 +3347,10 @@ computed outline, not by reading the CSS (it looks correct). Four shipped Campai
 - **Use `var(--violet)` (or `hsl(var(--ring))`) for focus outlines in the Solo shell.**
 - **Measure focus after transitions settle.** `.paige-solo .btn` transitions every property for 150 ms,
   outline included; a reading taken at once shows width 0 even when the rule is right.
+
+- 2026-10-12 (Experience 03 S1b): **When a stated value starts depending on a new input, every write path to that
+  input must refresh the readers.** S1b made a form's stated destination depend on its campaign link and the
+  campaign's pipeline. The screens, tests and drive were all correct at load, but nothing re-read the shared
+  Marketing read after attaching a form in the dossier, so the screens went stale until reload. It was caught only
+  by an independent review that asked "what writes this input?" Also: the realtime channel that seemed to cover it
+  never fires on production (no table is published, #2079). Check the publication before relying on a subscription.

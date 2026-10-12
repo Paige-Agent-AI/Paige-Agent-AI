@@ -2,7 +2,7 @@
 
 Date: 2026-10-12 · Journey Lead: Claude Code (one accountable lead) · Records: ANT-51 / ANT-147 · Shell: SOLO
 
-**Status: CHECKPOINT 1 — evidence-grounded inventory and plan.** Branch `claude/clever-lovelace-r111ru`.
+**Status: CHECKPOINT 1 (inventory and plan) + E4-S1 implementation (§11) and documented contracts (§12).** Branch `claude/clever-lovelace-r111ru`.
 Nothing here is owner-accepted or customer-released. Every claim names its evidence. Every absence claim
 names what was searched. Production evidence comes from read-only aggregate SELECTs; no identifiers or
 values were read.
@@ -391,3 +391,148 @@ Each has a recommendation. They are reversible unless marked.
 - Voice outbound bypass of the pre-send gate, quiet-hours time-zone fallback, and the dual consent stores are design
   inputs for S5–S7 and are raised with Communications when those slices start. They are not separate defects of
   current behaviour: the human softphone is the only dialer today.
+
+---
+
+## 11. E4-S1 delivery record — "Where this client stands" (2026-10-12)
+
+**What shipped on this branch (not yet merged; not live).**
+- Migration `20271026000100_exp04_client_engagement_status_read.sql` adds
+  `public.read_client_engagement_status(_expected_tenant_id uuid, _contact_id uuid)`. It is
+  SECURITY DEFINER with `search_path` pinned, granted to `authenticated` only (never `anon` or
+  `service_role`).
+- **Caller scope comes from the session.** The function requires
+  `current_user_tenant_id() = _expected_tenant_id`, and it reuses the Sales gate
+  `_sales_invoice_actor`: the caller must be an active owner or admin, with that workspace as
+  their active workspace. A client from another tenant is refused exactly like an unauthorized one.
+- **It composes canonical owners only:**
+  - commercial terms come from `tenant_client_agreements`;
+  - signing lifecycle comes from `paige_agreements` (body, document path and storage keys never
+    leave the database);
+  - balances come from `_sales_invoice_balance_rows`, split into manual, provider-live and
+    provider-test amounts;
+  - open, failed and expired payment requests come from `paige_invoice_provider_operations`;
+  - delivery work comes from `plan_items` milestones and tasks (reminders are excluded).
+- It adds no table, ledger, store, scheduler or provider call. Its single write is the canonical
+  `record_capability_run` receipt, which carries no name or amount.
+- Composer: `supabase/functions/_shared/client-engagement/status.ts`. It reuses the canonical
+  Collections schedule model (`previewCollectionSchedule`) and holds these invariants:
+  - verified (live), recorded by the owner, and test-environment money are kept apart, and test
+    money never reduces what is owed;
+  - the agreed schedule is kept apart from invoices: `not_yet_invoiced` and `behind_schedule`
+    count only invoices that reference the terms;
+  - in-flight or unknown payment requests are never treated as received;
+  - unrecorded facts (disputes, refunds, an "effective" transition, installment allocation) are
+    declared as not recorded, never zeroed;
+  - unreadable, stale, mixed-currency and truncated sources withhold totals instead of
+    understating them.
+- Data seam: `src/solo/engagement/useClientEngagementStatus.ts`. It is **not mounted** in any
+  shell; the Engagement panel waits on the owner's UI review (prototype in
+  `assets/exp04-engagement/`).
+
+**Evidence, by class.**
+
+| Class | Evidence | Result |
+|---|---|---|
+| Database, full schema, rolled back | `supabase/tests/exp04_client_engagement_status.sql` on a fresh local stack (1,278 migrations applied by `supabase start` 2.109.1) | **34/34 PASS**. 8 scope refusals: staff member, client-portal user, foreign owner ×2, anon, foreign client, foreign workspace, stale workspace after a switch. Every invoice balance equals an independent sum over `paige_invoice_payments` by evidence class. Signing body and keys never leave. Exactly one receipt, with no name or amount. |
+| Source parity (database → composer) | `scripts/proof/exp04-client-status-parity.mjs` composes the owner's actual read and checks it against hand-worked ledger values | **PASS** (16 money fields, 6 invoices, agreement, work) |
+| Tests bite (§71.4) | Mutant 1 removes the owner/admin gate; mutant 2 folds test money into live | Mutant 1: SQL proof FAILS ("staff member … accepted"). Mutant 2: SQL proof FAILS (ledger parity). Real function restored: PASS |
+| Composer unit | `src/__tests__/exp04-client-engagement-status.test.ts` over the captured real read | **10/10 PASS** |
+| CI | Both proofs added to `paige-spine-contract › database-contract` | Pending on the PR's exact head |
+| Authenticated runtime | — | **UNVERIFIED**: PC-1 not ready (#1832); typed Chat tools are off (INT-346) |
+
+**#2072 containment (same branch).** `paige-mcp` `send_invoice` now refuses
+(`legacy_invoice_send_retired`) before any read, provider call, write or audit. The original
+defect was worse than first filed: the handler read the invoice **by id alone with the service
+role**, with no workspace check, and wrote caller text unescaped into the customer email. The
+existing test that required legacy sending to succeed is rewritten to require zero effects; it
+fails 7/7 against the old handler and passes 7/7 against the contained one. §58 call-out: this
+removes a shipped capability, as directed by the owner on 2026-10-12 ("contain the legacy send
+path before any real customer invoice sending"). The governed replacement is
+`sales-invoice-delivery`.
+
+**Not in E4-S1 (named, not hidden):**
+- Spine/Chat registration of `client_engagement.status`, so PAIGE can answer the status question
+  in chat. It follows the #2075 ship-dark pattern and needs Platform Reach review; it is dark
+  while INT-346 drains.
+- Mounting the panel. This waits on owner UI approval.
+- The Fabric business-review roll-up, which is Experience 02's.
+
+## 12. Contracts — documented, NOT activated
+
+None of these transitions or communications runs until (a) the named backend change ships with
+its own proof, and (b) the owner authorizes activation. Each contract reuses the one approval
+gate (`paige_pending_confirmations`), and records a `record_capability_run` receipt and Rail
+event.
+
+### C-1 Signed-agreement effectuation (terms become effective)
+- **Trigger:** a `paige_agreements` row reaches `completed` with `sealed_storage_key`,
+  `content_sha256` and `sealed_sha256` present.
+- **Preconditions, all checked at execution:**
+  - same tenant, contact and offer on the signing and the terms;
+  - `commercial_terms_id` is not null;
+  - terms status is `draft` or `active`;
+  - **the terms version that was signed equals the current terms version.**
+- **The last precondition cannot be evaluated today.** Signing records no frozen commercial
+  snapshot (`signed_terms_compatibility = unverified_no_frozen_commercial_snapshot`; owned by
+  #1843). Until #1843 lands, effectuation **refuses** with `signed_terms_compatibility_unverified`
+  and PAIGE asks the owner to confirm the terms by hand.
+- **Effect:** terms `draft → active` through the existing writer `set_client_agreement_status`,
+  plus effective provenance.
+- **Backend change, named:** an effective-provenance record (`effective_signing_id`,
+  `effective_terms_version`, `effective_at`) on the terms row or a Sales event. No such column
+  exists today. This is a new migration, Sales-owned.
+- **Authority:** PAIGE proposes. The owner approves one card fingerprinting signing id + version +
+  terms id + terms version. It is classified **high**. It is never `auto`: the first activation of
+  commercial terms is a commercial commitment.
+- **Idempotency:** per (signing id, terms version). A replay returns the original result.
+- **Never:** issues an invoice, requests payment or starts onboarding. Those are separate,
+  separately approved acts.
+
+### C-2 Deposit-qualified onboarding (kickoff offer)
+- **Qualifying event, evaluated from the E4-S1 read and nothing else:**
+  - C-1 effectuation is recorded;
+  - **and** the deposit obligation is satisfied. That means the invoice referencing the terms that
+    carries the first scheduled row has `outstanding = 0` from real receipts: provider-verified
+    LIVE **or** recorded by the owner, with the evidence class shown on the offer.
+- **Never qualifies:** test-environment money, in-flight or unknown payment requests, a draft or
+  void invoice, an unbound invoice.
+- **Effect:** PAIGE *offers* the existing `operations_engagement_handoff`. It does not create its
+  own project. The owner approves the handoff card, and the handoff stays the single Operations
+  writer, idempotent by request id.
+- **The owner's own manual handoff is unchanged.** It does not require the deposit, because that
+  is the owner's call.
+- **Onboarding checklist:** NEW, tenant-authored (Playbook). It is never the retired funding steps
+  (§2). It is a separate later slice.
+- **Routed to Operations:** the handoff's Solo-only gate refuses sub-accounts (§60/§61 parity).
+
+### C-3 Ask-first payment reminders
+- **Source of truth:** the E4-S1 read: outstanding, overdue, due dates, open payment requests.
+- **Never propose a reminder when:**
+  - the invoice's outstanding is 0;
+  - a LIVE payment request on that invoice is in flight or has an unknown outcome;
+  - the pre-send gate would block (DND, `paige_suppressions`, missing consent, quiet hours for SMS);
+  - the owner paused follow-ups for the client;
+  - **a dispute or promise to pay is recorded.**
+- **Disputes and promises are not recorded today.** NEW backend: a collection-outcome record
+  (promise / dispute / failed contact / opted out / answered / voicemail), Sales/Comms-owned.
+  Until it exists, any client reply on the invoice thread pauses further proposals for that
+  invoice until the owner resumes.
+- **Channel order:**
+  - email first, through the governed `sales_invoice.email_send` (high → confirm);
+  - SMS only after the tenant's A2P registration is `approved` and SMS consent is recorded;
+  - **AI calls are not authorized** (legal review + owner authorization, §6 STOP).
+- **Ask-first, always:**
+  - PAIGE drafts each reminder.
+  - One confirmation card fingerprints recipient, invoice, amount due and the exact content. Any
+    change makes a new card.
+  - The owner approves, then the governed delivery sends.
+  - Never `auto`: §67, an external send is never covered by an `auto` grant.
+- **Timing:** owner policy, for example 3 days before due and 1 day after a miss. The policy is a
+  §67 process.
+  - **Backend change, named:** time-based native events `invoice.due_soon`, `invoice.overdue` and
+    `payment.received` for `paige-native-event-dispatch`.
+  - Until they exist, proposals are computed on read in the Engagement panel. There is no
+    scheduler.
+- **Truth after sending:** provider acceptance is not delivery, and delivery is not payment. The
+  status read changes only when the ledger does.

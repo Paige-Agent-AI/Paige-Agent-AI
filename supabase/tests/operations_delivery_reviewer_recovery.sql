@@ -14,7 +14,10 @@ insert into public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_
  select 'ef240000-0000-4000-8000-000000001111',('ef240000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,(case when n=2 or n=4 then 'admin' else 'member' end)::public.tenant_role,'active',false,now() from generate_series(1,5)n;
 insert into public.profiles(user_id,active_tenant_id) select ('ef240000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'ef240000-0000-4000-8000-000000001111'::uuid from generate_series(1,5)n
  on conflict(user_id) do update set active_tenant_id=excluded.active_tenant_id;
-insert into public.user_roles(user_id,role) values('ef240000-0000-4000-8000-000000000004','admin');
+insert into public.user_roles(user_id,role) values('ef240000-0000-4000-8000-000000000004','admin') on conflict(user_id,role) do nothing;
+-- Real Team membership synchronizes legacy administrator roles. Keep reviewer2
+-- source-authorized but deliberately without the separate Planning item-admin grant.
+delete from public.user_roles where user_id='ef240000-0000-4000-8000-000000000002' and role::text='admin';
 insert into public.clients(id,tenant_id,created_by,first_name,last_name,account_number) values
  ('ef240000-0000-4000-8000-00000000c001','ef240000-0000-4000-8000-000000001111','ef240000-0000-4000-8000-000000000001','Test','Client','ORR-1');
 insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id) values
@@ -77,7 +80,7 @@ select pg_temp.refused($s$select public.operations_delivery_review_scoped((selec
 select pg_temp.refused($s$select public.operations_delivery_reassign_reviewer_scoped((select id from reviewer_context),'ef240000-0000-4000-8000-000000000002','ef240000-0000-4000-8000-000000001111',(select updated_at from reviewer_context),'ef240000-0000-4000-8000-000000000004','Override')$s$,'42501','tenant admin without canonical item authority denied');
 reset role;
 select set_config('request.jwt.claim.sub','ef240000-0000-4000-8000-000000000004',true);
-update public.tenant_members set status='removed' where tenant_id='ef240000-0000-4000-8000-000000001111' and user_id='ef240000-0000-4000-8000-000000000002';
+update public.tenant_members set status='inactive' where tenant_id='ef240000-0000-4000-8000-000000001111' and user_id='ef240000-0000-4000-8000-000000000002';
 set local role authenticated;
 select pg_temp.refused($s$select public.operations_delivery_reassign_reviewer_scoped((select id from reviewer_context),'ef240000-0000-4000-8000-000000000004','ef240000-0000-4000-8000-000000001111',(select updated_at from reviewer_context),'ef240000-0000-4000-8000-000000000002','Unavailable cover')$s$,'42501','revoked replacement denied');
 select pg_temp.refused($s$select public.operations_delivery_reassign_reviewer_scoped((select id from reviewer_context),'ef240000-0000-4000-8000-000000000004','ef240000-0000-4000-8000-000000009999',(select updated_at from reviewer_context),'ef240000-0000-4000-8000-000000000002','Wrong tenant')$s$,'42501','foreign expected tenant denied');
@@ -93,7 +96,7 @@ select pg_temp.refused($s$select public.operations_delivery_reassign_reviewer_sc
 reset role;
 select pg_temp.refused($s$update public.operations_delivery_submissions set reviewer_user_id='ef240000-0000-4000-8000-000000000002' where id=(select id from reviewer_context)$s$,'42501','completed reviewer history immutable even to table owner');
 
-update public.tenant_members set status='removed' where tenant_id='ef240000-0000-4000-8000-000000001111' and user_id='ef240000-0000-4000-8000-000000000004';
+update public.tenant_members set status='inactive' where tenant_id='ef240000-0000-4000-8000-000000001111' and user_id='ef240000-0000-4000-8000-000000000004';
 set local role authenticated;
 select pg_temp.refused($s$select public.operations_delivery_reassign_reviewer_scoped((select id from reviewer_context),'ef240000-0000-4000-8000-000000000004','ef240000-0000-4000-8000-000000001111',(select updated_at from reviewer_context),'ef240000-0000-4000-8000-000000000002','Reviewer unavailable')$s$,'42501','revoked actor recovery denied');
 reset role;

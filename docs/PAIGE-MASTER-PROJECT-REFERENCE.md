@@ -4210,7 +4210,7 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
 - Not sent: no reminders. Contract C-3 is ask-first, needs a collection-outcome record and due/overdue events, and has no scheduler.
 - Not authorized: AI collection calls. Legal review and owner authorization are required.
 - Production has zero commercial terms, signings, plans or provider-settled payments, so none of this has run for a real business. Authenticated acceptance waits on PC-1 (#1832).
-- Not definitive yet: overdue status. Due, upcoming and overdue are classified in the business owner's configured time zone (E4-S1b; owner ruling 2026-10-12). Production has **no** owner time zone set (`profiles.coach_timezone` 0 of 21), so the read withholds those judgements and asks for configuration.
+- Not definitive yet: overdue status. Due, upcoming and overdue are classified in the business owner's configured time zone (E4-S1b; owner ruling 2026-10-12). That zone lives in `tenant_business_time_zones`, set only by the active owner through `set_business_time_zone`. No workspace has one yet, so the read withholds those judgements and asks for configuration. The live Collections workspace and the Sales overdue metric still use the UTC date (#2086, Sales).
 - Not automatic: contacting a customer. Automated reminders require the recipient's **verified** zone and location (`clients.timezone_verified`: 0 of 16 in production) and a verified jurisdiction. That field does not exist, so all automated contact is blocked today. The shared pre-send gate still falls back to the business zone or New York for SMS quiet hours (#2083, Communications).
 
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)

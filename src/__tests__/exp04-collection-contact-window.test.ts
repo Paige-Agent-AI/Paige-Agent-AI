@@ -49,17 +49,19 @@ describe('automated collections contact — refusals', () => {
   it('never contacts a recipient whose zone is missing, unverified or not an IANA zone', () => {
     for (const recipient of [
       us('', {}), us('America/New_York', { timezone_verified: false }),
-      { ...us('America/New_York'), timezone: null }, us('Mars/Olympus_Mons'), us('+05:30'), us('EST5EDT ', { timezone_verified: false }),
+      { ...us('America/New_York'), timezone: null }, us('Mars/Olympus_Mons'), us('+05:30'),
+      // Verified, but not regional zones: no DST rules of a place, so the local hour can be wrong.
+      us('EST'), us('EST5EDT'), us('Etc/GMT+5'), us('UTC'), us('Zulu'),
     ]) {
       expect(collectionContactWindow('email', recipient, noon)).toEqual({
         state: 'blocked', reason: 'recipient_time_zone_unverified', request_verification: true });
     }
   });
 
-  it('never infers the recipient from the business: there is no owner, phone or browser input at all', () => {
-    // The decision takes only the recipient's own recorded facts; an empty zone stays blocked no
-    // matter where the business is. (Arity guard: a future "fallback" parameter would change this.)
-    expect(collectionContactWindow.length).toBe(3);
+  it('reads an EST-"verified" recipient as unverified, so a 20:30 EDT text cannot slip through', () => {
+    // 00:30 UTC on 13 Oct is 20:30 EDT in New York and 19:30 in fixed EST.
+    expect(collectionContactWindow('sms', us('EST'), at('2026-10-13T00:30:00Z')).state).toBe('blocked');
+    expect(collectionContactWindow('sms', us('America/New_York'), at('2026-10-13T00:30:00Z')).state).toBe('wait');
   });
 
   it('never contacts a recipient whose location is not verified', () => {
@@ -88,6 +90,8 @@ describe('automated collections contact — refusals', () => {
     expect(reasonOf(collectionContactWindow('email', us('America/New_York', { consent: 'revoked' }), noon))).toBe('consent_revoked');
     expect(collectionContactWindow('sms', us('America/New_York', { consent: 'missing' }), noon)).toEqual({
       state: 'blocked', reason: 'consent_missing', request_verification: true });
+    // A collections EMAIL needs no prior opt-in in the US — only that permission was not withdrawn.
+    expect(collectionContactWindow('email', us('America/New_York', { consent: 'missing' }), noon).state).toBe('clear');
     // An opt-out wins even when the recipient's zone is also unknown.
     expect(reasonOf(collectionContactWindow('sms', us('', { suppressed: true }), noon))).toBe('opted_out');
   });

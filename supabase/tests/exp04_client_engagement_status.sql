@@ -38,9 +38,8 @@ insert into public.profiles(user_id,active_tenant_id) values
  -- A client portal user is never a member, so no active workspace can be pointed at A.
  ('e4000000-0000-4000-8000-000000000005',null)
 on conflict(user_id) do update set active_tenant_id=excluded.active_tenant_id;
--- The business owner configured New York. The admin works from Tokyo: the admin's own zone must never
--- become the business's (owner ruling 2026-10-12 — the viewer's zone is not a substitute).
-update public.profiles set coach_timezone='America/New_York' where user_id='e4000000-0000-4000-8000-000000000001';
+-- The admin's personal profile says Tokyo. It must never become the business's zone: only the owner's
+-- configured business time zone counts (owner ruling 2026-10-12; independent review of #2085).
 update public.profiles set coach_timezone='Asia/Tokyo' where user_id='e4000000-0000-4000-8000-000000000002';
 
 insert into public.clients(id,tenant_id,created_by,first_name,last_name,account_number) values
@@ -172,6 +171,23 @@ select pg_temp.refused($s$select public.read_client_engagement_status('e4000000-
 select pg_temp.refused($s$select public.read_client_engagement_status('e4000000-0000-4000-8000-00000000bbbb','e4000000-0000-4000-8000-0000000c00b1')$s$,'42501','owner naming another workspace refused');
 select pg_temp.refused($s$select public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa',null)$s$,'22023','missing client refused');
 
+-- ── The business time zone: only the active owner may set it, and only to a regional IANA zone. ──
+select pg_temp.check_true(not has_table_privilege('authenticated','public.tenant_business_time_zones','SELECT') and not has_table_privilege('authenticated','public.tenant_business_time_zones','INSERT') and not has_table_privilege('authenticated','public.tenant_business_time_zones','UPDATE'),'no direct access to the business time zone table');
+select pg_temp.check_true(has_function_privilege('authenticated','public.set_business_time_zone(uuid,text)','EXECUTE') and not has_function_privilege('anon','public.set_business_time_zone(uuid,text)','EXECUTE') and not has_function_privilege('service_role','public.set_business_time_zone(uuid,text)','EXECUTE'),'only signed-in callers may call the time zone writer');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Mars/Olympus_Mons')$s$,'22023','unknown zone refused');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','EST')$s$,'22023','abbreviation refused');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','EST5EDT')$s$,'22023','legacy rule zone refused');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Etc/GMT+5')$s$,'22023','fixed-offset zone refused');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000bbbb','America/Chicago')$s$,'42501','owner naming another workspace refused');
+-- The foreign business keeps its own zone; tenant A's read must never pick it up.
+reset role;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000004',true);
+set local role authenticated;
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000bbbb','Asia/Tokyo');
+reset role;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','America/New_York');
 -- ── Positive read as the owner. ──
 insert into status_result select public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001');
 reset role;
@@ -216,43 +232,42 @@ set local role authenticated;
 select pg_temp.check_true((select jsonb_array_length(public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002')->'invoices')=0),'admin reads an empty client as empty');
 -- The admin in Tokyo sees the business's New York zone, not their own.
 select pg_temp.check_true((select public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002')->'business_time_zone'->>'zone'='America/New_York'),'a viewer in another zone gets the owner''s zone');
+-- An admin cannot set or clear the business's zone.
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Asia/Tokyo')$s$,'42501','admin cannot set the business time zone');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa',null)$s$,'42501','admin cannot clear the business time zone');
 reset role;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000003',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Asia/Tokyo')$s$,'42501','staff member cannot set the business time zone');
+reset role;
+-- An owner who is no longer active cannot set it either.
+update public.tenant_members set status='suspended' where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and user_id='e4000000-0000-4000-8000-000000000001';
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Asia/Tokyo')$s$,'42501','an owner who is not active cannot set the business time zone');
+reset role;
+update public.tenant_members set status='active' where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and user_id='e4000000-0000-4000-8000-000000000001';
+select pg_temp.check_true((select time_zone='America/New_York' from public.tenant_business_time_zones where tenant_id='e4000000-0000-4000-8000-00000000aaaa'),'refused writers changed nothing');
 
--- Missing, invalid and ambiguous owner zones are reported, and no owner-local date is given.
+-- A missing zone is reported and no owner-local date is given; the owner can clear and re-set it.
 create temp table zone_probe(label text,value jsonb);
 grant insert,select on zone_probe to authenticated;
-update public.profiles set coach_timezone=null where user_id='e4000000-0000-4000-8000-000000000001';
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
 set local role authenticated;
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa',null);
 insert into zone_probe select 'missing',public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002');
-reset role;
-update public.profiles set coach_timezone='Mars/Olympus_Mons' where user_id='e4000000-0000-4000-8000-000000000001';
-set local role authenticated;
-insert into zone_probe select 'invalid',public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002');
-reset role;
-update public.profiles set coach_timezone='America/New_York' where user_id='e4000000-0000-4000-8000-000000000001';
-set local session_replication_role=replica;
-update public.tenant_members set is_owner=true where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and user_id='e4000000-0000-4000-8000-000000000002';
-set local session_replication_role=origin;
-set local role authenticated;
-insert into zone_probe select 'ambiguous',public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002');
-reset role;
-set local session_replication_role=replica;
-update public.tenant_members set is_owner=false where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and user_id='e4000000-0000-4000-8000-000000000002';
-set local session_replication_role=origin;
--- Two configured zones whose dates straddle UTC's (UTC+14 and UTC-12): at any hour of any day at
+-- Two configured zones whose dates straddle UTC's (UTC+14 and UTC-11): at any hour of any day at
 -- least one of them is on a different calendar date from UTC, so a UTC fallback cannot pass both.
-update public.profiles set coach_timezone='Pacific/Kiritimati' where user_id='e4000000-0000-4000-8000-000000000001';
-set local role authenticated;
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Pacific/Kiritimati');
 insert into zone_probe select 'far_east',public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002');
-reset role;
-update public.profiles set coach_timezone='Etc/GMT+12' where user_id='e4000000-0000-4000-8000-000000000001';
-set local role authenticated;
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Pacific/Pago_Pago');
 insert into zone_probe select 'far_west',public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002');
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','America/New_York');
 reset role;
-update public.profiles set coach_timezone='America/New_York' where user_id='e4000000-0000-4000-8000-000000000001';
+select pg_temp.check_true((select value->'business_time_zone'='{"state":"missing","zone":null}'::jsonb and value->'as_of_date'='null'::jsonb from zone_probe where label='missing'),'a missing business zone withholds the owner-local date');
 select pg_temp.check_true((select bool_and((value->>'as_of_date')::date=((value->>'read_at')::timestamptz at time zone (value->'business_time_zone'->>'zone'))::date) from zone_probe where label in ('far_east','far_west')),'as-of date follows the owner zone at both ends of the clock');
 select pg_temp.check_true((select bool_or((value->>'as_of_date')::date<>((value->>'read_at')::timestamptz at time zone 'UTC')::date) from zone_probe where label in ('far_east','far_west')),'the zone probes really differ from UTC (the check above can fail)');
-select pg_temp.check_true((select bool_and(value->'business_time_zone'->>'state'=label and value->'business_time_zone'->'zone'='null'::jsonb and value->'as_of_date'='null'::jsonb) and count(*)=3 from zone_probe where label in ('missing','invalid','ambiguous')),'missing, invalid and ambiguous owner zones withhold the owner-local date');
+select pg_temp.check_true((select count(*)>=4 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='set_business_time_zone'),'every time zone change leaves a receipt');
 
 -- A workspace switch is honoured at read time: the owner, also a member of B, switches to B and
 -- can no longer read A's client. (Fixture: the invite trigger would park a direct insert as

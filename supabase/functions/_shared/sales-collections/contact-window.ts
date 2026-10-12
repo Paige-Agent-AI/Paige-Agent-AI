@@ -19,7 +19,8 @@
 // file is pinned reviewed source, so a test keeps these values equal to its constants.
 //
 // Real sends and AI calls stay behind their separate compliance and activation controls; a `clear`
-// result here authorizes nothing by itself.
+// result here authorizes nothing by itself. NOTHING CALLS THIS YET: reminders (contract C-3) are not
+// built, so today it is the rule they will have to pass, proven by tests, not an enforced gate.
 import { localMinutesInZone, nextLocalTimeInZone } from '../paige-context/snapshot.ts';
 
 export type CollectionChannel = 'email' | 'sms' | 'call';
@@ -64,6 +65,13 @@ const CONTACT_HOURS: Record<string, { start: string; end: string }> = {
   US: { start: '08:00', end: '20:00' }, // = pre-send QUIET_HOURS_END / QUIET_HOURS_START
 };
 const minutesOf = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
+/**
+ * A recipient's zone must be a regional IANA Area/Location name. Abbreviations and fixed-offset or
+ * legacy rule names (EST, EST5EDT, Etc/GMT+5, Zulu, UTC) carry no regional daylight-saving rules, so
+ * a recipient "verified" as EST would be texted at 20:30 during EDT. Same shape the business zone
+ * table enforces, minus UTC (no person lives in UTC).
+ */
+const REGIONAL_ZONE = /^(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)\/[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z][A-Za-z0-9_+-]*)?$/;
 
 export function collectionContactWindow(
   channel: CollectionChannel,
@@ -80,7 +88,7 @@ export function collectionContactWindow(
     return { state: 'blocked', reason: 'consent_missing', request_verification: true };
   }
   const zone = recipient.timezone?.trim() ?? '';
-  const localMinutes = zone ? localMinutesInZone(now.getTime(), zone) : null;
+  const localMinutes = REGIONAL_ZONE.test(zone) ? localMinutesInZone(now.getTime(), zone) : null;
   if (!recipient.timezone_verified || localMinutes === null) {
     return { state: 'blocked', reason: 'recipient_time_zone_unverified', request_verification: true };
   }

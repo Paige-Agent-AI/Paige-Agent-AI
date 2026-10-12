@@ -12,7 +12,8 @@
 //     installment-level allocation) are declared as not recorded — never inferred as zero.
 //   * Unreadable or inconsistent sources degrade to a named state, never to a confident number.
 //   * "Today" is the calendar date in the BUSINESS OWNER's configured time zone (owner ruling,
-//     2026-10-12) — never UTC, server time or the viewer's zone. Without a usable zone every due,
+//     2026-10-12), set only by the owner (set_business_time_zone) — never UTC, server time or the
+//     viewer's zone. Without a usable zone every due,
 //     upcoming and overdue judgement is withheld (null) and `business_time_zone_unset` is raised.
 //     Contractual due dates and payment timestamps are passed through unchanged.
 //   * An invoice bound to the terms always carries the WHOLE agreed amount (the Sales writer refuses
@@ -65,7 +66,7 @@ export type ClientEngagementSource = {
   not_recorded: string[]; receipt_id: string;
 };
 
-export type TimeZoneState = 'configured' | 'missing' | 'ambiguous' | 'invalid';
+export type TimeZoneState = 'configured' | 'missing' | 'invalid';
 export type AgreementState = 'none' | 'draft' | 'sent' | 'viewed' | 'partially_signed' | 'signed'
   | 'declined' | 'voided' | 'expired';
 export type TermsState = 'absent' | 'current' | 'stale' | 'unreadable';
@@ -83,7 +84,7 @@ export type ScheduleRow = { sequence: number; due_date: string; amount_minor: nu
 
 export type ClientEngagementStatus = {
   client: { id: string; name: string | null };
-  /** Today in the business owner's zone; null when that zone is missing, ambiguous or invalid. */
+  /** Today in the business owner's zone; null when that zone is missing or invalid. */
   as_of_date: string | null;
   time_zone: { state: TimeZoneState; zone: string | null };
   agreement: {
@@ -230,7 +231,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   const readAt = Date.parse(String(source.read_at));
   if (!Number.isFinite(readAt)) fail('read_at');
   const zoneSource = source.business_time_zone;
-  if (!zoneSource || !['configured', 'missing', 'ambiguous', 'invalid'].includes(zoneSource.state)) fail('time_zone');
+  if (!zoneSource || !['configured', 'missing', 'invalid'].includes(zoneSource.state)) fail('time_zone');
   // Today is the owner's calendar date. A zone the database accepted but this runtime cannot resolve
   // is reported as invalid, never replaced by UTC or by whatever zone this code happens to run in.
   const localToday = zoneSource.state === 'configured' && typeof zoneSource.zone === 'string'

@@ -5,24 +5,75 @@
 -- browser zone as an implicit substitute. If the zone is missing or invalid, the read says so and the
 -- composer withholds every due / upcoming / overdue judgement until the owner configures it.
 --
--- Where the zone comes from (reuse, no new column): the business owner's own profile time zone,
--- public.profiles.coach_timezone, read for the workspace's ACTIVE OWNER(S) (tenant_members.is_owner).
--- It is the only time zone a person sets for themselves; calendar and booking zones default to
--- 'America/New_York', so a default there is indistinguishable from a choice and is not used.
--- The zone is the OWNER's, not the caller's, so an owner and an admin viewing the same workspace
--- from different places get the same classification.
---   configured : exactly one distinct zone across the active owners, and it is a known zone name
---   missing    : no active owner has a zone set
---   ambiguous  : active owners disagree
---   invalid    : the one zone is not a known time zone name (pg_timezone_names)
--- as_of_date is the owner-local calendar date of read_at, and null unless configured.
--- Contractual due dates (terms rows, invoice due_date) and payment timestamps are returned unchanged.
+-- WHERE THE ZONE LIVES. Grounding found no workspace-level zone the owner alone controls:
+--   * calendars / staff_calendar_settings / internal_bookings default to 'America/New_York', so a
+--     default is indistinguishable from a choice;
+--   * profiles.coach_timezone is a per-PERSON field that set_coach_fields lets any tenant admin write
+--     for any active member — including an admin of ANOTHER workspace the owner belongs to — so it
+--     cannot be the authority for this business's money (independent review, PR #2085);
+--   * tenants rows are UPDATE-able by tenant admins, so a column there would not be owner-only.
+-- So the zone gets one small home of its own, written ONLY through set_business_time_zone by the
+-- workspace's active owner and validated on write; nothing else may read or write the table.
+-- It is a setting, not a ledger: one row per workspace, no history, no money.
 --
--- Everything else in the read is carried verbatim from 20271026000100.
+-- Accepted zones: 'UTC' or an IANA Area/Location name known to this database. Abbreviations and
+-- fixed-offset legacy names (EST, EST5EDT, Etc/GMT+12, Zulu …) are refused: they have no regional
+-- daylight-saving rules and would silently misclassify a business that observes DST.
+--
+-- The read reports business_time_zone {state, zone}:
+--   configured : a row exists and its zone still has the accepted shape
+--   missing    : no row
+--   invalid    : a row exists but its zone no longer has the accepted shape (defensive)
+-- as_of_date is the owner-local calendar date of read_at, null unless configured. Everything else in
+-- the read is carried verbatim from 20271026000100. Contractual due dates and payment timestamps are
+-- returned unchanged.
+
+CREATE TABLE IF NOT EXISTS public.tenant_business_time_zones (
+  tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,
+  time_zone text NOT NULL CHECK (time_zone ~ '^(UTC|(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)/[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z][A-Za-z0-9_+-]*)?)$'),
+  set_by uuid NOT NULL,
+  set_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.tenant_business_time_zones ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.tenant_business_time_zones FROM PUBLIC, anon, authenticated;
+COMMENT ON TABLE public.tenant_business_time_zones IS
+ 'Experience 04 E4-S1b: the business owner''s configured IANA time zone for payment due / upcoming / overdue classification. One row per workspace. Written only by set_business_time_zone (active owner); read only by definer functions.';
+
+CREATE OR REPLACE FUNCTION public.set_business_time_zone(_expected_tenant_id uuid,_time_zone text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE run uuid:=gen_random_uuid(); zone text:=nullif(btrim(_time_zone),'');
+BEGIN
+ IF auth.uid() IS NULL OR public.current_user_tenant_id() IS DISTINCT FROM _expected_tenant_id THEN
+  RAISE EXCEPTION 'Business time zone workspace changed' USING ERRCODE='42501';
+ END IF;
+ -- The OWNER configures the business's zone; an admin, staff member or another workspace cannot.
+ IF NOT EXISTS(SELECT 1 FROM public.tenant_members tm WHERE tm.tenant_id=_expected_tenant_id
+   AND tm.user_id=auth.uid() AND tm.is_owner AND tm.status='active') THEN
+  RAISE EXCEPTION 'Only the business owner can set the business time zone' USING ERRCODE='42501';
+ END IF;
+ IF zone IS NULL THEN
+  DELETE FROM public.tenant_business_time_zones WHERE tenant_id=_expected_tenant_id;
+ ELSE
+  IF zone !~ '^(UTC|(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)/[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z][A-Za-z0-9_+-]*)?)$'
+     OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_timezone_names WHERE name=zone) THEN
+   RAISE EXCEPTION 'Unknown time zone' USING ERRCODE='22023';
+  END IF;
+  INSERT INTO public.tenant_business_time_zones(tenant_id,time_zone,set_by,set_at)
+  VALUES(_expected_tenant_id,zone,auth.uid(),now())
+  ON CONFLICT(tenant_id) DO UPDATE SET time_zone=excluded.time_zone,set_by=excluded.set_by,set_at=excluded.set_at;
+ END IF;
+ PERFORM public.record_capability_run(_expected_tenant_id,auth.uid(),'set_business_time_zone','capability_succeeded',run,NULL);
+ RETURN jsonb_build_object('time_zone',zone,'receipt_id',run);
+END $$;
+REVOKE ALL ON FUNCTION public.set_business_time_zone(uuid,text) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.set_business_time_zone(uuid,text) TO authenticated;
+COMMENT ON FUNCTION public.set_business_time_zone(uuid,text) IS
+ 'Experience 04 E4-S1b: the active owner of the caller''s active workspace sets (or, with null, clears) the business time zone. UTC or an IANA Area/Location zone only. One receipt per call.';
+
 CREATE OR REPLACE FUNCTION public.read_client_engagement_status(_expected_tenant_id uuid,_contact_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE run uuid:=gen_random_uuid(); read_at timestamptz:=clock_timestamp();
- client_name text; owner_zones text[]; zone_state text; zone text; terms jsonb; terms_more boolean; signings jsonb; signings_more boolean;
+ client_name text; zone_state text; zone text; terms jsonb; terms_more boolean; signings jsonb; signings_more boolean;
  invoices jsonb; invoices_more boolean; items jsonb; items_more boolean; work_counts jsonb; result jsonb;
 BEGIN
  -- Caller scope is resolved from the session, never from the request (§9/§59).
@@ -40,14 +91,11 @@ BEGIN
  client_name:=public._sales_collection_client_name(_contact_id,_expected_tenant_id);
 
  -- The business owner's configured time zone (see header). Read for the workspace, not the caller.
- SELECT array_agg(DISTINCT btrim(p.coach_timezone)) FILTER (WHERE nullif(btrim(p.coach_timezone),'') IS NOT NULL)
- INTO owner_zones
- FROM public.tenant_members tm JOIN public.profiles p ON p.user_id=tm.user_id
- WHERE tm.tenant_id=_expected_tenant_id AND tm.is_owner AND tm.status='active';
- IF coalesce(cardinality(owner_zones),0)=0 THEN zone_state:='missing';
- ELSIF cardinality(owner_zones)>1 THEN zone_state:='ambiguous';
- ELSIF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_timezone_names WHERE name=owner_zones[1]) THEN zone_state:='invalid';
- ELSE zone_state:='configured'; zone:=owner_zones[1];
+ SELECT z.time_zone INTO zone FROM public.tenant_business_time_zones z WHERE z.tenant_id=_expected_tenant_id;
+ IF zone IS NULL THEN zone_state:='missing';
+ ELSIF zone !~ '^(UTC|(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)/[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z][A-Za-z0-9_+-]*)?)$' THEN
+  zone_state:='invalid'; zone:=NULL;
+ ELSE zone_state:='configured';
  END IF;
 
  -- Commercial terms for this client, newest first. Notes and fee doctrine are omitted.

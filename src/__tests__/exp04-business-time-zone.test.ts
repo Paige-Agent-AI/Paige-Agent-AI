@@ -57,7 +57,7 @@ describe('the owner-local calendar date', () => {
 
 describe('client status uses the owner zone', () => {
   const originalTz = process.env.TZ;
-  afterEach(() => { process.env.TZ = originalTz; });
+  afterEach(() => { if (originalTz === undefined) delete process.env.TZ; else process.env.TZ = originalTz; });
 
   it('does not call an invoice late at UTC midnight when it is still its due date for the owner', () => {
     const s = at('2026-11-01T02:30:00Z', 'America/New_York');
@@ -98,7 +98,7 @@ describe('client status uses the owner zone', () => {
     expect(new Set(outputs).size).toBe(1);
   });
 
-  it.each(['missing', 'ambiguous', 'invalid'] as const)('withholds every due judgement when the owner zone is %s', state => {
+  it.each(['missing', 'invalid'] as const)('withholds every due judgement when the owner zone is %s', state => {
     const status = composeClientEngagementStatus(at('2026-11-01T02:30:00Z', null, state));
     expect(status.as_of_date).toBeNull();
     expect(status.time_zone).toEqual({ state, zone: null });
@@ -117,6 +117,12 @@ describe('client status uses the owner zone', () => {
     expect(status.invoices.map(i => i.due_date)).toEqual(reference.invoices.map(i => i.due_date));
     expect(status.money.received).toEqual(reference.money.received);
     expect(status.money.outstanding_minor).toBe(reference.money.outstanding_minor);
+  });
+
+  it('fails closed on a time-zone state it does not know', () => {
+    const s = at('2026-11-01T02:30:00Z', 'America/New_York');
+    (s.business_time_zone as { state: string }).state = 'ambiguous';
+    expect(() => composeClientEngagementStatus(s)).toThrow(/CLIENT_STATUS_SOURCE_INVALID/);
   });
 
   it('treats a zone this runtime cannot resolve as invalid, never as UTC', () => {

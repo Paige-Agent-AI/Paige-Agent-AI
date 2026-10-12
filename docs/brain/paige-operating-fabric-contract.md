@@ -132,8 +132,11 @@ both are superseded.
 
 - Push one tool, `get_business_snapshot`, next to the existing `read_business_metric` push. It is
   read-only, with parameters `period`, `custom_start`/`custom_end` and `focus`. The dispatch takes
-  the time zone from the server-resolved user or tenant setting (the turn's validated
-  `userTimezone`, falling back to UTC explicitly), never from the model.
+  the time zone from the turn request's `userTimezone` field (client-reported and length-bounded by
+  the `paige-ai-chat` request schema), never from the model. When the field is absent the dispatch
+  passes UTC explicitly; an unknown zone is refused by the period resolver as `invalid_timezone`,
+  never silently replaced. It moves only period boundaries, never tenant scope. (Wording corrected 2026-10-12 at closeout: this said
+  "server-resolved", which it is not.)
 - Budget the turn for the worst case: about three times the timeout (a bounded workspace read before,
   the adapters, a bounded workspace read after) — 30 s at the 10 s default.
 - Add one dispatch branch:

@@ -36,7 +36,8 @@ export type CampaignStepsChatContext = {
   threadId: string | null;
 };
 // `invalid` reached nothing (malformed, or a fact PAIGE was not given), so it is not the business's activity.
-export type CampaignStepsOutcome = 'succeeded' | 'refused' | 'invalid' | 'failed' | 'outcome_unknown';
+// 'unchanged': what was asked is already true and nothing was written, so no receipt credits PAIGE with it.
+export type CampaignStepsOutcome = 'succeeded' | 'unchanged' | 'refused' | 'invalid' | 'failed' | 'outcome_unknown';
 export type CampaignStepsChatResult = { outcome: CampaignStepsOutcome; content: Record<string, unknown>; runId?: string };
 
 const object = (v: unknown): Record<string, unknown> | null => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : null;
@@ -296,7 +297,7 @@ async function judgeTool(ctx: Scoped, args: Record<string, unknown>, deps: Campa
   if (!found.canManage) return refused('not_permitted');
   // A judgement already recorded exactly as asked (a retry after an unclear answer) is confirmed, not refused.
   if (found.step.lifecycle === 'evaluated' && object(found.step.judged)?.verdict === args.verdict && (text(object(found.step.judged)?.note, 500) ?? null) === note)
-    return { outcome: 'succeeded', content: { success: true, step: found.step, note: 'It is already judged that way; nothing changed.' } };
+    return { outcome: 'unchanged', content: { success: true, step: found.step, note: 'It is already judged that way; nothing changed, and PAIGE did not record a judgement.' } };
   if (found.step.lifecycle === 'evaluated') return refused('already_judged');
   if (found.step.lifecycle === 'recorded') return refused('step_not_proven');
   if (found.step.lifecycle !== 'outcome_observed') return refused('no_result_yet');

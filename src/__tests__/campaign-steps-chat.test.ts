@@ -219,7 +219,9 @@ describe("recording and judging a result", () => {
     // A retry of the very same judgement (after an unclear answer) confirms it and writes nothing new.
     const before = db.writes().length;
     const retry = await run(db, "campaign_step_judge", { campaign_id: CAMPAIGN, step_id: S_DONE, verdict: "met", note: "Above the aim" });
-    expect(retry.outcome).toBe("succeeded");
+    // It is not a "succeeded" write, so the chat records no receipt crediting PAIGE with a judgement she didn't make.
+    expect(retry.outcome).toBe("unchanged");
+    expect(retry.content.success).toBe(true);
     expect(db.writes()).toHaveLength(before);
   });
 });

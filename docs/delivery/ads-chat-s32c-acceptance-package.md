@@ -12,7 +12,7 @@ counts as a pass, and what is already proven without a sign-in.
   No agent holds it; issuing or rotating it is a coordinator/owner action (vault only, never chat/Linear/Drive).
 - Read-only state on 2026-10-12: 0 pipelines, 0 stages, 0 deals, 0 forms, 0 submissions, 0 library pictures, no
   autonomy override for `set_ad_creative_featured` (so PAIGE asks first). Scope: the owner approved the restricted
-  synthetic preparation for ANT-45 on 2026-10-12 (recorded in the ANT-21 register comment of 05:06 UTC) (fixtures through the product, one temporary member, temporary
+  synthetic preparation for ANT-45 on 2026-10-12, recorded in the ANT-21 register comment of 05:06 UTC (fixtures through the product, one temporary member, temporary
   reuse of the agency-preview business); no ad spend, provider publishing, customer data or INT-346.
 
 ## Evidence ledger 1 — database-level, rolled back (2026-10-12)
@@ -118,7 +118,7 @@ Record for each step: the PAIGE reply text, a screenshot, and the readback query
 | A1 | before any pipeline exists: "Where do my leads stand by campaign?" | Says there is no Sales pipeline yet; no numbers invented |
 | A2 | after the fixtures: same question | Names the default pipeline; deals per stage; leads/open/won/lost under campaign `QA-SPRING`; one row for the tagged picture; leads that reached no pipeline named |
 | A3 | "Same for the last 7 days" | Uses the 7-day window |
-| A4 | "Show it for pipeline <an id that is not in this business>" (any UUID outside the business; by design a foreign pipeline and a missing one get the same answer — ledger 1 covers the foreign case at database level) | Refused: "That pipeline is not in this business…"; no figures shown |
+| A4 | "Show it for pipeline <an id that is not in this business>" (any UUID outside the business; by design a foreign pipeline and a missing one get the same answer; ledger 1 covers a missing id and 0-row reads of other businesses' rows, but no real foreign pipeline exists in a test business to probe) | Refused: "That pipeline is not in this business…"; no figures shown |
 | A5 | "How much did I spend? What's my ROAS? Clicks?" | States those are not available — no ad account is connected; no figure, no zero |
 
 Readback: `select public.get_pipeline_lead_funnel(<pipeline id>, <since>)` as the same session must match the reply.

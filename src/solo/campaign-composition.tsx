@@ -82,9 +82,10 @@ export function BroughtIn({ id, leads, archived = false, onRoute }: { id: string
             {onRoute && leads.counts.opportunities > 0 && <> · <button type="button" className="cc-lnk" onClick={() => onRoute("sales")}>open Sales</button></>}</dd></div>
           <div className="cc-outv cc-muted"><dt><span aria-hidden="true">—</span><span className="campaigns-sr-only">No figure:</span></dt><dd>Revenue lives in Sales</dd></div>
         </dl>
-        {leads.counts.leads > 0 && <>
+        {leads.leads.length > 0 && <>
+          {/* The label counts the rows it will show (the server lists the newest 200). */}
           <button type="button" className="cc-add cl-toggle" aria-expanded={open} aria-controls={`${id}-rows`} onClick={() => setOpen((value) => !value)}>
-            {open ? "Hide the leads" : `Show the ${leads.counts.leads === 1 ? "lead" : `${Math.min(leads.counts.leads, leads.leads.length).toLocaleString()} newest leads`}`}
+            {leads.leads.length === 1 ? (open ? "Hide the lead" : "Show the lead") : open ? "Hide the leads" : `Show the ${leads.leads.length.toLocaleString()} newest leads`}
           </button>
           {open && <CampaignLeadRows id={`${id}-rows`} leads={leads}/>}
         </>}

@@ -7,17 +7,21 @@
 import React from "react";
 import { ATTRIBUTION_LABEL, statusLabel, statusTone, type CampaignLead, type CampaignLeadsState } from "./useCampaignLeads";
 
+// The year shows only when it isn't this year, so an old lead never reads as a recent one.
 const day = (iso: string | null) => {
   if (!iso) return "—";
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  if (Number.isNaN(date.getTime())) return "—";
+  const thisYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString(undefined, thisYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" });
 };
 
 // Who a lead is, in words that are true for this viewer: a member is not shown names; an owner sees the name,
-// or that the lead has not become a contact yet.
+// that the contact has no name on file, or that the lead has not become a contact yet.
 function who(lead: CampaignLead, canManage: boolean): { text: string; hidden: boolean } {
   if (lead.name) return { text: lead.name, hidden: false };
   if (!canManage) return { text: "A lead", hidden: true };
+  if (lead.hasContact) return { text: "Contact with no name", hidden: false };
   return { text: lead.status === "waiting" ? "Being saved as a contact" : "Not saved as a contact", hidden: false };
 }
 

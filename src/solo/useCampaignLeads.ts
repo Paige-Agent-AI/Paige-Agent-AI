@@ -17,6 +17,8 @@ export type CampaignLead = {
   readonly attribution: LeadAttribution;
   /** Null for a member, who sees that a lead arrived but not who it is (§9). */
   readonly name: string | null;
+  /** Whether the lead became a contact (members are told this too; only the name is withheld). */
+  readonly hasContact: boolean;
   readonly formName: string | null;
   readonly pipelineName: string | null;
   readonly stageLabel: string | null;
@@ -64,7 +66,7 @@ export function readCampaignLeads(data: unknown): Omit<CampaignLeadsState, "phas
     const attribution = ATTRIBUTIONS.find((value) => value === row.attribution);
     if (!id || !attribution) return [];
     return [{
-      id, attribution, receivedAt: str(row.received_at), name: str(row.contact_name), formName: str(row.form_name),
+      id, attribution, receivedAt: str(row.received_at), name: str(row.contact_name), hasContact: row.has_contact === true, formName: str(row.form_name),
       pipelineName: str(row.pipeline_name), stageLabel: str(row.stage_label), status: statusOf(row),
     }];
   });
@@ -100,7 +102,7 @@ export function broughtInNote(leads: Pick<CampaignLeadsState, "counts" | "uncred
   return how + fits;
 }
 
-// How each credit and status reads to a person (the dossier and PAIGE say the same words).
+// How each credit and status reads to a person in the dossier.
 export const ATTRIBUTION_LABEL: Record<LeadAttribution, string> = {
   form_and_tag: "Campaign form, tagged link",
   form_link: "Campaign form",

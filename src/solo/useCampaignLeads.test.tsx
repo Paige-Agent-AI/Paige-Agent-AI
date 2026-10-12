@@ -220,6 +220,31 @@ describe("Leads from this campaign", () => {
     expect(names(node)).toEqual(["Being saved as a contact", "Not saved as a contact"]);
   });
 
+  it("tells an owner a contact has no name on file, never that the lead isn't a contact", async () => {
+    const node = await render(payload({ leads: [lead("s1", { contact_name: null })] }));
+    await open(node);
+    expect(names(node)).toEqual(["Contact with no name"]);
+  });
+
+  it("speaks of one lead as one, and counts only the rows it can show", async () => {
+    const one = await render(payload({ counts: { leads: 1 }, leads: [lead("s1")] }));
+    expect(toggle(one).textContent).toBe("Show the lead");
+    await open(one);
+    expect(toggle(one).textContent).toBe("Hide the lead");
+    act(() => root?.unmount()); host?.remove();
+    const unreadable = await render(payload({ counts: { leads: 3 }, leads: [{ attribution: "guessed" }] }));
+    expect(toggle(unreadable)).toBeNull();
+  });
+
+  it("dates an old lead with its year, and a lead from this year without", async () => {
+    const thisYear = new Date().getFullYear();
+    const node = await render(payload({ leads: [lead("s1", { received_at: `${thisYear}-03-04T12:00:00Z` }), lead("s2", { received_at: "2019-03-04T12:00:00Z" })] }));
+    await open(node);
+    const dates = rows(node).map((row) => row.querySelector(".cl-when")?.textContent ?? "");
+    expect(dates[0]).not.toContain(String(thisYear));
+    expect(dates[1]).toContain("2019");
+  });
+
   it("names the pipeline on each row when the leads sit in different ones", async () => {
     const node = await render(payload({ leads: [lead("s1"), lead("s2", { pipeline_name: "Advisory consults" })] }));
     await open(node);

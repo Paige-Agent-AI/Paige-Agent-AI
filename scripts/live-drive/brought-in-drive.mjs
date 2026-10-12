@@ -120,7 +120,7 @@ async function main() {
             const rows = await section.locator(".cl-row").count();
             check(await toggle.getAttribute("aria-expanded") === "true" && rows === 7 && await page.locator(`#${await toggle.getAttribute("aria-controls")}`).count() === 1,
               `${id}: Enter opens the newest leads, announced as expanded`, JSON.stringify({ rows }));
-            check(await section.locator(".cl-row button, .cl-row a, .cl-row input").count() === 0, `${id}: the rows are read only`);
+            check(await section.locator(".cl-row :is(button, a, input, select, textarea, [tabindex], [role=button], [role=link])").count() === 0, `${id}: the rows are read only`);
           }
           await section.scrollIntoViewIfNeeded();
           const text = ((await section.textContent()) ?? "").replace(/\s+/g, " ");
@@ -144,7 +144,13 @@ async function main() {
               sideways: dw.scrollWidth > dw.clientWidth + 1,
               pushed: [...sec.querySelectorAll("*")].filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.right > box.right + 1; }).slice(0, 3).map((el) => String(el.className)),
               contrast: worst,
-              gold: [...sec.querySelectorAll("*")].some((el) => /gold|champagne/i.test(getComputedStyle(el).color + String(el.className))),
+              // Gold is the act colour (§11): no text, fill or border in the lane may resolve to it.
+              gold: (() => {
+                const probe = document.createElement("i"); probe.style.color = "var(--gold)"; sec.appendChild(probe);
+                const gold = getComputedStyle(probe).color; probe.remove();
+                if (!gold || gold === "rgb(0, 0, 0)") return true; // the token didn't resolve: fail loudly, not silently
+                return [...sec.querySelectorAll("*")].some((el) => { const st = getComputedStyle(el); return [st.color, st.backgroundColor, st.borderTopColor].includes(gold) || /gold|champagne/i.test(String(el.className)); });
+              })(),
             };
           });
           check(Boolean(facts) && errors.length === 0 && !facts.crashed, `${id}: renders without error`, JSON.stringify({ errors, crashed: facts?.crashed }));

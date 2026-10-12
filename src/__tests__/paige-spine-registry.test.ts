@@ -110,3 +110,18 @@ describe("resolveSpineEvidence", () => {
     await expect(resolveSpineEvidence({ rpc: async () => { throw new Error("SECRET"); } }, "pipeline.deal_stage_evidence", { clientRef: "CLT-SPINE-A", scope: currentScope() })).resolves.toEqual({ status: "unavailable", reason: "resolver_unavailable", signals: [] });
   });
 });
+
+describe("PC-1 browser capability registration", () => {
+  it("registers browser.browse_public_url as a read-only edge-executor declaration (no chat tool)", () => {
+    const cap = PAIGE_SPINE_CAPABILITIES.find((c) => c.key === "browser.browse_public_url");
+    expect(cap).toMatchObject({
+      domain: "browser",
+      owner: "paige-skill-runner",
+      action: { classification: "read", executor: "edge.skill-runner", riskPolicyKey: "read_only", approvalAuthority: "none" },
+      chatBinding: "UNAVAILABLE",
+      sharedPrimitiveChange: "NONE",
+    });
+    expect(cap?.action?.chatTool).toBeUndefined();
+    expect(validateSpineRegistry(PAIGE_SPINE_CAPABILITIES)).toEqual([]);
+  });
+});

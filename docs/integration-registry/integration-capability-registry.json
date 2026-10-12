@@ -683,8 +683,8 @@
       ],
       "status": "PROOF_OWED",
       "owner": "Integrations workstream",
-      "dependency": "Finance F1b candidate (2026-10-10): company/source identity and evidence metadata use existing workspace authority and controlled PostgreSQL proof. This is not provider verification; bindings default pending, legacy snapshots are not promoted, and QuickBooks sync remains fail-closed containment. One-use consent, actual company authorization, pagination, nullable figures, refresh/disconnect and authenticated provider proof remain owed.",
-      "next_slice": "Complete explicit company/source authority and OAuth integrity, then controlled provider read proof; preserve Settings Integrations as connection owner and separately authorize real activation.",
+      "dependency": "Company/source and one-use accounting-only consent foundations are released; native provider authorization is not established by those migrations. Controlled Finance normalization now stages bounded Account/Bill/Purchase/BillPayment/Deposit pages, preserves native account/report labels and refuses incomplete identity/count/period/basis/currency coverage. No HTTP handler, token flow, ingestion or customer connection is activated by this source slice. Legacy OAuth refresh/disconnect and verified native legal-company ownership remain proof owed.",
+      "next_slice": "Bind the controlled readers to the canonical company/connection consent envelope, secure token lifecycle and atomic source projections; then prove Settings Integrations adoption with separately authorized provider activation.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -720,6 +720,11 @@
         "next_slice": "Ground the wired capability + scopes; a governed READ proof before any write."
       },
       "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/finance/quickbooks-read-contract.ts",
+          "role": "provider_adapter",
+          "note": "Pure controlled normalization and bounded pagination/report metadata; no network, authority, credentials or live ingestion. Accounting balances never establish available bank cash."
+        },
         {
           "path": "supabase/functions/quickbooks-oauth-callback/index.ts",
           "role": "provider_adapter",
@@ -785,8 +790,8 @@
       "rail_mind_memory": "Rail: minimal. Mind: only safe summaries. Memory: no raw financial data.",
       "status": "PARTIAL",
       "owner": "Integrations workstream (finance lane, §2 opt-in)",
-      "dependency": "Finance F1b company/source metadata has controlled PostgreSQL proof, not provider acceptance. Legacy Plaid reads remain user scoped and item-wide transaction attribution/pagination are unproven. No Finance data is promoted from these rows; liabilities and commercial LOC coverage remain unverified. Preserve the separate §2/§194 Funding vertical and explicit connection consent.",
-      "next_slice": "Repair verified company/account authorization, item-to-account attribution, complete cursor pagination and safe source projection using controlled providers before separately authorized live connection proof. Settings Integrations retains activation ownership.",
+      "dependency": "Released company/account/liability source caches have controlled PostgreSQL proof, not provider acceptance. Controlled normalization preserves native type/subtype/currency/account identity and filters item-wide transaction mutations against a snapshotted authorized account selection. Incomplete or changed pagination discards staged mutations and retains the original cursor. Legacy user-scoped handlers are not promoted or activated; company consent, supported product eligibility, transport/persistence and institution freshness remain unverified.",
+      "next_slice": "Bind item/account-scoped controlled readers to the canonical company consent and credential lifecycle, then atomically persist complete batches/cursors with revocation fences and source readback. Settings Integrations retains activation; real provider access/spending requires separate authority.",
       "tier_eligibility": {
         "platform": "ineligible",
         "solo": "eligible",
@@ -822,6 +827,11 @@
         "next_slice": "Owner decision on cost_responsibility (platform_paid vs pass_through) for the opt-in finance lane."
       },
       "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/finance/plaid-read-contract.ts",
+          "role": "provider_adapter",
+          "note": "Pure controlled account/transaction normalization and item-wide pagination; immutable selected-account filtering, restart/refusal behavior, no network, authority or live provider ingestion."
+        },
         {
           "path": "supabase/functions/paige-plaid-link-token-create/index.ts",
           "role": "provider_adapter",

@@ -40,7 +40,7 @@ ACCEPTANCE_CRITERIA: an owner opens a campaign with a form attached; a prospect 
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: growth2.render.test.tsx (the dossier's other sections, plus a new Source-filter test) passes with the leads hook doubled; campaign-briefs.contract.test.tsx updated on purpose for the Recorded outcome stage; Audience and Overview not touched; the harness stub matcher now ignores Vite's ?t= query (it had silently loaded the real client after a file change)
 
-INTERNAL_BUILD_IDENTITY: f2bc5656b22c11a8413e3b17988924d5fd29f90d; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/brought-in-drive.mjs
+INTERNAL_BUILD_IDENTITY: d269c146e91d347dd390bf5caf2b11016e3f95dd; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/brought-in-drive.mjs
 RELEASE_CHANNEL: development: production on merge (pre-launch, §4)
 RELEASE_CLASSIFICATION: internal-only: a read-only lane inside an unreleased journey; a customer version is earned by Experience 03 as a whole
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version until Experience 03 earns one

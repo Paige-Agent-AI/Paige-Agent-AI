@@ -100,7 +100,7 @@ on:
       - "supabase/migrations/20271023000200_paige_act_dispatch_claim_stale_parse.sql"
       # INT-179 Slice 2b milestone 2 — crash recovery for a dispatcher that dies after claiming.
       - "supabase/tests/paige_dispatch_crash_recovery.sql"
-      - "supabase/migrations/20271024000100_paige_dispatch_crash_recovery.sql"
+      - "supabase/migrations/20271025000100_paige_dispatch_crash_recovery.sql"
       - "supabase/functions/_shared/paige-orchestration/**"
       - "supabase/functions/execute-approval/**"
       - "scripts/proof/resend-receipt-concurrency.mjs"

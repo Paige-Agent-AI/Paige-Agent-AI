@@ -1,4 +1,4 @@
--- INT-179 Slice 2b milestone 2 (20271024000100) — a dispatcher that dies after claiming no longer strands its act.
+-- INT-179 Slice 2b milestone 2 (20271025000100) — a dispatcher that dies after claiming no longer strands its act.
 -- The reconciler re-drives an automatic act through its exhausted event (bounded, scoped to its automation), hands an
 -- approved act back to its approver (every stale approval lock released), records a claimed act whose outcome cannot
 -- be proved as ambiguous (never replayed), and fails an act the readback proves never ran as dispatch_not_started.

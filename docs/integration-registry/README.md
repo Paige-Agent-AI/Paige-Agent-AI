@@ -248,7 +248,7 @@ longer exists).
 | Microsoft 365 / Outlook | productivity/documents | `DEFERRED` | prohibited | not wired; sequenced after Google parity |
 | Stripe | finance/accounting/payments | `PARTIAL` | confirm | four merchant Spine/Chat declarations reuse governed Express setup/resume and safe reads; authenticated merchant/TEST payment proof owed; deployed direct-charge substrate (#1769/#1779) and Billing remain separate |
 | PayPal | finance/accounting/payments | `UNAVAILABLE` | prohibited | visible disabled Finance tile and non-executing GET readback normalizer; approved partner seller onboarding/delegated transport absent; no connector or payment claim |
-| QuickBooks | finance/accounting/payments | `PROOF_OWED` | confirm | controlled company consent and read normalization; HTTP/ingestion/native-company proof owed |
+| QuickBooks | finance/accounting/payments | `PROOF_OWED` | confirm | controlled consent/read contracts; legacy OAuth/token lifecycle contained; working company integration proof owed |
 | Plaid | finance/accounting/payments | `PARTIAL` | read | controlled company/account projection and item-wide read normalization; Settings activation/eligibility proof owed; separate Funding vertical preserved |
 | SmartCredit | finance/accounting/payments | `PROOF_OWED` | read | Funding & Coaching Tools package-gated; dormant (0 producers); entitlement+connection fail-closed gate OWED (§2/§194) |
 | Nav.com (business credit) | finance/accounting/payments | `PROOF_OWED` | read | Funding & Coaching Tools package-gated; live producer (BusinessCreditAdmin) makes the OWED entitlement+connection gate load-bearing (§2/§194) |

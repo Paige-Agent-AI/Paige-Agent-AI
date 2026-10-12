@@ -683,7 +683,7 @@
       ],
       "status": "PROOF_OWED",
       "owner": "Integrations workstream",
-      "dependency": "Company/source and one-use accounting-only consent foundations are released; native provider authorization is not established by those migrations. Controlled Finance normalization now stages bounded Account/Bill/Purchase/BillPayment/Deposit pages, preserves native account/report labels and refuses incomplete identity/count/period/basis/currency coverage. No HTTP handler, token flow, ingestion or customer connection is activated by this source slice. Legacy OAuth refresh/disconnect and verified native legal-company ownership remain proof owed.",
+      "dependency": "Released company/source and one-use accounting-only consent foundations and controlled read normalization do not establish native provider authorization. Legacy user-only OAuth initiation/callback, refresh and disconnect are contained before private connection/token operations or Intuit traffic. Existing accounting writes and financial sync remain fail-closed. A working company-bound HTTP consent, native company mapping, encrypted token lifecycle, safe ingestion and authenticated provider proof remain owed.",
       "next_slice": "Bind the controlled readers to the canonical company/connection consent envelope, secure token lifecycle and atomic source projections; then prove Settings Integrations adoption with separately authorized provider activation.",
       "tier_eligibility": {
         "platform": "eligible",
@@ -721,14 +721,29 @@
       },
       "code_anchors": [
         {
+          "path": "supabase/functions/quickbooks-oauth-initiate/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
+        },
+        {
+          "path": "supabase/functions/quickbooks-refresh-token/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
+        },
+        {
+          "path": "supabase/functions/quickbooks-disconnect/index.ts",
+          "role": "fail_closed_containment",
+          "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
+        },
+        {
           "path": "supabase/functions/_shared/finance/quickbooks-read-contract.ts",
           "role": "provider_adapter",
           "note": "Pure controlled normalization and bounded pagination/report metadata; no network, authority, credentials or live ingestion. Accounting balances never establish available bank cash."
         },
         {
           "path": "supabase/functions/quickbooks-oauth-callback/index.ts",
-          "role": "provider_adapter",
-          "note": "Legacy HTTP OAuth callback remains unverified; new company-bound consent state alone does not repair or activate this handler."
+          "role": "fail_closed_containment",
+          "note": "Legacy callback refuses before code/state inspection, token exchange, activation or private rows. New company-bound consent controller remains unmounted; no real provider behavior is proven."
         },
         {
           "path": "supabase/migrations/20271020000300_quickbooks_company_oauth_attempts.sql",

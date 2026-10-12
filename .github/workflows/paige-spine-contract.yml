@@ -54,7 +54,11 @@ on:
       - "scripts/proof/contact-methods-add-race.mjs"
       - "scripts/proof/chat-answer-claim-race.mjs"
       - "scripts/proof/layer-c-native-vertical.mjs"
+      - "scripts/proof/operator-postgres-fixture.mjs"
       - "supabase/functions/paige-native-event-dispatch/**"
+      - "supabase/functions/_shared/capability-record.ts"
+      - "supabase/functions/_shared/railAutomation.ts"
+      - "supabase/functions/_shared/paige-capability-status/**"
       - "supabase/tests/contact_create_with_methods.sql"
       - "supabase/tests/user_primary_address.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
@@ -493,11 +497,20 @@ jobs:
       # and only the workspace owner's approval runs it (foreign owner and plain member refused); off
       # holds; a forged cross-workspace subject fails closed. No production or provider contact.
       - uses: denoland/setup-deno@v2
+        id: deno
         if: ${{ !cancelled() }}
         with:
-          deno-version: v2.x
+          deno-version: v2.9.6
+      # Fetch both functions' remote modules once, with one retry, so a transient esm.sh blip is not
+      # mistaken for a proof failure. The proof itself only runs when Deno and its modules are in place.
+      - name: Cache the Layer C proof's Deno modules
+        id: deno_modules
+        if: ${{ !cancelled() && steps.deno.outcome == 'success' }}
+        run: |
+          deno cache supabase/functions/paige-native-event-dispatch/index.ts supabase/functions/execute-approval/index.ts \
+            || (sleep 10 && deno cache supabase/functions/paige-native-event-dispatch/index.ts supabase/functions/execute-approval/index.ts)
       - run: node scripts/proof/layer-c-native-vertical.mjs
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.deno_modules.outcome == 'success' }}
         timeout-minutes: 6
         env:
           CI: "true"

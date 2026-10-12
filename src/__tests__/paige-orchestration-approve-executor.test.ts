@@ -14,6 +14,7 @@
  *     unconfirmed, consumes nothing.
  * The Gateway availability resolver is injected (test-only; production always uses the canonical Gateway).
  */
+import { stableRunId } from "../../supabase/functions/_shared/capability-record.ts";
 import { describe, it, expect } from "vitest";
 import {
   executeApprovedLayerCAct,
@@ -121,6 +122,8 @@ describe("approve-executor — happy path: a held native act is redeemed, dispat
     // the ledger keeps its own immutable action-kind snapshot
     const finalWrite = cfg.calls.rpc.filter((c) => c.fn === "paige_record_act_execution").at(-1)!;
     expect(finalWrite.args._capability_key).toBe("crm.advance_journey_stage");
+    // one receipt per act: the same run id the engine's auto path derives for this (event, act)
+    expect(receipt!.args._run_id).toBe(await stableRunId(["paige-cap", "e1", "act1"]));
   });
 
   it("dispatches the IMMUTABLE ledger snapshot args, NOT a mutated live act config (§P1)", async () => {

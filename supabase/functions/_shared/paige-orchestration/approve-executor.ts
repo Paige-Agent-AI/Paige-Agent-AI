@@ -178,7 +178,9 @@ async function advanceLedger(
   if (persisted === "executed") {
     const detail = (result.detail ?? {}) as Record<string, unknown>;
     const wasNoop = detail.already_at_requested_stage === true;
-    const runId = await stableRunId(["paige-cap-approve", base.eventId, base.actId]);
+    // The SAME run-id seed engine.ts phase 5 uses, so one act has at most one receipt whichever path files
+    // it (an engine re-drive adopting the act and an approval resume can otherwise both land one).
+    const runId = await stableRunId(["paige-cap", base.eventId, base.actId]);
     await recordCapabilityRun(db, {
       tenantId: base.tenantId, actorId: base.approverUserId, capabilityKey: base.receiptCapabilityKey,
       outcome: "capability_succeeded", runId,

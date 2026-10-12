@@ -22,7 +22,8 @@
 //   A' replay           → a second POST of the same event is not claimed; nothing new is written.
 //   A" re-drive         → the event is put back to pending (a lost acknowledgement): the drainer runs
 //                         the whole engine again and still writes no second effect, receipt or Rail.
-//   A* duplicate        → two concurrent POSTs of a fresh event: exactly one claims it.
+//   A* duplicate        → eight overlapping POSTs of a fresh event: exactly one claims it; one ledger row,
+//                         one effect, one receipt, one Rail entry.
 //   B  confirm lane     → approval_pending, one companion approval, no effect. Then:
 //        - an owner of ANOTHER workspace approves  → 403, nothing redeemed;
 //        - a plain member of this workspace approves → 403, nothing redeemed;
@@ -82,7 +83,8 @@ const keys = stackKeys();
 const servers = [];
 async function serve(fnDir, port) {
   // Network is limited to loopback: the function may listen on its port and reach the local stack, and
-  // any other outbound call fails loudly. (Remote module downloads are governed separately by Deno's
+  // any other outbound call is refused by Deno (a caller that swallows its own errors would hide that
+  // refusal, but cannot get through it). (Remote module downloads are governed separately by Deno's
   // import permission, so the esm.sh imports still resolve.)
   const child = spawn(denoBin, ["run", "--allow-env", "--allow-net=127.0.0.1", "--allow-read", `supabase/functions/${fnDir}/index.ts`], {
     cwd: root,
@@ -101,11 +103,16 @@ async function serve(fnDir, port) {
     },
   });
   let log = "";
+  let spawnError = null;
+  // Without this listener a missing Deno binary is an unhandled 'error' event that kills the process
+  // before cleanup runs.
+  child.on("error", (e) => { spawnError = e; log += String(e); });
   child.stdout.on("data", (d) => { log += d; });
   child.stderr.on("data", (d) => { log += d; });
   servers.push(child);
   const base = `http://127.0.0.1:${port}`;
   for (let i = 0; i < 240; i++) {
+    if (spawnError) throw new Error(`${fnDir} could not start: ${spawnError.message}`);
     if (child.exitCode !== null) throw new Error(`${fnDir} exited before listening:\n${log}`);
     if (log.includes("Listening on")) return { base, log: () => log };
     await new Promise((r) => setTimeout(r, 250));
@@ -194,10 +201,17 @@ const evidence = (tenantId, contactId, ledgerId) => ({
 
 let savedCompass = null;
 let canaryRunId = null;
+let servedLogs = () => "";
 const results = [];
 const step = (name, fn) => results.push({ name, fn });
 
 async function main() {
+  // Both functions must be listening BEFORE anything platform-wide is changed, so a start-up failure
+  // leaves nothing behind.
+  const drainer = await serve("paige-native-event-dispatch", 8791);
+  const approver = await serve("execute-approval", 8792);
+  servedLogs = () => `── drainer log ──\n${drainer.log().slice(-4000)}\n── execute-approval log ──\n${approver.log().slice(-4000)}`;
+
   // The trust compass is platform-wide. Rung 2 (auto) needs a fresh attestation and a passing operator
   // cross-tenant canary (§68); a plain replay has neither, so the default effective lane is confirm.
   savedCompass = one(`select coalesce(value::text, '') from public.admin_app_settings where key = 'paige_trust_compass';`);
@@ -209,9 +223,6 @@ async function main() {
       values (${q(canaryRunId)}, 'operator_cross_tenant_canary', null, 'pass');
     update public.admin_app_settings set value = value || jsonb_build_object('ceiling', 2, 'attested_at', now()) where key = 'paige_trust_compass';
   `);
-
-  const drainer = await serve("paige-native-event-dispatch", 8791);
-  const approver = await serve("execute-approval", 8792);
 
   // ── A: auto lane → one executed native effect with evidence ────────────────────────────────────
   const A = await workspace("auto");
@@ -257,15 +268,19 @@ async function main() {
     assert.deepEqual(evidence(A.tenantId, a.contactId), { transitions: 1, receipts: 1, rail: 1 });
   });
 
-  step("A* two concurrent deliveries of one event: exactly one claims it, one effect", async () => {
+  step("A* eight overlapping deliveries of one event: exactly one claims it, one effect, receipt and Rail", async () => {
     const dup = newContact(A.tenantId, A.owner.id, "Grace");
-    const [r1, r2] = await Promise.all([
-      post(drainer.base, { event_id: dup.eventId }, keys.service),
-      post(drainer.base, { event_id: dup.eventId }, keys.service),
-    ]);
-    assert.deepEqual([r1.json.claimed, r2.json.claimed].sort(), [false, true], JSON.stringify([r1.json, r2.json]));
-    assert.equal(ledger(dup.eventId).outcome, "executed");
+    // Eight at once makes overlap at the claim likely; every outcome below would also hold if they had run
+    // one after another, which is the point: duplicate delivery, concurrent or not, writes nothing twice.
+    const rs = await Promise.all(Array.from({ length: 8 }, () => post(drainer.base, { event_id: dup.eventId }, keys.service)));
+    assert.ok(rs.every((r) => r.status === 200), JSON.stringify(rs.map((r) => r.json)));
+    assert.equal(rs.filter((r) => r.json.claimed === true).length, 1, JSON.stringify(rs.map((r) => r.json)));
+    assert.equal(count(`select count(*) from public.paige_act_executions where event_id = ${q(dup.eventId)};`), 1);
+    const row = ledger(dup.eventId);
+    assert.equal(row.outcome, "executed");
     assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(dup.contactId)};`), 1);
+    assert.equal(count(`select count(*) from public.paige_workspace_events where source_kind = 'capability_run' and detail->>'event_id' = ${q(dup.eventId)};`), 1);
+    assert.equal(count(`select count(*) from public.paige_client_events where event_kind = 'automation.completed' and ref_id = ${q(row.id)};`), 1);
   });
 
   step("an unauthenticated or wrongly-keyed delivery is refused before any claim", async () => {
@@ -343,6 +358,10 @@ async function main() {
     assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(b.contactId)} and source_event = ${q(row.correlation_ref)} and to_stage_slug = 'paid_tier';`), 1);
     assert.equal(one(`select journey_stage_slug from public.clients where id = ${q(b.contactId)};`), "paid_tier");
     assert.deepEqual(evidence(B.tenantId, b.contactId, row.id), { transitions: 1, receipts: 1, rail: 1 });
+    // the receipt names the approver and this act, not just any capability run in the workspace
+    assert.equal(one(`select actor_id || ':' || outcome || ':' || (detail->>'approved') from public.paige_workspace_events
+      where tenant_id = ${q(B.tenantId)} and source_kind = 'capability_run' and detail->>'event_id' = ${q(b.eventId)};`),
+      `${B.owner.id}:capability_succeeded:true`);
     assert.equal(one(`select status || ':' || (metadata->>'act_outcome') from public.paige_pending_approvals where id = ${q(approvalId)};`), "approved:executed");
   });
 
@@ -395,28 +414,33 @@ async function main() {
     catch (e) { failed++; console.log(`FAIL - ${name}\n       ${e instanceof Error ? e.message : e}`); }
   }
   console.log(`\n${results.length - failed}/${results.length} passed`);
-  if (failed) {
-    console.log("\n── drainer log ──\n" + drainer.log().slice(-4000));
-    console.log("\n── execute-approval log ──\n" + approver.log().slice(-4000));
-  }
+  if (failed) console.log("\n" + servedLogs());
   return failed;
 }
 
 // Returns false when anything could not be put back; the run then fails (a leftover synthetic workspace
 // or a leftover passing canary is a defect, not a footnote).
+let cleanedUp = false;
 function cleanup() {
+  if (cleanedUp) return true;
+  cleanedUp = true;
   for (const s of servers) { try { s.kill("SIGKILL"); } catch { /* already gone */ } }
-  try {
-    if (canaryRunId) {
-      sql(`delete from public.paige_systems_check_finding where run_id = ${q(canaryRunId)};
-           delete from public.paige_systems_check_run where id = ${q(canaryRunId)};`);
-    }
-    if (savedCompass !== null) {
-      sql(savedCompass
-        ? `update public.admin_app_settings set value = ${q(savedCompass)}::jsonb where key = 'paige_trust_compass';`
-        : `delete from public.admin_app_settings where key = 'paige_trust_compass';`);
-    }
-    for (const t of tenants) {
+  // Each item is put back on its own, so one failure never skips the rest; any failure fails the run.
+  let ok = true;
+  const attempt = (label, fn) => {
+    try { fn(); } catch (e) { ok = false; console.error(`cleanup failed (${label}): ${e instanceof Error ? e.message : e}`); }
+  };
+  if (canaryRunId) {
+    attempt("canary", () => sql(`delete from public.paige_systems_check_finding where run_id = ${q(canaryRunId)};
+         delete from public.paige_systems_check_run where id = ${q(canaryRunId)};`));
+  }
+  if (savedCompass !== null) {
+    attempt("trust compass", () => sql(savedCompass
+      ? `update public.admin_app_settings set value = ${q(savedCompass)}::jsonb where key = 'paige_trust_compass';`
+      : `delete from public.admin_app_settings where key = 'paige_trust_compass';`));
+  }
+  for (const t of tenants) {
+    attempt(`workspace ${t}`, () => {
       // The proof's own process records are removed while the workspace is still active. Retiring a
       // workspace that still holds a process with acts is blocked today: the deletion plan removes the
       // acts first, their change trigger updates the parent automation, and the archived-workspace
@@ -427,16 +451,21 @@ function cleanup() {
       // disposition it does not offer), so the proof removes the transitions it created itself.
       sql(`delete from public.paige_journey_stage_transitions where contact_id in (select id from public.clients where tenant_id = ${q(t)});`);
       sql(retireSyntheticTenantSQL(t));
-    }
-    for (const u of users) sql(`delete from auth.users where id = ${q(u)};`);
-  } catch (e) {
-    console.error(`cleanup failed: ${e instanceof Error ? e.message : e}`);
-    return false;
+    });
   }
-  return true;
+  for (const u of users) attempt(`user ${u}`, () => sql(`delete from auth.users where id = ${q(u)};`));
+  return ok;
 }
 
-const timer = setTimeout(() => { console.error(`timed out after ${RUN_TIMEOUT_MS}ms`); cleanup(); process.exit(1); }, RUN_TIMEOUT_MS);
+const abort = (why) => {
+  console.error(why);
+  console.error(servedLogs());
+  cleanup();
+  process.exit(1);
+};
+const timer = setTimeout(() => abort(`timed out after ${RUN_TIMEOUT_MS}ms`), RUN_TIMEOUT_MS);
+process.on("uncaughtException", (e) => abort(`uncaught: ${e instanceof Error ? e.stack : e}`));
+process.on("unhandledRejection", (e) => abort(`unhandled rejection: ${e instanceof Error ? e.stack : e}`));
 let exitCode = 1;
 try {
   exitCode = (await main()) === 0 ? 0 : 1;

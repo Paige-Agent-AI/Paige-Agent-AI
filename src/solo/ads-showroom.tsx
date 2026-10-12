@@ -92,11 +92,10 @@ function Story({ brand, media }: PlacementProps) {
   </figure>;
 }
 
-function SearchAd({ brand, copy }: PlacementProps) {
-  const host = brand.toLowerCase().replace(/[^a-z0-9]+/g, "") || "yourbusiness";
+function SearchAd({ copy }: PlacementProps) {
   return <figure className="asr-frame asr-search" aria-label={copy ? "Search ad with your copy" : "Search ad, sample"}>
     <div className="asr-search-bar" aria-hidden="true"><Search size={12}/><span>{copy?.headline ? copy.headline.toLowerCase().split(" ").slice(0, 4).join(" ") : "what your customers search"}</span></div>
-    <small className="asr-search-url"><b>Sponsored</b> · {host}.com</small>
+    <small className="asr-search-url"><b>Sponsored</b> · yourwebsite.com</small>
     <b className="asr-search-h">{copy?.headline ?? "Your headline, as a search result"}</b>
     <p>{copy?.primary ?? "Two lines of your ad copy, written to answer what they searched."}</p>
     {!copy && <span className="asr-sample">Sample</span>}

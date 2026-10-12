@@ -283,7 +283,7 @@ function PipelineStages({ tenantId, workspace, submissions, days, onOpenSales, o
   const read = useLeadFunnel({ tenantId, pipeline: chosen, since, fallback });
   return <LeadFunnelPanel title="Where these leads stand in Sales" periodWords={`in the last ${days} days`} choices={choices} choicesReady
     pipelineId={chosen?.id ?? null} onPipeline={setPipelineId} read={read} recordLimit={SUBMISSION_READ_LIMIT} onOpenSales={onOpenSales} onOpenRouting={onOpenRouting}
-    adHint="None of these leads carried an ad tag (utm_content). In Ads › Creative, copy a picture’s tagged link and use it as its ad’s link."/>;
+    adHint="None of these leads carried an ad tag. In Ads › Creative, copy a picture’s tagged link and use it as its ad’s link."/>;
 }
 
 function Coverage({ model, floor, days, briefsKnown }: { model: Model; floor: (n: number) => string; days: number; briefsKnown: boolean }) {

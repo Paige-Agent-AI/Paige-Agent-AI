@@ -41,6 +41,7 @@ vi.mock("@/components/admin/studio/studio", () => ({ uploadToLibrary: (...args: 
 
 import { MarketingAds, parseAdCopy, type AdsView } from "./marketing-ads";
 import { resetAdsIntakeCapability } from "./ads-intake-capability";
+import { submissionsInPeriod } from "./marketing-overview-model";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -269,7 +270,8 @@ describe("Ads › Overview showroom: the business's own pictures", () => {
     // The default pipeline is read first, even though Sales lists it second; Ads reads only the pipelines.
     expect(db.rpcCalls[0][0]).toBe("get_pipeline_lead_funnel");
     expect(db.rpcCalls[0][1].p_pipeline_id).toBe("p1");
-    expect(String(db.rpcCalls[0][1].p_since)).toMatch(/T00:00:00\.000Z$/);
+    // The window is Marketing's one "last N days", so the badges and every other figure agree.
+    expect(db.rpcCalls[0][1].p_since).toBe(new Date(submissionsInPeriod([], 90).periodStart).toISOString());
     expect(salesScopes.every((scope) => scope === "pipeline")).toBe(true);
     expect(db.calls.find((c) => c.filters.some(([column]) => column === "in kind"))?.filters).toEqual([["tenant_id", "t-1"], ["in kind", ["image", "video"]], ["not status", "archived"]]);
   });

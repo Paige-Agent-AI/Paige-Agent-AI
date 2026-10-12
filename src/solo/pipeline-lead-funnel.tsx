@@ -17,17 +17,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { isMissingFunction, parseLeadFunnel, type FunnelAd, type FunnelCampaign, type LeadFunnel } from "./ads-model";
 import { noteAdsIntakeAnswer, useAdsIntakeCapability } from "./ads-intake-capability";
 import { safeMediaUrl } from "./marketing-content-model";
+import { submissionsInPeriod } from "./marketing-overview-model";
 import "./pipeline-lead-funnel.css";
 
-const DAY = 86_400_000;
 const n = (count: number) => count.toLocaleString();
 const plural = (count: number, noun: string) => `${n(count)} ${noun}${count === 1 ? "" : "s"}`;
 
-/** The start of the window, at a day boundary so the read stays the same for the whole day. */
+/** The start of the window: Marketing's one "last N days" (N whole local days, today included), so
+ *  these counts and every other figure on the page cover the same leads. */
 export function sinceFor(days: number | null, now = Date.now()): string | null {
   if (!days) return null;
-  const today = new Date(now);
-  return new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - days * DAY).toISOString();
+  return new Date(submissionsInPeriod([], days, now).periodStart).toISOString();
 }
 
 export type PipelineChoice = { id: string; name: string; isDefault: boolean; deals: number };
@@ -40,7 +40,7 @@ export type FunnelRead = {
   stale: boolean;
   /** Where the figures came from: the server count, or the records this page read. */
   source: "server" | "records" | null;
-  /** Why the server count was not used: it isn't there yet, or it failed. */
+  /** Why the server count was not used: it isn't there yet (records stand in), or it failed (nothing does). */
   reason: "unavailable" | "failed" | null;
   /** True when the records were a capped read, so the lead rows are floors. */
   capped: boolean;
@@ -56,8 +56,8 @@ const isForbidden = (error: unknown) => {
   return code === "42501" || /PIPELINE_FORBIDDEN/.test(String(message ?? ""));
 };
 
-/** Reads the server count for one pipeline and window; falls back to `fallback` when the read is not
- *  deployed or fails. `restricted` (the page already knows this person may not see the counts) reads
+/** Reads the server count for one pipeline and window; falls back to `fallback` only when the read is
+ *  not deployed, and shows a failed read as failed. `restricted` (the page already knows this person may not see the counts) reads
  *  nothing; a refusal from the server means the same, and is never covered over with the fallback. */
 export function useLeadFunnel({ tenantId, pipeline, since, fallback, restricted = false }: { tenantId: string | null; pipeline: PipelineChoice | null; since: string | null; fallback: FunnelFallback; restricted?: boolean }): FunnelRead {
   const [attempt, setAttempt] = React.useState(0);
@@ -100,6 +100,13 @@ export function useLeadFunnel({ tenantId, pipeline, since, fallback, restricted 
           console.error("[lead-funnel] server read failed", error);
           reason = "failed";
         }
+      }
+      // A server read that failed is shown as failed, with Try again: counts the browser works out
+      // are never put in place of the server's. The records count stands in only while the server
+      // read is not deployed at all.
+      if (reason === "failed") {
+        if (live) setState({ key, tenant: tenantId, phase: "error", funnel: null, source: null, reason, capped: false });
+        return;
       }
       try {
         const { funnel, capped } = await fallbackRef.current(chosen, since);
@@ -281,11 +288,11 @@ function FunnelBody({ funnel, read, periodWords, adNames, adHint, recordLimit, o
         {onOpenRouting && <button type="button" className="mov-lnk" onClick={onOpenRouting}>See where your forms send leads</button>}</p>}
     </div>
     <OutcomeTable area="camp" caption="By campaign" first="Campaign" rows={funnel.campaigns.map((row) => ({ key: `c:${row.campaign.toLowerCase()}`, label: <span className="plf-tag">{row.campaign}</span>, detail: stageSpread(row, stageName), ...row }))}
-        empty={funnel.leads.total ? `None of these leads carried a campaign tag (utm_campaign). Tag the links in your ads, posts and emails and each campaign’s leads show here.` : `No lead ${periodWords} has reached this pipeline yet.`} floor={floor}/>
+        empty={funnel.leads.total ? `None of these leads carried a campaign tag. Tag the links in your ads, posts and emails and each campaign’s leads show here.` : `No lead ${periodWords} has reached this pipeline yet.`} floor={floor}/>
     <OutcomeTable area="ad" caption="By ad" first="Ad" rows={funnel.ads.map((row) => ({ key: `a:${row.ad.toLowerCase()}`, label: <AdLabel row={row} names={adNames}/>, detail: row.campaign ? `Campaign ${row.campaign}` : null, ...row }))}
         empty={funnel.leads.total ? adHint : `No lead ${periodWords} has reached this pipeline yet.`} floor={floor}/>
     <div className="plf-foot">
-      {read.source === "records" && <p className="plf-note">{read.reason === "failed" ? "The server count couldn’t load" : "The server count isn’t available yet"}, so these figures are counted from {read.capped ? `the latest ${n(recordLimit)} leads read here; each lead count is a floor` : "the leads read here"}. Deals by stage count every deal in the pipeline.</p>}
+      {read.source === "records" && <p className="plf-note">The server count isn’t available yet, so these figures are counted from {read.capped ? `the latest ${n(recordLimit)} leads read here; each lead count is a floor` : "the leads read here"}. Deals by stage count every deal in the pipeline.</p>}
       <p className="plf-def">Stages show every deal on the pipeline now. Campaigns and ads cover the leads {periodWords}; open, won and lost count each deal once, under its most recent tagged lead.</p>
     </div>
   </div>;
@@ -302,14 +309,14 @@ function AdLabel({ row, names }: { row: FunnelAd; names?: Map<string, AdName> })
   // The server names a library picture by its id even where this page holds no library (Marketing).
   const thumb = known?.thumb ?? (row.contentId ? safeMediaUrl(row.imageUrl) : null);
   const kind = known?.kind ?? row.kind ?? "image";
-  if (known || row.contentId) return <span className="plf-ad" title={`The ad tag on the lead’s link: utm_content=${row.ad}`}>
+  if (known || row.contentId) return <span className="plf-ad" title={`The ad tag on the lead’s link: ${row.ad}`}>
     <span className="plf-thumb" aria-hidden="true">{thumb ? kind === "video" ? <video src={thumb} muted playsInline preload="metadata"/> : <img src={thumb} alt="" loading="lazy"/> : null}</span>
     <span className="plf-ad-t">{known?.title ?? `Library ${kind === "video" ? "video" : "picture"} …${id.slice(-4)}`}</span>
   </span>;
   // A tag that looks like a library id but matches nothing the business still has.
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.ad)
-    ? <span className="plf-tag" title={`The ad tag on the lead’s link: utm_content=${row.ad}`}>Library picture …{row.ad.slice(-4).toLowerCase()}</span>
-    : <span className="plf-tag" title="The ad tag (utm_content) on the lead’s link">{row.ad}</span>;
+    ? <span className="plf-tag" title={`The ad tag on the lead’s link: ${row.ad}`}>Library picture …{row.ad.slice(-4).toLowerCase()}</span>
+    : <span className="plf-tag" title="The ad tag on the lead’s link">{row.ad}</span>;
 }
 
 type Row = { key: string; label: React.ReactNode; detail: string | null; leads: number; open: number; won: number; lost: number };

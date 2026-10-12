@@ -458,7 +458,7 @@ function OverviewStage({ tenantId, brand, access, library, copyRow, copyCount, o
       pipelineId={chosen?.id ?? null} onPipeline={setPipelineId} read={funnel}
       controls={<div className="campaigns-segmented" role="group" aria-label="Period">{PERIODS.map((option) => <button type="button" key={option.key} aria-pressed={period === option.key} onClick={() => setPeriod(option.key)}>{option.label}</button>)}</div>}
       adNames={adNamesOf(library.rows)} recordLimit={FUNNEL_RECORD_LIMIT} onOpenSales={onOpenSales} onOpenRouting={onOpenRouting}
-      adHint={own ? "None of these leads carried an ad tag (utm_content). In Creative, copy a picture’s tagged link and use it as the link its ad points at; leads from that link are credited to that picture." : "None of these leads carried an ad tag (utm_content)."}/>
+      adHint={own ? "None of these leads carried an ad tag. In Creative, copy a picture’s tagged link and use it as the link its ad points at; leads from that link are credited to that picture." : "None of these leads carried an ad tag."}/>
   </>;
 }
 
@@ -592,7 +592,7 @@ function TaggedLinkPanel({ id, row, onClose, onCopy }: { id: string; row: MediaR
             </div>
             <label className="mad-linker-f"><span className="mad-linker-k">Campaign tag <small>optional</small></span>
               <input type="text" value={campaign} maxLength={80} placeholder="spring-workshop" autoComplete="off" spellCheck={false} onChange={(event) => setCampaign(event.target.value)} aria-describedby={`${id}-camp`}/>
-              <small id={`${id}-camp`}>Added as utm_campaign, so this ad’s leads also count under that campaign.</small>
+              <small id={`${id}-camp`}>Added to the link as its campaign tag, so this ad’s leads also count under that campaign.</small>
             </label>
             <div className="mad-linker-f"><span className="mad-linker-k">The link</span><code className="mad-linker-url" data-tagged-link>{url ?? "This link can’t be tagged."}</code></div>
             <div className="mad-linker-a">

@@ -22,6 +22,7 @@ vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
 import { MarketingAnalytics } from "./marketing-analytics";
 import { resetAdsIntakeCapability } from "./ads-intake-capability";
 import type { CampaignSubmission } from "./useSoloCampaigns";
+import { submissionsInPeriod } from "./marketing-overview-model";
 
 const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 const sub = (id: string, days: number, dealId: string | null, campaign: string | null, content: string | null): CampaignSubmission =>
@@ -73,9 +74,8 @@ describe("Marketing › Analytics: where the range's leads stand in Sales", () =
     expect(net.calls).toHaveLength(1);
     expect(net.calls[0][0]).toBe("get_pipeline_lead_funnel");
     expect(net.calls[0][1].p_pipeline_id).toBe("p-a");
-    const since = Date.parse(String(net.calls[0][1].p_since));
-    expect(Math.round((Date.now() - since) / 86_400_000)).toBeGreaterThanOrEqual(30);
-    expect(Math.round((Date.now() - since) / 86_400_000)).toBeLessThanOrEqual(31);
+    // The same "last 30 days" as the headline lead count on this page.
+    expect(net.calls[0][1].p_since).toBe(new Date(submissionsInPeriod([], 30).periodStart).toISOString());
     expect(panel().previousElementSibling?.getAttribute("aria-labelledby")).toBe("mva-funnel-h");
     expect(panel().querySelector("h2")?.textContent).toBe("Where these leads stand in Sales");
     expect(panel().getAttribute("data-funnel-source")).toBe("server");
@@ -124,16 +124,31 @@ describe("Marketing › Analytics: where the range's leads stand in Sales", () =
     expect(net.calls).toHaveLength(1);
   });
 
-  it("a failed server read is named as failed, and a full submissions read makes every lead count a floor", async () => {
-    net.answer = () => ({ data: null, error: { code: "XX000", message: "boom" } });
+  it("a failed server read shows as failed with Try again, never as counts the browser worked out", async () => {
+    let fail = true;
+    net.answer = (args) => fail
+      ? { data: null, error: { code: "XX000", message: "boom" } }
+      : { data: { pipeline: { id: args.p_pipeline_id, name: "Client intake", is_default: true }, stages: [{ id: "a1", name: "New", order_index: 1, stage_type: "open", deals: 4 }], leads: { total: 4, tagged: 0, untagged: 4, unfiled: 0 }, campaigns: [], ads: [] }, error: null };
     const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    await render();
+    expect(panel().querySelector(".plf-empty h3")?.textContent).toBe("These counts couldn’t load");
+    expect(panel().querySelectorAll(".plf-stage, table, .plf-note").length).toBe(0);
+    expect(panel().getAttribute("data-funnel-source")).not.toBe("records");
+    fail = false;
+    act(() => (panel().querySelector(".plf-empty button") as HTMLButtonElement).click());
+    await flush();
+    expect(panel().getAttribute("data-funnel-source")).toBe("server");
+    expect([...panel().querySelectorAll(".plf-stage-n")].map((b) => b.textContent)).toEqual(["4"]);
+    quiet.mockRestore();
+  });
+
+  it("while the server read isn't there yet, a full submissions read makes every lead count a floor", async () => {
     const full = Array.from({ length: 200 }, (_, i) => sub(`f${i}`, 2, "d1", "CB-SPRING", null));
     await render({ submissions: full });
-    expect(panel().querySelector(".plf-note")?.textContent).toBe("The server count couldn’t load, so these figures are counted from the latest 200 leads read here; each lead count is a floor. Deals by stage count every deal in the pipeline.");
+    expect(panel().querySelector(".plf-note")?.textContent).toBe("The server count isn’t available yet, so these figures are counted from the latest 200 leads read here; each lead count is a floor. Deals by stage count every deal in the pipeline.");
     // Last touch: the 200 leads are one deal, counted once.
     expect(rows("By campaign")[0].slice(1)).toEqual(["200+", "1+", "0+", "0+"]);
     expect(panel().querySelector(".plf-sum")?.textContent).toBe("3 deals on this pipeline now. 200+ leads in the last 30 days reached it, and 200+ carried a campaign or ad tag.");
-    quiet.mockRestore();
   });
 
   it("with no Sales pipeline, asks only whether the ads-intake functions are deployed, and words where leads go by the answer", async () => {

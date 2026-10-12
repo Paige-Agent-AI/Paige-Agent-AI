@@ -4208,7 +4208,7 @@ Grounded at `8b7f975` against read-only prod aggregates, with each LIVE claim ad
 
 Both are projections over the Sales department's INT-340/INT-341 issuer keys, read only through `readBusinessMetric`. F2a also adds the entry point `_shared/paige-context/business-review.ts` → `composeBusinessReview`, which reads the workspace before and after composing and voids every domain on a switch.
 
-Currencies are never summed, a failure is never a zero, and evidence references never enter the snapshot. **Still not wired to any turn.** The chat tool (`get_business_snapshot`) and the Spine read (`business.operating_snapshot`) are hand-offs to the Conversational Loop and Spine lanes, and INT-346 blocks reachability.
+Currencies are never summed, a failure is never a zero, and evidence references never enter the snapshot. **Corrected 2026-10-12 (E2-1, PR #2075): the wiring hand-offs landed ship-dark** — `business.operating_snapshot` is registered (read, read_only, workspace-admin seat) and the `get_business_snapshot` chat tool + dispatch exist behind the tenant lens — but INT-346 still blocks reachability: a typed Solo turn is offered zero tools until the owner-approved read-only admission class (ANT-23) admits it, and the authenticated drive remains owed.
 
 §13 correction (also in Section 10): receivables and collected-in-period **are** period-readable for PAIGE through the issuer — the Sales producer and issuer merged 2026-10-07 (#1809/#1814), the chat read `read_business_metric` 2026-10-08 (#1873). The "No windowed reads for … receivables and collected-in-period" line above is stale. See the contract's F2a section.
 

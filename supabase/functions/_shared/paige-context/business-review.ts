@@ -8,9 +8,10 @@
  * Business Operating Snapshot through the F1 seam (`./snapshot.ts`), and render its bounded projection.
  * Every other requested domain is reported honestly by the composer: not connected, or not wired yet.
  *
- * WHAT IT IS NOT. Not a tool definition, not a Spine registration, not wired to any turn. A Chat or Live
- * turn reaches it only after the Conversational Loop lane adds the tool and dispatch branch, and the
- * Spine lane registers the read (see `docs/brain/paige-operating-fabric-contract.md`, F2a).
+ * WHAT IT IS NOT. It is not a tool definition or a Spine registration itself — those live in
+ * `_shared/paige-context/business-review-chat.ts` and `_shared/paige-spine/domains/business-review.ts`
+ * (E2-1, PR #2075, ship-dark: wired, and unreachable from a typed Solo turn while INT-346 holds).
+ * This module is the composition entry point the tool dispatch calls.
  *
  * SCOPE IS OBSERVED, NOT ASSUMED. The caller is the authenticated user's client. It is wrapped so every
  * `current_user_tenant_id()` answer it returns — including the ones the metric reads make before and

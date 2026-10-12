@@ -70,7 +70,7 @@ describe('Finance Spine read candidate', () => {
   it('refuses unavailable server workspace resolution', async () => { const c = client(); c.rpc.mockResolvedValue({ data: null, error: null }); expect((await executeFinanceRead(c, command)).reason).toBe('workspace_unavailable'); });
   it('sanitizes server tenant, company, membership and provider failures', async () => {
     const c = client(); c.rpc.mockImplementation(async name => name === 'current_user_tenant_id' ? { data: tenant, error: null } : { data: null, error: { message: 'SECRET provider credential', code: '42501' } });
-    const r = await executeFinanceRead(c, command); expect(r.outcome).toBe('unavailable'); expect(JSON.stringify(r)).not.toContain('SECRET');
+    const r = await executeFinanceRead(c, command); expect(r.outcome).toBe('refused'); expect(JSON.stringify(r)).not.toContain('SECRET');
   });
   it('rejects cross-account switching during a read', async () => {
     const c = client(); c.rpc.mockResolvedValueOnce({ data: tenant, error: null }).mockResolvedValueOnce({ data: evidence(), error: null }).mockResolvedValueOnce({ data: '20000000-0000-0000-0000-000000000002', error: null });
@@ -225,5 +225,17 @@ it.each([{verification_state:'revoked'},{connection_active:false},{entity_id:ten
 it('does not leak final authority transport failures or return prior financial facts',async()=>{
  const c=client();const ordinary=c.rpc.getMockImplementation()!;
  c.rpc.mockImplementation(async(name,args)=>{if(name==='read_finance_source_catalog')throw new Error('SECRET private transport');return ordinary(name,args);});
+ const r=await executeFinanceRead(c,command);expect(r).toMatchObject({outcome:'unavailable',reason:'finance_source_read_failed',evidence:null});expect(JSON.stringify(r)).not.toContain('SECRET');
+});
+
+
+it.each([command,debtCommand,billCommand,{capability:'finance.source_catalog'},planningCommand,{...planningCommand,capability:'finance.budget_read'}])('distinguishes canonical permission refusal from missing source for %j',async(selector)=>{
+ const c=planningClient();const ordinary=c.rpc.getMockImplementation()!;
+ c.rpc.mockImplementation(async(name,args)=>name==='current_user_tenant_id'?ordinary(name,args):{data:null,error:{code:'42501',message:'SECRET permission detail'}});
+ const r=await executeFinanceRead(c,selector);expect(r).toMatchObject({outcome:'refused',reason:'finance_read_refused',evidence:null});expect(JSON.stringify(r)).not.toContain('SECRET');
+});
+it('distinguishes final authority read transport failure from a revoked permission',async()=>{
+ const c=client();const ordinary=c.rpc.getMockImplementation()!;
+ c.rpc.mockImplementation(async(name,args)=>name==='read_finance_source_catalog'?{data:null,error:{code:'08006',message:'SECRET transport'}}:ordinary(name,args));
  const r=await executeFinanceRead(c,command);expect(r).toMatchObject({outcome:'unavailable',reason:'finance_source_read_failed',evidence:null});expect(JSON.stringify(r)).not.toContain('SECRET');
 });

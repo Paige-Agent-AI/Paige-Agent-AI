@@ -28,7 +28,7 @@ const result = (outcome: ReadResult['outcome'], reason: string | null, evidence:
 function pick(value: unknown, keys: readonly string[]): Record<string, unknown> {
   const row = object(value);
   if (!row) throw new Error('Invalid evidence row');
-  return Object.fromEntries(keys.filter(key => Object.hasOwn(row, key)).map(key => {
+  return Object.fromEntries(keys.filter(key => Object.prototype.hasOwnProperty.call(row, key)).map(key => {
     const v = row[key];
     if (!(v === null || typeof v === 'boolean' || typeof v === 'number' && Number.isFinite(v) || typeof v === 'string' && v.length <= 500)) throw new Error('Invalid evidence value');
     return [key, v];
@@ -75,7 +75,7 @@ function accountProjection(value: unknown) {
   const row=pick(value,['native_id','source_label','source_path','institution_label','product','currency','current_balance','available_cash','available_credit','credit_limit','source_updated_at']);
   if(typeof row.native_id!=='string'||!row.native_id.trim()) throw new Error('Invalid native account identity');
   for(const key of ['current_balance','available_cash','available_credit','credit_limit'])
-    if(Object.hasOwn(row,key)&&row[key]!==null&&!money(row[key],true)) throw new Error('Invalid exact account amount');
+    if(Object.prototype.hasOwnProperty.call(row,key)&&row[key]!==null&&!money(row[key],true)) throw new Error('Invalid exact account amount');
   return row;
 }
 
@@ -100,7 +100,7 @@ function recordProjection(evidence: Record<string, unknown>, command: Record<str
     const projected = pick(row, keys);
     const amounts = debt ? ['outstandingBalance','principalBalance','originalPrincipal','creditLimit','availableCredit','minimumPayment','nextPayment','interestRatePercentage']
       : ['recordedTotal','recordedOutstanding'];
-    for (const key of amounts) if (Object.hasOwn(row,key) && row[key] !== null && !money(row[key], debt)) throw new Error('Invalid source amount');
+    for (const key of amounts) if (Object.prototype.hasOwnProperty.call(row,key) && row[key] !== null && !money(row[key], debt)) throw new Error('Invalid source amount');
     if (debt) {
       if (!['credit_card','revolving_line','loan_obligation'].includes(String(row.product))) throw new Error('Invalid debt product');
       if (row.accountingClassificationVerified !== false || row.companyOwnershipVerified !== false
@@ -109,8 +109,8 @@ function recordProjection(evidence: Record<string, unknown>, command: Record<str
       projected.aprs = row.aprs === null ? null : (row.aprs as unknown[]).map(apr => pick(apr,['percentage','sourceType','subjectBalance','interestCharge']));
     } else {
       if (row.bankSettlementVerified !== false || command.domain === 'expenses' && row.recognizedExpense !== null) throw new Error('Unsupported accounting conclusion');
-      for (const key of ['vendor','entity','paymentAccount']) if (Object.hasOwn(row,key)) projected[key] = row[key] === null ? null : pick(row[key],['nativeId','sourceLabel']);
-      if (Object.hasOwn(row,'issues')) {
+      for (const key of ['vendor','entity','paymentAccount']) if (Object.prototype.hasOwnProperty.call(row,key)) projected[key] = row[key] === null ? null : pick(row[key],['nativeId','sourceLabel']);
+      if (Object.prototype.hasOwnProperty.call(row,'issues')) {
         if (!Array.isArray(row.issues) || row.issues.length > 6 || row.issues.some(v=>typeof v !== 'string' || v.length > 100)) throw new Error('Invalid source issues');
         projected.issues = row.issues;
       }
@@ -149,7 +149,8 @@ export async function executeFinanceRead(client: FinanceCallerClient, input: unk
     if (planning) {
       const catalog = await client.rpc('read_finance_source_catalog', { _expected_tenant_id: workspace.data });
       const metadata = object(catalog.data);
-      if (catalog.error || metadata?.tenant_id !== workspace.data || !Array.isArray(metadata.entities) || metadata.entities.length > 200) return result('unavailable','finance_company_unavailable');
+      if(catalog.error) return result(object(catalog.error)?.code === '42501' ? 'refused' : 'unavailable',object(catalog.error)?.code === '42501' ? 'finance_read_refused' : 'finance_source_read_failed');
+      if (metadata?.tenant_id !== workspace.data || !Array.isArray(metadata.entities) || metadata.entities.length > 200) return result('unavailable','finance_company_unavailable');
       const entities = metadata.entities.map(object).filter(e => e?.id === command.entity_id);
       const entity = entities.length === 1 ? entities[0] : null;
       if (!entity || entity.is_active !== true || !Number.isSafeInteger(entity.version) || (entity.version as number)<1) return result('unavailable','finance_company_unavailable');
@@ -163,7 +164,7 @@ export async function executeFinanceRead(client: FinanceCallerClient, input: unk
       ? await client.rpc('read_finance_source_catalog', { _expected_tenant_id: workspace.data })
       : await client.rpc(command.capability === 'finance.liability_source' ? 'read_finance_liability_source' : obligations ? 'read_finance_accounting_obligations' : 'read_finance_account_source',
         { _expected_tenant: workspace.data, _entity_id: command.entity_id, _binding_id: command.binding_id, ...(obligations ? { _domain: command.domain } : {}) });
-    if (read.error) return result('unavailable', 'finance_source_read_failed');
+    if (read.error) return result(object(read.error)?.code === '42501' ? 'refused' : 'unavailable',object(read.error)?.code === '42501' ? 'finance_read_refused' : 'finance_source_read_failed');
     let evidence = object(read.data);
     if (!evidence) return result('unavailable', 'invalid_finance_evidence');
     // A workspace switch during the read invalidates the result; no old-account
@@ -175,7 +176,7 @@ export async function executeFinanceRead(client: FinanceCallerClient, input: unk
     // Re-resolve the canonical owner/admin, company and connection authority after
     // the data read. An unchanged tenant/user alone does not prove current role.
     const finalRead = await client.rpc('read_finance_source_catalog', { _expected_tenant_id: workspace.data });
-    if (finalRead.error) return result('refused', 'finance_authority_changed');
+    if (finalRead.error) return result(object(finalRead.error)?.code === '42501' ? 'refused' : 'unavailable',object(finalRead.error)?.code === '42501' ? 'finance_authority_changed' : 'finance_source_read_failed');
     const finalCatalog = object(finalRead.data);
     if (finalCatalog?.tenant_id !== workspace.data || !Array.isArray(finalCatalog.entities) || finalCatalog.entities.length > 200
       || !Array.isArray(finalCatalog.sources) || finalCatalog.sources.length > 1000) return result('unavailable','invalid_finance_evidence');

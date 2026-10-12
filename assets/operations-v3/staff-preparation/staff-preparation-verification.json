@@ -1,0 +1,186 @@
+{
+  "boundary": "Real unmounted Operations component/helpers with explicit synthetic session/source/Team/domain ports. No customer/account/provider/INT346 or canonical shell/PAIGE/authenticated acceptance proof.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "keyboardDocument": true,
+      "submitReadback": true,
+      "acceptanceNotInferred": true
+    },
+    {
+      "theme": "dark",
+      "mode": "empty",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "loading",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unavailable",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "source-refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "version-refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unknown",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "lost-ack",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "empty",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "loading",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "unavailable",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "source-refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "version-refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "unknown",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "lost-ack",
+      "stateHonest": true
+    }
+  ],
+  "errors": []
+}

@@ -55,6 +55,7 @@ on:
       - "scripts/proof/chat-answer-claim-race.mjs"
       - "scripts/proof/layer-c-native-vertical.mjs"
       - "scripts/proof/operator-postgres-fixture.mjs"
+      - "scripts/proof/operations-review-discovery-concurrency.mjs"
       - "supabase/functions/paige-native-event-dispatch/**"
       - "supabase/functions/_shared/capability-record.ts"
       - "supabase/functions/_shared/railAutomation.ts"
@@ -291,6 +292,15 @@ jobs:
       - name: Operations exact submitted artifact authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_artifact_read.sql
+
+      - name: Operations nominated reviewer discovery (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_review_discovery.sql
+
+      - name: Operations reviewer discovery real source-change races
+        env:
+          OPERATIONS_DISCOVERY_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: node scripts/proof/operations-review-discovery-concurrency.mjs
 
       - name: Operations explicit client review and acceptance (rolled back)
         if: ${{ !cancelled() }}

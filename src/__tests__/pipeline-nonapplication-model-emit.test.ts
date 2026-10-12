@@ -15,9 +15,10 @@ describe("model-emit non-application recording (CL-8)", () => {
     expect(src).toContain('if (approvedArgs && approvedFingerprint && tc.function.name === "pipeline_configure") {');
     expect(src).toContain('pipelineClaimToken.set(tc.id, approvedFingerprint);');
     // The premature first-resolution capture is gone (review P1): before the approved-set
-    // lookup resolves, the map must not be written.
-    expect(src).not.toContain('if (approvedFingerprint) approvalTokenTool.set(approvedFingerprint, tc.function.name);
-            if (approvedFingerprint && tc.function.name === "pipeline_configure")');
+    // lookup resolves, the map must not be written. Pinned as two fragments so no escape
+    // sequence is involved in the match.
+    expect(src).not.toContain('if (approvedFingerprint && tc.function.name === "pipeline_configure") pipelineClaimToken.set');
+    expect(src).not.toContain('if (approvedFingerprint && tc.function.name === "pipeline_configure") {\n              pipelineClaimToken.set');
   });
   it("the recorder accepts the pinned OR the gate-claimed token — not a pin-only condition", () => {
     expect(src).toContain("const observedClaimToken = resumePin.get(tc.id) ?? pipelineClaimToken.get(tc.id);");

@@ -3354,3 +3354,10 @@ computed outline, not by reading the CSS (it looks correct). Four shipped Campai
   Marketing read after attaching a form in the dossier, so the screens went stale until reload. It was caught only
   by an independent review that asked "what writes this input?" Also: the realtime channel that seemed to cover it
   never fires on production (no table is published, #2079). Check the publication before relying on a subscription.
+- **2026-10-12 · Exp 03 S1b — some `_shared` edge files are pinned to a reviewed fingerprint; a wording edit
+  turns `contract` red.** `scripts/ci/c0b-incumbent-resource-binding.mjs` pins the canonical AST hash of reviewed
+  sources (among them `_shared/action-risk.ts`), and `paige-spine-registry-lint.mjs --self-test` fails with
+  "`<capability>: binding positive failed`" when any pinned file changes — the message names a capability, not the
+  file. Run `node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs --self-test` locally before
+  pushing any `_shared` change. Re-pinning is a review decision, not a fix: S1b reverted its rationale wording
+  instead and carried the disclosure in an unpinned file (`paige-spine/domains/campaigns.ts`).

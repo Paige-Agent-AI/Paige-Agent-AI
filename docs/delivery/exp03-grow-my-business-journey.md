@@ -182,8 +182,8 @@ already uses (the same rules, evaluated at insert; differences are listed below)
   including leads saved before this release; a form linked only to an archived campaign credits none by its link,
   while a tag still matches an archived campaign.
 
-**S1b — the campaign's pipeline — BUILT 2026-10-12 (migration `20271026100000`; evidence
-`docs/evidence/ui-delivery/exp03-s1b-campaign-route.md`).** Order: the form's own route; its campaign's pipeline
+**S1b — the campaign's pipeline — SHIPPED 2026-10-12 (migration `20271026100000`, PR #2078 → main `212a2a9b`,
+db-live and edge-live `212a2a9b`, production read back; evidence `docs/evidence/ui-delivery/exp03-s1b-campaign-route.md`).** Order: the form's own route; its campaign's pipeline
 (first open, non-archived stage) when the form is attached to exactly one non-archived campaign whose pipeline is
 the business's own and not archived; the default pipeline; nowhere. One definition (`_growth_form_campaign_route`)
 is read by the filing (`growth_attach_submission_default_deal`), the metric (`marketing.forms.unrouted_current`)

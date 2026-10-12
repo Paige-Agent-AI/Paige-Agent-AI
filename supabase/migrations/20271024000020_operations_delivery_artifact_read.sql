@@ -27,6 +27,7 @@ begin
     or length(trim(v_a.snapshot->>'body'))=0 or length(v_a.snapshot->>'body')>200000 then
     raise exception 'DELIVERY_ARTIFACT_UNAVAILABLE' using errcode='42501';end if;
   return jsonb_build_object('actor_id',v_actor,'tenant_id',v_s.tenant_id,'submission_id',v_s.id,
+    'work_item_id',v_s.work_item_id,'plan_id',v_s.plan_id,'client_id',v_s.client_id,
     'artifact_version_id',v_a.id,'artifact_digest',v_s.artifact_digest,'revision_no',v_s.revision_no,
     'reviewer_user_id',v_s.reviewer_user_id,'submitted_by',v_s.submitted_by,'state',v_s.state,
     'title',v_a.snapshot->>'title','body',v_a.snapshot->>'body','updated_at',v_s.updated_at);

@@ -132,15 +132,20 @@ the activation gate. It is NOT unilaterally taken: it widens the #1899-accepted 
 DRAINING contract, which is an owner-reserved security-posture decision. This record
 presents that bounded design; the Platform Reach lane owns the capability itself.
 
-**#1832 minimum QA handoff (archived session not reused; no identities provisioned, no
-replacement team):** the minimum authorized administrative act is for the identity/QA
-owner to provision ONE synthetic `standalone` tenant + owner-level user (base global role,
-fixture data only, per the existing canonical spec `docs/delivery/solo-test-tenant-spec.md`)
-and inject its credentials into the EXISTING secret names (`PROOF_EMAIL`/`PROOF_PASSWORD`
-or `LIVE_DRIVE_*`) for the already-CI-pinned driver. Nothing else is required on any
-side: the runner (`scripts/proof/int304-authenticated-observation.mjs`) is complete,
-refuses to run without the fixture, and every authenticated-runtime PASS in this program
-remains honestly blocked until that single act.
+**#1832 minimum QA handoff (archived session not reused; no identities provisioned by this
+lane, no replacement team; corrected 2026-10-11 per the coordinator's runner-verified
+readback — credentials alone are INSUFFICIENT):** the acceptance runner
+(`scripts/proof/int304-authenticated-observation.mjs`) requires ALL FOUR of — (1) an
+approved, genuinely signed-in synthetic SOLO tenant-owner account with PRIVATE
+`PROOF_EMAIL`/`PROOF_PASSWORD` (or `LIVE_DRIVE_EMAIL`/`LIVE_DRIVE_PASSWORD`) injection;
+(2) `PROOF_ANON_KEY` — the PUBLIC anon/publishable project key, never the service-role
+key; (3) a POSITIONAL fixture JSON path carrying `actorId`, `tenantId`, and at least one
+real fixture case (`threadId`, `intentId`, exactly one `pipelineEffectId` OR `workId`,
+plus expected-result fields); and (4) an actual trusted runner/environment binding. The
+existing replacement QA #1832 owner (with an authorized Auth admin and the trusted runner
+maintainer) arranges the private fixture — not the Conversational Loop engineer and not
+customer data. Every authenticated-runtime PASS in this program remains honestly blocked
+until those four inputs exist; authentic QA readiness is not claimed before evidence.
 
 ## 2026-10-10 program acceptance matrix — handoff grounding, before any code change
 

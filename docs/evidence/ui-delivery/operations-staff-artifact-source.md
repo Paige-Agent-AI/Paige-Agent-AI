@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: Native authorized staff/reviewer read exact bounded version
 MOTION_PURPOSE: NONE: no component or motion added.
 PROTECTED_SEAMS: Existing scoped submission reader plus Studio authority, hash and actual identity; no shared route, QA credentials, provider or INT-346 change.
 
-INTERNAL_BUILD_IDENTITY: supporting source head55bba40314e1121d5e132fffc190e96c64de226b; deployment=NOT_DEPLOYED; environment=development; migration=proposed20271024000020 never-applied; edge=NOT_APPLICABLE; evidence=docs/delivery/operations-client-review-packet.md
+INTERNAL_BUILD_IDENTITY: supporting source head55bba40314e1121d5e132fffc190e96c64de226b; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271024000020 proposed never-applied, required CI and protected release not completed); edge=NOT_APPLICABLE; evidence=docs/delivery/operations-client-review-packet.md
 RELEASE_CHANNEL: development: unmounted source preparation; production identity not yet observed.
 RELEASE_CLASSIFICATION: internal-only: bounded source reader/helper preparation, not a customer workflow.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated customer outcome not established.

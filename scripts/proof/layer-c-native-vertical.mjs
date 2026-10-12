@@ -34,6 +34,9 @@
 //   E  revoked after the hold (§68): the process paused, turned off, or the platform ceiling at 0 →
 //                         the owner's approval does not run it and it stays pending; restored, the same
 //                         approval runs it once.
+//   F  dispatch claim   → a held act redeemed to accepted_for_execution, then eight separate database sessions
+//                         race paige_claim_act_dispatch at once: exactly one gets the claim, the outcome is
+//                         unchanged and nothing is dispatched by the claim itself.
 //   C  off lane         → held_by_lane, no effect, no approval.
 //   D  wrong subject    → an event that claims workspace D but whose subject belongs to workspace A
 //                         fails the integrity check: no ledger row, no effect, nothing in A touched.
@@ -68,6 +71,15 @@ const sql = (text) => execFileSync(psqlBin, ["-X", "-q", "-A", "-t", "-v", "ON_E
 }).trim();
 const one = (text) => sql(text).split("\n").filter(Boolean).at(-1) ?? "";
 const q = (s) => `'${String(s).replaceAll("'", "''")}'`;
+// One psql session per call, run concurrently (used to race separate database sessions against one row).
+const sqlAsync = (text) => new Promise((res, rej) => {
+  const child = spawn(psqlBin, ["-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-d", dbUrl.toString(), "-c", text]);
+  let out = ""; let err = "";
+  const kill = setTimeout(() => child.kill("SIGKILL"), 30000);
+  child.stdout.on("data", (d) => { out += d; });
+  child.stderr.on("data", (d) => { err += d; });
+  child.on("close", (code) => { clearTimeout(kill); code === 0 ? res(out.trim()) : rej(new Error(err || `psql exited ${code}`)); });
+});
 
 // The local stack's keys. `supabase status` prints the shared local-development defaults; they never
 // leave this machine and are not secrets of any real project.
@@ -418,6 +430,37 @@ async function main() {
       assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(w.contactId)};`), 1);
     });
   }
+
+  // ── F: the dispatch claim — of eight concurrent sessions exactly one may fire the act ────────────────
+  const F = await workspace("claim-race");
+  processRecord(F.tenantId, F.owner.id, "confirm", "paid_tier");
+  const f = newContact(F.tenantId, F.owner.id, "Race");
+  step("F eight concurrent sessions race the dispatch claim on one redeemed act: exactly one wins", async () => {
+    const r = await post(drainer.base, { event_id: f.eventId }, keys.service);
+    assert.deepEqual(r.json.act_outcomes, { approval_pending: 1 }, JSON.stringify(r.json));
+    const actId = one(`select act_id from public.paige_act_executions where event_id = ${q(f.eventId)};`);
+    assert.equal(one(`select (public.paige_approve_act_execution(${q(f.eventId)}, ${q(actId)}, ${q(F.owner.id)})).outcome::text;`), "accepted_for_execution");
+    // A barrier, so the race is real lock contention rather than eight staggered sequential calls: one session
+    // holds the row lock while the eight claimants queue behind it; when it commits, Postgres re-checks each
+    // waiter's WHERE against the winner's committed claim.
+    const holder = sqlAsync(`begin; select 1 from public.paige_act_executions where event_id = ${q(f.eventId)} for update; select pg_sleep(10); commit;`);
+    const sleeping = `select count(*) from pg_stat_activity where query like '%pg_sleep(10)%' and state = 'active' and pid <> pg_backend_pid();`;
+    for (let i = 0; i < 50 && count(sleeping) < 1; i++) await new Promise((r) => setTimeout(r, 50));
+    assert.equal(count(sleeping), 1, "the barrier session must hold the row lock before the claimants start");
+    const claims = Promise.all(Array.from({ length: 8 }, () =>
+      sqlAsync(`select (public.paige_claim_act_dispatch(${q(f.eventId)}, ${q(actId)}, gen_random_uuid())).id is not null;`)));
+    const waiting = `select count(*) from pg_stat_activity where wait_event_type = 'Lock' and query like '%paige_claim_act_dispatch%' and pid <> pg_backend_pid();`;
+    let queued = 0;
+    for (let i = 0; i < 50 && queued < 8; i++) { await new Promise((r) => setTimeout(r, 50)); queued = count(waiting); }
+    assert.equal(queued, 8, "all eight claimants must be queued on the row lock before the barrier commits");
+    await holder;
+    const results = await claims;
+    assert.equal(results.filter((x) => x === "t").length, 1, `exactly one claimant: ${JSON.stringify(results)}`);
+    assert.equal(results.filter((x) => x === "f").length, 7, `seven refused: ${JSON.stringify(results)}`);
+    assert.equal(ledger(f.eventId).outcome, "accepted_for_execution");
+    assert.match(one(`select detail->>'dispatch_claim' from public.paige_act_executions where event_id = ${q(f.eventId)};`), /^[0-9a-f-]{36}$/);
+    assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(f.contactId)};`), 0);
+  });
 
   // ── C: off lane → held, nothing runs ───────────────────────────────────────────────────────────
   const C = await workspace("off");

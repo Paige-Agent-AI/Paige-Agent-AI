@@ -66,6 +66,7 @@ import { resolveNativeCapabilityStatus } from "../paige-capability-status/gather
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { actReceiptRunSeed } from "./outcomes.ts";
+import { claimActDispatch } from "./dispatch-claim.ts";
 import { readProcessPosture } from "./engine.ts";
 
 /** The minimal client surface the executor needs (a read chain + rpc) — kept structural so a fake proves it.
@@ -366,6 +367,10 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
       // `gate.ok === false` (not `!gate.ok`): src tsc runs strictNullChecks:false and does NOT narrow a
       // discriminated union on the truthiness form, so `gate.reason` would not resolve (tsc-ratchet catches it).
       if (gate.ok === false) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: gate.reason };
+      // At most once (Slice 2b): a stale claim is re-taken only here, after the readback above found nothing landed.
+      const claim = await claimActDispatch(db, eventId, actId);
+      if (!claim.ok) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
+      if (!claim.claimed) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
       let dr: DispatchResult;
       try { dr = await adapter.dispatch({ ...dispatchInput, args: gate.args }); } catch (e) { dr = ambiguousFromThrow(e, "adapter_threw"); }
       return advanceLedger(db, base, dr, "accepted_for_execution");
@@ -386,8 +391,8 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
   // 6 — REDEEM the approval atomically: approval_pending → accepted_for_execution (the sole sanctioned
   //     transition). The RPC returns the row's outcome AFTER the transition. It cannot distinguish "I redeemed
   //     it" from "a concurrent call already redeemed it" — both yield accepted_for_execution — so:
-  //       * accepted_for_execution → proceed to dispatch (idempotent; the door's atomic claim already serialises
-  //         approvals of one row, and set_journey_stage + the monotonic RPC converge a rare double-dispatch);
+  //       * accepted_for_execution → take the dispatch claim (Slice 2b), which DOES tell the callers apart:
+  //         only its holder dispatches;
   //       * a TERMINAL outcome (executed/failed/cancelled) → a concurrent call already completed it. STOP and
   //         report the persisted truth (§13).
   const { data: appr, error: apprErr } = await db.rpc("paige_approve_act_execution", {
@@ -398,6 +403,10 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
   if (apprOutcome !== "accepted_for_execution") {
     return { ok: apprOutcome === "executed", outcome: apprOutcome, executed: apprOutcome === "executed", reason: "already_redeemed" };
   }
+
+  const claim = await claimActDispatch(db, eventId, actId);
+  if (!claim.ok) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
+  if (!claim.claimed) return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
 
   // 7 — DISPATCH through the native adapter, then advance the ledger + file receipt/Rail on a confirmed executed.
   //     The row is now accepted_for_execution (redeemed) — that is the priorOutcome reported if the advance
@@ -428,6 +437,8 @@ export function approvalRefusalMessage(reason: string | undefined, outcome?: str
       return held("One of this automation's steps is switched off, so PAIGE didn't run it.", "once it's on again");
     case "platform_observe_only":
       return held("PAIGE is held to observe only right now, so held steps don't run.", "once that lifts");
+    case "dispatch_in_progress": // "ten minutes" is DISPATCH_CLAIM_STALE (dispatch-claim.ts)
+      return "PAIGE may already be running this step. If it hasn't finished in ten minutes, approve it again.";
     case "process_not_found":
       return "This automation no longer exists, so there is nothing to run.";
     case "governed_capability_not_for_tier":

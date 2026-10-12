@@ -159,8 +159,8 @@ select is(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4
   'G9 a claim stamped just ahead of this transaction''s now() is still live (the future check has a margin)');
 
 -- ── F. Service role only ─────────────────────────────────────────────────────────────────────────────────
-select ok(not has_function_privilege('authenticated', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval)', 'execute')
-       and not has_function_privilege('anon', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval)', 'execute'),
+select ok(not has_function_privilege('authenticated', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval,boolean)', 'execute')
+       and not has_function_privilege('anon', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval,boolean)', 'execute'),
   'F1 anon and authenticated cannot execute the claim');
 set local request.jwt.claims = '{"sub":"d0000000-0000-4000-8000-000000000000","role":"authenticated"}';
 select throws_ok($$ select public.paige_claim_act_dispatch('e0000000-0000-4000-8000-000000000000', '00000000-0000-4000-8000-0000000000a3', gen_random_uuid()) $$,

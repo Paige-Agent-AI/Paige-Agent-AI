@@ -169,6 +169,9 @@ export function isNativeActionKind(actionKind: string | null | undefined): boole
 /** The native ActionAdapter: resolveCapability + dispatch/readback delegate to the per-action executor. */
 export const nativeAdapter: ActionAdapter = {
   kind: "native",
+  // The readback finds the transition stamped with the act's own correlation reference or proves there is none,
+  // so an act whose dispatcher died without landing it may be dispatched again under a fresh claim.
+  lostClaimRecovery: "readback_proves_absence",
   resolveCapability(actionKind: string): AdapterCapability | null {
     const ex = NATIVE_EXECUTORS[actionKind];
     return ex ? ex.capability : null;

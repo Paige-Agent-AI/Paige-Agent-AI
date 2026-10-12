@@ -43,3 +43,16 @@ it('rejects a passed projection with missing output facts and preserves a proven
   Object.assign(row, { verdict: 'not_applicable', applicability: 'not_applicable' }); excluded.items[0].latest_corrected_result = structuredClone(row);
   expect((await parseRegressionCorpus(excluded)).items[0].latest_corrected_result?.verdict).toBe('not_applicable');
 });
+it.each([1, 1000000])('preserves a producer-valid FAIL with %s unexpected writes', async count => {
+  const page = structuredClone(canonical); Object.assign(page.items[0].history[0].output, { disputes_auto_created: count });
+  expect((await parseRegressionCorpus(page)).items[0].history[0].output.disputes_auto_created).toBe(count);
+});
+it('rejects PASS with an unexpected write even when its evidence is complete', async () => {
+  const page = structuredClone(canonical); Object.assign(page.items[0].history[1].output, { disputes_auto_created: 1 });
+  page.items[0].latest_corrected_result = structuredClone(page.items[0].history[1]);
+  await expect(parseRegressionCorpus(page)).rejects.toThrow();
+});
+it.each([-1, 1000001, 0.5])('rejects producer-invalid unexpected-write count %s', async count => {
+  const page = structuredClone(canonical); Object.assign(page.items[0].history[0].output, { disputes_auto_created: count });
+  await expect(parseRegressionCorpus(page)).rejects.toThrow();
+});

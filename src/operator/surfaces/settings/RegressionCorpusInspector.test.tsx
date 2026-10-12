@@ -49,3 +49,24 @@ it('hides cached case data on error and offers truthful unavailable state withou
   expect(host.textContent).toContain('Corpus reader unavailable'); expect(host.textContent).not.toContain('Credit-sync audit integrity');
   expect(host.textContent).not.toContain('Run replay');
 });
+it.each([false, true])('uses the authoritative corrected result for tied history, reverse=%s', async reverse => {
+  await mount(); const p = structuredClone(canonical); const corrected = structuredClone(p.items[0].history[1]);
+  const failed = structuredClone(corrected);
+  Object.assign(failed, { run_ref: '60000000-0000-4000-8000-000000000099', result_ref: '60000000-0000-4000-8000-000000000098', verdict: 'fail' });
+  Object.assign(failed.output, { http_status: 500, audit_recorded: false });
+  p.items[0].history = [p.items[0].history[0], ...(reverse ? [failed, corrected] : [corrected, failed]), p.items[0].history[2]];
+  p.items[0].latest_corrected_result = corrected;
+  read.page.data = await parseRegressionCorpus(p); await act(async () => root.render(<RegressionCorpusInspector read={{ ...read }} />));
+  expect(host.querySelector('tbody strong')?.textContent).toBe('PASS'); await click('Inspect case');
+  expect(host.querySelector('.corpus-lifecycle li:nth-child(2) strong')?.textContent).toBe('PASS');
+});
+it('renders complete failed evidence with an unexpected-write count', async () => {
+  await mount(); const p = structuredClone(canonical); const row = p.items[0].history[1];
+  Object.assign(row, { verdict: 'fail' }); Object.assign(row.output, { disputes_auto_created: 1 });
+  p.items[0].latest_corrected_result = structuredClone(row);
+  read.page.data = await parseRegressionCorpus(p); await act(async () => root.render(<RegressionCorpusInspector read={{ ...read }} />));
+  expect(host.querySelector('tbody strong')?.textContent).toBe('FAIL'); await click('Inspect case');
+  expect(host.querySelector('.corpus-lifecycle li:nth-child(2) strong')?.textContent).toBe('FAIL');
+  expect(host.textContent).toContain('unexpected writes 1');
+  expect(host.textContent).toContain('does not pass a required regression gate');
+});

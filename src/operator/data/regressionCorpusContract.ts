@@ -11,7 +11,7 @@ const history = z.object({
   evaluator: z.object({ id: z.literal('offline-write-integrity'), version: z.literal('1.0.0'), hash }),
   verdict: z.enum(['pass', 'fail', 'indeterminate', 'not_applicable']),
   evidence_state: z.enum(['complete', 'missing', 'stale', 'partial', 'conflicting', 'unrelated', 'unavailable']),
-  output: z.object({ http_status: z.number().int().min(100).max(599).nullable(), audit_recorded: z.boolean().nullable(), disputes_auto_created: z.literal(0).nullable() }),
+  output: z.object({ http_status: z.number().int().min(100).max(599).nullable(), audit_recorded: z.boolean().nullable(), disputes_auto_created: z.number().int().min(0).max(1000000).nullable() }),
   proof_class: z.literal('controlled_offline_real_handler'), applicability: z.enum(['applicable', 'not_applicable', 'unknown']).nullable(),
 });
 const item = z.object({ case_ref: uuid, case_hash: hash, definition: z.unknown().transform(parseRegressionCase), published_at: timestamp,

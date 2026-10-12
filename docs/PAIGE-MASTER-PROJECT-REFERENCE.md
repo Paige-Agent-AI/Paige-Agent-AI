@@ -4126,6 +4126,17 @@ Grounded at `8b7f975` against read-only prod aggregates, with each LIVE claim ad
 
 **F1 (this entry's PR)** adds the pure seam `_shared/paige-context/snapshot.ts`: periods with timezone and DST handling, the validated `DomainSnapshot`, the NOT-CONNECTED register, the bounded fail-closed composer, and a projection that tells the model unavailable ≠ zero. It reuses `mod.ts` types and ships unit tests. **Nothing calls it from a turn yet.** It is wired to Chat and Live in F2, behind one read-only Spine capability (`business.operating_snapshot`). Sequence F2–F9 is in the contract's §L.
 
+**F1 merged** (#1790, `4f7117d26`). **F2a (2026-10-12)** adds the first two domain adapters:
+
+- `_shared/paige-context/adapters/payments.ts`: recorded receipts in the period with a previous-period change, plus outstanding and overdue receivables now, each by currency, with an `act` risk for overdue money.
+- `_shared/paige-context/adapters/sales-pipeline.ts`: opportunities created with a change, open opportunities, and open pipeline value by currency.
+
+Both are projections over the Sales department's INT-340/INT-341 issuer keys, read only through `readBusinessMetric`. F2a also adds the entry point `_shared/paige-context/business-review.ts` → `composeBusinessReview`, which reads the workspace before and after composing and voids every domain on a switch.
+
+Currencies are never summed, a failure is never a zero, and evidence references never enter the snapshot. **Still not wired to any turn.** The chat tool (`get_business_snapshot`) and the Spine read (`business.operating_snapshot`) are hand-offs to the Conversational Loop and Spine lanes, and INT-346 blocks reachability.
+
+§13 correction: receivables and collected-in-period **are** period-readable for PAIGE through the issuer since 2026-10-08. The "No windowed reads for … receivables and collected-in-period" line above is stale. See the contract's F2a section.
+
 ### Finance backend — owner-resumed end-to-end mission (2026-10-10)
 
 Owner-authorized ANT-9 continuation (2026-10-11): a bounded current-main successor to unmerged #1950 preserves all four historical findings and corrected consent guards. Production metadata frontier is independently verified as 20271020000270; current-main candidate uses checked-free forward migration 20271020000300. Its prior unapplied 00030 filename was superseded after a peer release used it; no applied history changed. Both actual historical/current retirement definitions pass the new fail-before/pass-after consent regression. Actual local PostgreSQL missing-contract/two-fresh-replay and concurrent one-use consent proof PASS. Genuine independent non-author non-Codex review, exact-head required CI, merge, deployment and source readback remain owed. No provider/account activation, token exchange, customer ingestion or authenticated acceptance is claimed. The existing approved UI, shared Chat/Live execution authority and sole Settings → Integrations setup home are preserved; [capability integration/proof matrix](brain/finance-department.md) names the unavailable seams.

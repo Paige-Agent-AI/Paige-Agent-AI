@@ -19,7 +19,7 @@ export function RegressionCorpusInspector({ read }: { read?: RegressionCorpusRea
   const selected = selection?.page === data ? data?.items.find(c => c.case_ref === selection.id) : undefined;
   useEffect(() => {
     if (selected) { detail.current?.focus(); detail.current?.scrollIntoView?.({ block: 'start', behavior: 'auto' }); }
-  }, [selected]);
+  }, [selection, selected]);
   useEffect(() => { if (selection && !selected) { setSelection(null); heading.current?.focus(); } }, [selection, selected]);
   function close() { setSelection(null); if (opener.current?.isConnected) opener.current.focus(); else heading.current?.focus(); }
   function navigate(action: () => void) { setSelection(null); heading.current?.focus(); action(); }

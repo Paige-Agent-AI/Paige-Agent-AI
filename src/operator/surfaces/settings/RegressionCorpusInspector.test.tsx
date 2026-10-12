@@ -28,6 +28,10 @@ it.each(['Back', 'Escape'])('returns focus to the exact case opener through %s',
   else await act(async () => document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(host.querySelector('[aria-label="Regression case inspection"]')).toBeNull(); expect(document.activeElement).toBe(opener);
 });
+it('refocuses inspection when the same selected case is opened again', async () => {
+  await mount(); const opener = await click('Inspect case'); opener.focus(); await click('Inspect case');
+  expect(document.activeElement?.getAttribute('aria-label')).toBe('Regression case inspection');
+});
 it('clears selected history on a failed or in-flight refresh and never reopens it on retry', async () => {
   await mount(); await click('Inspect case');
   await act(async () => root.render(<RegressionCorpusInspector read={{ ...read, page: { ...read.page, fetching: true } }} />));

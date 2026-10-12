@@ -122,25 +122,40 @@ Deno.serve(async (req) => {
     }
 
     // No target form means no submission for the form processor to route, so the lead is filed here:
-    // into the business's default pipeline, first open stage (owner ruling 2026-10-11). The contact is
-    // this request's outcome; a filing failure is logged and reported, never a failed request and
-    // never a deal that was not made. Such a lead writes no submission, so the lead funnel counts its
-    // deal in the stage counts but not in leads (see growth_attach_inbound_default_deal's COMMENT).
+    // into the business's default pipeline, first open stage (owner ruling 2026-10-11). This path keeps
+    // no retry record of its own, so a TRANSIENT filing failure (no database answer, a deadlock or a
+    // stale read, or PostgREST's connection/pool codes) answers 503 and
+    // the sender re-delivers: the contact step finds the same contact by address and the filing
+    // reuses its open deal, so a re-delivery never duplicates either. A PERMANENT refusal or a skip
+    // (no default pipeline) is reported in the 200 body, never as a deal that was made. Such a lead
+    // writes no submission, so the funnel counts its deal in the stage counts but not in leads.
     let deal: Record<string, unknown> | null = null;
     if (!source.target_form_id && contactId) {
+      let transient = false;
       try {
         const { data: filed, error: dealErr } = await supabase.rpc("growth_attach_inbound_default_deal", {
           p_tenant_id: source.tenant_id, p_contact_id: contactId, p_source: `external:${source.provider}`,
         });
         if (dealErr || !filed) {
-          console.error("[growth-inbound] default_pipeline_deal_failed", { code: dealErr?.code ?? null, message: dealErr?.message ?? "no result" });
+          const code = dealErr?.code ? String(dealErr.code) : "";
+          // PGRST202 (function not deployed yet) is permanent here, as in the form processor: a lagging
+          // migration must not turn every delivery into a 503 that used to answer 200 (§58).
+          transient = !!dealErr && (code === "" || code === "40001" || code === "40P01"
+            || /^PGRST00[0-3]$/.test(code) || /^(08|53|57)/.test(code));
+          console.error("[growth-inbound] default_pipeline_deal_failed", { code: code || null, transient, message: dealErr?.message ?? "no result" });
           deal = { filed: false, error: "default_pipeline_deal_failed" };
         } else {
           deal = filed as Record<string, unknown>;
         }
       } catch (e) {
-        console.error("[growth-inbound] default_pipeline_deal_failed", { message: String((e as Error)?.message ?? e) });
+        transient = true;
+        console.error("[growth-inbound] default_pipeline_deal_failed", { transient, message: String((e as Error)?.message ?? e) });
         deal = { filed: false, error: "default_pipeline_deal_failed" };
+      }
+      if (transient) {
+        return new Response(JSON.stringify({ ok: false, contact_id: contactId, error: "default_pipeline_deal_retry", retryable: true }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "30" },
+        });
       }
     }
 

@@ -54,6 +54,9 @@ describe("pipeline_attach_default executor", () => {
     [{ code: "", message: "TypeError: fetch failed" }],
     [{ code: "08006", message: "connection failure" }],
     [{ code: "57014", message: "canceling statement due to statement timeout" }],
+    [{ code: "40P01", message: "deadlock detected" }],
+    [{ code: "PGRST003", message: "Timed out acquiring connection from connection pool." }],
+    [{ code: "PGRST001", message: "Could not connect with the database" }],
   ])("retries a stale claim or a failure that never got a database answer (%#)", async (error) => {
     const h = ctx(async () => ({ data: null, error }));
     const out = await runExecutor(step(), h.ctx);
@@ -64,7 +67,7 @@ describe("pipeline_attach_default executor", () => {
     [{ code: "42501", message: "FORM_DEAL_ROUTE_INVALID" }, "FORM_DEAL_ROUTE_INVALID"],
     [{ code: "42501", message: "FORM_DEAL_OPERATOR_REQUIRED" }, "FORM_DEAL_OPERATOR_REQUIRED"],
     [{ code: "42501", message: "FORM_DEAL_TENANT_INACTIVE" }, "FORM_DEAL_TENANT_INACTIVE"],
-    [{ code: "PGRST202", message: "Could not find the function public.growth_attach_submission_default_deal" }, "PGRST202"],
+    [{ code: "PGRST202", message: "Could not find the function public.growth_attach_submission_default_deal" }, "default_filing_unavailable"],
   ])("never fails the submission on any other refusal (%#): done, not filed, with the reason", async (error, reason) => {
     const h = ctx(async () => ({ data: null, error }));
     expect(await runExecutor(step(), h.ctx)).toEqual(notFiled(reason));
@@ -181,12 +184,24 @@ describe("growth-inbound default pipeline", () => {
     expect((await h.send({ first_name: "No email" })).json).toEqual({ ok: true, contact_id: null });
     expect(h.rpcCalls).toEqual([]);
   });
-  it.each([[{ data: null, error: { code: "42501", message: "INBOUND_DEAL_CLIENT_INVALID" } }], ["throw" as const]])(
-    "a filing failure keeps the contact and never claims a deal (%#)", async (result) => {
+  it.each([[{ data: null, error: { code: "42501", message: "INBOUND_DEAL_CLIENT_INVALID" } }], [{ data: null, error: null }], [{ data: null, error: { code: "PGRST202", message: "Could not find the function" } }]])(
+    "a permanent refusal keeps the contact, answers 200 and never claims a deal (%#)", async (result) => {
       const h = inbound(src(null), result, "existing");
       const out = await h.send({ email: "lead@example.test" });
       expect(out.status).toBe(200);
       expect(out.json).toEqual({ ok: true, contact_id: "existing", deal: { filed: false, error: "default_pipeline_deal_failed" } });
       expect(JSON.stringify(out.json)).not.toContain("deal_id");
     });
+  it.each([
+    ["throw" as const],
+    [{ data: null, error: { code: "", message: "TypeError: fetch failed" } }],
+    [{ data: null, error: { code: "PGRST003", message: "Timed out acquiring connection from connection pool." } }],
+    [{ data: null, error: { code: "40P01", message: "deadlock detected" } }],
+  ])("a transient filing failure answers 503 so the sender re-delivers, and claims no deal (%#)", async (result) => {
+    const h = inbound(src(null), result, "existing");
+    const out = await h.send({ email: "lead@example.test" });
+    expect(out.status).toBe(503);
+    expect(out.json).toEqual({ ok: false, contact_id: "existing", error: "default_pipeline_deal_retry", retryable: true });
+    expect(JSON.stringify(out.json)).not.toContain("deal_id");
+  });
 });

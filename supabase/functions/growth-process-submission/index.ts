@@ -495,11 +495,18 @@ async function runExecutor(
       });
       if (fileError) {
         const message = String(fileError.message ?? "");
-        // A stale claim, or a failure that never reached a database answer (no SQLSTATE: the
-        // request itself failed; or connection 08*, resource 53*, operator-intervention 57*), is
-        // retried: marking it "done" would leave a lead that was never refused unfiled for good.
+        // A stale claim or deadlock, or a failure that never reached a database answer, is retried:
+        // marking it "done" would leave a lead that was never refused unfiled for good. "Never
+        // reached" = no code (the request itself failed), PostgREST's own connection, schema-cache
+        // and pool-timeout codes (PGRST000-003), or Postgres connection 08*, resource 53* and
+        // operator-intervention 57*. PGRST202 (function not found) is NOT retried: Edge and migrations
+        // deploy independently, and if the migration lags or fails, retrying would spend the
+        // submission's attempt budget and end it in a terminal error — failing a submission that
+        // worked before (§58). It finishes as not filed ("default_filing_unavailable"), counted in the
+        // funnel's leads.unfiled, and the release check looks for those rows after the merge.
         const sqlState = fileError.code ? String(fileError.code) : "";
-        if (sqlState === "40001" || sqlState === "" || /^(08|53|57)/.test(sqlState)) {
+        if (sqlState === "PGRST202") return notFiled("default_filing_unavailable");
+        if (sqlState === "40001" || sqlState === "40P01" || sqlState === "" || /^PGRST00[0-3]$/.test(sqlState) || /^(08|53|57)/.test(sqlState)) {
           return { status: "error", result: {}, error: `submission_default_deal_failed: ${message.slice(0, 200)}` };
         }
         const code = /^[A-Z][A-Z0-9_]{2,63}/.exec(message)?.[0] ?? (fileError.code ? String(fileError.code) : "rpc_error");

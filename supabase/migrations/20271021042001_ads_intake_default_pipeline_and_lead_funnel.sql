@@ -137,8 +137,8 @@ COMMENT ON FUNCTION public.growth_attach_inbound_default_deal(uuid,uuid,text) IS
   'Service-only. Files an external-source contact (no target form) into the tenant default pipeline, first open stage; reuses (never moves) an open deal for the contact. Such a lead writes no form submission, so get_pipeline_lead_funnel counts its deal in stages[].deals but not in leads.total (nor in any campaign or ad).';
 
 -- Counts only. The caller gate is the Marketing write rule (save_marketing_content, 20270546000000) plus
--- the platform owner: the business's owner/admin, the agency working in that business, or the platform
--- owner. A plain member, a missing pipeline and a foreign one all refuse the same way.
+-- the platform owner: the business's owner/admin or the agency working in it, in the caller's ACTIVE
+-- workspace (a stale id from another business they run refuses), or the platform owner. A plain member, a missing pipeline and a foreign one all refuse the same way.
 CREATE OR REPLACE FUNCTION public.get_pipeline_lead_funnel(p_pipeline_id uuid, p_since timestamptz DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE _caller uuid:=auth.uid(); _p public.pipelines%ROWTYPE; _found boolean;
@@ -146,9 +146,9 @@ BEGIN
   SELECT * INTO _p FROM public.pipelines WHERE id=p_pipeline_id;
   _found:=FOUND;
   IF _caller IS NULL OR NOT _found OR _p.tenant_id IS NULL
-     OR NOT (public.is_tenant_admin(_p.tenant_id)
-             OR (_p.tenant_id=public.current_user_tenant_id() AND public.agency_can_manage_child(_p.tenant_id))
-             OR public.is_platform_owner()) THEN
+     OR NOT (public.is_platform_owner()
+             OR (_p.tenant_id=public.current_user_tenant_id()
+                 AND (public.is_tenant_admin(_p.tenant_id) OR public.agency_can_manage_child(_p.tenant_id)))) THEN
     RAISE EXCEPTION 'PIPELINE_FORBIDDEN' USING ERRCODE='42501';
   END IF;
   RETURN (
@@ -252,12 +252,12 @@ DECLARE _row public.marketing_content%ROWTYPE; _found boolean; _count integer;
 BEGIN
   SELECT * INTO _row FROM public.marketing_content WHERE id=p_content_id;
   _found:=FOUND;
-  -- save_marketing_content's authority (the business's owner/admin, or the agency working in it), plus the
-  -- platform owner. A missing row and another business's row refuse the same way.
+  -- save_marketing_content's authority, bound to the caller's ACTIVE workspace (the business's owner/admin,
+  -- or the agency working in it), plus the platform owner. A missing row and another business's row refuse the same way.
   IF auth.uid() IS NULL OR NOT _found
-     OR NOT (public.is_tenant_admin(_row.tenant_id)
-             OR (_row.tenant_id=public.current_user_tenant_id() AND public.agency_can_manage_child(_row.tenant_id))
-             OR public.is_platform_owner()) THEN
+     OR NOT (public.is_platform_owner()
+             OR (_row.tenant_id=public.current_user_tenant_id()
+                 AND (public.is_tenant_admin(_row.tenant_id) OR public.agency_can_manage_child(_row.tenant_id)))) THEN
     RAISE EXCEPTION 'AD_CREATIVE_FORBIDDEN' USING ERRCODE='42501';
   END IF;
   IF _row.kind NOT IN ('image','video') THEN RAISE EXCEPTION 'AD_CREATIVE_KIND_INVALID' USING ERRCODE='22023'; END IF;

@@ -90,7 +90,7 @@ describe("Solo Campaigns approved contract", () => {
     // INT-342 S1d (2026-10-10): the capability statements moved from growth2's Analytics into
     // marketing-analytics.tsx, where each unavailable channel says so in plain words.
     const analytics = readFileSync(resolve(process.cwd(), "src/solo/marketing-analytics.tsx"), "utf8");
-    for (const plain of ["Not available", "aren’t read", "aren’t recorded"]) expect(analytics).toContain(plain);
+    for (const plain of ["Not available", "aren’t read", "aren’t counted here yet"]) expect(analytics).toContain(plain);
     for (const file of [source, analytics]) for (const internal of [">LIVE<", ">PARTIAL<", ">PROPOSED<", ">UNAVAILABLE<"]) expect(file).not.toContain(internal);
   });
 

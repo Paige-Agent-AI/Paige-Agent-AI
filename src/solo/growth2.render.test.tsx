@@ -1078,7 +1078,7 @@ describe("Solo Marketing department views", () => {
     expect(host.querySelector("[aria-labelledby='mva-ch-h'] .mov-foot")?.textContent).toBe("Leads from links with a source tag, paid ones included, are counted in Source mix.");
     expect(channels).not.toContain("connected");
     expect(channels).toContain("Reach and engagement aren’t read from any provider");
-    expect(channels).toContain("Visits aren’t recorded on public pages");
+    expect(channels).toContain("Visits are recorded, but aren’t counted here yet");
     expect(harness.emailDays.at(-1)).toBe(30);
   });
 

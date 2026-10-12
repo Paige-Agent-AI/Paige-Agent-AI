@@ -8,6 +8,10 @@ project_id = "xygzykjyynhzqytbqnzu"
   # origin, a bot trap, per-IP and per-form rate limits, and accepts only the form's own fields.
   [functions.growth-public-submit]
     verify_jwt = false
+  # INT-298 MBC 7a: anonymous visitors record a visit to a published page, live funnel or form (origin,
+  # privacy-signal, automated-agent and rate checks in the function; the writer pins the business).
+  [functions.growth-public-visit]
+    verify_jwt = false
   # Zoom redirects the host's browser straight here with ?code=&state= and no
   # Supabase JWT — the HMAC-signed state is what authenticates the connecting host.
   [functions.zoom-oauth-callback]

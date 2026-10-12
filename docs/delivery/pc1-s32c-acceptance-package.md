@@ -4,14 +4,15 @@ Date: 2026-10-12 · Status: PREPARED, NOT EXECUTED. Every action in "Preflight" 
 
 ## Scope and safety envelope
 
-- ONE synthetic SOLO tenant (test fixture class, no customer data). No credentialed browsing, no filing, no payment, no site login — the drive exercises the READ-ONLY public browse path only.
+- **Test identity (canonical, per the owner's ANT-21 universal-reuse rule — do NOT create others):** the ONE shared synthetic SOLO account provisioned 2026-10-12 through the canonical `provision_tenant_as` seam (subscriber agreement `saas-standalone` v1): **auth user `0640f8f9-30a7-49c7-ac4e-53f68b77381d` · tenant/workspace `bcefc207-4ac6-42af-83b8-3abe3e897649`** (slug `pc-1-qa-shared-synthetic`, standalone, active, owner role, account 5959067, `features = {}` — browse correctly inert). Nonsecret identifiers only; its credential is vault-discipline (never in chat/Linear/Drive). Isolation negative-controls that would need a SECOND tenant must first check ANT-21 for a separately authorized existing workspace — none may be created ad hoc.
+- No credentialed browsing, no filing, no payment, no site login — the drive exercises the READ-ONLY public browse path only.
 - Safe test destination: a **purpose-owned, low-risk public origin** — recommended `https://example.com` (static, no auth, no PII) or a Paige-owned public page. The Fly guard additionally allows `*.paigeagent.ai` targets regardless of the wildcard flag (§58), so a self-target drive is available WITHOUT the wildcard flip; an external-target drive requires it (choose per the goal of the drive).
 - Blast radius: per-request isolated context (cookies/localStorage die with the context — proven); worst-case budget exposure per call = 61s reserved from the tenant's day window, settled to actual on completion.
 
 ## Owner-controlled preflight (in order; all currently OFF/absent)
 
 1. **Fly flag**: set `PAIGE_BROWSER_WILDCARD_ENABLED=true` on the `paige-browser` Fly app (owner action in Fly; triggers a redeploy of the live host — `/pdf`,`/render` consumers unaffected by the flag; verify `healthz` 200 after).
-2. **Tenant flag**: set `features.secure_browser=true` on the synthetic tenant (owner/platform-operator console or SQL).
+2. **Tenant flag**: set `features.secure_browser=true` on tenant `bcefc207-4ac6-42af-83b8-3abe3e897649` (owner/platform-operator console or SQL).
 3. **Limits row**: call `configure_secure_browser_limits(expected_tenant, enabled:=true, 1, 900, 1800, 0)` from the tenant's workspace-admin context (note: 60s minimum validation on session seconds; the browse gate itself reserves 61s per call — `max_session_seconds` ≥ 61 required, 900 default satisfies).
 4. **Run the drive** (owner-initiated, authenticated as the synthetic tenant's owner user): `run_skill browse_public_url` with `inputs.url = https://example.com`.
 5. **Negative controls** (same session): (a) second drive to the same URL — assert no first-drive cookies/storage visible (isolation); (b) a drive while the limits row is `enabled=false` — assert refusal `control_plane:disabled`; (c) an unauthenticated direct POST to `skill-runner` — assert 401.

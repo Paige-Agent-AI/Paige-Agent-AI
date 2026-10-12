@@ -252,32 +252,32 @@
       "chain": {
         "canonical_source": {
           "status": "partial",
-          "note": "The desk reads saved ad copy and campaign briefs only. No provider account, campaign, spend, delivery or attribution record exists; those are named UNAVAILABLE in docs/product/int342-marketing-convergence.md §M."
+          "note": "The desk reads saved ad copy, campaign briefs, the lead funnel (get_pipeline_lead_funnel: the business's own form leads and Sales deals per campaign tag and per ad tag, migration 20271021042001) and the showroom flag (marketing_content.meta.ads_featured). No provider account, campaign, spend, delivery or provider-reported result exists; those are named UNAVAILABLE in docs/product/int342-marketing-convergence.md §M."
         },
         "tenant_scope": {
           "status": "inherited_contract",
           "note": "Existing tenant-scoped reads and the library owner/admin read policy are reused unchanged; the route address is never authority (§9). Authenticated isolation proof for the new mount is absent."
         },
         "safe_context": {
-          "status": "none",
-          "note": "No ads.* capability is registered with the Spine or Chat/Live; Ask PAIGE hands an ad-copy brief to the existing chat only. The future contract is §M3."
+          "status": "partial",
+          "note": "Two ads.* capabilities are registered with the Spine and mounted in Chat for the tenant tier (2026-10-12): ads.lead_funnel (get_pipeline_lead_funnel — counts only, own leads and deals, no ad-provider data; default pipeline when none is named) and ads.creative_feature (set_ad_creative_featured). Both run on the caller's own session (never service role), workspace-admin, with the active business checked before and after (supabase/functions/_shared/ads-funnel-chat.ts). Provider reads remain UNAVAILABLE; the full §M3 contract is not built. Code and automated tests only — the chat answer in an authenticated session is UNVERIFIED (Live through the same handler is not separately proven)."
         },
         "authority": {
-          "status": "none",
-          "note": "Department navigation grants nothing. No ad account activation, campaign creation, publishing or spend is authorized."
+          "status": "governed",
+          "note": "Department navigation grants nothing. Featuring a picture from Chat is classified ordinary in action-risk.ts and asks first through the one approval gate (card names the picture), catalogued in Autonomy settings (20271021210000); the RPC re-checks owner/admin, agency or platform owner in its body. No ad account activation, campaign creation, publishing or spend is authorized."
         },
         "governed_write": {
-          "status": "none",
-          "note": "The desk writes nothing; ad copy is drafted through the existing chat handoff and saved by Marketing's content seam."
+          "status": "wired",
+          "note": "The one Ads write is the showroom flag through set_ad_creative_featured (at most 6, archived refused), called by the Creative desk and, on approval, by Chat; Chat reports it only after a fresh caller-session read shows the asked-for state. Ad copy is still drafted through the chat handoff and saved by Marketing's content seam."
         },
         "verified_outcome": {
           "status": "proof_owed",
-          "note": "Automated route/registry/rail contracts and a local rendered harness pass; no authenticated Solo session has opened the department."
+          "note": "Automated route/registry/rail contracts, a local rendered harness, adapter unit tests for the two Chat capabilities and a rolled-back SQL proof of the catalogue row pass; no authenticated Solo session has opened the department or asked PAIGE about it."
         },
         "rail_evidence": {
-          "producer": "none",
+          "producer": "wired",
           "read": "none",
-          "note": "Ad-copy saves keep Marketing's existing content_save receipt; no Ads-owned producer or receipt exists."
+          "note": "A Chat showroom feature records a capability receipt through recordCapabilityRun (succeeded only after readback; refused; outcome_unknown); the funnel read records nothing. Ad-copy saves keep Marketing's existing content_save receipt. No receipt has been observed in an authenticated session."
         },
         "mind_eligibility": {
           "axis_a": "n/a",
@@ -298,8 +298,8 @@
         "completion_criterion": "An authenticated Solo owner sees real provider-reported performance and Paige completes a governed, owner-approved ad action with verified readback and a Rail receipt, the same capability reachable from Chat and Live — fixture rendering does not meet this criterion."
       },
       "state": "PROOF_OWED",
-      "state_reason": "The existing S1c desk is rehomed from Marketing into its own Solo department with five addressable views; old /growth/ads links redirect. Automated contracts and a local rendered harness pass; authenticated runtime is UNVERIFIED. Provider read, attribution, approvals, execution and Chat/Live ads capabilities are UNAVAILABLE or GATED — the department is not end-to-end operational.",
-      "next_slice": "Prove the department in an authenticated Solo session (§32.c). Then Phase B of int342 §M: a tenant-authorized, read-only provider connection through Integrations, with no activation, publishing or spend until the owner authorizes it.",
+      "state_reason": "The existing S1c desk is rehomed from Marketing into its own Solo department with five addressable views; old /growth/ads links redirect. Automated contracts and a local rendered harness pass; authenticated runtime is UNVERIFIED. Provider read, provider attribution and ad execution are UNAVAILABLE or GATED — the department is not end-to-end operational. Chat can now read the lead funnel and feature a showroom picture (ads.lead_funnel, ads.creative_feature; code and automated proof only, authenticated drive owed).",
+      "next_slice": "Prove the department in an authenticated Solo session (§32.c), including asking PAIGE how the ads are doing and approving a showroom feature (answer, approval card, readback, receipt). Then Phase B of int342 §M: a tenant-authorized, read-only provider connection through Integrations, with no activation, publishing or spend until the owner authorizes it.",
       "evidence_class": [
         "source_read",
         "automated_test",
@@ -311,7 +311,11 @@
         "src/solo/marketing-ads.tsx",
         "src/solo/AdsWorkspace.route.test.tsx",
         "docs/product/int342-marketing-convergence.md",
-        "docs/evidence/ui-delivery/int342-ads-department.md"
+        "docs/evidence/ui-delivery/int342-ads-department.md",
+        "supabase/functions/_shared/paige-spine/domains/ads.ts",
+        "supabase/functions/_shared/ads-funnel-chat.ts",
+        "src/__tests__/ads-funnel-chat.test.ts",
+        "supabase/tests/ads_chat_tools_catalogue.sql"
       ]
     },
     {

@@ -10,7 +10,7 @@ const psql = process.env.FINANCE_PROOF_PSQL ?? 'psql';
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('PG')));
 const args = database => ['-X', '--no-password', '-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', '-d', database, '-At', '-v', 'ON_ERROR_STOP=1'];
 const suite = process.argv[2] ?? 'source';
-const fixtures = { source: 'finance_source_authority.sql', accounts: 'finance_source_authority.sql', liabilities: 'finance_source_authority.sql', accounting: 'finance_source_authority.sql', quickbooks: 'quickbooks_oauth_authority.sql', budgets: 'finance_budget_versions.sql', scenarios: 'finance_cash_scenarios.sql' };
+const fixtures = { source: 'finance_source_authority.sql', accounts: 'finance_source_authority.sql', liabilities: 'finance_source_authority.sql', accounting: 'finance_source_authority.sql', quickbooks: 'quickbooks_oauth_authority.sql', budgets: 'finance_budget_versions.sql', scenarios: 'finance_cash_scenarios.sql', plans: 'finance_plan_catalog.sql' };
 if (!Object.hasOwn(fixtures, suite)) throw new Error('Unknown Finance fixture suite');
 const fixture = fileURLToPath(new URL(`../../supabase/tests/${fixtures[suite]}`, import.meta.url));
 const accountFixture = fileURLToPath(new URL('../../supabase/tests/finance_account_source_projections.sql', import.meta.url));
@@ -79,13 +79,13 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     const disposition = canonical.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
     assert.ok(disposition, 'Canonical retirement disposition missing');
     sql(database, disposition);
-    if (['quickbooks', 'budgets', 'scenarios'].includes(suite) && leg === 'replay2') {
+    if (['quickbooks', 'budgets', 'scenarios', 'plans'].includes(suite) && leg === 'replay2') {
       const currentPolicy = readFileSync(new URL('../../supabase/migrations/20270602000504_operator_provider_independent_retirement.sql', import.meta.url), 'utf8');
       const currentDisposition = currentPolicy.match(/CREATE OR REPLACE FUNCTION public\.operator_retirement_disposition\(_table text\)[\s\S]*?\$\$;/)?.[0];
       assert.ok(currentDisposition, 'Current canonical retirement disposition missing');
       sql(database, `CREATE TABLE public.fixture_current_retirement(definition text); INSERT INTO public.fixture_current_retirement VALUES ('${currentDisposition.replaceAll("'", "''")}');`);
     }
-    let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && ['source', 'budgets', 'scenarios'].includes(suite) ? 0 : 1}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
+    let result = run(database, undefined, ['-v', `apply_finance_migration=${leg === 'absent' && ['source', 'budgets', 'scenarios', 'plans'].includes(suite) ? 0 : 1}`, '-v', `apply_quickbooks_migration=${leg === 'absent' ? 0 : 1}`, '-f', fixture]);
     if (leg === 'absent' && suite === 'accounts') {
       assert.equal(result.status, 0, result.stderr);
       result = run(database, undefined, ['-v', 'apply_account_migration=0', '-f', accountFixture]);
@@ -98,12 +98,17 @@ for (const leg of ['absent', 'replay1', 'replay2']) {
     }
     if (leg === 'absent') {
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, suite === 'scenarios' ? /save_finance_cash_scenario.*does not exist/ : suite === 'budgets' ? /save_finance_budget.*does not exist/ : suite === 'source' ? /read_finance_source_catalog.*does not exist/ : suite === 'accounts' ? /read_finance_account_source.*does not exist/ : suite === 'quickbooks' ? /begin_quickbooks_company_authorization.*does not exist/ : suite === 'accounting' ? /read_finance_accounting_obligations.*does not exist/ : /read_finance_liability_source.*does not exist/);
+      assert.match(result.stderr, suite === 'plans' ? /read_finance_plan_catalog.*does not exist/ : suite === 'scenarios' ? /save_finance_cash_scenario.*does not exist/ : suite === 'budgets' ? /save_finance_budget.*does not exist/ : suite === 'source' ? /read_finance_source_catalog.*does not exist/ : suite === 'accounts' ? /read_finance_account_source.*does not exist/ : suite === 'quickbooks' ? /begin_quickbooks_company_authorization.*does not exist/ : suite === 'accounting' ? /read_finance_accounting_obligations.*does not exist/ : /read_finance_liability_source.*does not exist/);
       console.log(`PASS failing-first: Finance ${suite} contract does not exist before migration`);
       continue;
     }
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Finance source authority PASS/);
+    if (suite === 'plans') {
+      assert.match(result.stdout, /Finance plan catalogue authority PASS/);
+      console.log(`PASS ${leg}: plan catalogue authority, native identity, currency, history and output bounds`);
+      continue;
+    }
     if (suite === 'scenarios') {
       assert.match(result.stdout, /Finance cash scenario authority PASS/);
       const first = holding(database, `SELECT public.fixture_scenario_save(2,'Concurrent scenario A');`);

@@ -13,7 +13,7 @@ export function readQuickBooksStatementSummary(value:unknown,expected:{basis:'ca
  // Filter absence is not authority: the canonical producer must still bind an
  // unfiltered request and company/source evidence before financial interpretation.
  const header=object(object(value)?.Header);
- if(header&&['Customer','Vendor','Employee','Item','Class','Department','Account'].some(key=>Object.hasOwn(header,key)))
+ if(header&&['Customer','Vendor','Employee','Item','Class','Department','Account'].some(key=>Object.prototype.hasOwnProperty.call(header,key)))
   return unavailable('statement_source_filter_not_supported');
  if(report.coverage!=='complete'||report.totalColumnIndex===null)return unavailable('statement_source_incomplete_or_ambiguous');
  const figures:StatementFigures={income:null,costOfGoods:null,operatingExpenses:null,otherIncome:null,otherExpenses:null,reportedGrossProfit:null,reportedOperatingProfit:null,reportedNetProfit:null};
@@ -21,7 +21,7 @@ export function readQuickBooksStatementSummary(value:unknown,expected:{basis:'ca
  const seen=new Set<string>();
  for(const row of report.rows){
   const group=row.group;
-  if(typeof group!=='string'||!Object.hasOwn(groups,group))continue;
+  if(typeof group!=='string'||!Object.prototype.hasOwnProperty.call(groups,group))continue;
   if(row.type!=='Section')return unavailable('statement_summary_type_unavailable');
   if(seen.has(group))return unavailable('conflicting_statement_groups');seen.add(group);
   const cells=object(row.Summary)?.ColData;

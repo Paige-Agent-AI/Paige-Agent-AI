@@ -128,7 +128,7 @@ step label, and `_shared/paige-turn/step-start.ts:130` records it as `"no dispat
 better than three. This document previously proposed `read_business_snapshot` (§K) and `business_review` (§L F2);
 both are superseded.
 
-**Hand-off — Conversational Loop lane (not done here):**
+**Hand-off — Conversational Loop lane (not done here):** *Landed ship-dark 2026-10-12 by Experience 02 E2-1 (PR #2075): the tool push, the dispatch branch and the step-start flip are in main's tree as described below, unreachable while INT-346 holds. The read-only admission decision remains the outstanding half of this hand-off.*
 
 - Push one tool, `get_business_snapshot`, next to the existing `read_business_metric` push. It is
   read-only, with parameters `period`, `custom_start`/`custom_end` and `focus`. The dispatch takes
@@ -154,7 +154,7 @@ both are superseded.
 - Recompute the C0b fingerprints. Any legitimate chat-dispatch change shifts them.
 - Admit the tool under the read-only admission class while INT-346 is in force.
 
-**Hand-off — CC Spine lane (INT-179):** register `business.operating_snapshot`:
+**Hand-off — CC Spine lane (INT-179):** *Landed ship-dark 2026-10-12 by Experience 02 E2-1 (PR #2075) with the fields below.* Register `business.operating_snapshot`:
 
 | Field | Value |
 |---|---|
@@ -837,6 +837,7 @@ entry-point slice, not a new memory or context system.
 | **F2** | First adapters over **existing** tenant-derived reads: `sales_pipeline`/`clients`/`revenue` ← `practice_dashboard_metrics(p_window_days)`; `work`/`operations` ← `practice_attention_queue()` (+ tenant `systems_check_snapshot`); `game_plan` ← `list_business_missions`. Register Spine read `business.operating_snapshot` (chatBinding PARTIAL); one chat tool `business_review` + dispatch, caller-JWT client with the persona-tenant == `current_user_tenant_id()` bracket (the `pipelineWorkspaceRead` precedent) | `_shared/paige-context/adapters/*`, Spine domain file, `paige-ai-chat` (tool push + dispatch only) | unit + registry lint; authenticated Chat drive owed; Live drive owed. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 2.** **Corrected F2b (2026-10-12): `operations` and `clients` read the issuer keys; see the F2b section, §13 correction 2.** |
 | **F2a** (2026-10-12) | `payments` + `sales_pipeline` projection adapters over the INT-340/INT-341 issuer keys; `composeBusinessReview` (observed scope before/after); 45 tests. No tool, no Spine, no turn wiring (hand-offs in the F2a section) | `_shared/paige-context/adapters/*`, `_shared/paige-context/business-review.ts`, one test | unit + §71.4 falsification; Chat/Live reach UNVERIFIED (INT-346) |
 | **F2b** (2026-10-12) | `operations` + `clients` projection adapters over the same issuer (Systems Check, automation runs, client stages, onboarding); helpers generalised in place (`issuer-metric.ts`); 34 tests. `work`, `game_plan`, `campaigns`, `support` stay `no_adapter` (reasons in the F2b section) | `_shared/paige-context/adapters/*`, `business-review.ts`, one new test + F2a call counts | unit + §71.4 falsification; Chat/Live reach UNVERIFIED (INT-346) |
+| **E2-1** (2026-10-12) | The Chat + Spine hand-offs landed ship-dark (PR #2075): `business.operating_snapshot` registered (read, read_only, workspace-admin seat) and `get_business_snapshot` tool + dispatch + START label wired through `_shared/paige-context/business-review-chat.ts`; 29 corridor fingerprints recomputed; issuer-executor read carve-out in the capability-kit lint | two new `_shared` modules, `registry.ts`, `step-start.ts`, `paige-ai-chat/index.ts`, two CI contract files, one test | unit + mutation bite-proofs; Chat/Live reach still UNVERIFIED (INT-346 — awaits the ANT-23 read-only admission class) |
 | **F2c** | `work` + `game_plan` after the Planning and Business-mission hand-offs in the F2b section | adapters + owning-lane fixes | owner ruling on seat reach (§51) |
 | **F3** | Domain-owned windowed reads: Rail outcomes in [start,end) (SECURITY DEFINER, tenant from `current_user_tenant_id()`, §59 in-body check); bookings in window; comms counts in window | one migration per owning domain + adapter | §32 persisted-apply; §37 producer inventory |
 | **F4** | Payments period read (receivables, collected in period, overdue) by the Sales lane, consumed by the `payments` adapter | Sales lane migration + adapter | lane owner. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 3.** |

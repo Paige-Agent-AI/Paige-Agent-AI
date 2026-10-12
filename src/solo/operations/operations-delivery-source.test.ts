@@ -1,0 +1,21 @@
+import { expect, it, vi } from "vitest";
+import { readDeliverySourceSessions, readDeliverySourceVersions } from "./operations-delivery-source";
+const id=(n:number)=>`ef250000-0000-4000-8000-${n.toString().padStart(12,"0")}`;
+const scope={actorId:id(1),tenantId:id(2)};
+const session={id:id(3),tenant_id:id(2),title:"Client workshop",artifact_refs:[{kind:"content",id:id(4),title:"Workshop outline"}]};
+const version={id:id(5),tenant_id:id(2),session_id:id(3),kind:"content",lineage_id:id(4),version_no:2,created_at:"2026-10-12T00:00:00Z",snapshot:{kind:"text",title:"Reviewable outline",body:"The delivered outline",internal_brief:"Do not project this field"}};
+const caller=(data:unknown,error:unknown=null)=>({getActor:vi.fn().mockResolvedValue(id(1)),getTenant:vi.fn().mockResolvedValue(id(2)),rpc:vi.fn().mockResolvedValue({data,error})});
+it("uses actual Studio sessions without a duplicate artifact or identity store",async()=>{const c=caller([session]);expect(await readDeliverySourceSessions(c,scope,()=>true)).toMatchObject({kind:"ready",sessions:[{id:id(3),title:"Client workshop",artifacts:[{id:id(4),title:"Workshop outline"}]}]});expect(c.rpc).toHaveBeenCalledWith("list_studio_sessions",{p_filter:"recent",p_tenant_id:id(2),p_limit:40});});
+it("refuses foreign source rather than displaying it or inventing empty availability",async()=>{expect(await readDeliverySourceVersions(caller([{...version,tenant_id:id(9)}]),scope,id(3),id(4),()=>true)).toEqual({kind:"unavailable"});});
+it("projects only the intended text content and exact immutable version identity",async()=>{const c=caller([version]);const result=await readDeliverySourceVersions(c,scope,id(3),id(4),()=>true);expect(result).toEqual({kind:"ready",versions:[{id:id(5),versionNo:2,title:"Reviewable outline",body:"The delivered outline",createdAt:"2026-10-12T00:00:00Z"}],unsupportedCount:0});expect(JSON.stringify(result)).not.toContain("internal_brief");});
+
+it("an empty Studio response cannot mask a different current workspace",async()=>{const c=caller([]);c.getTenant.mockResolvedValue(id(9));expect(await readDeliverySourceSessions(c,scope,()=>true)).toEqual({kind:"refused"});expect(c.rpc).not.toHaveBeenCalled();});
+
+it("permission failure is unavailable rather than an empty source list",async()=>{expect(await readDeliverySourceSessions(caller(null,{code:"42501"}),scope,()=>true)).toEqual({kind:"unavailable"});});
+it("actual actor mismatch prevents all Studio reads",async()=>{const c=caller([session]);c.getActor.mockResolvedValue(id(9));expect(await readDeliverySourceSessions(c,scope,()=>true)).toEqual({kind:"refused"});expect(c.rpc).not.toHaveBeenCalled();});
+it("scope change during the read cannot publish old content",async()=>{let current=true;const c=caller([version]);c.rpc.mockImplementation(async()=>{current=false;return{data:[version],error:null};});expect(await readDeliverySourceVersions(c,scope,id(3),id(4),()=>current)).toEqual({kind:"scope_changed"});});
+it("post-read current-tenant change conceals source content",async()=>{const c=caller([version]);c.getTenant.mockResolvedValueOnce(id(2)).mockResolvedValueOnce(id(9));expect(await readDeliverySourceVersions(c,scope,id(3),id(4),()=>true)).toEqual({kind:"refused"});});
+it("image versions remain visibly unsupported rather than text deliverables",async()=>{expect(await readDeliverySourceVersions(caller([{...version,snapshot:{kind:"image",image_url:"not-a-text-artifact"}}]),scope,id(3),id(4),()=>true)).toEqual({kind:"ready",versions:[],unsupportedCount:1});});
+it("malformed text does not silently become an empty approved body",async()=>{expect(await readDeliverySourceVersions(caller([{...version,snapshot:{kind:"text",title:"Outline",body:null}}]),scope,id(3),id(4),()=>true)).toEqual({kind:"unavailable"});});
+it("duplicate or foreign-lineage versions cannot be offered as a unique source",async()=>{for(const rows of [[version,{...version,id:id(8)}],[{...version,lineage_id:id(9)}]])expect(await readDeliverySourceVersions(caller(rows),scope,id(3),id(4),()=>true)).toEqual({kind:"unavailable"});});
+it("a valid scoped empty response says only no readable sources returned",async()=>{expect(await readDeliverySourceSessions(caller([]),scope,()=>true)).toEqual({kind:"ready",sessions:[]});});

@@ -8,7 +8,8 @@
 .sbi button:disabled { opacity:.55; }
 .sbi button:focus-visible,.sbi textarea:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:2px; }
 .sbi-error { color:hsl(var(--destructive)); }
-.sbi-status,.sbi-proposal { border-inline-start:3px solid hsl(var(--primary)); padding-inline-start:10px; }
+.sbi-status { font-weight:600; }
+.sbi-proposal { border-block:1px solid hsl(var(--border)); padding-block:8px; }
 .sbi-facts { margin:12px 0; }
 .sbi-facts>div { display:grid; grid-template-columns:minmax(140px,1fr) minmax(100px,2fr) auto; gap:12px; padding:8px 0; border-block-end:1px solid hsl(var(--border)); align-items:start; }
 .sbi-facts dt { font-weight:600; }

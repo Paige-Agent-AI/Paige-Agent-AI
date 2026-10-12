@@ -98,6 +98,9 @@ on:
       - "supabase/tests/public_visits.sql"
       - "supabase/migrations/20271023000000_paige_act_dispatch_claim.sql"
       - "supabase/migrations/20271023000200_paige_act_dispatch_claim_stale_parse.sql"
+      # INT-179 Slice 2b milestone 2 — crash recovery for a dispatcher that dies after claiming.
+      - "supabase/tests/paige_dispatch_crash_recovery.sql"
+      - "supabase/migrations/20271025000100_paige_dispatch_crash_recovery.sql"
       - "supabase/functions/_shared/paige-orchestration/**"
       - "supabase/functions/execute-approval/**"
       - "scripts/proof/resend-receipt-concurrency.mjs"
@@ -447,6 +450,10 @@ jobs:
       # goes to exactly one claimant (never on a held, settled or ambiguous act; stale claims re-takeable above a
       # floor; service role only). The eight-session race on real rows runs in the Layer C proof below (case F).
       - run: supabase test db supabase/tests/paige_act_dispatch_claim.sql
+      # Slice 2b milestone 2: a dispatcher that dies after claiming is recovered (automatic acts re-driven, bounded;
+      # approved acts handed back to the approver; unprovable outcomes recorded ambiguous, never replayed). The real-
+      # drainer crash cases run in the Layer C proof below (cases G and H).
+      - run: supabase test db supabase/tests/paige_dispatch_crash_recovery.sql
       - run: supabase test db supabase/tests/resend_receipt_reliability.sql
       - run: node scripts/proof/resend-receipt-concurrency.mjs
         env:

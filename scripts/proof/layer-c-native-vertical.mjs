@@ -37,6 +37,13 @@
 //   F  dispatch claim   → a held act redeemed to accepted_for_execution, then eight separate database sessions
 //                         race paige_claim_act_dispatch at once: exactly one gets the claim, the outcome is
 //                         unchanged and nothing is dispatched by the claim itself.
+//   G  automatic crash  → the state a dispatcher leaves when it dies after claiming: accepted_for_execution, a
+//                         claim, nothing landed, the event out of attempts. While the claim is live a re-drive fires
+//                         nothing; once it is stale the reconciler re-opens the event and the real drainer re-takes
+//                         the claim and runs it exactly once; further passes and drains write nothing more.
+//   H  approval crash   → the executor died after redeeming and claiming: the approval row stays locked, so the
+//                         owner's retry is answered "in progress" and nothing runs. The reconciler releases the
+//                         stale lock; the owner's approval then runs it exactly once, and again does nothing.
 //   C  off lane         → held_by_lane, no effect, no approval.
 //   D  wrong subject    → an event that claims workspace D but whose subject belongs to workspace A
 //                         fails the integrity check: no ledger row, no effect, nothing in A touched.
@@ -183,10 +190,10 @@ async function workspace(label) {
 
 // A §67 process record: one act, then the grant (an act write drops an auto grant to confirm, so the
 // grant is set after the chain exists, the order a person or Paige follows).
-function processRecord(tenantId, createdBy, lane, stageSlug) {
+function processRecord(tenantId, createdBy, lane, stageSlug, name = "Welcome new contact") {
   const automationId = one(`
     insert into public.paige_automations (tenant_id, name, trigger_key, conditions, created_by, granted_lane, state)
-    values (${q(tenantId)}, 'Welcome new contact', 'contact.created', '[]'::jsonb, ${q(createdBy)}, 'confirm', 'draft')
+    values (${q(tenantId)}, ${q(name)}, 'contact.created', '[]'::jsonb, ${q(createdBy)}, 'confirm', 'draft')
     returning id;
   `);
   sql(`insert into public.paige_automation_acts (automation_id, position, action_kind, config)
@@ -460,6 +467,113 @@ async function main() {
     assert.equal(ledger(f.eventId).outcome, "accepted_for_execution");
     assert.match(one(`select detail->>'dispatch_claim' from public.paige_act_executions where event_id = ${q(f.eventId)};`), /^[0-9a-f-]{36}$/);
     assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(f.contactId)};`), 0);
+  });
+
+  // ── G/H: a dispatcher that dies after claiming (Slice 2b milestone 2) ──────────────────────────────────
+  // The crash state is built from the engine's OWN held row (its deterministic idempotency/correlation keys), then
+  // aged in replica mode so the touch trigger keeps the timestamps a real crash would leave. `reconcile` runs the
+  // cron's function exactly as pg_cron does (service-role context, auth.uid() NULL).
+  const reconcile = () => one(`select public.paige_reconcile_orchestration_acts();`);
+  const transitions = (contactId) => count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(contactId)};`);
+
+  const G = await workspace("crash-auto");
+  const gProcess = processRecord(G.tenantId, G.owner.id, "confirm", "paid_tier");
+  const g = newContact(G.tenantId, G.owner.id, "Crash");
+  step("G a dispatcher dies after claiming: a live claim blocks any re-fire; stale, the reconciler re-drives it exactly once", async () => {
+    const held = await post(drainer.base, { event_id: g.eventId }, keys.service);
+    assert.deepEqual(held.json.act_outcomes, { approval_pending: 1 }, JSON.stringify(held.json));
+    // The process becomes automatic, and the act is put in exactly the state an engine runner leaves when it dies
+    // between taking the claim and dispatching: accepted, a claim, no approver, nothing landed, the event spent.
+    sql(`update public.paige_automations set granted_lane = 'auto' where id = ${q(gProcess)};`);
+    assert.equal(one(`select public.resolve_automation_autonomy(${q(gProcess)})->>'effective';`), "auto");
+    sql(`set session_replication_role = replica;
+         update public.paige_pending_approvals set status = 'skipped' where source = 'paige_orchestration' and metadata->>'event_id' = ${q(g.eventId)};
+         update public.paige_act_executions
+            set outcome = 'accepted_for_execution',
+                detail = detail || jsonb_build_object('dispatch_claim', gen_random_uuid()::text, 'dispatch_claimed_at', now() - interval '2 minutes'),
+                updated_at = now() - interval '15 minutes'
+          where event_id = ${q(g.eventId)};
+         update public.paige_native_events set processing_state = 'pending', attempts = 1, claimed_at = null where id = ${q(g.eventId)};
+         update public.paige_event_dispatches set status = 'error' where event_id = ${q(g.eventId)};`);
+
+    // While the dead runner's claim is still live, a drain fires nothing.
+    const early = await post(drainer.base, { event_id: g.eventId }, keys.service);
+    assert.equal(early.status, 200, JSON.stringify(early.json));
+    assert.equal(transitions(g.contactId), 0, "a live claim must block a second dispatcher");
+    assert.equal(ledger(g.eventId).outcome, "accepted_for_execution");
+    reconcile();
+    assert.equal(one(`select coalesce(detail->>'dispatch_recoveries', '0') from public.paige_act_executions where event_id = ${q(g.eventId)};`), "0",
+      "the reconciler must not treat a live claim as dead");
+
+    // The claim goes stale and the event has run out of attempts: before this milestone nothing re-drove it.
+    sql(`set session_replication_role = replica;
+         update public.paige_act_executions
+            set detail = detail || jsonb_build_object('dispatch_claimed_at', now() - interval '15 minutes'),
+                updated_at = now() - interval '15 minutes'
+          where event_id = ${q(g.eventId)};
+         update public.paige_native_events set processing_state = 'error', attempts = 5 where id = ${q(g.eventId)};`);
+    // A second process goes live AFTER the event. The recovery drain is scoped to the stranded automation, so this
+    // old event is never delivered to it.
+    const late = processRecord(G.tenantId, G.owner.id, "auto", "paid_tier", "Granted after the event");
+    assert.ok(Number(reconcile()) >= 1, "the reconciler must act on the stranded act");
+    assert.equal(one(`select processing_state || ':' || attempts from public.paige_native_events where id = ${q(g.eventId)};`), "pending:4");
+    const redrive = await post(drainer.base, { event_id: g.eventId }, keys.service);
+    assert.equal(redrive.status, 200, JSON.stringify(redrive.json));
+    assert.equal(redrive.json.terminal, "done", JSON.stringify(redrive.json));
+    assert.equal(count(`select count(*) from public.paige_act_executions where event_id = ${q(g.eventId)} and automation_id = ${q(late)};`), 0,
+      "a process granted after the event is never delivered it by a recovery drain");
+    assert.equal(count(`select count(*) from public.paige_event_dispatches where event_id = ${q(g.eventId)} and automation_id = ${q(late)};`), 0);
+    const row = ledger(g.eventId);
+    assert.equal(row.outcome, "executed");
+    assert.equal(transitions(g.contactId), 1);
+    assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(g.contactId)} and source_event = ${q(row.correlation_ref)};`), 1,
+      "the one transition carries the act's own correlation reference");
+    assert.equal(one(`select detail->>'dispatch_recoveries' from public.paige_act_executions where event_id = ${q(g.eventId)};`), "1");
+
+    // Further passes and deliveries write nothing more.
+    sql(`set session_replication_role = replica; update public.paige_act_executions set updated_at = now() - interval '15 minutes' where event_id = ${q(g.eventId)};`);
+    reconcile();
+    await post(drainer.base, { event_id: g.eventId }, keys.service);
+    assert.equal(transitions(g.contactId), 1);
+    assert.equal(ledger(g.eventId).outcome, "executed");
+  });
+
+  const H = await workspace("crash-approval");
+  processRecord(H.tenantId, H.owner.id, "confirm", "paid_tier");
+  const h = newContact(H.tenantId, H.owner.id, "Halt");
+  step("H the executor dies after the owner approved: the stuck lock is released and the next approval runs it once", async () => {
+    const held = await post(drainer.base, { event_id: h.eventId }, keys.service);
+    assert.deepEqual(held.json.act_outcomes, { approval_pending: 1 }, JSON.stringify(held.json));
+    const aid = one(`select id from public.paige_pending_approvals where source = 'paige_orchestration' and metadata->>'event_id' = ${q(h.eventId)};`);
+    const actId = one(`select act_id from public.paige_act_executions where event_id = ${q(h.eventId)};`);
+    // What execute-approval leaves behind when it dies between claiming the dispatch and firing it: the approval row
+    // locked, the act redeemed under the owner's approval and claimed, nothing landed.
+    assert.equal(one(`select (public.paige_approve_act_execution(${q(h.eventId)}, ${q(actId)}, ${q(H.owner.id)})).outcome::text;`), "accepted_for_execution");
+    sql(`set session_replication_role = replica;
+         update public.paige_pending_approvals set claimed_at = now() - interval '20 minutes', reviewed_by_user_id = ${q(H.owner.id)} where id = ${q(aid)};
+         update public.paige_act_executions
+            set detail = detail || jsonb_build_object('dispatch_claim', gen_random_uuid()::text, 'dispatch_claimed_at', now() - interval '15 minutes'),
+                updated_at = now() - interval '15 minutes'
+          where event_id = ${q(h.eventId)};`);
+
+    // The defect this milestone fixes: the owner's retry cannot get past the stuck lock.
+    const stuck = await post(approver.base, { approval_id: aid }, H.owner.jwt);
+    assert.equal(stuck.json.already, "in_progress", JSON.stringify(stuck.json));
+    assert.equal(transitions(h.contactId), 0);
+
+    assert.ok(Number(reconcile()) >= 1, "the reconciler must release the stale approval lock");
+    assert.equal(one(`select status || ':' || (claimed_at is null) from public.paige_pending_approvals where id = ${q(aid)};`), "pending:true");
+    assert.equal(ledger(h.eventId).outcome, "accepted_for_execution", "the reconciler never fires an approved act itself");
+    assert.equal(transitions(h.contactId), 0);
+
+    const ran = await post(approver.base, { approval_id: aid }, H.owner.jwt);
+    assert.equal(ran.json.executed, true, JSON.stringify(ran.json));
+    assert.equal(ledger(h.eventId).outcome, "executed");
+    assert.equal(transitions(h.contactId), 1);
+    assert.equal(one(`select status from public.paige_pending_approvals where id = ${q(aid)};`), "approved");
+    const again = await post(approver.base, { approval_id: aid }, H.owner.jwt);
+    assert.equal(again.json.executed, false, JSON.stringify(again.json));
+    assert.equal(transitions(h.contactId), 1);
   });
 
   // ── C: off lane → held, nothing runs ───────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ export default defineConfig({
       if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx") || importer?.endsWith("marketing-email-series.tsx") || importer?.endsWith("marketing-analytics-email.ts")) && source.endsWith("integrations/supabase/client")) return path.join(here, "email-supabase-stub.ts");
       if (importer?.endsWith("useCampaignAssets.ts") && source.endsWith("integrations/supabase/client")) return path.join(here, "assets-supabase-stub.ts");
       if (importer?.endsWith("useCampaignActions.ts") && source.endsWith("integrations/supabase/client")) return path.join(here, "actions-supabase-stub.ts");
+      if (importer?.endsWith("useCampaignLeads.ts") && source.endsWith("integrations/supabase/client")) return path.join(here, "leads-supabase-stub.ts");
       if (importer?.endsWith("marketing-analytics-metrics.ts") && source.endsWith("integrations/supabase/client")) return path.join(here, "metrics-supabase-stub.ts");
       return null;
     },

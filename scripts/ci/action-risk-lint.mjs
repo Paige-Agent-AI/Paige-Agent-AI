@@ -525,6 +525,13 @@ if (chatSrc.includes('...EMAIL_SERIES_TOOLS')) {
   if (!seriesTools.length) throw new Error('Email series catalog could not be parsed');
   importedTools.push(...seriesTools);
 }
+if (chatSrc.includes('...CAMPAIGN_STEP_TOOLS')) {
+  if (!/import\s*\{[^}]*CAMPAIGN_STEP_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/campaign-steps-chat\.ts['"]/.test(chatSrc)) throw new Error('Unresolved campaign-step catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/campaign-steps-chat.ts', 'utf8');
+  const stepTools = [...source.matchAll(/\bname:\s*["']((?:read_campaign_steps|campaign_step_plan|campaign_step_record_result|campaign_step_judge|read_process_scope|process_scope_set))["']/g)].map(m => m[1]);
+  if (stepTools.length !== 6) throw new Error('Campaign-step catalog could not be parsed');
+  importedTools.push(...stepTools);
+}
 if (chatSrc.includes('...ADS_FUNNEL_TOOLS')) {
   if (!/import\s*\{[^}]*ADS_FUNNEL_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/ads-funnel-chat\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Ads catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/ads-funnel-chat.ts', 'utf8');

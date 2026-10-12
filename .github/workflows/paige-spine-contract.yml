@@ -213,6 +213,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_brief_actions.sql
 
+      # INT-298 MBC 6a: a form-started process runs only for its form or campaign, and a campaign step's
+      # outcome only stands on a proven finish (real triggers, writers and reads; rolled back).
+      - name: Marketing process scope and action truth (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/process_scope_and_action_truth.sql
+
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
       # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.

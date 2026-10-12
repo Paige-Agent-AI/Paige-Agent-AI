@@ -63,8 +63,12 @@ action serves one campaign.
 | `failed` | failed |
 | `blocked` | blocked |
 | `dismissed`, `expired` | stopped |
-| an outcome recorded | outcome_observed |
-| an evaluation recorded | evaluated |
+| an outcome recorded, over a proven finish or a failure | outcome_observed |
+| an evaluation recorded, over a proven finish or a failure | evaluated |
+
+Since MBC 6a (migration `20271022100000`) a step that is only `recorded` takes no outcome
+(`CAMPAIGN_ACTION_NOT_PROVEN`), and the read never shows an outcome or evaluation over one, however its row was
+written: a recorded step cannot read as an evaluated success.
 
 `evidence.basis` says what a completion rests on: `workflow_run` (a run the action started), `approval` (the
 owner approved a record-only step) or `recorded` (the bus recorded it). A campaign is never shown as running
@@ -116,6 +120,17 @@ lifecycle, family, tactic, approval, owner, due time, dependency (and whether it
 expected result, outcome, evaluation and evidence. A member, who cannot read the action bus, sees the plan and
 lifecycle without titles, summaries, approval ids or errors, and cannot change anything.
 
+## Admission (MBC 6a)
+
+Marketing admits the caller on the tenant policy: `is_tenant_admin` of the workspace resolved from auth. The
+action bus keeps its own authority unchanged: `file_action` additionally requires the global admin or coach
+role, which the membership sync gives every active owner and admin. If the bus ever refuses a caller Marketing
+admitted, the writer reports `CAMPAIGN_ACTION_BUS_REFUSED` (42501), never the bus's raw error and never a planned
+step. A recorded step is never judged either (`evaluate_outcome` refuses it as `CAMPAIGN_ACTION_NOT_PROVEN`). Bringing `file_action` onto the tenant policy is the bus owner's change, not Marketing's.
+
+Two concurrent links of one action to the same campaign now answer `already_linked`; to another campaign,
+`CAMPAIGN_ACTION_IN_OTHER_CAMPAIGN`.
+
 ## Other consumers (§37)
 
 The Trust Compass (`useSoloTrust`, `useCompass`, `useAgencyCompass`) counts enabled `paige_action_kinds` by
@@ -125,8 +140,8 @@ without a campaign link; such an action simply has no campaign until it is linke
 
 ## Not in this slice
 
-- A Campaigns dossier view of the actions (the read is ready for it).
-- Chat/Live tools over `plan_action` and the read (slice 6, with INT-346 gating for effectful paths).
+- A Campaigns dossier view of the actions (slice 6b).
+- Chat/Live tools over `plan_action` and the read (slice 6c, with INT-346 gating for effectful paths).
 - Writing `campaign_briefs.mission_id`: the brief writer still does not set it, so the strategy shows only
   where a mission is already attached.
 

@@ -2427,7 +2427,7 @@ lane the human grants it.
 | Capability | God | Agency | Enterprise | Solo | Sub-account | Client | Anon |
 |---|---|---|---|---|---|---|---|
 | See what can start a process (`automation_triggers_list`) | ✓ | ✓ | ✓ | ✓ | ✓ | — | 403 |
-| Start a process when someone fills in a form (`form.submitted`, MBC 4a, migration `20271020000030`; fires once per submission matched to a contact; every form in the workspace until process conditions can be authored, slice 6; none for a paused workspace) | ✓ | — (no forms, §61) | ✓ | ✓ | ✓ | — | 403 |
+| Start a process when someone fills in a form (`form.submitted`, MBC 4a, migration `20271020000030`; fires once per submission matched to a contact; since MBC 6a a process on it goes live only scoped to one form, several forms or one campaign (`configure_process_scope`, owner/admin); none for a paused workspace) | ✓ | — (no forms, §61) | ✓ | ✓ | ✓ | — | 403 |
 | List processes + their resolved posture | ✓ | ✓ | ✓ | ✓ | ✓ | — | 403 |
 | Paige builds one from a description | ✓ | ✓ | ✓ | ✓ | ✓ | — | 403 |
 | Grant a process a lane (`automation_set_grant`) | ✓ | ✓ | ✓ | ✓ | ✓ | — | 403 |

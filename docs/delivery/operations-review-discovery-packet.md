@@ -18,3 +18,10 @@
 Return only the caller's latest pending nominated submissions through the existing exact-artifact reader. No general Planning title, client name, raw body/snapshot, private brief, profile or table grant. Referenced work/plan/client/version fields are already permitted per-submission metadata. A bounded unreadable count is explicit; a failure cannot become an empty ready result. Has-more refers to bounded nominations, not a complete company portfolio or utilization. Existing caller/source authority is reused, never bypassed. UI discovery may not lend generic work-edit permission to an artifact-only reviewer.
 
 Forward proposed20271024000030 is never-applied; production frontier20 and30 absent verified before implementation. Recheck active reservations before PR release. No applied migration history modified.
+
+
+## Failing-first preparation proof
+
+Native fixture fails when discovery function is absent. The implemented readonly projection passes14 actual authenticated-role assertions in the existing disposable minimal PostgreSQL16 schema: nominated exact source, bounded has-more/page, no body/private/general work/client fields, wrong actor/tenant/limit, unrelated plan owner, explicit source-inaccessible count, content concealment, revoked membership and completed-review removal/anonymous refusal. Synthetic rows roll back and the local server is stopped. This does not imply full-schema CI or mounted/authenticated acceptance.
+
+Current source adds no task, identity, queue table, grants, executor or scheduler. Original authority/source reader remains the per-row gate. Native discovery step is added to the existing database-contract workflow, preserving all peers. Full-schema CI, independent source review, final forward reservation and readback remain required before release. No production migration or customer effect at this checkpoint.

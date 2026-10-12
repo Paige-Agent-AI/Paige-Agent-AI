@@ -9,6 +9,7 @@
 import React from "react";
 import { Ic as SharedIcons } from "./_shared";
 import { broughtInNote, useCampaignLeads, type CampaignLeadsState } from "./useCampaignLeads";
+import { CampaignLeadRows } from "./campaign-leads";
 import { kindLabel, statusLabel, type AttachableAsset, type CampaignAssetKind, type CampaignAssetLink, type CampaignAssetsState, type LinkableKind } from "./useCampaignAssets";
 
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
@@ -65,6 +66,8 @@ function Lane({ id, title, help, kinds, links, available, canManage, addLabel, m
 /** The outcome lane. Counts are the server's, over every lead credited to this campaign. */
 export function BroughtIn({ id, leads, archived = false, onRoute }: { id: string; leads: CampaignLeadsState; archived?: boolean; onRoute?: (route: string) => void }) {
   const headingRef = React.useRef<HTMLHeadingElement>(null);
+  // S1d-2 (owner-approved): the rows open under the counts on request, so the lane stays a summary by default.
+  const [open, setOpen] = React.useState(false);
   // Try again unmounts while the read reloads, so focus moves to the lane's heading rather than the page.
   const retry = () => { leads.retry(); requestAnimationFrame(() => headingRef.current?.focus()); };
   return (
@@ -79,6 +82,12 @@ export function BroughtIn({ id, leads, archived = false, onRoute }: { id: string
             {onRoute && leads.counts.opportunities > 0 && <> · <button type="button" className="cc-lnk" onClick={() => onRoute("sales")}>open Sales</button></>}</dd></div>
           <div className="cc-outv cc-muted"><dt><span aria-hidden="true">—</span><span className="campaigns-sr-only">No figure:</span></dt><dd>Revenue lives in Sales</dd></div>
         </dl>
+        {leads.counts.leads > 0 && <>
+          <button type="button" className="cc-add cl-toggle" aria-expanded={open} aria-controls={`${id}-rows`} onClick={() => setOpen((value) => !value)}>
+            {open ? "Hide the leads" : `Show the ${leads.counts.leads === 1 ? "lead" : `${Math.min(leads.counts.leads, leads.leads.length).toLocaleString()} newest leads`}`}
+          </button>
+          {open && <CampaignLeadRows id={`${id}-rows`} leads={leads}/>}
+        </>}
         <p className="cc-foot">{broughtInNote(leads, archived)}</p>
       </>}
     </section>

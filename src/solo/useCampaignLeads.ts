@@ -100,6 +100,35 @@ export function broughtInNote(leads: Pick<CampaignLeadsState, "counts" | "uncred
   return how + fits;
 }
 
+// How each credit and status reads to a person (the dossier and PAIGE say the same words).
+export const ATTRIBUTION_LABEL: Record<LeadAttribution, string> = {
+  form_and_tag: "Campaign form, tagged link",
+  form_link: "Campaign form",
+  campaign_tag: "Tagged link",
+};
+
+export function statusLabel(lead: Pick<CampaignLead, "status" | "stageLabel">): string {
+  switch (lead.status) {
+    case "won": return "Won";
+    case "lost": return "Lost";
+    case "open": return lead.stageLabel ?? "Open";
+    case "waiting": return "Being filed";
+    case "failed": return "Couldn't be filed";
+    case "no_opportunity": return "No opportunity";
+  }
+}
+
+/** The desk's state palette (never gold on a status, §11). */
+export function statusTone(status: LeadStatus): string {
+  switch (status) {
+    case "won": return "st-ready";
+    case "open": return "st-partial";
+    case "waiting": return "st-await";
+    case "failed": return "st-blocked";
+    default: return "st-unavail";
+  }
+}
+
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message?: string } | null }>;
 const rpc: Rpc = (fn, args) => (supabase as unknown as { rpc: Rpc }).rpc(fn, args);
 

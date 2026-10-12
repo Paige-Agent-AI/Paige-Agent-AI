@@ -4,10 +4,11 @@
 // WHAT IT PROVES. It mounts the REAL GrowthHub (src/solo/growth2.tsx) through the Marketing harness
 // (scripts/live-drive/harness/marketing-mount) with only network reads stubbed — the leads read by
 // leads-supabase-stub.ts — opens the Spring campaign's dossier and renders the map's Brought in lane in every state
-// (populated owner, member, no leads with forms attached, no leads and no form, read failed), in both
+// (populated owner, member, no leads with forms attached, no leads and no form, read failed, and — S1d-2 — the
+// per-lead list opened by an owner and by a member), in both
 // themes, at the eight canonical Solo frames (PAIGE open and closed) and a phone. For each frame it asserts: no page error, no harness crash,
 // nothing spilling sideways out of the dossier, measured WCAG contrast of the section's text against what
-// is painted behind it, and the exact words that state must say. Frames land in artifacts/campaign-leads.
+// is painted behind it, and the exact words that state must say. Frames land in artifacts/brought-in.
 //
 // WHAT IT DOES NOT PROVE. Real data, real permissions or the authenticated production surface (§32.c);
 // the server rules are proven by supabase/tests/campaign_lead_attribution.sql.
@@ -43,6 +44,9 @@ const STATES = [
   { mode: "populated", query: "&leads=empty", name: "empty", forbid: ["open Sales"], expect: ["0leads credited to this campaign", "0opportunities—No figure:", "No leads yet. A lead is credited when someone fills in this campaign’s form or arrives by its tagged link."] },
   { mode: "populated", query: "&leads=noform", name: "noform", expect: ["No leads yet. Attach a live form people sign up on, or share the campaign’s tagged link, and leads are credited as they arrive."] },
   { mode: "populated", query: "&leads=error", name: "error", expect: ["The leads this campaign brought in couldn’t load.", "Try again"], forbid: ["0leads"] },
+  // S1d-2 (owner-approved 2026-10-12): the per-lead list, opened under the counts. Names come from the server only.
+  { mode: "populated", query: "", name: "open-owner", open: true, expect: ["Hide the leads", "Stages are in Client pipeline, in Sales.", "Renée Okafor", "Being saved as a contact", "Campaign form, tagged link · Discovery call request"], forbid: ["Owners and admins see who each lead is.", "$"] },
+  { mode: "readonly", query: "", name: "open-member", open: true, expect: ["Hide the leads", "A lead", "Owners and admins see who each lead is."], forbid: ["Renée Okafor", "Marcus Lindqvist", "Being saved as a contact", "Not saved as a contact"] },
 ];
 
 const results = [];
@@ -99,6 +103,25 @@ async function main() {
           await section.waitFor({ timeout: 8000 });
           await page.waitForFunction(() => !document.querySelector(".dw .cc-out .campaigns-skeleton"), null, { timeout: 8000 }).catch(() => {});
           await page.waitForTimeout(150);
+          if (!state.open) {
+            const closed = section.locator(".cl-toggle");
+            const shown = await closed.count();
+            check(state.name === "empty" || state.name === "noform" || state.name === "error" ? shown === 0 : shown === 1 && await closed.getAttribute("aria-expanded") === "false" && await section.locator(".cl-row").count() === 0,
+              `${id}: the lead list stays closed until asked (and is absent with no leads)`);
+          } else {
+            const toggle = section.locator(".cl-toggle");
+            // Keyboard: reach the toggle from the element before it, see its ring, and open it with Enter.
+            await toggle.focus(); await page.keyboard.press("Shift+Tab"); await page.keyboard.press("Tab");
+            await page.waitForTimeout(300);
+            const ring = await toggle.evaluate((el) => ({ focused: document.activeElement === el, outline: getComputedStyle(el).outlineStyle, width: parseFloat(getComputedStyle(el).outlineWidth) }));
+            check(ring.focused && ring.outline !== "none" && ring.width >= 2, `${id}: the lead list toggle is reached by keyboard and shows its focus ring`, JSON.stringify(ring));
+            await page.keyboard.press("Enter");
+            await page.waitForTimeout(150);
+            const rows = await section.locator(".cl-row").count();
+            check(await toggle.getAttribute("aria-expanded") === "true" && rows === 7 && await page.locator(`#${await toggle.getAttribute("aria-controls")}`).count() === 1,
+              `${id}: Enter opens the newest leads, announced as expanded`, JSON.stringify({ rows }));
+            check(await section.locator(".cl-row button, .cl-row a, .cl-row input").count() === 0, `${id}: the rows are read only`);
+          }
           await section.scrollIntoViewIfNeeded();
           const text = ((await section.textContent()) ?? "").replace(/\s+/g, " ");
           const facts = await page.evaluate(() => {
@@ -111,7 +134,7 @@ async function main() {
             const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
             const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
             let worst = { ratio: 99, what: "" };
-            for (const el of sec.querySelectorAll("h5, .cc-h span, .cc-outv dt, .cc-outv dd, .cc-lnk, .cc-foot, .cc-empty")) {
+            for (const el of sec.querySelectorAll("h5, .cc-h span, .cc-outv dt, .cc-outv dd, .cc-lnk, .cc-foot, .cc-empty, .cl-toggle, .cl-in, .cl-n, .cl-when, .cl-via, .cl-state")) {
               const [hi, lo] = [lum(rgb(getComputedStyle(el).color)), lum(bgOf(el))].sort((x, y) => y - x);
               const ratio = (hi + 0.05) / (lo + 0.05);
               if (ratio < worst.ratio) worst = { ratio: Math.round(ratio * 100) / 100, what: `${el.className || el.tagName}:${el.textContent.trim().slice(0, 30)}` };

@@ -93,6 +93,8 @@ describe("Campaign brief seam — client contract", () => {
     // Since Experience 03 S1 a lead's campaign is stamped by the server at arrival; revenue still is not,
     // and the stage says both (it reads "Partly available", never "Available").
     expect(desk).toContain("Leads credited at arrival");
+    // Experience 03 S1b: the pipeline row states the routing rule, never a per-lead claim.
+    expect(desk).toContain("A form attached only to this campaign, with no route of its own, files its leads here.");
     expect(desk).toContain("Revenue isn't credited to campaigns yet.");
     expect(desk).not.toMatch(/outcome:\s+"ready"/);
   });

@@ -1416,6 +1416,47 @@ describe("Solo Marketing department views", () => {
     expect(host.querySelector(".mva-cap-row small")?.textContent).toBe("Not routed");
   });
 
+  // Experience 03 S1b (20271026100000): a form with no route of its own that is attached to one campaign whose
+  // pipeline can take a lead files its leads there. Marketing names that destination everywhere it names a route.
+  const campaignRoute = { briefId: "b-1", briefName: "Spring consults", pipelineId: "p-camp", pipelineName: "Consults", stageId: "st-disc", stageLabel: "Discovery" };
+
+  it("a form attached to one campaign with a pipeline reads as landing in the campaign's pipeline, everywhere Marketing names its route", () => {
+    // No default pipeline at all: the campaign's pipeline alone routes the form.
+    useWorkspace({ artifacts: [{ ...form, campaignRoute }] });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toBe("1 of 1Forms that route leadsEvery live form routes its leads");
+    expect(button("Route it")).toBeUndefined();
+    const capture = host.querySelector("#mov-capture")?.textContent ?? "";
+    expect(capture).toContain("Campaign: Consults → Discovery");
+    expect(capture).not.toMatch(/Not routed|\(default\)/);
+    act(() => (host.querySelector(".mov-cp") as HTMLButtonElement).click());
+    const dialog = host.querySelector('[role="dialog"]')?.textContent ?? "";
+    expect(dialog).toContain("Campaign: Consults → Discovery. With no route of its own, this form files its leads in the pipeline of its campaign, Spring consults. Set a route below to send them to a specific pipeline instead.");
+    act(() => root.unmount()); host.remove();
+    // Its own route still comes first, and a default pipeline does not override the campaign.
+    useWorkspace({ pipelineWorkspace: defaultWorkspace(), artifacts: [{ ...form, id: "f-camp", name: "Campaign form", campaignRoute }, { ...form, id: "f-own", name: "Own route", intakePipelineId: "pipeline-1", campaignRoute }, { ...form, id: "f-none", name: "No route" }] });
+    renderAt("/solo/42/growth/analytics");
+    const routes = Object.fromEntries([...host.querySelectorAll(".mva-cap-row")].map((row) => [row.querySelector(".mva-row-t")!.firstChild!.textContent, row.querySelector("small")!]));
+    expect(routes["Campaign form"].textContent).toBe("Campaign: Consults → Discovery");
+    expect(routes["Campaign form"].className).not.toContain("is-warn");
+    expect(routes["Own route"].textContent).toBe("Routed to a pipeline");
+    expect(routes["No route"].textContent).toBe("Client work (default) → New enquiry");
+  });
+
+  it("once the page knows the intake functions are not deployed, no form is said to land in its campaign's pipeline either", () => {
+    harness.intake = "missing";
+    useWorkspace({ artifacts: [{ ...form, campaignRoute }] });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toBe("0 of 1Forms that route leadsThe chain breaks hereRoute it");
+    expect(host.querySelector("#mov-capture")?.textContent).not.toContain("Campaign: ");
+    act(() => button("Route it")!.click());
+    expect(host.querySelector('[role="dialog"]')?.textContent).not.toContain("Campaign: ");
+    act(() => root.unmount()); host.remove();
+    useWorkspace({ artifacts: [{ ...form, campaignRoute }] });
+    renderAt("/solo/42/growth/analytics");
+    expect(host.querySelector(".mva-cap-row small")?.textContent).toBe("Not routed");
+  });
+
   it("saving a route re-reads Marketing, and the open panel keeps focus while it re-renders", async () => {
     useWorkspace();
     const retry = harness.state.retry as ReturnType<typeof vi.fn>;

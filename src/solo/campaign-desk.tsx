@@ -171,7 +171,9 @@ function readinessRows(b, links = []) {
     ["Target channels connected", "unavail", "social", "No customer-facing social / publishing provider is connected."],
     ["Publishing / distribution path", "unavail", "social", "Depends on a connected provider — not checked."],
     ["Conversations / follow-up path", "unavail", "social", "No connected messaging provider on this workspace."],
-    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."],
+    // Experience 03 S1b: the server files a form's leads here when the form has no route of its own and is
+    // attached to this campaign only (_growth_form_campaign_route). Stated as the rule, never per lead.
+    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live). A form attached only to this campaign, with no route of its own, files its leads here.` : "Not routed to a pipeline."],
     ["Tracking / attribution evidence", "partial", "analytics", "Leads are credited to this campaign as they arrive, through its form or its tagged link (see Brought in above). Analytics’ per-campaign figure still counts tagged links only. No order names a campaign, so revenue is never attributed to one."],
     ["Approvals complete", b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "ready" : b.lifecycleStatus === "ready_for_review" ? "await" : "planned", "overview",
       b.lifecycleStatus === "ready_for_review" ? "Awaiting your review." : b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "Approved." : "Not sent for review yet."],

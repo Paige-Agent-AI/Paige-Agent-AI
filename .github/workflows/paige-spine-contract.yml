@@ -240,6 +240,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_lead_attribution.sql
 
+      - name: Experience 03 S1b — an unrouted form files its leads into its campaign's pipeline (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_pipeline_routing.sql
+
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
       # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.

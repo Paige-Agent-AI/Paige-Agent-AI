@@ -16,7 +16,7 @@ import React from "react";
 import { Ic as SharedIcons } from "./_shared";
 import type { CampaignArtifact, CampaignDraft, CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT, defaultPipelineHint, defaultPipelineTarget, defaultRouteLabel, deriveMarketingOverview, isBlockedBrief, periodStartOf, pipelineRouteOf, sendsToPipeline, withServerOverview } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT, campaignRouteLabel, defaultPipelineHint, defaultPipelineTarget, defaultRouteLabel, deriveMarketingOverview, isBlockedBrief, periodStartOf, pipelineRouteOf, sendsToPipeline, withServerOverview } from "./marketing-overview-model";
 import { useAdsIntakeCapability } from "./ads-intake-capability";
 import { useMarketingProcessingHealth, useMarketingServerFigures, type ProcessingHealth } from "./marketing-analytics-metrics";
 import "./marketing-overview.css";
@@ -103,15 +103,18 @@ export function MarketingOverview(props: OverviewProps) {
   const intakeMissing = useAdsIntakeCapability(false) === "missing";
   const defaultTarget = intakeMissing ? null : defaultPipelineTarget(data.pipelineWorkspace);
   const hint = intakeMissing ? null : defaultPipelineHint(data.pipelineWorkspace);
-  const unrouted = liveForms.filter((item) => !sendsToPipeline(item, defaultTarget !== null));
-  const defaulted = liveForms.filter((item) => pipelineRouteOf(item, defaultTarget !== null) === "default");
+  // A campaign's pipeline takes a form's leads through the same intake function, so it is gated the same way.
+  const routed = (item: CampaignArtifact) => (intakeMissing && item.campaignRoute ? { ...item, campaignRoute: null } : item);
+  const unrouted = liveForms.filter((item) => !sendsToPipeline(routed(item), defaultTarget !== null));
+  const defaulted = liveForms.filter((item) => pipelineRouteOf(routed(item), defaultTarget !== null) === "default");
+  const toCampaign = liveForms.filter((item) => pipelineRouteOf(routed(item), defaultTarget !== null) === "campaign");
   const floor = (count: number) => (model.capped ? `${count}+` : String(count));
   const leads = model.leads.count;
   const opportunities = model.opportunities.count;
   const firstUse = !briefs.length && !artifacts.length && !drafts.length && !submissions.length;
 
   const create = canManage ? <button className="btn btn-g" onClick={onCreateBrief}><Ic.plus size={14}/>New campaign brief</button> : null;
-  const ask = <button className="btn" onClick={() => askPaige(`Look at my Marketing for the last ${WINDOW_DAYS} days: ${floor(leads)} leads, ${floor(opportunities)} became opportunities, ${unrouted.length} of ${liveForms.length} live forms not routed to any pipeline${defaultTarget && defaulted.length ? ` (${defaulted.length} with no route of their own file leads into my default pipeline, ${defaultRouteLabel(defaultTarget)})` : ""}. What should I do first? Use only what my records show; page visits are recorded but not yet counted here, and this workspace does not record spend, reach or revenue.`)}><Ic.spark size={14}/>Ask PAIGE</button>;
+  const ask = <button className="btn" onClick={() => askPaige(`Look at my Marketing for the last ${WINDOW_DAYS} days: ${floor(leads)} leads, ${floor(opportunities)} became opportunities, ${unrouted.length} of ${liveForms.length} live forms not routed to any pipeline${toCampaign.length ? ` (${toCampaign.length} with no route of their own file leads into their campaign's pipeline)` : ""}${defaultTarget && defaulted.length ? ` (${defaulted.length} with no route of their own file leads into my default pipeline, ${defaultRouteLabel(defaultTarget)})` : ""}. What should I do first? Use only what my records show; page visits are recorded but not yet counted here, and this workspace does not record spend, reach or revenue.`)}><Ic.spark size={14}/>Ask PAIGE</button>;
 
   const viewOnly = canManage || !authorityKnown ? null : <p className="mov-ro">View only. An owner or admin can change this.</p>;
 
@@ -153,7 +156,7 @@ export function MarketingOverview(props: OverviewProps) {
       <LeadFlow model={model} floor={floor} onGo={onGo} chartFloor={chartFloor}/>
       <Attention {...props} drafts={drafts} submissions={submissions} unrouted={unrouted} processing={processing.health} hint={hint}/>
     </div>
-    <Capture {...props} drafts={drafts} defaultTarget={defaultTarget}/>
+    <Capture {...props} drafts={drafts} defaultTarget={defaultTarget} routed={routed}/>
     {submissions.length > 0 && <RecentLeads {...props} submissions={submissions} drafts={drafts}/>}
   </div>;
 }
@@ -280,11 +283,13 @@ function Attention({ data, briefs, canManage, unrouted, drafts, submissions, pro
   </section>;
 }
 
-function Capture({ data, drafts, defaultTarget, captureFilter, onCaptureFilter, onOpenForm, onOpenAsset, canManage, studioLauncher }: OverviewProps & { drafts: CampaignDraft[]; defaultTarget: ReturnType<typeof defaultPipelineTarget> }) {
+function Capture({ data, drafts, defaultTarget, routed, captureFilter, onCaptureFilter, onOpenForm, onOpenAsset, canManage, studioLauncher }: OverviewProps & { drafts: CampaignDraft[]; defaultTarget: ReturnType<typeof defaultPipelineTarget>; routed: (item: CampaignArtifact) => CampaignArtifact }) {
   const pipelines = data.pipelineWorkspace?.pipelines ?? [];
   const stages = data.pipelineWorkspace?.stages ?? [];
   const routeOf = (item: CampaignArtifact) => {
-    if (pipelineRouteOf(item, defaultTarget !== null) === "default" && defaultTarget) return defaultRouteLabel(defaultTarget);
+    const route = pipelineRouteOf(routed(item), defaultTarget !== null);
+    if (route === "campaign" && item.campaignRoute) return campaignRouteLabel(item.campaignRoute);
+    if (route === "default" && defaultTarget) return defaultRouteLabel(defaultTarget);
     const pipeline = pipelines.find((p) => p.id === item.intakePipelineId)?.name;
     const stage = stages.find((s) => s.id === item.intakeStageId)?.label;
     return pipeline ? [pipeline, stage].filter(Boolean).join(" → ") : "Sent to a pipeline by an automation";
@@ -298,14 +303,14 @@ function Capture({ data, drafts, defaultTarget, captureFilter, onCaptureFilter, 
     {live.length + waiting.length === 0 ? <div className="mov-empty-block"><p>No {captureFilter === "all" ? "capture points" : FILTER_LABEL[captureFilter].toLowerCase()} yet. Build one in Vibe Studio and publish it.</p>{canManage && studioLauncher("Open Vibe Studio")}</div>
       : <div className="mov-gal">
         {live.map((item) => {
-          const issue = item.type === "form" && !sendsToPipeline(item, defaultTarget !== null);
+          const issue = item.type === "form" && !sendsToPipeline(routed(item), defaultTarget !== null);
           return <button key={`${item.type}-${item.id}`} className={`mov-cp${issue ? " is-issue" : ""}`} onClick={() => item.type === "form" ? onOpenForm(item.id) : onOpenAsset(item)}>
             <Mini type={item.type}/>
             <span className="mov-cp-b">
               <span className="mov-cp-t">{item.name}</span>
               <span className="mov-cp-s"><span className="mov-dot is-on" aria-hidden="true"/>{TYPE_LABEL[item.type]} · Live</span>
               {item.type === "form" ? <span className="mov-cp-m"><b>{item.recentSubmissions}</b> recent submission{item.recentSubmissions === 1 ? "" : "s"}</span> : <span className="mov-cp-m">Collects through its form</span>}
-              {item.type === "form" && <span className={`mov-cp-r${issue ? " is-warn" : ""}`}>{issue ? (item.intakeAlert ? "Email alert only, no pipeline" : item.routingConfigured ? "No pipeline" : "Not routed") : routeOf(item)}</span>}
+              {item.type === "form" && <span className={`mov-cp-r${issue ? " is-warn" : ""}`} title={issue ? undefined : routeOf(item)}>{issue ? (item.intakeAlert ? "Email alert only, no pipeline" : item.routingConfigured ? "No pipeline" : "Not routed") : routeOf(item)}</span>}
             </span>
           </button>;
         })}

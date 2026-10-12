@@ -32,3 +32,54 @@ export function readClientDeliveryArtifact(value: unknown, scope: {
     revisionNo: Number(row.revision_no), artifactDigest: row.artifact_digest,
     title: row.title, body: row.body, updatedAt: row.updated_at };
 }
+
+export interface ClientDeliveryCaller {
+  rpc(name: 'operations_delivery_client_decide_scoped' | 'operations_delivery_client_read_scoped',
+    args: Record<string, unknown>): PromiseLike<{ data: unknown; error: unknown }>;
+}
+export type ClientDeliveryDecisionResult =
+  | { kind: 'verified'; artifact: ClientDeliveryArtifact }
+  | { kind: 'invalid' | 'scope_changed' | 'refused' | 'unverified' };
+
+/** Existing client RPC + independent readback. No retries, authority grant or receipt store. */
+export async function decideClientDelivery(caller: ClientDeliveryCaller, original: ClientDeliveryArtifact,
+  decision: 'accepted' | 'client_revision_requested', note: string | null,
+  isCurrentScope: () => boolean): Promise<ClientDeliveryDecisionResult> {
+  if (!isCurrentScope()) return { kind: 'scope_changed' };
+  if (original.state !== 'awaiting_client'
+    || !['accepted', 'client_revision_requested'].includes(decision)
+    || (note !== null && typeof note !== 'string')
+    || (note?.length ?? 0) > 4000
+    || (decision === 'client_revision_requested' && !note?.trim())) return { kind: 'invalid' };
+  const scope = { actorId: original.actorId, tenantId: original.tenantId, releaseId: original.releaseId };
+  const matchesSource = (value: unknown) => {
+    const artifact = readClientDeliveryArtifact(value, scope);
+    return artifact && artifact.submissionId === original.submissionId
+      && artifact.revisionNo === original.revisionNo && artifact.artifactDigest === original.artifactDigest
+      && artifact.state === decision && artifact.title === original.title && artifact.body === original.body
+      ? artifact : null;
+  };
+  try {
+    const response = await caller.rpc('operations_delivery_client_decide_scoped', {
+      p_release_id: original.releaseId, p_expected_actor_id: original.actorId,
+      p_expected_tenant_id: original.tenantId, p_expected_updated_at: original.updatedAt,
+      p_decision: decision, p_note: note?.trim() || null,
+    });
+    if (!isCurrentScope()) return { kind: 'scope_changed' };
+    if (response.error) {
+      const error = response.error as { code?: unknown };
+      return { kind: typeof error.code === 'string' && ['42501', '40001', '22023'].includes(error.code)
+        ? 'refused' : 'unverified' };
+    }
+    if (!matchesSource(response.data)) return { kind: 'unverified' };
+    const readback = await caller.rpc('operations_delivery_client_read_scoped', {
+      p_release_id: original.releaseId, p_expected_actor_id: original.actorId,
+      p_expected_tenant_id: original.tenantId,
+    });
+    if (!isCurrentScope()) return { kind: 'scope_changed' };
+    const artifact = !readback.error && matchesSource(readback.data);
+    return artifact ? { kind: 'verified', artifact } : { kind: 'unverified' };
+  } catch {
+    return { kind: isCurrentScope() ? 'unverified' : 'scope_changed' };
+  }
+}

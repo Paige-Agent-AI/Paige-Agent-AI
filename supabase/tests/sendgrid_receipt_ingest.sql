@@ -59,6 +59,20 @@ SELECT pg_temp.require_true(
 SELECT pg_temp.require_true(
   (SELECT count(*) FROM public.email_send_log WHERE message_id='m3') = 0, 'nothing written for invalid');
 
+-- 6b. Distinct same-second events keep distinct identities (batch-index stamp):
+-- the handler composes sg:<msg>:<kind>:<ts>:<i>; prove two same-key receipts
+-- with different indexes BOTH append (no collapse) and each dedups alone.
+SELECT pg_temp.require_true(
+  public.ingest_sendgrid_receipt('sg:m9:open:1788480000:0','m9','opened','r@example.test','2026-10-11T01:00:00Z') = 'processed'
+  AND public.ingest_sendgrid_receipt('sg:m9:open:1788480000:1','m9','opened','r@example.test','2026-10-11T01:00:00Z') = 'processed',
+  'two same-second distinct events both append');
+SELECT pg_temp.require_true(
+  (SELECT count(*) FROM public.email_send_log WHERE message_id='m9' AND sender_account='sendgrid') = 2,
+  'two rows for two same-second events (no identity collapse)');
+SELECT pg_temp.require_true(
+  public.ingest_sendgrid_receipt('sg:m9:open:1788480000:1','m9','opened','r@example.test','2026-10-11T01:00:00Z') = 'duplicate',
+  'each identity dedups independently (redelivery of one is safe)');
+
 -- 7. The journal is invisible to anon/authenticated (private processing state).
 RESET ROLE;
 SELECT set_config('request.jwt.claims', '{"sub":"b4a00000-0000-4000-8000-000000000003","role":"authenticated"}', true);

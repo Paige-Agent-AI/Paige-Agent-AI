@@ -97,7 +97,7 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
     : liveForms
       ? <>No leads in {period}, so there’s nothing to trace yet. {liveForms === 1 ? "Your live form is" : `All ${liveForms} live forms are`} ready to record the source on its link.</>
       : <>No leads in {period}, and no form is live to collect them.</>;
-  const prompt = `Look at my marketing for ${period}: ${floor(model.leads)} leads, ${floor(model.tagged)} with a source tag, ${floor(model.matched)} matched to a campaign, and ${floor(model.opportunities)} became opportunities. Where should I focus next? Use only what my records show; this workspace does not record visits, spend, reach or revenue.`;
+  const prompt = `Look at my marketing for ${period}: ${floor(model.leads)} leads, ${floor(model.tagged)} with a source tag, ${floor(model.matched)} matched to a campaign, and ${floor(model.opportunities)} became opportunities. Where should I focus next? Use only what my records show; page visits are recorded but not yet counted here, and this workspace does not record spend, reach or revenue.`;
 
   const prev = model.previous;
   const share = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
@@ -329,7 +329,7 @@ function Capture({ model, floor, onOpenForm, studioLauncher, defaultLabel }: { m
         {model.fromRetired > 0 && <li className="mva-cap-row is-static"><span className="mva-row-t">Forms no longer live<small>Leads in this range from a form since unpublished</small></span><b>{floor(model.fromRetired)}</b></li>}
       </ul>
     </> : <div className="mov-empty-block"><p>No form is live. Publish one in Vibe Studio and its leads are counted here.</p>{studioLauncher}</div>}
-    <p className="mov-foot">Conversion rate needs visits, which public pages don’t record yet.</p>
+    <p className="mov-foot">Conversion rate isn’t shown yet: visits to your public pages are recorded from now on, but aren’t counted here yet.</p>
   </section>;
 }
 
@@ -344,7 +344,7 @@ function Channels({ days, email, onOpenEmail }: { days: number; email: EmailRead
   const rows: { name: string; line: string; flag?: string; act?: React.ReactNode }[] = [
     { name: "Email", line: emailLine, act: email.phase === "error" ? <button type="button" className="btn btn-s" onClick={email.retry}>Try again</button> : <button type="button" className="mov-lnk" onClick={onOpenEmail}>Open Email</button> },
     { name: "Social", line: "Reach and engagement aren’t read from any provider", flag: "Not available" },
-    { name: "Your pages", line: "Visits aren’t recorded on public pages", flag: "Not available" },
+    { name: "Your pages", line: "Visits are recorded, but aren’t counted here yet", flag: "Not available" },
   ];
   const points = s && s.tracked > 0 && s.series?.length ? ratePoints(s.series) : null;
   return <section className="mov-card" aria-labelledby="mva-ch-h">

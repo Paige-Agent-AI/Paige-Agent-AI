@@ -1,0 +1,113 @@
+{
+  "boundary": "Synthetic signed-out component recovery. No authenticated/customer/provider/INT346 or canonical shell proof.",
+  "results": [
+    {
+      "theme": "dark",
+      "mode": "version-refused",
+      "width": 390,
+      "height": 844,
+      "visible": {
+        "rect": {
+          "top": 645.125,
+          "bottom": 689.125,
+          "height": 844,
+          "feedbackTop": 598.9375,
+          "feedbackBottom": 689.125
+        },
+        "button": true,
+        "feedback": true
+      },
+      "readOnly": true
+    },
+    {
+      "theme": "dark",
+      "mode": "refused",
+      "width": 390,
+      "height": 844,
+      "visible": {
+        "rect": {
+          "top": 752.28125,
+          "bottom": 796.28125,
+          "height": 844,
+          "feedbackTop": 706.09375,
+          "feedbackBottom": 796.28125
+        },
+        "button": true,
+        "feedback": true
+      },
+      "readOnly": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unknown",
+      "width": 390,
+      "height": 844,
+      "visible": {
+        "rect": {
+          "top": 752.28125,
+          "bottom": 796.28125,
+          "height": 844,
+          "feedbackTop": 706.09375,
+          "feedbackBottom": 796.28125
+        },
+        "button": true,
+        "feedback": true
+      },
+      "readOnly": true
+    },
+    {
+      "theme": "light",
+      "mode": "version-refused",
+      "width": 390,
+      "height": 844,
+      "visible": {
+        "rect": {
+          "top": 645.125,
+          "bottom": 689.125,
+          "height": 844,
+          "feedbackTop": 598.9375,
+          "feedbackBottom": 689.125
+        },
+        "button": true,
+        "feedback": true
+      },
+      "readOnly": true
+    },
+    {
+      "theme": "light",
+      "mode": "refused",
+      "width": 390,
+      "height": 844,
+      "visible": {
+        "rect": {
+          "top": 752.28125,
+          "bottom": 796.28125,
+          "height": 844,
+          "feedbackTop": 706.09375,
+          "feedbackBottom": 796.28125
+        },
+        "button": true,
+        "feedback": true
+      },
+      "readOnly": true
+    },
+    {
+      "theme": "light",
+      "mode": "unknown",
+      "width": 390,
+      "height": 844,
+      "visible": {
+        "rect": {
+          "top": 752.28125,
+          "bottom": 796.28125,
+          "height": 844,
+          "feedbackTop": 706.09375,
+          "feedbackBottom": 796.28125
+        },
+        "button": true,
+        "feedback": true
+      },
+      "readOnly": true
+    }
+  ]
+}

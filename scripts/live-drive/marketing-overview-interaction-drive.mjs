@@ -77,7 +77,7 @@ async function main() {
       const asks = await page.evaluate(() => window.__asks);
       // The harness has no Solo shell or chat, so this proves the question is built and sent; that the
       // shell puts it in PAIGE's composer is proven in PaigeAIChat.composerScope.test.tsx.
-      check(asks.length === 1 && /leads/.test(asks[0]) && /does not record visits, spend, reach or revenue/.test(asks[0]), `${theme}: Ask PAIGE sends a question built from the page's own figures`, asks[0] ?? "none");
+      check(asks.length === 1 && /leads/.test(asks[0]) && /visits are recorded but not yet counted here, and this workspace does not record spend, reach or revenue/.test(asks[0]), `${theme}: Ask PAIGE sends a question built from the page's own figures`, asks[0] ?? "none");
 
       // The broken link: Route it opens the unrouted form's panel.
       await page.getByRole("button", { name: "Route it" }).first().click();

@@ -107,8 +107,11 @@ describe("public form page", () => {
     await render();
     await fillAndSubmit();
 
-    expect(state.invoke).toHaveBeenCalledTimes(1);
-    const [name, opts] = state.invoke.mock.calls[0] as [string, { body: Record<string, unknown> }];
+    // The page records its own visit (MBC 7a) and sends the answers once; nothing else is called.
+    const calls = state.invoke.mock.calls as [string, { body: Record<string, unknown> }][];
+    expect(calls.map(([fn]) => fn).sort()).toEqual(["growth-public-submit", "growth-public-visit"]);
+    expect(calls.find(([fn]) => fn === "growth-public-visit")?.[1].body).toMatchObject({ kind: "form", target_id: "form-1", step: 0 });
+    const [name, opts] = calls.find(([fn]) => fn === "growth-public-submit")!;
     expect(name).toBe("growth-public-submit");
     expect(opts.body.form_id).toBe("form-1");
     expect(opts.body.answers).toEqual({ name: "Dana Reyes", email: "dana@example.com" });
@@ -162,7 +165,7 @@ describe("public form page", () => {
     type(container.querySelector("#gf-email") as HTMLInputElement, "dana@example.com");
     await act(async () => { submitButton().click(); });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    const [, opts] = state.invoke.mock.calls[0] as [string, { body: Record<string, unknown> }];
+    const [, opts] = (state.invoke.mock.calls as [string, { body: Record<string, unknown> }][]).find(([fn]) => fn === "growth-public-submit")!;
     expect(opts.body.answers).toEqual({ name: "Dana Reyes", email: "dana@example.com" });
   });
 

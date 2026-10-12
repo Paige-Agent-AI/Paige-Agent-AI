@@ -125,6 +125,17 @@ vi.mock("./useCampaignActions", async (importOriginal) => ({
   }),
 }));
 
+// A campaign's leads read through a governed RPC; their contract is proven by
+// supabase/tests/campaign_lead_attribution.sql and useCampaignLeads.test.tsx. Here the dossier has none.
+vi.mock("./useCampaignLeads", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./useCampaignLeads")>()),
+  useCampaignLeads: () => ({
+    phase: "ready", canManage: harness.assets.canManage !== false,
+    counts: { leads: 0, opportunities: 0, won: 0, lost: 0, waiting: 0, failed: 0 },
+    leads: [], uncredited: 0, captureForms: [], truncated: false, retry: () => {},
+  }),
+}));
+
 // Content reads its library through Supabase; its own proof is marketing-content.render.test.tsx. Here it
 // shows only what the hub hands it, so the address wiring (?kind=, ?piece=) can be driven.
 vi.mock("./marketing-content", () => ({
@@ -896,6 +907,22 @@ describe("Solo Marketing department views", () => {
     expect(location()).toBe("/solo/42/growth/campaigns");
     const dialog = document.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain("New campaign brief");
+  });
+
+  it("the Source filter keeps a bare brief under No live source: credited leads are not a source a brief is backed by", () => {
+    useWorkspace();
+    harness.briefs = [brief("b1", "Bare draft"), brief("b2", "Offer-backed brief", { offerId: "o-1", offerName: "Advisory retainer" })];
+    renderAt("/solo/42/growth/campaigns");
+    const select = document.querySelector<HTMLSelectElement>('select[aria-label="Filter by source state"]')!;
+    const choose = (value: string) => act(() => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(select, value);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const names = () => [...document.querySelectorAll(".pf-row")].map((row) => (row.textContent ?? "").includes("Bare draft") ? "Bare draft" : (row.textContent ?? "").includes("Offer-backed brief") ? "Offer-backed brief" : "?");
+    choose("unavail");
+    expect(names()).toEqual(["Bare draft"]);
+    choose("live");
+    expect(names()).toEqual(["Offer-backed brief"]);
   });
 
   it("a campaign's dossier shows what it uses, in Reach and Land, and an admin attaches and removes pieces", async () => {

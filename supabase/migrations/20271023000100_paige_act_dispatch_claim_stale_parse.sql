@@ -2,15 +2,22 @@
 --
 -- 20271023000000 guarded the `dispatch_claimed_at` cast with a prefix regex. The regex accepts values that
 -- look like a timestamp but do not parse (`2026-99-99T99:99:99`, `2026-01-01T00:00:00junk`), so the cast
--- raised and every later claim on that act failed — the wedge the guard was written to prevent. It also let
--- `infinity` through, which parses but is never older than the window, so it held the claim forever.
+-- raised and every later claim on that act failed — the wedge the guard was written to prevent.
+--
+-- The stale check now runs in this order: no claim, or a value without the ISO prefix (which also rejects
+-- the special inputs `now`, `today`, `tomorrow`, `infinity`, `epoch`), is stale; a prefixed value that does not
+-- parse (pg_input_is_valid) is stale; a value more than a minute in the FUTURE is stale, because no claim RPC
+-- can have written it and it would otherwise hold the claim for years; anything else is compared with the
+-- window as before. The regex is kept ahead of pg_input_is_valid on purpose: pg_input_is_valid alone accepts
+-- `now` and `tomorrow`, which are never older than the window and would hold the claim forever. The future
+-- check uses clock_timestamp(), never now(): a caller re-checking after another caller's claim committed reads
+-- that caller's now(), which can be later than its own now() but never later than its clock_timestamp().
 --
 -- Only paige_claim_act_dispatch writes the key (as now()), and paige_record_act_execution strips it, so such a
 -- value can reach the row only through a raw service-role write. The guarantee is restored anyway, because a
 -- wedged claim fails silently: the act is never fired and only the 24 h reconciler notices.
 --
--- Now: anything pg_input_is_valid rejects, and anything non-finite, is stale (re-takeable). Same signature,
--- same body otherwise, same grants (service role only, §59).
+-- Same signature, same body otherwise, same grants (service role only, §59).
 
 create or replace function public.paige_claim_act_dispatch(
   _event_id    uuid,
@@ -44,12 +51,13 @@ begin
    where event_id = _event_id
      and act_id   = _act_id
      and outcome::text in ('accepted_for_execution', 'retrying')
-     -- CASE, not OR: it evaluates in order, so the cast in the last branch only ever sees a value that parses
-     -- and is finite. Missing, unparseable or infinite → stale (re-takeable), never an error that wedges the row.
+     -- CASE, not OR: it evaluates in order, so a cast only ever sees a value that parses. Missing, non-ISO,
+     -- unparseable or future → stale (re-takeable), never an error or a claim that holds forever.
      and case
            when detail->>'dispatch_claim' is null then true
-           when not pg_input_is_valid(coalesce(detail->>'dispatch_claimed_at', ''), 'timestamptz') then true
-           when not isfinite((detail->>'dispatch_claimed_at')::timestamptz) then true
+           when coalesce(detail->>'dispatch_claimed_at', '') !~ '^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}' then true
+           when not pg_input_is_valid(detail->>'dispatch_claimed_at', 'timestamptz') then true
+           when (detail->>'dispatch_claimed_at')::timestamptz > clock_timestamp() + interval '1 minute' then true
            else (detail->>'dispatch_claimed_at')::timestamptz < now() - _window
          end
   returning * into _row;
@@ -66,5 +74,5 @@ grant execute on function public.paige_claim_act_dispatch(uuid, uuid, uuid, inte
 comment on function public.paige_claim_act_dispatch(uuid, uuid, uuid, interval) is
   'INT-179 Slice 2b: at-most-once dispatch gate for a Layer-C act. Stamps detail.dispatch_claim on an '
   'accepted_for_execution/retrying row that has no live claim and returns it; NULL otherwise. A claim older '
-  'than the stale window (min 7 minutes), or whose timestamp is missing, unparseable or infinite, may be '
+  'than the stale window (min 7 minutes), or whose timestamp is missing, unparseable or in the future, may be '
   're-taken after the caller''s own readback. Service-role only.';

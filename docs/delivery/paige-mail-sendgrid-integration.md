@@ -94,3 +94,54 @@ round-trip remains separately authorized.
    INT-346 authority — unchanged.
 4. `sg-mail.paigeagent.ai` connector wiring (product usage, owner decision when to trial).
 5. Admin-key rotation (plan step 2 above).
+
+
+## S7.3 (ANT-78, 2026-10-12): stable provider identity, retry-safe freshness, operator automation
+
+**Event identity (P2 closed):** the receipt identity is now the provider's own
+`sg_event_id` (`sg:<sg_event_id>`) — stable across redeliveries regardless of
+batch composition or ordering, so dedup no longer depends on array position.
+Journal-level verification needs NO migration (the RPC is identity-agnostic and
+its id regex accepts the provider shape). Failing-first suite (14 cases)
+proves: identical redelivery recorded once; reordered / differently-batched
+redelivery idempotent; two legitimate same-second events for one message both
+persist; and the QUARANTINE POLICY — recognized events missing or carrying a
+malformed `sg_event_id` or `sg_message_id` are never silently ignored nor
+misrepresented as accounted-for: they fail the batch retriable (503) with a
+loud `quarantined_event` log, so the trail exists in provider and our logs.
+
+**Signature freshness vs 24h retries (verified, no loosening):** provider
+documentation and community-verified behavior confirm retries generate a FRESH
+timestamp and recomputed signature per delivery attempt — a temporary 503 can
+never cause later legitimate retries to fail as expired. The 5-minute window
+stays exactly as-is (its purpose is bounding captured-triple replay, which
+fresh-signature retries do not affect). No security-policy tradeoff required.
+
+**Operator automation (built, mocked-verified):** the broker
+(`_shared/comms-email/sendgrid-webhook-admin.ts` + operator-gated
+`comms-sendgrid-webhook-admin` function, the CI guard's ONLY allowlisted
+reader of the scoped key) implements the owner's automated workflow: inspect
+the existing webhook; REUSE it when it already points at the approved PAIGE
+receiver (never duplicating); refuse to repoint a webhook aimed elsewhere;
+otherwise PATCH/POST with the approved receiver + signature verification ON
+and delivery DISABLED; fetch the ECDSA public key and return it once for
+installation as `SENDGRID_WEBHOOK_PUBLIC_KEY`. Only the four SendGrid
+settings endpoints are callable; arbitrary destination URLs are refused
+pre-fetch; the credential never crosses logs or responses. 7 mocked tests.
+
+**Exact credential scopes (verified against the API reference):** the
+settings endpoints (GET/POST/PATCH `/v3/user/webhooks/event/settings` and GET
+`/v3/user/webhooks/event/settings/signed`) are covered by
+`user.webhooks.event.settings.read` + `user.webhooks.event.settings.write`.
+Caveat stated precisely: Twilio's scope table annotates these two scopes for
+settings read/update; whether a restricted key may CREATE (POST) a first
+webhook and read the signed key is not separately annotated — the broker
+reports a 403 truthfully if either is blocked, and the secure alternative is
+adding that one missing scope, never a Full Access credential. The single
+owner action remains: create the scoped key and install it as
+`SENDGRID_WEBHOOK_ADMIN_API_KEY`.
+
+**Still reserved (unchanged):** enabling real delivery, tenant SendGrid
+routing, real sends/paid tests, treating synthetic test events as delivery
+evidence, INT-346 activation. Unsubscribe/suppression protections preserved
+ahead of any customer-facing routing.

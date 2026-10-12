@@ -116,12 +116,31 @@ Deno.serve(async (req) => {
     const kind = typeof evt.event === "string" ? evt.event : "";
     const status = STATUS_MAP[kind];
     if (!status) { results.ignored = (results.ignored ?? 0) + 1; continue; }
+    // ANT-78 P2: the PROVIDER'S unique event identifier is the stable receipt
+    // identity — sg_event_id is stable across redeliveries regardless of batch
+    // composition or ordering, so dedup no longer depends on array position.
+    const sgEventId = typeof evt.sg_event_id === "string" ? evt.sg_event_id.trim() : "";
     // First dot-segment = the send-time X-Message-Id.
     const sgMessageId = typeof evt.sg_message_id === "string" ? evt.sg_message_id.split(".")[0] : "";
-    if (!sgMessageId) { results.ignored = (results.ignored ?? 0) + 1; continue; }
     const timestamp = typeof evt.timestamp === "number" ? new Date(evt.timestamp * 1000).toISOString() : null;
     const email = typeof evt.email === "string" ? evt.email : null;
-    const receiptId = `sg:${sgMessageId}:${kind}:${evt.timestamp ?? "nts"}:${i}`;
+    if (!/^[A-Za-z0-9_-]{1,180}$/.test(sgEventId) || !sgMessageId) {
+      // QUARANTINE POLICY (explicit, auditable, never silent): a recognized
+      // event without a usable provider event id or message id is NOT
+      // acknowledged as accounted-for and NOT silently ignored — it fails the
+      // batch retriable (503) with a loud log so SendGrid redelivers and the
+      // trail exists in both provider logs and ours. Deterministic-garbage
+      // retries expire on the provider's 24h window rather than being
+      // misrepresented as processed.
+      console.error(
+        "[handle-sendgrid-webhook] quarantined_event",
+        JSON.stringify({ kind, hasEventId: !!sgEventId, hasMessageId: !!sgMessageId, timestamp }).slice(0, 200),
+      );
+      durable = false;
+      results.quarantined = (results.quarantined ?? 0) + 1;
+      continue;
+    }
+    const receiptId = `sg:${sgEventId}`;
     try {
       const { data, error } = await admin.rpc("ingest_sendgrid_receipt", {
         _receipt_id: receiptId, _message_id: sgMessageId, _status: status, _email: email, _event_at: timestamp,

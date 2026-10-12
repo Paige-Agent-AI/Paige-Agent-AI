@@ -12,8 +12,8 @@ const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'prime
 const PEM = publicKey.export({ type: 'spki', format: 'pem' }).toString();
 const now = 1788480000;
 
-function event(event_name: string, i = 0, extra: Record<string, unknown> = {}) {
-  return { event: event_name, sg_message_id: `msg1.0.filterdrecv-abc`, email: 'c@example.invalid', timestamp: now, ...extra, __i: i };
+function event(event_name: string, eventId = 'ev-1', extra: Record<string, unknown> = {}) {
+  return { event: event_name, sg_event_id: eventId, sg_message_id: 'msg1.0.filterdrecv-abc', email: 'c@example.invalid', timestamp: now, ...extra };
 }
 function request(events: unknown[], headers: Record<string, string> = {}) {
   const body = JSON.stringify(events);
@@ -106,7 +106,7 @@ describe('sendgrid webhook door (ANT-148 corrections)', () => {
       call += 1;
       return Promise.resolve(call === 1 ? { data: 'processed', error: null } : { data: 'pending', error: null });
     });
-    const res = await h.handle(request([event('delivered', 0), event('open', 1)]));
+    const res = await h.handle(request([event('delivered', 'ev-1'), event('open', 'ev-2')]));
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.processed).toBe(1);
@@ -122,7 +122,7 @@ describe('sendgrid webhook door (ANT-148 corrections)', () => {
 
   it('RPC exception → 503, and an oversized batch is refused 413', async () => {
     const h = harness(ok);
-    const events = Array.from({ length: 1001 }, (_, i) => event('delivered', i));
+    const events = Array.from({ length: 1001 }, (_, i) => event('delivered', `ev-${i}`));
     expect((await h.handle(request(events))).status).toBe(413);
     const throwH = harness(() => Promise.reject(new Error('db down')));
     expect((await throwH.handle(request([event('delivered')]))).status).toBe(503);
@@ -137,11 +137,40 @@ describe('sendgrid webhook door (ANT-148 corrections)', () => {
     expect(calls.length).toBe(0);
   });
 
-  it('stamps the batch index into the identity so same-second events stay distinct', async () => {
+  it('uses the provider sg_event_id as the stable identity (ANT-78)', async () => {
     const ids: string[] = [];
     const h = harness((args) => { ids.push(args._receipt_id as string); return Promise.resolve({ data: 'processed', error: null }); });
-    await h.handle(request([event('open', 0), event('open', 1)]));
-    expect(ids).toEqual([`sg:msg1:open:${now}:0`, `sg:msg1:open:${now}:1`]);
+    await h.handle(request([event('open', 'ev-abc'), event('open', 'ev-xyz')]));
+    expect(ids).toEqual(['sg:ev-abc', 'sg:ev-xyz']);
+  });
+
+  it('reordered / differently-batched redelivery stays idempotent (same sg_event_id anywhere)', async () => {
+    const ids: string[] = [];
+    const h = harness((args) => { ids.push(args._receipt_id as string); return Promise.resolve({ data: 'processed', error: null }); });
+    await h.handle(request([event('delivered', 'ev-A'), event('open', 'ev-B')]));
+    await h.handle(request([event('open', 'ev-B'), event('delivered', 'ev-A')]));
+    await h.handle(request([event('delivered', 'ev-A')]));
+    expect(ids).toEqual(['sg:ev-A', 'sg:ev-B', 'sg:ev-B', 'sg:ev-A', 'sg:ev-A']);
+  });
+
+  it('two legitimate same-second events for the same message both persist (distinct sg_event_ids)', async () => {
+    const h = harness(ok);
+    const res = await h.handle(request([event('open', 'ev-1'), event('open', 'ev-2')]));
+    expect(res.status).toBe(200);
+    expect((await res.json()).processed).toBe(2);
+  });
+
+  it('quarantines (503, loud, never silently ignored) events missing sg_event_id or sg_message_id', async () => {
+    const h = harness(ok);
+    const noId = await h.handle(request([{ event: 'delivered', sg_message_id: 'msg1.0.x', email: 'c@example.invalid', timestamp: now }]));
+    expect(noId.status).toBe(503);
+    expect((await noId.json()).quarantined).toBe(1);
+    const noMsg = await h.handle(request([{ event: 'delivered', sg_event_id: 'ev-9', email: 'c@example.invalid', timestamp: now }]));
+    expect(noMsg.status).toBe(503);
+    expect((await noMsg.json()).quarantined).toBe(1);
+    const malformed = await h.handle(request([event('delivered', 'bad id with spaces!')]));
+    expect(malformed.status).toBe(503);
+    expect((await malformed.json()).quarantined).toBe(1);
   });
 
   it('fails closed 503 without the public key configured', async () => {

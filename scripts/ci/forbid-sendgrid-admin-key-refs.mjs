@@ -8,7 +8,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const FORBIDDEN = "SENDGRID_PLATFORM_ADMIN_API_KEY";
-const ALLOWLIST = new Set([]); // intentional: empty until operator tooling exists
+const ALLOWLIST = new Set(["supabase/functions/comms-sendgrid-webhook-admin/index.ts"]); // the scoped-key broker, added when it became the key's only reader
 const ROOT = "supabase/functions";
 
 function* walk(dir) {

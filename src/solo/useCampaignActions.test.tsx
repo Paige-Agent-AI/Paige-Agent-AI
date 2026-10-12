@@ -62,20 +62,46 @@ describe("readActions", () => {
     expect(basisLine(other)).toBe("Finished on your approval.");
   });
 
-  it("warns before removing that a result goes with it and an action still waits in Approvals", () => {
-    const [waiting, judged] = readActions({ actions: [
+  it("warns before removing in words true to where the action stands", () => {
+    const [waiting, planned, approved, approvedOther, observed, judged] = readActions({ actions: [
       row("a1", "approval_required"),
-      row("a2", "evaluated", { observed_result: { summary: "Twelve" }, evaluation: { verdict: "met" }, evidence: { basis: "approval" } }),
+      row("a2", "planned"),
+      row("a3", "approved"),
+      row("a4", "scheduled", { action_kind: "crm.send_email" }),
+      row("a5", "outcome_observed", { observed_result: { summary: "Twelve" }, evidence: { basis: "approval" } }),
+      row("a6", "evaluated", { observed_result: { summary: "Twelve" }, evaluation: { verdict: "met" }, evidence: { basis: "approval" } }),
     ] }).actions;
-    expect(removeWarning(waiting)).toMatch(/stays on your list and in Approvals/);
-    expect(removeWarning(judged)).toMatch(/recorded result and judgement go with it/);
+    expect(removeWarning(waiting)).toMatch(/stays in Approvals/);
+    expect(removeWarning(planned)).toMatch(/will still come to you for approval/);
+    expect(removeWarning(planned)).not.toMatch(/Approvals/);
+    // A record-only step never "runs"; another kind already approved may.
+    expect(removeWarning(approved)).not.toMatch(/run/);
+    expect(removeWarning(approvedOther)).toMatch(/may still run/);
+    expect(removeWarning(observed)).toMatch(/recorded result goes with it/);
+    expect(removeWarning(observed)).not.toMatch(/judgement/);
+    expect(removeWarning(judged)).toMatch(/result and judgement go with it/);
   });
 
-  it("sends a picked date as that day's local midnight, so it reads back as the same day", () => {
-    const sent = localDayStart("2031-03-01")!;
-    const back = new Date(sent);
-    expect([back.getFullYear(), back.getMonth(), back.getDate(), back.getHours()]).toEqual([2031, 2, 1, 0]);
-    expect(localDayStart("tomorrow")).toBeNull();
+  it("shows a failure reason only when it is a plain sentence", () => {
+    const [plain, technical] = readActions({ actions: [
+      row("a1", "failed", { status: "failed", evidence: { basis: "workflow_run", error: "The partner list was empty." } }),
+      row("a2", "failed", { status: "failed", evidence: { basis: "workflow_run", error: "PGRST116 json object requested, multiple (or no) rows returned at exec_step(worker.ts:88)" } }),
+    ] }).actions;
+    expect(basisLine(plain)).toBe("It failed: The partner list was empty.");
+    expect(basisLine(technical)).toBe("It failed. The action list has the details.");
+  });
+
+  it("sends a picked date as that day's local midnight, so it reads back as the same day west of UTC", () => {
+    const zone = process.env.TZ;
+    process.env.TZ = "America/Los_Angeles";
+    try {
+      const sent = localDayStart("2031-03-01")!;
+      expect(sent).toBe("2031-03-01T08:00:00.000Z");
+      const back = new Date(sent);
+      expect([back.getFullYear(), back.getMonth(), back.getDate(), back.getHours()]).toEqual([2031, 2, 1, 0]);
+      expect(localDayStart("tomorrow")).toBeNull();
+      expect(localDayStart("2031-02-30")).toBeNull(); // a day that doesn't exist never rolls into March
+    } finally { if (zone === undefined) delete process.env.TZ; else process.env.TZ = zone; }
   });
 
   it("reads a judgement only on a judged step, and a member's step without its name", () => {

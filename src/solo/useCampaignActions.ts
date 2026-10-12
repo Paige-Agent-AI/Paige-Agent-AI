@@ -98,9 +98,16 @@ export function lifecycleTone(action: Pick<CampaignAction, "lifecycle" | "verdic
     default: return "st-planned";
   }
 }
+/** A failure reason fit to show a person: a short plain sentence, never codes, identifiers or stack text. */
+function plainReason(error: string | null): string | null {
+  const line = error?.split("\n")[0].trim() ?? "";
+  if (!line || line.length > 200 || /[_{}<>`|\\]|\b[A-Z]{2,}_[A-Z]|\b\d{5}\b|https?:|\bat\s+\S+\(/.test(line)) return null;
+  return line;
+}
 /** What a finish rests on, in words. Null while the step has not finished. */
 export function basisLine(action: Pick<CampaignAction, "basis" | "failed" | "error" | "actionKind">): string | null {
-  if (action.failed) return action.error ? `It failed: ${action.error.slice(0, 200)}` : "It failed.";
+  // A reason only an owner can read; a technical one is not shown, but its existence is.
+  if (action.failed) return plainReason(action.error) ? `It failed: ${plainReason(action.error)}` : action.error ? "It failed. The action list has the details." : "It failed.";
   if (action.basis === "workflow_run") return "Done by the run it started.";
   // Approving the record-only campaign step records it and runs nothing; any other kind may have acted.
   if (action.basis === "approval") return action.actionKind === RECORD_ONLY_KIND
@@ -109,13 +116,16 @@ export function basisLine(action: Pick<CampaignAction, "basis" | "failed" | "err
   if (action.basis === "recorded") return "Marked done with no run or approval behind it, so it takes no result.";
   return null;
 }
-// Removing takes the step off the campaign with its recorded result and judgement; the action itself stays on
-// the action list, so one still waiting for approval can still be approved. The confirmation says both.
-export function removeWarning(action: Pick<CampaignAction, "observed" | "verdict" | "lifecycle">): string {
+// Removing takes the step off the campaign with what was recorded on it; the action itself stays on the action
+// list. Where it stands there decides what the warning says: only a step waiting for approval is in Approvals.
+export function removeWarning(action: Pick<CampaignAction, "observed" | "verdict" | "lifecycle" | "actionKind">): string {
   const parts = ["Take this step off the campaign?"];
-  if (action.observed || action.verdict) parts.push("Its recorded result and judgement go with it.");
-  if (["planned", "prepared", "approval_required", "approved", "scheduled"].includes(action.lifecycle))
-    parts.push("The action stays on your list and in Approvals; decline it there if it shouldn't run.");
+  if (action.verdict) parts.push("Its recorded result and judgement go with it.");
+  else if (action.observed) parts.push("Its recorded result goes with it.");
+  const recordOnly = action.actionKind === RECORD_ONLY_KIND;
+  if (action.lifecycle === "approval_required") parts.push("The action stays in Approvals; decline it there if you don't want it.");
+  else if (action.lifecycle === "planned" || action.lifecycle === "prepared") parts.push("The action stays on your list and will still come to you for approval.");
+  else if ((action.lifecycle === "approved" || action.lifecycle === "scheduled") && !recordOnly) parts.push("It is already approved, so it may still run.");
   else parts.push("The action itself is unchanged.");
   return parts.join(" ");
 }
@@ -155,7 +165,10 @@ export function actionMessageFor(detail: string): string {
 export function localDayStart(date: string): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
   const at = new Date(`${date}T00:00:00`);
-  return Number.isNaN(at.getTime()) ? null : at.toISOString();
+  if (Number.isNaN(at.getTime())) return null;
+  // A day that doesn't exist (31 Apr) would roll into the next month; refuse it instead.
+  const back = `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, "0")}-${String(at.getDate()).padStart(2, "0")}`;
+  return back === date ? at.toISOString() : null;
 }
 
 type ActionRow = Record<string, unknown> & { evidence?: Record<string, unknown>; approval?: Record<string, unknown>; owner?: Record<string, unknown> };
@@ -212,8 +225,10 @@ export function useCampaignActions(tenantId: string | null, briefId: string | nu
     if (!tenantId) return;
     let live = true;
     setState((current) => ({ ...current, phase: "loading" }));
+    const ticket = seq.current + 1;
     read().then(({ next, latest }) => { if (live && latest()) setState({ phase: "ready", ...next }); }, (error) => {
-      if (!live) return;
+      // A failed read that a newer read has already overtaken must not blank what that read drew.
+      if (!live || ticket !== seq.current) return;
       console.error("[campaign-actions] read failed", error);
       setState({ phase: "error", canManage: false, actions: [] });
     });

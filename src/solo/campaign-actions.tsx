@@ -131,7 +131,9 @@ function PlanForm({ tactics, busy, onPlan, onCancel }: {
   const [expected, setExpected] = React.useState("");
   // One key per plan: a retry after an unclear failure files the same step once, not twice.
   const [key] = React.useState(newKey);
-  const ready = title.trim() && tactic.trim();
+  // A date field without a native picker can hold text that is not a day; say so rather than drop it.
+  const dueBad = due !== "" && !localDayStart(due);
+  const ready = title.trim() && tactic.trim() && !dueBad;
   return (
     <form className="ca-form ca-plan" aria-label="Plan a step"
       onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onCancel(); } }}
@@ -143,9 +145,10 @@ function PlanForm({ tactics, busy, onPlan, onCancel }: {
       </div>}
       <div className="ca-field"><span id="ca-family-l">Kind of step</span><FamilyPicker value={family} onChange={setFamily}/></div>
       <div className="ca-pair">
-        <label className="ca-field ca-narrow"><span>Due (optional)</span><input type="date" value={due} onChange={(event) => setDue(event.target.value)}/></label>
+        <label className="ca-field ca-narrow"><span>Due (optional)</span><input type="date" value={due} aria-invalid={dueBad} onChange={(event) => setDue(event.target.value)}/></label>
         <label className="ca-field"><span>Aim (optional)</span><input value={expected} maxLength={500} onChange={(event) => setExpected(event.target.value)} placeholder="e.g. Ten replies"/></label>
       </div>
+      {dueBad && <p className="ca-hint ca-bad">Pick a day for the due date, or leave it empty.</p>}
       <p className="ca-hint">A planned step waits for your approval. Planning it sends and publishes nothing.</p>
       <div className="ca-row"><button type="submit" className="btn btn-s btn-g" disabled={busy || !ready}>{busy ? "Planning…" : "Plan step"}</button>
         <button type="button" className="btn btn-s" onClick={onCancel}>Cancel</button></div>
@@ -158,6 +161,7 @@ export function CampaignActions({ tenantId, briefId, onToast }: { tenantId: stri
   const [planning, setPlanning] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const addRef = React.useRef<HTMLButtonElement>(null);
+  if (!tenantId) return <div className="dw-note" role="status">No workspace is selected, so this campaign's steps can't be shown.</div>;
   if (state.phase === "loading") return <div className="campaigns-skeleton" style={{ padding: 0 }}><span style={{ height: 64 }}/></div>;
   if (state.phase === "error") return <div className="dw-note" role="alert">This campaign's steps couldn't load. Nothing was changed. <button type="button" className="btn btn-s" onClick={state.retry}>Try again</button></div>;
   const mine = state.actions.filter((action) => action.briefId === briefId);

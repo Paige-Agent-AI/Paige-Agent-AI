@@ -332,7 +332,8 @@ async function main() {
     // offers no result and shows none even when one was planted; a failed step stays failed; a member reads.
     for (const theme of ["light", "dark"]) {
       for (const mode of ["populated", "readonly"]) {
-        const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+        // West of UTC, so a due day sent as UTC midnight would read back a day early.
+        const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce", timezoneId: "America/Los_Angeles" });
         const page = await ctx.newPage();
         const errors = [];
         page.on("pageerror", (e) => errors.push(String(e.message)));
@@ -425,7 +426,7 @@ async function main() {
           const recap = page.locator(".dw .ca-step", { hasText: "Send the event recap" });
           await recap.locator("button[aria-label='Remove Send the event recap from this campaign']").click();
           const warn = await recap.locator(".ca-confirm").textContent();
-          check(/stays on your list and in Approvals/.test(warn ?? ""), `${id}: Remove asks first and says the action stays in Approvals`, JSON.stringify(warn));
+          check(/will still come to you for approval/.test(warn ?? "") && !/Approvals/.test(warn ?? ""), `${id}: Remove asks first and says a planned action will still come for approval`, JSON.stringify(warn));
           await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-remove-${theme}.png`) });
           await recap.locator("button", { hasText: "Remove from campaign" }).click();
           await page.waitForFunction(() => ![...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Send the event recap")), null, { timeout: 5000 }).catch(() => {});

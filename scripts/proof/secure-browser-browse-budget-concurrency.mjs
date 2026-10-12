@@ -42,10 +42,13 @@ INSERT INTO public.secure_browser_tenant_limits(tenant_id,enabled,worker_availab
   assert.equal(reserved, 180, 'reserved seconds never exceed the daily cap under concurrency');
   console.log('PASS: 12 concurrent service callers, exactly 4 reservations, reserved==cap, no overbook.');
 } finally {
-  run(`DELETE FROM public.secure_browser_usage_windows WHERE tenant_id='${T}';
+  // Best-effort child-row cleanup ONLY: tenants/users are guarded by the operator-archive lane
+  // (raw DELETE raises "permanent deletion requires the canonical confirmed operation" — hit in
+  // CI). The CI database is disposable (asserted above), so the synthetic 5c…cc rows may remain.
+  try {
+    run(`DELETE FROM public.secure_browser_usage_windows WHERE tenant_id='${T}';
 DELETE FROM public.secure_browser_tenant_limits WHERE tenant_id='${T}';
 DELETE FROM public.profiles WHERE user_id='${U}';
-DELETE FROM public.tenant_members WHERE tenant_id='${T}';
-DELETE FROM public.tenants WHERE id='${T}';
-DELETE FROM auth.users WHERE id='${U}';`);
+DELETE FROM public.tenant_members WHERE tenant_id='${T}';`);
+  } catch { /* guards may refuse even child rows on a shared DB — the DB is disposable in CI */ }
 }

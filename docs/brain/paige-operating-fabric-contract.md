@@ -229,6 +229,158 @@ check, and nothing from it reaches the snapshot.
    `analytics-metrics/read.ts:4`, `research-history-context.ts:1`). It also has its siblings
    `owner-memory.ts` and `snapshot.ts`. F2a adds `business-review.ts` and the adapters.
 
+
+## F2b (2026-10-12) — `operations` and `clients` adapters, still not wired to any turn
+
+F2b adds two more areas to the same review: *what needs fixing in how the business is set up and
+running*, and *where the clients stand*. Same seam, same rules, same status: **read-only,
+unit-tested, reachable from no turn yet.** No edit to `analytics-metrics`, `paige-ai-chat`,
+`paige-turn`, `paige-spine`, migrations or the F1 seam. Both adapters read only keys already in
+`BUSINESS_METRIC_KEYS`, through `readBusinessMetric`, with the caller's own JWT.
+
+**What shipped (code):**
+
+- `adapters/sales-metric.ts`, **generalised in place, not forked.** The interpreter now also accepts
+  `distribution` and `diagnostic_events` values, an expected `ownerDepartment` (anything else is
+  refused as the new closed code `metric_owner_unexpected`, because `read.ts` checks the owner only
+  for `sales.*` keys), and a per-key `definitionalExclusions` list (below). `noteSalesSource` takes the
+  producing department as an optional `system` (default `sales`). The Sales adapters pass exactly
+  what they passed before; their 45 tests still pass with only the call-count expectations that
+  F2b's extra reads changed.
+- `adapters/issuer-metric.ts`: the same helpers under department-neutral names, plus a closed
+  label map for distribution buckets (`closedBuckets`: a known key is shown or deliberately hidden,
+  an unknown key is dropped and counted, never shown), the Systems Check event reader, and
+  `plainUtcMinute`.
+- `adapters/operations.ts` (`domain: operations`, `owner: operations_pmo`). Three reads, one at a
+  time, abort checked before each:
+  - `operations.current_system_exceptions` → one risk per open finding, ranked blocking → high →
+    medium → low, at most 20. Blocking/high are `act`, medium/low `watch`; `kind` is
+    `systems_check_<severity>`. The summary names the item in the owner's words through a closed map
+    of the ten tenant check ids (a missing id reads "one setup item needs attention"; the raw id is
+    never shown), plus when it was found. The producer keeps the 20 **newest**, not the most severe,
+    and its `excluded_count` also counts deferred (skip), unknown-status and never-recorded checks.
+    So per-priority counts `operations.exceptions_<severity>` are `null` ("not available") only when
+    the cap may have cut real problems (it listed 20 and excluded more); the note then says how many
+    items were not listed. Below the cap nothing was cut, so the counts of the listed items stand and
+    the note says how many checks were deferred, not recorded or unreadable and are not in them. A
+    PARTIAL with nothing counted as excluded keeps the counts `null` (fail closed).
+  - `operations.unresolved_findings_current` → `operations.unresolved_findings` (failing checks in
+    the latest full check, uncapped).
+  - `operations.recorded_workflow_runs` (in period) → `operations.workflow_runs_recorded` and
+    `operations.workflow_runs_failed`; any failure adds an `act` risk, which leads the act risks so it
+    is never the one trimmed when 20 Systems Check items fill the list. An empty, complete period
+    shows "none recorded; not a sign that automations are working" with a note, and **no** failed
+    figure, so it can never read as "no failures". A read that left runs out (PARTIAL, or a status
+    Paige does not recognise) never claims "none recorded" or "0 failed": with nothing countable the
+    recorded figure is `null`, a zero failed count becomes `null`, and the note says a failed run
+    cannot be ruled out. A counted failure still stands.
+  - The two Systems Check figures carry the window note "from the Systems Check completed <UTC
+    minute>" taken from `freshness.source_updated_through`, not from the read time. No `changes[]`:
+    no history of findings exists to compare.
+- `adapters/clients.ts` (`domain: clients`, `owner: client_experience`). Three reads, all current
+  state, no `changes[]`:
+  - `business.active_clients_current` → `clients.active` ("leads are not counted here").
+  - `business.lifecycle_current` → `clients.paused`, `clients.churned`, `clients.past`. The past
+    bucket folds the two finished-relationship stages together and is labelled "past clients"; the
+    finance-worded stage name never appears in any label, note or key (§2). `client_active` is known
+    and not repeated here. Lead stages are unknown to the map and are dropped and counted.
+  - `business.onboarding_current` → `clients.onboarding_in_progress` (invited through uploading
+    documents) and `clients.onboarding_completed`, whitelisted to the seven-value CHECK in
+    `20260629160438`. `pre_invite` is never counted as progress, and when clients sit at it the note
+    says how many, so the two onboarding figures never read as silent zeros. UNAVAILABLE becomes the note
+    "onboarding steps are not being recorded"; an empty read (no clients at all) becomes "there are no
+    clients to onboard yet", never two zeros.
+  - The coverage note always says, in one short clause placed LAST, that new clients this period and
+    clients at risk are not measured yet and that leads are counted under sales. Last, because the
+    note is bounded at 300 characters: a gap found in this read (onboarding not recorded, a figure the
+    source calls incomplete) must survive, and the standing text is what gets cut if anything does.
+- `business-review.ts` registers both beside `payments` and `sales_pipeline`. The observed-scope
+  bracket is unchanged.
+- `src/__tests__/operating-snapshot-business-review-f2b.test.ts`: 34 tests against a fake issuer
+  whose payloads pass `parseMetricResult` and are shaped like the settings producer's (owner by key
+  prefix, current-snapshot semantics, one generic exclusion reason, raw enum keys as labels).
+
+**What PARTIAL means here (grounded, and narrower than the plan assumed).** The settings producer
+writes ONE exclusion reason for every non-diagnostic key —
+"Out-of-scope context, ineligible current state, version after as_of, or unknown supported quantity."
+(`20270601000005`, the `exclusions` build). So `exclusions[]` cannot tell a definitional exclusion (a
+passing check; a paused client) from any other. For `operations.unresolved_findings_current` and
+`business.active_clients_current` the adapters treat exactly that string as definitional. The "version
+after as_of" part practically cannot hide missing data: the read instant is the issuer's
+`clock_timestamp()` at issue. It is not strictly impossible: the producer's SELECT runs a moment later
+under READ COMMITTED, so a row committed in that sub-millisecond gap with a version after the instant
+is excluded silently (one active client undercounted, say). That narrow race is accepted for F2b; the
+real fix is the producer flag in hand-off 1. For `operations.unresolved_findings_current` the same text
+also covers checks that were deferred (skip) or could not run (error), not only passing checks. The
+figure (checks that ran and failed) is still correct by definition, and those checks are surfaced
+through the exceptions read instead: could-not-run findings as risks, deferred ones in its "not in the
+counts" note. Any other reason, a change to that text upstream, or a PARTIAL with nothing itemised as
+excluded, makes the figure partial again (fail closed), and only then does the note say "incomplete".
+The other keys keep the plain rule.
+
+**Left as `no_adapter`, and why.**
+
+| Area | Why it waits |
+|---|---|
+| `work` | `plan_list_operations_scoped` is Solo-only and VOLATILE and locks `profiles … FOR UPDATE` on a read (`20271020000020:145`); dates are DATE-granular in the session time zone; undated items vanish when `p_to` is set; no `has_more`, and done items fill the 200 cap; staff visibility uses the global `has_any_role` (`20260712040000:22`). Prod: 0 task/milestone items. F2c. |
+| `game_plan` | `list_business_missions` is a separate RPC with a standalone-owner-only gate (`20260905221203:90-92`) and message-based refusals. Prod: 0 missions ever. F2c, with `work`. |
+| `campaigns` | `marketing.*` keys are not in `BUSINESS_METRIC_KEYS`, so `readBusinessMetric` answers `needs_input`; `analytics-metrics` is outside this slice. `get_pipeline_lead_funnel` is not a substitute (no end bound, current stages, wider authority). |
+| `support` | `read_support_cases` is LIMIT 50 with no total and no period, returns subject text, and refuses with a 200 JSON body. Not planned. |
+
+**Hand-offs (named, not done here):**
+
+1. **Analytics (INT-340/INT-298):** add a separate `MARKETING_METRIC_KEYS` allowlist plus an owner
+   check (`marketing`, count or distribution) in `read.ts`, kept out of the `read_business_metric`
+   tool enum (no §37 consumer change). Consider a producer flag for "PARTIAL by definition" so
+   adapters stop depending on the exclusion text. This unblocks `campaigns` and exposes
+   `marketing.submissions.failed_current` and `marketing.forms.unrouted_current` as operational
+   problems.
+2. **Client experience / CRM:** new clients per period needs a lifecycle-transition timestamp or
+   event, a producer branch with `event_timestamp_cohort` semantics, and a key. Candidate substrates
+   were examined and do not qualify today: `paige_journey_stage_transitions` (0 rows, no `tenant_id`,
+   journey stages not lifecycle stages), `solo_beta_lifecycle_receipts` (billing receipts), and
+   `paige_client_events` (no governed key; payload shape unverified). Clients at risk needs a governed
+   health signal; `paige_health_snapshots` has 0 rows, no `tenant_id` and no writer. Both are backend
+   changes: stop and name them.
+3. **Spine / tier (§51/§56):** `_analytics_metric_authorized` admits only active owner/admin members
+   whose active workspace is the tenant, on an active/trial/past_due tenant. Coaches, members and
+   agency managers acting in a child account without their own seat are refused
+   (`metric_read_refused`). A revision change between issue and resolve (a client edited mid-read)
+   also arrives as 42501 and is reported the same way, which is why the wording never says "you lack
+   access". **Owner to rule** whether owner/admin is the intended reach of the review.
+4. **Operations / Planning (before F2c):** `plan_list`'s staff check uses the global
+   `has_any_role`; no `has_more`; `p_status` filters plan status, not item status; the DATE /
+   time-zone cast; the lock taken by a read.
+5. **Business mission (before F2c):** `list_business_missions` should return `closed_at`; the
+   heartbeat at `20270111000000:51` filters on states (`closed`, `abandoned`) that do not exist.
+6. **Naming follow-up (§18/§65, not blocking):** the one home for the generalised helpers is still
+   `adapters/sales-metric.ts` with Sales-named exports; `issuer-metric.ts` re-exports them under
+   neutral names, so each helper has two names. In a later slice, move the logic into
+   `issuer-metric.ts` and have `sales-metric.ts` re-export the Sales names. Deferred here because it
+   rewrites the F2a module for no behaviour change.
+
+**Evidence classes.**
+
+| Class | State |
+|---|---|
+| Automated | 34 new tests; the 45 F2a tests (three call-count expectations updated for F2b's six extra reads), the F1 seam and analytics suites still pass. Each defect was reinstated one at a time and caught by at least one failing test (§71.4): definitional rule removed; an extra exclusion reason ignored; a PARTIAL with nothing excluded treated as definitional; the owner check removed; a refusal reported as degraded; per-priority counts invented for a truncated list; the truncation note removed; medium mapped to `act`; severity ranking removed; a raw check id echoed; the no-check note said twice; the failed-run risk removed; an empty run period shown as zero failures; unknown buckets not counted; the finance word in a label; `pre_invite` counted as progress; unrecorded onboarding shown as zero; no clients shown as onboarding figures; the standing gaps note removed; operations or clients not registered; two operations reads overlapping. Added after review: a PARTIAL run read with nothing countable labelled "none recorded"; a PARTIAL run read showing 0 failed; the standing note placed first (a found gap cut for length); any exclusion nulling the counts by priority below the cap; the failed-run risk trimmed behind 20 Systems Check risks; clients before the invitation left as silent zeros |
+| Static | `tsc` ratchet: no new errors (baseline 10, current 10); strict `tsc` clean on the new files (only the pre-existing `node:util` resolution in `capability-kit/snapshot.ts` without node types); eslint clean |
+| Rendered / behavioural / authenticated runtime | **UNVERIFIED**: nothing is wired to a turn, as for F2a. The Chat drive owed for F2a now also owes these two areas |
+
+### §13 corrections recorded by F2b (rows below are marked, not rewritten)
+
+1. **§A "Systems Check (tenant)" row is stale.** PAIGE is not blind to it: the tenant-tier chat
+   pushes `read_business_metric` (`paige-ai-chat/index.ts:8158`, `callerTier === "tenant"`) and
+   dispatches it (`:11492`), and its enum carries `operations.systems_check_latest`,
+   `operations.unresolved_findings_current` and `operations.current_system_exceptions`, which the
+   settings producer reads through `systems_check_snapshot('tenant')`. Chat reach is PARTIAL
+   (tenant tier, owner/admin seat), not "none".
+2. **§L F2 still names `practice_attention_queue` for `work`/`operations`.** Superseded for
+   `operations` by the issuer keys above (and F2a correction 2 gives the reasons that source was
+   ruled out).
+3. **§A "Plans / plan items" row and §H say 4 plan items.** Prod read-only aggregate, 2026-10-12
+   03:48 UTC: `plan_items` 3, `plans` 0.
+
 ---
 
 ## The seven data classes this fabric keeps apart
@@ -267,7 +419,7 @@ re-enters the same handler, so its reach equals Chat's reach unless the table sa
 | Team / authority | `tenant_members`, invitations | `get_team_authority_readiness`, `get_paige_team_context` | `team.authority` (read only) | per-turn blocks + team tools | no | PARTIAL |
 | Agency / operator tiers | `tenants.parent_tenant_id`, `agency_team_members`, `user_roles` | SQL predicates | none | operator briefing only (tenant-less) | no | PARTIAL; Live unreachable (needs a tenant thread) |
 | Trust Compass | `admin_app_settings.paige_trust_compass` | `get_platform_trust_compass` (operator) | none | enforced via `resolve_tool_autonomy*`, never stated to PAIGE | no | PARTIAL |
-| Systems Check (tenant) | `paige_systems_check_run/_finding` (794 tenant runs) | `systems_check_snapshot(p_scope)` | none | **none** (0 matches in chat) | substrate yes, seam no | PARTIAL (runner live, PAIGE blind) |
+| Systems Check (tenant) | `paige_systems_check_run/_finding` (794 tenant runs) | `systems_check_snapshot(p_scope)` | none | **none** (0 matches in chat) | substrate yes, seam no | PARTIAL (runner live, PAIGE blind) **Corrected F2b (2026-10-12): see the F2b section, §13 correction 1.** |
 | Systems Check (operator) | same, `tenant_id IS NULL` | owner-context service read | none | operator briefing line | no | PARTIAL (chat delivery PROOF OWED) |
 | Connections / integrations | `channel_connectors`, `*_mcp_connections`, `tenant_n8n_connections` | `list_integration_surface()` | `integrations.list` (+ `integrations.health` declared, **no tool**) | Mind block + `integrations_list` | no | PARTIAL |
 | Secure Browser / PAIGE Computer | `secure_browser_*` (all 0 rows) | `browser-use` edge (gated off) | none | none | no | UNAVAILABLE |
@@ -296,7 +448,7 @@ re-enters the same handler, so its reach equals Chat's reach unless the table sa
 | Analytics (tenant metrics) | computed on read from canonical tables | `practice_dashboard_metrics(p_window_days)`, `practice_attention_queue()`, `issue_analytics_evidence_bundle` — **UI only** | none | **none** | yes, in UI only | PARTIAL (stranded) |
 | Analytics (telemetry) | `analytics_events`, PostHog | write-only | none | write-only | n/a | LIVE (write-only) |
 | Tasks: CRM | `tasks` (2 rows, tenant_id NULL) | service-role read (`:14275` reads one branch without a tenant filter) | via crm-command | `crm_list_tasks` | overdue only | PARTIAL |
-| Plans / plan items | `plans` (0), `plan_items` (4) | `plan_list(p_from,p_to)` | none | `plan_*` tools | **yes** | PARTIAL |
+| Plans / plan items | `plans` (0), `plan_items` (4) | `plan_list(p_from,p_to)` | none | `plan_*` tools | **yes** | PARTIAL **Corrected F2b (2026-10-12): prod has 3 plan items; see the F2b section, §13 correction 3.** |
 | Durable work | `paige_durable_work` (2) | `get_paige_durable_work(id)` | `long_form.*` | document tools only; C4d paused | no | PARTIAL |
 | Knowledge | `tenant_knowledge_docs` (12) / `_chunks` (34) | `match_tenant_knowledge` (caller JWT, fail-closed) | none | per-turn retrieval block; confirm-gated save | n/a | LIVE (retrieval) |
 | Business Vault | `business_vault_*` (all 0 rows) | `business_vault_snapshot`, `business_vault_get_context` (**0 callers**) | none | **none** | n/a | UNVERIFIED (stranded) |
@@ -496,7 +648,7 @@ Invariants:
   - Spine `business_mission.create/revise/transition`, with chat tools.
   - **Prod: 0 missions ever.**
 - **Horizon plans:** `plans` (scope, horizon week/month/quarter/year) and `plan_items`
-  (milestone/task/reminder). Plans have 0 rows and plan items have 4. The chat tools are not
+  (milestone/task/reminder). Plans have 0 rows and plan items have 4 (**corrected F2b 2026-10-12: 3 on prod**). The chat tools are not
   Spine-registered and are not linked to missions.
 - **Absent:** strategic goals, numeric targets, KPIs, pillars, and bets, plus mission ↔ metric
   linkage and performance evidence per mission. The Solo Game Plan UI *derives* priorities from setup
@@ -672,8 +824,10 @@ entry-point slice, not a new memory or context system.
 | # | Slice | Touches | Gate |
 |---|---|---|---|
 | **F1** (this PR) | Phase 0 map + contracts (this doc); the pure seam `_shared/paige-context/snapshot.ts` (periods, DomainSnapshot validator, NOT-CONNECTED register, composer, projection) + tests | docs, one new `_shared` module, one test | no runtime change |
-| **F2** | First adapters over **existing** tenant-derived reads: `sales_pipeline`/`clients`/`revenue` ← `practice_dashboard_metrics(p_window_days)`; `work`/`operations` ← `practice_attention_queue()` (+ tenant `systems_check_snapshot`); `game_plan` ← `list_business_missions`. Register Spine read `business.operating_snapshot` (chatBinding PARTIAL); one chat tool `business_review` + dispatch, caller-JWT client with the persona-tenant == `current_user_tenant_id()` bracket (the `pipelineWorkspaceRead` precedent) | `_shared/paige-context/adapters/*`, Spine domain file, `paige-ai-chat` (tool push + dispatch only) | unit + registry lint; authenticated Chat drive owed; Live drive owed. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 2.** |
+| **F2** | First adapters over **existing** tenant-derived reads: `sales_pipeline`/`clients`/`revenue` ← `practice_dashboard_metrics(p_window_days)`; `work`/`operations` ← `practice_attention_queue()` (+ tenant `systems_check_snapshot`); `game_plan` ← `list_business_missions`. Register Spine read `business.operating_snapshot` (chatBinding PARTIAL); one chat tool `business_review` + dispatch, caller-JWT client with the persona-tenant == `current_user_tenant_id()` bracket (the `pipelineWorkspaceRead` precedent) | `_shared/paige-context/adapters/*`, Spine domain file, `paige-ai-chat` (tool push + dispatch only) | unit + registry lint; authenticated Chat drive owed; Live drive owed. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 2.** **Corrected F2b (2026-10-12): `operations` and `clients` read the issuer keys; see the F2b section, §13 correction 2.** |
 | **F2a** (2026-10-12) | `payments` + `sales_pipeline` projection adapters over the INT-340/INT-341 issuer keys; `composeBusinessReview` (observed scope before/after); 45 tests. No tool, no Spine, no turn wiring (hand-offs in the F2a section) | `_shared/paige-context/adapters/*`, `_shared/paige-context/business-review.ts`, one test | unit + §71.4 falsification; Chat/Live reach UNVERIFIED (INT-346) |
+| **F2b** (2026-10-12) | `operations` + `clients` projection adapters over the same issuer (Systems Check, automation runs, client stages, onboarding); helpers generalised in place (`issuer-metric.ts`); 34 tests. `work`, `game_plan`, `campaigns`, `support` stay `no_adapter` (reasons in the F2b section) | `_shared/paige-context/adapters/*`, `business-review.ts`, one new test + F2a call counts | unit + §71.4 falsification; Chat/Live reach UNVERIFIED (INT-346) |
+| **F2c** | `work` + `game_plan` after the Planning and Business-mission hand-offs in the F2b section | adapters + owning-lane fixes | owner ruling on seat reach (§51) |
 | **F3** | Domain-owned windowed reads: Rail outcomes in [start,end) (SECURITY DEFINER, tenant from `current_user_tenant_id()`, §59 in-body check); bookings in window; comms counts in window | one migration per owning domain + adapter | §32 persisted-apply; §37 producer inventory |
 | **F4** | Payments period read (receivables, collected in period, overdue) by the Sales lane, consumed by the `payments` adapter | Sales lane migration + adapter | lane owner. **Corrected F2a (2026-10-12): see the F2a section, §13 correction 3.** |
 | **F5** | Context Assembly: move the snapshot and two inline blocks (business-context, team-authority) to typed resolvers selected by the Turn Route (R4 has merged) | `paige-ai-chat` context region | after F2; coordinate with R5 narrowing |

@@ -4164,6 +4164,27 @@ Currencies are never summed, a failure is never a zero, and evidence references 
 
 §13 corrections (also in Section 10 and the contract's F2b section): tenant Systems Check is **not** "0 chat reach" — the tenant-tier chat reads it through `read_business_metric` (`paige-ai-chat/index.ts:8158`, `:11492`), so the "tenant Systems Check results (794 runs, 0 chat reach)" line above is stale; the contract's §A/§H rows said 4 plan items, and prod has 3 (read-only aggregate, 2026-10-12).
 
+**F2 integration hand-off (2026-10-12).** The Fabric now owns the domain half of the chat seam in code,
+`_shared/paige-context/business-snapshot-chat.ts`: the `get_business_snapshot` argument contract (period,
+custom bounds, focus; no tenant, actor, role or time-zone field), a strict parser, and a dispatch that maps
+one call to one `composeBusinessReview` with a closed result (`succeeded`, `refused`, `unavailable`,
+`invalid`, `failed`), and refuses any workspace that is not Solo, Sub-account or Enterprise. It follows the Ads funnel split and is **still not wired to any turn**. **Owner ruling
+(2026-10-12):** coach is a title; the full executive snapshot stays owner/admin, and a member-scoped
+capability needs a separate approval. The exact hand-offs are in the contract's "F2 cross-lane
+integration" section:
+- **Conversational Loop:** the dispatch branch, offered to the `tenant` and `subaccount` tiers. There is no
+  read-only INT-346 admission class today (conversational mode removes every tool), so admitting this read
+  is new work. The C0b fingerprints have to be recomputed by hand.
+- **CC Spine (INT-179):** register `business.operating_snapshot` as a `read` with `workspace-admin`
+  authority. It must land in the same PR as the Chat push, because the declaration lint fails either half
+  alone.
+- **Operations (ANT-11):** seven `plan_list` read defects block F2c `work`.
+- **Business missions:** `closed_at` is missing from the mission list, and two live heartbeat defects
+  (non-existent states; an AND/OR precedence bug) block F2c `game_plan`.
+- **Platform Reach / Marketing:** a separate `MARKETING_METRIC_KEYS` allowlist for campaigns and leads.
+
+Authenticated Chat/Live proof waits for the joint PR and the ANT-21 QA account (not yet verified).
+
 ### Finance backend — owner-resumed end-to-end mission (2026-10-10)
 
 Owner-authorized ANT-9 continuation (2026-10-11): a bounded current-main successor to unmerged #1950 preserves all four historical findings and corrected consent guards. Production metadata frontier is independently verified as 20271020000270; current-main candidate uses checked-free forward migration 20271020000300. Its prior unapplied 00030 filename was superseded after a peer release used it; no applied history changed. Both actual historical/current retirement definitions pass the new fail-before/pass-after consent regression. Actual local PostgreSQL missing-contract/two-fresh-replay and concurrent one-use consent proof PASS. Genuine independent non-author non-Codex review, exact-head required CI, merge, deployment and source readback remain owed. No provider/account activation, token exchange, customer ingestion or authenticated acceptance is claimed. The existing approved UI, shared Chat/Live execution authority and sole Settings → Integrations setup home are preserved; [capability integration/proof matrix](brain/finance-department.md) names the unavailable seams.

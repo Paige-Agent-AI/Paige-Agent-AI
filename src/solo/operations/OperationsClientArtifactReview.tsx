@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { decideClientDelivery, readClientDeliveryArtifact, type ClientDeliveryArtifact, type ClientDeliveryCaller } from "@/lib/operations-client-review";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
@@ -10,6 +10,7 @@ export type ClientArtifactReviewScope = { actorId:string; tenantId:string; relea
 type ReadState = { key:string; phase:"loading"|"ready"|"unavailable"; artifact?:ClientDeliveryArtifact };
 /** Domain-owned review component; portal mount and client identity remain Clients-owned. */
 export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme="dark"}:ClientArtifactReviewScope) {
+ const reviewNoteHint=useId();
  const key=JSON.stringify([actorId,tenantId,releaseId]);
  const live=useRef(key);live.current=key;const mounted=useRef(false);const requestNo=useRef(0);const writing=useRef(false);
  const [read,setRead]=useState<ReadState>({key,phase:"loading"});
@@ -74,8 +75,8 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  return <section className="paige-solo ops-client-review" data-pg={theme} data-theme={theme} aria-label="Review released deliverable">
   {!visible||visible.phase==="loading"?<p role="status">Loading your deliverable...</p>:!artifact?<div role="status"><h1>Review unavailable</h1><p>This exact deliverable cannot be read with your current access. Refresh or ask your delivery team to check the review.</p><button type="button" onClick={refresh}>Check review again</button></div>:<>
    <header><p>Version {artifact.revisionNo} <span>{artifact.state==="accepted"?"Accepted":artifact.state==="client_revision_requested"?"Changes requested":"Ready for your review"}</span></p><h1>{artifact.title}</h1><p>Review the delivered work before accepting this version or requesting changes.</p></header>
-   <article className="ops-client-artifact" aria-label="Released artifact content">{artifact.body}</article>
-   {awaiting&&<div className="ops-client-review-controls"><label>Review note<textarea maxLength={4000} rows={4} value={note} disabled={locked} onChange={event=>{setNote(event.target.value);if(result?.kind==="invalid")setOutcome(null);}}/><small>Describe the changes you need. A note is required when requesting changes.</small></label><div><button type="button" disabled={locked} onClick={event=>review("client_revision_requested",event.currentTarget)}>Request changes</button><button type="button" className="ops-client-primary" disabled={locked} onClick={event=>review("accepted",event.currentTarget)}>Accept this version</button></div></div>}
+   <article tabIndex={0} className="ops-client-artifact" aria-label="Released artifact content">{artifact.body}</article>
+   {awaiting&&<div className="ops-client-review-controls"><label>Review note<textarea aria-label="Review note" aria-describedby={reviewNoteHint} maxLength={4000} rows={4} value={note} disabled={locked} onChange={event=>{setNote(event.target.value);if(result?.kind==="invalid")setOutcome(null);}}/><small id={reviewNoteHint}>Describe the changes you need. A note is required when requesting changes.</small></label><div><button type="button" disabled={locked} onClick={event=>review("client_revision_requested",event.currentTarget)}>Request changes</button><button type="button" className="ops-client-primary" disabled={locked} onClick={event=>review("accepted",event.currentTarget)}>Accept this version</button></div></div>}
    <div ref={feedback} tabIndex={-1} role="status" aria-live="polite">{busy&&<p>Saving and checking your decision...</p>}{artifact.state==="accepted"&&<p>Your acceptance is recorded for version {artifact.revisionNo}.</p>}{artifact.state==="client_revision_requested"&&<p>Your changes are recorded for version {artifact.revisionNo}. Your team must submit a new version for review.</p>}{result?.kind==="invalid"&&<p>Add a review note before requesting changes.</p>}{result?.kind==="refused"&&<p>Your decision was refused because the review or your access changed. Check the current review before continuing.</p>}{result?.kind==="unverified"&&awaiting&&<p>Your decision could not be confirmed. Check its recorded state; do not submit another decision while the outcome is unknown.</p>}</div>
    <button type="button" disabled={busy||Boolean(dirty)} onClick={refresh}>Check recorded review</button>{dirty&&<p>Finish or clear your review note before checking the recorded state.</p>}
   </>}

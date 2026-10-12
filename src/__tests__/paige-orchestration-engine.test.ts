@@ -74,7 +74,7 @@ describe("outcomeFromDecision — exact per-act outcome, never a success on a no
 
 // ── A minimal chainable, thenable mock of the supabase-js surface the engine uses. ─────────────────────
 type MockConfig = {
-  acts: Record<string, Array<{ id: string; position: number; action_kind: string | null; tool_key: string | null; config: unknown }>>;
+  acts: Record<string, Array<{ id: string; position: number; action_kind: string | null; tool_key: string | null; config: unknown; created_at?: string }>>;
   activeMembers: Set<string>;                       // `${tenantId}:${userId}`
   lanes: Record<string, { effective: string }>;
   recorded: Array<Record<string, unknown>>;         // every paige_record_act_execution call the engine made
@@ -91,13 +91,18 @@ function mockDb(cfg: MockConfig): EngineDb {
       select() { return q; },
       order() { return q; },
       eq(k: string, v: unknown) { state[k] = v; return q; },
+      lte(k: string, v: unknown) { state[`lte:${k}`] = v; return q; },
       limit() { return q; },
       then(onF: any, onR: any) {
         if (cfg.fromErrors?.has(table)) {
           return Promise.resolve({ data: null, error: { message: `${table}_read_failed` } }).then(onF, onR);
         }
         let data: unknown = [];
-        if (table === "paige_automation_acts") data = cfg.acts[state.automation_id as string] ?? [];
+        if (table === "paige_automation_acts") {
+          const cutoff = state["lte:created_at"] as string | undefined;
+          data = (cfg.acts[state.automation_id as string] ?? [])
+            .filter((a: any) => !cutoff || !a.created_at || a.created_at <= cutoff);
+        }
         else if (table === "tenant_members") {
           data = cfg.activeMembers.has(`${state.tenant_id}:${state.user_id}`) ? [{ user_id: state.user_id }] : [];
         }
@@ -218,6 +223,26 @@ describe("runEventActs — the exact per-act outcome for every branch", () => {
     expect(res.records[0].adapter_kind).toBe("unsupported");
     expect(res.records[0].outcome).toBe("failed");
     expect(res.records[0].error).toBe("unsupported_adapter");
+  });
+});
+
+describe("runEventActs — a recovery re-open governs only acts that existed when the event happened (Slice 2b)", () => {
+  const cfg = (): MockConfig => ({
+    acts: { a1: [
+      { id: "old", position: 1, action_kind: "n8n_run_workflow", tool_key: null, config: {}, created_at: "2026-10-01T00:00:00Z" },
+      { id: "late", position: 2, action_kind: "n8n_run_workflow", tool_key: null, config: {}, created_at: "2026-10-03T00:00:00Z" },
+    ] },
+    activeMembers: new Set(), lanes: { a1: { effective: "confirm" } }, recorded: [],
+  });
+  it("with the cutoff, an act added after the event is never governed or recorded", async () => {
+    const c = cfg();
+    const r = await runEventActs(mockDb(c), event, [auto({})], { actsCreatedAtOrBefore: "2026-10-02T00:00:00Z" });
+    expect(r.records.map((x) => x.act_id)).toEqual(["old"]);
+    expect(c.recorded.map((x) => x._act_id)).toEqual(["old"]);
+  });
+  it("without it (a normal event) every configured act is governed, as before", async () => {
+    const r = await runEventActs(mockDb(cfg()), event, [auto({})]);
+    expect(r.records.map((x) => x.act_id)).toEqual(["old", "late"]);
   });
 });
 

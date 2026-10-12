@@ -370,6 +370,7 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
       const d = await dispatchUnderClaim(db, eventId, actId, adapter, { ...dispatchInput, args: gate.args });
       if (d.kind === "claim_error") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
       if (d.kind === "held") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
+      if (d.kind === "not_dispatchable") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "adapter_not_dispatchable" };
       return advanceLedger(db, base, d.result, "accepted_for_execution");
     }
     // ambiguous, still unconfirmed → report honestly and consume NOTHING (the caller keeps it reclaimable; the
@@ -407,6 +408,7 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
   const d = await dispatchUnderClaim(db, eventId, actId, adapter, { ...dispatchInput, args: gate.args });
   if (d.kind === "claim_error") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_claim_error" };
   if (d.kind === "held") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "dispatch_in_progress" };
+  if (d.kind === "not_dispatchable") return { ok: false, outcome: "accepted_for_execution", executed: false, reason: "adapter_not_dispatchable" };
   return advanceLedger(db, base, d.result, "accepted_for_execution");
 }
 

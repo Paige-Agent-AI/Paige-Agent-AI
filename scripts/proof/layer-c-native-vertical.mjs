@@ -190,10 +190,10 @@ async function workspace(label) {
 
 // A §67 process record: one act, then the grant (an act write drops an auto grant to confirm, so the
 // grant is set after the chain exists, the order a person or Paige follows).
-function processRecord(tenantId, createdBy, lane, stageSlug) {
+function processRecord(tenantId, createdBy, lane, stageSlug, name = "Welcome new contact") {
   const automationId = one(`
     insert into public.paige_automations (tenant_id, name, trigger_key, conditions, created_by, granted_lane, state)
-    values (${q(tenantId)}, 'Welcome new contact', 'contact.created', '[]'::jsonb, ${q(createdBy)}, 'confirm', 'draft')
+    values (${q(tenantId)}, ${q(name)}, 'contact.created', '[]'::jsonb, ${q(createdBy)}, 'confirm', 'draft')
     returning id;
   `);
   sql(`insert into public.paige_automation_acts (automation_id, position, action_kind, config)
@@ -501,7 +501,7 @@ async function main() {
     assert.equal(early.status, 200, JSON.stringify(early.json));
     assert.equal(transitions(g.contactId), 0, "a live claim must block a second dispatcher");
     assert.equal(ledger(g.eventId).outcome, "accepted_for_execution");
-    assert.equal(reconcile() >= 0, true);
+    reconcile();
     assert.equal(one(`select coalesce(detail->>'dispatch_recoveries', '0') from public.paige_act_executions where event_id = ${q(g.eventId)};`), "0",
       "the reconciler must not treat a live claim as dead");
 
@@ -512,11 +512,17 @@ async function main() {
                 updated_at = now() - interval '15 minutes'
           where event_id = ${q(g.eventId)};
          update public.paige_native_events set processing_state = 'error', attempts = 5 where id = ${q(g.eventId)};`);
+    // A second process goes live AFTER the event. The recovery drain is scoped to the stranded automation, so this
+    // old event is never delivered to it.
+    const late = processRecord(G.tenantId, G.owner.id, "auto", "paid_tier", "Granted after the event");
     assert.ok(Number(reconcile()) >= 1, "the reconciler must act on the stranded act");
     assert.equal(one(`select processing_state || ':' || attempts from public.paige_native_events where id = ${q(g.eventId)};`), "pending:4");
     const redrive = await post(drainer.base, { event_id: g.eventId }, keys.service);
     assert.equal(redrive.status, 200, JSON.stringify(redrive.json));
     assert.equal(redrive.json.terminal, "done", JSON.stringify(redrive.json));
+    assert.equal(count(`select count(*) from public.paige_act_executions where event_id = ${q(g.eventId)} and automation_id = ${q(late)};`), 0,
+      "a process granted after the event is never delivered it by a recovery drain");
+    assert.equal(count(`select count(*) from public.paige_event_dispatches where event_id = ${q(g.eventId)} and automation_id = ${q(late)};`), 0);
     const row = ledger(g.eventId);
     assert.equal(row.outcome, "executed");
     assert.equal(transitions(g.contactId), 1);

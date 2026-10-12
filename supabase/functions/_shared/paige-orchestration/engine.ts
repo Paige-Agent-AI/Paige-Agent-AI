@@ -185,12 +185,13 @@ async function resolveAuthorizingPerson(
 /** Load an automation's acts. DISTINGUISHES an infra error (retry) from a genuinely empty act list — a
  *  swallowed read error must never look like "no acts" and let the event complete silently (§13/§32). */
 type LoadActsResult = { ok: true; acts: ActRow[] } | { ok: false; error: string };
-async function loadActs(db: EngineDb, automationId: string): Promise<LoadActsResult> {
-  const { data, error } = await db
+async function loadActs(db: EngineDb, automationId: string, createdAtOrBefore?: string): Promise<LoadActsResult> {
+  let q = db
     .from("paige_automation_acts")
     .select("id, position, action_kind, tool_key, config")
-    .eq("automation_id", automationId)
-    .order("position", { ascending: true });
+    .eq("automation_id", automationId);
+  if (createdAtOrBefore) q = q.lte("created_at", createdAtOrBefore);
+  const { data, error } = await q.order("position", { ascending: true });
   if (error) return { ok: false, error: error.message ?? String(error) };
   if (!Array.isArray(data)) return { ok: false, error: "paige_automation_acts returned a non-array" };
   return { ok: true, acts: data as ActRow[] };
@@ -356,8 +357,12 @@ export type EngineResult = {
 
 /** Orchestrate all acts for a claimed event across its live subscribers, writing the exact per-act
  *  outcome to paige_act_executions (fire-once). Returns a summary for the drainer's response. */
+/** `actsCreatedAtOrBefore` (Slice 2b recovery): govern only acts that existed at that time — set by the drainer
+ *  when the reconciler re-opened a finished event, so an act added after the event never runs for it. */
+export type RunEventActsOptions = { actsCreatedAtOrBefore?: string };
+
 export async function runEventActs(
-  db: EngineDb, event: ClaimedEvent, subscribers: AutomationRow[],
+  db: EngineDb, event: ClaimedEvent, subscribers: AutomationRow[], opts: RunEventActsOptions = {},
 ): Promise<EngineResult> {
   const facts: EventFacts = {
     event_key: event.event_key,
@@ -377,7 +382,7 @@ export async function runEventActs(
 
   for (const automation of subscribers) {
     // Load acts. An INFRA error is a RETRYABLE subscriber — never a false "no acts" that completes silently.
-    const actsRes = await loadActs(db, automation.id);
+    const actsRes = await loadActs(db, automation.id, opts.actsCreatedAtOrBefore);
     if (!actsRes.ok) { subscriber_retry.push(automation.id); continue; }
     const acts = actsRes.acts;
     if (acts.length === 0) continue;   // genuinely no acts to govern — nothing to record
@@ -566,7 +571,7 @@ export async function runEventActs(
         // drain or the reconciler's recovery pass.
         const d = await dispatchUnderClaim(db, rec.event_id, rec.act_id, plan.adapter, nativeInput);
         if (d.kind === "claim_error") { persist_failures.push(rec.act_id); continue; }
-        if (d.kind === "held") { rec.outcome = cur.outcome as ActOutcome; continue; }
+        if (d.kind === "held" || d.kind === "not_dispatchable") { rec.outcome = cur.outcome as ActOutcome; continue; }
         await advanceNative(rec, plan, d.result); continue;
       }
       rec.outcome = cur.outcome as ActOutcome; continue; // no plan this drain → leave for a later drain/sweep
@@ -581,7 +586,7 @@ export async function runEventActs(
       // At most once (Slice 2b): of concurrent runners that both read ABSENT, only the claim holder fires.
       const d = await dispatchUnderClaim(db, rec.event_id, rec.act_id, plan.adapter, nativeInput);
       if (d.kind === "claim_error") { persist_failures.push(rec.act_id); continue; }
-      if (d.kind === "held") continue; // another runner holds the dispatch; the row stays reconcilable
+      if (d.kind === "held" || d.kind === "not_dispatchable") continue; // another runner holds it; stays reconcilable
       await advanceNative(rec, plan, d.result); continue;
     }
     // a native record with a NON-execute decision (condition/held/approval/refused) — record it now.

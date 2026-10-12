@@ -17,7 +17,8 @@ import type { ActionAdapter, DispatchInput, DispatchResult } from "./adapters.ts
 type ClaimDb = { rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> };
 
 /** How long a claim protects a dispatch before another caller may re-take it (the RPC floors it at 7 minutes,
- *  above the edge-function wall-clock cap). The approval refusal copy ("ten minutes") is tied to this value. */
+ *  above the edge-function wall-clock cap). Tied to this value: the approval refusal copy ("ten minutes"), and the
+ *  reconciler's claim-liveness window in paige_reconcile_orchestration_acts (a drift test pins the migration). */
 export const DISPATCH_CLAIM_STALE = "10 minutes";
 
 /** `ok:false` = the claim could not be read or written (infra) — dispatch nothing and retry later.
@@ -44,10 +45,13 @@ export async function claimActDispatch(
   return { ok: true, claimed: typeof id === "string" && id.length > 0 };
 }
 
-/** The result of a dispatch attempt through the seam. `claim_error` and `held` dispatched NOTHING. */
+/** The result of a dispatch attempt through the seam. `claim_error`, `held` and `not_dispatchable` dispatched NOTHING.
+ *  `not_dispatchable` = the adapter has no dispatch at all (callers check first today; distinct so a caller never
+ *  tells the owner "it may already be running" about an act that cannot run). */
 export type ClaimedDispatch =
   | { kind: "claim_error" }
   | { kind: "held" }
+  | { kind: "not_dispatchable" }
   | { kind: "dispatched"; result: DispatchResult };
 
 /** A dispatch that THREW is unconfirmed, never failed and never executed: the call may have gone out. */
@@ -60,7 +64,7 @@ export async function dispatchUnderClaim(
   db: ClaimDb, eventId: string, actId: string,
   adapter: Pick<ActionAdapter, "dispatch" | "lostClaimRecovery">, input: DispatchInput,
 ): Promise<ClaimedDispatch> {
-  if (typeof adapter.dispatch !== "function") return { kind: "held" };
+  if (typeof adapter.dispatch !== "function") return { kind: "not_dispatchable" };
   const claim = await claimActDispatch(db, eventId, actId, {
     allowRetake: adapter.lostClaimRecovery === "readback_proves_absence",
   });

@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import {
   claimActDispatch,
   dispatchUnderClaim,
@@ -83,6 +83,12 @@ describe("dispatchUnderClaim — claim first, dispatch only on a won claim", () 
     expect(unknown.calls[0].args).toMatchObject({ _allow_retake: false });
   });
 
+  it("an adapter with no dispatch is reported not_dispatchable, never 'held' (and nothing is claimed)", async () => {
+    const db = fakeDb("won");
+    expect(await dispatchUnderClaim(db, "e", "a", { lostClaimRecovery: "outcome_unknown" }, input)).toEqual({ kind: "not_dispatchable" });
+    expect(db.calls).toEqual([]);
+  });
+
   it("claimActDispatch keeps the prior default (re-take allowed) for a caller that does not say otherwise", async () => {
     const db = fakeDb("won");
     expect(await claimActDispatch(db, "e", "a")).toEqual({ ok: true, claimed: true });
@@ -91,31 +97,55 @@ describe("dispatchUnderClaim — claim first, dispatch only on a won claim", () 
   });
 });
 
-describe("no Layer-C module dispatches around the seam (static guard)", () => {
-  const dir = resolve(process.cwd(), "supabase/functions/_shared/paige-orchestration");
-  const files = readdirSync(dir).filter((f) => f.endsWith(".ts"));
+describe("no edge module dispatches around the seam (static guard)", () => {
+  const root = resolve(process.cwd(), "supabase/functions");
+  const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? walk(resolve(d, e.name)) : e.name.endsWith(".ts") ? [resolve(d, e.name)] : []);
+  const files = walk(root).map((f) => relative(root, f));
+  const SEAM = "_shared/paige-orchestration/dispatch-claim.ts";
   // Adapter modules DEFINE dispatch and may delegate to their own per-action executor; that is not a call site.
-  const ADAPTER_DEFINITIONS = new Set(["adapters.ts", "native-adapter.ts", "n8n-adapter.ts"]);
+  const ADAPTER_DEFINITIONS = new Set([
+    "_shared/paige-orchestration/adapters.ts",
+    "_shared/paige-orchestration/native-adapter.ts",
+    "_shared/paige-orchestration/n8n-adapter.ts",
+  ]);
+  const read = (f: string) => readFileSync(resolve(root, f), "utf8");
 
-  it("covers the modules that fire acts (the guard would be vacuous if they moved)", () => {
-    expect(files).toEqual(expect.arrayContaining(["engine.ts", "approve-executor.ts", "dispatch-claim.ts"]));
+  it("covers every edge function and the modules that fire acts (the guard would be vacuous if they moved)", () => {
+    expect(files).toEqual(expect.arrayContaining([
+      SEAM, "_shared/paige-orchestration/engine.ts", "_shared/paige-orchestration/approve-executor.ts",
+      "execute-approval/index.ts", "paige-native-event-dispatch/index.ts",
+    ]));
+    expect(files.length).toBeGreaterThan(100);
   });
 
-  it("only dispatch-claim.ts calls an adapter's dispatch", () => {
+  it("only the seam calls an adapter's dispatch", () => {
     const offenders = files
-      .filter((f) => f !== "dispatch-claim.ts" && !ADAPTER_DEFINITIONS.has(f))
-      .filter((f) => /\.dispatch\s*\(/.test(readFileSync(resolve(dir, f), "utf8")));
+      .filter((f) => f !== SEAM && !ADAPTER_DEFINITIONS.has(f))
+      .filter((f) => /\.dispatch\s*\(/.test(read(f)));
     expect(offenders).toEqual([]);
   });
 
-  it("only dispatch-claim.ts calls the claim RPC", () => {
-    const offenders = files
-      .filter((f) => f !== "dispatch-claim.ts")
-      .filter((f) => readFileSync(resolve(dir, f), "utf8").includes("paige_claim_act_dispatch"));
+  it("only the seam calls the claim RPC", () => {
+    const offenders = files.filter((f) => f !== SEAM).filter((f) => read(f).includes("paige_claim_act_dispatch"));
     expect(offenders).toEqual([]);
   });
 
   it("the guard bites: a module that dispatched directly would be caught", () => {
     expect(/\.dispatch\s*\(/.test("try { dr = await plan.adapter.dispatch(nativeInput); }")).toBe(true);
+  });
+});
+
+describe("the reconciler's claim-liveness window is DISPATCH_CLAIM_STALE (drift guard)", () => {
+  const dir = resolve(process.cwd(), "supabase/migrations");
+  const latest = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()
+    .filter((f) => /create or replace function public\.paige_reconcile_orchestration_acts\(/i.test(readFileSync(resolve(dir, f), "utf8")))
+    .pop()!;
+  const body = readFileSync(resolve(dir, latest), "utf8");
+
+  it("the latest reconciler judges a claim live by the same window the callers claim with", () => {
+    expect(latest).toBeTruthy();
+    const m = body.match(/_claim_at::timestamptz >= now\(\) - interval '([^']+)'/);
+    expect(m?.[1]).toBe(DISPATCH_CLAIM_STALE);
   });
 });

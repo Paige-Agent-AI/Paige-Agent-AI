@@ -92,6 +92,20 @@ const PUB = "93.184.216.34"; // a public literal for validator tests only — ne
     if (!/^HTTP\/1\.1 403/.test(r)) fail(`CONNECT private-resolving host should 403, got: ${r.slice(0, 60)}`);
     r = await speak(`CONNECT 127.0.0.1:${tPort} HTTP/1.1\r\nHost: 127.0.0.1:${tPort}\r\n\r\n`);
     if (!/^HTTP\/1\.1 403/.test(r)) fail(`CONNECT private literal should 403, got: ${r.slice(0, 60)}`);
+    // Round-2 fix proof: a BRACKETED v6 target parses through to the VALIDATOR (private v6 refuses
+    // with the ssrf reason header — not target:malformed, which is what the old colon-split gave).
+    {
+      const sock = net.connect(proxy.port, "127.0.0.1");
+      let buf2 = "";
+      const v6resp = await new Promise((res2) => {
+        sock.setTimeout(6000, () => { sock.destroy(); res2(buf2 || "TIMEOUT"); });
+        sock.on("connect", () => sock.write("CONNECT [::1]:443 HTTP/1.1\r\nHost: [::1]:443\r\n\r\n"));
+        sock.on("data", (d) => { buf2 += d.toString("latin1"); if (buf2.includes("\r\n\r\n")) { sock.destroy(); res2(buf2); } });
+        sock.on("error", () => res2(buf2 || "SOCKERR"));
+      });
+      if (!/^HTTP\/1\.1 403/.test(v6resp)) fail(`bracketed v6 should 403, got: ${v6resp.slice(0, 60)}`);
+      if (!/X-Egress-Reason: ssrf:loopback/.test(v6resp)) fail(`bracketed v6 refusal must carry the ssrf reason (parse reached the validator), got: ${v6resp.slice(0, 120)}`);
+    }
     r = await speak(`GET http://privname.test:${tPort}/x HTTP/1.1\r\nHost: privname.test:${tPort}\r\nConnection: close\r\n\r\n`);
     if (!/^HTTP\/1\.1 403/.test(r)) fail(`absolute-form private should 403, got: ${r.slice(0, 60)}`);
     r = await speak(`GET http://pubname.test/x HTTP/1.1\r\nHost: pubname.test\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n`);

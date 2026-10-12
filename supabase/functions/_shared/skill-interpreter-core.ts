@@ -240,7 +240,14 @@ export function foldPublicBrowse(obs: PublicBrowseObservation): string {
 // is the safe direction; the count marker keeps the shape auditable.
 const PATH_TOKEN_SEGMENT_RE = /^[A-Za-z0-9_-]{20,}$/;
 function pathSegmentIsToken(seg: string): boolean {
-  return PATH_TOKEN_SEGMENT_RE.test(seg) && /[0-9]/.test(seg);
+  if (PATH_TOKEN_SEGMENT_RE.test(seg) && /[0-9]/.test(seg)) return true;
+  // Dotted multi-part runs (a full JWT in a path segment) — each part token-shaped (round-2 fix:
+  // the plain charset rule misses ".", letting a JWT path segment reach the rail verbatim).
+  if (seg.includes(".")) {
+    const parts = seg.split(".").filter(Boolean);
+    return parts.length >= 2 && parts.every((pt) => PATH_TOKEN_SEGMENT_RE.test(pt)) && /[0-9]/.test(seg);
+  }
+  return false;
 }
 function redactPathTokens(pathname: string): string {
   return pathname
@@ -255,8 +262,10 @@ export function redactUrlForAudit(raw: string): string {
     const params = [...u.searchParams.keys()];
     const q = params.length ? `?_redacted=${params.length}` : "";
     const frag = u.hash ? "#_redacted" : "";
-    const path = u.pathname.length > 300 ? `${u.pathname.slice(0, 300)}…` : u.pathname;
-    return `${u.protocol}//${u.host}${redactPathTokens(path)}${q}${frag}`;
+    // Redact BEFORE truncating so a partial prefix can never survive (round-2 nit fix).
+    const redacted = redactPathTokens(u.pathname);
+    const path = redacted.length > 300 ? `${redacted.slice(0, 300)}…` : redacted;
+    return `${u.protocol}//${u.host}${path}${q}${frag}`;
   } catch {
     return "_unparseable_url_redacted";
   }

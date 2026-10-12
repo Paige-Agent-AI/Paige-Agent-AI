@@ -156,6 +156,10 @@ describe("redactUrlForAudit — PC-1 audit redaction (secrets never reach the ra
     expect(redactUrlForAudit("https://a.co/annual-report-2026")).toBe("https://a.co/annual-report-2026");
     expect(redactUrlForAudit("https://a.co/infrastructure-modernization")).toBe("https://a.co/infrastructure-modernization");
     expect(redactUrlForAudit("https://a.co/filing/123")).toBe("https://a.co/filing/123");
+    // Round-2 fix: a full dotted JWT in a path segment redacts too (the plain charset rule missed ".").
+    expect(redactUrlForAudit("https://a.co/auth/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV"))
+      .toBe("https://a.co/auth/[token]");
+    expect(redactUrlForAudit("https://a.co/report.final.v2")).toBe("https://a.co/report.final.v2"); // short dotted names stay
   });
   it("caps runaway paths and answers unparseable input honestly", () => {
     const long = "https://a.co/" + "x".repeat(400);

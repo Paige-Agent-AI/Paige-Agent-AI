@@ -373,7 +373,9 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
       // browses cannot together exceed the daily budget. settleBudget runs on EVERY exit — block,
       // success, fault, cancel — releasing the reservation and recording actual seconds; a crashed
       // caller strands at most one reservation until the UTC day window rolls over (documented).
-      const BROWSE_RESERVE_SECONDS = 45; // the Fly host's RUN_CAP_MS worst case (ms/1000, ceil)
+      // Retry-aware worst case: the host makes up to TWO 30s attempts + a 400ms backoff (~60.4s
+      // wall) — the reservation must cover the retry or the daily budget under-counts (round-2 fix).
+      const BROWSE_RESERVE_SECONDS = 61;
       let gateReservedSeconds = 0;
       let controlPlaneReason: string | null = null;
       try {
@@ -400,6 +402,40 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
           console.error(`skill-interpreter[${skill.slug}] browse budget settle failed:`, (e as Error)?.message);
         }
       };
+      if (controlPlaneReason) {
+        // The gate REFUSED (feature flag off, limits missing/disabled, budget exhausted, or the
+        // control plane unreadable): the browse NEVER dispatches. One rail row with the reason and
+        // a capability_refused receipt — same discipline as a guard block (round-2 review fix: the
+        // verdict must be enforced, not advisory). Nothing was reserved, so nothing settles.
+        stepsLog.push({ step: "browse_public", dispatched: false, ok: false, blocked_reason: controlPlaneReason });
+        try {
+          const { error: auditErr } = await deps.admin.from("paige_browser_usage").insert({
+            tenant_id: tenantId,
+            endpoint: "browse-public-url",
+            url_requested: redactUrlForAudit(url),
+            url_resolved: null,
+            blocked_reason: controlPlaneReason,
+            http_status: null,
+            content_bytes: null,
+            response_time_ms: null,
+            created_by: actorUserId,
+          });
+          if (auditErr) console.error(`skill-interpreter[${skill.slug}] control-plane audit insert failed:`, auditErr?.message);
+        } catch (e) {
+          console.error(`skill-interpreter[${skill.slug}] control-plane audit insert threw:`, (e as Error)?.message);
+        }
+        if (tenantId && actorUserId) {
+          await recordCapabilityRun(deps.admin, {
+            tenantId, actorId: actorUserId, capabilityKey: "browse_public_url",
+            outcome: "capability_refused", runId,
+          }).catch(() => {});
+        }
+        return {
+          status: "needs_config",
+          outputs: { reason: "browser_budget_or_control_plane", note: "The workspace's secure-browser control plane blocked this browse." },
+          steps_log: stepsLog,
+        };
+      }
       let observed: PublicBrowseObservation | null = null;
       try {
         const result = await deps.browsePublic({
@@ -408,7 +444,9 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
           maxContentBytes: typeof publicStep.maxContentBytes === "number" ? publicStep.maxContentBytes : undefined,
         });
         if ((result as { needs_config?: boolean })?.needs_config) {
-          // Seam reported unconfigured — honest needs_config, and NO audit row (no call reached the endpoint).
+          // Seam reported unconfigured — honest needs_config, and NO audit row (no call reached the
+          // endpoint). The reservation settles first — this exit must not strand budget (round-2 fix).
+          await settleBudget(gateReservedSeconds);
           stepsLog.push({ step: "browse_public", dispatched: false, needs_config: true });
           return {
             status: "needs_config",

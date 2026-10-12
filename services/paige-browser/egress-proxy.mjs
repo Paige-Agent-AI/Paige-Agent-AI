@@ -57,9 +57,11 @@ export async function resolvePublicConnectTarget(host, { resolve } = {}) {
 }
 
 function refuse(socket, reason, hostForLog) {
-  // Host only, never path/query — the reason code is what audits consume (PC-1 redaction).
+  // Host only, never path/query — the reason code is what audits consume (PC-1 redaction). The
+  // X-Egress-Reason response header carries the CODE (never the host/URL) so callers + smokes can
+  // tell a validator refusal (ssrf:*/denylist:*) from a malformed target (target:malformed).
   console.error(`[egress-proxy] refused ${String(hostForLog || "?")}: ${reason}`);
-  try { socket.write("HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"); } catch { /* already gone */ }
+  try { socket.write(`HTTP/1.1 403 Forbidden\r\nX-Egress-Reason: ${reason}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n`); } catch { /* already gone */ }
   socket.destroy();
 }
 
@@ -97,11 +99,13 @@ export function startEgressProxy({ host = "127.0.0.1", port = 0, resolve } = {})
 
   // CONNECT tunneling (https:// and wss://): validate, dial the pinned address, pipe bytes.
   server.on("connect", async (req, clientSocket, head) => {
-    // IPv6 CONNECT targets arrive bracketed ([2001:db8::1]:443) — strip the brackets before the
-    // host:port split so a PUBLIC v6 literal validates instead of parsing as malformed (review P2;
-    // private v6 still refuses in the validator).
-    const [hostPart, portPart] = String(req.url || "").replace(/^\[|\]$/g, "").split(":");
-    const port = Number(portPart);
+    // IPv6 CONNECT targets arrive bracketed ([2001:db8::1]:443) — parse that shape FIRST so a
+    // public v6 literal validates (round-2 fix: bracket-strip + colon-split mangled v6 hosts);
+    // any malformed shape refuses as target:malformed (fail closed).
+    const target = String(req.url || "");
+    const v6 = target.match(/^\[([^\]]+)\]:(\d+)$/);
+    const hostPart = v6 ? v6[1] : target.split(":")[0];
+    const port = v6 ? Number(v6[2]) : Number(target.split(":")[1]);
     try {
       if (!hostPart || !Number.isInteger(port) || port < 1 || port > 65535) {
         refuse(clientSocket, "target:malformed", hostPart);

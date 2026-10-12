@@ -32,7 +32,7 @@ INSERT INTO public.secure_browser_tenant_limits(tenant_id,enabled,worker_availab
     child.stderr.resume();
     child.on('error', () => reject(new Error('concurrency process unavailable')));
     child.on('close', code => (code === 0 ? resolve(output.trim()) : reject(new Error('concurrency query failed'))));
-    child.stdin.end(`SELECT public.secure_browser_browse_budget_gate('${T}',45)->>'allowed';`);
+    child.stdin.end(`BEGIN; SET LOCAL ROLE service_role; SELECT set_config('request.jwt.claims','{"role":"service_role"}',true); SELECT public.secure_browser_browse_budget_gate('${T}',45)->>'allowed'; COMMIT;`);
   });
 
   const outcomes = await Promise.all(Array.from({ length: 12 }, invoke));

@@ -40,7 +40,7 @@ ACCEPTANCE_CRITERIA: an owner attaches one form to a campaign that names a pipel
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: Overview/Analytics own and default route tests unchanged and passing; the processor (growth-process-submission) unchanged; S1a proof (campaign_lead_attribution.sql) still passes
 
-INTERNAL_BUILD_IDENTITY: 5cf68c6767b5a62367f5b7bf75886a59ebeacfc9; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271026100000 is applied by deploy-migrations on merge, production readback after merge); edge=PROOF_OWED(description strings in _shared/paige-spine/domains/campaigns.ts and _shared/action-risk.ts redeploy the functions that import them on merge, edge-live readback after merge); evidence=scripts/live-drive/campaign-route-drive.mjs
+INTERNAL_BUILD_IDENTITY: 5cf68c6767b5a62367f5b7bf75886a59ebeacfc9; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271026100000 is applied by deploy-migrations on merge, production readback after merge); edge=PROOF_OWED(description strings in _shared/paige-spine/domains/campaigns.ts redeploy the functions that import it on merge, edge-live readback after merge); evidence=scripts/live-drive/campaign-route-drive.mjs
 RELEASE_CHANNEL: development: production on merge (pre-launch, §4)
 RELEASE_CLASSIFICATION: internal-only: routing and wording inside an unreleased journey; a customer version is earned by Experience 03 as a whole
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version until Experience 03 earns one

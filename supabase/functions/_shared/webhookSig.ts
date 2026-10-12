@@ -189,7 +189,7 @@ export type SendgridEventVerdict = { ok: true } | { ok: false; reason: string };
  * Verify a Twilio/SendGrid signed Event Webhook request. Fail-closed by construction.
  *
  * ANT-148 P1: the official protocol signs `timestamp + raw request body` — the
- * timestamp carried by the X-Twilio-Email-Webhook-Event-Timestamp header is
+ * timestamp carried by the X-Twilio-Email-Event-Webhook-Timestamp header is
  * PART of the signed content (Twilio's reference verification updates the
  * digest with the timestamp first, then the raw body, no separator). Verifying
  * the body alone (the pre-correction defect) accepts a replayed body under a

@@ -54,7 +54,7 @@ is acknowledged and NOT recorded (no canonical unsubscribed receipt status;
 suppression/complaint propagation is an explicit deferred decision until tenant
 routing — the resend path writes `paige_suppressions` from resolved campaign
 context the SendGrid receipt path does not yet have). Actual-handler regression
-suite: `src/solo/sendgrid-webhook-handler.test.ts` (12 cases: the ack matrix,
+suite: `src/solo/sendgrid-webhook-handler.test.ts` (11 cases: the ack matrix,
 partial batches, oversized, tampered/absent timestamp, unsigned, unconfigured).
 
 ## Revised owner-console acceptance procedure (post-ANT-148)

@@ -1,0 +1,60 @@
+{
+  "boundary": "Actual Operations components with explicit local synthetic source ports. Refusal/uncertainty/recovery and canonical workspace guard, no production persistence, login, client acceptance, providers or INT-346.",
+  "results": [
+    {
+      "mode": "empty",
+      "sourceStateHonest": true,
+      "noWrite": true
+    },
+    {
+      "mode": "loading",
+      "sourceStateHonest": true,
+      "noWrite": true
+    },
+    {
+      "mode": "error",
+      "sourceStateHonest": true,
+      "noWrite": true
+    },
+    {
+      "mode": "refused",
+      "sourceStateHonest": true,
+      "noWrite": true
+    },
+    {
+      "mode": "partial",
+      "controlsLocked": true,
+      "noWrite": true
+    },
+    {
+      "mode": "admin-refused",
+      "controlsLocked": true,
+      "noWrite": true
+    },
+    {
+      "mode": "evidence-refused",
+      "noForm": true,
+      "noWrite": true
+    },
+    {
+      "mode": "handoff-refused",
+      "exactlyOneSyntheticAttempt": true,
+      "readOnlyRecovery": true,
+      "noSuccessClaim": true
+    },
+    {
+      "mode": "handoff-uncertain",
+      "exactlyOneSyntheticAttempt": true,
+      "readOnlyRecovery": true,
+      "noSuccessClaim": true
+    },
+    {
+      "mode": "workspace-switch",
+      "canonicalGuardRefusesDirty": true,
+      "confirmedDiscard": true,
+      "cleanSwitchAllowed": true,
+      "oldDrawerMasked": true
+    }
+  ],
+  "errors": []
+}

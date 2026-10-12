@@ -60,9 +60,10 @@ result; the proof was run against both mutants and records this.
   other (§67).
 - The dispatcher evaluates a process's `conditions` against the payload, so `{field: "payload.form_id", op:
   "eq", value: <form id>}` would limit a process to one form, and `payload.utm_campaign` to one campaign tag.
-- **Not yet:** no surface writes `conditions` today (Paige's `automation_create` sets none, and no screen edits
-  them). Until then a process on this trigger runs for every matched form submission in the workspace. Narrowing
-  to a form or campaign is slice 6 (Chat), which adds conditions to process authoring.
+- **Since MBC 6a (migration `20271022100000`):** the payload also carries `campaign_brief_ids`, the live
+  campaigns the form is attached to, and a process on this trigger cannot go live until it names one form,
+  several forms or one campaign (`configure_process_scope`; `docs/delivery/process-scope-contract.md`). Before
+  6a a process here would have run for every form; production held no processes when 6a shipped.
 
 ## Not in this slice
 

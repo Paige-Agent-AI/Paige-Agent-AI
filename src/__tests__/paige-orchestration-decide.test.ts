@@ -132,9 +132,16 @@ describe("exact state semantics — TS `outcomes.ts` ↔ SQL migration parity (C
     resolve(process.cwd(), "supabase/migrations/20270126000000_paige_act_execution_ledger.sql"),
     "utf8",
   );
+  // The record RPC's EFFECTIVE definition (INT-179 Slice 2b redefined it with the in-flight guard). The domain
+  // still lives only in the founding migration; `_final` and `_decision` are parsed from the effective RPC.
+  const rpcMigration = readFileSync(
+    resolve(process.cwd(), "supabase/migrations/20271023000000_paige_act_dispatch_claim.sql"),
+    "utf8",
+  );
   // Strip SQL line comments FIRST: several domain entries carry a trailing `-- …` whose prose contains an
   // apostrophe (e.g. "the automation's conditions"), which would otherwise poison a naive quoted-token scan.
   const clean = migration.replace(/--[^\n]*/g, "");
+  const cleanRpc = rpcMigration.replace(/--[^\n]*/g, "");
   const tokens = (block: string | undefined): string[] =>
     (block?.match(/'([a-z_]+)'/g) ?? []).map((s) => s.slice(1, -1));
   const sorted = (xs: readonly string[]): string[] => [...xs].slice().sort();
@@ -150,11 +157,20 @@ describe("exact state semantics — TS `outcomes.ts` ↔ SQL migration parity (C
   });
 
   it("the SQL `_final` array equals FINAL_OUTCOMES, set-for-set (both directions)", () => {
-    const m = clean.match(/_final\s+constant\s+text\[\]\s*:=\s*array\[([\s\S]*?)\]/i);
+    const m = cleanRpc.match(/_final\s+constant\s+text\[\]\s*:=\s*array\[([\s\S]*?)\]/i);
     expect(m, "could not locate the `_final` array in paige_record_act_execution").toBeTruthy();
     const sqlFinal = tokens(m?.[1]);
     expect(sqlFinal.length).toBeGreaterThan(0);
     expect(sorted(sqlFinal)).toEqual(sorted(FINAL_OUTCOMES));
+  });
+
+  it("the SQL `_decision` array is exactly FINAL_OUTCOMES minus the terminal dispatch outcomes", () => {
+    // A decision may never overwrite an in-flight row (Slice 2b). The set must be every FINAL outcome that records
+    // what the engine DECIDED — i.e. FINAL minus executed/failed/cancelled, which are what a dispatch produced.
+    const m = cleanRpc.match(/_decision\s+constant\s+text\[\]\s*:=\s*array\[([\s\S]*?)\]/i);
+    expect(m, "could not locate the `_decision` array in paige_record_act_execution").toBeTruthy();
+    const terminal = new Set(["executed", "failed", "cancelled"]);
+    expect(sorted(tokens(m?.[1]))).toEqual(sorted(FINAL_OUTCOMES.filter((o) => !terminal.has(o))));
   });
 
   it("FINAL_OUTCOMES ⊂ ACT_OUTCOMES and ADVANCEABLE is exactly the complement (one partition, no drift)", () => {
@@ -177,7 +193,7 @@ describe("exact state semantics — TS `outcomes.ts` ↔ SQL migration parity (C
     expect(sorted(producible)).toEqual(sorted(ACT_OUTCOMES));
   });
 
-  it("20270126000000 is the SOLE authority for the domain + the record RPC — a later migration that touches them fails loudly", () => {
+  it("20270126000000 is the SOLE authority for the domain, and the record RPC is defined only where this guard parses it", () => {
     // Codex P2 (post-merge review of #1208): the two parses above read ONLY the founding migration, so a LATER
     // immutable migration that altered the domain or replaced the RPC (with a new _final), while the TS
     // vocabulary was left stale, would compare stale-TS vs stale-founding-SQL and PASS while the deployed schema
@@ -190,14 +206,16 @@ describe("exact state semantics — TS `outcomes.ts` ↔ SQL migration parity (C
     const createsDomain: string[] = [];
     const definesRpc: string[] = [];
     const altersDomain: string[] = [];
-    for (const f of readdirSync(dir).filter((n) => n.endsWith(".sql"))) {
+    for (const f of readdirSync(dir).filter((n) => n.endsWith(".sql")).sort()) {
       const sql = readFileSync(resolve(dir, f), "utf8");
       if (/create\s+domain\s+public\.paige_act_outcome\b/i.test(sql)) createsDomain.push(f);
       if (/create\s+or\s+replace\s+function\s+public\.paige_record_act_execution\b/i.test(sql)) definesRpc.push(f);
       if (/alter\s+domain\s+(public\.)?paige_act_outcome\b/i.test(sql)) altersDomain.push(f);
     }
     expect(createsDomain).toEqual([FOUNDING]);
-    expect(definesRpc).toEqual([FOUNDING]);
+    // (Slice 2b moved the RPC's effective definition to 20271023000000; the `_final`/`_decision` parses read that
+    // file, and this list pins exactly those two definitions. A third definition must repoint.)
+    expect(definesRpc).toEqual([FOUNDING, "20271023000000_paige_act_dispatch_claim.sql"]);
     expect(altersDomain).toEqual([]); // an ALTER DOMAIN ... ADD VALUE would widen the domain past this guard
   });
 });

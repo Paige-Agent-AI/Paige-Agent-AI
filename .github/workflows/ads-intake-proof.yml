@@ -1,0 +1,45 @@
+name: Ads intake default pipeline + lead funnel
+# Every form/external lead lands in a pipeline, and one read counts it per stage, campaign and ad.
+# Synthetic fixtures in a disposable PostgreSQL; the proof refuses any database but its own and
+# rolls back. Never production.
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20270588326001_solo_form_deal_identity.sql'
+      - 'supabase/migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql'
+      - 'supabase/tests/ads_intake_default_pipeline.sql'
+      - '.github/workflows/ads-intake-proof.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20270588326001_solo_form_deal_identity.sql'
+      - 'supabase/migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql'
+      - 'supabase/tests/ads_intake_default_pipeline.sql'
+      - '.github/workflows/ads-intake-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sql-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: ads_intake_default_pipeline_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: ads_intake_default_pipeline_contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: Default pipeline filing, routed forms unchanged, funnel counts and tenant refusals (rolled back)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/ads_intake_default_pipeline.sql

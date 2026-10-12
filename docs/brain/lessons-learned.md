@@ -6,6 +6,18 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### A green proof over a ledger the writer cannot produce (2026-10-12, Experience 04)
+
+**Symptom → root cause → rule.** The E4-S1 client-status proof passed 34/34 and its parity check agreed
+with hand-worked numbers, yet on real data the composer would have reported a whole $3,000 contract
+balance as past due when $200 was. The fixture inserted three instalment-sized invoices naming the
+$3,500 terms, with writer triggers bypassed. The Sales writer refuses that shape
+(`_sales_validate_invoice_terms_reference`): a bound invoice carries the whole agreed amount. The
+proof tested a world that cannot exist. **Rule:** when a fixture bypasses writer guards
+(`session_replication_role=replica`), assert inside the proof that each guarded row passes the
+writer's own validator, and that the shape you are NOT using is refused. Bypass the side effects,
+never the shape.
+
 ### A tool's own policy entry described the defect, and nothing read it as one (2026-10-12, #2072)
 
 **Symptom → root cause → rule.** The legacy MCP `send_invoice` read an invoice by id alone with the

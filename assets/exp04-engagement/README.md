@@ -2,7 +2,8 @@
 
 The screen that answers *"what's the status of this client, what have they paid, what do they still
 owe, and is their work on schedule?"* This folder is a **prototype for the owner's UI approval**, not
-production code. Nothing under `src/` or `supabase/` was changed.
+production code. Nothing in this folder is imported by the app. (The same PR also carries the read, composer and
+unmounted data hook it renders from; those live under `supabase/` and `src/solo/engagement/`.)
 
 - `prototype.html`: one self-contained page. `states.json` is inlined verbatim as `STATES`. The only
   network request is Google Fonts. A reviewer toolbar switches the state (populated · early · empty ·
@@ -15,9 +16,9 @@ production code. Nothing under `src/` or `supabase/` was changed.
 
 | Frame | What it shows |
 |---|---|
-| `populated-desktop-light.png` / `-dark.png` | The $3,500 consulting engagement: signed agreement, 5 attention items, progress against the agreement, separate paid figures, $300 test-mode payment, the 11-row schedule, 6 invoices, delivery 1 of 3 done with 1 overdue. |
+| `populated-desktop-light.png` / `-dark.png` | The $3,500 consulting engagement: signed agreement, 5 attention items, progress against the agreement, separate paid figures, $300 test-mode payment, the 11-row schedule (the two payments due so far plus the next one; the other 8 fold behind one line), 2 issued invoices plus a draft and a void, delivery 1 of 3 done with 1 overdue. |
 | `populated-mobile-light.png` / `-dark.png` | The same engagement as a full-height sheet at 390px. |
-| `early-desktop-light.png` | Agreement sent but not signed, deposit invoiced and past due, nothing paid, no work yet. |
+| `early-desktop-light.png` | Agreement sent but not signed, the agreement invoiced with the deposit and first instalment past due, nothing paid, no work yet. |
 | `empty-desktop-light.png` | A client with no engagement. The empty state explains what this panel will show and offers one way forward: Open in Sales. |
 | `error-desktop-light.png` | "This client's status could not be read." plus Try again. In the prototype, retry goes to loading and then to the populated state. |
 | `refused-desktop-light.png` | "Only the business owner or an admin can see payments for this client." |
@@ -66,8 +67,8 @@ The keyboard test passed every check: Esc closes, focus returns to the row, Ente
 
 ## The honesty rules, and how the design keeps them
 
-- **Verified, recorded and test money are never added together.** Stripe-verified money and money you recorded are separate rows, with no total, and the stage line names both ("Against $3,500 agreed: $100 verified by Stripe and $500 recorded by you"). Test money sits in a dashed "Test payment — not real money" note with its amount struck through, and it is left out of every figure.
-- **The agreed schedule is not the invoices.** "Agreed, not invoiced yet" is its own figure.
+- **Verified, recorded and test money are never added together.** Provider-confirmed money and money you recorded are separate rows, with no total, and the stage line names both ("Against $3,500 agreed: $100 confirmed by your provider and $500 recorded by you"). Test money sits in a dashed "Test payment — not real money" note with its amount struck through, and it is left out of every figure.
+- **The agreed schedule is not the invoices.** The Sales writer only lets an invoice name the terms if it carries the whole agreed amount, so a $3,500 invoice is not $3,500 due today. The bar measures progress against the schedule (paid, due by today and unpaid, not due yet), the contract invoice says "Paid over your agreed schedule" instead of a single due date, and its past-due figure comes from the schedule.
 - **Payments that are in progress or have an unknown result are never shown as received.** They are labelled "Payment in progress — not received yet" and "Needs checking".
 - **Disputes, refunds, the date the agreement takes effect, and which instalment a payment covers are said to be "not tracked yet".** They are never shown as zero.
 - **Internal codes never reach the screen.** Codes such as `outcome_unknown` and `payment_request_failed` are turned into plain sentences.
@@ -76,12 +77,13 @@ The keyboard test passed every check: Esc closes, focus returns to the row, Ente
 
 - **No Send reminder, Charge or Mark paid button.** This slice reads data and changes nothing, and reminders will ask before anything is sent but aren't built. Follow-ups says so plainly.
 - **No onboarding checklist.** Nothing tracks onboarding yet, so it shows a dashed "Not tracked yet — coming in a later release" note. I chose "Not tracked yet" over the brief's "Not started", because "Not started" claims something about the client that the data doesn't know.
-- **No payment state on schedule rows.** Which invoice pays which instalment is not recorded, so a schedule row cannot honestly say "paid". Rows say "Was due" or "Upcoming", and payment states live on the invoices.
+- **No payment state on schedule rows.** Which invoice pays which instalment is not recorded, so a schedule row cannot honestly say "paid". Rows sit under "Due so far" or "Still to come", and payment states live on the invoices.
 
 ## Data fields that were unclear
 
 1. **`failed_request_count` (1):** the composed status gives a count but no invoice. The attention line says "1 payment request failed. Nothing was collected from it." and names no invoice.
-2. **`awaiting_confirmation`:** the brief describes it as "awaiting the client", but `status.ts` describes it as a live payment request still in progress. The copy says "Payment in progress — not received until Stripe confirms" rather than assuming the client still has to act.
+2. **`awaiting_confirmation`:** the brief describes it as "awaiting the client", but `status.ts` describes it as a live payment request still in progress. The copy says "Payment in progress — not received until your provider confirms" rather than assuming the client still has to act.
 3. **`reversal_count` (1):** this is not one of the attention items, and the data doesn't say which payment was reversed. It appears as a footnote: "1 payment record was reversed and is already left out of the figures above". This relies on `recorded_by_owner_minor` being net of reversals, which `status.ts` documents.
-4. **Money received against the agreement is not a field on the status.** The bar works it out from the invoices tied to the agreement and checks it against `due_to_date − behind_schedule` (both $600 here). Production should get this figure from the composer rather than re-deriving it.
-5. **E4-0003 has a $300 test-mode payment and is still $300 unpaid.** Both are shown on that invoice.
+4. **Money received against the agreement** now comes from the composer (`received_against_terms`). The page still cross-checks it against `due_to_date − behind_schedule` (both $600 here) and logs any mismatch.
+5. **E4-0001 carries a $300 test-mode payment.** It is shown on that invoice and left out of every figure; what is owed on it ignores it.
+6. **`states.json` is generated, not hand-written.** `compose-states.mts` builds it from the real read fixture through the shared composer.

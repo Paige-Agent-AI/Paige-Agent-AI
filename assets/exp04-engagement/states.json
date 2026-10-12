@@ -9,8 +9,8 @@
       "state": "signed",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:03:47.807234+00:00",
-      "completed_at": "2026-09-01T21:03:47.807234+00:00",
+      "sent_at": "2026-08-28T21:37:17.420944+00:00",
+      "completed_at": "2026-09-01T21:37:17.420944+00:00",
       "sealed": true,
       "bound_to_terms": true,
       "effective": "not_recorded"
@@ -112,15 +112,19 @@
       "mixed_currency": false,
       "contracted_minor": 350000,
       "due_to_date_minor": 80000,
-      "invoiced_minor": 122000,
-      "invoiced_against_terms_minor": 110000,
-      "not_yet_invoiced_minor": 240000,
+      "invoiced_minor": 362000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000
+      },
+      "not_yet_invoiced_minor": 0,
       "received": {
         "verified_minor": 10000,
         "recorded_by_owner_minor": 50000,
         "test_environment_minor": 30000
       },
-      "outstanding_minor": 62000,
+      "outstanding_minor": 302000,
       "overdue_minor": 32000,
       "awaiting_confirmation_minor": 20000,
       "outcome_unknown_count": 1,
@@ -131,8 +135,8 @@
     },
     "invoices": [
       {
-        "id": "e4000000-0000-4000-8000-0000000e0005",
-        "number": "E4-0005",
+        "id": "e4000000-0000-4000-8000-0000000e0003",
+        "number": "E4-0003",
         "status": "draft",
         "payment_state": "draft",
         "amount_minor": 99900,
@@ -140,29 +144,15 @@
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
+        "past_due_minor": 0,
         "due_date": null,
         "overdue": false,
         "bound_to_terms": false,
         "legacy_status": false
       },
       {
-        "id": "e4000000-0000-4000-8000-0000000e0006",
-        "number": "E4-0006",
-        "status": "void",
-        "payment_state": "void",
-        "amount_minor": 77700,
-        "outstanding_minor": 0,
-        "verified_minor": 0,
-        "recorded_by_owner_minor": 0,
-        "test_environment_minor": 0,
-        "due_date": null,
-        "overdue": false,
-        "bound_to_terms": false,
-        "legacy_status": false
-      },
-      {
-        "id": "e4000000-0000-4000-8000-0000000e0004",
-        "number": "E4-0004",
+        "id": "e4000000-0000-4000-8000-0000000e0002",
+        "number": "E4-0002",
         "status": "issued",
         "payment_state": "outcome_unknown",
         "amount_minor": 12000,
@@ -170,53 +160,41 @@
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
+        "past_due_minor": 12000,
         "due_date": "2026-10-02",
         "overdue": true,
         "bound_to_terms": false,
         "legacy_status": false
       },
       {
-        "id": "e4000000-0000-4000-8000-0000000e0003",
-        "number": "E4-0003",
-        "status": "issued",
-        "payment_state": "unpaid",
-        "amount_minor": 30000,
-        "outstanding_minor": 30000,
+        "id": "e4000000-0000-4000-8000-0000000e0004",
+        "number": "E4-0004",
+        "status": "void",
+        "payment_state": "void",
+        "amount_minor": 77700,
+        "outstanding_minor": 0,
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
-        "test_environment_minor": 30000,
-        "due_date": "2026-11-01",
-        "overdue": false,
-        "bound_to_terms": true,
-        "legacy_status": false
-      },
-      {
-        "id": "e4000000-0000-4000-8000-0000000e0002",
-        "number": "E4-0002",
-        "status": "issued",
-        "payment_state": "awaiting_confirmation",
-        "amount_minor": 30000,
-        "outstanding_minor": 20000,
-        "verified_minor": 10000,
-        "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
-        "due_date": "2026-10-02",
-        "overdue": true,
-        "bound_to_terms": true,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
         "legacy_status": false
       },
       {
         "id": "e4000000-0000-4000-8000-0000000e0001",
         "number": "E4-0001",
         "status": "issued",
-        "payment_state": "paid",
-        "amount_minor": 50000,
-        "outstanding_minor": 0,
-        "verified_minor": 0,
+        "payment_state": "awaiting_confirmation",
+        "amount_minor": 350000,
+        "outstanding_minor": 290000,
+        "verified_minor": 10000,
         "recorded_by_owner_minor": 50000,
-        "test_environment_minor": 0,
+        "test_environment_minor": 30000,
+        "past_due_minor": 20000,
         "due_date": "2026-09-02",
-        "overdue": false,
+        "overdue": true,
         "bound_to_terms": true,
         "legacy_status": false
       }
@@ -230,14 +208,14 @@
       "blocked": 0,
       "next": {
         "title": "Draft discovery report",
-        "due_at": "2026-10-10T21:03:47.807234+00:00",
+        "due_at": "2026-10-10T21:37:17.420944+00:00",
         "item_type": "task"
       },
       "items": [
         {
           "id": "e4000000-0000-4000-8000-000000090002",
           "title": "Draft discovery report",
-          "due_at": "2026-10-10T21:03:47.807234+00:00",
+          "due_at": "2026-10-10T21:37:17.420944+00:00",
           "status": "in_progress",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
@@ -247,7 +225,7 @@
         {
           "id": "e4000000-0000-4000-8000-000000090003",
           "title": "Strategy review",
-          "due_at": "2026-10-26T21:03:47.807234+00:00",
+          "due_at": "2026-10-26T21:37:17.420944+00:00",
           "status": "open",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": false,
@@ -257,12 +235,12 @@
         {
           "id": "e4000000-0000-4000-8000-000000090001",
           "title": "Kickoff workshop",
-          "due_at": "2026-09-12T21:03:47.807234+00:00",
+          "due_at": "2026-09-12T21:37:17.420944+00:00",
           "status": "done",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
           "item_type": "milestone",
-          "completed_at": "2026-09-13T21:03:47.807234+00:00"
+          "completed_at": "2026-09-13T21:37:17.420944+00:00"
         }
       ]
     },
@@ -285,7 +263,7 @@
       "invoices": false,
       "work": false
     },
-    "receipt_id": "03d51813-2f8e-42e9-bcc8-1d18839d1fa4"
+    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
   },
   "early": {
     "client": {
@@ -297,7 +275,7 @@
       "state": "sent",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:03:47.807234+00:00",
+      "sent_at": "2026-08-28T21:37:17.420944+00:00",
       "completed_at": null,
       "sealed": false,
       "bound_to_terms": true,
@@ -400,16 +378,20 @@
       "mixed_currency": false,
       "contracted_minor": 350000,
       "due_to_date_minor": 80000,
-      "invoiced_minor": 50000,
-      "invoiced_against_terms_minor": 50000,
-      "not_yet_invoiced_minor": 300000,
+      "invoiced_minor": 350000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0
+      },
+      "not_yet_invoiced_minor": 0,
       "received": {
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0
       },
-      "outstanding_minor": 50000,
-      "overdue_minor": 50000,
+      "outstanding_minor": 350000,
+      "overdue_minor": 80000,
       "awaiting_confirmation_minor": 0,
       "outcome_unknown_count": 0,
       "failed_request_count": 0,
@@ -423,11 +405,12 @@
         "number": "E4-0001",
         "status": "issued",
         "payment_state": "unpaid",
-        "amount_minor": 50000,
-        "outstanding_minor": 50000,
+        "amount_minor": 350000,
+        "outstanding_minor": 350000,
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
+        "past_due_minor": 80000,
         "due_date": "2026-09-02",
         "overdue": true,
         "bound_to_terms": true,
@@ -461,7 +444,7 @@
       "invoices": false,
       "work": false
     },
-    "receipt_id": "03d51813-2f8e-42e9-bcc8-1d18839d1fa4"
+    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
   },
   "empty": {
     "client": {
@@ -487,6 +470,10 @@
       "due_to_date_minor": null,
       "invoiced_minor": 0,
       "invoiced_against_terms_minor": 0,
+      "received_against_terms": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0
+      },
       "not_yet_invoiced_minor": null,
       "received": {
         "verified_minor": 0,
@@ -526,6 +513,6 @@
       "invoices": false,
       "work": false
     },
-    "receipt_id": "03d51813-2f8e-42e9-bcc8-1d18839d1fa4"
+    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
   }
 }

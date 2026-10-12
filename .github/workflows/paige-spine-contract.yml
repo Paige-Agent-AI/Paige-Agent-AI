@@ -121,6 +121,7 @@ on:
       - "scripts/ci/grant-ordering-proof.sh"
       - "scripts/proof/mcp-gateway-tools-action.mjs"
       # Experience 04 E4-S1 — where this client stands (source read + composer parity).
+      - "supabase/tests/exp04_client_engagement_status.sql"
       - "scripts/proof/exp04-client-status-parity.mjs"
       - "supabase/functions/_shared/client-engagement/**"
 

@@ -2693,7 +2693,7 @@ mcp.tool("create_invoice", {
       due_date: dueDate,
       memo: args.memo ?? null,
       payment_plan_key: args.payment_plan_key ?? null,
-      hosted_invoice_url: null, // populated when send_invoice runs (Stripe Connect or fallback)
+      hosted_invoice_url: null, // the legacy send_invoice that filled this is retired (#2072); governed delivery is sales-invoice-delivery
       created_by: createdBy,
     }).select("id, invoice_number, status, amount_total_cents, hosted_invoice_url").single();
     if (error) return err(error.message);

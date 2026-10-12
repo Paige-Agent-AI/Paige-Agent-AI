@@ -11,6 +11,9 @@
 //   * Facts the platform does not record (disputes, refunds, an "effective" transition,
 //     installment-level allocation) are declared as not recorded — never inferred as zero.
 //   * Unreadable or inconsistent sources degrade to a named state, never to a confident number.
+//   * An invoice bound to the terms always carries the WHOLE agreed amount (the Sales writer refuses
+//     anything else: _sales_validate_invoice_terms_reference), so what is past due on it comes from
+//     the agreed schedule, never from the invoice total against its first due date.
 // The schedule is expanded by the canonical Collections model; nothing here re-derives it.
 import { parseCollectionTerms, MAX_SCHEDULE } from '../sales-collections/contract.ts';
 import { previewCollectionSchedule } from '../sales-collections/model.ts';
@@ -62,7 +65,7 @@ export type WorkState = 'none' | 'complete' | 'on_schedule' | 'behind' | 'undate
 export type Attention = 'agreement_not_signed' | 'agreement_not_bound_to_terms' | 'terms_stale'
   | 'terms_unreadable' | 'payment_overdue' | 'behind_schedule' | 'payment_outcome_unknown'
   | 'payment_request_failed' | 'invoice_status_legacy' | 'work_overdue' | 'work_blocked'
-  | 'mixed_currency' | 'list_truncated';
+  | 'mixed_currency' | 'list_truncated' | 'terms_invoiced_more_than_once' | 'other_terms_not_shown';
 
 export type ScheduleRow = { sequence: number; due_date: string; amount_minor: number; due: boolean; label: string | null };
 
@@ -86,26 +89,32 @@ export type ClientEngagementStatus = {
     contracted_minor: number | null;
     /** Sum of schedule rows due on or before as_of_date; null when it cannot be known exactly. */
     due_to_date_minor: number | null;
+    // Every money total below is null when currencies are mixed or the invoice list is truncated:
+    // a sum across currencies is meaningless and a sum over a partial list is a lower bound.
     /** Billed on invoices (issued, imported or legacy sent/paid); drafts, voids and write-offs excluded. */
-    invoiced_minor: number;
+    invoiced_minor: number | null;
     /** Billed on invoices that reference the agreed terms. */
-    invoiced_against_terms_minor: number;
+    invoiced_against_terms_minor: number | null;
+    /** Real receipts on invoices that reference the agreed terms, still kept apart by evidence class. */
+    received_against_terms: { verified_minor: number | null; recorded_by_owner_minor: number | null };
     /** contracted − invoiced against the terms, when both are known; agreed but not yet invoiced. */
     not_yet_invoiced_minor: number | null;
     received: {
       /** Settled by the payment provider in its LIVE environment and verified by readback. */
-      verified_minor: number;
+      verified_minor: number | null;
       /** Recorded by the owner by hand (net of reversals). Real, but not provider-verified. */
-      recorded_by_owner_minor: number;
+      recorded_by_owner_minor: number | null;
       /** Provider TEST environment. Never real money; excluded from every total. */
-      test_environment_minor: number;
+      test_environment_minor: number | null;
     };
-    /** invoiced − (verified + recorded by owner). Test money never reduces what is owed. */
-    outstanding_minor: number;
-    /** Outstanding on invoices whose due date has passed. */
-    overdue_minor: number;
-    /** Payment requests still in flight (live). Not received until the provider settles. */
-    awaiting_confirmation_minor: number;
+    /** invoiced − (verified + recorded by owner): the remaining balance, including schedule rows not
+     *  yet due on an invoice bound to the terms. Test money never reduces what is owed. */
+    outstanding_minor: number | null;
+    /** Past due: on a bound invoice, schedule rows due before today less real receipts on it; on any
+     *  other invoice, its remaining balance once its due date has passed. Null when not knowable. */
+    overdue_minor: number | null;
+    /** Payment requests in flight (live, dispatched) on invoices still owed. Not received until settled. */
+    awaiting_confirmation_minor: number | null;
     outcome_unknown_count: number;
     failed_request_count: number;
     /** due_to_date − real receipts on invoices referencing the terms; positive means behind. Null when unknown. */
@@ -116,6 +125,8 @@ export type ClientEngagementStatus = {
   invoices: Array<{
     id: string; number: string; status: string; payment_state: InvoicePaymentState; amount_minor: number;
     outstanding_minor: number; verified_minor: number; recorded_by_owner_minor: number; test_environment_minor: number;
+    /** What is past due on this invoice; null for a bound invoice whose schedule cannot be read. */
+    past_due_minor: number | null;
     due_date: string | null; overdue: boolean; bound_to_terms: boolean; legacy_status: boolean;
   }>;
   work: {
@@ -172,7 +183,9 @@ function composeTerms(row: SourceTerms | null, asOf: string): ClientEngagementSt
 
 function composeAgreement(signings: SourceSigning[], termsId: string | null): ClientEngagementStatus['agreement'] {
   const newest = (rows: SourceSigning[]) => [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  const bound = termsId ? newest(signings.filter(s => s.commercial_terms_id === termsId)) : undefined;
+  const forTerms = termsId ? signings.filter(s => s.commercial_terms_id === termsId) : [];
+  // A newer draft or voided amendment does not unsign the agreement already signed for these terms.
+  const bound = newest(forTerms.filter(s => s.status === 'completed' && s.sealed)) ?? newest(forTerms);
   const chosen = bound ?? newest(signings);
   if (!chosen) {
     return { state: 'none', signing_id: null, title: null, sent_at: null, completed_at: null, sealed: false,
@@ -193,7 +206,8 @@ function invoicePaymentState(row: SourceInvoice, outstanding: number): InvoicePa
   if (row.status === 'uncollectible') return 'written_off';
   if (row.open_payment_requests.some(r => r.environment === 'live' && r.state === 'outcome_unknown')) return 'outcome_unknown';
   if (outstanding <= 0) return 'paid';
-  if (row.open_payment_requests.some(r => r.environment === 'live')) return 'awaiting_confirmation';
+  // A request still being prepared has not reached the client, so it is not a payment in progress.
+  if (row.open_payment_requests.some(r => r.environment === 'live' && r.state !== 'prepared')) return 'awaiting_confirmation';
   return outstanding < row.amount_minor ? 'partially_paid' : 'unpaid';
 }
 
@@ -208,63 +222,96 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   const currencies = new Set<string>();
   if (terms?.currency) currencies.add(terms.currency.toLowerCase());
 
-  let invoiced = 0, verified = 0, recorded = 0, test = 0, outstanding = 0, overdue = 0;
+  // The terms' schedule: what was due before today (past due) and on or before today (due to date).
+  const usable = terms?.state === 'current';
+  const lastShown = terms?.schedule.at(-1)?.due_date;
+  // A truncated schedule can only be summed exactly if every unseen row falls after as_of.
+  const scheduleKnown = usable && (!terms!.schedule_has_more || (lastShown !== undefined && lastShown > asOf));
+  const pastDueOnSchedule = scheduleKnown
+    ? terms!.schedule.filter(r => r.due_date < asOf).reduce((sum, r) => sum + r.amount_minor, 0) : null;
+  const billedBound = termsRow ? source.invoices.filter(i => BILLED.has(i.status)
+    && i.commercial_terms_reference?.id === termsRow.id).length : 0;
+  // Two billed invoices each carrying the whole agreed amount cannot both be the obligation.
+  if (billedBound > 1) attention.add('terms_invoiced_more_than_once');
+
+  let invoiced = 0, verified = 0, recorded = 0, test = 0, outstanding = 0;
+  let overdue: number | null = 0;
   // Totals against the agreed terms only: an unrelated invoice for the same client is neither
   // progress on the schedule nor part of what remains to be invoiced under it.
-  let termsInvoiced = 0, termsReceived = 0;
+  let termsInvoiced = 0, termsVerified = 0, termsRecorded = 0;
   let awaiting = 0, unknown = 0, failed = 0, reversals = 0;
   const invoices: ClientEngagementStatus['invoices'] = source.invoices.map(row => {
     const amount = minor(row.amount_minor, 'amount');
     const live = minor(row.provider_verified_live_minor, 'live');
     const manual = minor(row.manual_recorded_minor, 'manual');
     const testMinor = minor(row.provider_verified_test_minor, 'test');
-    if (live < 0 || testMinor < 0) fail('negative_provider');
+    if (live < 0 || testMinor < 0 || manual < 0) fail('negative_receipts');
     const billed = BILLED.has(row.status);
     // Test money never reduces what is owed: outstanding is measured against real receipts only.
     const owed = billed ? Math.max(0, amount - live - manual) : 0;
     const paymentState = invoicePaymentState(row, owed);
-    const isOverdue = billed && owed > 0 && row.due_date !== null && row.due_date < asOf;
     const bound = Boolean(termsRow && row.commercial_terms_reference?.id === termsRow.id);
+    let pastDue: number | null = 0;
+    if (billed && owed > 0) {
+      if (bound) {
+        pastDue = pastDueOnSchedule === null || billedBound > 1 ? null
+          : Math.min(owed, Math.max(0, pastDueOnSchedule - live - manual));
+      } else if (row.due_date !== null && row.due_date < asOf) {
+        pastDue = owed;
+      }
+    }
     if (billed) {
       currencies.add(row.currency.toLowerCase());
       invoiced += amount; verified += live; recorded += manual; outstanding += owed;
-      if (bound) { termsInvoiced += amount; termsReceived += live + manual; }
-      if (isOverdue) overdue += owed;
+      if (bound) { termsInvoiced += amount; termsVerified += live; termsRecorded += manual; }
+      overdue = overdue === null || pastDue === null ? null : overdue + pastDue;
       if (LEGACY.has(row.status)) attention.add('invoice_status_legacy');
     }
     test += testMinor;
     reversals += minor(row.reversal_count, 'reversals');
-    failed += minor(row.failed_payment_requests, 'failed');
-    for (const request of row.open_payment_requests) {
-      if (request.environment !== 'live') continue;
-      if (request.state === 'outcome_unknown') unknown += 1;
-      else awaiting += minor(request.amount_minor, 'request');
+    // Requests matter only while the invoice is still owed; once it is paid, void or a draft they are history.
+    if (billed && owed > 0) {
+      failed += minor(row.failed_payment_requests, 'failed');
+      for (const request of row.open_payment_requests) {
+        if (request.environment !== 'live') continue;
+        if (request.state === 'outcome_unknown') { unknown += 1; continue; }
+        // A request still being prepared has not reached the client.
+        if (request.state === 'prepared') continue;
+        currencies.add(request.currency.toLowerCase());
+        awaiting += minor(request.amount_minor, 'request');
+      }
     }
     return {
       id: row.id, number: row.invoice_number, status: row.status, payment_state: paymentState, amount_minor: amount,
       outstanding_minor: owed, verified_minor: live, recorded_by_owner_minor: manual, test_environment_minor: testMinor,
-      due_date: row.due_date, overdue: isOverdue,
+      past_due_minor: pastDue, due_date: row.due_date, overdue: (pastDue ?? 0) > 0,
       bound_to_terms: bound,
       legacy_status: LEGACY.has(row.status),
     };
   });
 
   const mixed = currencies.size > 1;
-  const termsUsable = terms?.state === 'current' && !mixed;
+  const termsUsable = usable && !mixed && billedBound <= 1;
   const finite = termsUsable && !terms!.recurring && !terms!.schedule_has_more;
   const contracted = finite ? terms!.agreed_minor : null;
-  // A truncated schedule can only be summed exactly if every unseen row is due after as_of.
-  const lastShown = terms?.schedule.at(-1)?.due_date;
-  const dueKnown = termsUsable && (!terms!.schedule_has_more || (lastShown !== undefined && lastShown > asOf));
-  const dueToDate = dueKnown ? terms!.schedule.filter(r => r.due).reduce((sum, r) => sum + r.amount_minor, 0) : null;
-  const behind = dueToDate === null ? null : dueToDate - termsReceived;
+  const dueToDate = termsUsable && scheduleKnown
+    ? terms!.schedule.filter(r => r.due).reduce((sum, r) => sum + r.amount_minor, 0) : null;
+  const behind = dueToDate === null ? null : dueToDate - (termsVerified + termsRecorded);
+
+  const truncated = { terms: source.terms_has_more, signings: source.signings_has_more,
+    invoices: source.invoices_has_more, work: source.work.items_has_more };
+  // A truncated or mixed list makes every money total a lower bound or a sum of unlike units.
+  const totalsKnown = !mixed && !truncated.invoices && !truncated.terms;
+  const known = (value: number | null) => (totalsKnown ? value : null);
+  // Several live contracts (one per offer) can exist; only the first is composed, so say so.
+  if (source.terms.filter(row => row.status === 'active' || row.status === 'paused').length > 1) attention.add('other_terms_not_shown');
 
   if (terms?.state === 'stale') attention.add('terms_stale');
   if (terms?.state === 'unreadable') attention.add('terms_unreadable');
   if (terms && agreement.state !== 'signed') attention.add('agreement_not_signed');
   if (agreement.state !== 'none' && terms && !agreement.bound_to_terms) attention.add('agreement_not_bound_to_terms');
-  if (overdue > 0) attention.add('payment_overdue');
-  if (behind !== null && behind > 0) attention.add('behind_schedule');
+  if ((overdue ?? 0) > 0) attention.add('payment_overdue');
+  if (totalsKnown && behind !== null && behind > 0) attention.add('behind_schedule');
   if (unknown > 0) attention.add('payment_outcome_unknown');
   if (failed > 0) attention.add('payment_request_failed');
   if (mixed) attention.add('mixed_currency');
@@ -281,11 +328,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   if (w.overdue > 0) attention.add('work_overdue');
   if (w.blocked > 0) attention.add('work_blocked');
 
-  const truncated = { terms: source.terms_has_more, signings: source.signings_has_more,
-    invoices: source.invoices_has_more, work: w.items_has_more };
-  // A truncated invoice list makes every money total a lower bound, so the totals are withheld.
   if (truncated.invoices || truncated.terms || truncated.signings) attention.add('list_truncated');
-  const totalsKnown = !mixed && !truncated.invoices;
 
   return {
     client: { id: source.contact_id, name: source.client_name },
@@ -294,18 +337,19 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     terms,
     money: {
       currency: mixed ? null : [...currencies][0] ?? null, mixed_currency: mixed,
-      contracted_minor: totalsKnown ? contracted : null,
-      due_to_date_minor: totalsKnown ? dueToDate : null,
-      invoiced_minor: invoiced,
-      invoiced_against_terms_minor: termsInvoiced,
+      contracted_minor: known(contracted),
+      due_to_date_minor: known(dueToDate),
+      invoiced_minor: known(invoiced),
+      invoiced_against_terms_minor: known(termsInvoiced),
+      received_against_terms: { verified_minor: known(termsVerified), recorded_by_owner_minor: known(termsRecorded) },
       not_yet_invoiced_minor: totalsKnown && contracted !== null ? Math.max(0, contracted - termsInvoiced) : null,
-      received: { verified_minor: verified, recorded_by_owner_minor: recorded, test_environment_minor: test },
-      outstanding_minor: outstanding,
-      overdue_minor: overdue,
-      awaiting_confirmation_minor: awaiting,
+      received: { verified_minor: known(verified), recorded_by_owner_minor: known(recorded), test_environment_minor: known(test) },
+      outstanding_minor: known(outstanding),
+      overdue_minor: known(overdue),
+      awaiting_confirmation_minor: known(awaiting),
       outcome_unknown_count: unknown,
       failed_request_count: failed,
-      behind_schedule_minor: totalsKnown ? behind : null,
+      behind_schedule_minor: known(behind),
       reversal_count: reversals,
       disputes: 'not_recorded',
     },

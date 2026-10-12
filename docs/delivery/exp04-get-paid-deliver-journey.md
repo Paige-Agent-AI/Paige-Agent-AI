@@ -102,7 +102,7 @@ PAIGE then does the following:
 | Reconcile against provider evidence | **REUSE** | A signed webhook only locates the operation. A fresh account-scoped GET decides the result. `allocate_verified_sales_invoice_payment` writes it, with a receipt guard and a unique settlement index. |
 | "Issued ≠ received" | **REUSE, structural** | Issue never writes a payment. `evidence_kind` separates `manual_recorded` from `provider_verified`. Readers label the classes. |
 | Stripe posture (§38) | **REUSE** | Connect direct charges on the tenant's account, application fee 0, `transfer_data` refused (`_shared/sales-payments/stripe-hosted.ts:33,76,90–93`). **The environment is derived from the platform key prefix, which is LIVE.** A Stripe TEST settlement needs a separate test configuration and is `UNAVAILABLE` today. |
-| One canonical ledger | — | `paige_invoices` (obligation) · `paige_invoice_payments` (append-only receipts) · `paige_invoice_provider_operations` (async facts). **Do not touch or duplicate:** `paige_payment_authorizations`, storefront `tenant_orders`, `platform_*`, the legacy `stripe_invoice_id` columns, or the `paige-mcp` invoice tools (filed **#2072**). |
+| One canonical ledger | — | `paige_invoices` (obligation) · `paige_invoice_payments` (append-only receipts) · `paige_invoice_provider_operations` (async facts). **Do not touch or duplicate:** `paige_payment_authorizations`, storefront `tenant_orders`, `platform_*`, or the legacy `stripe_invoice_id` columns. The `paige-mcp` `send_invoice` tool is contained in E4-S1 (#2072, §11); `create_invoice`'s remaining issues stay with Sales/Communications under #2072. |
 
 ### 2c. Onboarding and delivery
 
@@ -192,9 +192,10 @@ reply with a wall of text and does not ask ten questions.
 **Client record → Engagement panel (one home, §18).**
 - The panel is one surface: a five-stage horizontal stepper.
   - **Agreement**: draft / sent / signed / effective.
-  - **Payments**: a schedule table. Each row carries a state chip (scheduled · invoiced · awaiting payment ·
-    received *(you recorded)* · received *(verified by Stripe)* · overdue · disputed). Totals show **paid / still owed
-    / next due**.
+  - **Payments**: progress against the agreed schedule (paid, due and unpaid, not due yet) and the schedule
+    itself. **Superseded by E4-S1 (§11):** rows carry no paid/received chip, because which payment covers which
+    instalment is not recorded (`installment_allocation`). Payment states live on invoices. Disputes are shown
+    as not tracked. Totals show **paid (by evidence class) / still owed / past due**.
   - **Onboarding**: the checklist with owner/client responsibility.
   - **Delivery**: milestones, on track / overdue.
   - **Follow-ups**: next planned touch, the last outcome, and paused-because.
@@ -421,23 +422,74 @@ Each has a recommendation. They are reversible unless marked.
     money never reduces what is owed;
   - the agreed schedule is kept apart from invoices: `not_yet_invoiced` and `behind_schedule`
     count only invoices that reference the terms;
+  - an invoice bound to the terms carries the whole agreed amount (the Sales writer refuses
+    anything else), so what is past due on it is taken from the schedule, never from its whole
+    balance against its first due date. Two billed invoices bound to the same terms withhold the
+    terms figures and raise `terms_invoiced_more_than_once`;
   - in-flight or unknown payment requests are never treated as received;
   - unrecorded facts (disputes, refunds, an "effective" transition, installment allocation) are
     declared as not recorded, never zeroed;
-  - unreadable, stale, mixed-currency and truncated sources withhold totals instead of
-    understating them.
+  - unreadable or stale terms withhold the schedule figures; mixed currencies or a truncated
+    invoice or terms list withhold **every** money total (invoiced, received, outstanding, past due,
+    in progress, behind), never a sum of unlike units or a lower bound shown as a total;
+  - a payment request still being prepared is not "in progress", and requests on invoices that
+    are paid, void or draft are not counted.
 - Data seam: `src/solo/engagement/useClientEngagementStatus.ts`. It is **not mounted** in any
   shell; the Engagement panel waits on the owner's UI review (prototype in
-  `assets/exp04-engagement/`).
+  `assets/exp04-engagement/`). The server's own refusal (42501) becomes a `refused` state, a
+  person with no active workspace gets `no_workspace`, and malformed answers log their internal
+  code and show only "could not be read".
+- **Known limit:** "today" is the UTC date (`as_of_date`), not the business's time zone, so an
+  invoice can turn past due up to a day early or late around midnight. Fixing it needs the
+  tenant's time zone in the read; it is named here rather than hidden.
+
+**Correction recorded (§13).** The first version of this slice (`cee47dd7`) proved itself against
+a ledger the Sales writer cannot produce: three instalment-sized invoices each naming the $3,500
+terms. `_sales_validate_invoice_terms_reference` refuses that (22023); a bound invoice must carry
+the whole agreed amount with the deposit as its amount due now. On that real shape the first
+composer reported the whole remaining contract as past due ($3,000 instead of $200). The
+independent adversarial reviewer found it. The fixture is now writer-legal, the proof checks the
+bound invoice against the writer's own validator and checks that the instalment shape is
+refused, and past due comes from the schedule. Mutant: restoring the old arithmetic fails
+parity ("past due comes from the schedule on the contract invoice, not its whole balance").
+
+**Why a new read instead of the two the plan named (§18).** §5 planned to reuse
+`paige_agreement_overview` and the Sales collections reader. `read_sales_collections` is
+tenant-wide (no per-client scope) and `paige_agreement_overview` does not carry
+`commercial_terms_id`, so neither can answer for one client against one set of terms. The new
+read composes the same owners directly. The sealed-signing predicate is the one shared
+duplication; folding it into one helper is a follow-up.
+
+**Tier decision (§56/§61) for this read.**
+
+| Tier | Result | Why |
+|---|---|---|
+| God / Super Admin | Refused unless an active owner/admin member of that workspace | No cross-tenant client read; operators act inside a workspace |
+| Agency (own surface) | Refused for sub-account clients | Agencies resell; they do not run a sub-account's client book |
+| Solo | Owner/admin: reads | The operator running the business |
+| Sub-account | Owner/admin: reads | Same as Solo (§60) |
+| Enterprise | Owner/admin of the workspace: reads | Operator use |
+| Client / Anonymous | Refused (proved) | Not this surface; the client portal is a separate projection |
+
+No tier-matrix change in this slice: nothing is mounted. The mount slice gates through
+`getTierFeatureSet()`/`hasFeature()` (§60) and updates the matrix in the same commit (§66).
+
+**Producer inventory for the `send_invoice` containment (§37).** In-repo references:
+`supabase/functions/paige-mcp/index.ts` (the handler and its scope map),
+`_shared/paige-mcp/capability-policy.ts`, `_shared/paige-mcp/action-risk.ts`, and the tests
+(`managed-invoice-dispatch.test.ts`, `mcp-governed-door.test.ts`). No skill seed, n8n workflow,
+cron, trigger or front-end caller names it. External MCP clients now receive
+`legacy_invoice_send_retired`, which is the intended refusal.
 
 **Evidence, by class.**
 
 | Class | Evidence | Result |
 |---|---|---|
-| Database, full schema, rolled back | `supabase/tests/exp04_client_engagement_status.sql` on a fresh local stack (1,278 migrations applied by `supabase start` 2.109.1) | **34/34 PASS**. 8 scope refusals: staff member, client-portal user, foreign owner ×2, anon, foreign client, foreign workspace, stale workspace after a switch. Every invoice balance equals an independent sum over `paige_invoice_payments` by evidence class. Signing body and keys never leave. Exactly one receipt, with no name or amount. |
-| Source parity (database → composer) | `scripts/proof/exp04-client-status-parity.mjs` composes the owner's actual read and checks it against hand-worked ledger values | **PASS** (16 money fields, 6 invoices, agreement, work) |
-| Tests bite (§71.4) | Mutant 1 removes the owner/admin gate; mutant 2 folds test money into live | Mutant 1: SQL proof FAILS ("staff member … accepted"). Mutant 2: SQL proof FAILS (ledger parity). Real function restored: PASS |
-| Composer unit | `src/__tests__/exp04-client-engagement-status.test.ts` over the captured real read | **10/10 PASS** |
+| Database, full schema, rolled back | `supabase/tests/exp04_client_engagement_status.sql` on a fresh local stack (1,278 migrations applied by `supabase start` 2.109.1) | **36/36 PASS**. The bound fixture invoice passes the Sales writer's own terms validator, and the instalment-sized shape is refused (22023). 8 scope refusals: staff member, client-portal user, foreign owner ×2, anon, foreign client, foreign workspace, stale workspace after a switch. Every invoice balance equals an independent sum over `paige_invoice_payments` by evidence class. Signing body and keys never leave. Exactly one receipt, with no name or amount. |
+| Source parity (database → composer) | `scripts/proof/exp04-client-status-parity.mjs` composes the owner's actual read and checks it against hand-worked ledger values | **PASS** (17 money fields, 4 invoices, per-invoice past due, agreement, work) |
+| Tests bite (§71.4) | Mutant 1 removes the owner/admin gate; mutant 2 folds test money into live; mutant 3 restores whole-balance past due; composer mutants remove each new guard (withholding on truncation/mixed currency, terms-list truncation, signed-over-amendment, double-bound terms, negative receipts, prepared ≠ in progress, requests on paid invoices); hook mutants drop the refusal mapping and the error wrapping | Every mutant FAILS its test; real code restored: PASS |
+| Composer unit | `src/__tests__/exp04-client-engagement-status.test.ts` over the captured real read | **15/15 PASS** |
+| Read seam unit | `src/__tests__/exp04-client-status-read.test.ts` (RPC mocked) | **5/5 PASS**: composes, 42501 → refused, other errors → unreadable, internal code never shown, scope mismatch refused |
 | CI | Both proofs added to `paige-spine-contract › database-contract` | Pending on the PR's exact head |
 | Authenticated runtime | — | **UNVERIFIED**: PC-1 not ready (#1832); typed Chat tools are off (INT-346) |
 
@@ -488,13 +540,26 @@ event.
 - **Idempotency:** per (signing id, terms version). A replay returns the original result.
 - **Never:** issues an invoice, requests payment or starts onboarding. Those are separate,
   separately approved acts.
+- **How it is noticed:** there is no signing-completed event today. Until one exists, PAIGE
+  proposes effectuation when the E4-S1 read shows a sealed signing for terms still in `draft`; the
+  read itself never writes the proposal (see C-3).
+- **Terms already `active`:** effectuation records provenance only and changes no status. If the
+  active terms version differs from the signed one, it refuses with
+  `signed_terms_compatibility_unverified` exactly as above.
+- **A signing voided or declined after effectuation:** nothing is reversed automatically. The
+  status read shows the conflict, and PAIGE proposes `active → paused` for the owner to approve.
+- **A stale card:** the card's fingerprint is re-checked at execution. Any change to the signing
+  or terms version refuses the card and a fresh one is proposed.
+- **Bounds:** §67 — never `auto`. §38 — no money moves.
 
 ### C-2 Deposit-qualified onboarding (kickoff offer)
 - **Qualifying event, evaluated from the E4-S1 read and nothing else:**
   - C-1 effectuation is recorded;
-  - **and** the deposit obligation is satisfied. That means the invoice referencing the terms that
-    carries the first scheduled row has `outstanding = 0` from real receipts: provider-verified
-    LIVE **or** recorded by the owner, with the evidence class shown on the offer.
+  - **and** the deposit is satisfied: real receipts against the terms
+    (`received_against_terms`, provider-verified LIVE plus recorded by the owner) are at least the
+    first schedule row's amount, with the evidence class shown on the offer. This is computable
+    from the read because the Sales writer puts the deposit on the one invoice bound to the terms
+    as its amount due now; no instalment allocation is needed or claimed.
 - **Never qualifies:** test-environment money, in-flight or unknown payment requests, a draft or
   void invoice, an unbound invoice.
 - **Effect:** PAIGE *offers* the existing `operations_engagement_handoff`. It does not create its
@@ -505,6 +570,11 @@ event.
 - **Onboarding checklist:** NEW, tenant-authored (Playbook). It is never the retired funding steps
   (§2). It is a separate later slice.
 - **Routed to Operations:** the handoff's Solo-only gate refuses sub-accounts (§60/§61 parity).
+- **A qualifying receipt later reversed:** an offer not yet accepted is withdrawn. A handoff
+  already made is not undone; PAIGE tells the owner the deposit no longer stands and leaves the
+  decision to them.
+- **C-1 provenance later withdrawn:** the same — no automatic unwinding, an explicit owner choice.
+- **Bounds:** §67 — never `auto`. §38 — no money moves.
 
 ### C-3 Ask-first payment reminders
 - **Source of truth:** the E4-S1 read: outstanding, overdue, due dates, open payment requests.
@@ -532,7 +602,13 @@ event.
   §67 process.
   - **Backend change, named:** time-based native events `invoice.due_soon`, `invoice.overdue` and
     `payment.received` for `paige-native-event-dispatch`.
-  - Until they exist, proposals are computed on read in the Engagement panel. There is no
-    scheduler.
+  - Until they exist, the panel only *shows* which invoices a reminder would be proposed for.
+    Showing writes nothing: no `paige_pending_confirmations` row is created until the owner asks
+    PAIGE to draft one. There is no scheduler.
+- **Limits:** at most one pending reminder card per invoice, and at most one sent reminder per
+  invoice per policy step. A bounce or an invalid address stops further proposals on that
+  channel until the owner fixes the address.
+- **Pay links in a reminder** follow §38: a link only to the tenant's own connected account
+  (direct charge), never a Paige-held charge. Without one, the reminder carries no link.
 - **Truth after sending:** provider acceptance is not delivery, and delivery is not payment. The
   status read changes only when the ledger does.

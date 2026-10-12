@@ -909,7 +909,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "billing_create_invoice",
     effect: "mutate",
     category: "billing",
-    evidence: "supabase/functions/paige-mcp/index.ts:2530-2543 — admin.from(\"paige_invoices\").insert({ tenant_id, contact_id, deal_id, status:'draft', amount_total_cents, currency, line_items, due_date, payment_plan_key, created_by }).select(...).single(). BTF preset amounts (up to $4,997) come from BTF_PLANS at :2481-2485. Audit at :2545. No external call — Stripe hosted URL is deferred to send_invoice.",
+    evidence: "supabase/functions/paige-mcp/index.ts:2685-2698 — admin.from(\"paige_invoices\").insert({ tenant_id, contact_id, deal_id, status:'draft', amount_total_cents, currency, line_items, due_date, payment_plan_key, created_by }).select(...).single(). BTF preset amounts (up to $4,997) come from BTF_PLANS at :2637. Audit at :2700. No external call. The legacy send_invoice that once filled the hosted URL is retired (#2072); delivery is sales-invoice-delivery.",
     paigeHome: false,
   },
   send_invoice: {

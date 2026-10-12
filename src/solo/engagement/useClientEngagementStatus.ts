@@ -13,20 +13,33 @@ import {
  * it with the shared composer. No provider call, no mutation, no inferred payment or signing state.
  * Not mounted in any shell yet: the Engagement panel waits on the owner's UI review.
  */
+const UNREADABLE = 'This client’s status could not be read.';
+
+/** The server refused this person (not an owner/admin of the workspace, or a client outside it). */
+export class ClientStatusRefused extends Error {
+  constructor() { super('Only the business owner or an admin can see payments for this client.'); }
+}
+
 export async function readClientEngagementStatus(tenantId: string, contactId: string): Promise<ClientEngagementStatus> {
   const { data, error } = await supabase.rpc('read_client_engagement_status' as never,
     { _expected_tenant_id: tenantId, _contact_id: contactId } as never);
-  if (error) throw new Error('This client’s status could not be read.');
-  const source = parseClientEngagementSource(data);
-  // The server answers for the session's workspace; a mismatch is refused, never displayed.
-  if (source.tenant_id !== tenantId || source.contact_id !== contactId) {
-    throw new Error('This client’s status could not be read.');
+  // 42501 is the read's own refusal: retrying cannot succeed, so it is a state, not an error.
+  if (error) throw (error as { code?: string }).code === '42501' ? new ClientStatusRefused() : new Error(UNREADABLE);
+  try {
+    const source = parseClientEngagementSource(data);
+    // The server answers for the session's workspace; a mismatch is refused, never displayed.
+    if (source.tenant_id !== tenantId || source.contact_id !== contactId) throw new Error('CLIENT_STATUS_SCOPE_MISMATCH');
+    return composeClientEngagementStatus(source);
+  } catch (cause) {
+    // The internal code is logged for diagnosis and never shown to the person (§11, §32).
+    console.error('[client-engagement-status]', cause);
+    throw new Error(UNREADABLE);
   }
-  return composeClientEngagementStatus(source);
 }
 
 type State =
-  | { phase: 'idle' | 'loading'; status: null; error: '' }
+  | { phase: 'idle' | 'loading' | 'no_workspace'; status: null; error: '' }
+  | { phase: 'refused'; status: null; error: string }
   | { phase: 'ready'; status: ClientEngagementStatus; error: '' }
   | { phase: 'error'; status: null; error: string };
 
@@ -37,17 +50,22 @@ export function useClientEngagementStatus(contactId: string | null) {
   const generation = useRef(0);
   useEffect(() => {
     const opened = ++generation.current;
-    if (!activeTenantId || accountContextLoading || !contactId) {
+    if (accountContextLoading || !contactId) {
       setState({ phase: 'idle', status: null, error: '' });
+      return;
+    }
+    // An operator or agency manager outside any workspace has no client book to read here.
+    if (!activeTenantId) {
+      setState({ phase: 'no_workspace', status: null, error: '' });
       return;
     }
     setState({ phase: 'loading', status: null, error: '' });
     readClientEngagementStatus(activeTenantId, contactId)
       .then(status => { if (generation.current === opened) setState({ phase: 'ready', status, error: '' }); })
       .catch((err: unknown) => {
-        if (generation.current === opened) {
-          setState({ phase: 'error', status: null, error: err instanceof Error ? err.message : 'This client’s status could not be read.' });
-        }
+        if (generation.current !== opened) return;
+        if (err instanceof ClientStatusRefused) setState({ phase: 'refused', status: null, error: err.message });
+        else setState({ phase: 'error', status: null, error: err instanceof Error ? err.message : UNREADABLE });
       });
   }, [activeTenantId, accountContextLoading, contactId, refresh]);
   return { ...state, retry: () => setRefresh(n => n + 1) };

@@ -4184,13 +4184,13 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
 - Database-to-composer parity.
 - Containment of the legacy `paige-mcp` `send_invoice` (#2072).
 
-**Still not true on the platform:**
-- PAIGE can answer "where does this client stand" in chat. It needs Spine registration, and typed tools are off under INT-346.
-- The Engagement panel is mounted. It waits on owner UI review of the prototype.
-- Signing makes terms effective. Contract C-1 is gated on #1843 plus a new provenance record.
-- Onboarding starts when the deposit lands. Contract C-2 is documented only.
-- Reminders are sent. Contract C-3 is ask-first, needs a collection-outcome record and due/overdue events, and has no scheduler.
-- AI collection calls. Not authorized: legal review and owner authorization are required.
+**Not yet on the platform (each line is something that does NOT happen today):**
+- Not in chat: PAIGE cannot answer "where does this client stand" yet. It needs Spine registration, and typed tools are off under INT-346.
+- Not mounted: the Engagement panel waits on owner UI review of the prototype.
+- Not automatic: signing does not make terms effective. Contract C-1 is gated on #1843 plus a new provenance record.
+- Not automatic: onboarding does not start when the deposit lands. Contract C-2 is documented only.
+- Not sent: no reminders. Contract C-3 is ask-first, needs a collection-outcome record and due/overdue events, and has no scheduler.
+- Not authorized: AI collection calls. Legal review and owner authorization are required.
 - Production has zero commercial terms, signings, plans or provider-settled payments, so none of this has run for a real business. Authenticated acceptance waits on PC-1 (#1832).
 
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)

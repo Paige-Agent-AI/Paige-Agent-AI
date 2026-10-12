@@ -28,24 +28,27 @@ const raw = JSON.parse(line.slice('E4_STATUS_JSON:'.length));
 const status = composeClientEngagementStatus(parseClientEngagementSource(raw));
 const m = status.money;
 
-// Hand-worked from the fixture ledger (see the SQL file):
-//   billed (issued) invoices: 50000 + 30000 + 30000 + 12000 = 122000; draft 99900 and void 77700 excluded
-//   real receipts: 50000 recorded by the owner (deposit) + 5000 recorded and reversed (net 0) + 10000 live verified
-//   test environment: 30000 on E4-0003 — never real money, never reduces what is owed
-//   outstanding: 0 + (30000-10000) + 30000 + 12000 = 62000; overdue (due before today): 20000 + 12000 = 32000
-//   terms-bound invoices: E4-0001..3 = 110000; real receipts on them = 60000
-//   due to date: 50000 deposit + 30000 month 1 = 80000 -> behind by 20000; agreed but not invoiced = 240000
+// Hand-worked from the fixture ledger (see the SQL file). The ledger is writer-legal: the invoice bound
+// to the terms carries the whole $3,500, so what is past due on it comes from the agreed schedule.
+//   billed (issued): E4-0001 contract 350000 + E4-0002 add-on 12000 = 362000; draft 99900 and void 77700 excluded
+//   real receipts on E4-0001: 50000 recorded by the owner (deposit) + 5000 recorded and reversed (net 0) + 10000 live verified
+//   test environment: 30000 on E4-0001 — never real money, never reduces what is owed
+//   outstanding: (350000-60000) + 12000 = 302000 (includes schedule rows not yet due)
+//   schedule due before today: deposit 50000 (today-40) + month 1 30000 (today-10) = 80000
+//   past due: E4-0001 80000-60000 = 20000; E4-0002 past its due date, 12000 -> 32000
+//   due to date 80000 -> behind by 80000 - 60000 = 20000; agreed but not invoiced = 0
 assert.equal(m.currency, 'usd');
 assert.equal(m.mixed_currency, false);
 assert.equal(m.contracted_minor, 350000, 'contracted');
-assert.equal(m.invoiced_minor, 122000, 'invoiced (drafts and voids excluded)');
-assert.equal(m.invoiced_against_terms_minor, 110000, 'invoiced against the terms');
-assert.equal(m.not_yet_invoiced_minor, 240000, 'agreed but not yet invoiced');
+assert.equal(m.invoiced_minor, 362000, 'invoiced (drafts and voids excluded)');
+assert.equal(m.invoiced_against_terms_minor, 350000, 'invoiced against the terms');
+assert.deepEqual(m.received_against_terms, { verified_minor: 10000, recorded_by_owner_minor: 50000 }, 'received against the terms, by evidence class');
+assert.equal(m.not_yet_invoiced_minor, 0, 'the whole agreement is invoiced');
 assert.equal(m.received.verified_minor, 10000, 'provider-verified live');
 assert.equal(m.received.recorded_by_owner_minor, 50000, 'recorded by the owner, net of reversal');
 assert.equal(m.received.test_environment_minor, 30000, 'test money reported apart');
-assert.equal(m.outstanding_minor, 62000, 'outstanding ignores test money');
-assert.equal(m.overdue_minor, 32000, 'overdue');
+assert.equal(m.outstanding_minor, 302000, 'outstanding ignores test money');
+assert.equal(m.overdue_minor, 32000, 'past due comes from the schedule on the contract invoice, not its whole balance');
 assert.equal(m.awaiting_confirmation_minor, 20000, 'payment awaiting the client is in flight, not received');
 assert.equal(m.outcome_unknown_count, 1, 'unknown provider outcome');
 assert.equal(m.failed_request_count, 1, 'failed payment request');
@@ -61,17 +64,20 @@ assert.equal(status.agreement.effective, 'not_recorded');
 assert.equal(status.work.state, 'behind');
 assert.deepEqual([status.work.total, status.work.done, status.work.open, status.work.overdue], [3, 1, 2, 1]);
 const byNumber = Object.fromEntries(status.invoices.map(i => [i.number, i]));
-assert.equal(byNumber['E4-0001'].payment_state, 'paid');
-assert.equal(byNumber['E4-0002'].payment_state, 'awaiting_confirmation');
-assert.equal(byNumber['E4-0003'].payment_state, 'unpaid', 'a test-environment settlement never marks an invoice paid');
-assert.equal(byNumber['E4-0004'].payment_state, 'outcome_unknown');
-assert.equal(byNumber['E4-0004'].bound_to_terms, false);
-assert.equal(byNumber['E4-0005'].payment_state, 'draft');
-assert.equal(byNumber['E4-0006'].payment_state, 'void');
+assert.equal(byNumber['E4-0001'].payment_state, 'awaiting_confirmation');
+assert.equal(byNumber['E4-0001'].bound_to_terms, true);
+assert.equal(byNumber['E4-0001'].outstanding_minor, 290000, 'a test-environment settlement never reduces what is owed');
+assert.equal(byNumber['E4-0001'].past_due_minor, 20000);
+assert.equal(byNumber['E4-0002'].payment_state, 'outcome_unknown');
+assert.equal(byNumber['E4-0002'].bound_to_terms, false);
+assert.equal(byNumber['E4-0002'].past_due_minor, 12000);
+assert.equal(byNumber['E4-0003'].payment_state, 'draft');
+assert.equal(byNumber['E4-0004'].payment_state, 'void');
 for (const flag of ['payment_overdue', 'behind_schedule', 'payment_outcome_unknown', 'payment_request_failed', 'work_overdue']) {
   assert(status.attention.includes(flag), `attention: ${flag}`);
 }
 assert(!status.attention.includes('agreement_not_signed'));
+assert(!status.attention.includes('terms_invoiced_more_than_once'));
 
 if (process.argv.includes('--write-fixture')) {
   writeFileSync(root + 'src/__tests__/fixtures/exp04-client-status-source.json', JSON.stringify(raw, null, 2) + '\n');

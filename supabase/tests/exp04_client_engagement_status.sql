@@ -6,7 +6,8 @@
 -- provider-verified receipts, provider operations) are inserted with session_replication_role
 -- = replica so the writer guards do not refuse a fixture. The READ under test runs afterwards
 -- with every trigger and policy restored, as a real authenticated caller. No writer is proven
--- here; the writers keep their own proofs.
+-- here; the writers keep their own proofs. The ledger's SHAPE is still writer-legal: the invoice
+-- bound to the terms is checked against the Sales writer's own terms validator below.
 begin;
 create function pg_temp.check_true(v boolean,label text) returns void language plpgsql as $$
 begin if v is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
@@ -64,49 +65,63 @@ insert into public.paige_agreements(id,tenant_id,contact_id,offer_id,commercial_
  ('e4000000-0000-4000-8000-0000000a0001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-0000000f0001','e4000000-0000-4000-8000-0000000d0001',
   'Test consulting agreement','PRIVATE_SOURCE_BODY','completed',1,repeat('a',64),repeat('b',64),'PRIVATE_SOURCE_KEY',now()-interval '45 days',now()-interval '41 days','e4000000-0000-4000-8000-000000000001');
 
--- Fixture ledger (writer guards bypassed for fixture insertion only — see header).
+-- Fixture ledger. The shapes are the ones the governed Sales writer produces: an invoice bound to the
+-- terms carries the WHOLE agreed amount ($3,500) with the deposit as its amount due now — the writer
+-- refuses an installment-sized invoice that names the terms (asserted below through its own
+-- validator). Insertion still bypasses writer triggers (session_replication_role) because the
+-- provider-verified receipts need settled provider operations the proof cannot dispatch.
 set local session_replication_role=replica;
-create temp table inv(id uuid,n text,amt int,due date,ref boolean);
-insert into inv select 'e4000000-0000-4000-8000-0000000e0001'::uuid,'E4-0001',50000,fx.d0,true from fx
- union all select 'e4000000-0000-4000-8000-0000000e0002','E4-0002',30000,fx.m1,true from fx
- union all select 'e4000000-0000-4000-8000-0000000e0003','E4-0003',30000,fx.m2,true from fx
- union all select 'e4000000-0000-4000-8000-0000000e0004','E4-0004',12000,fx.m1,false from fx;
 insert into public.paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,due_date,
  billing_draft_version,billing_draft,billing_last_operation_id,billing_last_request,billing_lifecycle_version,billing_issued_snapshot_version,
  billing_issued_at,billing_issued_by,billing_document,billing_document_digest,created_at)
-select inv.id,'e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',inv.n,'issued',inv.amt,'usd',inv.due,
- 1,CASE WHEN inv.ref THEN jsonb_build_object('commercial_terms_reference',jsonb_build_object('id','e4000000-0000-4000-8000-0000000d0001','version',1)) ELSE '{}'::jsonb END,
- gen_random_uuid(),'{}'::jsonb,2,1,now()-interval '30 days','e4000000-0000-4000-8000-000000000001','{}'::jsonb,repeat('c',64),now()-make_interval(days=>40-row_number() over ()::int)
-from inv;
+select 'e4000000-0000-4000-8000-0000000e0001'::uuid,'e4000000-0000-4000-8000-00000000aaaa'::uuid,'e4000000-0000-4000-8000-0000000c0001'::uuid,'E4-0001','issued',350000,'usd',fx.d0,
+ 1,jsonb_build_object('commercial_terms_reference',jsonb_build_object('id','e4000000-0000-4000-8000-0000000d0001','version',1),
+   'kind','deposit','total_minor',350000,'currency','usd','due_now_minor',50000,'due_date',fx.d0,
+   'price_snapshot',jsonb_build_object('product_id','e4000000-0000-4000-8000-0000000f0001')),
+ gen_random_uuid(),'{}'::jsonb,2,1,now()-interval '41 days','e4000000-0000-4000-8000-000000000001'::uuid,'{}'::jsonb,repeat('c',64),now()-interval '41 days'
+from fx
+union all
+-- An add-on invoice outside the terms (a workshop billed separately), past due.
+select 'e4000000-0000-4000-8000-0000000e0002','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001','E4-0002','issued',12000,'usd',fx.m1,
+ 1,'{}'::jsonb,gen_random_uuid(),'{}'::jsonb,2,1,now()-interval '15 days','e4000000-0000-4000-8000-000000000001','{}'::jsonb,repeat('e',64),now()-interval '15 days'
+from fx;
 -- A draft and a void invoice must never count as billed.
 insert into public.paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,created_at) values
- ('e4000000-0000-4000-8000-0000000e0005','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001','E4-0005','draft',99900,'usd',now()-interval '1 day');
+ ('e4000000-0000-4000-8000-0000000e0003','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001','E4-0003','draft',99900,'usd',now()-interval '1 day');
 insert into public.paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,
  billing_draft_version,billing_draft,billing_last_operation_id,billing_last_request,billing_lifecycle_version,billing_issued_snapshot_version,
  billing_issued_at,billing_issued_by,billing_document,billing_document_digest,created_at) values
- ('e4000000-0000-4000-8000-0000000e0006','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001','E4-0006','void',77700,'usd',
+ ('e4000000-0000-4000-8000-0000000e0004','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001','E4-0004','void',77700,'usd',
   1,'{}'::jsonb,gen_random_uuid(),'{}'::jsonb,2,1,now()-interval '20 days','e4000000-0000-4000-8000-000000000001','{}'::jsonb,repeat('d',64),now()-interval '20 days');
 -- A foreign tenant's invoice for its own client: must never appear for tenant A.
 insert into public.paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,created_at) values
  ('e4000000-0000-4000-8000-0000000e00b1','e4000000-0000-4000-8000-00000000bbbb','e4000000-0000-4000-8000-0000000c00b1','E4-B001','draft',55500,'usd',now());
 
--- Provider operations: one settled LIVE (verified), one settled TEST, one LIVE outcome unknown,
--- one LIVE awaiting the client, one failed.
+-- Provider operations on the contract invoice: one settled LIVE (verified), one settled TEST, one LIVE
+-- awaiting the client (the one in-flight request an invoice may have), one failed. On the add-on:
+-- one LIVE with an unknown outcome.
 insert into public.paige_invoice_provider_operations(id,tenant_id,invoice_id,client_id,actor_user_id,invoice_version,issued_snapshot_version,provider,merchant_account_id,merchant_binding_version,environment,amount_minor,currency,purpose,command,authority_fingerprint,idempotency_key,state,dispatch_claim_token,dispatch_started_at,provider_object_id,provider_status,verified_readback,settled_at,allocation_payment_id) values
- ('e4000000-0000-4000-8000-000000060001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0002','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',10000,'usd','installment','{}','0123456789abcdef','e4-fixture-k1','settled',gen_random_uuid(),now(),'cs_fixture_1','complete','{}',now(),'e4000000-0000-4000-8000-000000070002'),
- ('e4000000-0000-4000-8000-000000060002','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0003','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'test',30000,'usd','installment','{}','0123456789abcdef','e4-fixture-k2','settled',gen_random_uuid(),now(),'cs_fixture_2','complete','{}',now(),'e4000000-0000-4000-8000-000000070003'),
- ('e4000000-0000-4000-8000-000000060003','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0004','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',12000,'usd','full','{}','0123456789abcdef','e4-fixture-k3','outcome_unknown',gen_random_uuid(),now(),null,'unknown',null,null,null),
- ('e4000000-0000-4000-8000-000000060004','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0002','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',20000,'usd','installment','{}','0123456789abcdef','e4-fixture-k4','customer_action_required',gen_random_uuid(),now(),'cs_fixture_4','open',null,null,null),
- ('e4000000-0000-4000-8000-000000060005','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0003','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',30000,'usd','installment','{}','0123456789abcdef','e4-fixture-k5','failed',gen_random_uuid(),now(),null,'failed',null,null,null);
--- Receipts: deposit $500 recorded by the owner by hand; $100 LIVE verified on month 1; $300 TEST on month 2;
--- a $50 hand-recorded receipt on month 1 that the owner later reversed (net zero).
+ ('e4000000-0000-4000-8000-000000060001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',10000,'usd','installment','{}','0123456789abcdef','e4-fixture-k1','settled',gen_random_uuid(),now(),'cs_fixture_1','complete','{}',now(),'e4000000-0000-4000-8000-000000070002'),
+ ('e4000000-0000-4000-8000-000000060002','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'test',30000,'usd','installment','{}','0123456789abcdef','e4-fixture-k2','settled',gen_random_uuid(),now(),'cs_fixture_2','complete','{}',now(),'e4000000-0000-4000-8000-000000070003'),
+ ('e4000000-0000-4000-8000-000000060003','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0002','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',12000,'usd','full','{}','0123456789abcdef','e4-fixture-k3','outcome_unknown',gen_random_uuid(),now(),null,'unknown',null,null,null),
+ ('e4000000-0000-4000-8000-000000060004','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',20000,'usd','installment','{}','0123456789abcdef','e4-fixture-k4','customer_action_required',gen_random_uuid(),now(),'cs_fixture_4','open',null,null,null),
+ ('e4000000-0000-4000-8000-000000060005','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-000000000001',2,1,'stripe','acct_test_fixture',1,'live',30000,'usd','installment','{}','0123456789abcdef','e4-fixture-k5','failed',gen_random_uuid(),now(),null,'failed',null,null,null);
+-- Receipts on the contract invoice: the $500 deposit recorded by the owner by hand; $100 LIVE verified;
+-- $300 TEST; a $50 hand-recorded receipt that the owner later reversed (net zero).
 insert into public.paige_invoice_payments(id,invoice_id,tenant_id,actor_user_id,kind,amount_cents,currency,method,received_at,evidence_kind,provider_operation_id,provider,merchant_account_id,provider_environment,provider_transaction_id,provider_settlement_id,provider_verified_at,reverses_payment_id,reason) values
  ('e4000000-0000-4000-8000-000000070001','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','receipt',50000,'usd','zelle',now()-interval '39 days','manual_recorded',null,null,null,null,null,null,null,null,null),
- ('e4000000-0000-4000-8000-000000070002','e4000000-0000-4000-8000-0000000e0002','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','receipt',10000,'usd','stripe',now()-interval '5 days','provider_verified','e4000000-0000-4000-8000-000000060001','stripe','acct_test_fixture','live','pi_fixture_1','ch_fixture_1',now()-interval '5 days',null,null),
- ('e4000000-0000-4000-8000-000000070003','e4000000-0000-4000-8000-0000000e0003','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','receipt',30000,'usd','stripe',now()-interval '2 days','provider_verified','e4000000-0000-4000-8000-000000060002','stripe','acct_test_fixture','test','pi_fixture_2','ch_fixture_2',now()-interval '2 days',null,null),
- ('e4000000-0000-4000-8000-000000070004','e4000000-0000-4000-8000-0000000e0002','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','receipt',5000,'usd','cash',now()-interval '4 days','manual_recorded',null,null,null,null,null,null,null,null,null),
- ('e4000000-0000-4000-8000-000000070005','e4000000-0000-4000-8000-0000000e0002','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','reversal',5000,'usd','cash',now()-interval '3 days','manual_recorded',null,null,null,null,null,null,null,'e4000000-0000-4000-8000-000000070004','Entered in error');
+ ('e4000000-0000-4000-8000-000000070002','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','receipt',10000,'usd','stripe',now()-interval '5 days','provider_verified','e4000000-0000-4000-8000-000000060001','stripe','acct_test_fixture','live','pi_fixture_1','ch_fixture_1',now()-interval '5 days',null,null),
+ ('e4000000-0000-4000-8000-000000070003','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','receipt',30000,'usd','stripe',now()-interval '2 days','provider_verified','e4000000-0000-4000-8000-000000060002','stripe','acct_test_fixture','test','pi_fixture_2','ch_fixture_2',now()-interval '2 days',null,null),
+ ('e4000000-0000-4000-8000-000000070004','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','receipt',5000,'usd','cash',now()-interval '4 days','manual_recorded',null,null,null,null,null,null,null,null,null),
+ ('e4000000-0000-4000-8000-000000070005','e4000000-0000-4000-8000-0000000e0001','e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','reversal',5000,'usd','cash',now()-interval '3 days','manual_recorded',null,null,null,null,null,null,null,'e4000000-0000-4000-8000-000000070004','Entered in error');
 set local session_replication_role=origin;
+
+-- Writer legality: the bound fixture invoice passes the governed writer's own terms validator, and the
+-- installment-sized shape an earlier fixture used is refused by it.
+select pg_temp.check_true((select public._sales_validate_invoice_terms_reference(i.tenant_id,i.contact_id,i.billing_draft->'commercial_terms_reference',i.billing_draft)->>'id'='e4000000-0000-4000-8000-0000000d0001'
+ from public.paige_invoices i where i.id='e4000000-0000-4000-8000-0000000e0001'),'bound fixture invoice is one the Sales writer accepts');
+select pg_temp.refused($s$select public._sales_validate_invoice_terms_reference('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',
+ '{"id":"e4000000-0000-4000-8000-0000000d0001","version":1}'::jsonb,'{"total_minor":30000,"currency":"usd","price_snapshot":{"product_id":"e4000000-0000-4000-8000-0000000f0001"}}'::jsonb)$s$,'22023','an installment-sized invoice cannot name the terms');
 
 -- Delivery work: one done milestone, one overdue task, one future milestone, one personal reminder.
 insert into public.plans(id,tenant_id,created_by,owner_user_id,scope,horizon,title,status,starts_on,ends_on) values
@@ -163,7 +178,7 @@ select pg_temp.check_true((select jsonb_array_length(value->'terms')=1 and value
 select pg_temp.check_true((select jsonb_array_length(value#>'{terms,0,collection_terms,dates}')=11 from status_result),'terms: 11 dated obligations carried unchanged');
 select pg_temp.check_true((select jsonb_array_length(value->'signings')=1 and value#>>'{signings,0,status}'='completed' and (value#>>'{signings,0,sealed}')::boolean and value#>>'{signings,0,commercial_terms_id}'='e4000000-0000-4000-8000-0000000d0001' from status_result),'signing: sealed and bound to the terms');
 select pg_temp.check_true((select value::text !~ 'PRIVATE_SOURCE_BODY|PRIVATE_SOURCE_KEY' from status_result),'signing body and storage key never leave the database');
-select pg_temp.check_true((select jsonb_array_length(value->'invoices')=6 from status_result),'all six of the client''s invoices, none of the foreign tenant''s');
+select pg_temp.check_true((select jsonb_array_length(value->'invoices')=4 from status_result),'all four of the client''s invoices, none of the foreign tenant''s');
 select pg_temp.check_true((select value::text !~ 'E4-B001' from status_result),'foreign invoice absent');
 -- Balance parity per invoice against the ledger itself (independent of _sales_invoice_balance_rows).
 select pg_temp.check_true((
@@ -173,13 +188,13 @@ select pg_temp.check_true((
    and (r->>'provider_verified_test_minor')::bigint = coalesce((select sum(amount_cents) from public.paige_invoice_payments p where p.invoice_id=(r->>'id')::uuid and p.evidence_kind='provider_verified' and p.provider_environment='test'),0)
    and (r->>'amount_minor')::bigint = (select amount_total_cents from public.paige_invoices i where i.id=(r->>'id')::uuid))
  from status_result, jsonb_array_elements(value->'invoices') r),'every invoice balance matches the ledger by evidence class');
-select pg_temp.check_true((select (r->>'manual_recorded_minor')::bigint=0 and (r->>'reversal_count')::int=1 from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0002'),'reversed hand receipt nets to zero and is counted');
-select pg_temp.check_true((select (r->>'provider_verified_test_minor')::bigint=30000 and (r->>'provider_verified_live_minor')::bigint=0 from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0003'),'test-environment money is reported apart from live');
-select pg_temp.check_true((select jsonb_array_length(r->'open_payment_requests')=1 and r#>>'{open_payment_requests,0,state}'='outcome_unknown' from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0004'),'unknown provider outcome surfaced, never as a receipt');
-select pg_temp.check_true((select r#>>'{open_payment_requests,0,state}'='customer_action_required' and (r->>'failed_payment_requests')::int=0 from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0002'),'payment awaiting the client surfaced as in flight');
-select pg_temp.check_true((select (r->>'failed_payment_requests')::int=1 from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0003'),'failed payment request counted');
+select pg_temp.check_true((select (r->>'manual_recorded_minor')::bigint=50000 and (r->>'reversal_count')::int=1 from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0001'),'reversed hand receipt nets to zero and is counted');
+select pg_temp.check_true((select (r->>'provider_verified_test_minor')::bigint=30000 and (r->>'provider_verified_live_minor')::bigint=10000 from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0001'),'test-environment money is reported apart from live');
+select pg_temp.check_true((select jsonb_array_length(r->'open_payment_requests')=1 and r#>>'{open_payment_requests,0,state}'='outcome_unknown' from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0002'),'unknown provider outcome surfaced, never as a receipt');
+select pg_temp.check_true((select jsonb_array_length(r->'open_payment_requests')=1 and r#>>'{open_payment_requests,0,state}'='customer_action_required' from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0001'),'payment awaiting the client surfaced as in flight');
+select pg_temp.check_true((select (r->>'failed_payment_requests')::int=1 from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0001'),'failed payment request counted');
 select pg_temp.check_true((select r->'commercial_terms_reference'->>'id'='e4000000-0000-4000-8000-0000000d0001' from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0001'),'invoice keeps its reference to the agreed terms');
-select pg_temp.check_true((select r->'commercial_terms_reference' = 'null'::jsonb from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0004'),'invoice outside the terms is not bound to them');
+select pg_temp.check_true((select r->'commercial_terms_reference' = 'null'::jsonb from status_result, jsonb_array_elements(value->'invoices') r where r->>'invoice_number'='E4-0002'),'invoice outside the terms is not bound to them');
 -- Work parity.
 select pg_temp.check_true((select (value#>>'{work,total}')::int=3 and (value#>>'{work,done}')::int=1 and (value#>>'{work,open}')::int=2 and (value#>>'{work,overdue}')::int=1 from status_result),'work: 3 items (reminder excluded), 1 done, 2 open, 1 overdue');
 select pg_temp.check_true((select (value#>>'{work,total}')::int=(select count(*) from public.plan_items where contact_id='e4000000-0000-4000-8000-0000000c0001' and item_type in ('milestone','task')) from status_result),'work total equals the canonical item count');

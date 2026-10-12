@@ -197,6 +197,8 @@ body.bare[data-viewport="mobile"] .frame { width: 100%; height: 100%; border-rad
 .lede strong { color: var(--pg-ink); font-weight: 600; }
 .fine { margin: 10px 0 0; color: var(--pg-muted); font-size: var(--pg-t-label); line-height: 1.5; display: flex; gap: 6px; align-items: flex-start; }
 .fine svg.i { width: 13px; height: 13px; margin-top: 2px; }
+.more { display: inline-flex; min-height: 32px; align-items: center; margin-top: 4px; padding: 0 2px; border: 0; background: none; color: var(--pg-violet); font: 600 var(--pg-t-label)/1.2 var(--pg-font-ui); cursor: pointer; }
+.more:hover span { text-decoration: underline; text-underline-offset: 3px; }
 
 /* Agreement facts */
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); margin: 0; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-chip); overflow: hidden; }
@@ -389,8 +391,8 @@ const STATES = {
       "state": "signed",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:03:47.807234+00:00",
-      "completed_at": "2026-09-01T21:03:47.807234+00:00",
+      "sent_at": "2026-08-28T21:37:17.420944+00:00",
+      "completed_at": "2026-09-01T21:37:17.420944+00:00",
       "sealed": true,
       "bound_to_terms": true,
       "effective": "not_recorded"
@@ -492,15 +494,19 @@ const STATES = {
       "mixed_currency": false,
       "contracted_minor": 350000,
       "due_to_date_minor": 80000,
-      "invoiced_minor": 122000,
-      "invoiced_against_terms_minor": 110000,
-      "not_yet_invoiced_minor": 240000,
+      "invoiced_minor": 362000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000
+      },
+      "not_yet_invoiced_minor": 0,
       "received": {
         "verified_minor": 10000,
         "recorded_by_owner_minor": 50000,
         "test_environment_minor": 30000
       },
-      "outstanding_minor": 62000,
+      "outstanding_minor": 302000,
       "overdue_minor": 32000,
       "awaiting_confirmation_minor": 20000,
       "outcome_unknown_count": 1,
@@ -511,8 +517,8 @@ const STATES = {
     },
     "invoices": [
       {
-        "id": "e4000000-0000-4000-8000-0000000e0005",
-        "number": "E4-0005",
+        "id": "e4000000-0000-4000-8000-0000000e0003",
+        "number": "E4-0003",
         "status": "draft",
         "payment_state": "draft",
         "amount_minor": 99900,
@@ -520,29 +526,15 @@ const STATES = {
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
+        "past_due_minor": 0,
         "due_date": null,
         "overdue": false,
         "bound_to_terms": false,
         "legacy_status": false
       },
       {
-        "id": "e4000000-0000-4000-8000-0000000e0006",
-        "number": "E4-0006",
-        "status": "void",
-        "payment_state": "void",
-        "amount_minor": 77700,
-        "outstanding_minor": 0,
-        "verified_minor": 0,
-        "recorded_by_owner_minor": 0,
-        "test_environment_minor": 0,
-        "due_date": null,
-        "overdue": false,
-        "bound_to_terms": false,
-        "legacy_status": false
-      },
-      {
-        "id": "e4000000-0000-4000-8000-0000000e0004",
-        "number": "E4-0004",
+        "id": "e4000000-0000-4000-8000-0000000e0002",
+        "number": "E4-0002",
         "status": "issued",
         "payment_state": "outcome_unknown",
         "amount_minor": 12000,
@@ -550,53 +542,41 @@ const STATES = {
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
+        "past_due_minor": 12000,
         "due_date": "2026-10-02",
         "overdue": true,
         "bound_to_terms": false,
         "legacy_status": false
       },
       {
-        "id": "e4000000-0000-4000-8000-0000000e0003",
-        "number": "E4-0003",
-        "status": "issued",
-        "payment_state": "unpaid",
-        "amount_minor": 30000,
-        "outstanding_minor": 30000,
+        "id": "e4000000-0000-4000-8000-0000000e0004",
+        "number": "E4-0004",
+        "status": "void",
+        "payment_state": "void",
+        "amount_minor": 77700,
+        "outstanding_minor": 0,
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
-        "test_environment_minor": 30000,
-        "due_date": "2026-11-01",
-        "overdue": false,
-        "bound_to_terms": true,
-        "legacy_status": false
-      },
-      {
-        "id": "e4000000-0000-4000-8000-0000000e0002",
-        "number": "E4-0002",
-        "status": "issued",
-        "payment_state": "awaiting_confirmation",
-        "amount_minor": 30000,
-        "outstanding_minor": 20000,
-        "verified_minor": 10000,
-        "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
-        "due_date": "2026-10-02",
-        "overdue": true,
-        "bound_to_terms": true,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
         "legacy_status": false
       },
       {
         "id": "e4000000-0000-4000-8000-0000000e0001",
         "number": "E4-0001",
         "status": "issued",
-        "payment_state": "paid",
-        "amount_minor": 50000,
-        "outstanding_minor": 0,
-        "verified_minor": 0,
+        "payment_state": "awaiting_confirmation",
+        "amount_minor": 350000,
+        "outstanding_minor": 290000,
+        "verified_minor": 10000,
         "recorded_by_owner_minor": 50000,
-        "test_environment_minor": 0,
+        "test_environment_minor": 30000,
+        "past_due_minor": 20000,
         "due_date": "2026-09-02",
-        "overdue": false,
+        "overdue": true,
         "bound_to_terms": true,
         "legacy_status": false
       }
@@ -610,14 +590,14 @@ const STATES = {
       "blocked": 0,
       "next": {
         "title": "Draft discovery report",
-        "due_at": "2026-10-10T21:03:47.807234+00:00",
+        "due_at": "2026-10-10T21:37:17.420944+00:00",
         "item_type": "task"
       },
       "items": [
         {
           "id": "e4000000-0000-4000-8000-000000090002",
           "title": "Draft discovery report",
-          "due_at": "2026-10-10T21:03:47.807234+00:00",
+          "due_at": "2026-10-10T21:37:17.420944+00:00",
           "status": "in_progress",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
@@ -627,7 +607,7 @@ const STATES = {
         {
           "id": "e4000000-0000-4000-8000-000000090003",
           "title": "Strategy review",
-          "due_at": "2026-10-26T21:03:47.807234+00:00",
+          "due_at": "2026-10-26T21:37:17.420944+00:00",
           "status": "open",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": false,
@@ -637,12 +617,12 @@ const STATES = {
         {
           "id": "e4000000-0000-4000-8000-000000090001",
           "title": "Kickoff workshop",
-          "due_at": "2026-09-12T21:03:47.807234+00:00",
+          "due_at": "2026-09-12T21:37:17.420944+00:00",
           "status": "done",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
           "item_type": "milestone",
-          "completed_at": "2026-09-13T21:03:47.807234+00:00"
+          "completed_at": "2026-09-13T21:37:17.420944+00:00"
         }
       ]
     },
@@ -665,7 +645,7 @@ const STATES = {
       "invoices": false,
       "work": false
     },
-    "receipt_id": "03d51813-2f8e-42e9-bcc8-1d18839d1fa4"
+    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
   },
   "early": {
     "client": {
@@ -677,7 +657,7 @@ const STATES = {
       "state": "sent",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:03:47.807234+00:00",
+      "sent_at": "2026-08-28T21:37:17.420944+00:00",
       "completed_at": null,
       "sealed": false,
       "bound_to_terms": true,
@@ -780,16 +760,20 @@ const STATES = {
       "mixed_currency": false,
       "contracted_minor": 350000,
       "due_to_date_minor": 80000,
-      "invoiced_minor": 50000,
-      "invoiced_against_terms_minor": 50000,
-      "not_yet_invoiced_minor": 300000,
+      "invoiced_minor": 350000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0
+      },
+      "not_yet_invoiced_minor": 0,
       "received": {
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0
       },
-      "outstanding_minor": 50000,
-      "overdue_minor": 50000,
+      "outstanding_minor": 350000,
+      "overdue_minor": 80000,
       "awaiting_confirmation_minor": 0,
       "outcome_unknown_count": 0,
       "failed_request_count": 0,
@@ -803,11 +787,12 @@ const STATES = {
         "number": "E4-0001",
         "status": "issued",
         "payment_state": "unpaid",
-        "amount_minor": 50000,
-        "outstanding_minor": 50000,
+        "amount_minor": 350000,
+        "outstanding_minor": 350000,
         "verified_minor": 0,
         "recorded_by_owner_minor": 0,
         "test_environment_minor": 0,
+        "past_due_minor": 80000,
         "due_date": "2026-09-02",
         "overdue": true,
         "bound_to_terms": true,
@@ -841,7 +826,7 @@ const STATES = {
       "invoices": false,
       "work": false
     },
-    "receipt_id": "03d51813-2f8e-42e9-bcc8-1d18839d1fa4"
+    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
   },
   "empty": {
     "client": {
@@ -867,6 +852,10 @@ const STATES = {
       "due_to_date_minor": null,
       "invoiced_minor": 0,
       "invoiced_against_terms_minor": 0,
+      "received_against_terms": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0
+      },
       "not_yet_invoiced_minor": null,
       "received": {
         "verified_minor": 0,
@@ -906,7 +895,7 @@ const STATES = {
       "invoices": false,
       "work": false
     },
-    "receipt_id": "03d51813-2f8e-42e9-bcc8-1d18839d1fa4"
+    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
   }
 };
 
@@ -954,11 +943,11 @@ function day(iso, forceYear = false) {
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 /* ------------------------------------------------------------------ derivations (display only) */
-// Everything below reads the composed status as-is. The one figure not on the envelope —
-// money received AGAINST the agreed terms — is taken from the bound invoices and asserted
-// equal to due_to_date − behind_schedule so the bar can never disagree with the headline.
+// Everything below reads the composed status as-is. Money received against the agreed terms comes
+// from the composer (received_against_terms) and is asserted equal to due_to_date − behind_schedule.
 function receivedOnTerms(s) {
-  const fromInvoices = s.invoices.filter(i => i.bound_to_terms).reduce((a, i) => a + i.verified_minor + i.recorded_by_owner_minor, 0);
+  const r = s.money.received_against_terms;
+  const fromInvoices = (r.verified_minor ?? 0) + (r.recorded_by_owner_minor ?? 0);
   const m = s.money;
   if (m.due_to_date_minor !== null && m.behind_schedule_minor !== null) {
     const fromEnvelope = m.due_to_date_minor - m.behind_schedule_minor;
@@ -966,8 +955,8 @@ function receivedOnTerms(s) {
   }
   return fromInvoices;
 }
-function verifiedOnTerms(s) { return s.invoices.filter(i => i.bound_to_terms).reduce((a, i) => a + i.verified_minor, 0); }
-function recordedOnTerms(s) { return s.invoices.filter(i => i.bound_to_terms).reduce((a, i) => a + i.recorded_by_owner_minor, 0); }
+function verifiedOnTerms(s) { return s.money.received_against_terms.verified_minor; }
+function recordedOnTerms(s) { return s.money.received_against_terms.recorded_by_owner_minor; }
 const isOpenItem = it => it.status !== 'done' && it.status !== 'cancelled';
 const isLate = (it, asOf) => isOpenItem(it) && it.due_at && it.due_at.slice(0, 10) < asOf;
 
@@ -1008,8 +997,8 @@ function summaryParts(s) {
   if (s.attention.includes('agreement_not_signed')) parts.push({ tone: 'warning', text: 'Agreement not signed' });
   if (m.behind_schedule_minor > 0) parts.push({ tone: 'warning', text: `Behind by ${money(m.behind_schedule_minor, c)}` });
   if (m.overdue_minor > 0) parts.push({ tone: 'negative', text: `${money(m.overdue_minor, c)} past due` });
-  const check = m.outcome_unknown_count + m.failed_request_count;
-  if (check > 0) parts.push({ tone: 'warning', text: `${plural(check, 'payment', 'payments')} to check` });
+  // Only an unknown outcome needs checking; a failed request collected nothing and is named on its own.
+  if (m.outcome_unknown_count > 0) parts.push({ tone: 'warning', text: `${plural(m.outcome_unknown_count, 'payment', 'payments')} to check` });
   if (s.work.overdue > 0) parts.push({ tone: 'warning', text: `${plural(s.work.overdue, 'task', 'tasks')} overdue` });
   if (!parts.length) parts.push({ tone: 'positive', text: 'Paid up and on track' });
   return parts;
@@ -1030,14 +1019,14 @@ function attentionItems(s) {
       case 'payment_overdue':
         out.push({ tone: 'negative', icon: 'clock', to: 'payments', title: `${money(m.overdue_minor, c)} is past due`,
           body: overdueInv.length === 1
-            ? `Invoice ${overdueInv[0].number} was due ${day(overdueInv[0].due_date)}.`
-            : `Across ${overdueInv.length} invoices: ${overdueInv.map(i => `${i.number} (${money(i.outstanding_minor, c)} left)`).join(', ')}.` });
+            ? (overdueInv[0].bound_to_terms ? `On invoice ${overdueInv[0].number}, from payments in your terms that fell due before today.` : `Invoice ${overdueInv[0].number} was due ${day(overdueInv[0].due_date)}.`)
+            : `Across ${overdueInv.length} invoices: ${overdueInv.map(i => `${i.number} (${money(i.past_due_minor, c)} past due)`).join(', ')}.` });
         break;
       case 'behind_schedule': {
         // Verified and owner-recorded money are named separately — never one "paid" total.
         const got = receivedOnTerms(s), ver = verifiedOnTerms(s), rec = recordedOnTerms(s);
-        const paid = [ver ? `${money(ver, c)} is verified by Stripe` : '', rec ? `${money(rec, c)} is recorded by you` : ''].filter(Boolean).join(' and ');
-        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: `Behind the agreed schedule by ${money(m.behind_schedule_minor, c)}`,
+        const paid = [ver ? `${money(ver, c)} is confirmed by your payment provider` : '', rec ? `${money(rec, c)} is recorded by you` : ''].filter(Boolean).join(' and ');
+        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: `${s.agreement.state === 'signed' ? 'Behind the agreed schedule' : 'Behind the schedule in your terms'} by ${money(m.behind_schedule_minor, c)}`,
           body: `${money(m.due_to_date_minor, c)} was due by today. ${got > 0 ? `Against this agreement, ${paid}.` : 'Nothing has been paid against this agreement.'}` });
         break; }
       case 'payment_outcome_unknown':
@@ -1080,7 +1069,7 @@ function invoiceChips(i, c) {
   const map = {
     paid: ['Paid', 'positive', 'check'], partially_paid: ['Part paid', 'warning', null], unpaid: ['Unpaid', 'quiet', null],
     awaiting_confirmation: ['Payment in progress', 'info', 'clock'], outcome_unknown: ['Needs checking', 'warning', 'help'],
-    draft: ['Draft · not sent', 'quiet', null], void: ['Voided', 'quiet', null], written_off: ['Written off', 'quiet', null],
+    draft: ['Draft · not issued', 'quiet', null], void: ['Voided', 'quiet', null], written_off: ['Written off', 'quiet', null],
   };
   const [label, tone, icon] = map[i.payment_state] || [i.payment_state, 'quiet', null];
   chips.push(`<span class="chip" data-tone="${tone}">${icon ? ic(icon) : ''}${label}</span>`);
@@ -1090,10 +1079,12 @@ function invoiceChips(i, c) {
 }
 function invoiceNote(i, c) {
   const bits = [];
-  if (i.verified_minor > 0) bits.push(`${money(i.verified_minor, c)} verified by Stripe`);
+  if (i.verified_minor > 0) bits.push(`${money(i.verified_minor, c)} confirmed by your provider`);
   if (i.recorded_by_owner_minor > 0) bits.push(`${money(i.recorded_by_owner_minor, c)} recorded by you`);
-  if (i.payment_state === 'awaiting_confirmation') bits.push(`${money(i.outstanding_minor, c)} in progress — not received yet`);
-  else if (i.outstanding_minor > 0 && i.payment_state !== 'outcome_unknown') bits.push(`${money(i.outstanding_minor, c)} still owed`);
+  if (i.payment_state === 'awaiting_confirmation') bits.push('a payment is in progress — not received yet');
+  if (i.outstanding_minor > 0 && i.payment_state !== 'outcome_unknown') bits.push(`${money(i.outstanding_minor, c)} still owed`);
+  if (i.bound_to_terms && i.past_due_minor > 0) bits.push(`${money(i.past_due_minor, c)} of it past due`);
+  if (i.bound_to_terms && i.outstanding_minor > 0) bits.push('the rest follows your schedule');
   if (i.payment_state === 'outcome_unknown') bits.push(`${money(i.outstanding_minor, c)} counted as owed until the payment is confirmed`);
   if (!i.bound_to_terms && !['draft', 'void'].includes(i.payment_state)) bits.push('not part of the agreed terms');
   return bits.join(' · ');
@@ -1154,25 +1145,29 @@ function paymentsSection(s) {
   if (t && m.contracted_minor) {
     const total = m.contracted_minor;
     const ver = verifiedOnTerms(s), rec = recordedOnTerms(s);
-    const billedUnpaid = Math.max(0, m.invoiced_against_terms_minor - ver - rec);
+    // Measured against the agreed schedule: what has been paid, what fell due and is unpaid, and what
+    // is not due yet. An invoice bound to the terms carries the whole amount, so it is not the measure.
+    const dueUnpaid = Math.max(0, m.behind_schedule_minor ?? 0);
+    const notDue = Math.max(0, total - ver - rec - dueUnpaid);
     const notInv = m.not_yet_invoiced_minor ?? 0;
     const pct = v => (v / total * 100).toFixed(3) + '%';
     const tick = m.due_to_date_minor !== null ? m.due_to_date_minor / total * 100 : null;
     const got = ver + rec;
     plan = `<div class="plan">
-      <div class="plan-line"><span>${got > 0 ? `Against <strong>${money(total, c)} agreed</strong>: ${[ver ? `<strong>${money(ver, c)}</strong> verified by Stripe` : '', rec ? `<strong>${money(rec, c)}</strong> recorded by you` : ''].filter(Boolean).join(' and ')}` : `<strong>${money(total, c)} agreed</strong> — nothing paid against it yet`}</span></div>
+      <div class="plan-line"><span>${got > 0 ? `Against <strong>${money(total, c)} agreed</strong>: ${[ver ? `<strong>${money(ver, c)}</strong> confirmed by your provider` : '', rec ? `<strong>${money(rec, c)}</strong> recorded by you` : ''].filter(Boolean).join(' and ')}` : `<strong>${money(total, c)} agreed</strong> — nothing paid against it yet`}</span></div>
       <div class="bar-wrap">
-        <div class="bar" role="img" aria-label="${esc(`${money(ver, c)} verified by Stripe, ${money(rec, c)} recorded by you, ${money(billedUnpaid, c)} invoiced and unpaid, ${money(notInv, c)} agreed but not invoiced. ${money(m.due_to_date_minor, c)} was due by today.`)}">
-          ${ver ? `<span class="seg-verified" style="width:${pct(ver)}"></span>` : ''}${rec ? `<span class="seg-recorded" style="width:${pct(rec)}"></span>` : ''}${billedUnpaid ? `<span class="seg-billed" style="width:${pct(billedUnpaid)}"></span>` : ''}
+        <div class="bar" role="img" aria-label="${esc(`${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(dueUnpaid, c)} due and unpaid, ${money(notDue, c)} not due yet. ${money(m.due_to_date_minor, c)} was due by today.`)}">
+          ${ver ? `<span class="seg-verified" style="width:${pct(ver)}"></span>` : ''}${rec ? `<span class="seg-recorded" style="width:${pct(rec)}"></span>` : ''}${dueUnpaid ? `<span class="seg-billed" style="width:${pct(dueUnpaid)}"></span>` : ''}
         </div>
         ${tick !== null ? `<div class="tick" style="left:${tick}%" data-flip="${tick > 70}"><span>Due by today · ${money(m.due_to_date_minor, c)}</span></div>` : ''}
       </div>
       <ul class="legend">
-        <li><span class="sw seg-verified"></span><span>Paid — verified by Stripe</span><b class="num">${money(ver, c)}</b></li>
+        <li><span class="sw seg-verified"></span><span>Paid — confirmed by your provider</span><b class="num">${money(ver, c)}</b></li>
         <li><span class="sw seg-recorded"></span><span>Paid — recorded by you</span><b class="num">${money(rec, c)}</b></li>
-        <li><span class="sw seg-billed"></span><span>Invoiced, not paid</span><b class="num">${money(billedUnpaid, c)}</b></li>
-        <li><span class="sw sw-track"></span><span>Agreed, not invoiced yet</span><b class="num">${money(notInv, c)}</b></li>
+        <li><span class="sw seg-billed"></span><span>Due by today, not paid</span><b class="num">${money(dueUnpaid, c)}</b></li>
+        <li><span class="sw sw-track"></span><span>Not due yet</span><b class="num">${money(notDue, c)}</b></li>
       </ul>
+      ${notInv > 0 ? `<p class="fine">${ic('info')}<span>${money(notInv, c)} of this agreement isn’t on an invoice yet.</span></p>` : ''}
     </div>`;
   } else if (t) {
     plan = `<p class="lede">Totals are hidden for these terms — see what needs your attention above.</p>`;
@@ -1181,35 +1176,41 @@ function paymentsSection(s) {
   const paidNothing = m.received.verified_minor === 0 && m.received.recorded_by_owner_minor === 0;
   const ledger = `<div class="ledger">
     <section aria-labelledby="lg-paid"><h4 id="lg-paid">Paid</h4><dl>
-      <div class="row"><dt>Verified by Stripe<small>Stripe confirmed the money arrived</small></dt><dd class="num">${money(m.received.verified_minor, c)}</dd></div>
-      <div class="row"><dt>Recorded by you<small>Entered by hand — not checked by Stripe</small></dt><dd class="num">${money(m.received.recorded_by_owner_minor, c)}</dd></div>
+      <div class="row"><dt>Confirmed by your provider<small>Your payment provider confirmed the money arrived</small></dt><dd class="num">${money(m.received.verified_minor, c)}</dd></div>
+      <div class="row"><dt>Recorded by you<small>Entered by hand — not checked by a payment provider</small></dt><dd class="num">${money(m.received.recorded_by_owner_minor, c)}</dd></div>
     </dl></section>
     <section aria-labelledby="lg-owed"><h4 id="lg-owed">Still owed</h4><dl>
-      <div class="row lead"><dt>On invoices sent</dt><dd class="num">${money(m.outstanding_minor, c)}</dd></div>
+      <div class="row lead"><dt>On issued invoices<small>Includes payments in your terms that aren’t due yet</small></dt><dd class="num">${money(m.outstanding_minor, c)}</dd></div>
       <div class="row"><dt>Past due</dt><dd class="num" ${m.overdue_minor > 0 ? 'data-tone="negative"' : ''}>${money(m.overdue_minor, c)}</dd></div>
-      ${m.awaiting_confirmation_minor > 0 ? `<div class="row"><dt>Payment in progress<small>Not received until Stripe confirms</small></dt><dd class="num">${money(m.awaiting_confirmation_minor, c)}</dd></div>` : ''}
+      ${m.awaiting_confirmation_minor > 0 ? `<div class="row"><dt>Payment in progress<small>Not received until your provider confirms</small></dt><dd class="num">${money(m.awaiting_confirmation_minor, c)}</dd></div>` : ''}
     </dl></section>
   </div>
-  ${paidNothing ? '' : '<p class="fine">' + ic('info') + '<span>The two paid figures are kept apart on purpose and never added together.</span></p>'}`;
+  ${paidNothing ? '' : '<p class="fine">' + ic('info') + '<span>The two paid figures are kept apart on purpose and never added together.</span></p>'}
+  ${m.invoiced_minor !== m.invoiced_against_terms_minor ? '<p class="fine">' + ic('info') + '<span>Still owed covers every issued invoice for this client, including ones outside this agreement.</span></p>' : ''}`;
 
   const testMoney = m.received.test_environment_minor > 0
-    ? `<div class="test-money" role="note">${ic('flask')}<span><strong>Test payment — not real money.</strong> Made in Stripe’s test mode. It isn’t counted anywhere on this page.</span><span class="amt num" aria-label="${money(m.received.test_environment_minor, c)} in test mode">${money(m.received.test_environment_minor, c)}</span></div>` : '';
+    ? `<div class="test-money" role="note">${ic('flask')}<span><strong>Test payment — not real money.</strong> Made in your payment provider’s test mode. It isn’t counted anywhere on this page.</span><span class="amt num" aria-label="${money(m.received.test_environment_minor, c)} in test mode">${money(m.received.test_environment_minor, c)}</span></div>` : '';
 
   // Schedule — rows carry only what the data supports: due by today, or upcoming.
   let schedule = '';
   if (t && t.schedule.length) {
     const due = t.schedule.filter(r => r.due), up = t.schedule.filter(r => !r.due);
     const sum = rows => rows.reduce((a, r) => a + r.amount_minor, 0);
-    const row = (r, kind) => `<tr class="${kind}"><td class="seq num">${r.sequence}</td><td class="num">${day(r.due_date)}</td><td class="hide-n">${r.label ? esc(r.label) : 'Instalment'}</td><td class="r num">${money(r.amount_minor, t.currency)}</td><td class="r">${kind === 'due' ? '<span class="chip" data-tone="quiet">Was due</span>' : '<span class="chip" data-tone="quiet">Upcoming</span>'}</td></tr>`;
+    // The group label already says due or upcoming, so rows carry no repeated chip.
+    const row = (r, kind) => `<tr class="${kind}"><td class="seq num">${r.sequence}</td><td class="num">${day(r.due_date)}</td><td class="hide-n">${r.label ? esc(r.label) : 'Instalment'}</td><td class="r num">${money(r.amount_minor, t.currency)}</td></tr>`;
+    // Only the next upcoming payment is shown; the rest fold behind one line so the panel stays short.
+    const [next, ...later] = up;
     schedule = `<div class="sub">
       <h4>Agreed schedule <span>${plural(t.schedule.length, 'payment', 'payments')} · ${money(t.agreed_minor, t.currency)}</span></h4>
       <table class="table"><caption class="sr-only">Agreed payment schedule</caption>
-        <thead><tr><th scope="col"><span class="sr-only">Number</span></th><th scope="col">Due</th><th scope="col" class="hide-n">For</th><th scope="col" class="r" style="text-align:right">Amount</th><th scope="col"><span class="sr-only">When</span></th></tr></thead>
+        <thead><tr><th scope="col"><span class="sr-only">Number</span></th><th scope="col">Due</th><th scope="col" class="hide-n">For</th><th scope="col" class="r" style="text-align:right">Amount</th></tr></thead>
         <tbody>
-          ${due.length ? `<tr class="group"><td colspan="5">Due so far · <b class="num">${money(sum(due), t.currency)}</b></td></tr>${due.map(r => row(r, 'due')).join('')}` : ''}
-          ${up.length ? `<tr class="group"><td colspan="5">Still to come · <b class="num">${money(sum(up), t.currency)}</b></td></tr>${up.map(r => row(r, 'upcoming')).join('')}` : ''}
+          ${due.length ? `<tr class="group"><td colspan="4">Due so far · <b class="num">${money(sum(due), t.currency)}</b></td></tr>${due.map(r => row(r, 'due')).join('')}` : ''}
+          ${next ? `<tr class="group"><td colspan="4">Still to come · <b class="num">${money(sum(up), t.currency)}</b></td></tr>${row(next, 'upcoming')}` : ''}
         </tbody>
+        ${later.length ? `<tbody class="later" id="sched-later" hidden>${later.map(r => row(r, 'upcoming')).join('')}</tbody>` : ''}
       </table>
+      ${later.length ? `<button type="button" class="more" aria-expanded="false" aria-controls="sched-later" onclick="const b=document.getElementById('sched-later');b.hidden=!b.hidden;this.setAttribute('aria-expanded',String(!b.hidden));this.firstElementChild.textContent=b.hidden?'Show ${later.length} more · ${money(sum(later), t.currency)}':'Show less'"><span>Show ${later.length} more · ${money(sum(later), t.currency)}</span></button>` : ''}
       <p class="fine">${ic('info')}<span>Payments aren’t matched to individual instalments yet. What has actually been paid is on the invoices below.</span></p>
     </div>`;
   }
@@ -1220,14 +1221,14 @@ function paymentsSection(s) {
     const billed = s.invoices.filter(i => !['draft', 'void'].includes(i.payment_state)).sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
     const other = s.invoices.filter(i => ['draft', 'void'].includes(i.payment_state));
     const li = (i, muted) => `<li class="inv" data-muted="${muted}">
-        <div class="inv-id"><code>${esc(i.number)}</code><span>${i.due_date ? `Due ${day(i.due_date)}` : 'No due date'}</span></div>
+        <div class="inv-id"><code>${esc(i.number)}</code><span>${i.bound_to_terms ? 'Paid over your agreed schedule' : i.due_date ? `Due ${day(i.due_date)}` : 'No due date'}</span></div>
         <div class="inv-amt">${money(i.amount_minor, c)}</div>
         <div class="inv-chips">${invoiceChips(i, c)}</div>
         ${invoiceNote(i, c) ? `<p class="inv-note">${invoiceNote(i, c)}</p>` : ''}
         ${i.payment_state === 'outcome_unknown' ? '<p class="inv-note">A payment was started but we never heard whether it went through.</p>' : ''}
       </li>`;
     invoices = `<div class="sub">
-      <h4>Invoices <span>${plural(billed.length, 'sent', 'sent')} · ${money(m.invoiced_minor, c)} billed</span></h4>
+      <h4>Invoices <span>${plural(billed.length, 'issued', 'issued')} · ${money(m.invoiced_minor, c)} billed</span></h4>
       <ul class="invoices">${billed.map(i => li(i, false)).join('')}
         ${other.length ? `<li class="inv-group">Not billed — not counted</li>${other.map(i => li(i, true)).join('')}` : ''}
       </ul>
@@ -1315,7 +1316,7 @@ function renderEmpty(s) {
     </div>
     <ol class="preview-stages" aria-label="What this panel will show">
       <li>${ic('pen')}<div><strong>Agreement</strong>Sent, signed, and the terms it covers.</div></li>
-      <li>${ic('card')}<div><strong>Payments</strong>Paid — verified by Stripe or recorded by you — what’s still owed, and what’s past due.</div></li>
+      <li>${ic('card')}<div><strong>Payments</strong>Paid — confirmed by your payment provider or recorded by you — what’s still owed, and what’s past due.</div></li>
       <li>${ic('door')}<div><strong>Onboarding</strong>Not tracked yet — coming in a later release.</div></li>
       <li>${ic('list')}<div><strong>Delivery</strong>Milestones and tasks, and what’s overdue.</div></li>
       <li>${ic('bell')}<div><strong>Follow-ups</strong>Not built yet. Nothing will go out without your yes.</div></li>

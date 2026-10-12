@@ -182,6 +182,15 @@ already uses (the same rules, evaluated at insert; differences are listed below)
   including leads saved before this release; a form linked only to an archived campaign credits none by its link,
   while a tag still matches an archived campaign.
 
+**S1b — the campaign's pipeline — BUILT 2026-10-12 (migration `20271026100000`; evidence
+`docs/evidence/ui-delivery/exp03-s1b-campaign-route.md`).** Order: the form's own route; its campaign's pipeline
+(first open, non-archived stage) when the form is attached to exactly one non-archived campaign whose pipeline is
+the business's own and not archived; the default pipeline; nowhere. One definition (`_growth_form_campaign_route`)
+is read by the filing (`growth_attach_submission_default_deal`), the metric (`marketing.forms.unrouted_current`)
+and the screens' read (`get_form_campaign_routes`); Overview, Analytics, the form panel and the dossier's pipeline
+row say "Campaign: <pipeline> → <stage>". Known consumer left as is: PAIGE's `get_pipeline_lead_funnel` reads one
+pipeline (the default unless named), so campaign-pipeline leads are not in its default answer (#2077; the
+chat surface is INT-346's). The plan as decided:
 **S1b — the campaign's pipeline (its own follow-up PR, decided 2026-10-12).** For a form with no route of its own,
 file the lead into its campaign's pipeline (first open stage) when that pipeline can take it; otherwise the default
 pipeline exactly as today. Separated from S1a because three shipped consumers state where an unrouted form's leads

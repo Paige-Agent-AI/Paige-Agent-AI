@@ -1471,6 +1471,12 @@ serve(async (req) => {
     // approval this resume handled and what became of it before or at its claim; `resumeHandledActs`
     // / `resumeHandledSubjects` are what the model is refused from re-emitting in the same reply.
     const resumePin = new Map<string, string>();
+    // INT-1807 CL-8 — the gated model-emit counterpart of resumePin for the Pipeline
+    // non-application observation: when the general gate resolves an approved token for
+    // a re-emitted pipeline_configure call, the scoped token is kept here so a
+    // database-answered refusal at dispatch can be recorded for the ORIGINAL effect the
+    // same way the C4a pinned carry-forward already is. Server-only, never client-set.
+    const pipelineClaimToken = new Map<string, string>();
     const resumeTokens = new Map<string, { tool: string; state: "pending" | "expired" | "lost" | "unavailable" | "withheld" }>();
     // "here": this reply's resumed round carried the act forward. "elsewhere": the approval had
     // already been used before this request could (a second click, another tab) — the act may
@@ -11290,6 +11296,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // C4a — a resumed act is pinned to its approval by the server (`resumePin`), never matched.
             let approvedFingerprint: string | undefined = resumePin.get(tc.id) ?? (approvedConfirmations.has(fp) ? fp : undefined);
             if (approvedFingerprint) approvalTokenTool.set(approvedFingerprint, tc.function.name);
+            if (approvedFingerprint && tc.function.name === "pipeline_configure") pipelineClaimToken.set(tc.id, approvedFingerprint);
             // FIX B signal (P0 containment): the operator approved proposal(s) for this tool, but this
             // re-emitted call could not be pinned to exactly one of them. Set below when the approved-set
             // lookup finds ≥1 live proposal yet resolves no single fingerprint — a genuinely ambiguous
@@ -13581,20 +13588,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   _idempotency_key: args.idempotency_key,
                 });
                 if (configureError) {
-                  // INT-1807 CL-2 — a database-ANSWERED refusal of this single-RPC door call
-                  // rolled its one transaction back whole (approval-outcome.ts): nothing the
-                  // command would have written was written. Record that definite
-                  // non-application for the original effect so a later status read can
-                  // distinguish "definitely did not apply" from unknown. Only the C4a
-                  // pinned carry-forward holds the card token at this seam; recording the
-                  // gated model-emit path is a named follow-up. Best-effort by design: the
-                  // refusal itself is the answer and never waits on the observation.
-                  if (databaseAnswered(configureError) && interactive && resumePin.has(tc.id)) {
+                  // INT-1807 CL-2/CL-8 — a database-ANSWERED refusal of this single-RPC door
+                  // call (either the caller-JWT form a pinned C4a resume takes or the
+                  // as_paige form a gated model-emit claim takes) rolled its one transaction
+                  // back whole (approval-outcome.ts): nothing the command would have written
+                  // was written. Record that definite non-application for the ORIGINAL
+                  // effect so a later status read can distinguish "definitely did not apply"
+                  // from unknown. The token is the pinned carry-forward's, or the gate-resolved
+                  // approved token for a re-emitted call — both server-only, both validated
+                  // against the consumed card in SQL. Best-effort by design: the refusal itself
+                  // is the answer and never waits on the observation.
+                  const observedClaimToken = resumePin.get(tc.id) ?? pipelineClaimToken.get(tc.id);
+                  if (databaseAnswered(configureError) && interactive && observedClaimToken) {
                     try {
                       await admin.rpc("record_pipeline_metadata_non_application", {
                         p_thread: validatedData.threadId,
                         p_intent: validatedData.requestIntentId,
-                        p_token: resumePin.get(tc.id),
+                        p_token: observedClaimToken,
                         p_sqlstate: String((configureError as { code?: unknown }).code ?? ""),
                       });
                     } catch { /* the observation is best-effort; the refusal stands without it */ }

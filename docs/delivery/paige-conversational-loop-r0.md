@@ -97,6 +97,23 @@ idempotency, transport-code refusal, lineage-gated reads, drifted-record refusal
 handler: `actual: 'outcome_unknown'`), adapter unit 18/18, family vitest 71/71, tsc ratchet
 10=10, no new Deno diagnostics. Both checks are CI-wired beside their siblings.
 
+## 2026-10-11 CL-8 — the gated model-emit write path for the non-application record
+
+CL-2 left one named follow-up: only the C4a pinned carry-forward recorded a definite
+non-application when the Pipeline door refused. The general gate already resolves the
+approved token for a RE-EMITTED pipeline_configure call (the model-emit path); that
+resolution is now captured server-side (`pipelineClaimToken`, declared beside `resumePin`,
+never client-set) and the recorder accepts either token — pinned or gate-claimed — under
+the unchanged single guard: `databaseAnswered(configureError) && interactive && token`.
+Both door forms (`configure_tenant_pipeline` caller-JWT and `_as_paige` service) are single
+RPCs, so the rolled-back-whole doctrine covers both. The SQL validation is unchanged and
+path-agnostic: any consumed pipeline_configure card matching the token records once. A
+source-contract test pins the wiring (gate capture, observed-token composition, the
+dropped pin-only condition); runtime proof of the model-emit leg rides the C4f
+authenticated matrix (the C4a harness's pinned scenario stays green in CI). Corridor
+fingerprints recomputed for this tree (the documented per-tree procedure). Best-effort
+recording, refusal-first behavior, and every INT-346 boundary unchanged.
+
 ## 2026-10-11 first-wave closeout — merged, deployed, production-verified; the live/gated distinction; #1837 and #1832 dispositions
 
 **Merged and deployed:** #1925 (main `d3008b78b`), #1926 (`ffdca0a88`), #1929 (`ff795b15a`),

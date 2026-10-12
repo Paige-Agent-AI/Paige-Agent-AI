@@ -11,7 +11,7 @@ insert into auth.users(id,aud,role,email) select ('ef240000-0000-4000-8000-'||lp
 insert into public.tenants(id,slug,name,status,account_type,account_number_prefix,account_number,features) values
  ('ef240000-0000-4000-8000-000000001111','test-ops-review-recovery','Test Review Recovery','active','standalone','ORR',9952411,'{}');
 insert into public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at)
- select 'ef240000-0000-4000-8000-000000001111',('ef240000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,case when n=2 or n=4 then 'admin' else 'member' end,'active',false,now() from generate_series(1,5)n;
+ select 'ef240000-0000-4000-8000-000000001111',('ef240000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,(case when n=2 or n=4 then 'admin' else 'member' end)::public.tenant_role,'active',false,now() from generate_series(1,5)n;
 insert into public.profiles(user_id,active_tenant_id) select ('ef240000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'ef240000-0000-4000-8000-000000001111'::uuid from generate_series(1,5)n
  on conflict(user_id) do update set active_tenant_id=excluded.active_tenant_id;
 insert into public.user_roles(user_id,role) values('ef240000-0000-4000-8000-000000000004','admin');

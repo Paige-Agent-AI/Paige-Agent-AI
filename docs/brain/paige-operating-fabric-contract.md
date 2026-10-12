@@ -48,6 +48,8 @@ merged. Each change that moves a map row or the seam's own claims is listed here
 
 ## F2a (2026-10-12) — first adapters and the review entry point, not wired to any turn
 
+> *Corrected 2026-10-12 (E2-1, PR #2075): the Chat and Spine wiring hand-offs have since landed ship-dark — see the hand-off notes below and §L's E2-1 row. Reachability is still blocked by INT-346.*
+
 F2a answers one question end to end in code: *"How is my business performing this week, and what
 needs my attention?"* It is **read-only, unit-tested, and reachable from no turn yet.** Chat and Live
 reach it only after the two hand-offs below land.
@@ -126,7 +128,8 @@ In both cases the department owns the numbers. A projection adapter only names, 
 dangling label already in the runtime: `paige-ai-chat/index.ts:584` gives `get_business_snapshot` a
 step label, and `_shared/paige-turn/step-start.ts:130` records it as `"no dispatch"`. One name is
 better than three. This document previously proposed `read_business_snapshot` (§K) and `business_review` (§L F2);
-both are superseded.
+both are superseded. *Corrected 2026-10-12 (E2-1, PR #2075): the name is adopted, the dispatch branch
+exists, and the `"no dispatch"` entry is gone — the tool now carries a START label.*
 
 **Hand-off — Conversational Loop lane (not done here):** *Landed ship-dark 2026-10-12 by Experience 02 E2-1 (PR #2075): the tool push, the dispatch branch and the step-start flip are in main's tree as described below, unreachable while INT-346 holds. The read-only admission decision remains the outstanding half of this hand-off.*
 
@@ -231,6 +234,8 @@ check, and nothing from it reaches the snapshot.
 
 
 ## F2b (2026-10-12) — `operations` and `clients` adapters, still not wired to any turn
+
+> *Corrected 2026-10-12 (E2-1, PR #2075): as F2a above — wired ship-dark, unreachable while INT-346 holds.*
 
 F2b adds two more areas to the same review: *what needs fixing in how the business is set up and
 running*, and *where the clients stand*. Same seam, same rules, same status: **read-only,

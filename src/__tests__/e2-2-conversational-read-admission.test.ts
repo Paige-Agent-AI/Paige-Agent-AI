@@ -10,15 +10,18 @@ import { BUSINESS_OPERATING_SNAPSHOT } from "../../supabase/functions/_shared/pa
 const CHAT = fs.readFileSync(path.resolve(__dirname, "../../supabase/functions/paige-ai-chat/index.ts"), "utf8");
 
 describe("E2-2 admission set (ANT-23)", () => {
-  it("names exactly the two INT-340 issuer read tools as conversational-admitted", () => {
-    const m = CHAT.match(/CONVERSATIONAL_ADMITTED_READ_TOOLS[^=]*=\s*new Set\(\[([^\]]*)\]\)/);
+  it("names exactly the two INT-340 issuer read tools as conversational-admitted — no spread, no third name", () => {
+    const m = CHAT.match(/CONVERSATIONAL_ADMITTED_READ_TOOLS[^=]*=\s*new Set\(Object\.freeze\(\[([^\]]*)\]\)\)/);
     expect(m).not.toBeNull();
-    const names = [...m![1].matchAll(/"([a-z_]+)"/g)].map((x) => x[1]);
-    expect(names).toEqual(["read_business_metric", "get_business_snapshot"]);
+    // The captured literal must BE the pair: no spread, no unquoted tokens, nothing else. A
+    // `...EXTRA` inside the brackets would evade a quoted-name extraction (the review's P2), so
+    // pin the raw text itself.
+    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot"');
   });
 
   it("the set is declared ReadonlySet and its comment forbids widening without an owner-recorded change", () => {
     expect(CHAT).toMatch(/const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string>/);
+    expect(CHAT).toMatch(/new Set\(Object\.freeze\(/);
     expect(CHAT).toMatch(/Widen this set only by an owner-recorded policy change/);
   });
 });

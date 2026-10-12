@@ -296,7 +296,7 @@ const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 // E2-2 (2026-10-12, ANT-23 delegation): the block now names the ONE thing that turned on — the
 // narrowly approved read-only lookups — while every action, approval and external effect stays off.
 const PAIGE_CONVERSATIONAL_MODE_BLOCK = `CONVERSATIONAL MODE — ACTIONS ARE OFF THIS TURN.
-A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. You CAN answer questions about how the business is doing using your read-only lookup tools (get_business_snapshot for a whole-business review, read_business_metric for one measurement). A lookup is a read: it changes nothing and grants no action authority.
+A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement), use them to answer questions about how the business is doing. A lookup is a read: it changes nothing and grants no action authority.
 If asked to create, change, send, schedule or delete anything: say plainly and briefly that you cannot run actions in this conversation right now, then give the answer, plan or wording in words. Never claim an action was performed, and never promise one for later.`;
 // E2-2 / ANT-23: the narrowly approved read-only Metric/Evidence admission set — the ONLY tools a
 // conversational turn may be offered and run while the interactive rollout stays staged (DRAINING).
@@ -304,7 +304,7 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // owner/admin seat on every read; neither claims an executor, seeks an approval, or settles
 // anything beyond the existing conversational FINAL receipt. Everything else stays withheld at the
 // offer and refused per-call. Widen this set only by an owner-recorded policy change.
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(["read_business_metric", "get_business_snapshot"]);
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

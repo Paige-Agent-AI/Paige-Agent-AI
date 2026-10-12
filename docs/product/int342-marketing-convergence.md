@@ -644,7 +644,7 @@ genuine feature gaps"). This is Marketing's own matrix; the Ads matrix is §M3 a
 
 | Capability | Source shipped | Production verified | Authenticated tested | Owner accepted |
 |---|---|---|---|---|
-| Marketing tabs: Overview, Campaigns, Content, Email, Analytics (INT-342 S1a/S1d/S1e) | #1900, #1913, #1931 | Vercel READY (S1a `dpl_D5qp…`, S1d `dpl_GhiL…`, S1e `dpl_F9RE…`) | UNVERIFIED | Designs approved 2026-10-10; capability not yet accepted |
+| Marketing Overview, Analytics and Content tabs (INT-342 S1a, S1d, S1e) | #1900, #1913, #1931 | Vercel READY (S1a `dpl_D5qp…`, S1d `dpl_GhiL…`, S1e `dpl_F9RE…`) | UNVERIFIED | Designs approved 2026-10-10; capability not yet accepted |
 | Analytics owns its figures; Ads moved out (MBC 1) | #1952 → `bb0e98f` | Vercel READY `dpl_5fpJ…` | UNVERIFIED | — |
 | Marketing metric producer on the INT-340 seam (MBC 2a) | #1953 → `64a646f` | `20270602000503` recorded; functions and dispatcher branch read back; no grants | UNVERIFIED | — |
 | Analytics server figures (MBC 2b) | #1957 → `893c6e2` | Vercel READY `dpl_m26e…` | UNVERIFIED | — |
@@ -656,7 +656,7 @@ genuine feature gaps"). This is Marketing's own matrix; the Ads matrix is §M3 a
 | Campaign dossier: Steps and results (MBC 6b) | #2045 → `0c1cbb91` | Vercel `dpl_8KwK…` READY on paigeagent.ai; the served bundle carries the new strings | UNVERIFIED | — |
 | PAIGE tools for steps and process scope, Chat and Live (MBC 6c) | #2050 → `16fb9adf` | `20271023100000` recorded; read wrappers authenticated-only; four Autonomy rows, ask first; activity wording; `paige-ai-chat` deployed (`edge-live` = merge) | **UNAVAILABLE on typed Solo chat** while INT-346 is DRAINING (production `paige_chat_interactive_protocol` = version 2, `active: false`, 2026-10-12): every typed turn runs with no tools. Live: UNVERIFIED | — |
 | Public visit evidence (MBC 7a) | #2064 → `be8d9278` | see N4 | UNVERIFIED (a signed-out visit is part of the packet) | — |
-| Email: campaigns, dispatch, series (E1–E3) | #1700, #1725, #1731 | recorded and read back at release | UNVERIFIED | — |
+| Email: campaigns, dashboard and editor, chat tools, series (E1, E2, E2b, E3) | #1700, #1704, #1725, #1731 | recorded and read back at release | UNVERIFIED | — |
 
 ### N2. One-PAIGE layers (Marketing)
 
@@ -678,12 +678,13 @@ genuine feature gaps"). This is Marketing's own matrix; the Ads matrix is §M3 a
 
 1. **Link an existing action to a campaign.** The writer accepts `link_action` (slice 5) but no screen or chat tool
    sends it. Adding it is a writer-backed screen control and a chat tool; no permission change.
-2. **Set or change a step's dependency.** The writer sets one only when a step is created; there is no command
-   to change it later, though the integrity trigger already validates an update. Needs a `set_dependency` command
+2. **Change a step's dependency.** The writer sets one only when a step is planned or linked (`dependsOnActionId`);
+   there is no command to change it later, though the integrity trigger already validates an update. Needs a `set_dependency` command
    in the writer, then a control.
 3. **A member's view of a step.** Members already see each step's aim and its result and judgement (once
-   finished), but not its title, summary, approval id or error, because a member cannot read the action bus.
-   Showing titles to members is a read-policy decision for the owner; it is **not** being widened.
+   finished), but not its title, summary, approval id or error: `get_campaign_brief_actions` withholds those four
+   from anyone who is not a workspace admin, on purpose. Showing titles to members is a read-policy decision for the
+   owner; it is **not** being widened.
 4. **A governed process activation screen.** A process can be switched on only by a direct table update today; chat
    refuses (`automation_set_state` is owner-only and unadvertised) and no screen does it. The scope guard already
    refuses an unscoped form process on every path. The screen needs an owner-approved design (§00) and an audited
@@ -692,6 +693,13 @@ genuine feature gaps"). This is Marketing's own matrix; the Ads matrix is §M3 a
    (`advance_action` to `drafted`). The action worker never drafts this record-only kind, and the chat tool
    `action_advance` is for the platform team. So in the product a Solo owner can plan a step but cannot bring it to
    approval or completion. Needs a governed "prepare for approval" path for record-only campaign steps.
+   **The shipped copy promises it anyway**, so today it says something untrue:
+   - the plan form: "A planned step waits for your approval." (`src/solo/campaign-actions.tsx`);
+   - the empty state: "Plan the first one; it waits for your approval.";
+   - the remove warning for a planned step: "will still come to you for approval" (`useCampaignActions.ts`);
+   - PAIGE's plan receipt: "It comes to you for approval once it is prepared" (migration `20271023100000`).
+   This is the first Marketing fix after this matrix: either build the prepare-for-approval path or make the copy
+   say what happens now. The QA run records the sentences as a finding (packet A4), never as a pass.
 6. **Shared registration and admission.**
    - 6c's Spine and chat-tool registration were written in Marketing's lane. P-ANT-5 names Platform Reach (INT-179)
      as the shared registry's exclusive writer, so this is raised with Platform Reach for review rather than left

@@ -58,8 +58,10 @@ run. Never create one through service-role access to manufacture the case.
 
 ## Runner runbook — fixtures (canonical owner, signed in, Solo)
 
-1. **Brief:** Marketing › Campaigns → **New campaign brief** → name `QA Spring`, reference `QA-SPRING`, an
-   objective and an audience → save. Readback: one `campaign_briefs` row, `short_ref = QA-SPRING`.
+1. **Brief:** Marketing › Campaigns → **Create campaign brief** → Campaign name `QA Spring` and an objective → save.
+   The builder has no reference field: the server makes the reference itself (`CB-` and six characters).
+   Readback: one `campaign_briefs` row named `QA Spring`. Record its `short_ref`; run D uses it as `:qa_ref`, because
+   a link's `utm_campaign` is attributed to a campaign by that reference.
 2. **Form:** Marketing → Vibe Studio → "A short lead form named QA synthetic lead form asking for name and email" →
    **Build it** → **Publish** → **Publish now**.
    - If the Ads package already created this form in the same account, reuse it.
@@ -78,10 +80,10 @@ query result. Evidence ledger 2 holds one row per executed step.
 
 | # | Do | Pass when |
 |---|---|---|
-| A1 | Open `QA Spring` → **Steps and results** | "No steps yet"; **Plan a step** visible |
-| A2 | Plan a step: kind Email, tactic `Win-back`, step `Thank everyone who booked`, aim `Ten replies`, due a week out | The step appears under its tactic, **Planned**, aim and due day as entered (in the browser's own time zone); one `paige_actions` row of kind `marketing.campaign_action`, lane `confirm`; one `campaign_brief_actions` row; the activity record shows the step was planned |
+| A1 | Open `QA Spring` → **Steps and results** | "No steps planned yet."; **Plan a step** visible |
+| A2 | Plan a step: kind Email, tactic `Win-back`, step `Thank everyone who booked`, aim `Ten replies`, due a week out | The step appears under its tactic, **Planned**, aim and due day as entered (in the browser's own time zone); one `paige_actions` row of kind `marketing.campaign_action`, lane `confirm`; one `campaign_brief_actions` row; one `audit_logs` row recording the step as planned (a step planned from the dossier is recorded there; the "PAIGE planned a campaign step" receipt is for steps PAIGE plans, B3) |
 | A3 | Reload | Same step, same state |
-| A4 | Remove the step after its confirmation | The warning says what happens to the action from where it stands; the link is gone; the action itself unchanged |
+| A4 | Remove the step after its confirmation | The link is gone and the action itself is unchanged. Record the warning's exact words: for a planned step it says the action "will still come to you for approval", which is **not true today** (matrix §N3, item 5). Record it as a finding; it does not pass |
 
 ### B. Owner, PAIGE
 
@@ -102,9 +104,16 @@ query result. Evidence ledger 2 holds one row per executed step.
 
 ### D. Form → visit → submission → process
 
+**Run D needs a real browser.** `growth-public-visit` refuses an automation user agent (headless, Playwright,
+Puppeteer, Selenium and the like) as `automated_agent`, and the browser records nothing while a Paige session exists.
+So `scripts/live-drive/live-drive.mjs` (Playwright) cannot record a visit, and neither can a context left signed in
+from runs A–C. Use a person in an ordinary headed browser, signed out. **Never spoof a user agent to get a pass.** If
+no such browser is available, D1–D3 are **UNAVAILABLE**. The refusals themselves were already proven on production
+(matrix §N4).
+
 | # | Do | Pass when |
 |---|---|---|
-| D1 | Signed out, in an ordinary browser (no Do Not Track or Global Privacy Control), open `/form/<form id>?utm_source=qa&utm_campaign=QA-SPRING` | One `growth_public_visits` row for `:qa_workspace`, kind `form`, `utm_source = qa`, no IP or user agent stored |
+| D1 | Signed out, in a **headed, ordinary browser** (no Do Not Track or Global Privacy Control), **in a fresh browser context that has never signed in to Paige**, open `/form/<form id>?utm_source=qa&utm_campaign=:qa_ref` | One `growth_public_visits` row for `:qa_workspace`, `target_kind = 'form'`, `utm_json->>'utm_source' = 'qa'`; the table has no IP or user-agent column |
 | D2 | Reload within 30 minutes | Still one visit (continued, `last_seen_at` moved) |
 | D3 | Submit `QA Lead One` / `qa-lead-1@tests.invalid` | One submission with `visit_id` = that visit; one `form.submitted` event; the Overview and Analytics lead counts include it |
 | D4 | The same with Global Privacy Control on | No visit row; the submission is still saved, with `visit_id` null |

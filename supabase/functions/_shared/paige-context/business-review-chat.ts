@@ -106,13 +106,14 @@ export async function dispatchBusinessSnapshotChat(
   now?: Date,
 ): Promise<BusinessSnapshotChatResult> {
   const parsed = parseSnapshotArgs(args);
-  if (!parsed.ok) return { status: 'needs_input', message: `${parsed.fix} Nothing was read.` };
+  // `in` narrows under both the strict and the app tsconfig (the composer's own documented pattern).
+  if ('fix' in parsed) return { status: 'needs_input', message: `${parsed.fix} Nothing was read.` };
   // `now` (not a bare clock) so the composer derives ONE consistent instant for the period and its
   // freshness clock; injecting a clock alone would desync the two (the fabric contract's named
   // clock-skew risk). The composer is total: every read failure lands inside the snapshot with a
   // reason, so there is no catch here to swallow what cannot happen.
   const review = await composeBusinessReview(deps.caller, ctx.who, { ...parsed.request, timezone: ctx.timezone }, now ? { now } : {});
-  if (!review.ok) {
+  if ('reason' in review) {
     const fix = PERIOD_FIXES[review.reason] ?? 'That period request could not be used.';
     return { status: 'needs_input', message: `${fix} Nothing was read.` };
   }

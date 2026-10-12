@@ -772,6 +772,11 @@
         {
           "path": "supabase/functions/_shared/quickbooks-utils.ts",
           "role": "provider_adapter"
+        },
+        {
+          "path": "supabase/functions/_shared/paige-spine/domains/finance_reads.ts",
+          "role": "provider_adapter",
+          "note": "Finance-owned unregistered caller-JWT source read candidate; server company/role/binding fences and closed projections. No network, credentials, native provider ingestion or Chat/Live adoption authority."
         }
       ],
       "sources": [
@@ -880,6 +885,11 @@
           "path": "supabase/migrations/20270602000428_finance_liability_source_projections.sql",
           "role": "provider_adapter",
           "note": "Controlled company/native-account liability cache candidate, tied to exact account evidence version. No provider consent, product eligibility, live ingestion or verified institution freshness claim."
+        },
+        {
+          "path": "supabase/functions/_shared/paige-spine/domains/finance_reads.ts",
+          "role": "provider_adapter",
+          "note": "Finance-owned unregistered caller-JWT source read candidate; server company/role/binding fences and closed projections. No network, credentials, native provider ingestion or Chat/Live adoption authority."
         }
       ],
       "sources": [

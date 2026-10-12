@@ -16,8 +16,16 @@ KEYBOARD_FOCUS: PASS: document keyboard scroll, confirmation containment, cancel
 ZOOM_REFLOW: PASS: eight genuine signed-out Chrome200/400% cases, DPR2/4 physical captures, scroll and decision reachability; assets/operations-v3/client-artifact/client-artifact-zoom-verification.json.
 REDUCED_MOTION: PASS: preference enabled in component browser proof; no decorative or progress animation added.
 STATE_COVERAGE: PASS: populated, loading, unavailable, foreign, malformed, refused, unknown and revoked recovery; actor/scope changes fence late results. No record is distinct from unreadable source.
-TRUTHFUL_STATE_LABELS: PASS: internal approval, release and explicit client acceptance remain separate. Unknown write locks replay and offers only read-only recovery.
-SOLO_UI: NO: isolated unmounted client artifact component, not an added Solo screen. Full Client Portal/shared shell/PAIGE open-closed/workspace continuity proof remains owed before mount.
+TRUTHFUL_STATE_LABELS: PASS: internal approval, release and explicit client acceptance are separate named states, verified by the synthetic reports and source tests. Unconfirmed persistence locks replay and offers only read-only recovery.
+SOLO_UI: YES: recognized Operations Solo source path containing an isolated, unmounted client component. No production route is mounted; the full portal/shared-shell drive is not established.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE closed is not mounted or tested.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE open is not mounted or tested.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE closed is not mounted or tested.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE open is not mounted or tested.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE closed is not mounted or tested.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE open is not mounted or tested.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE closed is not mounted or tested.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: isolated component at this viewport is captured in assets/operations-v3/client-artifact; full portal/shared shell with PAIGE open is not mounted or tested.
 UNVERIFIED: production route, actual linked client runtime, staff controls, authenticated tenant/role flow, full portal continuity and governed COO execution.
 
 OWNER_INTENT: Existing owner-authorized Operations Delivery artifact/revision/explicit acceptance implementation, preserving Clients identity and portal ownership.
@@ -29,7 +37,7 @@ PROTECTED_SEAMS: Actual actor, expected tenant/release/version/digest, Clients l
 
 INTERNAL_BUILD_IDENTITY: 786b871ee684ec92ef349d7974df222d792e1063; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/operations-v3/client-artifact
 RELEASE_CHANNEL: development: source preparation only, no mounted production client route.
-RELEASE_CLASSIFICATION: internal component and staff adapter preparation; not a completed customer workflow.
+RELEASE_CLASSIFICATION: internal-only: unmounted component and staff adapter source preparation, not a completed customer workflow.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated customer outcome not established.
 RELEASE_NOTE_REQUIRED: no: unmounted implementation preparation only.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: released prerequisite backend catalog/native proof; PROOF OWED: mounted client/staff flow, authenticated acceptance and governed COO integration.
@@ -42,3 +50,7 @@ Client source0c0f6efc1f6f8c62616c9241f1cc683ee3495cf5: independent non-author so
 Staff adapter786b871ee684ec92ef349d7974df222d792e1063: independent non-author source COMPLETE/no confirmed material findings. It reuses submit/review/release, exact CAS values and scoped internal/client readers; direct table grants or new execution authority are not added. Reviewer did not independently rerun tests. Staff UI is not present in this slice.
 
 Reports, physical captures and reproducible local synthetic ports are under assets/operations-v3/client-artifact. Synthetic data is explicitly labeled and not imported into production. No customer account, privileged login, QA identity, provider communication or INT-346 activation was used.
+
+Evidence portability finding: copied sibling-worktree imports were invalid from the committed directory. The server and both verifiers now resolve the declared repository dependencies/source, document invocation, and use separate synthetic Chrome profiles. Replay from committed paths passes32 normal cases; fresh native zoom replay is recorded by the same saved script. Product source did not change. Full portal/shared-shell rows stay UNVERIFIED.
+
+Saved entrypoint replay completed after correction:32 normal cases/errors0 and8 native Chrome zoom cases/errors0 from the committed directory using loopback8817. Initial exact-head5032 required verify/database passed, UI evidence failed classification/Solo source-record declaration; this record corrects the grammar while explicitly retaining all eight full-shell rows as UNVERIFIED. No evidence assertion or CI rule was weakened.

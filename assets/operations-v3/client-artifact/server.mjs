@@ -1,11 +1,12 @@
-import { createServer } from '../operations-implementation/node_modules/vite/dist/node/index.js';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import tailwind from '../operations-implementation/node_modules/tailwindcss/lib/index.js';
-import autoprefixer from '../operations-implementation/node_modules/autoprefixer/lib/autoprefixer.js';
-import loadConfig from '../operations-implementation/node_modules/tailwindcss/loadConfig.js';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
 const root = path.dirname(fileURLToPath(import.meta.url));
-const app = path.resolve(root, process.argv[3] ?? '../operations-implementation');
+const app = process.argv[3] ? path.resolve(process.argv[3]) : path.resolve(root, '../../..');
+const require = createRequire(path.join(app, 'package.json'));
+const { createServer } = await import(pathToFileURL(path.join(app, 'node_modules/vite/dist/node/index.js')).href);
+const tailwind = require('tailwindcss'), autoprefixer = require('autoprefixer'), loadConfig = require('tailwindcss/loadConfig');
 const tw = loadConfig(path.join(app,'tailwind.config.ts'));
 tw.content = [path.join(app,'src/**/*.{ts,tsx}'),path.join(root,'*.tsx')];
 const server = await createServer({configFile:false,root,envDir:root,cacheDir:path.join(root,`.vite-${process.argv[2]??8771}`),publicDir:path.join(app,'public'),

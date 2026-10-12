@@ -67,6 +67,8 @@ export type CampaignSubmission = {
   trackingSource: string | null;
   /** `utm_campaign` from that link. Null when untagged. Never inferred from anything else. */
   trackingCampaign: string | null;
+  /** `utm_content` from that link: which ad (a library picture's id) the visitor came from. */
+  trackingContent?: string | null;
 };
 
 /**
@@ -743,6 +745,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
           dealId: row.deal_id,
           trackingSource: utmValue(row.utm_json, "utm_source"),
           trackingCampaign: utmValue(row.utm_json, "utm_campaign"),
+          trackingContent: utmValue(row.utm_json, "utm_content"),
         }));
         const submissionCounts = submissions.reduce<Record<string, number>>(
           (counts, row) => {

@@ -327,6 +327,84 @@ async function main() {
       }
     }
 
+    // Campaigns › dossier: steps and results (MBC 6b). Each step reads its real state; an admin plans a step,
+    // records a result over a proven finish and judges it; a recorded-only step offers no result; a member reads.
+    for (const theme of ["light", "dark"]) {
+      for (const mode of ["populated", "readonly"]) {
+        const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+        const page = await ctx.newPage();
+        const errors = [];
+        page.on("pageerror", (e) => errors.push(String(e.message)));
+        await open(page, { tab: "campaigns", theme, mode });
+        await setContentWidth(page, contentWidth(1366, "docked"));
+        await page.locator(".pf-row", { hasText: "Spring advisory intake" }).locator("button", { hasText: "Open dossier" }).first().click();
+        await page.waitForSelector(".dw .ca-step", { timeout: 8000 }).catch(() => {});
+        const id = `${theme}/${mode}/campaign-steps`;
+        const read = () => page.evaluate(() => [...document.querySelectorAll(".dw .ca-step")].map((li) => ({
+          name: li.querySelector(".ca-title")?.textContent ?? li.querySelector(".ca-top")?.textContent ?? "",
+          state: li.querySelector(".ca-state")?.textContent ?? "",
+          text: li.textContent ?? "",
+          buttons: [...li.querySelectorAll("button")].map((b) => b.textContent),
+        })));
+        const fit = () => page.evaluate(() => { const dw = document.querySelector(".dw"); if (!dw) return null; const r = dw.getBoundingClientRect(); return { sideways: dw.scrollWidth > dw.clientWidth + 1, offRight: [...dw.querySelectorAll(".ca *")].some((el) => el.getBoundingClientRect().right > r.right + 1) }; });
+        const steps = await read();
+        const f0 = await fit();
+        check(errors.length === 0 && steps.length === 6 && f0 && !f0.sideways && !f0.offRight, `${id}: six steps render without error or overflow`, JSON.stringify({ errors, n: steps.length, f0 }));
+        const tactics = await page.evaluate(() => [...document.querySelectorAll(".dw .ca-tactic")].map((t) => t.getAttribute("aria-label")));
+        check(JSON.stringify(tactics) === JSON.stringify(["Tactic: Win-back email", "Tactic: Launch event"]), `${id}: steps are grouped under their tactic`, JSON.stringify(tactics));
+        const recorded = steps.find((s) => /Marked done, nothing shows it ran/.test(s.state));
+        check(Boolean(recorded) && !recorded.buttons.includes("Record the result") && !/Judged|Result/.test(recorded.text.replace(/Record the result/g, "")), `${id}: a recorded-only step says nothing shows it ran, and carries no result`, JSON.stringify(recorded));
+        const waiting = steps.find((s) => /Waiting for your approval/.test(s.state));
+        check(Boolean(waiting), `${id}: a step awaiting approval says so`, JSON.stringify(steps.map((s) => s.state)));
+        await page.evaluate(() => document.querySelector(".dw .ca")?.scrollIntoView({ block: "start" }));
+        if (mode === "populated") {
+          const judged = steps.find((s) => /Twelve booked a call/.test(s.text));
+          check(Boolean(judged) && /Ten replies/.test(judged.text) && /Met/.test(judged.text), `${id}: a judged step shows its aim, its result and the judgement`, JSON.stringify(judged));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-${theme}.png`) });
+
+          await page.locator(".dw .cc-add", { hasText: "Plan a step" }).click();
+          const form = page.locator("form[aria-label='Plan a step']");
+          await form.locator("label", { hasText: "Step" }).locator("input").fill("Send the event recap");
+          await form.locator(".ca-chip", { hasText: "Launch event" }).click();
+          await form.locator("[role=radio]", { hasText: /^Email$/ }).click();
+          await form.locator("label", { hasText: "Aim" }).locator("input").fill("Twenty opens");
+          const f1 = await fit();
+          check(Boolean(f1) && !f1.sideways && !f1.offRight, `${id}: the plan form fits the dossier`, JSON.stringify(f1));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-plan-${theme}.png`) });
+          await form.locator("button[type=submit]").click();
+          await page.waitForFunction(() => [...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Send the event recap")), null, { timeout: 5000 }).catch(() => {});
+          const planned = await page.evaluate(() => {
+            const li = [...document.querySelectorAll(".dw .ca-step")].find((el) => el.textContent?.includes("Send the event recap"));
+            return { tactic: li?.closest(".ca-tactic")?.getAttribute("aria-label") ?? null, text: li?.textContent ?? "", toast: document.querySelector(".campaign-toast")?.textContent ?? "" };
+          });
+          check(planned.tactic === "Tactic: Launch event" && /Twenty opens/.test(planned.text) && /Nothing is drafted, sent or published/.test(planned.toast), `${id}: planning files the step under its tactic, with its aim, and says nothing went out`, JSON.stringify(planned));
+
+          const done = page.locator(".dw .ca-step", { hasText: "Thank-you note to everyone who booked" });
+          await done.locator("button", { hasText: "Record the result" }).click();
+          await done.locator("label", { hasText: "What happened" }).locator("input").fill("Nine of nine thanked");
+          await done.locator("label", { hasText: "Figure" }).locator("input").fill("9");
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-record-${theme}.png`) });
+          await done.locator("button[type=submit]").click();
+          await page.waitForFunction(() => [...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Nine of nine thanked")), null, { timeout: 5000 }).catch(() => {});
+          const observed = await done.evaluate((li) => ({ text: li.textContent ?? "", buttons: [...li.querySelectorAll("button")].map((b) => b.textContent) }));
+          check(/Nine of nine thanked/.test(observed.text) && observed.buttons.includes("Judge it") && !observed.buttons.includes("Record the result"), `${id}: a recorded result shows, and the step can now be judged`, JSON.stringify(observed));
+          await done.locator("button", { hasText: "Judge it" }).click();
+          await done.locator("label", { hasText: "Note" }).locator("input").fill("Everyone thanked");
+          await done.locator("button", { hasText: /^Met$/ }).click();
+          await page.waitForFunction(() => [...document.querySelectorAll(".dw .ca-step")].some((li) => li.textContent?.includes("Everyone thanked")), null, { timeout: 5000 }).catch(() => {});
+          const judgedNow = await done.evaluate((li) => ({ text: li.textContent ?? "", state: li.querySelector(".ca-state")?.textContent ?? "" }));
+          check(/Everyone thanked/.test(judgedNow.text) && /Met/.test(judgedNow.state + judgedNow.text), `${id}: judging records the verdict and its note`, JSON.stringify(judgedNow));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-judged-${theme}.png`) });
+        } else {
+          const controls = await page.evaluate(() => document.querySelectorAll(".dw .ca button").length);
+          const hidden = steps.every((s) => /owners and admins see its name/.test(s.text));
+          check(controls === 0 && hidden, `${id}: a member reads states without step names they can't see, and can't change anything`, JSON.stringify({ controls, hidden }));
+          await page.screenshot({ path: path.join(OUT, `flow-campaign-steps-member-${theme}.png`) });
+        }
+        await ctx.close();
+      }
+    }
+
     // Retired addresses and the one form panel, both themes, at the ordinary 1366 docked session.
     for (const theme of ["light", "dark"]) {
       const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });

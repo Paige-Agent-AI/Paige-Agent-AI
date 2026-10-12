@@ -14,6 +14,7 @@ import "./intelligence.css";
 import { DistributionChart, StatusComposition, LatencyPlot, EvaluationChart, GovernedPath } from "./IntelligenceVisuals";
 import { TrajectoryEvidence, trajectoryResult } from "./TrajectoryEvidence";
 import { TaskScorecard } from './TaskScorecard';
+import { RegressionCorpusInspector } from './RegressionCorpusInspector';
 
 const WORKSPACES = [
   ["executive", "Executive Flight Deck"], ["forensic", "Forensic Observatory"],
@@ -205,6 +206,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
 
         <TabsContent value="studio">
           <TaskScorecard read={read.scorecard} work={evaluationWork} onInspectTask={id => inspectTask({ workId: id }, true)} onBrowseTasks={() => { setReturnToScorecard(false); read.inspectTrajectory(null); setWorkspace('forensic'); setDestination('intel-task-evidence'); }} />
+          <RegressionCorpusInspector key={`${read.subject}:${read.epoch}`} read={read.corpus} />
           <Section title="Evaluation and regression evidence" headingId="intel-evaluation-evidence" subtitle="Latest 25 canonical runs · target version, scorer set and case links · no paid evaluation is triggered">
             <ReadStatus state={read.evals} name="Evaluation history" />
             <EvaluationChart runs={runs} onInspect={(selected, button) => { opener.current = button; setRun(selected); }} />
@@ -231,7 +233,7 @@ export function IntelligenceWorkspace({ read }: { read: IntelligenceRead }) {
           </Inspection>}
           <Section title="Controlled improvement path" subtitle="A recommendation confers no authority">
             <GovernedPath kind="improvement" />
-            <Coverage label="Clustering, experiments and releases" status="UNAVAILABLE" detail="Task scorecards support deterministic historical evidence replay. Issue discovery, versioned regression corpus, experiments, canary and rollback remain later slices. Existing paige-eval is not invoked by this UI." />
+            <Coverage label="Clustering, experiments and releases" status="UNAVAILABLE" detail="Task scorecards support deterministic historical evidence replay; the Corpus Inspector reads reviewed offline regression records. Automated issue discovery, experiments, canary and rollback remain unavailable. Existing paige-eval is not invoked by this UI." />
           </Section>
           <ProposalEditor draft={drafts.improvement} onChange={(draft) => setDrafts((d) => ({ ...d, improvement: draft }))} />
         </TabsContent>

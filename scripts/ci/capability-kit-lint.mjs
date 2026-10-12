@@ -104,7 +104,9 @@ function businessSnapshotReadDoorBound(resolver) {
   return adapter.includes('parameters: BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.input')
     && adapter.includes('composeBusinessReview(deps.caller')
     && chat.includes('toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS')
-    && chat.includes('dispatchBusinessSnapshotChat(');
+    && chat.includes('dispatchBusinessSnapshotChat(')
+    // Pin the caller-JWT client AT the mount, not just the call's existence (the review's P3).
+    && chat.includes('caller: supabaseClient')
 }
 
 /**

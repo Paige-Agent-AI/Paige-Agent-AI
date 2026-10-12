@@ -8,10 +8,12 @@ import type { MetricCaller } from '../analytics-metrics/read.ts';
 // INT-340 issuer's in-body check decides who may read each figure: this business's active owner or
 // admin. No chat-only snapshot, no second data path, no domain math here.
 //
-// SEQUENTIAL BY CONSTRUCTION. The composer reads every metric one at a time through the observing
-// caller, and the chat corridor executes tool calls serially, so a get_business_snapshot call can
-// never overlap a read_business_metric call in the same turn (the issuer revokes a caller's
-// previous evidence reference per metric and range; an overlapping resolve fails 42501).
+// SEQUENTIAL WHERE IT MUST BE. Within each domain adapter the metric reads run one at a time, and
+// the composer runs the four adapters concurrently on DISJOINT metric keys, so no two reads inside
+// one snapshot ever contend for the same issuer evidence reference. Across tools, the chat corridor
+// executes calls serially, so a get_business_snapshot call can never overlap a read_business_metric
+// call in the same turn (the issuer revokes a caller's previous evidence reference per metric and
+// range; an overlapping resolve fails 42501).
 //
 // HONEST BY CONSTRUCTION. The projection the composer returns reports every live domain's figures
 // with their coverage, and every other domain as not available with its reason. A refused,
@@ -22,6 +24,8 @@ import type { MetricCaller } from '../analytics-metrics/read.ts';
 // SHIP-DARK (E2-1). Under INT-346's staged rollout an ordinary typed Solo turn is offered ZERO
 // tools and dispatch refuses anything a provider emits, so this dispatch is unreachable from a
 // conversational turn until the tool is admitted under the owner-approved read-only admission class.
+// (The legacy non-interactive request path, where interactive is absent, can still offer and
+// dispatch this tool for tenant-tier callers — exactly like the incumbent read_business_metric.)
 
 export const BUSINESS_SNAPSHOT_TOOLS = [
   { type: 'function', function: {
@@ -32,7 +36,6 @@ export const BUSINESS_SNAPSHOT_TOOLS = [
     parameters: BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.input,
   } },
 ] as const;
-export const BUSINESS_SNAPSHOT_TOOL_NAMES = new Set<string>(BUSINESS_SNAPSHOT_TOOLS.map((t) => t.function.name));
 
 export type BusinessSnapshotStatus = 'available' | 'needs_input' | 'refused' | 'unavailable';
 export type BusinessSnapshotChatResult = { status: BusinessSnapshotStatus; message: string; projection?: string };

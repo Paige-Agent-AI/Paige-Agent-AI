@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  BUSINESS_SNAPSHOT_TOOLS, BUSINESS_SNAPSHOT_TOOL_NAMES, dispatchBusinessSnapshotChat,
+  BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat,
 } from "../../supabase/functions/_shared/paige-context/business-review-chat.ts";
 import {
   BUSINESS_OPERATING_SNAPSHOT, BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY,
@@ -44,7 +44,7 @@ const dispatch = (args: unknown, timezone = "UTC", caller = fakeCaller()) =>
 
 describe("E2-1 registration", () => {
   it("pushes exactly one chat tool named get_business_snapshot whose parameters are the registered capability's input", () => {
-    expect(BUSINESS_SNAPSHOT_TOOL_NAMES).toEqual(new Set(["get_business_snapshot"]));
+    expect(BUSINESS_SNAPSHOT_TOOLS).toHaveLength(1);
     const tool = BUSINESS_SNAPSHOT_TOOLS[0].function;
     expect(tool.name).toBe("get_business_snapshot");
     expect(tool.parameters).toEqual(JSON.parse(JSON.stringify(BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.input)));

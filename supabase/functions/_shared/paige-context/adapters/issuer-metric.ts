@@ -85,7 +85,13 @@ export function closedBuckets(metric: SalesMetric, map: ClosedBucketMap): Closed
   let dropped = 0;
   if (values === null || values.kind !== "distribution") return { counts, hidden, dropped, empty: true };
   for (const item of values.items) {
-    const n = Number.isSafeInteger(item.count) && item.count >= 0 ? item.count : 0;
+    // The issuer parser already enforces whole non-negative counts; anything else is counted as left
+    // out, never as zero.
+    if (!Number.isSafeInteger(item.count) || item.count < 0) {
+      dropped += 1;
+      continue;
+    }
+    const n = item.count;
     if (!Object.prototype.hasOwnProperty.call(map, item.key)) {
       dropped += n;
       continue;

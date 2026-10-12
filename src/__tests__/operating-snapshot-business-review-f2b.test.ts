@@ -232,7 +232,7 @@ describe('operations adapter', () => {
     const all = JSON.stringify(s) + projectOperatingSnapshot({ version: 1, tenant_id: TENANT, actor_id: 'a', account_shape: 'solo', period: period(), composed_at: NOW.toISOString(), requested: ['operations'], domains: { operations: { status: 'available', data: s } }, degradation: [], budget: { adapters_run: 1, timed_out: [], truncated: [] } });
     for (const raw of ['payment_method_options', 'website_connected', 'automation_wired', 'comms_configured', 'a_check_nobody_mapped']) expect(all).not.toContain(raw);
     expect(fig(s, 'operations.exceptions_high')?.value).toBe(2);
-    expect(fig(s, 'operations.exceptions_low')?.window_note).toBe('from the Systems Check completed 2026-10-11 09:02 UTC');
+    expect(fig(s, 'operations.exceptions_low')?.window_note).toBe('from the latest Systems Check, as of 2026-10-11 09:02 UTC');
   });
 
   it('a check that could not run is said so, not called a failure of the setup item', async () => {
@@ -419,6 +419,25 @@ describe('clients adapter', () => {
     const s = data(await clients(f));
     expect(s.coverage_note).toMatch(/onboarding steps are not being recorded, so onboarding progress is unknown/i);
     expect(s.coverage_note!.length).toBeLessThanOrEqual(300);
+  });
+
+  it('a partial lifecycle read never infers a zero for a stage it returned nothing for', async () => {
+    const s = data(await clients(fakeCaller({ script: (k) => k === CLIENTS_METRICS.lifecycle
+      ? { values: dist(['client_active', 3], ['client_paused', 2]), truth: 'PARTIAL', excluded: 1 }
+      : undefined })));
+    expect(fig(s, 'clients.paused')?.value).toBe(2);
+    expect(fig(s, 'clients.churned')?.value).toBeNull();
+    expect(fig(s, 'clients.past')?.value).toBeNull();
+    expect(s.coverage).toBe('partial');
+  });
+
+  it('a partial onboarding read never shows "0 part-way through" and says some onboarding is unrecorded', async () => {
+    const s = data(await clients(fakeCaller({ script: (k) => k === CLIENTS_METRICS.onboarding
+      ? { values: dist(['completed', 1]), truth: 'PARTIAL', excluded: 2 }
+      : undefined })));
+    expect(fig(s, 'clients.onboarding_in_progress')?.value).toBeNull();
+    expect(fig(s, 'clients.onboarding_completed')?.value).toBe(1);
+    expect(s.coverage_note).toMatch(/some clients' onboarding steps are not recorded/i);
   });
 
   it('onboarding not recorded is said in plain words, with no figure and never a zero', async () => {

@@ -263,7 +263,14 @@ unit-tested, reachable from no turn yet.** No edit to `analytics-metrics`, `paig
     the cap may have cut real problems (it listed 20 and excluded more); the note then says how many
     items were not listed. Below the cap nothing was cut, so the counts of the listed items stand and
     the note says how many checks were deferred, not recorded or unreadable and are not in them. A
-    PARTIAL with nothing counted as excluded keeps the counts `null` (fail closed).
+    PARTIAL with nothing counted as excluded keeps the counts `null` (fail closed). **Accepted limit
+    (independent review, 2026-10-12):** below the cap, `excluded_count` can also cover a failing
+    finding the producer rejected (unrecognised severity, malformed check id, timing after the check
+    or the read), so a priority count of 0 there is "0 of the readable findings", not proof none
+    exists; the note says checks were unreadable, and the producer flag is the real fix.
+  - Clients lifecycle and onboarding on a PARTIAL read: a bucket the producer returned nothing for is
+    `null`, never an inferred 0 (the left-out records may belong there); onboarding then says some
+    clients' onboarding steps are not recorded.
   - `operations.unresolved_findings_current` → `operations.unresolved_findings` (failing checks in
     the latest full check, uncapped).
   - `operations.recorded_workflow_runs` (in period) → `operations.workflow_runs_recorded` and
@@ -274,7 +281,7 @@ unit-tested, reachable from no turn yet.** No edit to `analytics-metrics`, `paig
     Paige does not recognise) never claims "none recorded" or "0 failed": with nothing countable the
     recorded figure is `null`, a zero failed count becomes `null`, and the note says a failed run
     cannot be ruled out. A counted failure still stands.
-  - The two Systems Check figures carry the window note "from the Systems Check completed <UTC
+  - The two Systems Check figures carry the window note "from the latest Systems Check, as of <UTC
     minute>" taken from `freshness.source_updated_through`, not from the read time. No `changes[]`:
     no history of findings exists to compare.
 - `adapters/clients.ts` (`domain: clients`, `owner: client_experience`). Three reads, all current
@@ -419,7 +426,7 @@ re-enters the same handler, so its reach equals Chat's reach unless the table sa
 | Team / authority | `tenant_members`, invitations | `get_team_authority_readiness`, `get_paige_team_context` | `team.authority` (read only) | per-turn blocks + team tools | no | PARTIAL |
 | Agency / operator tiers | `tenants.parent_tenant_id`, `agency_team_members`, `user_roles` | SQL predicates | none | operator briefing only (tenant-less) | no | PARTIAL; Live unreachable (needs a tenant thread) |
 | Trust Compass | `admin_app_settings.paige_trust_compass` | `get_platform_trust_compass` (operator) | none | enforced via `resolve_tool_autonomy*`, never stated to PAIGE | no | PARTIAL |
-| Systems Check (tenant) | `paige_systems_check_run/_finding` (794 tenant runs) | `systems_check_snapshot(p_scope)` | none | **none** (0 matches in chat) | substrate yes, seam no | PARTIAL (runner live, PAIGE blind) **Corrected F2b (2026-10-12): see the F2b section, §13 correction 1.** |
+| Systems Check (tenant) | `paige_systems_check_run/_finding` (794 tenant runs at the 2026-10-06 grounding; recounted 2026-10-12 as 525 runs with a tenant set — the counting rule may differ) | `systems_check_snapshot(p_scope)` | none | **none** (0 matches in chat) | substrate yes, seam no | PARTIAL (runner live, PAIGE blind) **Corrected F2b (2026-10-12): see the F2b section, §13 correction 1.** |
 | Systems Check (operator) | same, `tenant_id IS NULL` | owner-context service read | none | operator briefing line | no | PARTIAL (chat delivery PROOF OWED) |
 | Connections / integrations | `channel_connectors`, `*_mcp_connections`, `tenant_n8n_connections` | `list_integration_surface()` | `integrations.list` (+ `integrations.health` declared, **no tool**) | Mind block + `integrations_list` | no | PARTIAL |
 | Secure Browser / PAIGE Computer | `secure_browser_*` (all 0 rows) | `browser-use` edge (gated off) | none | none | no | UNAVAILABLE |

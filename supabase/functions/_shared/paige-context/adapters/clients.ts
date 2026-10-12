@@ -102,6 +102,7 @@ export const CLIENTS_NOTE = {
   standing: "new clients this period and clients at risk are not measured yet; leads are counted under sales",
   onboardingNotRecorded: "onboarding steps are not being recorded, so onboarding progress is unknown",
   noClientsToOnboard: "there are no clients to onboard yet",
+  onboardingPartlyRecorded: "some clients' onboarding steps are not recorded, so onboarding counts are incomplete",
 } as const;
 
 function addBuckets(
@@ -114,6 +115,8 @@ function addBuckets(
     readonly figures: readonly { readonly bucket: string; readonly key: string; readonly label: string }[];
     /** Said when known-but-not-shown records exist, so a hidden bucket never reads as zero. */
     readonly hiddenNote?: (n: number) => string;
+    /** Said instead of the generic note when the read is partial, naming what may be missing. */
+    readonly partialNote?: string;
   },
 ): void {
   const buckets = closedBuckets(metric, map);
@@ -121,13 +124,15 @@ function addBuckets(
     pushIssuerHeadline(draft, {
       key: f.key,
       label: f.label,
-      // Absent from a distribution the producer listed is a real zero for that bucket.
-      value: buckets.counts[f.bucket] ?? 0,
+      // Absent from a COMPLETE distribution is a real zero for that bucket. Absent from a partial one is
+      // unknown: the records the producer left out may belong there, so it is null, never an inferred 0.
+      // A positive count still stands either way.
+      value: buckets.counts[f.bucket] ?? (partial ? null : 0),
       unit: "count",
       basis: "point_in_time",
     }, group.noun);
   }
-  if (partial) draft.notes.push(ISSUER_NOTE.partial(group.noun));
+  if (partial) draft.notes.push(group.partialNote ?? ISSUER_NOTE.partial(group.noun));
   if (buckets.dropped > 0) draft.notes.push(droppedBucketNote(group.noun, buckets.dropped));
   if (buckets.hidden > 0 && group.hiddenNote !== undefined) draft.notes.push(group.hiddenNote(buckets.hidden));
 }
@@ -204,7 +209,7 @@ export function createClientsSnapshotAdapter(
         if (values !== null && values.kind === "distribution" && values.items.length === 0 && !onboarding.partial) {
           draft.notes.push(CLIENTS_NOTE.noClientsToOnboard);
         } else {
-          addBuckets(draft, onboarding.metric, onboarding.partial, ONBOARDING_MAP, ONBOARDING);
+          addBuckets(draft, onboarding.metric, onboarding.partial, ONBOARDING_MAP, { ...ONBOARDING, partialNote: CLIENTS_NOTE.onboardingPartlyRecorded });
         }
       } else {
         draft.failures.push({ reason: onboarding.failure, headline: true });

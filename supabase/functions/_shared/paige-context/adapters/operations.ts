@@ -142,10 +142,14 @@ function rank(severity: string | null): number {
   return i === -1 ? SEVERITIES.length : i;
 }
 
-/** "from the Systems Check completed 2026-10-11 09:00 UTC" — the reading's time, not the query's. */
+/**
+ * "from the latest Systems Check, as of 2026-10-11 09:00 UTC" — the reading's time, not the query's.
+ * The producer's time is the later of the check's completion and its newest finding, so it is stated
+ * as an "as of", never as the moment the check finished.
+ */
 function checkNote(metric: IssuerMetric): string | undefined {
   const when = plainUtcMinute(metric.freshness.source_updated_through);
-  return when === null ? undefined : `from the Systems Check completed ${when}`;
+  return when === null ? undefined : `from the latest Systems Check, as of ${when}`;
 }
 
 function failNote(draft: IssuerSnapshotDraft, metric: { readonly failure: string }, noun: string, unavailableNote: string): void {

@@ -250,6 +250,16 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // (or not) in Ads › Overview through the same RPC the Ads desk calls; at most six, an archived item
   // refused by the server. In-business and reversible by the same tool; it publishes, sends and spends
   // nothing and touches no ad account — the same class as content_save.
+  // Campaign steps (INT-298 MBC 6c). Plan files one record-only step on the action list at `confirm` (approving
+  // it records it; nothing is drafted, sent, published or spent); record/judge store what the owner said
+  // happened and their verdict on a finished step. In-business statements — the same class as content_save.
+  ["campaign_step_plan", "ordinary", "plans one record-only campaign step on the action list, waiting for the owner's approval; nothing is drafted, sent, published or spent"],
+  ["campaign_step_record_result", "ordinary", "records what the owner said happened on a finished campaign step, as stated and never as a measured figure"],
+  ["campaign_step_judge", "ordinary", "records the owner's met / partly met / not met judgement of a campaign step's recorded result"],
+  // Process scope (MBC 6c). Chooses which form(s) or campaign start a form-started process. It never switches a
+  // process on, but re-scoping a LIVE process changes which submissions run it from now on — an automation's
+  // reach — so it is `high`: the risk clamp makes the chat ask every time, whatever autonomy is set.
+  ["process_scope_set", "high", "changes which form submissions start a form-started process; on a live process that changes what runs automatically from now on"],
   ["set_ad_creative_featured", "ordinary", "features (or unfeatures) one of the business's own library pictures in its Ads showroom, at most six at once; reversible, and nothing is published, sent or spent"],
   // ── Calendar booking presets (E5, 2026-09-13). The SAME server-authorized RPCs the Settings ›
   // Connections › Calendars UI drives, adopted into Chat (no parallel model). Per-tool risk assumes

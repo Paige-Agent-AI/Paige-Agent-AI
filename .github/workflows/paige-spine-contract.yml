@@ -222,6 +222,9 @@ jobs:
       - name: Marketing process scope and action truth (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/process_scope_and_action_truth.sql
+      - name: Marketing campaign steps and process scope from chat (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_steps_chat_tools.sql
 
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/

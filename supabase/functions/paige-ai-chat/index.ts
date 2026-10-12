@@ -13,6 +13,7 @@ import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxI
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
 import { ADS_FUNNEL_TOOLS, ADS_FUNNEL_TOOL_NAMES, dispatchAdsFunnelChat } from '../_shared/ads-funnel-chat.ts';
+import { CAMPAIGN_STEP_TOOLS, CAMPAIGN_STEP_TOOL_NAMES, CAMPAIGN_STEP_WRITE_TOOLS, dispatchCampaignStepsChat } from '../_shared/campaign-steps-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { PUBLISH_DOOR_CHAT_TOOLS } from '../_shared/growth-publish-command/contract.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
@@ -441,6 +442,13 @@ function describeStep(
     // Ads (owner) — the funnel is the business's own leads and deals; featuring changes only the showroom.
     case "get_pipeline_lead_funnel": return { label: failed ? "Couldn't read your campaign results" : "Checked how your campaigns and ads are doing in Sales", group: "owner" };
     case "set_ad_creative_featured": return { label: failed ? "Couldn't confirm the Ads showroom changed" : out?.changed === false ? "Your Ads showroom already had it that way" : out?.featured === false ? "Took a picture out of your Ads showroom" : "Featured a picture in your Ads showroom", group: "owner", detail: failed ? "no confirmed change" : out?.changed === false ? "nothing changed" : "nothing published or spent" };
+    // Campaign steps and process scope (MBC 6c, owner): the same writer and reads the Campaigns dossier uses.
+    case "read_campaign_steps": return { label: failed ? "Couldn't read the campaign's steps" : "Read the campaign's steps", group: "owner" };
+    case "campaign_step_plan": return { label: failed ? "Couldn't confirm the step was planned" : "Planned a campaign step", group: "owner", detail: failed ? "no confirmed change" : "nothing drafted or sent" };
+    case "campaign_step_record_result": return { label: failed ? "Couldn't confirm the result was recorded" : "Recorded what came of a campaign step", group: "owner", detail: failed ? "no confirmed change" : "as you stated it" };
+    case "campaign_step_judge": return { label: failed ? "Couldn't confirm the judgement was recorded" : "Recorded your judgement of a campaign step", group: "owner" };
+    case "read_process_scope": return { label: failed ? "Couldn't read which form starts the process" : "Checked which form starts the process", group: "owner" };
+    case "process_scope_set": return { label: failed ? "Couldn't confirm the process's form was set" : "Set which form starts a process", group: "owner", detail: failed ? "no confirmed change" : "not switched on or off" };
     // Calendar booking presets (owner) — a preset is a bookable /book PAGE; only publish makes it public.
     // Each verb special-cases CALENDAR_PRESET_RAIL_WRITE_FAILED: there the mutation IS verified and
     // PERSISTED (only the Rail evidence did not finish), so the chip must state the TRUE persisted
@@ -8177,6 +8185,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // library picture in the Ads showroom. Tenant tier only, like the business metric read: both RPCs act on
     // the caller's active business. The feature is governed by the general gate below (ordinary → confirm).
     if (callerTier === "tenant") toolDefs.push(...ADS_FUNNEL_TOOLS as any);
+    // Campaign steps and process scope (INT-298 MBC 6c): PAIGE reads a campaign's steps, plans one, records
+    // and judges a finished step's result, and reads or sets which form or campaign starts a form-started
+    // process. Tenant tier: every call acts on the caller's active business through the same functions the
+    // Campaigns dossier and the process-scope seam use. The writes go through the general gate below
+    // (ordinary → asks first unless the owner chose otherwise; process_scope_set is high → always asks).
+    if (callerTier === "tenant") toolDefs.push(...CAMPAIGN_STEP_TOOLS as any);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -8535,6 +8549,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       email_series_request_approval: "filing an email series for your approval",
       get_pipeline_lead_funnel: "checking how your campaigns and ads are doing in Sales",
       set_ad_creative_featured: "changing what your Ads showroom features",
+      read_campaign_steps: "reading the campaign's steps",
+      campaign_step_plan: "planning a campaign step",
+      campaign_step_record_result: "recording what came of a campaign step",
+      campaign_step_judge: "recording your judgement of a campaign step",
+      read_process_scope: "checking which form starts the process",
+      process_scope_set: "choosing which form starts a process",
       booking_preset_create: "creating a booking calendar (a private draft)",
       booking_preset_revise: "revising a booking calendar",
       booking_preset_publish: "publishing a booking calendar's public page",
@@ -8864,6 +8884,39 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return a?.featured === false
             ? `Take ${named} out of your Ads showroom. It stays in your library; nothing is published, sent or spent.`
             : `Feature ${named} in your Ads showroom. Up to 6 can be featured; nothing is published, sent or spent.`;
+        }
+        case "campaign_step_plan": {
+          const step = String(a?.step ?? "").trim().slice(0, 120) || "a step";
+          const tactic = String(a?.tactic ?? "").trim().slice(0, 80);
+          return `Plan “${step}”${tactic ? ` under ${tactic}` : ""} on this campaign. It goes on your action list as planned and comes to you for approval once it is prepared; nothing is drafted, sent, published or spent.`;
+        }
+        case "campaign_step_record_result": {
+          const said = String(a?.what_happened ?? "").trim().slice(0, 160);
+          const figure = typeof a?.figure === "number" && Number.isFinite(a.figure) ? ` (${a.figure.toLocaleString()})` : "";
+          return `Record what came of this campaign step: “${said}”${figure}. It is recorded as you stated it, not as a measured figure${figure ? "; a figure is kept only if you wrote that number in this conversation" : ""}.`;
+        }
+        case "campaign_step_judge": {
+          const verdict = a?.verdict === "met" ? "met its aim" : a?.verdict === "partly_met" ? "partly met its aim" : a?.verdict === "not_met" ? "did not meet its aim" : "has been judged";
+          return `Record that this campaign step ${verdict}${a?.note ? `: “${String(a.note).trim().slice(0, 120)}”` : ""}. A step is judged once.`;
+        }
+        case "process_scope_set": {
+          // Name the campaign when that is the scope, read on the caller's own session in this business; a card
+          // that cannot name it says "this campaign" rather than guessing (§13).
+          let target = "";
+          if (Array.isArray(a?.form_ids)) target = a.form_ids.length === 1 ? "the form you chose" : `the ${a.form_ids.length} forms you chose`;
+          else {
+            const cid = typeof a?.campaign_id === "string" ? a.campaign_id.trim() : "";
+            let name: string | null = null;
+            if (UUIDISH.test(cid) && personaCtx?.tenant_id) {
+              try {
+                const { data } = await supabaseClient.from("campaign_briefs").select("name").eq("id", cid).eq("tenant_id", personaCtx.tenant_id).limit(1);
+                const raw = Array.isArray(data) ? data[0]?.name : null;
+                name = typeof raw === "string" && raw.trim() ? raw.trim().slice(0, 80) : null;
+              } catch { name = null; }
+            }
+            target = `forms attached to ${name ? `the campaign “${name}”` : "this campaign"}`;
+          }
+          return `Make this process run only when someone fills in ${target}. It is not switched on or off; if it is already live, this changes which submissions start it from now on.`;
         }
         case "booking_preset_create":
           return `Create a booking calendar "${String(a?.name || "Untitled").slice(0, 80)}"${a?.model ? ` (${String(a.model).replaceAll("_", " ")})` : ""} as a PRIVATE DRAFT. Its public /book page is NOT live — publishing is a separate, explicit step.`;
@@ -15604,6 +15657,41 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               ? { success: false, outcome: "outcome_unknown", error: "The showroom change did not report back.", note: "Check Ads › Overview before saying anything changed, and do not retry automatically." }
               : { success: false, error: "The campaign results could not be read right now." }) });
           }
+        } else if (CAMPAIGN_STEP_TOOL_NAMES.has(tc.function.name)) {
+          // Campaign steps and process scope (INT-298 MBC 6c). The adapter runs on the CALLER's session
+          // (supabaseClient), never the service role, so configure_campaign_brief_actions, configure_process_scope
+          // and their reads decide owner/admin and platform-owner authority in their own bodies. It checks the
+          // active business before and after, reports a write as done only after a fresh read shows it, and
+          // records only a figure the owner wrote in this conversation. A write's receipt goes to the Rail through
+          // the existing recorder; the reads record nothing.
+          let stepArgs: Record<string, unknown> = {};
+          try { stepArgs = JSON.parse(tc.function.arguments || "{}"); } catch { stepArgs = {}; }
+          const userTurns = messages.filter((message: any) => message?.role === "user");
+          const ownerText = userTurns.map((message: any) => typeof message?.content === "string" ? message.content
+            : Array.isArray(message?.content) ? message.content.map((part: any) => typeof part?.text === "string" ? part.text : "").join(" ") : "").join("\n");
+          const tid = personaCtx?.tenant_id ?? null;
+          try {
+            const result = await dispatchCampaignStepsChat({ tenantId: tid, userId: user.id, toolName: tc.function.name, args: stepArgs, ownerText, threadId: payloadThreadId ?? null }, { caller: supabaseClient });
+            if (CAMPAIGN_STEP_WRITE_TOOLS.has(tc.function.name) && tid
+                && (result.outcome === "succeeded" || result.outcome === "refused" || result.outcome === "outcome_unknown")) {
+              const recorded = await recordCapabilityRun(supabase, {
+                tenantId: tid, actorId: user.id, capabilityKey: tc.function.name,
+                outcome: result.outcome === "succeeded" ? "capability_succeeded" : result.outcome === "refused" ? "capability_refused" : "capability_outcome_unknown",
+                runId: await stableRunId(result.outcome === "succeeded" && result.runId
+                  ? [tc.function.name, tid, result.runId]
+                  : [tc.function.name, tid, `${payloadThreadId ?? ""}:${tc.id}`]),
+              });
+              if (!recorded && result.outcome === "succeeded") {
+                result.content = { ...result.content, activity_recorded: false,
+                  note: `${String(result.content.note ?? "")} It is done, but it did not appear in the business's activity record; say so if asked what PAIGE did.`.trim() };
+              }
+            }
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
+          } catch {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(CAMPAIGN_STEP_WRITE_TOOLS.has(tc.function.name)
+              ? { success: false, outcome: "outcome_unknown", error: "The campaign change did not report back.", note: "Read the campaign's steps or the process before saying anything changed, and do not retry automatically." }
+              : { success: false, error: "That could not be read right now." }) });
+          }
         } else if (tc.function.name === "campaign_brief_create" || tc.function.name === "campaign_brief_revise" || tc.function.name === "campaign_brief_list") {
           // Solo Tenant Brain — Campaign Brief planning records. The helper uses the CALLER JWT
           // for tenant/role resolution and the EXISTING configure RPC, then independently reopens
@@ -16249,6 +16337,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
         email_series_draft: "email_sequences", email_series_request_approval: "email_sequences",
         set_ad_creative_featured: "marketing_content",
+        campaign_step_plan: "campaign_brief_actions",
+        campaign_step_record_result: "campaign_brief_actions",
+        campaign_step_judge: "campaign_brief_actions",
+        process_scope_set: "paige_automations",
         // Calendar booking presets — every verb's durable subject is the calendars row (the
         // booking /book page). duplicate mints a new row; the rest act on the named one.
         booking_preset_create: "calendars", booking_preset_revise: "calendars",

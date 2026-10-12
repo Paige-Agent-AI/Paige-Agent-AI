@@ -7,8 +7,10 @@ import type { ClientAgreement } from "@/solo/useSoloCommercialTerms";
 import type { AgreementSigning } from "@/solo/useSoloAgreementSignings";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import type { OperationsEngagementEvidence } from "./OperationsEngagementEvidence";
+import { prepareEngagementHandoff } from "./operations-engagement-handoff";
+import { retainPendingHandoff } from "./operations-handoff-intent";
 
-const mocks=vi.hoisted(()=>({rpc:vi.fn(),write:vi.fn()}));
+const mocks=vi.hoisted(()=>({rpc:vi.fn(),write:vi.fn(),recover:vi.fn()}));
 const id=(n:number)=>`eb820000-0000-4000-8000-${n.toString().padStart(12,"0")}`;
 const agreement={id:id(4),contactId:id(3),offerId:id(5),title:"Synthetic engagement",status:"active",updatedAt:"2026-10-09T12:00:00Z"} as ClientAgreement;
 const documents=[6,7].map(n=>({id:id(n),agreementId:id(4),contactId:id(3),documentTitle:`Signed scope ${n}`,signatureState:"completed",displayState:"completed",hasSealedCopy:true})) as AgreementSigning[];
@@ -17,6 +19,7 @@ vi.mock("@/solo/useSoloCommercialTerms",()=>({useSoloCommercialTerms:()=>({tenan
 vi.mock("@/solo/useSoloAgreementSignings",()=>({useSoloAgreementSignings:()=>({tenantId:id(2),phase:"ready",readable:true,signings:documents,retry:vi.fn()})}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{rpc:mocks.rpc}}));
 vi.mock("./operations-engagement-handoff-write",()=>({writeEngagementHandoff:mocks.write}));
+vi.mock("./operations-handoff-recovery",()=>({inspectOriginalHandoff:mocks.recover}));
 vi.mock("./OperationsEngagementEvidence",()=>({OperationsEngagementEvidence:(props:Parameters<typeof OperationsEngagementEvidence>[0])=>props.handoff?<OperationsEngagementHandoff {...props.handoff} evidence={{tenantId:id(2),agreementId:props.signingId,contactId:id(3),commercialTermsId:id(4),offerId:id(5),version:3,status:"completed",completedAt:agreement.updatedAt,contentSha256:"a".repeat(64),sealedSha256:"b".repeat(64),sealedCopyRecorded:true}}/>:<p>Signing evidence</p>}));
 const members=[{user_id:id(1),status:"active",full_name:"Synthetic owner",avatar_url:null}] as TeamMemberRecord[];
 let host:HTMLDivElement,root:Root;
@@ -39,5 +42,19 @@ it("two eligible signings expose one selected draft and refuse switching until i
  await act(async()=>choices[1].click());
  await act(async()=>buttons("Discard draft").find(b=>b.closest('[role="alertdialog"]'))!.click());
  expect(document.querySelector('[role="dialog"]')).toBeNull();
+ expect(mocks.write).not.toHaveBeenCalled();
+});
+it("verified work remains inspectable with recovery feedback when the workspace refresh rejects",async()=>{
+ const scope={actorId:id(1),tenantId:id(2),contactId:id(3),commercialTermsId:id(4),offerId:id(5),termsUpdatedAt:agreement.updatedAt,commercialStatus:"active"};
+ const evidence={tenantId:id(2),agreementId:id(6),contactId:id(3),commercialTermsId:id(4),offerId:id(5),version:3,status:"completed",completedAt:agreement.updatedAt,contentSha256:"a".repeat(64),sealedSha256:"b".repeat(64),sealedCopyRecorded:true};
+ const request=prepareEngagementHandoff(scope,evidence,{title:"Synthetic project",summary:null,ownerUserId:id(1),startsOn:"2026-10-09",endsOn:"2026-10-20",milestones:[{title:"Review",assignedToUserId:id(1),priority:"normal"}]},id(8),[id(1)])!;
+ expect(retainPendingHandoff(request)).toBe(true);
+ mocks.recover.mockResolvedValue({kind:"verified",planId:id(9),milestoneIds:[id(10)]});
+ const onVerified=vi.fn().mockRejectedValue(new Error("Synthetic refresh failure"));
+ await act(async()=>root.render(<OperationsDelivery plans={[]} items={[]} planningReady members={members} peopleReady onVerified={onVerified}/>));
+ await act(async()=>Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find(b=>b.textContent?.includes("Inspect agreement"))!.click());
+ await act(async()=>buttons("Inspect original handoff")[0].click());
+ expect(onVerified).toHaveBeenCalledWith(id(9));
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("The original project was verified. Refresh current work.");
  expect(mocks.write).not.toHaveBeenCalled();
 });

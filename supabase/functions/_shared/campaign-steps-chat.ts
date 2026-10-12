@@ -184,13 +184,14 @@ function only(args: Record<string, unknown>, allowed: readonly string[]): string
 
 async function stepsTool(ctx: Scoped, args: Record<string, unknown>, deps: CampaignStepsChatDeps): Promise<CampaignStepsChatResult> {
   const bad = only(args, ['campaign_id']); if (bad) return invalid(bad);
-  const campaignId = args.campaign_id ?? null;
-  if (campaignId !== null && (typeof campaignId !== 'string' || !UUID.test(campaignId))) return invalid('campaign_id must be a campaign id, or left out for every campaign.');
+  const asked = args.campaign_id ?? null;
+  if (asked !== null && (typeof asked !== 'string' || !UUID.test(asked))) return invalid('campaign_id must be a campaign id, or left out for every campaign.');
+  const campaignId: string | null = typeof asked === 'string' ? asked.toLowerCase() : null;
   if (await activeBusiness(deps) !== ctx.tenantId) return refused('active_account_changed');
-  const read = await readSteps(ctx, deps, campaignId ? campaignId.toLowerCase() : null);
+  const read = await readSteps(ctx, deps, campaignId);
   if (!read || 'error' in read) return failed('The campaign steps could not be read right now.');
   if ('refusal' in read) return refused(read.refusal);
-  if (campaignId && !read.campaigns.some((c) => c.campaign_id === campaignId.toLowerCase())) return refused('campaign_not_found');
+  if (campaignId && !read.campaigns.some((c) => c.campaign_id === campaignId)) return refused('campaign_not_found');
   if (await activeBusiness(deps) !== ctx.tenantId) return refused('active_account_changed');
   return { outcome: 'succeeded', content: { success: true, ...read, note: STEPS_NOTE } };
 }

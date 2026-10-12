@@ -73,6 +73,30 @@ Deno.test("prepare REFUSES to repoint a webhook aimed at another destination", a
   assertEquals(m.calls.filter((c) => c.method === "POST" || c.method === "PATCH").length, 0); // no writes
 });
 
+Deno.test("prepare PATCHES an existing approved-receiver webhook that is UNSIGNED into the prepared state", async () => {
+  const m = mockProvider([
+    () => jsonResponse(200, { enabled: false, url: APPROVED_RECEIVER_URL, signed: false }),
+    ({ body }) => jsonResponse(200, { enabled: false, ...(body as object) }),
+    () => jsonResponse(200, { public_key: "PEM-MOCK" }),
+  ]);
+  const result = await prepareSignedDisabledWebhook(m.impl, KEY);
+  assertEquals(result.action, "patched");
+  assertEquals(result.settings.signed, true);
+  assertEquals(result.settings.enabled, false);
+});
+
+Deno.test("prepare PATCHES an existing approved-receiver webhook that is DELIVERING back to disabled", async () => {
+  const m = mockProvider([
+    () => jsonResponse(200, { enabled: true, url: APPROVED_RECEIVER_URL, signed: true }),
+    ({ body }) => jsonResponse(200, { ...(body as object) }),
+    () => jsonResponse(200, { public_key: "PEM-MOCK" }),
+  ]);
+  const result = await prepareSignedDisabledWebhook(m.impl, KEY);
+  assertEquals(result.action, "patched");
+  assertEquals(result.settings.enabled, false);
+  assertEquals(result.settings.signed, true);
+});
+
 Deno.test("prepare PATCHES the approved receiver (disabled + signed) when the webhook is unset", async () => {
   const m = mockProvider([
     () => jsonResponse(200, { enabled: false, url: null }),

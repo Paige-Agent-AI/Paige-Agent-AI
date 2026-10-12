@@ -146,3 +146,72 @@ owner action remains: create the scoped key and install it as
 routing, real sends/paid tests, treating synthetic test events as delivery
 evidence, INT-346 activation. Unsubscribe/suppression protections preserved
 ahead of any customer-facing routing.
+
+
+## S7.4 (ANT-78 closeout, 2026-10-12): broker hardening + credential setup package
+
+**P3 hardening shipped:** the CI guard is now per-(file, key) — the operator
+broker is the only file that may reference ANY SendGrid administrative
+credential, and it may reference ONLY the scoped `SENDGRID_WEBHOOK_ADMIN_API_KEY`;
+a swap to full access inside the broker itself now fails CI (verified by a
+four-way probe matrix: full-access-in/scoped-in/scoped-out/full-access-out).
+The reuse-PATCH branch (existing approved-receiver webhooks that are unsigned
+or delivering get PATCHed into the prepared state) is pinned by two new
+mocked tests; the broker suite is 9/9.
+
+### Owner credential setup package (minimum privilege)
+
+1. In the SendGrid console: Settings → API Keys → Create API Key, **Restricted
+   Access**, granting exactly:
+   - `User → Webhooks → Event Webhook Settings → Read`
+   - `User → Webhooks → Event Webhook Settings → Write`
+   (`user.webhooks.event.settings.read` / `.write`.)
+2. Install the value as the Supabase Edge secret
+   `SENDGRID_WEBHOOK_ADMIN_API_KEY` (Edge Functions secrets UI or CLI — same
+   path as the existing SendGrid secrets; never commit, never log).
+3. **Documented uncertainty:** whether a restricted key may CREATE the first
+   webhook (POST) and read the signed public key is not separately annotated
+   in the provider's scope tables. If either is blocked, the broker returns a
+   truthful 403 report (`sendgrid_403:…`) — the safe alternative is adding
+   exactly the missing scope in the console, NEVER a Full Access key.
+
+### Secret install / verify / revoke procedures (no credential exposure)
+
+- **Install:** the secret lands in the Edge secret store; the CI guard
+  permits its reference only in the broker function. Verification is
+  behavioral: `GET /functions/v1/comms-sendgrid-webhook-admin` with the
+  Platform Operator login → 200 with truthful settings (401/403/503
+  otherwise; no key material ever appears in responses or logs).
+- **Verify webhook config:** `POST` `{"action":"prepare"}` as operator — the
+  response reports `action` (reused/patched/created), the resulting
+  enabled/signing/url state, and the ECDSA public key ONCE. Install that PEM
+  as `SENDGRID_WEBHOOK_PUBLIC_KEY`; the receipt door then leaves its 503
+  fail-closed state.
+- **Revoke:** delete the SendGrid key in the console and remove the Edge
+  secret. The broker then reports 503 NOT_CONFIGURED; the receipt door
+  continues to fail closed until a replacement key+PEM are installed.
+  Revocation never affects Resend transport or any tenant surface.
+
+### Signed-connectivity acceptance matrix (delivery stays DISABLED throughout)
+
+| Step | Action | Pass | Fail |
+|---|---|---|---|
+| 1 | Broker `GET` (operator) | 200 truthful settings | any other status |
+| 2 | Broker `prepare` (operator) | action + signed:true + enabled:false + PEM returned | 403 → add missing scope (documented above); anything else → report |
+| 3 | Install PEM; door unauthenticated POST | 503 → 401 (fail-closed on signature, key live) | still 503 (key not installed) |
+| 4 | SendGrid console *Send test event* (delivery disabled — the test posts directly) | door log shows signature-verified receipt attempt with truthful mapping/quarantine counts | 401 in door logs = key/PEM mismatch |
+| 5 | Unsigned curl POST to the door | 401 | anything else |
+| 6 | Re-check settings via broker | enabled:false + signed:true | — |
+
+**Rollback (to pre-configuration state):** broker shows settings; if a
+webhook was created/patched by prepare, PATCH it back or delete it in the
+console (or revoke the scoped key entirely — the door 503s fail-closed).
+No data migration, no tenant surface, no Resend path is touched by any step
+above; the journal remains empty until real delivery is enabled (reserved).
+
+**Separation maintained:** webhook administration (scoped key, broker only) /
+Mail Send (executor key, send door only) / tenant routing (connector-gated,
+unwired) / suppression enforcement (deferred decision, documented) / live
+provider effects (all reserved). The single owner-reserved action remains:
+provision the scoped key as `SENDGRID_WEBHOOK_ADMIN_API_KEY` (console test
+events are connectivity-only, never delivery evidence).

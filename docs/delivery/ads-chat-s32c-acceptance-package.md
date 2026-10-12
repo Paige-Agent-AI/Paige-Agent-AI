@@ -9,7 +9,10 @@ counts as a pass, and what is already proven without a sign-in.
 - The one shared synthetic SOLO QA account registered in ANT-21 (standalone, active, single member: owner). Its
   identifiers live in ANT-21, not in this file; below, `:qa_user` and `:qa_workspace` stand for them (psql variables in the SQL).
 - Its password was generated and consumed inside the provisioning session (ANT-21 comment, 2026-10-12 03:34 UTC).
-  No agent holds it; issuing or rotating it is a coordinator/owner action (vault only, never chat/Linear/Drive).
+  Issuing or rotating it is a coordinator/owner action (vault only, never chat/Linear/Drive). Once installed in the
+  runner's environment the session can read it (`live-drive.mjs` reads `process.env`) and must never print, log or
+  screenshot it. The credential-free alternative is a handed-over signed-in session (`opts.storageState`,
+  `live-drive.mjs:227-231`): the drive reuses it and never sees a password.
 - Read-only state on 2026-10-12: 0 pipelines, 0 stages, 0 deals, 0 forms, 0 submissions, 0 library pictures, no
   autonomy override for `set_ad_creative_featured` (so PAIGE asks first). Scope: the owner approved the restricted
   synthetic preparation for ANT-45 on 2026-10-12, recorded in the ANT-21 register comment of 05:06 UTC (fixtures through the product, one temporary member, temporary
@@ -40,7 +43,7 @@ Separately, an HTTP call to the function gateway (evidence class: **unauthentica
 Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_autonomy` carries
 `set_ad_creative_featured` with default `confirm`.
 
-## Readiness — 2026-10-12 05:05 UTC (owner approved the restricted preparation package)
+## Readiness — 2026-10-12, last checked 14:38 UTC (owner approved the restricted preparation package)
 
 | Item | State | Evidence class |
 |---|---|---|
@@ -73,12 +76,12 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
    pipeline** → **Activate**. Readback: one pipeline, `is_default = true`.
 3. **Pictures** — Ads › Creative → **Add a picture or video** eight times with synthetic image files named
    `QA picture 1.png`…`QA picture 8.png` (the title comes from the file name). Readback: 8 `image` rows, none featured.
-4. **Ad copy** — ask PAIGE in chat: "Write one short ad headline for a spring offer and save it as ad copy."
-   Readback: one `text` row, channel `ad_copy`.
-5. **Form** — Marketing → **Vibe Studio** → "A short lead form asking for name and email" → **Build it**
+4. **Ad copy** — ask PAIGE in chat: "Write one short ad headline for a spring offer and save it as ad copy
+   titled QA synthetic ad copy." Readback: one `text` row, channel `ad_copy`, title starting `QA`.
+5. **Form** — Marketing → **Vibe Studio** → "A short lead form named QA synthetic lead form asking for name and email" → **Build it**
    → **Publish** → **Publish now**. Do not add an automation or pipeline route. Readback: one form, `active`.
-6. **Submissions** — as a signed-out visitor, submit the form twice with synthetic names/emails
-   (`qa-lead-1@tests.invalid`, `qa-lead-2@tests.invalid`) at
+6. **Submissions** — as a signed-out visitor, submit the form twice as `QA Lead One` /
+   `qa-lead-1@tests.invalid` and `QA Lead Two` / `qa-lead-2@tests.invalid` at
    `/form/<form id>?utm_campaign=QA-SPRING&utm_content=<QA picture 1 id>` and
    `/form/<form id>?utm_campaign=QA-SPRING`. Readback: two submissions with `deal_id` set in the QA pipeline.
 7. Nothing is featured before the acceptance run (B2 needs room under the limit of 6). The C5 set-up is part of
@@ -96,8 +99,8 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 
 1. **C4 archived picture — `UNAVAILABLE`.** No product control archives a picture, and production records are not
    modified through service-role access to manufacture the case. `QA picture 8` is a spare.
-2. **C2 foreign picture — database-level only.** The rolled-back refusal in ledger 1 stands; no other business's
-   records are used, and C2 is not reported as signed-in acceptance.
+2. **C2 foreign picture — database-level only.** The rolled-back refusal in ledger 1 stands; no further use is
+   made of another business's records, and C2 is not reported as signed-in acceptance.
 3. **Fixtures — retained.** The pipeline, pictures, ad copy, form, tagged submissions and the contacts and deals
    they create stay in the canonical QA business, labelled synthetic, for future authorized regression runs. Their
    ids and custodian are registered in ANT-21 after creation. The temporary member's access is revoked after the
@@ -188,8 +191,9 @@ coordination point with the Platform Reach owner. Nothing is built until the own
 
 ## Evidence ledger 2 — signed-in runner results
 
-Empty. The runner fills one row per step (A1–A5, B1–B5, C1–C6): date/time, actor, PAIGE reply text, screenshot
-path, readback result, pass/fail. Never copy ledger 1 rows here.
+Empty. The runner fills one row per executed step (A1–A5, B1–B5, C1, C3, C5, C6): date/time, actor, PAIGE reply
+text, screenshot path, readback result, pass/fail. C2 is recorded as "not run — decision 2 (ledger 1)" and C4 as
+"UNAVAILABLE — decision 1", with no pass/fail and no screenshot. Never copy ledger 1 rows here.
 
 ## Clean-up and its proof
 
@@ -209,4 +213,8 @@ select id, revoked_at, archived_at, uses from tenant_invite_tokens where tenant_
 select id, deleted_at, banned_until from auth.users where id = :'temp_member';  -- no row, or deleted_at / banned_until set
 select count(*) from pipelines where tenant_id = :'agency_preview';  -- 0, unchanged
 select id, status from growth_forms where tenant_id = :'qa_workspace';  -- draft (unpublished)
+-- retained synthetic fixtures, for the ANT-21 register:
+select id, kind, channel, title, status, created_at from marketing_content where tenant_id = :'qa_workspace' order by created_at;
+select id, name, is_default, lifecycle_status, created_at from pipelines where tenant_id = :'qa_workspace';
+select id, form_id, deal_id, utm_json, created_at from growth_form_submissions where tenant_id = :'qa_workspace';
 ```

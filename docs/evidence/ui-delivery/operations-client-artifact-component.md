@@ -54,3 +54,10 @@ Reports, physical captures and reproducible local synthetic ports are under asse
 Evidence portability finding: copied sibling-worktree imports were invalid from the committed directory. The server and both verifiers now resolve the declared repository dependencies/source, document invocation, and use separate synthetic Chrome profiles. Replay from committed paths passes32 normal cases; fresh native zoom replay is recorded by the same saved script. Product source did not change. Full portal/shared-shell rows stay UNVERIFIED.
 
 Saved entrypoint replay completed after correction:32 normal cases/errors0 and8 native Chrome zoom cases/errors0 from the committed directory using loopback8817. Initial exact-head5032 required verify/database passed, UI evidence failed classification/Solo source-record declaration; this record corrects the grammar while explicitly retaining all eight full-shell rows as UNVERIFIED. No evidence assertion or CI rule was weakened.
+
+
+## Staff source and exact-artifact read continuation (unmounted)
+
+This bounded continuation adds no visible control or layout. Existing rendered component evidence above is historical #2052 proof and is not a newly mounted staff or portal journey. Current53 source/staff helper tests PASS; scoped ESLint PASS; native10 exact-artifact role assertions PASS in a disposable minimal schema. Full-schema exact-head CI and final independent review are still required. Named Studio projections and per-submission artifact reads never project raw metadata, private briefs or unrelated client/work names. Negative actor/tenant/source/version/scope reads expose no content; altered review metadata requires a fresh submission inspection.
+
+Proposed20271024000020 is never applied; production deployment/migration and staff/portal rendering remain UNVERIFIED. No new customer identity, task store, receipt, executor, shared route or UI style. Original component full-shell/PAIGE and authenticated rows remain UNVERIFIED. This is internal-only development source preparation, not customer completion or a customer release identity.

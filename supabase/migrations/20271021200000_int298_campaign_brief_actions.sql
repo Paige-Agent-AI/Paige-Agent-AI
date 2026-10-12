@@ -14,8 +14,11 @@
 --     tenant re-resolved from auth (§9/§59), owner/admin seat (§53), idempotent through the brief's own
 --     command ledger, audited.
 --   * `plan_action` files a new `marketing.campaign_action` through the existing `file_action` at
---     `confirm`, so a planned step always waits for the owner's approval. Nothing is drafted, sent or
---     published by planning it.
+--     `confirm`. The kind needs approval, is record-only and has no drafting specialist, so planning
+--     drafts, sends and publishes nothing; the step moves only through the bus's own `advance_action`
+--     and the approval trigger. `file_action` keeps its own checks on the caller: it also requires the
+--     global admin/coach role, which the membership sync gives every active tenant owner and admin
+--     (`map_tenant_role_to_app_role`: owner and admin → admin; on production 2026-10-12, 9 of 9).
 --   * `link_action` attaches an action that already exists in the workspace (for example a workflow run
 --     Paige filed), so its real execution lifecycle shows under the campaign.
 --   * An outcome may be recorded only once the action has finished (done or failed), and judged only once
@@ -26,7 +29,7 @@
 INSERT INTO public.paige_action_kinds(slug, tenant_id, label, description, default_from_department, default_to_department,
   executor, requires_approval, approval_type, draft_subagent_slug, default_autonomy_lane, default_priority, enabled)
 VALUES ('marketing.campaign_action', NULL, 'Carry out a campaign step',
-  'A planned step in a campaign. It waits for the owner''s approval; approving it records the step, it does not send or publish anything.',
+  'A planned step in a campaign. Once prepared it goes to the owner for approval; approving it records the step, it does not send or publish anything.',
   'marketing', 'marketing', 'record_only', true, 'cs_draft', NULL, 'confirm', 'normal', true)
 ON CONFLICT DO NOTHING;
 
@@ -58,6 +61,10 @@ CREATE TABLE IF NOT EXISTS public.campaign_brief_actions (
   CHECK (depends_on_action_id IS DISTINCT FROM action_id)
 );
 CREATE INDEX IF NOT EXISTS campaign_brief_actions_brief ON public.campaign_brief_actions (tenant_id, brief_id, created_at);
+-- Every foreign key leads an index, so deletes and account retirement never scan the table (ANT-47).
+CREATE INDEX IF NOT EXISTS campaign_brief_actions_brief_fk ON public.campaign_brief_actions (brief_id);
+CREATE INDEX IF NOT EXISTS campaign_brief_actions_automation_fk ON public.campaign_brief_actions (automation_id) WHERE automation_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS campaign_brief_actions_depends_fk ON public.campaign_brief_actions (depends_on_action_id) WHERE depends_on_action_id IS NOT NULL;
 
 ALTER TABLE public.campaign_brief_actions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS campaign_brief_actions_tenant_read ON public.campaign_brief_actions;
@@ -72,9 +79,25 @@ GRANT ALL ON public.campaign_brief_actions TO service_role;
 CREATE OR REPLACE FUNCTION public._campaign_brief_action_guard()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 BEGIN
-  IF TG_OP='UPDATE' AND (NEW.tenant_id IS DISTINCT FROM OLD.tenant_id OR NEW.brief_id IS DISTINCT FROM OLD.brief_id
-      OR NEW.action_id IS DISTINCT FROM OLD.action_id) THEN
-    RAISE EXCEPTION 'CAMPAIGN_ACTION_LINK_IMMUTABLE' USING ERRCODE='42501';
+  IF TG_OP='UPDATE' THEN
+    IF NEW.tenant_id IS DISTINCT FROM OLD.tenant_id OR NEW.brief_id IS DISTINCT FROM OLD.brief_id
+        OR NEW.action_id IS DISTINCT FROM OLD.action_id THEN
+      RAISE EXCEPTION 'CAMPAIGN_ACTION_LINK_IMMUTABLE' USING ERRCODE='42501';
+    END IF;
+    -- The campaign and action were checked when linked. An update re-checks only a new process or
+    -- dependency, so deleting a process or an action (ON DELETE SET NULL) is never refused because
+    -- the campaign was archived since.
+    IF NEW.automation_id IS NOT NULL AND NEW.automation_id IS DISTINCT FROM OLD.automation_id
+       AND NOT EXISTS(SELECT 1 FROM public.paige_automations p WHERE p.id=NEW.automation_id AND p.tenant_id=NEW.tenant_id) THEN
+      RAISE EXCEPTION 'CAMPAIGN_ACTION_PROCESS_NOT_FOUND' USING ERRCODE='22023';
+    END IF;
+    IF NEW.depends_on_action_id IS NOT NULL AND NEW.depends_on_action_id IS DISTINCT FROM OLD.depends_on_action_id
+       AND NOT EXISTS(SELECT 1 FROM public.campaign_brief_actions d
+         WHERE d.action_id=NEW.depends_on_action_id AND d.brief_id=NEW.brief_id AND d.tenant_id=NEW.tenant_id) THEN
+      RAISE EXCEPTION 'CAMPAIGN_ACTION_DEPENDENCY_INVALID' USING ERRCODE='22023';
+    END IF;
+    NEW.updated_at := now();
+    RETURN NEW;
   END IF;
   IF NOT EXISTS(SELECT 1 FROM public.campaign_briefs b WHERE b.id=NEW.brief_id AND b.tenant_id=NEW.tenant_id AND b.lifecycle_status<>'archived') THEN
     RAISE EXCEPTION 'CAMPAIGN_BRIEF_NOT_FOUND' USING ERRCODE='22023';
@@ -212,8 +235,8 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'CAMPAIGN_BRIEF_NOT_FOUND' USING ERRCODE='22023'; END IF;
 
   IF _action='plan_action' THEN
-    -- The bus's own writer: the kind, the lane, the archived-workspace guard and the audit are its.
-    -- Asked at `confirm`, so the planned step waits for the owner whatever the workspace's defaults.
+    -- The bus's own writer: the kind, the lane, the caller's role, the archived-workspace guard and its
+    -- audit are its. Asked at `confirm`, whatever the kind's default.
     _filed := public.file_action('marketing.campaign_action', _title, _summary, NULL,
       jsonb_build_object('campaign_brief_id', _brief, 'tactic', _tactic, 'family', _family),
       NULL, NULL, NULL, _due, NULL, NULL, CASE WHEN _actor_kind='paige' THEN 'paige' ELSE 'owner' END, _tenant, 'confirm');
@@ -222,7 +245,7 @@ BEGIN
       expected_result, created_through, linked_by)
     VALUES (_tenant, _brief, _action_id, _tactic, _family, _automation, _depends, _expected, _actor_kind, _caller);
     _result := jsonb_build_object('ok',true,'outcome','planned','brief_id',_brief,'action_id',_action_id,'lifecycle','planned',
-      'message','Planned. It waits for your approval; nothing is sent or published.');
+      'message','Planned. Nothing is drafted, sent or published; once prepared, it goes to you for approval.');
 
   ELSIF _action='link_action' THEN
     SELECT * INTO _link FROM public.campaign_brief_actions l WHERE l.action_id=_action_id AND l.tenant_id=_tenant;
@@ -234,9 +257,14 @@ BEGIN
       IF NOT EXISTS(SELECT 1 FROM public.paige_actions a WHERE a.id=_action_id AND a.tenant_id=_tenant) THEN
         RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_FOUND' USING ERRCODE='22023';
       END IF;
-      INSERT INTO public.campaign_brief_actions(tenant_id, brief_id, action_id, tactic, family, automation_id, depends_on_action_id,
-        expected_result, created_through, linked_by)
-      VALUES (_tenant, _brief, _action_id, _tactic, _family, _automation, _depends, _expected, _actor_kind, _caller);
+      BEGIN
+        INSERT INTO public.campaign_brief_actions(tenant_id, brief_id, action_id, tactic, family, automation_id, depends_on_action_id,
+          expected_result, created_through, linked_by)
+        VALUES (_tenant, _brief, _action_id, _tactic, _family, _automation, _depends, _expected, _actor_kind, _caller);
+      EXCEPTION WHEN unique_violation THEN
+        -- Linked meanwhile by a concurrent command (under another key).
+        RAISE EXCEPTION 'CAMPAIGN_ACTION_IN_OTHER_CAMPAIGN' USING ERRCODE='22023';
+      END;
       _result := jsonb_build_object('ok',true,'outcome','linked','brief_id',_brief,'action_id',_action_id,
         'message','Added to the campaign. The action itself is unchanged.');
     END IF;
@@ -258,7 +286,7 @@ BEGIN
       SELECT a.status INTO _status FROM public.paige_actions a WHERE a.id=_action_id AND a.tenant_id=_tenant;
       IF _action='record_outcome' THEN
         -- Only what has finished has an outcome to observe.
-        IF _status NOT IN ('done','failed') THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_FINISHED' USING ERRCODE='22023'; END IF;
+        IF _status IS NULL OR _status NOT IN ('done','failed') THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_FINISHED' USING ERRCODE='22023'; END IF;
         IF _link.evaluated_at IS NOT NULL THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_ALREADY_EVALUATED' USING ERRCODE='22023'; END IF;
         UPDATE public.campaign_brief_actions SET observed_result=_observed, observed_at=now(), observed_through=_actor_kind WHERE id=_link.id;
         _result := jsonb_build_object('ok',true,'outcome','outcome_recorded','brief_id',_brief,'action_id',_action_id,'lifecycle','outcome_observed',
@@ -289,10 +317,12 @@ GRANT EXECUTE ON FUNCTION public.configure_campaign_brief_actions(uuid,jsonb,tex
 -- Each campaign's actions with their derived lifecycle:
 --   filed/assigned → planned · drafting/drafted → prepared · pending_approval → approval_required ·
 --   approved → scheduled while its due time is ahead, else approved · executing → unknown when its run's
---   durable work reports outcome_unknown, else executing · done → completed · failed → failed ·
---   blocked → blocked · dismissed/expired → stopped; then outcome_observed and evaluated once recorded.
--- `evidence.basis` says what a completion rests on: a workflow run that succeeded, an approval, or a
--- record. Members (who cannot read the action bus) see the plan and lifecycle without titles or errors.
+--   durable work reports outcome_unknown, else executing · done → completed when a run or an approval
+--   stands behind it, else recorded (moved to done with neither, which proves nothing was carried out) ·
+--   failed → failed · blocked → blocked · dismissed/expired → stopped; then outcome_observed and
+--   evaluated once recorded.
+-- `evidence.basis` says what a finish rests on: a workflow run, an approval, or a record. Members (who
+-- cannot read the action bus) see the plan and lifecycle without titles or errors.
 CREATE OR REPLACE FUNCTION public.get_campaign_brief_actions(_tenant_id uuid, _brief_id uuid DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE
@@ -344,6 +374,7 @@ BEGIN
         WHEN x.status='approved' THEN 'approved'
         WHEN x.status='executing' AND x.work_status='outcome_unknown' THEN 'unknown'
         WHEN x.status='executing' THEN 'executing'
+        WHEN x.status='done' AND x.workflow_run_id IS NULL AND NOT coalesce(x.result ? 'approval_status', false) THEN 'recorded'
         WHEN x.status='done' THEN 'completed'
         WHEN x.status='failed' THEN 'failed'
         WHEN x.status='blocked' THEN 'blocked'

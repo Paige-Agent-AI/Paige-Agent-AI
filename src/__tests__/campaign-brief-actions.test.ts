@@ -44,7 +44,7 @@ describe("the writer", () => {
   });
 
   it("records an outcome only after a finish, and an evaluation only after an outcome", () => {
-    expect(writer).toContain("IF _status NOT IN ('done','failed') THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_FINISHED'");
+    expect(writer).toContain("IF _status IS NULL OR _status NOT IN ('done','failed') THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NOT_FINISHED'");
     expect(writer).toContain("IF _link.observed_at IS NULL THEN RAISE EXCEPTION 'CAMPAIGN_ACTION_NO_OUTCOME'");
     expect(mig).toContain("CHECK (evaluated_at IS NULL OR observed_at IS NOT NULL)");
   });
@@ -64,7 +64,7 @@ describe("the read derives the lifecycle from the action's own status", () => {
   it("maps every bus status, in order, and observed/evaluated last", () => {
     const order = [
       "'evaluated'", "'outcome_observed'", "'planned'", "'prepared'", "'approval_required'", "'scheduled'",
-      "'approved'", "'unknown'", "'executing'", "'completed'", "'failed'", "'blocked'", "'stopped'",
+      "'approved'", "'unknown'", "'executing'", "'recorded'", "'completed'", "'failed'", "'blocked'", "'stopped'",
     ];
     const at = order.map((s) => read.indexOf(`THEN ${s}`) >= 0 ? read.indexOf(`THEN ${s}`) : read.indexOf(`ELSE ${s}`));
     expect(at.every((i) => i > 0)).toBe(true);
@@ -76,6 +76,10 @@ describe("the read derives the lifecycle from the action's own status", () => {
     expect(read).toContain("LEFT JOIN public.paige_durable_work w ON w.id=r.work_id AND w.tenant_id=_tenant");
   });
 
+  it("never calls a step completed when neither a run nor an approval stands behind it", () => {
+    expect(read).toContain("WHEN x.status='done' AND x.workflow_run_id IS NULL AND NOT coalesce(x.result ? 'approval_status', false) THEN 'recorded'");
+  });
+
   it("says what a finish rests on", () => {
     expect(read).toMatch(/'basis', CASE[\s\S]*'workflow_run'[\s\S]*'approval'[\s\S]*'recorded'/);
   });
@@ -84,6 +88,21 @@ describe("the read derives the lifecycle from the action's own status", () => {
     for (const field of ["'title', CASE WHEN _admin", "'summary', CASE WHEN _admin", "'approval_id', CASE WHEN _admin", "'error', CASE WHEN _admin"]) {
       expect(read).toContain(field);
     }
+  });
+});
+
+describe("integrity", () => {
+  it("indexes every foreign key, for deletes and account retirement", () => {
+    for (const col of ["(brief_id)", "(automation_id)", "(depends_on_action_id)"]) {
+      expect(mig).toContain(`ON public.campaign_brief_actions ${col}`);
+    }
+  });
+
+  it("re-checks only a changed process or dependency on update, so a delete's SET NULL is never refused", () => {
+    const guard = section("CREATE OR REPLACE FUNCTION public._campaign_brief_action_guard", "REVOKE ALL ON FUNCTION public._campaign_brief_action_guard");
+    const update = guard.slice(guard.indexOf("IF TG_OP='UPDATE' THEN"), guard.indexOf("RETURN NEW;") + "RETURN NEW;".length);
+    expect(update).toContain("CAMPAIGN_ACTION_LINK_IMMUTABLE");
+    expect(update).not.toContain("lifecycle_status");
   });
 });
 

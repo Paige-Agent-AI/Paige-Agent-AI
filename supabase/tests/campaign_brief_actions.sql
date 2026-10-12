@@ -29,7 +29,8 @@ CREATE FUNCTION pg_temp.entry(read jsonb,action text) RETURNS jsonb LANGUAGE sql
 
 INSERT INTO auth.users(id,email) VALUES
  ('a2980500-0000-4000-8000-000000000001','actions-admin@example.invalid'),
- ('a2980500-0000-4000-8000-000000000002','actions-member@example.invalid');
+ ('a2980500-0000-4000-8000-000000000002','actions-member@example.invalid'),
+ ('a2980500-0000-4000-8000-000000000005','actions-owner@example.invalid');
 DO $fixture_owner$ DECLARE fixture_owner_id uuid; BEGIN
  IF (SELECT count(*) FROM public.user_roles WHERE role='super_admin')>1 THEN RAISE EXCEPTION 'FIXTURE: canonical owner is ambiguous'; END IF;
  SELECT user_id INTO fixture_owner_id FROM public.user_roles WHERE role='super_admin';
@@ -47,11 +48,16 @@ INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefi
 SELECT set_config('request.jwt.claims','{}',true);
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
  ('a2980500-0000-4000-8000-000000000011','a2980500-0000-4000-8000-000000000001','admin','active',false),
- ('a2980500-0000-4000-8000-000000000011','a2980500-0000-4000-8000-000000000002','member','active',false);
+ ('a2980500-0000-4000-8000-000000000011','a2980500-0000-4000-8000-000000000002','member','active',false),
+ ('a2980500-0000-4000-8000-000000000011','a2980500-0000-4000-8000-000000000005','owner','active',true);
 INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
  ('a2980500-0000-4000-8000-000000000001','a2980500-0000-4000-8000-000000000011'),
- ('a2980500-0000-4000-8000-000000000002','a2980500-0000-4000-8000-000000000011')
+ ('a2980500-0000-4000-8000-000000000002','a2980500-0000-4000-8000-000000000011'),
+ ('a2980500-0000-4000-8000-000000000005','a2980500-0000-4000-8000-000000000011')
  ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
+-- The Solo owner: tenant role owner. file_action also keys on the global admin/coach role, which the
+-- membership sync gives every active owner; the proof relies on that sync, not on a role it inserts.
+SELECT pg_temp.require_true(public.has_any_role('a2980500-0000-4000-8000-000000000005',ARRAY['admin']),'the membership sync gives a tenant owner the role file_action keys on');
 
 -- A strategy, its campaigns, and a campaign in another workspace.
 INSERT INTO public.business_missions(id,tenant_id,requested_by,request_source,title) VALUES
@@ -88,6 +94,7 @@ INSERT INTO public.paige_actions(id,tenant_id,action_kind,from_department,to_dep
  ('a2980500-0000-4000-8000-0000000000d9','a2980500-0000-4000-8000-000000000011','marketing.campaign_action','marketing','marketing','Old idea','dismissed',NULL,NULL,NULL),
  ('a2980500-0000-4000-8000-0000000000da','a2980500-0000-4000-8000-000000000011','marketing.campaign_action','marketing','marketing','Thank-you note','done',NULL,'{"approval_status":"approved"}',NULL),
  ('a2980500-0000-4000-8000-0000000000dc','a2980500-0000-4000-8000-000000000011','marketing.campaign_action','marketing','marketing','Text the list','executing',NULL,NULL,'a2980500-0000-4000-8000-0000000000f6'),
+ ('a2980500-0000-4000-8000-0000000000dd','a2980500-0000-4000-8000-000000000011','marketing.campaign_action','marketing','marketing','Marked done unseen','done',NULL,NULL,NULL),
  ('a2980500-0000-4000-8000-0000000000db','a2980500-0000-4000-8000-000000000012','marketing.campaign_action','marketing','marketing','Other workspace action','filed',NULL,NULL,NULL);
 
 SELECT pg_temp.require_true(public.operator_retirement_disposition('campaign_brief_actions')='delete','actions retire with the account');
@@ -125,15 +132,25 @@ SELECT pg_temp.require_true((pg_temp.cmd(jsonb_build_object('type','plan_action'
 SELECT pg_temp.require_true((SELECT count(*)=1 FROM public.campaign_brief_actions),'a replay files nothing');
 SELECT pg_temp.require_refused($$SELECT pg_temp.cmd('{"type":"plan_action","briefId":"a2980500-0000-4000-8000-0000000000c1","title":"Other","tactic":"x","family":"email"}','plan-1')$$,'CAMPAIGN_BRIEF_IDEMPOTENCY_CONFLICT','a reused key for another command conflicts');
 
+-- 2b. The tenant owner plans too.
+SELECT pg_temp.as_user('a2980500-0000-4000-8000-000000000005');
+SELECT pg_temp.require_true((pg_temp.cmd('{"type":"plan_action","briefId":"a2980500-0000-4000-8000-0000000000c1","title":"Book the venue","tactic":"Launch event","family":"event"}','plan-owner')->>'outcome')='planned','a tenant owner plans a step');
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT a.created_by='a2980500-0000-4000-8000-000000000005' AND a.status='filed' AND a.autonomy_lane='confirm'
+  FROM public.paige_actions a WHERE a.title='Book the venue'),'the bus row names the owner who planned it');
+SELECT pg_temp.require_true((SELECT a.created_by='a2980500-0000-4000-8000-000000000001' FROM public.paige_actions a WHERE a.title='Invite past clients'),'the bus row names the admin who planned it');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('a2980500-0000-4000-8000-000000000001');
+
 -- 3. Linking existing actions; every lifecycle is derived from the action's own status.
 SELECT pg_temp.link(x,'a2980500-0000-4000-8000-0000000000c1','Spring launch') FROM unnest(ARRAY[
  'a2980500-0000-4000-8000-0000000000d1','a2980500-0000-4000-8000-0000000000d2','a2980500-0000-4000-8000-0000000000d3',
  'a2980500-0000-4000-8000-0000000000d4','a2980500-0000-4000-8000-0000000000d5','a2980500-0000-4000-8000-0000000000d6',
  'a2980500-0000-4000-8000-0000000000d7','a2980500-0000-4000-8000-0000000000d8','a2980500-0000-4000-8000-0000000000d9',
- 'a2980500-0000-4000-8000-0000000000dc']) x;
+ 'a2980500-0000-4000-8000-0000000000dc','a2980500-0000-4000-8000-0000000000dd']) x;
 SELECT pg_temp.require_true((pg_temp.cmd('{"type":"link_action","briefId":"a2980500-0000-4000-8000-0000000000c1","actionId":"a2980500-0000-4000-8000-0000000000d1","tactic":"Spring launch","family":"email"}','link-again')->>'outcome')='already_linked','linking twice says so');
 CREATE TEMP TABLE r1 AS SELECT public.get_campaign_brief_actions(NULL,'a2980500-0000-4000-8000-0000000000c1') v;
-SELECT pg_temp.require_true(jsonb_array_length(v->'actions')=11 AND (v->>'can_manage')::boolean,'the owner reads eleven actions') FROM r1;
+SELECT pg_temp.require_true(jsonb_array_length(v->'actions')=13 AND (v->>'can_manage')::boolean,'the admin reads thirteen actions') FROM r1;
 SELECT pg_temp.require_true(
   pg_temp.lifecycle(v,'a2980500-0000-4000-8000-0000000000d1')='prepared' AND
   pg_temp.lifecycle(v,'a2980500-0000-4000-8000-0000000000d2')='approval_required' AND
@@ -146,7 +163,9 @@ SELECT pg_temp.require_true(
   pg_temp.lifecycle(v,'a2980500-0000-4000-8000-0000000000d9')='stopped' AND
   pg_temp.lifecycle(v,'a2980500-0000-4000-8000-0000000000dc')='unknown' AND
   pg_temp.entry(v,'a2980500-0000-4000-8000-0000000000dc')->'evidence'->>'durable_work_status'='outcome_unknown' AND
-  (SELECT count(*)=1 FROM jsonb_array_elements(v->'actions') a WHERE a->>'lifecycle'='planned'),'each status maps to its lifecycle') FROM r1;
+  pg_temp.lifecycle(v,'a2980500-0000-4000-8000-0000000000dd')='recorded' AND
+  pg_temp.entry(v,'a2980500-0000-4000-8000-0000000000dd')->'evidence'->>'basis'='recorded' AND
+  (SELECT count(*)=2 FROM jsonb_array_elements(v->'actions') a WHERE a->>'lifecycle'='planned'),'each status maps to its lifecycle') FROM r1;
 SELECT pg_temp.require_true(
   pg_temp.entry(v,'a2980500-0000-4000-8000-0000000000d6')->'evidence'->>'basis'='workflow_run' AND
   pg_temp.entry(v,'a2980500-0000-4000-8000-0000000000d6')->'evidence'->>'workflow_run_status'='succeeded' AND
@@ -212,12 +231,20 @@ SELECT pg_temp.require_refused($$INSERT INTO public.campaign_brief_actions(tenan
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('a2980500-0000-4000-8000-000000000002');
 CREATE TEMP TABLE r3 AS SELECT public.get_campaign_brief_actions(NULL,'a2980500-0000-4000-8000-0000000000c1') v;
-SELECT pg_temp.require_true(NOT (v->>'can_manage')::boolean AND jsonb_array_length(v->'actions')=11
+SELECT pg_temp.require_true(NOT (v->>'can_manage')::boolean AND jsonb_array_length(v->'actions')=13
   AND (SELECT bool_and(a->'title'='null'::jsonb AND a->'summary'='null'::jsonb AND a->'approval'->'approval_id'='null'::jsonb) FROM jsonb_array_elements(v->'actions') a)
   AND pg_temp.lifecycle(v,'a2980500-0000-4000-8000-0000000000d6')='evaluated','a member reads the plan without titles') FROM r3;
 SELECT pg_temp.require_denied($$SELECT pg_temp.cmd('{"type":"unlink_action","briefId":"a2980500-0000-4000-8000-0000000000c1","actionId":"a2980500-0000-4000-8000-0000000000d1"}','m-1')$$,'a member cannot change the plan');
 RESET ROLE;
 
-SELECT pg_temp.require_true((SELECT count(*)=18 FROM public.audit_logs WHERE action='campaign_brief.actions' AND data->>'tenant_id'='a2980500-0000-4000-8000-000000000011'),'every write is audited once');
-SELECT pg_temp.require_true((SELECT count(*)=18 FROM public.campaign_brief_command_results WHERE tenant_id='a2980500-0000-4000-8000-000000000011'),'every write is in the ledger once');
+-- 8. Deleting a process or an action is never refused because its campaign was archived since.
+UPDATE public.campaign_brief_actions SET depends_on_action_id='a2980500-0000-4000-8000-0000000000d1' WHERE action_id='a2980500-0000-4000-8000-0000000000da';
+UPDATE public.campaign_briefs SET lifecycle_status='archived' WHERE id='a2980500-0000-4000-8000-0000000000c1';
+DELETE FROM public.paige_automations WHERE id='a2980500-0000-4000-8000-0000000000f1';
+DELETE FROM public.paige_actions WHERE id='a2980500-0000-4000-8000-0000000000d1';
+SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.campaign_brief_actions WHERE automation_id IS NOT NULL OR action_id='a2980500-0000-4000-8000-0000000000d1')
+  AND (SELECT depends_on_action_id IS NULL FROM public.campaign_brief_actions WHERE action_id='a2980500-0000-4000-8000-0000000000da'),'a deleted process or action leaves its links behind cleanly');
+
+SELECT pg_temp.require_true((SELECT count(*)=20 FROM public.audit_logs WHERE action='campaign_brief.actions' AND data->>'tenant_id'='a2980500-0000-4000-8000-000000000011'),'every write is audited once');
+SELECT pg_temp.require_true((SELECT count(*)=20 FROM public.campaign_brief_command_results WHERE tenant_id='a2980500-0000-4000-8000-000000000011'),'every write is in the ledger once');
 ROLLBACK;

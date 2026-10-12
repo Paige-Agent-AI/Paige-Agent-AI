@@ -58,7 +58,8 @@ action serves one campaign.
 | `approved` | approved |
 | `executing`, and its run's durable work is `outcome_unknown` | unknown |
 | `executing` | executing |
-| `done` | completed |
+| `done`, with a workflow run or an approval behind it | completed |
+| `done`, with neither | recorded (moved to done without proof that it was carried out) |
 | `failed` | failed |
 | `blocked` | blocked |
 | `dismissed`, `expired` | stopped |
@@ -75,11 +76,15 @@ Only through `configure_campaign_brief_actions(_tenant_id, _command, _idempotenc
 on the brief's other writers: tenant re-resolved from auth (§9/§59), owner or admin seat (§53), the brief's own
 idempotency ledger, audited.
 
-- `plan_action` files a new action of kind `marketing.campaign_action` through the bus's own `file_action`, and
-  asks for `confirm` whatever the kind's default, so a planned step always waits for the owner's approval. The
-  kind is record-only, needs approval and has no drafting specialist, so the action-bus worker does not draft
-  it and approving it sends or publishes nothing. `file_action` keeps its own checks (kind available, admin or
-  coach role, the archived-workspace guard) and its own audit.
+- `plan_action` files a new action of kind `marketing.campaign_action` through the bus's own `file_action`,
+  asking for `confirm` whatever the kind's default. The kind is record-only, needs approval and has no
+  drafting specialist, so the action-bus worker never drafts it and planning drafts, sends and publishes
+  nothing. From there the step moves only through the bus: when it is prepared (`advance_action` to
+  `drafted`) the bus opens its approval, and approving it records the step. `advance_action` can also move a
+  step on without an approval; the read then says so (`recorded`, below) rather than calling it completed.
+  `file_action` keeps its own checks (kind available, the caller's global admin or coach role, the
+  archived-workspace guard) and its own audit. The membership sync gives every active tenant owner and
+  admin that global role (`map_tenant_role_to_app_role`); on production on 2026-10-12, 9 of 9 held it.
 - `link_action` adds an action that already exists in the workspace, so a step Paige filed for a real
   execution path shows its true lifecycle under the campaign. Linking what is linked says so; an action linked
   to another campaign is refused.
@@ -97,7 +102,10 @@ department.
 
 A trigger checks every insert and update, whoever writes: the brief (not archived), the action, the process
 and the dependency all belong to the link's workspace; a dependency is part of the same campaign; a link never
-moves to another campaign, workspace or action. Direct writes from the browser have no grant. The table is
+moves to another campaign, workspace or action. On an update only a changed process or dependency is
+re-checked, so deleting a process or an action (its link's `ON DELETE SET NULL`) is never refused because the
+campaign has since been archived. Every foreign key leads an index. Direct writes from the browser have no
+grant. The table is
 registered `delete` for account retirement, like the briefs.
 
 ### Read
@@ -107,6 +115,13 @@ strategy (mission title and state, when the mission is in this workspace), and e
 lifecycle, family, tactic, approval, owner, due time, dependency (and whether it is still waiting on it),
 expected result, outcome, evaluation and evidence. A member, who cannot read the action bus, sees the plan and
 lifecycle without titles, summaries, approval ids or errors, and cannot change anything.
+
+## Other consumers (§37)
+
+The Trust Compass (`useSoloTrust`, `useCompass`, `useAgencyCompass`) counts enabled `paige_action_kinds` by
+department and lane, so Marketing now shows a second act, "Carry out a campaign step" at `confirm`; its
+derived level is unchanged (every Marketing act is `confirm`). The chat `file_action` tool can file this kind
+without a campaign link; such an action simply has no campaign until it is linked.
 
 ## Not in this slice
 
@@ -118,16 +133,19 @@ lifecycle without titles, summaries, approval ids or errors, and cannot change a
 ## Proof
 
 `supabase/tests/campaign_brief_actions.sql`, in the `database-contract` job on the production-schema clone,
-rolled back: planning files a real bus row at `confirm` even when the kind's default is `auto`; replay and key
+rolled back: planning files a real bus row at `confirm` even when the kind's default is `auto`, for an admin
+and for a tenant owner, each named on the row; replay and key
 conflict; every bus status maps to its lifecycle, including `unknown` from a run's durable work; evidence
-basis; the strategy; outcomes only after a finish and evaluation only after an outcome; dependencies within
+basis, and `recorded` for a step done with neither a run nor an approval; the strategy; outcomes only after a finish and evaluation only after an outcome; dependencies within
 one campaign, kept honest on unlink; refusals for another workspace's action, campaign or process, an archived
 campaign, bad input and a send command; the server role cannot move a link or link across workspaces; a member
-reads without titles and cannot write; every write audited and in the ledger once.
+reads without titles and cannot write; deleting a process or an action after its campaign is archived leaves
+the links behind cleanly; every write audited and in the ledger once.
 
 Run locally against a stub schema with the real `file_action`, each guard mutated: dropping the requested
 `confirm`, the admin gate, the finish check, `scheduled`, `unknown`, member redaction, the cross-workspace
 action, process and dependency checks, link immutability, the unlink dependency clear, the evaluated lock,
-the evidence basis, the strategy join, the verdict check or the audit each fails the proof.
+the evidence basis, `recorded`, the update-only re-check, the strategy join, the verdict check or the audit
+each fails the proof.
 
 `src/__tests__/campaign-brief-actions.test.ts` keeps the static contract.

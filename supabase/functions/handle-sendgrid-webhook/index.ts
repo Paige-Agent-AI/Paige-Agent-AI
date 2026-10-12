@@ -14,10 +14,10 @@
 // identity-keyed dedup makes whole-batch redelivery safe (proven in SQL).
 // Batches over 1000 events are refused 413 (retriable after splitting).
 //
-// EVENT IDENTITY (ANT-148): `sg:<message>:<kind>:<timestamp>:<batch-index>` —
-// identical redeliveries replay the identical array and therefore collide into
-// the SAME journal identity (dedup); two legitimate same-second events in one
-// batch keep distinct identities via the array index.
+// EVENT IDENTITY (ANT-78): `sg:<sg_event_id>` — the provider's own unique
+// event identifier, stable across redeliveries regardless of batch composition
+// or ordering, so dedup never depends on array position; distinct events never
+// collide. Missing/malformed ids follow the quarantine policy below.
 //
 // Event vocabulary (truthful; unknown events acked, never guessed):
 //   delivered->delivered, deferred->delivery_delayed, open->opened,

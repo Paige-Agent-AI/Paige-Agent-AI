@@ -119,8 +119,9 @@ fresh-signature retries do not affect). No security-policy tradeoff required.
 
 **Operator automation (built, mocked-verified):** the broker
 (`_shared/comms-email/sendgrid-webhook-admin.ts` + operator-gated
-`comms-sendgrid-webhook-admin` function, the CI guard's ONLY allowlisted
-reader of the scoped key) implements the owner's automated workflow: inspect
+`comms-sendgrid-webhook-admin` function — the CI guard forbids BOTH admin
+key names everywhere else in function code, and the broker is the scoped
+key's only reader) implements the owner's automated workflow: inspect
 the existing webhook; REUSE it when it already points at the approved PAIGE
 receiver (never duplicating); refuse to repoint a webhook aimed elsewhere;
 otherwise PATCH/POST with the approved receiver + signature verification ON

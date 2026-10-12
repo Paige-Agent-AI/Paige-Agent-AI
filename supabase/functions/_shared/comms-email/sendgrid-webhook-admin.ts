@@ -46,7 +46,7 @@ export type WebhookSettings = {
 
 export type ProviderFetch = (url: string, init: RequestInit) => Promise<Response>;
 
-function assertEndpoint(method: string, url: string): void {
+export function assertEndpoint(method: string, url: string): void {
   if (!ALLOWED_ENDPOINTS.has(`${method} ${url}`)) {
     throw new Error(`endpoint_not_allowed:${method} ${url}`);
   }
@@ -74,7 +74,7 @@ function toSettings(raw: Record<string, unknown>): WebhookSettings {
   return {
     enabled: bool(raw.enabled),
     url: typeof raw.url === "string" ? raw.url : null,
-    signed: bool(raw.signed ?? raw.oauth_warning) || bool((raw as { signed?: boolean }).signed),
+    signed: bool(raw.signed),
     group_resubscribe: bool(raw.group_resubscribe),
     delivered: bool(raw.delivered),
     group_unsubscribe: bool(raw.group_unsubscribe),
@@ -134,13 +134,31 @@ export async function prepareSignedDisabledWebhook(
   }
   const settings = toSettings(current);
   if (settings.url === APPROVED_RECEIVER_URL) {
-    // Reuse: never create a second webhook for the same receiver. Still fetch
-    // the key so the operator can complete installation.
+    // Reuse: never create a second webhook for the same receiver — but only
+    // when it is ALREADY in the prepared state (signed on, delivery off).
+    // An existing webhook on our receiver that is unsigned or delivering is
+    // PATCHED into the prepared state (never silently left misconfigured).
+    if (settings.signed && !settings.enabled) {
+      const signedRaw = await providerCall(fetchImpl, key, "GET", `${BASE}/signed`);
+      return {
+        settings,
+        publicKeyPem: typeof signedRaw.public_key === "string" ? signedRaw.public_key : null,
+        action: "reused",
+      };
+    }
+    const patched = await providerCall(fetchImpl, key, "PATCH", BASE, {
+      enabled: false,
+      url: APPROVED_RECEIVER_URL,
+      signed: true,
+      delivered: true, deferred: true, open: true, click: true,
+      bounce: true, dropped: true, spam_report: true, unsubscribe: true,
+      group_resubscribe: false, group_unsubscribe: false, processed: false,
+    });
     const signedRaw = await providerCall(fetchImpl, key, "GET", `${BASE}/signed`);
     return {
-      settings,
+      settings: toSettings(patched),
       publicKeyPem: typeof signedRaw.public_key === "string" ? signedRaw.public_key : null,
-      action: "reused",
+      action: "patched",
     };
   }
   if (settings.url && settings.url !== APPROVED_RECEIVER_URL) {

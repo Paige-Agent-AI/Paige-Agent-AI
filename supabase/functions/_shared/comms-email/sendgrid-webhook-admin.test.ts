@@ -1,6 +1,6 @@
 // Operator broker tests — fully mocked provider IO (ANT-78/S7.3).
-import { assertEquals, assertRejects } from "https://deno.land/std@0.190.0/testing/asserts.ts";
-import { APPROVED_RECEIVER_URL, inspectWebhook, prepareSignedDisabledWebhook, type ProviderFetch } from "./sendgrid-webhook-admin.ts";
+import { assertEquals, assertRejects, assertThrows } from "https://deno.land/std@0.190.0/testing/asserts.ts";
+import { APPROVED_RECEIVER_URL, assertEndpoint, inspectWebhook, prepareSignedDisabledWebhook, type ProviderFetch } from "./sendgrid-webhook-admin.ts";
 
 const KEY = "SG.synthetic-scoped-webhook-admin-key";
 const BASE = "https://api.sendgrid.com/v3/user/webhooks/event/settings";
@@ -86,24 +86,24 @@ Deno.test("prepare PATCHES the approved receiver (disabled + signed) when the we
   assertEquals((patch!.body as { url: string }).url, APPROVED_RECEIVER_URL);
 });
 
-Deno.test("the broker NEVER calls an endpoint outside the allowlist (guard throws pre-fetch)", async () => {
-  let fetched = false;
-  const evil: ProviderFetch = () => { fetched = true; return Promise.resolve(jsonResponse(200, {})); };
-  // inspectWebhook only ever calls the allowed BASE — prove the guard itself by
-  // calling the internal path with a mutated fetch that would succeed on any URL:
-  // a disallowed destination must throw BEFORE the fetch fires.
-  const err = await assertRejects(() =>
-    (async () => {
-      // Reach the module guard directly: endpoint allowlist is enforced inside
-      // providerCall; simulate by asking for a URL the module never uses.
-      const { inspectWebhook: _i } = await import("./sendgrid-webhook-admin.ts");
-      void _i;
-      throw new Error("endpoint_not_allowed:GET https://api.sendgrid.com/v3/scopes");
-    })(), Error);
-  assertEquals(err.message.startsWith("endpoint_not_allowed:"), true);
-  assertEquals(fetched, false);
+Deno.test("the endpoint guard throws PRE-FETCH for anything outside the allowlist", () => {
+  // Real enforcement proof: the exported guard itself rejects disallowed
+  // method/URL pairs — including the exact scope-creep shapes (scopes read,
+  // mail send, arbitrary hosts) — and accepts each of the four allowed pairs.
+  for (const bad of [
+    "GET https://api.sendgrid.com/v3/scopes",
+    "POST https://api.sendgrid.com/v3/mail/send",
+    "GET https://evil.example.invalid/user/webhooks/event/settings",
+    "DELETE https://api.sendgrid.com/v3/user/webhooks/event/settings",
+  ]) {
+    const [method, url] = bad.split(" ");
+    assertThrows(() => assertEndpoint(method, url), Error, "endpoint_not_allowed");
+  }
+  for (const good of ["GET", "POST", "PATCH"]) {
+    assertEndpoint(good, "https://api.sendgrid.com/v3/user/webhooks/event/settings");
+  }
+  assertEndpoint("GET", "https://api.sendgrid.com/v3/user/webhooks/event/settings/signed");
 });
-
 Deno.test("provider errors surface truthfully (status + bounded body, never the key)", async () => {
   const m = mockProvider([() => jsonResponse(403, { errors: [{ message: "access forbidden" }] })]);
   const err = await assertRejects(() => inspectWebhook(m.impl, KEY), Error);

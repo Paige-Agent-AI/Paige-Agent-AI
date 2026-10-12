@@ -72,6 +72,23 @@ function merchantReadDoorBound(resolver) {
     && edge.includes("admin.rpc('record_sales_merchant_onboarding_readback',");
 }
 
+// Exact Ads lead-funnel read door (2026-10-12). The deployed function is get_pipeline_lead_funnel, not
+// read_*, and it is not renamed or wrapped to satisfy the naming heuristic. Only this declaration in this
+// file may project its exact input, and only while the adapter reads it on the caller's own session with
+// the active-business check and Chat mounts that adapter with the caller-JWT client. Never clears risk debt.
+const ADS_FUNNEL_DECLARATION_FILE='supabase/functions/_shared/paige-spine/domains/ads.ts';
+const ADS_FUNNEL_ADAPTER_FILE='supabase/functions/_shared/ads-funnel-chat.ts';
+function adsFunnelReadDoorBound(resolver) {
+  const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
+  const adapter=read(ADS_FUNNEL_ADAPTER_FILE);
+  const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  return adapter.includes("deps.caller.rpc('get_pipeline_lead_funnel',")
+    && adapter.includes("deps.caller.rpc('current_user_tenant_id')")
+    && adapter.includes('parameters:ADS_LEAD_FUNNEL_READ_CAPABILITY.input')
+    && chat.includes('toolDefs.push(...ADS_FUNNEL_TOOLS')
+    && chat.includes('dispatchAdsFunnelChat({ tenantId: tid, toolName: tc.function.name, args: adsArgs }, { caller: supabaseClient })');
+}
+
 /**
  * Every `actionRiskKey` declared through `defineCapability()` in the scanned tree. A key here has a
  * governed declaration, so its `RISK` entry is the declaration's dependency rather than debt.
@@ -123,6 +140,11 @@ function collectDeclaredCapabilityNames(files, resolver) {
                   && sourceFile.text.includes("caller.rpc('current_user_tenant_id')")
                   && chat.includes('toolDefs.push(...BUSINESS_METRIC_TOOLS)')
                   && chat.includes('readBusinessMetric(supabaseClient,'))readTools.set('read_business_metric',owner.name.text);
+              }
+              else if(operation==='public.get_pipeline_lead_funnel'&&relative(file)===ADS_FUNNEL_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='ads.lead_funnel'&&owner.name.text==='ADS_LEAD_FUNNEL_READ_CAPABILITY'
+                  && adsFunnelReadDoorBound(resolver))readTools.set('get_pipeline_lead_funnel',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);
@@ -1167,6 +1189,33 @@ function runSelfTest() {
     const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
     const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:ts.createSourceFile(p,chat,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS)});
     const found=scanSource(metricTool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  // The Ads lead-funnel door: the exact declaration in its own file, its caller-session adapter and the
+  // Chat mount are all required; any one missing, or a mutation, leaves the tool schema a bypass.
+  const adsPath=path.join(ROOT,ADS_FUNNEL_DECLARATION_FILE);
+  const adsAdapterPath=path.join(ROOT,ADS_FUNNEL_ADAPTER_FILE);
+  const adsSource=readSource.replace('READ_CAP','ADS_LEAD_FUNNEL_READ_CAPABILITY').replace('public.read_probe','public.get_pipeline_lead_funnel').replace('effect:"read"','identity:{id:"ads.lead_funnel"},effect:"read"');
+  const adsAdapter="deps.caller.rpc('current_user_tenant_id');deps.caller.rpc('get_pipeline_lead_funnel', {});const t={parameters:ADS_LEAD_FUNNEL_READ_CAPABILITY.input};";
+  const adsChat='toolDefs.push(...ADS_FUNNEL_TOOLS as any);dispatchAdsFunnelChat({ tenantId: tid, toolName: tc.function.name, args: adsArgs }, { caller: supabaseClient });';
+  const adsTool=readTool.replace('READ_CAP','ADS_LEAD_FUNNEL_READ_CAPABILITY').replace('read_probe','get_pipeline_lead_funnel');
+  for(const [name,source,adapter,chat,file,tool,expected] of [
+    ['ads funnel exact read door',adsSource,adsAdapter,adsChat,adsPath,adsTool,false],
+    ['ads funnel wrong declaration id',adsSource.replace('ads.lead_funnel','ads.other'),adsAdapter,adsChat,adsPath,adsTool,true],
+    ['ads funnel wrong declaration symbol',adsSource.replace(/ADS_LEAD_FUNNEL_READ_CAPABILITY/g,'OTHER_CAP'),adsAdapter,adsChat,adsPath,adsTool.replace('ADS_LEAD_FUNNEL_READ_CAPABILITY','OTHER_CAP'),true],
+    ['ads funnel wrong source path',adsSource,adsAdapter,adsChat,declarationFile,adsTool,true],
+    ['ads funnel missing caller rpc',adsSource,adsAdapter.replace("rpc('get_pipeline_lead_funnel'","rpc('other'"),adsChat,adsPath,adsTool,true],
+    ['ads funnel missing scope check',adsSource,adsAdapter.replace('current_user_tenant_id','other'),adsChat,adsPath,adsTool,true],
+    ['ads funnel unmounted',adsSource,adsAdapter,adsChat.replace('ADS_FUNNEL_TOOLS','OTHER_TOOLS'),adsPath,adsTool,true],
+    ['ads funnel missing caller JWT binding',adsSource,adsAdapter,adsChat.replace('supabaseClient','supabase'),adsPath,adsTool,true],
+    ['ads funnel unrelated payload',adsSource,adsAdapter,adsChat,adsPath,adsTool.replace('ADS_LEAD_FUNNEL_READ_CAPABILITY.input','{type:"object"}'),true],
+    ['ads funnel name mismatches door',adsSource,adsAdapter,adsChat,adsPath,adsTool.replace('get_pipeline_lead_funnel','get_other_funnel'),true],
+    ['ads funnel mutation cannot clear',adsSource.replace('effect:"read"','effect:"mutation"'),adsAdapter,adsChat,adsPath,adsTool,true],
+  ]){
+    const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const texts=new Map([[adsAdapterPath,adapter],[path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'),chat]]);
+    const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:texts.has(p)?ts.createSourceFile(p,texts.get(p),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }
   const readNames=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>readAst});

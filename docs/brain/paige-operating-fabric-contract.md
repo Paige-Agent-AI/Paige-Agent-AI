@@ -350,11 +350,14 @@ The other keys keep the plain rule.
    health signal; `paige_health_snapshots` has 0 rows, no `tenant_id` and no writer. Both are backend
    changes: stop and name them.
 3. **Spine / tier (§51/§56):** `_analytics_metric_authorized` admits only active owner/admin members
-   whose active workspace is the tenant, on an active/trial/past_due tenant. Coaches, members and
-   agency managers acting in a child account without their own seat are refused
-   (`metric_read_refused`). A revision change between issue and resolve (a client edited mid-read)
-   also arrives as 42501 and is reported the same way, which is why the wording never says "you lack
-   access". **Owner to rule** whether owner/admin is the intended reach of the review.
+   whose active workspace is the tenant, on an active/trial/past_due tenant. Members, and agency
+   managers acting in a child account without their own seat, are refused (`metric_read_refused`).
+   (Corrected 2026-10-12: this first said "coaches"; coach is a title, never a permission — tenant
+   roles are exactly owner, admin and member, per the 2026-09-26 owner ruling in
+   `docs/brain/decision-log.md`.) A revision change between issue and resolve (a client edited
+   mid-read) also arrives as 42501 and is reported the same way, which is why the wording never says
+   "you lack access". **Owner to rule** whether members should get the review, or owner/admin is the
+   intended reach.
 4. **Operations / Planning (before F2c):** `plan_list`'s staff check uses the global
    `has_any_role`; no `has_more`; `p_status` filters plan status, not item status; the DATE /
    time-zone cast; the lock taken by a read.

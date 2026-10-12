@@ -58,7 +58,8 @@ export async function readDeliverySourceVersions(caller: DeliverySourceCaller, s
         || ids.has(row.id) || numbers.has(Number(row.version_no)) || !snapshot) return {kind:"unavailable"};
       ids.add(row.id); numbers.add(Number(row.version_no));
       if(snapshot.kind!=="text") {unsupportedCount++;continue;}
-      if(!text(snapshot.title,2000) || !text(snapshot.body,200000)) return {kind:"unavailable"};
+      if(typeof snapshot.title!=="string" || typeof snapshot.body!=="string") return {kind:"unavailable"};
+      if(!snapshot.title.trim() || snapshot.title.length>500 || !snapshot.body.trim() || snapshot.body.length>200000) {unsupportedCount++;continue;}
       versions.push({id:row.id,versionNo:Number(row.version_no),title:snapshot.title,body:snapshot.body,createdAt:row.created_at});
     }
     if (await caller.getActor()!==scope.actorId || await caller.getTenant()!==scope.tenantId) return {kind:"refused"};

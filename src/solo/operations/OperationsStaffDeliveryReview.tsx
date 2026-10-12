@@ -20,6 +20,8 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark"}:{scop
  const [note,setNote]=useState(""),[noteSource,setNoteSource]=useState<string|null>(null);
  const [pending,setPending]=useState<StaffDeliveryAction|null>(null),[outcome,setOutcome]=useState<Outcome|null>(null);
  const [hint,setHint]=useState(""),invoker=useRef<HTMLButtonElement|null>(null),feedback=useRef<HTMLDivElement|null>(null);
+ const retainedIntent=useRef<{key:string;action:StaffDeliveryAction}|null>(null);
+ useEffect(()=>{if(outcome?.key===key||hint)feedback.current?.scrollIntoView?.({block:"nearest",behavior:"auto"});},[outcome,key,hint]);
  const current=()=>mounted.current&&live.current===key;
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
  useEffect(()=>{
@@ -31,7 +33,16 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark"}:{scop
    if(!same())return;
    const latest=data.kind==="ready"?data.submissions[0]:null;
    const artifact=latest?await readStaffArtifact(staffDeliveryCaller,scope,latest,same):null;
-   if(same())setRead({key,data,artifact,loading:false});
+   if(same()){
+    setRead({key,data,artifact,loading:false});
+    const intent=retainedIntent.current;
+    if(outcome?.key===key&&outcome.kind==="unverified"&&intent?.key===key&&data.kind==="ready"&&artifact?.kind==="ready"&&intent.action.kind!=="submit"){
+     const original=intent.action.submission;
+     const recorded=data.submissions.find(row=>row.id===original.id&&row.artifact_version_id===original.artifact_version_id&&row.artifact_digest===original.artifact_digest&&row.revision_no===original.revision_no);
+     const matched=intent.action.kind==="review"?recorded?.state===intent.action.decision&&recorded.reviewed_by===scope.actorId&&recorded.review_note===(intent.action.note?.trim()||null)&&recorded.updated_at!==original.updated_at:recorded?.state==="approved"&&data.releases.some(row=>row.submission_id===original.id&&row.released_by===scope.actorId);
+     if(matched){setOutcome({key,kind:"verified",message:`The recorded state confirms your ${intent.action.kind==="release"?"client release":intent.action.decision==="approved"?"internal approval":"revision request"}. Your earlier request could not be confirmed directly.`});setNote("");setNoteSource(null);}
+    }
+   }
   })();
   return()=>{cancelled=true;};
  // Exact scope and read sequence fence both content and submitted-version actions.
@@ -54,7 +65,7 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark"}:{scop
  };
  const save=async()=>{
   if(!pending||!current()||locked||writing.current)return;
-  const action=pending;writing.current=true;setBusy(true);setPending(null);
+  const action=pending;retainedIntent.current={key,action};writing.current=true;setBusy(true);setPending(null);
   try{
    const saved=await writeStaffDelivery(staffDeliveryCaller,scope,action,current);
    if(!current())return;
@@ -68,18 +79,19 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark"}:{scop
  const restoreFocus=(event:Event)=>{const button=invoker.current;if(button?.isConnected&&!button.disabled){event.preventDefault();button.focus();}else if(feedback.current?.isConnected){event.preventDefault();feedback.current.focus();}};
  return <section className="paige-solo ops-staff-review" data-pg={theme} data-theme={theme} aria-label="Deliverable review">
   <header><FileCheck2 size={24} aria-hidden="true"/><h2>Review the work</h2><button type="button" disabled={busy} onClick={refresh}>Inspect recorded state</button></header>
-  <ol className="ops-staff-progression" aria-label="Delivery progression">
-   {[{label:"Internal review",complete:latest?.state==="approved"},{label:"Client review",complete:Boolean(release)},{label:"Accepted",complete:release?.state==="accepted"}].map(stage=><li key={stage.label} data-complete={stage.complete}>{stage.complete?<CheckCircle2 size={18} aria-hidden="true"/>:<Circle size={18} aria-hidden="true"/>}<span>{stage.label}</span><span className="sr-only">{stage.complete?"recorded":"not recorded"}</span></li>)}
-  </ol>
+  {data&&<ol className="ops-staff-progression" aria-label="Delivery progression">
+   {[{label:"Internal review",complete:latest?.state==="approved"},{label:"Released for client review",complete:Boolean(release)},{label:"Accepted",complete:release?.state==="accepted"}].map(stage=><li key={stage.label} data-complete={stage.complete}>{stage.complete?<CheckCircle2 size={18} aria-hidden="true"/>:<Circle size={18} aria-hidden="true"/>}<span>{stage.label}</span><span className="sr-only">{stage.complete?"recorded":"not recorded"}</span></li>)}
+  </ol>}
   {!visible||visible.loading?<p role="status">Loading the submitted version...</p>:!data?<div role="status"><h3>Submitted work unavailable</h3><p>Your current access could not read this work. Inspect the recorded state or ask the accountable owner to check its review.</p></div>:!latest?<div><h3>No submitted version yet</h3><p>Prepare an immutable text version in Studio and nominate an eligible reviewer before this work can be reviewed.</p></div>:<>
    <div className="ops-staff-people"><div><span>Prepared by</span>{members.find(m=>m.user_id===latest.submitted_by)?<OperationsAssignee member={members.find(m=>m.user_id===latest.submitted_by)}/>:<strong>Member unavailable</strong>}</div><div><span>Reviewer</span>{members.find(m=>m.user_id===latest.reviewer_user_id)?<OperationsAssignee member={members.find(m=>m.user_id===latest.reviewer_user_id)}/>:<strong>Member unavailable</strong>}</div><p>Version {latest.revision_no}<br/><span>{latest.state==="approved"?"Internally approved":latest.state==="revision_requested"?"Changes requested":"In internal review"}</span></p></div>
    {artifact?<article aria-label="Exact submitted artifact"><h3>{artifact.title}</h3><div className="ops-staff-document" tabIndex={0}>{artifact.body}</div></article>:<p role="status">The exact submitted content cannot be inspected with current source access. No substitute version is shown.</p>}
    {latest.review_note&&<section aria-label="Recorded internal review"><h3>Recorded review note</h3><p className="ops-staff-note">{latest.review_note}</p></section>}
    {release&&<section aria-label="Recorded client outcome"><h3>{release.state==="accepted"?"Client acceptance recorded":release.state==="client_revision_requested"?"Client requested changes":"Awaiting client review"}</h3><p>{release.state==="accepted"?`Version ${latest.revision_no} was explicitly accepted at ${release.decision_at}.`:release.state==="client_revision_requested"?"Prepare a new immutable version, obtain a new internal review and release it again.":"Internal work is approved; the linked client's decision has not been recorded."}</p>{release.client_note&&<p className="ops-staff-note">{release.client_note}</p>}</section>}
-   {reviewing&&<div className="ops-staff-decisions"><label>Review note<textarea aria-label="Review note" maxLength={4000} value={noteOwner.current===key?note:""} disabled={busy||result?.kind==="unverified"} onChange={event=>{setNote(event.target.value);if(!note){setNoteSource(source);noteOwner.current=key;}setHint("");}}/></label><p>Describe what needs to change. A note is required for revisions.</p><div><button type="button" disabled={locked} onClick={event=>request({kind:"review",submission:latest,decision:"revision_requested",note:note.trim()||null},event.currentTarget)}>Request changes</button><button type="button" disabled={locked} className="ops-staff-primary" onClick={event=>request({kind:"review",submission:latest,decision:"approved",note:note.trim()||null},event.currentTarget)}>Approve internally</button></div></div>}
+   {reviewing&&<div className="ops-staff-decisions">{artifact&&<><label>Review note<textarea aria-label="Review note" maxLength={4000} value={noteOwner.current===key?note:""} disabled={busy||result?.kind==="unverified"} onChange={event=>{setNote(event.target.value);if(!note){setNoteSource(source);noteOwner.current=key;}setHint("");}}/></label><p>Describe what needs to change. A note is required for revisions.</p></>}<div><button type="button" disabled={locked} onClick={event=>request({kind:"review",submission:latest,decision:"revision_requested",note:note.trim()||null},event.currentTarget)}>Request changes</button><button type="button" disabled={locked} className="ops-staff-primary" onClick={event=>request({kind:"review",submission:latest,decision:"approved",note:note.trim()||null},event.currentTarget)}>Approve internally</button></div></div>}
    {latest.state==="approved"&&!release&&<button type="button" className="ops-staff-primary" disabled={locked} onClick={event=>request({kind:"release",submission:latest},event.currentTarget)}>Release for client review</button>}
   </>}
-  {mismatched&&<p role="status">Your draft note belongs to the previous inspected version. Keep a copy, then clear it explicitly before deciding on the current version.</p>}
+  {note&&artifact&&!reviewing&&noteOwner.current===key&&<section aria-label="Retained review note"><h3>Your retained draft</h3><p className="ops-staff-note">{note}</p><p>This draft has not been confirmed as the recorded review. Keep a copy or clear it explicitly.</p></section>}
+  {mismatched&&<p role="status">Your draft note belongs to the previous inspected version. Keep a copy when source access permits, then clear it explicitly before deciding on the current version.</p>}
   {note&&<button type="button" disabled={busy} onClick={()=>{setNote("");setNoteSource(null);}}>Clear review note</button>}
   <div ref={feedback} role="status" tabIndex={-1} aria-live="polite">{busy?<p>Saving and verifying the recorded change...</p>:result?<p>{result.message}</p>:hint?<p>{hint}</p>:null}</div>
   <AlertDialog open={Boolean(pending)&&!locked} onOpenChange={open=>{if(!open)setPending(null);}}><AlertDialogContent className="paige-solo ops-staff-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>{pending?.kind==="release"?`Release version ${latest?.revision_no} for client review?`:pending?.kind==="review"&&pending.decision==="approved"?`Approve version ${latest?.revision_no} internally?`:`Request changes to version ${latest?.revision_no}?`}</AlertDialogTitle><AlertDialogDescription>{artifact?.title}. {pending?.kind==="release"?"This exposes this exact approved version to the linked client for their explicit decision.":"This records your internal review of the exact submitted version. It does not record client acceptance."}</AlertDialogDescription></AlertDialogHeader>{note.trim()&&<p className="ops-staff-note">{note}</p>}<AlertDialogFooter><AlertDialogCancel>Keep reviewing</AlertDialogCancel><AlertDialogAction className="ops-staff-primary" onClick={()=>void save()}>{pending?.kind==="release"?"Confirm client release":pending?.kind==="review"&&pending.decision==="approved"?"Confirm internal approval":"Confirm changes request"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

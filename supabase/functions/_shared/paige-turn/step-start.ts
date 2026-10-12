@@ -74,6 +74,9 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   read_email_series: "Checking your email series",
   email_series_draft: "Writing an email series",
   email_series_request_approval: "Filing an email series for approval",
+  // Ads
+  get_pipeline_lead_funnel: "Checking how your campaigns and ads are doing",
+  set_ad_creative_featured: "Updating your Ads showroom",
   // Agreements
   agreement_send: "Sending the agreement for signature",
   agreement_draft: "Drafting the agreement",

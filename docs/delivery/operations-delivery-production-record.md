@@ -23,3 +23,7 @@ Planning retains projects/work; Team retains identity; Studio retains artifact b
 Client release, artifact review, explicit acceptance, rendered mounting, governed COO/Chat/Live and authenticated customer acceptance remain PROOF OWED. No customer login, customer mutation, communication, provider expense or INT-346 activation was performed. Recovery uses reviewed forward changes and authoritative readback, never uncertain replay.
 
 ANT-11 contains exact release evidence and the One-PAIGE proof matrix update. The canonical Master Project Reference records this merge in Section 4.0.
+
+## Subsequent item-authorization finding — ANT-152
+
+The historical release proof above remains valid at its stated scope. A later independent GitHub P1 identified submit/list plan-owner/creator alternatives broader than canonical item visibility. Coordinator and Operations read-only production inspections confirmed those alternatives. An isolated authenticated-role regression subsequently reproduced the mismatch; no customer exploitation or breach is inferred. Forward corrective PR [#2015](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2015) is under review/CI. Applied320 is unchanged. Authenticated customer Delivery acceptance remains UNVERIFIED and the finding is not yet represented as production-fixed.

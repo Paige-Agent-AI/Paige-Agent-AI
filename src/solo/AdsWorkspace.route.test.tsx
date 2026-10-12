@@ -25,8 +25,13 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 const briefs = { phase: "ready", canManage: true, briefs: [] as Array<Record<string, unknown>> };
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => briefs }));
-// Marketing's own readers never mount on a redirected address; if one did, this would say so.
-vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => { throw new Error("Marketing mounted on an Ads address"); } }));
+// Marketing's own readers never mount on a redirected address; if one did, this would say so. Ads reads
+// only the Sales pipelines (scope "pipeline", for its lead funnel), never Marketing's whole read.
+vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: (options?: { scope?: string }) => {
+  if (options?.scope !== "pipeline") throw new Error("Marketing mounted on an Ads address");
+  return { phase: "ready", pipelineWorkspace: { canManage: true, canArchiveFolders: false, folders: [], pipelines: [], stages: [], deals: [], automationRules: [] } };
+} }));
+vi.mock("@/components/admin/studio/studio", () => ({ uploadToLibrary: () => Promise.reject(new Error("not in this test")) }));
 
 import { AdsWorkspace } from "./AdsWorkspace";
 import { GrowthHub } from "./growth2";
@@ -173,11 +178,11 @@ describe("Ads, its own department below Marketing", () => {
   it("reads saved ad copy for the active workspace only, and keeps the read policy for members", async () => {
     db.rows = [{ id: "a1", title: "Spring planning session", status: "draft", updated_at: "2026-10-01T10:00:00Z", body: "Headline: Plan your quarter\nPrimary text: Book a session.\nCTA: Book now" }];
     await mount("/solo/42/ads/creative", "t-1");
-    expect(db.calls.filter((c) => c.table === "marketing_content").map((c) => c.filters.find(([k]) => k === "tenant_id")?.[1])).toEqual(["t-1"]);
+    expect(db.calls.filter((c) => c.table === "marketing_content").map((c) => c.filters.find(([k]) => k === "tenant_id")?.[1])).toEqual(["t-1", "t-1"]); // the saved copy and the pictures and videos
     expect(text()).toContain("Plan your quarter");
     db.calls = [];
     await mount("/solo/42/ads/creative", "t-2");
-    expect(db.calls.filter((c) => c.table === "marketing_content").map((c) => c.filters.find(([k]) => k === "tenant_id")?.[1])).toEqual(["t-2"]);
+    expect(db.calls.filter((c) => c.table === "marketing_content").map((c) => c.filters.find(([k]) => k === "tenant_id")?.[1])).toEqual(["t-2", "t-2"]);
     // A member: saved copy is for owners and admins, so it is never read, and they are told so.
     db.calls = [];
     briefs.canManage = false;

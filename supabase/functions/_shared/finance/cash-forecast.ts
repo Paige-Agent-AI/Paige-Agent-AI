@@ -3,9 +3,12 @@
 // Available credit, revenue recognition and accounting profit are not cash inputs.
 export type CashEvent = {
   id: string; obligationId: string | null; date: string; currency: string; amountMinor: string | null;
-  direction: 'inflow' | 'outflow'; basis: 'scheduled_obligation' | 'collection_estimate' | 'owner_assumption';
   sourceRef: string; sourceVersion: string;
-};
+} & (
+  | { basis: 'scheduled_obligation'; direction: 'outflow' }
+  | { basis: 'collection_estimate'; direction: 'inflow' }
+  | { basis: 'owner_assumption'; direction: 'inflow' | 'outflow' }
+);
 export type CashForecastInput = {
   companyId: string; currency: string; minorUnitScale: number; startDate: string; horizonDays: 30 | 60 | 90;
   openingCashMinor: string | null; cashFloorMinor: string | null; openingEvidenceRef: string;
@@ -36,6 +39,10 @@ export function calculateCashForecast(input: CashForecastInput) {
     if (!event || !text(event.id) || !day(event.date) || event.currency !== input.currency
       || !['inflow', 'outflow'].includes(event.direction) || !['scheduled_obligation', 'collection_estimate', 'owner_assumption'].includes(event.basis)
       || !text(event.sourceRef) || !text(event.sourceVersion) || event.obligationId !== null && !text(event.obligationId)) return refused('invalid_event');
+    // Runtime JSON can bypass the typed contract. Obligations spend cash;
+    // collections bring it in. Owner assumptions retain either direction.
+    if (event.basis !== 'owner_assumption'
+      && event.direction !== (event.basis === 'scheduled_obligation' ? 'outflow' : 'inflow')) return refused('invalid_event_basis_direction');
     if (ids.has(event.id)) return refused('duplicate_event');
     ids.add(event.id);
     // A canonical obligation appears once, even when accounting and lender sources

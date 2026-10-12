@@ -1,7 +1,7 @@
 -- Paige Secure Browser control-plane security and lifecycle proof.
 -- Synthetic fixtures only; the transaction is always rolled back.
 BEGIN;
-SELECT plan(28);
+SELECT plan(42);
 
 SELECT ok((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='public.secure_browser_sessions'::regclass),'sessions force RLS');
 SELECT ok(NOT has_table_privilege('authenticated','public.secure_browser_sessions','SELECT,INSERT,UPDATE,DELETE'),'authenticated has no direct session access');
@@ -77,6 +77,53 @@ RESET ROLE;
 SELECT is((SELECT state FROM public.secure_browser_connected_accounts WHERE label='Expired metadata'),'expired','expiry is persisted canonically');
 SELECT is((SELECT count(*)::integer FROM public.secure_browser_receipts WHERE action_kind='account.expire'),1,'account expiry writes one detailed receipt with Rail identity');
 SELECT is((SELECT count(*)::integer FROM public.secure_browser_receipts WHERE action_kind='usage.settle'),1,'settlement writes one detailed receipt');
+
+
+-- ── PC-1 browse budget gate + settle (#2003 coordinator P1+P2) ────────────────────────────────────
+-- Real PostgreSQL permissions under the executing role: the gate/settle pair is the ONLY authorized
+-- service-role door to the limits; direct table reads stay revoked (proven above for sessions; same
+-- REVOKE covers the limits + windows tables in 20270419000000). Tenant B has NO limits row here —
+-- the missing-row fail-closed proof. Atomicity of concurrent reservations is proven separately by
+-- scripts/proof/secure-browser-browse-budget-concurrency.mjs (12 racing callers, budget admits 4).
+SELECT ok(has_function_privilege('service_role','public.secure_browser_browse_budget_gate(uuid,integer)','EXECUTE'),'browse budget gate is service-role reachable');
+SELECT ok(NOT has_function_privilege('authenticated','public.secure_browser_browse_budget_gate(uuid,integer)','EXECUTE'),'browser cannot call the browse budget gate');
+SELECT ok(has_function_privilege('service_role','public.secure_browser_browse_budget_settle(uuid,integer,integer)','EXECUTE'),'browse budget settle is service-role reachable');
+
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT is((SELECT public.secure_browser_browse_budget_gate('5b000000-0000-4000-8000-00000000bbbb',45)->>'reason'),'control_plane:not_configured','MISSING limits row fails closed (P2)');
+SELECT is((SELECT public.secure_browser_browse_budget_gate('5a000000-0000-4000-8000-00000000aaaa',45)->>'allowed'),'true','configured tenant reserves atomically');
+RESET ROLE;
+SELECT is((SELECT reserved_seconds::integer FROM public.secure_browser_usage_windows WHERE tenant_id='5a000000-0000-4000-8000-00000000aaaa' AND window_kind='day'),45,'gate reserved worst-case seconds in the day window');
+
+UPDATE public.secure_browser_tenant_limits SET enabled=false WHERE tenant_id='5a000000-0000-4000-8000-00000000aaaa';
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT is((SELECT public.secure_browser_browse_budget_gate('5a000000-0000-4000-8000-00000000aaaa',45)->>'reason'),'control_plane:disabled','disabled limits row refuses');
+RESET ROLE;
+UPDATE public.secure_browser_tenant_limits SET enabled=true WHERE tenant_id='5a000000-0000-4000-8000-00000000aaaa';
+
+UPDATE public.secure_browser_usage_windows SET consumed_seconds=1770 WHERE tenant_id='5a000000-0000-4000-8000-00000000aaaa' AND window_kind='day';
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT is((SELECT public.secure_browser_browse_budget_gate('5a000000-0000-4000-8000-00000000aaaa',45)->>'reason'),'control_plane:daily_budget','exhausted daily budget refuses (45 reserved + 1770 consumed > 1800)');
+SELECT is((SELECT public.secure_browser_browse_budget_settle('5a000000-0000-4000-8000-00000000aaaa',45,5)->>'settled'),'true','settle releases the reservation and records actual seconds');
+RESET ROLE;
+SELECT is((SELECT reserved_seconds::integer FROM public.secure_browser_usage_windows WHERE tenant_id='5a000000-0000-4000-8000-00000000aaaa' AND window_kind='day'),0,'settle released the reserved seconds');
+SELECT is((SELECT consumed_seconds::integer FROM public.secure_browser_usage_windows WHERE tenant_id='5a000000-0000-4000-8000-00000000aaaa' AND window_kind='day'),1775,'settle recorded actual seconds once');
+
+UPDATE public.tenants SET features=features-'secure_browser' WHERE id='5a000000-0000-4000-8000-00000000aaaa';
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT is((SELECT public.secure_browser_browse_budget_gate('5a000000-0000-4000-8000-00000000aaaa',45)->>'reason'),'control_plane:feature_disabled','feature-off tenant refuses even with limits configured');
+RESET ROLE;
+UPDATE public.tenants SET features=jsonb_set(features,'{secure_browser}','true') WHERE id='5a000000-0000-4000-8000-00000000aaaa';
+
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT throws_ok($q$SELECT public.secure_browser_browse_budget_settle('5a000000-0000-4000-8000-00000000aaaa',45,46)$q$,'22023',NULL,'settle cannot consume more than it reserved');
+SELECT throws_ok($q$SELECT public.secure_browser_browse_budget_gate('5a000000-0000-4000-8000-00000000aaaa',0)$q$,'22023',NULL,'gate rejects a zero reservation');
+RESET ROLE;
 
 SELECT * FROM finish();
 ROLLBACK;

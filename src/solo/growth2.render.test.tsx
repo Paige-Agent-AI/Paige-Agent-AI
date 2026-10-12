@@ -11,6 +11,8 @@ const harness = vi.hoisted(() => ({
   // Owner briefs the Marketing Overview and Analytics read. Empty unless a test sets them.
   readCalls: 0,
   canManage: true,
+  // What this page load learned about the ads-intake functions (ads-intake-capability). Deployed unless a test says not.
+  intake: "present" as "unknown" | "present" | "missing",
   // Analytics' email row (marketing-analytics-email). Days asked for, and the answer to give.
   emailDays: [] as number[],
   email: { phase: "ready", stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 } } as Record<string, unknown>,
@@ -88,6 +90,17 @@ vi.mock("./marketing-analytics-metrics", async (importOriginal) => ({
   useMarketingServerFigures: (tenantId: string | null, range: string, periodStart: number) => { harness.serverReads.push([tenantId, range, periodStart]); return { ...harness.server, retry: () => {} }; },
   useMarketingProcessingHealth: () => harness.health,
 }));
+
+// Analytics' pipeline lead funnel reads get_pipeline_lead_funnel through its own hook; its server and
+// records paths are proven in marketing-analytics-funnel.render.test.tsx. Here the panel stays real and
+// the read never leaves the test (it draws the records the hub holds).
+vi.mock("./pipeline-lead-funnel", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./pipeline-lead-funnel")>();
+  return { ...actual, useLeadFunnel: () => ({ phase: "idle", funnel: null, stale: false, source: null, reason: null, capped: false, retry: () => {} }) };
+});
+// Whether the ads-intake functions are deployed is asked once by the funnel's empty state; proven in
+// marketing-ads.render.test.tsx and marketing-analytics-funnel.render.test.tsx. Here they are deployed.
+vi.mock("./ads-intake-capability", () => ({ useAdsIntakeCapability: () => harness.intake, noteAdsIntakeAnswer: () => {}, resetAdsIntakeCapability: () => {} }));
 
 // What each campaign uses reads and writes through governed RPCs; their contract is proven by
 // supabase/tests/campaign_brief_asset_links.sql and useCampaignAssets.test.tsx. Here it answers what a test sets.
@@ -167,6 +180,7 @@ afterEach(() => {
   harness.briefs = [];
   harness.briefsPhase = "ready";
   harness.canManage = true;
+  harness.intake = "present";
   harness.emailDays = [];
   harness.email = { phase: "ready", stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 } };
   harness.emailRetry.mockClear();
@@ -785,7 +799,7 @@ describe("Solo Marketing department views", () => {
     // Sources are the tracking tags, merged.
     expect(sources()).toEqual(["newsletter2", "linkedin1"]);
     expect(attention()).toEqual([
-      "Discovery call requestA lead from this form goes nowhere: no pipeline, no alertRoute it",
+      "Discovery call requestA lead from this form goes nowhere: no pipeline, no alert. Setting a default pipeline in Sales would catch them.Route it",
       "Podcast seriesNo capture form chosenOpen",
       "Referral pushWaiting on the offerOpen",
       "Retainer upgrade pageDraft page: collects nothing until it’s publishedFinish in Vibe",
@@ -1262,7 +1276,7 @@ describe("Solo Marketing department views", () => {
   it("only a pipeline route closes the chain: other automations still leave the link broken", () => {
     useWorkspace({ artifacts: [{ ...form, routingConfigured: true, routingState: "Active", routingTargets: ["notify_team"] }] });
     renderAt("/solo/42/growth/overview");
-    expect(attention()[0]).toBe("Discovery call requestIts automations run, but leads never reach a pipelineRoute it");
+    expect(attention()[0]).toBe("Discovery call requestIts automations run, but leads never reach a pipeline. Setting a default pipeline in Sales would catch them.Route it");
     expect(host.querySelector("#mov-capture")?.textContent).toContain("No pipeline");
     expect(chain()[2]).toMatch(/^0 of 1/);
     act(() => root.unmount()); host.remove();
@@ -1276,7 +1290,7 @@ describe("Solo Marketing department views", () => {
     // The processor follows a form's enabled automations and ignores its own route, so this form reaches no pipeline.
     useWorkspace({ artifacts: [{ ...form, intakePipelineId: "pipeline-1", routingConfigured: true, routingState: "Active", routingTargets: ["notify_team"] }] });
     renderAt("/solo/42/growth/overview");
-    expect(attention()[0]).toBe("Discovery call requestIts own pipeline route is skipped while an automation is on; add a pipeline step to its automations in Vibe StudioRoute it");
+    expect(attention()[0]).toBe("Discovery call requestIts own pipeline route is skipped while an automation is on; add a pipeline step to its automations in Vibe Studio. Setting a default pipeline in Sales would catch them.Route it");
     act(() => button("Route it")!.click());
     const dialog = host.querySelector('[role="dialog"]')?.textContent;
     expect(dialog).toContain("No pipeline: the route below is skipped while an automation is on. Add a pipeline step to its automations in Vibe Studio");
@@ -1286,10 +1300,81 @@ describe("Solo Marketing department views", () => {
   it("a form that only emails its leads is not called silent, and is still not routed", () => {
     useWorkspace({ artifacts: [{ ...form, intakeAlert: true }] });
     renderAt("/solo/42/growth/overview");
-    expect(attention()[0]).toBe("Discovery call requestLeads are emailed to you but never reach a pipelineRoute it");
+    expect(attention()[0]).toBe("Discovery call requestLeads are emailed to you but never reach a pipeline. Setting a default pipeline in Sales would catch them.Route it");
     expect(host.querySelector("#mov-capture")?.textContent).toContain("Email alert only, no pipeline");
     act(() => button("Route it")!.click());
     expect(host.querySelector('[role="dialog"]')?.textContent).toContain("No pipeline: each lead is only emailed");
+  });
+
+  // Owner ruling 2026-10-11 (20271021042001): a form with no route of its own files its leads into the
+  // business's default pipeline, first open stage. Marketing must not say those leads go nowhere.
+  const defaultWorkspace = (stageOverrides: Record<string, unknown> = {}) => ({
+    ...emptyWorkspace,
+    pipelines: [
+      { id: "p-old", name: "Retired intake", isDefault: true, lifecycleStatus: "archived", createdAt: daysAgo(90) },
+      { id: "p-def", name: "Client work", isDefault: true, lifecycleStatus: "active", createdAt: daysAgo(30) },
+    ],
+    stages: [
+      { id: "st-won", pipelineId: "p-def", label: "Signed", stageType: "won", archivedAt: null, orderIndex: 0 },
+      { id: "st-new", pipelineId: "p-def", label: "New enquiry", stageType: "open", archivedAt: null, orderIndex: 1, ...stageOverrides },
+      { id: "st-old", pipelineId: "p-old", label: "Old inbox", stageType: "open", archivedAt: null, orderIndex: 0 },
+    ],
+  });
+
+  it("a form with no route of its own reads as landing in the default pipeline, everywhere Marketing names its route", () => {
+    useWorkspace({ pipelineWorkspace: defaultWorkspace(), artifacts: [{ ...form, intakeAlert: true }] });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toBe("1 of 1Forms that route leadsEvery live form routes its leads");
+    expect(host.querySelector(".mov-node.is-broken")).toBeNull();
+    expect(button("Route it")).toBeUndefined();
+    expect(attention().some((row) => row.startsWith("Discovery call request"))).toBe(false);
+    const capture = host.querySelector("#mov-capture")?.textContent ?? "";
+    expect(capture).toContain("Client work (default) → New enquiry");
+    expect(capture).not.toMatch(/Not routed|no pipeline/);
+    expect(host.querySelector(".mov-cp.is-issue")).toBeNull();
+    // The panel names the destination and still offers a route of the form's own.
+    act(() => (host.querySelector(".mov-cp") as HTMLButtonElement).click());
+    const dialog = host.querySelector('[role="dialog"]')?.textContent ?? "";
+    expect(dialog).toContain("Client work (default) → New enquiry. With no route of its own, this form files its leads in your default pipeline. Set a route below to send them to a specific pipeline instead. Each lead is also emailed to you.");
+    expect(dialog).not.toContain("No pipeline");
+    act(() => root.unmount()); host.remove();
+    useWorkspace({ pipelineWorkspace: defaultWorkspace(), artifacts: [{ ...form, id: "f-none", name: "No route" }, { ...form, id: "f-pipe", name: "Own route", intakePipelineId: "pipeline-1" }] });
+    renderAt("/solo/42/growth/analytics");
+    const routes = Object.fromEntries([...host.querySelectorAll(".mva-cap-row")].map((row) => [row.querySelector(".mva-row-t")!.firstChild!.textContent, row.querySelector("small")!]));
+    expect(routes["No route"].textContent).toBe("Client work (default) → New enquiry");
+    expect(routes["No route"].className).not.toContain("is-warn");
+    expect(routes["Own route"].textContent).toBe("Routed to a pipeline");
+  });
+
+  it("once the page knows the default-pipeline functions are not deployed, no form is said to land there and none is offered as a fix", () => {
+    harness.intake = "missing";
+    useWorkspace({ pipelineWorkspace: defaultWorkspace() });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toBe("0 of 1Forms that route leadsThe chain breaks hereRoute it");
+    expect(attention()[0]).toBe("Discovery call requestA lead from this form goes nowhere: no pipeline, no alertRoute it");
+    expect(host.querySelector("#mov-capture")?.textContent).not.toContain("(default)");
+    act(() => button("Route it")!.click());
+    const dialog = host.querySelector('[role="dialog"]')?.textContent ?? "";
+    expect(dialog).toContain("Not routed: no pipeline, no alert");
+    expect(dialog).not.toMatch(/default pipeline/i);
+    act(() => root.unmount()); host.remove();
+    useWorkspace({ pipelineWorkspace: defaultWorkspace() });
+    renderAt("/solo/42/growth/analytics");
+    expect(host.querySelector(".mva-cap-row small")?.textContent).toBe("Not routed");
+  });
+
+  it("a default pipeline with no open stage catches nothing, so the form is still not routed and says what would fix it", () => {
+    useWorkspace({ pipelineWorkspace: defaultWorkspace({ archivedAt: daysAgo(2) }) });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toBe("0 of 1Forms that route leadsThe chain breaks hereRoute it");
+    expect(attention()[0]).toBe("Discovery call requestA lead from this form goes nowhere: no pipeline, no alert. Your default pipeline in Sales has no open stage to take them.Route it");
+    expect(host.querySelector("#mov-capture")?.textContent).toContain("Not routed");
+    act(() => button("Route it")!.click());
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain("Not routed: no pipeline, no alert. Your default pipeline in Sales has no open stage to take them.");
+    act(() => root.unmount()); host.remove();
+    useWorkspace({ pipelineWorkspace: defaultWorkspace({ archivedAt: daysAgo(2) }) });
+    renderAt("/solo/42/growth/analytics");
+    expect(host.querySelector(".mva-cap-row small")?.textContent).toBe("Not routed");
   });
 
   it("saving a route re-reads Marketing, and the open panel keeps focus while it re-renders", async () => {

@@ -56,6 +56,15 @@
       "writes": 0
     },
     {
+      "theme": "dark",
+      "kind": "review-cleared",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
       "theme": "light",
       "kind": "preparation-draft",
       "realUnmount": true,
@@ -103,6 +112,15 @@
     {
       "theme": "light",
       "kind": "review-replaced",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "light",
+      "kind": "review-cleared",
       "realUnmount": true,
       "freshWorkVersion": true,
       "sourceAuthorityRevalidated": true,

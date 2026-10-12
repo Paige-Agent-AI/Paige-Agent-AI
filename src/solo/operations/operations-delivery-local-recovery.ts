@@ -36,7 +36,7 @@ function parseAction(value:unknown,scope:StaffDeliveryScope):StaffDeliveryAction
   {kind:"submit",artifactVersionId:r.artifactVersionId,reviewerId:r.reviewerId,expectedRevisionNo:Number(r.expectedRevisionNo)}:null;
  const row=submission(r.submission,scope);if(!row)return null;
  if(r.kind==="release")return row.state==="approved"?{kind:"release",submission:row}:null;
- if(r.kind!=="review"||row.state!=="in_review"||row.reviewer_user_id!==scope.actorId||!["approved","revision_requested"].includes(String(r.decision))||!(r.note===null||typeof r.note==="string"&&r.note.length<=4000)||r.decision==="revision_requested"&&!(typeof r.note==="string"&&r.note.trim()))return null;
+ if(r.kind!=="review"||row.state!=="in_review"||row.reviewer_user_id!==scope.actorId||typeof r.decision!=="string"||!["approved","revision_requested"].includes(r.decision)||!(r.note===null||typeof r.note==="string"&&r.note.length<=4000)||r.decision==="revision_requested"&&!(typeof r.note==="string"&&r.note.trim()))return null;
  return{kind:"review",submission:row,decision:r.decision as "approved"|"revision_requested",note:r.note as string|null};
 }
 function parseRecovery(value:unknown,current:StaffDeliveryScope):DeliveryRecovery|null{

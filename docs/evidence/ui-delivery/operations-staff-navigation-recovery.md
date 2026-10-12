@@ -7,9 +7,9 @@ MATERIAL_FLOW_CHANGE: YES: existing unmounted preparation/review sources retain 
 FLOW_PROTOTYPE: PASS: approved Operations V3 and owner implementation authorization; real component drive uses explicitly synthetic records and callers.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: staff return to their work without losing an original note or replaying an uncertain submission/review/client release.
 VISUAL_DIRECTION: PASS: approved Obsidian/Mineral, connected recorded-event progression, canonical inline people/photos, readable work document and scoped champagne confirmation/indigo focus.
-AUTOMATED_EVIDENCE: PASS:111 focused tests (18 preparation,17 review,14 recovery,38 staff,15 source,9 discovery), failing-first four preparation/six review/two replacement-clearance regressions, scoped lint PASS.
+AUTOMATED_EVIDENCE: PASS:114 focused tests (18 preparation,19 review,15 recovery,38 staff,15 source,9 discovery), failing-first four preparation/six review/two replacement-clearance regressions, scoped lint PASS.
 STATIC_EVIDENCE: PASS: minimal versioned sessionStorage UI metadata, original scope/CAS, strict existing parser projections, explicit no-overwrite/no-clear unknown-intent checks; no artifact body, profile copy, authority, API executor, route or domain store added. Independent final review still owed.
-RENDERED_EVIDENCE: PASS: assets/operations-v3/staff-navigation-recovery/verification.json records12 both-theme phone actual-component unmount/remount cases/errors0; native zoom report records8 genuine signed-out Chrome200/400 captures/errors0. Isolated sources, not canonical shell/PAIGE.
+RENDERED_EVIDENCE: PASS: assets/operations-v3/staff-navigation-recovery/verification.json records14 both-theme phone actual-component unmount/remount cases/errors0; native zoom report records8 genuine signed-out Chrome200/400 captures/errors0. Isolated sources, not canonical shell/PAIGE.
 BEHAVIORAL_EVIDENCE: PASS: actual caller/readback with explicit synthetic ports, original CAS after changed visible timestamp, uncertain no replay, authorized same-source draft recovery, revoked/replaced-source concealment and exact-intent retention/clearance.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no legitimate customer or canonical QA client session exercised. ANT-21/#1832/ANT-7/ANT-86 remains the authorized queue.
 KEYBOARD_FOCUS: PASS:8 native zoom cases scroll the real document using PageDown, invoke confirmation using keyboard, cancel with zero writer and restore focus. Parent close/account/unload guards covered locally; production route/back integration still owed.
@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: Original draft and unknown intent survive navigation while 
 MOTION_PURPOSE: NONE: no authored motion; only existing shared confirmation state transitions.
 PROTECTED_SEAMS: Operations-owned source only; shared Clients/router/shell/Spine/Chat/executor/QA/provider contracts untouched.
 
-INTERNAL_BUILD_IDENTITY: source candidate recorded in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/operations-client-review-packet.md
+INTERNAL_BUILD_IDENTITY: supporting source head c43125b8bbb1474646381d34b54d671e5fd6a620; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/operations-client-review-packet.md
 RELEASE_CHANNEL: development: unmounted recovery source, no mounted customer reachability.
 RELEASE_CLASSIFICATION: internal-only: original-scope UI recovery; production mount/authenticated acceptance remain owed.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated customer outcome not established.
@@ -45,4 +45,4 @@ RELEASE_RECOVERY: position=reviewed forward correction and original-scope readba
 
 
 
-Independent non-author source and bounded design review are required before release. No additional aesthetic pass or new design direction is proposed. Review, CI, merge, source deployment and authenticated acceptance remain separate evidence states.
+Initial non-author source review NOT COMPLETE found malformed decision coercion and deleted-note resurrection; meaningful regressions reproduced both plus failed-clearance preservation (3FAIL/31PASS). One combined correction requires literal supported string decisions, clears deleted drafts with verified scoped absence or preserves the visible note/guard on storage refusal.114 focused tests/scoped lint PASS. Initial visual packet required recapture: one gray closing-overlay artifact was invalid; settled overlay-node absence is now asserted and the complete14-case packet is recaptured. Initial UI gate114925464846 FAIL missing exact build SHA; supporting c43125b8bbb1474646381d34b54d671e5fd6a620 is now recorded and grammar check PASS without changing the gate. Final independent source and bounded design confirmation are required before release. No additional aesthetic pass or new design direction is proposed. Review, CI, merge, source deployment and authenticated acceptance remain separate evidence states.

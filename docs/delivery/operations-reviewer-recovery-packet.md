@@ -18,3 +18,7 @@ Applied migrations320/20/30/50 remain unchanged. Production frontier202710230002
 Only a latest `in_review` submission with no decision may change reviewer. Original source/version/digest/submitter/client/work and completed decisions remain immutable. Replacement must be a currently active same-tenant member, distinct from submitter, with actual Studio source permission. A documented reason and original timestamp prevent silent or stale reassignment. Plan-level ownership alone never grants this action. Historical reviewer identity remains in existing audit.
 
 Local minimal-schema proof is preparation, not full deployed-schema or authenticated runtime acceptance. Full rollback-only native CI must also run against the complete migration tree.
+
+## Native preparation checkpoint
+
+Failing-first88e06f4aa asserts the missing scoped function and fails on native PostgreSQL16 before implementation. Forward migration20271024000010 then passes27 actual authenticated-role assertions in the disposable minimal-schema fixture, including original source, old reviewer read/decision loss, exact admin intersection, source-only unrelated plan owner refusal, active replacement, stale intent, completed history and existing audit. One ambiguous test column was qualified without weakening its assertion. Full-schema CI, independent security review, release and mounted/authenticated proof remain pending.

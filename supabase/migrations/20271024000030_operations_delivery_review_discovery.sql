@@ -36,6 +36,24 @@ begin
     exception when insufficient_privilege then
       v_unavailable:=v_unavailable+1;continue;
     end;
+    -- The delegated volatile reader can observe a newer state than the cursor.
+    -- Never label a changed review/reviewer/revision as this caller's pending work.
+    if v_artifact->>'submission_id' is distinct from v_s.id::text
+      or v_artifact->>'state' is distinct from 'in_review'
+      or v_artifact->>'reviewer_user_id' is distinct from v_actor::text
+      or v_artifact->>'revision_no' is distinct from v_s.revision_no::text
+      or v_artifact->>'artifact_version_id' is distinct from v_s.artifact_version_id::text
+      or v_artifact->>'artifact_digest' is distinct from v_s.artifact_digest
+      or (v_artifact->>'updated_at')::timestamptz is distinct from v_s.updated_at
+      or not exists(select 1 from public.operations_delivery_submissions current_s
+        where current_s.id=v_s.id and current_s.tenant_id=p_expected_tenant_id
+          and current_s.state='in_review' and current_s.reviewer_user_id=v_actor
+          and current_s.updated_at=v_s.updated_at and current_s.revision_no=v_s.revision_no
+          and not exists(select 1 from public.operations_delivery_submissions newer
+            where newer.tenant_id=current_s.tenant_id and newer.work_item_id=current_s.work_item_id
+              and newer.revision_no>current_s.revision_no)) then
+      v_unavailable:=v_unavailable+1;continue;
+    end if;
     select w.updated_at into v_work_version from public.plan_items w
       where w.id=v_s.work_item_id and w.tenant_id=p_expected_tenant_id;
     if v_work_version is null then v_unavailable:=v_unavailable+1;continue;end if;

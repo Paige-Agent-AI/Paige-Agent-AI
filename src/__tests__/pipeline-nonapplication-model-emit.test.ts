@@ -11,8 +11,13 @@ const src = readFileSync(join(root, "supabase/functions/paige-ai-chat/index.ts")
  *  gate-resolved approved token for a re-emitted pipeline_configure call now reaches the
  *  recorder too, and that the recorder's token is server-resolved (never from args). */
 describe("model-emit non-application recording (CL-8)", () => {
-  it("the general gate captures the resolved approved token for pipeline_configure calls", () => {
-    expect(src).toContain('if (approvedFingerprint && tc.function.name === "pipeline_configure") pipelineClaimToken.set(tc.id, approvedFingerprint);');
+  it("the claim seam captures the FINAL resolved approved token for pipeline_configure (post-claim, not the first resolution)", () => {
+    expect(src).toContain('if (approvedArgs && approvedFingerprint && tc.function.name === "pipeline_configure") {');
+    expect(src).toContain('pipelineClaimToken.set(tc.id, approvedFingerprint);');
+    // The premature first-resolution capture is gone (review P1): before the approved-set
+    // lookup resolves, the map must not be written.
+    expect(src).not.toContain('if (approvedFingerprint) approvalTokenTool.set(approvedFingerprint, tc.function.name);
+            if (approvedFingerprint && tc.function.name === "pipeline_configure")');
   });
   it("the recorder accepts the pinned OR the gate-claimed token — not a pin-only condition", () => {
     expect(src).toContain("const observedClaimToken = resumePin.get(tc.id) ?? pipelineClaimToken.get(tc.id);");

@@ -107,7 +107,10 @@ never client-set) and the recorder accepts either token — pinned or gate-claim
 the unchanged single guard: `databaseAnswered(configureError) && interactive && token`.
 Both door forms (`configure_tenant_pipeline` caller-JWT and `_as_paige` service) are single
 RPCs, so the rolled-back-whole doctrine covers both. The SQL validation is unchanged and
-path-agnostic: any consumed pipeline_configure card matching the token records once. A
+path-agnostic: a consumed pipeline_configure card whose stored command is exactly an
+update-pipeline command with its idempotency key (the migration’s own shape rule) records
+once — other card shapes are refused by the SQL and the observation is skipped (the
+refusal answer itself is unaffected). A
 source-contract test pins the wiring (gate capture, observed-token composition, the
 dropped pin-only condition); runtime proof of the model-emit leg rides the C4f
 authenticated matrix (the C4a harness's pinned scenario stays green in CI). Corridor

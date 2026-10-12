@@ -11296,7 +11296,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // C4a — a resumed act is pinned to its approval by the server (`resumePin`), never matched.
             let approvedFingerprint: string | undefined = resumePin.get(tc.id) ?? (approvedConfirmations.has(fp) ? fp : undefined);
             if (approvedFingerprint) approvalTokenTool.set(approvedFingerprint, tc.function.name);
-            if (approvedFingerprint && tc.function.name === "pipeline_configure") pipelineClaimToken.set(tc.id, approvedFingerprint);
             // FIX B signal (P0 containment): the operator approved proposal(s) for this tool, but this
             // re-emitted call could not be pinned to exactly one of them. Set below when the approved-set
             // lookup finds ≥1 live proposal yet resolves no single fingerprint — a genuinely ambiguous
@@ -11396,6 +11395,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const approvedArgs = approvedFingerprint !== undefined
               ? await claimConfirmation(approvedFingerprint, tc.function.name)
               : null;
+            // INT-1807 CL-8 — the token is FINAL here (pinned resume, direct scoped match, or
+            // the approved-set resolution above) and the claim has consumed the row, so a
+            // later database-answered door refusal can be recorded against the ORIGINAL
+            // effect. Captured after the claim by review: the first resolution alone misses
+            // the approved-set path, and a bare unscoped token cannot validate anyway.
+            if (approvedArgs && approvedFingerprint && tc.function.name === "pipeline_configure") {
+              pipelineClaimToken.set(tc.id, approvedFingerprint);
+            }
 
             if (!approvedArgs) {
               // C4a — A RESUMED ACT WHOSE CLAIM FAILED never becomes a fresh card. Read the row once

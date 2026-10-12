@@ -28,7 +28,9 @@ Production database, read-only or rolled back, as the canonical user's claims (`
 | Feature, picture id that does not exist | `42501 AD_CREATIVE_FORBIDDEN`, nothing written |
 | Funnel as `anon` | `42501 permission denied for function get_pipeline_lead_funnel` |
 | Feature as `anon` | `42501 permission denied for function set_ad_creative_featured` |
-| `POST /functions/v1/paige-ai-chat` with no session | `HTTP 401 UNAUTHORIZED_NO_AUTH_HEADER` |
+
+Separately, an HTTP call to the function gateway (evidence class: **unauthenticated gateway call**):
+`POST /functions/v1/paige-ai-chat` with no session → `HTTP 401 UNAUTHORIZED_NO_AUTH_HEADER`.
 
 Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_autonomy` carries
 `set_ad_creative_featured` with default `confirm`.
@@ -44,13 +46,16 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
    - one Marketing form with no route of its own, submitted twice with tagged links
      (`?utm_campaign=QA-SPRING&utm_content=<picture id>` and `?utm_campaign=QA-SPRING`), which files two deals into
      the default pipeline;
-   - two library pictures uploaded in Ads › Creative (one is archived later for a negative control).
+   - seven library pictures uploaded in Ads › Creative: two for the positive flow, one archived later for C4, and
+     enough that six can be featured at once for C5;
+   - one non-picture library item (e.g. saved ad copy, `kind = 'text'`) for C6.
    All of it is synthetic and stays in the canonical workspace; nothing is published, spent, or sent to a provider.
 3. **Second identities for refusal cases (ANT-21 exception record needed first).**
    - *Unauthorized actor:* a **member** (non-admin) seat in the canonical workspace — a role addition, which the
      standing rules forbid without owner authorization and an ANT-21 exception entry.
    - *Wrong workspace:* a separately authorized second tenant. `test-agency-preview` (`2de8ca80…`, agency, active)
-     exists but is **not** registered in ANT-21 for isolation tests; it may be used only if the owner registers it.
+     exists but is **not** registered in ANT-21 for isolation tests; it may be used only if the owner registers it,
+     and C2 also needs one picture in that tenant (its id is what the canonical owner asks to feature).
 
 ## Acceptance run (signed in as the canonical owner, in Solo)
 
@@ -67,6 +72,13 @@ Record for each step: the PAIGE reply text, a screenshot, and the readback query
 | A5 | "How much did I spend? What's my ROAS? Clicks?" | States those are not available — no ad account is connected; no figure, no zero |
 
 Readback: `select public.get_pipeline_lead_funnel(<pipeline id>, <since>)` as the same session must match the reply.
+Take `<since>` from the tool result's `window.since`; the 7-day window starts at 00:00 UTC six days before today
+(`windowStart`, `ads-funnel-chat.ts:62-66`), so a hand-picked date will not match.
+
+**Order of checks for B and C.** `set_ad_creative_featured` asks first (`confirm`). Before the card, only the role
+gate runs. The "already featured" check and the not-found / archived / not-a-picture / limit checks run after
+approval, inside the tool. So for B3, C2, C4, C5 and C6 the tester sees an approval card first, approves it, and the
+reply then explains why nothing changed.
 
 ### B. Featured-picture flow
 
@@ -74,7 +86,7 @@ Readback: `select public.get_pipeline_lead_funnel(<pipeline id>, <since>)` as th
 |---|---|---|
 | B1 | "Feature <picture title> in my Ads showroom" | An approval card naming the picture; nothing changed yet |
 | B2 | Approve the card | PAIGE reports it featured only after readback; Ads › Overview shows it in the first placement as "Featured" |
-| B3 | Ask again for the same picture | "already had it that way"; no write, no new receipt |
+| B3 | Ask again for the same picture → approve the card | Reply says it is already featured and nothing was changed (tool note, `ads-funnel-chat.ts:202`; the action chip reads "already had it that way", `paige-ai-chat/index.ts:443`); no write, no receipt |
 | B4 | "Take it out of the showroom" → approve | Unfeatured; Overview falls back to performance/newest |
 | B5 | Decline (or ignore) the card | No change; readback unchanged |
 
@@ -82,17 +94,19 @@ Readback after B2/B4:
 ```sql
 select id, title, kind, status, meta->>'ads_featured' featured, meta->>'ads_featured_at' featured_at
 from marketing_content where tenant_id = 'bcefc207-4ac6-42af-83b8-3abe3e897649' and kind in ('image','video');
--- receipts: one capability run per approved write on the workspace Rail
-select * from paige_workspace_events where tenant_id = 'bcefc207-4ac6-42af-83b8-3abe3e897649'
-order by created_at desc limit 10;
+-- receipts: one capability run per approved write (and one refused receipt per refusal) on the workspace Rail.
+-- This table is not readable by a signed-in session: run as service role / in the SQL editor.
+select occurred_at, capability_key, outcome from paige_workspace_events
+where tenant_id = 'bcefc207-4ac6-42af-83b8-3abe3e897649' and capability_key = 'set_ad_creative_featured'
+order by occurred_at desc limit 10;
 ```
 
 ### C. Refusals
 
 | # | Case | Pass when |
 |---|---|---|
-| C1 | Unauthorized actor (member seat, preflight 3) asks either question | Refused before any card: "Campaign results are for owners and admins…" / "Featuring pictures … is for owners and admins…" |
-| C2 | Wrong workspace: owner asks to feature a picture id from the second tenant | "That picture is not in this business's library."; nothing written in either tenant |
+| C1 | Unauthorized actor (member seat, preflight 3) asks either question | Refused by the workspace role gate before any card (`paige-ai-chat/index.ts:10899-10906`): funnel — "Looking this up needs this workspace's owner or an admin…"; feature — "This needs this workspace's owner or an admin. Nothing was changed…" (`workspace-authority.ts:224-229`) |
+| C2 | Wrong workspace: owner asks to feature a picture id from the second tenant → approve | "That picture is not in this business's library."; no change to `marketing_content` in either tenant; one refused receipt in the canonical workspace |
 | C3 | Missing approval: B5 | No write, no succeeded receipt |
 | C4 | Invalid creative: archived picture | "That picture is archived, so it cannot be featured…" |
 | C5 | Invalid creative: a seventh picture while six are featured | "You can feature up to 6; unfeature one first." plus the six currently featured |

@@ -25,3 +25,7 @@ Primary references checked: [Plaid Transactions API](https://plaid.com/docs/api/
 Current-main controlled suite: **65 tests PASS**. The mutable-selection regression failed before the scope snapshot and passes afterward. Focused static checks are recorded separately. Independent exact-head review, hosted CI, merge, deployment, source persistence, authenticated acceptance and native-provider behavior remain **NOT_DONE / UNVERIFIED** for this candidate.
 
 Internal development source only; no customer release name or announcement. No schemas, customer financial records, provider connections, shell branches or UI behavior are changed.
+
+## Current-main continuation
+
+Reconciled with released cash-scenario main `ad092c3146eccc9df2e82cad6ca9cb9579405da1`, preserving all upstream Finance and peer source. The QuickBooks/Plaid Integration Registry entries and companion rows now record the pure controlled readers and retain their existing readiness states. This slice also records the actual #2004 production closeout in the existing Master/Brain/delivery records; it adds no migration or provider handler. Current exact-head independent review and hosted release evidence remain owed.

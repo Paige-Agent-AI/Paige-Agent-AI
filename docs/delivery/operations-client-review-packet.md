@@ -87,7 +87,6 @@ Native current-shape rerun passes10 authenticated-role assertions on the disposa
 
 Source-only release boundary: no component, production route, shared shell, client portal, reviewer queue, source editing, automation, external artifact URL or mutation added. Staff inspects exact submitted title/body via existing submission visibility AND current Studio authority. Callable Spine artifact-read remains UNAVAILABLE; mount and authenticated acceptance remain PROOF OWED. Client portal owner/lease remains unresolved; that shared mount is parked while owned domain source proceeds. Existing #1832/ANT-7/ANT-86/single ANT-21 receives these safe native/helper fixtures; no credentials/customer data/provider effect/INT-346 activation.
 
-
 ## Staff review controls pre-edit routing
 
 1. Human outcome: inspect the exact submitted work, see who prepared/reviews it, approve internally or document changes, and explicitly release approved work to the linked client without claiming client acceptance.

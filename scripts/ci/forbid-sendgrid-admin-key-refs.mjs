@@ -8,7 +8,13 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const FORBIDDEN = ["SENDGRID_PLATFORM_ADMIN_API_KEY", "SENDGRID_WEBHOOK_ADMIN_API_KEY"];
-const ALLOWLIST = new Set(["supabase/functions/comms-sendgrid-webhook-admin/index.ts"]); // the scoped-key broker, added when it became the key's only reader
+// Per-(file, key): the ONLY file that may reference a SendGrid administrative
+// credential is the operator broker, and it may reference ONLY the scoped
+// webhook-admin key — the full-access key is forbidden EVERYWHERE, including
+// inside the allowlisted file (a swap to full access fails CI).
+const ALLOWLIST = new Map([
+  ["supabase/functions/comms-sendgrid-webhook-admin/index.ts", new Set(["SENDGRID_WEBHOOK_ADMIN_API_KEY"])],
+]);
 const ROOT = "supabase/functions";
 
 function* walk(dir) {
@@ -22,9 +28,11 @@ function* walk(dir) {
 const violations = [];
 for (const file of walk(ROOT)) {
   const normalized = file.split("\\").join("/");
-  if (ALLOWLIST.has(normalized)) continue;
+  const allowedKeys = ALLOWLIST.get(normalized) ?? new Set();
   const text = readFileSync(file, "utf8");
-  for (const name of FORBIDDEN) if (text.includes(name)) violations.push(`${file} (${name})`);
+  for (const name of FORBIDDEN) {
+    if (text.includes(name) && !allowedKeys.has(name)) violations.push(`${file} (${name})`);
+  }
 }
 if (violations.length) {
   console.error(`::error::${FORBIDDEN} referenced outside the operator allowlist: ${violations.join(", ")}`);

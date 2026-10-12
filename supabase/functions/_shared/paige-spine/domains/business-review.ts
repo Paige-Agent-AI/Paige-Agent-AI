@@ -57,7 +57,8 @@ export const BUSINESS_OPERATING_SNAPSHOT = {
     idempotency: "Read-only composition on the caller's own session. The active workspace is observed before and after composing; a switch voids every domain. Within an adapter reads run one at a time; adapters run concurrently on disjoint metric keys, and the chat corridor is serial across tools (the issuer revokes a caller's previous evidence reference per metric and range)." },
   outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "public.issue_analytics_evidence_bundle",
     railVisibility: "Measurement provenance only. The E2-1 chat dispatch writes no Rail row; a read is not a business action or settlement receipt." },
-  // PARTIAL until the owner-approved read-only admission class admits this tool to typed Solo turns
-  // (INT-346 keeps ordinary typed turns at zero tool exposure until then).
-  chatBinding: "PARTIAL", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+  // E2-2 (2026-10-12, ANT-23 delegation): the read-only admission class now admits this tool to
+  // conversational turns, so the chat binding is LIVE. Actions, approvals and external effects
+  // remain refused in conversational mode; this changes reads only.
+  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;

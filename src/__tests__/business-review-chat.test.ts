@@ -60,7 +60,8 @@ describe("E2-1 registration", () => {
     // Owner ruling (E2-1 order 3): full COO snapshots stay owner/admin-only — the seat declaration
     // matches the issuer's in-body owner/admin check.
     expect(entry!.action!.seatAuthority).toBe("workspace-admin");
-    expect(entry!.chatBinding).toBe("PARTIAL");
+    // E2-2: LIVE once the ANT-23 read-only admission admits the tool to conversational turns.
+    expect(entry!.chatBinding).toBe("LIVE");
   });
 
   it("binds the spine executor to the INT-340 issuer seam, not a chat-only path", () => {

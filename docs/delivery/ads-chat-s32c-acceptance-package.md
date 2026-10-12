@@ -49,7 +49,7 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 |---|---|---|
 | Canonical account confirmed | **Done (readback)** — SOLO `standalone`, `active`; only member is its owner (`owner`, `is_owner`, `active`); never signed in. Recorded in ANT-21; Auth-administrator sign-off **pending** | database read |
 | Second business | **Verified distinct** — `test-agency-preview`: `agency`, `active`, no parent, no children, its own single owner, no shared member, no data. Owner-ruled throwaway pending deletion (`route-and-url-taxonomy.md` §7.2). The agency shell has no Sales, Marketing or Studio screens, so no test record can be placed in it through the product; it serves as the database-level isolation baseline only (ledger 1). Nothing is created in it and no sign-in to it is needed | database read |
-| Runner credentials | **Outstanding** — Auth administrators install them privately as environment variables of the trusted runner (in this cloud environment: environment settings → environment variables; a new session picks them up): `LIVE_DRIVE_EMAIL` / `LIVE_DRIVE_PASSWORD` for the QA owner, later `LIVE_DRIVE_MEMBER_EMAIL` / `LIVE_DRIVE_MEMBER_PASSWORD` for the temporary member (`live-drive.mjs` takes `auth.emailEnv` / `auth.passwordEnv`). Never in code, GitHub, Linear, logs or chat. Checked 2026-10-12 14:38 UTC: not set; the live app answers HTTP 200 from the runner sandbox and Chromium is present | runner check |
+| Runner credentials | **Outstanding** — Auth administrators install them privately as environment variables of the trusted runner (in this cloud environment: environment settings → environment variables; a new session picks them up): `LIVE_DRIVE_EMAIL` / `LIVE_DRIVE_PASSWORD` for the QA owner. The temporary member's C1 run uses the **same two default names in its own separate session** (or a handed-over signed-in session), because the helper's error redaction only scrubs those two names. Never in code, GitHub, Linear, logs or chat. Checked 2026-10-12 14:38 UTC: not set; the live app answers HTTP 200 from the runner sandbox and Chromium is present | runner check |
 | Synthetic fixtures | **Not created** — every step needs the canonical owner signed in (runner) | — |
 | Temporary member | **Not created** — needs the runner and an inbox the Auth administrators control | — |
 | Signed-in acceptance | **Not started** | — |
@@ -92,7 +92,8 @@ Prod catalogue readback (#2026): migration `20271021210000` applied; `list_tool_
 - Canonical owner: Settings › Team → **Invite someone** → an email address the Auth administrators control →
   Permission **Member** (the default; never Admin) → **Review invitation** → **Confirm and send invitation**.
 - Auth administrator: accept at `/join/<token>` as that email (this creates the one temporary sign-in), then install
-  its credential in the runner only.
+  its credential in the runner only, under the default `LIVE_DRIVE_EMAIL` / `LIVE_DRIVE_PASSWORD` names in a separate session
+  (never alongside the owner's), or hand over a signed-in session instead.
 - Run C1 as that member. Record the member's user id and the invite id in ANT-21 with timestamps.
 
 ### Owner decisions (resolved 2026-10-12)

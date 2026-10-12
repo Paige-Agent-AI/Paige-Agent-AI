@@ -6,6 +6,32 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### A green proof over a ledger the writer cannot produce (2026-10-12, Experience 04)
+
+**Symptom → root cause → rule.** The E4-S1 client-status proof passed 34/34 and its parity check agreed
+with hand-worked numbers, yet on real data the composer would have reported a whole $3,000 contract
+balance as past due when $200 was. The fixture inserted three instalment-sized invoices naming the
+$3,500 terms, with writer triggers bypassed. The Sales writer refuses that shape
+(`_sales_validate_invoice_terms_reference`): a bound invoice carries the whole agreed amount. The
+proof tested a world that cannot exist. **Rule:** when a fixture bypasses writer guards
+(`session_replication_role=replica`), assert inside the proof that each guarded row passes the
+writer's own validator, and that the shape you are NOT using is refused. Bypass the side effects,
+never the shape.
+
+### A tool's own policy entry described the defect, and nothing read it as one (2026-10-12, #2072)
+
+**Symptom → root cause → rule.** The legacy MCP `send_invoice` read an invoice by id alone with the
+service-role client, with no workspace check. It wrote caller text unescaped into a customer email,
+skipped the provider floor and the consent gate, and marked the row `sent` outside the invoice
+lifecycle. Its capability-policy entry had recorded the read-and-send evidence line by line for
+months, and its own test asserted the legacy send *succeeds*.
+**What missed it:** every guard here checks a classification (governed door, destructive confirm,
+receipt coverage). None checks that a service-role read is scoped to the caller's tenant, and the
+test pinned the behaviour instead of questioning it.
+**Rule:** when you touch or classify a service-role handler, read its first query for the tenant
+predicate before trusting any lint that passed over it. A test that asserts a legacy path
+"retains success" is a record of behaviour, not evidence that the behaviour is safe.
+
 ### A pure helper tested on plain objects, called on a frozen one (2026-10-05, C4b rebase)
 
 **Symptom → root cause → rule.** Every crm-command request naming a contact by `client_ref` threw

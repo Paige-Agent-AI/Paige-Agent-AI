@@ -120,6 +120,10 @@ on:
       - "scripts/ci/reproduce-production-grants.*"
       - "scripts/ci/grant-ordering-proof.sh"
       - "scripts/proof/mcp-gateway-tools-action.mjs"
+      # Experience 04 E4-S1 — where this client stands (source read + composer parity).
+      - "supabase/tests/exp04_client_engagement_status.sql"
+      - "scripts/proof/exp04-client-status-parity.mjs"
+      - "supabase/functions/_shared/client-engagement/**"
 
 permissions:
   contents: read
@@ -337,6 +341,20 @@ jobs:
       - name: Operations native concurrent engagement handoff
         if: ${{ !cancelled() }}
         run: node scripts/proof/operations-handoff-concurrency.mjs
+
+      # Experience 04 E4-S1: one client's terms, signing, invoice balances by evidence class,
+      # open payment requests and delivery work — owner/admin only, foreign scope refused — then the
+      # shared composer over that exact read, asserted against the hand-worked fixture ledger.
+      - name: Experience 04 client status read, scope refusals and ledger parity (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp04_client_engagement_status.sql
+      - uses: actions/setup-node@v4
+        if: ${{ !cancelled() }}
+        with:
+          node-version: 24
+      - name: Experience 04 client status composer parity over the real read
+        if: ${{ !cancelled() }}
+        run: node --experimental-strip-types scripts/proof/exp04-client-status-parity.mjs postgresql://postgres:postgres@127.0.0.1:54322/postgres
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.

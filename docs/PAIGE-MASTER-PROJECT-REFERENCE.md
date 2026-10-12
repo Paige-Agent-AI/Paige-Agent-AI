@@ -4176,6 +4176,26 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
+### Experience 04 — Get Paid & Deliver My Services: first read built, nothing activated (2026-10-12)
+
+Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-get-paid-deliver-journey.md) (ANT-51 / ANT-147, PR #2074, **not merged**).
+
+**Built on the branch:**
+- E4-S1 `read_client_engagement_status`: one client's terms, signing, invoice balances by evidence class, open payment requests and delivery work. Owner/admin only.
+- A shared composer that keeps provider-verified money, owner-recorded money and test money apart.
+- A full-schema rollback proof with 34 checks.
+- Database-to-composer parity.
+- Containment of the legacy `paige-mcp` `send_invoice` (#2072).
+
+**Not yet on the platform (each line is something that does NOT happen today):**
+- Not in chat: PAIGE cannot answer "where does this client stand" yet. It needs Spine registration, and typed tools are off under INT-346.
+- Not mounted: the Engagement panel waits on owner UI review of the prototype.
+- Not automatic: signing does not make terms effective. Contract C-1 is gated on #1843 plus a new provenance record.
+- Not automatic: onboarding does not start when the deposit lands. Contract C-2 is documented only.
+- Not sent: no reminders. Contract C-3 is ask-first, needs a collection-outcome record and due/overdue events, and has no scheduler.
+- Not authorized: AI collection calls. Legal review and owner authorization are required.
+- Production has zero commercial terms, signings, plans or provider-settled payments, so none of this has run for a real business. Authenticated acceptance waits on PC-1 (#1832).
+
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)
 
 Grounded at `8b7f975` against read-only prod aggregates, with each LIVE claim adversarially verified. Full map and contract: [`brain/paige-operating-fabric-contract.md`](brain/paige-operating-fabric-contract.md). The gaps that block an owner asking *"give me a read on the last week"* in Chat or Live:

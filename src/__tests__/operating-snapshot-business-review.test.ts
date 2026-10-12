@@ -480,6 +480,8 @@ describe('composeBusinessReview', () => {
     expect(r.snapshot.period.key).toBe('last_7_days');
     expect(r.snapshot.domains.payments.status).toBe('available');
     expect(r.snapshot.domains.sales_pipeline.status).toBe('available');
+    // This fixture's issuer answers every key as a Sales figure, so the F2b clients adapter refuses it
+    // by owner (metric_owner_unexpected) — still an honest gap. F2b's own suite covers clients read.
     expect(r.projection).toMatch(/\[Clients\] NOT AVAILABLE/);
     expect(r.projection).toMatch(/\[Work and tasks\] NOT AVAILABLE/);
     expect(r.projection).toContain('USD 1,250.00');
@@ -513,7 +515,8 @@ describe('composeBusinessReview', () => {
     const f = fakeCaller({ scope: (n) => (n <= 3 ? TENANT : 'switched-workspace'), script: usdEverywhere });
     const r = await review(f);
     if (!('snapshot' in r)) throw new Error(r.reason);
-    expect(r.snapshot.budget.adapters_run).toBe(2);
+    // F2b: four adapters now run (payments, sales_pipeline, operations, clients).
+    expect(r.snapshot.budget.adapters_run).toBe(4);
     expect(f.issued().length).toBeGreaterThan(0);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d].status).toBe('degraded');
     expect(r.snapshot.degradation.every((e) => e.reason === 'scope_changed')).toBe(true);
@@ -521,13 +524,15 @@ describe('composeBusinessReview', () => {
   });
 
   it('a switch after every adapter settled still voids every domain', async () => {
-    // 1 pre-check + 2 per metric read × 8 reads = 17 answers that match; the 18th is the explicit
-    // post-compose read, and only it reports a different workspace.
-    const f = fakeCaller({ scope: (n) => (n <= 17 ? TENANT : 'switched-workspace'), script: usdEverywhere });
+    // 14 reads since F2b (8 F2a + 3 operations + 3 clients). Each read checks the workspace before and
+    // after, except the Systems Check list: this fixture answers it in a Sales shape the contract
+    // rejects, so that read stops after its first check. 1 pre-check + 27 = 28 answers that match; the
+    // 29th is the explicit post-compose read, and only it reports a different workspace.
+    const f = fakeCaller({ scope: (n) => (n <= 28 ? TENANT : 'switched-workspace'), script: usdEverywhere });
     const r = await review(f);
     if (!('snapshot' in r)) throw new Error(r.reason);
-    expect(f.issued()).toHaveLength(8);
-    expect(f.calls.filter((c) => c.name === 'current_user_tenant_id')).toHaveLength(18);
+    expect(f.issued()).toHaveLength(14);
+    expect(f.calls.filter((c) => c.name === 'current_user_tenant_id')).toHaveLength(29);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d]).toEqual({ status: 'degraded', reason: 'scope_changed', data: null });
     expect(r.projection).not.toContain('USD 999.00');
   });
@@ -541,11 +546,12 @@ describe('composeBusinessReview', () => {
   }, 2000);
 
   it('a workspace lookup that never answers after composing voids every domain', async () => {
-    // 1 pre-check + 16 per-read lookups answer; the 18th, the explicit post-compose read, hangs.
-    const f = fakeCaller({ scopeHangs: (n) => n === 18, script: usdEverywhere });
+    // 1 pre-check + 27 per-read lookups answer (14 reads since F2b; see the test above); the 29th, the
+    // explicit post-compose read, hangs.
+    const f = fakeCaller({ scopeHangs: (n) => n === 29, script: usdEverywhere });
     const r = await composeBusinessReview(f.caller, WHO, { timezone: 'UTC' }, { now: NOW, timeoutMs: 500 });
     if (!('snapshot' in r)) throw new Error(r.reason);
-    expect(f.issued()).toHaveLength(8);
+    expect(f.issued()).toHaveLength(14);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d]).toEqual({ status: 'degraded', reason: 'scope_changed', data: null });
     expect(r.projection).not.toContain('USD 999.00');
   }, 3000);

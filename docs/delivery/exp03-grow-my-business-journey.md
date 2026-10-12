@@ -118,8 +118,10 @@ never guessed; a paused/archived workspace starts no process; nothing sends, pub
   to stay true, and that change is disclosed in the evidence record.
 - **S1d-1 as built (2026-10-12):** the third lane of "What this campaign uses" in the dossier
   (`src/solo/campaign-composition.tsx`, `BroughtIn`): leads credited to this campaign; opportunities with
-  "see them in Sales" (hidden at zero); "Revenue lives in Sales"; a foot line saying how a lead is credited
-  and disclosing leads on the campaign's forms that fit another campaign. Counts are the server's. A failed
+  "open Sales" (hidden at zero; the approved "see them in Sales" overpromised, as Sales is not filtered to a
+  campaign); "Revenue lives in Sales"; a foot line saying how a lead is credited, true for archived campaigns
+  and forms that aren't live, and disclosing leads on the campaign's forms that fit another campaign. Launch
+  readiness' attribution row now agrees with it. Counts are the server's. A failed
   read offers retry and draws no zero. The Recorded outcome stage reads Partly available. Evidence:
   `docs/evidence/ui-delivery/exp03-s1d1-brought-in.md` (594/594 rendered checks).
 - **Not covered by any recorded approval:** the per-lead list below (names, how each was credited, stage per

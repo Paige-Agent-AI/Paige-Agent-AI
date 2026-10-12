@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
     const attempted = res.outcome === "executed" || res.outcome === "failed";
     if (!attempted) {
       await releaseClaim();
-      return json(200, { ok: false, executed: false, act_outcome: res.outcome, reason: res.reason, error: approvalRefusalMessage(res.reason), approval_id: approvalId });
+      return json(200, { ok: false, executed: false, act_outcome: res.outcome, reason: res.reason, error: approvalRefusalMessage(res.reason, res.outcome), approval_id: approvalId });
     }
     // A real attempt — the ledger records the outcome. Stamp the approval with it (metadata.act_outcome also
     // satisfies the DB direct-approve guard that blocks a bypass approve on an orchestration row, slice 2).

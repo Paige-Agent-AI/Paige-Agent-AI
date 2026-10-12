@@ -213,7 +213,7 @@ const ambiguousFromThrow = (e: unknown, reason: string): DispatchResult =>
  *  THE PROCESS IS RE-READ TOO (INT-179). A human's yes approves one held act; it does not override what the
  *  process and the platform say NOW. Before this check, a held act still executed on approval after its owner
  *  PAUSED the process, turned it OFF, or the platform's trust ceiling dropped to 0 (Observe) — all three
- *  proven against the real database. `resolve_automation_autonomy` (the one resolver the engine uses) is
+ *  proven against a rebuilt database (Layer-C proof, case E). `resolve_automation_autonomy` (the one resolver the engine uses) is
  *  re-read at approval time: a process that is not `live`, or whose effective lane is now `off`, STOPS here.
  *  Nothing is redeemed and the approval stays pending, so it runs once the process is switched back on.
  *  `confirm` and `auto` both proceed (the human's yes satisfies confirm; auto never needed one). */
@@ -232,8 +232,11 @@ async function governedGate(
   if (pst.found !== true) return { ok: false, reason: "process_not_found" };
   if (pst.state !== "live") return { ok: false, reason: "process_not_live" };
   if (pst.effective !== "auto" && pst.effective !== "confirm") {
-    // Name the bound that holds it, so the owner is told the fix that actually applies.
-    return { ok: false, reason: pst.capped_by === "ceiling" ? "platform_observe_only" : "process_lane_off" };
+    // Name the bound that holds it: the platform ceiling, one step's floor (a tool switched off), or the
+    // process's own grant — so the owner is told the cause that actually applies.
+    const reason = pst.capped_by === "ceiling" ? "platform_observe_only"
+      : pst.capped_by === "floor" ? "process_step_off" : "process_lane_off";
+    return { ok: false, reason };
   }
   const gw = await p.resolveAvail(db, { actorUserId: p.approverUserId, tenantId: p.tenantId, actionKind: p.actionKind });
   if (!gw.ok) return { ok: false, reason: "availability_infra_error" };
@@ -406,24 +409,31 @@ export async function executeApprovedLayerCAct(input: ApproveExecInput): Promise
 }
 
 /** What the owner is told when an approval does not run the held act. The raw `reason` stays in the response
- *  for the record; this is the sentence the approval surfaces show (they display `error`). Unknown reasons fall
- *  back to a plain, honest line rather than leaking a code. */
-export function approvalRefusalMessage(reason: string | undefined): string {
+ *  for the record; this is the sentence the approval surfaces show (they display `error`). It says only what is
+ *  known: a dispatch that may have landed is never reported as "nothing changed", and "it stays here" is said
+ *  only while the row is still `approval_pending` (a redeemed resume can be settled by the reconciler). */
+export function approvalRefusalMessage(reason: string | undefined, outcome?: string): string {
+  // The dispatch ran, or may have, and its result is not confirmed. The reconciler sweeps these.
+  if (outcome === "ambiguous" || reason === "ledger_write_failed" || reason === "reconcile_unconfirmed") {
+    return "PAIGE couldn't confirm whether this already ran. She is checking and won't run it twice.";
+  }
+  const waits = outcome === "approval_pending";
+  const held = (cause: string, until: string) => waits ? `${cause} It stays here for you to approve ${until}.` : cause;
   switch (reason) {
     case "process_not_live":
-      return "This automation is paused, so PAIGE didn't run it. It stays here for you to approve once the automation is running again.";
+      return held("This automation isn't running right now, so PAIGE didn't run this step.", "once it's running again");
     case "process_lane_off":
-      return "This automation is turned off, so PAIGE didn't run it. It stays here for you to approve once the automation is on again.";
+      return held("This automation is switched off, so PAIGE didn't run this step.", "once it's on again");
+    case "process_step_off":
+      return held("One of this automation's steps is switched off, so PAIGE didn't run it.", "once it's on again");
     case "platform_observe_only":
-      return "PAIGE is set to observe only right now, so nothing runs. This stays here for you to approve once that setting is raised.";
+      return held("PAIGE is held to observe only right now, so held steps don't run.", "once that lifts");
     case "process_not_found":
       return "This automation no longer exists, so there is nothing to run.";
     case "governed_capability_not_for_tier":
-      return "Only the workspace owner or an admin can approve this.";
-    case "reconcile_unconfirmed":
-      return "PAIGE couldn't confirm whether this already ran. She is checking and won't run it twice.";
+      return "You can't approve this step from this account.";
     default:
-      return "PAIGE couldn't complete that action. Nothing was changed.";
+      return "PAIGE couldn't complete that action.";
   }
 }
 

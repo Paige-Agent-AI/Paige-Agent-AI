@@ -406,8 +406,9 @@ async function main() {
       assert.equal(refused.status, 200, JSON.stringify(refused.json));
       assert.equal(refused.json.executed, false, JSON.stringify(refused.json));
       assert.equal(refused.json.reason, rv.reason, JSON.stringify(refused.json));
-      // the approval surfaces show `error`: a plain sentence naming the fix, never a raw code
+      // the approval surfaces show `error`: a plain sentence, never a raw code, saying the approval waits
       assert.ok(typeof refused.json.error === "string" && !/_/.test(refused.json.error), JSON.stringify(refused.json));
+      assert.match(refused.json.error, /stays here for you to approve/, JSON.stringify(refused.json));
       assert.equal(ledger(w.eventId).outcome, "approval_pending");
       assert.equal(count(`select count(*) from public.paige_journey_stage_transitions where contact_id = ${q(w.contactId)};`), 0);
       assert.equal(one(`select status || ':' || (claimed_at is null) from public.paige_pending_approvals where id = ${q(aid)};`), "pending:true");

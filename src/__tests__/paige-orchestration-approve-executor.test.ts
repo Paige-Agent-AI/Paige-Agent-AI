@@ -21,7 +21,8 @@ import {
   executeApprovedLayerCAct,
   type ApproveExecutorDb,
   type ApproveExecInput,
- approvalRefusalMessage } from "../../supabase/functions/_shared/paige-orchestration/approve-executor.ts";
+  approvalRefusalMessage,
+} from "../../supabase/functions/_shared/paige-orchestration/approve-executor.ts";
 
 // ── A chainable, thenable mock of the supabase-js surface the executor + native adapter use. ────────────
 type Rows = Record<string, unknown[]>;
@@ -115,6 +116,8 @@ describe("approve-executor — the process is re-read at approval (§68, INT-179
     refusedWith(posture({ found: true, state: "paused", effective: "confirm" }), "process_not_live"));
   it("a process turned off does not run on approval", () =>
     refusedWith(posture({ found: true, state: "live", effective: "off" }), "process_lane_off"));
+  it("a step switched off (an act floor) does not run on approval, and is named as the step", () =>
+    refusedWith(posture({ found: true, state: "live", effective: "off", capped_by: "floor" }), "process_step_off"));
   it("a trust ceiling of 0 (Observe) does not run on approval", () =>
     refusedWith(posture({ found: true, state: "live", effective: "off", capped_by: "ceiling", rung: 0 }), "platform_observe_only"));
   it("a deleted process does not run on approval", () =>
@@ -126,13 +129,27 @@ describe("approve-executor — the process is re-read at approval (§68, INT-179
     const res = await run(cfg);
     expect(res.outcome).toBe("executed");
   });
-  it("tells the owner what happened and that the approval waits, never a raw code", () => {
-    expect(approvalRefusalMessage("process_not_live")).toMatch(/paused/);
-    expect(approvalRefusalMessage("process_lane_off")).toMatch(/turned off/);
-    expect(approvalRefusalMessage("platform_observe_only")).toMatch(/observe only/);
-    expect(approvalRefusalMessage("governed_capability_not_for_tier")).toMatch(/owner or an admin/);
-    for (const r of ["process_not_live", "process_lane_off", "platform_observe_only", "something_new", undefined]) {
-      expect(approvalRefusalMessage(r)).not.toMatch(/_/);   // no snake_case code reaches the owner
+  it("tells the owner what happened, and says it waits only while it really does", () => {
+    expect(approvalRefusalMessage("process_not_live", "approval_pending")).toMatch(/isn't running right now.*stays here/);
+    expect(approvalRefusalMessage("process_lane_off", "approval_pending")).toMatch(/switched off.*stays here/);
+    expect(approvalRefusalMessage("process_step_off", "approval_pending")).toMatch(/steps is switched off/);
+    expect(approvalRefusalMessage("platform_observe_only", "approval_pending")).toMatch(/observe only.*once that lifts/);
+    expect(approvalRefusalMessage("governed_capability_not_for_tier", "approval_pending")).toBe("You can't approve this step from this account.");
+    // A redeemed resume can be settled by the reconciler, so it never promises the row will wait.
+    expect(approvalRefusalMessage("process_not_live", "accepted_for_execution")).not.toMatch(/stays here/);
+    for (const r of ["process_not_live", "process_lane_off", "process_step_off", "platform_observe_only", "something_new", undefined]) {
+      expect(approvalRefusalMessage(r, "approval_pending")).not.toMatch(/_/);   // no snake_case code reaches the owner
+    }
+  });
+  it("never says nothing changed when the dispatch may have landed", () => {
+    const unconfirmed = /couldn't confirm whether this already ran.*won't run it twice/;
+    expect(approvalRefusalMessage(undefined, "ambiguous")).toMatch(unconfirmed);                 // fresh dispatch threw
+    expect(approvalRefusalMessage("ledger_write_failed", "accepted_for_execution")).toMatch(unconfirmed);
+    expect(approvalRefusalMessage("reconcile_unconfirmed", "ambiguous")).toMatch(unconfirmed);
+    for (const r of ["ledger_write_failed", "something_new", undefined]) {
+      for (const o of ["ambiguous", "accepted_for_execution", "unknown", "absent", undefined]) {
+        expect(approvalRefusalMessage(r, o)).not.toMatch(/nothing (was )?changed/i);
+      }
     }
   });
   it("re-reads the posture of the held act's OWN process", async () => {
@@ -188,6 +205,8 @@ describe("approve-executor — happy path: a held native act is redeemed, dispat
     expect(finalWrite.args._capability_key).toBe("crm.advance_journey_stage");
     // one receipt per act: the same run id the engine's auto path derives for this (event, act)
     expect(receipt!.args._run_id).toBe(await stableRunId(actReceiptRunSeed("e1", "act1")));
+    // The seed itself is pinned: changing it would orphan receipt dedup against run ids already filed.
+    expect(actReceiptRunSeed("e1", "act1")).toEqual(["paige-cap", "e1", "act1"]);
   });
 
   it("dispatches the IMMUTABLE ledger snapshot args, NOT a mutated live act config (§P1)", async () => {

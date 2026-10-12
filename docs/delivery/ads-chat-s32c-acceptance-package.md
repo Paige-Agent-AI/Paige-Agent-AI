@@ -216,5 +216,5 @@ select id, status from growth_forms where tenant_id = :'qa_workspace';  -- draft
 -- retained synthetic fixtures, for the ANT-21 register:
 select id, kind, channel, title, status, created_at from marketing_content where tenant_id = :'qa_workspace' order by created_at;
 select id, name, is_default, lifecycle_status, created_at from pipelines where tenant_id = :'qa_workspace';
-select id, form_id, deal_id, utm_json, created_at from growth_form_submissions where tenant_id = :'qa_workspace';
+select id, form_id, contact_id, deal_id, utm_json, created_at from growth_form_submissions where tenant_id = :'qa_workspace';
 ```

@@ -763,6 +763,21 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-13 — Experience 04 E4-S1b: payment due dates in the business owner's time zone; recipient-verified contact window (read-only, unmounted) — PR [#2085](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2085) → main `4fa99047a1eaab4763d01edd2bc0c5736b11d351` (squash merge, 00:57 UTC); reviewed head `2a36bf201f9af11c50715e0f42ab36726d241ba7`, merged head `6340a256` (merge from main, docs-only conflict). Two independent reviews closed; Codex review no findings; 13/13 CI.** Internal-only; production channel (pre-launch §4); no customer announcement/version. **What shipped:**
+- `public.tenant_business_time_zones`: one row per workspace; RLS on; no grants to `anon`, `authenticated` or `service_role`.
+- `public.set_business_time_zone(_expected_tenant_id, _time_zone)`: active owner of the caller's active workspace only; UTC or IANA Area/Location, checked against `pg_timezone_names`; writes a capability receipt.
+- `read_client_engagement_status` adds `business_time_zone {state, zone}` and an owner-local `as_of_date`. Without a configured zone every due/upcoming/overdue judgement is withheld.
+- `_shared/sales-collections/contact-window.ts`: the recipient-local rule for automated collections contact. Nothing calls it yet.
+
+**Production readback (independent of the pipeline):**
+- deploy-migrations run 494 success; `schema_migrations` row `20271026200000 exp04_client_status_business_time_zone` present and latest; `db-live` = `4fa99047`.
+- Table: RLS true, 0 policies, no grants to `anon`/`authenticated`/`service_role`/PUBLIC, 0 rows.
+- Setter: body md5 `a0dc183a…` equals the repo's; SECURITY DEFINER; `search_path=pg_catalog, public`; EXECUTE `authenticated` only (not `anon`, `service_role` or PUBLIC).
+- Read: body md5 changed from `db7e57e6…` (E4-S1) to `9245d6c3…`, which equals the repo's; DEFINER; same search_path; EXECUTE `authenticated` only.
+- deploy-edge-functions run 578 success; `edge-live` = `4fa99047`; `edge-live..main` drift on `supabase/functions` is zero.
+
+**Not proven / not reachable:** no workspace has a business zone, and nothing a person can reach sets one (no UI, no Chat binding), so this read withholds every invoice and payment-schedule due/overdue judgement in production. Not withheld: delivery-work `overdue`, which compares two instants (`due_at < read_at`) and needs no zone; and the live Collections workspace and Sales overdue metric, which still use the UTC date (#2086). No recipient has a verified jurisdiction, so all automated contact would be blocked. Authenticated drive waits on PC-1 (#1832).
+
 **2026-10-12 — Experience 02 E2-3a: the COO briefing narrative contract — PR [#2092](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2092) → main `6b04ab3a99fb03b3ac6c4ce0bbb3d704562e1c4a` (squash merge); reviewed head `2ecb8778a` (independent non-author review verdict SHIP, no P1/P2; three P3 wording notes accepted-as-is with reasoning — record on the PR).** Internal capability release; development channel; no migration; no customer announcement/version. **What shipped:** the narration layer for the first grounded conversational COO briefing — model-facing only, no corridor/data-path/admission change (all 29 incumbent fingerprints byte-identical to main). The `get_business_snapshot` tool description now promises the briefing structure (overall picture for the period → what needs attention, the review's act-level risks before watch-level with exact figures → one to three next steps the cited figures support → what could not be measured and why), and the result guidance carries the full narration order plus the honesty rules (freshness exactly as the review's window notes; priorities follow the review's assigned risk levels, never the model's ranking, money-at-risk/failed-runs outrank plain counts; setup-dependent steps named as needing setup; never estimate, never sum currencies; real zero ≠ not-available). Every rule cross-checked by the review against the real projection code. **Proof boundary:** exact-head CI all SUCCESS at `2ecb8778a` after one infra re-run (both first-run failures died at the runner's Initialize-containers step — comms-provider-boundary and postgres-authority, no code failure); 2 new test blocks (14 pins) bite-proven; deno/spine/kit/chat-tool lints + eslint PASS; prior E2-1/E2-2 suites green. Post-merge `deploy-edge-functions` run [38331014666](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38331014666) SUCCESS — `✓ deployed paige-ai-chat` 01:13:04Z from the merge commit. **Honest boundary:** authenticated customer acceptance remains blocked by #2089 (QA-account login; handed to the Codex QA coordinator and Auth administrators per the owner's security correction — no further direct Auth-record changes from this lane, no credentials requested through chat). The mission question is answerable end-to-end in code and deployed; no owner has yet asked it on a live signed-in session. Evidence: PR #2092 thread, ANT-23/ANT-138/ANT-147, issue #2089. Customer release eligible: **No.**
 
 **2026-10-12 — Experience 04 E4-S1: "where this client stands" read (read-only, unmounted) + #2072 legacy invoice-send containment — PR [#2074](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2074) → main `c0a20243249739a00b2fa709729b323156cb125b` (squash merge, 23:15 UTC); reviewed head `28084bcb59a511c3b3da655bd902d40f74681f5a` (independent adversarial verifier + compliance officer; findings fixed with tests that fail without them).** Internal-only; production channel (pre-launch §4); no customer announcement/version. **What shipped:**
@@ -4195,9 +4210,9 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
-### Experience 04 — Get Paid & Deliver My Services: first read built, nothing activated (2026-10-12)
+### Experience 04 — Get Paid & Deliver My Services: first read built, nothing activated (2026-10-12, updated 2026-10-13)
 
-Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-get-paid-deliver-journey.md) (ANT-51 / ANT-147). E4-S1 merged in PR #2074 (`c0a20243`, see §4.0). E4-S1b (owner and recipient time zones) is on branch `claude/clever-lovelace-r111ru`.
+Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-get-paid-deliver-journey.md) (ANT-51 / ANT-147). E4-S1 merged in PR #2074 (`c0a20243`, see §4.0). E4-S1b (owner and recipient time zones) merged in PR #2085 (`4fa99047`, see §4.0).
 
 **Shipped in E4-S1 (read-only, nothing mounted):**
 - E4-S1 `read_client_engagement_status`: one client's terms, signing, invoice balances by evidence class, open payment requests and delivery work. Owner/admin only.

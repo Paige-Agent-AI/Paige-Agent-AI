@@ -248,6 +248,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_pipeline_routing.sql
 
+      - name: Security #2087/#2090 — consent cannot be forged from a browser; stored form and booking links are web addresses (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/security_consent_and_form_links.sql
+
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
       # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.

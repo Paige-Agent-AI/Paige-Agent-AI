@@ -233,3 +233,38 @@ describe("embedded form (landing pages and funnel steps)", () => {
     expect(text()).toBe("");
   });
 });
+
+describe("stored success links (#2090)", () => {
+  const withSuccess = (success: Record<string, unknown>) =>
+    state.rpc.mockResolvedValue({ data: [{ ...FORM, success_action_json: { message: "Thanks, Dana will reply today.", ...success } }], error: null });
+
+  it("never follows or renders a script redirect or download stored on the form", async () => {
+    const assign = vi.fn();
+    const loc = window.location;
+    Object.defineProperty(window, "location", { configurable: true, value: { ...loc, set href(v: string) { assign(v); }, get href() { return loc.href; } } });
+    try {
+      withSuccess({ redirect_url: "javascript:alert(document.cookie)", download_url: "data:text/html,<script>alert(1)</script>" });
+      state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+      await render();
+      await fillAndSubmit();
+      expect(assign).not.toHaveBeenCalled();
+      expect(text()).toContain("Thanks, Dana will reply today.");
+      const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href") ?? "");
+      expect(hrefs.some((h) => /^(javascript|data):/i.test(h.trim()))).toBe(false);
+      expect(text()).not.toContain("Continue");
+      expect(text()).not.toContain("Download");
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: loc });
+    }
+  });
+
+  it("still shows a real https download and continue link", async () => {
+    withSuccess({ redirect_url: "https://example.com/next", download_url: "https://cdn.example.com/guide.pdf" });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render();
+    await fillAndSubmit();
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+    expect(hrefs).toContain("https://example.com/next");
+    expect(hrefs).toContain("https://cdn.example.com/guide.pdf");
+  });
+});

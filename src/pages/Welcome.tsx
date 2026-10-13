@@ -82,6 +82,7 @@ export default function Welcome() {
       if (timer) clearTimeout(timer);
       setHandoff(null);
       setStatus(null);
+      setWorkspaceError(null);
       setView("needs_identity");
     });
 
@@ -197,7 +198,7 @@ export default function Welcome() {
     canceled_paid: { title: "Your paid Solo subscription has ended", body: "The verified paid service period is over. Billing history and support remain available." },
   };
   const copy = workspaceError && view === "failed" ? { title: "We could not open your workspace", body: workspaceError } : defaults[view];
-  const message = workspaceError || (view === "pending" && status?.state === "verified"
+  const message = (view === "failed" ? workspaceError : null) || (view === "pending" && status?.state === "verified"
     ? "Your enrollment is verified. Confirming the selected workspace before opening it."
     : status?.message || copy.body);
 

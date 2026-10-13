@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
 import Welcome from "@/pages/Welcome";
+import { simulateAuthChange } from "./welcome.fixture";
 import "@/index.css";
 
 const params = new URLSearchParams(location.search);
@@ -11,6 +12,7 @@ createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme={params.get("theme") === "dark" ? "dark" : "light"} enableSystem={false}>
     <RequestedTheme />
     <div className="fixed left-2 top-2 z-50 text-xs text-muted-foreground">Synthetic Welcome render — no Auth, database or provider requests</div>
+    {params.get("scenario") === "settled-error" ? <div className="fixed bottom-2 left-2 z-50 flex gap-4 text-xs"><button onClick={() => simulateAuthChange(null)}>Simulate sign-out</button><button onClick={() => simulateAuthChange("test-user-other")}>Simulate different actor</button></div> : null}
     <MemoryRouter initialEntries={["/welcome?checkout=success"]}>
       <Routes><Route path="/welcome" element={<Welcome />} /><Route path="*" element={<main className="grid min-h-screen place-items-center"><div><h1>Handoff reached the synthetic destination</h1><p>Actual customer workspace and authentication are unverified.</p></div></main>} /></Routes>
     </MemoryRouter>

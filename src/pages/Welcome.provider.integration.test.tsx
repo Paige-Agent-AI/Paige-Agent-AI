@@ -194,6 +194,24 @@ describe("Welcome with the mounted canonical tenant provider", () => {
     expect(host.querySelector("[data-solo-mounted]")).not.toBeNull();
   });
 
+  it.each([null, "test-user-other"])("clears a settled workspace failure when Auth changes to %s", async (userId) => {
+    await mount();
+    fixture.profileFailure = true;
+    await fulfill();
+    expectBlocked();
+    expect(host.textContent).toContain("Your enrollment is verified");
+    await act(async () => {
+      fixture.userId = userId;
+      fixture.listeners.forEach((listener) => listener(userId ? "SIGNED_IN" : "SIGNED_OUT", userId ? { user: { id: userId } } : null));
+    });
+    expect(host.querySelector("[data-solo-mounted]")).toBeNull();
+    expect(host.textContent).toContain("Your session ended before server verification completed");
+    expect(host.textContent).toContain("Sign in and resume");
+    expect(host.textContent).not.toContain("Your enrollment is verified");
+    expect(host.textContent).not.toContain("Retry verification");
+    expect(host.textContent).not.toContain("test-enrollment-reference");
+  });
+
   it.each(["tenant", "role"] as const)("rejects a %s refresh failure even when a previous matching provider was accepted", async (failure) => {
     fixture.provisioned = true;
     await mount();

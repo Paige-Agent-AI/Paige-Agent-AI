@@ -117,6 +117,21 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: parsed.error }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Per-user rate limit (the review's P2, the chat seam's own pattern): each call costs
+    // ~12-20 issuer RPCs, so the same 20/min/user bound the chat path enforces applies here.
+    const { data: rateLimitCheck } = await supabaseClient.rpc("check_rate_limit", {
+      _user_id: user.id,
+      _function_name: "paige-business-review",
+      _max_requests: 20,
+      _window_minutes: 1,
+    });
+    if (rateLimitCheck === false) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" } },
+      );
+    }
+
     // The workspace is read on the caller's own session — server-resolved, never a body arg.
     const scope = await supabaseClient.rpc("current_user_tenant_id");
     const tenantId = !scope.error && typeof scope.data === "string" && scope.data !== "" ? scope.data : null;

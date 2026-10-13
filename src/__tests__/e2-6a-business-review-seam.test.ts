@@ -77,6 +77,13 @@ describe("E2-6a — truthful responses", () => {
     expect(SOURCE).toMatch(/"The business review could not be read right now\."/);
   });
 
+  it("enforces the chat seam's own per-user rate limit before any read (review P2)", () => {
+    expect(SOURCE).toMatch(/rpc\("check_rate_limit", \{\s*\n\s*_user_id: user\.id,/);
+    expect(SOURCE).toMatch(/_function_name: "paige-business-review"/);
+    expect(SOURCE).toMatch(/_max_requests: 20/);
+    expect(SOURCE).toMatch(/status: 429/);
+  });
+
   it("verify_jwt is ON in config (caller JWT required at the gateway)", () => {
     const config = fs.readFileSync(path.resolve(__dirname, "../../supabase/config.toml"), "utf8");
     expect(config).toMatch(/\[functions\.paige-business-review\]\s*\n\s*verify_jwt = true/);

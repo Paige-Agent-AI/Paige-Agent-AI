@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenantContext, type TenantSummary } from "@/hooks/useTenantContext";
+import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 30000;
@@ -11,11 +13,17 @@ const POLL_TIMEOUT_MS = 30000;
 type EnrollmentState = "needs_identity" | "needs_intake" | "needs_checkout" | "pending" | "verified" | "choose_account" | "payment_recovery" | "canceled_trial" | "canceled_paid" | "failed";
 type ViewState = EnrollmentState | "cancelled" | "expired" | "invalid" | "delayed";
 type EnrollmentStatus = { state: EnrollmentState; reference_id: string; message: string; retryable: boolean; destination?: string; can_manage_billing?: boolean };
+type WorkspaceHandoff = { generation: number; userId: string; tenantId: string; destination: string; priorTenants: ReturnType<typeof useTenantContext>["tenants"] };
 
 export default function Welcome() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const reduce = useReducedMotion();
+  const context = useTenantContext();
+  // refresh has no snapshot return and changes identity on provider renders. Read
+  // the current provider without restarting polling whenever that identity changes.
+  const contextRef = useRef(context);
+  useLayoutEffect(() => { contextRef.current = context; }, [context]);
   const checkout = params.get("checkout");
   const initial: ViewState = checkout === "cancelled" ? "cancelled" : checkout === "expired" ? "expired" : checkout === "failed" ? "failed" : checkout === "success" || checkout === "recovery" ? "pending" : "invalid";
   const [view, setView] = useState<ViewState>(initial);
@@ -23,15 +31,60 @@ export default function Welcome() {
   const [attempt, setAttempt] = useState(0);
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  const [handoff, setHandoff] = useState<WorkspaceHandoff | null>(null);
+  const generationRef = useRef(0);
   const settled = useRef(false);
+
+  useEffect(() => {
+    if (!handoff || handoff.generation !== generationRef.current) return;
+    if (context.accountContextLoading || context.accountContextStatus === "resolving") return;
+    if (context.accountContextStatus !== "ready" || context.tenants === handoff.priorTenants || context.activeUserId !== handoff.userId
+      || context.activeTenantId !== handoff.tenantId || context.activeTenant?.id !== handoff.tenantId
+      || workspaceRootForTenant(context.activeTenant) !== handoff.destination) {
+      settled.current = true;
+      setHandoff(null);
+      setWorkspaceError("Your enrollment is verified, but PAIGE could not confirm the selected workspace. Retry verification or contact support with this reference.");
+      setStatus((current) => current ? { ...current, retryable: true } : current);
+      setView("failed");
+      return;
+    }
+    // Provider state must have React-committed, not merely resolved its Promise.
+    settled.current = true;
+    setView("verified");
+    navigate(handoff.destination, { replace: true });
+  }, [context, handoff, navigate]);
 
   useEffect(() => {
     if (checkout !== "success" && checkout !== "recovery") return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let callerId: string | null = null;
+    const generation = ++generationRef.current;
+    const current = () => !cancelled && !settled.current && generationRef.current === generation;
     const startedAt = Date.now();
     settled.current = false;
+    setHandoff(null);
+    setWorkspaceError(null);
     setView("pending");
+    const failWorkspace = () => {
+      if (!current()) return;
+      settled.current = true;
+      setHandoff(null);
+      setWorkspaceError("Your enrollment is verified, but PAIGE could not confirm the selected workspace. Retry verification or contact support with this reference.");
+      setStatus((value) => value ? { ...value, retryable: true } : value);
+      setView("failed");
+    };
+    const { data: authSubscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!callerId || session?.user.id === callerId) return;
+      cancelled = true;
+      if (generationRef.current === generation) generationRef.current += 1;
+      if (timer) clearTimeout(timer);
+      setHandoff(null);
+      setStatus(null);
+      setWorkspaceError(null);
+      setView("needs_identity");
+    });
 
     const poll = async () => {
       if (cancelled || settled.current) return;
@@ -42,12 +95,13 @@ export default function Welcome() {
         setView("needs_identity");
         return;
       }
+      callerId = sessionData.session.user.id;
       const { data, error } = await supabase.functions.invoke("solo-beta-enrollment-status");
-      if (cancelled) return;
+      if (!current()) return;
       if (!error && data && typeof data === "object") {
         const next = data as EnrollmentStatus;
         setStatus(next);
-        setView(next.state);
+        setView(next.state === "verified" ? "pending" : next.state);
         if (next.state === "choose_account") {
           if (next.destination !== "/choose-account") {
             setView("failed");
@@ -59,11 +113,41 @@ export default function Welcome() {
         }
         if (next.state === "verified") {
           if (!next.destination || !/^\/solo\/[0-9]+\/command-center$/.test(next.destination)) {
-            setView("failed");
+            failWorkspace();
             return;
           }
-          settled.current = true;
-          navigate(next.destination, { replace: true });
+          // The status endpoint owns enrollment authority. The destination is
+          // only an address; never use it to select/write a tenant or membership.
+          timer = setTimeout(failWorkspace, Math.max(0, POLL_TIMEOUT_MS - (Date.now() - startedAt)));
+          try {
+            // Accepted provider reads publish a new tenant list; a failed refresh
+            // preserves its old list even when an old accepted scope is still ready.
+            const priorTenants = contextRef.current.tenants;
+            await contextRef.current.refresh();
+            if (!current()) return;
+            const profile = await supabase.from("profiles").select("user_id,active_tenant_id").eq("user_id", callerId).maybeSingle();
+            if (!current()) return;
+            if (profile.error || profile.data?.user_id !== callerId || !profile.data.active_tenant_id) { failWorkspace(); return; }
+            const tenant = await supabase.from("tenants").select("id,account_type,parent_tenant_id,account_number").eq("id", profile.data.active_tenant_id).maybeSingle();
+            if (!current()) return;
+            // account_number is live but missing from generated database types,
+            // matching the shared provider's explicit selected-column projection.
+            const selectedTenant = tenant.data as unknown as Pick<TenantSummary, "id" | "account_type" | "parent_tenant_id" | "account_number"> | null;
+            const [actor, scope] = await Promise.all([supabase.auth.getUser(), supabase.rpc("current_user_tenant_id")]);
+            if (!current()) return;
+            if (!actor.error && actor.data.user?.id !== callerId) {
+              settled.current = true;
+              setStatus(null);
+              setView("needs_identity");
+              return;
+            }
+            if (actor.error || scope.error || scope.data !== profile.data.active_tenant_id
+              || tenant.error || selectedTenant?.id !== scope.data
+              || workspaceRootForTenant(selectedTenant) !== next.destination) { failWorkspace(); return; }
+            setHandoff({ generation, userId: callerId, tenantId: scope.data, destination: next.destination, priorTenants });
+          } catch {
+            failWorkspace();
+          }
           return;
         }
         if (next.state !== "pending") return;
@@ -76,7 +160,12 @@ export default function Welcome() {
     };
 
     void poll();
-    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+    return () => {
+      cancelled = true;
+      if (generationRef.current === generation) generationRef.current += 1;
+      if (timer) clearTimeout(timer);
+      authSubscription.subscription.unsubscribe();
+    };
   }, [attempt, checkout, navigate]);
 
   const openBillingRecovery = async () => {
@@ -108,8 +197,10 @@ export default function Welcome() {
     canceled_trial: { title: "Your Solo Beta trial is canceled", body: "No first paid renewal is scheduled, and trial access has ended. Billing history and support remain available." },
     canceled_paid: { title: "Your paid Solo subscription has ended", body: "The verified paid service period is over. Billing history and support remain available." },
   };
-  const copy = defaults[view];
-  const message = status?.message || copy.body;
+  const copy = workspaceError && view === "failed" ? { title: "We could not open your workspace", body: workspaceError } : defaults[view];
+  const message = (view === "failed" ? workspaceError : null) || (view === "pending" && status?.state === "verified"
+    ? "Your enrollment is verified. Confirming the selected workspace before opening it."
+    : status?.message || copy.body);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-center" style={{ background: "radial-gradient(120% 90% at 70% 15%, hsl(var(--primary)/0.14) 0%, hsl(var(--background)) 55%)" }}>

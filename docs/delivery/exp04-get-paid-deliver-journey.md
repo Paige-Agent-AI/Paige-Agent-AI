@@ -2,7 +2,7 @@
 
 Date: 2026-10-12 · Journey Lead: Claude Code (one accountable lead) · Records: ANT-51 / ANT-147 · Shell: SOLO
 
-**Status: CHECKPOINT 1 (inventory and plan) + E4-S1 implementation (§11) and documented contracts (§12).** Branch `claude/clever-lovelace-r111ru`.
+**Status: CHECKPOINT 1 (inventory and plan) + E4-S1 shipped (§11, PR #2074, main `c0a20243`) + E4-S1b time zones (§13) + documented contracts (§12).** Branch `claude/clever-lovelace-r111ru`.
 Nothing here is owner-accepted or customer-released. Every claim names its evidence. Every absence claim
 names what was searched. Production evidence comes from read-only aggregate SELECTs; no identifiers or
 values were read.
@@ -439,9 +439,8 @@ Each has a recommendation. They are reversible unless marked.
   `assets/exp04-engagement/`). The server's own refusal (42501) becomes a `refused` state, a
   person with no active workspace gets `no_workspace`, and malformed answers log their internal
   code and show only "could not be read".
-- **Known limit:** "today" is the UTC date (`as_of_date`), not the business's time zone, so an
-  invoice can turn past due up to a day early or late around midnight. Fixing it needs the
-  tenant's time zone in the read; it is named here rather than hidden.
+- **Known limit at E4-S1 merge, resolved by E4-S1b (§13):** "today" was the UTC date. It is now the
+  business owner's configured time zone; without one, due and overdue judgements are withheld.
 
 **Correction recorded (§13).** The first version of this slice (`cee47dd7`) proved itself against
 a ledger the Sales writer cannot produce: three instalment-sized invoices each naming the $3,500
@@ -582,6 +581,9 @@ event.
   - the invoice's outstanding is 0;
   - a LIVE payment request on that invoice is in flight or has an unknown outcome;
   - the pre-send gate would block (DND, `paige_suppressions`, missing consent, quiet hours for SMS);
+  - the Collections contact window (`_shared/sales-collections/contact-window.ts`, §13) does not
+    clear it: the recipient's zone or location is not verified, the jurisdiction's rules are not
+    encoded, permission is missing or withdrawn, or it is outside the recipient's local hours;
   - the owner paused follow-ups for the client;
   - **a dispute or promise to pay is recorded.**
 - **Disputes and promises are not recorded today.** NEW backend: a collection-outcome record
@@ -600,6 +602,12 @@ event.
   - Never `auto`: §67, an external send is never covered by an `auto` grant.
 - **Timing:** owner policy, for example 3 days before due and 1 day after a miss. The policy is a
   §67 process.
+  - **Two clocks, never mixed (owner rulings 2026-10-12):**
+    - *which day* an invoice is due or late is the BUSINESS OWNER's configured zone;
+    - *what hour* a reminder may reach someone is the RECIPIENT's verified zone.
+    A reminder for an invoice that became late on the owner's calendar still waits for the
+    recipient's local hours. The recipient's zone is never taken from the owner, a phone prefix
+    or a browser.
   - **Backend change, named:** time-based native events `invoice.due_soon`, `invoice.overdue` and
     `payment.received` for `paige-native-event-dispatch`.
   - Until they exist, the panel only *shows* which invoices a reminder would be proposed for.
@@ -612,3 +620,142 @@ event.
   (direct charge), never a Paige-held charge. Without one, the reminder carries no link.
 - **Truth after sending:** provider acceptance is not delivery, and delivery is not payment. The
   status read changes only when the ledger does.
+
+## 13. E4-S1b — the two time zones (2026-10-12)
+
+**Owner rulings (ANT-51 / ANT-147).**
+1. Payment due-date, upcoming and overdue classifications use the authenticated business owner's
+   configured IANA zone. Never UTC, server time or the viewer's browser. If the zone is missing or
+   invalid, ask for configuration and withhold definitive overdue claims.
+2. The recipient's verified local zone governs when outbound email, SMS and AI calls may go out,
+   subject to jurisdiction, consent, quiet hours, preferences and provider rules. Never assume it
+   from the owner's location, a phone prefix or a browser. If the location, zone or permission is
+   unknown, make no automated contact and ask for verification.
+
+**Grounding (§71).**
+- Searched every `public` column named like `%time%zone%` or `%tz%` in production.
+- Grepped migrations, `src/` and `supabase/functions` for `timezone`, `time_zone`, `timeZone`,
+  `quiet_hours` and `timezone_verified`.
+- **Owner side: no zone that only the owner controls existed.**
+  - `calendars`, `staff_calendar_settings` and `internal_bookings` default to `America/New_York`,
+    so a default can't be told apart from a choice.
+  - `profiles.coach_timezone` is a per-person field. `set_coach_fields` lets any tenant admin
+    write it for any active member, including an admin of another workspace the owner belongs
+    to. `paige-mcp update_coach_profile` writes it with no tenant predicate.
+  - The independent review caught this. The first version of this slice read the owner's
+    `coach_timezone`; it no longer does.
+  - Tenant admins can UPDATE `tenants` directly, so a column there wouldn't be owner-only.
+- **Recipient side.**
+  - `clients.timezone` and `clients.timezone_verified` come from Communications
+    (`20260726210000`). Production: 0 of 16 clients have either set.
+  - `clients` has state, city and zip but **no country**.
+- **Other paths still on UTC.**
+  - The shared pre-send gate falls back to the business zone and then New York for SMS. Filed to
+    Communications as **#2083**. The gate is pinned reviewed source and is not edited here.
+  - The live Collections workspace and the Sales performance overdue metric compute "today"
+    in UTC. Filed to Sales as **#2086**.
+  - The ruling applies to those paths too; they are owed, not done.
+
+**What changed.**
+- **Migration `20271026200000`.**
+  - Adds `public.tenant_business_time_zones`: one row per workspace, RLS on, no direct grants. A
+    CHECK allows only `UTC` or an IANA Area/Location name, so abbreviations and fixed-offset or
+    legacy names (`EST`, `EST5EDT`, `Etc/GMT+5`) are refused.
+  - Adds `public.set_business_time_zone(_expected_tenant_id, _time_zone)`. Only the **active
+    owner** of the caller's active workspace may call it.
+    - It validates the zone against `pg_timezone_names` when written.
+    - Only an explicit null clears it; a blank value is refused.
+    - Legacy aliases (`US/Eastern`) are refused in favour of the canonical region name. They do carry
+      their region's rules; the point is one comparable spelling.
+    - No API role (`anon`, `authenticated`, `service_role`) holds any privilege on the table.
+    - It writes one capability receipt.
+  - Re-creates `read_client_engagement_status`, otherwise unchanged:
+    - it adds `business_time_zone {state, zone}`;
+    - state is `configured`, `missing`, or `invalid`. A stored zone that the database can't convert
+      (written by a privileged path that bypassed the writer) degrades to `invalid` instead of
+      failing the whole read;
+    - `as_of_date` is the owner-local date of the read, null unless configured;
+    - there is no `pg_timezone_names` scan on read.
+- **Composer.** It computes "today" itself from `read_at` and the zone, using the shared IANA
+  helper `localDateInZone` (in `_shared/paige-context/snapshot.ts`). Without a usable zone:
+  - schedule `due`, invoice `overdue` and `past_due_minor`, `due_to_date`, `behind` and
+    `overdue_minor` are all null;
+  - `business_time_zone_unset` is raised, and `payment_overdue` and `behind_schedule` are not;
+  - contractual due dates and payment timestamps pass through unchanged.
+- **`_shared/sales-collections/contact-window.ts`.** The pure recipient-side rule for automated
+  collections contact.
+  - **Order:** calls blocked → opt-out → DND → consent withdrawn → SMS consent missing →
+    recipient zone missing, unverified or not a regional zone → location unverified →
+    jurisdiction rules unknown → recipient-local hours.
+  - Only verified **US** recipients have encoded hours: 08:00–20:00 local, the pre-send gate's
+    quiet window. A test keeps the two equal.
+  - The local-time math is two helpers in the shared zone module (`localMinutesInZone`,
+    `nextLocalTimeInZone`).
+  - **Nothing calls it yet.** Reminders (C-3) aren't built. It is the rule they must pass, proven
+    by tests, not an enforced gate.
+- **Prototype.** Adds the `nozone` state, which is the state production produces today. The
+  panel says "Set your business time zone". Schedule dates aren't split into due and upcoming,
+  past due shows "—", and the progress bar shows one "Not paid yet" figure, for screen readers
+  too. Task lateness compares timestamps with the read, matching the read's own overdue count.
+  Instants are shown on the owner's calendar.
+
+**Evidence.**
+- **Database proof: 63/63 PASS.** It covers:
+  - no privilege for any API role on the table, and the writer's grants;
+  - refusals of an unknown zone (`Mars/Olympus_Mons`, `America/Nowhere`), `EST`, `EST5EDT`,
+    `Etc/GMT+5`, `US/Eastern` and a blank value;
+  - acceptance of three-level and hyphenated zones;
+  - refusals of an owner naming another workspace, an owner of two workspaces naming the
+    inactive one, an admin setting or clearing the zone, staff, and an owner who isn't active;
+  - an unrecognised stored zone reads as `invalid` and withholds the date;
+  - refused writers change nothing;
+  - the owner-local date checked in UTC+14 and UTC−11 (at any hour at least one differs from UTC);
+  - an admin whose personal profile says Tokyo still gets the business's New York;
+  - the foreign workspace's zone is never picked up;
+  - missing withholds the date;
+  - every change leaves a receipt.
+- **Database mutants** (all FAIL the proof):
+  - admin can set;
+  - UTC date;
+  - reads another workspace's zone;
+  - no tzdata check on write;
+  - no stale-workspace check;
+  - no `invalid` fallback on read;
+  - blank value clears.
+  - Dropping the writer's `status='active'` clause survives. `current_user_tenant_id()` already
+    refuses a non-active membership, so the clause is defence in depth and can't be isolated.
+- **Parity:** the database's owner-local date equals the composer's own.
+- **Owner-zone unit tests (13).** They cover:
+  - UTC midnight;
+  - both DST change days, and the first midnight after each;
+  - Sydney;
+  - non-IANA names refused;
+  - the same output under four different process zones;
+  - missing or invalid withholds every judgement;
+  - an unknown state fails closed.
+  - Mutants caught: UTC fallback, the viewer's local date, unknown treated as "not late",
+    missing flag dropped.
+- **Contact-window tests (9).** They cover:
+  - one instant across New York, Chicago, Los Angeles and Honolulu, plus three-level and
+    hyphenated zones (Indianapolis, New Salem, Port-au-Prince);
+  - DST both ways, Arizona, and the 19:59/20:00 boundary;
+  - an "EST-verified" recipient refused, so a 20:30 EDT text can't slip through;
+  - a US customer in Berlin; GB and JP refused;
+  - opt-out, DND, withdrawn consent, and missing SMS consent refused; a collections email with
+    no prior opt-in clears;
+  - missing, unverified, invalid, offset and non-regional zones refused;
+  - calls refused;
+  - the window equals the gate's.
+  - Mutants caught: unverified zone accepted, New York fallback, opt-out ignored, unknown
+    jurisdiction cleared, calls allowed, non-regional zone accepted, email consent made strict,
+    third-level zones dropped from the pattern.
+- **Pre-send gate:** untouched. An export-only edit first tripped the pinned-source lint and was
+  reverted. Smoke 15/15.
+
+**Still owed.**
+- A place in the product for the owner to set the zone. `set_business_time_zone` is the callable
+  seam; the control belongs with the panel mount. A Spine/Chat binding so PAIGE can set it on the
+  owner's word is also owed.
+- A verified country or jurisdiction on the recipient record (#2083), and jurisdiction rules
+  beyond the US: state rules, weekends and holidays.
+- #2083 (pre-send fallback) and #2086 (Collections and Sales performance on UTC).

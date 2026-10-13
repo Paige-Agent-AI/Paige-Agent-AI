@@ -386,13 +386,18 @@ const STATES = {
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
     "agreement": {
       "state": "signed",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:37:17.420944+00:00",
-      "completed_at": "2026-09-01T21:37:17.420944+00:00",
+      "sent_at": "2026-08-28T23:50:11.185285+00:00",
+      "completed_at": "2026-09-01T23:50:11.185285+00:00",
       "sealed": true,
       "bound_to_terms": true,
       "effective": "not_recorded"
@@ -590,14 +595,14 @@ const STATES = {
       "blocked": 0,
       "next": {
         "title": "Draft discovery report",
-        "due_at": "2026-10-10T21:37:17.420944+00:00",
+        "due_at": "2026-10-10T23:50:11.185285+00:00",
         "item_type": "task"
       },
       "items": [
         {
           "id": "e4000000-0000-4000-8000-000000090002",
           "title": "Draft discovery report",
-          "due_at": "2026-10-10T21:37:17.420944+00:00",
+          "due_at": "2026-10-10T23:50:11.185285+00:00",
           "status": "in_progress",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
@@ -607,7 +612,7 @@ const STATES = {
         {
           "id": "e4000000-0000-4000-8000-000000090003",
           "title": "Strategy review",
-          "due_at": "2026-10-26T21:37:17.420944+00:00",
+          "due_at": "2026-10-26T23:50:11.185285+00:00",
           "status": "open",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": false,
@@ -617,12 +622,12 @@ const STATES = {
         {
           "id": "e4000000-0000-4000-8000-000000090001",
           "title": "Kickoff workshop",
-          "due_at": "2026-09-12T21:37:17.420944+00:00",
+          "due_at": "2026-09-12T23:50:11.185285+00:00",
           "status": "done",
           "plan_id": "e4000000-0000-4000-8000-000000080001",
           "assigned": true,
           "item_type": "milestone",
-          "completed_at": "2026-09-13T21:37:17.420944+00:00"
+          "completed_at": "2026-09-13T23:50:11.185285+00:00"
         }
       ]
     },
@@ -645,19 +650,24 @@ const STATES = {
       "invoices": false,
       "work": false
     },
-    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
   },
   "early": {
     "client": {
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
     "agreement": {
       "state": "sent",
       "signing_id": "e4000000-0000-4000-8000-0000000a0001",
       "title": "Test consulting agreement",
-      "sent_at": "2026-08-28T21:37:17.420944+00:00",
+      "sent_at": "2026-08-28T23:50:11.185285+00:00",
       "completed_at": null,
       "sealed": false,
       "bound_to_terms": true,
@@ -826,14 +836,289 @@ const STATES = {
       "invoices": false,
       "work": false
     },
-    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
+  },
+  "nozone": {
+    "client": {
+      "id": "e4000000-0000-4000-8000-0000000c0001",
+      "name": "Test Consulting Client"
+    },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
+    "as_of_date": null,
+    "time_zone": {
+      "state": "missing",
+      "zone": null
+    },
+    "agreement": {
+      "state": "signed",
+      "signing_id": "e4000000-0000-4000-8000-0000000a0001",
+      "title": "Test consulting agreement",
+      "sent_at": "2026-08-28T23:50:11.185285+00:00",
+      "completed_at": "2026-09-01T23:50:11.185285+00:00",
+      "sealed": true,
+      "bound_to_terms": true,
+      "effective": "not_recorded"
+    },
+    "terms": {
+      "id": "e4000000-0000-4000-8000-0000000d0001",
+      "status": "active",
+      "version": 1,
+      "offer_name": "Test consulting engagement",
+      "title": "Test consulting engagement",
+      "currency": "usd",
+      "agreed_minor": 350000,
+      "state": "current",
+      "kind": "custom",
+      "recurring": false,
+      "schedule": [
+        {
+          "sequence": 1,
+          "due_date": "2026-09-02",
+          "amount_minor": 50000,
+          "due": null,
+          "label": "Deposit"
+        },
+        {
+          "sequence": 2,
+          "due_date": "2026-10-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 3,
+          "due_date": "2026-11-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 4,
+          "due_date": "2026-12-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 5,
+          "due_date": "2027-01-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 6,
+          "due_date": "2027-02-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 7,
+          "due_date": "2027-03-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 8,
+          "due_date": "2027-04-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 9,
+          "due_date": "2027-05-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 10,
+          "due_date": "2027-06-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 11,
+          "due_date": "2027-07-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        }
+      ],
+      "schedule_has_more": false
+    },
+    "money": {
+      "currency": "usd",
+      "mixed_currency": false,
+      "contracted_minor": 350000,
+      "due_to_date_minor": null,
+      "invoiced_minor": 362000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000
+      },
+      "not_yet_invoiced_minor": 0,
+      "received": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000,
+        "test_environment_minor": 30000
+      },
+      "outstanding_minor": 302000,
+      "overdue_minor": null,
+      "awaiting_confirmation_minor": 20000,
+      "outcome_unknown_count": 1,
+      "failed_request_count": 1,
+      "behind_schedule_minor": null,
+      "reversal_count": 1,
+      "disputes": "not_recorded"
+    },
+    "invoices": [
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0003",
+        "number": "E4-0003",
+        "status": "draft",
+        "payment_state": "draft",
+        "amount_minor": 99900,
+        "outstanding_minor": 0,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0002",
+        "number": "E4-0002",
+        "status": "issued",
+        "payment_state": "outcome_unknown",
+        "amount_minor": 12000,
+        "outstanding_minor": 12000,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": null,
+        "due_date": "2026-10-02",
+        "overdue": null,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0004",
+        "number": "E4-0004",
+        "status": "void",
+        "payment_state": "void",
+        "amount_minor": 77700,
+        "outstanding_minor": 0,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0001",
+        "number": "E4-0001",
+        "status": "issued",
+        "payment_state": "awaiting_confirmation",
+        "amount_minor": 350000,
+        "outstanding_minor": 290000,
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000,
+        "test_environment_minor": 30000,
+        "past_due_minor": null,
+        "due_date": "2026-09-02",
+        "overdue": null,
+        "bound_to_terms": true,
+        "legacy_status": false
+      }
+    ],
+    "work": {
+      "state": "behind",
+      "total": 3,
+      "done": 1,
+      "open": 2,
+      "overdue": 1,
+      "blocked": 0,
+      "next": {
+        "title": "Draft discovery report",
+        "due_at": "2026-10-10T23:50:11.185285+00:00",
+        "item_type": "task"
+      },
+      "items": [
+        {
+          "id": "e4000000-0000-4000-8000-000000090002",
+          "title": "Draft discovery report",
+          "due_at": "2026-10-10T23:50:11.185285+00:00",
+          "status": "in_progress",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": true,
+          "item_type": "task",
+          "completed_at": null
+        },
+        {
+          "id": "e4000000-0000-4000-8000-000000090003",
+          "title": "Strategy review",
+          "due_at": "2026-10-26T23:50:11.185285+00:00",
+          "status": "open",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": false,
+          "item_type": "milestone",
+          "completed_at": null
+        },
+        {
+          "id": "e4000000-0000-4000-8000-000000090001",
+          "title": "Kickoff workshop",
+          "due_at": "2026-09-12T23:50:11.185285+00:00",
+          "status": "done",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": true,
+          "item_type": "milestone",
+          "completed_at": "2026-09-13T23:50:11.185285+00:00"
+        }
+      ]
+    },
+    "attention": [
+      "payment_outcome_unknown",
+      "payment_request_failed",
+      "business_time_zone_unset",
+      "work_overdue"
+    ],
+    "not_recorded": [
+      "payment_disputes",
+      "provider_refunds",
+      "terms_effective_transition",
+      "installment_allocation"
+    ],
+    "truncated": {
+      "terms": false,
+      "signings": false,
+      "invoices": false,
+      "work": false
+    },
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
   },
   "empty": {
     "client": {
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Empty Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
     "agreement": {
       "state": "none",
       "signing_id": null,
@@ -895,7 +1180,7 @@ const STATES = {
       "invoices": false,
       "work": false
     },
-    "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1"
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
   }
 };
 
@@ -934,11 +1219,16 @@ function money(minor, currency = 'usd') {
   return currency && currency.toLowerCase() === 'usd' ? `$${v}` : `${v} ${String(currency || '').toUpperCase()}`;
 }
 let AS_OF_YEAR = '2026';
+// Instants (sent_at, due_at …) are shown on the business owner's calendar; plain contract dates
+// (YYYY-MM-DD) are shown exactly as agreed. Without an owner zone, instants fall back to UTC labels.
+let DISPLAY_ZONE = 'UTC';
 function day(iso, forceYear = false) {
   if (!iso) return '—';
-  const d = new Date(iso.slice(0, 10) + 'T00:00:00Z');
-  const y = iso.slice(0, 4);
-  return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', ...(forceYear || y !== AS_OF_YEAR ? { year: 'numeric' } : {}) });
+  const instant = iso.length > 10;
+  const d = instant ? new Date(iso) : new Date(iso.slice(0, 10) + 'T00:00:00Z');
+  const zone = instant ? DISPLAY_ZONE : 'UTC';
+  const y = new Intl.DateTimeFormat('en-US', { timeZone: zone, year: 'numeric' }).format(d);
+  return d.toLocaleDateString('en-US', { timeZone: zone, month: 'short', day: 'numeric', ...(forceYear || y !== AS_OF_YEAR ? { year: 'numeric' } : {}) });
 }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
@@ -958,7 +1248,10 @@ function receivedOnTerms(s) {
 function verifiedOnTerms(s) { return s.money.received_against_terms.verified_minor; }
 function recordedOnTerms(s) { return s.money.received_against_terms.recorded_by_owner_minor; }
 const isOpenItem = it => it.status !== 'done' && it.status !== 'cancelled';
-const isLate = (it, asOf) => isOpenItem(it) && it.due_at && it.due_at.slice(0, 10) < asOf;
+// A task is late when its due instant is before the moment of the read — the same rule as the read's
+// own overdue count, so the cards and the list always agree, with or without an owner zone.
+const isLate = (it, readAt) => isOpenItem(it) && Boolean(it.due_at) && Date.parse(it.due_at) < Date.parse(readAt);
+const zoneUnset = s => s.as_of_date === null;
 
 /* Agreement words */
 const AGREEMENT = {
@@ -973,6 +1266,7 @@ function stageModel(s) {
   const ag = AGREEMENT[s.agreement.state] || { word: s.agreement.state, tone: 'quiet' };
   let pay;
   if (!s.terms && !s.invoices.length) pay = { word: 'None yet', tone: 'quiet' };
+  else if (zoneUnset(s)) pay = { word: 'Set time zone', tone: 'warning' };
   else if (m.behind_schedule_minor > 0) pay = { word: `Behind ${money(m.behind_schedule_minor, m.currency)}`, tone: 'warning' };
   else if (m.overdue_minor > 0) pay = { word: `${money(m.overdue_minor, m.currency)} late`, tone: 'warning' };
   else pay = { word: 'On schedule', tone: 'positive' };
@@ -995,6 +1289,7 @@ function summaryParts(s) {
   if (!s.terms && !s.invoices.length && s.agreement.state === 'none' && s.work.total === 0)
     return [{ tone: 'quiet', text: 'No agreement, payments or work yet' }];
   if (s.attention.includes('agreement_not_signed')) parts.push({ tone: 'warning', text: 'Agreement not signed' });
+  if (zoneUnset(s)) parts.push({ tone: 'warning', text: 'Due dates on hold until your time zone is set' });
   if (m.behind_schedule_minor > 0) parts.push({ tone: 'warning', text: `Behind by ${money(m.behind_schedule_minor, c)}` });
   if (m.overdue_minor > 0) parts.push({ tone: 'negative', text: `${money(m.overdue_minor, c)} past due` });
   // Only an unknown outcome needs checking; a failed request collected nothing and is named on its own.
@@ -1009,7 +1304,7 @@ function attentionItems(s) {
   const m = s.money, c = m.currency, out = [];
   const overdueInv = s.invoices.filter(i => i.overdue);
   const unknownInv = s.invoices.filter(i => i.payment_state === 'outcome_unknown');
-  const late = s.work.items.filter(it => isLate(it, s.as_of_date));
+  const late = s.work.items.filter(it => isLate(it, s.read_at));
   for (const code of s.attention) {
     switch (code) {
       case 'agreement_not_signed':
@@ -1052,6 +1347,10 @@ function attentionItems(s) {
         break;
       case 'mixed_currency':
         out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: 'Invoices use more than one currency', body: 'Totals are hidden rather than added across currencies.' });
+        break;
+      case 'business_time_zone_unset':
+        out.push({ tone: 'warning', icon: 'clock', to: 'payments', title: 'Set your business time zone',
+          body: 'What is due and what is late is worked out on your calendar, in your time zone. Until you set it, those are left blank rather than guessed. Amounts and payments are unaffected.' });
         break;
       case 'list_truncated':
         out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: 'This client has more records than this panel can show', body: 'Totals are hidden because they would be incomplete.' });
@@ -1156,7 +1455,7 @@ function paymentsSection(s) {
     plan = `<div class="plan">
       <div class="plan-line"><span>${got > 0 ? `Against <strong>${money(total, c)} agreed</strong>: ${[ver ? `<strong>${money(ver, c)}</strong> confirmed by your provider` : '', rec ? `<strong>${money(rec, c)}</strong> recorded by you` : ''].filter(Boolean).join(' and ')}` : `<strong>${money(total, c)} agreed</strong> — nothing paid against it yet`}</span></div>
       <div class="bar-wrap">
-        <div class="bar" role="img" aria-label="${esc(`${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(dueUnpaid, c)} due and unpaid, ${money(notDue, c)} not due yet. ${money(m.due_to_date_minor, c)} was due by today.`)}">
+        <div class="bar" role="img" aria-label="${esc(zoneUnset(s) ? `${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(total - ver - rec, c)} not paid yet. What is due waits for your business time zone.` : `${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(dueUnpaid, c)} due and unpaid, ${money(notDue, c)} not due yet. ${money(m.due_to_date_minor, c)} was due by today.`)}">
           ${ver ? `<span class="seg-verified" style="width:${pct(ver)}"></span>` : ''}${rec ? `<span class="seg-recorded" style="width:${pct(rec)}"></span>` : ''}${dueUnpaid ? `<span class="seg-billed" style="width:${pct(dueUnpaid)}"></span>` : ''}
         </div>
         ${tick !== null ? `<div class="tick" style="left:${tick}%" data-flip="${tick > 70}"><span>Due by today · ${money(m.due_to_date_minor, c)}</span></div>` : ''}
@@ -1164,8 +1463,10 @@ function paymentsSection(s) {
       <ul class="legend">
         <li><span class="sw seg-verified"></span><span>Paid — confirmed by your provider</span><b class="num">${money(ver, c)}</b></li>
         <li><span class="sw seg-recorded"></span><span>Paid — recorded by you</span><b class="num">${money(rec, c)}</b></li>
-        <li><span class="sw seg-billed"></span><span>Due by today, not paid</span><b class="num">${money(dueUnpaid, c)}</b></li>
-        <li><span class="sw sw-track"></span><span>Not due yet</span><b class="num">${money(notDue, c)}</b></li>
+        ${zoneUnset(s)
+          ? `<li><span class="sw sw-track"></span><span>Not paid yet · what is due waits for your time zone</span><b class="num">${money(total - ver - rec, c)}</b></li>`
+          : `<li><span class="sw seg-billed"></span><span>Due by today, not paid</span><b class="num">${money(dueUnpaid, c)}</b></li>
+        <li><span class="sw sw-track"></span><span>Not due yet</span><b class="num">${money(notDue, c)}</b></li>`}
       </ul>
       ${notInv > 0 ? `<p class="fine">${ic('info')}<span>${money(notInv, c)} of this agreement isn’t on an invoice yet.</span></p>` : ''}
     </div>`;
@@ -1194,7 +1495,9 @@ function paymentsSection(s) {
   // Schedule — rows carry only what the data supports: due by today, or upcoming.
   let schedule = '';
   if (t && t.schedule.length) {
-    const due = t.schedule.filter(r => r.due), up = t.schedule.filter(r => !r.due);
+    // A row whose due status is unknown (no business time zone) is never shown as upcoming.
+    const unknown = t.schedule.some(r => r.due === null);
+    const due = t.schedule.filter(r => r.due === true), up = unknown ? t.schedule : t.schedule.filter(r => r.due === false);
     const sum = rows => rows.reduce((a, r) => a + r.amount_minor, 0);
     // The group label already says due or upcoming, so rows carry no repeated chip.
     const row = (r, kind) => `<tr class="${kind}"><td class="seq num">${r.sequence}</td><td class="num">${day(r.due_date)}</td><td class="hide-n">${r.label ? esc(r.label) : 'Instalment'}</td><td class="r num">${money(r.amount_minor, t.currency)}</td></tr>`;
@@ -1206,7 +1509,7 @@ function paymentsSection(s) {
         <thead><tr><th scope="col"><span class="sr-only">Number</span></th><th scope="col">Due</th><th scope="col" class="hide-n">For</th><th scope="col" class="r" style="text-align:right">Amount</th></tr></thead>
         <tbody>
           ${due.length ? `<tr class="group"><td colspan="4">Due so far · <b class="num">${money(sum(due), t.currency)}</b></td></tr>${due.map(r => row(r, 'due')).join('')}` : ''}
-          ${next ? `<tr class="group"><td colspan="4">Still to come · <b class="num">${money(sum(up), t.currency)}</b></td></tr>${row(next, 'upcoming')}` : ''}
+          ${next ? `<tr class="group"><td colspan="4">${unknown ? 'Payment dates · not judged until your time zone is set' : 'Still to come'} · <b class="num">${money(sum(up), t.currency)}</b></td></tr>${row(next, 'upcoming')}` : ''}
         </tbody>
         ${later.length ? `<tbody class="later" id="sched-later" hidden>${later.map(r => row(r, 'upcoming')).join('')}</tbody>` : ''}
       </table>
@@ -1256,10 +1559,10 @@ function deliverySection(s) {
     return String(a.due_at).localeCompare(String(b.due_at));
   });
   const meter = items.slice().sort((a, b) => (a.status === 'done' ? -1 : 0) - (b.status === 'done' ? -1 : 0))
-    .map(it => `<span data-s="${it.status === 'done' ? 'done' : isLate(it, s.as_of_date) ? 'overdue' : 'open'}"></span>`).join('');
-  const next = w.next ? `<p class="lede"><strong>${w.done} of ${w.total} done.</strong> Next up: ${esc(w.next.title)}, ${isLate({ status: 'open', due_at: w.next.due_at }, s.as_of_date) ? `<strong style="color:var(--pg-negative)">was due ${day(w.next.due_at)}</strong>` : `due ${day(w.next.due_at)}`}.</p>` : `<p class="lede"><strong>${w.done} of ${w.total} done.</strong></p>`;
+    .map(it => `<span data-s="${it.status === 'done' ? 'done' : isLate(it, s.read_at) ? 'overdue' : 'open'}"></span>`).join('');
+  const next = w.next ? `<p class="lede"><strong>${w.done} of ${w.total} done.</strong> Next up: ${esc(w.next.title)}, ${isLate({ status: 'open', due_at: w.next.due_at }, s.read_at) ? `<strong style="color:var(--pg-negative)">was due ${day(w.next.due_at)}</strong>` : `due ${day(w.next.due_at)}`}.</p>` : `<p class="lede"><strong>${w.done} of ${w.total} done.</strong></p>`;
   const rows = items.map(it => {
-    const done = it.status === 'done', late = isLate(it, s.as_of_date);
+    const done = it.status === 'done', late = isLate(it, s.read_at);
     const kind = it.item_type === 'milestone' ? 'Milestone' : 'Task';
     const meta = done ? `${kind} · done ${day(it.completed_at)}`
       : `${kind} · ${it.status === 'in_progress' ? 'in progress' : it.status === 'blocked' ? 'blocked' : 'not started'}${it.assigned ? '' : ' · no one assigned'}`;
@@ -1293,7 +1596,8 @@ function attentionBlock(s) {
 }
 
 function renderPopulated(s) {
-  AS_OF_YEAR = s.as_of_date.slice(0, 4);
+  if (s.as_of_date) AS_OF_YEAR = s.as_of_date.slice(0, 4);
+  DISPLAY_ZONE = s.time_zone?.zone || 'UTC';
   const isEmpty = !s.terms && !s.invoices.length && s.agreement.state === 'none' && s.work.total === 0;
   if (isEmpty) return renderEmpty(s);
   return header(s) + `<div class="d-body" id="d-body"><div class="d-body-inner">
@@ -1303,7 +1607,7 @@ function renderPopulated(s) {
     ${onboardingSection()}
     ${deliverySection(s)}
     ${followupsSection()}
-    <div class="d-foot"><span>As of ${day(s.as_of_date, true)}</span><span>Read-only — changes are made in Sales</span></div>
+    <div class="d-foot"><span>${s.as_of_date ? `As of ${day(s.as_of_date, true)}` : 'As of now · business time zone not set'}</span><span>Read-only — changes are made in Sales</span></div>
   </div></div>`;
 }
 
@@ -1400,7 +1704,7 @@ function render() {
 
 function renderToolbar() {
   const group = (el, key, opts) => { document.getElementById(el).innerHTML = opts.map(([v, l]) => `<button type="button" data-rv="${key}" data-v="${v}" aria-pressed="${ui[key] === v}">${l}</button>`).join(''); };
-  group('rv-state', 'state', [['populated', 'Populated'], ['early', 'Early'], ['empty', 'Empty'], ['loading', 'Loading'], ['error', 'Error'], ['refused', 'No access']]);
+  group('rv-state', 'state', [['populated', 'Populated'], ['early', 'Early'], ['empty', 'Empty'], ['loading', 'Loading'], ['error', 'Error'], ['refused', 'No access'], ['nozone', 'No time zone']]);
   group('rv-theme', 'theme', [['light', 'Light'], ['dark', 'Dark']]);
   group('rv-view', 'view', [['desktop', 'Desktop drawer'], ['mobile', 'Mobile sheet']]);
 }

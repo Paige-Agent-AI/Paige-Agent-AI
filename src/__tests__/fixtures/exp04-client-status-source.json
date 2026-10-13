@@ -6,7 +6,7 @@
       {
         "id": "e4000000-0000-4000-8000-000000090002",
         "title": "Draft discovery report",
-        "due_at": "2026-10-10T21:37:17.420944+00:00",
+        "due_at": "2026-10-11T00:10:41.917334+00:00",
         "status": "in_progress",
         "plan_id": "e4000000-0000-4000-8000-000000080001",
         "assigned": true,
@@ -16,7 +16,7 @@
       {
         "id": "e4000000-0000-4000-8000-000000090003",
         "title": "Strategy review",
-        "due_at": "2026-10-26T21:37:17.420944+00:00",
+        "due_at": "2026-10-27T00:10:41.917334+00:00",
         "status": "open",
         "plan_id": "e4000000-0000-4000-8000-000000080001",
         "assigned": false,
@@ -26,12 +26,12 @@
       {
         "id": "e4000000-0000-4000-8000-000000090001",
         "title": "Kickoff workshop",
-        "due_at": "2026-09-12T21:37:17.420944+00:00",
+        "due_at": "2026-09-13T00:10:41.917334+00:00",
         "status": "done",
         "plan_id": "e4000000-0000-4000-8000-000000080001",
         "assigned": true,
         "item_type": "milestone",
-        "completed_at": "2026-09-13T21:37:17.420944+00:00"
+        "completed_at": "2026-09-14T00:10:41.917334+00:00"
       }
     ],
     "total": 3,
@@ -48,10 +48,10 @@
       "status": "active",
       "ends_on": null,
       "offer_id": "e4000000-0000-4000-8000-0000000f0001",
-      "starts_on": "2026-09-02",
-      "created_at": "2026-10-12T21:37:17.420944+00:00",
+      "starts_on": "2026-09-03",
+      "created_at": "2026-10-13T00:10:41.917334+00:00",
       "offer_name": "Test consulting engagement",
-      "updated_at": "2026-10-12T21:37:17.420944+00:00",
+      "updated_at": "2026-10-13T00:10:41.917334+00:00",
       "agreed_currency": "usd",
       "collection_terms": {
         "kind": "custom",
@@ -59,57 +59,57 @@
         "dates": [
           {
             "label": "Deposit",
-            "due_date": "2026-09-02",
+            "due_date": "2026-09-03",
             "amount_cents": 50000
           },
           {
             "label": null,
-            "due_date": "2026-10-02",
+            "due_date": "2026-10-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2026-11-02",
+            "due_date": "2026-11-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2026-12-02",
+            "due_date": "2026-12-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2027-01-02",
+            "due_date": "2027-01-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2027-02-02",
+            "due_date": "2027-02-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2027-03-02",
+            "due_date": "2027-03-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2027-04-02",
+            "due_date": "2027-04-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2027-05-02",
+            "due_date": "2027-05-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2027-06-02",
+            "due_date": "2027-06-03",
             "amount_cents": 30000
           },
           {
             "label": null,
-            "due_date": "2027-07-02",
+            "due_date": "2027-07-03",
             "amount_cents": 30000
           }
         ],
@@ -126,7 +126,7 @@
           "fixed_cents": 0,
           "agreement_basis": null
         },
-        "anchor_date": "2026-09-02",
+        "anchor_date": "2026-09-03",
         "total_cents": 350000,
         "deposit_cents": null,
         "schema_version": 1
@@ -135,7 +135,7 @@
       "collection_terms_version": 1
     }
   ],
-  "read_at": "2026-10-12T21:37:17.595492+00:00",
+  "read_at": "2026-10-13T00:10:42.328955+00:00",
   "invoices": [
     {
       "id": "e4000000-0000-4000-8000-0000000e0003",
@@ -143,7 +143,7 @@
       "currency": "usd",
       "due_date": null,
       "issued_at": null,
-      "created_at": "2026-10-11T21:37:17.420944+00:00",
+      "created_at": "2026-10-12T00:10:41.917334+00:00",
       "amount_minor": 99900,
       "invoice_number": "E4-0003",
       "reversal_count": 0,
@@ -160,9 +160,9 @@
       "id": "e4000000-0000-4000-8000-0000000e0002",
       "status": "issued",
       "currency": "usd",
-      "due_date": "2026-10-02",
-      "issued_at": "2026-09-27T21:37:17.420944+00:00",
-      "created_at": "2026-09-27T21:37:17.420944+00:00",
+      "due_date": "2026-10-03",
+      "issued_at": "2026-09-28T00:10:41.917334+00:00",
+      "created_at": "2026-09-28T00:10:41.917334+00:00",
       "amount_minor": 12000,
       "invoice_number": "E4-0002",
       "reversal_count": 0,
@@ -174,7 +174,7 @@
           "state": "outcome_unknown",
           "purpose": "full",
           "currency": "usd",
-          "updated_at": "2026-10-12T21:37:17.420944+00:00",
+          "updated_at": "2026-10-13T00:10:41.917334+00:00",
           "environment": "live",
           "amount_minor": 12000
         }
@@ -189,8 +189,8 @@
       "status": "void",
       "currency": "usd",
       "due_date": null,
-      "issued_at": "2026-09-22T21:37:17.420944+00:00",
-      "created_at": "2026-09-22T21:37:17.420944+00:00",
+      "issued_at": "2026-09-23T00:10:41.917334+00:00",
+      "created_at": "2026-09-23T00:10:41.917334+00:00",
       "amount_minor": 77700,
       "invoice_number": "E4-0004",
       "reversal_count": 0,
@@ -207,9 +207,9 @@
       "id": "e4000000-0000-4000-8000-0000000e0001",
       "status": "issued",
       "currency": "usd",
-      "due_date": "2026-09-02",
-      "issued_at": "2026-09-01T21:37:17.420944+00:00",
-      "created_at": "2026-09-01T21:37:17.420944+00:00",
+      "due_date": "2026-09-03",
+      "issued_at": "2026-09-02T00:10:41.917334+00:00",
+      "created_at": "2026-09-02T00:10:41.917334+00:00",
       "amount_minor": 350000,
       "invoice_number": "E4-0001",
       "reversal_count": 1,
@@ -221,7 +221,7 @@
           "state": "customer_action_required",
           "purpose": "installment",
           "currency": "usd",
-          "updated_at": "2026-10-12T21:37:17.420944+00:00",
+          "updated_at": "2026-10-13T00:10:41.917334+00:00",
           "environment": "live",
           "amount_minor": 20000
         }
@@ -241,15 +241,15 @@
       "title": "Test consulting agreement",
       "sealed": true,
       "status": "completed",
-      "sent_at": "2026-08-28T21:37:17.420944+00:00",
+      "sent_at": "2026-08-29T00:10:41.917334+00:00",
       "version": 1,
       "offer_id": "e4000000-0000-4000-8000-0000000f0001",
       "viewed_at": null,
       "voided_at": null,
-      "created_at": "2026-10-12T21:37:17.420944+00:00",
+      "created_at": "2026-10-13T00:10:41.917334+00:00",
       "expires_at": null,
       "declined_at": null,
-      "completed_at": "2026-09-01T21:37:17.420944+00:00",
+      "completed_at": "2026-09-02T00:10:41.917334+00:00",
       "commercial_terms_id": "e4000000-0000-4000-8000-0000000d0001"
     }
   ],
@@ -257,7 +257,7 @@
   "tenant_id": "e4000000-0000-4000-8000-00000000aaaa",
   "as_of_date": "2026-10-12",
   "contact_id": "e4000000-0000-4000-8000-0000000c0001",
-  "receipt_id": "c9d9ab02-d23f-4bb4-914a-c450a43b8bc1",
+  "receipt_id": "e486ff15-2713-4b83-a2d1-6d5d028f4251",
   "client_name": "Test Consulting Client",
   "not_recorded": [
     "payment_disputes",
@@ -268,5 +268,9 @@
   "terms_has_more": false,
   "invoices_has_more": false,
   "signings_has_more": false,
+  "business_time_zone": {
+    "zone": "America/New_York",
+    "state": "configured"
+  },
   "provider_execution": "none"
 }

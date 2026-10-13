@@ -10,8 +10,10 @@ const early = clone(); // just signed-up: agreement out for signature, nothing p
 early.signings[0].status='sent'; early.signings[0].sealed=false; early.signings[0].completed_at=null;
 early.invoices = early.invoices.filter((i:any)=>i.invoice_number==='E4-0001').map((i:any)=>({...i,manual_recorded_minor:0,provider_verified_live_minor:0,provider_verified_test_minor:0,allocated_minor:0,remaining_minor:i.amount_minor,reversal_count:0,open_payment_requests:[],failed_payment_requests:0}));
 early.work={...early.work,total:0,done:0,open:0,overdue:0,blocked:0,cancelled:0,undated_open:0,items:[]};
+// The state production produces today: no business time zone configured, so no due judgements.
+const nozone = clone(); nozone.business_time_zone = { state: 'missing', zone: null }; nozone.as_of_date = null;
 const empty = clone(); empty.terms=[];empty.signings=[];empty.invoices=[];empty.client_name='Test Empty Client';
 empty.work={...empty.work,total:0,done:0,open:0,overdue:0,blocked:0,cancelled:0,undated_open:0,items:[]};
 writeFileSync(new URL('./states.json', import.meta.url), JSON.stringify({
-  populated, early: composeClientEngagementStatus(early), empty: composeClientEngagementStatus(empty) }, null, 2)+'\n');
+  populated, early: composeClientEngagementStatus(early), nozone: composeClientEngagementStatus(nozone), empty: composeClientEngagementStatus(empty) }, null, 2)+'\n');
 console.log('ok');

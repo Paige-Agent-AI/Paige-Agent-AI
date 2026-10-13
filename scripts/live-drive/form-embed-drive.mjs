@@ -224,9 +224,14 @@ async function main() {
       await frame.waitForSelector("#gf-name", { timeout: 20000 });
       await frame.fill("#gf-name", "Dana Reyes"); await frame.fill("#gf-email", "dana@example.com"); await settle(1700);
       await frame.locator("button", { hasText: "Submit" }).click();
-      const alert = await frame.waitForSelector("[role=alert]", { timeout: 15000 });
-      const words = await alert.textContent();
-      check(Boolean(words) && !(await frame.locator("text=Thanks").count()), "error: a refused send says so in the frame and claims nothing", words ?? "");
+      // The form's own alert (the app shell has alert regions of its own, so match the words, not the role).
+      const alert = await frame.waitForSelector("[role=alert]:has-text('Lots of responses are coming in right now')", { timeout: 15000 }).catch(() => null);
+      const words = alert ? await alert.textContent() : null;
+      const resend = await frame.locator("button", { hasText: "Submit" }).isEnabled().catch(() => false);
+      check(Boolean(words) && !(await frame.locator("text=Thanks").count()) && resend, "error: a refused send says so in the frame, claims nothing, and lets the visitor try again", words ?? "no form alert");
+      await settle(600);
+      const fits = await frame.evaluate(() => ({ scroll: document.documentElement.scrollHeight, client: document.documentElement.clientHeight }));
+      check(fits.scroll <= fits.client + 2, "error: the frame grows to show the message and the button, no inner scrollbar", JSON.stringify(fits));
       await page.screenshot({ path: path.join(OUT, "desktop-1366-light-error.png"), fullPage: true });
       await ctx.close();
     }

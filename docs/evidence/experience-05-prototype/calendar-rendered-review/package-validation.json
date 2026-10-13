@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+  "projectionSourceSHA256": "06D13D2C1B819D913FFB181DA487E1FEAED88C10F03EB6D0B57C553101440CBF",
+  "checks": 186,
+  "passed": 186,
+  "captures": 86,
+  "relativeLinks": "All output/repository gallery links resolve; all86PNGs embedded once per gallery",
+  "manifest": "All86PNG hashes and dimensions verified",
+  "repositoryEvidenceBytes": 4713534,
+  "finishReview": "Qualified whole-review chain saved; current scored correction SHIP",
+  "ownerDesignRuling": "PENDING/UNVERIFIED",
+  "authenticatedAcceptance": "UNVERIFIED"
+}

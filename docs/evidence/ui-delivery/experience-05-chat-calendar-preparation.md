@@ -1,0 +1,50 @@
+# Weekly Internal Commitment Check — unmounted Chat/Calendar preparation
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Ten-question pre-edit routing, affected boundaries and canonical contract packet in docs/delivery/experience-05-weekly-commitment-check.md.
+PAIGE_UI_DESIGN: PASS: Incumbent SOLO contract, vendor accessibility guidance and five experience-quality modules read; docs/evidence/experience-05-prototype/incumbent-system-check.md records Mineral/Obsidian reuse.
+MATERIAL_FLOW_CHANGE: YES: Chat and existing Calendar inspect one recurring definition, actual next execution, latest attempt and separate last verified result. Human exact-revision consent and future-only controls remain canonical; simulation is unmounted and Chat/Live admission is a shared-system handoff.
+FLOW_PROTOTYPE: PASS: Current standalone Chat+Calendar flow and repository-relative86-PNG gallery: docs/evidence/experience-05-prototype/calendar-rendered-review/OWNER-REVIEW.md. The owner authorized this review prototype; owner design ruling remains UNVERIFIED before product mounting.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: A SOLO owner delegates one weekly read of personal canonical Planning commitments and can inspect verified results and future controls in the same conversation.
+VISUAL_DIRECTION: PASS: Existing Mineral/Obsidian palette, compact sans type, hairline rows and explicit evidence disclosure; no new primary dashboard or production shell mount.
+AUTOMATED_EVIDENCE: PASS:41 focused tests;61 actual PostgreSQL/engine/owner-reader cases in docs/evidence/experience-05-weekly-read-preparation-postgres-proof.json, including redrain adoption, uncertainty/history/DST, privacy and zero outbound effects; fixture-role restoration verified. Auth/context/trust/cron/network/display and operator preflight/deletion-plan/provider/inventory doubles are explicit. Prior51-case release evidence remains historical; neither proves Auth/customer acceptance or production retirement.
+STATIC_EVIDENCE: PASS: Direct strict typing of the unmounted reader/projection, app ratchet10/10, build, definer and exact-signature ACL, migration-version, declaration and Capability Kit anti-bypass guards. No lint exception, admission tuple, runtime Chat/Live import or Calendar booking write is added.
+RENDERED_EVIDENCE: PASS: Artifact16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090 embeds canonical projection06D13D2C1B819D913FFB181DA487E1FEAED88C10F03EB6D0B57C553101440CBF; current157 main +14 negative +15 reviewer-branch checks PASS and86 actual PNG captures. Exact manifest/current proofs/gallery and non-author full-review/scoped-correction chain are in docs/evidence/experience-05-prototype/calendar-rendered-review/. Owner ruling is UNVERIFIED.
+BEHAVIORAL_EVIDENCE: PASS:186 browser checks drive the actual shared projection over local canonical-shaped mocks through both surfaces, human consent/readback, execution/failure/uncertainty, receipt/history, exact-revision future controls, refusal/errors and later conversation. Current proof files are docs/evidence/experience-05-prototype/calendar-rendered-review/current/browser-proof.json and its negative/reviewer branch companions.61 SQL/engine cases separately prove the local execution seams; authenticated presentation is UNVERIFIED.
+AUTHENTICATED_RUNTIME: UNVERIFIED: Owner's verified2026-10-12 directive designates Antonio Cook's existing customer account; shared QA coordinates genuine actor/workspace/role/scope and protected sessions. No authenticated customer browser or ordinary production Chat/Live exchange was attempted.
+KEYBOARD_FOCUS: PASS: Current Chromium proof covers labels/resolved ARIA/unique IDs, Tab confirmation, safe native-dialog initial focus/Escape return, thread semantics and mobile conversation focus. Not a screen-reader or browser-chrome acceptance claim.
+ZOOM_REFLOW: UNVERIFIED: Narrow320 CSS-pixel sample passed, but root-font-size sampling does not establish actual200-percent browser/text zoom; mounted shell reflow remains an acceptance task.
+REDUCED_MOTION: PASS: Local browser reduced-motion emulation observed no result animation; incumbent opacity feedback has an immediate reduced-motion alternative.
+STATE_COVERAGE: PASS: One process across both surfaces: requested, authorization/readback pending, scheduled/held, running/completed/failed/unknown, historical receipt, pause/edit/resume/cancel, in-flight original revision, stale/refused/unavailable/lost-response controls, later conversation, missing/invalid/display-zone changes, ISO7/DST and off-hours dated execution points.
+TRUTHFUL_STATE_LABELS: PASS: Backend completed status requires matching observation and durable receipt; actual next is absent while held. Final prototype has no owner replay command, settled failures remain recorded, and absence-only uncertain readback stays unknown; committed observation plus receipt may be adopted.
+SOLO_UI: YES: SOLO is the intended customer shell; only an unmounted review artifact is delivered here.
+UNVERIFIED: Owner design approval, mounted SOLO geometry, real zoom/screen-reader drive, scoped official-account authenticated QA, weekly Chat/Live admission, candidate migration/source deployment and customer acceptance remain separate gates. Prior backend release is verified DARK; candidate preparation is not released.
+
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Standalone prototype capture exists; actual SOLO closed-shell containment was not mounted or exercised.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Standalone prototype capture exists; actual SOLO open-PAIGE geometry was not mounted or exercised.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Standalone prototype capture exists; actual SOLO closed-shell containment was not mounted or exercised.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Standalone prototype capture exists; actual SOLO open-PAIGE geometry was not mounted or exercised.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Standalone prototype capture exists; actual SOLO closed-shell containment was not mounted or exercised.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Standalone prototype capture exists; actual SOLO open-PAIGE geometry was not mounted or exercised.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Standalone prototype capture exists; actual SOLO closed-shell containment was not mounted or exercised.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Standalone prototype capture exists; actual SOLO open-PAIGE geometry was not mounted or exercised.
+
+OWNER_INTENT: The owner authorized the first Weekly Internal Commitment Check slice and ordinary engineering, with rendered review before materially new UI mount.
+MUST_NOT_HAPPEN: Another scheduler or execution ledger, seeded automatic permission, fabricated completion, unknown replay, private Planning leakage, provider effects or protected QA/INT-346 bypass.
+MUST_PRESERVE: Canonical process/event/act identity, current authority, existing tool Settings, Planning domain ownership, Rail receipts and original protected-system owners.
+ACCEPTANCE_CRITERIA: Exact owner consent, one real internal observation and receipt, future-only controls, authoritative reconciliation, cross-conversation readback and authenticated end-to-end proof through existing protected QA.
+MOTION_PURPOSE: Restrained opacity feedback indicates a local state transition; reduced motion removes it.
+PROTECTED_SEAMS: No actual Chat admission, Live tools, protected account flags, consequential capabilities or new production route is changed by this slice.
+INTERNAL_BUILD_IDENTITY: 6083a728f9d89b784cc3709875b0215c236d63b2; deployment=none; environment=development; migrations=PROOF_OWED(candidate20271029000000 not applied to production); edge=PROOF_OWED(candidate shared source not deployed); evidence=docs/delivery/experience-05-weekly-commitment-check.md
+RELEASE_CHANNEL: development: Current source preparation and rendered simulation; prior backend production DARK release is historical and independently re-read.
+RELEASE_CLASSIFICATION: internal-only: Prepared bounded read and Chat/Calendar review, with no mounted or activated customer workflow.
+CUSTOMER_RELEASE_IDENTITY: none: No customer release or authenticated outcome has been accepted.
+RELEASE_NOTE_REQUIRED: NO: Internal-only development preparation; no customer outcome/version or announcement is authorized.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: Prior production DARK substrate intact and candidate migration absent by read-only readback. Local prepared owner read/projection exists; weekly Chat/Live remains UNAVAILABLE and mounted/authenticated owner acceptance UNVERIFIED.
+RELEASE_RECOVERY: position=preserve occurrence identity, reconcile committed evidence before replay, keep trigger dark and use reviewed forward repair or scoped source rollback; reference=docs/delivery/experience-05-weekly-acceptance-packet.md.
+
+The current payload is source preparation from main07a10820ee4cf4e1c9fa1dac78d8c56aad4dacd8; exact-head independent review/CI are attached externally on the draft PR. No merge/deployment or owner design ruling is inferred. Prior released UI-evidence record and9E97/130/44 captures remain historical and unchanged.
+
+Scope/collisions: E5 owns the bounded ongoing-process read; Calendar bookings, Planning/domain semantics, E4 business-zone Setup and E1/E2/QA shared Chat/admission files remain independently owned. No protected handler, allowlist, Kit carve-out, operator/account policy, provider connection, trigger or cron change. Existing booking Rail/Mind FU-3/#786 state remains UNAVAILABLE.
+
+Evidence index: current gallery/manifest/proofs/finish chain are docs/evidence/experience-05-prototype/calendar-rendered-review/; actual SQL/engine evidence is docs/evidence/experience-05-weekly-read-preparation-postgres-proof.json; fresh production DARK/candidate-absent readback is docs/evidence/experience-05-calendar-preparation-dark-readback.json. Existing delivery/acceptance packets record routing, owner authority, recovery and exact prerequisites. Out-of-scope existing business-zone retirement disposition is parked in issue2111; the disclosed fixture deletion-plan double is not production retirement proof.

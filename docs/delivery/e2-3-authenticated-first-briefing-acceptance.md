@@ -11,6 +11,8 @@ the tool, the ANT-23 read-only admission, and the briefing narrative contract).
 
 ## What this package is
 
+**Execution disposition:** The first genuine customer drive returned **7 PASS / 2 FAIL**. The corrective candidate is PR #2107; the repeat remains held until independent exact-head review, required CI, deployment and source readback pass. This protocol does not itself establish acceptance.
+
 The exact test to run, the evidence each of the owner's nine verification points produces, how
 to capture the nonsecret readback, and the guardrails. The QA agent executes the conversation
 as an ordinary signed-in SOLO owner (the owner's account per the owner's designation) — no

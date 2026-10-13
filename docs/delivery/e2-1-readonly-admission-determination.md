@@ -85,6 +85,43 @@ in the conversational read set, under the matrix above. E2-2 implements the clas
 designed (narrowed offer + per-call guard; approvals, executor claims, settlement and the
 activation gate untouched); the independent security review ran on the E2-2 PR.
 
+## E4-S2 admission (2026-10-13, Experience 04)
+
+**Authority.** The Experience 04 E4-S2 continuation (ANT-51 / ANT-147) directs: *"Obtain explicit
+guarded admission and independent security review for any newly exposed Chat tool. The existing
+read-only admission list must not be silently expanded."* This section is that explicit record. The
+admission is conditional on the independent security review recorded below. Until that review
+returns SHIP, the set is not merged.
+
+**What is admitted.** Two tools, added to `CONVERSATIONAL_ADMITTED_READ_TOOLS` by name. The test
+pins the literal, so any further name fails CI:
+
+| Tool | Executor | Seat | Writes | What reaches the model |
+|---|---|---|---|---|
+| `read_client_engagement_status` | `public.find_clients_for_status`, then `public.read_client_engagement_status` | owner/admin of the active workspace (`_sales_invoice_actor`, in each body) | one capability receipt per call; no business data | a bounded projection of one client: agreement, installments, money by evidence class, invoices, delivery work, attention |
+| `read_business_time_zone` | `public.read_business_time_zone` | the same | one capability receipt per call | the configured zone (or missing/invalid), and whether this person may change it; an optional zone **check**, never a save |
+
+**How it differs from the E2-2 pair.**
+1. **New data class: per-client records.** The E2-2 reads aggregate business metrics. These read one
+   named client's agreement, invoices and work. The seat is the same owner/admin seat that already
+   sees this in Sales. Client names come from the established picker helper. No email, phone, note,
+   document body or storage key leaves the database.
+2. **A lookup by name.** `find_clients_for_status` takes owner-typed text. It treats `%` and `_` as
+   literal text, matches an email only when it is typed in full (a fragment never enumerates
+   addresses), returns at most five rows with a "more" flag, and is scoped to the active workspace.
+3. **Write adjacency.** `read_business_time_zone` sits beside an owner-only writer. The chat tool cannot
+   reach the writer: it calls the read only, takes no `save` argument (an extra key is refused before
+   any call), and its result tells the model it cannot save. Saving happens only in Setup, by the owner,
+   through `set_business_time_zone`, followed by a readback.
+4. **Receipts.** Each read writes one `record_capability_run` row, as `read_client_engagement_status`
+   has since E4-S1. No other state changes.
+
+**What does not change.** Actions, approvals, executor claims, settlement and the INT-346 activation
+gate stay exactly as E2-2 left them. Live reaches the same two reads through the ordinary tenant tool
+list, under the existing Live refusal of approvals.
+
+**Independent security review.** _Recorded on the E4-S2 PR before merge._
+
 ## Preserved boundaries
 
 - INT-346 stays DRAINING; #1822 remains the separate activation hard stop; nothing in E2-1

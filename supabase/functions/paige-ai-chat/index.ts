@@ -8,6 +8,7 @@ import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
+import { CLIENT_ENGAGEMENT_TOOLS, dispatchBusinessTimeZoneChat, dispatchClientStandingChat } from '../_shared/client-engagement/chat.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
 import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxIntelligenceChat, dispatchOrganizeChat } from '../_shared/inbox-intelligence/chat.ts';
@@ -296,7 +297,7 @@ const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 // E2-2 (2026-10-12, ANT-23 delegation): the block now names the ONE thing that turned on — the
 // narrowly approved read-only lookups — while every action, approval and external effect stays off.
 const PAIGE_CONVERSATIONAL_MODE_BLOCK = `CONVERSATIONAL MODE — ACTIONS ARE OFF THIS TURN.
-A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement), use them to answer questions about how the business is doing. A lookup is a read: it changes nothing and grants no action authority.
+A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement, read_client_engagement_status for where one client stands, read_business_time_zone for the business time zone), use them to answer questions about how the business and its clients are doing. A lookup is a read: it changes nothing and grants no action authority.
 If asked to create, change, send, schedule or delete anything: say plainly and briefly that you cannot run actions in this conversation right now, then give the answer, plan or wording in words. Never claim an action was performed, and never promise one for later.`;
 // E2-2 / ANT-23: the narrowly approved read-only Metric/Evidence admission set — the ONLY tools a
 // conversational turn may be offered and run while the interactive rollout stays staged (DRAINING).
@@ -304,7 +305,12 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // owner/admin seat on every read; neither claims an executor, seeks an approval, or settles
 // anything beyond the existing conversational FINAL receipt. Everything else stays withheld at the
 // offer and refused per-call. Widen this set only by an owner-recorded policy change.
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot"]));
+// E4-S2 (2026-10-13, Experience 04 owner continuation; determination recorded in
+// docs/delivery/e2-1-readonly-admission-determination.md with its independent security review):
+// read_client_engagement_status and read_business_time_zone, both caller-JWT reads whose SQL bodies re-prove the
+// active workspace and the owner/admin seat. Neither writes; the business time zone is saved only by
+// the owner in Setup (set_business_time_zone).
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -604,6 +610,8 @@ function describeStep(
     case "list_subagents": return { label: "Finding the right specialist", group: "shared" };
     // Research (shared)
     case "get_business_snapshot": return { label: failed ? "Couldn't take stock of your business" : "Taking stock of your business", group: "shared" };
+    case "read_client_engagement_status": return { label: failed ? "Couldn't check where that client stands" : "Checking where that client stands", group: "shared" };
+    case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checking your business time zone", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
 }
@@ -8184,6 +8192,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // rollout a conversational turn is offered ZERO tools, so this stays dark until the read-only
     // admission class admits it.
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS);
+    // E4-S2 client standing + business time zone: same Solo-workspace lens; caller-JWT reads only.
+    if (callerTier === "tenant") toolDefs.push(...CLIENT_ENGAGEMENT_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
@@ -16245,6 +16255,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch (e) {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "plan_error", note: "It did NOT happen — do not claim success." }) });
           }
+        } else if (tc.function.name === "read_client_engagement_status" || tc.function.name === "read_business_time_zone") {
+          // E4-S2 — last in the chain so no reviewed incumbent dispatch gains a dominating condition. Same finished-round, scope, cancellation and read-only Harness gates as every tool
+          // above. The caller-JWT client is mandatory: find_clients_for_status,
+          // read_client_engagement_status and read_business_time_zone re-prove the active workspace and
+          // the owner/admin seat in their own bodies and each write one capability receipt. The tenant
+          // comes from the server-resolved persona, never from the model. Neither tool writes.
+          const engagementScope = { tenantId: callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null };
+          const engagementArgs = JSON.parse(tc.function.arguments || "{}");
+          const result = tc.function.name === "read_client_engagement_status"
+            ? await dispatchClientStandingChat(engagementScope, supabaseClient, engagementArgs)
+            : await dispatchBusinessTimeZoneChat(engagementScope, supabaseClient, engagementArgs);
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }

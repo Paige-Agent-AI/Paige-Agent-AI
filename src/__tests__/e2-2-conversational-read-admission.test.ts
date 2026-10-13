@@ -10,13 +10,15 @@ import { BUSINESS_OPERATING_SNAPSHOT } from "../../supabase/functions/_shared/pa
 const CHAT = fs.readFileSync(path.resolve(__dirname, "../../supabase/functions/paige-ai-chat/index.ts"), "utf8");
 
 describe("E2-2 admission set (ANT-23)", () => {
-  it("names exactly the two INT-340 issuer read tools as conversational-admitted — no spread, no third name", () => {
+  it("names exactly the admitted reads — E2-2's two INT-340 issuer reads plus E4-S2's two — no spread, no fifth name", () => {
     const m = CHAT.match(/CONVERSATIONAL_ADMITTED_READ_TOOLS[^=]*=\s*new Set\(Object\.freeze\(\[([^\]]*)\]\)\)/);
     expect(m).not.toBeNull();
     // The captured literal must BE the pair: no spread, no unquoted tokens, nothing else. A
     // `...EXTRA` inside the brackets would evade a quoted-name extraction (the review's P2), so
     // pin the raw text itself.
-    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot"');
+    // E4-S2 (2026-10-13) widened it deliberately, by the recorded determination in
+    // docs/delivery/e2-1-readonly-admission-determination.md and its independent security review.
+    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone"');
   });
 
   it("the set is declared ReadonlySet and its comment forbids widening without an owner-recorded change", () => {

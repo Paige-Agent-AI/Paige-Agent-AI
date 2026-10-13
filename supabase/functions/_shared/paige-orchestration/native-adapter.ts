@@ -1,10 +1,12 @@
 // Paige Runtime Harness — Layer C · C2: the NATIVE synchronous executor(s).
 //
-// A "native" action is one whose effect is a governed IN-TENANT Paige write with a canonical RPC — no
-// external provider, no per-tenant connection/consent to negotiate. C2 ships exactly ONE: advancing a
+// A "native" action uses a governed IN-TENANT canonical RPC — no external provider or connection.
+// The original C2 write advances a
 // contact's journey stage (`crm.advance_journey_stage` action_kind → the tenant-aware `set_journey_stage`
 // RPC). The native ActionAdapter (registered in adapters.ts) routes an action_kind to its executor here, so
-// adding the next native action is one registry entry — never a journey-specific engine (owner:
+// Experience 05 adds the owner-personal Planning observation using that same registry and claim seam;
+// its atomic observation/receipt readback does not mutate Planning. Adding an action is a registry entry,
+// never a journey-specific engine (owner:
 // connector-neutral).
 //
 // The contract this honours (adapters.ts): dispatch performs the effect and RETURNS THE TERMINAL OUTCOME
@@ -30,6 +32,7 @@
 //     alone, so a crash-recovery drain (which no longer holds the governed args) still confirms honestly (§39 F4).
 
 import type { ActionAdapter, AdapterCapability, DispatchInput, DispatchResult } from "./adapters.ts";
+import { weeklyCommitmentExecutor } from "./weekly-commitment-adapter.ts";
 
 // ── The native action registry: exact action_kind → executor. §18 one home; extend, never fork. ─────────
 type NativeExecutor = {
@@ -159,6 +162,7 @@ const journeyStageExecutor: NativeExecutor = {
 // (crm_advance_journey_stage) that action-risk + the receipt use — the standard dotted-kind ↔ underscore-tool seam.
 const NATIVE_EXECUTORS: Readonly<Record<string, NativeExecutor>> = {
   "crm.advance_journey_stage": journeyStageExecutor,
+  "planning.weekly_commitment_check": weeklyCommitmentExecutor,
 };
 
 /** True when an action_kind has a registered native executor (adapters.ts routes these to "native"). */

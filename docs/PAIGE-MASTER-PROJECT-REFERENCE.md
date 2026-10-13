@@ -4,6 +4,8 @@
 
 **Locked:** 2026-08-09 by Antonio Cook + Cowork · **Owner:** Antonio · **Living:** update on every merge · **Cross-refs:** every deeper doc is in Section 9.
 
+> **2026-10-12 candidate — Experience 05 Weekly Internal Commitment Check, NOT SHIPPED:** The authorized backend slice extends existing process/event/act claims and canonical receipts, with owner-only schedule authorization, future controls and conversation-independent readback. It observes only the authorizing owner's bounded personal Planning commitments. The weekly trigger ships dark; private observations never enter shared Rail. The standalone rendered flow is a simulation and no new production UI is mounted. Chat/Live binding and authenticated acceptance on the owner's designated existing customer account remain UNVERIFIED; conflicting PC-1-only directions are superseded and INT-346 remains governed by its owner. Production readback confirms reader/executor absent and zero weekly events. The unapplied migration was moved to20271028000000 with unchanged SQL bytes after production advanced to20271027100000; exact corrected-head review/CI precede the authorized backend release. This is a candidate record, not a Section4.0 shipped entry. Contracts, proof and acceptance handoff: `docs/delivery/experience-05-weekly-commitment-check.md` and `docs/delivery/experience-05-weekly-acceptance-packet.md`.
+
 > **Current owner override — 2026-09-06:** Admin is a role, never a URL. The legacy privileged
 > route, its descendants, redirects, shell flags, and delayed authentication entry are retired.
 > Requests to those old addresses use the ordinary immediate unknown-route behavior. Authentication,

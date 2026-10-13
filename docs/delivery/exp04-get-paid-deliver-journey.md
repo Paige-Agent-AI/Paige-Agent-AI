@@ -754,7 +754,9 @@ event.
 
 **Production (2026-10-13).** Merged as `4fa99047` (#2085). Migration `20271026200000` persisted;
 setter and read body md5 equal the repo's (`a0dc183a…`, `9245d6c3…`); EXECUTE `authenticated` only;
-table RLS on, no grants, 0 rows. Overdue judgements are withheld everywhere until an owner sets a zone.
+table RLS on, no grants, 0 rows. Until an owner sets a zone, this read withholds every invoice and
+payment-schedule due/overdue judgement. Delivery-work `overdue` compares two instants and is unaffected;
+Collections and the Sales metric still use the UTC date (#2086).
 
 **Still owed.**
 - A place in the product for the owner to set the zone. `set_business_time_zone` is the callable

@@ -28,8 +28,12 @@
 //                         send-transactional-email; the provider's answer decides done|error
 //   n8n_workflow       -> file_action(owner.run_workflow, {workflow_key}) then advance_action -> run
 //   outbound_webhook   -> SSRF-guarded POST of the submission to a connected endpoint
-//   lead_reply_draft   -> (synthesized, never a row) a Solo business's new lead -> ONE owner.lead_followup
-//                         reply draft for the owner to approve; see appendLeadReply / lead-reply.ts
+//   lead_reply_draft   -> (synthesized, never a row) a new lead on a form that opted in
+//                         (growth_forms.lead_reply_enabled) of a standalone/sub_account business -> ONE
+//                         owner.lead_followup reply draft for the owner to review and send through the
+//                         governed email door; see appendLeadReply / lead-reply.ts. A form's own
+//                         paige_action automation for owner.lead_followup runs through the same
+//                         fileLeadReply (same gates, same draft brief, same once-per-submission rule).
 //
 // -- SECURITY (S9/S13) ------------------------------------------------------------------------
 // NOT user-facing. Authorized ONLY by (a) the service-role bearer, or (b) a valid Vault cron token
@@ -46,7 +50,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { isEmailAddress } from "../_shared/growth-intake.ts";
-import { appendLeadReply, fileLeadReply } from "./lead-reply.ts";
+import { appendLeadReply, fileLeadReply, LEAD_REPLY_ACTION_KIND } from "./lead-reply.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // NOTE: the outbound_webhook executor (which uses the shared SSRF guard) is DEFERRED for the first
 // live ship (see its case below); its only shared import is the pure address check above.
 // The fast-follow that re-enables outbound_webhook re-adds: import { assertPublicHttpUrl } from
@@ -285,14 +290,16 @@ Deno.serve(async (req) => {
     applyIntakeSettings(plan, form);
     appendDefaultIntake(plan, form, (rows?.length ?? 0) > 0);
     // The business that owns the claimed submission (tenantId above), read here to decide the
-    // lead-reply step. An unreadable row plans no reply draft; it never fails the lead.
-    const { data: business, error: businessErr } = await admin
+    // lead-reply step (and re-checked when it runs). An unreadable row plans and files no reply draft;
+    // it never fails the lead.
+    const { data: businessRow, error: businessErr } = await admin
       .from("tenants")
       .select("id, parent_tenant_id, account_type")
       .eq("id", tenantId)
       .maybeSingle();
     if (businessErr) console.warn(`[growth-process-submission] lead reply not planned: business read failed (${businessErr.code ?? "no code"})`);
-    appendLeadReply(plan, form, businessErr ? null : business);
+    const business = businessErr ? null : businessRow;
+    appendLeadReply(plan, form, business);
 
     // Existing dispatch ledger for this submission -> skip already-completed executors (idempotent).
     const { data: existingDispatches } = await admin
@@ -325,7 +332,7 @@ Deno.serve(async (req) => {
       let outcome: ExecOutcome;
       try {
         outcome = await runExecutor(p, {
-          admin, tenantId, submissionId, claimAttempt: claim.attempts, form, payload, submission,
+          admin, tenantId, submissionId, claimAttempt: claim.attempts, form, payload, submission, business,
           contactId, setContactId: (id: string) => { contactId = id; },
         });
       } catch (e) {
@@ -386,6 +393,8 @@ type ExecCtx = {
   payload: Record<string, unknown>;
   // deno-lint-ignore no-explicit-any
   submission: any;
+  /** The claimed submission's business row (id, parent_tenant_id, account_type), or null if unread. */
+  business: unknown;
   contactId: string | null;
   setContactId: (id: string) => void;
 };
@@ -535,6 +544,11 @@ async function runExecutor(
     case "surface_to_client": {
       const actionKind = s(p.config.action_kind) ?? s(p.targetConfig.action_kind);
       if (!actionKind) return { status: "error", result: {}, error: "no_action_kind_configured" };
+      // A reply draft ("Draft Paige's follow-up" = owner.lead_followup) goes through the one lead-reply
+      // path: the composer brief (draft_input), the tier/sender/suppression gates, the caps, and the
+      // once-per-submission rule (a lost race is "already drafted", never a failed lead). The automation
+      // row itself is the form's opt-in to drafting.
+      if (actionKind === LEAD_REPLY_ACTION_KIND) return await runLeadReply(ctx);
       const { data: filed, error: fileErr } = await admin.rpc("file_action", {
         p_action_kind: actionKind,
         p_title: `New submission - ${form.name ?? "form"}`,
@@ -726,15 +740,8 @@ async function runExecutor(
     // -- lead_reply_draft: ONE reply draft for the owner to approve (lead-reply.ts). Files the request
     // onto the action bus only when the intake's contact has an email and the business can send one;
     // it never sends, and every reason it does not file is reported and recorded on the submission. --
-    case "lead_reply_draft": { // === LEAD_REPLY_STEP (a literal: the case list is evaluated in order)
-      const idn = extractIdentity(payload, form.schema_json);
-      return await fileLeadReply(admin, {
-        tenantId, submissionId, formId: form.id, formName: s(form.name),
-        contactId: ctx.contactId,
-        answers: labelledAnswers(payload, form.schema_json),
-        visitorName: [idn.firstName, idn.lastName].filter(Boolean).join(" ").trim() || null,
-      });
-    }
+    case "lead_reply_draft": // === LEAD_REPLY_STEP (a literal: the case list is evaluated in order)
+      return await runLeadReply(ctx);
 
     // -- outbound_webhook: DEFERRED (fast-follow). ----------------------------------------------
     // Held out of the first live ship on purpose. Two things must land together before a service-role
@@ -759,6 +766,21 @@ async function runExecutor(
     default:
       return { status: "error", result: {}, error: `unknown_executor:${p.executor}` };
   }
+}
+
+// -- The one lead-reply path, shared by the synthesized lead_reply_draft step and a form's own
+// owner.lead_followup automation. Everything it reads comes from the claimed submission: its tenant,
+// its business row, the intake's contact and the visitor's labelled answers (identity numbers already
+// dropped by labelledAnswers). The environment reader and the pre-send check are the email door's own.
+async function runLeadReply(ctx: ExecCtx): Promise<ExecOutcome> {
+  const { admin, tenantId, submissionId, form, payload } = ctx;
+  const idn = extractIdentity(payload, form.schema_json);
+  return await fileLeadReply(admin, {
+    tenantId, business: ctx.business, submissionId, formId: form.id, formName: s(form.name),
+    contactId: ctx.contactId,
+    answers: labelledAnswers(payload, form.schema_json),
+    visitorName: [idn.firstName, idn.lastName].filter(Boolean).join(" ").trim() || null,
+  }, { env: (key: string) => Deno.env.get(key), preSendCheck: runPreSend });
 }
 
 // -- A form's alert address, applied to every form (with or without automation rows). --

@@ -124,6 +124,12 @@ on:
       - "supabase/tests/exp04_client_engagement_status.sql"
       - "scripts/proof/exp04-client-status-parity.mjs"
       - "supabase/functions/_shared/client-engagement/**"
+      # Experience 03 S3 — the lead reply: its proof, its migration, and the three functions whose
+      # contract it pins (the drafter, the filer; the approve door is listed above).
+      - "supabase/tests/exp03_lead_reply_draft.sql"
+      - "supabase/migrations/20271030000000_exp03_lead_reply_once_per_submission.sql"
+      - "supabase/functions/paige-action-worker/**"
+      - "supabase/functions/growth-process-submission/**"
 
 permissions:
   contents: read
@@ -359,6 +365,15 @@ jobs:
       - name: Experience 04 client status composer parity over the real read
         if: ${{ !cancelled() }}
         run: node --experimental-strip-types scripts/proof/exp04-client-status-parity.mjs postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+      # Experience 03 S3 "PAIGE works your leads": one reply draft per submission; the per-form
+      # opt-in set only through growth_form_set_intake (both signatures); no outbound-message approval
+      # (a reply, or a legacy client.followup) marked approved/sent without a provider-accepted governed
+      # send of the same business and person; lead_reply_record_send scope and every send state —
+      # driven through the governed email door's real prepare/claim/finalize.
+      - name: Experience 03 lead reply draft, opt-in and governed-send guard (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp03_lead_reply_draft.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.

@@ -75,6 +75,15 @@ vi.mock("./data/useSoloBusinessContext", () => ({
     refresh: state.refresh,
   }),
 }));
+// Business profile mounts the business time zone section, which reads its own store; its behaviour is
+// proven in setup-business-time-zone.test.tsx. Here it is a settled double so these tests stay isolated.
+vi.mock("./data/useBusinessTimeZone", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./data/useBusinessTimeZone")>()),
+  useBusinessTimeZone: () => ({
+    load: { status: "ready", value: { state: "configured", zone: "America/New_York", setAt: "2026-10-12T20:00:00Z", localDate: "2026-10-12", canSet: true } },
+    saving: false, refresh: async () => {}, save: async () => ({ ok: false, kind: "failed" }),
+  }),
+}));
 vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => ({ confirm: state.confirm, dialog: null }),
 }));
@@ -155,6 +164,17 @@ async function setValue(
 }
 
 describe("canonical Solo Setup business context", () => {
+  it("mounts the business time zone on Business profile, and only there (E4-S2)", async () => {
+    const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile");
+    const section = host.querySelector("section#business-time-zone");
+    expect(section?.querySelector("h2")?.textContent).toBe("Business time zone");
+    expect(section?.textContent).toContain("America/New_York");
+    await act(async () => root.unmount());
+    const other = await mount("100", "/solo/100/settings/setup/direction");
+    expect(other.host.querySelector("section#business-time-zone")).toBeNull();
+    await act(async () => other.root.unmount());
+  });
+
   it("opens the requested child URL and supplies real sibling links", async () => {
     const { host, root } = await mount(
       "100",

@@ -112,6 +112,35 @@ export const FLOWS = [
         intent: "after the switch, no record from the prior tenant is visible — marker crossTenantBleed=false" },
     ],
   },
+  {
+    // Experience 04 E4-S2 owner acceptance (2026-10-13). Run on the OFFICIAL QA account — the owner's
+    // existing Solo customer account (PC-1 superseded) — with ordinary customer sign-in, never Operator
+    // access. The ONE mutation is that account's own business time zone, set to the owner's real zone
+    // (reversible: Setup › Business profile › Business time zone). No client record, payment, message
+    // or provider is touched. INT-346 stays staged: PAIGE reads and checks the zone in chat; the owner
+    // saves it in Setup. Paths are relative to /solo/<account>; the runner resolves the account.
+    id: "exp04-business-time-zone-acceptance",
+    title: "E4-S2 — chat ready, PAIGE resolves the zone, owner confirms, saved, read back, used for due dates, survives re-entry",
+    actor: "solo-qa-owner",
+    steps: [
+      { name: "1. sign in as the Solo owner", expect: STEP_EXPECT.RENDER, semantic: true, path: "/login",
+        intent: "ordinary customer sign-in opens the owner's Solo workspace (not Operator, not a support session)" },
+      { name: "2. PAIGE Chat finishes initializing", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account",
+        intent: "within 10 s 'Loading your conversations before you can write to PAIGE.' is gone and the composer accepts text — markers composerWritable=true, loadingMs recorded; if it never clears, record the paige_chat_threads request status/timing (the one dependency) and stop" },
+      { name: "3. the owner asks to change the business time zone", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account",
+        intent: "owner types e.g. 'My business runs on Chicago time' — PAIGE calls read_business_time_zone (step label 'Checking your business time zone') and states the current setting" },
+      { name: "4. PAIGE offers the correct validated IANA zone", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account",
+        intent: "PAIGE names America/Chicago (Central Time) with its local time, asks the owner to confirm, says it is NOT saved yet and points to Setup › Business profile › Business time zone — marker claimedSaved=false" },
+      { name: "5. the owner confirms the change", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account/settings/setup/business-profile",
+        intent: "owner picks Chicago, sees 'Save Central Time — America/Chicago?', presses Save time zone; typing 'Denver' must not highlight UTC (word matching)" },
+      { name: "6. the setting persists and reads back", expect: STEP_EXPECT.READBACK, path: "/solo/:account/settings/setup/business-profile",
+        intent: "'Saved and read back from your business record: America/Chicago.' appears, and a page reload still shows Central Time · Chicago — marker persisted=true" },
+      { name: "7. payment due-date reporting uses the saved zone", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account",
+        intent: "owner asks 'where does <a client> stand?' — the answer names the business time zone America/Chicago and judges due/overdue (no 'due dates are on hold'); with no client records it says so plainly and never invents money" },
+      { name: "8. logout and re-entry keep the setting", expect: STEP_EXPECT.READBACK, path: "/solo/:account/settings/setup/business-profile",
+        intent: "sign out, sign back in, open Setup — Central Time · Chicago is still shown; asking PAIGE again reports America/Chicago — marker persisted=true" },
+    ],
+  },
 ];
 
 /** Resolve each step's relative `path` against the configured base URL for the authenticated run. */

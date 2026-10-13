@@ -17,6 +17,7 @@ let offeredToolCount = null;
 let routeIntent = 'answer';
 let modelStopReason = 'end_turn';
 let modelReply = 'Answered in words.';
+let readToolUse = null; // E4-S2: an ADMITTED read the model calls on its first round, e.g. { name, input }
 globalThis.fetch = async (url, opts) => {
   if (!String(url).includes('api.anthropic.com')) return new Response('{}', { status: 503 });
   const body = JSON.parse(opts.body);
@@ -28,6 +29,13 @@ globalThis.fetch = async (url, opts) => {
   if (danglingStream) {
     // A provider connection that dies mid-answer: bytes arrived, the turn never finished.
     return new Response('event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":1}}}\n\nevent: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Partial answ"}}\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
+  }
+  if (readToolUse && modelCalls === 1) {
+    const readEvents = [{ type: 'message_start', message: { usage: { input_tokens: 1 } } },
+      { type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'tool-read', name: readToolUse.name } },
+      { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: JSON.stringify(readToolUse.input) } },
+      { type: 'message_delta', delta: { stop_reason: 'tool_use' }, usage: { output_tokens: 1 } }, { type: 'message_stop' }];
+    return new Response(readEvents.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(''), { headers: { 'Content-Type': 'text/event-stream' } });
   }
   if (!emitToolUse || modelCalls > 1) {
     return new Response('event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":1}}}\n\nevent: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Answered in words."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}}\n\nevent: message_stop\ndata: {"type":"message_stop"}\n\n'.replace('"stop_reason":"end_turn"', `"stop_reason":${JSON.stringify(modelStopReason)}`).replace('"text":"Answered in words."', `"text":${JSON.stringify(modelReply)}`), { headers: { 'Content-Type': 'text/event-stream' } });
@@ -290,6 +298,48 @@ receipts.length = 0; modelCalls = 0; routeIntent = 'act';
 rec = scenario();
 const misclassifiedDraft = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Draft a follow-up message in words.' }] }, id(37)));
 assert.ok((await misclassifiedDraft.text()).includes(modelReply), 'advisory act classification must not erase a known pure-prose draft');
+// E4-S2 — an action-worded status request answered by an ADMITTED read keeps its grounded answer
+// ("get me ..." is classified act); the same read followed by a claim that something was done is still refused.
+const zoneRpcs = { rpcs: { current_user_tenant_id: { data: tenant, error: null }, is_tenant_admin_as: { data: true, error: null }, agency_can_manage_child: { data: false, error: null }, read_business_time_zone: { data: { state: 'missing', zone: null, set_at: null, local_date: null, can_set: true }, error: null } } };
+receipts.length = 0; modelCalls = 0; routeIntent = 'act'; readToolUse = { name: 'read_business_time_zone', input: {} };
+modelReply = 'Your business time zone is not set yet, so due dates are on hold.';
+rec = scenario(zoneRpcs);
+const groundedRead = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Get me my business time zone status.' }] }, id(40)));
+const groundedWire = await groundedRead.text();
+assert.equal(rec.rpc.filter(c => c.name === 'read_business_time_zone').length, 1, 'the admitted read ran on the caller session');
+assert.ok(groundedWire.includes(modelReply), 'a grounded admitted-read answer is not replaced by the action refusal');
+assert.ok(groundedWire.includes('No business action was run.'), 'the actions-unavailable line is still added beneath a kept read answer');
+assert.ok(groundedWire.indexOf(modelReply) < groundedWire.indexOf('No business action was run.'), 'the answer leads; the line follows');
+assert.equal(rec.rpc.find(c => c.name === 'paige_chat_interactive_settle').args.p_bundle_ref.turn_state.state, 'FINAL');
+receipts.length = 0; modelCalls = 0; modelReply = 'Done. I’ve created the task.';
+rec = scenario(zoneRpcs);
+const readThenClaim = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Get me my business time zone status.' }] }, id(41)));
+const readThenClaimWire = await readThenClaim.text();
+assert.ok(!readThenClaimWire.includes('I’ve created the task.'), 'a read does not license a false completion claim');
+assert.ok(readThenClaimWire.includes('Actions are unavailable in this conversation'), 'a read plus a claimed action still gets the truthful refusal');
+// A completion claim the phrase check misses is never left standing alone: the no-action line follows it.
+receipts.length = 0; modelCalls = 0; modelReply = 'Acme is current. Task created for Friday.';
+rec = scenario(zoneRpcs);
+const missedClaim = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Check my time zone and create a follow-up task.' }] }, id(42)));
+const missedClaimWire = await missedClaim.text();
+assert.ok(missedClaimWire.includes('No business action was run.'), 'a missed completion phrase is contradicted by the no-action line');
+// An unbacked card claim after a grounded read: the claim fallback replaces the text and keeps the no-action line.
+receipts.length = 0; modelCalls = 0; modelReply = 'Your approval card is ready below.';
+rec = scenario(zoneRpcs);
+const cardClaim = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Get me my business time zone status.' }] }, id(44)));
+const cardClaimWire = await cardClaim.text();
+assert.ok(!cardClaimWire.includes('Your approval card is ready below.'), 'an unbacked card claim is not left standing');
+assert.ok(cardClaimWire.includes('No business action was run.'), 'the no-action line survives the claim fallback');
+// A read that was refused is not grounding: the reply is replaced, exactly as when nothing was read.
+receipts.length = 0; modelCalls = 0; modelReply = 'Your business time zone looks fine to me.';
+rec = scenario({ rpcs: { ...zoneRpcs.rpcs, read_business_time_zone: { data: null, error: { code: '42501', message: 'x' } } } });
+const refusedRead = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Get me my business time zone status.' }] }, id(43)));
+const refusedReadWire = await refusedRead.text();
+assert.equal(rec.rpc.filter(c => c.name === 'read_business_time_zone').length, 1);
+assert.ok(!refusedReadWire.includes(modelReply), 'an ungrounded reply after a refused read is not kept');
+assert.ok(refusedReadWire.includes('Actions are unavailable in this conversation'));
+readToolUse = null;
+
 routeIntent = 'answer'; modelReply = 'Answered in words.'; receipts.length = 0; modelCalls = 0;
 rec = scenario();
 const knownAct = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(38)));

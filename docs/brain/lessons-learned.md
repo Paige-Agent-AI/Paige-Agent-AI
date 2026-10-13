@@ -6,6 +6,12 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### Small functional history does not prove recurring-status read performance (2026-10-13, #2112)
+
+**Symptom → root cause → rule.** The weekly status getter passed functional, receipt, privacy and execution proofs, but its added per-process historical result lookup had no predicate/recency index. Fifty outer process rows did not bound each process's accumulated event/receipt scan. A post-merge P2 correctly identified that missing proof.
+
+**Rule:** measure the actual owner RPC over accumulated owner and foreign history, inspect its natural `EXPLAIN (ANALYZE, BUFFERS)` plan and keep the correlation/security negatives. Index both the recency predicate and the existing receipt string comparisons; never weaken evidence validation to improve latency. Report timeouts as censored lower bounds. Applied migrations stay immutable: a new forward migration repairs access paths without turning a dark recurring trigger, calendar entry or capability declaration into execution authority. The bounded repair/proof and its exact deployment boundary are recorded in `../delivery/experience-05-weekly-history-performance-repair.md`.
+
 ### A migration that deadlocked against a schema dump, and the header that said it would half-apply (2026-10-13, #2099)
 
 **Symptom → root cause → rule.** The #2099 migration passed every proof and CI. Its first production

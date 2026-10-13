@@ -18,17 +18,17 @@ REDUCED_MOTION: NOT_APPLICABLE: No motion change.
 STATE_COVERAGE: PASS: Existing future-only controls and execution states stay unchanged; new history cases preserve a newer ambiguous attempt plus older verified completion, and refuse mismatched or missing receipt correlations.
 TRUTHFUL_STATE_LABELS: PASS: Bulk-seeded history is explicitly synthetic; measured local query performance does not establish production or authenticated customer acceptance.
 SOLO_UI: NO: Backend index repair with no SOLO interface source or mounting.
-UNVERIFIED: Production apply/readback, independent exact-head review/CI until attached; owner design, Chat/Live admission, protected fixtures, activation and authenticated weekly acceptance remain separate.
+UNVERIFIED: Owner design, weekly Chat/Live admission, protected fixtures, activation and authenticated weekly acceptance remain separate; merged-main CI tracked independently until observed.
 OWNER_INTENT: Repair #2112's historical lookup performance through one bounded forward cycle and preserve the DARK release.
 MUST_NOT_HAPPEN: Applied migration rewrite, second scheduler/ledger, unknown replay, admission bypass, cron, provider effect or real-account modification.
 MUST_PRESERVE: Tenant/active-owner permissions, receipt correlation, canonical process/event/act identity, future-only controls and separate design/QA gates.
 ACCEPTANCE_CRITERIA: Natural index plans and measured actual getter over 10,000 and 100,000 seeded history rows; tenant/role/correlation negatives; independent non-author review and exact-head CI; read-only DARK production verification.
 MOTION_PURPOSE: NONE: No motion change.
 PROTECTED_SEAMS: Execution authority, Harness/Gateway/Rail, RLS, scheduling and Chat/Live admission are unchanged; actual disposable proof verifies adjacent behavior.
-INTERNAL_BUILD_IDENTITY: 7c2f9f10bc538cc5fe7ff9329facf7b68d24346d source base; exact corrective head/review/CI attach to PR; deployment=none observed for correction; environment=development; migrations=PROOF_OWED(20271030000000); edge=NOT_APPLICABLE; evidence=docs/delivery/experience-05-weekly-history-performance-repair.md.
-RELEASE_CHANNEL: development: Candidate index repair; intended guarded production deployment is not inferred.
+INTERNAL_BUILD_IDENTITY: cd2f1fad4abb9875597680ca37cfb4029912b825; deployment=dpl_2i2G48ZNsLJM4aXFWbPeqvtoNdpV; environment=production; migrations=APPLIED(20271030000000_experience05_weekly_history_indexes); edge=NOT_APPLICABLE; evidence=docs/evidence/experience-05-weekly-history-dark-release.json.
+RELEASE_CHANNEL: production: Internal-only DARK reliability repair; actual migration/index/body/ACL/guard/zero-effect and public build readback recorded.
 RELEASE_CLASSIFICATION: internal-only: Bounded reliability correction without mounted customer flow.
 CUSTOMER_RELEASE_IDENTITY: none: No owner-visible release or publication ruling.
 RELEASE_NOTE_REQUIRED: NO: Internal DARK repair; no customer announcement.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: Existing getter/declaration released DARK by #2112; corrective apply/readback PROOF OWED until observed; design PENDING, weekly conversational admission UNAVAILABLE and authenticated acceptance UNVERIFIED.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: Canonical status repair deployed DARK and verified read-only; owner design PENDING, weekly conversational admission UNAVAILABLE and authenticated acceptance UNVERIFIED.
 RELEASE_RECOVERY: position=transactional bounded apply, inspect actual state after failure, preserve DARK and require reviewed forward repair; reference=docs/delivery/experience-05-weekly-history-performance-repair.md.

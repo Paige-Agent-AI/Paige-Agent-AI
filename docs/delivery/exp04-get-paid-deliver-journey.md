@@ -833,3 +833,36 @@ Conversational Loop lane as #2105.
   `scripts/live-drive/flows/solo-governed-flows.mjs`, eight steps), run by the QA lane.
 - Saving the zone from chat, once INT-346 is activated, as a confirm-lane capability.
 - #2083, #2086 and #2105.
+
+
+### Release record (2026-10-13)
+
+**Released** to production in PR #2106 → main `6f73ade472d684b0b60fda73b1c0bc9a7511badb` (merged head `d3d792ff`). Exact production readback is in master §4.0.
+
+| Owner can… | State |
+|---|---|
+| Set the business time zone in Setup › Business profile, confirm the exact zone, and see "saved" only after readback | **Live.** Proven in unit tests and the harness drive (1058/1058); authenticated acceptance owed |
+| Ask PAIGE "where does Acme stand?" and get a grounded answer: agreement, installments, verified versus recorded money, outstanding versus genuinely overdue, delivery, next steps | **Live** in conversational turns; authenticated acceptance owed |
+| Tell PAIGE where the business is; PAIGE resolves and checks the zone, asks the owner to confirm, and points to Setup | **Live.** PAIGE never claims to have saved it |
+| Save the zone from chat | **Unavailable** until INT-346 is activated (separately governed) |
+| See due and overdue judged on the business calendar | **Live** once the owner saves a zone; production had 0 configured zones at release |
+| Use the Engagement panel | **Unmounted**, pending its own design approval |
+
+**Handoff to the QA lane: authenticated acceptance.**
+- **Account and sign-in:** the official Antonio Cook Solo account, by ordinary customer sign-in. Do not use PC-1, Operator access or a new tenant.
+- **Flow:** `exp04-business-time-zone-acceptance` in `scripts/live-drive/flows/solo-governed-flows.mjs`.
+- **Steps:**
+  1. open PAIGE Chat;
+  2. the composer becomes usable;
+  3. ask to set the time zone ("we're in Chicago");
+  4. PAIGE offers `America/Chicago` with its local time and does not claim to save it;
+  5. confirm and save in Setup;
+  6. "saved and read back" appears;
+  7. ask "where does <client> stand?": overdue is now judged on that calendar;
+  8. log out and back in: the setting persists.
+- **Also check:**
+  - verified money is not mixed with owner-recorded money;
+  - unknowns are not shown as zero;
+  - any action request gets "No business action was run.";
+  - the chat composer clears its "Loading your conversations" state (see #2105 if it does not).
+- **Safety:** no real payments, messages or provider charges.

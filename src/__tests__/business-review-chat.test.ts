@@ -70,6 +70,15 @@ describe("E2-1 registration", () => {
 });
 
 describe("E2-3a briefing narrative contract", () => {
+  it("#2102 narrates Sales' last completed UTC day cutoff without replacing current balance freshness", async () => {
+    const d = BUSINESS_SNAPSHOT_TOOLS[0].function.description;
+    const r = await dispatch({});
+    for (const text of [d, r.message]) {
+      expect(text).toMatch(/When presenting Sales evidence, explicitly state.*last completed UTC day/);
+      expect(text).toMatch(/current receivables balances.*as of now/);
+      expect(text).toMatch(/period headline.*does not replace.*cutoff/);
+    }
+  });
   // The owner's required answer shape for "how's my business doing, what needs attention, and
   // what should we work on today?": accurate evidence, source freshness, meaningful priorities,
   // appropriate recommendations, and missing information identified — never invented. The contract

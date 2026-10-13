@@ -1,0 +1,44 @@
+{
+  "observedAt": "2026-10-13T04:34:20.429Z",
+  "class": "PUBLIC_PRODUCTION_ARTIFACT_READ_ONLY",
+  "originalMerge": "1e8ea92039e4ee7151480b7041f8494535dd9c39",
+  "canonicalCommit": "1e8ea92039e4ee7151480b7041f8494535dd9c39",
+  "ancestry": {
+    "status": "IDENTICAL",
+    "aheadBy": 0,
+    "behindBy": 0,
+    "mergeBase": "1e8ea92039e4ee7151480b7041f8494535dd9c39",
+    "delta": "Exact #2109 release; reviewed and merged Welcome source/tests byte-identical",
+    "evidence": "Git diff reviewed699c1cb...merged1e8ea92 returned zero for Welcome source/tests"
+  },
+  "originalProductionDeployment": "dpl_EqRkdR2t7cyoPRwHoUEik6gwghz1",
+  "canonicalProductionDeployment": "dpl_EqRkdR2t7cyoPRwHoUEik6gwghz1",
+  "welcomeSourceSha256": "db0dde17af9d584d4085fd49d47407b5c076f37aeb7104e0ae5afcedcc6503a6",
+  "buildId": "1e8ea92039e4ee7151480b7041f8494535dd9c39-mv66pc1b",
+  "customerUpdate": null,
+  "version": {
+    "url": "https://paigeagent.ai/version.json?t=1791866057591",
+    "status": 200
+  },
+  "index": {
+    "url": "https://paigeagent.ai/assets/main-BBKFMsR3.js",
+    "status": 200
+  },
+  "welcome": {
+    "url": "https://paigeagent.ai/assets/Welcome-COYPGlLn.js",
+    "status": 200,
+    "sha256": "4635fed73083becd8264034e01557e6e35be8008e45e5458a82c51104f3d1546",
+    "markers": {
+      "current_user_tenant_id": true,
+      "active_tenant_id": true,
+      "solo-beta-enrollment-status": true,
+      "getUser": true,
+      "sign_in": false,
+      "failed": true
+    },
+    "markerLimit": "Literal substrings only; minification may remove enum names. Not actual browser/customer behavior."
+  },
+  "authenticated": false,
+  "rendered": false,
+  "privateDataRead": false
+}

@@ -33,13 +33,13 @@ MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tested — GrowthFormRenderer submit/success (renderer tests), growth_form_upsert and calendars writes (DB proof), affiliate-application-confirm (contract test src/__tests__/transactional-email-relay-closed.test.ts); unaffected — growth-public-submit, embed loader (#2088), BookingPage
 
 <!-- RELEASE_GOVERNANCE_POLICY — read docs/doctrine/release-governance-and-customer-update-policy.md -->
-INTERNAL_BUILD_IDENTITY: 473c9fd6853b5e47ce7a91d079d0521472d1ce7c; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271027100000 applies on merge via deploy-migrations; readback owed); edge=PROOF_OWED(dispatch-stage-automation, affiliate-application-confirm, paige-operator-sms-send deploy on merge via deploy-edge-functions); evidence=PR-2099
+INTERNAL_BUILD_IDENTITY: 473c9fd6853b5e47ce7a91d079d0521472d1ce7c; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271027100000 applies on merge via deploy-migrations and its schema_migrations row, grants, policies and triggers are read back on production after that); edge=PROOF_OWED(dispatch-stage-automation, affiliate-application-confirm, paige-operator-sms-send deploy on merge via deploy-edge-functions); evidence=PR-2099
 RELEASE_CHANNEL: development: PR #2099 branch claude/stoic-archimedes-pv4r8u-security; production on merge via the deploy pipelines
 RELEASE_CLASSIFICATION: internal-only: a security correction with no customer-visible change for legitimate data
 CUSTOMER_RELEASE_IDENTITY: none: internal security correction, no owner-decided customer release
 RELEASE_NOTE_REQUIRED: NO: no customer-visible surface change for legitimate links or flows
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the migration and three edge functions are not yet applied; once merged, LIVE only after the production readback of grants, policies, triggers and deployed function versions
-RELEASE_RECOVERY: position=forward-fix preferred; a revert of PR #2099 restores the prior (vulnerable) grants and policies and must not be done without a replacement; reference=PR #2099 and migration 20271027100000
+RELEASE_RECOVERY: position=forward-fix by a follow-up migration that CREATE OR REPLACEs the changed functions, policies and triggers, because a git revert does not reverse applied SQL and restoring the prior grants would reopen the consent forgery; the migration writes no data, so nothing needs restoring; reference=PR #2099 and migration 20271027100000_security_consent_provenance_and_form_links
 
 ## Scope and collisions
 

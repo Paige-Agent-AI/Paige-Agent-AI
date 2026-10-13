@@ -39,7 +39,9 @@
   // A form whose success action is "go to this page" asks the loader to move the visitor's whole page.
   var FORM_REDIRECT_EVENT = "paige-form-redirect";
   // The campaign tags a visit carries (the same keys the hosted form reads, src/lib/growth.ts readUtm).
-  var TAG_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ref", "gclid", "fbclid"];
+  // Not "ref": inside the frame Paige reads ?ref= as its own referral code, so a host page's ref would be
+  // mistaken for one.
+  var TAG_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "fbclid"];
   var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // The tag currently executing. Captured synchronously so each copy of the

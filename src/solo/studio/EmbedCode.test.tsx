@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmbedCode } from "./EmbedCode";
-import { embedSnippet } from "./embed-code";
+import { embedOrigin, embedSnippet } from "./embed-code";
 
 describe("embedSnippet", () => {
   it("is one tag: this app's loader, the form's id and its name as the frame's label", () => {
@@ -17,6 +17,20 @@ describe("embedSnippet", () => {
   });
   it("leaves the label out when the form has no name", () => {
     expect(embedSnippet("https://paigeagent.ai", "id", "  ")).not.toContain("data-title");
+  });
+});
+
+describe("embedOrigin", () => {
+  const at = (url: string) => { const u = new URL(url); return { protocol: u.protocol, host: u.host, hostname: u.hostname }; };
+  it("serves the loader from the Paige host the owner is on (the intake accepts paigeagent.ai and its subdomains)", () => {
+    expect(embedOrigin(at("https://paigeagent.ai/solo/1"))).toBe("https://paigeagent.ai");
+    expect(embedOrigin(at("https://app.paigeagent.ai/x"))).toBe("https://app.paigeagent.ai");
+    expect(embedOrigin(at("https://acme.paigeagent.ai/x"))).toBe("https://acme.paigeagent.ai");
+  });
+  it("falls back to the public host anywhere else, so copied code never points at a host the intake refuses", () => {
+    expect(embedOrigin(at("https://paige-agent-ai-git-x.vercel.app/x"))).toBe("https://paigeagent.ai");
+    expect(embedOrigin(at("http://localhost:5173/x"))).toBe("https://paigeagent.ai");
+    expect(embedOrigin(at("https://paigeagent.ai.evil.example/x"))).toBe("https://paigeagent.ai");
   });
 });
 
@@ -37,7 +51,7 @@ describe("EmbedCode", () => {
     const node = await render();
     expect(node.querySelector("h3")?.textContent).toBe("Put it on your website");
     await act(async () => { (node.querySelector("button") as HTMLButtonElement).click(); });
-    expect(writeText).toHaveBeenCalledWith(`<script src="${window.location.origin}/embed.js" data-form="f-1" data-title="Spring consult" async></script>`);
+    expect(writeText).toHaveBeenCalledWith(`<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="Spring consult" async></script>`);
     expect(node.querySelector("button")?.textContent).toBe("Copied");
     expect(node.querySelector("[role=status]")?.textContent).toBe("Paste it into your site's page editor.");
   });

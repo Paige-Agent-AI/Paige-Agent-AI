@@ -4,11 +4,11 @@
 // own origin, so they are filed, credited to a campaign and routed exactly as on the form's own page.
 // Shown only for a live form; taking the form offline makes the copy on the site say it isn't available.
 import React from "react";
-import { embedSnippet } from "./embed-code";
+import { embedOrigin, embedSnippet } from "./embed-code";
 
 
 export function EmbedCode({ formId, formName }: { formId: string; formName?: string | null }) {
-  const code = embedSnippet(window.location.origin, formId, formName);
+  const code = embedSnippet(embedOrigin(window.location), formId, formName);
   const [copy, setCopy] = React.useState<"idle" | "copied" | "failed">("idle");
   const codeRef = React.useRef<HTMLElement | null>(null);
   const onCopy = async () => {
@@ -27,7 +27,7 @@ export function EmbedCode({ formId, formName }: { formId: string; formName?: str
     <section className="vs-embed" aria-labelledby={`vs-embed-${formId}`}>
       <h3 id={`vs-embed-${formId}`}>Put it on your website</h3>
       <p>Paste this code where the form should appear on a page of your site. It fits the space it's given, and answers come into Paige exactly as they do on the form's own page.</p>
-      <pre className="vs-code" tabIndex={0} aria-label="Embed code"><code ref={codeRef}>{code}</code></pre>
+      <pre className="vs-code" tabIndex={0} role="region" aria-label="Embed code"><code ref={codeRef}>{code}</code></pre>
       <div className="vs-embed-row">
         <button type="button" className="vs-btn" onClick={() => void onCopy()}>{copy === "copied" ? "Copied" : "Copy code"}</button>
         <p className="vs-embed-status" role="status">

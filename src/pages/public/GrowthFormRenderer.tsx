@@ -229,7 +229,10 @@ function FormBody({ form, accent, onComplete, embedded = false }: { form: FormRo
       // loader (public/embed.js) moves its own page when asked (a framed page may not, without a fresh click);
       // the success card stays as the fallback, its Continue link aimed at the whole page.
       if (embedded) {
-        if (isEmbedded()) window.parent.postMessage({ type: "paige-form-redirect", formId: form.id, url: redirect }, parentOrigin());
+        // A parent that refuses the message (an opaque sandbox) can't stop the success card: the answer is saved.
+        try {
+          if (isEmbedded()) window.parent.postMessage({ type: "paige-form-redirect", formId: form.id, url: redirect }, parentOrigin());
+        } catch { /* the Continue link on the success card still works */ }
         setDone(true);
         return;
       }

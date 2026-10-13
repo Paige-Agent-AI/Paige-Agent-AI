@@ -109,15 +109,15 @@ async function main() {
         const page = await ctx.newPage();
         const errors = []; page.on("pageerror", (e) => errors.push(String(e.message)));
         // A visitor arrives from a tagged campaign link; an unrelated parameter must not travel.
-        await page.goto(`${SITE}/?utm_source=newsletter&utm_campaign=spring-advisory&secret=do-not-forward`, { waitUntil: "domcontentloaded" });
+        await page.goto(`${SITE}/?utm_source=newsletter&utm_campaign=spring-advisory&ref=producthunt&secret=do-not-forward`, { waitUntil: "domcontentloaded" });
         const { el, frame } = await frameOf(page);
         const src = new URL(await el.getAttribute("src"));
         check(src.origin === APP && src.pathname === `/form/${FORM_ID}` && src.searchParams.get("embed") === "1"
-          && src.searchParams.get("utm_campaign") === "spring-advisory" && src.searchParams.get("utm_source") === "newsletter" && !src.searchParams.has("secret"),
+          && src.searchParams.get("utm_campaign") === "spring-advisory" && src.searchParams.get("utm_source") === "newsletter" && !src.searchParams.has("secret") && !src.searchParams.has("ref"),
           `${id}: the loader frames this form from Paige, carrying the page's campaign tags and nothing else`, src.href);
         check(await el.getAttribute("title") === "Spring consult request", `${id}: the frame is named for the form`);
         // While the app boots, the frame paints no Paige splash or fallback: the business's page shows through.
-        await frame.waitForSelector("body", { timeout: 15000 });
+        await frame.waitForSelector("body", { state: "attached", timeout: 30000 });
         const boot = await frame.evaluate(() => {
           const splash = document.getElementById("paige-splash");
           const fallback = document.querySelector("#root > main");

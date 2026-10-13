@@ -26,10 +26,11 @@ export function embeddedFormTheme(): "light" | "dark" | undefined {
 export function parentOrigin(): string {
   try {
     const ao = (window.location as unknown as { ancestorOrigins?: DOMStringList }).ancestorOrigins;
-    if (ao && ao.length > 0) return ao[0];
+    // A sandboxed or opaque-origin parent reports "null", which postMessage refuses as a target.
+    if (ao && ao.length > 0 && ao[0] && ao[0] !== "null") return ao[0];
   } catch { /* cross-origin access can throw; fall through */ }
   if (document.referrer) {
-    try { return new URL(document.referrer).origin; } catch { /* malformed referrer */ }
+    try { const origin = new URL(document.referrer).origin; if (origin !== "null") return origin; } catch { /* malformed referrer */ }
   }
   return "*";
 }

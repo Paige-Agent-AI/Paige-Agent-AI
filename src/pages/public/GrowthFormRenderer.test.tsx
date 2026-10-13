@@ -336,3 +336,49 @@ describe("public form page, embedded on a business's site", () => {
     expect(link.getAttribute("target")).toBe("_top");
   });
 });
+
+describe("a success redirect, embedded", () => {
+  const REDIRECT = { ...FORM, success_action_json: { message: "Thanks", redirect_url: "https://acme.example/thanks" } };
+  let parentDescriptor: PropertyDescriptor | undefined;
+  afterEach(() => { if (parentDescriptor) Object.defineProperty(window, "parent", parentDescriptor); vi.unstubAllGlobals(); });
+  const framed = (postMessage: (...args: unknown[]) => void) => {
+    // Framed, the page reports its height; jsdom has no ResizeObserver.
+    vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+    parentDescriptor = Object.getOwnPropertyDescriptor(window, "parent");
+    Object.defineProperty(window, "parent", { value: { postMessage }, configurable: true });
+  };
+
+  it("asks the loader to move the visitor's page to the form's thank-you page", async () => {
+    const postMessage = vi.fn();
+    framed(postMessage);
+    state.rpc.mockResolvedValue({ data: [REDIRECT], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    await fillAndSubmit();
+    const redirect = postMessage.mock.calls.find(([m]) => (m as { type?: string }).type === "paige-form-redirect");
+    expect(redirect?.[0]).toEqual({ type: "paige-form-redirect", formId: "form-1", url: "https://acme.example/thanks" });
+    expect(text()).toContain("Thanks");
+  });
+
+  it("still shows the success card when the parent refuses the message (an opaque sandbox)", async () => {
+    framed(() => { throw new SyntaxError("Invalid target origin 'null'"); });
+    state.rpc.mockResolvedValue({ data: [REDIRECT], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    await fillAndSubmit();
+    expect(text()).toContain("Thanks");
+    const link = Array.from(container.querySelectorAll("a")).find((a) => a.textContent === "Continue") as HTMLAnchorElement;
+    expect(link.getAttribute("target")).toBe("_top");
+  });
+});
+
+describe("a form's redirect address", () => {
+  it("is never followed or linked unless it is a web address (a javascript: one would run on Paige's origin)", async () => {
+    state.rpc.mockResolvedValue({ data: [{ ...FORM, success_action_json: { message: "Thanks", redirect_url: "javascript:alert(document.domain)" } }], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render();
+    await fillAndSubmit();
+    expect(text()).toContain("Thanks");
+    expect(Array.from(container.querySelectorAll("a")).some((a) => /javascript:/i.test(a.getAttribute("href") ?? ""))).toBe(false);
+  });
+});

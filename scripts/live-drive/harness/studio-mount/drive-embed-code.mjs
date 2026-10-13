@@ -75,7 +75,8 @@ try {
   let ready = false;
   for (let i = 0; i < 60 && !ready; i++) { ready = await up(); if (!ready) await new Promise((r) => setTimeout(r, 500)); }
   if (!ready) throw new Error("Studio harness did not start.");
-  const expected = `<script src="${base.replace(/\/$/, "")}/embed.js" data-form="f-1" data-title="New client intake" async></script>`;
+  // The harness runs on 127.0.0.1, not a Paige host, so the code points at the public host (embed-code.ts embedOrigin).
+  const expected = `<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="New client intake" async></script>`;
   for (const theme of ["light", "dark"]) {
     for (const [w, h] of VIEWPORTS) {
       const id = `${theme}/${w}x${h}`;

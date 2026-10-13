@@ -4206,6 +4206,8 @@ Development evidence is separate: isolated actual PostgreSQL functions/rows, com
 
 Continuation preserves current main2fa3128595426ba3443408d50975011bd3667e60's authorized read class and protected effectful controls.180 pre-integration focused tests, isolated45-case SQL proof and32 native synthetic theme/context/layout captures support the bounded foundation; non-author finish review found no material regression. Delayed-checkpoint focus loss was reproduced and repaired. Final integration review/CI and release remain required; ca8880fa6 checks/preview do not establish this head. Native200%zoom/screen reader and ordinary-owner authentication remain unverified. New-customer admission also requires canonical public verification/provisioning, shared context hydration, logout/login and honest cross-module availability. Operator entry confers no membership; its owner-only denials are not owner-defect evidence.
 
+Read-only production metadata exposed a newer migration frontier20271026100000. The unrecorded interview checkpoint was renamed to20271027000000 with unchanged SQL bytes/hash; old local execution identity retained in evidence/experience-01-foundation/migration-renumbering.json. Final CI, normal deployment and production readback must prove the new version; no manual Auth/data mutation.
+
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)
 
 Grounded at `8b7f975` against read-only prod aggregates, with each LIVE claim adversarially verified. Full map and contract: [`brain/paige-operating-fabric-contract.md`](brain/paige-operating-fabric-contract.md). The gaps that block an owner asking *"give me a read on the last week"* in Chat or Live:

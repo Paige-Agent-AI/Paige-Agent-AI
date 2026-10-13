@@ -22,6 +22,8 @@ Source candidate is not shipped or authenticated acceptance. INT-346 remains DRA
 
 Continuation initially refreshed main c0a20243249739a00b2fa709729b323156cb125b, then reconciled2fa3128595426ba3443408d50975011bd3667e60. The latter carries owner-delegated ANT-23 read_business_metric/get_business_snapshot admission during DRAINING; retain those exact read gates and current main's LIVE snapshot registration. Interview proposal remains withheld; no effectful activation is added. Native rendering found premature focus while checkpoint controls were disabled; scoped return now waits for release with failing-first proof.180 pre-integration focused tests and32 native geometry/theme/state captures passed; non-author finish review is SHIP only for synthetic component evidence. Native200%zoom/screen reader, actual Chat, protected login and production remain unverified. Old invalid captures do not become acceptance.
 
+Experience01 pending checkpoint migration is20271027000000 after a byte-identical renumber above observed production frontier20271026100000. Its historical local proof version is retained explicitly in migration-renumbering.json; no production application is inferred.
+
 ## First vertical slice — Business Mission
 
 Current source implementation:

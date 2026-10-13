@@ -39,7 +39,7 @@ RELEASE_CLASSIFICATION: internal-only: a security correction with no customer-vi
 CUSTOMER_RELEASE_IDENTITY: none: internal security correction, no owner-decided customer release
 RELEASE_NOTE_REQUIRED: NO: no customer-visible surface change for legitimate links or flows
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the migration and three edge functions are not yet applied; once merged, LIVE only after the production readback of grants, policies, triggers and deployed function versions
-RELEASE_RECOVERY: position=forward-fix by a follow-up migration that CREATE OR REPLACEs the changed functions, policies and triggers, because a git revert does not reverse applied SQL and restoring the prior grants would reopen the consent forgery; the migration writes no data, so nothing needs restoring; reference=PR #2099 and migration 20271027100000_security_consent_provenance_and_form_links
+RELEASE_RECOVERY: position=forward-fix by a follow-up migration that CREATE OR REPLACEs the changed functions, policies and triggers, because a git revert does not reverse applied SQL and restoring the prior grants would reopen the consent forgery, and the migration writes no data, so nothing needs restoring; reference=PR #2099 and migration 20271027100000_security_consent_provenance_and_form_links
 
 ## Scope and collisions
 

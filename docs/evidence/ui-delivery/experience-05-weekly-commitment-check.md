@@ -35,7 +35,7 @@ MUST_PRESERVE: Canonical process/event/act identity, current authority, existing
 ACCEPTANCE_CRITERIA: Exact owner consent, one real internal observation and receipt, future-only controls, authoritative reconciliation, cross-conversation readback and authenticated end-to-end proof through existing protected QA.
 MOTION_PURPOSE: Restrained opacity feedback indicates a local state transition; reduced motion removes it.
 PROTECTED_SEAMS: No actual Chat admission, Live tools, protected account flags, consequential capabilities or new production route is changed by this slice.
-INTERNAL_BUILD_IDENTITY: f2e1a959fdd1f9e4ac73c8c49aaf9e4be6bc594b; deployment=local-unreleased-source-and-file-prototype; environment=development; migrations=APPLIED(20271027000000_experience05_weekly_commitment_check); edge=PROOF_OWED(production-native-event-dispatch-not-released); evidence=docs/evidence/experience-05-weekly-postgres-proof.json
+INTERNAL_BUILD_IDENTITY: 267f55e5c3fa80f92a55310b96b22820f38a16e6; deployment=local-unreleased-source-and-file-prototype; environment=development; migrations=APPLIED(20271027000000_experience05_weekly_commitment_check); edge=PROOF_OWED(production-native-event-dispatch-not-released); evidence=docs/evidence/experience-05-weekly-postgres-proof.json
 RELEASE_CHANNEL: development: Disposable local PostgreSQL and file prototype only; migration APPLIED refers exclusively to that local proof.
 RELEASE_CLASSIFICATION: internal-only: Unreleased source candidate and rendered review artifact.
 CUSTOMER_RELEASE_IDENTITY: none: No customer release or authenticated outcome has been accepted.

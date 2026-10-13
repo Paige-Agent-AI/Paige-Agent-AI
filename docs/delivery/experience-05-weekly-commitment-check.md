@@ -2,7 +2,7 @@
 
 Status: implemented ship-dark backend candidate and rendered review prototype; no production UI mount or authenticated customer acceptance. Overall PARTIAL.
 
-Grounded at main c0a20243249739a00b2fa709729b323156cb125b and rebased onto main 96a89501ac2d56dd7259fed5f102ef338dbc4939. Intended outcome: a SOLO owner authorizes one weekly read of their canonical Planning commitments, inspects verified results, controls future runs, and reads the same last/next status in a later conversation.
+Grounded at main c0a20243249739a00b2fa709729b323156cb125b, database/engine re-proven after rebase onto 96a89501ac2d56dd7259fed5f102ef338dbc4939, then rebased onto main 2fa3128595426ba3443408d50975011bd3667e60 (Campaigns/closeout changes; weekly execution substrate unchanged). Intended outcome: a SOLO owner authorizes one weekly read of their canonical Planning commitments, inspects verified results, controls future runs, and reads the same last/next status in a later conversation.
 
 ## Capability routing before edits
 

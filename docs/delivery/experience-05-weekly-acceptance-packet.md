@@ -4,7 +4,7 @@ Status: PREPARATION ONLY. Authenticated customer outcome UNVERIFIED. This packet
 
 ## Candidate and evidence boundary
 
-Candidate branch: `codex/experience05-weekly-commitment-check`, rebased onto main `96a89501ac2d56dd7259fed5f102ef338dbc4939` after initial grounding at `c0a20243249739a00b2fa709729b323156cb125b`. The final PR and exact head are recorded in its review/CI evidence, not inferred from this base. No merge or release has occurred. On production readback 2026-10-12, weekly reader/executor are absent, weekly occurrences zero and Chat protocol `{version:2,active:false}`. This is pre-release source evidence only.
+Candidate branch: `codex/experience05-weekly-commitment-check`, rebased onto main `2fa3128595426ba3443408d50975011bd3667e60` after initial grounding at `c0a20243249739a00b2fa709729b323156cb125b` and local proof at `96a89501ac2d56dd7259fed5f102ef338dbc4939`. Draft PR: https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2091. The final exact head is recorded in its review/CI evidence, not inferred from this base. No merge or release has occurred. On production readback 2026-10-12, weekly reader/executor are absent, weekly occurrences zero and Chat protocol `{version:2,active:false}`. This is pre-release source evidence only.
 
 The rendered standalone flow is a simulation; approval there does not authorize a real process. The backend reads real `plan_items`, uses existing process/event/act claims and atomic receipt evidence. The trigger ships dark. The read-only Chat/Live adapter is prepared but unmounted; current admission does not include it.
 

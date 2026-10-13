@@ -247,3 +247,124 @@ S3 currently owns `readiness.ts`, `comms-email-command`, `execute-approval/*` an
 - `/home/user/Paige-Agent-AI/src/solo/useConversations.ts` (unreachable)
 - `/home/user/Paige-Agent-AI/src/solo/SoloApp.tsx`
 - `/home/user/Paige-Agent-AI/src/components/tenant-relationships/workspaceModel.ts`
+---
+
+# Addendum 2026-10-13 — owner direction and decision prep
+
+## Owner product decisions (2026-10-13)
+
+1. **Personal mailbox import:** known business contacts only. No whole-mailbox import into CRM Conversations. A broader, explicitly authorised inbox experience may come later with its own consent, privacy controls and retention rules.
+2. **Lead creation:** unknown personal senders are never turned into leads automatically. PAIGE may recommend creating one; the owner confirms. Any future automation needs its own governed opt-in policy.
+3. **Tenant email privacy:** platform ownership grants no routine access to tenant personal email content. The production `messages_select` platform-owner branch must be corrected before public mailbox onboarding, keeping narrow operational diagnostics and auditable exceptional access.
+4. **Gmail scopes:** narrowest scopes that support the intended actions — no `gmail.modify` where read-only suffices.
+5. **iCloud:** prove SMTP 587 and IMAP 993 from the proposed Fly environment first; do not assume `paige-browser` is an appropriate mail transport. No new paid infrastructure without separate authorisation.
+
+## Decision prep (read-only research, adversarially checked: 23 claims, 20 confirmed, 0 wrong, 2 partial, 1 unverified)
+
+## (a) Google: one project or two
+
+**Spot checks**
+1. **Confirmed.** The inbox consent asks for `gmail.modify` + `gmail.labels` + `userinfo.email`, and the send consent asks for `gmail.send` + `userinfo.email` (`gmail-oauth-start/index.ts:169-176`). Calendar asks for `calendar.events.owned` + `userinfo.email` (`google-calendar-oauth-start/index.ts:118-121`). Every flow sends `include_granted_scopes=true`.
+2. **Confirmed.** `gmail-disconnect/index.ts:86` revokes the token at Google. `google-calendar-disconnect` has no revoke call (searched for `revoke`, no hits).
+3. **Confirmed.** Google's web-server OAuth page says revocation "removes all OAuth 2.0 scopes previously granted to a project … for all clients registered under that project", and that revoking a combined grant revokes all of its scopes together.
+4. **Confirmed.** Google's audience page (answer/15549945) says the 100-user cap is lifetime and cannot be reset. It applies only to requests for "unapproved sensitive or restricted scopes", not to requests asking "only approved" scopes. Testing mode allows 100 test users, and their grants expire after 7 days.
+5. **Confirmed.** Google's FAQ (answer/13463817) estimates "10 Business days" for sensitive review and "6 weeks" for restricted, both "not guaranteed". Google charges no assessment fee, and the assessment repeats yearly. The FAQ also does not say a restricted review delays a sensitive approval in the same project, so that point is correctly left UNVERIFIED.
+6. **Confirmed.** No code calls the Google Calendar API (searched `calendar/v3` and `googleapis.com/calendar` across `supabase/functions` and `src`, no hits). Production has 1 `staff_calendar_settings` row with 0 Google tokens, 0 Gmail connectors (all 8 connectors are `resend`), and 5 Google sign-in identities.
+7. **Confirmed.** The read gate accepts `gmail.readonly` or `gmail.modify`; organizing requires `gmail.modify` (`policy.ts:44-52`). The organize door calls `messages/{id}/modify`, `trash` and `untrash` (`comms-mailbox-command:232,235`), and its refusal says the consent "no longer includes" organization (`:112`).
+8. **Confirmed.** The privacy page's "Google API data" section (`Privacy.tsx:91-97`) does not say that Gmail content is sent to AI model providers.
+
+**Correction worth adding.** The plan's REPAIR row ("let the same user upgrade from send to inbox on the same connector row") does not work across two projects. A refresh token only works with the client that issued it. So the connector must record which client issued its token, and an upgrade becomes a new consent in project B. The report notes the client recording, but not that it breaks the plan's upgrade-in-place.
+
+**Summary for the owner**
+- **Recommendation: two Google Cloud projects.**
+  - **Project A (the existing client):** Calendar and `gmail.send`. These are sensitive scopes, with no security assessment, and review takes about 10 business days.
+  - **Project B (new):** the inbox, asking for `gmail.readonly` + `gmail.send` + `userinfo.email`. This is restricted, so it needs Google's review (about 6 weeks) plus the yearly CASA security assessment.
+- **The deciding reason.** Google revokes access per project. In one shared project, a Gmail disconnect (our code revokes at Google) also removes the user's Calendar access, and possibly their Google sign-in if that client is in the same project. B's lifetime cap of 100 users then goes only to inbox pilot users.
+- **What it costs.** No user is affected today: there are 0 Calendar tokens and 0 Gmail connectors. The work is a second consent screen, a second secret pair, and choosing the client at 5 code places. The connector must also record which client issued its token. Recording it in a new column needs owner approval (§00); deriving it from the consent purpose already in the signed state avoids that.
+- **Dropping `gmail.modify` and `gmail.labels`** loses label, archive and trash. That can come back later through incremental consent in project B.
+- **Owner actions:**
+  1. Choose two projects or one.
+  2. Choose the inbox scopes.
+  3. Create project B and install its secrets.
+  4. Submit A now; submit B, then hire a CASA lab when Google makes contact.
+  5. Choose the pilot setup for B: unverified "In production" with Google's warning screen, or Testing mode with a reconnect every 7 days.
+  6. Say whether Supabase Auth's Google sign-in client lives in project A.
+  7. Add an AI-processing disclosure to `/privacy` before the restricted submission.
+- **Money.** Google charges nothing. CASA prices come from vendor pages only (UNVERIFIED), at about $540–$6,000 a year, and replace the plan's "$675–$5,400".
+
+## (b) Canonical QA identity
+
+**Spot checks**
+1. **Confirmed.** ANT-21's description says, under "OWNER SUPERSEDING QA ACCOUNT DIRECTIVE — 2026-10-12": "Antonio Cook's existing PAIGE customer account is the official testing account … do not create another QA tenant … No personal-Google account linking or Operator impersonation". The older text ("PC-1 … ONLY default approved", Antonio's account as "a secondary OWNER-controlled alternative") is still in the body, so the stale-text finding stands.
+2. **Confirmed.** In production, user `93b0889e…` belongs to two businesses, both standalone with no parent:
+   - `36d626be…`: role owner, created 2026-09-13 06:38 UTC, and its only member.
+   - `e7f1b157…`: role admin only.
+3. **Confirmed.** The user has only a Google sign-in (0 other identities) and no execution-disabled flag. Neither business has `comms_provider_execution_disabled` set. `36d626be` has one active Resend connector and 0 pipelines. So no send-blocking floor applies, as `comms_provider_execution_allowed` shows (`20270602000104:32-58`).
+4. **Confirmed.** The PC-1 tenant `bcefc207…` has 0 rows. Its Auth user `0640f8f9…` still exists with 0 memberships.
+5. **Confirmed.** Searching for a recipient allowlist finds only `sendgrid-webhook-admin.test.ts`. `test-agency-preview` (`2de8ca80…`) is an agency with 1 member.
+6. **Confirmed.** The S2a package names `LIVE_DRIVE_EMAIL` / `LIVE_DRIVE_PASSWORD` or `storageState` (L18-20), says "identifiers stay in ANT-52" (L16), and lists "ids are recorded in ANT-52" (L117). The email plan says "QA-only allowlist" (L178) and "on ANT-52" (L187, L198). The line references the report gives are correct.
+
+**Caveat.** ANT-21 also says "Owner is handling PC-1 deletion; deletion completion is not verified or performed by QA". The orphan Auth user is something to report to the owner, not a QA defect. Small notes: a production read shows `e7f1b157` as standalone with no parent, unlike the history in CLAUDE.md §51. And the ANT-52 comment IDs were not opened.
+
+**Summary for the owner**
+- **No conflict.** ANT-21 and ANT-52 name the same account: your existing Solo account, using only the business `36d626be…` that you own. Never select `e7f1b157…`, where you are only an admin and which is a real business.
+- **Stale text.** ANT-21 still carries the superseded PC-1 sections and has no register entry for `36d626be`. Per the owner rulings, ANT-21 holds the account register and ANT-52 holds the execution results.
+- **Corrections to the S2a package:**
+  - Point identifiers at the ANT-21 register.
+  - Require the owned standalone business to be selected and verified at startup.
+  - Replace the password or exported-session sign-in with ordinary Google sign-in, because the account has no password.
+  - Allow one labelled synthetic pipeline, since the account has none.
+  - P1 (form notify) must be **Off**: the account has a live sending connection, so any notify address would send real email.
+  - Make clear the `.invalid` lead address is backup, not the no-send control.
+- **Corrections to the email plan:**
+  - The test mailboxes do not exist.
+  - The recipient allowlist does not exist and would be new backend work needing your approval (§00).
+  - Do not use your own Gmail as the fixture, because sync would import your real mail.
+  - Connecting a test mailbox to your real business needs your recorded approval.
+  - A second actor needs its own authorisation, with an expiry, revocation and readback.
+  - Tier checks: Solo on your account, Agency negatives on `test-agency-preview`, the rest as database-level proofs or UNAVAILABLE.
+- **Only you can do these:**
+  1. Approve and create 1 Google test account, plus listing it as a test user in Google Cloud.
+  2. Approve and create 1 Apple ID with two-factor authentication and an app-specific password.
+  3. Approve and create 2 team-owned recipient mailboxes.
+  4. Add the ANT-21 register entry.
+  5. Decide the orphan PC-1 Auth user.
+
+## (c) iCloud: proving the transport and where it runs
+
+**Spot checks**
+1. **Confirmed.** Supabase's limits page says "Outgoing connections to ports `25` and `587` are not allowed." It does not mention 465 or 993. Limits are 2 s of CPU and 150 s / 400 s wall clock.
+2. **Confirmed.** Apple's page (102525) gives `imap.mail.me.com:993` (SSL required, TLS as fallback) and `smtp.mail.me.com:587` (SSL required, TLS or STARTTLS as fallback). SMTP needs the full address and an app-specific password. No port 465 is documented.
+3. **Confirmed.** Fly pricing: shared-cpu-1x is $2.19/month at 256 MB, $3.69 at 512 MB and $6.70 at 1 GB. A dedicated IPv4 is $2/month and optional (a shared IPv4 is free). Outbound data in North America is $0.02/GB. "New organizations don't have a free tier."
+4. **Confirmed.**
+   - `services/paige-browser/fly.toml` is the only `fly.toml`: `iad`, 1 GB, scale to zero.
+   - The concurrency cap defaults to 3 (`server.js:61`).
+   - The egress proxy covers `/browse-public-url` only (`egress-proxy.mjs:13-15`).
+   - The service is database-free (README L31-33).
+   - The deploy workflow uses `FLY_API_TOKEN`, created with `flyctl auth token` (L16-20, L119).
+5. **Confirmed.**
+   - `read_channel_secret` and `write_channel_secret` are SECURITY DEFINER with EXECUTE for `service_role` only.
+   - `isAuthorizedInternalCaller` is at `systems-check-http.ts:135-143`.
+   - `smtp-connect` uses `Deno.connectTls` / `Deno.connect`.
+   - Production has 8 connectors, all `resend`.
+6. **Confirmed.** The repo has no `api/` folder and `vercel.json` only does rewrites. `exp03-grow-my-business-journey.md:272` says "no Cloudflare account is connected to Paige".
+7. **Partly checked.** `cron_token_header()` is EXECUTE for `postgres` only. The edge probe's `net.http_post` call is a production write, so it is correctly an owner stop.
+8. **UNVERIFIED (not checked).** That Fly leaves 587 open (only a Fly community thread was cited, not opened) and that `secrets set --stage` reaches a later `fly machine run` machine. The second only matters for step 2b.
+
+**Summary for the owner**
+- **Step 1, reachability with no login:**
+  - **What runs.** A manually triggered GitHub workflow starts a short-lived Fly machine (256 MB, `iad`, `--rm`, destroyed afterwards) inside a new, empty app `paige-mail-transport` that holds no secrets. It opens `smtp.mail.me.com:587`, upgrades with STARTTLS and lists the login methods, then checks the `imap.mail.me.com:993` TLS greeting. It never logs in and never sends mail.
+  - **Cost.** Under $0.001 per run.
+  - **What it needs from you:** create the empty app in org `personal`, ideally with a deploy token scoped to that app instead of the existing broad `FLY_API_TOKEN`; approve the sub-cent spend; approve merging the workflow and probe script.
+  - **The 993 question from Supabase.** This needs a temporary edge function plus one internal call, which is a new function and a production write. Both are owner stops (§00).
+- **Step 2, one login and logout:**
+  - **What runs.** One IMAP and SMTP login, then logout, on the team-owned iCloud test account. No message is read and nothing is sent.
+  - **What it needs from you:** the account itself, with two-factor authentication and one QA app-specific password, plus approval to store it by name only (Vault or GitHub secrets). Secrets are removed afterwards.
+  - **If Apple refuses by IP:** a static outgoing IP from Fly would need pricing and your approval.
+- **Where it runs:** a new, dedicated Fly app `paige-mail-transport`. **Reject putting it on `paige-browser`.**
+  - **Why not `paige-browser`:** it renders arbitrary public web pages, Fly exposes app secrets to every machine in the app, its shared secret already has three callers, and it has only 3 concurrency slots.
+  - **If the edge 993 check passes:** run IMAP sync on Supabase and send-only SMTP 587 on Fly. That costs about $0–1/month, versus about $2.19–3.69/month if Fly also runs the sync.
+  - **Why not Vercel or Cloudflare:** neither has functions or an account in use today.
+  - **Caveats:** the outgoing host allowlist lives in code only. Supabase's outgoing IPs change, and whether Apple throttles that is UNVERIFIED.
+  - **Owner stops:** the new Fly app, edge functions and Vault entries.
+

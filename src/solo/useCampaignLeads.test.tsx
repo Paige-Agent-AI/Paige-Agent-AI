@@ -158,3 +158,115 @@ describe("Brought in", () => {
     expect(values(node)[0]).toBe("2leads credited to this campaign");
   });
 });
+
+// S1d-2 — the per-lead list under the lane (owner-approved 2026-10-12). Who a lead is comes from the server;
+// these tests prove the screen shows only what it was given and never fills a name in.
+describe("Leads from this campaign", () => {
+  let root: Root | null = null;
+  let host: HTMLDivElement | null = null;
+  afterEach(() => { act(() => root?.unmount()); host?.remove(); root = null; host = null; rpc.mockReset(); });
+  const render = async (data: unknown) => {
+    rpc.mockResolvedValue({ data, error: null });
+    host = document.createElement("div"); document.body.appendChild(host);
+    root = createRoot(host);
+    await act(async () => { root!.render(<Lane/>); });
+    return host;
+  };
+  const toggle = (node: HTMLElement) => node.querySelector(".cl-toggle") as HTMLButtonElement;
+  const open = async (node: HTMLElement) => { await act(async () => { toggle(node).click(); }); };
+  const rows = (node: HTMLElement) => [...node.querySelectorAll(".cl-row")];
+  const names = (node: HTMLElement) => rows(node).map((row) => row.querySelector(".cl-n")?.textContent);
+
+  it("stays a summary until asked, and says how many leads it will show", async () => {
+    const node = await render(payload());
+    expect(rows(node)).toHaveLength(0);
+    expect(toggle(node).textContent).toBe("Show the 2 newest leads");
+    expect(toggle(node).getAttribute("aria-expanded")).toBe("false");
+    expect(toggle(node).getAttribute("aria-controls")).toBe("cc-out-b1-rows");
+    await open(node);
+    expect(toggle(node).getAttribute("aria-expanded")).toBe("true");
+    expect(toggle(node).textContent).toBe("Hide the leads");
+    expect(node.querySelector("#cc-out-b1-rows")).not.toBeNull();
+  });
+
+  it("shows an owner who each lead is, how it came in and where it stands, naming one pipeline once", async () => {
+    const node = await render(payload({ leads: [lead("s1"), lead("s2", { contact_name: "Marcus Lindqvist", deal_status: "won", attribution: "form_and_tag" })] }));
+    await open(node);
+    expect(names(node)).toEqual(["Renée Okafor", "Marcus Lindqvist"]);
+    expect(node.querySelector(".cl-in")?.textContent).toBe("Stages are in Client pipeline, in Sales.");
+    expect(rows(node).map((row) => row.querySelector(".cl-via")?.textContent)).toEqual(["Campaign form · Discovery call", "Campaign form, tagged link · Discovery call"]);
+    expect(rows(node).map((row) => row.querySelector(".cl-state")?.textContent)).toEqual(["New enquiry", "Won"]);
+    expect(node.textContent).not.toContain("Owners and admins see who each lead is.");
+  });
+
+  it("shows a member that a lead arrived and where it stands, never who, because the server sent no names", async () => {
+    const node = await render(payload({ can_manage: false, leads: [
+      lead("s1", { contact_id: null, contact_name: null, deal_id: null, deal_title: null }),
+      lead("s2", { contact_id: null, contact_name: null, deal_id: null, deal_title: null, has_contact: false, deal_status: null, processing_state: "pending" }),
+    ] }));
+    await open(node);
+    expect(names(node)).toEqual(["A lead", "A lead"]);
+    expect(rows(node).map((row) => row.querySelector(".cl-state")?.textContent)).toEqual(["New enquiry", "Being filed"]);
+    expect(node.textContent).toContain("Owners and admins see who each lead is.");
+    expect(node.textContent).not.toMatch(/Renée|Being saved as a contact|Not saved as a contact/);
+  });
+
+  it("tells an owner a lead has no contact yet rather than leaving a blank", async () => {
+    const node = await render(payload({ leads: [
+      lead("s1", { contact_id: null, contact_name: null, deal_id: null, has_contact: false, deal_status: null, processing_state: "claimed" }),
+      lead("s2", { contact_id: null, contact_name: null, deal_id: null, has_contact: false, deal_status: null, processing_state: "done" }),
+    ] }));
+    await open(node);
+    expect(names(node)).toEqual(["Being saved as a contact", "Not saved as a contact"]);
+  });
+
+  it("tells an owner a contact has no name on file, never that the lead isn't a contact", async () => {
+    const node = await render(payload({ leads: [lead("s1", { contact_name: null })] }));
+    await open(node);
+    expect(names(node)).toEqual(["Contact with no name"]);
+  });
+
+  it("speaks of one lead as one, and counts only the rows it can show", async () => {
+    const one = await render(payload({ counts: { leads: 1 }, leads: [lead("s1")] }));
+    expect(toggle(one).textContent).toBe("Show the lead");
+    await open(one);
+    expect(toggle(one).textContent).toBe("Hide the lead");
+    act(() => root?.unmount()); host?.remove();
+    const unreadable = await render(payload({ counts: { leads: 3 }, leads: [{ attribution: "guessed" }] }));
+    expect(toggle(unreadable)).toBeNull();
+  });
+
+  it("dates an old lead with its year, and a lead from this year without", async () => {
+    const thisYear = new Date().getFullYear();
+    const node = await render(payload({ leads: [lead("s1", { received_at: `${thisYear}-03-04T12:00:00Z` }), lead("s2", { received_at: "2019-03-04T12:00:00Z" })] }));
+    await open(node);
+    const dates = rows(node).map((row) => row.querySelector(".cl-when")?.textContent ?? "");
+    expect(dates[0]).not.toContain(String(thisYear));
+    expect(dates[1]).toContain("2019");
+  });
+
+  it("names the pipeline on each row when the leads sit in different ones", async () => {
+    const node = await render(payload({ leads: [lead("s1"), lead("s2", { pipeline_name: "Advisory consults" })] }));
+    await open(node);
+    expect(node.querySelector(".cl-in")).toBeNull();
+    expect(rows(node).map((row) => row.querySelector(".cl-state")?.textContent)).toEqual(["Client pipeline · New enquiry", "Advisory consults · New enquiry"]);
+  });
+
+  it("says when it shows only the newest, against the server's full count", async () => {
+    const node = await render(payload({ counts: { leads: 240, with_opportunity: 31 }, truncated: true }));
+    expect(toggle(node).textContent).toBe("Show the 2 newest leads");
+    await open(node);
+    expect(node.textContent).toContain("Showing the newest 2. The counts above cover all 240.");
+  });
+
+  it("is read only: no row can contact a lead or move an opportunity", async () => {
+    const node = await render(payload());
+    await open(node);
+    expect(node.querySelectorAll(".cl-row button, .cl-row a, .cl-row input")).toHaveLength(0);
+  });
+
+  it("offers no list when the campaign has brought in nobody", async () => {
+    const node = await render(payload({ counts: { leads: 0 }, leads: [] }));
+    expect(toggle(node)).toBeNull();
+  });
+});

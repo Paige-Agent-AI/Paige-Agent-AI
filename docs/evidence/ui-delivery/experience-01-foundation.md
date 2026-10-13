@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: authenticated owner interview→reviewed fact→canonical s
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: private caller-JWT Owner/thread checkpoint; existing user metadata only; real DRAINING begin retry and immutable assistant settle replay tested in SQL; approvals/rollout/provider/Auth unchanged.
 
-INTERNAL_BUILD_IDENTITY: continuation parent180817d2a28edff4a462a0002c5ea8d386091367 on main c0a20243249739a00b2fa709729b323156cb125b; captured component SHA2565713f051b2c1d111ad11013bf61dd13d327deac13005069b48e4aadf6fac7145 and CSS78ef156374ac6a320118df45d7905099e638b1f50adfd45b9d57972f84e6d178; final exact-head review/CI recorded on PR2071; deployment=none; environment=development; migration20271027000000/paige-ai-chat production=PROOF_OWED.
+INTERNAL_BUILD_IDENTITY: 9b548fc888b4f4aa5108791b2cd479a9903ef9de; deployment=none; environment=development; migrations=PROOF_OWED(production execution of 20271027000000_solo_business_interview_checkpoint); edge=PROOF_OWED(production paige-ai-chat interview context); evidence=docs/evidence/experience-01-foundation/sql-proof.json
 RELEASE_CHANNEL: development: local source candidate and isolated synthetic proof; no deployed customer outcome.
 RELEASE_CLASSIFICATION: internal-only: foundation candidate awaiting exact-head CI/review, normal release and protected authenticated proof.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent production outcome accepted or announcement authorized.

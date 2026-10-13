@@ -74,6 +74,8 @@
     <script>
       (function () {
         if (/^\/render-frame(?:\/|$)/i.test(window.location.pathname)) return;
+        // A form on a business's own website (public/embed.js, Experience 03): its visitors are the business's.
+        if (/^\/form\//.test(window.location.pathname) && (window.parent !== window || /[?&]embed=1(&|$)/.test(window.location.search))) return;
         var tracker = document.createElement("script");
         tracker.defer = true;
         tracker.setAttribute("data-domain", "paigeagent.ai");

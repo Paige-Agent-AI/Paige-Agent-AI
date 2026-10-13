@@ -3,12 +3,15 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmbedCode } from "./EmbedCode";
-import { embedOrigin, embedSnippet } from "./embed-code";
+import { embedFrameSnippet, embedOrigin, embedSnippet } from "./embed-code";
 
 describe("embedSnippet", () => {
   it("is one tag: this app's loader, the form's id and its name as the frame's label", () => {
     expect(embedSnippet("https://paigeagent.ai", "0b8f1a2e-1111-4222-8333-444455556666", "Spring consult"))
-      .toBe('<script src="https://paigeagent.ai/embed.js" data-form="0b8f1a2e-1111-4222-8333-444455556666" data-title="Spring consult" async></script>');
+      .toBe('<script src="https://paigeagent.ai/embed.js" data-form="0b8f1a2e-1111-4222-8333-444455556666" data-title="Spring consult" data-cfasync="false" async></script>');
+  });
+  it("tells Cloudflare's Rocket Loader to leave the tag alone (sites served through Cloudflare)", () => {
+    expect(embedSnippet("https://paigeagent.ai", "id", "x")).toContain('data-cfasync="false"');
   });
   it("cannot be broken out of by a form's name", () => {
     const code = embedSnippet("https://paigeagent.ai", "0b8f1a2e-1111-4222-8333-444455556666", `"><img src=x onerror=alert(1)>`);
@@ -17,6 +20,17 @@ describe("embedSnippet", () => {
   });
   it("leaves the label out when the form has no name", () => {
     expect(embedSnippet("https://paigeagent.ai", "id", "  ")).not.toContain("data-title");
+  });
+});
+
+describe("embedFrameSnippet", () => {
+  it("is the form's frame on its own, for a site that won't run a script tag", () => {
+    expect(embedFrameSnippet("https://paigeagent.ai", "0b8f1a2e-1111-4222-8333-444455556666", "Spring consult"))
+      .toBe('<iframe src="https://paigeagent.ai/form/0b8f1a2e-1111-4222-8333-444455556666?embed=1" title="Spring consult" loading="lazy" style="width:100%;height:720px;border:0;color-scheme:normal"></iframe>');
+  });
+  it("cannot be broken out of by a form's name, and is still named without one", () => {
+    expect(embedFrameSnippet("https://paigeagent.ai", "id", `"><script>alert(1)</script>`)).not.toContain('"><script');
+    expect(embedFrameSnippet("https://paigeagent.ai", "id", " ")).toContain('title="Form"');
   });
 });
 
@@ -51,7 +65,7 @@ describe("EmbedCode", () => {
     const node = await render();
     expect(node.querySelector("h3")?.textContent).toBe("Put it on your website");
     await act(async () => { (node.querySelector("button") as HTMLButtonElement).click(); });
-    expect(writeText).toHaveBeenCalledWith(`<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="Spring consult" async></script>`);
+    expect(writeText).toHaveBeenCalledWith(`<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="Spring consult" data-cfasync="false" async></script>`);
     expect(node.querySelector("button")?.textContent).toBe("Copied");
     expect(node.querySelector("[role=status]")?.textContent).toBe("Paste it into your site's page editor.");
   });
@@ -62,6 +76,22 @@ describe("EmbedCode", () => {
     await act(async () => { (node.querySelector("button") as HTMLButtonElement).click(); });
     expect(node.querySelector("[role=status]")?.textContent).toContain("Your browser didn't allow copying");
     expect(window.getSelection()?.toString()).toContain("embed.js");
+  });
+
+  it("offers the no-script version for a site that won't run the tag, says what it can't do, and switches back", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    const node = await render();
+    const byText = (t: string) => [...node.querySelectorAll("button")].find((b) => b.textContent === t) as HTMLButtonElement;
+    await act(async () => { byText("Get a version without a script").click(); });
+    expect(node.querySelector("code")?.textContent).toContain('<iframe src="https://paigeagent.ai/form/f-1?embed=1"');
+    expect(node.textContent).toContain("can't resize to fit the form or carry your campaign links' tags");
+    expect(node.textContent).not.toContain("It fits the space it's given");
+    await act(async () => { byText("Copy code").click(); });
+    expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining("<iframe "));
+    await act(async () => { byText("Use the first code").click(); });
+    expect(node.querySelector("code")?.textContent).toContain("embed.js");
+    expect(node.querySelector("[role=status]")?.textContent).toBe("");
   });
 
   it("tells the owner what unpublishing does to the copy on their site", async () => {

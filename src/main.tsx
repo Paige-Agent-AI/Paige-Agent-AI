@@ -4,12 +4,15 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import { initObservability } from "./lib/observability";
+import { isFormOnBusinessSite } from "./hooks/useEmbedHeight";
+import { SandboxedFormNotice } from "./pages/public/SandboxedFormNotice";
 
 // Initialize Sentry + PostHog as early as possible (no-ops when env keys missing).
 // /render-frame is a machine surface (paige-browser screenshots of draft pages): no visitor to observe,
 // and a draft's content must not leave the frame through analytics. Plausible, the one third-party
 // script index.html loads, is skipped on the same route by its loader there.
-if (!/^\/(?:invoice|render-frame)\/?$/i.test(window.location.pathname)) initObservability();
+// A form on a business's own website (Experience 03) keeps error reporting but not product analytics.
+if (!/^\/(?:invoice|render-frame)\/?$/i.test(window.location.pathname)) initObservability({ productAnalytics: !isFormOnBusinessSite() });
 
 
 
@@ -108,7 +111,11 @@ window.addEventListener("load", () => {
   try { sessionStorage.removeItem("__chunk_reload__"); } catch { /* ignore */ }
 });
 
-createRoot(document.getElementById("root")!).render(
+// A form on a business's site inside a sandbox that hides its origin: the app can't run there (every provider reads
+// storage the browser refuses it), so the visitor gets a link to the form's own page instead of a blank frame.
+const sandboxedForm = isFormOnBusinessSite() && String(window.origin) === "null";
+
+createRoot(document.getElementById("root")!).render(sandboxedForm ? <SandboxedFormNotice /> : (
   <React.StrictMode>
     <HelmetProvider>
       <App />
@@ -124,7 +131,7 @@ createRoot(document.getElementById("root")!).render(
       <div data-app-ready hidden aria-hidden="true" />
     </HelmetProvider>
   </React.StrictMode>
-);
+));
 
 // ---------------------------------------------------------------------------
 // Cinematic splash dismissal

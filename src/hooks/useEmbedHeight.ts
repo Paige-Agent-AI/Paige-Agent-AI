@@ -7,6 +7,14 @@ import { useEffect, type RefObject } from "react";
 /** Is this page rendered inside a parent frame? Stable for the life of the page. */
 export const isEmbedded = (): boolean => typeof window !== "undefined" && window.parent !== window;
 
+/** A Paige form shown on a business's own website: framed by the loader (public/embed.js) or by the no-script
+ *  frame, or asked for with ?embed=1. Paige's own product analytics stay off there: the visitors are the
+ *  business's, not Paige's. Stable for the life of the page. */
+export function isFormOnBusinessSite(): boolean {
+  if (typeof window === "undefined" || !/^\/form\//.test(window.location.pathname)) return false;
+  return isEmbedded() || new URLSearchParams(window.location.search).get("embed") === "1";
+}
+
 /**
  * The theme a form framed on a business's website is drawn in: what the embed code asked for (`data-theme` →
  * `?theme=`), light by default so a business's page never gets a dark box it didn't choose; "auto" follows the
@@ -14,10 +22,8 @@ export const isEmbedded = (): boolean => typeof window !== "undefined" && window
  * visit never changes the theme the owner picked in their own app.
  */
 export function embeddedFormTheme(): "light" | "dark" | undefined {
-  if (typeof window === "undefined" || !/^\/form\//.test(window.location.pathname)) return undefined;
-  const params = new URLSearchParams(window.location.search);
-  if (!isEmbedded() && params.get("embed") !== "1") return undefined;
-  const asked = params.get("theme");
+  if (!isFormOnBusinessSite()) return undefined;
+  const asked = new URLSearchParams(window.location.search).get("theme");
   return asked === "dark" ? "dark" : asked === "auto" ? undefined : "light";
 }
 

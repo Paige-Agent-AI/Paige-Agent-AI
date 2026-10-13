@@ -60,7 +60,7 @@ async function facts(page) {
       const ratio = (hi + 0.05) / (lo + 0.05);
       if (ratio < worst.ratio) worst = { ratio: Math.round(ratio * 100) / 100, what: `${el.tagName}:${el.textContent.trim().slice(0, 30)}` };
     }
-    const copy = sec?.querySelector("button");
+    const copy = sec?.querySelector(".vs-btn");
     return {
       shown: Boolean(sec), code: sec?.querySelector(".vs-code")?.textContent ?? null,
       inView: box.left >= 0 && box.right <= innerWidth + 0.5 && box.top >= 0,
@@ -76,7 +76,8 @@ try {
   for (let i = 0; i < 60 && !ready; i++) { ready = await up(); if (!ready) await new Promise((r) => setTimeout(r, 500)); }
   if (!ready) throw new Error("Studio harness did not start.");
   // The harness runs on 127.0.0.1, not a Paige host, so the code points at the public host (embed-code.ts embedOrigin).
-  const expected = `<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="New client intake" async></script>`;
+  const expected = `<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="New client intake" data-cfasync="false" async></script>`;
+  const expectedFrame = `<iframe src="https://paigeagent.ai/form/f-1?embed=1" title="New client intake" loading="lazy" style="width:100%;height:720px;border:0;color-scheme:normal"></iframe>`;
   for (const theme of ["light", "dark"]) {
     for (const [w, h] of VIEWPORTS) {
       const id = `${theme}/${w}x${h}`;
@@ -107,7 +108,7 @@ try {
         await page.waitForTimeout(250);
         const f = await facts(page);
         check(f.shown && f.code === expected && f.inView && f.pushed.length === 0, `${id}: a live form keeps its code in reach`, JSON.stringify(f));
-        const copy = page.locator(".vs-embed button");
+        const copy = page.locator(".vs-embed .vs-btn");
         await page.locator(".vs-code").focus();
         await page.keyboard.press("Tab");
         await page.waitForTimeout(200);
@@ -119,6 +120,19 @@ try {
         const said = await page.locator(".vs-embed [role=status]").innerText();
         check(clip === expected && said === "Paste it into your site's page editor.", `${id}: Copy puts the exact tag on the clipboard and says where to paste it`, JSON.stringify({ clip, said }));
         await page.screenshot({ path: path.join(out, `${theme}-${w}x${h}-live-copied.png`) });
+        // A site that won't run a script tag: the frame on its own, said plainly, and back again.
+        await page.getByRole("button", { name: "Get a version without a script" }).click();
+        await page.waitForTimeout(150);
+        const nf = await facts(page);
+        const caveat = await page.locator(".vs-embed").innerText();
+        check(nf.code === expectedFrame && /can't resize to fit the form or carry your campaign links' tags/.test(caveat), `${id}: the no-script version is the form's frame, with what it can't do said`, nf.code ?? "");
+        check(nf.inView && nf.pushed.length === 0 && nf.docOverflowX <= 0 && nf.contrast.ratio >= 4.5, `${id}: the no-script version stays on screen, wraps, contrast >= 4.5:1 (worst ${nf.contrast.ratio})`, JSON.stringify(nf));
+        await copy.click();
+        const clipFrame = await page.evaluate(() => navigator.clipboard.readText());
+        check(clipFrame === expectedFrame, `${id}: Copy copies the version shown`, clipFrame);
+        await page.screenshot({ path: path.join(out, `${theme}-${w}x${h}-no-script.png`) });
+        await page.getByRole("button", { name: "Use the first code" }).click();
+        check((await facts(page)).code === expected, `${id}: back to the one-line code`);
         check(errors.length === 0, `${id}: no page error (live)`, JSON.stringify(errors));
         await ctx.close();
       }

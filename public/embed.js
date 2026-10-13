@@ -4,7 +4,7 @@
  * A tenant drops one tag onto their site and Paige handles the rest:
  *
  *   <script src="https://app.paigeagent.ai/embed.js" data-slug="discovery-call" async></script>
- *   <script src="https://app.paigeagent.ai/embed.js" data-form="<form id>" async></script>
+ *   <script src="https://paigeagent.ai/embed.js" data-form="<form id>" data-cfasync="false" async></script>
  *
  * A form (Experience 03) frames the published form at /form/<id>?embed=1. Answers go through Paige's
  * own intake from Paige's own origin, so the host page never handles them. The host page's campaign
@@ -29,6 +29,17 @@
  *   data-button the popup button label    (default "Book a time")
  *   data-height starting height in px      (default 720, before auto-size)
  *   data-target CSS selector to mount into (inline; default: in place)
+ *
+ * Any host, including a site built elsewhere and served from Cloudflare Pages: nothing here depends on how the
+ * page is hosted, and no account on the host's side is involved. Three things a host can do are handled:
+ *   - Cloudflare Rocket Loader defers scripts. `data-cfasync="false"` (in the copied code) tells it to leave this
+ *     tag alone; an older tag without it still mounts once, in place (Rocket Loader keeps document.currentScript).
+ *   - A tag in <head> (pasted there, or the only thing in a builder's "custom HTML" block) puts the widget at the
+ *     end of the page, not in the invisible head.
+ *   - A Content-Security-Policy that blocks framing Paige (frame-src): the frame is replaced by a link to the form,
+ *     and the console says which directive to add.
+ *   - A sandbox without allow-same-origin (some site builders' "custom HTML" blocks): a frame there could not send
+ *     its answers (the intake refuses an address-less origin), so the visitor gets a link to the form instead.
  */
 (function () {
   "use strict";
@@ -83,6 +94,7 @@
   // from that exact origin.
   var appOrigin;
   var bookingUrl;
+  var formPageUrl;
   try {
     var u = new URL(script.src, window.location.href);
     appOrigin = u.origin;
@@ -96,6 +108,11 @@
         if (v) tags.set(TAG_KEYS[i], v.slice(0, 200));
       }
       bookingUrl = appOrigin + "/form/" + encodeURIComponent(formId) + "?" + tags.toString();
+      // The form's own page, for when a frame can't work here: the same campaign tags, without the embed flag.
+      tags.delete("embed");
+      tags.delete("theme");
+      var rest = tags.toString();
+      formPageUrl = appOrigin + "/form/" + encodeURIComponent(formId) + (rest ? "?" + rest : "");
     } else {
       bookingUrl = appOrigin + "/book/" + encodeURIComponent(slug);
     }
@@ -103,6 +120,12 @@
     if (window.console) console.error("[Paige embed] Could not resolve the embed source URL.", e);
     return;
   }
+
+  var BUTTON_CSS =
+    "display:inline-flex;align-items:center;justify-content:center;gap:.5rem;" +
+    "padding:.65rem 1.15rem;border-radius:.65rem;border:0;cursor:pointer;" +
+    "font:600 15px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;" +
+    "background:#1B1230;color:#fff;";
 
   // --- build the iframe -----------------------------------------------------
   function makeIframe(initialHeight) {
@@ -155,37 +178,74 @@
     };
   }
 
-  // --- inline mode ----------------------------------------------------------
-  function mountInline() {
-    var iframe = makeIframe(startHeight);
-    window.addEventListener("message", heightListener(iframe, null));
-    if (isForm) window.addEventListener("message", redirectListener(iframe));
-
+  // Where the widget goes: the data-target element, else exactly where the tag sits in the page. A tag in <head>
+  // (pasted into a site's head, or the only thing in a builder's "custom HTML" block, which the parser files into
+  // head) would leave it invisible there, so then it goes at the end of the page instead.
+  function place(node, allowTarget) {
     var mount = null;
-    if (targetSel) {
+    if (allowTarget && targetSel) {
       try { mount = document.querySelector(targetSel); } catch (e) { mount = null; }
     }
-    if (mount) {
-      mount.appendChild(iframe);
-    } else if (script.parentNode) {
-      // Drop the frame exactly where the tag sits.
-      script.parentNode.insertBefore(iframe, script);
-    } else {
-      document.body.appendChild(iframe);
+    if (mount) mount.appendChild(node);
+    else if (script.parentNode && document.body && document.body.contains(script)) script.parentNode.insertBefore(node, script);
+    else (document.body || document.documentElement).appendChild(node);
+  }
+
+  // --- when a frame can't work here: a link to the form's own page ----------
+  function makeLink() {
+    var a = document.createElement("a");
+    a.href = formPageUrl;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = buttonLabel;
+    a.setAttribute("data-paige-form-link", "");
+    a.style.cssText = BUTTON_CSS + "text-decoration:none;";
+    return a;
+  }
+
+  // A page whose origin is opaque (a sandbox without allow-same-origin) passes that to every frame it makes, and the
+  // intake refuses answers from an address-less origin. Say so in the console and show the link, never a form that
+  // fails only after the visitor has typed everything.
+  var opaque = String(window.origin || (window.location && window.location.origin)) === "null";
+
+  // A frame the host's Content-Security-Policy refuses never loads, and nothing inside it can tell the visitor.
+  // The browser reports the refusal on this page: swap the frame for the link and name the fix for the site owner.
+  function watchFramePolicy(iframe) {
+    if (!isForm) return;
+    document.addEventListener("securitypolicyviolation", function (e) {
+      var directive = String(e.effectiveDirective || e.violatedDirective || "");
+      if (!/^(frame-src|child-src|default-src)/.test(directive)) return;
+      if (String(e.blockedURI || "").indexOf(appOrigin) !== 0 || !iframe.parentNode) return;
+      if (window.console) console.error("[Paige embed] This site's Content-Security-Policy blocks the form (" + directive + "). Add " + appOrigin + " to frame-src, or visitors get a link instead.");
+      iframe.parentNode.replaceChild(makeLink(), iframe);
+    });
+  }
+
+  // --- inline mode ----------------------------------------------------------
+  function mountInline() {
+    if (isForm && opaque) {
+      if (window.console) console.warn("[Paige embed] This page runs in a sandbox without allow-same-origin, so a form inside it can't send answers. Showing a link to the form instead. Paste the code straight into the page, or allow same-origin on the block that holds it.");
+      place(makeLink(), true);
+      return;
     }
+    var iframe = makeIframe(startHeight);
+    watchFramePolicy(iframe);
+    window.addEventListener("message", heightListener(iframe, null));
+    if (isForm) window.addEventListener("message", redirectListener(iframe));
+    place(iframe, true);
   }
 
   // --- popup mode -----------------------------------------------------------
   function mountPopup() {
+    if (isForm && opaque) {
+      place(makeLink(), false);
+      return;
+    }
     var btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = buttonLabel;
     btn.setAttribute("aria-haspopup", "dialog");
-    btn.style.cssText =
-      "display:inline-flex;align-items:center;justify-content:center;gap:.5rem;" +
-      "padding:.65rem 1.15rem;border-radius:.65rem;border:0;cursor:pointer;" +
-      "font:600 15px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;" +
-      "background:#1B1230;color:#fff;";
+    btn.style.cssText = BUTTON_CSS;
 
     var overlay, frameWrap, iframe, removeListener;
 
@@ -234,6 +294,7 @@
 
       iframe = makeIframe(Math.min(startHeight, Math.round(window.innerHeight * 0.9)));
       iframe.style.borderRadius = "16px";
+      watchFramePolicy(iframe);
       var listener = heightListener(iframe, { maxHeight: Math.round(window.innerHeight * 0.9) });
       var onRedirect = isForm ? redirectListener(iframe) : null;
       window.addEventListener("message", listener);
@@ -249,8 +310,7 @@
     }
 
     btn.addEventListener("click", open);
-    if (script.parentNode) script.parentNode.insertBefore(btn, script);
-    else document.body.appendChild(btn);
+    place(btn, false);
   }
 
   function boot() {

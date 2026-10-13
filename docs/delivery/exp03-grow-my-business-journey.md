@@ -264,6 +264,94 @@ Studio's publish panel shows "Put it on your website" with Copy code for a live 
 preview already shows it). S2c, consent: a form's declared consent question writes a consent record through the
 public intake for the form's own business, after #2087 closes the recorder and scopes the gates.
 
+### 11a. Sites built elsewhere and served by Cloudflare (owner clarification 2026-10-13)
+
+The owner builds client sites with Genspark agents, and some are served by Cloudflare Pages or Workers. Those sites
+are a first-class target for S2a. They are not moved to Vercel or rebuilt in Vibe Studio, and **no Cloudflare
+account is connected to Paige.** The installation guide is `docs/guides/put-a-paige-form-on-a-cloudflare-or-genspark-site.md`.
+
+**Grounded first (2026-10-13).**
+- Production serves `/form/:id` and `/embed.js` with no `frame-ancestors` and no `X-Frame-Options`, so any site
+  may frame the form.
+- Its `/assets/*.js` carry `access-control-allow-origin: *`, so the app's scripts load even in a frame with an
+  opaque origin.
+- The intake accepts answers only from `paigeagent.ai` and its subdomains. The framed form posts from that
+  origin, so the host's hosting platform is irrelevant to the intake.
+
+**Compatibility matrix.** Driven by `scripts/live-drive/cloudflare-embed-drive.mjs`: Cloudflare's own Pages runtime
+(`wrangler pages dev`, which applies `_headers` as Pages does) and the real app on another origin, with Supabase
+stubbed. 58/58.
+
+| Host situation | Result |
+|---|---|
+| Plain page, desktop and phone (390px) | Works end to end: tags carried, sized, sent from Paige's origin, thank-you fits |
+| Code pasted in `<head>` | Works: the form goes to the end of the page (before: invisible in head) |
+| Rocket Loader on, copied tag (`data-cfasync="false"`) | Works: one form, in place |
+| Rocket Loader on, older tag without `data-cfasync` | Works: one form, in place (Rocket Loader keeps `document.currentScript`) |
+| CSP allowing `https://paigeagent.ai` in script-src and frame-src | Works end to end |
+| CSP blocking the frame | Link to the form's own page, with the tags; the console names `frame-src` |
+| CSP blocking outside scripts | The tag can't run; the no-script frame works end to end |
+| Builder "custom HTML" block sandboxed without same-origin | Link to the form; nothing sent (before: invisible in head, and the form could not send) |
+| No-script frame inside such a sandbox | "This form opens on its own page", with a link (before: a blank frame) |
+| Sandbox with same-origin | Works end to end |
+| Thank-you redirect | The business's page navigates to the thank-you page |
+| Paige's product analytics inside the form on a business's site | None. Plausible, PostHog, the page-view event and the Meta Pixel are skipped; error reporting stays on |
+
+**What changed for it:**
+- `embed.js`:
+  - a widget whose tag sits in `<head>` goes to the end of the page;
+  - a frame refused by CSP becomes a link to the form's own page;
+  - an opaque-origin page gets a link instead of a frame.
+- `main.tsx`: a framed form in an opaque origin renders a small link card, not the app, because every provider
+  reads storage.
+- Analytics are skipped when `isFormOnBusinessSite()`.
+- Studio:
+  - the copied tag carries `data-cfasync="false"`;
+  - a "Get a version without a script" option gives the form's frame on its own, and says plainly that it can't
+    resize or carry campaign tags.
+- Each change is mutation-checked: removing it fails the drive or a unit test.
+
+**Server half, with a real sent answer.** `scripts/live-drive/form-embed-intake-replay.mjs` takes the request a
+visitor sent from the Cloudflare site and replays it through the real intake rules (`growth-intake.ts`). It then
+runs the real database path on an isolated local clone, rolled back:
+
+- the row growth-public-submit inserts, for the form's own business;
+- the S1a stamp `form_and_tag`;
+- the processor's filing into the campaign's pipeline (S1b);
+- the owner's campaign lead read;
+- another business's owner seeing none of it.
+
+9/9. Two mutations of it each fail it.
+
+**Remaining gaps for Genspark-built sites:**
+- No real Genspark site has been driven, and neither has Cloudflare's live edge. Rocket Loader is Cloudflare's
+  own script, but the harness applies it to the page.
+- No signed-in production run yet. It is safely testable only once S2a is live after the owner's design
+  ruling, and it is the QA coordinator's to run on the designated account (ANT-52).
+- Sites sending `Cross-Origin-Embedder-Policy: require-corp` are untested. The form page does not opt in, so
+  such a site would likely block the frame.
+- The no-script frame keeps a fixed height and carries no campaign tags.
+
+**Optional, later: a customer-authorized Cloudflare connection (assessment only; nothing built).**
+
+- **Outcome.** With the customer's explicit approval, Paige reads the Pages project, custom domain and zone
+  settings that matter to the form. That means `_headers` CSP, Rocket Loader, and the deployment that holds the
+  page. Paige then tells the owner exactly what to change, or, on a separate approval per change, makes it.
+- **Least privilege.**
+  - A customer-created Cloudflare API token scoped to one account and zone, with Account › Cloudflare Pages: Read
+    and Zone › Zone Settings: Read.
+  - Write scopes only for a named, approved change, never standing.
+  - No Global API Key.
+- **Custody.** The token is kept server-side through Paige's existing protected credential path, never returned to
+  the browser or logged. It is revocable by the customer at Cloudflare, and Paige stops on revocation.
+- **Governance.**
+  - It needs its own Integration Capability Registry entry before any build (the delivery rule).
+  - It runs read-only by default; any write is `confirm` with a Rail receipt; verification reads the setting
+    back.
+- **Cost.** $0 to Paige (the Cloudflare API is free).
+- **Necessary for the first paid Solo customers?** No. The embed and the guide need no connection.
+- **Stage:** after S2a ships and a real customer asks.
+
 ## 10. Delivery sequence (each independently testable)
 
 | Slice | Deliverable | Proof |

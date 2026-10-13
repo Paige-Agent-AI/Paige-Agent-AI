@@ -5,7 +5,9 @@ import posthog from "posthog-js";
 
 let observabilityInitialized = false;
 
-export function initObservability(): void {
+/** `productAnalytics: false` keeps PostHog off (error reporting stays on): a Paige form on a business's own
+ *  website is visited by the business's visitors, whom Paige's product analytics have no reason to observe. */
+export function initObservability({ productAnalytics = true }: { productAnalytics?: boolean } = {}): void {
   if (observabilityInitialized) return;
   observabilityInitialized = true;
 
@@ -30,7 +32,7 @@ export function initObservability(): void {
 
   const posthogKey = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
   const posthogHost = (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ?? "https://us.posthog.com";
-  if (posthogKey) {
+  if (posthogKey && productAnalytics) {
     try {
       posthog.init(posthogKey, {
         api_host: posthogHost,

@@ -247,7 +247,7 @@ describe("every other kind is drafted exactly as before", () => {
         contact_id: a.contact_id,
         ...((a.payload && typeof a.payload === "object" && (a.payload as Record<string, unknown>).draft_input &&
               typeof (a.payload as Record<string, unknown>).draft_input === "object")
-            ? (a.payload as Record<string, unknown>).draft_input
+            ? (a.payload as Record<string, unknown>).draft_input as Obj // (cast only: TS cannot spread unknown)
             : {}),
       },
       context: { contact_id: a.contact_id, conversation_id: a.conversation_id },

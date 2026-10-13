@@ -53,6 +53,26 @@ surface (typed message). Expected wall time for leg 1: under ~2 minutes (the sna
 - The readback for point 9 is the absence of: approval cards, executed-action confirmations,
   Rail receipts for this read (the snapshot dispatch writes none), and any provider event.
 
+## Corrected 2026-10-13 (E2-3b, after the first QA run)
+
+**Workspace scope correction.** The Journey Lead's pre-check ("expected evidence classes")
+matched the WRONG account: it resolved an Antonio-named account with non-zero pipeline/client
+tables, while the owner-designated testing session ran on a different account whose workspace
+genuinely holds zero Sales/Clients records (verified read-only against the QA thread's own
+tenant: 0 pipelines, 0 deals, 0 clients, a real Systems Check history). The briefing's
+figures (opportunities 0, clients 0, receipts 0, outstanding $0.00) were CORRECT for that
+workspace and matched its live UI. **Corrected expected evidence classes for the designated
+workspace:** pipeline and payments = real zeros (complete reads of empty books — the honest-
+zero class); clients = real zeros; operations/Systems Check = genuine ranked findings
+evidence; every unconnected area = not-available. No records were created or switched.
+
+**Two defects the run exposed (fixed in E2-3b):** the action-refusal leg exhausted its
+rounds and the server authored the generic "I wasn't able to complete that request" copy with
+a LIMIT_REACHED record ("Reached the limit for one answer") instead of the truthful
+conversational refusal; and each prompt persisted TWO user rows (the conversational begin
+claim plus a legacy bare append). Both are corrected at the source; the historical duplicate
+rows in the test thread are left as they lie (no data repair).
+
 ## Known expected behaviors (so they are not misread as defects)
 
 - The typed Solo turn runs in **conversational mode** (INT-346 DRAINING preserved): reads are

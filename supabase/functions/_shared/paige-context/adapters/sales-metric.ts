@@ -118,7 +118,11 @@ export function salesMetricWindow(period: SnapshotPeriod, now: Date): SalesMetri
     range_start: new Date(startMs).toISOString(),
     range_end: new Date(endMs).toISOString(),
   };
-  return periodEndMs > nowMs ? { ...window, window_note: "counted up to just now; the period ends later" } : window;
+  // E2-3b (QA #2102 point 5): the cutoff is a FACT about these figures, so the projection
+  // carries it for every period window — an in-progress window ends at the edge clock margin,
+  // a completed one is counted through the last completed UTC day, never up to this moment.
+  if (periodEndMs > nowMs) return { ...window, window_note: "counted up to just now; the period ends later" };
+  return { ...window, window_note: "counted through the last completed UTC day" };
 }
 
 /** One issuer read for this window. The caller is the authenticated user's client; tenant is server-derived. */

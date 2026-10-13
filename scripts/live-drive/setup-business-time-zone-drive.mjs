@@ -178,8 +178,16 @@ async function main() {
       const page = await ctx.newPage();
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e.message)));
-      await open(page, { paige: "closed" }, theme, "missing");
+      await open(page, { paige: "open" }, theme, "missing");
       const id = `${theme}/keyboard`;
+      // Chat initializes beside Setup: the PAIGE composer must become writable (E4-S2 acceptance step 2).
+      await page.waitForFunction(() => !document.body.innerText.includes("Loading your conversations before you can write to PAIGE"), null, { timeout: 10000 }).catch(() => {});
+      check(await page.evaluate(() => { const t = document.querySelector("#tenant-paige-workspace textarea"); return Boolean(t) && !t.disabled; }), `${id}: the PAIGE composer is writable (chat finished initializing)`);
+      const fold = page.locator('#tenant-paige-workspace button[aria-label="Fold PAIGE conversation"]');
+      if (await fold.isVisible()) { await fold.click(); await page.waitForTimeout(400); }
+      // Controls read as controls: the primary act is a filled violet button, never bare text.
+      const looks = await page.locator(".setup-tz__trigger").evaluate((el) => { const s = getComputedStyle(el); return { bg: s.backgroundColor, border: s.borderTopWidth }; });
+      check(looks.bg !== "rgba(0, 0, 0, 0)" && looks.border !== "0px", `${id}: "Set time zone" is a visible filled button`, JSON.stringify(looks));
       const trigger = page.getByRole("button", { name: /Set time zone/ });
       await trigger.focus(); await page.keyboard.press("Shift+Tab"); await page.keyboard.press("Tab");
       await page.waitForTimeout(300); // the shell animates the ring in
@@ -189,6 +197,20 @@ async function main() {
       await page.locator(".setup-tz__picker").waitFor();
       check(await page.evaluate(() => document.activeElement?.getAttribute("placeholder")) === "Find a city or time zone", `${id}: Enter opens the picker with the search focused`);
       await page.keyboard.type("Denver");
+      await page.waitForTimeout(150);
+      // Regression (E4-S2): fuzzy matching once kept "Coordinated Universal Time" highlighted for
+      // "Denver", so Enter picked UTC. And no zone may be listed twice (two rows highlighted at once).
+      const picked = await page.evaluate(() => ({
+        selected: [...document.querySelectorAll('.setup-tz__picker [cmdk-item][data-selected="true"]')].map((el) => el.textContent),
+        visible: [...document.querySelectorAll(".setup-tz__picker [cmdk-item]")].map((el) => el.getAttribute("data-value")),
+      }));
+      check(picked.selected.length === 1 && picked.selected[0].startsWith("Denver"), `${id}: typing Denver highlights Denver only`, JSON.stringify(picked.selected));
+      check(!picked.visible.some((v) => /^UTC\|/.test(v ?? "")), `${id}: UTC is not offered for "Denver"`);
+      await page.keyboard.press("Escape");
+      await page.getByRole("button", { name: /Set time zone/ }).click();
+      const all = await page.locator(".setup-tz__picker [cmdk-item]").evaluateAll((els) => els.map((el) => el.getAttribute("data-value")));
+      check(all.length > 300 && new Set(all).size === all.length, `${id}: every zone is listed exactly once (${all.length})`);
+      await page.locator(".setup-tz__picker").getByPlaceholder("Find a city or time zone").fill("Denver");
       await page.keyboard.press("Enter");
       await page.locator(".setup-tz__confirm").waitFor();
       check(await page.evaluate(() => document.activeElement?.id) === "setup-tz-confirm-title", `${id}: focus moves to the confirmation`);

@@ -1,5 +1,12 @@
 # Decision Log — chronological one-liners
 
+- **Experience 04 E4-S2 — client standing in chat, owner time-zone setup (2026-10-13, ANT-51 / ANT-147).**
+  - **INT-346 shapes the write.** It is still staged, so a typed Solo turn cannot run a confirmed write. PAIGE resolves and checks the zone in chat (`read_business_time_zone`, read-only); the owner confirms and saves in Setup through `set_business_time_zone`, and the value is read back before it is called saved. No chat write, no second store.
+  - **Explicit admission.** `read_client_engagement_status` and `read_business_time_zone` are added BY NAME to the conversational read set, recorded in `docs/delivery/e2-1-readonly-admission-determination.md` and conditional on the independent security review. The test pins the literal.
+  - **Client lookup** (`find_clients_for_status`): names and status only; literal search text; email only when typed in full; five rows plus "more".
+  - **The live Setup is `SoloBusinessContextSetup`.** `SoloSetupView` is dead code, and an edit made to it first was reverted (§71 reachability).
+  - **Chat "Loading your conversations…"** is the thread-list read settling, normally one round trip. It has three unbounded paths (stalled request, offline, hidden tab), handed to the Conversational Loop lane as #2105. The harness's permanent lock was a stub artifact, fixed.
+  - **QA:** the official account is the owner's existing Solo account (PC-1 superseded). The eight-step acceptance flow is `exp04-business-time-zone-acceptance`.
 - **Experience 04 E4-S1b — two time zones (2026-10-12, owner rulings, ANT-51 / ANT-147).**
   - **Which DAY** a payment is due, upcoming or overdue is the business owner's configured IANA zone. It is held in `tenant_business_time_zones` (one row per workspace). Only the active owner writes it, through `set_business_time_zone`, and the value must be UTC or an IANA Area/Location name, validated on write. It is never UTC by default, server time or the viewer's zone. If it is missing, the read and composer withhold every due/overdue judgement and raise `business_time_zone_unset`.
   - **Rejected source:** `profiles.coach_timezone`. Admins can write that per-person field, including admins of another workspace the owner belongs to (independent review of #2085).

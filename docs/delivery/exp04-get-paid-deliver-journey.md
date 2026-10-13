@@ -765,3 +765,71 @@ Collections and the Sales metric still use the UTC date (#2086).
 - A verified country or jurisdiction on the recipient record (#2083), and jurisdiction rules
   beyond the US: state rules, weekends and holidays.
 - #2083 (pre-send fallback) and #2086 (Collections and Sales performance on UTC).
+
+## 14. E4-S2 — client standing in chat, and owner time-zone setup (2026-10-13)
+
+**Owner order (2026-10-13).** An authenticated Solo owner can tell PAIGE their business location or
+time zone. PAIGE resolves a validated IANA zone, asks the owner to confirm, and the zone is saved through
+`set_business_time_zone`, read back, and used for payment due dates. The owner can ask "where does this
+client stand?" and get a grounded answer. Explicit guarded admission and an independent security review
+are required for any new chat tool. Writes must not bypass INT-346. Acceptance runs on the official QA
+account, the owner's existing Solo account (PC-1 superseded), through ordinary customer sign-in.
+
+**Grounding (§71).**
+- **INT-346 is still staged in production** (`paige_chat_interactive_rollout.active = false`). Every
+  typed Solo turn is interactive (`PaigeAIChat.tsx:1430`), so it runs in conversational mode:
+  - only admitted reads are offered;
+  - any other tool is refused per call;
+  - approvals are refused with 409 `INTERACTIVE_EFFECTS_UNAVAILABLE`.
+
+  A chat-confirmed write therefore cannot run today without changing INT-346. **Decision:** PAIGE resolves
+  and checks the zone in chat, and the owner confirms and saves it in Setup. That keeps the owner's own
+  confirmed act as the write and leaves INT-346 untouched.
+- **Setup had no business time-zone field.** `src/solo/calendar-settings.tsx:133` shows a hard-coded
+  label, and no caller of `set_business_time_zone` existed.
+- **The live Setup is `SoloBusinessContextSetup`** (`src/solo/settings.tsx:1844`). `SoloSetupView` in
+  `settings-setup.tsx` is imported by nothing. An edit made to it first was reverted, and a test now
+  proves the section mounts in the live Setup on Business profile only.
+
+**What changed.**
+- **Migration `20271027000100`** adds two reads behind the same owner/admin seat as every Sales read,
+  each writing one capability receipt:
+  - `read_business_time_zone` returns state, zone, `set_at`, `local_date` and `can_set`.
+  - `find_clients_for_status` returns names and status only. `%` and `_` are literal text, an email
+    matches only when typed in full, and it returns at most five rows plus a "more" flag.
+- **Chat tools**, named for their executors:
+  - `read_client_engagement_status` looks the client up by name and reads through the same composer as
+    the Engagement seam. Its projection keeps provider-verified, owner-recorded and test money apart,
+    prints "not known" or "not added up" instead of zero, and withholds due/overdue judgements without a
+    business zone.
+  - `read_business_time_zone` reports the setting and checks a proposed zone. It never saves.
+  - Both are in the Spine (`client.engagement_status`, `business.time_zone`) and admitted by name to the
+    conversational set. The determination is recorded in `docs/delivery/e2-1-readonly-admission-determination.md`.
+- **Setup › Business profile › Business time zone.** The owner picks a city, sees the exact zone and its
+  local time, confirms, and the control saves and then reads the value back before saying "saved".
+  - An admin sees the setting read-only.
+  - Matching is by word, so "Denver" never highlights UTC, and each zone is listed once.
+  - Focus moves to the confirmation and then to the result.
+  - The picker carries the theme.
+  - Buttons are visible: the shell's `.paige-solo button` reset flattens Setup buttons, so the override
+    is scoped to this section.
+
+**Evidence.**
+- **SQL proof:** 94/94 (+31). Twelve mutants are killed (one equivalent mutant is noted).
+- **Unit tests:** 27 chat and 12 Setup tests. Twelve mutants are killed.
+- **Harness drive** (`scripts/live-drive/setup-business-time-zone-drive.mjs`): every state in both themes
+  at the eight Solo frames plus a phone. It also covers pick → confirm → save → read back, the keyboard
+  path, the Denver/UTC and duplicate-zone regressions, and the PAIGE composer becoming writable.
+
+**PAIGE Chat "Loading your conversations…" (owner screenshot).** Investigated; filed to the
+Conversational Loop lane as #2105.
+- It clears when the `paige_chat_threads` list read settles, normally in one round trip.
+- Errors stop after 4 attempts (about 7 s of backoff), and chat then opens a new conversation.
+- Three paths have no upper bound: a stalled request, the browser being offline, and a hidden tab.
+- The harness's permanent "Loading…" was a stub artifact, fixed by gating the stub like the real hook.
+
+**Owed.**
+- Authenticated acceptance on the official QA account (`exp04-business-time-zone-acceptance` in
+  `scripts/live-drive/flows/solo-governed-flows.mjs`, eight steps), run by the QA lane.
+- Saving the zone from chat, once INT-346 is activated, as a confirm-lane capability.
+- #2083, #2086 and #2105.

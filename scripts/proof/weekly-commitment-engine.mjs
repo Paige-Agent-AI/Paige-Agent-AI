@@ -48,11 +48,22 @@ const db = {
 };
 const { runEventActs } = await import('../../supabase/functions/_shared/paige-orchestration/engine.ts');
 const { verifySubjectTenant } = await import('../../supabase/functions/_shared/paige-orchestration/subject-tenant.ts');
-const event = (await db.from('paige_native_events').select('*').eq('id', config.eventId).limit(1)).data[0];
+const rolePosture=sql(`SELECT jsonb_build_object('role',current_user,'bypass_rls',
+  (SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user),'auth_uid',auth.uid(),
+  'event_table_rls',(SELECT relrowsecurity FROM pg_class WHERE oid='public.paige_native_events'::regclass));`);
+const eventRead=await db.from('paige_native_events').select('*').eq('id',config.eventId).limit(1);
+assert.equal(eventRead.error,null,`canonical event read failed: ${JSON.stringify({error:eventRead.error,role_posture:rolePosture})}`);
+assert(Array.isArray(eventRead.data)&&eventRead.data.length===1,
+  `canonical claimed event is not visible: ${JSON.stringify({row_count:eventRead.data?.length??null,role_posture:rolePosture})}`);
+const event=eventRead.data[0];
 assert.equal(event.processing_state, 'claimed', 'canonical event claim required');
 assert.equal(event.subject_table, 'paige_automations');
 assert.equal((await verifySubjectTenant(db, event.subject_table, event.subject_id, event.tenant_id)).ok, true);
-const automation = (await db.from('paige_automations').select('*').eq('id', event.subject_id).limit(1)).data[0];
+const automationRead=await db.from('paige_automations').select('*').eq('id',event.subject_id).limit(1);
+assert.equal(automationRead.error,null,`canonical process read failed: ${JSON.stringify({error:automationRead.error,role_posture:rolePosture})}`);
+assert(Array.isArray(automationRead.data)&&automationRead.data.length===1,
+  `canonical process is not visible: ${JSON.stringify({row_count:automationRead.data?.length??null,role_posture:rolePosture})}`);
+const automation=automationRead.data[0];
 const claimed = { ...event, event_id: event.id };
 const first = await runEventActs(db, claimed, [automation]);
 assert.equal(first.records.length, 1);
@@ -63,5 +74,5 @@ assert.equal(second.records[0].outcome, 'executed');
 assert.equal(calls.filter(n => n === 'execute_weekly_commitment_check').length, 1, 'redrain adopts the existing observation');
 const rows = (await db.from('paige_act_executions').select('*').eq('event_id', event.id)).data;
 assert.equal(rows.length, 1); assert(rows[0].detail.weekly_commitment_observation);
-console.log(JSON.stringify({ status: 'PASS', actual_engine: true, executed: 1, redrain_adopted: true,
+console.log(JSON.stringify({ status: 'PASS', actual_engine: true, executed: 1, redrain_adopted: true,role_posture:rolePosture,
   outbound_requests: 0, boundary: 'real engine/adapter/Gateway over disposable PostgreSQL; Auth/tier/authority fixture dependencies; no HTTP drainer or authenticated platform proof' }));

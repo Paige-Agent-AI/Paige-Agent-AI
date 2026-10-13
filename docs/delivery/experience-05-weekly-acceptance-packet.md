@@ -1,6 +1,8 @@
 # Weekly Internal Commitment Check — protected acceptance handoff
 
-Status: PREPARATION ONLY. Authenticated customer outcome UNVERIFIED. This packet authorizes no account repair, permission change, activation, provider call or production fixture write. ANT-147 integration; ANT-21/PC-1 and INT-346 retain their owners.
+Status: PREPARATION ONLY. Authenticated customer outcome UNVERIFIED. This packet authorizes no account repair, permission change, activation, provider call or production fixture write. ANT-147 integration; ANT-21/shared QA and INT-346 retain their owners.
+
+Owner supersession, 2026-10-12: Antonio Cook's existing PAIGE customer account is the official testing account for Experiences01–05. The journey lead verified the direct human instruction in the original QA chat; canonical account coordination is ANT-21/ANT-52/ANT-7. PC-1-only recovery directions below are superseded where conflicting; PC-1 deletion is owner-handled and not verified here. Do not recover, mint, reset or create a replacement QA tenant. Account designation is not authenticated PASS or permission to activate a schedule. Preserve legitimate memberships, roles, connections and subscription. Verify the actual signed-in actor, explicitly selected authorized workspace and current role at every test; no Operator impersonation, personal-Google linking, password request or exported session. Existing effect/spend/approval/session and task-hold controls remain.
 
 ## Candidate and evidence boundary
 
@@ -12,19 +14,19 @@ An absent per-tool permission resolves to confirm through the actual canonical r
 
 ## Readiness supplied by the existing owners
 
-1. Auth administrators confirm the existing PC-1 QA Shared Synthetic account, active standalone SOLO workspace and exact owner seat. Reuse it; do not create another QA tenant, impersonate the owner or sign in with customer credentials.
-2. QA owners attest protected account marker, provider-disabled floor and tenant execution controls. Install runner secrets privately through the existing trusted runner. No credential, token or email belongs in this packet, a screenshot, PR or log.
+1. Shared QA confirms genuine ordinary authentication to the official customer account, the explicitly authorized workspace, current local owner seat and task-specific scope. Do not infer standalone/SOLO or owner authority from the account name. Do not alter legitimate roles, memberships or account classification to fit a test.
+2. QA owners confirm existing protected-session, provider/effect, spend, approval and execution controls for the approved test scope. Use existing protected authentication and trusted tooling; do not export sessions or request passwords. No credential, token, private account mapping or email belongs in this packet, screenshot, PR or log. Historic PC-1 readiness/#2089 does not block the new account's acceptance, but real authentication and each task hold still require evidence.
 3. Platform Reach/Conversational Loop binds the prepared caller-JWT reader and owner-reviewed schedule controls through current admission. An admitted business-metric tool is not authorization to admit a schedule or this private Planning read. Preserve INT-346.
 4. After rendered owner review, mount the approved narrow conversation flow using existing SOLO components and expose this registered native read through the existing tenant Settings presentation. The SOLO Trust Compass map is a curated mutation subset; its current map does not expose this new native read, so a catalogue row alone is not evidence of a usable owner knob. Reuse the existing human setter and read classification without inventing a mutation risk or another permission store. Obtain independent review and exact-head CI again for source changes.
 5. Release through ordinary migration/edge/web pipelines only after the explicit final go-live decision. Record released source SHA, migration identity, deployed edge version, served build and SQL ACL readback separately. A READY deployment is not authenticated acceptance.
 
 ## Fixtures and role matrix
 
-All fixtures are synthetic and created only after the trusted runner is ready, through canonical owner interfaces. Reuse the existing isolation baseline; no foreign tenant data is needed.
+Any test fixtures are synthetic and created only after their explicit task authorization and genuine scoped authentication, through canonical owner interfaces. Preserve existing customer records and reuse the existing isolation baseline; no foreign tenant data is needed.
 
 | Fixture/seat | Required behavior |
 | --- | --- |
-| Active PC-1 owner | Draft and authorize an exact weekly schedule; read only commitments assigned to or created by that owner |
+| Verified official-account local owner | Draft and authorize an exact weekly schedule within approved scope; read only commitments assigned to or created by that owner |
 | Ordinary member / tenant admin | No schedule authorization/control; no private owner observation or titles through tables, getter, Rail or Chat |
 | Global admin without local owner seat | Same denial; platform/global status supplies no owner authorization |
 | Revoked/inactive owner | No new publication/execution; read/control denied |
@@ -48,6 +50,6 @@ Run the approved flow at1536×770,1366×768,1024×768 and900×1000, PAIGE open a
 
 Compare event dedup identity, authorized schedule revision, act idempotency/correlation, dispatch claim, observation scope, receipt identity and source readback. One occurrence has one act observation and one canonical receipt. The local proof runs actual PostgreSQL roles and independent connections; it does not substitute for Supabase Auth or browser QA.
 
-After acceptance, use the canonical owner cancel control for the test schedule and remove synthetic Planning fixtures through their existing interfaces. Preserve process/act/receipt history. Account deletion, role restoration and protected flags remain Auth/QA-owned. Assert no live test schedule, pending due execution, provider effect or new QA tenant. Report cleanup truthfully; do not delete an uncertain act to make the run green.
+After acceptance, use the canonical owner cancel control for the authorized test schedule and remove only recorded synthetic Planning fixtures through their existing interfaces. Preserve customer records, existing owner sessions and process/act/receipt history. PC-1 deletion is owner-handled; it is not a cleanup step for this journey. Protected account/role flags remain with their owners. Assert no live test schedule, pending due execution, provider effect or new QA tenant. Report cleanup truthfully; do not delete an uncertain act to make the run green.
 
 The acceptance record must separately label source, local database/engine, rendered prototype, non-author review, exact-head CI, release, production readback, authenticated Chat/Live and owner acceptance. Customer completion remains UNVERIFIED until the final two are proven.

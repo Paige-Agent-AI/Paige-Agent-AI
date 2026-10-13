@@ -16,7 +16,9 @@ import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-ca
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271027000000_experience05_weekly_commitment_check.sql';
 const ci=process.argv.includes('--postgres');
+const simulateCiRole=process.argv.includes('--simulate-ci-role');
 if(ci&&process.env.CI!=='true')throw new Error('--postgres is limited to the disposable CI service');
+if(ci&&simulateCiRole)throw new Error('Role simulation is limited to a newly created local disposable cluster');
 if(ci&&process.env.PGHOST&&!['localhost','127.0.0.1'].includes(process.env.PGHOST))throw new Error('Loopback only');
 const bin=process.env.WEEKLY_PROOF_PG_BIN??(process.platform==='win32'?'C:/Program Files/PostgreSQL/16/bin':'');
 const command=name=>bin?join(bin,`${name}${process.platform==='win32'?'.exe':''}`):name;
@@ -65,14 +67,20 @@ async function concurrent(sql,ctx,n=6){
 }
 const owner=randomUUID(),otherOwner=randomUUID(),member=randomUUID(),admin=randomUUID(),tenant=randomUUID(),foreign=randomUUID();
 const ownerCtx={actor:owner,tenant,role:'authenticated'};
-let started=false,created=false;
+let started=false,created=false,roleCaptured=false,originalServiceRole=null,evidence=null;
+const roleParity={simulated_incumbent_role:simulateCiRole,restoration_verified:false};
 try{
   if(!ci){
     execFileSync(command('initdb'),['-D',join(scratch,'data'),'-A','trust','-U','postgres','--encoding=UTF8','--no-locale','--no-sync'],{windowsHide:true,stdio:'ignore',timeout:30000});
     started=true; // startup failures also attempt cleanup; Windows children must not inherit pipe handles.
     execFileSync(command('pg_ctl'),['-D',join(scratch,'data'),'-l',join(scratch,'postgres.log'),'-o',`-h 127.0.0.1 -p ${port}`,'-w','start'],{windowsHide:true,stdio:'ignore',timeout:30000});
+    if(simulateCiRole)run('CREATE ROLE service_role NOBYPASSRLS;',{db:'postgres'});
   }
   run(`CREATE DATABASE ${database};`,{db:'postgres'});created=true;
+  originalServiceRole=json("SELECT coalesce((SELECT jsonb_build_object('bypass_rls',rolbypassrls) FROM pg_roles WHERE rolname='service_role'),'null'::jsonb);",{db:'postgres'});
+  roleCaptured=true;
+  roleParity.original_exists=originalServiceRole!==null;
+  roleParity.original_bypass_rls=originalServiceRole?.bypass_rls??null;
   run(`DO $roles$ BEGIN
     IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon; END IF;
     IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated; END IF;
@@ -124,6 +132,11 @@ try{
     ${extractTable(source('supabase/migrations/20260711140000_action_bus.sql'),'paige_action_kinds')}
     ${extractTable(source('supabase/migrations/20260711340000_paige_planning.sql'),'plans')}
     ${extractTable(source('supabase/migrations/20260711340000_paige_planning.sql'),'plan_items')}`);
+  // Earlier CI fixtures may create the shared role without Supabase's trusted-role BYPASSRLS.
+  // Match that real infrastructure posture only in this loopback disposable proof; restore it below.
+  if(originalServiceRole?.bypass_rls===false)run('ALTER ROLE service_role BYPASSRLS;',{db:'postgres'});
+  assert.equal(run("SELECT rolbypassrls FROM pg_roles WHERE rolname='service_role';"),'t');
+  roleParity.effective_bypass_rls=true;
   run(source('supabase/migrations/20260711200000_paige_tool_autonomy.sql'));
   run(source('supabase/migrations/20270540000000_tool_autonomy_ceiling_fact.sql'));
   run(source('supabase/migrations/20270552000000_resolve_tool_autonomy_many.sql').split('-- paige_improvement_proposals: the tenant question')[0]);
@@ -429,8 +442,19 @@ try{
   const bridgeConfig=join(scratch,'engine-transport.json');
   writeFileSync(bridgeConfig,JSON.stringify({psql:command('psql'),port,database,eventId:actualEngine.eventId}));
   check('actual governed engine Gateway native adapter SQL observation and redrain',()=>{
-    const output=execFileSync(process.execPath,['--experimental-transform-types',join(root,'scripts/proof/weekly-commitment-engine.mjs'),bridgeConfig],
+    const bridge=()=>execFileSync(process.execPath,['--experimental-transform-types',join(root,'scripts/proof/weekly-commitment-engine.mjs'),bridgeConfig],
       {encoding:'utf8',stdio:['pipe','pipe','pipe'],windowsHide:true,timeout:120000,maxBuffer:2*1024*1024});
+    if(simulateCiRole){
+      run('ALTER ROLE service_role NOBYPASSRLS;',{db:'postgres'});
+      try{
+        assert.equal(run(`SELECT count(*) FROM paige_native_events WHERE id=${literal(actualEngine.eventId)};`,{role:'service_role'}),'0');
+        assert.throws(bridge,error=>String(error.stderr??error.message).includes('canonical claimed event is not visible')
+          && String(error.stderr??error.message).includes('"bypass_rls":false'));
+        assert.equal(run(`SELECT count(*) FROM paige_act_executions WHERE event_id=${literal(actualEngine.eventId)};`),'0');
+        roleParity.non_bypass_failure_reproduced=true;
+      }finally{run('ALTER ROLE service_role BYPASSRLS;',{db:'postgres'});}
+    }
+    const output=bridge();
     const proof=JSON.parse(output.trim());assert.equal(proof.status,'PASS');assert.equal(proof.actual_engine,true);
     assert.equal(proof.executed,1);assert.equal(proof.redrain_adopted,true);console.log(output.trim());
   });
@@ -472,12 +496,25 @@ try{
     assert.equal(run(`SELECT count(*) FROM tenants WHERE id=${literal(foreign)};`),'0');
   });
   const schemaFingerprint=run("SELECT md5(string_agg(pg_get_functiondef(p.oid),E'\\n' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '%weekly_commitment%';");
-  const evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,schema_fingerprint:schemaFingerprint,
+  evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,schema_fingerprint:schemaFingerprint,
+    fixture_service_role:roleParity,
     incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};
   writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));
   console.log(JSON.stringify(evidence));console.log(`Evidence: ${join(scratch,'result.json')}`);
 }finally{
   if(created){try{run(`DROP DATABASE ${database};`,{db:'postgres'});}catch(e){console.error('Cleanup failed',e.message);process.exitCode=1;}}
+  if(roleCaptured){try{
+    if(originalServiceRole){
+      run(`ALTER ROLE service_role ${originalServiceRole.bypass_rls?'BYPASSRLS':'NOBYPASSRLS'};`,{db:'postgres'});
+      assert.equal(run("SELECT rolbypassrls FROM pg_roles WHERE rolname='service_role';",{db:'postgres'}),originalServiceRole.bypass_rls?'t':'f');
+    }else{
+      run('DROP ROLE IF EXISTS service_role;',{db:'postgres'});
+      assert.equal(run("SELECT count(*) FROM pg_roles WHERE rolname='service_role';",{db:'postgres'}),'0');
+    }
+    roleParity.restoration_verified=true;
+    if(evidence)writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));
+    console.log('Fixture service_role original posture restored and verified');
+  }catch(e){console.error('Fixture service_role restoration failed',e.message);process.exitCode=1;}}
     if(started){try{execFileSync(command('pg_ctl'),['-D',join(scratch,'data'),'-m','fast','-w','stop'],{windowsHide:true,stdio:'ignore',timeout:30000});}catch(e){console.error('Local cluster stop failed',e.message);process.exitCode=1;}}
 }

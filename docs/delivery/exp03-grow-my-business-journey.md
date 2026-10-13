@@ -367,7 +367,7 @@ runs the real database path on an isolated local clone, rolled back:
 |---|---|---|
 | S1 | §9 | DB contract test; unit tests; rendered UI both themes; production readback; PC-1 drive owed |
 | S2 | Campaign roll-up into Marketing Analytics + Exp 02 evidence (`marketing.campaign.leads`, `.opportunities`, `.won`) via INT-340 | DB test; Exp 02 consumer handoff |
-| S3 | Chat: attach asset, transition campaign, read leads; brief-from-goal grounded in Exp 01 profile | Spine/chat contract tests; INT-346 gate |
+| S3 | Chat: attach asset, transition campaign, read leads; brief-from-goal grounded in Exp 01 profile *(see §12: the S3 label on this branch was used for lead replies; this deliverable is not built)* | Spine/chat contract tests; INT-346 gate |
 | S4 | Follow-up: campaign-scoped process activation screen (owner-seen design) + step prepare-for-approval; booking → opportunity (Sales) | DB tests; rendered design |
 | S5 | Opportunity → customer: deal link on agreement/invoice; customer promotion on won/paid (Sales/Payments writers) | Sales contract tests |
 | S6 | Results vs goal + evidence-backed recommendation through Exp 02's review | Fabric adapter tests |
@@ -375,3 +375,33 @@ runs the real database path on an isolated local clone, rolled back:
 Every slice: independent non-author review, exact-head CI, `deploy-migrations` persisted-apply readback, master
 reference §4/§5 and tier matrix updated in the same PR, four evidence states kept separate (CODE_COMPLETE, RELEASED,
 AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
+
+## 12. S3 "PAIGE works your leads" — backend built, not merged (2026-10-13)
+
+**Naming note (§13).** §10's table plans S3 as "chat: attach asset, transition campaign, read leads". The work built on this branch under the S3 label is a different deliverable: a drafted reply to each new lead, sent only through the governed email door. The chat-tools deliverable is not built by this work, and no slice number is assigned to it here.
+
+**Status.** CODE_COMPLETE on branch `claude/stoic-archimedes-pv4r8u`. Not RELEASED: not merged, and migrations `20271031000000`/`000100`/`000200` are not applied. Not AUTHENTICATED_WORKFLOW_VERIFIED. Not OWNER_ACCEPTED. Full record: master §4.0 (2026-10-13 S3 entry), with the gaps in master §5.
+
+**Flow covered (backend):**
+1. A lead submits an opted-in form.
+2. `growth-process-submission` files one `owner.lead_followup` draft. Its gates:
+   - business account type and open status;
+   - the typed email matches the contact;
+   - exactly one sender;
+   - caps.
+
+   A skip records `lead_reply_skipped_reason`.
+3. The worker drafts plain text.
+4. The owner approves the exact email, and `comms-email-command` sends it with `approval_id` from an admitted sender. SendGrid counts only while its domain is verified..
+5. At `provider_accepted`, the send is recorded on the approval, and the contact and deal history show "handed to the email provider".
+6. A signature-verified SendGrid event moves the message forward (delivered / bounced / blocked / dropped / deferred / spam reported).
+
+`execute-approval` and every other approve path cannot mark a send approved without a governed send.
+
+**Not covered, and why:**
+- **The reply screen and every UI state.** Owner design approval comes first (§00).
+- **A live SendGrid send.** Operator steps are owed (master §5).
+- **`client.followup`.** Decline-only; an owner decision is owed.
+- **A SendGrid-only business gets no draft.** The drafter does not pass the SendGrid provider list yet.
+- **Enterprise forms cannot be opted in.** The setter admits standalone and sub-account only.
+- **The full rollout plan.** Gmail and iCloud Mail are planned separately in `exp03-launch-email-providers-plan.md`.

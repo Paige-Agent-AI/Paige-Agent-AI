@@ -6,6 +6,20 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### "Approved" was a category string match, and no test asserted a send happened (2026-10-13, Experience 03 S3)
+
+**Symptom.** On production, six `client.followup` approvals read `approved` and their actions read `done`, between 2026-09-15 and 2026-10-07. Nothing was sent for any of them. Each row's own metadata said so (`executed:false`, "acknowledged — no automated executor for this category yet"), and nothing read that field.
+
+**Root cause.** `execute-approval` picked its branch by matching the approval's category text against "email" and "sms". `client.followup` matched neither, so it fell through to a generic acknowledge branch. That branch marked the approval approved, and the approval→action sync trigger then marked the action done. Before S3, `execute-approval` had no behavioural test of its own (its `index.test.ts` and vitest config are new in S3); the tests that read it checked its source text. No test asserted that an approved outbound-message approval had produced a send, a provider receipt, or anything at all.
+
+**The class of proof that missed it.** A status transition was treated as evidence of the effect the status names. A test that checks a row reached `approved` passes exactly as well when the work was skipped.
+
+**Rule.**
+- For any kind whose job is an external effect (a send, a payment, a publish), the terminal "done" state must REQUIRE the effect's canonical receipt. Enforce that at the write, not in the caller. S3 does it with a guard on `paige_pending_approvals` that demands a provider-accepted governed send for the same business and person.
+- The test suite must include the negative: approve the thing with no effect, and assert the row does NOT become approved.
+- A fall-through "acknowledge" branch is a default that silently claims completion. When a door meets a kind it cannot execute, it must refuse by default.
+- Reading `executed:false` in production is cheap. Count it before trusting an "approved" metric.
+
 ### Small functional history does not prove recurring-status read performance (2026-10-13, #2112)
 
 **Symptom → root cause → rule.** The weekly status getter passed functional, receipt, privacy and execution proofs, but its added per-process historical result lookup had no predicate/recency index. Fifty outer process rows did not bound each process's accumulated event/receipt scan. A post-merge P2 correctly identified that missing proof.

@@ -1438,7 +1438,7 @@
       "id": "resend",
       "name": "Resend (transactional / platform email)",
       "taxonomy": "crm_calendar_communications",
-      "business_reason": "Email delivery for platform and tenant sending identities.",
+      "business_reason": "Email delivery for platform and tenant sending identities. Owner policy 2026-10-13: Resend is the Platform Operator's own email, and a business's PAIGE Email moves to SendGrid (see the sendgrid entry). Existing tenant Resend connectors are not converted; the governed door still admits them, and only Resend sends can be reconciled.",
       "paige_use_cases": [
         "send platform/tenant email from a verified sending identity",
         "verify a sending domain",
@@ -1521,6 +1521,107 @@
         "docs/PAIGE-MASTER-PROJECT-REFERENCE.md §4 (Resend)",
         "docs/comms/SEND-MESSAGE-CONTRACT.md",
         "docs/product/provider-result-contract.md §4.3"
+      ]
+    },
+    {
+      "id": "sendgrid",
+      "name": "SendGrid (PAIGE Email — tenant one-to-one email)",
+      "taxonomy": "crm_calendar_communications",
+      "business_reason": "Owner policy 2026-10-13: a business's PAIGE Email sends through SendGrid on the platform's account. Resend stays the Platform Operator's own email, and existing tenant Resend connectors are not converted. Customers see 'PAIGE Email', never a provider name.",
+      "paige_use_cases": [
+        "send one approved email to one existing contact from the business's SendGrid-verified domain through the governed door (comms-email-command / comms.email_send); provider acceptance only",
+        "send an approved reply to a new lead (owner.lead_followup, Experience 03 S3) with approval_id, and record the send on the approval (lead_reply_record_send_service)",
+        "read back the provider's own outcome (delivered / bounced / blocked / dropped / deferred / spam report) from a signature-verified Event Webhook, correlated to the governed message"
+      ],
+      "connection_prerequisite": "Operator steps, none done on production as of 2026-10-13 (master §5): the restricted Mail Send key SENDGRID_MAIL_SEND_API_KEY set with its scopes recorded via comms-sendgrid-scopes; the business's sending domain authenticated in SendGrid (DNS); the verification facts (tenant_email_domains.sendgrid_domain_id / sendgrid_status='verified' / sendgrid_verified_at) written by the service role, since there is no automated SendGrid verification service and manage-tenant-domain is Resend-only; a channel_connectors row provider='sendgrid' on the verified domain; comms_provider_execution_allowed admitting the business and actor; the Event Webhook enabled with SENDGRID_WEBHOOK_PUBLIC_KEY set; owner sign-off on the first live test send.",
+      "required_scopes": [
+        "SendGrid restricted API key: Mail Send only (SENDGRID_MAIL_SEND_API_KEY)",
+        "a separate scoped key for Event Webhook setup only (SENDGRID_WEBHOOK_ADMIN_API_KEY, read only by comms-sendgrid-webhook-admin)"
+      ],
+      "safe_readable_context": "The provider message id (X-Message-Id), the event type, the bounce type and a sanitized provider reason (control characters stripped, addresses replaced by [address], 200 characters max). Never the message body from the provider, never a credential.",
+      "allowed_writes_external_effects": "Send one email. Only through comms-email-command after the person approves the exact email on the canonical confirmation. The sender domain must be SendGrid-verified at prepare and again at send time (COMMS_EMAIL_SENDER_UNVERIFIED / binding not eligible otherwise). HTTP 202 is provider acceptance, never delivery. A SendGrid outcome of 'unknown' is never re-sent by reconcile (_comms_email_reconcilable admits Resend only); the identical-content guard refuses a duplicate while it is unknown. execute-approval refuses every send_via_approval kind (409) and sends nothing.",
+      "authority_lane": [
+        "read",
+        "draft",
+        "confirm"
+      ],
+      "m1_dependency": "none as a discretionary purchase (email delivery is an operating comms cost, recorded below).",
+      "canonical_provider_receipt": "SendGrid X-Message-Id stored as messages.provider_message_id at provider_accepted; Event Webhook sg_message_id prefix + custom_args paige_tenant_id / paige_operation_id / paige_message_id for correlation.",
+      "rail_mind_memory": "Rail: the governed send's outcome (provider_accepted, then any correlated provider-reported delivery state); a lead reply that reaches provider_accepted writes one communication_log row and, with an open deal, one deal_activities row saying 'handed to the email provider'. Mind: no bodies. Memory: none of raw content. Provider acceptance is never reported as delivered; a spam report keeps the status and sets delivery_state='spam_reported'.",
+      "status": "PROOF_OWED",
+      "owner": "Comms workstream (Experience 03 S3 for the lead-reply binding)",
+      "dependency": "Operator steps in connection_prerequisite; merge and persisted apply of 20271031000100 and 20271031000200 (branch claude/stoic-archimedes-pv4r8u, not merged on 2026-10-13); the reply screen UI (owner design approval first). Production 2026-10-13 (read-only): 0 sendgrid connectors, 0 sendgrid_receipt_processing rows.",
+      "next_slice": "Complete the operator steps on one test business and run one owner-approved live send end to end: approve → provider_accepted → correlated Event Webhook → message state read back. Then build a SendGrid domain-verification service so the facts are not hand-written.",
+      "tier_eligibility": {
+        "platform": "ineligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "platform (Paige Agent AI Inc.) holds the SendGrid account and its Mail Send key",
+        "operational_owner": "Comms workstream",
+        "pricing_model": "metered_usage",
+        "pricing_source_url": "https://sendgrid.com/en-us/pricing",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Plan tiers with monthly email volume; not verified in this slice, so no figure is recorded (§13). Whether tenant send volume is later passed through to the tenant is undecided.",
+        "access_prerequisite": "SendGrid account; restricted Mail Send key; per-business authenticated sending domain (DNS); Event Webhook with signature verification.",
+        "expected_cost_driver": [
+          "messages"
+        ],
+        "rate_limits_quotas": "Plan volume limits and Mail Send rate limits; send-message applies a 20 s deadline and treats a timeout/5xx as unknown (never retried by reconcile) and a 4xx as failed. Lead-reply drafting caps: 20 per business per hour, 100 per day, 1 per contact per day. Verify provider limits at source.",
+        "usage_review_cadence": "Monthly (send volume), and after the first live sends.",
+        "renewal_deprecation_review": "No fixed contract recorded; track Mail Send v3 and Event Webhook deprecations; rotation of the never-read SENDGRID_PLATFORM_ADMIN_API_KEY is owed.",
+        "data_privacy_retention": "Bodies never enter Mind/Memory; provider reasons are sanitized before storage; customer-facing text never names the vendor. A form submission is not marketing consent; a lead reply is a direct response to it (owner ruling 2026-10-13).",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Email delivery is a metered operating comms cost, not a payment or discretionary purchase. Volume is bounded by the lead-reply caps and the governed door's per-send approval."
+        },
+        "receipt_reconciliation": "X-Message-Id at acceptance; Event Webhook events journalled in sendgrid_receipt_processing (correlated or uncorrelated with a reason) and applied forward-only to the governed message.",
+        "rail_outcome": "governed send outcome; provider acceptance recorded separately from provider-reported delivery.",
+        "pause_revoke_path": "Unset SENDGRID_MAIL_SEND_API_KEY (readiness becomes EMAIL_PROVIDER_NOT_CONFIGURED), deactivate the business's sendgrid connector, or clear its sendgrid_status (the binding stops being eligible at send time).",
+        "next_owner": "Comms workstream",
+        "next_slice": "Verify pricing at source and record pricing_checked_as_of; decide tenant pass-through."
+      },
+      "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/email/providers.ts",
+          "role": "provider_adapter",
+          "note": "SendGridProvider (Mail Send v3, 202 + X-Message-Id), from #1995."
+        },
+        {
+          "path": "supabase/functions/_shared/comms-email/readiness.ts",
+          "role": "fail_closed_containment",
+          "note": "SendGrid readiness: sender missing / domain not verified / key not configured, in that order; a connector row alone is never a verified sender."
+        },
+        {
+          "path": "supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql",
+          "role": "fail_closed_containment",
+          "note": "SendGrid verification facts writable only by the service role; prepare and send-time admission only while the domain is verified."
+        },
+        {
+          "path": "supabase/functions/handle-sendgrid-webhook/index.ts",
+          "role": "callback_readback",
+          "note": "Signature-verified Event Webhook; 503 until SENDGRID_WEBHOOK_PUBLIC_KEY is set."
+        },
+        {
+          "path": "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql",
+          "role": "callback_readback",
+          "note": "ingest_sendgrid_receipt + correlated, forward-only application to the governed message."
+        },
+        {
+          "path": "supabase/functions/send-message/index.ts",
+          "role": "provider_adapter",
+          "note": "the GENERIC dispatcher's governed SendGrid arm (custom_args, 20 s deadline, http_status); not SendGrid-specific on its own."
+        }
+      ],
+      "sources": [
+        "docs/PAIGE-MASTER-PROJECT-REFERENCE.md §4.0 (2026-10-13 Experience 03 S3) and §5",
+        "docs/brain/decision-log.md (Experience 03 S3, 2026-10-13)",
+        "docs/brain/config-registry.md (PAIGE Email — SendGrid)",
+        "docs/delivery/exp03-launch-email-providers-plan.md"
       ]
     },
     {

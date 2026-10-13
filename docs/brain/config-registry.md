@@ -534,6 +534,21 @@ Values intentionally omitted.
 - **Email:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, plus from-address names
   `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`, `CALENDAR_EMAIL_FROM`,
   `PLATFORM_SUPPORT_EMAIL`.
+- **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
+  - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
+    - `_shared/email/providers.ts`: the `SendGridProvider` case, used when there is no tenant key;
+    - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`);
+    - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;
+    - `comms-email-command/index.ts`: presence decides whether `sendgrid` counts as a sender provider (`emailProvidersFor`);
+    - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
+  - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name.
+  - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed).
+  - **Database facts, not secrets (`20271031000100`):**
+    - `tenant_email_domains.sendgrid_domain_id`, `.sendgrid_status` and `.sendgrid_verified_at`, writable only by the service role (`guard_tenant_email_domain_sendgrid_facts`);
+    - a `channel_connectors` row with `provider='sendgrid'`;
+    - receipt journal `sendgrid_receipt_processing`, written by `ingest_sendgrid_receipt` (10-argument form, `20271031000200`).
+
+    On 2026-10-13, production had 0 `sendgrid` connectors and 0 journal rows. The operator steps to go live are in master §5.
 - **Calendars / meetings:** Google (`GOOGLE_OAUTH_CLIENT_ID`/`_SECRET`, `CALENDAR_ENCRYPTION_KEY`,
   `CALENDAR_OAUTH_REDIRECT_ORIGIN`, `GOOGLE_DRIVE_API_KEY`), Cal.com (`CAL_API_KEY`, `CAL_BASE_URL`,
   `CAL_WEBHOOK_SECRET`), Zoom (`ZOOM_CLIENT_ID`/`_SECRET`, `ZOOM_OAUTH_REDIRECT_URL`).

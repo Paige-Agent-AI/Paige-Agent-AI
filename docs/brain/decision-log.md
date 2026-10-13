@@ -1,5 +1,26 @@
 # Decision Log — chronological one-liners
 
+- **Experience 03 S3 "PAIGE works your leads" — email policy, the governed door, the legacy quarantine (2026-10-13; branch `claude/stoic-archimedes-pv4r8u`, migrations `20271031000000`/`000100`/`000200`; not merged when recorded).**
+  - **Owner policy (2026-10-13): a business's PAIGE Email sends through SendGrid; Resend is the Platform Operator's own email.**
+    - Existing tenant Resend connectors are NOT converted. The governed door still admits `resend`, and only Resend sends can be reconciled.
+    - Customers see "PAIGE Email", never a provider name.
+    - **Reach of the policy in code today (§13).** S3 applies it at the governed one-to-one door only. Two other paths still send a business's email on the platform Resend key: Marketing email's managed sender (2026-10-04 E1 ruling "managed Resend only when no sender was chosen") and `buildProvider`'s default/unknown-provider fallback in `_shared/email/providers.ts`. Reconciling those paths with the policy is open; it is not decided here.
+    - Customer Gmail (OAuth) and iCloud Mail are a separate launch plan: `docs/delivery/exp03-launch-email-providers-plan.md`.
+  - **Governed door only (owner ruling 2026-10-13).**
+    - A form submission is not marketing consent. A direct reply to it is allowed, but it goes out only from the business's verified email through `comms-email-command` / `comms.email_send`. There is no second sender path.
+    - Provider acceptance is not delivery: HTTP 202 is `provider_accepted`, never `delivered`.
+    - AI drafting is opt-in per form (`growth_forms.lead_reply_enabled`, default false).
+  - **Legacy approval quarantine.** `execute-approval` refuses every `send_via_approval` kind with 409 before any write (`reason_code` `review_and_send` | `decline_only`). A database guard refuses `approved`/`sent` for a send-kind approval unless it cites a provider-accepted governed send for the same business and person. `client.followup` is decline-only until the owner rules on a governed path (master §5).
+  - **§58 call-out — exactly what is removed.**
+    - For `client.followup`: a false completion. Approving one marked it approved/done with `executed:false` and sent nothing. 6 such rows on production, 2026-09-15 to 2026-10-07 (master §10).
+    - For flat-draft send kinds whose category carries email/sms: a route into `send-message` through `execute-approval`. 0 such actions in the 30 days to 2026-10-13, so no working send volume is lost.
+    - Declining stays free on every kind.
+  - **§61 `lead_reply` declaration: default, no exception.**
+    - God, Solo and Sub-account: yes. Enterprise: yes, through the Solo union. Agency: no at its own operator surface.
+    - The server enforces it in `growth-process-submission/lead-reply.ts` `LEAD_REPLY_ACCOUNT_TYPES` (standalone, sub_account, enterprise), pinned to `tierFeatures.ts` by `tierFeatures.test.ts`.
+    - Known mismatch: the opt-in setter `growth_form_set_intake` admits only standalone and sub-account, so enterprise cannot turn it on yet.
+  - **Recording a send is sender-only.** `lead_reply_record_send` and its service twin require the send's bound actor (`LEAD_REPLY_NOT_YOUR_SEND`). They refuse a new send while an earlier one on the same approval is unresolved (`LEAD_REPLY_PRIOR_SEND_UNRESOLVED`).
+  - **Spam report keeps the message's status** (`delivery_state='spam_reported'`). A complaint proves arrival, and "failed" would invite a resend. This deviates from the brief, and the deviation is recorded in `20271031000200`.
 - **Experience 04 E4-S2 — client standing in chat, owner time-zone setup (2026-10-13, ANT-51 / ANT-147).**
   - **INT-346 shapes the write.** It is still staged, so a typed Solo turn cannot run a confirmed write. PAIGE resolves and checks the zone in chat (`read_business_time_zone`, read-only); the owner confirms and saves in Setup through `set_business_time_zone`, and the value is read back before it is called saved. No chat write, no second store.
   - **Explicit admission.** `read_client_engagement_status` and `read_business_time_zone` are added BY NAME to the conversational read set, recorded in `docs/delivery/e2-1-readonly-admission-determination.md` and conditional on the independent security review. The test pins the literal.

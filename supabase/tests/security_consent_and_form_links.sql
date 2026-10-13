@@ -187,6 +187,18 @@ RESET ROLE;
 SELECT pg_temp.require_true((SELECT sms_phone_verified FROM public.communication_preferences WHERE user_id = '5ec20870-0000-4000-8000-000000000002'),
   'an unrelated browser edit keeps a server-verified number verified');
 
+-- Nor by planting its own verification code for someone else's number (verify-sms-code would trust it).
+SELECT pg_temp.require_true(NOT has_table_privilege('authenticated', 'public.sms_verifications', 'INSERT')
+  AND NOT has_table_privilege('anon', 'public.sms_verifications', 'INSERT'), 'no browser role can write a verification code');
+SELECT pg_temp.require_true(NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.sms_verifications'::regclass AND polcmd = 'a'),
+  'no browser insert policy remains on verification codes');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('5ec20870-0000-4000-8000-000000000001');
+SELECT pg_temp.require_error($$INSERT INTO public.sms_verifications(user_id, phone_number, verification_code, expires_at)
+  VALUES ('5ec20870-0000-4000-8000-000000000001', '+15558675309', encode(sha256('123456'), 'hex'), now() + interval '1 day')$$,
+  '42501', NULL, 'a signed-in user cannot plant a code for a number they do not own');
+RESET ROLE;
+
 -- The gates answer the server only, even if a later migration grants them to a browser role (§59).
 GRANT EXECUTE ON FUNCTION public.has_sms_consent(text, boolean), public.has_email_marketing_consent(text) TO authenticated;
 SET LOCAL ROLE authenticated;

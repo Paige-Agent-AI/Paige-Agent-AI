@@ -38,7 +38,9 @@
 --      That flag was browser-writable (RLS lets a user update their own row, every column), so the
 --      evidence's owner could mark any number verified. A trigger now keeps it the server's: only the
 --      service role (verify-sms-code, after a matched code) or a direct SQL session can set it true, and a
---      browser change of the number clears it.
+--      browser change of the number clears it. And the code it checks must be the server's own: a browser
+--      could INSERT its own sms_verifications row (any number, a code it chose), and verify-sms-code would
+--      then mark that number verified. Only send-sms-verification (service role) writes that table now.
 --   4. paige_consent_events / paige_suppressions: their browser policies keyed authority on the GLOBAL
 --      'admin' role (§59 trap), so a plain member of business B who is an admin anywhere else could write
 --      B's consent ledger (granting marketing consent) or delete B's suppressions (un-opting-out a contact),
@@ -219,6 +221,12 @@ DROP TRIGGER IF EXISTS communication_preferences_guard_verified_phone ON public.
 CREATE TRIGGER communication_preferences_guard_verified_phone
   BEFORE INSERT OR UPDATE ON public.communication_preferences
   FOR EACH ROW EXECUTE FUNCTION public.communication_preferences_guard_verified_phone();
+
+-- The verification code must be one the server generated and sent (send-sms-verification, service role).
+DROP POLICY IF EXISTS "Users can insert own sms verifications" ON public.sms_verifications;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.sms_verifications FROM PUBLIC, anon, authenticated;
+-- anon never writes preferences (RLS already refused it; the grant goes too).
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.communication_preferences FROM anon;
 
 REVOKE ALL ON FUNCTION public.has_sms_consent(text, boolean) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.has_sms_consent(text, boolean) TO service_role;

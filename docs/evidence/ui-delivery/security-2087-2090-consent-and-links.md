@@ -67,5 +67,5 @@ refused save (message in the existing error slot). No new scroll owner.
 
 Independent non-author review (§39) on the first commit: SHIP with two should-fix findings (signup evidence for
 typed numbers; tenant-ledger policies keyed on the global admin role) and one test gap; all fixed, plus the
-browser-writable phone-verification flag found while answering the first. Remaining: the authenticated live drive
+browser-writable phone-verification flag found while answering the first; a second review pass found browsers could plant their own SMS verification codes, closed in the same migration. Remaining: the authenticated live drive
 (PC-1) and the post-merge production readback.

@@ -211,8 +211,7 @@ relying on either. (Secret **values** intentionally not recorded.)
 
 ## Signup / onboarding / provisioning (✅ code + migration-verified 2026-08-09)
 
-- **Signup verification = EMAIL only.** `src/pages/PublicSignup.tsx` uses email verification
-  (`CommunicationsConsent … showSms={false}`, "click it to verify your account"). **SMS/phone
+- **Signup verification = EMAIL only.** Current mounted public route (2026-10-12): `App.tsx` SignupRedirect → `Auth.tsx` → `signUpWithReferral` → ordinary `supabase.auth.signUp` and verification redirect/UI. Historical2026-08-09 pointer `PublicSignup.tsx` is unmounted; preserve it as history, not current routing authority. **SMS/phone
   verification is NOT wired into the signup flow** — the `input-otp` primitive exists and OTP is used
   for Auth/MFA, but signup doesn't use it. **SMS phone-verify itself DOES exist** for notification
   opt-in: `send-sms-verification` + `verify-sms-code` edge fns + `sms_verifications` table, wired in

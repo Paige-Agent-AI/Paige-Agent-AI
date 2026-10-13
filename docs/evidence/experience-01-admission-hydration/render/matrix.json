@@ -1,12 +1,18 @@
 {
   "schemaVersion": 1,
   "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
-  "sourceSha256": "f0f9dc35e82f68dcfde966a7d203617d566c3ea621850352be8d99dd256d4502",
-  "sourcePayloadCommit": "941d930681f1b2e007a30a140e06cc575f0502c3",
+  "sourceSha256": "0059f9fd7eec039a1f9681bee7022dd9f8e6676faa838c58fff66579df4a537c",
+  "sourcePayloadCommit": "46d6d3b80b45d1c31adacc9956cdf318cab0d093",
+  "previousPacket": {
+    "head": "15a64f11fb13d491440a935133a4e5abbf84e921",
+    "sourceSha256": "f0f9dc35e82f68dcfde966a7d203617d566c3ea621850352be8d99dd256d4502",
+    "captures": 13,
+    "preservation": "Original packet retained in Git at this head; current captures recollected after review repair."
+  },
   "captureAPI": "cua_repl native getScreenshot bytes copied without image modification",
   "expectedResponsiveMatrix": 8,
   "actualResponsiveMatrix": 8,
-  "additionalCaptures": 5,
+  "additionalCaptures": 8,
   "invalidAcceptedCaptures": 0,
   "captures": [
     {
@@ -63,7 +69,7 @@
     {
       "file": "dark-error-320x844.json",
       "image": "dark-error-320x844.jpg",
-      "imageSha256": "bcfe30f9feb3d39538573d3cfe680ca901b5a1e884840b4970c9f4848986f56c",
+      "imageSha256": "3f61d00f7bd427a8cddaa9e82b225a797253814133ccd8e43fd1be6bb2c9b90e",
       "label": "dark-error-320x844",
       "requested": {
         "width": 320,
@@ -129,6 +135,57 @@
       "overflow": false
     },
     {
+      "file": "dark-settled-error-after-actor-change.json",
+      "image": "dark-settled-error-after-actor-change.jpg",
+      "imageSha256": "1b96394ac56321f5a141e561590480bcbd751d417130b87560ba9e69419d3b5b",
+      "label": "dark-settled-error-after-actor-change",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "dark",
+      "heading": "Sign in to finish verification",
+      "overflow": false
+    },
+    {
+      "file": "dark-settled-error-after-signout.json",
+      "image": "dark-settled-error-after-signout.jpg",
+      "imageSha256": "1b96394ac56321f5a141e561590480bcbd751d417130b87560ba9e69419d3b5b",
+      "label": "dark-settled-error-after-signout",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "dark",
+      "heading": "Sign in to finish verification",
+      "overflow": false
+    },
+    {
+      "file": "dark-settled-error-before-signout.json",
+      "image": "dark-settled-error-before-signout.jpg",
+      "imageSha256": "61a4f7cddf4faa2349a46c05c07aae7fabea2c8bb0aecdb20700b0616f49bf08",
+      "label": "dark-settled-error-before-signout",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "dark",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
       "file": "light-error-1024x768.json",
       "image": "light-error-1024x768.jpg",
       "imageSha256": "9a6685784a8fa65c5889b571a0462845b7ec7aae3f024c6d3f25dca04daba698",
@@ -165,7 +222,7 @@
     {
       "file": "light-error-1536x770.json",
       "image": "light-error-1536x770.jpg",
-      "imageSha256": "292e2deab55bec127c1528af45974733dadc049c2faa7e7fece1775664540cf5",
+      "imageSha256": "2b851520f9e6a675205d293ef00a4c3f790d9213cf120b63d9beb4801f559423",
       "label": "light-error-1536x770",
       "requested": {
         "width": 1536,
@@ -234,7 +291,7 @@
   "behavior": {
     "keyboard": "Native Tab visibly focused Retry; native Return reached labelled synthetic route destination.",
     "pending": "Actual Welcome shows verified enrollment and pending workspace confirmation.",
-    "recovery": "Read-error and signed-out states retain actionable existing controls.",
+    "recovery": "Read-error and signed-out states retain actionable existing controls. Settled failure followed by simulated sign-out or different actor clears old verified enrollment/referral/retry copy in the actual component.",
     "reflow": "320 CSS-pixel viewport measured without horizontal overflow; this is not native 200 percent zoom.",
     "reducedMotion": "Preference true in captured browser DOM; native preference toggle and temporal motion proof unverified."
   },
@@ -242,7 +299,7 @@
     "Deterministic no-network SDK/context adapters; no account, Auth, database or provider request.",
     "The browser handoff target is explicitly synthetic, not actual SoloEntry or customer workspace.",
     "Actual mounted TenantProvider and SoloEntry are exercised separately by jsdom integration tests.",
-    "Screen-reader, native zoom, full first-use/account-choice and rendered actor-change cases remain unverified.",
+    "Screen-reader, native zoom, full first-use/account-choice, real authenticated actor changes and unexercised rendered transitions remain unverified.",
     "No production or authenticated customer acceptance."
   ]
 }

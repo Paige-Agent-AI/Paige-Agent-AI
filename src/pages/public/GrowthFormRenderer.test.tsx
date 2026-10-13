@@ -55,10 +55,10 @@ function type(input: HTMLInputElement, value: string) {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
-async function render() {
+async function render(entry = "/form/form-1") {
   await act(async () => {
     root.render(
-      <MemoryRouter initialEntries={["/form/form-1"]}>
+      <MemoryRouter initialEntries={[entry]}>
         <Routes><Route path="/form/:id" element={<GrowthFormPage />} /></Routes>
       </MemoryRouter>,
     );
@@ -297,5 +297,42 @@ describe("stored success links (#2090)", () => {
     const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href"));
     expect(hrefs).toContain("https://example.com/next");
     expect(hrefs).toContain("https://cdn.example.com/guide.pdf");
+  });
+});
+
+// Experience 03: the same page, framed on a business's own website by public/embed.js (data-form).
+describe("public form page, embedded on a business's site", () => {
+  it("drops the full-page layout for a compact card and still reads and submits through the public seams", async () => {
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    expect(container.querySelector(".min-h-dvh")).toBeNull();
+    expect(container.querySelector("h1")?.textContent).toBe("Book a call");
+    await fillAndSubmit();
+    const submit = (state.invoke.mock.calls as [string, { body: Record<string, unknown> }][]).find(([fn]) => fn === "growth-public-submit")!;
+    expect(submit[1].body.form_id).toBe("form-1");
+    expect(submit[1].body).not.toHaveProperty("tenant_id");
+    expect(state.from).not.toHaveBeenCalled();
+    expect(text()).toContain("Thanks, Dana will reply today.");
+  });
+
+  it("says plainly when the form was taken offline, inside the card", async () => {
+    state.rpc.mockResolvedValue({ data: [], error: null });
+    await render("/form/form-1?embed=1");
+    expect(container.querySelector("[role=status]")?.textContent).toContain("This form isn't available right now");
+    expect(container.querySelector(".min-h-dvh")).toBeNull();
+  });
+
+  it("keeps the hosted page exactly as it was when not embedded", async () => {
+    await render("/form/form-1");
+    expect(container.querySelector(".min-h-dvh")).not.toBeNull();
+  });
+
+  it("sends a redirect's Continue link to the visitor's whole page, not the frame", async () => {
+    state.rpc.mockResolvedValue({ data: [{ ...FORM, success_action_json: { message: "Thanks", redirect_url: "https://example.com/next", download_url: "https://example.com/f.pdf" } }], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    await fillAndSubmit();
+    const link = Array.from(container.querySelectorAll("a")).find((a) => a.textContent === "Continue") as HTMLAnchorElement;
+    expect(link.getAttribute("target")).toBe("_top");
   });
 });

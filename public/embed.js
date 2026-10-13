@@ -1,9 +1,15 @@
 /**
- * Paige booking embed loader — public/embed.js
+ * Paige embed loader — public/embed.js (booking calendars and lead forms)
  *
  * A tenant drops one tag onto their site and Paige handles the rest:
  *
  *   <script src="https://app.paigeagent.ai/embed.js" data-slug="discovery-call" async></script>
+ *   <script src="https://app.paigeagent.ai/embed.js" data-form="<form id>" async></script>
+ *
+ * A form (Experience 03) frames the published form at /form/<id>?embed=1. Answers go through Paige's
+ * own intake from Paige's own origin, so the host page never handles them. The host page's campaign
+ * tags (utm_*, gclid, fbclid) ride along on the frame's address, so a visit from a tagged link is
+ * credited to its campaign exactly as on the hosted form.
  *
  * Inline mode (default): injects the booking iframe where the tag sits and
  * auto-sizes its height to the content — no inner scrollbar, responsive width.
@@ -15,7 +21,10 @@
  * anything that isn't our height event.
  *
  * Attributes:
- *   data-slug   (required)  the calendar's public slug
+ *   data-slug   the calendar's public slug          (one of data-slug / data-form)
+ *   data-form   the published form's id
+ *   data-title  the frame's accessible name        (default "Book a time" / "Form")
+ *   data-theme  a form's look: light | dark | auto (default "light"; auto follows the visitor)
  *   data-mode   inline | popup            (default "inline")
  *   data-button the popup button label    (default "Book a time")
  *   data-height starting height in px      (default 720, before auto-size)
@@ -24,7 +33,14 @@
 (function () {
   "use strict";
 
-  var HEIGHT_EVENT = "paige-booking-height";
+  // Each widget accepts only its own page's height message.
+  var BOOKING_HEIGHT_EVENT = "paige-booking-height";
+  var FORM_HEIGHT_EVENT = "paige-form-height";
+  // A form whose success action is "go to this page" asks the loader to move the visitor's whole page.
+  var FORM_REDIRECT_EVENT = "paige-form-redirect";
+  // The campaign tags a visit carries (the same keys the hosted form reads, src/lib/growth.ts readUtm).
+  var TAG_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ref", "gclid", "fbclid"];
+  var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // The tag currently executing. Captured synchronously so each copy of the
   // tag on a page manages its own widget (document.currentScript is null once
@@ -38,16 +54,26 @@
   if (!script) return;
 
   var slug = (script.getAttribute("data-slug") || "").trim();
-  if (!slug) {
+  var formId = (script.getAttribute("data-form") || "").trim();
+  var isForm = !slug && !!formId;
+  if (!slug && !formId) {
     // Fail loud in the console, quiet on the page — never render a broken frame.
-    if (window.console) console.error("[Paige embed] Missing data-slug on the embed script tag.");
+    if (window.console) console.error("[Paige embed] Missing data-slug or data-form on the embed script tag.");
     return;
   }
+  if (isForm && !UUID_RE.test(formId)) {
+    if (window.console) console.error("[Paige embed] data-form is not a form id. Copy the embed code from Paige again.");
+    return;
+  }
+  var HEIGHT_EVENT = isForm ? FORM_HEIGHT_EVENT : BOOKING_HEIGHT_EVENT;
+  var frameTitle = script.getAttribute("data-title") || (isForm ? "Form" : "Book a time");
+  var formTheme = (script.getAttribute("data-theme") || "light").toLowerCase();
+  if (formTheme !== "dark" && formTheme !== "auto") formTheme = "light";
 
   var mode = (script.getAttribute("data-mode") || "inline").toLowerCase();
   var startHeight = parseInt(script.getAttribute("data-height") || "", 10);
   if (!isFinite(startHeight) || startHeight <= 0) startHeight = 720;
-  var buttonLabel = script.getAttribute("data-button") || "Book a time";
+  var buttonLabel = script.getAttribute("data-button") || (isForm ? "Open the form" : "Book a time");
   var targetSel = script.getAttribute("data-target") || "";
 
   // The booking app's origin is wherever this script was served from — the src
@@ -58,7 +84,19 @@
   try {
     var u = new URL(script.src, window.location.href);
     appOrigin = u.origin;
-    bookingUrl = appOrigin + "/book/" + encodeURIComponent(slug);
+    if (isForm) {
+      var tags = new URLSearchParams();
+      tags.set("embed", "1");
+      if (formTheme !== "light") tags.set("theme", formTheme);
+      var here = new URLSearchParams(window.location.search);
+      for (var i = 0; i < TAG_KEYS.length; i++) {
+        var v = here.get(TAG_KEYS[i]);
+        if (v) tags.set(TAG_KEYS[i], v.slice(0, 200));
+      }
+      bookingUrl = appOrigin + "/form/" + encodeURIComponent(formId) + "?" + tags.toString();
+    } else {
+      bookingUrl = appOrigin + "/book/" + encodeURIComponent(slug);
+    }
   } catch (e) {
     if (window.console) console.error("[Paige embed] Could not resolve the embed source URL.", e);
     return;
@@ -68,7 +106,7 @@
   function makeIframe(initialHeight) {
     var iframe = document.createElement("iframe");
     iframe.src = bookingUrl;
-    iframe.title = "Book a time";
+    iframe.title = frameTitle;
     iframe.loading = "lazy";
     // camelCase is ignored by some browsers for iframe; set both attr + prop.
     iframe.setAttribute("allow", "clipboard-write; web-share");
@@ -77,7 +115,9 @@
     iframe.style.display = "block";
     iframe.style.height = initialHeight + "px";
     iframe.style.transition = "height 120ms ease";
-    iframe.style.colorScheme = "normal";
+    // The frame's colour scheme matches the page inside it, or the browser paints an opaque box behind a
+    // transparent page. A booking page and a light form are "normal"; a dark form is dark; auto follows the visitor.
+    iframe.style.colorScheme = !isForm || formTheme === "light" ? "normal" : formTheme === "dark" ? "dark" : "light dark";
     return iframe;
   }
 
@@ -99,10 +139,25 @@
     };
   }
 
+  // Only from our origin, only from THIS frame, only an http(s) address: never script, never another frame.
+  function redirectListener(iframe) {
+    return function (event) {
+      if (event.origin !== appOrigin) return;
+      if (iframe.contentWindow && event.source !== iframe.contentWindow) return;
+      var data = event.data;
+      if (!data || typeof data !== "object" || data.type !== FORM_REDIRECT_EVENT || typeof data.url !== "string") return;
+      var next;
+      try { next = new URL(data.url, window.location.href); } catch (e) { return; }
+      if (next.protocol !== "https:" && next.protocol !== "http:") return;
+      window.location.assign(next.href);
+    };
+  }
+
   // --- inline mode ----------------------------------------------------------
   function mountInline() {
     var iframe = makeIframe(startHeight);
     window.addEventListener("message", heightListener(iframe, null));
+    if (isForm) window.addEventListener("message", redirectListener(iframe));
 
     var mount = null;
     if (targetSel) {
@@ -150,7 +205,7 @@
       overlay = document.createElement("div");
       overlay.setAttribute("role", "dialog");
       overlay.setAttribute("aria-modal", "true");
-      overlay.setAttribute("aria-label", "Book a time");
+      overlay.setAttribute("aria-label", frameTitle);
       overlay.style.cssText =
         "position:fixed;inset:0;z-index:2147483647;display:flex;" +
         "align-items:center;justify-content:center;padding:24px;" +
@@ -178,8 +233,10 @@
       iframe = makeIframe(Math.min(startHeight, Math.round(window.innerHeight * 0.9)));
       iframe.style.borderRadius = "16px";
       var listener = heightListener(iframe, { maxHeight: Math.round(window.innerHeight * 0.9) });
+      var onRedirect = isForm ? redirectListener(iframe) : null;
       window.addEventListener("message", listener);
-      removeListener = function () { window.removeEventListener("message", listener); };
+      if (onRedirect) window.addEventListener("message", onRedirect);
+      removeListener = function () { window.removeEventListener("message", listener); if (onRedirect) window.removeEventListener("message", onRedirect); };
 
       frameWrap.appendChild(closeBtn);
       frameWrap.appendChild(iframe);

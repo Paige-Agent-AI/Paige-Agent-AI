@@ -264,6 +264,13 @@
 .vs-studio .vs-pop p.vs-pop-note { color: var(--vs-text); }
 .vs-studio .vs-pop-confirm { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--vs-line-soft); }
 .vs-studio .vs-pop h3 { margin: 0; font-size: 13.5px; }
+/* A live form's embed code (Experience 03): a quiet code well under a hairline, one Copy action (not gold:
+   copying isn't the act, publishing was). */
+.vs-studio .vs-embed { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--vs-line-soft); }
+.vs-studio .vs-code { margin: 0; padding: 10px 11px; border: 1px solid var(--vs-line); border-radius: 9px; background: var(--vs-violet-soft); color: var(--vs-text); font: 500 11.6px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-all; }
+.vs-studio .vs-code:focus-visible { outline: 2px solid var(--vs-violet); outline-offset: 2px; }
+.vs-studio .vs-embed-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.vs-studio .vs-pop p.vs-embed-status { color: var(--vs-text); flex: 1 1 160px; }
 .vs-studio .vs-chat-toggle { display: none; }
 
 /* Narrower screens: the chat becomes a panel over the stage, opened from the top bar. */

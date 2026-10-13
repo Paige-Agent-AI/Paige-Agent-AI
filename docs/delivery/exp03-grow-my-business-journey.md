@@ -229,6 +229,41 @@ a campaign with a pipeline, a form attached to it, a public submission with the 
 `form_and_tag` → processed into the campaign's pipeline → the read returns it, a member gets no names, another
 workspace is refused, an ambiguous tag stamps nothing. **Authenticated drive on PC-1 is BLOCKED (§7).**
 
+## 11. A Studio form on the business's own website (owner requirement 2026-10-12)
+
+**Requirement.** A Solo owner creates and customises a lead form in Vibe Studio, publishes it, and gets code to
+embed it on a website they control. Submissions reach the existing intake with S1a attribution, S1b routing,
+tenant isolation and consent records; fields, branding, publish/unpublish, copyable instructions, responsive,
+accessible, validated, with plain success and error states. No second forms store, intake, campaign system or
+publishing engine.
+
+**Reuse inventory (searched `GrowthFormRenderer`, `GrowthFormEmbed`, `growth-public-submit`, `growth-publish-command`,
+`embed.js`, `iframe`, `frame-ancestors`, `X-Frame-Options`, `consent`, `brand`, `studio/*`; read the code below).**
+
+| Piece | Where | State before S2a |
+|---|---|---|
+| Hosted form page | `/form/:id`, `src/pages/public/GrowthFormRenderer.tsx` (`GrowthFormPage`) | WORKING; full-page layout only |
+| In-app embed | `GrowthFormEmbed` (same file) | WORKING inside Paige pages and funnels; not an external embed |
+| Public read | `growth_public_form` (anon, active form of a live business) | WORKING; returns no brand or tenant slug |
+| Public intake | `growth-public-submit` (origin allow-list `*.paigeagent.ai`, bot trap, rate limits, form-derived tenant) | WORKING; a framed `/form/:id` posts from Paige's origin, so it is accepted; a direct post from another site is refused (correct). `consent_json` is always `{}` |
+| Attribution / routing | S1a stamp at insert (form link + `utm_*`), S1b campaign pipeline | WORKING; tag credit needs the host page's tags inside the frame |
+| Publish / unpublish | `growth-publish-command` (one door, approvals, readback) and Studio `PublishPanel` | WORKING; "It's live" shows the address only |
+| External loader | `public/embed.js` (booking calendars: inline/popup frame, origin-checked height messages) | WORKING for `/book/:slug` only |
+| Framing | `vercel.json` sets no `frame-ancestors` / `X-Frame-Options` | any site may frame the app |
+| Fields, wording, thank-you | Vibe Studio chat (`growth-form-draft`), stage preview per device, `FormSettings` (routing, notify) | WORKING by conversation (§18/§21: no field-editor buttons) |
+| Brand | Studio preview reads `peek_tenant_portal_brand(slug)` | GAP: the live form shows no brand, so preview and live differ |
+| Consent | `communications_consents` + `record_communications_consent`, read by the send gates | GAP: forms record none; and the recorder is anon-callable and unscoped (#2087, security) |
+
+**Gaps closed by S2a (no backend change):** `embed.js` learns `data-form` (frames `/form/<id>?embed=1`, forwards
+only the page's `utm_*`/`gclid`/`fbclid`, sizes itself, `data-theme` light|dark|auto, and moves the visitor's page
+on a success redirect); `/form/:id` gains an embedded card (no page chrome, transparent around it, light unless
+asked, its height reported through the shared `useEmbedHeight` the booking page now uses too, no Paige splash);
+Studio's publish panel shows "Put it on your website" with Copy code for a live form.
+
+**Later slices:** S2b, the live form carries the business's brand (a public brand field on the form read; the
+preview already shows it). S2c, consent: a form's declared consent question writes a consent record through the
+public intake for the form's own business, after #2087 closes the recorder and scopes the gates.
+
 ## 10. Delivery sequence (each independently testable)
 
 | Slice | Deliverable | Proof |

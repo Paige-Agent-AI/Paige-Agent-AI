@@ -6005,10 +6005,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     if (payloadThreadId) {
       const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content;
       // An answer's turn is appended once, as its claim, immediately before PAIGE is called (below).
-      // E2-3b (QA #2102): a CONVERSATIONAL turn's user row is already appended by its begin_v2
-      // claim (with the interactive intent); this legacy append also ran on such turns — the
-      // executor object is null there, so `!interactive` alone did not exclude them — and every
-      // prompt persisted twice (once bare, once with the intent). Exclude them here.
+      // DRAINING begin_v2 already appended the canonical intent-bound user row.
+      // Its effectful controller is null by design, not an invitation to append twice.
       if (!interactive && !interactiveConversational && !answerBinding && typeof latestUserText === "string" && latestUserText.trim()) {
         try {
           await supabaseClient.rpc("paige_chat_turn_append", {
@@ -10240,6 +10238,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // own message_stop, and ends a stream that broke with the same clean [DONE] — so a missing
         // finish_reason is the only sign a round was cut off. Read by the turn record, nothing else.
         let finished = false;
+        let normalAnswerStop = false;
+        let nativeAnswerEnd: "complete" | "limited" | "refused" | "incomplete" | null = null;
         // INT-334 (the R7 invariant) — every `data:` payload in order, [DONE] included, for the shared
         // finished-round gate (_shared/paige-turn/round.ts). A round's tool calls run only when it
         // ended in a normal tool-use stop and every call is whole; a cut-off, refused or token-limited
@@ -10274,6 +10274,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             if (parsed.choices?.[0]?.finish_reason === "tool_calls") hasToolCall = true;
             if (parsed.choices?.[0]?.finish_reason) finished = true;
+            if (parsed.choices?.[0]?.finish_reason === "stop") {
+              // OpenAI's stop is normal completion. Anthropic supplies a bounded
+              // enum because its legacy stop also represents refusal/token limits.
+              const provenance = parsed.choices[0].paige_answer_end;
+              normalAnswerStop = provenance === undefined || provenance === "complete";
+              if (provenance !== undefined) nativeAnswerEnd = ["complete", "limited", "refused"].includes(provenance) ? provenance : "incomplete";
+            }
           } catch { /* skip */ }
         };
         while (true) {
@@ -10289,8 +10296,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         sseBuf += fullDecoder.decode(); // flush any trailing multi-byte char
         if (sseBuf) handleLine(sseBuf); // final line without a trailing newline
-        const runnable = executableToolCalls(readModelRound(payloads)).length > 0;
-        return { content, toolCalls, allChunks, hasToolCall, finished, runnable };
+        const modelRound = readModelRound(payloads);
+        const runnable = executableToolCalls(modelRound).length > 0;
+        return { content, toolCalls, allChunks, hasToolCall, finished, runnable,
+          completedAnswer: normalAnswerStop && modelRound.end === "end_turn",
+          answerEnd: modelRound.end === "max_tokens" ? "limited" as const : modelRound.end === "refusal" ? "refused" as const
+            : modelRound.end !== "end_turn" ? "incomplete" as const : nativeAnswerEnd ?? "complete" as const };
       };
 
       // executeToolCalls dispatches one round's tool calls. Every tc that clears
@@ -16841,6 +16852,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // paige-turn — whether the round `finalChunks` replays was FINISHED by the provider (consumeRound's
       // `finished`). Updated every round, so it describes the last one, which is the one replayed.
       let lastRoundFinished = true;
+      let lastRoundCompletedAnswer = false;
+      let lastRoundAnswerEnd: "complete" | "limited" | "refused" | "incomplete" = "incomplete";
       // INT-334 (R7) — set when a round showed tool calls but never finished choosing them: none ran, the
       // server's own sentence is the answer, and no post-loop branch re-calls the model or rewrites it.
       let unfinishedRound = false;
@@ -17172,10 +17185,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const resumedRound = resumeRound;
             resumeRound = null;
             if (!resumedRound) turnTracker.roundStarted();
-            const { content, toolCalls, allChunks, hasToolCall, finished, runnable } = resumedRound
-              ? { ...resumedRound, runnable: true } // a server-built resume round: the stored, approved act
+            const { content, toolCalls, allChunks, hasToolCall, finished, runnable, completedAnswer, answerEnd } = resumedRound
+              ? { ...resumedRound, runnable: true, completedAnswer: false, answerEnd: "incomplete" as const } // a server-built resume round: the stored, approved act
               : await consumeRound(currentResponse!);
             lastRoundFinished = finished;
+            lastRoundCompletedAnswer = completedAnswer;
+            lastRoundAnswerEnd = answerEnd;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
             // proposed from tenant Knowledge.
@@ -17419,6 +17434,42 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // conversation, the provider is re-called through the existing gateway, and the SAME
           // for loop re-enters with the new response (via the while wrapper). A hard budget
           // of MAX_CONTINUATIONS stops it. The `!hasToolCall` block is byte-identical to main.
+          // #2102: known action unavailability is an admission outcome, not unresolved
+          // work to force through C1. Only a finished conversational action request with
+          // no business write/card/result can use this answer; interrupted/failed rounds
+          // and active effectful turns retain their existing truthful terminal behavior.
+          // The classifier is advisory: neither a known prose edit nor an explicit
+          // platform step changes kind just because that label is wrong.
+          // Use the existing step-kind contract for the fallback as well: composing
+          // prose may quote an action without requesting a platform action. This only
+          // governs the no-effects reply; it never grants a capability or authority.
+          const latestRequest = [...aiMessages].reverse().find((m: any) => m?.role === "user")?.content;
+          const requestedKind = typeof latestRequest === "string"
+            ? offerKind(`Would you like me to ${latestRequest.trim().replace(/^please\s+/i, "")}`) : "unknown";
+          const conversationalAct = requestedKind === "act"
+            || (turnRoute.intent === "act" && requestedKind !== "prose");
+          if (interactiveConversational && (turnRoute.intent === "act" || isActionIntent || requestedKind === "act") && !lastRoundCompletedAnswer
+              && !liveRuntimeScope && !forcedTermination && !studioSessionId) {
+            if (lastRoundAnswerEnd === "limited") turnTracker.budgetStop();
+            // REFUSED's v1 UI copy names the sole client-scope refusal. A native
+            // provider refusal cannot finish this normal answer, but is not that
+            // client-access cause: retain its actual prose/provenance and the
+            // existing non-success interrupted state rather than misnaming it.
+            else turnTracker.interrupted();
+          }
+          const conversationalActionUnavailable = interactiveConversational && conversationalAct
+            && acceptedKind !== "prose" && finalChunks && lastRoundCompletedAnswer && !unfinishedRound && !liveRuntimeScope
+            && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
+            && writeAttempts === 0 && classifierWrites === 0 && queuedApprovals.length === 0
+            && confirmTrace.length === 0 && crmResultTrace.length === 0;
+          if (conversationalActionUnavailable) {
+            finalAssistantText = "Actions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run. I can help you plan the next step.";
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
           // INT-332 — AN UNBACKED CLAIM IS NEVER A TERMINAL ANSWER. Prose that says an approval card is
           // coming, ready or waiting when no card was created in this turn (and none is standing from the
           // previous one), or that decides approval itself ("approvals are off", "I can run it directly"),
@@ -17460,7 +17511,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           }
-          if (!claimContinued && finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
+          if (!interactiveConversational && !claimContinued && finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < continuationLimitFor() && !studioSessionId) {
             const acceptedTurn = heldAccept;
             const proseTerminal = typeof finalAssistantText === "string"
@@ -17586,9 +17637,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             lastRoundFinished = true;
           }
           // INT-332 — an accepted PROSE offer is not held, but a reply that reads as if it did something while no
-          // tool ran gets the server's line beneath it. Only a line is added: the answer itself always stands.
+          // tool ran gets the server's line beneath it. #2102 also retains this truthful backstop for finished
+          // no-effects conversational answers, including unknown request kinds and quoted draft prose.
+          // Only a line is added: the answer itself always stands.
           if (finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !claimAnswered && !studioSessionId
-              && acceptedKind === "prose" && writeAttempts === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
+              && (acceptedKind === "prose" || (interactiveConversational && lastRoundCompletedAnswer))
+              && writeAttempts === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
               && typeof finalAssistantText === "string" && finalAssistantText.trim() && saysItWasDone(finalAssistantText)) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
             finalChunks = [

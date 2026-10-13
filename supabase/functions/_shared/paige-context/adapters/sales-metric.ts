@@ -27,11 +27,12 @@
  * Pure apart from the injected caller: no Deno globals, no hidden clock. Deno and vitest import it.
  */
 
-import { readBusinessMetric, type MetricCaller, type MetricReadOutcome } from "../../analytics-metrics/read.ts";
+import { completedUtcDayBoundary, readBusinessMetric, type MetricCaller, type MetricReadOutcome } from "../../analytics-metrics/read.ts";
 import { contextAvailable, contextDegraded, contextUnavailable, type ContextSourceResult } from "../mod.ts";
 import {
   formatCurrencyMinor,
   SNAPSHOT_BOUNDS,
+  resolveSnapshotPeriod,
   type DomainSnapshot,
   type SnapshotDomain,
   type SnapshotMetric,
@@ -83,6 +84,48 @@ export type SalesMetricWindow = {
  */
 export const SALES_WINDOW_CLOCK_MARGIN_MS = 2_000;
 
+/**
+ * Sales activity uses completed UTC days, as the canonical metric reader's named Sales periods do.
+ * This is opt-in at the two Sales adapters: neutral Clients/Operations and current-state reads retain
+ * their requested windows. Explicit custom intervals disclose their contained completed-day subset;
+ * an interval containing no such day is unavailable, never an invented zero. Comparison callers use
+ * this effective period so their adjacent cohorts have identical lengths.
+ */
+export function salesReportingPeriod(period: SnapshotPeriod, now: Date): {
+  readonly period: SnapshotPeriod;
+  readonly windowNote: string;
+  readonly coverageNote?: string;
+} | null {
+  const nowMs = now.getTime();
+  if (!Number.isFinite(nowMs)) return null;
+  const cutoff = completedUtcDayBoundary(now);
+  let effective: SnapshotPeriod;
+  if (period.key === "custom") {
+    const requestedStart = Date.parse(period.start);
+    const requestedEnd = Date.parse(period.end);
+    if (!Number.isFinite(requestedStart) || !Number.isFinite(requestedEnd)) return null;
+    const floorStart = completedUtcDayBoundary(new Date(requestedStart)).getTime();
+    const start = floorStart === requestedStart ? floorStart : floorStart + DAY_MS;
+    const end = Math.min(completedUtcDayBoundary(new Date(requestedEnd)).getTime(), cutoff.getTime());
+    effective = { ...period, start: new Date(start).toISOString(), end: new Date(end).toISOString(), timezone: "UTC" };
+  } else {
+    const resolved = resolveSnapshotPeriod({ key: period.key, now: cutoff, timezone: "UTC" });
+    if ("reason" in resolved) return null;
+    effective = resolved.period;
+  }
+  const start = Date.parse(effective.start);
+  const end = Date.parse(effective.end);
+  // Preserve the existing database-clock safety margin at the midnight boundary as well.
+  if (end <= start || end > nowMs - SALES_WINDOW_CLOCK_MARGIN_MS || start < tenYearsBefore(nowMs)) return null;
+  const lastDay = new Date(end - DAY_MS).toISOString().slice(0, 10);
+  const windowNote = `Sales reporting: last completed UTC day ${lastDay}; UTC interval ${effective.start} to ${effective.end} (exclusive cutoff).`
+    + (period.key === "custom" ? ` Requested interval ${period.start} to ${period.end}; partial UTC days are excluded.` : "");
+  const narrowedCustom = period.key === "custom" && (effective.start !== period.start || effective.end !== period.end);
+  return { period: effective, windowNote,
+    ...(narrowedCustom ? { coverageNote: "Sales activity covers only completed UTC days within the requested interval; partial UTC days are excluded." } : {}),
+  };
+}
+
 /** The issuer refuses a start more than ten calendar years before its own clock. */
 function tenYearsBefore(nowMs: number): number {
   const d = new Date(nowMs);
@@ -122,8 +165,9 @@ export function salesMetricWindow(period: SnapshotPeriod, now: Date): SalesMetri
   // [start, end) — to the second, no day boundary — so the truthful cutoff note fires whenever
   // the end was pulled back to now (endMs < periodEndMs covers BOTH an end after now AND the
   // rolling periods that resolve end = now exactly). A window that already ended in the past is
-  // complete and carries no note; the range dates speak for it. The "last completed UTC day"
-  // contract belongs to the close-date metrics only, which these adapters do not read.
+  // complete and carries no note; the range dates speak for it. This neutral timestamp helper
+  // does not impose a day boundary. The two Sales activity adapters separately opt into
+  // salesReportingPeriod and carry that effective completed-day interval in their headline note.
   if (endMs < periodEndMs) return { ...window, window_note: "counted up to just now; the period ends later" };
   return window;
 }

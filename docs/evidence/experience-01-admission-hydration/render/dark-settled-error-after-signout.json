@@ -1,0 +1,59 @@
+{
+  "label": "dark-settled-error-after-signout",
+  "requested": {
+    "width": 1366,
+    "height": 768
+  },
+  "screenshotDimensions": {
+    "height": 768,
+    "width": 1366
+  },
+  "url": "http://127.0.0.1:5205/welcome.html?scenario=settled-error&theme=dark",
+  "dom": {
+    "controls": [
+      {
+        "bottom": 760,
+        "height": 16,
+        "name": "Simulate sign-out",
+        "top": 744,
+        "width": 93.5999984741211
+      },
+      {
+        "bottom": 760,
+        "height": 16,
+        "name": "Simulate different actor",
+        "top": 744,
+        "width": 124.32500457763672
+      },
+      {
+        "bottom": 490.75,
+        "height": 40,
+        "name": "Sign in and resume",
+        "top": 450.75,
+        "width": 448
+      },
+      {
+        "bottom": 542.75,
+        "height": 40,
+        "name": "Contact support",
+        "top": 502.75,
+        "width": 448
+      }
+    ],
+    "focus": {
+      "name": "Simulate sign-out",
+      "tag": "BUTTON"
+    },
+    "heading": "Sign in to finish verification",
+    "overflow": false,
+    "reducedMotion": true,
+    "theme": "dark",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  "state": "- generic: Synthetic Welcome render — no Auth, database or provider requests\n- button \"Simulate sign-out\" [active]\n- button \"Simulate different actor\"\n- main:\n  - region \"Sign in to finish verification\":\n    - img \"Paige\"\n    - status:\n      - heading \"Sign in to finish verification\" [level=1]\n      - paragraph: Your session ended before server verification completed. Sign in again to safely resume.\n    - button \"Sign in and resume\"\n    - link \"Contact support\":\n      - /url: mailto:support@paigeagent.ai?subject=Solo%20enrollment%20verification",
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "captureAPI": "native screenshot after settled DOM"
+}

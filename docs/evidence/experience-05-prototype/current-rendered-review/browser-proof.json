@@ -1,0 +1,4297 @@
+{
+  "artifact": "outputs/weekly-commitment-check.html",
+  "artifactSHA256": "3D5C2C08090B69AF8403742996C4711FF6DB7F2E2DCBB869699E6BDC8D9DE0E4",
+  "expectedHash": "3D5C2C08090B69AF8403742996C4711FF6DB7F2E2DCBB869699E6BDC8D9DE0E4",
+  "generatedAt": "2026-10-13T02:25:26.649Z",
+  "browser": "151.0.7922.34",
+  "mode": "Headless Chromium direct local file; all business states/execution/settings simulated",
+  "summary": {
+    "checks": 116,
+    "passed": 114,
+    "failed": [
+      "desktop native modal wraps keyboard focus",
+      "mobile native modal wraps keyboard focus"
+    ],
+    "captures": 38
+  },
+  "checks": [
+    {
+      "name": "desktop-first-use no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 462,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop conversation request creates proposal",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouPAIGE, check my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "desktop native field labels",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": [
+        {
+          "id": "day",
+          "labels": [
+            "Every week on\nSunday\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday"
+          ],
+          "required": false,
+          "describedBy": null
+        },
+        {
+          "id": "time",
+          "labels": [
+            "Time"
+          ],
+          "required": true,
+          "describedBy": "form-error"
+        },
+        {
+          "id": "zone",
+          "labels": [
+            "Time zone\nUse an IANA time zone, such as America/New_York."
+          ],
+          "required": true,
+          "describedBy": "zone-hint form-error"
+        },
+        {
+          "id": "consent",
+          "labels": [
+            "I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings."
+          ],
+          "required": false,
+          "describedBy": null
+        },
+        {
+          "id": "message",
+          "labels": [
+            "Message PAIGE"
+          ],
+          "required": false,
+          "describedBy": null
+        }
+      ]
+    },
+    {
+      "name": "desktop ARIA references resolve",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": [
+        {
+          "attribute": "aria-describedby",
+          "id": "form-error",
+          "exists": true
+        },
+        {
+          "attribute": "aria-describedby",
+          "id": "zone-hint",
+          "exists": true
+        },
+        {
+          "attribute": "aria-describedby",
+          "id": "form-error",
+          "exists": true
+        },
+        {
+          "attribute": "aria-describedby",
+          "id": "cancel-description",
+          "exists": true
+        },
+        {
+          "attribute": "aria-labelledby",
+          "id": "cancel-title",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "desktop-requested no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 722,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "INPUT",
+          "id": "time"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop authorize is reachable by Tab",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": {
+        "id": "authorize",
+        "tag": "BUTTON"
+      }
+    },
+    {
+      "name": "desktop no consent refuses registration",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouPAIGE, check my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Confirm the permission before authorizing the recurring check.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "desktop invalid IANA zone refused and retained",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouPAIGE, check my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Enter a valid IANA time zone, such as America/New_York.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "desktop-schedule-consent no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 740,
+          "scrollTop": 278
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "INPUT",
+          "id": "zone"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop schedule consent does not grant auto",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop-default-confirm no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 807,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop held schedule starts no act",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Execution remains held. Review the existing tool permission in Settings; no run was started.",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop-settings-handoff no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 973,
+          "scrollTop": 235
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "approve-permission"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop keep permission preserves hold",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Execution remains held. Review the existing tool permission in Settings; no run was started.",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop offline Settings action grants nothing",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": true,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "You’re offline. Reconnect and retry; your input is preserved.",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop explicit Settings opt-in enables only internal auto",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": "2026-10-12T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop-scheduled no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 596,
+          "scrollTop": 134
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop local reload preserves configuration",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": "2026-10-12T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop scheduled simulation enters running",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "running",
+        "due": "2026-10-12T13:00:00.000Z",
+        "started": "2026-10-12T13:00:00.000Z",
+        "receipt": null,
+        "finished": null
+      }
+    },
+    {
+      "name": "desktop-running no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 740,
+          "scrollTop": 214
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop running claim prevents duplicate run",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "running",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": null,
+          "finished": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop pause affects future only",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "paused",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "running",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": null,
+          "finished": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop-running-paused no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 716,
+          "scrollTop": 191
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "resume"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop paused in-flight act completes with observation and receipt",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "paused",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop canonical simulated evidence visible",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "Inspect execution evidence\nCheck reference\nCHECK-005\nRun reference\nRUN-CHECK-005-2026-10-12\nScheduled for\nMon, Oct 12, 9:00 AM EDT\nStarted\nMon, Oct 12, 9:00 AM EDT\nCommitted result\nOBSERVATION-CHECK-005-2026-10-12\nReceipt\nRECEIPT-CHECK-005-2026-10-12 · verified in this simulation\nEvidence state\nCompleted and exception recorded\nScope\nActive workspace only · internal reads"
+    },
+    {
+      "name": "desktop-completed-evidence no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 1229,
+          "scrollTop": 191
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop resume computes future slot without replay",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": false,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop later conversation reads saved run and next slot",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTCommitted resultOBSERVATION-CHECK-005-2026-10-12ReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksHide details"
+    },
+    {
+      "name": "desktop-later-conversation no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 1275,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "later-thread"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop draft leaves authorized configuration intact",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "2",
+        "time": "10:00",
+        "zone": "America/New_York",
+        "consent": false,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": true,
+        "editing": true,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday.",
+        "previousConfig": {
+          "day": "1",
+          "time": "09:00",
+          "zone": "America/New_York"
+        }
+      }
+    },
+    {
+      "name": "desktop-edit-future-schedule no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 1734,
+          "scrollTop": 891
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "INPUT",
+          "id": "zone"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop discard preserves authorized configuration",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": false,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": true,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday.",
+        "previousConfig": null
+      }
+    },
+    {
+      "name": "desktop authorized edit changes future version only",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "10:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 2,
+          "intendedNext": "2026-10-12T14:00:00.000Z",
+          "next": "2026-10-12T14:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": true,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday.",
+        "previousConfig": {
+          "day": "1",
+          "time": "09:00",
+          "zone": "America/New_York"
+        }
+      }
+    },
+    {
+      "name": "desktop cancellation defaults to safe action",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": "keep-schedule"
+    },
+    {
+      "name": "desktop native modal wraps keyboard focus",
+      "status": "FAIL",
+      "kind": "accessibility",
+      "detail": "keep-schedule"
+    },
+    {
+      "name": "desktop Escape restores invoking control",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": "cancel"
+    },
+    {
+      "name": "desktop cancellation retains in-flight act",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "cancelled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "running",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": null,
+          "committedObservation": null,
+          "finished": null,
+          "absenceReadback": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop-cancelled-future no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 747,
+          "scrollTop": 191
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop cancelled future schedule retains eventual receipt",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "cancelled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00Z",
+          "absenceReadback": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop settled failed has no owner replay",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Verified act readback in this simulation found no committed observation and no live claim. No completed check result or owner replay action is available. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThis settled run failed. Canonical act readback in this simulation found no committed observation and no live claim. No completed result is available. There is no owner replay action.Eligible accepted or retrying acts that never started may recover through the existing executor. This settled failed act has no owner replay command; future checks follow the saved weekly schedule and permission.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedCommitted resultNo committed observation verifiedReceiptNo verified completion receiptEvidence stateCanonical act readback (simulated): no committed observation and no live claimScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksHide details"
+    },
+    {
+      "name": "desktop-failed no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 1107,
+          "scrollTop": 237
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop uncertain result remains unknown",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "unknown",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": null,
+          "committedObservation": null,
+          "finished": null,
+          "absenceReadback": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "The execution record is still uncertain. Repeating this run remains locked.",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop authoritative absence remains unknown and locked",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "unknown",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": null,
+          "committedObservation": null,
+          "finished": null,
+          "absenceReadback": {
+            "verified": true,
+            "noCommittedObservation": true,
+            "noLiveClaim": true,
+            "source": "canonical act readback (simulated)"
+          }
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Authoritative absence contains no committed result. The outcome remains unknown and replay stays locked.",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop-unknown-absence no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 1253,
+          "scrollTop": 214
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "desktop only committed observation plus receipt resolves outcome",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00Z",
+          "absenceReadback": {
+            "verified": true,
+            "noCommittedObservation": true,
+            "noLiveClaim": true,
+            "source": "canonical act readback (simulated)"
+          }
+        },
+        "later": false,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "desktop reduced motion removes result animation",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": "none"
+    },
+    {
+      "name": "desktop visible input keyboard focus",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": {
+        "width": "2px",
+        "style": "solid",
+        "color": "rgb(91, 63, 214)",
+        "focusVisible": true
+      }
+    },
+    {
+      "name": "desktop sampled normal text contrast",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": [
+        {
+          "selector": ".paige-copy",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "14px",
+          "target": {
+            "width": 528.28125,
+            "height": 69.28125
+          },
+          "textContrast": 17.89,
+          "borderContrast": 17.89
+        },
+        {
+          "selector": ".hint",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "11px",
+          "target": {
+            "width": 372,
+            "height": 16.5
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": "#composer p",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "12px",
+          "target": {
+            "width": 760,
+            "height": 18
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": ".fields input",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(229, 225, 216)",
+          "fontSize": "12px",
+          "target": {
+            "width": 372,
+            "height": 42
+          },
+          "textContrast": 17.89,
+          "borderContrast": 1.3
+        },
+        {
+          "selector": "#authorize",
+          "color": "rgb(251, 250, 247)",
+          "background": "rgb(23, 19, 49)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "12px",
+          "target": {
+            "width": 155.921875,
+            "height": 38
+          },
+          "textContrast": 17.14,
+          "borderContrast": 1
+        }
+      ]
+    },
+    {
+      "name": "mobile-first-use no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 512,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 197.78125,
+          "bottom": 710
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile conversation request creates proposal",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouPAIGE, check my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "mobile native field labels",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": [
+        {
+          "id": "day",
+          "labels": [
+            "Every week on\nSunday\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday"
+          ],
+          "required": false,
+          "describedBy": null
+        },
+        {
+          "id": "time",
+          "labels": [
+            "Time"
+          ],
+          "required": true,
+          "describedBy": "form-error"
+        },
+        {
+          "id": "zone",
+          "labels": [
+            "Time zone\nUse an IANA time zone, such as America/New_York."
+          ],
+          "required": true,
+          "describedBy": "zone-hint form-error"
+        },
+        {
+          "id": "consent",
+          "labels": [
+            "I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings."
+          ],
+          "required": false,
+          "describedBy": null
+        },
+        {
+          "id": "message",
+          "labels": [
+            "Message PAIGE"
+          ],
+          "required": false,
+          "describedBy": null
+        }
+      ]
+    },
+    {
+      "name": "mobile ARIA references resolve",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": [
+        {
+          "attribute": "aria-describedby",
+          "id": "form-error",
+          "exists": true
+        },
+        {
+          "attribute": "aria-describedby",
+          "id": "zone-hint",
+          "exists": true
+        },
+        {
+          "attribute": "aria-describedby",
+          "id": "form-error",
+          "exists": true
+        },
+        {
+          "attribute": "aria-describedby",
+          "id": "cancel-description",
+          "exists": true
+        },
+        {
+          "attribute": "aria-labelledby",
+          "id": "cancel-title",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "mobile-requested no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1030,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 197.78125,
+          "bottom": 710
+        },
+        "activeElement": {
+          "tag": "INPUT",
+          "id": "time"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile authorize is reachable by Tab",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": {
+        "id": "authorize",
+        "tag": "BUTTON"
+      }
+    },
+    {
+      "name": "mobile no consent refuses registration",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouPAIGE, check my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Confirm the permission before authorizing the recurring check.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "mobile invalid IANA zone refused and retained",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouPAIGE, check my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Enter a valid IANA time zone, such as America/New_York.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "mobile-schedule-consent no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1048,
+          "scrollTop": 536
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "INPUT",
+          "id": "zone"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile schedule consent does not grant auto",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile-default-confirm no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1008,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile held schedule starts no act",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Execution remains held. Review the existing tool permission in Settings; no run was started.",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile-settings-handoff no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1289,
+          "scrollTop": 268
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "approve-permission"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile keep permission preserves hold",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Execution remains held. Review the existing tool permission in Settings; no run was started.",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile offline Settings action grants nothing",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": true,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "You’re offline. Reconnect and retry; your input is preserved.",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile explicit Settings opt-in enables only internal auto",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": "2026-10-12T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile-scheduled no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 735,
+          "scrollTop": 223
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile local reload preserves configuration",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": "2026-10-12T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile scheduled simulation enters running",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "running",
+        "due": "2026-10-12T13:00:00.000Z",
+        "started": "2026-10-12T13:00:00.000Z",
+        "receipt": null,
+        "finished": null
+      }
+    },
+    {
+      "name": "mobile-running no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 893,
+          "scrollTop": 224
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile running claim prevents duplicate run",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "running",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": null,
+          "finished": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile pause affects future only",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "paused",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "running",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": null,
+          "finished": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile-running-paused no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 870,
+          "scrollTop": 201
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "resume"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile paused in-flight act completes with observation and receipt",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "paused",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile canonical simulated evidence visible",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "Inspect execution evidence\nCheck reference\nCHECK-005\nRun reference\nRUN-CHECK-005-2026-10-12\nScheduled for\nMon, Oct 12, 9:00 AM EDT\nStarted\nMon, Oct 12, 9:00 AM EDT\nCommitted result\nOBSERVATION-CHECK-005-2026-10-12\nReceipt\nRECEIPT-CHECK-005-2026-10-12 · verified in this simulation\nEvidence state\nCompleted and exception recorded\nScope\nActive workspace only · internal reads"
+    },
+    {
+      "name": "mobile-completed-evidence no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1526,
+          "scrollTop": 201
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile resume computes future slot without replay",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": false,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile later conversation reads saved run and next slot",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTCommitted resultOBSERVATION-CHECK-005-2026-10-12ReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksHide details"
+    },
+    {
+      "name": "mobile-later-conversation no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1595,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile draft leaves authorized configuration intact",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "2",
+        "time": "10:00",
+        "zone": "America/New_York",
+        "consent": false,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": true,
+        "editing": true,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday.",
+        "previousConfig": {
+          "day": "1",
+          "time": "09:00",
+          "zone": "America/New_York"
+        }
+      }
+    },
+    {
+      "name": "mobile-edit-future-schedule no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 2334,
+          "scrollTop": 1105
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "INPUT",
+          "id": "zone"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile discard preserves authorized configuration",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": false,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": true,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday.",
+        "previousConfig": null
+      }
+    },
+    {
+      "name": "mobile authorized edit changes future version only",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00.000Z",
+        "day": "1",
+        "time": "10:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 2,
+          "intendedNext": "2026-10-12T14:00:00.000Z",
+          "next": "2026-10-12T14:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00.000Z",
+          "started": "2026-10-12T13:00:00.000Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00.000Z",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12"
+        },
+        "later": true,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "PAIGE, check my outstanding commitments every Monday.",
+        "previousConfig": {
+          "day": "1",
+          "time": "09:00",
+          "zone": "America/New_York"
+        }
+      }
+    },
+    {
+      "name": "mobile cancellation defaults to safe action",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": "keep-schedule"
+    },
+    {
+      "name": "mobile native modal wraps keyboard focus",
+      "status": "FAIL",
+      "kind": "accessibility",
+      "detail": "keep-schedule"
+    },
+    {
+      "name": "mobile Escape restores invoking control",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": "cancel"
+    },
+    {
+      "name": "mobile cancellation retains in-flight act",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "cancelled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "running",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": null,
+          "committedObservation": null,
+          "finished": null,
+          "absenceReadback": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile-cancelled-future no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 867,
+          "scrollTop": 203
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile cancelled future schedule retains eventual receipt",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "cancelled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00Z",
+          "absenceReadback": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile settled failed has no owner replay",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Verified act readback in this simulation found no committed observation and no live claim. No completed check result or owner replay action is available. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThis settled run failed. Canonical act readback in this simulation found no committed observation and no live claim. No completed result is available. There is no owner replay action.Eligible accepted or retrying acts that never started may recover through the existing executor. This settled failed act has no owner replay command; future checks follow the saved weekly schedule and permission.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedCommitted resultNo committed observation verifiedReceiptNo verified completion receiptEvidence stateCanonical act readback (simulated): no committed observation and no live claimScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksHide details"
+    },
+    {
+      "name": "mobile-failed no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1329,
+          "scrollTop": 249
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile uncertain result remains unknown",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "unknown",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": null,
+          "committedObservation": null,
+          "finished": null,
+          "absenceReadback": null
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "The execution record is still uncertain. Repeating this run remains locked.",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile authoritative absence remains unknown and locked",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "unknown",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": null,
+          "committedObservation": null,
+          "finished": null,
+          "absenceReadback": {
+            "verified": true,
+            "noCommittedObservation": true,
+            "noLiveClaim": true,
+            "source": "canonical act readback (simulated)"
+          }
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Authoritative absence contains no committed result. The outcome remains unknown and replay stays locked.",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile-unknown-absence no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1478,
+          "scrollTop": 226
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BUTTON",
+          "id": "inspect"
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "mobile only committed observation plus receipt resolves outcome",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "completed",
+          "due": "2026-10-12T13:00:00Z",
+          "started": "2026-10-12T13:00:00Z",
+          "receipt": "RECEIPT-CHECK-005-2026-10-12",
+          "committedObservation": "OBSERVATION-CHECK-005-2026-10-12",
+          "finished": "2026-10-12T13:00:00Z",
+          "absenceReadback": {
+            "verified": true,
+            "noCommittedObservation": true,
+            "noLiveClaim": true,
+            "source": "canonical act readback (simulated)"
+          }
+        },
+        "later": false,
+        "editing": false,
+        "detail": true,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile reduced motion removes result animation",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": "none"
+    },
+    {
+      "name": "mobile visible input keyboard focus",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": {
+        "width": "2px",
+        "style": "solid",
+        "color": "rgb(91, 63, 214)",
+        "focusVisible": true
+      }
+    },
+    {
+      "name": "mobile sampled normal text contrast",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": [
+        {
+          "selector": ".paige-copy",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "14px",
+          "target": {
+            "width": 354,
+            "height": 92.375
+          },
+          "textContrast": 17.89,
+          "borderContrast": 17.89
+        },
+        {
+          "selector": ".hint",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "11px",
+          "target": {
+            "width": 354,
+            "height": 16.5
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": "#composer p",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "12px",
+          "target": {
+            "width": 358,
+            "height": 34.78125
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": ".fields input",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(229, 225, 216)",
+          "fontSize": "12px",
+          "target": {
+            "width": 354,
+            "height": 42
+          },
+          "textContrast": 17.89,
+          "borderContrast": 1.3
+        },
+        {
+          "selector": "#authorize",
+          "color": "rgb(251, 250, 247)",
+          "background": "rgb(23, 19, 49)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "12px",
+          "target": {
+            "width": 155.921875,
+            "height": 44
+          },
+          "textContrast": 17.14,
+          "borderContrast": 1
+        }
+      ]
+    },
+    {
+      "name": "mobile-permission-off no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 987,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "member view withholds owner check record",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEOwner authorization requiredYour member role cannot configure, control or read this owner-only check. Ask the workspace owner to review it."
+    },
+    {
+      "name": "mobile-member-denied no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 512,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Member",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "workspace switch does not reveal prior check",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "What can I keep an eye on?Describe a recurring internal check. I’ll confirm the schedule and permission before it can be registered.Check my commitments every week"
+    },
+    {
+      "name": "offline registration preserves input without schedule",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.You’re offline. Reconnect and retry; your input is preserved.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "mobile-offline no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1027,
+          "scrollTop": 515
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "lost save response stays unconfirmed",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "unknown",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile-save-response-lost no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 738,
+          "scrollTop": 178
+        },
+        "pane": {
+          "top": 196.78125,
+          "bottom": 709
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "lost response readback reuses record without auto",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "expired review session preserves proposal",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "draft",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": false,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": null,
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "pending registration resolves to default held schedule",
+      "status": "PASS",
+      "kind": "behavior",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": false,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "mobile History Escape restores toggle focus",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": "history-toggle"
+    },
+    {
+      "name": "wide-1536-request no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1536,
+          "height": 770
+        },
+        "documentWidth": 1536,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 464,
+          "scrollHeight": 722,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 647
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "tablet-1024-request no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "documentWidth": 1024,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 462,
+          "scrollHeight": 722,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 645
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "tablet-900-request no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 900,
+          "height": 1000
+        },
+        "documentWidth": 900,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 694,
+          "scrollHeight": 734,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 183,
+          "bottom": 877
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "light"
+      }
+    },
+    {
+      "name": "obsidian-mobile-request no document horizontal overflow",
+      "status": "PASS",
+      "kind": "rendered",
+      "detail": {
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "scrollOwner": {
+          "id": "transcript",
+          "overflowY": "auto",
+          "clientHeight": 512,
+          "scrollHeight": 1009,
+          "scrollTop": 0
+        },
+        "pane": {
+          "top": 197.78125,
+          "bottom": 710
+        },
+        "activeElement": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "context": "Demo studio · Owner",
+        "theme": "dark"
+      }
+    },
+    {
+      "name": "320 CSS-pixel reflow and authorization reachability",
+      "status": "PASS",
+      "kind": "accessibility",
+      "detail": {
+        "viewport": 320,
+        "doc": 320,
+        "button": {
+          "x": 18,
+          "y": 480,
+          "width": 155.921875,
+          "height": 44,
+          "top": 480,
+          "right": 173.921875,
+          "bottom": 524,
+          "left": 18
+        },
+        "pane": {
+          "x": 0,
+          "y": 215.171875,
+          "width": 320,
+          "height": 351.828125,
+          "top": 215.171875,
+          "right": 320,
+          "bottom": 567,
+          "left": 0
+        }
+      }
+    },
+    {
+      "name": "frozen artifact unchanged through complete browser drive",
+      "status": "PASS",
+      "kind": "integrity",
+      "detail": {
+        "before": "3D5C2C08090B69AF8403742996C4711FF6DB7F2E2DCBB869699E6BDC8D9DE0E4",
+        "after": "3D5C2C08090B69AF8403742996C4711FF6DB7F2E2DCBB869699E6BDC8D9DE0E4"
+      }
+    },
+    {
+      "name": "no page runtime errors",
+      "status": "PASS",
+      "kind": "integrity",
+      "detail": []
+    },
+    {
+      "name": "no external requests",
+      "status": "PASS",
+      "kind": "integrity",
+      "detail": [
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "file": "desktop-first-use.png",
+      "scenario": "desktop-first-use",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 462,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-requested.png",
+      "scenario": "desktop-requested",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 722,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "id": "time"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-schedule-consent.png",
+      "scenario": "desktop-schedule-consent",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 740,
+        "scrollTop": 278
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "id": "zone"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-default-confirm.png",
+      "scenario": "desktop-default-confirm",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 807,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-settings-handoff.png",
+      "scenario": "desktop-settings-handoff",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 973,
+        "scrollTop": 235
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "approve-permission"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-scheduled.png",
+      "scenario": "desktop-scheduled",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 596,
+        "scrollTop": 134
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-running.png",
+      "scenario": "desktop-running",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 740,
+        "scrollTop": 214
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-running-paused.png",
+      "scenario": "desktop-running-paused",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 716,
+        "scrollTop": 191
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "resume"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-completed-evidence.png",
+      "scenario": "desktop-completed-evidence",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 1229,
+        "scrollTop": 191
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-later-conversation.png",
+      "scenario": "desktop-later-conversation",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 1275,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "later-thread"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-edit-future-schedule.png",
+      "scenario": "desktop-edit-future-schedule",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 1734,
+        "scrollTop": 891
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "id": "zone"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-cancel-dialog.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "scenario": "cancel future runs while act already running"
+    },
+    {
+      "file": "desktop-cancelled-future.png",
+      "scenario": "desktop-cancelled-future",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 747,
+        "scrollTop": 191
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-failed.png",
+      "scenario": "desktop-failed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 1107,
+        "scrollTop": 237
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "desktop-unknown-absence.png",
+      "scenario": "desktop-unknown-absence",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 1253,
+        "scrollTop": 214
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-first-use.png",
+      "scenario": "mobile-first-use",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 512,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 197.78125,
+        "bottom": 710
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-requested.png",
+      "scenario": "mobile-requested",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1030,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 197.78125,
+        "bottom": 710
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "id": "time"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-schedule-consent.png",
+      "scenario": "mobile-schedule-consent",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1048,
+        "scrollTop": 536
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "id": "zone"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-default-confirm.png",
+      "scenario": "mobile-default-confirm",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1008,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-settings-handoff.png",
+      "scenario": "mobile-settings-handoff",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1289,
+        "scrollTop": 268
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "approve-permission"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-scheduled.png",
+      "scenario": "mobile-scheduled",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 735,
+        "scrollTop": 223
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-running.png",
+      "scenario": "mobile-running",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 893,
+        "scrollTop": 224
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-running-paused.png",
+      "scenario": "mobile-running-paused",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 870,
+        "scrollTop": 201
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "resume"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-completed-evidence.png",
+      "scenario": "mobile-completed-evidence",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1526,
+        "scrollTop": 201
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-later-conversation.png",
+      "scenario": "mobile-later-conversation",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1595,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-edit-future-schedule.png",
+      "scenario": "mobile-edit-future-schedule",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 2334,
+        "scrollTop": 1105
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "id": "zone"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-cancel-dialog.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "light",
+      "scenario": "cancel future runs while act already running"
+    },
+    {
+      "file": "mobile-cancelled-future.png",
+      "scenario": "mobile-cancelled-future",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 867,
+        "scrollTop": 203
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-failed.png",
+      "scenario": "mobile-failed",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1329,
+        "scrollTop": 249
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-unknown-absence.png",
+      "scenario": "mobile-unknown-absence",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1478,
+        "scrollTop": 226
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "inspect"
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-permission-off.png",
+      "scenario": "mobile-permission-off",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 987,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-member-denied.png",
+      "scenario": "mobile-member-denied",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 512,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Member",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-offline.png",
+      "scenario": "mobile-offline",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1027,
+        "scrollTop": 515
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "mobile-save-response-lost.png",
+      "scenario": "mobile-save-response-lost",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 738,
+        "scrollTop": 178
+      },
+      "pane": {
+        "top": 196.78125,
+        "bottom": 709
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "wide-1536-request.png",
+      "scenario": "wide-1536-request",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "documentWidth": 1536,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 464,
+        "scrollHeight": 722,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 647
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "tablet-1024-request.png",
+      "scenario": "tablet-1024-request",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "documentWidth": 1024,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 462,
+        "scrollHeight": 722,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 645
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "tablet-900-request.png",
+      "scenario": "tablet-900-request",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "documentWidth": 900,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 694,
+        "scrollHeight": 734,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 183,
+        "bottom": 877
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "light"
+    },
+    {
+      "file": "obsidian-mobile-request.png",
+      "scenario": "obsidian-mobile-request",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "documentWidth": 390,
+      "scrollOwner": {
+        "id": "transcript",
+        "overflowY": "auto",
+        "clientHeight": 512,
+        "scrollHeight": 1009,
+        "scrollTop": 0
+      },
+      "pane": {
+        "top": 197.78125,
+        "bottom": 710
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": ""
+      },
+      "context": "Demo studio · Owner",
+      "theme": "dark"
+    }
+  ],
+  "observations": [
+    {
+      "name": "desktop current conversation ARIA state",
+      "value": "",
+      "expected": "page or true",
+      "visualAttributePresent": true
+    },
+    {
+      "name": "desktop focus after thread selection",
+      "tag": "BUTTON",
+      "id": "later-thread",
+      "display": "block"
+    },
+    {
+      "name": "desktop computed text/border samples",
+      "samples": [
+        {
+          "selector": ".paige-copy",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "14px",
+          "target": {
+            "width": 528.28125,
+            "height": 69.28125
+          },
+          "textContrast": 17.89,
+          "borderContrast": 17.89
+        },
+        {
+          "selector": ".hint",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "11px",
+          "target": {
+            "width": 372,
+            "height": 16.5
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": "#composer p",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "12px",
+          "target": {
+            "width": 760,
+            "height": 18
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": ".fields input",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(229, 225, 216)",
+          "fontSize": "12px",
+          "target": {
+            "width": 372,
+            "height": 42
+          },
+          "textContrast": 17.89,
+          "borderContrast": 1.3
+        },
+        {
+          "selector": "#authorize",
+          "color": "rgb(251, 250, 247)",
+          "background": "rgb(23, 19, 49)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "12px",
+          "target": {
+            "width": 155.921875,
+            "height": 38
+          },
+          "textContrast": 17.14,
+          "borderContrast": 1
+        }
+      ]
+    },
+    {
+      "name": "mobile current conversation ARIA state",
+      "value": "",
+      "expected": "page or true",
+      "visualAttributePresent": true
+    },
+    {
+      "name": "mobile focus after thread selection",
+      "tag": "BODY",
+      "id": "",
+      "display": "block"
+    },
+    {
+      "name": "mobile computed text/border samples",
+      "samples": [
+        {
+          "selector": ".paige-copy",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "14px",
+          "target": {
+            "width": 354,
+            "height": 92.375
+          },
+          "textContrast": 17.89,
+          "borderContrast": 17.89
+        },
+        {
+          "selector": ".hint",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "11px",
+          "target": {
+            "width": 354,
+            "height": 16.5
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": "#composer p",
+          "color": "rgb(97, 91, 120)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(97, 91, 120)",
+          "fontSize": "12px",
+          "target": {
+            "width": 358,
+            "height": 34.78125
+          },
+          "textContrast": 6.41,
+          "borderContrast": 6.41
+        },
+        {
+          "selector": ".fields input",
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(229, 225, 216)",
+          "fontSize": "12px",
+          "target": {
+            "width": 354,
+            "height": 42
+          },
+          "textContrast": 17.89,
+          "borderContrast": 1.3
+        },
+        {
+          "selector": "#authorize",
+          "color": "rgb(251, 250, 247)",
+          "background": "rgb(23, 19, 49)",
+          "border": "rgb(23, 19, 49)",
+          "fontSize": "12px",
+          "target": {
+            "width": 155.921875,
+            "height": 44
+          },
+          "textContrast": 17.14,
+          "borderContrast": 1
+        }
+      ]
+    },
+    {
+      "name": "Native browser zoom shortcut probe",
+      "before": 1,
+      "after": 1
+    },
+    {
+      "name": "Accessible tree snapshot saved",
+      "file": "completed-accessibility-tree.yaml",
+      "scope": "Browser semantic tree; not a real screen reader drive"
+    }
+  ],
+  "limitations": [
+    {
+      "name": "Current conversation is not exposed through a valid aria-current value",
+      "viewport": "desktop",
+      "observed": "",
+      "location": "#later-thread",
+      "scope": "ARIA state inspection; real screen reader untested"
+    },
+    {
+      "name": "Default field boundary contrast below 3:1 diagnostic floor",
+      "viewport": "desktop",
+      "value": 1.3,
+      "foreground": "rgb(229, 225, 216)",
+      "background": "rgb(255, 255, 255)",
+      "location": ".fields input",
+      "scope": "Computed boundary colors; full WCAG context assessment unverified"
+    },
+    {
+      "name": "Current conversation is not exposed through a valid aria-current value",
+      "viewport": "mobile",
+      "observed": "",
+      "location": "#later-thread",
+      "scope": "ARIA state inspection; real screen reader untested"
+    },
+    {
+      "name": "Mobile thread selection loses focus to body or hidden history",
+      "observed": {
+        "tag": "BODY",
+        "id": "",
+        "display": "block"
+      },
+      "location": "#later-thread → closeHistory()",
+      "scope": "Keyboard focus observation"
+    },
+    {
+      "name": "Default field boundary contrast below 3:1 diagnostic floor",
+      "viewport": "mobile",
+      "value": 1.3,
+      "foreground": "rgb(229, 225, 216)",
+      "background": "rgb(255, 255, 255)",
+      "location": ".fields input",
+      "scope": "Computed boundary colors; full WCAG context assessment unverified"
+    },
+    {
+      "name": "Actual browser 200% zoom not verified",
+      "reason": "Headless shortcut did not change devicePixelRatio; 320 CSS-pixel reflow was tested separately"
+    }
+  ],
+  "runtimeErrors": [],
+  "network": [
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+  ],
+  "truthBoundary": [
+    "Current browser simulation only; no source UI mounted",
+    "Actual SOLO shell PAIGE-open/closed remains unverified",
+    "No authenticated role/tenant/server contract proof",
+    "No real screen reader or native haptic proof",
+    "No provider, production scheduling or execution proof",
+    "Owner UI ruling pending"
+  ],
+  "priorProofPolicy": "Prior64/13 hashes are not reused as current checks"
+}

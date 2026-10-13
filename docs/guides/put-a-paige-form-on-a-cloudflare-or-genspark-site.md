@@ -51,8 +51,8 @@ Cloudflare.
 
 ## 3. If the site sets a security policy (`_headers`)
 
-Most Genspark sites set no policy, so skip this unless your site has a `_headers` file with a
-`Content-Security-Policy` line. If it does, add Paige to two directives, keeping everything else:
+Skip this unless your site has a `_headers` file (or a `<meta http-equiv="Content-Security-Policy">` tag) that sets
+a `Content-Security-Policy`. If it does, add Paige to two directives, keeping everything else:
 
 ```text
 /*
@@ -64,6 +64,9 @@ Most Genspark sites set no policy, so skip this unless your site has a `_headers
 - **Script allowed, but framing Paige blocked:** visitors see an **Open the form** button that opens the form on
   its own page, and the browser console names the directive to add. Add `https://paigeagent.ai` to `frame-src` to
   show the form in place.
+- **`Content-Security-Policy-Report-Only`** never blocks anything, so the form shows normally under it.
+- Browsers report a refused frame by address, not by frame. If your policy allows some Paige addresses and refuses
+  others, every Paige form frame on that page becomes a link. Allow `https://paigeagent.ai` as a whole.
 
 ## 4. If the site won't run a script tag
 
@@ -74,20 +77,26 @@ paste that instead:
 <iframe src="https://paigeagent.ai/form/YOUR-FORM-ID?embed=1" title="Your form's name" loading="lazy" style="width:100%;height:720px;border:0;color-scheme:normal"></iframe>
 ```
 
-It works anywhere frames are allowed, with two limits:
+It works anywhere frames are allowed, with three limits:
 
 - it keeps a fixed height (720px) instead of growing to fit the form;
-- it doesn't pass the visit's campaign tags (`utm_*`, `gclid`, `fbclid`) to the form.
+- it doesn't pass the visit's campaign tags (`utm_*`, `gclid`, `fbclid`) to the form;
+- if the form has a thank-you page, visitors reach it by pressing **Continue** on the thank-you message; the page
+  doesn't move by itself.
 
 Use the one-line code wherever the site allows it.
 
 ## 5. If you paste it into a builder's "custom HTML" block
 
 Some builders run custom HTML in a sandbox. If that sandbox doesn't allow same-origin, a form inside it couldn't
-send its answers. Visitors there get an **Open the form** button that opens the form on its own page, and the
-console says why.
+send its answers. Visitors there get an **Open the form** button instead, and the console says why.
 
-To show the form in place, do one of these:
+- If the block lets new tabs escape its sandbox (`allow-popups-to-escape-sandbox`), the button opens the form on its
+  own page and it works.
+- If it doesn't, the new tab stays sandboxed and the form can't run there either. That tab says so and shows the
+  form's address, with a **Copy address** button, to paste into a new browser tab.
+
+To show the form in place instead, do one of these:
 
 - paste the code directly into the page instead of the block; or
 - turn on the block's "allow same origin" option, if it has one.
@@ -109,8 +118,9 @@ If the form says **"This form isn't available right now,"** it isn't published. 
 |---|---|
 | Answers | Sent from Paige's own address (`paigeagent.ai`), never from your site's code. Your site never handles them. |
 | Your page's other links | Only `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `gclid` and `fbclid` travel to the form. Nothing else from your page's address does. |
-| Paige's own analytics | Off inside a form on your site. Your visitors aren't tracked by Paige's product analytics there. |
+| Paige's own analytics | Off inside a form on your site: Plausible, PostHog, Paige's page-view event and the Meta Pixel. Error reporting stays on, and so does Vercel Speed Insights, which measures how fast Paige's form page loads without identifying visitors. |
 | Look | Light by default. Add `data-theme="dark"` (or `"auto"`, which follows the visitor's setting) to the tag. Your page shows around the card. |
+| The "Open the form" button | Shown only when the form can't appear in place. Deep indigo with white text, edged with a white-then-indigo ring so it stands out on light and dark pages alike; white with indigo text for a dark-look form. 44px tall, with the browser's keyboard focus ring. The booking calendar's popup button uses the same style. |
 | Cloudflare account | Not needed, not asked for, not connected. |
 
 ## How this was tested
@@ -130,14 +140,18 @@ production.
 | CSP allowing Paige | The form works end to end |
 | CSP blocking the frame | Link to the form instead, and a console message naming the fix |
 | CSP blocking outside scripts | The tag can't run; the no-script version works end to end |
-| Builder block sandboxed without same-origin, one-line code | Link to the form instead; nothing sent |
-| Builder block sandboxed without same-origin, no-script version | "This form opens on its own page", with a link |
+| Builder block sandboxed without same-origin, one-line code | Link to the form instead; nothing sent. The tab it opens stays sandboxed and shows the form's address to copy |
+| Builder block that lets tabs escape its sandbox | The link opens the form on its own page, and it works end to end |
+| `Content-Security-Policy-Report-Only` | The form stays and works end to end |
+| Builder block sandboxed without same-origin, no-script version | "This form opens on its own page", with a link and the address to copy |
 | Builder block sandboxed with same-origin | The form works end to end |
 | Thank-you redirect | Your thank-you page replaces the visitor's page |
-| Paige's own analytics inside the form on your site | None |
+| "Open the form" button on a light page, on a dark page, and for a dark-look form | Text 17.9:1 against its fill; its outline at least 15:1 against the page around it; 44px; keyboard focus shown (measured in pixels) |
+| Booking calendar popup button, on a light and a dark page | The same measurements; it still opens the calendar and closes on Escape |
+| Paige's own analytics inside the form on your site | None of Plausible, the page-view event or the Meta Pixel's settings lookup (driven); PostHog off (unit-tested; the test setup has no PostHog key) |
 | Paige's own analytics on the form's own page | Unchanged |
 
-`scripts/live-drive/form-embed-intake-replay.sh` then takes an answer the browser actually sent and files it through
+`scripts/live-drive/form-embed-intake-replay.mjs` then takes an answer the browser actually sent and files it through
 the real intake rules into the real database (a rolled-back local clone). That answer is filed for the form's
 business, credited to its campaign, and put in the campaign's pipeline.
 

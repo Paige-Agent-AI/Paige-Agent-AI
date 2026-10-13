@@ -280,7 +280,7 @@ account is connected to Paige.** The installation guide is `docs/guides/put-a-pa
 
 **Compatibility matrix.** Driven by `scripts/live-drive/cloudflare-embed-drive.mjs`: Cloudflare's own Pages runtime
 (`wrangler pages dev`, which applies `_headers` as Pages does) and the real app on another origin, with Supabase
-stubbed. 58/58.
+stubbed. 79/79 after the independent review's fixes and the owner's button direction.
 
 | Host situation | Result |
 |---|---|
@@ -291,19 +291,25 @@ stubbed. 58/58.
 | CSP allowing `https://paigeagent.ai` in script-src and frame-src | Works end to end |
 | CSP blocking the frame | Link to the form's own page, with the tags; the console names `frame-src` |
 | CSP blocking outside scripts | The tag can't run; the no-script frame works end to end |
-| Builder "custom HTML" block sandboxed without same-origin | Link to the form; nothing sent (before: invisible in head, and the form could not send) |
-| No-script frame inside such a sandbox | "This form opens on its own page", with a link (before: a blank frame) |
+| Builder "custom HTML" block sandboxed without same-origin | Link to the form; nothing sent (before: invisible in head, and the form could not send). The tab it opens inherits the sandbox, so it shows the form's address with Copy address (before: a blank page) |
+| Builder block that lets tabs escape (`allow-popups-to-escape-sandbox`) | The link opens the form's own page with its real origin; works end to end |
+| No-script frame inside such a sandbox | "This form opens on its own page", with a link and the address to copy (before: a blank frame) |
+| `Content-Security-Policy-Report-Only` | The form stays and works (a report-only policy never blocks) |
+| The "Open the form" fallback button, on light and dark sites (owner direction 2026-10-13) | Deep indigo, white text (17.9:1), a white-then-indigo ring so its outline stands out on any page (>= 15:1 measured); inverted for a dark-look form; 44px; keyboard focus clear of the ring. Before: indigo on a dark site at 1.2:1 against the page (measured), nearly invisible |
+| The booking popup button (same style) | Same measurements on light and dark sites; still opens the calendar and closes on Escape |
 | Sandbox with same-origin | Works end to end |
 | Thank-you redirect | The business's page navigates to the thank-you page |
-| Paige's product analytics inside the form on a business's site | None. Plausible, PostHog, the page-view event and the Meta Pixel are skipped; error reporting stays on |
+| Paige's product analytics inside the form on a business's site | Plausible, the page-view event and the Meta Pixel's settings lookup: none (driven). PostHog: off (unit-tested; the harness has no key). Error reporting and Vercel Speed Insights stay on |
 
 **What changed for it:**
 - `embed.js`:
   - a widget whose tag sits in `<head>` goes to the end of the page;
-  - a frame refused by CSP becomes a link to the form's own page;
+  - a frame refused by an enforced CSP becomes a link to the form's own page (a report-only policy is ignored);
   - an opaque-origin page gets a link instead of a frame.
-- `main.tsx`: a framed form in an opaque origin renders a small link card, not the app, because every provider
-  reads storage.
+- `main.tsx`: any form page in an opaque origin (framed, or a tab opened from a sandbox, which inherits it) renders
+  a small card with the form's address and Copy address, not the app, because every provider reads storage.
+- Known limit: browsers report a refused frame by origin, so a policy allowing some Paige addresses and refusing
+  others turns every Paige form frame on the page into a link.
 - Analytics are skipped when `isFormOnBusinessSite()`.
 - Studio:
   - the copied tag carries `data-cfasync="false"`;

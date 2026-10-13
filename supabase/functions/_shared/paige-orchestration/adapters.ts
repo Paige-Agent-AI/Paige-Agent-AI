@@ -52,6 +52,9 @@ export type DispatchInput = {
   /** the event's canonical subject coordinates — the subject IS the target (a contact id is never an arg). */
   subjectTable: string;
   subjectId: string;
+  /** Canonical claimed occurrence coordinates, supplied by the engine/claim seam. */
+  eventId?: string;
+  actId?: string;
 };
 
 /** The connector-neutral result of a dispatch or a readback. `outcome` is the exact per-act outcome the

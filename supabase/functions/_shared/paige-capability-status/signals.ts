@@ -51,6 +51,8 @@ export interface CapabilityFacts {
   contactCreateLane: Lane;
   /** resolve_tool_autonomy("crm_advance_journey_stage") — the native journey-advance write (Layer C · C2). */
   journeyAdvanceLane: Lane;
+  /** Native internal observation; schedule authorization is separately owner-only. */
+  weeklyCommitmentLane?: Lane;
   /** resolve_tool_autonomy("campaign_brief_create"). */
   campaignCreateLane: Lane;
   /** resolve_tool_autonomy("n8n_run_workflow") — moot until n8n is connected, carried for correctness. */
@@ -153,6 +155,9 @@ export function buildCapabilitySignals(facts: CapabilityFacts): CapabilitySignal
     // grounding guard). The ceiling-clamped lane decides live vs needs_approval; this is the canonical
     // availability the Layer C native adapter resolves THROUGH this seam (never a Layer-C inline literal).
     { key: "crm.advance_journey_stage", label: "Move a client along their journey", actionKind: "update", maturity: "LIVE", tierEligible, requiresConnection: false, autonomyLane: facts.journeyAdvanceLane },
+    // Internal read adapter only. No Chat/Live binding or authenticated acceptance is implied.
+    // The native Gateway additionally holds recurring reads when the canonical tool lane is not auto.
+    { key: "planning.weekly_commitment_check", label: "Check your internal commitments", actionKind: "read", maturity: "PARTIAL", tierEligible, requiresConnection: false, autonomyLane: facts.weeklyCommitmentLane ?? "off" },
 
     // ── Connections ──────────────────────────────────────────────────────────────────────────
     // See your connected apps — the integrations read surface (integrations.list, PARTIAL today).

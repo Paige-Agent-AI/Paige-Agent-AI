@@ -30,7 +30,9 @@ export function SandboxedFormNotice() {
     <div className={framed ? "p-1" : "min-h-dvh bg-background flex items-center justify-center px-4"}>
       <div className="w-full max-w-md rounded-xl border border-border bg-card text-card-foreground p-5 sm:p-7 shadow-sm text-center" role="status">
         <h1 className="font-display text-lg font-semibold text-foreground">This form opens on its own page</h1>
-        <p className="mt-1 text-sm text-muted-foreground">It can't be sent from here. Open it, or copy its address into a new browser tab.</p>
+        <p className="mt-1 text-sm text-muted-foreground">{framed
+          ? "It can't be sent from here. Open it, or copy its address into a new browser tab."
+          : "It can't be sent from this tab. Copy its address into a new browser tab."}</p>
         <p ref={addressRef} className="mt-3 select-all break-all rounded-md border border-border bg-muted px-3 py-2 font-mono text-xs text-foreground">{address}</p>
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           {framed && <Button asChild><a href={address} target="_blank" rel="noopener">Open the form</a></Button>}

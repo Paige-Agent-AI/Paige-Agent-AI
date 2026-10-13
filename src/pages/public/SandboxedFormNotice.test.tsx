@@ -26,12 +26,16 @@ describe("SandboxedFormNotice", () => {
   });
 
   it("offers Open the form only inside a frame (a tab opened from a sandbox is still sandboxed)", async () => {
-    expect((await render(false)).querySelector("a")).toBeNull();
+    const tab = await render(false);
+    expect(tab.querySelector("a")).toBeNull();
+    expect(tab.textContent).toContain("Copy its address into a new browser tab.");
+    expect(tab.textContent).not.toContain("Open it");
     act(() => root?.unmount()); host?.remove();
     const framed = await render(true);
     const link = framed.querySelector("a") as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe(address);
     expect(link.getAttribute("target")).toBe("_blank");
+    expect(framed.textContent).toContain("Open it, or copy its address");
   });
 
   it("copies the address, and selects it when the browser refuses the clipboard", async () => {

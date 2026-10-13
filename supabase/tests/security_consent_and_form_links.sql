@@ -137,6 +137,13 @@ INSERT INTO public.communications_consents(user_id, email, email_marketing, sour
 VALUES ('5ec20870-0000-4000-8000-000000000001', 'sec-2087-a@example.invalid', true, 'proof');
 SELECT pg_temp.require_true(NOT public.has_email_marketing_consent('sec-2087-a@example.invalid'),
   'a self-confirmed account''s own email opt-in is not proof of inbox ownership');
+-- Nor does a complete signup evidence row with email marketing on (the shape signup writes): it carries a
+-- phone only because SMS evidence must, and email never leans on it.
+INSERT INTO public.communications_consents(user_id, email, phone, sms_transactional, email_marketing, source, source_url, disclosure_version, consent_granted_at)
+VALUES ('5ec20870-0000-4000-8000-000000000001', 'sec-2087-a2@example.invalid', '+15550000071', true, true, 'solo_beta_signup',
+        'https://paigeagent.ai/auth?mode=signup', 'paige-platform-account-service-v1-2026-08-31', now());
+SELECT pg_temp.require_true(NOT public.has_email_marketing_consent('sec-2087-a2@example.invalid'),
+  'signup evidence with email marketing on does not authorize platform marketing email');
 -- A tenant-scoped legacy row is never platform evidence.
 INSERT INTO public.communications_consents(tenant_id, email, phone, sms_transactional, sms_marketing, email_marketing, source)
 VALUES ('5ec20870-0000-4000-8000-0000000000a1', 'tenant@example.invalid', '+15550000002', true, true, true, 'proof');

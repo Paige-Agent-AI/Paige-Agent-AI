@@ -22,10 +22,16 @@
 // the invoke fails, fail_action marks the row 'blocked' with the real error so it SURFACES in the
 // Actions queue instead of dying silently. A crashed run's 'drafting' rows self-heal (claim_filed_actions
 // reopens a >10-min stale claim). One action failing never aborts the batch — each is independent.
+// An EMAIL send kind (send_via_approval, not SMS — e.g. owner.lead_followup) stores the email contract
+// {channel:'email', subject, body, body_text, raw} that execute-approval sends from after the owner's
+// yes; one with no intent, or whose specialist returned no usable subject + body, is failed with the
+// reason instead of putting an empty email in front of the owner. The recipient is never taken from
+// the draft (see draft.ts).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { idempotencyKey } from "../_shared/durable-job/mod.ts";
+import { type ClaimedAction, draftClaimedAction } from "./draft.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,18 +56,6 @@ function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: jsonHeaders });
 }
 
-type ClaimedAction = {
-  id: string;
-  tenant_id: string;
-  action_kind: string;
-  contact_id: string | null;
-  conversation_id: string | null;
-  title: string;
-  summary: string | null;
-  payload: Record<string, unknown> | null;
-  draft_subagent_slug: string;
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -81,6 +75,16 @@ Deno.serve(async (req) => {
     }
   }
   if (!authorized) return json({ error: "unauthorized" }, 401);
+
+  // -- 0. Which kinds are send_via_approval (claim_filed_actions does not return the executor). Read
+  //    BEFORE the claim: if this read fails nothing has been claimed, so no row is left 'drafting' and
+  //    no email kind is ever drafted without knowing it must carry the email contract (§13). --
+  const { data: sendKindRows, error: kindsErr } = await admin.from("paige_action_kinds")
+    .select("slug").eq("executor", "send_via_approval");
+  if (kindsErr) return json({ error: "kinds_lookup_failed", detail: kindsErr.message }, 500);
+  const sendViaApprovalKinds = new Set<string>(
+    ((sendKindRows ?? []) as Array<{ slug: string }>).map((r) => r.slug),
+  );
 
   // -- 1. Atomically claim a batch of draft-eligible filed actions (self-heals stale claims). --
   const { data: claim, error: claimErr } = await admin.rpc("claim_filed_actions", { p_limit: BATCH_LIMIT });
@@ -144,74 +148,40 @@ Deno.serve(async (req) => {
       // Invoke the kind's drafting sub-agent through the orchestrator (§14 — her team drafts it).
       // tenant_id is passed TOP-LEVEL (the orchestrator's trusted service-role tenant source); context
       // carries the contact/conversation. The service-role bearer marks us a trusted internal caller.
-      const ctl = new AbortController();
-      const timer = setTimeout(() => ctl.abort(), INVOKE_TIMEOUT_MS);
-      let orchRes: Response;
-      try {
-        orchRes = await fetch(ORCHESTRATOR_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${SERVICE_ROLE}`,
-            "apikey": SERVICE_ROLE,
-          },
-          body: JSON.stringify({
-            action: "tool_invoke",
-            slug: a.draft_subagent_slug,
-            tenant_id: a.tenant_id,
-            input: {
-              action_kind: a.action_kind,
-              title: a.title,
-              summary: a.summary,
-              contact_id: a.contact_id,
-              // The filing's drafting brief, when the filer provided one: composer-ready
-              // fields (intent/key_points/tone/cta/…) spread to top level so the drafting
-              // specialist receives its actual input contract, not filing metadata.
-              ...((a.payload && typeof a.payload === "object" && (a.payload as Record<string, unknown>).draft_input &&
-                    typeof (a.payload as Record<string, unknown>).draft_input === "object")
-                  ? (a.payload as Record<string, unknown>).draft_input
-                  : {}),
-            },
-            context: { contact_id: a.contact_id, conversation_id: a.conversation_id },
-          }),
-          signal: ctl.signal,
-        });
-      } finally {
-        clearTimeout(timer);
-      }
+      // draft.ts decides the rest: email send kinds store the email contract or fail honestly.
+      const outcome = await draftClaimedAction({
+        invoke: async (request) => {
+          const ctl = new AbortController();
+          const timer = setTimeout(() => ctl.abort(), INVOKE_TIMEOUT_MS);
+          try {
+            const orchRes = await fetch(ORCHESTRATOR_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${SERVICE_ROLE}`,
+                "apikey": SERVICE_ROLE,
+              },
+              body: JSON.stringify(request),
+              signal: ctl.signal,
+            });
+            const body = await orchRes.json().catch(() => ({}));
+            return { httpOk: orchRes.ok, status: orchRes.status, body };
+          } finally {
+            clearTimeout(timer);
+          }
+        },
+        rpc: async (fn, args) => {
+          const { error } = await admin.rpc(fn, args);
+          return { error: error ? { message: error.message } : null };
+        },
+      }, a, sendViaApprovalKinds);
 
-      const orchBody = await orchRes.json().catch(() => ({}));
-      if (!orchRes.ok || orchBody?.ok !== true) {
-        const msg = `invoke ${a.draft_subagent_slug} failed (${orchRes.status}): ${
-          typeof orchBody?.error === "string" ? orchBody.error : JSON.stringify(orchBody).slice(0, 300)
-        }`;
-        await admin.rpc("fail_action", { p_action_id: a.id, p_error: msg });
-        await recordReceipt(a, "capability_failed", { stage: "invoke" });
-        failed.push({ id: a.id, error: msg });
+      if (outcome.kind === "failed") {
+        await recordReceipt(a, "capability_failed", { stage: outcome.stage });
+        failed.push({ id: a.id, error: outcome.error });
         continue;
       }
-
-      // The draft the sub-agent produced (§13 — store what it actually returned, not a hoped-for shape).
-      const raw = orchBody.result;
-      const draftContent = raw && typeof raw === "object" ? raw : { content: raw ?? null };
-      const invocationId: string | null = typeof orchBody.invocation_id === "string" ? orchBody.invocation_id : null;
-
-      // Advance to 'drafted' + attach the draft + the invocation that produced it. advance_action then
-      // routes send-kinds into paige_pending_approvals (never sends). tenant pinned from the claimed row.
-      const { error: advErr } = await admin.rpc("advance_action", {
-        p_action_id: a.id,
-        p_to_status: "drafted",
-        p_draft_content: draftContent,
-        p_assigned_subagent_slug: a.draft_subagent_slug,
-        p_invocation_id: invocationId,
-        p_tenant_id: a.tenant_id,
-      });
-      if (advErr) {
-        await admin.rpc("fail_action", { p_action_id: a.id, p_error: `advance failed: ${advErr.message}` });
-        await recordReceipt(a, "capability_failed", { stage: "advance" });
-        failed.push({ id: a.id, error: advErr.message });
-        continue;
-      }
+      const invocationId = outcome.invocationId;
       await recordReceipt(a, "capability_succeeded", {
         invocation_id: invocationId,
         routed_to_approval: true,

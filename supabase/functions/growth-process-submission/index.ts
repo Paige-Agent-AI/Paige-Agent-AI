@@ -28,6 +28,8 @@
 //                         send-transactional-email; the provider's answer decides done|error
 //   n8n_workflow       -> file_action(owner.run_workflow, {workflow_key}) then advance_action -> run
 //   outbound_webhook   -> SSRF-guarded POST of the submission to a connected endpoint
+//   lead_reply_draft   -> (synthesized, never a row) a Solo business's new lead -> ONE owner.lead_followup
+//                         reply draft for the owner to approve; see appendLeadReply / lead-reply.ts
 //
 // -- SECURITY (S9/S13) ------------------------------------------------------------------------
 // NOT user-facing. Authorized ONLY by (a) the service-role bearer, or (b) a valid Vault cron token
@@ -44,6 +46,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { isEmailAddress } from "../_shared/growth-intake.ts";
+import { appendLeadReply, fileLeadReply } from "./lead-reply.ts";
 // NOTE: the outbound_webhook executor (which uses the shared SSRF guard) is DEFERRED for the first
 // live ship (see its case below); its only shared import is the pure address check above.
 // The fast-follow that re-enables outbound_webhook re-adds: import { assertPublicHttpUrl } from
@@ -281,6 +284,15 @@ Deno.serve(async (req) => {
 
     applyIntakeSettings(plan, form);
     appendDefaultIntake(plan, form, (rows?.length ?? 0) > 0);
+    // The business that owns the claimed submission (tenantId above), read here to decide the
+    // lead-reply step. An unreadable row plans no reply draft; it never fails the lead.
+    const { data: business, error: businessErr } = await admin
+      .from("tenants")
+      .select("id, parent_tenant_id, account_type")
+      .eq("id", tenantId)
+      .maybeSingle();
+    if (businessErr) console.warn(`[growth-process-submission] lead reply not planned: business read failed (${businessErr.code ?? "no code"})`);
+    appendLeadReply(plan, form, businessErr ? null : business);
 
     // Existing dispatch ledger for this submission -> skip already-completed executors (idempotent).
     const { data: existingDispatches } = await admin
@@ -709,6 +721,19 @@ async function runExecutor(
         return { status: "error", result: { action_id: filed.action_id }, error: `advance_action_failed: ${advErr.message}` };
       }
       return { status: "done", result: { action_id: filed.action_id, workflow_key: workflowKey, action_status: adv?.status ?? filed.status } };
+    }
+
+    // -- lead_reply_draft: ONE reply draft for the owner to approve (lead-reply.ts). Files the request
+    // onto the action bus only when the intake's contact has an email and the business can send one;
+    // it never sends, and every reason it does not file is reported and recorded on the submission. --
+    case "lead_reply_draft": { // === LEAD_REPLY_STEP (a literal: the case list is evaluated in order)
+      const idn = extractIdentity(payload, form.schema_json);
+      return await fileLeadReply(admin, {
+        tenantId, submissionId, formId: form.id, formName: s(form.name),
+        contactId: ctx.contactId,
+        answers: labelledAnswers(payload, form.schema_json),
+        visitorName: [idn.firstName, idn.lastName].filter(Boolean).join(" ").trim() || null,
+      });
     }
 
     // -- outbound_webhook: DEFERRED (fast-follow). ----------------------------------------------

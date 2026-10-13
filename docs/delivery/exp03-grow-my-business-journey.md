@@ -229,6 +229,135 @@ a campaign with a pipeline, a form attached to it, a public submission with the 
 `form_and_tag` → processed into the campaign's pipeline → the read returns it, a member gets no names, another
 workspace is refused, an ambiguous tag stamps nothing. **Authenticated drive on PC-1 is BLOCKED (§7).**
 
+## 11. A Studio form on the business's own website (owner requirement 2026-10-12)
+
+**Requirement.** A Solo owner creates and customises a lead form in Vibe Studio, publishes it, and gets code to
+embed it on a website they control. Submissions reach the existing intake with S1a attribution, S1b routing,
+tenant isolation and consent records; fields, branding, publish/unpublish, copyable instructions, responsive,
+accessible, validated, with plain success and error states. No second forms store, intake, campaign system or
+publishing engine.
+
+**Reuse inventory (searched `GrowthFormRenderer`, `GrowthFormEmbed`, `growth-public-submit`, `growth-publish-command`,
+`embed.js`, `iframe`, `frame-ancestors`, `X-Frame-Options`, `consent`, `brand`, `studio/*`; read the code below).**
+
+| Piece | Where | State before S2a |
+|---|---|---|
+| Hosted form page | `/form/:id`, `src/pages/public/GrowthFormRenderer.tsx` (`GrowthFormPage`) | WORKING; full-page layout only |
+| In-app embed | `GrowthFormEmbed` (same file) | WORKING inside Paige pages and funnels; not an external embed |
+| Public read | `growth_public_form` (anon, active form of a live business) | WORKING; returns no brand or tenant slug |
+| Public intake | `growth-public-submit` (origin allow-list `*.paigeagent.ai`, bot trap, rate limits, form-derived tenant) | WORKING; a framed `/form/:id` posts from Paige's origin, so it is accepted; a direct post from another site is refused (correct). `consent_json` is always `{}` |
+| Attribution / routing | S1a stamp at insert (form link + `utm_*`), S1b campaign pipeline | WORKING; tag credit needs the host page's tags inside the frame |
+| Publish / unpublish | `growth-publish-command` (one door, approvals, readback) and Studio `PublishPanel` | WORKING; "It's live" shows the address only |
+| External loader | `public/embed.js` (booking calendars: inline/popup frame, origin-checked height messages) | WORKING for `/book/:slug` only |
+| Framing | `vercel.json` sets no `frame-ancestors` / `X-Frame-Options` | any site may frame the app |
+| Fields, wording, thank-you | Vibe Studio chat (`growth-form-draft`), stage preview per device, `FormSettings` (routing, notify) | WORKING by conversation (§18/§21: no field-editor buttons) |
+| Brand | Studio preview reads `peek_tenant_portal_brand(slug)` | GAP: the live form shows no brand, so preview and live differ |
+| Consent | `communications_consents` + `record_communications_consent`, read by the send gates | GAP: forms record none; and the recorder is anon-callable and unscoped (#2087, security) |
+
+**Gaps closed by S2a (no backend change):** `embed.js` learns `data-form` (frames `/form/<id>?embed=1`, forwards
+only the page's `utm_*`/`gclid`/`fbclid`, sizes itself, `data-theme` light|dark|auto, and moves the visitor's page
+on a success redirect); `/form/:id` gains an embedded card (no page chrome, transparent around it, light unless
+asked, its height reported through the shared `useEmbedHeight` the booking page now uses too, no Paige splash);
+Studio's publish panel shows "Put it on your website" with Copy code for a live form.
+
+**Later slices:** S2b, the live form carries the business's brand (a public brand field on the form read; the
+preview already shows it). S2c, consent: a form's declared consent question writes a consent record through the
+public intake for the form's own business, after #2087 closes the recorder and scopes the gates.
+
+### 11a. Sites built elsewhere and served by Cloudflare (owner clarification 2026-10-13)
+
+The owner builds client sites with Genspark agents, and some are served by Cloudflare Pages or Workers. Those sites
+are a first-class target for S2a. They are not moved to Vercel or rebuilt in Vibe Studio, and **no Cloudflare
+account is connected to Paige.** The installation guide is `docs/guides/put-a-paige-form-on-a-cloudflare-or-genspark-site.md`.
+
+**Grounded first (2026-10-13).**
+- Production serves `/form/:id` and `/embed.js` with no `frame-ancestors` and no `X-Frame-Options`, so any site
+  may frame the form.
+- Its `/assets/*.js` carry `access-control-allow-origin: *`, so the app's scripts load even in a frame with an
+  opaque origin.
+- The intake accepts answers only from `paigeagent.ai` and its subdomains. The framed form posts from that
+  origin, so the host's hosting platform is irrelevant to the intake.
+
+**Compatibility matrix.** Driven by `scripts/live-drive/cloudflare-embed-drive.mjs`: Cloudflare's own Pages runtime
+(`wrangler pages dev`, which applies `_headers` as Pages does) and the real app on another origin, with Supabase
+stubbed. 80/80 after the independent review's fixes and the owner's button direction.
+
+| Host situation | Result |
+|---|---|
+| Plain page, desktop and phone (390px) | Works end to end: tags carried, sized, sent from Paige's origin, thank-you fits |
+| Code pasted in `<head>` | Works: the form goes to the end of the page (before: invisible in head) |
+| Rocket Loader on, copied tag (`data-cfasync="false"`) | Works: one form, in place |
+| Rocket Loader on, older tag without `data-cfasync` | Works: one form, in place (Rocket Loader keeps `document.currentScript`) |
+| CSP allowing `https://paigeagent.ai` in script-src and frame-src | Works end to end |
+| CSP blocking the frame | Link to the form's own page, with the tags; the console names `frame-src` |
+| CSP blocking outside scripts | The tag can't run; the no-script frame works end to end |
+| Builder "custom HTML" block sandboxed without same-origin | Link to the form; nothing sent (before: invisible in head, and the form could not send). The tab it opens inherits the sandbox, so it shows the form's address with Copy address (before: a blank page) |
+| Builder block that lets tabs escape (`allow-popups-to-escape-sandbox`) | The link opens the form's own page with its real origin; works end to end |
+| No-script frame inside such a sandbox | "This form opens on its own page", with a link and the address to copy (before: a blank frame) |
+| `Content-Security-Policy-Report-Only` | The form stays and works (a report-only policy never blocks) |
+| The "Open the form" fallback button, on light and dark sites (owner direction 2026-10-13) | Deep indigo, white text (17.9:1), a white-then-indigo ring so one of its tones always clears 3:1 against any page (measured 15.1:1 on the dark test page, 17.1:1 on the light one); inverted for a dark-look form; 44px; keyboard focus clear of the ring. Before: indigo on a dark site at 1.2:1 against the page (measured), nearly invisible |
+| The booking popup button (same style) | Same measurements on light and dark sites; still opens the calendar and closes on Escape |
+| Sandbox with same-origin | Works end to end |
+| Thank-you redirect | The business's page navigates to the thank-you page |
+| Paige's product analytics inside the form on a business's site | Plausible, the page-view event and the Meta Pixel's settings lookup: none (driven). PostHog: off (unit-tested; the harness has no key). Error reporting and Vercel Speed Insights stay on |
+
+**What changed for it:**
+- `embed.js`:
+  - a widget whose tag sits in `<head>` goes to the end of the page;
+  - a frame refused by an enforced CSP becomes a link to the form's own page (a report-only policy is ignored);
+  - an opaque-origin page gets a link instead of a frame.
+- `main.tsx`: any form page in an opaque origin (framed, or a tab opened from a sandbox, which inherits it) renders
+  a small card with the form's address and Copy address, not the app, because every provider reads storage.
+- Known limit: browsers report a refused frame by origin, so a policy allowing some Paige addresses and refusing
+  others turns every Paige form frame on the page into a link.
+- Analytics are skipped when `isFormOnBusinessSite()`.
+- Studio:
+  - the copied tag carries `data-cfasync="false"`;
+  - a "Get a version without a script" option gives the form's frame on its own, and says plainly that it can't
+    resize or carry campaign tags.
+- Each change is mutation-checked: removing it fails the drive or a unit test.
+
+**Server half, with a real sent answer.** `scripts/live-drive/form-embed-intake-replay.mjs` takes the request a
+visitor sent from the Cloudflare site and replays it through the real intake rules (`growth-intake.ts`). It then
+runs the real database path on an isolated local clone, rolled back:
+
+- the row growth-public-submit inserts, for the form's own business;
+- the S1a stamp `form_and_tag`;
+- the processor's filing into the campaign's pipeline (S1b);
+- the owner's campaign lead read;
+- another business's owner seeing none of it.
+
+9/9. Two mutations of it each fail it.
+
+**Remaining gaps for Genspark-built sites:**
+- No real Genspark site has been driven, and neither has Cloudflare's live edge. Rocket Loader is Cloudflare's
+  own script, but the harness applies it to the page.
+- No signed-in production run yet. It is safely testable only once S2a is live after the owner's design
+  ruling, and it is the QA coordinator's to run on the designated account (ANT-52).
+- Sites sending `Cross-Origin-Embedder-Policy: require-corp` are untested. The form page does not opt in, so
+  such a site would likely block the frame.
+- The no-script frame keeps a fixed height and carries no campaign tags.
+
+**Optional, later: a customer-authorized Cloudflare connection (assessment only; nothing built).**
+
+- **Outcome.** With the customer's explicit approval, Paige reads the Pages project, custom domain and zone
+  settings that matter to the form. That means `_headers` CSP, Rocket Loader, and the deployment that holds the
+  page. Paige then tells the owner exactly what to change, or, on a separate approval per change, makes it.
+- **Least privilege.**
+  - A customer-created Cloudflare API token scoped to one account and zone, with Account › Cloudflare Pages: Read
+    and Zone › Zone Settings: Read.
+  - Write scopes only for a named, approved change, never standing.
+  - No Global API Key.
+- **Custody.** The token is kept server-side through Paige's existing protected credential path, never returned to
+  the browser or logged. It is revocable by the customer at Cloudflare, and Paige stops on revocation.
+- **Governance.**
+  - It needs its own Integration Capability Registry entry before any build (the delivery rule).
+  - It runs read-only by default; any write is `confirm` with a Rail receipt; verification reads the setting
+    back.
+- **Cost.** $0 to Paige (the Cloudflare API is free).
+- **Necessary for the first paid Solo customers?** No. The embed and the guide need no connection.
+- **Stage:** after S2a ships and a real customer asks.
+
 ## 10. Delivery sequence (each independently testable)
 
 | Slice | Deliverable | Proof |

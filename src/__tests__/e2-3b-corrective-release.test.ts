@@ -38,27 +38,39 @@ describe("E2-3b point 8 — the conversational action-refusal defect", () => {
     expect(branch).toMatch(/if \(!interactiveConversational\) turnTracker\.budgetStop\(\);/);
   });
 
+  it("every budgetStop in the post-loop exhaustion region is gated off conversational turns (the same LIMIT_REACHED misdescription cannot return by a side branch)", () => {
+    const region = CHAT.slice(CHAT.indexOf("Budget exhausted on an unresolved action"), CHAT.indexOf("INT-323 site 1"));
+    const unguarded = [...region.matchAll(/turnTracker\.budgetStop\(\);/g)].filter((m) => {
+      const before = region.slice(Math.max(0, m.index - 120), m.index);
+      return !/!interactiveConversational/.test(before);
+    });
+    expect(unguarded).toHaveLength(0);
+  });
+
   it("the per-call conversational refusal teaches recovery in words", () => {
     expect(CHAT).toMatch(/Answer the owner in words: say plainly that actions are off in this conversation right now/);
   });
 });
 
 describe("E2-3b point 5 — the Sales reporting cutoff", () => {
-  it("a completed sales window carries the cutoff as data: 'counted through the last completed UTC day'", () => {
+  it("the cutoff note is truthful to the second: it fires whenever the end was pulled back to now (end>now AND the end==now rolling default); a past-ended window carries no note", () => {
     const period = (start: string, end: string): SnapshotPeriod =>
       ({ key: "last_7_days", start, end, timezone: "UTC", basis: "rolling", label: "last 7 days" } as unknown as SnapshotPeriod);
-    const completed = salesMetricWindow(period("2026-10-05T00:00:00.000Z", "2026-10-12T00:00:00.000Z"), new Date(NOW));
-    expect(completed?.window_note).toBe("counted through the last completed UTC day");
-    const inProgress = salesMetricWindow(period("2026-10-06T00:00:00.000Z", "2026-11-13T00:00:00.000Z"), new Date(NOW));
-    expect(inProgress?.window_note).toBe("counted up to just now; the period ends later");
+    const endsAfterNow = salesMetricWindow(period("2026-10-06T00:00:00.000Z", "2026-11-13T00:00:00.000Z"), new Date(NOW));
+    expect(endsAfterNow?.window_note).toBe("counted up to just now; the period ends later");
+    const endsAtNow = salesMetricWindow(period("2026-10-05T15:30:00.000Z", "2026-10-12T15:30:00.000Z"), new Date(NOW));
+    expect(endsAtNow?.window_note).toBe("counted up to just now; the period ends later");
+    const endedInPast = salesMetricWindow(period("2026-10-05T00:00:00.000Z", "2026-10-12T00:00:00.000Z"), new Date(NOW));
+    expect(endedInPast?.window_note).toBeUndefined();
   });
 
-  it("the briefing contract requires stating the cutoff once when sales or pipeline figures appear", async () => {
+  it("the briefing contract requires stating the truthful cutoff once when sales or pipeline figures appear", async () => {
     const r = await dispatchBusinessSnapshotChat(
       { who: { actorId: "a", tenantId: TENANT, role: "owner", accountShape: "solo" }, timezone: "UTC" },
       { caller }, {}, new Date(NOW));
-    expect(r.message).toMatch(/Sales and pipeline figures are counted through the last completed UTC day, never up to this moment/);
-    expect(r.message).toMatch(/when you narrate any of them, state that cutoff once, plainly/);
+    expect(r.message).toMatch(/Sales and pipeline period figures are counted up to the moment of this review, to the second/);
+    expect(r.message).toMatch(/not to a day boundary/);
+    expect(r.message).toMatch(/state that once, plainly/);
     expect(r.message).toMatch(/Current balances and Systems Check state are right now/);
   });
 });

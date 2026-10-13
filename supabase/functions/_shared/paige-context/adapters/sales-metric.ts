@@ -118,11 +118,14 @@ export function salesMetricWindow(period: SnapshotPeriod, now: Date): SalesMetri
     range_start: new Date(startMs).toISOString(),
     range_end: new Date(endMs).toISOString(),
   };
-  // E2-3b (QA #2102 point 5): the cutoff is a FACT about these figures, so the projection
-  // carries it for every period window — an in-progress window ends at the edge clock margin,
-  // a completed one is counted through the last completed UTC day, never up to this moment.
-  if (periodEndMs > nowMs) return { ...window, window_note: "counted up to just now; the period ends later" };
-  return { ...window, window_note: "counted through the last completed UTC day" };
+  // E2-3b (QA #2102 point 5, review round): the producer counts raw record timestamps in
+  // [start, end) — to the second, no day boundary — so the truthful cutoff note fires whenever
+  // the end was pulled back to now (endMs < periodEndMs covers BOTH an end after now AND the
+  // rolling periods that resolve end = now exactly). A window that already ended in the past is
+  // complete and carries no note; the range dates speak for it. The "last completed UTC day"
+  // contract belongs to the close-date metrics only, which these adapters do not read.
+  if (endMs < periodEndMs) return { ...window, window_note: "counted up to just now; the period ends later" };
+  return window;
 }
 
 /** One issuer read for this window. The caller is the authenticated user's client; tenant is server-derived. */

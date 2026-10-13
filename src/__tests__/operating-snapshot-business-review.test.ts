@@ -191,9 +191,11 @@ describe('salesMetricWindow', () => {
     const w = salesMetricWindow(period(), NOW);
     expect(SALES_WINDOW_CLOCK_MARGIN_MS).toBeGreaterThan(0);
     expect(w?.range_end).toBe(JUST_BEFORE_NOW);
-    // E2-3b (QA #2102 point 5): a completed window now carries the cutoff as data; only the
-    // in-progress note ("counted up to just now; the period ends later") predates it.
-    expect(w?.window_note).toBe("counted through the last completed UTC day");
+    // E2-3b (QA #2102 point 5, review round): the default rolling window resolves end = now
+    // exactly, its end is pulled back to the clock margin, and the producer counts raw
+    // timestamps to the second — so the truthful note is the to-just-now one (the note fires
+    // whenever the end was pulled back: endMs < periodEndMs covers end > now AND end == now).
+    expect(w?.window_note).toBe("counted up to just now; the period ends later");
     // a window that already ended is left exactly as it is
     const prior = salesMetricWindow(previousPeriod(period()), NOW);
     expect(prior?.range_end).toBe(period().start);

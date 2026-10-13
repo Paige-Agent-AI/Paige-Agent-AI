@@ -17556,7 +17556,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${heldNote}`;
-            if (!continuationFailed) turnTracker.budgetStop();
+            if (!continuationFailed && !interactiveConversational) turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),

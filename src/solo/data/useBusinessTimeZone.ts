@@ -22,10 +22,13 @@ export type BusinessTimeZoneLoad =
   | { status: "loading" }
   | { status: "ready"; value: BusinessTimeZone }
   | { status: "refused" }
+  | { status: "no_workspace" }
   | { status: "error" };
 export type BusinessTimeZoneSave =
   | { ok: true; value: BusinessTimeZone }
-  | { ok: false; kind: "refused" | "invalid" | "failed" | "unconfirmed" };
+  | { ok: false; kind: "refused" | "invalid" | "failed" | "unconfirmed" }
+  /** The person left this workspace before the save answered: say nothing about it in the new one. */
+  | { ok: false; kind: "stale" };
 
 /** The database's own accepted shape (the writer and the table CHECK use the same pattern). */
 export const BUSINESS_ZONE_PATTERN = /^(UTC|(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)\/[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z][A-Za-z0-9_+-]*)?)$/;
@@ -75,7 +78,7 @@ export function useBusinessTimeZone(tenantId: string | null) {
   current.current = tenantId;
 
   const refresh = useCallback(async () => {
-    if (!tenantId) { setLoad({ status: "refused" }); return; }
+    if (!tenantId) { setLoad({ status: "no_workspace" }); return; }
     setLoad({ status: "loading" });
     const next = await readBusinessTimeZone(tenantId);
     if (current.current === tenantId) setLoad(next);
@@ -88,7 +91,7 @@ export function useBusinessTimeZone(tenantId: string | null) {
     setSaving(true);
     try {
       const result = await saveBusinessTimeZone(tenantId, zone);
-      if (current.current !== tenantId) return { ok: false, kind: "failed" };
+      if (current.current !== tenantId) return { ok: false, kind: "stale" };
       if (result.ok) setLoad({ status: "ready", value: result.value });
       return result;
     } finally {

@@ -103,6 +103,7 @@ export function BusinessTimeZoneSetting({ tenantId }: { tenantId: string | null 
   useEffect(() => { if (notice) noticeRef.current?.focus(); }, [notice]);
 
   if (load.status === "loading") return <div className="setup-tz" aria-busy="true"><div className="setup-tz__state" role="status"><RefreshCw aria-hidden/>Reading this business’s time zone…</div></div>;
+  if (load.status === "no_workspace") return <div className="setup-tz"><div className="setup-tz__state" role="status"><ShieldCheck aria-hidden/>Open this business’s workspace to see its time zone.</div></div>;
   if (load.status === "refused") return <div className="setup-tz"><div className="setup-tz__state" role="status"><ShieldCheck aria-hidden/>Only the business owner or an admin can see the business time zone.</div></div>;
   if (load.status === "error") return <div className="setup-tz"><div className="setup-notice" data-tone="bad" role="alert"><CircleHelp aria-hidden/><span>The business time zone could not be read. Nothing was changed.</span><button type="button" className="setup-button" onClick={() => void refresh()}>Retry</button></div></div>;
 
@@ -114,6 +115,8 @@ export function BusinessTimeZoneSetting({ tenantId }: { tenantId: string | null 
   const confirm = async () => {
     if (!chosen) return;
     const result = await save(chosen);
+    // A save that answered after the person switched workspace belongs to the other business.
+    if ("kind" in result && result.kind === "stale") return;
     // `in` narrows under both the strict and the app tsconfig.
     if (!("kind" in result)) {
       setChosen(null);

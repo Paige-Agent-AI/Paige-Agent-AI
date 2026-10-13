@@ -114,6 +114,43 @@ describe("Setup › Business time zone", () => {
     expect(text()).toContain("Not set");
   });
 
+  it("never reports a save when the read back shows a different zone", async () => {
+    rpc.mockImplementation((name: string) => {
+      if (name === "set_business_time_zone") return ok({ time_zone: "America/Chicago", receipt_id: "r1" });
+      return rpc.mock.calls.some(([n]) => n === "set_business_time_zone")
+        ? ok(zoneRow({ state: "configured", zone: "America/Denver", local_date: "2026-10-12" }))
+        : ok(zoneRow());
+    });
+    await mount();
+    await choose("Chicago", /^Chicago/);
+    await click(button(/^Save time zone$/));
+    expect(text()).toContain("The save could not be confirmed by reading it back");
+    expect(text()).not.toContain("Saved and read back");
+  });
+
+  it("says nothing in the new workspace about a save that answered after the switch", async () => {
+    let finish: (v: unknown) => void = () => {};
+    rpc.mockImplementation((name: string) => name === "set_business_time_zone"
+      ? new Promise((resolve) => { finish = resolve; })
+      : ok(zoneRow()));
+    await mount();
+    await choose("Chicago", /^Chicago/);
+    await act(async () => { button(/^Save time zone$/)!.click(); });
+    await mount("tenant-b");
+    await act(async () => { finish({ data: null, error: { code: "XX000" } }); });
+    await flush();
+    expect(text()).not.toContain("could not be saved");
+    expect(text()).not.toContain("Saved and read back");
+    expect(text()).toContain("Not set");
+  });
+
+  it("asks for the workspace instead of flashing a refusal when there is none", async () => {
+    await mount(null);
+    expect(text()).toContain("Open this business’s workspace to see its time zone.");
+    expect(text()).not.toContain("Only the business owner");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it("tells the owner when the server refuses, without relaying its text", async () => {
     rpc.mockImplementation((name: string) => name === "set_business_time_zone" ? fail("42501") : ok(zoneRow()));
     await mount();

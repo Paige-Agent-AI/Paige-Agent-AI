@@ -120,7 +120,45 @@ pins the literal, so any further name fails CI:
 gate stay exactly as E2-2 left them. Live reaches the same two reads through the ordinary tenant tool
 list, under the existing Live refusal of approvals.
 
-**Independent security review.** _Recorded on the E4-S2 PR before merge._
+**Independent security review — SHIP (2026-10-13), non-author reviewer, commit `73eb3e25`.** No P1 or
+P2 findings. Measured on a local database in rollback-only transactions with the migration
+re-applied:
+- **Tenant isolation.** An owner of business A asking for business B is refused (42501). So is a
+  member who is not an owner or admin; anon and `service_role` are denied. An admin is allowed, with
+  `can_set=false`. A foreign `client_id` is refused by the already-merged status read. A persona whose
+  tenant differs from the profile's active tenant fails closed.
+- **No write path from chat.** Only `record_capability_run` receipts are written. `proposed_zone` is
+  checked in TypeScript and never reaches `set_business_time_zone`. The per-call guard still refuses
+  every tool outside the four admitted names.
+- **Lookup.** `%%` and `__` match nothing, and `%_` matches only a literal `%_`. An email fragment
+  matches nothing. Results carry no email, phone or notes.
+- **Grants.** Both functions are `SECURITY DEFINER` with `search_path=pg_catalog,public`, and
+  executable by `postgres` and `authenticated` only.
+- **Fingerprints.** For all 29 incumbent tools the pre-hash input diff is identical: 0 lines removed,
+  10 added. Those 10 lines are the tool-list push and the appended branch. No incumbent body changed.
+
+**P3 notes:**
+1. **Fixed before merge.** Client names appeared in the instruction field on the "several clients
+   match" path. They now travel only in the labelled data projection, quoted.
+2. **Accepted, recorded.** `_sales_invoice_actor` takes `FOR UPDATE` row locks on every read. This is
+   the existing Sales pattern.
+3. **Accepted, recorded.** The tenant-bounded `ILIKE` search is unindexed.
+
+**Adversarial verifier — no blocker; 5 major, 7 minor.** All 5 majors were fixed before merge:
+- per-invoice currency;
+- record text quoted onto one line, so a name cannot forge a figure;
+- dates in the business zone, and withheld when the zone is unset;
+- a save answered after a workspace switch stays silent;
+- tests added to catch the surviving mutants.
+
+Minors fixed: the unknown-`client_id` wording, a negative "behind" printed as "ahead", a note for
+invoices not listed, the work-deadline note, and the no-workspace state. One minor is recorded as
+pre-existing and out of scope: `get_business_snapshot` still judges overdue receivables on the
+device zone, with UTC as fallback.
+
+**Authenticated acceptance.** PC-1 is superseded. Acceptance runs on the owner-designated SOLO
+customer account, by ordinary sign-in through the QA lane (flow
+`exp04-business-time-zone-acceptance`). Operator access is never customer authentication.
 
 ## Preserved boundaries
 

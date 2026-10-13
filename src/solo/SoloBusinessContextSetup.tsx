@@ -1393,7 +1393,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                   <h2 id="business-time-zone-title">Business time zone</h2>
                   <p>The calendar Paige uses to decide which payments are due and which are overdue. Saved on its own, the moment you confirm it.</p>
                 </header>
-                <BusinessTimeZoneSetting tenantId={data.activeTenantId} />
+                <BusinessTimeZoneSetting key={data.activeTenantId ?? "none"} tenantId={data.activeTenantId} />
               </section>
             )}{" "}
             {tab === "public-presence" && (

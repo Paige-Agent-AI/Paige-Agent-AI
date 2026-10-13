@@ -21,8 +21,21 @@ beforeEach(() => {
   state.rpc.mockImplementation(async (_name, args) => ({ data: args._checkpoint ? { tenantId: state.tenant, threadId: args._thread_id, ...args._checkpoint, contextRevisionAtCheckpoint: args._expected_context_revision } : null, error: null }));
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
-afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 describe("owner interview review over canonical Setup", () => {
+  it("restores correction focus only after a delayed checkpoint releases the controls", async () => {
+    const frames = new Map<number, FrameRequestCallback>(); let frameId = 0;
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId; });
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+    const flush = async () => act(async () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(callback => callback(0)); });
+    let resolveWrite!: (value: unknown) => void;
+    state.rpc.mockImplementation(async (name) => name === "get_solo_business_interview_checkpoint" ? { data: null, error: null } : await new Promise(resolve => { resolveWrite = resolve; }));
+    state.save.mockResolvedValue({ ok: true, kind: "saved", readback: { tenantId: "tenant-a", brief: state.context.brief, contextRevision: 8 } });
+    await render(); await click(host.querySelector('[aria-label="Correct Industry"]')!); await click(button("Confirm and save to Setup"));
+    await flush(); expect((host.querySelector('[aria-label="Correct Industry"]') as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => resolveWrite({ data: { tenantId: "tenant-a", threadId: "thread-a", phase: "active", nextField: "industry", contextRevisionAtCheckpoint: 8 }, error: null }));
+    await flush(); expect(document.activeElement).toBe(host.querySelector('[aria-label="Correct Industry"]'));
+  });
   it("requires explicit review/save, preserves unrelated records, then supports correction in the same thread", async () => {
     state.save.mockImplementation(async next => { state.context.brief = cleanSoloSetupBrief({ ...next.brief, industry: next.brief.industry.trim(), updatedAt: "stored" }); state.context.contextRevision = 8; return { ok: true, kind: "saved", readback: { tenantId: "tenant-a", brief: state.context.brief, contextRevision: 8 } }; });
     await render(); expect(state.save).not.toHaveBeenCalled();

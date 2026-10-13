@@ -1,0 +1,35 @@
+{
+  "label": "light-state-busy",
+  "requested": {
+    "width": 1366,
+    "height": 768
+  },
+  "screenshotDimensions": {
+    "width": 1366,
+    "height": 768
+  },
+  "url": "http://127.0.0.1:5204/interview.html?theme=light&state=busy",
+  "dom": {
+    "alerts": [],
+    "background": "rgb(251, 248, 244)",
+    "focus": {
+      "name": "BODY",
+      "tag": "BODY"
+    },
+    "foreground": "rgb(33, 30, 36)",
+    "overflow": false,
+    "paige": "open",
+    "pg": "light",
+    "profileOverflow": false,
+    "profileScroll": 0,
+    "secondary": "rgb(103, 97, 107)",
+    "statuses": [],
+    "theme": "light",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+  "captureAPI": "native screenshot after settled DOM"
+}

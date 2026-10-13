@@ -6,6 +6,14 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### Focus restoration can race disabled checkpoint controls (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** Rendered save put focus on BODY although an immediate-fixture test passed. Canonical save finished first; the private checkpoint still disabled the correction button when an animation-frame callback tried to focus it. Use deferred checkpoints and assert enabled-control focus after settlement. Restore through a scope-fenced effect, cancel on scope changes and retain the failed-save editor. Setup success and progress-write failure remain separate outcomes.
+
+### A theme class and DOM fit do not prove the captured surface (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** A harness declared dark while the shell's ThemeProvider emitted light tokens; rapid viewport changes also captured another viewport's dimensions. Drive the actual provider, compare computed token state, validate each native image's dimensions/state after settlement and reject mismatches.320CSS reflow does not substantiate native200%zoom when browser geometry is unchanged. Synthetic context/provider rendering cannot substantiate customer authentication or stored records.
+
 ### A green proof over a ledger the writer cannot produce (2026-10-12, Experience 04)
 
 **Symptom → root cause → rule.** The E4-S1 client-status proof passed 34/34 and its parity check agreed

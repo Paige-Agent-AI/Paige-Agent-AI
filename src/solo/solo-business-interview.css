@@ -3,7 +3,7 @@
 .sbi-head strong { display:block; font-size:16px; }
 .sbi-head span,.sbi-note,.sbi-facts small { color:hsl(var(--muted-foreground)); }
 .sbi p { margin:8px 0; }
-.sbi button { border:1px solid hsl(var(--border)); border-radius:6px; padding:7px 10px; min-height:36px; font-size:13px; background:hsl(var(--background)); color:hsl(var(--foreground)); }
+.sbi button { border:1px solid hsl(var(--border)); border-radius:6px; padding:7px 10px; min-width:44px; min-height:36px; font-size:13px; background:hsl(var(--background)); color:hsl(var(--foreground)); }
 .sbi button:hover:enabled { background:hsl(var(--muted)); }
 .sbi button:disabled { opacity:.55; }
 .sbi button:focus-visible,.sbi textarea:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:2px; }

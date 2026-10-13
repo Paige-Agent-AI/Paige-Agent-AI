@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: authenticated owner interview→reviewed fact→canonical s
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: private caller-JWT Owner/thread checkpoint; existing user metadata only; real DRAINING begin retry and immutable assistant settle replay tested in SQL; approvals/rollout/provider/Auth unchanged.
 
-INTERNAL_BUILD_IDENTITY: 9b548fc888b4f4aa5108791b2cd479a9903ef9de; deployment=none; environment=development; migrations=PROOF_OWED(production execution of 20271027200000_solo_business_interview_checkpoint); edge=PROOF_OWED(production paige-ai-chat interview context); evidence=docs/evidence/experience-01-foundation/sql-proof.json
+INTERNAL_BUILD_IDENTITY: 9b548fc888b4f4aa5108791b2cd479a9903ef9de; deployment=none; environment=development; migrations=PROOF_OWED(production execution of 20271028100000_solo_business_interview_checkpoint); edge=PROOF_OWED(production paige-ai-chat interview context); evidence=docs/evidence/experience-01-foundation/sql-proof.json
 RELEASE_CHANNEL: development: local source candidate and isolated synthetic proof; no deployed customer outcome.
 RELEASE_CLASSIFICATION: internal-only: foundation candidate awaiting exact-head CI/review, normal release and protected authenticated proof.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent production outcome accepted or announcement authorized.
 RELEASE_NOTE_REQUIRED: NO: internal candidate only; customer outcome announcement remains behind the normal release gate.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: deployment of migration20271027200000 and paige-ai-chat context, admitted proposal behavior, protected ordinary-customer persistence/conversation/resume and owner acceptance; no LIVE outcome.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: deployment of migration20271028100000 and paige-ai-chat context, admitted proposal behavior, protected ordinary-customer persistence/conversation/resume and owner acceptance; no LIVE outcome.
 RELEASE_RECOVERY: position=unmerged candidate can be withdrawn and existing Setup remains authority if progress write fails; reference=docs/delivery/experience-01-foundation.md
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: both themes/two synthetic contexts, native1535x770 within disclosed rounding; authenticated proof owed.

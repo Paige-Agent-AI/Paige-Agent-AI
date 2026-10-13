@@ -1,9 +1,8 @@
 {
   "evidenceClass": "SOURCE_IDENTITY_AND_READ_ONLY_PRODUCTION_METADATA",
-  "productionFrontierObserved": "20271027100000",
   "formerPendingVersion": "20271026000000",
-  "newPendingVersion": "20271027200000",
-  "newFile": "supabase/migrations/20271027200000_solo_business_interview_checkpoint.sql",
+  "newPendingVersion": "20271028100000",
+  "newFile": "supabase/migrations/20271028100000_solo_business_interview_checkpoint.sql",
   "sqlSha256BeforeAndAfter": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
   "sqlBytesChanged": false,
   "historicalLocalExecution": "sql-proof.json and migration-state.json accurately retain execution under the former filename/version; they are not relabeled as execution of the new version",
@@ -22,13 +21,26 @@
       "newFile": "supabase/migrations/20271027000000_solo_business_interview_checkpoint.sql",
       "applied": false,
       "scope": "Historical source renumber; local proof still original260000"
+    },
+    {
+      "newPendingVersion": "20271027200000",
+      "newFile": "supabase/migrations/20271027200000_solo_business_interview_checkpoint.sql",
+      "productionFrontierObserved": "20271027100000",
+      "executedInIsolatedLocalProof": true,
+      "proof": "Owner-facing experience-01-sql-proof-272000-prepared.json",
+      "productionApplied": false
     }
   ],
   "intermediatePendingVersion": "20271027000000",
-  "currentProductionReadback": {
+  "readAtDateUTC": "2026-10-13",
+  "historicalProductionFrontierObserved": "20271027100000",
+  "currentSourceChainFrontier": "20271028000000",
+  "currentSourceBase": "aec64c4caafd935b64714f963ba166907b946677",
+  "reason": "Current-main source chain advanced; canonical deploy policy permits newer pending migrations only. SQL bytes unchanged, all executable references advanced together.",
+  "currentProductionReadbackClass": "PROOF_OWED; no current production diagnostics published in this source record",
+  "historicalProductionReadback": {
     "intermediateVersionRecorded": false,
     "checkpointReaderPresent": false,
     "checkpointWriterPresent": false
-  },
-  "readAtDateUTC": "2026-10-13"
+  }
 }

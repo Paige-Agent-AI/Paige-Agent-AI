@@ -191,7 +191,9 @@ describe('salesMetricWindow', () => {
     const w = salesMetricWindow(period(), NOW);
     expect(SALES_WINDOW_CLOCK_MARGIN_MS).toBeGreaterThan(0);
     expect(w?.range_end).toBe(JUST_BEFORE_NOW);
-    expect(w?.window_note).toBeUndefined();
+    // E2-3b (QA #2102 point 5): a completed window now carries the cutoff as data; only the
+    // in-progress note ("counted up to just now; the period ends later") predates it.
+    expect(w?.window_note).toBe("counted through the last completed UTC day");
     // a window that already ended is left exactly as it is
     const prior = salesMetricWindow(previousPeriod(period()), NOW);
     expect(prior?.range_end).toBe(period().start);

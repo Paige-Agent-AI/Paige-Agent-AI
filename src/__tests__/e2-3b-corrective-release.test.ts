@@ -78,6 +78,6 @@ describe("E2-3b triage — workspace pre-check scope correction (documented, no 
     expect(doc).toMatch(/Corrected 2026-10-13/);
     expect(doc).toMatch(/matched the WRONG account|pre-check scope error/);
     expect(doc).toMatch(/0 pipelines, 0 deals, 0 clients/);
-    expect(doc).toMatch(/were CORRECT for that workspace/);
+    expect(doc).toMatch(/were CORRECT for that\s+workspace/m);
   });
 });

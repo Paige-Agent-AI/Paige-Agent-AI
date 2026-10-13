@@ -41,8 +41,8 @@ ACCEPTANCE_CRITERIA: an owner publishes a form in Studio, presses Copy code, pas
 MOTION_PURPOSE: NONE: no new motion
 PROTECTED_SEAMS: booking embed check in form-embed-drive; GrowthFormRenderer and Studio tests unchanged and passing; BookingPage moved onto the shared height hook with the same message
 
-INTERNAL_BUILD_IDENTITY: 84fa6734e7470f808fe95a784a1ef967bd0dbdea; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/cloudflare-embed-drive.mjs
-RELEASE_CHANNEL: development: production on merge (owner's S2a design ruling received 2026-10-13)
+INTERNAL_BUILD_IDENTITY: 84fa6734e7470f808fe95a784a1ef967bd0dbdea (CI head 6ee8ae5a, docs-only beyond it); merged as 7f3217af597ad779b332515391f492a25f8ba811; deployment=dpl_5uyTfDn75jfMY7M9jBD6riA2vW7m (Vercel, READY); environment=production; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/cloudflare-embed-drive.mjs
+RELEASE_CHANNEL: production: merged and deployed 2026-10-13 after the owner's S2a design approval; production readback in master §4.0
 RELEASE_CLASSIFICATION: internal-only: inside an unreleased journey; a customer version is earned by Experience 03 as a whole
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version until Experience 03 earns one
 RELEASE_NOTE_REQUIRED: no: pre-launch, no customers; announced with the journey

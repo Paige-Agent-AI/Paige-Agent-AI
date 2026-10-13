@@ -537,6 +537,8 @@ Frontend over the #1658 seams. The Studio opens from Solo Campaigns; authority i
 | Studio home, projects, chat-built work on the stage, timeline + preview | — (no tenant) | — (no Growth surface, §60) | **✓** owner/admin; a member's create is refused by the server | **✓** (same Solo shell) | — | — | LIVE on merge; authenticated drive owed |
 | Publish / unpublish from the Studio | — | — | **✓** owner/admin | **✓** owner/admin | — | — | LIVE on merge (RPC-gated) |
 | Form settings in the Studio (`growth_form_set_intake`) | — | — | **✓** owner/admin; members read-only | **✓** | — | — | LIVE on merge |
+| Studio › Publish › **Put it on your website** (Experience 03 S2a, PR #2088: the one-line code with Copy code, a script-free frame option, shown only for a live form) | — | — | **✓** owner/admin | **✓** owner/admin | — | — | LIVE 2026-10-13 (`7f3217af`); UI only, no new seam; authenticated drive owed (ANT-52) |
+| A published form embedded on the business's own website (`embed.js` `data-form` → `/form/<id>?embed=1`) | — | — | — | — | — | **✓** any visitor; answers go to the form's own business through the unchanged `growth-public-submit` | LIVE 2026-10-13 (`7f3217af`); no Paige product analytics on it |
 
 ### Vibe Studio publish lifecycle and Studio chat forms (PR #1658, 2026-10-03)
 

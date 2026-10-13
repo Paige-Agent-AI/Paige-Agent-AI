@@ -323,6 +323,13 @@ rec = scenario(zoneRpcs);
 const missedClaim = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Check my time zone and create a follow-up task.' }] }, id(42)));
 const missedClaimWire = await missedClaim.text();
 assert.ok(missedClaimWire.includes('No business action was run.'), 'a missed completion phrase is contradicted by the no-action line');
+// An unbacked card claim after a grounded read: the claim fallback replaces the text and keeps the no-action line.
+receipts.length = 0; modelCalls = 0; modelReply = 'Your approval card is ready below.';
+rec = scenario(zoneRpcs);
+const cardClaim = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Get me my business time zone status.' }] }, id(44)));
+const cardClaimWire = await cardClaim.text();
+assert.ok(!cardClaimWire.includes('Your approval card is ready below.'), 'an unbacked card claim is not left standing');
+assert.ok(cardClaimWire.includes('No business action was run.'), 'the no-action line survives the claim fallback');
 // A read that was refused is not grounding: the reply is replaced, exactly as when nothing was read.
 receipts.length = 0; modelCalls = 0; modelReply = 'Your business time zone looks fine to me.';
 rec = scenario({ rpcs: { ...zoneRpcs.rpcs, read_business_time_zone: { data: null, error: { code: '42501', message: 'x' } } } });

@@ -16839,7 +16839,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         let v: any;
         try { v = JSON.parse(content ?? ""); } catch { return false; }
         return !!v && typeof v === "object" && !Array.isArray(v) && v.success !== false && !v.error && v.forbidden_seat !== true
-          && v.refused_before_run !== true && !["refused", "needs_input", "unavailable"].includes(String(v.status ?? ""));
+          && v.refused_before_run !== true && v.status === "available"; // every admitted read reports available | needs_input | refused | unavailable
       };
       // A write by the classifier (or a question card): what "the step was done" means. Kept separate from the
       // broad count above, which only decides whether the server may say nothing was saved (review round 11).
@@ -17621,7 +17621,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (stillClaimed) {
               // Claims only what the server knows: nothing about earlier cards, and never hides work this
               // turn did (its steps and any card stay on the wire above the sentence).
-              const truthful = claimFallback(stillClaimed, { didWork: totalToolCalls > 0 || cardMinted });
+              // E4-S2 — when this replaces a kept read answer, the no-action line it carried is kept too.
+              const truthful = `${claimFallback(stillClaimed, { didWork: totalToolCalls > 0 || cardMinted })}${groundedReadAnswerStands
+                ? "\n\nActions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run." : ""}`;
               finalAssistantText = truthful;
               if (continuationsUsed >= MAX_CONTINUATIONS && !cardMinted && totalToolCalls === 0) turnTracker.budgetStop();
               finalChunks = [

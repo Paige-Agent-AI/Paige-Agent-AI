@@ -307,6 +307,28 @@ describe("Welcome with the mounted canonical tenant provider", () => {
     expectBlocked();
   });
 
+  it.each([0, 3000])("allows bounded workspace readback after late enrollment verification (response delay %sms)", async (responseDelay) => {
+    await mount();
+    await act(async () => { await vi.advanceTimersByTimeAsync(26000); });
+    let releaseScope!: () => void;
+    fixture.scopeWait = new Promise<void>((resolve) => { releaseScope = resolve; });
+    fixture.provisioned = true;
+    fixture.enrollmentState = "verified";
+    let releaseEnrollment!: () => void;
+    if (responseDelay) fixture.enrollmentWait = new Promise<void>((resolve) => { releaseEnrollment = resolve; });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    if (responseDelay) {
+      await act(async () => { await vi.advanceTimersByTimeAsync(responseDelay); releaseEnrollment(); });
+    }
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    expect(host.querySelector("[data-solo-mounted]")).toBeNull();
+    expect(host.textContent).toContain("Confirming the selected workspace");
+    expect(host.textContent).not.toContain("We could not open your workspace");
+    await act(async () => { releaseScope(); });
+    expect(host.querySelector("[data-solo-mounted]")).not.toBeNull();
+    expect(host.querySelector("[data-provider-tenant]")?.getAttribute("data-provider-tenant")).toBe("test-tenant-admission");
+  });
+
   it("preserves the existing deliberate chooser handoff", async () => {
     fixture.enrollmentState = "choose_account";
     await mount();

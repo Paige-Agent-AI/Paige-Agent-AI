@@ -260,6 +260,8 @@ on a success redirect); `/form/:id` gains an embedded card (no page chrome, tran
 asked, its height reported through the shared `useEmbedHeight` the booking page now uses too, no Paige splash);
 Studio's publish panel shows "Put it on your website" with Copy code for a live form.
 
+**Status (2026-10-13):** S2a shipped (owner-approved design; PR #2088 → main `7f3217af`; production read back, master §4.0). Authenticated acceptance is with the QA coordinator (ANT-52).
+
 **Later slices:** S2b, the live form carries the business's brand (a public brand field on the form read; the
 preview already shows it). S2c, consent: a form's declared consent question writes a consent record through the
 public intake for the form's own business, after #2087 closes the recorder and scopes the gates.
@@ -332,8 +334,9 @@ runs the real database path on an isolated local clone, rolled back:
 **Remaining gaps for Genspark-built sites:**
 - No real Genspark site has been driven, and neither has Cloudflare's live edge. Rocket Loader is Cloudflare's
   own script, but the harness applies it to the page.
-- No signed-in production run yet. It is safely testable only once S2a is live after the owner's design
-  ruling, and it is the QA coordinator's to run on the designated account (ANT-52).
+- No signed-in production run yet. S2a is live since 2026-10-13 (owner-approved design; PR #2088 → `7f3217af`,
+  production read back in master §4.0). The run is the QA coordinator's, on the designated account (ANT-52), per
+  `docs/delivery/exp03-s2a-form-embed-acceptance-package.md`.
 - Sites sending `Cross-Origin-Embedder-Policy: require-corp` are untested. The form page does not opt in, so
   such a site would likely block the frame.
 - The no-script frame keeps a fixed height and carries no campaign tags.

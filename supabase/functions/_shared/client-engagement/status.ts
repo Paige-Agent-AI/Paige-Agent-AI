@@ -84,6 +84,8 @@ export type ScheduleRow = { sequence: number; due_date: string; amount_minor: nu
 
 export type ClientEngagementStatus = {
   client: { id: string; name: string | null };
+  /** The instant the database read happened (compare timestamps such as task due_at against it). */
+  read_at: string;
   /** Today in the business owner's zone; null when that zone is missing or invalid. */
   as_of_date: string | null;
   time_zone: { state: TimeZoneState; zone: string | null };
@@ -360,6 +362,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
 
   return {
     client: { id: source.contact_id, name: source.client_name },
+    read_at: source.read_at,
     as_of_date: asOf,
     time_zone: timeZone,
     agreement,

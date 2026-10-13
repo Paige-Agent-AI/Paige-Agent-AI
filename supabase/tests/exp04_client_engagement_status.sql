@@ -172,12 +172,17 @@ select pg_temp.refused($s$select public.read_client_engagement_status('e4000000-
 select pg_temp.refused($s$select public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa',null)$s$,'22023','missing client refused');
 
 -- ── The business time zone: only the active owner may set it, and only to a regional IANA zone. ──
-select pg_temp.check_true(not has_table_privilege('authenticated','public.tenant_business_time_zones','SELECT') and not has_table_privilege('authenticated','public.tenant_business_time_zones','INSERT') and not has_table_privilege('authenticated','public.tenant_business_time_zones','UPDATE'),'no direct access to the business time zone table');
+select pg_temp.check_true((select bool_and(not has_table_privilege(r,'public.tenant_business_time_zones',p)) from unnest(array['anon','authenticated','service_role']) r, unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p),'no API role holds any privilege on the business time zone table');
 select pg_temp.check_true(has_function_privilege('authenticated','public.set_business_time_zone(uuid,text)','EXECUTE') and not has_function_privilege('anon','public.set_business_time_zone(uuid,text)','EXECUTE') and not has_function_privilege('service_role','public.set_business_time_zone(uuid,text)','EXECUTE'),'only signed-in callers may call the time zone writer');
 select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Mars/Olympus_Mons')$s$,'22023','unknown zone refused');
 select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','EST')$s$,'22023','abbreviation refused');
 select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','EST5EDT')$s$,'22023','legacy rule zone refused');
 select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Etc/GMT+5')$s$,'22023','fixed-offset zone refused');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','America/Nowhere')$s$,'22023','a region-shaped name that is not a real zone is refused');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','US/Eastern')$s$,'22023','legacy alias refused in favour of the region name');
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','   ')$s$,'22023','a blank value is refused, not treated as a clear');
+select pg_temp.check_true((select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','America/Argentina/Buenos_Aires')->>'time_zone'='America/Argentina/Buenos_Aires'),'three-level region zones are accepted');
+select pg_temp.check_true((select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','America/Port-au-Prince')->>'time_zone'='America/Port-au-Prince'),'hyphenated region zones are accepted');
 select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000bbbb','America/Chicago')$s$,'42501','owner naming another workspace refused');
 -- The foreign business keeps its own zone; tenant A's read must never pick it up.
 reset role;
@@ -230,7 +235,7 @@ select pg_temp.check_true((select count(*)=0 from public.paige_workspace_events 
 select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000002',true);
 set local role authenticated;
 select pg_temp.check_true((select jsonb_array_length(public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002')->'invoices')=0),'admin reads an empty client as empty');
--- The admin in Tokyo sees the business's New York zone, not their own.
+-- Regression guard: an admin whose personal profile says Tokyo still gets the business's New York zone.
 select pg_temp.check_true((select public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002')->'business_time_zone'->>'zone'='America/New_York'),'a viewer in another zone gets the owner''s zone');
 -- An admin cannot set or clear the business's zone.
 select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Asia/Tokyo')$s$,'42501','admin cannot set the business time zone');
@@ -268,6 +273,27 @@ select pg_temp.check_true((select value->'business_time_zone'='{"state":"missing
 select pg_temp.check_true((select bool_and((value->>'as_of_date')::date=((value->>'read_at')::timestamptz at time zone (value->'business_time_zone'->>'zone'))::date) from zone_probe where label in ('far_east','far_west')),'as-of date follows the owner zone at both ends of the clock');
 select pg_temp.check_true((select bool_or((value->>'as_of_date')::date<>((value->>'read_at')::timestamptz at time zone 'UTC')::date) from zone_probe where label in ('far_east','far_west')),'the zone probes really differ from UTC (the check above can fail)');
 select pg_temp.check_true((select count(*)>=4 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='set_business_time_zone'),'every time zone change leaves a receipt');
+
+-- A zone that slipped past the writer (a privileged write; CHECK shape only) degrades to 'invalid'
+-- rather than making the client status unreadable.
+update public.tenant_business_time_zones set time_zone='America/Nowhere' where tenant_id='e4000000-0000-4000-8000-00000000aaaa';
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+insert into zone_probe select 'invalid',public.read_client_engagement_status('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0002');
+reset role;
+update public.tenant_business_time_zones set time_zone='America/New_York' where tenant_id='e4000000-0000-4000-8000-00000000aaaa';
+select pg_temp.check_true((select value->'business_time_zone'='{"state":"invalid","zone":null}'::jsonb and value->'as_of_date'='null'::jsonb from zone_probe where label='invalid'),'an unrecognised stored zone reads as invalid and withholds the date');
+-- An owner of two workspaces cannot set the one that is not their active workspace.
+set local session_replication_role=replica;
+insert into public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) values
+ ('e4000000-0000-4000-8000-00000000bbbb','e4000000-0000-4000-8000-000000000001','owner','active',true,now());
+set local session_replication_role=origin;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000bbbb','America/Chicago')$s$,'42501','an owner naming a workspace that is not active is refused');
+reset role;
+delete from public.tenant_members where tenant_id='e4000000-0000-4000-8000-00000000bbbb' and user_id='e4000000-0000-4000-8000-000000000001';
+select pg_temp.check_true((select time_zone='Asia/Tokyo' from public.tenant_business_time_zones where tenant_id='e4000000-0000-4000-8000-00000000bbbb'),'the other workspace''s zone is unchanged');
 
 -- A workspace switch is honoured at read time: the owner, also a member of B, switches to B and
 -- can no longer read A's client. (Fixture: the invite trigger would park a direct insert as

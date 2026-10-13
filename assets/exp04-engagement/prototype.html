@@ -386,6 +386,7 @@ const STATES = {
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
     "time_zone": {
       "state": "configured",
@@ -656,6 +657,7 @@ const STATES = {
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
     "time_zone": {
       "state": "configured",
@@ -841,6 +843,7 @@ const STATES = {
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": null,
     "time_zone": {
       "state": "missing",
@@ -1110,6 +1113,7 @@ const STATES = {
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Empty Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
     "time_zone": {
       "state": "configured",
@@ -1215,11 +1219,16 @@ function money(minor, currency = 'usd') {
   return currency && currency.toLowerCase() === 'usd' ? `$${v}` : `${v} ${String(currency || '').toUpperCase()}`;
 }
 let AS_OF_YEAR = '2026';
+// Instants (sent_at, due_at …) are shown on the business owner's calendar; plain contract dates
+// (YYYY-MM-DD) are shown exactly as agreed. Without an owner zone, instants fall back to UTC labels.
+let DISPLAY_ZONE = 'UTC';
 function day(iso, forceYear = false) {
   if (!iso) return '—';
-  const d = new Date(iso.slice(0, 10) + 'T00:00:00Z');
-  const y = iso.slice(0, 4);
-  return d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', ...(forceYear || y !== AS_OF_YEAR ? { year: 'numeric' } : {}) });
+  const instant = iso.length > 10;
+  const d = instant ? new Date(iso) : new Date(iso.slice(0, 10) + 'T00:00:00Z');
+  const zone = instant ? DISPLAY_ZONE : 'UTC';
+  const y = new Intl.DateTimeFormat('en-US', { timeZone: zone, year: 'numeric' }).format(d);
+  return d.toLocaleDateString('en-US', { timeZone: zone, month: 'short', day: 'numeric', ...(forceYear || y !== AS_OF_YEAR ? { year: 'numeric' } : {}) });
 }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
@@ -1239,8 +1248,9 @@ function receivedOnTerms(s) {
 function verifiedOnTerms(s) { return s.money.received_against_terms.verified_minor; }
 function recordedOnTerms(s) { return s.money.received_against_terms.recorded_by_owner_minor; }
 const isOpenItem = it => it.status !== 'done' && it.status !== 'cancelled';
-// Without the owner's date nothing is called late; the read's own overdue count (instant-based) still shows.
-const isLate = (it, asOf) => Boolean(asOf) && isOpenItem(it) && it.due_at && it.due_at.slice(0, 10) < asOf;
+// A task is late when its due instant is before the moment of the read — the same rule as the read's
+// own overdue count, so the cards and the list always agree, with or without an owner zone.
+const isLate = (it, readAt) => isOpenItem(it) && Boolean(it.due_at) && Date.parse(it.due_at) < Date.parse(readAt);
 const zoneUnset = s => s.as_of_date === null;
 
 /* Agreement words */
@@ -1294,7 +1304,7 @@ function attentionItems(s) {
   const m = s.money, c = m.currency, out = [];
   const overdueInv = s.invoices.filter(i => i.overdue);
   const unknownInv = s.invoices.filter(i => i.payment_state === 'outcome_unknown');
-  const late = s.work.items.filter(it => isLate(it, s.as_of_date));
+  const late = s.work.items.filter(it => isLate(it, s.read_at));
   for (const code of s.attention) {
     switch (code) {
       case 'agreement_not_signed':
@@ -1445,7 +1455,7 @@ function paymentsSection(s) {
     plan = `<div class="plan">
       <div class="plan-line"><span>${got > 0 ? `Against <strong>${money(total, c)} agreed</strong>: ${[ver ? `<strong>${money(ver, c)}</strong> confirmed by your provider` : '', rec ? `<strong>${money(rec, c)}</strong> recorded by you` : ''].filter(Boolean).join(' and ')}` : `<strong>${money(total, c)} agreed</strong> — nothing paid against it yet`}</span></div>
       <div class="bar-wrap">
-        <div class="bar" role="img" aria-label="${esc(`${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(dueUnpaid, c)} due and unpaid, ${money(notDue, c)} not due yet. ${money(m.due_to_date_minor, c)} was due by today.`)}">
+        <div class="bar" role="img" aria-label="${esc(zoneUnset(s) ? `${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(total - ver - rec, c)} not paid yet. What is due waits for your business time zone.` : `${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(dueUnpaid, c)} due and unpaid, ${money(notDue, c)} not due yet. ${money(m.due_to_date_minor, c)} was due by today.`)}">
           ${ver ? `<span class="seg-verified" style="width:${pct(ver)}"></span>` : ''}${rec ? `<span class="seg-recorded" style="width:${pct(rec)}"></span>` : ''}${dueUnpaid ? `<span class="seg-billed" style="width:${pct(dueUnpaid)}"></span>` : ''}
         </div>
         ${tick !== null ? `<div class="tick" style="left:${tick}%" data-flip="${tick > 70}"><span>Due by today · ${money(m.due_to_date_minor, c)}</span></div>` : ''}
@@ -1549,10 +1559,10 @@ function deliverySection(s) {
     return String(a.due_at).localeCompare(String(b.due_at));
   });
   const meter = items.slice().sort((a, b) => (a.status === 'done' ? -1 : 0) - (b.status === 'done' ? -1 : 0))
-    .map(it => `<span data-s="${it.status === 'done' ? 'done' : isLate(it, s.as_of_date) ? 'overdue' : 'open'}"></span>`).join('');
-  const next = w.next ? `<p class="lede"><strong>${w.done} of ${w.total} done.</strong> Next up: ${esc(w.next.title)}, ${isLate({ status: 'open', due_at: w.next.due_at }, s.as_of_date) ? `<strong style="color:var(--pg-negative)">was due ${day(w.next.due_at)}</strong>` : `due ${day(w.next.due_at)}`}.</p>` : `<p class="lede"><strong>${w.done} of ${w.total} done.</strong></p>`;
+    .map(it => `<span data-s="${it.status === 'done' ? 'done' : isLate(it, s.read_at) ? 'overdue' : 'open'}"></span>`).join('');
+  const next = w.next ? `<p class="lede"><strong>${w.done} of ${w.total} done.</strong> Next up: ${esc(w.next.title)}, ${isLate({ status: 'open', due_at: w.next.due_at }, s.read_at) ? `<strong style="color:var(--pg-negative)">was due ${day(w.next.due_at)}</strong>` : `due ${day(w.next.due_at)}`}.</p>` : `<p class="lede"><strong>${w.done} of ${w.total} done.</strong></p>`;
   const rows = items.map(it => {
-    const done = it.status === 'done', late = isLate(it, s.as_of_date);
+    const done = it.status === 'done', late = isLate(it, s.read_at);
     const kind = it.item_type === 'milestone' ? 'Milestone' : 'Task';
     const meta = done ? `${kind} · done ${day(it.completed_at)}`
       : `${kind} · ${it.status === 'in_progress' ? 'in progress' : it.status === 'blocked' ? 'blocked' : 'not started'}${it.assigned ? '' : ' · no one assigned'}`;
@@ -1587,6 +1597,7 @@ function attentionBlock(s) {
 
 function renderPopulated(s) {
   if (s.as_of_date) AS_OF_YEAR = s.as_of_date.slice(0, 4);
+  DISPLAY_ZONE = s.time_zone?.zone || 'UTC';
   const isEmpty = !s.terms && !s.invoices.length && s.agreement.state === 'none' && s.work.total === 0;
   if (isEmpty) return renderEmpty(s);
   return header(s) + `<div class="d-body" id="d-body"><div class="d-body-inner">

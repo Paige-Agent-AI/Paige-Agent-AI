@@ -25,6 +25,10 @@ describe('automated collections contact — recipient-local hours across the Uni
     expect(collectionContactWindow('sms', us('America/Chicago'), instant).state).toBe('clear');
     expect(collectionContactWindow('sms', us('America/Los_Angeles'), instant).state).toBe('clear');
     expect(collectionContactWindow('email', us('Pacific/Honolulu'), instant).state).toBe('clear');
+    // Three-level and hyphenated region names are real US recipients' zones.
+    expect(collectionContactWindow('sms', us('America/Indiana/Indianapolis'), instant).state).toBe('wait');
+    expect(collectionContactWindow('sms', us('America/North_Dakota/New_Salem'), instant).state).toBe('clear');
+    expect(collectionContactWindow('email', us('America/Port-au-Prince'), at('2026-10-13T16:00:00Z')).state).toBe('clear');
   });
 
   it('opens at 08:00 recipient-local on both sides of a daylight saving change', () => {

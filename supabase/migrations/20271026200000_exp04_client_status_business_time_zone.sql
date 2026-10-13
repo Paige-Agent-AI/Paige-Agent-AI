@@ -13,17 +13,23 @@
 --     cannot be the authority for this business's money (independent review, PR #2085);
 --   * tenants rows are UPDATE-able by tenant admins, so a column there would not be owner-only.
 -- So the zone gets one small home of its own, written ONLY through set_business_time_zone by the
--- workspace's active owner and validated on write; nothing else may read or write the table.
+-- workspace's active owner and validated on write. No API role (anon, authenticated, service_role)
+-- holds any privilege on the table; only definer functions read or write it.
 -- It is a setting, not a ledger: one row per workspace, no history, no money.
 --
--- Accepted zones: 'UTC' or an IANA Area/Location name known to this database. Abbreviations and
--- fixed-offset legacy names (EST, EST5EDT, Etc/GMT+12, Zulu …) are refused: they have no regional
--- daylight-saving rules and would silently misclassify a business that observes DST.
+-- Accepted zones: 'UTC' or an IANA Area/Location name known to this database. Everything else is
+-- refused, with "use a region name, for example America/New_York":
+--   * abbreviations and fixed offsets (EST, MST, Etc/GMT+5, Zulu) have no daylight-saving rules at all;
+--   * POSIX rule names (EST5EDT, PST8PDT) carry rules but are not tied to a place;
+--   * backward-compatible aliases (US/Eastern, Canada/Eastern, GB, Japan) DO carry their region's
+--     rules, but they are legacy spellings; one canonical form keeps the setting comparable and makes
+--     the recipient rule (contact-window.ts) use the same shape.
 --
 -- The read reports business_time_zone {state, zone}:
---   configured : a row exists and its zone still has the accepted shape
+--   configured : a row exists and this database can convert to its zone
 --   missing    : no row
---   invalid    : a row exists but its zone no longer has the accepted shape (defensive)
+--   invalid    : a row exists but the zone is not recognised (e.g. written by a privileged path
+--                that bypassed the writer, or removed from tzdata); the read degrades, never fails
 -- as_of_date is the owner-local calendar date of read_at, null unless configured. Everything else in
 -- the read is carried verbatim from 20271026000100. Contractual due dates and payment timestamps are
 -- returned unchanged.
@@ -35,13 +41,13 @@ CREATE TABLE IF NOT EXISTS public.tenant_business_time_zones (
   set_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.tenant_business_time_zones ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.tenant_business_time_zones FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.tenant_business_time_zones FROM PUBLIC, anon, authenticated, service_role;
 COMMENT ON TABLE public.tenant_business_time_zones IS
  'Experience 04 E4-S1b: the business owner''s configured IANA time zone for payment due / upcoming / overdue classification. One row per workspace. Written only by set_business_time_zone (active owner); read only by definer functions.';
 
 CREATE OR REPLACE FUNCTION public.set_business_time_zone(_expected_tenant_id uuid,_time_zone text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE run uuid:=gen_random_uuid(); zone text:=nullif(btrim(_time_zone),'');
+DECLARE run uuid:=gen_random_uuid(); zone text:=btrim(_time_zone);
 BEGIN
  IF auth.uid() IS NULL OR public.current_user_tenant_id() IS DISTINCT FROM _expected_tenant_id THEN
   RAISE EXCEPTION 'Business time zone workspace changed' USING ERRCODE='42501';
@@ -51,12 +57,13 @@ BEGIN
    AND tm.user_id=auth.uid() AND tm.is_owner AND tm.status='active') THEN
   RAISE EXCEPTION 'Only the business owner can set the business time zone' USING ERRCODE='42501';
  END IF;
- IF zone IS NULL THEN
+ -- Only an explicit null clears the setting; a blank value is a mistake, not a request to clear.
+ IF _time_zone IS NULL THEN
   DELETE FROM public.tenant_business_time_zones WHERE tenant_id=_expected_tenant_id;
  ELSE
   IF zone !~ '^(UTC|(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)/[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z][A-Za-z0-9_+-]*)?)$'
      OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_timezone_names WHERE name=zone) THEN
-   RAISE EXCEPTION 'Unknown time zone' USING ERRCODE='22023';
+   RAISE EXCEPTION 'Unknown time zone: use a region name, for example America/New_York' USING ERRCODE='22023';
   END IF;
   INSERT INTO public.tenant_business_time_zones(tenant_id,time_zone,set_by,set_at)
   VALUES(_expected_tenant_id,zone,auth.uid(),now())
@@ -73,7 +80,7 @@ COMMENT ON FUNCTION public.set_business_time_zone(uuid,text) IS
 CREATE OR REPLACE FUNCTION public.read_client_engagement_status(_expected_tenant_id uuid,_contact_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE run uuid:=gen_random_uuid(); read_at timestamptz:=clock_timestamp();
- client_name text; zone_state text; zone text; terms jsonb; terms_more boolean; signings jsonb; signings_more boolean;
+ client_name text; zone_state text; zone text; as_of date; terms jsonb; terms_more boolean; signings jsonb; signings_more boolean;
  invoices jsonb; invoices_more boolean; items jsonb; items_more boolean; work_counts jsonb; result jsonb;
 BEGIN
  -- Caller scope is resolved from the session, never from the request (§9/§59).
@@ -93,9 +100,14 @@ BEGIN
  -- The business owner's configured time zone (see header). Read for the workspace, not the caller.
  SELECT z.time_zone INTO zone FROM public.tenant_business_time_zones z WHERE z.tenant_id=_expected_tenant_id;
  IF zone IS NULL THEN zone_state:='missing';
- ELSIF zone !~ '^(UTC|(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)/[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z][A-Za-z0-9_+-]*)?)$' THEN
-  zone_state:='invalid'; zone:=NULL;
- ELSE zone_state:='configured';
+ ELSE
+  -- Convert once here; a zone this database does not recognise degrades to 'invalid' instead of
+  -- making the whole client status unreadable.
+  BEGIN
+   as_of:=(read_at AT TIME ZONE zone)::date; zone_state:='configured';
+  EXCEPTION WHEN invalid_parameter_value THEN
+   zone_state:='invalid'; zone:=NULL; as_of:=NULL;
+  END;
  END IF;
 
  -- Commercial terms for this client, newest first. Notes and fee doctrine are omitted.
@@ -185,7 +197,7 @@ BEGIN
   'tenant_id',_expected_tenant_id,'contact_id',_contact_id,
   'client_name',left(client_name,200),'read_at',read_at,
   'business_time_zone',jsonb_build_object('state',zone_state,'zone',zone),
-  'as_of_date',CASE WHEN zone_state='configured' THEN (read_at AT TIME ZONE zone)::date END,
+  'as_of_date',as_of,
   'terms',terms,'terms_has_more',terms_more,
   'signings',signings,'signings_has_more',signings_more,
   'invoices',invoices,'invoices_has_more',invoices_more,

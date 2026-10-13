@@ -4,6 +4,7 @@
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
     "time_zone": {
       "state": "configured",
@@ -274,6 +275,7 @@
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
     "time_zone": {
       "state": "configured",
@@ -459,6 +461,7 @@
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Consulting Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": null,
     "time_zone": {
       "state": "missing",
@@ -728,6 +731,7 @@
       "id": "e4000000-0000-4000-8000-0000000c0001",
       "name": "Test Empty Client"
     },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
     "as_of_date": "2026-10-12",
     "time_zone": {
       "state": "configured",

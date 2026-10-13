@@ -66,10 +66,13 @@ const CONTACT_HOURS: Record<string, { start: string; end: string }> = {
 };
 const minutesOf = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 /**
- * A recipient's zone must be a regional IANA Area/Location name. Abbreviations and fixed-offset or
- * legacy rule names (EST, EST5EDT, Etc/GMT+5, Zulu, UTC) carry no regional daylight-saving rules, so
- * a recipient "verified" as EST would be texted at 20:30 during EDT. Same shape the business zone
- * table enforces, minus UTC (no person lives in UTC).
+ * A recipient's zone must be a regional IANA Area/Location name — the same shape the business zone
+ * table enforces, minus UTC (no person lives in UTC). Refused, and sent back for re-verification:
+ *   * abbreviations and fixed offsets (EST, Etc/GMT+5, Zulu) — no daylight-saving rules, so a
+ *     recipient "verified" as EST would be texted at 20:30 during EDT;
+ *   * POSIX rule names (EST5EDT) — rules, but not a place;
+ *   * legacy aliases (US/Eastern, Canada/Eastern) — these DO carry their region's rules; they are
+ *     refused only so one canonical spelling is stored (America/New_York, America/Toronto).
  */
 const REGIONAL_ZONE = /^(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)\/[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z][A-Za-z0-9_+-]*)?$/;
 

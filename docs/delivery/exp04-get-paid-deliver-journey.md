@@ -663,11 +663,17 @@ event.
     legacy names (`EST`, `EST5EDT`, `Etc/GMT+5`) are refused.
   - Adds `public.set_business_time_zone(_expected_tenant_id, _time_zone)`. Only the **active
     owner** of the caller's active workspace may call it.
-    - It validates the zone against `pg_timezone_names` when written. Null clears it.
+    - It validates the zone against `pg_timezone_names` when written.
+    - Only an explicit null clears it; a blank value is refused.
+    - Legacy aliases (`US/Eastern`) are refused in favour of the canonical region name. They do carry
+      their region's rules; the point is one comparable spelling.
+    - No API role (`anon`, `authenticated`, `service_role`) holds any privilege on the table.
     - It writes one capability receipt.
   - Re-creates `read_client_engagement_status`, otherwise unchanged:
     - it adds `business_time_zone {state, zone}`;
-    - state is `configured`, `missing`, or `invalid` (defensive);
+    - state is `configured`, `missing`, or `invalid`. A stored zone that the database can't convert
+      (written by a privileged path that bypassed the writer) degrades to `invalid` instead of
+      failing the whole read;
     - `as_of_date` is the owner-local date of the read, null unless configured;
     - there is no `pg_timezone_names` scan on read.
 - **Composer.** It computes "today" itself from `read_at` and the zone, using the shared IANA
@@ -689,13 +695,19 @@ event.
     by tests, not an enforced gate.
 - **Prototype.** Adds the `nozone` state, which is the state production produces today. The
   panel says "Set your business time zone". Schedule dates aren't split into due and upcoming,
-  past due shows "—", and the progress bar shows one "Not paid yet" figure.
+  past due shows "—", and the progress bar shows one "Not paid yet" figure, for screen readers
+  too. Task lateness compares timestamps with the read, matching the read's own overdue count.
+  Instants are shown on the owner's calendar.
 
 **Evidence.**
-- **Database proof: 55/55 PASS.** It covers:
-  - no direct table access, and the writer's grants;
-  - refusals of an unknown zone, `EST`, `EST5EDT` and `Etc/GMT+5`, an owner naming another
-    workspace, an admin setting or clearing the zone, staff, and an owner who isn't active;
+- **Database proof: 63/63 PASS.** It covers:
+  - no privilege for any API role on the table, and the writer's grants;
+  - refusals of an unknown zone (`Mars/Olympus_Mons`, `America/Nowhere`), `EST`, `EST5EDT`,
+    `Etc/GMT+5`, `US/Eastern` and a blank value;
+  - acceptance of three-level and hyphenated zones;
+  - refusals of an owner naming another workspace, an owner of two workspaces naming the
+    inactive one, an admin setting or clearing the zone, staff, and an owner who isn't active;
+  - an unrecognised stored zone reads as `invalid` and withholds the date;
   - refused writers change nothing;
   - the owner-local date checked in UTC+14 and UTC−11 (at any hour at least one differs from UTC);
   - an admin whose personal profile says Tokyo still gets the business's New York;
@@ -705,7 +717,11 @@ event.
 - **Database mutants** (all FAIL the proof):
   - admin can set;
   - UTC date;
-  - reads another workspace's zone.
+  - reads another workspace's zone;
+  - no tzdata check on write;
+  - no stale-workspace check;
+  - no `invalid` fallback on read;
+  - blank value clears.
   - Dropping the writer's `status='active'` clause survives. `current_user_tenant_id()` already
     refuses a non-active membership, so the clause is defence in depth and can't be isolated.
 - **Parity:** the database's owner-local date equals the composer's own.
@@ -720,7 +736,8 @@ event.
   - Mutants caught: UTC fallback, the viewer's local date, unknown treated as "not late",
     missing flag dropped.
 - **Contact-window tests (9).** They cover:
-  - one instant across New York, Chicago, Los Angeles and Honolulu;
+  - one instant across New York, Chicago, Los Angeles and Honolulu, plus three-level and
+    hyphenated zones (Indianapolis, New Salem, Port-au-Prince);
   - DST both ways, Arizona, and the 19:59/20:00 boundary;
   - an "EST-verified" recipient refused, so a 20:30 EDT text can't slip through;
   - a US customer in Berlin; GB and JP refused;
@@ -730,7 +747,8 @@ event.
   - calls refused;
   - the window equals the gate's.
   - Mutants caught: unverified zone accepted, New York fallback, opt-out ignored, unknown
-    jurisdiction cleared, calls allowed, non-regional zone accepted, email consent made strict.
+    jurisdiction cleared, calls allowed, non-regional zone accepted, email consent made strict,
+    third-level zones dropped from the pattern.
 - **Pre-send gate:** untouched. An export-only edit first tripped the pinned-source lint and was
   reverted. Smoke 15/15.
 

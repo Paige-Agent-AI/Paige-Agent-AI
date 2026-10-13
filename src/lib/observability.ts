@@ -59,10 +59,10 @@ export function identifyObservability(userId: string, traits: Record<string, unk
 }
 
 export function resetObservability(): void {
-  try { if (import.meta.env.VITE_POSTHOG_KEY) posthog.reset(); } catch {}
-  try { if (import.meta.env.VITE_SENTRY_DSN) Sentry.setUser(null); } catch {}
+  try { if (import.meta.env.VITE_POSTHOG_KEY) posthog.reset(); } catch { /* no-op */ }
+  try { if (import.meta.env.VITE_SENTRY_DSN) Sentry.setUser(null); } catch { /* no-op */ }
 }
 
 export function captureEvent(event: string, props: Record<string, unknown> = {}): void {
-  try { if (import.meta.env.VITE_POSTHOG_KEY) posthog.capture(event, props); } catch {}
+  try { if (import.meta.env.VITE_POSTHOG_KEY) posthog.capture(event, props); } catch { /* no-op */ }
 }

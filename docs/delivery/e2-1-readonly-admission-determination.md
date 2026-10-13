@@ -74,6 +74,17 @@ determination is confirmed against ANT-23's actual wording: under Reading A, doc
 here as within scope; under Reading B, the four-point difference above is returned for
 owner approval — never activated silently.
 
+## Resolution (2026-10-12, E2-2)
+
+The owner's continuation directive records that ANT-23's read-only policy covers this
+access and delegates the activation authority: "The owner has already delegated authority
+for the guarded conversational access required by Experience 02. ANT-23's read-only
+policy and your activation authority are recorded." The reading is therefore resolved in
+the seam-scoped sense: `get_business_snapshot` is admitted alongside `read_business_metric`
+in the conversational read set, under the matrix above. E2-2 implements the class as
+designed (narrowed offer + per-call guard; approvals, executor claims, settlement and the
+activation gate untouched); the independent security review ran on the E2-2 PR.
+
 ## Preserved boundaries
 
 - INT-346 stays DRAINING; #1822 remains the separate activation hard stop; nothing in E2-1

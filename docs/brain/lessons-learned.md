@@ -10,6 +10,17 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 **Symptom → root cause → rule.** Welcome received verified server enrollment and navigated, but real SoloEntry refused an empty workspace provider accepted before fulfillment. Server record writes emit no browser Auth event; a navigation-only mock missed this. Refresh the same canonical provider, prove an accepted new list has React-committed, and match fresh actor/profile/server-selected tenant/address before entry. The reference change is a completion marker, never authority. Failed refresh preserves old context, so merely awaiting its void Promise is insufficient. Use the real provider/dispatcher in integration proof; keep native rendering, hosted release and protected ordinary-owner acceptance distinct.
 
+### A per-person field is not a business setting (2026-10-12, Experience 04)
+
+**Symptom → root cause → rule.** The first E4-S1b draft took "the business owner's time zone" from
+the owner's `profiles.coach_timezone`. The proof passed and so did the tests. The independent
+reviewer then traced who can write that field: any tenant admin can write it for any active member
+through `set_coach_fields`, including the admin of another workspace the owner also belongs to.
+That admin could have moved a different business's overdue dates. **Rule:** before a value decides
+money, answer "who can write it, and from which workspace?" by reading its writers. If anyone other
+than the person the ruling names can write it, it is not the authority; give it a home only they
+can write.
+
 ### A green proof over a ledger the writer cannot produce (2026-10-12, Experience 04)
 
 **Symptom → root cause → rule.** The E4-S1 client-status proof passed 34/34 and its parity check agreed

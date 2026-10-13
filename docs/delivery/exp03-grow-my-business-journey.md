@@ -124,8 +124,12 @@ never guessed; a paused/archived workspace starts no process; nothing sends, pub
   readiness' attribution row now agrees with it. Counts are the server's. A failed
   read offers retry and draws no zero. The Recorded outcome stage reads Partly available. Evidence:
   `docs/evidence/ui-delivery/exp03-s1d1-brought-in.md` (594/594 rendered checks).
-- **Not covered by any recorded approval:** the per-lead list below (names, how each was credited, stage per
-  lead). It was rendered and sent to the owner on 2026-10-12 and ships only after a ruling (S1d-2).
+- **S1d-2 — the per-lead list — owner-APPROVED 2026-10-12 and BUILT** as the reviewed sheet showed it: collapsed
+  under the Brought in counts ("Show the N newest leads"), read-only rows of who, when, how credited, which form
+  and stage, the pipeline named once. Names and record ids come only from the server, to owners and admins;
+  members and an agency manager working in the sub-account see "A lead" (proof 3b, 3b2). Evidence:
+  `docs/evidence/ui-delivery/exp03-s1d2-campaign-leads.md` (1008/1008 rendered checks). The original proposal,
+  kept for the record (superseded by the approved collapsed design):
 - **S1d-2 proposal — "Leads from this campaign"** inside the dossier, after "Steps and results":
   - headline counts: leads · became opportunities · won · lost (server counts, never computed on screen);
   - each lead: when, how it was attributed in the owner's words ("Came through a form in this campaign",
@@ -215,7 +219,7 @@ the table's existing read policy already lets a member read submissions. Narrowi
 manager acting inside a sub-account reads the member view (`is_tenant_admin` counts only that workspace's own
 members), the same as campaign assets.
 
-**S1d — the view** (§6). S1d-1, the approved map's Brought in lane, is built; S1d-2, the per-lead list, waits for an owner ruling.
+**S1d — the view** (§6). S1d-1, the approved map's Brought in lane, is built; S1d-2, the per-lead list, was approved by the owner on 2026-10-12 and is built under it.
 
 **S1e — PAIGE's read** `read_campaign_leads` (Spine read, member seat) — registered, raised with Platform Reach,
 reachable in typed chat once INT-346 clears.

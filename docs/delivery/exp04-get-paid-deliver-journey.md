@@ -992,3 +992,12 @@ This slice closes gaps 1–4 for the one outcome that already reaches customers 
 - Collections overdue on the business calendar.
 
 Gap 5, mounting the client standing on the client record, needs an Impeccable design that the owner sees and approves first. It runs as a prototype in parallel. Gaps 7–8 are recorded as **blocking INT-346 activation** for the Conversational Loop owner.
+
+### 15.7 Must-fix prerequisites before consequential Chat activation (owner direction 2026-10-13)
+
+These two defects are dormant today, because INT-346 withholds every action tool. They become live defects the moment consequential Chat actions are admitted. Each is classified as a **prerequisite**: INT-346 must not admit the affected tools until it is fixed and independently reviewed.
+
+| ID | Defect | Class | Owner lane | Exit condition |
+|---|---|---|---|---|
+| PRE-1 | **Agreement-terms integrity.** A Chat `agreement_draft` revise rewrites a bound draft through `save_paige_agreement` without `_commercial_terms_id`, `_offer_id`, `_body_source` or `_expected_updated_at`. It nulls the terms binding, switches the source to `paige_draft`, nulls `document_path`, and skips the stale-write guard (`chat-write.ts:152-158`; `20270401000000:827-845`). | **REPAIR (prerequisite)** | Sales / Agreements | A Chat revise preserves the binding and fails closed on a stale version, proven by a test that fails on today's code |
+| PRE-2 | **Legacy project-writer authorization mismatch.** Chat `plan_create`, `plan_add_milestone`, `plan_assign_task` and `plan_update_item` call the legacy unscoped, non-idempotent writers (`paige-ai-chat/index.ts:16207-16239`), not the scoped writers the Operations UI uses (`20271020000210`, `20271020000020`). Their write target is also mislabelled (`tasks` / `plans` for `plan_items`), so any record link built on it would open the wrong surface. | **REPAIR (prerequisite)** | Operations / Conversational Loop | Chat planning routes through the same scoped writers and authority checks as the UI, with the correct write target, proven by an authority test per tier |

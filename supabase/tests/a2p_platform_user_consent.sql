@@ -55,14 +55,18 @@ BEGIN
     RAISE EXCEPTION 'FAIL_SCHEMA: active/history platform-user consent indexes are missing';
   END IF;
 
+  -- #2087 (migration 20271027100000): a signed-in user reads, and may withdraw or revoke, but never
+  -- writes consent; every writer is a service-role server path.
   IF NOT has_table_privilege('authenticated', 'public.communications_consents', 'SELECT')
-     OR NOT has_table_privilege('authenticated', 'public.communications_consents', 'INSERT')
-     OR NOT has_table_privilege('authenticated', 'public.communications_consents', 'UPDATE') THEN
-    RAISE EXCEPTION 'FAIL_GRANTS: authenticated lost an existing consent-table privilege';
+     OR NOT has_column_privilege('authenticated', 'public.communications_consents', 'revoked_at', 'UPDATE')
+     OR NOT has_column_privilege('authenticated', 'public.communications_consents', 'withdrawn_at', 'UPDATE') THEN
+    RAISE EXCEPTION 'FAIL_GRANTS: authenticated lost read or withdrawal';
   END IF;
 
-  IF has_table_privilege('authenticated', 'public.communications_consents', 'DELETE') THEN
-    RAISE EXCEPTION 'FAIL_GRANTS: authenticated unexpectedly has DELETE';
+  IF has_table_privilege('authenticated', 'public.communications_consents', 'INSERT')
+     OR has_table_privilege('authenticated', 'public.communications_consents', 'DELETE')
+     OR has_column_privilege('authenticated', 'public.communications_consents', 'phone', 'UPDATE') THEN
+    RAISE EXCEPTION 'FAIL_GRANTS: authenticated can write consent';
   END IF;
 
   IF has_table_privilege('anon', 'public.communications_consents', 'SELECT')

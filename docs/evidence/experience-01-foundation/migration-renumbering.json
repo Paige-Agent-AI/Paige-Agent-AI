@@ -1,13 +1,34 @@
 {
   "evidenceClass": "SOURCE_IDENTITY_AND_READ_ONLY_PRODUCTION_METADATA",
-  "productionFrontierObserved": "20271026100000",
+  "productionFrontierObserved": "20271027100000",
   "formerPendingVersion": "20271026000000",
-  "newPendingVersion": "20271027000000",
-  "newFile": "supabase/migrations/20271027000000_solo_business_interview_checkpoint.sql",
+  "newPendingVersion": "20271027200000",
+  "newFile": "supabase/migrations/20271027200000_solo_business_interview_checkpoint.sql",
   "sqlSha256BeforeAndAfter": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
   "sqlBytesChanged": false,
   "historicalLocalExecution": "sql-proof.json and migration-state.json accurately retain execution under the former filename/version; they are not relabeled as execution of the new version",
-  "productionReadbackBeforeRelease": {"formerVersionRecorded": false, "checkpointReaderPresent": false, "checkpointWriterPresent": false},
+  "productionReadbackBeforeRelease": {
+    "formerVersionRecorded": false,
+    "checkpointReaderPresent": false,
+    "checkpointWriterPresent": false
+  },
   "newVersionApplied": false,
-  "requiredNextProof": "Final-head CI replay, normal deploy-migrations and authoritative production metadata readback. Actual customer Setup rows require protected ordinary-owner acceptance."
+  "requiredNextProof": "Final-head CI replay, normal deploy-migrations and authoritative production metadata readback. Actual customer Setup rows require protected ordinary-owner acceptance.",
+  "history": [
+    {
+      "productionFrontierObserved": "20271026100000",
+      "formerPendingVersion": "20271026000000",
+      "newPendingVersion": "20271027000000",
+      "newFile": "supabase/migrations/20271027000000_solo_business_interview_checkpoint.sql",
+      "applied": false,
+      "scope": "Historical source renumber; local proof still original260000"
+    }
+  ],
+  "intermediatePendingVersion": "20271027000000",
+  "currentProductionReadback": {
+    "intermediateVersionRecorded": false,
+    "checkpointReaderPresent": false,
+    "checkpointWriterPresent": false
+  },
+  "readAtDateUTC": "2026-10-13"
 }

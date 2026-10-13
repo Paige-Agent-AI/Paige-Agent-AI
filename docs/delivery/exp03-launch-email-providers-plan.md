@@ -368,3 +368,84 @@ S3 currently owns `readiness.ts`, `comms-email-command`, `execute-approval/*` an
   - **Caveats:** the outgoing host allowlist lives in code only. Supabase's outgoing IPs change, and whether Apple throttles that is UNVERIFIED.
   - **Owner stops:** the new Fly app, edge functions and Vault entries.
 
+
+---
+
+# Addendum 2026-10-13 — PAIGE Email Cleanup & Unsubscribe Management (owner-approved extension)
+
+**Owner approval (2026-10-13):** cleanup and unsubscribe management is part of the intended PAIGE Email Assistant.
+Experience 03 owns implementation. Routine design and implementation decisions inside this scope need no repeated owner
+approval. Independent review, exact-head CI, protected authenticated QA and authorization for real external effects
+still apply, as does §00: the owner sees the design before UI release. It extends the Gmail/iCloud foundation and is
+built only after the mailbox access and approval contracts below exist. It does not interrupt S3, G1 or the foundation PRs.
+
+## What already exists (grounded 2026-10-13)
+
+- `comms-mailbox-command` is the one door for mailbox organization. Kinds: label/unlabel, archive/unarchive,
+  trash/untrash, `unsubscribe_propose`, `unsubscribe_send`. Undo is only offered where the action has an exact inverse;
+  unsubscribe kinds are recorded as irreversible (`_shared/inbox-intelligence/organize.ts:15-65`).
+- `unsubscribe_propose` works. It records the one-click target taken **only** from the message's own recorded
+  `List-Unsubscribe` header, never from the request (`comms-mailbox-command/index.ts:117-121`), and accepts only an
+  https URL with no userinfo (`organize.ts:76-84`).
+- `unsubscribe_send` is **refused with 410** by an earlier owner addendum (6088460092) "until a reviewed safe-transport
+  boundary exists" (`comms-mailbox-command/index.ts:56-63`; ANT-42 repeats it). This approval lifts that hold **only**
+  through the safe mechanism below.
+- The classifier already has a `newsletter` class (`classify.ts:14`), and sync already records `List-Unsubscribe`
+  (`gmail-mailbox-sync` metadata headers).
+
+## How it fits the owner's privacy decisions
+
+Owner decision 1 limits CRM Conversations import to known business contacts and reserves "an explicitly authorized
+broader inbox experience" for later. Discovering newsletters needs that broader read, so cleanup **is** that experience:
+
+- **Its own opt-in**, per mailbox, by the mailbox owner only: "Let PAIGE find subscriptions in this mailbox". It is off
+  by default and revocable. Revoking it deletes the inventory and stops discovery.
+- **A private subscription inventory, not CRM records.** One row per sender or list (`List-Id`, From domain), holding
+  counts, first and last seen, the unsubscribe methods the headers offer, and the outcome history. It holds no message
+  bodies and creates no contacts, leads or Conversations threads. Only the mailbox owner can see it: not other admins,
+  and not the platform owner (owner decision 3).
+- **Retention:** aggregates are kept while the opt-in is on. Per-message ids used to target archive or label actions
+  are kept for a bounded window (30 days proposed).
+
+## The operations — each separate, each through the existing door
+
+| Operation | Mechanism | Scope / transport | Outcome states |
+|---|---|---|---|
+| Discover | Header-only read (`List-Id`, `List-Unsubscribe`, `List-Unsubscribe-Post`, `Precedence`, From) of recent mail, aggregated per sender | Gmail `gmail.readonly` (project B); iCloud IMAP `BODY.PEEK[HEADER.FIELDS (...)]` | n/a |
+| Unsubscribe, one-click | RFC 8058 `POST` with `List-Unsubscribe=One-Click`, **only** when both headers are present, to the header's https target, through the shared SSRF-safe egress (public-IP resolution, no redirects to private ranges, timeout, size cap) | Supabase edge HTTPS; no mailbox scope needed | requested → acknowledged (2xx) / failed / unknown (timeout) |
+| Unsubscribe, mailto | A plain message to the header's `mailto:` address, sent **through the governed email door** from the same mailbox, with the approval naming the exact address | `gmail.send` / iCloud SMTP | requested → provider accepted / failed / unknown |
+| Unsubscribe, web page only | Never fetched automatically (a GET can confirm or track). Shown to the owner as "open this page to finish" | none | manual |
+| Verify | Unsubscribed once no new mail arrives from that list after a grace window (Gmail asks senders to honour within 2 days; PAIGE waits 10) | the discovery read | verified / still arriving |
+| Archive / label | Existing door kinds | Gmail `gmail.modify` (incremental consent, only if the owner turns organizing on); iCloud IMAP `MOVE` | done / failed, with undo |
+| Filter / block a sender | Gmail: a server-side filter (to trash or skip inbox). iCloud: no server rules API is documented for IMAP, so PAIGE applies the rule during its own sync and says so ("while this mailbox is connected") | Gmail `gmail.settings.basic` (classification to confirm — restricted); iCloud IMAP `MOVE` | done / failed, with undo |
+
+**Bulk:** one approval names the exact list of senders and mechanisms, with a fingerprint and the per-sender idempotency
+key. Each item gets its own Rail receipt and outcome. Execution is rate-limited, partial failure is reported per item,
+and nothing is retried before it has been reconciled.
+
+**Authority:** these are personal-mailbox actions, so only the mailbox owner may request or approve them. Everything goes
+through Spine, Trust and Rail via `comms-mailbox-command` — the one home (§18); no second mailbox door. PAIGE Chat gets
+the same door through the existing `gmail_organize` tool family, advertised only when the scope and opt-in exist.
+
+**Surfaces:** a subscription inventory view inside Clients → Conversations, owner-only, plus the same actions in PAIGE
+Chat. Design frames go to the owner before UI release.
+
+## Dependency order (after the foundation PRs)
+
+| # | PR | Depends on |
+|---|---|---|
+| X1 | Cleanup opt-in and private subscription inventory: schema, owner-only RLS, header aggregation in the same sync engine (one engine, two outputs) | G2 (one Gmail connection), M1 (message identity), G3 (sync writer), owner's project-B / scope decision |
+| X2 | Safe unsubscribe execution: lift the 410 for one-click POST through SSRF-safe egress and for mailto through the governed door; outcome states; verification sweep | X1, D1 (approval/Message-ID door), S3 merged |
+| X3 | Bulk approval and per-item receipts | X2 |
+| X4 | Separate organize / filter / block operations with incremental consent (Gmail) and PAIGE-side rules (iCloud) | X1, owner project-B scopes; I2 for iCloud |
+| X5 | Subscription inventory view in Conversations and Chat affordances (design → owner → build) | X2, C1 |
+| — | iCloud parity for X1–X4 | I1, I2 |
+
+**Experience 05 coordination:** recurring cleanup (a periodic subscription digest, and opt-in automatic unsubscribe for
+chosen categories) is governed automation under §67, granted to a process, not a tool. Experience 03 delivers the
+manual, approval-gated operations and the outcome records first. Experience 05 owns the recurring and automated layer
+on top of the same door.
+
+**Real external effects:** a one-click POST or a mailto unsubscribe is a real effect on a third party. QA runs it only
+against team-owned test mailboxes and a team-controlled test list endpoint. No customer mailbox, and no real sender,
+until authorized.

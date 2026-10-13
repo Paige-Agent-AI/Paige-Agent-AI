@@ -55,6 +55,16 @@ The held-with-running-act screenshot keeps the existing act's Running state and 
 
 The journey lead reported that the focused independent finish reviewer returned ship with no material fixes in this permission-gate scope. That bounded review outcome does not supply owner visual approval, authenticated acceptance or production permission/scheduling proof; those remain UNVERIFIED or pending as stated above.
 
+## Final failed-recovery copy and fixture recheck
+
+The final artifact SHA256 is `C57AECBBA940ED11824C10EC4AF72B3A0460222004D5E31147388238B073526D`, verified from the local HTML after the final retry-label correction. `absence-final-browser-proof.json` records 13 PASS checks and three captures focused on the changed failure/recovery branch. It explicitly identifies the prior full 64-PASS suite on `F895DA7C1A56FAF3CDDDD5A9286404009C20351D2AF38A0515FE3D77BCC5FB4C` as historical regression evidence on different bytes, not a full suite for this final artifact. The earlier permission-gate evidence and findings above remain preserved with that boundary.
+
+Inspected the final source guard/copy and `absence-final-desktop.png` (1366 × 1100) and `absence-final-mobile.png` (390 × 1000), both Mineral failed-state captures with the evidence disclosure open. Also inspected `absence-final-unverified-mobile.png`, which displays the disabled “Retry locked pending act readback” control when absence proof is missing. The source uses the verified retry label only when the verified-absence guard is true. Palette, typography, layout and component treatment remain as recorded above; this follow-up changes assurance language, conditional retry labeling and deterministic fixture guards only.
+
+An event claim alone is not absence proof. The failed state and evidence disclosure now name canonical act readback explicitly as simulated, with no committed observation and no live claim. The source's retry guard requires verified absence as well as owner authority, scheduled status and automatic tool permission. The focused proof records that verified absence permits retry with the same run reference, while unknown, uncertain readback and a failed label without verified absence remain locked. These readback fixtures and labels are not canonized as real backend evidence or production capability.
+
+This pass inspected the supplied test record and screenshots without rerunning tests. The final focused independent review was still pending at this documentation handoff; no final reviewer decision is inferred. Production acceptance remains UNVERIFIED and owner visual approval remains pending.
+
 ## Five-line system summary
 
 Palette: inherited Mineral/Obsidian neutrals and violet/semantic tints, with explicitly recorded local contrast adjustments.

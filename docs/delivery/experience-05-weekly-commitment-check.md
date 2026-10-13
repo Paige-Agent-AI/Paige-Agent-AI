@@ -2,7 +2,7 @@
 
 Status: implemented ship-dark backend candidate and rendered review prototype; no production UI mount or authenticated customer acceptance. Overall PARTIAL.
 
-Base: main c0a20243249739a00b2fa709729b323156cb125b. Intended outcome: a SOLO owner authorizes one weekly read of their canonical Planning commitments, inspects verified results, controls future runs, and reads the same last/next status in a later conversation.
+Grounded at main c0a20243249739a00b2fa709729b323156cb125b and rebased onto main 96a89501ac2d56dd7259fed5f102ef338dbc4939. Intended outcome: a SOLO owner authorizes one weekly read of their canonical Planning commitments, inspects verified results, controls future runs, and reads the same last/next status in a later conversation.
 
 ## Capability routing before edits
 
@@ -46,7 +46,7 @@ The standalone prototype uses deterministic local mocks, separate review control
 
 ## Regression and proof boundary
 
-Affected: process authority/direct writes, subject integrity, occurrence isolation, native adapter/Gateway parity, act claim/reconciliation, receipt attribution/private evidence, scheduled timing and owner readback. Test every affected boundary. Unaffected: signup/billing/provisioning, external provider dispatch, financial domain mutations, existing Chat transcript/scroll and INT-346 admission, Live audio, Vault/credentials, tenant shell routing and domain goal logic.
+Affected: process authority/direct writes, subject integrity, occurrence isolation, native adapter/Gateway parity, act claim/reconciliation, receipt attribution/private evidence, scheduled timing, owner readback and canonical operator child-first retirement. Test every affected boundary. Unaffected: signup/billing/provisioning, external provider dispatch, financial domain mutations, existing Chat transcript/scroll and INT-346 admission, Live audio, Vault/credentials, tenant shell routing and domain goal logic.
 
 Independent contract assessment completed read-only at base c0a2024. A fresh non-author backend audit found and corrected the off/confirm read bypass, canonical child-first retirement interaction, and incorrect held/refused status. This is preliminary source review; the immutable-head verdict and hosted CI are recorded with the PR.
 
@@ -64,9 +64,9 @@ Independent contract assessment completed read-only at base c0a2024. A fresh non
 
 Migration: `20271027000000_experience05_weekly_commitment_check.sql`. Human APIs are `draft_weekly_commitment_check(request_id,name,weekday,local_time,timezone)`, `configure_weekly_commitment_check(automation_id,weekday,local_time,timezone,expected_revision)`, `control_weekly_commitment_check(automation_id,action,expected_revision)` and `get_weekly_commitment_checks()`. Service execution/readback only accept canonical occurrence coordinates; they grant no scheduling authority.
 
-Local proof:49/49 actual PostgreSQL cases, including the actual TypeScript engine/Gateway/native adapter against real canonical records, one execute and duplicate-drain adoption, permission/privacy negatives, races, failed receipt rollback, unknown/no replay and actual child-first retirement executor. The selected substrate uses explicit Auth/context/tier/trust/cron/network/base Rail and retirement preflight/provider/deletion-plan/credential doubles. It proves these integration boundaries, not HTTP drainer, Supabase Auth or production acceptance. Migration SHA256 `dac500db0c6a4f640132a74eb28ec980aaba0ed0136bbb941b83ada938b47b64`.
+Local proof:49/49 actual PostgreSQL cases after the current-main rebase, including the actual TypeScript engine/Gateway/native adapter against real canonical records, one execute and duplicate-drain adoption, permission/privacy negatives, races, failed receipt rollback, unknown/no replay and actual child-first retirement executor. The selected substrate uses explicit Auth/context/tier/trust/cron/network/base Rail and retirement preflight/provider/deletion-plan/credential doubles. It proves these integration boundaries, not HTTP drainer, Supabase Auth or production acceptance. Migration SHA256 `73b104ef24df186f3574c4c87b65110ca87228945bc60bcdb302c12bcc69168c`.
 
-Rendered prototype:64/64 local browser checks,19 captures, independent finish verdicts for the listed flow fixes and permission gate. It remains a simulation; no actual SOLO open/closed shell geometry or authenticated persistence is claimed. Unit/regression tests, type ratchet, build and contract gates are tracked separately from that proof.
+Rendered prototype:64/64 prior full local browser checks and19 captures at artifact SHA256 `F895DA7C1A56FAF3CDDDD5A9286404009C20351D2AF38A0515FE3D77BCC5FB4C`;13/13 focused failure/recovery checks and three captures at final artifact `C57AECBBA940ED11824C10EC4AF72B3A0460222004D5E31147388238B073526D`. Independent finish review scored the final recovery-copy fix resolved/ship. The full suite is historical evidence on different bytes. The final prototype remains a simulation; no actual SOLO open/closed shell geometry or authenticated persistence is claimed. Unit/regression tests, type ratchet, build and contract gates are tracked separately from that proof.
 
 Experience01 retains profile/preferences; the first slice asks for an explicit owner-confirmed time zone and does not wait for that journey. Experience02 retains goals and health logic; this observer reads existing personal Planning state. Experiences03/04 retain marketing, lead, payment, collections and delivery logic; no business-domain act or provider action is added here. Future routines must register existing governed capabilities through this shared ongoing-work experience.
 

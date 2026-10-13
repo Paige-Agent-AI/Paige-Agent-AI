@@ -53,7 +53,7 @@
     "canonical tenant FK retirement remains possible"
   ],
   "source": "supabase/migrations/20271027000000_experience05_weekly_commitment_check.sql",
-  "migration_sha256": "dac500db0c6a4f640132a74eb28ec980aaba0ed0136bbb941b83ada938b47b64",
+  "migration_sha256": "73b104ef24df186f3574c4c87b65110ca87228945bc60bcdb302c12bcc69168c",
   "schema_fingerprint": "534e654204f73b7519420ce3042ed8ce",
   "boundary": "isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim"
 }

@@ -909,4 +909,3 @@ end $$;
 
 revoke all on function public.paige_reconcile_orchestration_acts() from public, anon, authenticated;
 grant execute on function public.paige_reconcile_orchestration_acts() to service_role;
-

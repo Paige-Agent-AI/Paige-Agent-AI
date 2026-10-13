@@ -69,6 +69,38 @@ describe("E2-1 registration", () => {
   });
 });
 
+describe("E2-3a briefing narrative contract", () => {
+  // The owner's required answer shape for "how's my business doing, what needs attention, and
+  // what should we work on today?": accurate evidence, source freshness, meaningful priorities,
+  // appropriate recommendations, and missing information identified — never invented. The contract
+  // lives in the two model-facing surfaces (tool description + result guidance); these pins bite
+  // (mutation-proven: removing any clause turns its assertion red).
+  it("the tool description promises the briefing structure: picture, attention (act before watch), supported next steps, unmeasured named", () => {
+    const d = BUSINESS_SNAPSHOT_TOOLS[0].function.description;
+    expect(d).toMatch(/answer as a briefing/);
+    expect(d).toMatch(/act-level risks.*before its watch-level ones/);
+    expect(d).toMatch(/one to three practical next steps that the cited figures actually support/);
+    expect(d).toMatch(/what could not be measured and why/);
+  });
+
+  it("the result guidance carries the full narration order and every honesty rule", async () => {
+    const r = await dispatch({});
+    const m = r.message;
+    // The four-part order.
+    expect(m).toMatch(/\(1\) the overall picture for the period/);
+    expect(m).toMatch(/\(2\) what needs attention — every act-level risk first, then watch-level/);
+    expect(m).toMatch(/\(3\) one to three practical next steps/);
+    expect(m).toMatch(/\(4\) what could not be measured, named by area/);
+    // Freshness, priorities and the not-invented rules.
+    expect(m).toMatch(/the window note the review gives/);
+    expect(m).toMatch(/Priorities follow the risk levels the review assigns, never your own ranking/);
+    expect(m).toMatch(/money at risk and failed runs outrank plain counts/);
+    expect(m).toMatch(/never estimate, never sum currencies/);
+    expect(m).toMatch(/a real zero is different from not-available/);
+    expect(m).toMatch(/say it needs setup rather than implying the data exists/);
+  });
+});
+
 describe("E2-1 dispatch behavior", () => {
   it("returns the composer's bounded projection as an available read with no-action-authority guidance", async () => {
     const r = await dispatch({});

@@ -235,8 +235,9 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     roundTrip("command-center", "systems-check", "sys");
     roundTrip("command-center", "trust-compass", "compass");
     roundTrip("command-center", "mind", "mind");
-    // `overview` is now a compatibility alias of the new default landing, Business Game Plan.
-    expect(subtabBySlug("solo", "command-center", "overview")?.key).toBe("plan");
+    // E2-6 (2026-10-13): `overview` is the compatibility alias of the Executive landing (the
+    // AI Executive Command Center IS the overview); Business Game Plan keeps its own slug.
+    expect(subtabBySlug("solo", "command-center", "overview")?.key).toBe("exec");
     expect(subtabBySlug("solo", "command-center", "directory")?.key).toBe("mind");
     expect(subtabBySlug("solo", "command-center", "history")?.key).toBe("mind");
     roundTrip("paige", "knowledge", "knowledge");

@@ -123,7 +123,11 @@ export const SOLO_BRANCHES: Branch[] = [
     // order — but ONLY when its owner ships a real Command Center sub-tab. It is deliberately
     // NOT declared here as a dead/placeholder tab (owner ruling 2026-09-05; four-surfaces §4).
     subtabs: [
-      { slug: "business-game-plan", aliases: ["overview"], key: "plan", label: "Business Game Plan" },
+      // E2-6 (2026-10-13, ANT-138): Executive is the default Command Center landing — the AI
+      // Executive Command Center. The former `overview` compatibility alias moves HERE (the
+      // executive overview IS the overview); Business Game Plan keeps its own slug and position.
+      { slug: "executive", aliases: ["overview"], key: "exec", label: "Executive" },
+      { slug: "business-game-plan", key: "plan", label: "Business Game Plan" },
       { slug: "systems-check", key: "sys", label: "Systems Check" },
       // Trust Compass is the third Command Center surface (owner-ruled 2026-09-05):
       // Business Game Plan → Systems Check → Trust Compass → Mind.

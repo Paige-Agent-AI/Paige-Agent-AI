@@ -22,7 +22,10 @@ function transpile(path: string): string {
   }).outputText;
 }
 
-function harness(env: Record<string, string> = { SENDGRID_WEBHOOK_PUBLIC_KEY: PEM }, answer = "processed") {
+function harness(
+  env: Record<string, string> = { SENDGRID_WEBHOOK_PUBLIC_KEY: PEM },
+  answer: string | ((args: Row) => string) = "processed",
+) {
   const calls: { fn: string; args: Row }[] = [];
   let handle!: (req: Request) => Promise<Response>;
   const frozenDate = class extends Date { static now() { return NOW * 1000; } };
@@ -30,7 +33,7 @@ function harness(env: Record<string, string> = { SENDGRID_WEBHOOK_PUBLIC_KEY: PE
   const handlerExports: Row = {};
   const requireShim = (name: string) => {
     if (name === "npm:@supabase/supabase-js@2") {
-      return { createClient: () => ({ rpc: (fn: string, args: Row) => { calls.push({ fn, args }); return Promise.resolve({ data: answer, error: null }); } }) };
+      return { createClient: () => ({ rpc: (fn: string, args: Row) => { calls.push({ fn, args }); return Promise.resolve({ data: typeof answer === "function" ? answer(args) : answer, error: null }); } }) };
     }
     if (name === "../_shared/webhookSig.ts") return sigExports;
     throw new Error("unexpected import in test: " + name);
@@ -138,4 +141,20 @@ test("unchanged: 503 until the public key is set, 401 on a bad signature, nothin
 test("unchanged: an unpersisted event is never acknowledged", async () => {
   const h = harness(undefined, "pending");
   assert.equal((await h.handle(signed([ev("bounce", "e14", { type: "blocked" })]))).status, 503);
+});
+
+test("an EARLY event (the send is still being handed over: 'pending') makes the whole batch 503, so SendGrid redelivers it", async () => {
+  // ingest_sendgrid_receipt answers 'pending' for an event whose three claims name a governed send that is
+  // still prepared/dispatching (20271031000200); the processed event beside it dedups on redelivery.
+  const h = harness(undefined, (args) => (args._receipt_id === "sg:e16" ? "pending" : "processed"));
+  const res = await h.handle(signed([
+    ev("delivered", "e15", { paige_tenant_id: T, paige_operation_id: OP, paige_message_id: M }),
+    ev("delivered", "e16", { paige_tenant_id: T, paige_operation_id: OP, paige_message_id: M }),
+  ]));
+  assert.equal(res.status, 503);
+  assert.equal(h.calls.length, 2, "every event is still offered to the database");
+  const body = await res.json();
+  assert.equal(body.retriable, true);
+  assert.equal(body.pending, 1);
+  assert.equal(body.processed, 1);
 });

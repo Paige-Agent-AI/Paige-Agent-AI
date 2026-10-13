@@ -6,7 +6,7 @@ import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts"
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
 import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest } from "../_shared/comms-email/contract.ts";
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
-import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
+import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
 
 // INT-328 comms.email_send — the governed door for ONE business email to ONE existing contact.
@@ -136,6 +136,9 @@ Deno.serve(async req => {
   // Experience 03: once the provider ACCEPTED this send (never delivery), bind it to the lead reply's
   // approval server-side. A record failure never reports the send as failed — the email went out — it
   // answers record_status:'pending_record', and re-POSTing the same operation (a replay) records it.
+  // The approval named here is never trusted on its own: on a replay it must equal the approval the
+  // operation was PREPARED for (comms_email_binding.approval_id, checked below), and the SQL record
+  // (_lead_reply_record_send) refuses any send whose binding names a different approval.
   const approvalAdmin = admin as unknown as LeadReplyApprovalAdmin;
   const withApprovalRecord = async (settled: Record<string, unknown>, operationId: string): Promise<Record<string, unknown>> => {
     if (body.approval_id === undefined || settled.ok !== true || settled.outcome !== "provider_accepted") return settled;
@@ -153,6 +156,19 @@ Deno.serve(async req => {
   // earlier attempt. Never "Not sent" — unknown, and no send is attempted.
   try { replay = object(await readResult(body.operation_id)); } catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
   const preparedRecovery = replay?.outcome === "prepared";
+  // A replay that names an approval must name the one this operation was prepared for: the request's
+  // approval_id is a claim, the binding is the record. An operation prepared for no approval, or for
+  // another, is never recorded against this one (round-3 MAJOR-2). A replay naming NO approval records
+  // nothing, so it is answered as before.
+  if (replay && body.approval_id !== undefined) {
+    let matches: boolean;
+    try {
+      const messageId = typeof replay.message_id === "string" && UUID.test(replay.message_id) ? replay.message_id : null;
+      matches = messageId !== null && bindingApprovalMatches(await readBinding(messageId), body.approval_id);
+    } catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
+    // The operation exists, so it may have been (or may still be) dispatched: never "refused"/"Not sent".
+    if (!matches) return response(403, { ok: false, outcome: "outcome_unknown", code: "LEAD_REPLY_APPROVAL_MISMATCH", operation_id: body.operation_id });
+  }
   if (replay && !preparedRecovery) {
     if (replay.outcome === "unknown" || replay.outcome === "dispatching") {
       const settled = await withApprovalRecord(await reconcile(body.operation_id), body.operation_id);
@@ -167,7 +183,7 @@ Deno.serve(async req => {
   // 2b — A named lead-reply approval must be THIS business's pending owner.lead_followup approval for
   // THIS contact, before any card is raised or anything is prepared (re-checked on the stored call).
   if (body.approval_id !== undefined) {
-    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id });
+    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id, operationId: body.operation_id });
     if (refusal) return refusedBeforeDispatch(refusal === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, refusal);
   }
 
@@ -296,7 +312,7 @@ Deno.serve(async req => {
   // approval is a swap. Then the approval is re-proved against the STORED call's contact.
   if (!storedApprovalMatches(decision.args, body.approval_id)) return refusedBeforeDispatch(403, "LEAD_REPLY_APPROVAL_MISMATCH");
   if (body.approval_id !== undefined) {
-    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: stored.command.contact_id });
+    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: stored.command.contact_id, operationId: stored.operationId });
     if (refusal) return refusedBeforeDispatch(refusal === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, refusal);
   }
   if (preparedRecovery && (stored.operationId !== body.operation_id || JSON.stringify(stored.command) !== JSON.stringify(proposedCommand)
@@ -305,15 +321,28 @@ Deno.serve(async req => {
   const governance = { actor_user_id: user.id, tenant_id: tenantId, tool: COMMS_EMAIL_TOOL, action: COMMS_EMAIL_ACTION,
     approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting",
     approved_fingerprint: decision.audit.laneEffective === "confirm" ? body.approved_fingerprint : null,
-    decision_receipt_recorded: true };
+    decision_receipt_recorded: true,
+    // The reply approval this send answers (already proved equal to the STORED call's). prepare stores
+    // it on the binding (comms_email_binding.approval_id): one live send per approval, and the only send
+    // the approval can ever be recorded or approved by. Absent for every other send.
+    ...(body.approval_id !== undefined ? { approval_id: body.approval_id } : {}) };
+  // The adapter reports any database refusal it does not know as COMMS_EMAIL_PREPARE_REFUSED; keep the
+  // specific one-send-per-approval refusal so the owner is told the reply is already sent / in flight.
+  const approvalPrepareRefusal: { code: string | null } = { code: null };
 
   const result = await executeCommsEmailSend({ actorUserId: user.id, tenantId, operationId: stored.operationId, stored, governance }, {
     stillCurrent, readResult, send, readBinding,
     resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }, senderProviders),
     readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId }, key => Deno.env.get(key), runPreSend),
-    prepare: async args => { const { data, error } = await admin.rpc("prepare_comms_email_send", args); return { data, error }; },
+    prepare: async args => {
+      const { data, error } = await admin.rpc("prepare_comms_email_send", args);
+      approvalPrepareRefusal.code = error ? leadReplyPrepareRefusal(error) : null;
+      return { data, error };
+    },
   });
-  const settled = await withApprovalRecord(await notAdmitted(result, stored.operationId), stored.operationId);
+  const mapped = approvalPrepareRefusal.code && result.outcome === "refused" && result.reason === "COMMS_EMAIL_PREPARE_REFUSED"
+    ? { ...result, reason: approvalPrepareRefusal.code } : result;
+  const settled = await withApprovalRecord(await notAdmitted(mapped, stored.operationId), stored.operationId);
   await settleSupportCase(settled);
   return response(statusOf(settled), { ...settled, capability: COMMS_EMAIL_TOOL });
 });

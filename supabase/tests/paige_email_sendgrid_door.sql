@@ -10,7 +10,9 @@
 -- sender is admitted by prepare_comms_email_send ONLY with its own business's verified domain; a
 -- lapse between prepare and send makes the binding ineligible (so claim refuses); Resend/Gmail are
 -- unchanged; a SendGrid 'unknown' outcome is never reconcilable (no re-dispatch) and acceptance is
--- never delivery. Fixtures are fresh uuids, `pes-proof-*` slugs, .invalid mail (§63).
+-- never delivery; the binding carries the drafted reply it answers (approval_id, NULL for every other
+-- send), one live send per reply is a unique index, and a malformed/foreign approval or a replay naming
+-- a different one is refused. Fixtures are fresh uuids, `pes-proof-*` slugs, .invalid mail (§63).
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -25,15 +27,20 @@ CREATE TEMP TABLE _before AS SELECT count(*) AS n FROM public.tenant_email_domai
 
 \ir ../migrations/20271031000100_paige_email_sendgrid_governed_door.sql
 
-CREATE FUNCTION pg_temp.ok(_ord int, _cond boolean, _label text) RETURNS void LANGUAGE sql AS $$
+-- Every assertion prints its own PASS/FAIL line as it runs (round-3 security: this proof used to print
+-- none, so a reader could not see what it proved), and the report at the end still fails the run.
+CREATE FUNCTION pg_temp.ok(_ord int, _cond boolean, _label text) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
  INSERT INTO _p VALUES (_ord, CASE WHEN coalesce(_cond,false) THEN 'ok' ELSE 'FAIL' END, _label);
-$$;
+ IF coalesce(_cond,false) THEN RAISE NOTICE 'PASS: [%] %', _ord, _label; ELSE RAISE WARNING 'FAIL: [%] %', _ord, _label; END IF;
+END $$;
 CREATE FUNCTION pg_temp.err(_ord int, _label text, _sql text, _state text, _msg text) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE got text;
 BEGIN
  BEGIN EXECUTE _sql; got := 'no error';
  EXCEPTION WHEN OTHERS THEN got := SQLSTATE || ' ' || SQLERRM; END;
  INSERT INTO _p VALUES (_ord, CASE WHEN got LIKE _state || ' ' || _msg THEN 'ok' ELSE 'FAIL got ' || got END, _label);
+ IF got LIKE _state || ' ' || _msg THEN RAISE NOTICE 'PASS: [%] %', _ord, _label; ELSE RAISE WARNING 'FAIL: [%] % (got %)', _ord, _label, got; END IF;
 END $$;
 CREATE FUNCTION pg_temp.as_user(_uid text) RETURNS void LANGUAGE sql AS $$
  SELECT set_config('request.jwt.claims', jsonb_build_object('sub',_uid,'role','authenticated')::text, true) $$;
@@ -118,12 +125,12 @@ CREATE FUNCTION pg_temp.gov() RETURNS jsonb LANGUAGE sql AS $$
   'tool','comms_send_email','action','comms.email_send','approval_channel','operator_card','approved_fingerprint','0123456789abcdef',
   'decision_receipt_recorded',true) $$;
 CREATE FUNCTION pg_temp.op(_op int) RETURNS uuid LANGUAGE sql AS $$ SELECT ('dddddddd-5e9d-4000-8000-'||lpad(_op::text,12,'0'))::uuid $$;
-CREATE FUNCTION pg_temp.prep(_op int, _connector uuid, _from text, _subject text DEFAULT 'Thanks for reaching out') RETURNS jsonb LANGUAGE sql AS $$
+CREATE FUNCTION pg_temp.prep(_op int, _connector uuid, _from text, _subject text DEFAULT 'Thanks for reaching out', _gov jsonb DEFAULT '{}'::jsonb) RETURNS jsonb LANGUAGE sql AS $$
  SELECT public.prepare_comms_email_send('ffffffff-5e9d-4000-8000-000000000001','aaaaaaaa-5e9d-4000-8000-000000000001',pg_temp.op(_op),
   'bbbbbbbb-5e9d-4000-8000-000000000001','lead.one@example.invalid',_connector,_from,_subject,'Hello there.','<p>Hello there.</p>',
   encode(extensions.digest(convert_to('lead.one@example.invalid'||E'\n'||_connector::text||E'\n'||_subject||E'\n'||'Hello there.','UTF8'),'sha256'),'hex'),
   jsonb_build_object('action','comms.email_send','contact_id','bbbbbbbb-5e9d-4000-8000-000000000001','connector_id',_connector,'subject',_subject,'body','Hello there.'),
-  pg_temp.gov()) $$;
+  pg_temp.gov() || _gov) $$;
 CREATE FUNCTION pg_temp.msg(_op int) RETURNS uuid LANGUAGE sql AS $$
  SELECT id FROM public.messages WHERE meta#>>'{comms_email_binding,operation_id}'=pg_temp.op(_op)::text $$;
 
@@ -196,11 +203,31 @@ SELECT pg_temp.ok(56, (SELECT status='sent' AND provider_message_id='sg-x-messag
   'the receipt id is stored for webhook correlation');
 RESET ROLE;
 
+-- ── 5b. one live send per drafted reply (the binding carries the approval) ────────────────────
+-- The reply-specific cases (in-progress, already-sent, replay mismatch, contact, kind, cited send) are
+-- driven with real reply approvals in exp03_lead_reply_draft.sql §4a; here, the door's own shape.
+SELECT pg_temp.ok(57, (SELECT i.indisunique AND pg_get_indexdef(i.indexrelid) LIKE '%lower((meta #>> ''{comms_email_binding,approval_id}''::text[]))%'
+   AND pg_get_expr(i.indpred,i.indrelid) LIKE '%failed%' AND pg_get_expr(i.indpred,i.indrelid) LIKE '%refused%'
+   FROM pg_index i WHERE i.indexrelid='public.messages_comms_email_approval_live'::regclass),
+  'one live send per approval: UNIQUE on lower(binding.approval_id), partial to sends that have not failed/been refused');
+SELECT pg_temp.ok(58, (SELECT bool_and(m.meta->'comms_email_binding' ? 'approval_id' AND m.meta->'comms_email_binding'->'approval_id'='null'::jsonb)
+  FROM public.messages m WHERE m.id IN (pg_temp.msg(31),pg_temp.msg(33),pg_temp.msg(55))),
+  'a send that names no reply carries approval_id null (every non-reply caller is unchanged)');
+SELECT pg_temp.err(59, 'a malformed approval id in the governance record is refused',
+  $q$SELECT pg_temp.prep(59,'cccccccc-5e9d-4000-8000-000000000003','owner@resend.example.invalid','R59','{"approval_id":"nope"}')$q$, '22023', 'COMMS_EMAIL_CONTENT_INVALID');
+SELECT pg_temp.err(60, 'an approval that is not this business''s drafted reply is refused before anything is written',
+  $q$SELECT pg_temp.prep(60,'cccccccc-5e9d-4000-8000-000000000003','owner@resend.example.invalid','R60','{"approval_id":"aaaaaaaa-5e9d-4000-8000-0000000000ff"}')$q$, '42501', 'COMMS_EMAIL_APPROVAL_INVALID');
+SELECT pg_temp.err(62, 'replaying a send made for no reply while naming one is a replay mismatch',
+  $q$SELECT pg_temp.prep(33,'cccccccc-5e9d-4000-8000-000000000003','owner@resend.example.invalid','Thanks for reaching out','{"approval_id":"aaaaaaaa-5e9d-4000-8000-0000000000ff"}')$q$, '22023', 'COMMS_EMAIL_REPLAY_MISMATCH');
+SELECT pg_temp.ok(63, (SELECT count(*)=0 FROM public.messages WHERE meta#>>'{comms_email_binding,operation_id}' IN (pg_temp.op(59)::text, pg_temp.op(60)::text)),
+  'no refused prepare wrote a row');
+RESET ROLE;
+
 -- ── 6. grants ────────────────────────────────────────────────────────────────────────────────
-SELECT pg_temp.ok(60, NOT has_function_privilege('authenticated','public._comms_email_sendgrid_sender_verified(uuid,text)','EXECUTE')
+SELECT pg_temp.ok(70, NOT has_function_privilege('authenticated','public._comms_email_sendgrid_sender_verified(uuid,text)','EXECUTE')
   AND NOT has_function_privilege('anon','public._comms_email_sendgrid_sender_verified(uuid,text)','EXECUTE')
   AND has_function_privilege('service_role','public._comms_email_sendgrid_sender_verified(uuid,text)','EXECUTE'), 'helper is service_role-only');
-SELECT pg_temp.ok(61, NOT has_function_privilege('authenticated','public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)','EXECUTE')
+SELECT pg_temp.ok(71, NOT has_function_privilege('authenticated','public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)','EXECUTE')
   AND NOT has_function_privilege('anon','public.read_comms_email_send_binding(uuid)','EXECUTE')
   AND NOT has_function_privilege('authenticated','public.read_comms_email_send_binding(uuid)','EXECUTE'), 'replaced functions keep service_role-only grants');
 

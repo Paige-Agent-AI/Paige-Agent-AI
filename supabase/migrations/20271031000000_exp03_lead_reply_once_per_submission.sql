@@ -18,8 +18,10 @@
 --      The 5-argument form is KEPT, unchanged in signature, defaults and grants, and now delegates with
 --      NULL — so every existing caller keeps working (see the §37 inventory below).
 --   5. A guard on paige_pending_approvals: an approval that stands for a send_via_approval action can
---      only become approved/sent when it names a governed email that the provider ACCEPTED, for the
---      same business and the same person. Declining stays free. This closes every approve path
+--      only become approved/sent when every send action behind it is owner.lead_followup AND it names
+--      the governed email the door prepared FOR THIS APPROVAL (comms_email_binding.approval_id) and the
+--      provider ACCEPTED, for the same business and the same person. Every other send kind (client.followup
+--      included) is decline/archive only. Declining stays free. This closes every approve path
 --      (execute-approval, paige-mcp decide_pending_approval, paige-bridge update_pending_approval, a
 --      direct RLS-admitted write) that could mark a send action done with nothing sent. A unique partial
 --      index makes one accepted message satisfy at most one approved/sent approval.
@@ -161,8 +163,10 @@ CREATE TRIGGER trg_growth_forms_guard_lead_reply
 
 -- ── 4. growth_form_set_intake, now able to set lead_reply_enabled ───────────────────────────────
 -- The body is 20270518000000's, plus one column. _lead_reply_enabled NULL leaves the setting as it is.
--- Only a business account (Solo or a sub-account) can turn replies on: an agency or enterprise
--- account manages businesses rather than answering leads itself, and the processor never drafts for one.
+-- Only an account that answers its own leads can turn replies on: Solo, a sub-account, or Enterprise —
+-- the same set the feature is declared for (src/lib/tier/tierFeatures.ts `lead_reply`, §61: Enterprise
+-- inherits the operator features) and the processor drafts for (LEAD_REPLY_ACCOUNT_TYPES in
+-- growth-process-submission). An agency manages businesses rather than answering leads itself.
 CREATE OR REPLACE FUNCTION public.growth_form_set_intake(
   p_form_id            uuid,
   p_auto_create_deal   boolean,
@@ -217,7 +221,7 @@ BEGIN
 
   IF _lead_reply_enabled IS TRUE AND NOT EXISTS (
     SELECT 1 FROM public.tenants t
-     WHERE t.id = _form.tenant_id AND t.account_type IN ('standalone', 'sub_account')
+     WHERE t.id = _form.tenant_id AND t.account_type IN ('standalone', 'sub_account', 'enterprise')
   ) THEN
     RAISE EXCEPTION 'GROWTH_INVALID_INTAKE: drafted replies to new leads are for a business account'
       USING ERRCODE = '22023';
@@ -303,19 +307,29 @@ GRANT EXECUTE ON FUNCTION public.growth_form_set_intake(uuid, boolean, uuid, uui
 -- rewrites or drops metadata.action_id cannot launder the row past this check. Approvals naming no
 -- send action are returned untouched before anything else is read (§58).
 --
--- Such an approval may become approved/sent ONLY when metadata.governed_send names a messages row that
--- is the governed email send (meta.comms_email_binding) and:
+-- Only owner.lead_followup has a governed record path. An approval standing for ANY other send kind
+-- (client.followup — the 125 legacy production drafts — owner.followup_email, a mix of kinds, ...) can
+-- NEVER become approved/sent, whatever metadata.governed_send names: it is declined or archived only
+-- (round-3 security H1 — an unrelated accepted email to the same person used to satisfy it).
+--
+-- A reply (every send action behind the approval is owner.lead_followup) may become approved/sent ONLY
+-- when metadata.governed_send names a messages row that is the governed email send
+-- (meta.comms_email_binding) and:
+--   * the binding was prepared FOR THIS APPROVAL: comms_email_binding.approval_id = this approval's id
+--     (written by the governed door, 20271031000100) — an unrelated email to the same person, sent from
+--     chat or support, is never proof that this reply went out;
 --   * the binding's state is provider_accepted (accepted by the provider — not proof of delivery);
 --   * the binding's operation_id equals governed_send.operation_id;
 --   * the message is in the approval's business, and to the same person as every send action it stands for;
 --   * the message was created no earlier than the approval (an older email cannot be re-used as proof);
 --   * no OTHER approved/sent approval already names the same message (one send proves one approval —
 --     also enforced by uq_paige_pending_approvals_governed_send_message below).
--- paige_pending_approvals.status admits pending|approved|rejected|sent|changes_requested|escalated|
--- skipped (CHECK); only approved and sent complete the action (trg_ppa_sync_action), so only those are
--- restricted. Applies to every role, service role included: no trusted path completes a send without one.
--- The refusal's HINT says what the person can do for THIS kind: only owner.lead_followup has a record
--- path (reply screen → governed door → lead_reply_record_send); every other send kind can be declined.
+-- Ids are compared lowercased. paige_pending_approvals.status admits pending|approved|rejected|sent|
+-- changes_requested|escalated|skipped (CHECK); only approved and sent complete the action
+-- (trg_ppa_sync_action), so only those are restricted. Applies to every role, service role included: no
+-- trusted path completes a send without one. The refusal's DETAIL/HINT say what the person can do for
+-- THIS kind: review_and_send for a reply (reply screen → governed door → lead_reply_record_send),
+-- decline_only for every other send kind.
 CREATE OR REPLACE FUNCTION public.paige_guard_send_approval_requires_governed_send()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -356,6 +370,14 @@ BEGIN
     RETURN NEW;  -- not an outbound-message approval: every other approval is untouched (§58)
   END IF;
 
+  -- Any send kind without a governed record path is decline/archive only — no proof is consulted.
+  IF _kinds IS DISTINCT FROM ARRAY['owner.lead_followup'] THEN
+    RAISE EXCEPTION 'SEND_REQUIRES_GOVERNED_SEND: an outbound message is approved only once the business''s verified email has sent it; it can still be declined'
+      USING ERRCODE = '42501',
+            DETAIL  = 'reason_code=decline_only',
+            HINT    = 'This message can be declined for now; sending it from an approval is not available yet.';
+  END IF;
+
   _gs  := NEW.metadata->'governed_send';
   _mid := CASE WHEN jsonb_typeof(_gs) = 'object' THEN lower(btrim(_gs->>'message_id')) END;
   _op  := CASE WHEN jsonb_typeof(_gs) = 'object' THEN lower(btrim(_gs->>'operation_id')) END;
@@ -368,6 +390,7 @@ BEGIN
 
   IF _msg.id IS NULL
      OR NOT (_msg.meta ? 'comms_email_binding')
+     OR lower(btrim(_msg.meta#>>'{comms_email_binding,approval_id}')) IS DISTINCT FROM NEW.id::text
      OR _msg.meta#>>'{comms_email_binding,state}' IS DISTINCT FROM 'provider_accepted'
      OR lower(_msg.meta#>>'{comms_email_binding,operation_id}') IS DISTINCT FROM _op
      OR _tenant IS NULL OR _msg.tenant_id IS DISTINCT FROM _tenant
@@ -386,16 +409,10 @@ BEGIN
              AND o.status IN ('approved', 'sent')
              AND lower(o.metadata#>>'{governed_send,message_id}') = _msg.id::text)
   THEN
-    IF _kinds = ARRAY['owner.lead_followup'] THEN
-      RAISE EXCEPTION 'SEND_REQUIRES_GOVERNED_SEND: an outbound message is approved only once the business''s verified email has sent it; it can still be declined'
-        USING ERRCODE = '42501',
-              DETAIL  = 'reason_code=review_and_send',
-              HINT    = 'Review and send it from the reply screen; the send is recorded on the approval once the business''s verified email has sent it.';
-    END IF;
     RAISE EXCEPTION 'SEND_REQUIRES_GOVERNED_SEND: an outbound message is approved only once the business''s verified email has sent it; it can still be declined'
       USING ERRCODE = '42501',
-            DETAIL  = 'reason_code=decline_only',
-            HINT    = 'This message can be declined for now; sending it from an approval is not available yet.';
+            DETAIL  = 'reason_code=review_and_send',
+            HINT    = 'Review and send it from the reply screen; the send is recorded on the approval once the business''s verified email has sent it.';
   END IF;
 
   RETURN NEW;
@@ -460,9 +477,13 @@ COMMENT ON INDEX public.uq_paige_pending_approvals_governed_send_message IS
 -- Both re-derive authority in the body (§59): the actor is a live user, an active owner/admin of the
 -- approval's business, which is the actor's active business; the business is active (trial/active/
 -- past_due, the same statuses _comms_email_actor admits); and the send was made BY THAT ACTOR
--- (comms_email_binding.actor_user_id). The approval row is locked only AFTER that authorization, so an
--- outsider can neither probe nor block it. A different send cannot be recorded while an earlier one on
--- the same approval is still unresolved (prepared/dispatching/unknown/accepted-but-unrecorded).
+-- (comms_email_binding.actor_user_id), and the door prepared it FOR THIS APPROVAL
+-- (comms_email_binding.approval_id = the approval's id, 20271031000100) — so an unrelated email to the
+-- same lead, sent from chat or support, is never recorded as the reply (LEAD_REPLY_NOT_THIS_APPROVAL).
+-- The approval row is locked only AFTER that authorization, so an outsider can neither probe nor block
+-- it. A different send cannot be recorded while an earlier one on the same approval is still unresolved
+-- (prepared/dispatching/unknown/accepted-but-unrecorded); the door itself already refuses to PREPARE a
+-- second live send for one approval (messages_comms_email_approval_live), so this is the second lock.
 -- Idempotent: recording the same accepted operation again returns the same answer and writes nothing.
 CREATE OR REPLACE FUNCTION public._lead_reply_record_send(_approval_id uuid, _operation_id uuid, _actor uuid)
 RETURNS jsonb
@@ -551,7 +572,9 @@ BEGIN
   IF _prior_op ~ _uuid AND _prior_op IS DISTINCT FROM _operation_id::text THEN
     SELECT m.meta#>>'{comms_email_binding,state}' INTO _prior_st
       FROM public.messages m
-     WHERE m.tenant_id = _ap.tenant_id AND m.meta#>>'{comms_email_binding,operation_id}' = _prior_op;
+     WHERE m.meta ? 'comms_email_binding'
+       AND m.meta#>>'{comms_email_binding,operation_id}' = _prior_op
+       AND m.tenant_id = _ap.tenant_id;
     IF _prior_st IN ('prepared', 'dispatching', 'unknown', 'provider_accepted') THEN
       RAISE EXCEPTION 'LEAD_REPLY_PRIOR_SEND_UNRESOLVED: an earlier send of this reply has not been resolved yet'
         USING ERRCODE = '55000',
@@ -561,15 +584,23 @@ BEGIN
   END IF;
 
   -- The governed send for this operation, in this business, to this lead. The operation_id is unique
-  -- across messages (messages_comms_email_operation), so this is at most one row.
+  -- across messages (messages_comms_email_operation, partial to meta ? 'comms_email_binding' — the
+  -- predicate below lets the lookup use it), so this is at most one row.
   SELECT * INTO _msg FROM public.messages m
-   WHERE m.meta#>>'{comms_email_binding,operation_id}' = _operation_id::text
+   WHERE m.meta ? 'comms_email_binding'
+     AND m.meta#>>'{comms_email_binding,operation_id}' = _operation_id::text
      AND m.tenant_id = _ap.tenant_id
      AND m.contact_id = _act.contact_id
      AND m.channel_type = 'email' AND m.direction = 'outbound';
   IF _msg.id IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'state', 'not_found', 'delivery_confirmed', false,
       'approval_id', _ap.id, 'operation_id', _operation_id);
+  END IF;
+  -- The send was prepared for THIS reply: an accepted email to the same lead that the door prepared for
+  -- another approval, or for none (chat, support), is never this reply's proof.
+  IF lower(btrim(_msg.meta#>>'{comms_email_binding,approval_id}')) IS DISTINCT FROM _ap.id::text THEN
+    RAISE EXCEPTION 'LEAD_REPLY_NOT_THIS_APPROVAL: this email was not sent as this reply, so it cannot be recorded as its send'
+      USING ERRCODE = '42501';
   END IF;
   -- The person recording is the person who sent it: a send is never claimed by someone else.
   IF lower(_msg.meta#>>'{comms_email_binding,actor_user_id}') IS DISTINCT FROM _actor::text THEN

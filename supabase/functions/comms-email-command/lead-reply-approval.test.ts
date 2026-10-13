@@ -10,7 +10,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { setScenario } from "../../../scripts/client-memory-authz/fake-supabase.mjs";
-import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend } from "./lead-reply-approval.ts";
+import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal } from "./lead-reply-approval.ts";
 
 const T = "a3e30300-0000-4000-8000-000000000001"; // this business
 const T2 = "a3e30300-0000-4000-8000-000000000002"; // another business
@@ -32,7 +32,14 @@ interface World {
   approvals: Row[]; actions: Row[]; domains: Row[]; connectors: Row[];
   proposals: Row[]; sent: boolean; recordResult: { data: unknown; error: unknown } | (() => never);
   rpcCalls: { name: string; args: Row }[]; fetches: string[];
+  /** Governed sends as `messages` rows, keyed the way the door filters them (tenant + binding approval). */
+  messages: Row[];
+  /** The approval the replayed operation's binding was prepared for (read_comms_email_send_binding). */
+  bindingApproval: string | null;
+  /** When set, prepare_comms_email_send answers this database error. */
+  prepareError: { code: string; message: string } | null;
 }
+const BINDING_APPROVAL = "meta->comms_email_binding->>approval_id";
 function world(overrides: Partial<World> = {}): World {
   return {
     approvals: [
@@ -46,7 +53,7 @@ function world(overrides: Partial<World> = {}): World {
     domains: [{ tenant_id: T, domain: "own.example.invalid", sendgrid_status: "verified", sendgrid_domain_id: "sg-dom-1", sendgrid_verified_at: "2026-10-13T00:00:00Z" }],
     connectors: [{ id: SG, tenant_id: T, channel_type: "email", provider: "sendgrid", from_address: "Hello@Own.example.invalid", active: true, status: "active", credentials_vault_ref: null, config: {} }],
     proposals: [], sent: false, recordResult: { data: { ok: true, state: "provider_accepted" }, error: null },
-    rpcCalls: [], fetches: [],
+    rpcCalls: [], fetches: [], messages: [], bindingApproval: AP, prepareError: null,
     ...overrides,
   };
 }
@@ -79,6 +86,7 @@ function scenario(w: World) {
     tenant_email_domains: (f) => matching(w.domains, f),
     paige_pending_approvals: (f) => matching(w.approvals, f),
     paige_actions: (f) => matching(w.actions, f),
+    messages: (f) => matching(w.messages, f),
     paige_pending_confirmations: proposalsTable,
   };
   const result = (outcome: string) => ({ ok: outcome === "provider_accepted", outcome, operation_id: OP, message_id: MSG, delivery_confirmed: false, provider: "sendgrid", reconcilable: false });
@@ -92,8 +100,15 @@ function scenario(w: World) {
       comms_provider_execution_allowed: { data: true, error: null },
       resolve_tool_autonomy: { data: "confirm", error: null },
       find_comms_email_pending_reconciliation: { data: null, error: null },
-      read_comms_email_send_result: rpc("read_comms_email_send_result", () => ({ data: w.sent ? result("provider_accepted") : null, error: null })),
-      prepare_comms_email_send: rpc("prepare_comms_email_send", () => ({ data: { ok: true, replayed: false, state: "prepared", message_id: MSG }, error: null })),
+      read_comms_email_send_result: rpc("read_comms_email_send_result", (args) => ({ data: w.sent && args._operation_id === OP ? result("provider_accepted") : null, error: null })),
+      // Like the real prepare: the send is written with the approval the door's governance carried.
+      prepare_comms_email_send: rpc("prepare_comms_email_send", (args) => {
+        if (w.prepareError) return { data: null, error: w.prepareError };
+        const approval = ((args._governance as Row).approval_id as string | undefined) ?? null;
+        w.messages.push({ tenant_id: T, [BINDING_APPROVAL]: approval, operation_id: args._operation_id, state: "prepared" });
+        return { data: { ok: true, replayed: false, state: "prepared", message_id: MSG }, error: null };
+      }),
+      read_comms_email_send_binding: rpc("read_comms_email_send_binding", () => ({ data: { message_id: MSG, operation_id: OP, approval_id: w.bindingApproval }, error: null })),
       lead_reply_record_send_service: rpc("lead_reply_record_send_service", () => { if (typeof w.recordResult === "function") return w.recordResult(); return w.recordResult; }),
       mark_support_case_outbound: { data: null, error: null },
     },
@@ -110,6 +125,7 @@ let current: World;
 globalThis.fetch = (async (url: string | URL) => {
   current.fetches.push(String(url));
   current.sent = true;
+  for (const m of current.messages) if (m.state === "prepared") m.state = "provider_accepted";
   return new Response(JSON.stringify({ ok: true, outcome: "provider_accepted", delivery_confirmed: false }), { status: 200 });
 }) as typeof fetch;
 
@@ -201,6 +217,8 @@ test("wrong business, wrong contact, non-pending and wrong-kind approvals are re
   const cases: [string, Partial<World>, Row, string][] = [
     ["another business's approval", { approvals: [{ id: AP, tenant_id: T2, status: "pending", contact_id: C, metadata: { action_id: ACT } }] }, {}, "LEAD_REPLY_APPROVAL_NOT_FOUND"],
     ["an approval for another person", { actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: "owner.lead_followup", contact_id: C2 }] }, {}, "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH"],
+    // D2: the action is for this lead, but the APPROVAL row itself names someone else.
+    ["an approval row that names another person", { approvals: [{ id: AP, tenant_id: T, status: "pending", contact_id: C2, metadata: { action_id: ACT } }] }, {}, "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH"],
     ["an already-decided approval", { approvals: [{ id: AP, tenant_id: T, status: "rejected", contact_id: C, metadata: { action_id: ACT } }] }, {}, "LEAD_REPLY_APPROVAL_NOT_PENDING"],
     ["a client.followup approval", { actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: "client.followup", contact_id: C }] }, {}, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
     ["an action that does not point back", { actions: [{ id: ACT, tenant_id: T, approval_id: AP2, action_kind: "owner.lead_followup", contact_id: C }] }, {}, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
@@ -253,9 +271,83 @@ test("without approval_id the door behaves exactly as before (no approval read, 
   assert.ok(!rpcNames(w).includes("lead_reply_record_send_service"));
 });
 
+// ── one reply, one email (round-3 MAJOR-1 / MAJOR-2, security H1 / M1) ───────────────────────
+const OP2 = "a3e30300-0000-4000-8000-000000000202";
+test("the approval rides in the governance record to prepare (binding.approval_id); absent for a plain send", async () => {
+  const w = world();
+  const proposed = await call(w, { approval_id: AP });
+  await call(w, { approval_id: AP, approved_fingerprint: proposed.body.fingerprint });
+  const prep = w.rpcCalls.find((c) => c.name === "prepare_comms_email_send");
+  assert.equal((prep?.args._governance as Row).approval_id, AP);
+  const w2 = world();
+  const plain = await call(w2, {});
+  await call(w2, { approved_fingerprint: plain.body.fingerprint });
+  assert.equal("approval_id" in (w2.rpcCalls.find((c) => c.name === "prepare_comms_email_send")?.args._governance as Row), false);
+});
+
+test("record fails, then a NEW operation on the same reply: refused ALREADY_SENT, the lead gets ONE email", async () => {
+  const w = world({ recordResult: { data: null, error: { code: "XX000", message: "boom" } } });
+  const first = await call(w, { approval_id: AP });
+  const sent = await call(w, { approval_id: AP, approved_fingerprint: first.body.fingerprint });
+  assert.deepEqual([sent.body.outcome, sent.body.record_status], ["provider_accepted", "pending_record"]);
+  const again = await call(w, { approval_id: AP, operation_id: OP2 });
+  assert.equal(again.status, 409, JSON.stringify(again.body));
+  assert.deepEqual([again.body.outcome, again.body.code], ["refused", "LEAD_REPLY_APPROVAL_ALREADY_SENT"]);
+  assert.equal(w.fetches.length, 1, "exactly one email reached send-message");
+  assert.equal(w.proposals.length, 1, "no second card was raised");
+});
+
+test("a second operation while another send of the reply is in flight: SEND_IN_PROGRESS; after it fails: allowed", async () => {
+  for (const state of ["prepared", "dispatching", "unknown"]) {
+    const w = world({ messages: [{ tenant_id: T, [BINDING_APPROVAL]: AP, operation_id: OP2, state }] });
+    const r = await call(w, { approval_id: AP });
+    assert.deepEqual([r.status, r.body.code], [409, "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS"], state);
+    assert.equal(w.proposals.length, 0, state);
+  }
+  for (const state of ["failed", "refused"]) {
+    const w = world({ messages: [{ tenant_id: T, [BINDING_APPROVAL]: AP, operation_id: OP2, state }] });
+    const r = await call(w, { approval_id: AP });
+    assert.equal(r.status, 202, `${state}: ${JSON.stringify(r.body)}`);
+  }
+  // A send prepared for ANOTHER approval does not block this one.
+  const other = world({ messages: [{ tenant_id: T, [BINDING_APPROVAL]: AP2, operation_id: OP2, state: "provider_accepted" }] });
+  assert.equal((await call(other, { approval_id: AP })).status, 202);
+});
+
+test("the database's one-send-per-approval refusal reaches the owner as its own code, never a generic one", async () => {
+  for (const [db, code] of [["COMMS_EMAIL_APPROVAL_SEND_IN_PROGRESS", "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS"], ["COMMS_EMAIL_APPROVAL_ALREADY_SENT", "LEAD_REPLY_APPROVAL_ALREADY_SENT"], ["COMMS_EMAIL_APPROVAL_INVALID", "LEAD_REPLY_APPROVAL_INVALID"]]) {
+    const w = world();
+    const proposed = await call(w, { approval_id: AP });
+    w.prepareError = { code: "55000", message: db };
+    const r = await call(w, { approval_id: AP, approved_fingerprint: proposed.body.fingerprint });
+    assert.deepEqual([r.body.ok, r.body.outcome, r.body.reason], [false, "refused", code], db);
+    assert.deepEqual(w.fetches, [], db);
+    assert.ok(!rpcNames(w).includes("lead_reply_record_send_service"), db);
+  }
+});
+
+test("a replay naming a different approval than the operation was prepared for is refused and records nothing", async () => {
+  for (const bindingApproval of [AP2, null]) {
+    const w = world({ sent: true, bindingApproval });
+    const r = await call(w, { approval_id: AP });
+    assert.equal(r.status, 403, String(bindingApproval));
+    assert.deepEqual([r.body.ok, r.body.code], [false, "LEAD_REPLY_APPROVAL_MISMATCH"], String(bindingApproval));
+    assert.ok(!rpcNames(w).includes("lead_reply_record_send_service"), String(bindingApproval));
+  }
+  // A replay that names no approval records nothing and is answered as before.
+  const plain = world({ sent: true, bindingApproval: AP });
+  const r = await call(plain, {});
+  assert.deepEqual([r.status, r.body.outcome, "record_status" in r.body], [200, "provider_accepted", false]);
+});
+
 // ── the module, directly ─────────────────────────────────────────────────────────────────────
 const admin = (w: World) => ({
-  from: (table: string) => ({ select: () => { const filters: Filter[] = []; const q = { eq: (k: string, v: unknown) => { filters.push(["eq", k, v]); return q; }, maybeSingle: async () => ({ data: (table === "paige_pending_approvals" ? matching(w.approvals, filters) : matching(w.actions, filters))[0] ?? null, error: null }) }; return q; } }),
+  from: (table: string) => ({ select: () => {
+    const filters: Filter[] = [];
+    const rows = () => matching(table === "paige_pending_approvals" ? w.approvals : table === "messages" ? w.messages : w.actions, filters);
+    const q = { eq: (k: string, v: unknown) => { filters.push(["eq", k, v]); return q; }, maybeSingle: async () => ({ data: rows()[0] ?? null, error: null }), limit: async () => ({ data: rows(), error: null }) };
+    return q;
+  } }),
   rpc: async () => w.recordResult as { data: unknown; error: unknown },
 });
 test("verifyLeadReplyApproval / storedApprovalMatches / recordLeadReplySend", async () => {
@@ -268,4 +360,14 @@ test("verifyLeadReplyApproval / storedApprovalMatches / recordLeadReplySend", as
   assert.equal(storedApprovalMatches({ approval_id: AP }, undefined), false);
   assert.equal(storedApprovalMatches({}, AP), false);
   assert.equal(await recordLeadReplySend(admin(w), { approvalId: AP, operationId: OP, actorUserId: U }), "recorded");
+  // The operation being confirmed is not "another send"; any other live one is.
+  const live = world({ messages: [{ tenant_id: T, [BINDING_APPROVAL]: AP, operation_id: OP, state: "prepared" }] });
+  assert.equal(await verifyLeadReplyApproval(admin(live), { tenantId: T, approvalId: AP, contactId: C, operationId: OP }), null);
+  assert.equal(await verifyLeadReplyApproval(admin(live), { tenantId: T, approvalId: AP, contactId: C, operationId: OP2 }), "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS");
+  assert.equal(bindingApprovalMatches({ approval_id: AP.toUpperCase() }, AP), true);
+  assert.equal(bindingApprovalMatches({ approval_id: AP2 }, AP), false);
+  assert.equal(bindingApprovalMatches({ approval_id: null }, AP), false);
+  assert.equal(bindingApprovalMatches(null, AP), false);
+  assert.equal(leadReplyPrepareRefusal({ message: "COMMS_EMAIL_APPROVAL_ALREADY_SENT" }), "LEAD_REPLY_APPROVAL_ALREADY_SENT");
+  assert.equal(leadReplyPrepareRefusal({ message: "COMMS_EMAIL_SENDER_CHANGED" }), null);
 });

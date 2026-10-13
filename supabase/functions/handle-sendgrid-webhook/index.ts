@@ -34,10 +34,14 @@
 //
 // GOVERNED MESSAGE (Experience 03, migration 20271031000200): the same RPC now also
 // moves the governed email the event is about — only when it CORRELATES (sg_message_id
-// prefix = the stored provider id of a provider-accepted SendGrid binding, and every
-// custom_args claim the send carried — paige_tenant_id / paige_operation_id /
-// paige_message_id, set by send-message — plus the recipient, match). A claim that
-// does not match changes nothing and is journalled 'uncorrelated'. This door only
+// prefix = the stored provider id of a provider-accepted SendGrid binding, and ALL THREE
+// custom_args claims send-message sets — paige_tenant_id / paige_operation_id /
+// paige_message_id — match; an absent claim is a non-match). A send whose outcome the
+// door could not read (no stored id) is settled only when all three claims AND the
+// event's recipient match it exactly. An event for a send that is still being handed
+// over comes back 'pending', which this door answers 503 so SendGrid redelivers it
+// (bounded in SQL). A claim that does not match changes nothing and is journalled
+// 'uncorrelated'. This door only
 // READS what the event says and passes it through; every decision (mapping, ordering,
 // never-backwards, idempotency) is made once, in SQL. A bounce's `type` ('bounce' |
 // 'blocked') is passed so a blocked bounce is recorded as blocked, not as a generic

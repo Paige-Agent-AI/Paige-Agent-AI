@@ -3135,41 +3135,75 @@ export type Database = {
       communication_log: {
         Row: {
           channel: string
+          contact_id: string | null
           created_at: string
           error_message: string | null
           id: string
+          message_id: string | null
           message_type: string
+          operation_id: string | null
           preview: string | null
           provider_message_id: string | null
           status: string
           subject: string | null
-          user_id: string
+          tenant_id: string | null
+          user_id: string | null
         }
         Insert: {
           channel: string
+          contact_id?: string | null
           created_at?: string
           error_message?: string | null
           id?: string
+          message_id?: string | null
           message_type: string
+          operation_id?: string | null
           preview?: string | null
           provider_message_id?: string | null
           status: string
           subject?: string | null
-          user_id: string
+          tenant_id?: string | null
+          user_id?: string | null
         }
         Update: {
           channel?: string
+          contact_id?: string | null
           created_at?: string
           error_message?: string | null
           id?: string
+          message_id?: string | null
           message_type?: string
+          operation_id?: string | null
           preview?: string | null
           provider_message_id?: string | null
           status?: string
           subject?: string | null
-          user_id?: string
+          tenant_id?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "communication_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_log_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       communication_preferences: {
         Row: {

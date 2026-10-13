@@ -8,8 +8,14 @@
 //   * the approval of an `owner.lead_followup` action (metadata.action_id → paige_actions whose
 //     approval_id points back at it, same business) — the one send-kind with a record path,
 //   * for the SAME person the email goes to (the action's contact, and the approval's own contact
-//     when it carries one).
-// The approval id is part of the fingerprinted arguments, so a card approved for one approval can
+//     when it carries one),
+//   * NOT already answered by another send: no other operation prepared for it is still live
+//     (prepared/dispatching/unknown → SEND_IN_PROGRESS) or was accepted (→ ALREADY_SENT). One reply,
+//     one email (round-3 MAJOR-1). prepare_comms_email_send re-proves all of this under a row lock and a
+//     unique index (20271031000100), so this check is the early, readable refusal, not the guarantee.
+// The approval id is part of the fingerprinted arguments AND of the prepared binding
+// (comms_email_binding.approval_id): a replay naming a different approval is refused, and only the
+// send prepared for this approval can ever be recorded on it; a card approved for one approval can
 // never be confirmed against another. After the provider accepts the send, the door records it on
 // the approval through lead_reply_record_send_service (20271031000000), which re-proves everything
 // in SQL. A failure to record never turns an accepted send into a failed one: the email went out.
@@ -24,10 +30,12 @@ export type LeadReplyApprovalRefusal =
   | "LEAD_REPLY_APPROVAL_NOT_FOUND"       // no such approval in THIS business (another business's id reads the same)
   | "LEAD_REPLY_APPROVAL_NOT_PENDING"     // already approved / declined / sent
   | "LEAD_REPLY_APPROVAL_WRONG_KIND"      // not a drafted reply to a new lead
-  | "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH"; // the approval is for a different person
+  | "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH" // the approval is for a different person
+  | "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS"  // another send of this reply is prepared/dispatching/unknown
+  | "LEAD_REPLY_APPROVAL_ALREADY_SENT";     // another send of this reply was accepted by the provider
 
 interface ReadResult { data: unknown; error: unknown }
-interface ReadQuery { eq(column: string, value: unknown): ReadQuery; maybeSingle(): PromiseLike<ReadResult> }
+interface ReadQuery { eq(column: string, value: unknown): ReadQuery; maybeSingle(): PromiseLike<ReadResult>; limit(count: number): PromiseLike<ReadResult> }
 /** The slice of the service client this check uses. */
 export interface LeadReplyApprovalAdmin {
   from(table: string): { select(columns: string): ReadQuery };
@@ -39,7 +47,7 @@ const lower = (v: unknown): string | null => typeof v === "string" ? v.trim().to
 /** null = the approval may carry this send; otherwise the refusal code. Never throws. */
 export async function verifyLeadReplyApproval(
   admin: LeadReplyApprovalAdmin,
-  input: { tenantId: string; approvalId: string; contactId: string },
+  input: { tenantId: string; approvalId: string; contactId: string; operationId?: string },
 ): Promise<LeadReplyApprovalRefusal | null> {
   try {
     const tenantId = lower(input.tenantId), approvalId = lower(input.approvalId), contactId = lower(input.contactId);
@@ -60,6 +68,17 @@ export async function verifyLeadReplyApproval(
       || action.action_kind !== LEAD_REPLY_ACTION_KIND) return "LEAD_REPLY_APPROVAL_WRONG_KIND";
     if (lower(action.contact_id) !== contactId) return "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH";
     if (approval.contact_id !== null && approval.contact_id !== undefined && lower(approval.contact_id) !== contactId) return "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH";
+    // Any OTHER operation prepared for this approval that has not failed or been refused answers it.
+    // The operation being replayed/confirmed right now is itself, not "another send".
+    const operationId = lower(input.operationId);
+    const sends = await admin.from("messages")
+      .select("id,operation_id:meta->comms_email_binding->>operation_id,state:meta->comms_email_binding->>state")
+      .eq("tenant_id", tenantId).eq("meta->comms_email_binding->>approval_id", approvalId).limit(20);
+    if (sends.error || !Array.isArray(sends.data)) return "LEAD_REPLY_APPROVAL_UNAVAILABLE";
+    const live = (sends.data as unknown[]).map(object).filter((m): m is Record<string, unknown> => !!m
+      && lower(m.operation_id) !== operationId && !["failed", "refused"].includes(String(m.state ?? "")));
+    if (live.some((m) => m.state === "provider_accepted")) return "LEAD_REPLY_APPROVAL_ALREADY_SENT";
+    if (live.length > 0) return "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS";
     return null;
   } catch {
     return "LEAD_REPLY_APPROVAL_UNAVAILABLE";
@@ -74,6 +93,27 @@ export function storedApprovalMatches(storedArgs: unknown, requestApprovalId: st
   const stored = object(storedArgs)?.approval_id;
   if (requestApprovalId === undefined) return stored === undefined || stored === null;
   return typeof stored === "string" && stored.toLowerCase() === requestApprovalId.toLowerCase();
+}
+
+/**
+ * The binding the operation was PREPARED with (read_comms_email_send_binding) names the approval this
+ * request names. A binding with no approval, another approval, or an unreadable shape is a mismatch.
+ */
+export function bindingApprovalMatches(binding: unknown, requestApprovalId: string): boolean {
+  const stored = lower(object(binding)?.approval_id);
+  return !!stored && UUID.test(stored) && stored === requestApprovalId.toLowerCase();
+}
+
+/** prepare_comms_email_send's one-send-per-approval refusals (20271031000100), as the door's codes. */
+const PREPARE_APPROVAL_REFUSALS: [string, LeadReplyApprovalRefusal | "LEAD_REPLY_APPROVAL_INVALID"][] = [
+  ["COMMS_EMAIL_APPROVAL_SEND_IN_PROGRESS", "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS"],
+  ["COMMS_EMAIL_APPROVAL_ALREADY_SENT", "LEAD_REPLY_APPROVAL_ALREADY_SENT"],
+  ["COMMS_EMAIL_APPROVAL_NOT_PENDING", "LEAD_REPLY_APPROVAL_NOT_PENDING"],
+  ["COMMS_EMAIL_APPROVAL_INVALID", "LEAD_REPLY_APPROVAL_INVALID"],
+];
+export function leadReplyPrepareRefusal(error: unknown): string | null {
+  const message = String(object(error)?.message ?? "");
+  return PREPARE_APPROVAL_REFUSALS.find(([needle]) => message.includes(needle))?.[1] ?? null;
 }
 
 export type LeadReplyRecordStatus = "recorded" | "pending_record";

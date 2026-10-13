@@ -1,0 +1,12 @@
+{
+  "observed_at": "2026-10-13T20:37:04.556Z",
+  "origin": "https://app.paigeagent.ai",
+  "method": "GET",
+  "authenticated": false,
+  "html_status": 200,
+  "version_status": 200,
+  "build_id": "cd2f1fad4abb9875597680ca37cfb4029912b825-mv750364",
+  "exact_merge_prefix": true,
+  "customer_update": null,
+  "boundary": "public build readback only; no signed-in owner flow or weekly activation"
+}

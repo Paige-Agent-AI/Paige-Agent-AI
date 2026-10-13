@@ -75,6 +75,25 @@ conversational refusal; and each prompt persisted TWO user rows (the conversatio
 claim plus a legacy bare append). Both are corrected at the source; the historical duplicate
 rows in the test thread are left as they lie (no data repair).
 
+## Customer-visible validation (added 2026-10-13 per the Mandatory Customer-Visible Outcome Standard — appended, prior tests unchanged)
+
+After the three legs, the QA agent additionally records:
+
+1. **Persist/reload (verified receipt):** reload the conversation (or re-open the thread) and
+   confirm the briefing answer and the refusal are still present, rendered from the persisted
+   canonical turns — not frontend-only state.
+2. **Visible state truthfulness:** confirm the briefing's step chip showed running→finished,
+   the refusal rendered as a normal completed answer (no "Reached the limit" chip), and no
+   optimistic status appeared anywhere (nothing claimed completed that was not).
+3. **Navigation (known gap, record as such):** attempt to reach the departmental view a
+   briefing figure refers to (e.g. open Sales for a pipeline number). Record whether chat→UI
+   navigation exists — today it does NOT, and that absence is the classified E2-6 EXTEND gap
+   in the integration matrix (`docs/delivery/e2-customer-experience-integration-matrix.md`),
+   not a failure of this acceptance run.
+4. **Status vocabulary:** confirm the interface distinguished the read (a completed answer)
+   from a suggestion (recommendations are words, not proposed actions) and from the refused
+   action (no card, no "submitted" state anywhere).
+
 ## Known expected behaviors (so they are not misread as defects)
 
 **Post-merge P2 disposition.** #2110 merged at `138b8207dee5462c24773ceb95d9d088f8cb3736` with truthful raw-timestamp freshness wording. It did not establish the owner's required completed-UTC-day Sales reporting cutoff. #2107 therefore aligns the actual Sales activity windows and narrative, preserving current-state and neutral-domain reads; completed-day custom subsets disclose partial coverage. Do not accept point 5 by changing its criterion to current-day reporting. Source implementation, review, exact-head CI, deployment/readback and the genuine nine-point repeat remain separate.

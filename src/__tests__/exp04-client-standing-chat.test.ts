@@ -7,6 +7,7 @@ import {
   dispatchClientStandingChat,
   money,
   projectClientStanding,
+  rec,
   type EngagementCaller,
 } from '../../supabase/functions/_shared/client-engagement/chat';
 import { composeClientEngagementStatus, type ClientEngagementSource } from '../../supabase/functions/_shared/client-engagement/status';
@@ -150,6 +151,21 @@ describe('the projection holds up against what the records can contain', () => {
     expect(projectClientStanding(status)).toContain('(2 more invoices are not listed here)');
   });
 
+  it('drops bidirectional overrides and quote look-alikes, and never cuts a character in half', () => {
+    expect(rec('Acme\u202e"evil')).toBe(`"Acme'evil"`);
+    expect(rec('Ann \u201cThe Boss\u201d Lee')).toBe(`"Ann 'The Boss' Lee"`);
+    const long = 'a'.repeat(119) + '\u{1F600}' + 'b';
+    expect(rec(long)).toBe(`"${'a'.repeat(119)}\u{1F600}"`);
+  });
+
+  it('gives the reason a withheld total is withheld', () => {
+    const status = composeClientEngagementStatus(base());
+    status.truncated.invoices = true; status.money.contracted_minor = null; status.money.behind_schedule_minor = null;
+    const text = projectClientStanding(status);
+    expect(text).toContain('Agreed total: not added up: more invoices exist than one read returns');
+    expect(text).toContain('Behind the agreed schedule: not added up: more invoices exist than one read returns');
+  });
+
   it('formats an amount with no recorded currency as minor units, never as a guessed major amount', () => {
     expect(money(500, null)).toBe('500 (minor units; currency not recorded)');
   });
@@ -201,7 +217,10 @@ describe('get the client: lookup, disambiguation and refusals', () => {
     const { caller, calls } = fakeCaller({ find_clients_for_status: { data: { matches: [], more: false } } });
     const r = await dispatchClientStandingChat({ tenantId: TENANT }, caller, { client: 'Nobody' });
     expect(r).toMatchObject({ status: 'needs_input' });
-    expect(r.message).toContain('No client in this business matches "Nobody"');
+    expect(r.message).toContain('No client in this business matches the search');
+    // The owner's search text is record-like input: it travels quoted in the data, not in the instruction.
+    expect(r.message).not.toContain('Nobody');
+    expect(r.projection).toBe('CLIENTS MATCHING "Nobody": none');
     expect(calls).toHaveLength(1);
   });
 
@@ -236,7 +255,7 @@ describe('get the client: lookup, disambiguation and refusals', () => {
     const readRefused = await dispatchClientStandingChat({ tenantId: TENANT }, fakeCaller({ read_client_engagement_status: { error: { code: '42501', message: leak } } }).caller, { client_id: CLIENT });
     // The status read refuses an unknown or foreign client_id the same way; a guessed id is not "no authority".
     expect(readRefused.status).toBe('needs_input');
-    expect(readRefused.message).toContain('not a client this person can read');
+    expect(readRefused.message).toContain('either the client_id is not a client of this business, or this person may not read client status here');
     expect(JSON.stringify(readRefused)).not.toContain(leak);
     expect((await dispatchClientStandingChat({ tenantId: TENANT }, fakeCaller({ find_clients_for_status: { error: { code: '22023' } } }).caller, { client: 'Test' })).status).toBe('needs_input');
     expect((await dispatchClientStandingChat({ tenantId: TENANT }, fakeCaller({ find_clients_for_status: { error: { code: '57014' } } }).caller, { client: 'Test' })).status).toBe('unavailable');
@@ -264,6 +283,8 @@ describe('the business time zone: read and check, never save', () => {
     const r = await dispatchBusinessTimeZoneChat({ tenantId: TENANT }, caller, {}, now);
     expect(r.status).toBe('available');
     expect(r.projection).toContain('BUSINESS TIME ZONE: America/New_York');
+    // The saved time is given in the business zone, never as a bare UTC timestamp.
+    expect(r.projection).toContain('saved Oct 12, 2026, 4:00 PM EDT');
     expect(r.projection).toContain('can set it in Settings → Setup → Business profile → Business time zone');
     expect(calls).toEqual([{ name: 'read_business_time_zone', args: { _expected_tenant_id: TENANT } }]);
     // Only the one read; nothing that could write was called.

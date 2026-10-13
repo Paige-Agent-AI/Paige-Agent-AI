@@ -16831,6 +16831,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // run, a filed approval (review round 12). Any of these, a classifier write or a question card = the step ran.
       const STEP_CAPABLE_TOOLS = new Set(["growth_page_generate", "growth_funnel_generate", "deep_research", "draft_marketing_content", "propose_action", "ask_choices"]);
       let writeAttempts = 0;
+      // E4-S2 — admitted conversational reads that actually ran this turn (after every dispatch guard). A grounded
+      // read answer is the answer, even when the request was worded like an action ("get me Acme's payment status").
+      let admittedReadsRun = 0;
       // A write by the classifier (or a question card): what "the step was done" means. Kept separate from the
       // broad count above, which only decides whether the server may say nothing was saved (review round 11).
       let classifierWrites = 0;
@@ -17355,6 +17358,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             totalToolCalls += sumToolCost(executed);
             writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !(PLAIN_READ_TOOL.test(n) || NAMED_READ_TOOLS.has(n)); }).length;
+            admittedReadsRun += executed.filter((tc: any) => CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc?.function?.name ?? ""))).length;
             // A step-capable tool is the step only when it succeeded and, on an accepted act, is what was offered.
             classifierWrites += executed.filter((tc: any) => {
               const n = String(tc?.function?.name ?? "");
@@ -17483,7 +17487,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             && acceptedKind !== "prose" && finalChunks && lastRoundCompletedAnswer && !unfinishedRound && !liveRuntimeScope
             && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
             && writeAttempts === 0 && classifierWrites === 0 && queuedApprovals.length === 0
-            && confirmTrace.length === 0 && crmResultTrace.length === 0;
+            && confirmTrace.length === 0 && crmResultTrace.length === 0
+            // An answer grounded in an admitted read stands; one that also claims something was done is still refused.
+            && !(admittedReadsRun > 0 && !(typeof finalAssistantText === "string" && saysItWasDone(finalAssistantText)));
           if (conversationalActionUnavailable) {
             finalAssistantText = "Actions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run. I can help you plan the next step.";
             finalChunks = [

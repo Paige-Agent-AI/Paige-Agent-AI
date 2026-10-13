@@ -156,6 +156,32 @@ invoices not listed, the work-deadline note, and the no-workspace state. One min
 pre-existing and out of scope: `get_business_snapshot` still judges overdue receivables on the
 device zone, with UTC as fallback.
 
+**Independent re-review of the post-review source: SHIP (2026-10-13), head `42b51cc0`.** Scope:
+- the review fixes;
+- the migration renumbered from `20271027000100` to `20271029000100`, with an identical sha256;
+- the merge of main, including #2107.
+
+What it confirmed:
+- No later migration redefines a dependency.
+- The chat function differs from main only by this PR's additions.
+- The admitted set is exactly four names.
+- C0b and the INT-346 handler check pass.
+- The only `src/` consumer of the composer, `useClientEngagementStatus`, is unmounted and does not read `invoices[]`.
+
+It found one MAJOR defect, in #2107's code, and it is fixed in this PR:
+- **The defect.** #2107's no-effects guard replaced a finished, grounded answer with "Actions are unavailable…" whenever a request was worded like an action. "Get me Acme's payment status" is classified `act`, so the owner never saw the status. `get_business_snapshot` already had this problem on main.
+- **The fix.** The guard now stands down when an admitted conversational read actually ran this turn (after every dispatch guard) and the answer does not claim that anything was done. A read followed by a false completion claim is still fully refused.
+- **Proof.** `scripts/int346-conversational-handler-check.mjs` gained two scenarios. In both the read runs through the Spine seat check on the caller's own session. Reverting either half of the condition fails a scenario. The other INT-336/346 handler checks still pass.
+
+Of the 7 minor findings:
+- Fixed:
+  - the `client_id` refusal wording;
+  - the reasons on Agreed total and Behind;
+  - `set_at` shown in the business zone;
+  - `rec()` dropping bidirectional overrides and quote look-alikes and cutting by code point;
+  - the no-match query moved into the data.
+- Recorded: the `stale` result is defence in depth. In the mounted Setup the section is keyed by workspace, so an unmounted component's late result is simply dropped.
+
 **Authenticated acceptance.** PC-1 is superseded. Acceptance runs on the owner-designated SOLO
 customer account, by ordinary sign-in through the QA lane (flow
 `exp04-business-time-zone-acceptance`). Operator access is never customer authentication.

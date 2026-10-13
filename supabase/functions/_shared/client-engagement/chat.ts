@@ -61,7 +61,7 @@ const UNAVAILABLE = 'This could not be read right now. Say so plainly and do not
 function failure(error: { code?: string } | null, byId = false): EngagementChatResult {
   // The status read answers an unknown or foreign client_id with the same refusal it gives a person
   // without authority, so a guessed id must not be reported as the owner lacking authority.
-  if (error?.code === '42501' && byId) return { status: 'needs_input', message: 'That client_id is not a client this person can read in this business. Ask the owner which client they mean, by name or full email. Nothing was read.' };
+  if (error?.code === '42501' && byId) return { status: 'needs_input', message: 'That client could not be read: either the client_id is not a client of this business, or this person may not read client status here. Ask the owner which client they mean, by name or full email; if a name search is also refused, only the owner or an admin can read it. Nothing was read.' };
   if (error?.code === '42501') return { status: 'refused', message: REFUSED };
   if (error?.code === '22023') return { status: 'needs_input', message: 'That client search was not usable: give 2 to 120 characters of a name, business name or full email. Nothing was read.' };
   return { status: 'unavailable', message: UNAVAILABLE };
@@ -122,8 +122,13 @@ const PAYMENT_STATE: Record<string, string> = {
  * in a client's name must never be able to start a line that reads like a figure.
  */
 export function rec(v: string | null | undefined, empty = 'untitled'): string {
-  const flat = (v ?? '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ').replace(/"/g, "'").replace(/\s+/g, ' ').trim();
-  return `"${flat ? flat.slice(0, 120) : empty}"`;
+  // Control characters and line breaks become spaces; bidirectional overrides and zero-width marks are dropped so
+  // a name cannot visually re-order the line; every double-quote look-alike becomes ' so the quoting cannot be faked.
+  const flat = (v ?? '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ')
+    .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, '')
+    .replace(/["\u201c\u201d\u201e\u201f\u2033\u00ab\u00bb\uff02]/g, "'").replace(/\s+/g, ' ').trim();
+  // Cut by code point, never through the middle of a character.
+  return `"${flat ? Array.from(flat).slice(0, 120).join('') : empty}"`;
 }
 
 /** A timestamp in the business zone, or "not shown" when the zone is not set — never a bare UTC date. */
@@ -175,7 +180,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   }
 
   lines.push(`MONEY${cur ? ` (${cur.toUpperCase()})` : ''}:`);
-  lines.push(`  Agreed total: ${money(m.contracted_minor, cur, m.mixed_currency ? totalsReason : 'not known (no finite current schedule)')}`);
+  lines.push(`  Agreed total: ${money(m.contracted_minor, cur, m.mixed_currency || s.truncated.invoices ? totalsReason : 'not known (no finite current schedule)')}`);
   lines.push(`  Due to date under the schedule: ${zoneSet ? money(m.due_to_date_minor, cur) : held}`);
   lines.push(`  Invoiced: ${money(m.invoiced_minor, cur, totalsReason)}`);
   lines.push(`  Paid and VERIFIED by the payment provider: ${money(m.received.verified_minor, cur, totalsReason)}`);
@@ -183,7 +188,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   lines.push(`  Test-environment payments (never real money, excluded from every total): ${money(m.received.test_environment_minor, cur, totalsReason)}`);
   lines.push(`  Outstanding (invoiced, not yet received): ${money(m.outstanding_minor, cur, totalsReason)}`);
   lines.push(`  Overdue: ${zoneSet ? money(m.overdue_minor, cur, totalsReason) : held}`);
-  lines.push(`  Behind the agreed schedule: ${!zoneSet ? held : m.behind_schedule_minor === null ? 'not known'
+  lines.push(`  Behind the agreed schedule: ${!zoneSet ? held : m.behind_schedule_minor === null ? (m.mixed_currency || s.truncated.invoices ? totalsReason : 'not known')
     : m.behind_schedule_minor > 0 ? money(m.behind_schedule_minor, cur)
     : m.behind_schedule_minor < 0 ? `no — ahead of the schedule by ${money(-m.behind_schedule_minor, cur)}` : 'no — exactly on schedule'}`);
   lines.push(`  Agreed but not yet invoiced: ${money(m.not_yet_invoiced_minor, cur)}`);
@@ -237,7 +242,7 @@ export async function dispatchClientStandingChat(ctx: EngagementChatContext, cal
     const exact = matches.filter((c) => c.exact);
     const pick = exact.length === 1 ? exact[0] : matches.length === 1 && !env!.more ? matches[0] : null;
     if (!pick) {
-      if (!matches.length) return { status: 'needs_input', message: `No client in this business matches ${rec(name)}. Ask the owner to check the name or give a full email. Nothing else was read.` };
+      if (!matches.length) return { status: 'needs_input', message: 'No client in this business matches the search. Ask the owner to check the name or give a full email. Nothing else was read.', projection: `CLIENTS MATCHING ${rec(name)}: none` };
       const list = matches.map((c) => `  ${rec(c.name, 'Unnamed client')}${c.status ? ` (${rec(c.status)})` : ''} — client_id ${c.id}`).join('\n');
       // Client names are record text: they go in the data, never in the instruction.
       return { status: 'needs_input',
@@ -282,7 +287,7 @@ export async function dispatchBusinessTimeZoneChat(ctx: EngagementChatContext, c
   const zone = typeof z!.zone === 'string' ? z!.zone : null;
   const canSet = z!.can_set === true;
   const lines = [state === 'configured'
-    ? `BUSINESS TIME ZONE: ${zone} (saved ${z!.set_at ?? 'at an unrecorded time'}; today there is ${z!.local_date}). Payment due dates are judged on this calendar.`
+    ? `BUSINESS TIME ZONE: ${zone} (saved ${(typeof z!.set_at === 'string' && zone ? at(z!.set_at, zone) : null) ?? 'at an unrecorded time'}; today there is ${z!.local_date}). Payment due dates are judged on this calendar.`
     : state === 'missing'
       ? 'BUSINESS TIME ZONE: NOT SET. Due, upcoming and overdue payment judgements are on hold until the owner sets it.'
       : 'BUSINESS TIME ZONE: the saved value is not recognised, so due and overdue judgements are on hold until the owner sets it again.'];

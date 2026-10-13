@@ -15,6 +15,15 @@ export function isFormOnBusinessSite(): boolean {
   return isEmbedded() || new URLSearchParams(window.location.search).get("embed") === "1";
 }
 
+/** A form's own page, for a visitor whose frame can't send it: this address and its campaign tags, without the
+ *  embedded presentation. */
+export function formPageHref(href: string): string {
+  const page = new URL(href);
+  page.searchParams.delete("embed");
+  page.searchParams.delete("theme");
+  return page.href;
+}
+
 /**
  * The theme a form framed on a business's website is drawn in: what the embed code asked for (`data-theme` →
  * `?theme=`), light by default so a business's page never gets a dark box it didn't choose; "auto" follows the

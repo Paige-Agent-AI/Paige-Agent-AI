@@ -42,7 +42,7 @@ const FORM = {
 };
 
 // The exact code Studio hands the owner (src/solo/studio/EmbedCode.tsx embedSnippet), with the loader on the app's origin.
-const snippet = (extra = "") => `<script src="${APP}/embed.js" data-form="${FORM_ID}" data-title="Spring consult request"${extra} async></script>`;
+const snippet = (extra = "") => `<script src="${APP}/embed.js" data-form="${FORM_ID}" data-title="Spring consult request" data-cfasync="false"${extra} async></script>`;
 const site = (body) => `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Acme Advisory</title>
 <style>body{margin:0;font:16px/1.5 Georgia,serif;background:#f4efe6;color:#2b2118}main{max-width:720px;margin:0 auto;padding:32px 16px}h1{font-size:28px;margin:0 0 8px}</style></head>
 <body><main><h1>Acme Advisory</h1><p>Spring consults are open. Tell us a little about you.</p><a id="before" href="#">Our services</a>${body}<p id="after">We reply within a day.</p></main></body></html>`;

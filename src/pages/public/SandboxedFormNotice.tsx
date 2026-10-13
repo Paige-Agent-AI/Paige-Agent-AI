@@ -4,14 +4,7 @@
 // visitor has typed everything, the visitor gets the form's own page. Rendered by src/main.tsx with no providers,
 // because every provider reads storage.
 import { Button } from "@/components/ui/button";
-
-/** The form's own page: this address and its campaign tags, without the embedded presentation. */
-export function formPageHref(href: string): string {
-  const page = new URL(href);
-  page.searchParams.delete("embed");
-  page.searchParams.delete("theme");
-  return page.href;
-}
+import { formPageHref } from "@/hooks/useEmbedHeight";
 
 export function SandboxedFormNotice() {
   return (

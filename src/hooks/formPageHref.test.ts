@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formPageHref } from "./SandboxedFormNotice";
+import { formPageHref } from "@/hooks/useEmbedHeight";
 
 describe("formPageHref", () => {
   it("is the form's own page, keeping the visit's campaign tags and dropping the embedded presentation", () => {

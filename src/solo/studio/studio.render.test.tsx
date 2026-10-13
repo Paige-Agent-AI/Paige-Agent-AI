@@ -227,7 +227,7 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).toContain(`${window.location.origin}/form/f-1`);
     // Experience 03: the live form's embed code, the same loader the booking calendar uses.
     expect(text()).toContain("Put it on your website");
-    expect(host.querySelector(".vs-code")?.textContent).toBe(`<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="New client intake" async></script>`);
+    expect(host.querySelector(".vs-code")?.textContent).toBe(`<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="New client intake" data-cfasync="false" async></script>`);
   });
 
   it("while the server checks, Publish waits and says so", async () => {

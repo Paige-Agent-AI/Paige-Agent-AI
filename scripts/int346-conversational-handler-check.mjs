@@ -253,7 +253,7 @@ for (const stopReason of ['max_tokens', 'refusal', 'pause_turn', null]) {
   assert.ok(!limitedWire.includes('Actions are unavailable in this conversation'), `${stopReason}: do not replace the actual provider termination`);
   assert.ok(limitedWire.includes('Answered in words.'), `${stopReason}: preserve actual provider text`);
   assert.equal(rec.rpc.find(c => c.name === 'paige_chat_interactive_settle').args.p_bundle_ref.turn_state.state,
-    stopReason === 'max_tokens' ? 'LIMIT_REACHED' : stopReason === 'refusal' ? 'REFUSED' : 'INTERRUPTED', `${stopReason}: truthful non-success terminal`);
+    stopReason === 'max_tokens' ? 'LIMIT_REACHED' : 'INTERRUPTED', `${stopReason}: truthful non-success terminal without misusing the client-only REFUSED cause`);
   assert.equal(rec.rpc.filter(c => c.name === 'plan_create').length, 0);
 }
 routeIntent = 'answer'; modelStopReason = 'end_turn';
@@ -286,6 +286,14 @@ receipts.length = 0; modelCalls = 0;
 rec = scenario();
 const politeDraft = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Please draft a follow-up message in words.' }] }, id(35)));
 assert.ok((await politeDraft.text()).includes(modelReply), 'courtesy prefix must preserve supported draft prose');
+receipts.length = 0; modelCalls = 0; routeIntent = 'act';
+rec = scenario();
+const misclassifiedDraft = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Draft a follow-up message in words.' }] }, id(37)));
+assert.ok((await misclassifiedDraft.text()).includes(modelReply), 'advisory act classification must not erase a known pure-prose draft');
+routeIntent = 'answer'; modelReply = 'Answered in words.'; receipts.length = 0; modelCalls = 0;
+rec = scenario();
+const knownAct = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(38)));
+assert.ok((await knownAct.text()).includes('Actions are unavailable in this conversation'), 'a known unavailable act must be refused without depending on advisory classification or completion words');
 receipts.length = 0; modelCalls = 0; modelReply = 'Done. I’ve created the task.';
 rec = scenario();
 const unknownKind = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Could you take care of that?' }] }, id(36)));

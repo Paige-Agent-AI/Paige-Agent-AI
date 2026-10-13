@@ -17438,20 +17438,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // work to force through C1. Only a finished conversational action request with
           // no business write/card/result can use this answer; interrupted/failed rounds
           // and active effectful turns retain their existing truthful terminal behavior.
-          // The classifier is advisory. A model claim that an imperative act happened
-          // cannot defeat the authoritative no-effects mode by classifying as answer.
+          // The classifier is advisory: neither a known prose edit nor an explicit
+          // platform step changes kind just because that label is wrong.
           // Use the existing step-kind contract for the fallback as well: composing
           // prose may quote an action without requesting a platform action. This only
           // governs the no-effects reply; it never grants a capability or authority.
           const latestRequest = [...aiMessages].reverse().find((m: any) => m?.role === "user")?.content;
           const requestedKind = typeof latestRequest === "string"
             ? offerKind(`Would you like me to ${latestRequest.trim().replace(/^please\s+/i, "")}`) : "unknown";
-          const conversationalAct = turnRoute.intent === "act"
-            || (requestedKind === "act" && saysItWasDone(finalAssistantText));
+          const conversationalAct = requestedKind === "act"
+            || (turnRoute.intent === "act" && requestedKind !== "prose");
           if (interactiveConversational && (turnRoute.intent === "act" || isActionIntent || requestedKind === "act") && !lastRoundCompletedAnswer
               && !liveRuntimeScope && !forcedTermination && !studioSessionId) {
             if (lastRoundAnswerEnd === "limited") turnTracker.budgetStop();
-            else if (lastRoundAnswerEnd === "refused") turnTracker.refused();
+            // REFUSED's v1 UI copy names the sole client-scope refusal. A native
+            // provider refusal cannot finish this normal answer, but is not that
+            // client-access cause: retain its actual prose/provenance and the
+            // existing non-success interrupted state rather than misnaming it.
             else turnTracker.interrupted();
           }
           const conversationalActionUnavailable = interactiveConversational && conversationalAct

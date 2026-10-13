@@ -335,3 +335,32 @@ describe("index.ts wiring", () => {
     assert.ok(cleared > 0 && read > cleared);
   });
 });
+
+describe("the drafted subject fits the governed email door (verifier minor 7)", () => {
+  // parseCommsEmailCommand refuses a subject longer than COMMS_EMAIL_SUBJECT_MAX (200): a longer
+  // drafted subject would be a draft the owner approves and the door then refuses.
+  it("an over-long subject is cut to at most 200 characters, at a word, and the door would accept it", async () => {
+    const { COMMS_EMAIL_SUBJECT_MAX, parseCommsEmailCommand } = await import("../_shared/comms-email/contract.ts");
+    const long = Array.from({ length: 60 }, (_, i) => `word${i}`).join(" ");
+    assert.ok(long.length > COMMS_EMAIL_SUBJECT_MAX);
+    const d = shapeEmailDraft({ ok: true, draft: { subject: long, body_text: "Body" } })!;
+    assert.ok(d.subject.length <= COMMS_EMAIL_SUBJECT_MAX, String(d.subject.length));
+    assert.ok(long.startsWith(d.subject));
+    assert.ok(/word\d+$/.test(d.subject), d.subject); // ends on a whole word
+    assert.doesNotThrow(() => parseCommsEmailCommand({
+      action: "comms.email_send", contact_id: "30000000-0000-4000-8000-000000000001", connector_id: null, subject: d.subject, body: d.body,
+    }));
+  });
+
+  it("a cut never leaves half of a surrogate pair, and a NUL never reaches the subject", () => {
+    const d = shapeEmailDraft({ subject: "x".repeat(199) + "\u{1F600}" + "y".repeat(10), body: "Body" })!;
+    assert.ok(d.subject.length <= 200);
+    assert.equal(/[\uD800-\uDBFF]$/.test(d.subject), false);
+    assert.equal(shapeEmailDraft({ subject: "Hi\u0000there", body: "Body" })!.subject, "Hi there");
+  });
+
+  it("a subject at exactly the limit is kept whole", () => {
+    const s = "a".repeat(200);
+    assert.equal(shapeEmailDraft({ subject: s, body: "Body" })!.subject, s);
+  });
+});

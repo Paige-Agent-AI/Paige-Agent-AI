@@ -651,3 +651,54 @@ test("labelledAnswers (the helper the step reuses) still drops identity numbers 
   assert.match(processor, /const SENSITIVE_FIELD_TYPES = new Set\(\["ssn4"\]\);/);
   assert.match(processor, /if \(SENSITIVE_FIELD_TYPES\.has\(f\.type\)\) continue;/);
 });
+
+// ── Verifier MAJOR-3: the drafter counts senders with the email door's provider list. ──
+// comms-email-command resolves parties with emailProvidersFor({ sendgridConfigured: !!SENDGRID_MAIL_SEND_API_KEY }),
+// which admits a PAIGE Email (SendGrid) connector. A drafter that used the default list skipped a
+// SendGrid-only business as no_email_sender, and counted one sender where the door counts two.
+const SG_K = "70000000-0000-4000-8000-0000000000a5";
+const sgSender = (over: Row = {}) => sender({ id: SG_K, provider: "sendgrid", from_address: "hello@own.test", ...over });
+const sgVerified = (): Row => ({ tenant_id: T, domain: "own.test", sendgrid_status: "verified", sendgrid_domain_id: "sg-domain-1", sendgrid_verified_at: "2027-10-01T00:00:00.000Z" });
+
+test("a business whose only sender is PAIGE Email (SendGrid, verified) gets a reply draft", async () => {
+  const tables = ready({ channel_connectors: [sgSender()], tenant_email_domains: [sgVerified()] });
+  const h = db(tables, { rpc: filedOk });
+  const out = await fileLeadReply(h.admin, input(), deps({ env: { SENDGRID_MAIL_SEND_API_KEY: "set" } }));
+  assert.equal(out.status, "done");
+  assert.equal(out.result.action_id, "80000000-0000-4000-8000-000000000001");
+  assert.equal(h.rpcs.filter((r) => r.fn === "file_action").length, 1);
+  assert.equal(skippedReason(h, tables), null);
+});
+
+test("a SendGrid-only business whose domain is NOT verified drafts nothing — the door would refuse the send", async () => {
+  const tables = ready({ channel_connectors: [sgSender()], tenant_email_domains: [{ ...sgVerified(), sendgrid_status: "pending" }] });
+  const h = db(tables, { rpc: filedOk });
+  const out = await fileLeadReply(h.admin, input(), deps({ env: { SENDGRID_MAIL_SEND_API_KEY: "set" } }));
+  assert.deepEqual(out.result, { note: "lead_reply_not_drafted", reason: "email_sender_not_ready:SENDER_VERIFICATION_MISSING" });
+  assert.equal(h.rpcs.length, 0);
+});
+
+test("Resend + SendGrid: the drafter counts the SAME two senders the door counts, so no unsendable draft is filed", async () => {
+  const { resolveCommsEmailParties, emailProvidersFor } = await import("../_shared/comms-email/readiness.ts");
+  const tables = ready({ channel_connectors: [sender(), sgSender()], tenant_email_domains: [sgVerified()] });
+  const env = { RESEND_API_KEY: "set", SENDGRID_MAIL_SEND_API_KEY: "set" };
+  // The door's own call (comms-email-command/index.ts: emailProvidersFor over the key's presence).
+  const door = await resolveCommsEmailParties(db(tables).admin as never, { tenantId: T, contactId: C, connectorId: null },
+    emailProvidersFor({ sendgridConfigured: !!env.SENDGRID_MAIL_SEND_API_KEY }));
+  assert.equal(door.kind, "sender_choice_required");
+  const h = db(tables, { rpc: filedOk });
+  const out = await fileLeadReply(h.admin, input(), deps({ env }));
+  assert.deepEqual(out.result, { note: "lead_reply_not_drafted", reason: "several_email_senders", sender_count: (door as { senders: unknown[] }).senders.length });
+  assert.equal(h.rpcs.length, 0);
+});
+
+test("the drafter hands the door's provider list to the resolver (including sendgrid)", async () => {
+  const tables = ready();
+  const h = db(tables, { rpc: filedOk });
+  const seen: (readonly string[])[] = [];
+  const { resolveCommsEmailParties } = await import("../_shared/comms-email/readiness.ts");
+  await fileLeadReply(h.admin, input(), { ...deps(), resolveParties: (a, i, p) => { seen.push(p); return resolveCommsEmailParties(a, i, p); } });
+  assert.equal(seen.length, 1);
+  assert.ok(seen[0].includes("sendgrid"));
+  assert.ok(seen[0].includes("resend"));
+});

@@ -1276,6 +1276,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:execute-approval
 
+      - name: Lead reply composer prompt (submission quoted as untrusted data, never instructions)
+        if: ${{ !cancelled() }}
+        run: npm run test:email-composer-prompt
+
+      - name: Governed email door binds a lead reply approval to one send (verified PAIGE Email sender only)
+        if: ${{ !cancelled() }}
+        run: npm run test:comms-lead-reply-approval
+
+      - name: SendGrid webhook door (signed events only, acceptance is never delivery)
+        if: ${{ !cancelled() }}
+        run: npm run test:sendgrid-webhook
+
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real
     # `_shared/ssrfGuard.ts`, whose `SsrfError` uses a TS parameter property that needs

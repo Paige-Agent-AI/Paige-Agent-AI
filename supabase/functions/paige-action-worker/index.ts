@@ -24,9 +24,10 @@
 // reopens a >10-min stale claim). One action failing never aborts the batch — each is independent.
 // owner.lead_followup (a reply to a website-form lead) is the one kind whose draft is shaped: the
 // visitor's answers reach the composer as untrusted data, the stored draft is the email contract
-// {channel:'email', subject, body (plain text), body_html, raw} with no recipient in it, and a filing
-// with no intent or a result with no usable subject + body is failed with the reason. Every other
-// kind is drafted exactly as before. See draft.ts.
+// {channel:'email', subject (one line, at most the door's 200 characters), body (plain text
+// only — the model's HTML is never stored; the door builds the sent HTML from the owner's text), raw}
+// with no recipient in it, and a filing with no intent or a result with no usable subject + body is
+// failed with the reason. Every other kind is drafted exactly as before. See draft.ts.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";

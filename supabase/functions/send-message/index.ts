@@ -95,6 +95,8 @@ interface SendBody {
 // ── INT-328 comms.email_send helpers. Every one is used ONLY on the comms_email path. ──
 const COMMS_EMAIL_PROVIDER_TIMEOUT_MS = 20_000;
 const COMMS_EMAIL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Refusal code for any SendGrid send that is not the governed email door's dispatch (security H2).
+const PAIGE_EMAIL_DOOR_REQUIRED = "paige_email_requires_governed_send";
 interface CommsEmailBinding {
   operation_id: string; tenant_id: string; contact_id: string; connector_id: string;
   recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp" | "sendgrid";
@@ -1014,6 +1016,22 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "forbidden_cross_tenant_connector" }), {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+  // Experience 03 (security H2): PAIGE Email (SendGrid) sends ONLY as the governed email door's
+  // dispatch. The SendGrid arm uses the PLATFORM Mail Send key, and SendGrid authenticates a domain for
+  // the whole shared account, not per business — so the provider would accept any From this account
+  // has verified. The door's prepare + read_comms_email_send_binding (20271031000100) are what bind a
+  // SendGrid From to a domain THIS business verified (_comms_email_sendgrid_sender_verified, carried
+  // to this request as the binding's `eligible`, checked below before any claim). commsBinding is set
+  // only for a service-role request naming a prepared comms_email operation whose stored binding
+  // matched it field for field; every other request (a user's generic send, a scheduled release, an
+  // invoice, a marketing send) with a SendGrid connector is refused here, before any provider call.
+  if (connectorRow?.provider === "sendgrid" && !commsBinding) {
+    if (isInternal && draftRow?.status === "queued") return await terminalizeScheduledRelease(PAIGE_EMAIL_DOOR_REQUIRED);
+    return new Response(JSON.stringify({
+      status: "failed", outcome: "refused", error: PAIGE_EMAIL_DOOR_REQUIRED,
+      reason: "This sender only sends replies reviewed and approved in Paige.",
+    }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
   // INT-328: the approved sender is the prepared one. A connector whose address or provider moved
   // after approval is a different sender — refuse rather than send as someone else.

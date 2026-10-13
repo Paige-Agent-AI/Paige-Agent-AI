@@ -73,7 +73,7 @@
 // reader and the pre-send check, so node --test and Deno both load this module.
 
 import {
-  readCommsEmailReadiness, resolveCommsEmailParties,
+  emailProvidersFor, readCommsEmailReadiness, resolveCommsEmailParties,
   type CommsEmailAdmin, type CommsEmailParties, type CommsEmailPreSendCheck, type CommsEmailReadiness,
 } from "../_shared/comms-email/readiness.ts";
 
@@ -253,7 +253,7 @@ export type LeadReplyDeps = {
   env: (key: string) => string | undefined;
   /** The recipient pre-send check (_shared/pre-send-pipeline.ts runPreSend), injected. */
   preSendCheck: CommsEmailPreSendCheck;
-  resolveParties?: (admin: CommsEmailAdmin, input: { tenantId: string; contactId: string; connectorId: string | null }) => Promise<CommsEmailParties>;
+  resolveParties?: (admin: CommsEmailAdmin, input: { tenantId: string; contactId: string; connectorId: string | null }, providers: readonly string[]) => Promise<CommsEmailParties>;
 };
 
 /** File one reply draft for this lead, or report — and record — why not. */
@@ -295,9 +295,13 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
 
   // 2. Who would it go to, and from whom? Recipient = the contact's primary email; sender = the
   //    business's ONLY active email connector. Resolved server-side, never from form or model text.
+  //    The sender list is the email door's own (comms-email-command: emailProvidersFor over the PRESENCE
+  //    of the platform Mail Send key), so a business whose only sender is PAIGE Email (SendGrid) gets a
+  //    draft, and a business with two senders is counted the same here as at the door.
+  const providers = emailProvidersFor({ sendgridConfigured: !!deps.env("SENDGRID_MAIL_SEND_API_KEY") });
   let parties: CommsEmailParties;
   try {
-    parties = await resolveParties(admin, { tenantId: input.tenantId, contactId: input.contactId, connectorId: null });
+    parties = await resolveParties(admin, { tenantId: input.tenantId, contactId: input.contactId, connectorId: null }, providers);
   } catch {
     return notDrafted("email_readiness_unreadable");
   }

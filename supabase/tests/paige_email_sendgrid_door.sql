@@ -206,6 +206,7 @@ RESET ROLE;
 -- ── 5b. one live send per drafted reply (the binding carries the approval) ────────────────────
 -- The reply-specific cases (in-progress, already-sent, replay mismatch, contact, kind, cited send) are
 -- driven with real reply approvals in exp03_lead_reply_draft.sql §4a; here, the door's own shape.
+SET LOCAL ROLE service_role;
 SELECT pg_temp.ok(57, (SELECT i.indisunique AND pg_get_indexdef(i.indexrelid) LIKE '%lower((meta #>> ''{comms_email_binding,approval_id}''::text[]))%'
    AND pg_get_expr(i.indpred,i.indrelid) LIKE '%failed%' AND pg_get_expr(i.indpred,i.indrelid) LIKE '%refused%'
    FROM pg_index i WHERE i.indexrelid='public.messages_comms_email_approval_live'::regclass),

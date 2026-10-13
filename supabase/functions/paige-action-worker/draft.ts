@@ -32,6 +32,8 @@
 //
 // Pure TypeScript with erasable syntax only, so node --test, vitest and deno test can all load it.
 
+import { COMMS_EMAIL_SUBJECT_MAX } from "../_shared/comms-email/contract.ts";
+
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? v as Obj : {});
 const str = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
@@ -166,9 +168,20 @@ export function shapeEmailDraft(result: unknown): EmailDraft | null {
   return { channel: "email", subject, body: text, raw };
 }
 
-/** A subject is one line of text: markup removed, line breaks collapsed. */
+/**
+ * A subject is one line of text: markup removed, line breaks and NULs collapsed, and no longer than
+ * the governed email door accepts (COMMS_EMAIL_SUBJECT_MAX, contract.ts) — a longer one would be a
+ * draft the owner approves and the door then refuses. Cut at a word when one is near, never inside a
+ * surrogate pair (a lone half is not storable text).
+ */
 function oneLineSubject(s: string): string {
-  return (looksLikeHtml(s) ? htmlToText(s) : s).replace(/\s+/g, " ").trim();
+  const line = (looksLikeHtml(s) ? htmlToText(s) : s).replace(/[\s\u0000]+/g, " ").trim();
+  if (line.length <= COMMS_EMAIL_SUBJECT_MAX) return line;
+  let cut = line.slice(0, COMMS_EMAIL_SUBJECT_MAX);
+  const space = cut.lastIndexOf(" ");
+  if (space >= COMMS_EMAIL_SUBJECT_MAX - 40) cut = cut.slice(0, space);
+  if (/[\uD800-\uDBFF]$/.test(cut)) cut = cut.slice(0, -1);
+  return cut.trimEnd();
 }
 
 export interface DraftDeps {

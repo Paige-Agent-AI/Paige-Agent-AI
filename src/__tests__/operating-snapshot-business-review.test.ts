@@ -17,6 +17,7 @@ import {
   pushSalesHeadline,
   SALES_WINDOW_CLOCK_MARGIN_MS,
   salesMetricWindow,
+  salesReportingPeriod,
   type SalesMetric,
 } from '../../supabase/functions/_shared/paige-context/adapters/sales-metric.ts';
 import {
@@ -207,6 +208,74 @@ describe('salesMetricWindow', () => {
 
 // ── payments adapter ─────────────────────────────────────────────────────────────────────────────────
 
+describe('Sales completed-day reporting cutoff', () => {
+  it('excludes current-day timestamps and discloses the actual cutoff without moving current snapshots', async () => {
+    const dates = ['2026-10-11T23:50:00Z', '2026-10-12T11:55:00Z'].map(Date.parse);
+    const f = fakeCaller({ script: (a) => a.p_metric_key === 'sales.opportunities.created'
+      ? { values: count(dates.filter(t => t >= Date.parse(a.p_range_start) && t < Date.parse(a.p_range_end)).length) }
+      : defaultScript(a) });
+    const s = data(await createSalesPipelineSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    const created = s.headline.find(m => m.key === 'sales_pipeline.opportunities_created');
+    expect(created?.value).toBe(1);
+    expect(created?.window_note).toMatch(/last completed UTC day/);
+    expect(created?.window_note).toContain('2026-10-12T00:00:00.000Z');
+    const reads = f.issued();
+    expect(reads[0].p_range_start).toBe('2026-10-05T00:00:00.000Z');
+    expect(reads[0].p_range_end).toBe('2026-10-12T00:00:00.000Z');
+    expect(reads[2].p_range_end).toBe(new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString());
+    expect(s.headline.find(m => m.key === 'sales_pipeline.opportunities_open')?.basis).toBe('point_in_time');
+  });
+
+  it('compares adjacent equal-length completed-day cohorts for receipts and leaves balances current', async () => {
+    const f = fakeCaller();
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    const [current, prior, balance] = f.issued();
+    expect(current.p_range_end).toBe('2026-10-12T00:00:00.000Z');
+    expect(prior.p_range_end).toBe(current.p_range_start);
+    expect(Date.parse(current.p_range_end) - Date.parse(current.p_range_start))
+      .toBe(Date.parse(prior.p_range_end) - Date.parse(prior.p_range_start));
+    expect(balance.p_range_end).toBe(new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString());
+    expect(s.headline.find(m => m.key.startsWith('payments.cash_recorded_received'))?.window_note).toMatch(/last completed UTC day/);
+  });
+
+  it('discloses the completed-day subset of an explicit historical midday interval', async () => {
+    const requested = period('custom', { customStart: '2026-09-01T12:00:00Z', customEnd: '2026-09-03T12:00:00Z' });
+    const f = fakeCaller();
+    const s = data(await createSalesPipelineSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx(requested)));
+    expect(f.issued()[0].p_range_start).toBe('2026-09-02T00:00:00.000Z');
+    expect(f.issued()[0].p_range_end).toBe('2026-09-03T00:00:00.000Z');
+    const note = s.headline.find(m => m.key === 'sales_pipeline.opportunities_created')?.window_note;
+    expect(note).toContain(requested.start);
+    expect(note).toContain(requested.end);
+    expect(note).toMatch(/partial UTC days.*excluded/i);
+    expect(s.coverage).toBe('partial');
+    expect(s.coverage_note).toMatch(/partial UTC days.*excluded/i);
+    expect(validateDomainSnapshot(s, { domain: 'sales_pipeline', period: requested, notAfter: NOW }).ok).toBe(true);
+    expect(f.issued()[1].p_range_end).toBe(f.issued()[0].p_range_start);
+  });
+
+  it('reports a period with no completed day as unavailable, keeps current figures and preserves neutral windows', async () => {
+    const requested = period('today');
+    const f = fakeCaller();
+    const s = data(await createSalesPipelineSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx(requested)));
+    expect(f.issued().map(a => a.p_metric_key)).toEqual(['sales.opportunities.open_current', 'sales.pipeline.open_value']);
+    expect(s.headline.some(m => m.key === 'sales_pipeline.opportunities_created')).toBe(false);
+    expect(s.coverage).toBe('partial');
+    expect(s.coverage_note).toMatch(/new opportunities.*could not|could not.*new opportunities/i);
+    // The neutral Clients/Operations helper must continue to use its requested timestamp window.
+    expect(salesMetricWindow(period(), NOW)?.range_end).toBe(new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString());
+  });
+
+  it('holds the completed-day read at clock-margin midnight and releases the exact next cutoff afterward', () => {
+    expect(salesReportingPeriod(period(), new Date('2026-10-13T00:00:01Z'))).toBeNull();
+    const next = salesReportingPeriod(period(), new Date('2026-10-13T00:00:03Z'));
+    expect(next?.period.start).toBe('2026-10-06T00:00:00.000Z');
+    expect(next?.period.end).toBe('2026-10-13T00:00:00.000Z');
+    expect(next?.windowNote).toMatch(/last completed UTC day 2026-10-12/);
+    expect(next?.windowNote.length).toBeLessThanOrEqual(300);
+  });
+});
+
 describe('payments adapter', () => {
   it('keeps every currency separate, upper-cases codes, and never sums them', async () => {
     const f = fakeCaller({ script: (a) => a.p_metric_key === 'sales.cash.recorded_received' && !isPrevious(a)
@@ -231,8 +300,8 @@ describe('payments adapter', () => {
       'sales.cash.recorded_received', 'sales.cash.recorded_received',
       'sales.receivables.outstanding_current', 'sales.receivables.overdue_current',
     ]);
-    // the second read is the previous window, ending where the period starts
-    expect(f.issued()[1].p_range_end).toBe(period().start);
+    // Sales comparisons end at the effective completed-day reporting start.
+    expect(f.issued()[1].p_range_end).toBe(f.issued()[0].p_range_start);
   });
 
   it.each([1, 2, 3])('stops before the next read when aborted after read %i', async (k) => {
@@ -556,15 +625,17 @@ describe('composeBusinessReview', () => {
     expect(r.projection).not.toContain('USD 999.00');
   }, 3000);
 
-  it('an end after now is read up to just before now, with the note carried on the in-period figure', async () => {
+  it('discloses the Sales completed-day cutoff while other reads retain their requested current window', async () => {
     const f = fakeCaller();
     const r = await review(f, { timezone: 'UTC', period: 'custom', customStart: '2026-10-10T00:00:00Z', customEnd: '2026-10-12T12:00:30Z' });
     if (!('snapshot' in r)) throw new Error(r.reason);
     const current = f.issued().filter((a) => a.p_range_start === '2026-10-10T00:00:00.000Z');
     expect(current.length).toBeGreaterThan(0);
-    expect(current.every((a) => a.p_range_end === new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString())).toBe(true);
+    const salesActivity = current.filter(a => ['sales.opportunities.created', 'sales.cash.recorded_received'].includes(a.p_metric_key));
+    expect(salesActivity.every(a => a.p_range_end === '2026-10-12T00:00:00.000Z')).toBe(true);
+    expect(current.filter(a => !salesActivity.includes(a)).every(a => a.p_range_end === new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString())).toBe(true);
     const created = data(r.snapshot.domains.sales_pipeline).headline.find((m) => m.key === 'sales_pipeline.opportunities_created');
-    expect(created?.window_note).toMatch(/up to just now/);
+    expect(created?.window_note).toMatch(/last completed UTC day 2026-10-11/);
   });
 
   it('no workspace: every domain says so, and nothing is called', async () => {

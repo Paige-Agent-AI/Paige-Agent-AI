@@ -74,7 +74,9 @@ describe("E2-3a briefing narrative contract", () => {
     const d = BUSINESS_SNAPSHOT_TOOLS[0].function.description;
     const r = await dispatch({});
     for (const text of [d, r.message]) {
-      expect(text).toMatch(/When presenting Sales evidence, explicitly state.*last completed UTC day/);
+      expect(text).toMatch(/When presenting Sales in-period evidence, explicitly state.*last completed UTC day/);
+      expect(text).toMatch(/actual exclusive reporting cutoff given in its window note/);
+      expect(text).toMatch(/historical or custom reporting.*actual cutoff date.*completed-day subset/);
       expect(text).toMatch(/current receivables balances.*as of now/);
       expect(text).toMatch(/period headline.*does not replace.*cutoff/);
     }

@@ -38,7 +38,7 @@ Canonical operational mappings: publicName, industry, offers, deliveryModel, ide
 7. Durable job/event: none; progress lives on the existing transcript. No second store, engine or registry.
 8. Evidence: canonical returned Setup brief/revision and fresh SQL readback. This is Setup persistence, not a PAIGE action receipt or Rail outcome.
 9. Surface: existing `settings.setup` ledger remains PROOF_OWED; new private interview projection is expressly scoped away from the readiness/Mind binding.
-10. Required runtime proof: protected PC-1 owner in authenticated production, actual admitted proposal and same-thread conversation, canonical rows/readbacks, correction, pause/skip/reload and denied/cross-tenant cases. Not substituted by fixtures, source tests or deployment.
+10. Required runtime proof: latest owner-designated ordinary SOLO customer owner in authenticated production, actual admitted proposal and same-thread conversation, canonical rows/readbacks, correction, pause/skip/reload and denied/cross-tenant cases. Not substituted by fixtures, source tests or deployment.
 
 ## Protected seams and errors
 
@@ -62,4 +62,6 @@ Release-frontier repair: read-only production metadata reported newest migration
 
 Current frontier reconciliation (2026-10-13): a fresh read-only production metadata query now reports20271027100000 and absent exact checkpoint getter/saver. Pending migration is20271027200000, still with the unchanged SQL hash above. Intermediate pending20271027000000 was never recorded in production; original local execution remains20271026000000. Current-main security changes are preserved; no production Auth or database write was performed.
 
-Current-main reconciliation: the tracked migration chain now includes20271028000000. The pending byte-identical interview migration is20271028100000, with all live proof-runner references updated atomically. The normal deploy policy is forward-only (no include-all); old260000/270000/272000 evidence remains explicitly historical. No production application is inferred.
+Historical pre-7c main reconciliation: the tracked migration chain included20271028000000. The pending byte-identical interview migration was20271028100000, with all live proof-runner references updated atomically. The normal deploy policy is forward-only (no include-all); old260000/270000/272000 evidence remains explicitly historical. No production application is inferred.
+
+Current source reconciliation (2026-10-13): main7c2f9f10 includes migration290000 and current E2/E5 source. Pending checkpoint advances unchanged to291000; runner reference follows atomically. Pre-commit non-author source/pin composition PASS is separate from final review/CI. Preview still holds release; supported rebase did not remove the stale original260000 entry, whose stored SQL matches the candidate. Existing authorized administrator/runner must use supported branch-only history repair under permitted credentials; current connection endpoint403. No database reset, manual SQL history edit, production Auth/data change or acceptance inference.

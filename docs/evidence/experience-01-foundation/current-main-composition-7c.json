@@ -1,0 +1,30 @@
+{
+  "class": "NON_AUTHOR_PRE_COMMIT_CURRENT_MAIN_COMPOSITION",
+  "at": "2026-10-13T19:34:36.476Z",
+  "reviewedHead": "7f3334ea144753e0437bbaf5ae5c639df2f39edb",
+  "currentMain": "7c2f9f10bc538cc5fe7ff9329facf7b68d24346d",
+  "sourceAudit": "COMPLETE_PASS",
+  "mergedChatSha256": "558f9164df813840abb98e7b6d10455353fee5bd877e45fcd3c3a0bdcfdf8cd5",
+  "upstreamDiffSha256": "59640ae913872c1466b6f8f75cea491f7cea4c7b1efbbc408cd08d5490ee8ea6",
+  "contracts": 29,
+  "changedIdentityPart": 12,
+  "additionalCanonicalCharacters": 553,
+  "branchesControlsHelpersImportsUnchanged": true,
+  "currentMainSourceAndAncestryPinsRetained": true,
+  "helperAstPin": "5927f625f25e6e1baeeb9da64a80a6544ba731aff1b36375eb3b56270152540b",
+  "newPendingMigration": "20271029100000",
+  "sqlBytesChanged": false,
+  "finalImmutableHeadReview": "OWED",
+  "hostedCI": "OWED",
+  "preview": "HELD",
+  "production": false,
+  "authenticated": false,
+  "ownerAccepted": false,
+  "localTests": {
+    "focusedE1E2E5": 91,
+    "c0bPositiveAdversarial": 53,
+    "isolatedSql": 45,
+    "clusterStopped": true
+  },
+  "localSqlAssurance": "Real PostgreSQL execution of tracked migrations, extracted sender/access functions, canonical Setup save/get functions and checkpoint RPCs. Initial supplemental cases use the explicitly stubbed base seam; interview cases replace it with verbatim real base functions and assert real tenants.brand writes. Synthetic dependency schema; NOT full production schema replay, protected Vault/provider delivery, or authenticated browser proof."
+}

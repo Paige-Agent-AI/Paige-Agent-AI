@@ -3453,3 +3453,7 @@ through PUBLIC, so revoking PUBLIC removes nothing. The test that would have cau
 - **The guard belongs in the body too (§59).** The recorder now refuses a browser role itself, so a later
   grant cannot reopen it; the proof grants anon EXECUTE back on purpose and expects the refusal.
 
+
+### A renamed pending migration leaves real Preview history behind (2026-10-13, Experience01)
+
+**Symptom → root cause → rule.** Forward-only production ordering moved the unchanged checkpoint file while the existing Preview retained its original260000 history row. The required check rejected remote versions absent from local files. Rebase alone did not clear that record. Compare stored SQL AND live definitions/ACL against canonical candidate before choosing supported history-only repair; preserve all original identities. Do not convert an infra/recovery failure into a fake SQL pass, reset/recreate blindly, pre-mark a new version applied, or bypass a403 credential endpoint. Normal Preview must still execute canonical pending SQL at the reviewed head.

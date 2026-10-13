@@ -1,8 +1,8 @@
 {
   "evidenceClass": "SOURCE_IDENTITY_AND_READ_ONLY_PRODUCTION_METADATA",
   "formerPendingVersion": "20271026000000",
-  "newPendingVersion": "20271028100000",
-  "newFile": "supabase/migrations/20271028100000_solo_business_interview_checkpoint.sql",
+  "newPendingVersion": "20271029100000",
+  "newFile": "supabase/migrations/20271029100000_solo_business_interview_checkpoint.sql",
   "sqlSha256BeforeAndAfter": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
   "sqlBytesChanged": false,
   "historicalLocalExecution": "sql-proof.json and migration-state.json accurately retain execution under the former filename/version; they are not relabeled as execution of the new version",
@@ -29,13 +29,21 @@
       "executedInIsolatedLocalProof": true,
       "proof": "Owner-facing experience-01-sql-proof-272000-prepared.json",
       "productionApplied": false
+    },
+    {
+      "formerPendingVersion": "20271028100000",
+      "newPendingVersion": "20271029100000",
+      "productionFrontierObserved": "20271029000000",
+      "readAt": "2026-10-13T19:38:57.667Z",
+      "sqlBytesChanged": false,
+      "scope": "Current source forward-only rename; prior281000 isolated execution remains historical, production/preview application not inferred"
     }
   ],
   "intermediatePendingVersion": "20271027000000",
   "readAtDateUTC": "2026-10-13",
   "historicalProductionFrontierObserved": "20271027100000",
-  "currentSourceChainFrontier": "20271028000000",
-  "currentSourceBase": "aec64c4caafd935b64714f963ba166907b946677",
+  "currentSourceChainFrontier": "20271029000000",
+  "currentSourceBase": "7c2f9f10bc538cc5fe7ff9329facf7b68d24346d",
   "reason": "Current-main source chain advanced; canonical deploy policy permits newer pending migrations only. SQL bytes unchanged, all executable references advanced together.",
   "currentProductionReadbackClass": "PROOF_OWED; no current production diagnostics published in this source record",
   "historicalProductionReadback": {

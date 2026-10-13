@@ -725,7 +725,13 @@ async function streamAnthropicAsOpenAI(
               if (ev.usage?.cache_read_input_tokens != null) cacheReadTok = ev.usage.cache_read_input_tokens;
               if (ev.usage?.cache_creation_input_tokens != null) cacheCreateTok = ev.usage.cache_creation_input_tokens;
             } else if (ev.type === "message_stop") {
-              send(controller, { choices: [{ index: 0, delta: {}, finish_reason: stopReason === "tool_use" ? "tool_calls" : "stop" }] });
+              // Bounded provenance for server-authored prose replacement. The established
+              // finish_reason/tool gate stays unchanged; a limit/refusal/unknown native stop
+              // must not be mistaken for a complete answer merely because it maps to stop.
+              send(controller, { choices: [{ index: 0, delta: {}, finish_reason: stopReason === "tool_use" ? "tool_calls" : "stop",
+                paige_answer_end: traceStopReason === "end_turn" || traceStopReason === "stop_sequence" ? "complete"
+                  : traceStopReason === "max_tokens" || traceStopReason === "model_context_window_exceeded" ? "limited"
+                  : traceStopReason === "refusal" ? "refused" : "incomplete" }] });
             }
           }
         }

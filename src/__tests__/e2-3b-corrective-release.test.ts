@@ -64,14 +64,14 @@ describe("E2-3b point 5 — the Sales reporting cutoff", () => {
     expect(endedInPast?.window_note).toBeUndefined();
   });
 
-  it("the briefing contract requires stating the truthful cutoff once when sales or pipeline figures appear", async () => {
+  it("the briefing contract communicates the actual completed-day cutoff while keeping current sources separate", async () => {
     const r = await dispatchBusinessSnapshotChat(
       { who: { actorId: "a", tenantId: TENANT, role: "owner", accountShape: "solo" }, timezone: "UTC" },
       { caller }, {}, new Date(NOW));
-    expect(r.message).toMatch(/Sales and pipeline period figures are counted up to the moment of this review, to the second/);
-    expect(r.message).toMatch(/not to a day boundary/);
-    expect(r.message).toMatch(/state that once, plainly/);
-    expect(r.message).toMatch(/Current balances and Systems Check state are right now/);
+    expect(r.message).toMatch(/Sales in-period evidence.*last completed UTC day/);
+    expect(r.message).toMatch(/actual exclusive reporting cutoff given in its window note/);
+    expect(r.message).toMatch(/historical or custom reporting.*actual cutoff date.*completed-day subset/);
+    expect(r.message).toMatch(/current receivables balances and current pipeline state as of now/);
   });
 });
 

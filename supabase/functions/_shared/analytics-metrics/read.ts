@@ -65,6 +65,13 @@ export function metricReadContext(result: MetricReadOutcome): ContextSourceResul
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const stamp = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(v) && Number.isFinite(Date.parse(v));
 
+/** Exclusive end of the last completed UTC day. Shared by canonical Sales reporting callers. */
+export function completedUtcDayBoundary(at: Date): Date {
+  const boundary = new Date(at.getTime());
+  boundary.setUTCHours(0, 0, 0, 0);
+  return boundary;
+}
+
 function request(input: unknown, now: number) {
   if (!object(input) || Object.keys(input).some(k => !['metric_key', 'period', 'range_key', 'range_start', 'range_end', 'evidence_ref'].includes(k))
     || !BUSINESS_METRIC_KEYS.includes(input.metric_key as typeof BUSINESS_METRIC_KEYS[number])) return null;
@@ -79,7 +86,7 @@ function request(input: unknown, now: number) {
   } else {
     if (input.range_key !== undefined || input.range_start !== undefined || input.range_end !== undefined) return null;
     // Date-cohort Sales producers operate on completed UTC days. State snapshots still say current_snapshot.
-    if (String(input.metric_key).startsWith('sales.')) end.setUTCHours(0, 0, 0, 0);
+    if (String(input.metric_key).startsWith('sales.')) end = completedUtcDayBoundary(end);
     start = new Date(end);
     if (period === 'this_month' || period === 'last_month') {
       start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1));

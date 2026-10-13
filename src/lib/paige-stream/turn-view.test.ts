@@ -1,7 +1,7 @@
 // C3a — the living turn view. Every case drives the view from TURN STATE and step frames only:
 // the module is handed whether answer text has arrived (a boolean), never the text itself, so
 // nothing PAIGE writes can steer what the status line claims (owner ruling 2026-10-05).
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -292,7 +292,7 @@ describe("REFUSED names a cause only while exactly one emitter exists", () => {
   // "Stopped — couldn't confirm that client" is true because the only `refused()` caller is the
   // client-scope refusal. A second emitter (a different reason) must change that line first.
   it("the client-scope refusal is the one and only `.refused()` caller", () => {
-    const hits = execSync("git grep -n -F '.refused()' -- 'supabase/functions/*.ts' ':!*.test.ts' ':!*_test.ts' ':!*/tests/*'", { encoding: "utf8" })
+    const hits = execFileSync("git", ["grep", "-n", "-F", ".refused()", "--", "supabase/functions/*.ts", ":!*.test.ts", ":!*_test.ts", ":!*/tests/*"], { encoding: "utf8" })
       .trim().split("\n").filter(Boolean);
     expect(hits).toHaveLength(1);
     expect(hits[0]).toMatch(/^supabase\/functions\/paige-ai-chat\/index\.ts:\d+:\s*refusedTurn\.refused\(\);$/);

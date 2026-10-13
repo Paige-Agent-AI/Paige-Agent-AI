@@ -9,6 +9,7 @@ import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 30000;
+const WORKSPACE_TIMEOUT_MS = 30000;
 
 type EnrollmentState = "needs_identity" | "needs_intake" | "needs_checkout" | "pending" | "verified" | "choose_account" | "payment_recovery" | "canceled_trial" | "canceled_paid" | "failed";
 type ViewState = EnrollmentState | "cancelled" | "expired" | "invalid" | "delayed";
@@ -118,7 +119,9 @@ export default function Welcome() {
           }
           // The status endpoint owns enrollment authority. The destination is
           // only an address; never use it to select/write a tenant or membership.
-          timer = setTimeout(failWorkspace, Math.max(0, POLL_TIMEOUT_MS - (Date.now() - startedAt)));
+          // Enrollment polling and canonical workspace readback are separate
+          // bounded phases. Late verification must not consume readback's budget.
+          timer = setTimeout(failWorkspace, WORKSPACE_TIMEOUT_MS);
           try {
             // Accepted provider reads publish a new tenant list; a failed refresh
             // preserves its old list even when an old accepted scope is still ready.

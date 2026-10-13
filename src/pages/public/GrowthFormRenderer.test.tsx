@@ -258,6 +258,37 @@ describe("stored success links (#2090)", () => {
     }
   });
 
+  it("never navigates to a script redirect when there is no download (the immediate-redirect branch)", async () => {
+    const assign = vi.fn();
+    const loc = window.location;
+    Object.defineProperty(window, "location", { configurable: true, value: { ...loc, set href(v: string) { assign(v); }, get href() { return loc.href; } } });
+    try {
+      withSuccess({ redirect_url: "javascript:alert(document.cookie)" });
+      state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+      await render();
+      await fillAndSubmit();
+      expect(assign).not.toHaveBeenCalled();
+      expect(text()).toContain("Thanks, Dana will reply today.");
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: loc });
+    }
+  });
+
+  it("follows a real https redirect straight away when there is no download", async () => {
+    const assign = vi.fn();
+    const loc = window.location;
+    Object.defineProperty(window, "location", { configurable: true, value: { ...loc, set href(v: string) { assign(v); }, get href() { return loc.href; } } });
+    try {
+      withSuccess({ redirect_url: "https://example.com/next" });
+      state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+      await render();
+      await fillAndSubmit();
+      expect(assign).toHaveBeenCalledWith("https://example.com/next");
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: loc });
+    }
+  });
+
   it("still shows a real https download and continue link", async () => {
     withSuccess({ redirect_url: "https://example.com/next", download_url: "https://cdn.example.com/guide.pdf" });
     state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });

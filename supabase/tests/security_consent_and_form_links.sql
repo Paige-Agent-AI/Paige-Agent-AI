@@ -77,6 +77,14 @@ INSERT INTO public.profiles(user_id, active_tenant_id) VALUES
  ('5ec20870-0000-4000-8000-000000000003', '5ec20870-0000-4000-8000-0000000000a1'),
  ('5ec20870-0000-4000-8000-000000000004', '5ec20870-0000-4000-8000-0000000000b1')
  ON CONFLICT(user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id;
+-- User 5 owns business A (so holds the GLOBAL admin role) and is only a member of business B, working in B.
+INSERT INTO auth.users(id, email) VALUES ('5ec20870-0000-4000-8000-000000000005', 'sec-2087-member@example.invalid');
+INSERT INTO public.tenant_members(tenant_id, user_id, role, status, is_owner, joined_at) VALUES
+ ('5ec20870-0000-4000-8000-0000000000a1', '5ec20870-0000-4000-8000-000000000005', 'admin', 'active', false, now()),
+ ('5ec20870-0000-4000-8000-0000000000b1', '5ec20870-0000-4000-8000-000000000005', 'member', 'active', false, now());
+INSERT INTO public.user_roles(user_id, role) VALUES ('5ec20870-0000-4000-8000-000000000005', 'admin') ON CONFLICT DO NOTHING;
+INSERT INTO public.profiles(user_id, active_tenant_id) VALUES ('5ec20870-0000-4000-8000-000000000005', '5ec20870-0000-4000-8000-0000000000b1')
+ ON CONFLICT(user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id;
 
 -- ───────────── #2087: the forgeries in the issue, as the roles that would make them ─────────────
 -- 1. The issue's exact call, from the public anon key.
@@ -124,13 +132,45 @@ INSERT INTO public.communications_consents(tenant_id, email, phone, sms_transact
 VALUES ('5ec20870-0000-4000-8000-0000000000a1', 'tenant@example.invalid', '+15550000002', true, true, true, 'proof');
 SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000002', false) AND NOT public.has_email_marketing_consent('tenant@example.invalid'),
   'a tenant row does not authorize a platform send');
--- Verified evidence, written the way tenant-signup writes it, does — until revoked.
+-- Signup evidence, written the way tenant-signup writes it, authorizes only once its own account has
+-- verified that number — and only until revoked.
 INSERT INTO public.communications_consents(user_id, email, phone, sms_transactional, sms_marketing, source, source_url, disclosure_version, consent_granted_at)
 VALUES ('5ec20870-0000-4000-8000-000000000002', 'sec-2087-b@example.invalid', '+15550000003', true, false, 'signup',
         'https://paigeagent.ai/auth?mode=signup', 'paige-platform-account-service-v1-2026-08-31', now());
-SELECT pg_temp.require_true(public.has_sms_consent('+1 (555) 000-0003', false), 'verified platform evidence authorizes transactional SMS');
+SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000003', false), 'signup evidence for a number nobody verified authorizes nothing');
+RESET ROLE;
+INSERT INTO public.communication_preferences(user_id, sms_phone_number, sms_phone_verified)
+VALUES ('5ec20870-0000-4000-8000-000000000002', '+1 555 000 0003', false)
+ ON CONFLICT (user_id) DO UPDATE SET sms_phone_number = EXCLUDED.sms_phone_number, sms_phone_verified = EXCLUDED.sms_phone_verified;
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000003', false), 'the number on the account, unverified, is not enough');
+RESET ROLE;
+UPDATE public.communication_preferences SET sms_phone_verified = true, sms_phone_number = '+15550009999'
+ WHERE user_id = '5ec20870-0000-4000-8000-000000000002';
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000003', false), 'nor is the account having verified a different number');
+-- Another account verifying this number does not vouch for this evidence either.
+RESET ROLE;
+INSERT INTO public.communication_preferences(user_id, sms_phone_number, sms_phone_verified)
+VALUES ('5ec20870-0000-4000-8000-000000000001', '+15550000003', true)
+ ON CONFLICT (user_id) DO UPDATE SET sms_phone_number = EXCLUDED.sms_phone_number, sms_phone_verified = EXCLUDED.sms_phone_verified;
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000003', false), 'nor someone else''s account verifying it');
+RESET ROLE;
+UPDATE public.communication_preferences SET sms_phone_number = '+1 (555) 000-0003'
+ WHERE user_id = '5ec20870-0000-4000-8000-000000000002';
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_true(public.has_sms_consent('+1 (555) 000-0003', false), 'evidence plus its own account''s verified number authorizes transactional SMS');
 SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000003', true), 'but not marketing SMS');
 RESET ROLE;
+
+-- The gates answer the server only, even if a later migration grants them to a browser role (§59).
+GRANT EXECUTE ON FUNCTION public.has_sms_consent(text, boolean), public.has_email_marketing_consent(text) TO authenticated;
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('5ec20870-0000-4000-8000-000000000002');
+SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000003', false), 'a browser caller learns nothing from the SMS gate');
+RESET ROLE;
+REVOKE EXECUTE ON FUNCTION public.has_sms_consent(text, boolean), public.has_email_marketing_consent(text) FROM authenticated;
 
 -- 4. Revocation: the owner of a consent can withdraw it, cannot repoint it, and cannot touch anyone else's.
 SET LOCAL ROLE authenticated;
@@ -153,12 +193,13 @@ RESET ROLE;
 DO $urls$
 DECLARE
   good text[] := ARRAY['https://example.com', 'http://example.com/thanks?x=1#done', 'https://example.com:8443/a/b',
-                       'HTTPS://Example.COM/Path', 'https://sub.example.co.uk/x/', ''];
+                       'HTTPS://Example.COM/Path', 'https://sub.example.co.uk/x/', 'https://[::1]:8443/x', 'https://user@example.com/', ''];
   bad text[] := ARRAY['javascript:alert(1)', 'JaVaScRiPt:alert(1)', ' javascript:alert(1)', 'data:text/html,<script>alert(1)</script>',
                       'vbscript:msgbox(1)', '//evil.example', 'https:/evil.example', 'https://', 'https:///path', 'ftp://example.com',
                       ' https://example.com', 'https://example.com ', 'https://exa mple.com', 'https://example.com/a b',
                       E'https://example.com/\nx', E'https://example.com\\@evil.example', 'http:\\evil.example', 'mailto:a@b.c',
-                      'example.com/thanks', 'https://example.com/' || repeat('a', 2030)];
+                      'example.com/thanks', 'https://example.com/' || repeat('a', 2030),
+                      'https://@', 'https://:', 'https://a@', 'https://@/x', 'https://:443/x'];
   u text;
 BEGIN
   PERFORM pg_temp.require_true(public.is_safe_web_url(NULL), 'no link is fine');
@@ -219,6 +260,26 @@ VALUES ('5ec20870-0000-4000-8000-0000000000a1', 'sec-2090-cal', 'personal', fals
 SELECT pg_temp.require_error($$UPDATE public.calendars SET redirect_url = 'example.com/booked' WHERE slug = 'sec-2090-cal'$$,
   '23514', 'PRESET_REDIRECT_INVALID', 'a calendar redirect without https:// is refused with words the owner can act on');
 UPDATE public.calendars SET redirect_url = NULL WHERE slug = 'sec-2090-cal';
+RESET ROLE;
+
+-- ───────────── #2087: the tenant ledger (paige_consent_events / paige_suppressions) ─────────────
+-- (User 5, set up with the fixtures: owns-admin of A, so holds the GLOBAL admin role; only a member of B.)
+INSERT INTO public.paige_suppressions(tenant_id, address_normalized, channel, reason, source)
+VALUES ('5ec20870-0000-4000-8000-0000000000b1', 'optedout@example.invalid', 'email', 'unsubscribe_link', 'webhook');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('5ec20870-0000-4000-8000-000000000005');
+SELECT pg_temp.require_error($$INSERT INTO public.paige_consent_events(tenant_id, address_normalized, channel, action, source)
+  VALUES ('5ec20870-0000-4000-8000-0000000000b1', 'victim@example.invalid', 'email', 'granted', 'admin_ui')$$,
+  '42501', NULL, 'a plain member of B (an admin elsewhere) cannot grant consent in B''s ledger');
+DELETE FROM public.paige_suppressions WHERE tenant_id = '5ec20870-0000-4000-8000-0000000000b1';
+SELECT pg_temp.require_true((SELECT count(*) FROM public.paige_suppressions) = 0, 'nor read B''s suppressions');
+SELECT pg_temp.as_user('5ec20870-0000-4000-8000-000000000004');
+SELECT pg_temp.require_true((SELECT count(*) FROM public.paige_suppressions WHERE tenant_id = '5ec20870-0000-4000-8000-0000000000b1') = 1,
+  'the member''s delete removed nothing (B''s owner still sees the opt-out)');
+INSERT INTO public.paige_consent_events(tenant_id, address_normalized, channel, action, source)
+VALUES ('5ec20870-0000-4000-8000-0000000000b1', 'client@example.invalid', 'email', 'granted', 'admin_ui');
+SELECT pg_temp.require_true((SELECT count(*) FROM public.paige_consent_events WHERE tenant_id = '5ec20870-0000-4000-8000-0000000000b1') = 1,
+  'B''s own owner still records consent for B');
 RESET ROLE;
 
 -- A row that never had a link is untouched by an unrelated edit (the trigger fires only on the link columns).

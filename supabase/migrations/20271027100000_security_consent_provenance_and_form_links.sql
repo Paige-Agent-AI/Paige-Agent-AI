@@ -3,12 +3,13 @@
 -- issues and in docs/brain/decision-log.md.
 --
 -- #2087 — who may write consent, and which records a send may trust.
---   Production at write time: communications_consents holds ONE row. The signup function wrote it with
---   the service role, 0.15 s after the account was created, and it carries the full evidence shape
---   (consent_granted_at, disclosure_version, https source_url). No row was written through
---   record_communications_consent or the null-user insert branch. No consent-dependent send has run in
---   30 days: 0 stage-automation rules, 0 operator SMS ever, 0 SMS in communication_log, 0 rows in
---   email_send_log.
+--   Production at write time: communications_consents holds ONE row. It came from signup (0.15 s after the
+--   account was created) and carries the full evidence shape (consent_granted_at, disclosure_version, https
+--   source_url), but its account has NO verified phone, so who owns that number is unproven. Under the
+--   rule below it no longer authorizes a send: a historical row is not trusted because it exists. No row was
+--   written through record_communications_consent or the null-user insert branch. No consent-dependent send
+--   has run in 30 days: 0 stage-automation rules, 0 operator SMS ever, 0 SMS in communication_log, 0 rows
+--   in email_send_log.
 --   1. record_communications_consent: EXECUTE for the service role only (anon and authenticated held it,
 --      so anyone could write any tenant's, contact's or phone's consent). The body also refuses a
 --      browser role, so a later grant cannot reopen it (§59).
@@ -17,17 +18,28 @@
 --      attach any tenant, contact or marketing flags. Both are dropped. anon keeps no privilege at all.
 --      (Production granted anon full table DML, with RLS the only guard.) Signed-in users keep read
 --      access through the unchanged read policies, and may update only withdrawn_at, withdrawn_reason
---      and revoked_at on their own rows, which is revocation. Every writer in the repo is a service-role
---      edge function: tenant-signup, the two STOP/START webhooks and affiliate-application-confirm.
---   3. has_sms_consent / has_email_marketing_consent: service role only. Both are anon-callable today,
---      which lets anyone probe whether a number or address has consented. They now trust only verified
---      platform evidence: consent_granted_at set (the evidence-shape CHECK then guarantees a user, an
---      https source and a disclosure version), no tenant, no contact, not withdrawn, not revoked.
+--      and revoked_at on their own rows, which is revocation. The remaining writers are server-side:
+--      tenant-signup, the two STOP/START webhooks and affiliate-application-confirm (service role), and
+--      the persist_solo_beta_signup_consent trigger. Both signup paths write evidence for a phone number the
+--      signer TYPED (the trigger reads it from signup metadata the browser supplies), which is why the gate
+--      below also demands a verified number (#2094 tracks proving ownership at signup).
+--   3. has_sms_consent / has_email_marketing_consent: service role only (grant AND body). Both are
+--      anon-callable today, which lets anyone probe whether a number or address has consented. They now
+--      trust only platform evidence: consent_granted_at set (the evidence-shape CHECK then guarantees a
+--      user, an https source and a disclosure version), no tenant, no contact, not withdrawn, not revoked,
+--      and, for SMS, the evidence's own account has VERIFIED that number (communication_preferences, set
+--      only by verify-sms-code). paige-operator-sms-send now asks this one gate instead of matching on the
+--      phone alone.
 --      Unverified preference rows authorize nothing. No server path writes verified email-marketing
 --      evidence today, so has_email_marketing_consent now answers false, which fails closed.
 --      Tenant-to-contact consent is never decided here. It belongs to the tenant ledger
 --      (paige_consent_events, tenant-scoped RLS, read by the pre-send pipeline), and
 --      dispatch-stage-automation now reads it there.
+--   4. paige_consent_events / paige_suppressions: their browser policies keyed authority on the GLOBAL
+--      'admin' role (§59 trap), so a plain member of business B who is an admin anywhere else could write
+--      B's consent ledger (granting marketing consent) or delete B's suppressions (un-opting-out a contact),
+--      and read both. Now: platform owner, or the active workspace's own owner/admin (is_tenant_admin), or
+--      its managing agency (agency_can_manage_child). The server's service-role writers are unchanged.
 --
 -- #2090 — a stored link that a public page renders must be a web address.
 --   public.is_safe_web_url(text): null/empty, or an http(s) URL with a host, no whitespace, no control
@@ -39,7 +51,7 @@
 --   PRESET_ prefix that the booking editors already strip.
 --   Production at write time: 5 forms and 13 calendars, none with a redirect or download link, so
 --   nothing needs cleaning and no existing row is touched. The browser guards (GrowthFormRenderer,
---   BookingPage, embed.js) stay as defence in depth.
+--   BookingPage) stay as defence in depth.
 
 -- ───────────────────────────── #2087 ─────────────────────────────
 
@@ -66,7 +78,7 @@ DECLARE
 BEGIN
   -- A server-side recorder: the caller has already decided who this is and why (§59 — the grant is not the
   -- guard). A browser role never writes consent, whatever grants a later migration adds.
-  IF coalesce(auth.role(), '') IN ('anon', 'authenticated') THEN
+  IF coalesce(auth.role(), '') NOT IN ('service_role', '') THEN
     RAISE EXCEPTION 'CONSENT_WRITE_FORBIDDEN: consent is recorded by the server, not the browser'
       USING ERRCODE = '42501';
   END IF;
@@ -142,7 +154,15 @@ AS $function$
           (_marketing = false AND consent.sms_transactional = true)
           OR (_marketing = true AND consent.sms_marketing = true)
         )
+        -- The account behind the evidence proved it owns this number (verify-sms-code sets it).
+        AND EXISTS (
+          SELECT 1 FROM public.communication_preferences pref
+          WHERE pref.user_id = consent.user_id
+            AND pref.sms_phone_verified = true
+            AND public.normalize_e164_phone(pref.sms_phone_number) = consent.phone
+        )
     )
+    AND coalesce(auth.role(), '') IN ('service_role', '')
   FROM target;
 $function$;
 
@@ -164,7 +184,8 @@ AS $function$
       AND withdrawn_at IS NULL
       AND revoked_at IS NULL
       AND email_marketing = true
-  );
+  )
+  AND coalesce(auth.role(), '') IN ('service_role', '');
 $function$;
 
 REVOKE ALL ON FUNCTION public.has_sms_consent(text, boolean) FROM PUBLIC, anon, authenticated;
@@ -185,6 +206,8 @@ AS $function$
     OR (
       length(_url) <= 2048
       AND _url ~* '^https?://[^[:space:][:cntrl:]/?#\\]+([/?#][^[:space:][:cntrl:]\\]*)?$'
+      -- a real host: after any userinfo, it starts with a letter, a digit or an IPv6 bracket
+      AND substring(_url from '^[A-Za-z]+://([^/?#]*)') ~ '(^|@)[[:alnum:]\[][^@]*$'
     );
 $function$;
 
@@ -235,3 +258,31 @@ DROP TRIGGER IF EXISTS calendars_guard_redirect_url ON public.calendars;
 CREATE TRIGGER calendars_guard_redirect_url
   BEFORE INSERT OR UPDATE OF redirect_url ON public.calendars
   FOR EACH ROW EXECUTE FUNCTION public.calendars_guard_redirect_url();
+
+-- ───────────── #2087: the tenant ledger's browser policies (§59 global-role trap) ─────────────
+
+-- The policies below call these as the browser role. Production already grants both to authenticated
+-- (read 2026-10-13); stated here so the policies cannot depend on drift.
+GRANT EXECUTE ON FUNCTION public.is_tenant_admin(uuid), public.agency_can_manage_child(uuid) TO authenticated;
+
+DROP POLICY IF EXISTS paige_consent_events_insert ON public.paige_consent_events;
+CREATE POLICY paige_consent_events_insert ON public.paige_consent_events FOR INSERT
+  WITH CHECK (public.is_platform_owner() OR (tenant_id = public.current_user_tenant_id()
+    AND (public.is_tenant_admin(tenant_id) OR public.agency_can_manage_child(tenant_id))));
+DROP POLICY IF EXISTS paige_consent_events_select ON public.paige_consent_events;
+CREATE POLICY paige_consent_events_select ON public.paige_consent_events FOR SELECT
+  USING (public.is_platform_owner() OR (tenant_id = public.current_user_tenant_id()
+    AND (public.is_tenant_admin(tenant_id) OR public.agency_can_manage_child(tenant_id))));
+
+DROP POLICY IF EXISTS paige_suppressions_insert ON public.paige_suppressions;
+CREATE POLICY paige_suppressions_insert ON public.paige_suppressions FOR INSERT
+  WITH CHECK (public.is_platform_owner() OR (tenant_id = public.current_user_tenant_id()
+    AND (public.is_tenant_admin(tenant_id) OR public.agency_can_manage_child(tenant_id))));
+DROP POLICY IF EXISTS paige_suppressions_select ON public.paige_suppressions;
+CREATE POLICY paige_suppressions_select ON public.paige_suppressions FOR SELECT
+  USING (public.is_platform_owner() OR (tenant_id = public.current_user_tenant_id()
+    AND (public.is_tenant_admin(tenant_id) OR public.agency_can_manage_child(tenant_id))));
+DROP POLICY IF EXISTS paige_suppressions_delete ON public.paige_suppressions;
+CREATE POLICY paige_suppressions_delete ON public.paige_suppressions FOR DELETE
+  USING (public.is_platform_owner() OR (tenant_id = public.current_user_tenant_id()
+    AND (public.is_tenant_admin(tenant_id) OR public.agency_can_manage_child(tenant_id))));

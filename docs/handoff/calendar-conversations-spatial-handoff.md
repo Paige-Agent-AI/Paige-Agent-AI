@@ -3,6 +3,8 @@
 **Evidence date:** 2026-08-22  
 **Prototype:** `/tenant-redesign`
 
+> **Current mounting correction, 2026-10-13:** The ruling below is the dated2026-08-22 prototype record. Current SOLO mounts `TenantCanonicalCalendarWorkspace` → `SoloCalendarWorkspace`/`useSoloCalendar` under Clients; `CalendarAdmin` remains an existing implementation and owner-personal Planning overlay precedent. E5 recurring commitment visibility must consume the same owner-only canonical process status as Chat, separately from `list_team_bookings`. A process marker has no booking identity, duration or occupancy, and a booking grants no autonomous authority. Execution stays on the existing process scheduler/Harness/Rail; owner business-zone display is distinct from the approved schedule zone. E5's new projection/prototype is unmounted preparation, not resolution of the booking Rail/Mind FU-3/#786 boundary. Current inventory, reviews and activation holds: `../delivery/experience-05-weekly-commitment-check.md`.
+
 ## Canonical capability ruling
 
 - `CalendarAdmin` remains the single connected scheduling and time-commitment implementation. Calendar lives under **Work** with Calendar, Agenda, Availability, Booking Pages, Connections, and Settings views. Tasks, reminders, deadlines, appointments, blocked time, and commitments are object types or filters—not new primary destinations.

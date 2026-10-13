@@ -15,10 +15,13 @@ import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-ca
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql';
+const readMigration='supabase/migrations/20271029000000_experience05_weekly_status_readback.sql';
+const baselineRead=process.argv.includes('--baseline-read-preparation');
 const ci=process.argv.includes('--postgres');
 const simulateCiRole=process.argv.includes('--simulate-ci-role');
 if(ci&&process.env.CI!=='true')throw new Error('--postgres is limited to the disposable CI service');
 if(ci&&simulateCiRole)throw new Error('Role simulation is limited to a newly created local disposable cluster');
+if(ci&&baselineRead)throw new Error('Negative baseline is limited to a newly created local disposable cluster');
 if(ci&&process.env.PGHOST&&!['localhost','127.0.0.1'].includes(process.env.PGHOST))throw new Error('Loopback only');
 const bin=process.env.WEEKLY_PROOF_PG_BIN??(process.platform==='win32'?'C:/Program Files/PostgreSQL/16/bin':'');
 const command=name=>bin?join(bin,`${name}${process.platform==='win32'?'.exe':''}`):name;
@@ -32,6 +35,8 @@ const literal=v=>v===null?'NULL':typeof v==='number'?String(v):`'${String(v).rep
 const source=path=>readFileSync(join(root,path),'utf8');
 const migrationSource=source(migration);
 const migrationHash=createHash('sha256').update(migrationSource).digest('hex');
+const readMigrationSource=source(readMigration);
+const readMigrationHash=createHash('sha256').update(readMigrationSource).digest('hex');
 function run(sql,{actor='',tenant='',role='',db=database}={}){
   const prefix=`DO $ctx$ BEGIN PERFORM set_config('test.actor',${literal(actor)},false); PERFORM set_config('test.tenant',${literal(tenant)},false); END $ctx$;${role?`SET ROLE ${role};`:''}`;
   try{return execFileSync(command('psql'),args(db),{input:`\\set VERBOSITY verbose\n${prefix}\n${sql}`,encoding:'utf8',stdio:['pipe','pipe','pipe'],windowsHide:true,timeout:60000,maxBuffer:8*1024*1024}).trim();}
@@ -158,7 +163,31 @@ try{
     INSERT INTO tenants(id,name,owner_user_id) VALUES(${literal(tenant)},'test-tenant-weekly',${literal(owner)}),(${literal(foreign)},'test-tenant-foreign',${literal(otherOwner)});
     INSERT INTO tenant_members VALUES(${literal(tenant)},${literal(owner)},'owner','active'),(${literal(foreign)},${literal(otherOwner)},'owner','active'),
       (${literal(tenant)},${literal(member)},'member','active'),(${literal(tenant)},${literal(admin)},'admin','active');`);
+  const zoneSource=source('supabase/migrations/20271026200000_exp04_client_status_business_time_zone.sql');
+  run(extractTable(zoneSource,'tenant_business_time_zones'));
+  run(zoneSource.match(/ALTER TABLE public\.tenant_business_time_zones ENABLE ROW LEVEL SECURITY;/)[0]);
+  run(zoneSource.match(/REVOKE ALL ON public\.tenant_business_time_zones[^;]+;/)[0]);
+  if(!baselineRead){run(readMigrationSource);run(readMigrationSource);}
   check('migration applies twice; catalogue stays dark',()=>assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),'f'));
+  check('owner read supplies source actor clock and explicit bounded coverage',()=>{
+    const data=json('SELECT get_weekly_commitment_checks();',ownerCtx);
+    assert.equal(data.actor_id,owner);assert.equal(data.tenant_id,tenant);assert.equal(data.limit,50);
+    assert.equal(data.has_more,false);assert(Number.isFinite(Date.parse(data.read_at)));
+  });
+  check('missing business zone is not a calendar staff profile or browser default',()=>{
+    assert.deepEqual(json('SELECT get_weekly_commitment_checks();',ownerCtx).business_time_zone,{state:'missing',zone:null});
+  });
+  run('INSERT INTO tenant_business_time_zones(tenant_id,time_zone,set_by) VALUES('+literal(tenant)+",'America/New_York',"+literal(owner)+'),('+literal(foreign)+",'Europe/London',"+literal(otherOwner)+');');
+  check('shared owner business setting is scoped and raw table privileges stay closed',()=>{
+    assert.deepEqual(json('SELECT get_weekly_commitment_checks();',ownerCtx).business_time_zone,{state:'configured',zone:'America/New_York'});
+    assert.equal(json('SELECT get_weekly_commitment_checks();',{actor:otherOwner,tenant:foreign,role:'authenticated'}).business_time_zone.zone,'Europe/London');
+    for(const role of ['anon','authenticated','service_role'])refuses('SELECT * FROM tenant_business_time_zones;',{...ownerCtx,role});
+  });
+  check('invalid privileged zone degrades without exposing or defaulting the stored value',()=>{
+    run('UPDATE tenant_business_time_zones SET time_zone='+literal('America/Not_A_Zone')+' WHERE tenant_id='+literal(tenant)+';');
+    assert.deepEqual(json('SELECT get_weekly_commitment_checks();',ownerCtx).business_time_zone,{state:'invalid',zone:null});
+    run("UPDATE tenant_business_time_zones SET time_zone='America/New_York' WHERE tenant_id="+literal(tenant)+';');
+  });
   check('complete current incumbent catalogue survives replay with identical metadata and defaults',()=>{
     const after=json(catalogueSQL(tenant));assert.equal(after.length,priorCatalogue.length+1);
     assert.deepEqual(after.filter(row=>row.tool_key!=='planning_weekly_commitment_check'),priorCatalogue);
@@ -435,6 +464,55 @@ try{
     check(`canonical ${outcome} is reported ${status}`,()=>
       assert.equal(json('SELECT get_weekly_commitment_checks();',ownerCtx).checks.find(c=>c.automation_id===sample.id).last_run.status,status));
   }
+  const history=occurrence('Readback history');run(history.claim);assert.equal(json(history.execute).outcome,'executed');
+  check('newer unknown attempt preserves separate verified result and historical schedule revision',()=>{
+    const newEvent=randomUUID(),newCorrelation='proof-newer:'+newEvent;
+    run("INSERT INTO paige_native_events(id,tenant_id,event_key,subject_table,subject_id,dedup_key,payload,occurred_at,processing_state) SELECT "+
+      literal(newEvent)+",tenant_id,event_key,subject_table,subject_id,"+literal(newCorrelation)+",payload,occurred_at+interval '1 second','done' FROM paige_native_events WHERE id="+literal(history.eventId)+';');
+    run('SELECT paige_record_act_execution('+literal(newEvent)+','+literal(history.id)+','+literal(history.actId)+',1,'+literal(tenant)+
+      ",'native','planning.weekly_commitment_check','auto','ambiguous',NULL,"+literal(newCorrelation)+','+literal(newCorrelation)+",NULL,'{}',NULL,NULL,NULL);");
+    const read=json('SELECT get_weekly_commitment_checks();',ownerCtx).checks.find(c=>c.automation_id===history.id);
+    assert.equal(read.last_run.event_id,newEvent);assert.equal(read.last_run.status,'unknown');
+    assert.equal(read.last_verified_run.event_id,history.eventId);assert.equal(read.last_verified_run.observation.receipt_id,history.receiptId);
+    assert.equal(read.last_verified_run.observation.schedule_revision,1);
+    json('SELECT configure_weekly_commitment_check('+literal(history.id)+",1,'10:00','UTC',1);",ownerCtx);
+    const revised=json('SELECT get_weekly_commitment_checks();',ownerCtx).checks.find(c=>c.automation_id===history.id);
+    assert.equal(revised.revision,2);assert.equal(revised.last_verified_run.observation.schedule_revision,1);assert.equal(revised.next_run_at,null);
+  });
+  check('receipt absence cannot create historical verified completion',()=>{
+    run('DELETE FROM paige_workspace_events WHERE source_id='+literal(history.receiptId)+';');
+    const read=json('SELECT get_weekly_commitment_checks();',ownerCtx).checks.find(c=>c.automation_id===history.id);
+    assert.equal(read.last_verified_run,null);assert.equal(read.last_run.status,'unknown');
+  });
+  check('business setting update does not rewrite approved schedule or future process input',()=>{
+    const before=json('SELECT trigger_config FROM paige_automations WHERE id='+literal(history.id)+';');
+    run("UPDATE tenant_business_time_zones SET time_zone='Europe/London' WHERE tenant_id="+literal(tenant)+';');
+    const read=json('SELECT get_weekly_commitment_checks();',ownerCtx).checks.find(c=>c.automation_id===history.id);
+    assert.deepEqual(read.schedule,before);assert.equal(read.schedule.timezone,'UTC');
+    run("UPDATE tenant_business_time_zones SET time_zone='America/New_York' WHERE tenant_id="+literal(tenant)+';');
+  });
+  check('both DST changes use canonical ISO Sunday local schedule without client recurrence',()=>{
+    for(const zone of ['CET','GMT','EST']){
+      const present=run('SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_timezone_names WHERE name='+literal(zone)+');');
+      assert(['t','f'].includes(present),'canonical timezone catalogue yields a known boolean');
+      const schedule='SELECT weekly_commitment_schedule(1,\'09:00\','+literal(zone)+');';
+      if(present==='t')assert.equal(json(schedule).timezone,zone);
+      else refuses(schedule,undefined,'22023');
+    }
+    const cfg=literal(JSON.stringify({weekday:7,local_time:'09:00',timezone:'America/New_York'}))+'::jsonb';
+    for(const [after,expected]of[['2026-03-01T13:59:00Z','2026-03-01T14:00:00Z'],['2026-03-08T12:59:00Z','2026-03-08T13:00:00Z'],['2026-10-25T12:59:00Z','2026-10-25T13:00:00Z'],['2026-11-01T13:59:00Z','2026-11-01T14:00:00Z']]){
+      assert.equal(Date.parse(run('SELECT weekly_commitment_next('+cfg+','+literal(after)+'::timestamptz);')),Date.parse(expected));
+    }
+  });
+  check('owner getter reads create no process event act or receipt',()=>{
+    const counts="SELECT jsonb_build_array((SELECT count(*) FROM paige_automations),(SELECT count(*) FROM paige_native_events),(SELECT count(*) FROM paige_act_executions),(SELECT count(*) FROM paige_workspace_events));";
+    const before=json(counts);json('SELECT get_weekly_commitment_checks();',ownerCtx);json('SELECT get_weekly_commitment_checks();',ownerCtx);assert.deepEqual(json(counts),before);
+  });
+  check('fifty-row owner read exposes has_more instead of pretending complete coverage',()=>{
+    for(let n=0;n<51;n++)json('SELECT draft_weekly_commitment_check('+literal(randomUUID())+','+literal('Bounded read '+n)+",1,'09:00','UTC');",ownerCtx);
+    const first=json('SELECT get_weekly_commitment_checks();',ownerCtx),second=json('SELECT get_weekly_commitment_checks();',ownerCtx);
+    assert.equal(first.checks.length,50);assert.equal(first.has_more,true);assert.deepEqual(first.checks.map(c=>c.automation_id),second.checks.map(c=>c.automation_id));
+  });
   const actualEngine=occurrence('Actual governed engine',{seed:false});
   // Supabase's base service-role table privileges are infrastructure; source functions remain unchanged.
   run('GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;');
@@ -456,7 +534,9 @@ try{
     }
     const output=bridge();
     const proof=JSON.parse(output.trim());assert.equal(proof.status,'PASS');assert.equal(proof.actual_engine,true);
-    assert.equal(proof.executed,1);assert.equal(proof.redrain_adopted,true);console.log(output.trim());
+    assert.equal(proof.executed,1);assert.equal(proof.redrain_adopted,true);
+    assert.equal(proof.actual_prepared_owner_reader,true);assert.equal(proof.actual_calendar_projection,true);
+    assert.equal(proof.inspection_rows_written,0);assert.equal(proof.outbound_requests,0);console.log(output.trim());
   });
   const retirement=source('supabase/migrations/20270602000504_operator_provider_independent_retirement.sql');
   const archives=source('supabase/migrations/20270602000203_operator_account_archive.sql');
@@ -467,7 +547,7 @@ try{
     CREATE FUNCTION operator_remove_retired_credentials(uuid[]) RETURNS void LANGUAGE sql AS $$ SELECT $$;
     CREATE FUNCTION operator_account_deletion_plan(_ids uuid[]) RETURNS jsonb LANGUAGE plpgsql SET search_path=public AS $$
     DECLARE table_name text; tids jsonb; plan jsonb:='{}'; BEGIN
-      FOREACH table_name IN ARRAY ARRAY['tenant_members','tenant_tool_autonomy','plan_items','plans','paige_automations','paige_native_events',
+      FOREACH table_name IN ARRAY ARRAY['tenant_members','tenant_tool_autonomy','tenant_business_time_zones','plan_items','plans','paige_automations','paige_native_events',
         'paige_event_dispatches','paige_act_executions','paige_workspace_events'] LOOP
         EXECUTE format('SELECT coalesce(jsonb_agg(ctid::text),''[]''::jsonb) FROM public.%I WHERE tenant_id=ANY($1)',table_name) INTO tids USING _ids;
         IF jsonb_array_length(tids)>0 THEN plan:=plan||jsonb_build_object(table_name,jsonb_build_object('disposition','delete','tids',tids)); END IF;
@@ -496,7 +576,9 @@ try{
     assert.equal(run(`SELECT count(*) FROM tenants WHERE id=${literal(foreign)};`),'0');
   });
   const schemaFingerprint=run("SELECT md5(string_agg(pg_get_functiondef(p.oid),E'\\n' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '%weekly_commitment%';");
-  evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,schema_fingerprint:schemaFingerprint,
+  evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,
+    read_preparation:{source:readMigration,migration_sha256:readMigrationHash,actual_canonical_owner_rpc:true,actual_prepared_owner_reader:true,calendar_records_written:0},
+    schema_fingerprint:schemaFingerprint,
     fixture_service_role:roleParity,
     incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};

@@ -14,11 +14,14 @@ let modelCalls = 0;
 let emitToolUse = false;
 let danglingStream = false;
 let offeredToolCount = null;
+let routeIntent = 'answer';
+let modelStopReason = 'end_turn';
+let modelReply = 'Answered in words.';
 globalThis.fetch = async (url, opts) => {
   if (!String(url).includes('api.anthropic.com')) return new Response('{}', { status: 503 });
   const body = JSON.parse(opts.body);
   if (body.system?.startsWith('You label one message sent to PAIGE')) {
-    return Response.json({ content: [{ type: 'text', text: JSON.stringify({ intent: 'answer', research: 'none', difficulty: 'routine', image: 'none', needs_workspace_data: false, confidence: .9 }) }], usage: { input_tokens: 1, output_tokens: 1 } });
+    return Response.json({ content: [{ type: 'text', text: JSON.stringify({ intent: routeIntent, research: 'none', difficulty: 'routine', image: 'none', needs_workspace_data: routeIntent === 'act', confidence: .9 }) }], usage: { input_tokens: 1, output_tokens: 1 } });
   }
   modelCalls++;
   if (modelCalls === 1) offeredToolCount = Array.isArray(body.tools) ? body.tools.length : 0;
@@ -27,7 +30,7 @@ globalThis.fetch = async (url, opts) => {
     return new Response('event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":1}}}\n\nevent: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Partial answ"}}\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
   }
   if (!emitToolUse || modelCalls > 1) {
-    return new Response('event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":1}}}\n\nevent: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Answered in words."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}}\n\nevent: message_stop\ndata: {"type":"message_stop"}\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
+    return new Response('event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":1}}}\n\nevent: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Answered in words."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}}\n\nevent: message_stop\ndata: {"type":"message_stop"}\n\n'.replace('"stop_reason":"end_turn"', `"stop_reason":${JSON.stringify(modelStopReason)}`).replace('"text":"Answered in words."', `"text":${JSON.stringify(modelReply)}`), { headers: { 'Content-Type': 'text/event-stream' } });
   }
   // Adversarial variant: the model names a governed tool it was never offered.
   const events = [{ type: 'message_start', message: { usage: { input_tokens: 1 } } },
@@ -68,9 +71,9 @@ const scenario = (extra = {}) => fake.setScenario({
     get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
     paige_chat_interactive_begin_v2: { data: { status: 'accepted', turn_id: id(5) }, error: null },
     paige_chat_interactive_executor_v2: (a) => {
-      if (a.p_operation === 'acquire') executorState.held = intent;
-      if (a.p_operation === 'release' && executorState.held === intent) executorState.held = null;
-      return { data: { latest: intent, executor: executorState.held, acquired: executorState.held === intent, terminal: receipts.length > 0, stopped: false }, error: null };
+      if (a.p_operation === 'acquire') executorState.held = a.p_intent;
+      if (a.p_operation === 'release' && executorState.held === a.p_intent) executorState.held = null;
+      return { data: { latest: a.p_intent, executor: executorState.held, acquired: executorState.held === a.p_intent, terminal: receipts.length > 0, stopped: false }, error: null };
     },
     paige_chat_interactive_settle: (a) => { receipts.push({ role: 'assistant', content: a.p_content, bundle_ref: a.p_bundle_ref }); return { data: id(8), error: null }; },
     ...(extra.rpcs ?? {}),
@@ -203,6 +206,138 @@ const brokenSettles = rec.rpc.filter((c) => c.name === 'paige_chat_interactive_s
 assert.equal(brokenSettles.length, 1, 'an interrupted conversational turn still settles once');
 assert.equal(brokenSettles[0].args.p_bundle_ref.turn_state.state, 'INTERRUPTED');
 assert.ok(String(brokenSettles[0].args.p_content).includes('Partial answ'), 'the partial answer is preserved truthfully');
+danglingStream = false;
+
+// #2102 — exact ordinary customer failure: imperative task request, DRAINING,
+// route fresh/act/operational, repeated prose with no admitted action tool.
+// Before correction the real handler continued three times and authored LIMIT_REACHED.
+receipts.length = 0; modelCalls = 0; routeIntent = 'act';
+rec = scenario();
+const taskRequest = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(20)));
+const taskWire = await taskRequest.text();
+console.log('E2 task refusal terminal:', rec.rpc.find(c => c.name === 'paige_chat_interactive_settle')?.args.p_bundle_ref.turn_state.state);
+assert.ok(taskWire.includes('Actions are unavailable in this conversation'), 'known unavailable actions must get the deterministic refusal');
+assert.ok(taskWire.includes('No business action was run.'), 'refusal must state the no-effect outcome');
+assert.ok(!taskWire.includes('LIMIT_REACHED'), 'known action unavailability is not continuation exhaustion');
+assert.equal(modelCalls, 1, 'do not continue asking a read-only turn to carry out an unavailable act');
+const taskSettles = rec.rpc.filter(c => c.name === 'paige_chat_interactive_settle');
+assert.equal(taskSettles.length, 1);
+assert.equal(taskSettles[0].args.p_bundle_ref.turn_state.state, 'FINAL');
+assert.ok(taskSettles[0].args.p_content.includes('Actions are unavailable in this conversation'), 'persisted answer must match the refusal on the wire');
+assert.equal(rec.rpc.filter(c => c.name === 'paige_chat_interactive_executor_v2' && c.args.p_operation === 'acquire').length, 0);
+assert.equal(rec.rpc.filter(c => /plan_create|task_create|propose_action/.test(c.name)).length, 0);
+// A hallucinated unoffered action call remains blocked and must not weaken refusal.
+receipts.length = 0; modelCalls = 0; emitToolUse = true;
+rec = scenario();
+const unadmittedTask = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(22)));
+assert.ok((await unadmittedTask.text()).includes('Actions are unavailable in this conversation'), 'an unadmitted action call must also end with the truthful refusal');
+assert.equal(rec.rpc.filter(c => c.name === 'plan_create').length, 0);
+emitToolUse = false;
+// A genuinely interrupted action response must stay interrupted, never be relabelled FINAL.
+receipts.length = 0; modelCalls = 0; danglingStream = true;
+rec = scenario();
+const interruptedTask = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(28)));
+assert.ok(!(await interruptedTask.text()).includes('Actions are unavailable in this conversation'), 'do not replace an interrupted provider answer with a finished refusal');
+assert.equal(rec.rpc.find(c => c.name === 'paige_chat_interactive_settle').args.p_bundle_ref.turn_state.state, 'INTERRUPTED');
+danglingStream = false;
+routeIntent = 'answer';
+
+// Native max_tokens/refusal/unknown stops also map to stop in the existing
+// Anthropic converter. None is evidence of normal completion; preserve that
+// actual provider output and existing terminal semantics, never policy-rewrite it.
+for (const stopReason of ['max_tokens', 'refusal', 'pause_turn', null]) {
+  receipts.length = 0; modelCalls = 0; routeIntent = 'act'; modelStopReason = stopReason;
+  rec = scenario();
+  const limited = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(30)));
+  const limitedWire = await limited.text();
+  assert.ok(!limitedWire.includes('Actions are unavailable in this conversation'), `${stopReason}: do not replace the actual provider termination`);
+  assert.ok(limitedWire.includes('Answered in words.'), `${stopReason}: preserve actual provider text`);
+  assert.equal(rec.rpc.find(c => c.name === 'paige_chat_interactive_settle').args.p_bundle_ref.turn_state.state,
+    stopReason === 'max_tokens' ? 'LIMIT_REACHED' : 'INTERRUPTED', `${stopReason}: truthful non-success terminal without misusing the client-only REFUSED cause`);
+  assert.equal(rec.rpc.filter(c => c.name === 'plan_create').length, 0);
+}
+routeIntent = 'answer'; modelStopReason = 'end_turn';
+
+// Advisory misclassification may never let a false business-completion claim out.
+receipts.length = 0; modelCalls = 0; modelReply = 'Done. I’ve created the task.';
+rec = scenario();
+const falseDone = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(31)));
+const falseDoneWire = await falseDone.text();
+assert.ok(!falseDoneWire.includes('I’ve created the task.'), 'a read-only turn cannot claim task creation even if the classifier says answer');
+assert.ok(falseDoneWire.includes('Actions are unavailable in this conversation'));
+assert.equal(modelCalls, 1);
+assert.equal(rec.rpc.find(c => c.name === 'paige_chat_interactive_settle').args.p_bundle_ref.turn_state.state, 'FINAL');
+receipts.length = 0; modelCalls = 0;
+rec = scenario();
+const politeAct = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Please create a task to follow up on that.' }] }, id(34)));
+const politeActWire = await politeAct.text();
+assert.ok(!politeActWire.includes('I’ve created the task.'), 'courtesy prefix must not defeat the no-effects task refusal');
+assert.ok(politeActWire.includes('Actions are unavailable in this conversation'));
+receipts.length = 0; modelCalls = 0; modelReply = 'Here is a draft you can copy: Thanks for meeting.';
+rec = scenario();
+const actualDraft = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Draft a follow-up message in words.' }] }, id(32)));
+assert.ok((await actualDraft.text()).includes(modelReply), 'supported draft text is retained, not replaced by an act refusal');
+receipts.length = 0; modelCalls = 0; modelReply = 'Here is a draft you can copy: I’ve created the report. Would you like any changes?';
+rec = scenario();
+const quotedDraft = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Draft a follow-up message in words.' }] }, id(33)));
+assert.ok((await quotedDraft.text()).includes(modelReply), 'quoted actions in a supported draft must not erase the draft');
+assert.equal(modelCalls, 1);
+receipts.length = 0; modelCalls = 0;
+rec = scenario();
+const politeDraft = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Please draft a follow-up message in words.' }] }, id(35)));
+assert.ok((await politeDraft.text()).includes(modelReply), 'courtesy prefix must preserve supported draft prose');
+receipts.length = 0; modelCalls = 0; routeIntent = 'act';
+rec = scenario();
+const misclassifiedDraft = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Draft a follow-up message in words.' }] }, id(37)));
+assert.ok((await misclassifiedDraft.text()).includes(modelReply), 'advisory act classification must not erase a known pure-prose draft');
+routeIntent = 'answer'; modelReply = 'Answered in words.'; receipts.length = 0; modelCalls = 0;
+rec = scenario();
+const knownAct = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Create a task to follow up on that.' }] }, id(38)));
+assert.ok((await knownAct.text()).includes('Actions are unavailable in this conversation'), 'a known unavailable act must be refused without depending on advisory classification or completion words');
+receipts.length = 0; modelCalls = 0; modelReply = 'Done. I’ve created the task.';
+rec = scenario();
+const unknownKind = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Could you take care of that?' }] }, id(36)));
+assert.ok((await unknownKind.text()).includes('Nothing was sent, saved or changed in this reply.'), 'unknown request kind must retain the canonical no-action truth backstop');
+modelReply = 'Answered in words.';
+
+// Pure drafting remains an answer: the advisory action route, not a broad word
+// such as "draft", distinguishes the blocked act from supported conversational prose.
+receipts.length = 0; modelCalls = 0;
+rec = scenario();
+const prose = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Draft a follow-up message in words.' }] }, id(21)));
+assert.ok((await prose.text()).includes('Answered in words.'), 'non-effectful drafting remains available');
+
+// Model the production SQL's begin append and the legacy append separately.
+// No transcript de-duplication by text: two different intents may say the same words.
+receipts.length = 0; modelCalls = 0;
+const userRows = [], begunIntents = new Set();
+rec = scenario({ rpcs: {
+  paige_chat_interactive_begin_v2: a => {
+    if (begunIntents.has(a.p_intent)) return { data: { status: 'duplicate' }, error: null };
+    begunIntents.add(a.p_intent);
+    if (!a.p_bound_answer) userRows.push({ content: a.p_content, intent: a.p_intent });
+    return { data: { status: 'accepted', turn_id: id(23) }, error: null };
+  },
+  paige_chat_turn_append: a => {
+    if (a.p_role === 'user') userRows.push({ content: a.p_content, intent: null });
+    return { data: id(24), error: null };
+  },
+  paige_chat_interactive_executor_v2: () => ({ data: { latest: [...begunIntents].at(-1), executor: null, acquired: false, terminal: false, stopped: false }, error: null }),
+} });
+for (const n of [25, 26]) {
+  const ordinary = await capturedHandler()(req({}, id(n)));
+  await ordinary.text();
+}
+assert.equal(userRows.length, 2, 'two admitted intents must record exactly two user rows, not four');
+assert.ok(userRows.every(r => r.intent !== null), 'canonical admission, not a second legacy append, owns conversational user persistence');
+const duplicate = await capturedHandler()(req({}, id(26)));
+assert.equal(duplicate.status, 409);
+assert.equal(userRows.length, 2, 'replay must not append a user row');
+danglingStream = true;
+const cut = await capturedHandler()(req({}, id(27)));
+await cut.text();
+assert.equal(userRows.length, 3, 'interruption preserves only the one admitted user row');
+assert.equal(rec.rpc.filter(c => c.name === 'paige_chat_turn_append' && c.args.p_role === 'user').length, 0);
 danglingStream = false;
 
 console.log('PASS conversational degraded mode: browser payload accepted while DRAINING (no 503), no tools offered or dispatched, no executor claim, one server-issued FINAL receipt, approvals refused before acceptance, replay idempotent, scope bound, interruption truthful, stop/status unchanged');

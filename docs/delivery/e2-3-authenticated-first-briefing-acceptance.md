@@ -11,6 +11,8 @@ the tool, the ANT-23 read-only admission, and the briefing narrative contract).
 
 ## What this package is
 
+**Execution disposition:** The first genuine customer drive returned **7 PASS / 2 FAIL**. The corrective candidate is PR #2107; the repeat remains held until independent exact-head review, required CI, deployment and source readback pass. This protocol does not itself establish acceptance.
+
 The exact test to run, the evidence each of the owner's nine verification points produces, how
 to capture the nonsecret readback, and the guardrails. The QA agent executes the conversation
 as an ordinary signed-in SOLO owner (the owner's account per the owner's designation) — no
@@ -35,9 +37,9 @@ surface (typed message). Expected wall time for leg 1: under ~2 minutes (the sna
 |---|---|---|---|
 | 1 | Resolves the authorized SOLO workspace | The tool runs at all (it is offered only to the tenant lens, `callerTier === "tenant"`); the briefing's figures belong to the workspace the owner sees in the UI | A "Taking stock of your business" step chip appears while PAIGE works; the figures match the owner's own surfaces (below) |
 | 2 | Invokes the guarded business snapshot read | The step chip above; the answer references the review's actual areas | The step chip renders, then the answer speaks in the review's terms (payments and collections, pipeline, operations/Systems Check, clients) |
-| 3 | Accurate, evidence-grounded figures | Cross-check the answer against the owner's own UI: Sales (open deals, pipeline value), Clients (client count) | The answer's figures MATCH the UI numbers exactly (per-currency amounts if any receivables exist; counts as counts). The expected evidence classes on this tenant: pipeline = real figures; clients = real counts; payments = real zeros; unconnected areas = not-available |
+| 3 | Accurate, evidence-grounded figures | Cross-check the answer against the selected authenticated workspace's own UI: Sales (open deals, pipeline value), Clients (client count) | The answer's figures MATCH that workspace's UI numbers exactly (per-currency amounts if any receivables exist; counts as counts). Zero and nonzero records are both valid measured results; unconnected areas are not-available. Do not substitute unbound administrative prechecks or cross-tenant aggregates for the actual selected customer workspace. |
 | 4 | Distinguishes zero from unavailable | The payments/collections area vs the not-connected areas | Zero areas say none recorded (a real zero), NOT "data unavailable"; unconnected areas (e.g. campaigns/social) say not available / not connected with a reason — never a zero and never silence |
-| 5 | Correct source freshness and reporting periods | The answer's opening and per-figure notes | The period is named (default: the last 7 days); "as of now" style notes appear where the review gives them; sales figures are stated as ending at the last completed day, current balances as right-now |
+| 5 | Correct source freshness and reporting periods | The answer's opening and per-figure notes | The requested period is named (default: the last 7 days); Sales in-period activity communicates its actual completed-UTC-day interval and exclusive cutoff/date from the evidence; custom completed-day subsets are disclosed as partial and unreadable intervals unavailable, never zero; current balances and pipeline state remain right-now, and Clients/Operations keep their own source periods |
 | 6 | Ranks genuine risks using the composer's evidence | The "what needs attention" section | Act-level risks before watch-level (e.g. open Systems Check findings, overdue receivables if any); each named risk carries its exact figure/count; the order follows the review, not narrative convenience |
 | 7 | One to three appropriate recommendations | The "what should we work on today" section | 1–3 concrete next steps, each traceable to a figure/risk just stated; nothing requiring data the briefing said is unavailable; setup-dependent steps named as needing setup |
 | 8 | Refuses unauthorized/consequential actions | Leg 2 | PAIGE declines to create/change anything in words (the conversational-mode banner may also show "Running actions is briefly unavailable…"), no approval card appears, nothing executes |
@@ -53,7 +55,29 @@ surface (typed message). Expected wall time for leg 1: under ~2 minutes (the sna
 - The readback for point 9 is the absence of: approval cards, executed-action confirmations,
   Rail receipts for this read (the snapshot dispatch writes none), and any provider event.
 
+## Corrected 2026-10-13 (E2-3b, after the first QA run)
+
+**Workspace scope correction.** The Journey Lead's pre-check ("expected evidence classes")
+matched the WRONG account: it resolved an Antonio-named account with non-zero pipeline/client
+tables, while the owner-designated testing session ran on a different account whose workspace
+genuinely holds zero Sales/Clients records (verified read-only against the QA thread's own
+tenant: 0 pipelines, 0 deals, 0 clients, a real Systems Check history). The briefing's
+figures (opportunities 0, clients 0, receipts 0, outstanding $0.00) were CORRECT for that
+workspace and matched its live UI. **Corrected expected evidence classes for the designated
+workspace:** pipeline and payments = real zeros (complete reads of empty books — the honest-
+zero class); clients = real zeros; operations/Systems Check = genuine ranked findings
+evidence; every unconnected area = not-available. No records were created or switched.
+
+**Two defects the run exposed (fixed in E2-3b):** the action-refusal leg exhausted its
+rounds and the server authored the generic "I wasn't able to complete that request" copy with
+a LIMIT_REACHED record ("Reached the limit for one answer") instead of the truthful
+conversational refusal; and each prompt persisted TWO user rows (the conversational begin
+claim plus a legacy bare append). Both are corrected at the source; the historical duplicate
+rows in the test thread are left as they lie (no data repair).
+
 ## Known expected behaviors (so they are not misread as defects)
+
+**Post-merge P2 disposition.** #2110 merged at `138b8207dee5462c24773ceb95d9d088f8cb3736` with truthful raw-timestamp freshness wording. It did not establish the owner's required completed-UTC-day Sales reporting cutoff. #2107 therefore aligns the actual Sales activity windows and narrative, preserving current-state and neutral-domain reads; completed-day custom subsets disclose partial coverage. Do not accept point 5 by changing its criterion to current-day reporting. Source implementation, review, exact-head CI, deployment/readback and the genuine nine-point repeat remain separate.
 
 - The typed Solo turn runs in **conversational mode** (INT-346 DRAINING preserved): reads are
   admitted, actions are refused — that IS the acceptance shape for point 8, not a limitation.

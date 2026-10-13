@@ -792,7 +792,7 @@ account, the owner's existing Solo account (PC-1 superseded), through ordinary c
   proves the section mounts in the live Setup on Business profile only.
 
 **What changed.**
-- **Migration `20271029000100`** adds two reads behind the same owner/admin seat as every Sales read,
+- **Migration `20271029000100`** (renumbered from `20271027000100` so it follows production's newest recorded version; same SQL) adds two reads behind the same owner/admin seat as every Sales read,
   each writing one capability receipt:
   - `read_business_time_zone` returns state, zone, `set_at`, `local_date` and `can_set`.
   - `find_clients_for_status` returns names and status only. `%` and `_` are literal text, an email

@@ -10,6 +10,12 @@
 //   * at most once per application, once a day per address, and a platform-wide hourly ceiling,
 //     so the form cannot be turned into a way to mail strangers from the platform's domain.
 // It then calls send-transactional-email as an internal caller (service role).
+//
+// It also records the applicant's optional contact preferences from the form (#2087: the browser can no
+// longer write consent). The row is bound to the stored application, to its address and phone and never to
+// ones named in the request, and is written once per application through the server's recorder. It is a
+// preference, not proof: no send gate treats it as consent, because nothing here verifies who owns that
+// address or number.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
@@ -17,6 +23,15 @@ import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 const TEMPLATE = "affiliate-application-received";
 const FRESH_MS = 15 * 60 * 1000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CONSENT_SOURCE = "affiliate_apply";
+
+type Preferences = { emailMarketing: boolean; smsMarketing: boolean; smsTransactional: boolean };
+
+/** Only literal `true` opts in; anything else, or no object at all, is a no. */
+function readPreferences(raw: unknown): Preferences {
+  const r = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+  return { emailMarketing: r.emailMarketing === true, smsMarketing: r.smsMarketing === true, smsTransactional: r.smsTransactional === true };
+}
 
 function firstNameOnly(fullName: unknown): string | null {
   const first = String(fullName ?? "").trim().split(/\s+/)[0] ?? "";
@@ -35,9 +50,11 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
   let applicationId = "";
+  let preferences: Preferences;
   try {
     const body = await req.json();
     applicationId = String(body?.applicationId ?? "");
+    preferences = readPreferences(body?.consent);
   } catch {
     return json(400, { error: "invalid_json" });
   }
@@ -54,7 +71,7 @@ Deno.serve(async (req) => {
 
   const { data: app, error: appErr } = await admin
     .from("affiliate_applications")
-    .select("id, email, full_name, requested_tier_key, created_at")
+    .select("id, email, phone, full_name, requested_tier_key, created_at")
     .eq("id", applicationId)
     .maybeSingle();
   if (appErr) return json(503, { error: "application_lookup_failed" });
@@ -65,6 +82,9 @@ Deno.serve(async (req) => {
 
   const email = String(app.email ?? "").trim().toLowerCase();
   if (!email) return json(404, { error: "application_not_found" });
+
+  // Never blocks the confirmation: a preference that could not be recorded is logged, not retried here.
+  await recordPreferences(admin, app, email, preferences);
 
   const idempotencyKey = `aff-app-received-${app.id}`;
   const { data: prior, error: priorErr } = await admin
@@ -111,3 +131,31 @@ Deno.serve(async (req) => {
   }
   return json(200, { success: true, sent: out?.sent === true });
 });
+
+// deno-lint-ignore no-explicit-any
+async function recordPreferences(admin: any, app: { email?: string | null; phone?: string | null; created_at: string }, email: string, p: Preferences) {
+  try {
+    const { data: prior, error: priorErr } = await admin
+      .from("communications_consents")
+      .select("id")
+      .eq("source", CONSENT_SOURCE)
+      .eq("email", email)
+      .gte("created_at", app.created_at)
+      .limit(1);
+    if (priorErr) { console.error("[affiliate-application-confirm] preference lookup failed", priorErr.message); return; }
+    if ((prior ?? []).length > 0) return;
+    const phone = String(app.phone ?? "").trim() || null;
+    const { error } = await admin.rpc("record_communications_consent", {
+      p_email: email,
+      p_phone: phone,
+      p_email_marketing: p.emailMarketing,
+      p_sms_marketing: phone ? p.smsMarketing : false,
+      p_sms_transactional: phone ? p.smsTransactional : false,
+      p_voice_marketing: false,
+      p_source: CONSENT_SOURCE,
+    });
+    if (error) console.error("[affiliate-application-confirm] preference not recorded", error.message);
+  } catch (e) {
+    console.error("[affiliate-application-confirm] preference not recorded", e instanceof Error ? e.message : String(e));
+  }
+}

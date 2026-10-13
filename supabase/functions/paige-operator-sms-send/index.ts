@@ -105,20 +105,15 @@ Deno.serve(async (req) => {
   // Platform Campaign traffic is authorized only by the platform-user evidence
   // row created from the exact signup disclosure. Tenant/contact consent cannot
   // authorize an operator message, even when the phone number happens to match.
-  const { data: platformConsent, error: consentErr } = await admin
-    .from("communications_consents")
-    .select("id")
-    .eq("phone", toNorm)
-    .is("tenant_id", null)
-    .is("contact_id", null)
-    .not("consent_granted_at", "is", null)
-    .is("revoked_at", null)
-    .is("withdrawn_at", null)
-    .eq("sms_transactional", true)
-    .limit(1)
-    .maybeSingle();
+  // The one gate (has_sms_consent, #2087) also requires that the account behind the
+  // evidence VERIFIED this number: a number typed at signup proves nothing about
+  // who owns it, and a check that cannot run holds the message.
+  const { data: platformConsent, error: consentErr } = await admin.rpc("has_sms_consent", {
+    _phone: toNorm,
+    _marketing: false,
+  });
   if (consentErr) return json({ outcome: "suppressed", reason: "consent_check_failed" }, 200);
-  if (!platformConsent) return json({ outcome: "suppressed", reason: "platform_sms_consent_required" }, 200);
+  if (platformConsent !== true) return json({ outcome: "suppressed", reason: "platform_sms_consent_required" }, 200);
 
   // Upsert the operator conversation thread for this counterparty (service role; the owner
   // gate above already authorized this write). Unique on (channel, counterparty_phone).

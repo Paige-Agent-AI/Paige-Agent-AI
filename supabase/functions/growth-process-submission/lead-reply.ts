@@ -18,20 +18,42 @@
 //
 // THE PLAN DECISION (appendLeadReply, no I/O): the step is added only when the form itself opted in
 // (growth_forms.lead_reply_enabled = true; default false, so a form that never chose it gets nothing),
-// the business is a non-manager business (account_type standalone or sub_account — never an agency or
-// enterprise, which manage accounts rather than answer a lead book), and the form has no automation of
+// the business is a tier that answers its own lead book (account_type standalone, sub_account or
+// enterprise — never a pure agency, which manages accounts rather than a lead book; see
+// LEAD_REPLY_ACCOUNT_TYPES and tierFeatures.ts 'lead_reply'), and the form has no automation of
 // its own that already files owner.lead_followup (that one is routed through fileLeadReply instead —
 // never a second draft). The step is unledgered (no automation row, like applyIntakeSettings'
 // email_alert): adding a growth_form_automations row would switch the form off the legacy column
 // fallback and silently drop its auto_create_contact step (§58).
 //
-// THE RUN DECISION (fileLeadReply): nothing is filed unless the business tier qualifies, the intake
-// produced a contact, that contact has an email, the business has EXACTLY ONE usable email sender
+// THE RUN DECISION (fileLeadReply): nothing is filed unless the form opted in (lead_reply_enabled is
+// the ONE switch — a form's own legacy paige_follow_up automation for owner.lead_followup is held to
+// it too, so no second way to turn drafting on exists), the business tier qualifies, the business is
+// open (tenants.status trial/active/past_due and not archived — no model spend for a closed business),
+// the intake produced a contact, the email the visitor TYPED is that contact's email (see IDENTITY
+// below), the business has EXACTLY ONE usable email sender
 // (resolveCommsEmailParties → 'resolved', then the door's own readiness: emailSenderReadiness null and
 // the recipient is not suppressed / opted out), and drafting is within the per-business and
 // per-recipient caps. Several senders → no draft (no screen can send it yet), reason recorded. Every
 // reason a draft is not filed is reported as it is and recorded on the submission
 // (lead_reply_skipped_reason) — never presented as a draft that was made.
+//
+// IDENTITY (security): the intake resolves an existing contact by email, then by PHONE. So a visitor can
+// type a fresh email plus an existing client's phone number and be matched to that client — and a
+// draft would then be addressed to the client, about a request the client never made. The draft is
+// filed only when the normalized (trim, lowercase) email typed into the form equals the server-
+// resolved recipient email; otherwise it is skipped with 'submitted_email_not_contact_email'. The
+// draft's title and the composer brief name the STORED contact, never the typed name.
+//
+// CAPS ARE BOUNDED, NOT SERIALIZED (§13): the cap check reads counts, then file_action inserts — two
+// separate PostgREST calls, so two concurrent submissions can both pass the check. After filing, the
+// count is taken again over the rows created at or before ours; if ours is over a cap it is dismissed
+// (advance_action 'dismissed', before the */2 drafting worker claims it, so no model call is spent in
+// the normal case) and the reason recorded. Residual window: a row created earlier but committed after
+// our recount is invisible to it, so a burst of truly simultaneous submissions can overshoot a cap by
+// the number in flight at once. Airtight serialization needs a database-side lock inside one filing
+// function (e.g. pg_advisory_xact_lock on the tenant within file_action or a lead-reply wrapper RPC),
+// which is not in this module's reach.
 //
 // UNTRUSTED DATA: the visitor's answers become the draft brief's key_points. They are DATA for the
 // composer, never instructions: labelled, whitespace-collapsed, bounded in count and length, with
@@ -72,9 +94,18 @@ const MAX_KEY_POINTS = 20;
 const MAX_KEY_POINT_CHARS = 500;
 const MAX_NAME_CHARS = 120;
 
-// The tiers that answer their own lead book (§51/§60: Solo ≡ Sub-account). Agency and enterprise
-// manage accounts; they never get a reply draft.
-const LEAD_REPLY_ACCOUNT_TYPES = new Set(["standalone", "sub_account"]);
+// The tenants.account_type values that get reply drafts. MUST equal the 'lead_reply' declaration in
+// src/lib/tier/tierFeatures.ts (§60 one home; §61 default): Solo ('standalone', which also covers a
+// legacy parented sub-account still typed 'standalone'), Sub-account ('sub_account') and Enterprise
+// (the hybrid tier, Solo ∪ Agency) — YES; a pure Agency — NO (it manages sub-accounts, not a lead book;
+// reselling is a separate Marketplace mechanism). God is the operator, not a tenant row. Pinned by
+// src/lib/tier/tierFeatures.test.ts, which reads this line.
+export const LEAD_REPLY_ACCOUNT_TYPES: ReadonlySet<string> = new Set(["standalone", "sub_account", "enterprise"]);
+
+// A business that is open (the platform's own live-business set, owner ruling 2026-09-29 — the same
+// set growth-public-submit accepts submissions for). Anything else (canceled, suspended) or an
+// archived business spends no drafting.
+export const LEAD_REPLY_BUSINESS_STATUSES: ReadonlySet<string> = new Set(["trial", "active", "past_due"]);
 
 export const LEAD_REPLY_INTENT =
   "Reply personally to someone who just asked about the business through its website form; thank them, answer what they asked if possible from their answers, and propose one clear next step";
@@ -92,10 +123,22 @@ export type PlanStep = {
   config: Obj; targetConfig: Obj;
 };
 
-/** A business that answers its own leads: standalone (Solo) or sub_account. Never agency/enterprise. */
+/** A business that answers its own leads: standalone (Solo), sub_account or enterprise. Never agency. */
 export function isLeadReplyBusiness(tenant: unknown): boolean {
   if (!tenant || typeof tenant !== "object") return false;
   return LEAD_REPLY_ACCOUNT_TYPES.has(String((tenant as Obj).account_type ?? ""));
+}
+
+/** The business is open: a live status and not archived. An unread status is closed (fail-closed). */
+export function isLeadReplyBusinessOpen(tenant: unknown): boolean {
+  if (!tenant || typeof tenant !== "object") return false;
+  const t = tenant as Obj;
+  return LEAD_REPLY_BUSINESS_STATUSES.has(String(t.status ?? "")) && (t.archived_at === null || t.archived_at === undefined);
+}
+
+/** Trim + lowercase, the comparison the identity gate uses. Non-strings are "". */
+export function normalizeTypedEmail(v: unknown): string {
+  return typeof v === "string" ? v.trim().toLowerCase() : "";
 }
 
 /** The form opted in to reply drafts. Strictly `true`: absent, null or anything else is off. */
@@ -116,8 +159,8 @@ export function filesLeadReply(p: PlanStep): boolean {
 
 /**
  * Add the unledgered lead-reply step to a submission's plan, after every other step (so the intake's
- * contact exists when it runs). No step unless the form opted in and the business is a non-manager
- * business; no step when one is already planned (the form's own owner.lead_followup automation runs
+ * contact exists when it runs). No step unless the form opted in and the business's tier answers its
+ * own leads; no step when one is already planned (the form's own owner.lead_followup automation runs
  * through fileLeadReply itself).
  */
 export function appendLeadReply(plan: PlanStep[], form: unknown, tenant: unknown): void {
@@ -189,8 +232,13 @@ export type LeadReplyAdmin = { rpc: (fn: string, args: Obj) => PromiseLike<{ dat
 
 export type LeadReplyInput = {
   tenantId: string;
-  /** The claimed submission's business row (account_type). Re-checked here, not only at plan time. */
+  /** The claimed submission's business row (account_type, status, archived_at). Checked here. */
   business: unknown;
+  /** growth_forms.lead_reply_enabled === true — the ONE opt-in, for the synthesized step AND a form's
+   *  own owner.lead_followup automation. */
+  formOptedIn: boolean;
+  /** The email address the visitor typed into the form (as extracted by the processor), or null. */
+  submittedEmail: string | null;
   submissionId: string;
   formId: string;
   formName: string | null;
@@ -225,7 +273,9 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
   const retry = (what: string, error: DbError): ExecOutcome =>
     ({ status: "error", result: {}, error: `lead_reply_${what}: ${String(error?.message ?? "no answer").slice(0, 200)}` });
 
+  if (input.formOptedIn !== true) return notDrafted("form_not_opted_in");
   if (!isLeadReplyBusiness(input.business)) return notDrafted("business_not_eligible");
+  if (!isLeadReplyBusinessOpen(input.business)) return notDrafted("business_not_active");
   if (!input.contactId) return notDrafted("no_contact");
 
   // 1. Already drafted for this submission? (A retry, or a re-claimed submission.)
@@ -253,6 +303,10 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
   }
   if (parties.kind === "contact_not_in_workspace") return notDrafted("contact_not_in_workspace");
   if (parties.kind === "recipient_missing") return notDrafted("no_contact_email");
+  // The intake may have matched this contact by PHONE. Only the person whose address was typed into
+  // the form gets a reply: anything else is someone else's contact record.
+  const typed = normalizeTypedEmail(input.submittedEmail);
+  if (!typed || typed !== normalizeTypedEmail(parties.recipient)) return notDrafted("submitted_email_not_contact_email");
   if (parties.kind === "sender_missing") return notDrafted("no_email_sender");
   // Several senders: the reply screen sends from one verified identity and cannot choose yet, so a
   // draft here would be one nobody can send. Recorded, not guessed.
@@ -270,15 +324,23 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
   if (blocked) return notDrafted(blocked);
 
   // 4. Caps: this business's reply drafts in the last hour / day, and this recipient's in the last day.
-  const filedSince = async (hours: number, contactId: string | null) => {
+  //    `upTo` (the re-count after filing): only rows created at or before ours, ours excluded.
+  const filedSince = async (hours: number, contactId: string | null, upTo?: { createdAt: string; id: string }) => {
     let q = admin.from("paige_actions")
       .select("id", { count: "exact", head: true })
       .eq("tenant_id", input.tenantId)
       .eq("action_kind", LEAD_REPLY_ACTION_KIND);
     if (contactId) q = q.eq("contact_id", contactId);
-    const { count, error } = await q.gte("created_at", new Date(now.getTime() - hours * 3600_000).toISOString());
+    q = q.gte("created_at", new Date(now.getTime() - hours * 3600_000).toISOString());
+    if (upTo) q = q.lte("created_at", upTo.createdAt).neq("id", upTo.id);
+    const { count, error } = await q;
     return { count: error ? null : (count ?? 0), error };
   };
+  const overCap = (hourCount: number, dayCount: number, contactCount: number): string | null =>
+    contactCount >= LEAD_REPLIES_PER_CONTACT_PER_DAY ? "contact_daily_cap"
+      : hourCount >= LEAD_REPLIES_PER_BUSINESS_PER_HOUR ? "business_hourly_cap"
+      : dayCount >= LEAD_REPLIES_PER_BUSINESS_PER_DAY ? "business_daily_cap"
+      : null;
   const hour = await filedSince(1, null);
   const day = await filedSince(24, null);
   const recipientDay = await filedSince(24, input.contactId);
@@ -296,9 +358,11 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
   }
 
   // 5. File the draft request. The kind's default lane (confirm) applies; it always needs the owner.
+  //    The name is the STORED contact's (the record the reply goes to); the typed name only when the
+  //    record has none.
   const visitor = str(input.visitorName) ? oneLine(input.visitorName as string, MAX_NAME_CHARS) : null;
   const contactName = parties.contactName && parties.contactName !== "this contact" ? oneLine(parties.contactName, MAX_NAME_CHARS) : null;
-  const recipientName = visitor || contactName || null;
+  const recipientName = contactName || visitor || null;
   const { data: filed, error: fileErr } = await admin.rpc("file_action", {
     p_action_kind: LEAD_REPLY_ACTION_KIND,
     p_title: `Reply to ${recipientName ?? "a new lead"} - ${oneLine(input.formName ?? "form", 120) || "form"}`,
@@ -326,7 +390,43 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
     return notDrafted(`file_refused:${code}`);
   }
   if (!filed?.ok || !str(filed?.action_id)) return notDrafted("file_refused:no_result");
-  const result: Obj = { action_id: filed.action_id, action_kind: LEAD_REPLY_ACTION_KIND, status: filed.status ?? "filed" };
+  const actionId = str(filed.action_id) as string;
+  const result: Obj = { action_id: actionId, action_kind: LEAD_REPLY_ACTION_KIND, status: filed.status ?? "filed" };
+
+  // 6. The race bound (see CAPS above): count again, over the rows created at or before ours. If ours
+  //    is over a cap, dismiss it before the drafting worker claims it. A re-count that cannot be read
+  //    keeps the draft (the pre-check above already held) and says so.
+  const mine = await admin.from("paige_actions")
+    .select("id, created_at")
+    .eq("id", actionId).eq("tenant_id", input.tenantId)
+    .maybeSingle();
+  const createdAt = mine.error ? null : str(mine.data?.created_at);
+  if (!createdAt) {
+    result.cap_recheck = "unreadable";
+  } else {
+    const upTo = { createdAt, id: actionId };
+    const [h2, d2, c2] = [await filedSince(1, null, upTo), await filedSince(24, null, upTo), await filedSince(24, input.contactId, upTo)];
+    if (h2.count === null || d2.count === null || c2.count === null) {
+      result.cap_recheck = "unreadable";
+    } else {
+      const overflow = overCap(h2.count, d2.count, c2.count);
+      if (overflow) {
+        const { error: dismissErr } = await admin.rpc("advance_action", {
+          p_action_id: actionId,
+          p_to_status: "dismissed",
+          p_error: `lead_reply_cap_overflow:${overflow}`,
+          p_tenant_id: input.tenantId,
+        });
+        if (dismissErr) {
+          // Not dismissed: the draft stands and is reported as over the cap, never hidden.
+          result.cap_overflow = overflow;
+          result.dismiss_error = String(dismissErr.message ?? dismissErr.code ?? "unknown").slice(0, 200);
+        } else {
+          return notDrafted(overflow, { dismissed_action_id: actionId, race: "filed_then_dismissed" });
+        }
+      }
+    }
+  }
   // A retry that now drafted clears an earlier attempt's reason (e.g. no_contact before the contact
   // step succeeded). The draft is filed either way; a failed clear is reported, not retried.
   const { error: clearErr } = await admin.from("growth_form_submissions")

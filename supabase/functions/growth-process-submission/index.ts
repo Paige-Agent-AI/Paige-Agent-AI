@@ -29,11 +29,13 @@
 //   n8n_workflow       -> file_action(owner.run_workflow, {workflow_key}) then advance_action -> run
 //   outbound_webhook   -> SSRF-guarded POST of the submission to a connected endpoint
 //   lead_reply_draft   -> (synthesized, never a row) a new lead on a form that opted in
-//                         (growth_forms.lead_reply_enabled) of a standalone/sub_account business -> ONE
+//                         (growth_forms.lead_reply_enabled) of a standalone/sub_account/enterprise
+//                         business that is open (trial/active/past_due, not archived) -> ONE
 //                         owner.lead_followup reply draft for the owner to review and send through the
 //                         governed email door; see appendLeadReply / lead-reply.ts. A form's own
 //                         paige_action automation for owner.lead_followup runs through the same
-//                         fileLeadReply (same gates, same draft brief, same once-per-submission rule).
+//                         fileLeadReply (same gates — INCLUDING lead_reply_enabled, the one opt-in —
+//                         same draft brief, same once-per-submission rule).
 //
 // -- SECURITY (S9/S13) ------------------------------------------------------------------------
 // NOT user-facing. Authorized ONLY by (a) the service-role bearer, or (b) a valid Vault cron token
@@ -50,7 +52,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { isEmailAddress } from "../_shared/growth-intake.ts";
-import { appendLeadReply, fileLeadReply, LEAD_REPLY_ACTION_KIND } from "./lead-reply.ts";
+import { appendLeadReply, fileLeadReply, LEAD_REPLY_ACTION_KIND, leadReplyEnabled } from "./lead-reply.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // NOTE: the outbound_webhook executor (which uses the shared SSRF guard) is DEFERRED for the first
 // live ship (see its case below); its only shared import is the pure address check above.
@@ -294,7 +296,7 @@ Deno.serve(async (req) => {
     // it never fails the lead.
     const { data: businessRow, error: businessErr } = await admin
       .from("tenants")
-      .select("id, parent_tenant_id, account_type")
+      .select("id, parent_tenant_id, account_type, status, archived_at")
       .eq("id", tenantId)
       .maybeSingle();
     if (businessErr) console.warn(`[growth-process-submission] lead reply not planned: business read failed (${businessErr.code ?? "no code"})`);
@@ -393,7 +395,7 @@ type ExecCtx = {
   payload: Record<string, unknown>;
   // deno-lint-ignore no-explicit-any
   submission: any;
-  /** The claimed submission's business row (id, parent_tenant_id, account_type), or null if unread. */
+  /** The claimed submission's business row (id, parent_tenant_id, account_type, status, archived_at), or null if unread. */
   business: unknown;
   contactId: string | null;
   setContactId: (id: string) => void;
@@ -547,7 +549,8 @@ async function runExecutor(
       // A reply draft ("Draft Paige's follow-up" = owner.lead_followup) goes through the one lead-reply
       // path: the composer brief (draft_input), the tier/sender/suppression gates, the caps, and the
       // once-per-submission rule (a lost race is "already drafted", never a failed lead). The automation
-      // row itself is the form's opt-in to drafting.
+      // row is NOT an opt-in of its own: growth_forms.lead_reply_enabled is the one switch, and
+      // fileLeadReply records form_not_opted_in when it is off.
       if (actionKind === LEAD_REPLY_ACTION_KIND) return await runLeadReply(ctx);
       const { data: filed, error: fileErr } = await admin.rpc("file_action", {
         p_action_kind: actionKind,
@@ -777,6 +780,8 @@ async function runLeadReply(ctx: ExecCtx): Promise<ExecOutcome> {
   const idn = extractIdentity(payload, form.schema_json);
   return await fileLeadReply(admin, {
     tenantId, business: ctx.business, submissionId, formId: form.id, formName: s(form.name),
+    formOptedIn: leadReplyEnabled(form),
+    submittedEmail: idn.email,
     contactId: ctx.contactId,
     answers: labelledAnswers(payload, form.schema_json),
     visitorName: [idn.firstName, idn.lastName].filter(Boolean).join(" ").trim() || null,

@@ -12,13 +12,18 @@
 //     explicit rule that they are not instructions (subagent-email-composer/prompt.ts). Forced here,
 //     whatever the filing said. The filing names no recipient (`recipient_email` is dropped): the
 //     composer reads the contact on the server.
-//   • The stored draft is
-//         { channel: 'email', subject, body: <plain text>, body_html, raw }
-//     — `body` is plain text so every preview shows words, not markup; `body_html` is the HTML twin.
-//   • The recipient is NEVER taken from the drafting output. `raw` keeps only an allow-list of the
-//     composer's record (draft wording, compliance verdict) — no `to`/`cc`/`recipient`/`summary` or
-//     anything else the model echoed — so no later reader can be tempted to address from it (§9).
-//     The owner's send goes through comms-email-command, which resolves the recipient itself.
+//   • The stored draft is PLAIN TEXT ONLY:
+//         { channel: 'email', subject, body: <plain text>, raw }
+//     The model's HTML is never stored: it is unsanitized model output (a link, a tracking pixel, a
+//     hidden block) and nothing downstream needs it — every preview shows `body` as words, and the
+//     governed email door builds the sent HTML from the owner's text itself (escaped). A specialist
+//     that answered only in HTML is reduced to text here.
+//   • The recipient is NEVER taken from the drafting output. `raw` is a small allow-list of
+//     platform-authored facts about the draft (which specialist, the compliance verdict and its
+//     rule-match flags, whether approval is required, the tone/length/word count) — never the model's
+//     wording, the reviewer's free-text findings, a `to`/`cc`/`recipient`/`summary`, or anything else
+//     the model echoed — so no later reader can address from it or render it (§9). The owner's send
+//     goes through comms-email-command, which resolves the recipient itself.
 //   • A filing with no intent, or a result with no usable subject AND body, never reaches the
 //     approvals queue: the action is failed ('blocked') with the reason, instead of offering the
 //     owner an empty email (§13).
@@ -93,18 +98,6 @@ function leadReplyInput(payload: unknown): Obj {
   return brief;
 }
 
-const escapeHtml = (s: string): string =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-
-function textToHtml(text: string): string {
-  return text
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`)
-    .join("\n");
-}
-
 function htmlToText(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
@@ -121,40 +114,61 @@ function htmlToText(html: string): string {
 const looksLikeHtml = (s: string): boolean =>
   /<\/?(p|br|div|span|a|strong|em|b|i|u|ul|ol|li|h[1-6]|table|thead|tbody|tr|td|th|blockquote|hr|img)(\s[^<>]*)?\/?>/i.test(s);
 
-// What of the composer's answer is kept as the record. An allow-list, not a deny-list: anything the
-// model or the composer put elsewhere — a `to`, a `recipient`, a summary naming an address — is not
-// carried forward.
-const RAW_KEYS = ["subagent", "compliance_verdict", "compliance_findings", "compliance_flags", "requires_approval", "confidence"];
-const RAW_DRAFT_KEYS = ["subject", "body_html", "body_text", "tone_used", "length", "word_count"];
+// What of the composer's answer is kept as the record. An allow-list, not a deny-list, and only small
+// platform-authored values: anything the model or the composer put elsewhere — a `to`, a
+// `recipient`, a summary naming an address, the reviewer's free-text findings, the draft wording
+// again, its HTML — is not carried forward. compliance_flags are the composer's own rule-match
+// codes (regex sources it authored), not model text.
+const RAW_KEYS = ["subagent", "compliance_verdict", "compliance_flags", "requires_approval", "confidence"];
+const RAW_DRAFT_KEYS = ["tone_used", "length", "word_count"];
+const RAW_MAX_STRING = 200;
+const RAW_MAX_FLAGS = 20;
+
+/** A small, flat value: a bounded string, a finite number, a boolean, or a bounded list of strings. */
+function smallValue(v: unknown): unknown {
+  if (typeof v === "string") return v.slice(0, RAW_MAX_STRING);
+  if (typeof v === "number") return Number.isFinite(v) ? v : undefined;
+  if (typeof v === "boolean") return v;
+  if (Array.isArray(v)) return v.filter((x) => typeof x === "string").slice(0, RAW_MAX_FLAGS).map((x) => (x as string).slice(0, RAW_MAX_STRING));
+  return undefined;
+}
 
 function pick(o: Obj, keys: string[]): Obj {
   const out: Obj = {};
-  for (const k of keys) if (k in o) out[k] = o[k];
+  for (const k of keys) {
+    if (!(k in o)) continue;
+    const v = smallValue(o[k]);
+    if (v !== undefined) out[k] = v;
+  }
   return out;
 }
 
-export type EmailDraft = { channel: "email"; subject: string; body: string; body_html: string; raw: Obj };
+export type EmailDraft = { channel: "email"; subject: string; body: string; raw: Obj };
 
 /**
- * Shape a drafting specialist's result into the lead-reply email contract, or null when it carries
- * no usable subject + body. Reads the composer's nested `draft.{subject, body_html, body_text}`
- * first, then a flat `{subject, body_html | body, body_text}`. A body given only as text is escaped
- * into HTML; a body given only as HTML gets a plain-text twin.
+ * Shape a drafting specialist's result into the lead-reply email contract (plain text only), or null
+ * when it carries no usable subject + body. Reads the composer's nested `draft.{subject, body_text,
+ * body_html}` first, then a flat `{subject, body_text | body | body_html}`. Text is preferred; a body
+ * given only as HTML is reduced to text (tags removed, entities decoded) and the HTML is dropped.
  */
 export function shapeEmailDraft(result: unknown): EmailDraft | null {
   const r = obj(result);
   if (r.ok === false) return null;
   const d = obj(r.draft);
-  const subject = str(d.subject) || str(r.subject);
+  const subject = oneLineSubject(str(d.subject) || str(r.subject));
   const flatBody = str(d.body) || str(r.body);
-  let html = str(d.body_html) || str(r.body_html) || (looksLikeHtml(flatBody) ? flatBody : "");
+  const html = str(d.body_html) || str(r.body_html) || (looksLikeHtml(flatBody) ? flatBody : "");
   let text = str(d.body_text) || str(r.body_text) || (flatBody && !looksLikeHtml(flatBody) ? flatBody : "");
-  if (!html && text) html = textToHtml(text);
   if (!text && html) text = htmlToText(html);
-  if (!subject || !html || !text) return null;
+  if (!subject || !text) return null;
   const raw = pick(r, RAW_KEYS);
   if (r.draft && typeof r.draft === "object" && !Array.isArray(r.draft)) raw.draft = pick(d, RAW_DRAFT_KEYS);
-  return { channel: "email", subject, body: text, body_html: html, raw };
+  return { channel: "email", subject, body: text, raw };
+}
+
+/** A subject is one line of text: markup removed, line breaks collapsed. */
+function oneLineSubject(s: string): string {
+  return (looksLikeHtml(s) ? htmlToText(s) : s).replace(/\s+/g, " ").trim();
 }
 
 export interface DraftDeps {

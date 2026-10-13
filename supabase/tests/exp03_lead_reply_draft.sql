@@ -10,15 +10,24 @@
 --   3. The send guard on paige_pending_approvals: an approval standing for a send_via_approval action —
 --      a reply, AND a legacy client.followup in the nested draft shape — is refused approved/sent with no
 --      governed send, with a failed send, another business's send, another person's send, a mismatched
---      operation, a re-used send, or with metadata.action_id stripped in the same write; created
---      already-approved is refused; declining is allowed; a provider-accepted send of the same business
---      and person is accepted; a non-send action's approval and a plain approval approve as before.
---   4. lead_reply_record_send: no grant for anon/service_role; refuses a plain member, another business,
---      a wrong kind, null arguments; answers not_found for another person's / business's / unknown
---      operation; records prepared|dispatching|unknown (stays pending), leaves failed|refused untouched,
---      approves on provider_accepted (delivery_confirmed false, action done, lead's last contact
---      stamped), replays idempotently, refuses a second different operation, and lets a failed send be
---      retried with a new accepted one.
+--      operation, a re-used send, or with metadata.action_id stripped in the same write; EACH of its three
+--      signals (new metadata.action_id, stored OLD metadata.action_id, paige_actions.approval_id) is
+--      enough on its own, upper-case ids included; the refusal says per kind what can be done
+--      (review_and_send for a reply, decline_only for every other send kind); created already-approved
+--      is refused; declining is allowed; a provider-accepted send of the same business and person is
+--      accepted; the unique message index refuses a second approval citing the same message even with
+--      the guard trigger disabled; a non-send action's approval (approve, decline, approve→sent) and a
+--      plain approval behave as before.
+--   4. lead_reply_record_send / lead_reply_record_send_service: no grant for anon/service_role (and the
+--      service twin none for anon/authenticated; the shared body none for anyone); refuses a plain member,
+--      another business, a wrong kind, null arguments, a send made by another person, a second send while
+--      an earlier one is unresolved, and a business that is not active (an outsider still gets the
+--      plain refusal); an outsider's refused call takes no row lock; answers not_found for another
+--      person's / business's / unknown operation; records prepared|dispatching|unknown (stays pending),
+--      leaves failed|refused untouched, approves on provider_accepted (delivery_confirmed false, action
+--      done, lead's last contact stamped), replays idempotently, refuses a second different operation,
+--      and lets a failed send be retried with a new accepted one. The service twin applies the same
+--      validation with the door's bound actor and refuses a JWT subject.
 --   5. lead_reply_enabled: default false; set/kept/cleared through growth_form_set_intake (6 args, and
 --      NULL = unchanged); the existing 5-arg positional and named calls still work and keep it; a direct
 --      browser insert/update is refused; a plain member and an agency account cannot turn it on.
@@ -43,6 +52,13 @@ CREATE FUNCTION pg_temp.refused(stmt text,code text,msg text,label text) RETURNS
 BEGIN BEGIN EXECUTE stmt; EXCEPTION WHEN others THEN
   IF SQLSTATE=code AND SQLERRM LIKE msg THEN RAISE NOTICE 'PASS: %',label; RETURN; END IF;
   RAISE EXCEPTION 'FAIL: % unexpected % %',label,SQLSTATE,SQLERRM; END;
+RAISE EXCEPTION 'FAIL: % accepted',label; END $$;
+-- Same, and also pins the refusal's DETAIL (the per-kind reason_code).
+CREATE FUNCTION pg_temp.refused_detail(stmt text,code text,msg text,detail text,label text) RETURNS void LANGUAGE plpgsql AS $$
+DECLARE d text; BEGIN BEGIN EXECUTE stmt; EXCEPTION WHEN others THEN
+  GET STACKED DIAGNOSTICS d = PG_EXCEPTION_DETAIL;
+  IF SQLSTATE=code AND SQLERRM LIKE msg AND d LIKE detail THEN RAISE NOTICE 'PASS: %',label; RETURN; END IF;
+  RAISE EXCEPTION 'FAIL: % unexpected % % [%]',label,SQLSTATE,SQLERRM,d; END;
 RAISE EXCEPTION 'FAIL: % accepted',label; END $$;
 CREATE FUNCTION pg_temp.as_user(uid text) RETURNS void LANGUAGE sql AS $$
  SELECT set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',uid)::text,true),
@@ -102,6 +118,21 @@ SELECT pg_temp.check_true(has_function_privilege('authenticated','public.lead_re
   AND NOT has_function_privilege('anon','public.lead_reply_record_send(uuid,uuid)','EXECUTE')
   AND NOT has_function_privilege('service_role','public.lead_reply_record_send(uuid,uuid)','EXECUTE'),
   'lead_reply_record_send is executable by a signed-in user only (not anon, not service_role)');
+SELECT pg_temp.check_true(has_function_privilege('service_role','public.lead_reply_record_send_service(uuid,uuid,uuid)','EXECUTE')
+  AND NOT has_function_privilege('anon','public.lead_reply_record_send_service(uuid,uuid,uuid)','EXECUTE')
+  AND NOT has_function_privilege('authenticated','public.lead_reply_record_send_service(uuid,uuid,uuid)','EXECUTE')
+  AND NOT has_function_privilege('anon','public._lead_reply_record_send(uuid,uuid,uuid)','EXECUTE')
+  AND NOT has_function_privilege('authenticated','public._lead_reply_record_send(uuid,uuid,uuid)','EXECUTE')
+  AND NOT has_function_privilege('service_role','public._lead_reply_record_send(uuid,uuid,uuid)','EXECUTE')
+  AND (SELECT bool_and(prosecdef AND array_to_string(proconfig,',') LIKE 'search_path=%') FROM pg_proc
+        WHERE oid IN ('public.lead_reply_record_send_service(uuid,uuid,uuid)'::regprocedure,'public._lead_reply_record_send(uuid,uuid,uuid)'::regprocedure)),
+  'the service twin is executable by the service role only; the shared body by no API role; both DEFINER with a pinned search_path');
+SELECT pg_temp.check_true((SELECT i.indisunique AND i.indrelid='public.paige_pending_approvals'::regclass
+     AND pg_get_indexdef(i.indexrelid) LIKE '%lower((metadata #>> ''{governed_send,message_id}''::text[]))%'
+     AND pg_get_expr(i.indpred,i.indrelid) LIKE '%approved%' AND pg_get_expr(i.indpred,i.indrelid) LIKE '%sent%'
+     AND pg_get_expr(i.indpred,i.indrelid) NOT LIKE '%pending%'
+    FROM pg_index i WHERE i.indexrelid='public.uq_paige_pending_approvals_governed_send_message'::regclass),
+  'one governed message per approved/sent approval: a UNIQUE partial index on lower(governed_send.message_id)');
 SELECT pg_temp.check_true(has_function_privilege('authenticated','public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean)','EXECUTE')
   AND NOT has_function_privilege('anon','public.growth_form_set_intake(uuid,boolean,uuid,uuid,text,boolean)','EXECUTE')
   AND has_function_privilege('authenticated','public.growth_form_set_intake(uuid,boolean,uuid,uuid,text)','EXECUTE')
@@ -257,9 +288,17 @@ SELECT pg_temp.prep(8,'e3000000-0000-4000-8000-000000000002','e3000000-0000-4000
 SELECT pg_temp.claim(8);   SELECT pg_temp.fin(8,'provider_accepted',1);          -- accepted, in another business
 SELECT pg_temp.prep_a(9);  SELECT pg_temp.claim(9); SELECT pg_temp.fin(9,'provider_accepted',1);
 SELECT pg_temp.prep_a(11); SELECT pg_temp.claim(11); SELECT pg_temp.fin(11,'provider_accepted',1);
+-- An accepted send made by the business's ADMIN (not the owner), to lead A1.
+SELECT pg_temp.prep(12,'e3000000-0000-4000-8000-000000000005','e3000000-0000-4000-8000-00000000aaaa','e3000000-0000-4000-8000-0000000c0001',
+  'lead.a1@example.invalid','e3000000-0000-4000-8000-0000000e000a','owner@a.example.invalid');
+SELECT pg_temp.claim(12);  SELECT pg_temp.fin(12,'provider_accepted',1);
+SELECT pg_temp.prep_a(13); SELECT pg_temp.claim(13); SELECT pg_temp.fin(13,'provider_accepted',1);
+SELECT pg_temp.prep_a(14); SELECT pg_temp.claim(14); SELECT pg_temp.fin(14,'provider_accepted',1);
+SELECT pg_temp.prep_a(16); SELECT pg_temp.claim(16); SELECT pg_temp.fin(16,'provider_accepted',1);
 SELECT pg_temp.check_true(pg_temp.st(1)='prepared' AND pg_temp.st(2)='dispatching' AND pg_temp.st(3)='unknown' AND pg_temp.st(4)='failed'
   AND pg_temp.st(5)='refused' AND pg_temp.st(6)='provider_accepted' AND pg_temp.st(7)='provider_accepted' AND pg_temp.st(8)='provider_accepted'
-  AND pg_temp.st(9)='provider_accepted' AND pg_temp.st(11)='provider_accepted',
+  AND pg_temp.st(9)='provider_accepted' AND pg_temp.st(11)='provider_accepted' AND pg_temp.st(12)='provider_accepted'
+  AND pg_temp.st(13)='provider_accepted' AND pg_temp.st(14)='provider_accepted' AND pg_temp.st(16)='provider_accepted',
   'fixture: the governed door recorded every outcome state (prepared, dispatching, unknown, failed, refused, provider_accepted)');
 
 -- ── 3. The send guard. ─────────────────────────────────────────────────────────────────────────────
@@ -291,9 +330,44 @@ SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status
   '42501','SEND_REQUIRES_GOVERNED_SEND%','an accepted send to another person is not proof for this lead');
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(9,6) WHERE id=%L$$,pg_temp.ap('a1')),
   '42501','SEND_REQUIRES_GOVERNED_SEND%','a governed_send whose operation does not match its message is refused');
+SELECT pg_temp.refused_detail(format($$UPDATE public.paige_pending_approvals SET status='approved' WHERE id=%L$$,pg_temp.ap('a1')),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','reason_code=review_and_send','a reply''s refusal points the owner to review and send it (reason_code review_and_send)');
 SELECT pg_temp.check_true((SELECT status='pending' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('a1'))
   AND (SELECT status='pending_approval' AND executed_at IS NULL FROM public.paige_actions WHERE approval_id=pg_temp.ap('a1')),
   'after every refused approve the reply is still pending and its action is not done');
+
+-- Each signal that an approval stands for a send is enough ON ITS OWN. Two client.followup actions that
+-- were filed but never drafted (approval_id NULL), and three plain approvals that start with no action_id.
+INSERT INTO filed VALUES ('sx', public.file_action('client.followup','Signal X',NULL,'e3000000-0000-4000-8000-0000000c0001','{}'::jsonb,
+   NULL,NULL,NULL,NULL,NULL,NULL,'paige','e3000000-0000-4000-8000-00000000aaaa',NULL)),
+                         ('sy', public.file_action('client.followup','Signal Y',NULL,'e3000000-0000-4000-8000-0000000c0001','{}'::jsonb,
+   NULL,NULL,NULL,NULL,NULL,NULL,'paige','e3000000-0000-4000-8000-00000000aaaa',NULL));
+CREATE FUNCTION pg_temp.fa(l text) RETURNS uuid LANGUAGE sql AS $$ SELECT (result->>'action_id')::uuid FROM filed WHERE label=l $$;
+SELECT pg_temp.check_true((SELECT bool_and(approval_id IS NULL) FROM public.paige_actions WHERE id IN (pg_temp.fa('sx'),pg_temp.fa('sy'))),
+  'fixture: the two signal actions point at no approval');
+INSERT INTO public.paige_pending_approvals(id,type,draft_content,status,tenant_id,category,metadata) VALUES
+ ('e3000000-0000-4000-8000-0000000a0101','other','{}'::jsonb,'pending','e3000000-0000-4000-8000-00000000aaaa','other','{}'::jsonb),
+ ('e3000000-0000-4000-8000-0000000a0102','other','{}'::jsonb,'pending','e3000000-0000-4000-8000-00000000aaaa','other',jsonb_build_object('action_id',pg_temp.fa('sx'))),
+ ('e3000000-0000-4000-8000-0000000a0103','other','{}'::jsonb,'pending','e3000000-0000-4000-8000-00000000aaaa','other','{}'::jsonb),
+ ('e3000000-0000-4000-8000-0000000a0104','other','{}'::jsonb,'pending','e3000000-0000-4000-8000-00000000aaaa','other','{}'::jsonb);
+UPDATE public.paige_actions SET approval_id='e3000000-0000-4000-8000-0000000a0103' WHERE id=pg_temp.fa('sy');
+SELECT pg_temp.refused_detail(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=jsonb_build_object('action_id',%L)
+     WHERE id='e3000000-0000-4000-8000-0000000a0101'$$,pg_temp.fa('sx')),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','reason_code=decline_only',
+  'signal 1 alone — the NEW metadata.action_id (no stored id, no back-pointer) — is refused, and a client.followup is told decline_only');
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=jsonb_build_object('action_id',upper(%L))
+     WHERE id='e3000000-0000-4000-8000-0000000a0101'$$,pg_temp.fa('sx')),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','an upper-case action_id names the same action');
+SELECT pg_temp.refused($$UPDATE public.paige_pending_approvals SET status='approved', metadata='{}'::jsonb WHERE id='e3000000-0000-4000-8000-0000000a0102'$$,
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','signal 2 alone — the STORED (OLD) metadata.action_id, dropped in the approving write — is refused');
+SELECT pg_temp.refused($$UPDATE public.paige_pending_approvals SET status='approved' WHERE id='e3000000-0000-4000-8000-0000000a0103'$$,
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','signal 3 alone — paige_actions.approval_id pointing at the approval, no action_id anywhere — is refused');
+SELECT pg_temp.check_true((SELECT bool_and(status='pending') FROM public.paige_pending_approvals
+   WHERE id IN ('e3000000-0000-4000-8000-0000000a0101','e3000000-0000-4000-8000-0000000a0102','e3000000-0000-4000-8000-0000000a0103')),
+  'all three signal approvals are still pending');
+UPDATE public.paige_pending_approvals SET status='approved' WHERE id='e3000000-0000-4000-8000-0000000a0104';
+SELECT pg_temp.check_true((SELECT status='approved' FROM public.paige_pending_approvals WHERE id='e3000000-0000-4000-8000-0000000a0104'),
+  'control: the same plain approval with no signal approves');
 
 -- A provider-accepted send of the same business, to the same person, is accepted.
 UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(9) WHERE id=pg_temp.ap('g2');
@@ -302,6 +376,19 @@ SELECT pg_temp.check_true((SELECT status='approved' FROM public.paige_pending_ap
   'an approval naming a provider-accepted send of this business to this lead is accepted (and its action completes)');
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(9) WHERE id=%L$$,pg_temp.ap('g3')),
   '42501','SEND_REQUIRES_GOVERNED_SEND%','one accepted send proves one approval: re-using it for a second reply is refused');
+-- The index holds that on its own: with the guard trigger switched off (rolled back), the database
+-- still refuses a second approved approval citing the same message — in any letter case.
+ALTER TABLE public.paige_pending_approvals DISABLE TRIGGER trg_paige_guard_send_approval_requires_governed_send;
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(9) WHERE id=%L$$,pg_temp.ap('g3')),
+  '23505','%uq_paige_pending_approvals_governed_send_message%','the unique index refuses a second approval citing the same message (guard off)');
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='sent',
+     metadata=metadata||jsonb_build_object('governed_send',jsonb_build_object('message_id',upper(pg_temp.msg(9)::text))) WHERE id=%L$$,pg_temp.ap('g3')),
+  '23505','%uq_paige_pending_approvals_governed_send_message%','… and the same message id in upper case, marked sent');
+UPDATE public.paige_pending_approvals SET metadata=metadata||pg_temp.gs(9) WHERE id=pg_temp.ap('g3');
+SELECT pg_temp.check_true((SELECT status='pending' AND metadata ? 'governed_send' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('g3')),
+  'a PENDING approval may still record the same message (the index covers approved/sent only)');
+UPDATE public.paige_pending_approvals SET metadata=metadata-'governed_send' WHERE id=pg_temp.ap('g3');
+ALTER TABLE public.paige_pending_approvals ENABLE TRIGGER trg_paige_guard_send_approval_requires_governed_send;
 -- An email older than the approval cannot be re-used as proof.
 UPDATE public.paige_pending_approvals SET created_at=now()+interval '1 minute' WHERE id=pg_temp.ap('g3');
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(11) WHERE id=%L$$,pg_temp.ap('g3')),
@@ -342,6 +429,22 @@ UPDATE public.paige_pending_approvals SET status='approved'
 SELECT pg_temp.check_true((SELECT p.status='approved' FROM public.paige_pending_approvals p JOIN public.paige_actions a ON a.approval_id=p.id
    WHERE a.id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='nonsend')),
   'a non-send action''s approval (record_only kind) still approves');
+SELECT pg_temp.check_true((SELECT status='done' AND executed_at IS NOT NULL FROM public.paige_actions
+   WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='nonsend')),
+  '… and its action completes, as before');
+UPDATE public.paige_pending_approvals SET status='sent', metadata=metadata||'{"executed":true}'::jsonb
+ WHERE id=(SELECT approval_id FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='nonsend'));
+SELECT pg_temp.check_true((SELECT status='sent' FROM public.paige_pending_approvals
+   WHERE id=(SELECT approval_id FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='nonsend'))),
+  '… and can move on to executed/sent');
+INSERT INTO filed VALUES ('nonsend2', public.file_action('marketing.draft_campaign','Campaign idea 2',NULL,NULL,'{}'::jsonb,
+   NULL,NULL,NULL,NULL,NULL,NULL,'paige','e3000000-0000-4000-8000-00000000aaaa',NULL));
+SELECT public.advance_action((SELECT (result->>'action_id')::uuid FROM filed WHERE label='nonsend2'),'drafted',
+  jsonb_build_object('summary','Another idea'),NULL,NULL,NULL,NULL,NULL,NULL,'e3000000-0000-4000-8000-00000000aaaa');
+UPDATE public.paige_pending_approvals SET status='rejected'
+ WHERE id=(SELECT approval_id FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='nonsend2'));
+SELECT pg_temp.check_true((SELECT status='dismissed' FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='nonsend2')),
+  'a non-send action''s approval can be declined, and its action is dismissed, as before');
 INSERT INTO public.paige_pending_approvals(id,type,draft_content,status,tenant_id,category)
  VALUES ('e3000000-0000-4000-8000-0000000a0001','other','{}'::jsonb,'pending','e3000000-0000-4000-8000-00000000aaaa','other');
 UPDATE public.paige_pending_approvals SET status='approved' WHERE id='e3000000-0000-4000-8000-0000000a0001';
@@ -355,9 +458,38 @@ INSERT INTO ap VALUES ('p', pg_temp.reply_approval('e3000000-0000-4000-8000-0000
                       ('f', pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b4')),
                       ('r', pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b5')),
                       ('ok',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b6')),
-                      ('declined',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b7'));
+                      ('declined',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b7')),
+                      ('adm',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b8')),
+                      ('svc',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b9'));
+-- Business B's reply to its own lead (filed above as 'b1'), drafted now.
+SELECT pg_temp.draft((SELECT (result->>'action_id')::uuid FROM filed WHERE label='b1'),'e3000000-0000-4000-8000-00000000bbbb');
+INSERT INTO ap VALUES ('b',(SELECT approval_id FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='b1')));
 UPDATE public.paige_pending_approvals SET status='rejected' WHERE id=pg_temp.ap('declined');
 CREATE FUNCTION pg_temp.rec(l text,n int) RETURNS jsonb LANGUAGE sql AS $$ SELECT public.lead_reply_record_send(pg_temp.ap(l),pg_temp.op(n)) $$;
+
+-- An outsider's refused call takes NO row lock: authorization runs on an unlocked read, the lock
+-- comes after. (A FOR UPDATE in a subtransaction leaves the row's xmax naming that subtransaction —
+-- or a multixact including it — even after the refusal rolls it back, so an unchanged xmax proves no
+-- lock was taken. The row already carries this transaction's own key-share lock from the fixtures.)
+CREATE TEMP TABLE lk(label text PRIMARY KEY, v text) ON COMMIT DROP;
+GRANT ALL ON lk TO authenticated;
+INSERT INTO lk SELECT 'before', xmax::text FROM public.paige_pending_approvals WHERE id=pg_temp.ap('ok');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000002');
+SELECT pg_temp.refused($$SELECT pg_temp.rec('ok',6)$$,'42501','LEAD_REPLY_FORBIDDEN%','an outsider''s record of this reply is refused …');
+RESET ROLE;
+INSERT INTO lk SELECT 'after-outsider', xmax::text FROM public.paige_pending_approvals WHERE id=pg_temp.ap('ok');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
+-- The control runs in a subtransaction too (as the outsider's did), so a lock it takes shows as a new xmax.
+SELECT pg_temp.refused($q$DO $c$ BEGIN IF pg_temp.rec('ok',99)->>'state'='not_found' THEN RAISE EXCEPTION 'CONTROL_RAN'; END IF; END $c$$q$,
+  'P0001','CONTROL_RAN','control: the owner''s call for an unknown operation runs (not_found, nothing written)');
+RESET ROLE;
+INSERT INTO lk SELECT 'after-owner', xmax::text FROM public.paige_pending_approvals WHERE id=pg_temp.ap('ok');
+SELECT pg_temp.check_true((SELECT v FROM lk WHERE label='before') = (SELECT v FROM lk WHERE label='after-outsider'),
+  '… and took no lock on the row before being refused (the outsider can neither probe nor block it)');
+SELECT pg_temp.check_true((SELECT v FROM lk WHERE label='after-owner') IS DISTINCT FROM (SELECT v FROM lk WHERE label='after-outsider'),
+  'control: the authorized call DID lock the row (so the probe above can see a lock)');
 
 -- Who may call it.
 SET LOCAL ROLE anon;
@@ -384,13 +516,11 @@ SELECT pg_temp.refused(format($$SELECT public.lead_reply_record_send(%L,pg_temp.
 
 -- What the door recorded is what gets written.
 CREATE TEMP TABLE rec(label text PRIMARY KEY, r jsonb) ON COMMIT DROP;
-GRANT ALL ON rec TO authenticated;
+GRANT ALL ON rec TO authenticated, service_role;
 INSERT INTO rec VALUES ('f-other-person', pg_temp.rec('f',7)), ('f-other-business', pg_temp.rec('f',8)), ('f-unknown-op', pg_temp.rec('f',99));
 SELECT pg_temp.check_true((SELECT bool_and(r->>'ok'='false' AND r->>'state'='not_found' AND r->>'delivery_confirmed'='false') FROM rec WHERE label LIKE 'f-%'),
   'a send to another person, in another business, or an unknown operation answers not_found');
-SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000005');   -- an admin of the business may record too
 INSERT INTO rec VALUES ('p', pg_temp.rec('p',1));
-SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
 INSERT INTO rec VALUES ('d', pg_temp.rec('d',2)), ('u', pg_temp.rec('u',3)), ('f', pg_temp.rec('f',4)), ('r', pg_temp.rec('r',5));
 RESET ROLE;
 SELECT pg_temp.check_true((SELECT bool_and(r->>'ok'='false' AND r->>'state'=label_state AND r->>'delivery_confirmed'='false')
@@ -454,6 +584,87 @@ RESET ROLE;
 SELECT pg_temp.check_true((SELECT r->>'ok'='true' FROM rec WHERE label='d-later')
   AND (SELECT status='approved' AND metadata#>>'{governed_send,state}'='provider_accepted' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('d')),
   'a send recorded while dispatching is approved once the door records the provider''s acceptance');
+
+-- The person recording is the person who sent it.
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000005');
+SELECT pg_temp.refused($$SELECT pg_temp.rec('adm',13)$$,'42501','LEAD_REPLY_NOT_YOUR_SEND%','an admin cannot record a send the OWNER made (actor mismatch)');
+INSERT INTO rec VALUES ('adm', pg_temp.rec('adm',12));
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
+SELECT pg_temp.refused($$SELECT pg_temp.rec('svc',12)$$,'42501','LEAD_REPLY_NOT_YOUR_SEND%','the owner cannot record a send the ADMIN made');
+RESET ROLE;
+SELECT pg_temp.check_true((SELECT r->>'ok'='true' FROM rec WHERE label='adm')
+  AND (SELECT status='approved' AND reviewed_by_user_id='e3000000-0000-4000-8000-000000000005' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('adm')),
+  'an admin of the business records the send they made themselves');
+
+-- A different send cannot be recorded while an earlier one on the same reply is unresolved.
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
+SELECT pg_temp.refused($$SELECT pg_temp.rec('p',13)$$,'55000','LEAD_REPLY_PRIOR_SEND_UNRESOLVED%','a second send cannot be recorded while the first is still prepared');
+SELECT pg_temp.refused($$SELECT pg_temp.rec('u',14)$$,'55000','LEAD_REPLY_PRIOR_SEND_UNRESOLVED%','… nor while the first is unknown');
+RESET ROLE;
+SELECT pg_temp.check_true((SELECT bool_and(status='pending') FROM public.paige_pending_approvals WHERE id IN (pg_temp.ap('p'),pg_temp.ap('u'))),
+  'both replies stay pending');
+SELECT pg_temp.as_service();
+SELECT pg_temp.fin(1,'failed',NULL);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
+INSERT INTO rec VALUES ('p-after-fail', pg_temp.rec('p',13));
+RESET ROLE;
+SELECT pg_temp.check_true((SELECT r->>'ok'='true' FROM rec WHERE label='p-after-fail')
+  AND (SELECT status='approved' AND metadata#>>'{governed_send,operation_id}'=pg_temp.op(13)::text FROM public.paige_pending_approvals WHERE id=pg_temp.ap('p')),
+  'once the earlier send has failed, the new accepted send is recorded');
+
+-- A business that is not active cannot have replies recorded — and an outsider still learns nothing.
+SELECT pg_temp.as_service();
+UPDATE public.tenants SET status='suspended' WHERE id='e3000000-0000-4000-8000-00000000bbbb';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000002');
+SELECT pg_temp.refused($$SELECT pg_temp.rec('b',8)$$,'42501','LEAD_REPLY_WORKSPACE_UNAVAILABLE%','a suspended business''s owner cannot record a reply');
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
+SELECT pg_temp.refused($$SELECT pg_temp.rec('b',8)$$,'42501','LEAD_REPLY_FORBIDDEN%','an outsider gets the plain refusal, not the business''s status');
+RESET ROLE;
+SELECT pg_temp.as_service();
+UPDATE public.tenants SET status='active' WHERE id='e3000000-0000-4000-8000-00000000bbbb';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000002');
+INSERT INTO rec VALUES ('b', pg_temp.rec('b',8));
+RESET ROLE;
+SELECT pg_temp.check_true((SELECT r->>'ok'='true' FROM rec WHERE label='b'),'control: once active again, the owner records the reply');
+
+-- ── 4b. lead_reply_record_send_service — the governed door's server-side twin. ────────────────────
+CREATE FUNCTION pg_temp.svc(l text,n int,actor uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT public.lead_reply_record_send_service(pg_temp.ap(l),pg_temp.op(n),actor) $$;
+SET LOCAL ROLE anon;
+SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000001')$$,'42501','permission denied for function lead_reply_record_send_service','a visitor cannot call the service twin');
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
+SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000001')$$,'42501','permission denied for function lead_reply_record_send_service','a signed-in person — even the sender — cannot call the service twin');
+SELECT pg_temp.refused($$SELECT public._lead_reply_record_send(pg_temp.ap('svc'),pg_temp.op(16),'e3000000-0000-4000-8000-000000000001')$$,'42501','permission denied for function _lead_reply_record_send','nor the shared body');
+RESET ROLE;
+SET LOCAL ROLE service_role;
+SELECT pg_temp.as_service();
+SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',16,NULL)$$,'42501','LEAD_REPLY_FORBIDDEN%','the service twin needs the door''s bound actor');
+SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000005')$$,'42501','LEAD_REPLY_NOT_YOUR_SEND%','… and refuses an actor who did not make the send');
+SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000003')$$,'42501','LEAD_REPLY_FORBIDDEN%','… a plain member as actor');
+SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000002')$$,'42501','LEAD_REPLY_FORBIDDEN%','… another business''s owner as actor');
+SELECT pg_temp.refused($$SELECT pg_temp.svc('legacy',16,'e3000000-0000-4000-8000-000000000001')$$,'22023','LEAD_REPLY_WRONG_KIND%','… and a legacy client.followup');
+SELECT set_config('request.jwt.claim.sub','e3000000-0000-4000-8000-000000000001',true);
+SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000001')$$,'42501','LEAD_REPLY_FORBIDDEN%','a call carrying a signed-in subject is refused (the twin is for the server only)');
+SELECT pg_temp.as_service();
+INSERT INTO rec VALUES ('svc', pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000001'));
+INSERT INTO rec VALUES ('svc-replay', pg_temp.svc('svc',16,'e3000000-0000-4000-8000-000000000001'));
+RESET ROLE;
+SELECT pg_temp.check_true((SELECT r->>'ok'='true' AND r->>'state'='provider_accepted' AND r->>'delivery_confirmed'='false'
+    AND r->>'approval_id'=pg_temp.ap('svc')::text AND r->>'message_id'=pg_temp.msg(16)::text AND r->>'operation_id'=pg_temp.op(16)::text
+   FROM rec WHERE label='svc')
+  AND (SELECT r->>'replayed'='true' FROM rec WHERE label='svc-replay'),
+  'the service twin records the sender''s accepted send with the same answer shape, idempotently');
+SELECT pg_temp.check_true((SELECT p.status='approved' AND p.reviewed_by_user_id='e3000000-0000-4000-8000-000000000001'
+    AND p.metadata#>>'{governed_send,message_id}'=pg_temp.msg(16)::text FROM public.paige_pending_approvals p WHERE p.id=pg_temp.ap('svc'))
+  AND (SELECT status='done' FROM public.paige_actions WHERE approval_id=pg_temp.ap('svc')),
+  '… approving the reply in the sender''s name and completing its action');
 
 -- ── 5. lead_reply_enabled — the opt-in, through the audited seam only. ─────────────────────────────
 SELECT pg_temp.check_true((SELECT lead_reply_enabled IS FALSE FROM public.growth_forms WHERE id='e3000000-0000-4000-8000-0000000f0001'),

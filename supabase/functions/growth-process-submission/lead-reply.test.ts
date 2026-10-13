@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import ts from "typescript";
 
 import {
-  appendLeadReply, fileLeadReply, isLeadReplyBusiness, isTransientDbError, leadReplyEnabled, leadReplyKeyPoints, leadReplyPayload,
+  appendLeadReply, fileLeadReply, isLeadReplyBusiness, isLeadReplyBusinessOpen, isTransientDbError, leadReplyEnabled, leadReplyKeyPoints, leadReplyPayload,
   leadReplyReadinessBlock, LEAD_REPLIES_PER_BUSINESS_PER_DAY, LEAD_REPLIES_PER_BUSINESS_PER_HOUR, LEAD_REPLIES_PER_CONTACT_PER_DAY,
   LEAD_REPLY_ACTION_KIND, LEAD_REPLY_INTENT, type LeadReplyDeps, type PlanStep,
 } from "./lead-reply.ts";
@@ -23,7 +23,13 @@ type Row = Record<string, unknown>;
 type Err = { code?: string; message?: string } | null;
 
 // ── In-memory service client: just the query shapes lead-reply.ts and the readiness resolver use. ──
-function db(tables: Record<string, Row[]>, opts: { fail?: Record<string, Err>; rpc?: (fn: string, args: Row) => { data: unknown; error: Err } } = {}) {
+// file_action, when it answers ok, inserts the action row (created NOW) the way the real RPC does, so the
+// post-filing re-count sees it; `onFile` runs first (a concurrent filer's row landing in between).
+// advance_action is answered here: it moves the row's status, or fails with `advanceError`.
+function db(tables: Record<string, Row[]>, opts: {
+  fail?: Record<string, Err>; rpc?: (fn: string, args: Row) => { data: unknown; error: Err };
+  onFile?: (tables: Record<string, Row[]>) => void; advanceError?: Err; insertFiled?: boolean;
+} = {}) {
   const reads: { table: string; filters: unknown[][] }[] = [];
   const updates: { table: string; values: Row; filters: unknown[][] }[] = [];
   const rpcs: { fn: string; args: Row }[] = [];
@@ -32,13 +38,29 @@ function db(tables: Record<string, Row[]>, opts: { fail?: Record<string, Err>; r
     const val = k.includes("->>") ? (r[k.split("->>")[0]] as Row | undefined)?.[k.split("->>")[1]] : r[k];
     if (op === "eq") return val === v;
     if (op === "gte") return String(val) >= String(v);
+    if (op === "lte") return String(val) <= String(v);
+    if (op === "neq") return val !== v;
     if (op === "not_is_null") return val !== null && val !== undefined;
     return false;
   };
   const admin = {
     rpc: (fn: string, args: Row) => {
       rpcs.push({ fn, args });
-      return Promise.resolve(opts.rpc ? opts.rpc(fn, args) : { data: null, error: { message: "no rpc" } });
+      if (fn === "advance_action") {
+        if (opts.advanceError) return Promise.resolve({ data: null, error: opts.advanceError });
+        for (const r of tables.paige_actions ?? []) if (r.id === args.p_action_id && r.tenant_id === args.p_tenant_id) Object.assign(r, { status: args.p_to_status, error: args.p_error });
+        return Promise.resolve({ data: { ok: true, action_id: args.p_action_id, status: args.p_to_status }, error: null });
+      }
+      const res = opts.rpc ? opts.rpc(fn, args) : { data: null, error: { message: "no rpc" } };
+      const filed = res.data as Row | null;
+      if (fn === "file_action" && !res.error && filed?.ok && opts.insertFiled !== false && tables.paige_actions) {
+        opts.onFile?.(tables);
+        tables.paige_actions.push({
+          id: filed.action_id, tenant_id: args.p_tenant_id, action_kind: args.p_action_kind, contact_id: args.p_contact_id,
+          payload: args.p_payload, status: "filed", created_at: NOW.toISOString(),
+        });
+      }
+      return Promise.resolve(res);
     },
     from: (table: string) => ({
       select: (_cols: string, sel?: { count?: string; head?: boolean }) => {
@@ -48,6 +70,8 @@ function db(tables: Record<string, Row[]>, opts: { fail?: Record<string, Err>; r
         const q = {
           eq: (k: string, v: unknown) => { filters.push(["eq", k, v]); return q; },
           gte: (k: string, v: unknown) => { filters.push(["gte", k, v]); return q; },
+          lte: (k: string, v: unknown) => { filters.push(["lte", k, v]); return q; },
+          neq: (k: string, v: unknown) => { filters.push(["neq", k, v]); return q; },
           limit: () => q,
           maybeSingle: () => Promise.resolve(err ? { data: null, error: err } : { data: rows()[0] ?? null, error: null }),
           then: (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
@@ -88,9 +112,10 @@ const ready = (extra: Record<string, Row[]> = {}) => ({
   paige_actions: [] as Row[], ...extra,
 });
 const filedOk = () => ({ data: { ok: true, action_id: "80000000-0000-4000-8000-000000000001", status: "filed" }, error: null });
-const soloBusiness: Row = { id: T, parent_tenant_id: null, account_type: "standalone" };
+const soloBusiness: Row = { id: T, parent_tenant_id: null, account_type: "standalone", status: "active", archived_at: null };
 const input = (over: Partial<Parameters<typeof fileLeadReply>[1]> = {}) => ({
-  tenantId: T, business: soloBusiness, submissionId: S, formId: F, formName: "Website enquiry", contactId: C,
+  tenantId: T, business: soloBusiness, formOptedIn: true, submittedEmail: "rae@visitor.test",
+  submissionId: S, formId: F, formName: "Website enquiry", contactId: C,
   answers: [{ label: "What do you need?", value: "A strategy session" }, { label: "Budget", value: "$2,000" }],
   visitorName: "Rae Lead", now: NOW, ...over,
 });
@@ -122,12 +147,12 @@ const followUpAutomation = (actionKind: string, where: "config" | "targetConfig"
 });
 const executors = (plan: PlanStep[]) => plan.map((p) => p.executor);
 
-test("the businesses that answer their own leads: standalone and sub_account — never agency, enterprise or an unread row", () => {
+test("the businesses that answer their own leads (§61 'lead_reply'): standalone, sub_account, enterprise — never agency or an unread row", () => {
   assert.equal(isLeadReplyBusiness(soloBusiness), true);
   assert.equal(isLeadReplyBusiness({ ...soloBusiness, account_type: "sub_account", parent_tenant_id: OTHER }), true);
   assert.equal(isLeadReplyBusiness({ ...soloBusiness, parent_tenant_id: OTHER }), true); // legacy-labelled sub-account
+  assert.equal(isLeadReplyBusiness({ ...soloBusiness, account_type: "enterprise" }), true); // the hybrid tier (Solo ∪ Agency)
   assert.equal(isLeadReplyBusiness({ ...soloBusiness, account_type: "agency" }), false);
-  assert.equal(isLeadReplyBusiness({ ...soloBusiness, account_type: "enterprise" }), false);
   assert.equal(isLeadReplyBusiness({ id: T }), false);
   assert.equal(isLeadReplyBusiness(null), false);
 });
@@ -158,8 +183,8 @@ test("lead_reply_enabled=false (the default) → no draft step", () => {
   }
 });
 
-test("an agency, an enterprise or an unreadable business → no draft step, even when the form opted in", () => {
-  for (const t of [{ ...soloBusiness, account_type: "agency" }, { ...soloBusiness, account_type: "enterprise" }, null]) {
+test("an agency or an unreadable business → no draft step, even when the form opted in", () => {
+  for (const t of [{ ...soloBusiness, account_type: "agency" }, null]) {
     const plan: PlanStep[] = [contactStep];
     appendLeadReply(plan, optedIn, t);
     assert.deepEqual(executors(plan), ["contact_upsert"]);
@@ -375,13 +400,158 @@ test("a later successful draft clears an earlier attempt's skip reason", async (
   assert.equal(skippedReason(h, tables), null);
 });
 
+// ── S3 hardening (round 3): one opt-in, the typed-email identity gate, an open business, the race bound ──
+const FILED_ID = "80000000-0000-4000-8000-000000000001";
+
+test("lead_reply_enabled is the ONE opt-in: a run with the form not opted in files nothing and records why", async () => {
+  const tables = ready();
+  const h = db(tables, { rpc: filedOk });
+  assert.deepEqual(await fileLeadReply(h.admin, input({ formOptedIn: false }), deps()),
+    { status: "done", result: { note: "lead_reply_not_drafted", reason: "form_not_opted_in" } });
+  assert.equal(h.rpcs.length, 0);
+  assert.equal(skippedReason(h, tables), "form_not_opted_in");
+});
+
+test("the visitor must have typed the contact's own email — a phone match to someone else's record drafts nothing", async () => {
+  for (const typed of ["stranger@visitor.test", null, "", "   "]) {
+    const tables = ready();
+    const h = db(tables, { rpc: filedOk });
+    const d = deps();
+    const out = await fileLeadReply(h.admin, input({ submittedEmail: typed }), d);
+    assert.deepEqual(out, { status: "done", result: { note: "lead_reply_not_drafted", reason: "submitted_email_not_contact_email" } }, String(typed));
+    assert.equal(h.rpcs.length, 0, String(typed));
+    assert.equal(skippedReason(h, tables), "submitted_email_not_contact_email");
+    assert.equal(d.preSendCalls.length, 0, "decided before any recipient check runs");
+  }
+  // Normalized (trim + lowercase) on both sides: the same address typed differently still drafts.
+  const h = db(ready(), { rpc: filedOk });
+  assert.equal((await fileLeadReply(h.admin, input({ submittedEmail: "  RAE@Visitor.TEST " }), deps())).result.action_id, FILED_ID);
+});
+
+test("the draft names the STORED contact, not the typed name; the typed name only when the record has none", async () => {
+  const h = db(ready(), { rpc: filedOk });
+  await fileLeadReply(h.admin, input({ visitorName: "Mallory Typed" }), deps());
+  assert.equal(h.rpcs[0].args.p_title, "Reply to Rae Lead - Website enquiry");
+  assert.equal(((h.rpcs[0].args.p_payload as Row).draft_input as Row).recipient_name, "Rae Lead");
+
+  const nameless = { ...contact("rae@visitor.test"), first_name: null, last_name: null };
+  const h2 = db(ready({ clients: [nameless] }), { rpc: filedOk });
+  await fileLeadReply(h2.admin, input({ visitorName: "Mallory Typed" }), deps());
+  assert.equal(h2.rpcs[0].args.p_title, "Reply to Mallory Typed - Website enquiry");
+});
+
+test("a business that is not open spends no drafting: canceled, suspended, archived or unread status", async () => {
+  for (const business of [
+    { ...soloBusiness, status: "canceled" }, { ...soloBusiness, status: "suspended" },
+    { ...soloBusiness, archived_at: "2027-10-01T00:00:00Z" }, { id: T, account_type: "standalone" },
+  ]) {
+    const tables = ready();
+    const h = db(tables, { rpc: filedOk });
+    assert.deepEqual(await fileLeadReply(h.admin, input({ business }), deps()),
+      { status: "done", result: { note: "lead_reply_not_drafted", reason: "business_not_active" } }, JSON.stringify(business));
+    assert.equal(h.rpcs.length, 0);
+    assert.equal(h.reads.some((r) => r.table === "clients"), false, "decided before any contact read");
+  }
+  for (const status of ["trial", "active", "past_due"]) assert.equal(isLeadReplyBusinessOpen({ ...soloBusiness, status }), true, status);
+});
+
+test("an enterprise (the hybrid tier) gets a reply draft; a pure agency does not", async () => {
+  const h = db(ready(), { rpc: filedOk });
+  assert.equal((await fileLeadReply(h.admin, input({ business: { ...soloBusiness, account_type: "enterprise" } }), deps())).result.action_id, FILED_ID);
+  const plan: PlanStep[] = [contactStep];
+  appendLeadReply(plan, optedIn, { ...soloBusiness, account_type: "enterprise" });
+  assert.deepEqual(executors(plan), ["contact_upsert", "lead_reply_draft"]);
+});
+
+test("race bound: a concurrent filing that lands between the cap check and ours → ours is dismissed, reason recorded", async () => {
+  // The cap check sees 19 of 20; another filer's row (created a millisecond earlier) lands before ours.
+  const tables = ready({ paige_actions: recent(LEAD_REPLIES_PER_BUSINESS_PER_HOUR - 1, 10) });
+  const racer = (t: Record<string, Row[]>) => t.paige_actions.push({
+    id: "racer", tenant_id: T, action_kind: LEAD_REPLY_ACTION_KIND, contact_id: "30000000-0000-4000-8000-000000000002",
+    payload: { submission_id: "racer-sub" }, status: "filed", created_at: new Date(NOW.getTime() - 1).toISOString(),
+  });
+  const h = db(tables, { rpc: filedOk, onFile: racer });
+  const out = await fileLeadReply(h.admin, input(), deps());
+  assert.deepEqual(out, { status: "done", result: { note: "lead_reply_not_drafted", reason: "business_hourly_cap", dismissed_action_id: FILED_ID, race: "filed_then_dismissed" } });
+  assert.deepEqual(h.rpcs.map((r) => r.fn), ["file_action", "advance_action"]);
+  assert.deepEqual(h.rpcs[1].args, { p_action_id: FILED_ID, p_to_status: "dismissed", p_error: "lead_reply_cap_overflow:business_hourly_cap", p_tenant_id: T });
+  assert.equal(tables.paige_actions.find((r) => r.id === FILED_ID)?.status, "dismissed");
+  assert.equal(tables.paige_actions.find((r) => r.id === "racer")?.status, "filed", "the earlier filing keeps its draft");
+  assert.equal(skippedReason(h, tables), "business_hourly_cap");
+});
+
+test("race bound: the same recipient filed twice at once → the later one is dismissed (contact_daily_cap)", async () => {
+  const tables = ready();
+  const racer = (t: Record<string, Row[]>) => t.paige_actions.push({
+    id: "racer", tenant_id: T, action_kind: LEAD_REPLY_ACTION_KIND, contact_id: C,
+    payload: { submission_id: "racer-sub" }, status: "filed", created_at: new Date(NOW.getTime() - 1).toISOString(),
+  });
+  const h = db(tables, { rpc: filedOk, onFile: racer });
+  assert.equal((await fileLeadReply(h.admin, input(), deps())).result.reason, "contact_daily_cap");
+  assert.equal(tables.paige_actions.find((r) => r.id === FILED_ID)?.status, "dismissed");
+});
+
+test("race bound: a filing that is not over any cap is kept — ours is not counted against itself", async () => {
+  const tables = ready({ paige_actions: recent(LEAD_REPLIES_PER_BUSINESS_PER_HOUR - 1, 10) });
+  const h = db(tables, { rpc: filedOk });
+  assert.equal((await fileLeadReply(h.admin, input(), deps())).result.action_id, FILED_ID);
+  assert.deepEqual(h.rpcs.map((r) => r.fn), ["file_action"]);
+  // The re-count is bounded to rows at or before ours, ours excluded, in this tenant.
+  const recount = h.reads.filter((r) => r.table === "paige_actions" && r.filters.some((f) => f[0] === "lte"));
+  assert.equal(recount.length, 3);
+  for (const r of recount) {
+    assert.ok(r.filters.some((f) => f[0] === "neq" && f[1] === "id" && f[2] === FILED_ID));
+    assert.ok(r.filters.some((f) => f[0] === "eq" && f[1] === "tenant_id" && f[2] === T));
+  }
+});
+
+test("race bound: a dismiss that fails keeps the draft and reports it over the cap; an unreadable re-count keeps it and says so", async () => {
+  const tables = ready({ paige_actions: recent(LEAD_REPLIES_PER_BUSINESS_PER_HOUR - 1, 10) });
+  const racer = (t: Record<string, Row[]>) => t.paige_actions.push({
+    id: "racer", tenant_id: T, action_kind: LEAD_REPLY_ACTION_KIND, contact_id: null, payload: {}, status: "filed",
+    created_at: new Date(NOW.getTime() - 1).toISOString(),
+  });
+  const h = db(tables, { rpc: filedOk, onFile: racer, advanceError: { code: "XX000", message: "boom" } });
+  const out = await fileLeadReply(h.admin, input(), deps());
+  assert.equal(out.status, "done");
+  assert.equal(out.result.action_id, FILED_ID);
+  assert.equal(out.result.cap_overflow, "business_hourly_cap");
+  assert.equal(out.result.dismiss_error, "boom");
+
+  const h2 = db(ready(), { rpc: filedOk, insertFiled: false }); // ours cannot be read back
+  const out2 = await fileLeadReply(h2.admin, input(), deps());
+  assert.equal(out2.result.action_id, FILED_ID);
+  assert.equal(out2.result.cap_recheck, "unreadable");
+  assert.deepEqual(h2.rpcs.map((r) => r.fn), ["file_action"]);
+});
+
+test("the legacy paige_follow_up automation on a form that did NOT opt in files nothing — one switch only", async () => {
+  const tables = ready();
+  const h = db(tables, { rpc: filedOk });
+  const runExecutor = loadExecutors({ fileLeadReply });
+  for (const form of [{ id: F, name: "Website enquiry", schema_json: "SCHEMA" }, { id: F, name: "x", schema_json: "S", lead_reply_enabled: false }]) {
+    const out = await runExecutor(followUpAutomation("owner.lead_followup"), execCtx(h.admin, { form }));
+    assert.deepEqual(out, { status: "done", result: { note: "lead_reply_not_drafted", reason: "form_not_opted_in" } });
+  }
+  assert.equal(h.rpcs.length, 0);
+  assert.equal(skippedReason(h, tables), "form_not_opted_in");
+});
+
+test("the legacy arm drafts only for the contact whose email was typed", async () => {
+  const h = db(ready(), { rpc: filedOk });
+  const exec = loadExecutors({ fileLeadReply }, { email: "someone-else@visitor.test" });
+  const out = await exec(followUpAutomation("owner.lead_followup"), execCtx(h.admin));
+  assert.equal(out.result.reason, "submitted_email_not_contact_email");
+  assert.equal(h.rpcs.length, 0);
+});
+
 // ── The processor wiring (the actual index.ts) ─────────────────────────────────────────────────
 const processor = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
 
 test("the step is planned after the intake steps, from the form row and the claimed tenant's business row — never the request body", () => {
   assert.match(processor, /applyIntakeSettings\(plan, form\);\s*appendDefaultIntake\(plan, form, \(rows\?\.length \?\? 0\) > 0\);/);
   const planning = processor.slice(processor.indexOf("appendDefaultIntake(plan, form, (rows"), processor.indexOf("// Existing dispatch ledger"));
-  assert.match(planning, /\.from\("tenants"\)[\s\S]*\.select\("id, parent_tenant_id, account_type"\)[\s\S]*\.eq\("id", tenantId\)[\s\S]*const business = businessErr \? null : businessRow;\s*appendLeadReply\(plan, form, business\);/);
+  assert.match(planning, /\.from\("tenants"\)[\s\S]*\.select\("id, parent_tenant_id, account_type, status, archived_at"\)[\s\S]*\.eq\("id", tenantId\)[\s\S]*const business = businessErr \? null : businessRow;\s*appendLeadReply\(plan, form, business\);/);
   assert.equal(planning.includes("body."), false);
   // The form row is read whole, so lead_reply_enabled arrives with it (absent column → undefined → off).
   assert.match(processor, /\.from\("growth_forms"\)\s*\.select\("\*"\)/);
@@ -395,23 +565,24 @@ test("the step is planned after the intake steps, from the form row and the clai
 });
 
 // The executor region of index.ts, transpiled and run with its collaborators injected.
-function loadExecutors(collab: { fileLeadReply: unknown; runPreSend?: unknown; env?: Record<string, string> }) {
+function loadExecutors(collab: { fileLeadReply: unknown; runPreSend?: unknown; env?: Record<string, string> }, identity: Row = {}) {
   const body = processor.slice(processor.indexOf("async function runExecutor("), processor.indexOf("// -- A form's alert address"));
   const js = ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
   const env = collab.env ?? { RESEND_API_KEY: "set" };
-  return new Function("s", "extractIdentity", "labelledAnswers", "fileLeadReply", "LEAD_REPLY_ACTION_KIND", "runPreSend", "Deno", `${js};return runExecutor;`)(
+  return new Function("s", "extractIdentity", "labelledAnswers", "fileLeadReply", "LEAD_REPLY_ACTION_KIND", "leadReplyEnabled", "runPreSend", "Deno", `${js};return runExecutor;`)(
     (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null),
-    () => ({ firstName: "Rae", lastName: "Lead", email: "rae@visitor.test" }),
+    () => ({ firstName: "Rae", lastName: "Lead", email: "rae@visitor.test", ...identity }),
     (_payload: unknown, schema: unknown) => [{ label: "from", value: String(schema) }],
     collab.fileLeadReply,
     LEAD_REPLY_ACTION_KIND,
+    leadReplyEnabled,
     collab.runPreSend ?? (() => Promise.resolve({ proceed: true, outcome: "proceed" })),
     { env: { get: (k: string) => env[k] } },
   ) as (p: PlanStep, ctx: unknown) => Promise<{ status: string; result: Row; error?: string }>;
 }
 const leadStep: PlanStep = { automationId: null, slug: "lead_reply", executor: "lead_reply_draft", lane: null, config: {}, targetConfig: {} };
 const execCtx = (admin: unknown, over: Row = {}) => ({
-  admin, tenantId: T, submissionId: S, claimAttempt: 1, form: { id: F, name: " Website enquiry ", schema_json: "SCHEMA" },
+  admin, tenantId: T, submissionId: S, claimAttempt: 1, form: { id: F, name: " Website enquiry ", schema_json: "SCHEMA", lead_reply_enabled: true },
   payload: {}, submission: {}, business: soloBusiness, contactId: C, setContactId: () => {}, ...over,
 });
 
@@ -423,7 +594,8 @@ test("the synthesized step hands the claimed business, the intake's contact and 
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], admin);
   assert.deepEqual(calls[0][1], {
-    tenantId: T, business: soloBusiness, submissionId: S, formId: F, formName: "Website enquiry", contactId: C,
+    tenantId: T, business: soloBusiness, submissionId: S, formId: F, formName: "Website enquiry",
+    formOptedIn: true, submittedEmail: "rae@visitor.test", contactId: C,
     answers: [{ label: "from", value: "SCHEMA" }], visitorName: "Rae Lead",
   });
   const d = calls[0][2] as LeadReplyDeps;

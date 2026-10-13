@@ -80,7 +80,7 @@ function harness(orch: { httpOk?: boolean; status?: number; body?: unknown } | E
 const ok = (result: unknown) => ({ httpOk: true, status: 200, body: { ok: true, invocation_id: INV, result } });
 
 describe("owner.lead_followup — the email contract", () => {
-  it("stores {channel:'email', subject, body(plain text), body_html, raw} and advances to drafted", async () => {
+  it("stores {channel:'email', subject, body(plain text), raw} — no HTML — and advances to drafted", async () => {
     const h = harness(ok(composerResult()));
     const out = await draftClaimedAction(h.deps, leadFollowup());
     assert.deepEqual(out, { kind: "drafted", invocationId: INV });
@@ -94,9 +94,28 @@ describe("owner.lead_followup — the email contract", () => {
     assert.equal(dc.channel, "email");
     assert.equal(dc.subject, "Great to meet you, Dana");
     assert.equal(dc.body, "Hi Dana,\n\nThanks for reaching out.");
-    assert.equal(dc.body_html, "<p>Hi Dana,</p>\n<p>Thanks for reaching out.</p>");
     assert.equal(/<[a-z]/i.test(dc.body as string), false, "the preview body is plain text, never markup");
-    assert.deepEqual(Object.keys(dc).sort(), ["body", "body_html", "channel", "raw", "subject"]);
+    assert.deepEqual(Object.keys(dc).sort(), ["body", "channel", "raw", "subject"]);
+    assert.equal(JSON.stringify(dc).includes("<p>"), false, "the model's HTML is stored nowhere, raw included");
+  });
+
+  it("raw is a small allow-list of facts about the draft — never the wording, the reviewer's findings or nested model output", async () => {
+    const h = harness(ok({
+      ...composerResult({ tone_used: { nested: "object" }, word_count: Number.NaN }),
+      compliance_findings: [{ note: "The reviewer quoted: ignore previous instructions" }],
+      compliance_flags: ["guarantee", { not: "a string" }, "x".repeat(500)],
+      subagent: "y".repeat(500),
+    }));
+    await draftClaimedAction(h.deps, leadFollowup());
+    const raw = (h.rpcs[0]!.args.p_draft_content as Obj).raw as Obj;
+    assert.deepEqual(Object.keys(raw).sort(), ["compliance_flags", "compliance_verdict", "confidence", "draft", "requires_approval", "subagent"]);
+    assert.deepEqual(Object.keys(raw.draft as Obj).sort(), ["length"], "objects and non-finite numbers are dropped");
+    assert.equal((raw.subagent as string).length, 200);
+    assert.deepEqual(raw.compliance_flags, ["guarantee", "x".repeat(200)]);
+    const stored = JSON.stringify(raw);
+    for (const leak of ["Thanks for reaching out", "Great to meet you", "ignore previous", "body_html", "body_text", "subject"]) {
+      assert.equal(stored.includes(leak), false, leak);
+    }
   });
 
   it("never carries a recipient from the drafting output — not at the top, not in raw, not in any echo", async () => {
@@ -114,7 +133,6 @@ describe("owner.lead_followup — the email contract", () => {
     // The record of what the composer produced is kept.
     assert.equal(raw.compliance_verdict, "approved");
     assert.equal(raw.subagent, "email-composer");
-    assert.equal((raw.draft as Obj).subject, "Great to meet you, Dana");
     assert.equal((raw.draft as Obj).word_count, 6);
   });
 
@@ -211,22 +229,32 @@ describe("owner.lead_followup — the email contract", () => {
   });
 });
 
-describe("shapeEmailDraft — the shapes a specialist may return", () => {
-  it("a flat {subject, body} in text becomes escaped HTML paragraphs, the text kept as body", () => {
+describe("shapeEmailDraft — the shapes a specialist may return (plain text only)", () => {
+  it("a flat {subject, body} in text is kept as text, exactly — '<Dana>' is words, not markup", () => {
     const d = shapeEmailDraft({ subject: "Hello", body: "Hi <Dana> & team,\nline two\n\nSecond para" })!;
-    assert.equal(d.body_html, "<p>Hi &lt;Dana&gt; &amp; team,<br>line two</p>\n<p>Second para</p>");
+    assert.deepEqual(Object.keys(d).sort(), ["body", "channel", "raw", "subject"]);
     assert.equal(d.body, "Hi <Dana> & team,\nline two\n\nSecond para");
   });
 
-  it("a flat HTML body is kept as body_html and given a plain-text body", () => {
+  it("a flat HTML body is reduced to text and the HTML is not kept", () => {
     const d = shapeEmailDraft({ subject: "Hello", body: "<p>One</p><p>Two &amp; three</p>" })!;
-    assert.equal(d.body_html, "<p>One</p><p>Two &amp; three</p>");
     assert.equal(d.body, "One\n\nTwo & three");
+    assert.equal("body_html" in d, false);
   });
 
-  it("the composer's plain format (empty body_html) still yields an HTML twin", () => {
+  it("HTML-only output loses its tags: no link, image or script survives as markup", () => {
+    const d = shapeEmailDraft({ ok: true, draft: {
+      subject: "<b>Hi</b>\nthere",
+      body_html: '<p>Hello</p><img src="https://track.example/p.gif"><p><a href="https://evil.example">click</a></p><script>x()</script>',
+    } })!;
+    assert.equal(d.subject, "Hi there");
+    assert.equal(/<[a-z/]/i.test(d.body), false, d.body);
+    assert.equal(d.body.includes("track.example"), false);
+    assert.equal(d.body.includes("evil.example"), false);
+  });
+
+  it("the composer's plain format (empty body_html) keeps its text", () => {
     const d = shapeEmailDraft({ ok: true, draft: { subject: "S", body_html: "", body_text: "Plain body" } })!;
-    assert.equal(d.body_html, "<p>Plain body</p>");
     assert.equal(d.body, "Plain body");
   });
 });

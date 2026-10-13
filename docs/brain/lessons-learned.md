@@ -14,6 +14,17 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 **Symptom → root cause → rule.** A harness declared dark while the shell's ThemeProvider emitted light tokens; rapid viewport changes also captured another viewport's dimensions. Drive the actual provider, compare computed token state, validate each native image's dimensions/state after settlement and reject mismatches.320CSS reflow does not substantiate native200%zoom when browser geometry is unchanged. Synthetic context/provider rendering cannot substantiate customer authentication or stored records.
 
+### A per-person field is not a business setting (2026-10-12, Experience 04)
+
+**Symptom → root cause → rule.** The first E4-S1b draft took "the business owner's time zone" from
+the owner's `profiles.coach_timezone`. The proof passed and so did the tests. The independent
+reviewer then traced who can write that field: any tenant admin can write it for any active member
+through `set_coach_fields`, including the admin of another workspace the owner also belongs to.
+That admin could have moved a different business's overdue dates. **Rule:** before a value decides
+money, answer "who can write it, and from which workspace?" by reading its writers. If anyone other
+than the person the ruling names can write it, it is not the authority; give it a home only they
+can write.
+
 ### A green proof over a ledger the writer cannot produce (2026-10-12, Experience 04)
 
 **Symptom → root cause → rule.** The E4-S1 client-status proof passed 34/34 and its parity check agreed

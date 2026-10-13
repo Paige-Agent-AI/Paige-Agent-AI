@@ -12,7 +12,7 @@ const page_url = pathToFileURL(path.join(here, 'prototype.html')).href;
 const FRAMES = [
   ['populated', 'desktop', 'light'], ['populated', 'desktop', 'dark'],
   ['populated', 'mobile', 'light'], ['populated', 'mobile', 'dark'],
-  ['early', 'desktop', 'light'], ['empty', 'desktop', 'light'],
+  ['early', 'desktop', 'light'], ['nozone', 'desktop', 'light'], ['empty', 'desktop', 'light'],
   ['error', 'desktop', 'light'], ['refused', 'desktop', 'light'],
   // extra, for review only
   ['loading', 'desktop', 'light'], ['early', 'mobile', 'dark'],

@@ -18,6 +18,7 @@ unmounted data hook it renders from; those live under `supabase/` and `src/solo/
 |---|---|
 | `populated-desktop-light.png` / `-dark.png` | The $3,500 consulting engagement: signed agreement, 5 attention items, progress against the agreement, separate paid figures, $300 test-mode payment, the 11-row schedule (the two payments due so far plus the next one; the other 8 fold behind one line), 2 issued invoices plus a draft and a void, delivery 1 of 3 done with 1 overdue. |
 | `populated-mobile-light.png` / `-dark.png` | The same engagement as a full-height sheet at 390px. |
+| `nozone-desktop-light.png` | The state production produces today: no business time zone set. The panel asks the owner to set it. Due and upcoming are not split, past due shows "—", and the bar shows one "Not paid yet" figure. |
 | `early-desktop-light.png` | Agreement sent but not signed, the agreement invoiced with the deposit and first instalment past due, nothing paid, no work yet. |
 | `empty-desktop-light.png` | A client with no engagement. The empty state explains what this panel will show and offers one way forward: Open in Sales. |
 | `error-desktop-light.png` | "This client's status could not be read." plus Try again. In the prototype, retry goes to loading and then to the populated state. |

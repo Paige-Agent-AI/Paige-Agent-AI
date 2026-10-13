@@ -167,6 +167,12 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
         if (cfg.claim === "error") return { data: null, error: { message: "claim_failed" } };
         return { data: cfg.claim === "held" ? null : { id: `row-${args._act_id as string}` }, error: null };
       }
+      if (fn === "execute_weekly_commitment_check") {
+        return { data: { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation", receipt_id: "test-receipt" } }, error: null };
+      }
+      if (fn === "read_weekly_commitment_check") {
+        return { data: null, error: { message: "readback unavailable" } };
+      }
       if (fn === "paige_record_act_execution") {
         const actId = args._act_id as string;
         const isAdvance = args._dispatched_at != null;
@@ -613,5 +619,34 @@ describe("native registries stay in sync — no dark executor, no orphan binding
     // and the C2 vertical is present in both by its dotted action_kind
     expect(executorKeys).toContain(KIND);
     expect(hasNativeCapabilityBinding(KIND)).toBe(true);
+  });
+});
+
+describe("weekly read through the canonical engine", () => {
+  const weeklyEvent: ClaimedEvent = { event_id: "e1", tenant_id: "t1", event_key: "schedule.weekly_commitment_check",
+    subject_table: "paige_automations", subject_id: "a1", payload: {} };
+  const weeklyActs = { a1: [{ id: "act1", position: 1, action_kind: "planning.weekly_commitment_check", tool_key: null, config: {} }] };
+  it.each(["off", "confirm"] as const)("tool %s holds a weekly read even when the process grant is auto", async (toolLane) => {
+    const cfg = happy({ acts: weeklyActs, toolLane });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(0);
+    expect(result.records[0].outcome).not.toBe("executed");
+    expect(result.records[0].outcome).not.toBe("accepted_for_execution");
+  });
+  it("auto executes once with process references and no contact Rail attribution", async () => {
+    const cfg = happy({ acts: weeklyActs });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(result.records[0].outcome).toBe("executed");
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(1);
+    const receipt = cfg.rpcCalls.find(c => c.fn === "record_capability_run");
+    expect(receipt?.args._detail).toMatchObject({ process_id: "a1" });
+    expect(receipt?.args._detail).not.toHaveProperty("contact_id");
+    expect(cfg.rpcCalls.filter(c => c.fn === "record_rail_event")).toHaveLength(0);
+  });
+  it.each(["accepted_for_execution", "ambiguous"])("%s and a readback error never redispatch", async (currentActOutcome) => {
+    const cfg = happy({ acts: weeklyActs, currentActOutcome });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(0);
+    expect(result.records[0].outcome).toBe(currentActOutcome);
   });
 });

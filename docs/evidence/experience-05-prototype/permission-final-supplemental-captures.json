@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-10-13T00:13:27.580Z",
+  "requestedBy": "Focused independent finish review",
+  "captures": [
+    {
+      "file": "permission-final-held-readback.png",
+      "state": "saved schedule; default confirm; actual next null and intended slot separate",
+      "viewport": {
+        "width": 1366,
+        "height": 1100
+      },
+      "theme": "Mineral"
+    },
+    {
+      "file": "permission-final-settings-kept-confirm.png",
+      "state": "existing Settings handoff closed; confirm unchanged; schedule retained",
+      "viewport": {
+        "width": 1366,
+        "height": 1100
+      },
+      "theme": "Mineral"
+    },
+    {
+      "file": "permission-final-auto-readback.png",
+      "state": "explicit simulated owner Settings opt-in; auto permission with real simulated next slot",
+      "viewport": {
+        "width": 1366,
+        "height": 1100
+      },
+      "theme": "Mineral"
+    },
+    {
+      "file": "permission-final-held-with-running-act.png",
+      "state": "existing running act continues; future confirm hold; actual next null",
+      "viewport": {
+        "width": 1366,
+        "height": 1100
+      },
+      "theme": "Mineral"
+    }
+  ],
+  "scope": "Visibility supplements for permission setup contract; browser simulation only"
+}

@@ -101,7 +101,7 @@ describe("no edge module dispatches around the seam (static guard)", () => {
   const root = resolve(process.cwd(), "supabase/functions");
   const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) =>
     e.isDirectory() ? walk(resolve(d, e.name)) : e.name.endsWith(".ts") ? [resolve(d, e.name)] : []);
-  const files = walk(root).map((f) => relative(root, f));
+  const files = walk(root).map((f) => relative(root, f).split("\\").join("/"));
   const SEAM = "_shared/paige-orchestration/dispatch-claim.ts";
   // Adapter modules DEFINE dispatch and may delegate to their own per-action executor; that is not a call site.
   const ADAPTER_DEFINITIONS = new Set([

@@ -1,0 +1,75 @@
+# Experience 05 Weekly Internal Commitment Check
+
+Status: implemented ship-dark backend candidate and rendered review prototype; no production UI mount or authenticated customer acceptance. Overall PARTIAL.
+
+Base: main c0a20243249739a00b2fa709729b323156cb125b. Intended outcome: a SOLO owner authorizes one weekly read of their canonical Planning commitments, inspects verified results, controls future runs, and reads the same last/next status in a later conversation.
+
+## Capability routing before edits
+
+1. Owner outcome is the complete recurring check, including evidence and future controls.
+2. Experience 05 owns the shared automation/continuity journey. Planning retains commitment records/semantics; Harness/Spine owns shared execution. Active #2082/#2071 own protected Chat admission/interview files; this slice does not edit those files.
+3. REUSE A/B Gateway/authority, C event/act engine, E existing event sweeper/reconciler, F receipts/readback. EXTEND one occurrence producer and native internal adapter. G authenticated QA remains protected.
+4. Existing `planning.list`, `automations.list`, `automations.triggers_list` are reused evidence. NEW `automations.weekly_commitment_status` is a bounded reader; native `planning.weekly_commitment_check` is not a currently admitted Chat tool.
+5. No external provider/connection, send, financial move or paid model invocation.
+6. Human-only authorize/control uses the canonical process grant; no assistant tool can call it. Existing `owner_only` restrictions remain. Execution rechecks current active owner, scope, process revision and resolved Trust posture. No second approval store.
+7. REUSE `paige_native_events`, event claims, act dispatch claim and existing sweepers. NEW weekly occurrence producer feeds the same engine; no second scheduler or execution ledger.
+8. Store the bounded private observation in the existing act row, atomically with the existing capability receipt. Workspace Rail receives minimized status/hash/time only. No process UUID is used as a contact.
+9. Existing `settings.integrations` remains PARTIAL. The prototype extends the established PAIGE conversation and existing Settings destination; no UI is mounted in production.
+10. Real disposable PostgreSQL/engine proof, negative roles, races and failure reconciliation are required. PC-1 authenticated Chat/Live/browser acceptance stays UNVERIFIED until its original owners clear it.
+
+## Locked bounded contract
+
+REUSE process/acts, event/act identities, claim, posture, canonical receipt and Planning. EXTEND the subject tenant registry, native adapter/Gateway binding and existing reconciler. REPAIR process-subject receipt attribution. NEW human RPCs for draft/authorize/pause/edit/resume/cancel and owner-only last/next readback inside these canonical records.
+
+A proposal is requested (`draft`/`confirm`) and does not publish. Authorization binds its exact revision. Material edits disarm and invalidate that authorization. Pause/cancel disarm future starts, retain history and do not overwrite already-started outcomes. Resume uses the next future weekly slot and never replays missed slots. Cancel is permanent for that definition. An outage coalesces missed slots into one overdue check, never a burst.
+
+Process conditions bind occurrence process ID and approved revision. Due publishers lock the existing process row and use the existing event dedup key. Worker execution and controls serialize on that process boundary. The observer uses the same personal scope as `paige_operating_memory`: open/in_progress/blocked Planning items assigned to or created by the authorizing owner, bounded at50 with honest total/truncation. Private observations are not readable by other members or exposed in shared receipts.
+
+The trigger is shipped dark. Local proof may enable it only in its disposable database. No production activation follows from a merge or deployment. Readback is modality-neutral; production Chat/Live wiring remains with the active shared owner and is not falsely declared LIVE.
+
+The current canonical tool resolver defaults missing permission to `confirm`. Schedule authorization does not widen that permission or the Trust ceiling. A catalog entry exposes this internal read through existing Settings; the owner must deliberately select automatic permission through its existing setter. Otherwise the authorized configuration is retained but execution is held, actual next run is null and the intended slot remains inspectable. No tenant permission is seeded by migration or authorization.
+
+Weekly slots use an explicit IANA civil time and ISO weekday1–7. The existing five-minute event sweeper publishes due slots; the scheduled slot and actual start/observation timestamps are separate facts. There is no claim of exact-second dispatch. PostgreSQL's time-zone conversion shifts nonexistent times forward and uses standard time for repeated times; local proof covers DST boundaries.
+
+## Prototype direction
+
+Goal: one owner delegates a weekly internal check from PAIGE.
+Human and feel: busy SOLO owner; calm, explicit control.
+Entry and exit: existing PAIGE conversation; return to the same context.
+System: incumbent Mineral/Obsidian tokens, compact sans, hairline rows.
+Signature: the same schedule and receipt reference persists into a later conversation.
+Feedback: bounded opacity150ms; immediate reduced-motion alternative; no browser haptics.
+Rejecting: metric dashboard and simulated backend success as capability proof.
+Variants: owner controls; member refusal; narrow mobile retains context.
+
+The standalone prototype uses deterministic local mocks, separate review controls and explicit simulated labels. Its approval is not production activation or authenticated acceptance.
+
+## Regression and proof boundary
+
+Affected: process authority/direct writes, subject integrity, occurrence isolation, native adapter/Gateway parity, act claim/reconciliation, receipt attribution/private evidence, scheduled timing and owner readback. Test every affected boundary. Unaffected: signup/billing/provisioning, external provider dispatch, financial domain mutations, existing Chat transcript/scroll and INT-346 admission, Live audio, Vault/credentials, tenant shell routing and domain goal logic.
+
+Independent contract assessment completed read-only at base c0a2024. A fresh non-author backend audit found and corrected the off/confirm read bypass, canonical child-first retirement interaction, and incorrect held/refused status. This is preliminary source review; the immutable-head verdict and hosted CI are recorded with the PR.
+
+## Implemented slice and local evidence
+
+| Boundary | Canonical implementation / classification |
+| --- | --- |
+| Request and human authorization | NEW draft/configure/control/getter RPCs on REUSED `paige_automations`/acts; owner/tenant/exact-revision checks and direct-write guards |
+| Permission setup | EXTEND existing `list_tool_autonomy`; REUSE its Settings setter and batch/single resolver. Missing permission stays confirm; no auto seed |
+| Scheduling | EXTEND existing event sweeper with due publisher; stable weekly occurrence dedup and row locks. No extra cron job |
+| Governed execution | REUSE current event/act claim and `runEventActs`; EXTEND registered process subject, Gateway and fixed native read adapter |
+| Verified output | REUSE `plan_items`, monotonic act writer and capability receipt. Atomic private observation plus minimized receipt; REPAIR process/contact attribution |
+| Recovery | EXTEND existing reconciler; bounded authoritative-absence recovery, no ambiguous replay, immutable per-occurrence stop cutoff |
+| Future controls and recall | NEW owner readback over canonical records; prepared caller-JWT Chat/Live read adapter is unmounted. No memory or approval store |
+
+Migration: `20271027000000_experience05_weekly_commitment_check.sql`. Human APIs are `draft_weekly_commitment_check(request_id,name,weekday,local_time,timezone)`, `configure_weekly_commitment_check(automation_id,weekday,local_time,timezone,expected_revision)`, `control_weekly_commitment_check(automation_id,action,expected_revision)` and `get_weekly_commitment_checks()`. Service execution/readback only accept canonical occurrence coordinates; they grant no scheduling authority.
+
+Local proof:49/49 actual PostgreSQL cases, including the actual TypeScript engine/Gateway/native adapter against real canonical records, one execute and duplicate-drain adoption, permission/privacy negatives, races, failed receipt rollback, unknown/no replay and actual child-first retirement executor. The selected substrate uses explicit Auth/context/tier/trust/cron/network/base Rail and retirement preflight/provider/deletion-plan/credential doubles. It proves these integration boundaries, not HTTP drainer, Supabase Auth or production acceptance. Migration SHA256 `dac500db0c6a4f640132a74eb28ec980aaba0ed0136bbb941b83ada938b47b64`.
+
+Rendered prototype:64/64 local browser checks,19 captures, independent finish verdicts for the listed flow fixes and permission gate. It remains a simulation; no actual SOLO open/closed shell geometry or authenticated persistence is claimed. Unit/regression tests, type ratchet, build and contract gates are tracked separately from that proof.
+
+Experience01 retains profile/preferences; the first slice asks for an explicit owner-confirmed time zone and does not wait for that journey. Experience02 retains goals and health logic; this observer reads existing personal Planning state. Experiences03/04 retain marketing, lead, payment, collections and delivery logic; no business-domain act or provider action is added here. Future routines must register existing governed capabilities through this shared ongoing-work experience.
+
+Remaining handoffs: rendered owner review before new production UI mount; Platform Reach/Conversational Loop admission and live readback binding; protected PC-1 Auth/QA readiness; exact-head non-author verdict/CI; explicit final release decision, ordinary release pipelines, production readback and authenticated end-to-end acceptance. Current main has since admitted Experience02's bounded metric reader; that admission does not include weekly private Planning reads or owner schedule controls.
+
+Second Brain sweep searched `weekly commitment`, `weekly internal commitment`, `schedule.weekly_commitment_check`, `planning.weekly_commitment_check`, `weekly_commitment_status` in Brain and Master before adding candidate records; there were no prior matches to reconcile. Historical dated platform claims were retained. README, Spine/Rail state and Master now link this candidate and acceptance packet. No secret values were recorded. No new out-of-scope product findings were discovered; existing PC-1/INT-346 gates remain recorded with their owners.

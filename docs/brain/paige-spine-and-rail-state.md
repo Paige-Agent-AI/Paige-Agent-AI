@@ -1,5 +1,11 @@
 # PAIGE Spine & Rail — verified current state
 
+## UPDATE 2026-10-12 — Experience 05 weekly commitment check candidate, NOT SHIPPED
+
+The authorized first slice extends canonical `paige_automations`/acts, native events and act claims; it adds no automation engine, durable job or receipt ledger. Its fixed internal observer reads only open/in-progress/blocked `plan_items` assigned to or created by the authorizing owner, bounded at50 with total/truncation. Private observations remain in owner-only act evidence; shared workspace receipts carry only minimized references. Human scheduling/control RPCs require the current active local owner and exact configuration revision. Unknown outcomes remain reconcilable and are never automatically replayed.
+
+`automations.weekly_commitment_status` is a PARTIAL backend reader, `chatBinding:UNAVAILABLE`, `mindBinding:UNAVAILABLE`, self-description off. The prepared caller-JWT read adapter is unmounted. A separate owner-reviewable rendered prototype demonstrates the flow; it is a simulation, not persistence proof. The weekly event trigger ships dark and joins the existing sweeper/reconciler. Current production readback confirms the new reader/executor absent, zero weekly events and typed Chat protocol version2/activefalse. These source changes confer no activation or authenticated acceptance. Candidate and protected handoff: `docs/delivery/experience-05-weekly-commitment-check.md`, `docs/delivery/experience-05-weekly-acceptance-packet.md`.
+
 ## UPDATE 2026-10-07 — canonical typed-turn supersession (INT-336)
 
 PR #1805 merged as `df2b1ebe161970275bdcf2d26298f197b1c10b55`; migration20270601000000 and paige-ai-chat v355 are deployed. This is a bounded conversation authority correction, not a new Brain, queue, capability executor or durable scheduler. A stable Solo draft remains writable; canonical acceptance and the thread executor serialize typed interactive generations. Dispatched effects settle and canonical terminal receipts persist before executor handoff. Completed effects remain; unknown consequential receipts block new writes pending authoritative reconciliation while reads/chat remain available. Durable work, exact approval fingerprints and explicit ASK_USER bindings retain existing authority.

@@ -1,9 +1,15 @@
 /**
- * Paige booking embed loader — public/embed.js
+ * Paige embed loader — public/embed.js (booking calendars and lead forms)
  *
  * A tenant drops one tag onto their site and Paige handles the rest:
  *
  *   <script src="https://app.paigeagent.ai/embed.js" data-slug="discovery-call" async></script>
+ *   <script src="https://paigeagent.ai/embed.js" data-form="<form id>" data-cfasync="false" async></script>
+ *
+ * A form (Experience 03) frames the published form at /form/<id>?embed=1. Answers go through Paige's
+ * own intake from Paige's own origin, so the host page never handles them. The host page's campaign
+ * tags (utm_*, gclid, fbclid) ride along on the frame's address, so a visit from a tagged link is
+ * credited to its campaign exactly as on the hosted form.
  *
  * Inline mode (default): injects the booking iframe where the tag sits and
  * auto-sizes its height to the content — no inner scrollbar, responsive width.
@@ -15,16 +21,43 @@
  * anything that isn't our height event.
  *
  * Attributes:
- *   data-slug   (required)  the calendar's public slug
+ *   data-slug   the calendar's public slug          (one of data-slug / data-form)
+ *   data-form   the published form's id
+ *   data-title  the frame's accessible name        (default "Book a time" / "Form")
+ *   data-theme  a form's look: light | dark | auto (default "light"; auto follows the visitor)
  *   data-mode   inline | popup            (default "inline")
  *   data-button the popup button label    (default "Book a time")
  *   data-height starting height in px      (default 720, before auto-size)
  *   data-target CSS selector to mount into (inline; default: in place)
+ *
+ * Any host, including a site built elsewhere and served from Cloudflare Pages: nothing here depends on how the
+ * page is hosted, and no account on the host's side is involved. Three things a host can do are handled:
+ *   - Cloudflare Rocket Loader defers scripts. `data-cfasync="false"` (in the copied code) tells it to leave this
+ *     tag alone; an older tag without it still mounts once, in place (Rocket Loader keeps document.currentScript).
+ *   - A tag in <head> (pasted there, or the only thing in a builder's "custom HTML" block) puts the widget at the
+ *     end of the page, not in the invisible head.
+ *   - A Content-Security-Policy that blocks framing Paige (frame-src): the frame is replaced by a link to the form,
+ *     and the console says which directive to add. A Report-Only policy is ignored (it never blocks). Browsers report
+ *     a refused frame by origin, not by frame, so a policy that allows some Paige addresses and refuses others turns
+ *     every Paige form frame on the page into a link.
+ *   - A sandbox without allow-same-origin (some site builders' "custom HTML" blocks): a frame there could not send
+ *     its answers (the intake refuses an address-less origin), so the visitor gets a link to the form instead. A tab
+ *     opened from it stays sandboxed unless the block allows popups to escape the sandbox; the form page then shows
+ *     its address to copy into a new tab (src/main.tsx).
  */
 (function () {
   "use strict";
 
-  var HEIGHT_EVENT = "paige-booking-height";
+  // Each widget accepts only its own page's height message.
+  var BOOKING_HEIGHT_EVENT = "paige-booking-height";
+  var FORM_HEIGHT_EVENT = "paige-form-height";
+  // A form whose success action is "go to this page" asks the loader to move the visitor's whole page.
+  var FORM_REDIRECT_EVENT = "paige-form-redirect";
+  // The campaign tags a visit carries (the same keys the hosted form reads, src/lib/growth.ts readUtm).
+  // Not "ref": inside the frame Paige reads ?ref= as its own referral code, so a host page's ref would be
+  // mistaken for one.
+  var TAG_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "fbclid"];
+  var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // The tag currently executing. Captured synchronously so each copy of the
   // tag on a page manages its own widget (document.currentScript is null once
@@ -38,16 +71,26 @@
   if (!script) return;
 
   var slug = (script.getAttribute("data-slug") || "").trim();
-  if (!slug) {
+  var formId = (script.getAttribute("data-form") || "").trim();
+  var isForm = !slug && !!formId;
+  if (!slug && !formId) {
     // Fail loud in the console, quiet on the page — never render a broken frame.
-    if (window.console) console.error("[Paige embed] Missing data-slug on the embed script tag.");
+    if (window.console) console.error("[Paige embed] Missing data-slug or data-form on the embed script tag.");
     return;
   }
+  if (isForm && !UUID_RE.test(formId)) {
+    if (window.console) console.error("[Paige embed] data-form is not a form id. Copy the embed code from Paige again.");
+    return;
+  }
+  var HEIGHT_EVENT = isForm ? FORM_HEIGHT_EVENT : BOOKING_HEIGHT_EVENT;
+  var frameTitle = script.getAttribute("data-title") || (isForm ? "Form" : "Book a time");
+  var formTheme = (script.getAttribute("data-theme") || "light").toLowerCase();
+  if (formTheme !== "dark" && formTheme !== "auto") formTheme = "light";
 
   var mode = (script.getAttribute("data-mode") || "inline").toLowerCase();
   var startHeight = parseInt(script.getAttribute("data-height") || "", 10);
   if (!isFinite(startHeight) || startHeight <= 0) startHeight = 720;
-  var buttonLabel = script.getAttribute("data-button") || "Book a time";
+  var buttonLabel = script.getAttribute("data-button") || (isForm ? "Open the form" : "Book a time");
   var targetSel = script.getAttribute("data-target") || "";
 
   // The booking app's origin is wherever this script was served from — the src
@@ -55,20 +98,53 @@
   // from that exact origin.
   var appOrigin;
   var bookingUrl;
+  var formPageUrl;
   try {
     var u = new URL(script.src, window.location.href);
     appOrigin = u.origin;
-    bookingUrl = appOrigin + "/book/" + encodeURIComponent(slug);
+    if (isForm) {
+      var tags = new URLSearchParams();
+      tags.set("embed", "1");
+      if (formTheme !== "light") tags.set("theme", formTheme);
+      var here = new URLSearchParams(window.location.search);
+      for (var i = 0; i < TAG_KEYS.length; i++) {
+        var v = here.get(TAG_KEYS[i]);
+        if (v) tags.set(TAG_KEYS[i], v.slice(0, 200));
+      }
+      bookingUrl = appOrigin + "/form/" + encodeURIComponent(formId) + "?" + tags.toString();
+      // The form's own page, for when a frame can't work here: the same campaign tags, without the embed flag.
+      tags.delete("embed");
+      tags.delete("theme");
+      var rest = tags.toString();
+      formPageUrl = appOrigin + "/form/" + encodeURIComponent(formId) + (rest ? "?" + rest : "");
+    } else {
+      bookingUrl = appOrigin + "/book/" + encodeURIComponent(slug);
+    }
   } catch (e) {
     if (window.console) console.error("[Paige embed] Could not resolve the embed source URL.", e);
     return;
   }
 
+  // The button sits on a page Paige didn't design, light or dark. Its own fill carries the text (white on deep indigo,
+  // about 17:1), and a two-tone ring (white inside, indigo outside) keeps its edge visible on any background: the
+  // indigo against a light page, the white against a dark one (WCAG 1.4.11). A form whose owner chose the dark look
+  // gets the same button inverted. 44px tall, a comfortable touch target. Shared by the booking popup button.
+  var INK = "#1B1230", PAPER = "#FFFFFF";
+  var invert = isForm && formTheme === "dark";
+  var BUTTON_CSS =
+    "display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:44px;box-sizing:border-box;" +
+    "padding:.65rem 1.15rem;border-radius:.65rem;border:0;cursor:pointer;" +
+    "font:600 15px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;" +
+    "background:" + (invert ? PAPER : INK) + ";color:" + (invert ? INK : PAPER) + ";" +
+    "box-shadow:0 0 0 2px " + (invert ? INK : PAPER) + ",0 0 0 3px " + (invert ? PAPER : INK) + ";" +
+    // The browser's own keyboard focus ring, drawn clear of the two-tone ring.
+    "outline-offset:5px;";
+
   // --- build the iframe -----------------------------------------------------
   function makeIframe(initialHeight) {
     var iframe = document.createElement("iframe");
     iframe.src = bookingUrl;
-    iframe.title = "Book a time";
+    iframe.title = frameTitle;
     iframe.loading = "lazy";
     // camelCase is ignored by some browsers for iframe; set both attr + prop.
     iframe.setAttribute("allow", "clipboard-write; web-share");
@@ -77,7 +153,9 @@
     iframe.style.display = "block";
     iframe.style.height = initialHeight + "px";
     iframe.style.transition = "height 120ms ease";
-    iframe.style.colorScheme = "normal";
+    // The frame's colour scheme matches the page inside it, or the browser paints an opaque box behind a
+    // transparent page. A booking page and a light form are "normal"; a dark form is dark; auto follows the visitor.
+    iframe.style.colorScheme = !isForm || formTheme === "light" ? "normal" : formTheme === "dark" ? "dark" : "light dark";
     return iframe;
   }
 
@@ -99,36 +177,90 @@
     };
   }
 
-  // --- inline mode ----------------------------------------------------------
-  function mountInline() {
-    var iframe = makeIframe(startHeight);
-    window.addEventListener("message", heightListener(iframe, null));
+  // Only from our origin, only from THIS frame, only an http(s) address: never script, never another frame.
+  function redirectListener(iframe) {
+    return function (event) {
+      if (event.origin !== appOrigin) return;
+      if (iframe.contentWindow && event.source !== iframe.contentWindow) return;
+      var data = event.data;
+      if (!data || typeof data !== "object" || data.type !== FORM_REDIRECT_EVENT || typeof data.url !== "string") return;
+      var next;
+      try { next = new URL(data.url); } catch (e) { return; }
+      if (next.protocol !== "https:" && next.protocol !== "http:") return;
+      window.location.assign(next.href);
+    };
+  }
 
+  // Where the widget goes: the data-target element, else exactly where the tag sits in the page. A tag in <head>
+  // (pasted into a site's head, or the only thing in a builder's "custom HTML" block, which the parser files into
+  // head) would leave it invisible there, so then it goes at the end of the page instead.
+  function place(node, allowTarget) {
     var mount = null;
-    if (targetSel) {
+    if (allowTarget && targetSel) {
       try { mount = document.querySelector(targetSel); } catch (e) { mount = null; }
     }
-    if (mount) {
-      mount.appendChild(iframe);
-    } else if (script.parentNode) {
-      // Drop the frame exactly where the tag sits.
-      script.parentNode.insertBefore(iframe, script);
-    } else {
-      document.body.appendChild(iframe);
+    if (mount) mount.appendChild(node);
+    else if (script.parentNode && document.body && document.body.contains(script)) script.parentNode.insertBefore(node, script);
+    else (document.body || document.documentElement).appendChild(node);
+  }
+
+  // --- when a frame can't work here: a link to the form's own page ----------
+  function makeLink() {
+    var a = document.createElement("a");
+    a.href = formPageUrl;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = buttonLabel;
+    a.setAttribute("data-paige-form-link", "");
+    a.style.cssText = BUTTON_CSS + "text-decoration:none;";
+    return a;
+  }
+
+  // A page whose origin is opaque (a sandbox without allow-same-origin) passes that to every frame it makes, and the
+  // intake refuses answers from an address-less origin. Say so in the console and show the link, never a form that
+  // fails only after the visitor has typed everything.
+  var opaque = String(window.origin || (window.location && window.location.origin)) === "null";
+
+  // A frame the host's Content-Security-Policy refuses never loads, and nothing inside it can tell the visitor.
+  // The browser reports the refusal on this page: swap the frame for the link and name the fix for the site owner.
+  function watchFramePolicy(iframe) {
+    if (!isForm) return;
+    document.addEventListener("securitypolicyviolation", function (e) {
+      // A Report-Only policy (how sites trial a policy) only reports: the frame still loads, so leave it be.
+      if (e.disposition === "report") return;
+      var directive = String(e.effectiveDirective || e.violatedDirective || "");
+      if (!/^(frame-src|child-src|default-src)/.test(directive)) return;
+      if (String(e.blockedURI || "").indexOf(appOrigin) !== 0 || !iframe.parentNode) return;
+      if (window.console) console.error("[Paige embed] This site's Content-Security-Policy blocks the form (" + directive + "). Add " + appOrigin + " to frame-src, or visitors get a link instead.");
+      iframe.parentNode.replaceChild(makeLink(), iframe);
+    });
+  }
+
+  // --- inline mode ----------------------------------------------------------
+  function mountInline() {
+    if (isForm && opaque) {
+      if (window.console) console.warn("[Paige embed] This page runs in a sandbox without allow-same-origin, so a form inside it can't send answers. Showing a link to the form instead. Paste the code straight into the page, or allow same-origin on the block that holds it.");
+      place(makeLink(), true);
+      return;
     }
+    var iframe = makeIframe(startHeight);
+    watchFramePolicy(iframe);
+    window.addEventListener("message", heightListener(iframe, null));
+    if (isForm) window.addEventListener("message", redirectListener(iframe));
+    place(iframe, true);
   }
 
   // --- popup mode -----------------------------------------------------------
   function mountPopup() {
+    if (isForm && opaque) {
+      place(makeLink(), false);
+      return;
+    }
     var btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = buttonLabel;
     btn.setAttribute("aria-haspopup", "dialog");
-    btn.style.cssText =
-      "display:inline-flex;align-items:center;justify-content:center;gap:.5rem;" +
-      "padding:.65rem 1.15rem;border-radius:.65rem;border:0;cursor:pointer;" +
-      "font:600 15px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;" +
-      "background:#1B1230;color:#fff;";
+    btn.style.cssText = BUTTON_CSS;
 
     var overlay, frameWrap, iframe, removeListener;
 
@@ -150,7 +282,7 @@
       overlay = document.createElement("div");
       overlay.setAttribute("role", "dialog");
       overlay.setAttribute("aria-modal", "true");
-      overlay.setAttribute("aria-label", "Book a time");
+      overlay.setAttribute("aria-label", frameTitle);
       overlay.style.cssText =
         "position:fixed;inset:0;z-index:2147483647;display:flex;" +
         "align-items:center;justify-content:center;padding:24px;" +
@@ -177,9 +309,12 @@
 
       iframe = makeIframe(Math.min(startHeight, Math.round(window.innerHeight * 0.9)));
       iframe.style.borderRadius = "16px";
+      watchFramePolicy(iframe);
       var listener = heightListener(iframe, { maxHeight: Math.round(window.innerHeight * 0.9) });
+      var onRedirect = isForm ? redirectListener(iframe) : null;
       window.addEventListener("message", listener);
-      removeListener = function () { window.removeEventListener("message", listener); };
+      if (onRedirect) window.addEventListener("message", onRedirect);
+      removeListener = function () { window.removeEventListener("message", listener); if (onRedirect) window.removeEventListener("message", onRedirect); };
 
       frameWrap.appendChild(closeBtn);
       frameWrap.appendChild(iframe);
@@ -190,8 +325,7 @@
     }
 
     btn.addEventListener("click", open);
-    if (script.parentNode) script.parentNode.insertBefore(btn, script);
-    else document.body.appendChild(btn);
+    place(btn, false);
   }
 
   function boot() {

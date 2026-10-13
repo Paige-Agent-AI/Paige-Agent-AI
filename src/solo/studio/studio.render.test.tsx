@@ -218,11 +218,16 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).toContain("Asks for an email");
     expect(text()).toContain(`Goes live at ${window.location.origin}/form/f-1`);
     expect(text()).not.toContain("It's live");
+    // A draft offers no code for another website: nothing would show there yet.
+    expect(text()).not.toContain("Put it on your website");
     await press("Publish now");
     expect(h.doorCalls[1]).toEqual({ action: "publish", kind: "form", id: "f-1", approved_fingerprint: "fp-1" });
     expect(h.doorCalls).toHaveLength(2);
     expect(text()).toContain("It's live");
     expect(text()).toContain(`${window.location.origin}/form/f-1`);
+    // Experience 03: the live form's embed code, the same loader the booking calendar uses.
+    expect(text()).toContain("Put it on your website");
+    expect(host.querySelector(".vs-code")?.textContent).toBe(`<script src="https://paigeagent.ai/embed.js" data-form="f-1" data-title="New client intake" data-cfasync="false" async></script>`);
   });
 
   it("while the server checks, Publish waits and says so", async () => {
@@ -344,6 +349,8 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).not.toContain("Publishing is switched off");
     expect(button("Unpublish")!.disabled).toBe(true);
     expect(button("Publish again")!.disabled).toBe(false);
+    // A funnel is not embedded this way (its pages are its address); only a form offers the code.
+    expect(text()).not.toContain("Put it on your website");
   });
 
   it.each([
@@ -445,6 +452,9 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).toContain("A live funnel uses this form");
     expect(text()).toContain("Take “Free strategy call” offline first.");
     expect(button("Unpublish")!.disabled).toBe(true);
+    // A live form keeps its embed code in reach, whenever the owner comes back to it.
+    expect(text()).toContain("Put it on your website");
+    expect(host.querySelector(".vs-code")?.textContent).toContain('data-form="f-1"');
   });
 
   it("unpublishing asks 'Take it offline?' inline and redeems the prepared fingerprint", async () => {

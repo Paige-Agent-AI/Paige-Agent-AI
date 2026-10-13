@@ -18,7 +18,7 @@ REDUCED_MOTION: UNVERIFIED: browser preference measured true and incumbent useRe
 STATE_COVERAGE: PASS: automated delayed fulfillment, accepted prior scope, profile/tenant/role/actor/scope read failure, empty provider catalog, stale/unsafe/tier destination, retry, sign-out/actor switch, scope switch, departure, timeout/late completion and existing chooser cases covered; browser evidence remains owed.
 TRUTHFUL_STATE_LABELS: PASS: verified enrollment is separated from unverified workspace opening; failures keep the server reference and do not falsely say paid access was never activated.
 SOLO_UI: YES: public Solo Welcome-to-current-Solo entry transition; no Solo shell layout changes.
-UNVERIFIED: Current-source native render/keyboard/reflow/state/motion/screen reader; independent exact-head review, hosted CI, new release/source identity, protected customer actor/membership/entry/logout-return and final owner acceptance.
+UNVERIFIED: Current-source native render/keyboard/reflow/full state/motion/screen reader/finish, real browser interaction, protected customer actor/membership/selection/enrollment/logout-return and final owner acceptance. Hosted review/CI and merge/deployment are separately verified below.
 
 OWNER_INTENT: Complete trustworthy new-customer admission using existing authentication/provisioning/membership/context contracts, preserving the interview/save/readback/correction/resume foundation.
 MUST_NOT_HAPPEN: No Auth administration, provider effect, tenant/membership write, authority widening, new store, approval system or fixture account; no old actor/destination may trigger entry.
@@ -27,13 +27,13 @@ ACCEPTANCE_CRITERIA: After delayed signed fulfillment, the real provider hydrate
 MOTION_PURPOSE: NONE: existing pending verification motion and reduced-motion branches retained; no motion change.
 PROTECTED_SEAMS: Impacted and locally tested: actor/scope fencing, provider commit and failure preservation, canonical readback/address agreement, chooser recovery, cancellation and timeout. Unaffected: Auth/provisioning/roles, billing/Checkout/webhook, Setup writers, Chat/Spine/Harness/Trust/admission, provider connections and receipt/Rail stores.
 
-INTERNAL_BUILD_IDENTITY: d74cb231c9410e9ec14be07335928c876c37201f; source_sha256=db0dde17af9d584d4085fd49d47407b5c076f37aeb7104e0ae5afcedcc6503a6; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/experience-01-admission-readback-window/source-proof.json
-RELEASE_CHANNEL: development: isolated forward-fix branch; no merge/deployment inferred.
+INTERNAL_BUILD_IDENTITY: 1e8ea92039e4ee7151480b7041f8494535dd9c39; deployment=dpl_EqRkdR2t7cyoPRwHoUEik6gwghz1; environment=production; reviewed_head=699c1cb42345959b062f75635ffeedba8915bb47; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/experience-01-admission-readback-window/production-readback.json
+RELEASE_CHANNEL: production: exact merged source deployed READY and public compiled/version read back; current native/customer interaction remains unverified.
 RELEASE_CLASSIFICATION: patch: repairs an existing delayed-enrollment handoff with canonical readback and unchanged approval/permission architecture.
 CUSTOMER_RELEASE_IDENTITY: none: bounded internal reliability repair candidate; authentic customer acceptance owed.
 RELEASE_NOTE_REQUIRED: NO: bounded reliability patch; no customer announcement or release identity is authorized by this worker result.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: scope=late-enrollment/current-SOLO entry; blocker=current-source native render unavailable and protected ordinary-customer case/runner attestation absent; excluded_from_LIVE=authenticated enrollment entry/logout-return and complete Experience01.
-RELEASE_RECOVERY: position=reviewed-forward-fix-before-release; reference=docs/delivery/experience-01-admission-readback-window.md
+RELEASE_RECOVERY: position=reviewed-forward-fix-or-normal-Git-revert-if-regression; reference=docs/delivery/experience-01-admission-readback-window.md#actual-release-closeout--2026-10-13
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: current-source IAB webview attachment blocked; original #2096 native actual-Welcome light/dark frame is historical unchanged-UI baseline only. PAIGE is not mounted.
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: public Welcome does not mount PAIGE; downstream authenticated shell geometry remains independently owned.
@@ -49,3 +49,5 @@ SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: public Welcome does not mount PAIGE; d
 Only polling/readback phase timing changes. Existing human-owned canonical provisioning/context/Setup/Chat/Spine/Harness/Trust boundaries are retained. All original historical fields above refer only to #2096 where explicitly labelled. No current native or hosted/customer proof is inferred.
 
 Impeccable incumbent direction, hardening/cancellation and craft-floor checks reused; current detector on Welcome returned exit0 with no diagnostic output. Canonical skill: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md. Independent non-author source/finish review remains required before delivery.
+
+Actual release: independent non-author COMPLETE/PASS on699c1cb4; sole evidence-label P2 resolved. Ten applicable exact-head check groups successful, Supabase Preview appropriately SKIPPED. Normal merge1e8ea9203, productiondpl_EqRkdR2t7cyoPRwHoUEik6gwghz1 READY and public source readback verified. Historical synthetic frames remain historical, automated proof stays automated, BEHAVIORAL_EVIDENCE remains UNVERIFIED. No current native finish/customer LIVE claim.

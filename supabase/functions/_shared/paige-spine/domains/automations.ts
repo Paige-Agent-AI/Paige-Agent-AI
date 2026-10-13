@@ -12,3 +12,14 @@ export const AUTOMATION_READ_CAPABILITIES = [
     idempotency: "existing caller-JWT stored-state read; no rows written", riskPolicyKey: "read_only", approvalAuthority: "none" },
   chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability));
+
+// Experience 05 backend readback. Kept out of self-description until the incumbent
+// Chat/Live owners bind this owner-only RPC and authenticated acceptance succeeds.
+export const WEEKLY_COMMITMENT_STATUS = {
+  key: "automations.weekly_commitment_status", domain: "automations", owner: "experience-05",
+  humanSurface: "PAIGE workspace", readiness: "none", selfDescribe: false,
+  action: { classification: "read", executor: "public.get_weekly_commitment_checks",
+    idempotency: "canonical process and act receipt read; conversation-independent; no writes",
+    riskPolicyKey: "read_only", approvalAuthority: "none" },
+  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+} as const satisfies SpineCapability;

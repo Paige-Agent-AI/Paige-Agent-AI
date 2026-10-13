@@ -554,7 +554,8 @@ const SOURCES = {
   "supabase/functions/_shared/doc-render.ts": "56e5fd5223120d45d2f445f4f53eeaeb8d69dac9b253c52fe915026d746a5b95",
   "supabase/functions/_shared/token-pricing.ts": "d7a9327187e536caac716def14bd147f4a8319505928f672c1ddc09daede9359",
   "supabase/functions/_shared/paige-spine/governedExecution.ts": "771d67a36c3a88323690e528df35b5355f74a5b6ff330d7262952a7eb87a83a9",
-  "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "7b4670476f67d7a8eecea23737f9a3f5ea6477c78e1428b6c8cfd728abc0569c",
+  // Experience 05: independently reviewed process-subject registration; all refusal branches retained.
+  "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "79bfca5cada98f8226a533684556c2b6035ec8aaf0855c06846b035ef4d778bd",
   "supabase/functions/_shared/sales-payments/balance-projection.ts": "089be3509f1a784659f86ceaa8e21238a765b744ebc5f75ecdb870be58070a92",
   "supabase/functions/_shared/sales-invoice-delivery/readiness.ts": "951b29afbdab2ad6480fdaadde38ae6f927bf5686f7bbf5518109128c91bb140",
   "supabase/functions/_shared/comms-email/readiness.ts": "5ea65b2c7ff8c499da47238645bf19856da2508ad7ea85ab2a8ab39ac3a09b1d",

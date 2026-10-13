@@ -547,9 +547,10 @@ export async function runEventActs(
       await recordCapabilityRun(db, {
         tenantId: event.tenant_id, actorId: plan.personUserId, capabilityKey: plan.capabilityKey,
         outcome: "capability_succeeded", runId,
-        detail: { correlation_ref: rec.correlation_ref, event_id: rec.event_id, act_id: rec.act_id, contact_id: event.subject_id, ...detail },
+        detail: { correlation_ref: rec.correlation_ref, event_id: rec.event_id, act_id: rec.act_id,
+          ...(event.subject_table === "clients" ? { contact_id: event.subject_id } : { process_id: event.subject_id }), ...detail },
       });
-      if (!wasNoop) {
+      if (!wasNoop && event.subject_table === "clients") {
         await emitAutomationRail(db, {
           tenantId: event.tenant_id, contactId: event.subject_id, workflowName: plan.automationName,
           phase: "completed", refTable: "paige_act_executions", refId: w.id,
@@ -567,6 +568,7 @@ export async function runEventActs(
     const nativeInput = {
       tenantId: event.tenant_id, actionKind: rec.capability_key ?? "", args: plan?.args ?? {},
       correlationRef: rec.correlation_ref, db, subjectTable: event.subject_table, subjectId: event.subject_id,
+      eventId: rec.event_id, actId: rec.act_id,
     };
 
     const cur = await readActOutcome(db, rec.event_id, rec.act_id);
@@ -581,6 +583,12 @@ export async function runEventActs(
       try { recon = await rb(null, nativeInput); } catch (e) { recon = ambiguousFromThrow(e, "readback_threw"); }
       if (recon.outcome === "executed") { await advanceNative(rec, plan, recon); continue; }   // our write landed
       if (cur.outcome === "ambiguous") { rec.outcome = "ambiguous"; continue; }                // owner: never blind re-dispatch
+      // A failed read is not evidence of absence. The weekly internal observer can
+      // resume an accepted occurrence only after canonical readback proves no commit
+      // and no live claim; a lost/uncertain response is never blindly replayed.
+      if (rec.capability_key === "planning.weekly_commitment_check" && recon.detail?.proven_absent !== true) {
+        rec.outcome = cur.outcome as ActOutcome; continue;
+      }
       // an `accepted`/`retrying` row whose correlation shows NO landed transition → it never dispatched.
       if (plan && typeof plan.adapter.dispatch === "function") {
         // At most once (Slice 2b): only the caller holding the dispatch claim fires. A live claim held by

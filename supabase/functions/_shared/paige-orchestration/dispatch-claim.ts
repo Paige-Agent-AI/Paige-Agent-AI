@@ -71,6 +71,6 @@ export async function dispatchUnderClaim(
   if (!claim.ok) return { kind: "claim_error" };
   if (!claim.claimed) return { kind: "held" };
   let result: DispatchResult;
-  try { result = await adapter.dispatch(input); } catch (e) { result = ambiguousFromThrow(e, "adapter_threw"); }
+  try { result = await adapter.dispatch({ ...input, eventId, actId }); } catch (e) { result = ambiguousFromThrow(e, "adapter_threw"); }
   return { kind: "dispatched", result };
 }

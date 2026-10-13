@@ -29,9 +29,9 @@
 --      user, an https source and a disclosure version), no tenant, no contact, not withdrawn, not revoked,
 --      and, for SMS, the evidence's own account has VERIFIED that number (communication_preferences, set
 --      only by verify-sms-code). paige-operator-sms-send now asks this one gate instead of matching on the
---      phone alone.
---      Unverified preference rows authorize nothing. No server path writes verified email-marketing
---      evidence today, so has_email_marketing_consent now answers false, which fails closed.
+--      phone alone. EMAIL is judged on email evidence, never a phone, and none exists at platform level:
+--      signup auto-confirms addresses and there is no double opt-in, so has_email_marketing_consent
+--      answers false (fails closed) until one exists (#2101). Unverified preference rows authorize nothing.
 --      Tenant-to-contact consent is never decided here. It belongs to the tenant ledger
 --      (paige_consent_events, tenant-scoped RLS, read by the pre-send pipeline), and
 --      dispatch-stage-automation now reads it there.
@@ -178,20 +178,13 @@ CREATE OR REPLACE FUNCTION public.has_email_marketing_consent(_email text)
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-  -- Verified platform evidence only (see has_sms_consent). No server path records verified email-marketing
-  -- evidence yet, so this answers false: fail closed. A tenant's own contacts are never decided here; their
-  -- consent is the tenant ledger, paige_consent_events.
-  SELECT EXISTS (
-    SELECT 1 FROM public.communications_consents
-    WHERE lower(email) = lower(_email)
-      AND consent_granted_at IS NOT NULL
-      AND tenant_id IS NULL
-      AND contact_id IS NULL
-      AND withdrawn_at IS NULL
-      AND revoked_at IS NULL
-      AND email_marketing = true
-  )
-  AND coalesce(auth.role(), '') IN ('service_role', '');
+  -- Platform-level EMAIL marketing consent needs proof that the person who opted in controls that inbox,
+  -- and no platform path proves it yet: signup creates accounts with the address already confirmed
+  -- (tenant-signup sets email_confirm, and production's 8 accounts of the 60 days to 2026-10-13 were all confirmed
+  -- within 5 seconds of creation), and no double opt-in exists. So this answers false: fail closed. It
+  -- never consults a phone. A business's consent to email ITS contacts is not decided here; that is the
+  -- tenant ledger, paige_consent_events (channel 'email'), which needs no phone either.
+  SELECT false;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.communication_preferences_guard_verified_phone()

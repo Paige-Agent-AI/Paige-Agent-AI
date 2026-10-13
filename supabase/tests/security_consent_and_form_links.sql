@@ -127,6 +127,16 @@ SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000001', false) AN
   'an unverified preference does not authorize SMS');
 SELECT pg_temp.require_true(NOT public.has_email_marketing_consent('pref@example.invalid'),
   'an unverified preference does not authorize marketing email');
+-- Email is judged on email evidence, never a phone. A confirmed account's own opt-in, with no phone at all,
+-- still does not authorize platform marketing email: confirmation is automatic at signup, so it proves
+-- nothing about who controls the inbox (no double opt-in exists yet).
+RESET ROLE;
+UPDATE auth.users SET email_confirmed_at = now() WHERE id = '5ec20870-0000-4000-8000-000000000001';
+SET LOCAL ROLE service_role;
+INSERT INTO public.communications_consents(user_id, email, email_marketing, source)
+VALUES ('5ec20870-0000-4000-8000-000000000001', 'sec-2087-a@example.invalid', true, 'proof');
+SELECT pg_temp.require_true(NOT public.has_email_marketing_consent('sec-2087-a@example.invalid'),
+  'a self-confirmed account''s own email opt-in is not proof of inbox ownership');
 -- A tenant-scoped legacy row is never platform evidence.
 INSERT INTO public.communications_consents(tenant_id, email, phone, sms_transactional, sms_marketing, email_marketing, source)
 VALUES ('5ec20870-0000-4000-8000-0000000000a1', 'tenant@example.invalid', '+15550000002', true, true, true, 'proof');

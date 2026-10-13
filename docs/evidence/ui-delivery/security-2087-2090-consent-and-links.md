@@ -16,14 +16,14 @@ AUTOMATED_EVIDENCE: PASS: src/pages/public/GrowthFormRenderer.test.tsx (javascri
 STATIC_EVIDENCE: PASS: tsc 10 errors, identical to main and none in touched files; eslint clean on touched files; lint:definer-fns, lint:views, lint:rail-grants, lint:migration-versions, lint:write-targets, lint:governed-execution, lint:action-risk, spine self-test PASS
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visual change; markup for an http(s) link is identical, and an unsafe link is omitted rather than restyled
 BEHAVIORAL_EVIDENCE: PASS: jsdom drive of the real hosted form — submit with a javascript: redirect stays on the success message without navigating; submit with an https redirect navigates to it; the success state renders the https Continue and Download links and omits unsafe ones
-AUTHENTICATED_RUNTIME: UNVERIFIED: PC-1 (the approved synthetic QA business) is not ready (#1832), so no authenticated drive on the live platform; the post-merge production readback covers grants, policies, triggers and the deployed edge functions
+AUTHENTICATED_RUNTIME: UNVERIFIED: no genuine signed-in drive yet; PC-1 is retired and Antonio Cook's existing SOLO customer account is the official test account (owner directive, ANT-52), used only through ordinary sign-in coordinated by the dedicated QA coordinator, whose credentials this session does not hold; the post-merge production readback covers grants, policies, triggers and the deployed edge functions
 KEYBOARD_FOCUS: NOT_APPLICABLE: no interactive element added or changed
 ZOOM_REFLOW: NOT_APPLICABLE: no layout changed
 REDUCED_MOTION: NOT_APPLICABLE: no motion added or changed
 STATE_COVERAGE: PASS: success with no link, with a safe redirect, with a safe download, with unsafe redirect/download (omitted), refused save (message) — each covered by the tests above
 TRUTHFUL_STATE_LABELS: PASS: the affiliate form's optional preferences are still recorded (server-side, bound to the stored application) so its checkboxes stay truthful; the unrouted PublicSignup page's email checkbox now records nothing and is tracked in #2095
 SOLO_UI: NO: no src/solo path changed; the hosted public form, the public affiliate form and an unrouted page
-UNVERIFIED: the authenticated live drive (PC-1 not ready); everything else is proven at the boundaries above
+UNVERIFIED: the authenticated live drive on the designated account (ANT-52, QA coordinator); everything else is proven at the boundaries above
 
 OWNER_INTENT: owner priority "SECURITY PRIORITY — CROSS-TENANT CONSENT AND FORM REDIRECTS": consent provenance that cannot be forged, tenant-scoped fail-closed enforcement, authoritative URL validation before a form is saved or published, browser defence in depth preserved
 MUST_NOT_HAPPEN: a legitimate https redirect or download stops working; a form or booking save that held a valid link starts failing; the affiliate form loses its preference recording; the hosted or embedded intake changes
@@ -68,4 +68,4 @@ refused save (message in the existing error slot). No new scroll owner.
 Independent non-author review (§39) on the first commit: SHIP with two should-fix findings (signup evidence for
 typed numbers; tenant-ledger policies keyed on the global admin role) and one test gap; all fixed, plus the
 browser-writable phone-verification flag found while answering the first; a second review pass found browsers could plant their own SMS verification codes, closed in the same migration. Remaining: the authenticated live drive
-(PC-1) and the post-merge production readback.
+on the designated account (ANT-52) and the post-merge production readback.

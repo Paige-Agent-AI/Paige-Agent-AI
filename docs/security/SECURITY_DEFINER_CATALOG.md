@@ -45,10 +45,10 @@ Re-review triggers: any grant to a browser role · writes evidence columns
 ### Function: public.has_email_marketing_consent
 Grants: service_role only (corrected 2026-10-13, #2087 — was anon + authenticated)
 Category: A — Server-only
-Justification: Platform-level email-marketing gate over VERIFIED evidence only (`consent_granted_at` set, no tenant, no contact, not withdrawn/revoked). No server path writes such evidence yet, so it answers false (fail closed). The previous entry's "unsubscribe landing pages" caller was not found in the repo (searched `src`, `supabase/functions`, `scripts`, `public`): its anon grant only let anyone probe an address. A business's consent to message its contacts is `paige_consent_events`, never this function.
-Auth-check location: Grant (service role) + body (answers only `service_role` or a direct SQL session) + evidence-only predicate.
+Justification: Platform-level email-marketing gate. It answers false: email is judged on email evidence (never a phone), and no platform path proves inbox ownership yet (signup auto-confirms addresses; no double opt-in, #2101). A business's consent to email its contacts is `paige_consent_events`, never this function. The previous entry's "unsubscribe landing pages" caller was not found in the repo; its anon grant only let anyone probe an address.
+Auth-check location: Grant (service role) + constant fail-closed body.
 Regression test: `supabase/tests/security_consent_and_form_links.sql`.
-Re-review triggers: any grant to a browser role · trusts a non-evidence row
+Re-review triggers: any grant to a browser role · a double opt-in lands (then trust only confirmed rows)
 
 ### Function: public.has_sms_consent
 Grants: service_role only (corrected 2026-10-13, #2087 — was anon + authenticated)

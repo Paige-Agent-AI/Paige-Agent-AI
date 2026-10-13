@@ -161,7 +161,15 @@ export function salesMetricWindow(period: SnapshotPeriod, now: Date): SalesMetri
     range_start: new Date(startMs).toISOString(),
     range_end: new Date(endMs).toISOString(),
   };
-  return periodEndMs > nowMs ? { ...window, window_note: "counted up to just now; the period ends later" } : window;
+  // E2-3b (QA #2102 point 5, review round): the producer counts raw record timestamps in
+  // [start, end) — to the second, no day boundary — so the truthful cutoff note fires whenever
+  // the end was pulled back to now (endMs < periodEndMs covers BOTH an end after now AND the
+  // rolling periods that resolve end = now exactly). A window that already ended in the past is
+  // complete and carries no note; the range dates speak for it. This neutral timestamp helper
+  // does not impose a day boundary. The two Sales activity adapters separately opt into
+  // salesReportingPeriod and carry that effective completed-day interval in their headline note.
+  if (endMs < periodEndMs) return { ...window, window_note: "counted up to just now; the period ends later" };
+  return window;
 }
 
 /** One issuer read for this window. The caller is the authenticated user's client; tenant is server-derived. */

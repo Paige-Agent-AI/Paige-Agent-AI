@@ -10430,7 +10430,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // the same finished-round, scope, cancellation and seat gates as every other turn.
         if (interactiveConversational && !CONVERSATIONAL_ADMITTED_READ_TOOLS.has(tc.function.name)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
-            code: "CONVERSATIONAL_MODE", error: "This conversation is running without actions while a platform update finishes. That tool can't run here." }) });
+            code: "CONVERSATIONAL_MODE", error: "This conversation is running without actions while a platform update finishes. That tool can't run here. Answer the owner in words: say plainly that actions are off in this conversation right now, then give the answer, plan or wording in words." }) });
           continue;
         }
         // Actual dispatch boundary: the account may change after the model round was
@@ -17607,7 +17607,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${heldNote}`;
-            if (!continuationFailed) turnTracker.budgetStop();
+            if (!continuationFailed && !interactiveConversational) turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),
@@ -17619,9 +17619,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId) {
-            const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+            // E2-3b (QA #2102 point 8): on a conversational turn the truthful cause of an unrun
+            // action is the action restriction itself, not a limit or a missing capability — the
+            // generic exhaustion copy (and the LIMIT_REACHED budgetStop that renders "Reached the
+            // limit for one answer") misdescribes it. The server authors the same refusal the
+            // prompt block instructs, records a completed answer (no budgetStop), and the turn
+            // persists normally.
+            const exhausted = interactiveConversational
+              ? "I can't create, change, send, schedule or delete anything in this conversation right now while a platform update finishes — nothing was run, created or sent. I can still look things up and answer in words: tell me what the task is for and I'll give you the wording, plan or next step in words."
+              : "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
             finalAssistantText = exhausted;
-            turnTracker.budgetStop();
+            if (!interactiveConversational) turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),

@@ -35,7 +35,7 @@ MUST_PRESERVE: Canonical process/event/act identity, current authority, existing
 ACCEPTANCE_CRITERIA: Exact owner consent, one real internal observation and receipt, future-only controls, authoritative reconciliation, cross-conversation readback and authenticated end-to-end proof through existing protected QA.
 MOTION_PURPOSE: Restrained opacity feedback indicates a local state transition; reduced motion removes it.
 PROTECTED_SEAMS: No actual Chat admission, Live tools, protected account flags, consequential capabilities or new production route is changed by this slice.
-INTERNAL_BUILD_IDENTITY: eb08ec4ef21421cc440ae6795ce84c81d3a83f9e; deployment=local-unreleased-source-and-file-prototype; environment=development; migrations=APPLIED(20271027000000_experience05_weekly_commitment_check); edge=PROOF_OWED(production-native-event-dispatch-not-released); evidence=docs/evidence/experience-05-weekly-postgres-proof.json
+INTERNAL_BUILD_IDENTITY: eb08ec4ef21421cc440ae6795ce84c81d3a83f9e; deployment=local-unreleased-source-and-file-prototype; environment=development; migrations=APPLIED(20271028000000_experience05_weekly_commitment_check); edge=PROOF_OWED(production-native-event-dispatch-not-released); evidence=docs/evidence/experience-05-weekly-postgres-proof.json
 RELEASE_CHANNEL: development: Disposable local PostgreSQL and file prototype only; migration APPLIED refers exclusively to that local proof.
 RELEASE_CLASSIFICATION: internal-only: Unreleased source candidate and rendered review artifact.
 CUSTOMER_RELEASE_IDENTITY: none: No customer release or authenticated outcome has been accepted.
@@ -44,3 +44,5 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: Canonical local database/engine proof and simul
 RELEASE_RECOVERY: position=preserve occurrence identity, reconcile committed evidence before replay, keep trigger dark and use reviewed forward repair or scoped source rollback; reference=docs/delivery/experience-05-weekly-acceptance-packet.md.
 
 The source identity above precedes this evidence-only commit. Final immutable-head review and CI must name the final PR SHA independently. A green evidence parser or prototype consent does not supply rendered owner approval, production activation or authenticated acceptance.
+
+Release-order correction2026-10-12: source was rebased onto main216ee2b6; the same unapplied SQL bytes moved from20271027000000 to20271028000000 after production recorded20271027100000. Fresh51-case disposable PostgreSQL/actual-engine proof and verified fixture-role restoration passed. Prototype bytes and production-UI/design gate are unchanged. The earlier source identity is retained as history, not substituted for the corrected exact-head review/CI.

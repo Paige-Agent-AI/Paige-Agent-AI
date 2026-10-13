@@ -14,7 +14,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-catalogue-lint.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const migration='supabase/migrations/20271027000000_experience05_weekly_commitment_check.sql';
+const migration='supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql';
 const ci=process.argv.includes('--postgres');
 const simulateCiRole=process.argv.includes('--simulate-ci-role');
 if(ci&&process.env.CI!=='true')throw new Error('--postgres is limited to the disposable CI service');

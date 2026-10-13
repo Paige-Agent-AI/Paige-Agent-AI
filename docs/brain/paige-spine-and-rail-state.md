@@ -2,6 +2,8 @@
 
 ## UPDATE 2026-10-12 — Experience 05 weekly commitment check candidate, NOT SHIPPED
 
+Release-order correction before merge: production advanced to20271027100000 (#2099); the unapplied weekly migration is now20271028000000 with identical SQL SHA256740608f719d2ee15c29933421d0e26c61f3bfde2a59972fc6f1c901b4092e738. Source was rebased onto main216ee2b6, and fresh51-case actual-engine/database proof passed with fixture-role restoration verified. This follows existing newer-only/plain db push; no include-all, production ledger repair or activation is authorized. Corrected exact-head review/CI and actual release readback remain distinct evidence legs.
+
 QA account supersession verified from the owner's direct2026-10-12 instruction: Antonio Cook's existing customer account is the official testing account, replacing PC-1-only directions where conflicting. Shared QA retains actual authentication/workspace/role/scope confirmation; existing effect/spend/approval/session/task holds remain. No replacement account, recovery or authenticated PASS follows. The current acceptance packet carries this supersession and preserves historical PC-1 findings.
 
 The authorized first slice extends canonical `paige_automations`/acts, native events and act claims; it adds no automation engine, durable job or receipt ledger. Its fixed internal observer reads only open/in-progress/blocked `plan_items` assigned to or created by the authorizing owner, bounded at50 with total/truncation. Private observations remain in owner-only act evidence; shared workspace receipts carry only minimized references. Human scheduling/control RPCs require the current active local owner and exact configuration revision. Unknown outcomes remain reconcilable and are never automatically replayed.

@@ -1,0 +1,40 @@
+- main:
+  - heading "Chat" [level=1]
+  - text: Internal work only You
+  - paragraph: Check my outstanding commitments every Monday.
+  - article:
+    - text: PAIGE
+    - paragraph: The last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.
+    - region "Last execution":
+      - heading "Your commitment check is ready" [level=2]
+      - text: Completed
+      - paragraph: I checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.
+      - list:
+        - listitem: Review service-delivery outline Overdue since Oct 9 · owner review required Needs attention
+        - listitem: Confirm next week’s capacity Due Oct 16 · still open Upcoming
+        - listitem: Finalize next month’s service scope Blocked · waiting for your scope decision Blocked
+      - paragraph: 3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.
+      - group: Inspect execution evidence
+    - region "Saved schedule":
+      - heading "Weekly commitment check" [level=2]
+      - text: Scheduled
+      - term: Schedule
+      - definition: Every Monday at 09:00 · America/New_York
+      - term: Next run
+      - definition: Mon, Oct 19, 9:00 AM EDT
+      - term: Tool permission
+      - definition: Automatic internal reads enabled
+      - term: Read scope
+      - definition: Read your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output only
+      - term: Authorization
+      - definition: Schedule saved by workspace owner · Oct 12, 2026 · version 1
+      - term: Reference
+      - definition: CHECK-005
+      - button "Pause future checks"
+      - button "Edit schedule"
+      - button "Cancel future checks"
+      - button "Inspect details"
+  - text: Message PAIGE
+  - textbox "Message PAIGE": Check my outstanding commitments every Monday.
+  - button "Send"
+  - paragraph: This review supports the weekly commitment-check request and status questions. Live is unavailable in this prototype.

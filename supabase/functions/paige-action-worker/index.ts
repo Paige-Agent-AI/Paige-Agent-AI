@@ -22,11 +22,11 @@
 // the invoke fails, fail_action marks the row 'blocked' with the real error so it SURFACES in the
 // Actions queue instead of dying silently. A crashed run's 'drafting' rows self-heal (claim_filed_actions
 // reopens a >10-min stale claim). One action failing never aborts the batch — each is independent.
-// An EMAIL send kind (send_via_approval, not SMS — e.g. owner.lead_followup) stores the email contract
-// {channel:'email', subject, body, body_text, raw} that execute-approval sends from after the owner's
-// yes; one with no intent, or whose specialist returned no usable subject + body, is failed with the
-// reason instead of putting an empty email in front of the owner. The recipient is never taken from
-// the draft (see draft.ts).
+// owner.lead_followup (a reply to a website-form lead) is the one kind whose draft is shaped: the
+// visitor's answers reach the composer as untrusted data, the stored draft is the email contract
+// {channel:'email', subject, body (plain text), body_html, raw} with no recipient in it, and a filing
+// with no intent or a result with no usable subject + body is failed with the reason. Every other
+// kind is drafted exactly as before. See draft.ts.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
@@ -75,16 +75,6 @@ Deno.serve(async (req) => {
     }
   }
   if (!authorized) return json({ error: "unauthorized" }, 401);
-
-  // -- 0. Which kinds are send_via_approval (claim_filed_actions does not return the executor). Read
-  //    BEFORE the claim: if this read fails nothing has been claimed, so no row is left 'drafting' and
-  //    no email kind is ever drafted without knowing it must carry the email contract (§13). --
-  const { data: sendKindRows, error: kindsErr } = await admin.from("paige_action_kinds")
-    .select("slug").eq("executor", "send_via_approval");
-  if (kindsErr) return json({ error: "kinds_lookup_failed", detail: kindsErr.message }, 500);
-  const sendViaApprovalKinds = new Set<string>(
-    ((sendKindRows ?? []) as Array<{ slug: string }>).map((r) => r.slug),
-  );
 
   // -- 1. Atomically claim a batch of draft-eligible filed actions (self-heals stale claims). --
   const { data: claim, error: claimErr } = await admin.rpc("claim_filed_actions", { p_limit: BATCH_LIMIT });
@@ -148,13 +138,14 @@ Deno.serve(async (req) => {
       // Invoke the kind's drafting sub-agent through the orchestrator (§14 — her team drafts it).
       // tenant_id is passed TOP-LEVEL (the orchestrator's trusted service-role tenant source); context
       // carries the contact/conversation. The service-role bearer marks us a trusted internal caller.
-      // draft.ts decides the rest: email send kinds store the email contract or fail honestly.
+      // draft.ts decides the rest; only owner.lead_followup is shaped (see draft.ts).
       const outcome = await draftClaimedAction({
         invoke: async (request) => {
           const ctl = new AbortController();
           const timer = setTimeout(() => ctl.abort(), INVOKE_TIMEOUT_MS);
+          let orchRes: Response;
           try {
-            const orchRes = await fetch(ORCHESTRATOR_URL, {
+            orchRes = await fetch(ORCHESTRATOR_URL, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -164,17 +155,18 @@ Deno.serve(async (req) => {
               body: JSON.stringify(request),
               signal: ctl.signal,
             });
-            const body = await orchRes.json().catch(() => ({}));
-            return { httpOk: orchRes.ok, status: orchRes.status, body };
           } finally {
             clearTimeout(timer);
           }
+          // Read after the timer is cleared, exactly as before: the timeout bounds the request.
+          const body = await orchRes.json().catch(() => ({}));
+          return { httpOk: orchRes.ok, status: orchRes.status, body };
         },
         rpc: async (fn, args) => {
           const { error } = await admin.rpc(fn, args);
           return { error: error ? { message: error.message } : null };
         },
-      }, a, sendViaApprovalKinds);
+      }, a);
 
       if (outcome.kind === "failed") {
         await recordReceipt(a, "capability_failed", { stage: outcome.stage });

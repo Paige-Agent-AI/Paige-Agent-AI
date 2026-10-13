@@ -2,20 +2,28 @@
 // back, and advance it (or fail it honestly). index.ts owns auth, the claim, receipts and the digest;
 // this module owns the per-action decision so it can be driven without a network or a database.
 //
-// THE EMAIL SEND CONTRACT (send_via_approval kinds that are emails — e.g. owner.lead_followup):
-// the draft stored on the action, and copied by advance_action onto the approval row, is
-//     { channel: 'email', subject, body (html), body_text, raw }
-// which execute-approval reads after the owner approves. Two rules hold it safe:
-//   • The recipient is NEVER taken from the drafting output. execute-approval resolves it on the
-//     server from the action's contact; any to/cc/bcc/recipient the composer echoes is dropped, even
-//     from `raw`, so no later reader can be tempted to use it (§9).
-//   • An email with no usable subject AND body never reaches the approvals queue. The action is
-//     failed ('blocked') with the reason, so it surfaces instead of offering the owner an empty
-//     email to approve (§13).
-// Nothing here sends. advance_action routes a send kind to paige_pending_approvals; only the owner's
-// approval, through execute-approval, ever sends.
+// EVERY KIND BUT ONE is drafted exactly as the worker always drafted it: the filing's draft_input is
+// spread into the specialist's input, and the specialist's result is stored as returned.
 //
-// Every other kind is drafted exactly as before: the specialist's result is stored as returned.
+// owner.lead_followup — a reply to someone who filled in a business's website form (Exp03 S3) — is
+// the one exception, and it is shaped here because the form's answers are UNTRUSTED:
+//   • The specialist is told the submission is untrusted (`untrusted_submission: true`), so the
+//     email composer passes the visitor's answers and details as delimited, quoted DATA with an
+//     explicit rule that they are not instructions (subagent-email-composer/prompt.ts). Forced here,
+//     whatever the filing said. The filing names no recipient (`recipient_email` is dropped): the
+//     composer reads the contact on the server.
+//   • The stored draft is
+//         { channel: 'email', subject, body: <plain text>, body_html, raw }
+//     — `body` is plain text so every preview shows words, not markup; `body_html` is the HTML twin.
+//   • The recipient is NEVER taken from the drafting output. `raw` keeps only an allow-list of the
+//     composer's record (draft wording, compliance verdict) — no `to`/`cc`/`recipient`/`summary` or
+//     anything else the model echoed — so no later reader can be tempted to address from it (§9).
+//     The owner's send goes through comms-email-command, which resolves the recipient itself.
+//   • A filing with no intent, or a result with no usable subject AND body, never reaches the
+//     approvals queue: the action is failed ('blocked') with the reason, instead of offering the
+//     owner an empty email (§13).
+// Nothing here sends. advance_action routes a send kind to paige_pending_approvals; a send only ever
+// happens when the owner sends it through the governed email door.
 //
 // Pure TypeScript with erasable syntax only, so node --test, vitest and deno test can all load it.
 
@@ -35,26 +43,28 @@ export type ClaimedAction = {
   draft_subagent_slug: string;
 };
 
+/** The one kind whose draft is shaped into the email contract: a reply to a website-form lead. */
+export const LEAD_REPLY_KIND = "owner.lead_followup";
+
 /** The specialist whose input contract requires an `intent` (what the email should accomplish). */
 export const EMAIL_COMPOSER_SLUG = "email-composer";
 
-/**
- * Is this an EMAIL send kind? Its executor is send_via_approval and it is not an SMS kind. The SMS
- * test mirrors execute-approval's own rule (an approval category — the kind slug — containing "sms"
- * takes the SMS path), so an SMS nudge drafted by the email composer is never relabelled an email.
- */
-export function isEmailSendKind(sendViaApprovalKinds: ReadonlySet<string>, actionKind: string): boolean {
-  return sendViaApprovalKinds.has(actionKind) && !actionKind.toLowerCase().includes("sms");
-}
+export const isLeadReply = (a: Pick<ClaimedAction, "action_kind">): boolean => a.action_kind === LEAD_REPLY_KIND;
 
 /** The filing's drafting brief (payload.draft_input), when the filer provided one as an object. */
 export function draftInputOf(payload: unknown): Obj {
-  const di = obj(payload).draft_input;
-  return di && typeof di === "object" && !Array.isArray(di) ? di as Obj : {};
+  return obj(obj(payload).draft_input);
 }
 
-/** The body index.ts posts to the orchestrator — unchanged from the original worker. */
+/** The body index.ts posts to the orchestrator. */
 export function orchestratorRequest(a: ClaimedAction): Obj {
+  const p = a.payload as Record<string, unknown> | null;
+  // Every kind but the lead reply: byte-for-byte the expression the worker always used.
+  const brief: Obj = isLeadReply(a)
+    ? leadReplyInput(a.payload)
+    : ((p && typeof p === "object" && p.draft_input && typeof p.draft_input === "object")
+      ? p.draft_input as Obj
+      : {});
   return {
     action: "tool_invoke",
     slug: a.draft_subagent_slug,
@@ -67,18 +77,20 @@ export function orchestratorRequest(a: ClaimedAction): Obj {
       // The filing's drafting brief, when the filer provided one: composer-ready
       // fields (intent/key_points/tone/cta/…) spread to top level so the drafting
       // specialist receives its actual input contract, not filing metadata.
-      ...draftInputOf(a.payload),
+      ...brief,
     },
     context: { contact_id: a.contact_id, conversation_id: a.conversation_id },
   };
 }
 
-const RECIPIENT_KEYS = ["to", "cc", "bcc", "recipient", "recipients", "recipient_email", "recipient_name", "email"];
-
-function withoutRecipients(o: Obj): Obj {
-  const out: Obj = { ...o };
-  for (const k of RECIPIENT_KEYS) delete out[k];
-  return out;
+/** The lead reply's brief: the filing's, with no recipient in it and the untrusted flag forced on. */
+function leadReplyInput(payload: unknown): Obj {
+  const brief: Obj = { ...draftInputOf(payload) };
+  delete brief.recipient_email;
+  delete brief.contact_id;
+  delete brief.client_id;
+  brief.untrusted_submission = true;
+  return brief;
 }
 
 const escapeHtml = (s: string): string =>
@@ -109,12 +121,25 @@ function htmlToText(html: string): string {
 const looksLikeHtml = (s: string): boolean =>
   /<\/?(p|br|div|span|a|strong|em|b|i|u|ul|ol|li|h[1-6]|table|thead|tbody|tr|td|th|blockquote|hr|img)(\s[^<>]*)?\/?>/i.test(s);
 
-export type EmailDraft = { channel: "email"; subject: string; body: string; body_text: string; raw: Obj };
+// What of the composer's answer is kept as the record. An allow-list, not a deny-list: anything the
+// model or the composer put elsewhere — a `to`, a `recipient`, a summary naming an address — is not
+// carried forward.
+const RAW_KEYS = ["subagent", "compliance_verdict", "compliance_findings", "compliance_flags", "requires_approval", "confidence"];
+const RAW_DRAFT_KEYS = ["subject", "body_html", "body_text", "tone_used", "length", "word_count"];
+
+function pick(o: Obj, keys: string[]): Obj {
+  const out: Obj = {};
+  for (const k of keys) if (k in o) out[k] = o[k];
+  return out;
+}
+
+export type EmailDraft = { channel: "email"; subject: string; body: string; body_html: string; raw: Obj };
 
 /**
- * Shape a drafting specialist's result into the email contract, or null when it carries no usable
- * subject + body. Reads the composer's nested `draft.{subject, body_html, body_text}` first, then a
- * flat `{subject, body_html | body, body_text}`. A body given only as text is escaped into HTML.
+ * Shape a drafting specialist's result into the lead-reply email contract, or null when it carries
+ * no usable subject + body. Reads the composer's nested `draft.{subject, body_html, body_text}`
+ * first, then a flat `{subject, body_html | body, body_text}`. A body given only as text is escaped
+ * into HTML; a body given only as HTML gets a plain-text twin.
  */
 export function shapeEmailDraft(result: unknown): EmailDraft | null {
   const r = obj(result);
@@ -127,9 +152,9 @@ export function shapeEmailDraft(result: unknown): EmailDraft | null {
   if (!html && text) html = textToHtml(text);
   if (!text && html) text = htmlToText(html);
   if (!subject || !html || !text) return null;
-  const raw = withoutRecipients(r);
-  if (r.draft && typeof r.draft === "object" && !Array.isArray(r.draft)) raw.draft = withoutRecipients(d);
-  return { channel: "email", subject, body: html, body_text: text, raw };
+  const raw = pick(r, RAW_KEYS);
+  if (r.draft && typeof r.draft === "object" && !Array.isArray(r.draft)) raw.draft = pick(d, RAW_DRAFT_KEYS);
+  return { channel: "email", subject, body: text, body_html: html, raw };
 }
 
 export interface DraftDeps {
@@ -147,29 +172,27 @@ export const MISSING_INTENT_ERROR =
 export const EMPTY_EMAIL_DRAFT_ERROR =
   "draft_incomplete: the drafting specialist returned no usable email subject and body, so nothing was sent to approvals";
 
+type OrchBody = { ok?: unknown; error?: unknown; result?: unknown; invocation_id?: unknown } | null | undefined;
+
 /**
  * Draft one claimed action. Throws are left to the caller (index.ts fails the action in its catch,
- * exactly as before). Every failure that is decided here marks the action 'blocked' via fail_action
- * with the reason, and advance_action is never called for it.
+ * exactly as before). Every failure decided here marks the action 'blocked' via fail_action with the
+ * reason, and advance_action is never called for it.
  */
-export async function draftClaimedAction(
-  deps: DraftDeps,
-  a: ClaimedAction,
-  sendViaApprovalKinds: ReadonlySet<string>,
-): Promise<DraftOutcome> {
-  const emailSend = isEmailSendKind(sendViaApprovalKinds, a.action_kind);
+export async function draftClaimedAction(deps: DraftDeps, a: ClaimedAction): Promise<DraftOutcome> {
+  const leadReply = isLeadReply(a);
 
   // The composer refuses an email with no intent; say so plainly before spending an invocation.
-  if (emailSend && a.draft_subagent_slug === EMAIL_COMPOSER_SLUG && !str(draftInputOf(a.payload).intent)) {
+  if (leadReply && a.draft_subagent_slug === EMAIL_COMPOSER_SLUG && !str(draftInputOf(a.payload).intent)) {
     await deps.rpc("fail_action", { p_action_id: a.id, p_error: MISSING_INTENT_ERROR });
     return { kind: "failed", stage: "preflight", error: MISSING_INTENT_ERROR };
   }
 
   const orch = await deps.invoke(orchestratorRequest(a));
-  const orchBody = obj(orch.body);
-  if (!orch.httpOk || orchBody.ok !== true) {
+  const orchBody = orch.body as OrchBody;
+  if (!orch.httpOk || orchBody?.ok !== true) {
     const msg = `invoke ${a.draft_subagent_slug} failed (${orch.status}): ${
-      typeof orchBody.error === "string" ? orchBody.error : JSON.stringify(orch.body ?? {}).slice(0, 300)
+      typeof orchBody?.error === "string" ? orchBody.error : JSON.stringify(orchBody).slice(0, 300)
     }`;
     await deps.rpc("fail_action", { p_action_id: a.id, p_error: msg });
     return { kind: "failed", stage: "invoke", error: msg };
@@ -178,7 +201,7 @@ export async function draftClaimedAction(
   // The draft the sub-agent produced (§13 — store what it actually returned, not a hoped-for shape).
   const raw = orchBody.result;
   let draftContent: unknown;
-  if (emailSend) {
+  if (leadReply) {
     const email = shapeEmailDraft(raw);
     if (!email) {
       await deps.rpc("fail_action", { p_action_id: a.id, p_error: EMPTY_EMAIL_DRAFT_ERROR });

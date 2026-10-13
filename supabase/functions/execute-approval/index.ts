@@ -15,12 +15,13 @@
 //
 // It NEVER marks a comms row approved without a successful send.
 //
-// ACTION-BACKED EMAIL (./action-email.ts): an approval whose metadata.action_id names a
-// `send_via_approval` action (e.g. owner.lead_followup) is never acknowledged — it sends through the
-// business's OWN email connector to the contact's primary email, or fails honestly (needs_setup,
-// sender_choice_required, no_recipient, not_sendable …) with the claim released. A quiet-hours/DND
-// hold that QUEUES the message is accepted on every comms path: the claim is kept so a second
-// Approve cannot queue a second copy.
+// OUTBOUND MESSAGES ARE NOT SENT FROM HERE (./action-email.ts): an approval whose metadata.action_id
+// names a `send_via_approval` action kind (client.followup, owner.lead_followup, any of them, in any
+// draft shape) is REFUSED with 409 send_requires_review — before the claim, with no write, no
+// acknowledge and no send-message call. Those messages go out only through the governed email command
+// (comms-email-command / comms.email_send); there is no second sender path. The row stays pending and
+// can still be declined. A quiet-hours/DND hold that QUEUES a message on the generic comms path below
+// is accepted: the claim is kept so a second Approve cannot queue a second copy.
 //
 // LAYER C (C5): an approval minted by the event→act engine (metadata.source='paige_orchestration') carries a
 // held act's coordinates. This one door also delegates those to the Layer-C approval-executor — re-running the
@@ -30,7 +31,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approvalRefusalMessage, executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
-import { classifySendResult, decideActionEmailApproval, type ActionEmailAdmin, type SendMessageRequest } from "./action-email.ts";
+import { classifySendResult, refuseSendKindApproval, type SendKindAdmin } from "./action-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,15 +63,10 @@ Deno.serve(async (req) => {
   const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
   if (!isAdmin) return json(403, { error: "forbidden" });
 
-  let payload: { approval_id?: string; connector_id?: string };
+  let payload: { approval_id?: string };
   try { payload = await req.json(); } catch { return json(400, { error: "invalid_json" }); }
   const approvalId = payload?.approval_id;
   if (!approvalId) return json(400, { error: "missing_approval_id" });
-  // Optional sender choice for an action-backed email when the business has several email senders.
-  // Only an id: it is re-read inside the approval's own tenant (never trusted as a tenant, §9).
-  const chosenConnectorId = typeof payload?.connector_id === "string" &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.connector_id)
-    ? payload.connector_id.toLowerCase() : null;
 
   // Load the approval (service role — we authorize explicitly below).
   const { data: approval, error: loadErr } = await admin
@@ -100,6 +96,13 @@ Deno.serve(async (req) => {
   if (approval.status === "sent" || approval.status === "approved") {
     return json(200, { ok: true, executed: false, already: approval.status, approval_id: approvalId });
   }
+
+  // An outbound message (a send_via_approval action) is never sent or completed from this door — refuse it
+  // BEFORE the claim, so nothing is written at all: no claim, no reviewer stamp, no acknowledge, no send.
+  // Runs before every branch below (campaign, series, Layer C, comms, acknowledge), for ALL send kinds.
+  // Same structural bridge as the Layer-C executor below: the SDK's builders are thenables.
+  const sendRefusal = await refuseSendKindApproval(admin as unknown as SendKindAdmin, { id: approvalId, metadata: approval.metadata });
+  if (sendRefusal) return json(sendRefusal.status, sendRefusal.payload);
 
   // Atomic claim: guard against a double-send from two concurrent Approve clicks
   // (two tabs, or the UI and Paige at once). Only the caller that flips
@@ -217,28 +220,6 @@ Deno.serve(async (req) => {
     return json(200, { ok: res.ok, executed: res.executed, act_outcome: res.outcome, approval_id: approvalId });
   }
 
-  // Action-backed email (send_via_approval kinds, e.g. owner.lead_followup): send through the business's
-  // OWN email connector to the action contact's primary email, or fail honestly — never acknowledged as
-  // done with nothing sent. Returns null for anything else, which continues below unchanged (§58).
-  const sendMessage = async (sendReq: SendMessageRequest) => {
-    const resp = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/send-message`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: authHeader, apikey: anonKey },
-      body: JSON.stringify(sendReq),
-    });
-    return { httpOk: resp.ok, body: await resp.json().catch(() => ({})) };
-  };
-  const actionEmail = await decideActionEmailApproval({
-    // Same structural bridge as the Layer-C executor above: the SDK's builders are thenables.
-    admin: admin as unknown as ActionEmailAdmin,
-    sendMessage,
-    releaseClaim: () => releaseClaim(),
-    env: (k) => Deno.env.get(k),
-    now: () => new Date(),
-    log: (m) => console.error(m),
-  }, approval as any, { connectorId: chosenConnectorId });
-  if (actionEmail) return json(actionEmail.status, actionEmail.payload);
-
   const dc = (approval.draft_content ?? {}) as Record<string, unknown>;
   const category = String(approval.category ?? approval.type ?? "").toLowerCase();
   const channelRaw = String(dc.channel ?? "").toLowerCase();
@@ -285,7 +266,7 @@ Deno.serve(async (req) => {
     if (sendOutcome.kind === "queued") {
       // A quiet-hours/DND hold queued the message to go later: ACCEPTED. Keep the claim so a second
       // Approve cannot queue a second copy; the row is not marked approved because nothing has gone yet.
-      const qMeta = (typeof (approval as any).metadata === "object" && (approval as any).metadata) || {};
+      const qMeta = (typeof approval.metadata === "object" && approval.metadata) || {};
       await admin.from("paige_pending_approvals").update({
         metadata: { ...qMeta, send_queued: { outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, message_id: sendOutcome.messageId, at: new Date().toISOString() } },
       }).eq("id", approvalId);

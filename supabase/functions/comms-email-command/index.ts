@@ -5,7 +5,8 @@ import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
 import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest } from "../_shared/comms-email/contract.ts";
-import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
+import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
+import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
 
 // INT-328 comms.email_send — the governed door for ONE business email to ONE existing contact.
@@ -34,18 +35,21 @@ Deno.serve(async req => {
   const admin = createClient(url, serviceKey);
   const { data: { user }, error: userError } = await caller.auth.getUser();
   if (userError || !user) return refusedBeforeDispatch(401, "UNAUTHENTICATED");
-  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string }, command: ReturnType<typeof parseCommsEmailCommand>;
+  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string }, command: ReturnType<typeof parseCommsEmailCommand>;
   try {
     const raw = await req.text();
     if (raw.length > 100000) throw new TypeError("BODY_TOO_LARGE");
     const parsed = object(JSON.parse(raw));
-    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint"].includes(key))) throw new TypeError("INVALID_BODY");
+    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id"].includes(key))) throw new TypeError("INVALID_BODY");
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id) || typeof parsed.operation_id !== "string" || !UUID.test(parsed.operation_id)) throw new TypeError("INVALID_SCOPE");
     if (parsed.approved_fingerprint !== undefined && (typeof parsed.approved_fingerprint !== "string" || !FINGERPRINT.test(parsed.approved_fingerprint))) throw new TypeError("INVALID_FINGERPRINT");
+    // Experience 03: the drafted lead reply this email answers (paige_pending_approvals.id). Optional.
+    if (parsed.approval_id !== undefined && (typeof parsed.approval_id !== "string" || !UUID.test(parsed.approval_id))) throw new TypeError("INVALID_APPROVAL");
     command = parseCommsEmailCommand(parsed.command);
     // The binding, the unique index and send-message all compare the operation id as lowercase
     // text; an uppercase id from a direct caller would otherwise never match its own binding.
-    body = { ...parsed, expected_tenant_id: parsed.expected_tenant_id.toLowerCase(), operation_id: parsed.operation_id.toLowerCase() };
+    body = { ...parsed, expected_tenant_id: parsed.expected_tenant_id.toLowerCase(), operation_id: parsed.operation_id.toLowerCase(),
+      ...(typeof parsed.approval_id === "string" ? { approval_id: parsed.approval_id.toLowerCase() } : {}) };
   } catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_COMMAND_INVALID"); }
 
   const { data: tenantId, error: tenantError } = await caller.rpc("current_user_tenant_id");
@@ -129,6 +133,18 @@ Deno.serve(async req => {
     try { await admin.rpc("mark_support_case_outbound", { _message_id: settled.message_id }); } catch { /* next inbound re-syncs the case */ }
   };
 
+  // Experience 03: once the provider ACCEPTED this send (never delivery), bind it to the lead reply's
+  // approval server-side. A record failure never reports the send as failed — the email went out — it
+  // answers record_status:'pending_record', and re-POSTing the same operation (a replay) records it.
+  const approvalAdmin = admin as unknown as LeadReplyApprovalAdmin;
+  const withApprovalRecord = async (settled: Record<string, unknown>, operationId: string): Promise<Record<string, unknown>> => {
+    if (body.approval_id === undefined || settled.ok !== true || settled.outcome !== "provider_accepted") return settled;
+    const record_status = await recordLeadReplySend(approvalAdmin, { approvalId: body.approval_id, operationId, actorUserId: user.id });
+    return { ...settled, approval_id: body.approval_id, record_status };
+  };
+  // PAIGE Email (SendGrid) is a sender this door recognises; whether it may send is readiness's call.
+  const senderProviders = emailProvidersFor({ sendgridConfigured: !!Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") });
+
   // 2 — Replay first: a recorded outcome is returned before any current fact or approval is read.
   // An operation whose provider outcome is unknown is reconciled under its own id, never re-run.
   if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
@@ -139,18 +155,25 @@ Deno.serve(async req => {
   const preparedRecovery = replay?.outcome === "prepared";
   if (replay && !preparedRecovery) {
     if (replay.outcome === "unknown" || replay.outcome === "dispatching") {
-      const settled = await reconcile(body.operation_id);
+      const settled = await withApprovalRecord(await reconcile(body.operation_id), body.operation_id);
       await settleSupportCase(settled);
       return response(statusOf(settled), { ...settled, replayed: true });
     }
-    const recorded = commsEmailSafeResult(replay, { replayed: true });
+    const recorded = await withApprovalRecord(commsEmailSafeResult(replay, { replayed: true }), body.operation_id);
     await settleSupportCase(recorded);
     return response(statusOf(recorded), recorded);
   }
 
+  // 2b — A named lead-reply approval must be THIS business's pending owner.lead_followup approval for
+  // THIS contact, before any card is raised or anything is prepared (re-checked on the stored call).
+  if (body.approval_id !== undefined) {
+    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id });
+    if (refusal) return refusedBeforeDispatch(refusal === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, refusal);
+  }
+
   // 3 — Who it goes to and who it comes from, resolved here and never taken from the model.
   let parties: Awaited<ReturnType<typeof resolveCommsEmailParties>>;
-  try { parties = await resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: command.contact_id, connectorId: command.connector_id }); }
+  try { parties = await resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: command.contact_id, connectorId: command.connector_id }, senderProviders); }
   catch { return response(503, { ok: false, outcome: "refused", code: "COMMS_EMAIL_PARTIES_UNAVAILABLE" }); }
   if (parties.kind === "contact_not_in_workspace") return response(422, { ok: false, outcome: "refused", reason: "CONTACT_NOT_IN_WORKSPACE" });
   if (parties.kind === "recipient_missing") return response(422, { ok: false, outcome: "needs_setup", reason: "RECIPIENT_EMAIL_MISSING" });
@@ -181,6 +204,9 @@ Deno.serve(async req => {
   // 5 — The proposed call: the exact recipient address, sender address and content digest are part
   // of what is fingerprinted, so a change to any of them is a different approval.
   const requestArgs: Record<string, unknown> = { expected_tenant_id: tenantId, operation_id: body.operation_id, command: proposedCommand, recipient: parties.recipient, from_address: parties.fromAddress, content_digest: contentDigest };
+  // The approval is part of what is fingerprinted: a card approved for one approval cannot be confirmed
+  // against another. Absent when no approval is named, so every other send's fingerprint is unchanged.
+  if (body.approval_id !== undefined) requestArgs.approval_id = body.approval_id;
   const summary = `Email ${parties.contactName} at ${parties.recipient} from ${parties.fromAddress}: "${command.subject}"`;
   const preview = { kind: "email", to_name: parties.contactName, to_address: parties.recipient, from_address: parties.fromAddress, subject: command.subject, body_text: command.body };
   if (preparedRecovery || body.approved_fingerprint === undefined) {
@@ -199,6 +225,7 @@ Deno.serve(async req => {
       try { cycleCommand = parseCommsEmailCommand(cycle.command); } catch { return response(409, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" }); }
       if (cycle.expected_tenant_id !== tenantId || cycle.operation_id !== body.operation_id || JSON.stringify(cycleCommand) !== JSON.stringify(proposedCommand)
         || cycle.recipient !== parties.recipient || cycle.from_address !== parties.fromAddress || cycle.content_digest !== contentDigest
+        || !storedApprovalMatches(cycle, body.approval_id)
         || typeof cycle.approval_cycle_nonce !== "string" || !UUID.test(cycle.approval_cycle_nonce))
         return response(409, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" });
       requestArgs.approval_cycle_nonce = cycle.approval_cycle_nonce;
@@ -265,6 +292,13 @@ Deno.serve(async req => {
   // it is not what runs.
   const stored = parseCommsEmailStoredCall(decision.args, tenantId);
   if (!stored) return response(403, { ok: false, outcome: "refused", code: "APPROVAL_CLAIM_INVALID" });
+  // The approved call carries the approval it was approved for; a confirm naming a different (or no)
+  // approval is a swap. Then the approval is re-proved against the STORED call's contact.
+  if (!storedApprovalMatches(decision.args, body.approval_id)) return refusedBeforeDispatch(403, "LEAD_REPLY_APPROVAL_MISMATCH");
+  if (body.approval_id !== undefined) {
+    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: stored.command.contact_id });
+    if (refusal) return refusedBeforeDispatch(refusal === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, refusal);
+  }
   if (preparedRecovery && (stored.operationId !== body.operation_id || JSON.stringify(stored.command) !== JSON.stringify(proposedCommand)
     || typeof object(decision.args)?.approval_cycle_nonce !== "string")) return response(403, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" });
   if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
@@ -275,11 +309,11 @@ Deno.serve(async req => {
 
   const result = await executeCommsEmailSend({ actorUserId: user.id, tenantId, operationId: stored.operationId, stored, governance }, {
     stillCurrent, readResult, send, readBinding,
-    resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }),
+    resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }, senderProviders),
     readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId }, key => Deno.env.get(key), runPreSend),
     prepare: async args => { const { data, error } = await admin.rpc("prepare_comms_email_send", args); return { data, error }; },
   });
-  const settled = await notAdmitted(result, stored.operationId);
+  const settled = await withApprovalRecord(await notAdmitted(result, stored.operationId), stored.operationId);
   await settleSupportCase(settled);
   return response(statusOf(settled), { ...settled, capability: COMMS_EMAIL_TOOL });
 });

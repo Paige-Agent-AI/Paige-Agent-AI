@@ -15,12 +15,14 @@
 //
 // It NEVER marks a comms row approved without a successful send.
 //
-// OUTBOUND MESSAGES ARE NOT SENT FROM HERE (./action-email.ts): an approval whose metadata.action_id
-// names a `send_via_approval` action kind (client.followup, owner.lead_followup, any of them, in any
-// draft shape) is REFUSED with 409 send_requires_review — before the claim, with no write, no
+// OUTBOUND MESSAGES ARE NOT SENT FROM HERE (./action-email.ts): an approval that stands for a
+// `send_via_approval` action — named by metadata.action_id OR pointed at by paige_actions.approval_id,
+// the same two signals the database guard reads (client.followup, owner.lead_followup, any of them, in
+// any draft shape) — is REFUSED with 409 send_requires_review — before the claim, with no write, no
 // acknowledge and no send-message call. Those messages go out only through the governed email command
 // (comms-email-command / comms.email_send); there is no second sender path. The row stays pending and
-// can still be declined. A quiet-hours/DND hold that QUEUES a message on the generic comms path below
+// can still be declined. reason_code tells the caller what the person can do: review_and_send (a reply
+// to a new lead: the reply screen) or decline_only (every other send kind, for now). A quiet-hours/DND hold that QUEUES a message on the generic comms path below
 // is accepted: the claim is kept so a second Approve cannot queue a second copy.
 //
 // LAYER C (C5): an approval minted by the event→act engine (metadata.source='paige_orchestration') carries a
@@ -101,7 +103,7 @@ Deno.serve(async (req) => {
   // BEFORE the claim, so nothing is written at all: no claim, no reviewer stamp, no acknowledge, no send.
   // Runs before every branch below (campaign, series, Layer C, comms, acknowledge), for ALL send kinds.
   // Same structural bridge as the Layer-C executor below: the SDK's builders are thenables.
-  const sendRefusal = await refuseSendKindApproval(admin as unknown as SendKindAdmin, { id: approvalId, metadata: approval.metadata });
+  const sendRefusal = await refuseSendKindApproval(admin as unknown as SendKindAdmin, { id: approvalId, tenant_id: approval.tenant_id, metadata: approval.metadata });
   if (sendRefusal) return json(sendRefusal.status, sendRefusal.payload);
 
   // Atomic claim: guard against a double-send from two concurrent Approve clicks
@@ -294,6 +296,11 @@ Deno.serve(async (req) => {
       metadata: { ...meta, executed: false, execute_note: "acknowledged — no automated executor for this category yet" },
     })
     .eq("id", approvalId);
-  if (ackErr) return json(500, { error: ackErr.message });
+  if (ackErr) {
+    // Nothing was acknowledged (e.g. the send guard refused a send action that slipped past the check
+    // above). Release the claim so the row can still be declined or retried, never left held (§13).
+    await releaseClaim();
+    return json(500, { ok: false, executed: false, error: ackErr.message, approval_id: approvalId });
+  }
   return json(200, { ok: true, executed: false, acknowledged: true, approval_id: approvalId });
 });

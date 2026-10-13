@@ -1,7 +1,10 @@
 // execute-approval — the REAL handler (index.ts), driven end to end against an in-memory service client
 // and a fake fetch. It proves, at the door itself rather than in a helper:
-//   • every send_via_approval approval — the legacy nested client.followup shape included — is refused
-//     with 409 send_requires_review: no claim, no acknowledge, no send-message call, no write at all;
+//   • every send_via_approval approval — the legacy nested client.followup shape included, named by
+//     metadata.action_id OR only by the action's approval_id back-pointer, ids in any letter case — is
+//     refused with 409 send_requires_review and a per-kind reason_code: no claim, no acknowledge, no
+//     send-message call, no write at all;
+//   • a failed acknowledge write releases the claim instead of leaving the row held;
 //   • a non-send action approval and a non-action approval behave exactly as before;
 //   • a queued_* hold on the generic comms path keeps the claim (no second copy on a second Approve).
 // Nothing here reaches a network or a database.
@@ -22,13 +25,13 @@ vi.mock("../_shared/paige-orchestration/approve-executor.ts", () => ({
 
 const USER = "70000000-0000-4000-8000-000000000001";
 const T = "10000000-0000-4000-8000-000000000001";
-const A = "20000000-0000-4000-8000-000000000001", ACT = "40000000-0000-4000-8000-000000000001";
+const A = "2000000a-0000-4000-8000-0000000000aa", ACT = "4000000b-0000-4000-8000-0000000000bb";
 const C = "30000000-0000-4000-8000-000000000001";
 
 interface Write { table: string; values: Row; filters: [string, string, unknown][] }
 
 /** A small PostgREST-shaped fake: select/update with eq/is, maybeSingle or await. Records every write. */
-function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = []) {
+function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUpdateWhen?: (table: string, values: Row) => boolean) {
   const writes: Write[] = [];
   const rpcs: string[] = [];
   const from = (table: string) => {
@@ -37,8 +40,9 @@ function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = []) {
     const filters: [string, string, unknown][] = [];
     const run = (single: boolean) => {
       if (op === "select" && failSelect.includes(table)) return { data: null, error: { message: "boom" } };
+      if (op === "update" && failUpdateWhen?.(table, values)) return { data: null, error: { message: "SEND_REQUIRES_GOVERNED_SEND: refused by the database" } };
       const rows = (tables[table] ?? []).filter((r) =>
-        filters.every(([o, k, v]) => (o === "eq" ? r[k] === v : (r[k] ?? null) === v)));
+        filters.every(([o, k, v]) => (o === "eq" ? r[k] === v : o === "in" ? (v as unknown[]).includes(r[k]) : (r[k] ?? null) === v)));
       if (op === "update") rows.forEach((r) => Object.assign(r, values));
       return { data: single ? (rows[0] ?? null) : rows, error: null };
     };
@@ -47,6 +51,7 @@ function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = []) {
       update: (v: Row) => { op = "update"; values = v; writes.push({ table, values: v, filters }); return q; },
       eq: (k: string, v: unknown) => { filters.push(["eq", k, v]); return q; },
       is: (k: string, v: unknown) => { filters.push(["is", k, v]); return q; },
+      in: (k: string, v: unknown[]) => { filters.push(["in", k, v]); return q; },
       maybeSingle: () => Promise.resolve(run(true)),
       then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(run(false)).then(res, rej),
     };
@@ -110,8 +115,8 @@ describe("execute-approval: a send_via_approval approval is never sent and never
     await load(db);
     const r = await approve();
     expect(r.status).toBe(409);
-    expect(r.body).toMatchObject({ ok: false, executed: false, error: "send_requires_review", approval_id: A });
-    expect(typeof r.body.reason).toBe("string");
+    expect(r.body).toMatchObject({ ok: false, executed: false, error: "send_requires_review", reason_code: "decline_only", approval_id: A });
+    expect(r.body.reason).toBe("This can be declined for now; sending it from here isn't available yet.");
     expect(db.writes).toEqual([]);          // no claim, no reviewer stamp, no acknowledge
     expect(fetchCalls).toEqual([]);         // send-message never called
     expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
@@ -125,7 +130,28 @@ describe("execute-approval: a send_via_approval approval is never sent and never
     await load(db);
     const r = await approve();
     expect(r.status).toBe(409);
-    expect(r.body.error).toBe("send_requires_review");
+    expect(r.body).toMatchObject({ error: "send_requires_review", reason_code: "review_and_send" });
+    expect(String(r.body.reason)).toContain("Review and send it from the reply screen");
+    expect(fetchCalls).toEqual([]);
+    expect(db.writes).toEqual([]);
+  });
+
+  it("the action's back-pointer ALONE is enough: metadata.action_id gone, the action still names this approval", async () => {
+    const db = fakeDb({ paige_pending_approvals: [approval({ metadata: {} })], paige_actions: [action("client.followup")], paige_action_kinds: kinds, clients: [contact] });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(409);
+    expect(r.body.reason_code).toBe("decline_only");
+    expect(db.writes).toEqual([]);
+    expect(fetchCalls).toEqual([]);
+  });
+
+  it("an upper-case action_id names the same send action (no bypass by letter case)", async () => {
+    expect(ACT.toUpperCase()).not.toBe(ACT);
+    const db = fakeDb({ paige_pending_approvals: [approval({ category: "followup", metadata: { action_id: ACT.toUpperCase() }, draft_content: { channel: "email", subject: "S", body: "B" } })],
+      paige_actions: [{ ...action("client.followup"), approval_id: null }], paige_action_kinds: kinds, clients: [contact] });
+    await load(db);
+    expect((await approve()).status).toBe(409);
     expect(fetchCalls).toEqual([]);
     expect(db.writes).toEqual([]);
   });
@@ -185,6 +211,19 @@ describe("execute-approval: everything else behaves exactly as before", () => {
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0].url).toBe("https://unit.invalid/functions/v1/send-message");
     expect(fetchCalls[0].body).toMatchObject({ channel: "email", to: "dana@x.test", subject: "S", body: "B", approval_id: A });
+  });
+
+  it("a failed acknowledge write releases the claim (never left held) and reports the failure", async () => {
+    const db = fakeDb({ paige_pending_approvals: [approval({ category: "content", type: "other", metadata: {}, draft_content: { text: "x" } })] },
+      [], (table, values) => table === "paige_pending_approvals" && values.status === "approved");
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(500);
+    expect(r.body).toMatchObject({ ok: false, executed: false, approval_id: A });
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row.claimed_at).toBeNull();
+    expect(row.status).toBe("pending");
+    expect(db.writes.at(-1)?.values).toEqual({ claimed_at: null });
   });
 
   it("a non-action approval with no automated executor is acknowledged as before", async () => {

@@ -97,14 +97,18 @@ const COMMS_EMAIL_PROVIDER_TIMEOUT_MS = 20_000;
 const COMMS_EMAIL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 interface CommsEmailBinding {
   operation_id: string; tenant_id: string; contact_id: string; connector_id: string;
-  recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp";
+  recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp" | "sendgrid";
   subject: string; body_html: string; state: string;
 }
 type CommsEmailOutcome = "provider_accepted" | "failed" | "refused" | "unknown";
 type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
-// The Resend branch of the email adapter honours this signal; Gmail/SMTP seams take none, so the
-// deadline below also races them. Never set on any other path.
-type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null };
+// The Resend and SendGrid branches of the email adapter honour this signal; Gmail/SMTP seams take
+// none, so the deadline below also races them. Never set on any other path.
+// sendgridCustomArgs (comms_email path only): correlation ids SendGrid echoes on every Event Webhook
+// event for this message. They are HINTS for finding the stored governed send, never proof: a receipt
+// is accepted only after it is verified server-side against the stored message (tenant, operation,
+// message id and the recorded X-Message-Id), never trusted from the event.
+type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null; sendgridCustomArgs?: Record<string, string> | null };
 
 // read_comms_email_send_binding returns the binding (flat, like the invoice read) plus the
 // message's tenant. A nested `comms_email_binding` object is accepted too. Anything malformed,
@@ -122,7 +126,10 @@ function parseCommsEmailBinding(value: unknown, messageTenantId: string | null):
   if (typeof v.message_tenant_id === "string" && v.message_tenant_id !== messageTenantId) return null;
   if (typeof v.recipient !== "string" || !/^\S+@\S+\.\S+$/.test(v.recipient) || v.recipient.length > 320) return null;
   if (typeof v.from_address !== "string" || !/^\S+@\S+\.\S+$/.test(v.from_address)) return null;
-  if (v.provider !== "resend" && v.provider !== "gmail" && v.provider !== "smtp") return null;
+  // PAIGE Email (SendGrid) is admitted here only because prepare_comms_email_send and
+  // read_comms_email_send_binding (20271031000100) refuse a SendGrid sender whose domain this business
+  // has not verified; `eligible` (checked below) carries that re-check to the send.
+  if (v.provider !== "resend" && v.provider !== "gmail" && v.provider !== "smtp" && v.provider !== "sendgrid") return null;
   if (typeof v.subject !== "string" || !v.subject.trim() || v.subject.length > 200 || /[\r\n]/.test(v.subject)) return null;
   if (typeof v.body_html !== "string" || !v.body_html) return null;
   if (typeof v.state !== "string") return null;
@@ -341,8 +348,16 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
       const name0 = ctx.from.display_name?.replace(/[^\w \-.@'"]/g, " ").replace(/\s+/g, " ").trim();
       const sgHeaders: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
       if (msg.in_reply_to_provider_id) sgHeaders["In-Reply-To"] = msg.in_reply_to_provider_id;
+      // A SendGrid request never hangs a send: its own deadline (the comms_email provider deadline),
+      // combined with the comms_email abort when that path set one. An abort is an UNCONFIRMED
+      // outcome (no http_status below), never a definitive rejection.
+      const sgComms = ctx as CommsEmailSendContext;
+      const sgTimeout = AbortSignal.timeout(COMMS_EMAIL_PROVIDER_TIMEOUT_MS);
+      const sgSignal = sgComms.abortSignal ? AbortSignal.any([sgComms.abortSignal, sgTimeout]) : sgTimeout;
+      const sgCustomArgs = sgComms.sendgridCustomArgs && Object.keys(sgComms.sendgridCustomArgs).length ? sgComms.sendgridCustomArgs : null;
       try {
         const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+          signal: sgSignal,
           method: "POST",
           headers: {
             Authorization: `Bearer ${sgKey}`,
@@ -351,6 +366,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
           },
           body: JSON.stringify({
             personalizations: [{ to: [{ email: ctx.to }] }],
+            ...(sgCustomArgs ? { custom_args: sgCustomArgs } : {}),
             from: name0 ? { email: ctx.from.address, name: name0 } : { email: ctx.from.address },
             ...(ctx.replyTo ? { reply_to: { email: ctx.replyTo } } : {}),
             subject: msg.subject || "(no subject)",
@@ -373,7 +389,9 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
         });
         if (!res.ok) {
           const errBody = await res.text().catch(() => "");
-          return { ok: false, status: "failed" as const, error: `sendgrid_${res.status}: ${errBody.slice(0, 200)}` };
+          // meta.http_status lets the comms_email path tell a definitive 4xx rejection (nothing sent)
+          // from an outcome that is merely unconfirmed — the same additive contract as the Resend arm.
+          return { ok: false, status: "failed" as const, error: `sendgrid_${res.status}: ${errBody.slice(0, 200)}`, meta: { http_status: res.status } };
         }
         // v3/mail/send returns an EMPTY 202 body; X-Message-Id is the durable id
         // (it corresponds to the Event Webhook's sg_message_id).
@@ -1494,6 +1512,10 @@ Deno.serve(async (req) => {
         commsClaimedAttempt = claimedAttempt;
         commsAbort = new AbortController();
         (ctx as CommsEmailSendContext).abortSignal = commsAbort.signal;
+        // Correlation ids for SendGrid's Event Webhook (read only by the SendGrid branch).
+        (ctx as CommsEmailSendContext).sendgridCustomArgs = {
+          paige_tenant_id: commsBinding.tenant_id, paige_operation_id: commsBinding.operation_id, paige_message_id: String(body.message_id),
+        };
         commsProviderAttempted = true;
       }
       const delivery = commsAbort

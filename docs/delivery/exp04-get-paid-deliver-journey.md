@@ -2,7 +2,7 @@
 
 Date: 2026-10-12 · Journey Lead: Claude Code (one accountable lead) · Records: ANT-51 / ANT-147 · Shell: SOLO
 
-**Status: CHECKPOINT 1 (inventory and plan) + E4-S1 shipped (§11, PR #2074, main `c0a20243`) + E4-S1b time zones (§13) + documented contracts (§12).** Branch `claude/clever-lovelace-r111ru`.
+**Status: CHECKPOINT 1 (inventory and plan) + E4-S1 shipped (§11, PR #2074, main `c0a20243`) + E4-S1b time zones shipped (§13, PR #2085, main `4fa99047`) + documented contracts (§12).** Branch `claude/clever-lovelace-r111ru`.
 Nothing here is owner-accepted or customer-released. Every claim names its evidence. Every absence claim
 names what was searched. Production evidence comes from read-only aggregate SELECTs; no identifiers or
 values were read.
@@ -751,6 +751,10 @@ event.
     third-level zones dropped from the pattern.
 - **Pre-send gate:** untouched. An export-only edit first tripped the pinned-source lint and was
   reverted. Smoke 15/15.
+
+**Production (2026-10-13).** Merged as `4fa99047` (#2085). Migration `20271026200000` persisted;
+setter and read body md5 equal the repo's (`a0dc183a…`, `9245d6c3…`); EXECUTE `authenticated` only;
+table RLS on, no grants, 0 rows. Overdue judgements are withheld everywhere until an owner sets a zone.
 
 **Still owed.**
 - A place in the product for the owner to set the zone. `set_business_time_zone` is the callable

@@ -3402,3 +3402,23 @@ computed outline, not by reading the CSS (it looks correct). Four shipped Campai
   file. Run `node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs --self-test` locally before
   pushing any `_shared` change. Re-pinning is a review decision, not a fix: S1b reverted its rationale wording
   instead and carried the disclosure in an unpinned file (`paige-spine/domains/campaigns.ts`).
+
+## 2026-10-13 — `REVOKE … FROM PUBLIC` left the public consent writer open to `anon` for months (#2087)
+
+`record_communications_consent`, `has_sms_consent` and `has_email_marketing_consent` were written with
+`REVOKE ALL … FROM PUBLIC; GRANT EXECUTE … TO authenticated, service_role`, and the repo's own consent test
+asserted anon held nothing on the table. Production disagreed on both: Supabase's default privileges grant
+`anon` and `authenticated` EXECUTE on every new function and full DML on every new table explicitly, not
+through PUBLIC, so revoking PUBLIC removes nothing. The test that would have caught it never ran in CI.
+
+- **Revoke from `anon` and `authenticated` by name**, and grant back exactly what is meant. `FROM PUBLIC`
+  alone is not a revocation on Supabase.
+- **A grant assertion proves only the database it ran on.** Prove grants in the database-contract job, which
+  reproduces production's grants before applying the change; a local-only test can pass against a schema
+  production does not have.
+- **An RLS policy is a write path.** The "self insert" policy let any signed-in user write complete
+  platform SMS evidence for any number. Inventory policies alongside functions when asking "who can write
+  this?" (§37).
+- **The guard belongs in the body too (§59).** The recorder now refuses a browser role itself, so a later
+  grant cannot reopen it; the proof grants anon EXECUTE back on purpose and expects the refusal.
+

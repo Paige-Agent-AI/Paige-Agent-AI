@@ -64,6 +64,7 @@ jobs:
         run: >-
           node --test
           supabase/functions/_shared/comms-provider-boundary.test.ts
+          supabase/functions/_shared/tenant-consent.test.ts
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/booking-provider-boundary.test.mjs

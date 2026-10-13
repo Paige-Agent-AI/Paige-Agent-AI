@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { safeWebUrl } from "@/lib/safe-web-url";
 
 type FormRow = PublicGrowthForm;
 
@@ -181,8 +182,9 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
     // A download_url wins over an immediate redirect — navigating straight away would strand
     // the visitor before they ever see the download button (additive: pages with ONLY
     // redirect_url set, which is every page today, behave exactly as before).
-    if (form.success_action_json?.redirect_url && !form.success_action_json?.download_url) {
-      window.location.href = form.success_action_json.redirect_url;
+    const redirect = safeWebUrl(form.success_action_json?.redirect_url);
+    if (redirect && !form.success_action_json?.download_url) {
+      window.location.href = redirect;
       return;
     }
     // Embedded in a funnel with a next step: hand control back to the step machine so the
@@ -197,19 +199,21 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
 
   if (done) {
     const success = form.success_action_json;
+    const download = safeWebUrl(success?.download_url);
+    const next = safeWebUrl(success?.redirect_url);
     return <div className="text-center py-12 space-y-4">
       <div className="text-3xl mb-2">✓</div>
       <p className="text-lg">{success?.message ?? "Thanks — we'll be in touch."}</p>
-      {success?.download_url && (
+      {download && (
         <Button asChild>
-          <a href={success.download_url} target="_blank" rel="noopener noreferrer" download>
-            Download {filenameFromDownloadUrl(success.download_url)}
+          <a href={download} target="_blank" rel="noopener noreferrer" download>
+            Download {filenameFromDownloadUrl(download)}
           </a>
         </Button>
       )}
-      {success?.redirect_url && (
+      {next && (
         <p className="text-sm">
-          <a href={success.redirect_url} className="underline">Continue</a>
+          <a href={next} className="underline">Continue</a>
         </p>
       )}
     </div>;

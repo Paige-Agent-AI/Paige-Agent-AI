@@ -21,7 +21,8 @@ DO $$ BEGIN
     ALTER FUNCTION public.list_tool_autonomy(uuid) RENAME TO _list_tool_autonomy_before_weekly_commitment;
   END IF;
 END $$;
-REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_weekly_commitment(uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_weekly_commitment(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_weekly_commitment(uuid) FROM service_role;
 CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid DEFAULT NULL)
 RETURNS TABLE(tool_key text,label text,category text,mode text,is_default boolean,updated_at timestamptz)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -32,10 +33,11 @@ BEGIN
     _tenant:=public.current_user_tenant_id();
     IF public.is_platform_owner() AND _tenant_id IS NOT NULL THEN _tenant:=_tenant_id; END IF;
   ELSE _tenant:=_tenant_id; END IF;
-  RETURN QUERY SELECT 'planning_weekly_commitment_check'::text,'Weekly internal commitment check'::text,'Planning'::text,
-    coalesce(a.mode,'confirm'),a.mode IS NULL,a.updated_at
-    FROM (VALUES(1)) c(n) LEFT JOIN public.tenant_tool_autonomy a
-      ON a.tenant_id=_tenant AND a.tool_key='planning_weekly_commitment_check';
+  RETURN QUERY WITH catalog(tool_key,label,category) AS (VALUES
+    ('planning_weekly_commitment_check','Weekly internal commitment check','Planning')
+  ) SELECT c.tool_key,c.label,c.category,coalesce(a.mode,'confirm'),a.mode IS NULL,a.updated_at
+    FROM catalog c LEFT JOIN public.tenant_tool_autonomy a
+      ON a.tenant_id=_tenant AND a.tool_key=c.tool_key;
 END $$;
 REVOKE ALL ON FUNCTION public.list_tool_autonomy(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.list_tool_autonomy(uuid) TO authenticated,service_role;

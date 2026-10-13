@@ -1,8 +1,10 @@
 {
   "status": "PASS",
-  "cases": 49,
+  "cases": 51,
   "checks": [
     "migration applies twice; catalogue stays dark",
+    "complete current incumbent catalogue survives replay with identical metadata and defaults",
+    "catalogue owner and platform scope preserve canonical predecessor policy",
     "owner draft intent is durable and idempotent",
     "member/admin/foreign scope/service/anonymous cannot authorize",
     "same intent cannot change approved input",
@@ -53,7 +55,12 @@
     "canonical tenant FK retirement remains possible"
   ],
   "source": "supabase/migrations/20271027000000_experience05_weekly_commitment_check.sql",
-  "migration_sha256": "73b104ef24df186f3574c4c87b65110ca87228945bc60bcdb302c12bcc69168c",
-  "schema_fingerprint": "534e654204f73b7519420ce3042ed8ce",
+  "migration_sha256": "740608f719d2ee15c29933421d0e26c61f3bfde2a59972fc6f1c901b4092e738",
+  "schema_fingerprint": "a8310f160bf7069f93bfc50b550fd4c7",
+  "incumbent_catalogue": {
+    "source": "20271023100000_int298_campaign_steps_chat_tools.sql",
+    "rows": 189,
+    "preserved_metadata_and_defaults": true
+  },
   "boundary": "isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim"
 }

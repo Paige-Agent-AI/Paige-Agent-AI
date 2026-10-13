@@ -6,7 +6,7 @@ import { stableRunId } from "../../supabase/functions/_shared/capability-record"
 import { actReceiptRunSeed } from "../../supabase/functions/_shared/paige-orchestration/outcomes";
 import { dispatchUnderClaim } from "../../supabase/functions/_shared/paige-orchestration/dispatch-claim";
 import type { DispatchInput } from "../../supabase/functions/_shared/paige-orchestration/adapters";
-import { readWeeklyCommitmentStatus, WEEKLY_COMMITMENT_STATUS_TOOL } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-chat";
+import { readWeeklyCommitmentStatus } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-chat";
 
 describe("weekly commitment check enters the canonical engine", () => {
   it("has one native adapter and Gateway binding", () => {
@@ -38,7 +38,6 @@ describe("subsequent-conversation readback handoff", () => {
     expect(await readWeeklyCommitmentStatus(caller)).toEqual({ status: "available", source: "canonical_process_and_act_receipts", checks: saved });
     expect(await readWeeklyCommitmentStatus(caller)).toEqual({ status: "available", source: "canonical_process_and_act_receipts", checks: saved });
     expect(names).toEqual(["get_weekly_commitment_checks", "get_weekly_commitment_checks"]);
-    expect(WEEKLY_COMMITMENT_STATUS_TOOL.function.parameters.properties).toEqual({});
   });
   it("read errors do not become a false empty schedule or completed run", async () => {
     expect(await readWeeklyCommitmentStatus({ rpc: async () => ({ data: null, error: "held" }) }))

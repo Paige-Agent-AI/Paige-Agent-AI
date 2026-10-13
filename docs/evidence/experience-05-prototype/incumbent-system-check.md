@@ -55,7 +55,9 @@ The held-with-running-act screenshot keeps the existing act's Running state and 
 
 The journey lead reported that the focused independent finish reviewer returned ship with no material fixes in this permission-gate scope. That bounded review outcome does not supply owner visual approval, authenticated acceptance or production permission/scheduling proof; those remain UNVERIFIED or pending as stated above.
 
-## Final failed-recovery copy and fixture recheck
+## Historical failed-recovery copy and fixture recheck — superseded
+
+The owner replay guards, labels and unknown-to-failed recovery path described in this section are historical findings on the C57 artifact only. They are superseded by the executor-alignment recheck below; they do not describe current behavior or authorize replay.
 
 The final artifact SHA256 is `C57AECBBA940ED11824C10EC4AF72B3A0460222004D5E31147388238B073526D`, verified from the local HTML after the final retry-label correction. `absence-final-browser-proof.json` records 13 PASS checks and three captures focused on the changed failure/recovery branch. It explicitly identifies the prior full 64-PASS suite on `F895DA7C1A56FAF3CDDDD5A9286404009C20351D2AF38A0515FE3D77BCC5FB4C` as historical regression evidence on different bytes, not a full suite for this final artifact. The earlier permission-gate evidence and findings above remain preserved with that boundary.
 
@@ -65,12 +67,22 @@ An event claim alone is not absence proof. The failed state and evidence disclos
 
 This pass inspected the supplied test record and screenshots without rerunning tests. The final focused independent review was still pending at this documentation handoff; no final reviewer decision is inferred. Production acceptance remains UNVERIFIED and owner visual approval remains pending.
 
+## Current executor-alignment recheck
+
+The current artifact SHA256 is `3D5C2C08090B69AF8403742996C4711FF6DB7F2E2DCBB869699E6BDC8D9DE0E4`, verified from the local HTML. `executor-alignment-browser-proof.json` records 14 focused PASS checks and four captures. The prior 64-PASS suite on F895 and 13-PASS focused proof on C57 remain historical evidence on their respective full hashes recorded above, not a current full-suite claim. The earlier owner-retry-label finding is superseded by removal of owner replay.
+
+Inspected the current source and all four Mineral captures: `executor-alignment-failed-desktop.png` (1366 × 1100), `executor-alignment-failed-mobile.png` (390 × 1000), `executor-alignment-unknown-absence-mobile.png` (390 × 1000) and `executor-alignment-committed-readback-desktop.png` (1366 × 1100). Palette, type tokens, layout vocabulary and component styling remain unchanged. Evidence detail adds a committed-result row using the existing hairline row and reference-text treatment.
+
+The settled failed state exposes no owner replay control or handler, no completed result, its simulated absence evidence and the next weekly slot. Eligible accepted/retrying never-started recovery is described as belonging to the existing executor; the prototype provides no human replay command for that recovery. Unknown readback showing authoritative absence with no committed result remains Unknown and replay locked; the previous unknown-to-absence-to-failed-to-owner-retry transition is removed. Completion readback instead supplies a simulated committed observation and receipt together, both visible in the evidence disclosure.
+
+This pass checked the supplied focused proof, source and screenshots without rerunning tests. The journey lead reported that the same independent finish reviewer returned ship with no fixes for this executor-alignment seam. That bounded result provides no production acceptance, owner approval, real canonical readback or live executor capability proof. All simulated observations, receipts and recovery explanations remain outside durable design authority.
+
 ## Five-line system summary
 
 Palette: inherited Mineral/Obsidian neutrals and violet/semantic tints, with explicitly recorded local contrast adjustments.
 Type ramp: compact sans, 14px base; 11–12px labels/references, 13px result copy, 15–20px headings; actual Geist loading unverified.
 Conversation rule: proposal, saved schedule, result and receipt remain inline beside the existing history/composer composition.
-State rule: schedule consent, per-tool permission and unapproved edits remain distinct; held actual-next and intended slots retain honest labels and references.
+State rule: schedule consent, tool permission and drafts remain distinct; no owner replay, unknown stays locked, and completion names observation plus receipt.
 Motion rule: one 150ms result opacity update, immediate reduced-motion rendering and no simulated native haptics claim.
 
 Not canonized or repaired: incumbent eyebrow/kicker styles and missing durable DESIGN/sidecar records remain outside this narrow pass; prototype font fallback, local token/layout differences and simulated receipts are not future-surface or production authority. Authenticated production behavior remains UNVERIFIED, and owner visual approval remains pending.

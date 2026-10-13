@@ -11,6 +11,7 @@ import {join,resolve,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {randomUUID,createHash} from 'node:crypto';
+import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-catalogue-lint.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271027000000_experience05_weekly_commitment_check.sql';
@@ -39,6 +40,21 @@ const cases=[];
 function check(name,fn){fn();cases.push(name);console.log(`PASS ${name}`);}
 function refuses(sql,ctx,code='42501'){assert.throws(()=>run(sql,ctx),new RegExp(code));}
 function extractTable(text,name){const m=text.match(new RegExp(`CREATE TABLE IF NOT EXISTS public\\.${name} \\([\\s\\S]+?\\n\\);`,'i'));assert(m,`${name} DDL present`);return m[0];}
+function catalogueSource(declaration){
+  // Selected actual function bodies only: never execute unrelated migrations in this fixture.
+  const sql=declaration.sql;
+  const fn=sql.match(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.list_tool_autonomy\s*\([\s\S]+?\bAS\s+(\$[a-z_0-9]*\$)[\s\S]+?\1\s*;/i);
+  assert(fn,`${declaration.file}: actual catalogue function body`);
+  let rename='';
+  if(preservesCataloguePredecessor(sql)){
+    const at=sql.search(/ALTER\s+FUNCTION\s+public\.list_tool_autonomy/i);
+    const begin=sql.slice(0,at).lastIndexOf('DO $$'),end=sql.indexOf('END $$;',at);
+    assert(begin>=0&&end>=0,`${declaration.file}: exact predecessor rename block`);
+    rename=sql.slice(begin,end+'END $$;'.length);
+  }
+  const privileges=[...sql.matchAll(/(?:REVOKE|GRANT)[^;]*ON\s+FUNCTION\s+public\.(?:list_tool_autonomy|_list_tool_autonomy_[a-z0-9_]+)\(uuid\)[^;]*;/gi)].map(m=>m[0]).join('\n');
+  return `${rename}\n${fn[0]}\n${privileges}`;
+}
 async function concurrent(sql,ctx,n=6){
   return Promise.all(Array.from({length:n},()=>new Promise((resolvePromise,reject)=>{
     const child=spawn(command('psql'),args(database),{stdio:['pipe','pipe','pipe'],windowsHide:true});let out='',err='';
@@ -69,8 +85,10 @@ try{
     CREATE TABLE tenants(id uuid PRIMARY KEY,name text,owner_user_id uuid,parent_tenant_id uuid,archive_operation_id uuid,
       archived_at timestamptz,lifecycle_execution_paused boolean DEFAULT false);
     CREATE TABLE tenant_members(tenant_id uuid REFERENCES tenants(id) ON DELETE CASCADE,user_id uuid,role text,status text,PRIMARY KEY(tenant_id,user_id));
+    CREATE TABLE user_roles(user_id uuid,role text);
     CREATE FUNCTION current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.tenant',true),'')::uuid $$;
-    CREATE FUNCTION is_platform_owner() RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
+    CREATE FUNCTION is_platform_owner() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+      SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=auth.uid() AND role='super_admin') $$;
     CREATE FUNCTION is_tenant_member(_id uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$ SELECT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=_id AND user_id=auth.uid() AND status='active') $$;
     CREATE FUNCTION is_tenant_admin(_id uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$ SELECT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=_id AND user_id=auth.uid() AND status='active' AND role IN ('owner','admin')) $$;
     CREATE FUNCTION trust_effective_rung() RETURNS integer LANGUAGE sql AS $$ SELECT 3 $$;
@@ -83,7 +101,6 @@ try{
     CREATE TABLE paige_subagents(slug text PRIMARY KEY,rail_display_name text,tenant_id uuid);
     CREATE TABLE paige_departments(slug text PRIMARY KEY); INSERT INTO paige_departments VALUES('owner_ops');
     CREATE TABLE audit_logs(id uuid DEFAULT gen_random_uuid(),user_id uuid,entity text,action text,entity_id uuid,data jsonb);
-    CREATE TABLE user_roles(user_id uuid,role text);
     CREATE FUNCTION is_platform_admin() RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$
       SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=auth.uid() AND role IN ('platform_admin','super_admin')) $$;
     CREATE FUNCTION get_actor_access(_actor uuid) RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
@@ -110,6 +127,12 @@ try{
   run(source('supabase/migrations/20260711200000_paige_tool_autonomy.sql'));
   run(source('supabase/migrations/20270540000000_tool_autonomy_ceiling_fact.sql'));
   run(source('supabase/migrations/20270552000000_resolve_tool_autonomy_many.sql').split('-- paige_improvement_proposals: the tenant question')[0]);
+  const declarations=catalogueDeclarations().filter(d=>d.file<migration.split('/').at(-1));
+  const lastComplete=declarations.findLastIndex(d=>!preservesCataloguePredecessor(d.sql));
+  assert(lastComplete>=0);
+  for(const declaration of declarations.slice(lastComplete))run(catalogueSource(declaration));
+  const catalogueSQL=target=>`SELECT jsonb_agg(to_jsonb(t) ORDER BY tool_key) FROM list_tool_autonomy(${literal(target)}) t;`;
+  const priorCatalogue=json(catalogueSQL(tenant));assert.equal(priorCatalogue.length,declarations.at(-1).keys.size);
   for(const path of [
     'supabase/migrations/20261022000000_automations_the_process_record.sql',
     'supabase/migrations/20261024000000_resolve_automation_autonomy.sql',
@@ -123,6 +146,22 @@ try{
     INSERT INTO tenant_members VALUES(${literal(tenant)},${literal(owner)},'owner','active'),(${literal(foreign)},${literal(otherOwner)},'owner','active'),
       (${literal(tenant)},${literal(member)},'member','active'),(${literal(tenant)},${literal(admin)},'admin','active');`);
   check('migration applies twice; catalogue stays dark',()=>assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),'f'));
+  check('complete current incumbent catalogue survives replay with identical metadata and defaults',()=>{
+    const after=json(catalogueSQL(tenant));assert.equal(after.length,priorCatalogue.length+1);
+    assert.deepEqual(after.filter(row=>row.tool_key!=='planning_weekly_commitment_check'),priorCatalogue);
+  });
+  check('catalogue owner and platform scope preserve canonical predecessor policy',()=>{
+    run("SELECT set_tool_autonomy('crm_create_contact','off');",ownerCtx);
+    run("SELECT set_tool_autonomy('crm_create_contact','auto');",{actor:otherOwner,tenant:foreign,role:'authenticated'});
+    refuses(catalogueSQL(foreign),ownerCtx);
+    const own=json(catalogueSQL(tenant),ownerCtx);assert.equal(own.find(row=>row.tool_key==='crm_create_contact').mode,'off');
+    run(`INSERT INTO user_roles VALUES(${literal(otherOwner)},'super_admin');`);
+    const selected=json(catalogueSQL(tenant),{actor:otherOwner,tenant:foreign,role:'authenticated'});
+    assert.deepEqual(selected,own);
+    const other=json(catalogueSQL(foreign),{actor:otherOwner,tenant:foreign,role:'authenticated'});
+    assert.equal(other.find(row=>row.tool_key==='crm_create_contact').mode,'auto');
+    run(`DELETE FROM user_roles WHERE user_id=${literal(otherOwner)} AND role='super_admin';`);
+  });
   const request=randomUUID();
   const draftSQL=`SELECT draft_weekly_commitment_check(${literal(request)},'Weekly commitment check',1,'09:00','America/New_York');`;
   check('owner draft intent is durable and idempotent',()=>{
@@ -434,6 +473,7 @@ try{
   });
   const schemaFingerprint=run("SELECT md5(string_agg(pg_get_functiondef(p.oid),E'\\n' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '%weekly_commitment%';");
   const evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,schema_fingerprint:schemaFingerprint,
+    incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};
   writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));
   console.log(JSON.stringify(evidence));console.log(`Evidence: ${join(scratch,'result.json')}`);

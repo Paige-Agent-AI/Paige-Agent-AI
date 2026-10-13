@@ -4,6 +4,8 @@
 
 Current candidate is development-only on `codex/experience05-conversation-read-preparation`, grounded at main `07a10820ee4cf4e1c9fa1dac78d8c56aad4dacd8`. The preceding released backend remains DARK. The new status migration is unapplied, no product interface is mounted, and weekly Chat/Live admission remains UNAVAILABLE. Customer outcome and owner design approval remain UNVERIFIED. Section4.0 shipped-log update is N/A: this integration candidate has not reached main. No customer release identity or announcement.
 
+Source/rendered payload commit: `6083a728f9d89b784cc3709875b0215c236d63b2`. A subsequent metadata-only commit binds this identity; the draft PR carries its exact immutable reviewed head and CI. Current prototype16CE8211…90B090, embedded projection06D13D2C…40CBF,186 passing local browser checks and86 actual captures have a remote repository-relative gallery and independent full-review/scoped-correction chain. This is rendered design evidence, not owner approval or mounted/authenticated proof.
+
 The owner's Calendar clarification preserves one process: Chat requests and changes the approved definition; existing Calendar displays that definition's authoritative actual next execution, latest attempt and separately last verified result. A Calendar booking does not authorize an automation. Neither presentation owns execution, retries or receipts.
 
 ### Canonical inventory and classification

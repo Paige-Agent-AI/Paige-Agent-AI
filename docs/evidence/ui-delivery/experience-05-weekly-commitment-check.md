@@ -35,7 +35,7 @@ MUST_PRESERVE: Canonical process/event/act identity, current authority, existing
 ACCEPTANCE_CRITERIA: Exact owner consent, one real internal observation and receipt, future-only controls, authoritative reconciliation, cross-conversation readback and authenticated end-to-end proof through existing protected QA.
 MOTION_PURPOSE: Restrained opacity feedback indicates a local state transition; reduced motion removes it.
 PROTECTED_SEAMS: No actual Chat admission, Live tools, protected account flags, consequential capabilities or new production route is changed by this slice.
-INTERNAL_BUILD_IDENTITY: 07a10820ee4cf4e1c9fa1dac78d8c56aad4dacd8; deployment=none; environment=development; migrations=NOT_APPLICABLE(candidate20271029000000 unapplied); edge=NOT_APPLICABLE(prepared modules unmounted); evidence=docs/delivery/experience-05-weekly-commitment-check.md
+INTERNAL_BUILD_IDENTITY: 6083a728f9d89b784cc3709875b0215c236d63b2; deployment=none; environment=development; migrations=NOT_APPLICABLE(candidate20271029000000 unapplied); edge=NOT_APPLICABLE(prepared modules unmounted); evidence=docs/delivery/experience-05-weekly-commitment-check.md
 RELEASE_CHANNEL: development: Current source preparation and rendered simulation; prior backend production DARK release is historical and independently re-read.
 RELEASE_CLASSIFICATION: internal-only: Prepared bounded read and Chat/Calendar review, with no mounted or activated customer workflow.
 CUSTOMER_RELEASE_IDENTITY: none: No customer release or authenticated outcome has been accepted.

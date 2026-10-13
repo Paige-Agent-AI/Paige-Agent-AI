@@ -31,7 +31,7 @@ RELEASE_CLASSIFICATION: internal-only: backend inside an unreleased journey; a c
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version until Experience 03 earns one
 RELEASE_NOTE_REQUIRED: no: pre-launch, nothing customer-visible; announced with the journey
 RELEASE_TRUTH_BOUNDARY: PARTIAL: backend contracts built and proven locally; customer screens UNAVAILABLE until the next PR; live SendGrid sending PROOF OWED behind operator steps
-RELEASE_RECOVERY: position=forward-fix; the migrations are additive and the features stay off by default; reference=https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2126
+RELEASE_RECOVERY: position=forward-fix, because the migrations are additive and the features stay off by default; reference=https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2126
 
 ## Scope and collisions
 

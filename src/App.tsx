@@ -30,6 +30,7 @@ const lazyWithReload = <T extends React.ComponentType<any>>(
     }
   });
 import { ThemeProvider } from "next-themes";
+import { embeddedFormTheme, isFormOnBusinessSite } from "@/hooks/useEmbedHeight";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -193,7 +194,8 @@ function LegacyIntelligenceRedirect() {
 const AppInner = () => {
   useHostRouting();
   useReferralTracking();
-  usePageView();
+  // Not on a form shown on a business's own website: those visitors are the business's (Experience 03).
+  usePageView(!isFormOnBusinessSite());
   return <GlobalAuthSessionManager />;
 };
 
@@ -209,7 +211,7 @@ const isRenderFramePath = (pathname: string) => /^\/render-frame\/?$/i.test(path
 const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <PaymentReturn /> : /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : isRenderFramePath(window.location.pathname) ? (
   <React.Suspense fallback={null}><RenderFrame /></React.Suspense>
 ) : (
-  <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange forcedTheme={embeddedFormTheme()}>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       {/* One shared tenant-scope context for the whole app (operator/tenant mode +
@@ -229,7 +231,7 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
         <PlatformUpdateBanner />
         <BrowserRouter>
           <AppInner />
-          <MetaPixel />
+          {!isFormOnBusinessSite() && <MetaPixel />}
           <SpeedInsights />
           <ClientOnlyRouteGuard />
           <Routes>

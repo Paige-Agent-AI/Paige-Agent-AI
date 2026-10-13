@@ -146,7 +146,7 @@ production.
 | Builder block sandboxed without same-origin, no-script version | "This form opens on its own page", with a link and the address to copy |
 | Builder block sandboxed with same-origin | The form works end to end |
 | Thank-you redirect | Your thank-you page replaces the visitor's page |
-| "Open the form" button on a light page, on a dark page, and for a dark-look form | Text 17.9:1 against its fill; its outline at least 15:1 against the page around it; 44px; keyboard focus shown (measured in pixels) |
+| "Open the form" button on a light page, on a dark page, and for a dark-look form | Text 17.9:1 against its fill; its outline 15.1:1 on the dark test page and 17.1:1 on the light one (one of its two ring tones always clears 3:1 on any page); white for the dark-look form; 44px; keyboard focus shown (measured in pixels) |
 | Booking calendar popup button, on a light and a dark page | The same measurements; it still opens the calendar and closes on Escape |
 | Paige's own analytics inside the form on your site | None of Plausible, the page-view event or the Meta Pixel's settings lookup (driven); PostHog off (unit-tested; the test setup has no PostHog key) |
 | Paige's own analytics on the form's own page | Unchanged |

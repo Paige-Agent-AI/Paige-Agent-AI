@@ -280,7 +280,7 @@ account is connected to Paige.** The installation guide is `docs/guides/put-a-pa
 
 **Compatibility matrix.** Driven by `scripts/live-drive/cloudflare-embed-drive.mjs`: Cloudflare's own Pages runtime
 (`wrangler pages dev`, which applies `_headers` as Pages does) and the real app on another origin, with Supabase
-stubbed. 79/79 after the independent review's fixes and the owner's button direction.
+stubbed. 80/80 after the independent review's fixes and the owner's button direction.
 
 | Host situation | Result |
 |---|---|
@@ -295,7 +295,7 @@ stubbed. 79/79 after the independent review's fixes and the owner's button direc
 | Builder block that lets tabs escape (`allow-popups-to-escape-sandbox`) | The link opens the form's own page with its real origin; works end to end |
 | No-script frame inside such a sandbox | "This form opens on its own page", with a link and the address to copy (before: a blank frame) |
 | `Content-Security-Policy-Report-Only` | The form stays and works (a report-only policy never blocks) |
-| The "Open the form" fallback button, on light and dark sites (owner direction 2026-10-13) | Deep indigo, white text (17.9:1), a white-then-indigo ring so its outline stands out on any page (>= 15:1 measured); inverted for a dark-look form; 44px; keyboard focus clear of the ring. Before: indigo on a dark site at 1.2:1 against the page (measured), nearly invisible |
+| The "Open the form" fallback button, on light and dark sites (owner direction 2026-10-13) | Deep indigo, white text (17.9:1), a white-then-indigo ring so one of its tones always clears 3:1 against any page (measured 15.1:1 on the dark test page, 17.1:1 on the light one); inverted for a dark-look form; 44px; keyboard focus clear of the ring. Before: indigo on a dark site at 1.2:1 against the page (measured), nearly invisible |
 | The booking popup button (same style) | Same measurements on light and dark sites; still opens the calendar and closes on Escape |
 | Sandbox with same-origin | Works end to end |
 | Thank-you redirect | The business's page navigates to the thank-you page |

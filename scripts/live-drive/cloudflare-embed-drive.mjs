@@ -188,7 +188,8 @@ async function buttonLooks(pg, frame, selector) {
       at += 12 + len;
     }
     const raw = zlib.inflateSync(Buffer.concat(idat));
-    return [raw[1], raw[2], raw[3]].slice(0, colorType === 0 ? 1 : 3);
+    // Grey (0) and grey-alpha (4) carry one value per pixel; colour (2, 6) three. Chromium writes colour.
+    return colorType === 0 || colorType === 4 ? [raw[1], raw[1], raw[1]] : [raw[1], raw[2], raw[3]];
   };
   const cy = box.y + box.height / 2;
   const [fill, inner, outer, around] = [await px(box.x + 4, cy), await px(box.x - 1.5, cy), await px(box.x - 2.6, cy), await px(box.x - 14, cy)];
@@ -372,6 +373,10 @@ async function main() {
       const { ctx, pg } = await open(route);
       const looks = await buttonLooks(pg, pg.mainFrame(), "a[data-paige-form-link]");
       check(looks.textRatio >= 4.5 && looks.edgeRatio >= 3 && looks.h >= 44 && looks.focus.focused && looks.focus.outline !== "none", `${label}: readable (${looks.textRatio}:1), its edge visible (${looks.edgeRatio}:1), 44px, keyboard focus shown`, JSON.stringify(looks));
+      if (route.includes("darkform")) {
+        const fill = await pg.locator("a[data-paige-form-link]").evaluate((a) => getComputedStyle(a).backgroundColor);
+        check(fill === "rgb(255, 255, 255)", `${label}: the button is inverted (white) for the owner's dark-look form`, fill);
+      }
       await pg.screenshot({ path: path.join(OUT, `${route.replaceAll("/", "")}.png`), fullPage: true });
       await ctx.close();
     });

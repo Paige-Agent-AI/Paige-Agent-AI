@@ -765,6 +765,48 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-13 — Security #2087 + #2090: consent written only by the server, send gates trust only verified evidence; stored form and booking links must be web addresses — PR [#2099](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2099) → main `216ee2b60d73a811e14077ab128875d6a4cb3dd7` (squash merge, 02:05 UTC); reviewed and CI head `7656623d21c98a570aafa07828ebca05c7f3440b` (13/13 checks green; independent review SHIP after three passes, every finding fixed).** Internal security release; production channel (pre-launch §4); no customer announcement or version.
+
+**What shipped:**
+- **Platform consent writer.** `record_communications_consent` runs for the service role only, enforced by both its grant and its body.
+- **`communications_consents`.** The browser insert policy is dropped and `anon` holds nothing. Signed-in users read, and may only withdraw or revoke.
+- **SMS gate.** `has_sms_consent` is service-role only. It trusts platform evidence only when that evidence's own account has VERIFIED the number.
+  - The verified flag is now settable only by the server (trigger `communication_preferences_guard_verified_phone`).
+  - Browsers can no longer plant `sms_verifications` codes.
+- **Email gate.** `has_email_marketing_consent` answers false: there is no double opt-in, and email consent is never inferred from a phone (#2101).
+- **Tenant ledger.** `paige_consent_events` / `paige_suppressions` browser policies are scoped to the workspace's own owner/admin or its managing agency.
+- **Stage automation.** `dispatch-stage-automation` is service-role only, and decides marketing consent from the business's own ledger (`_shared/tenant-consent.ts`, default-deny).
+- **Affiliate preferences.** Recorded server-side by `affiliate-application-confirm`. The browser consent recorder is removed.
+- **Stored links (#2090).** `is_safe_web_url` plus guard triggers on `growth_forms` (live and working-copy redirect/download) and `calendars.redirect_url`. The hosted form follows a link only if `src/lib/safe-web-url.ts` accepts it.
+
+**Production readback (read-only, after the apply):**
+- the `schema_migrations` row `20271027100000`;
+- both gates and the recorder service-role only, with the role guard in the body;
+- the email gate's body is `SELECT false`;
+- `communications_consents` policies are read and withdraw only; `authenticated` has no INSERT and may UPDATE only the withdrawal columns;
+- `sms_verifications` policies are service-role only;
+- the three guard triggers are present;
+- `is_safe_web_url` truth table: `https` accepted; `javascript:`, `data:` and host-less addresses refused;
+- the ledger policies as above;
+- Edge `dispatch-stage-automation` v64, `affiliate-application-confirm` v441 and `paige-operator-sms-send` v34, deployed 02:06 UTC from the merge;
+- the live `paigeagent.ai` bundle: 319 chunks crawled, no `record_communications_consent` call left.
+
+**Deploy incident, recovered:**
+- The first `deploy-migrations` attempt (run 38335246603) deadlocked. A concurrent Supavisor schema-dump session held `communication_preferences` and wanted `communications_consents`, the reverse of the migration's lock order.
+- A second applier session, origin not identified, also ran the file and ended without committing.
+- Production stayed fully pre-fix; nothing was half-applied.
+- Once the dump ended, the failed job was re-run once and passed (push, persisted check, `db-live`). Recorded on incident #1548.
+
+**Exposure that remains, each filed:**
+- #2094: signup evidence binds a typed phone; harmless while the SMS gate requires a verified number.
+- #2095: the A2P test is not in CI, and an unrouted page still has a consent box.
+- #2097: page button `cta_href` is unchecked.
+- #2098: the stage-automation trigger is dead in production.
+- #2100: staff don't see opt-out badges.
+- #2101: no email double opt-in.
+
+Authenticated runtime: UNVERIFIED, owed to the QA coordinator on the designated test account (ANT-52). Customer release eligible: **No.**
+
 **2026-10-13 — Experience 04 E4-S1b: payment due dates in the business owner's time zone; recipient-verified contact window (read-only, unmounted) — PR [#2085](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2085) → main `4fa99047a1eaab4763d01edd2bc0c5736b11d351` (squash merge, 00:57 UTC); reviewed head `2a36bf201f9af11c50715e0f42ab36726d241ba7`, merged head `6340a256` (merge from main, docs-only conflict). Two independent reviews closed; Codex review no findings; 13/13 CI.** Internal-only; production channel (pre-launch §4); no customer announcement/version. **What shipped:**
 - `public.tenant_business_time_zones`: one row per workspace; RLS on; no grants to `anon`, `authenticated` or `service_role`.
 - `public.set_business_time_zone(_expected_tenant_id, _time_zone)`: active owner of the caller's active workspace only; UTC or IANA Area/Location, checked against `pg_timezone_names`; writes a capability receipt.

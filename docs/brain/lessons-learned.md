@@ -6,6 +6,29 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### A migration that deadlocked against a schema dump, and the header that said it would half-apply (2026-10-13, #2099)
+
+**Symptom → root cause → rule.** The #2099 migration passed every proof and CI. Its first production
+apply then died with `deadlock detected` at statement 12. A Supavisor schema-dump session was reading
+functions one by one, holding `communication_preferences` and then wanting `communications_consents`.
+The migration takes those two tables in the opposite order. A second applier session was also running
+the same file at the same time.
+
+**The trap is in what you assume next.** The workflow's header says `db push` does not wrap a file in
+a transaction, so a failure mid-file leaves earlier statements committed. Production said otherwise:
+read-only checks showed the statements before the failure (the recorder's new body and its grants)
+had NOT persisted. The file rolled back as a whole.
+
+**Rule:**
+- After a failed apply, read production before acting. Check the migration row, the objects the file
+  creates, and the bodies and grants it replaces. Neither "half-applied" nor "nothing happened" is
+  safe to assume.
+- Retry only once nothing holds or waits on the tables involved (`pg_stat_activity`,
+  `pg_blocking_pids`), and retry only once.
+- A migration that takes exclusive locks on more than one hot table is exposed to any concurrent
+  reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
+  `lock_timeout`, narrows the window but does not close it.
+
 ### A per-person field is not a business setting (2026-10-12, Experience 04)
 
 **Symptom → root cause → rule.** The first E4-S1b draft took "the business owner's time zone" from

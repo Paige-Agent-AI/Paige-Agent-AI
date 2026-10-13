@@ -73,8 +73,8 @@ DECLARE r jsonb; aid uuid; BEGIN
 END $$;
 
 -- ── 0. The migration (replayed: a database that already has it proves replay is a no-op). ──────────
-\ir ../migrations/20271030000000_exp03_lead_reply_once_per_submission.sql
-\ir ../migrations/20271030000000_exp03_lead_reply_once_per_submission.sql
+\ir ../migrations/20271031000000_exp03_lead_reply_once_per_submission.sql
+\ir ../migrations/20271031000000_exp03_lead_reply_once_per_submission.sql
 
 SELECT pg_temp.check_true((SELECT count(*)=1 FROM pg_indexes WHERE schemaname='public' AND indexname='uq_paige_actions_lead_followup_submission'),
   'the reply-draft index exists exactly once after a replay');

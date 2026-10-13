@@ -127,7 +127,7 @@ on:
       # Experience 03 S3 — the lead reply: its proof, its migration, and the three functions whose
       # contract it pins (the drafter, the filer; the approve door is listed above).
       - "supabase/tests/exp03_lead_reply_draft.sql"
-      - "supabase/migrations/20271030000000_exp03_lead_reply_once_per_submission.sql"
+      - "supabase/migrations/20271031000000_exp03_lead_reply_once_per_submission.sql"
       - "supabase/functions/paige-action-worker/**"
       - "supabase/functions/growth-process-submission/**"
 

@@ -170,8 +170,12 @@ What it confirmed:
 
 It found one MAJOR defect, in #2107's code, and it is fixed in this PR:
 - **The defect.** #2107's no-effects guard replaced a finished, grounded answer with "Actions are unavailable…" whenever a request was worded like an action. "Get me Acme's payment status" is classified `act`, so the owner never saw the status. `get_business_snapshot` already had this problem on main.
-- **The fix.** The guard now stands down when an admitted conversational read actually ran this turn (after every dispatch guard) and the answer does not claim that anything was done. A read followed by a false completion claim is still fully refused.
-- **Proof.** `scripts/int346-conversational-handler-check.mjs` gained two scenarios. In both the read runs through the Spine seat check on the caller's own session. Reverting either half of the condition fails a scenario. The other INT-336/346 handler checks still pass.
+- **The first fix was not enough.** It stood the guard down whenever a read ran and the answer did not match the completion-phrase check. A focused review (FIX-FIRST) showed that check misses phrasings such as "Task created for Friday." It also showed a mixed request ("get Acme's status and send a reminder") would lose its disclosure that nothing was sent, and that reads which were refused or failed were being counted.
+- **The final fix.**
+  - An answer grounded in an admitted read that returned data is kept. "Returned data" is judged by the read's own result, so a refused, unparseable, needs-input or failed read does not count.
+  - The actions-unavailable / no-action line is always added beneath a kept answer.
+  - A reply the phrase check does recognise as claiming completion is still replaced outright.
+- **Proof.** `scripts/int346-conversational-handler-check.mjs` has four scenarios: a grounded answer kept with the line; a recognised claim replaced; a missed claim contradicted by the line; a refused read not counted. Reinstating each weakness fails a scenario (no line, counting refused reads, no claim check). The other INT-336/346 handler checks and the gateway variant pass.
 
 Of the 7 minor findings:
 - Fixed:

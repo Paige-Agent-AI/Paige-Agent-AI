@@ -308,7 +308,8 @@ const groundedRead = await capturedHandler()(req({ messages: [{ role: 'user', co
 const groundedWire = await groundedRead.text();
 assert.equal(rec.rpc.filter(c => c.name === 'read_business_time_zone').length, 1, 'the admitted read ran on the caller session');
 assert.ok(groundedWire.includes(modelReply), 'a grounded admitted-read answer is not replaced by the action refusal');
-assert.ok(!groundedWire.includes('Actions are unavailable in this conversation'), 'an answered status request is not an unavailable action');
+assert.ok(groundedWire.includes('No business action was run.'), 'the actions-unavailable line is still added beneath a kept read answer');
+assert.ok(groundedWire.indexOf(modelReply) < groundedWire.indexOf('No business action was run.'), 'the answer leads; the line follows');
 assert.equal(rec.rpc.find(c => c.name === 'paige_chat_interactive_settle').args.p_bundle_ref.turn_state.state, 'FINAL');
 receipts.length = 0; modelCalls = 0; modelReply = 'Done. I’ve created the task.';
 rec = scenario(zoneRpcs);
@@ -316,6 +317,20 @@ const readThenClaim = await capturedHandler()(req({ messages: [{ role: 'user', c
 const readThenClaimWire = await readThenClaim.text();
 assert.ok(!readThenClaimWire.includes('I’ve created the task.'), 'a read does not license a false completion claim');
 assert.ok(readThenClaimWire.includes('Actions are unavailable in this conversation'), 'a read plus a claimed action still gets the truthful refusal');
+// A completion claim the phrase check misses is never left standing alone: the no-action line follows it.
+receipts.length = 0; modelCalls = 0; modelReply = 'Acme is current. Task created for Friday.';
+rec = scenario(zoneRpcs);
+const missedClaim = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Check my time zone and create a follow-up task.' }] }, id(42)));
+const missedClaimWire = await missedClaim.text();
+assert.ok(missedClaimWire.includes('No business action was run.'), 'a missed completion phrase is contradicted by the no-action line');
+// A read that was refused is not grounding: the reply is replaced, exactly as when nothing was read.
+receipts.length = 0; modelCalls = 0; modelReply = 'Your business time zone looks fine to me.';
+rec = scenario({ rpcs: { ...zoneRpcs.rpcs, read_business_time_zone: { data: null, error: { code: '42501', message: 'x' } } } });
+const refusedRead = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Get me my business time zone status.' }] }, id(43)));
+const refusedReadWire = await refusedRead.text();
+assert.equal(rec.rpc.filter(c => c.name === 'read_business_time_zone').length, 1);
+assert.ok(!refusedReadWire.includes(modelReply), 'an ungrounded reply after a refused read is not kept');
+assert.ok(refusedReadWire.includes('Actions are unavailable in this conversation'));
 readToolUse = null;
 
 routeIntent = 'answer'; modelReply = 'Answered in words.'; receipts.length = 0; modelCalls = 0;

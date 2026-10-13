@@ -16831,9 +16831,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // run, a filed approval (review round 12). Any of these, a classifier write or a question card = the step ran.
       const STEP_CAPABLE_TOOLS = new Set(["growth_page_generate", "growth_funnel_generate", "deep_research", "draft_marketing_content", "propose_action", "ask_choices"]);
       let writeAttempts = 0;
-      // E4-S2 — admitted conversational reads that actually ran this turn (after every dispatch guard). A grounded
-      // read answer is the answer, even when the request was worded like an action ("get me Acme's payment status").
-      let admittedReadsRun = 0;
+      // E4-S2 — admitted conversational reads that returned data this turn, judged by each read's own result (a
+      // refused, unparseable, needs-input or failed read does not count). A grounded read answer is kept even when the
+      // request was worded like an action ("get me Acme's payment status"), but always with the actions-unavailable line.
+      let admittedReadsGrounded = 0;
+      const groundedReadResult = (content: string | undefined): boolean => {
+        let v: any;
+        try { v = JSON.parse(content ?? ""); } catch { return false; }
+        return !!v && typeof v === "object" && !Array.isArray(v) && v.success !== false && !v.error && v.forbidden_seat !== true
+          && v.refused_before_run !== true && !["refused", "needs_input", "unavailable"].includes(String(v.status ?? ""));
+      };
       // A write by the classifier (or a question card): what "the step was done" means. Kept separate from the
       // broad count above, which only decides whether the server may say nothing was saved (review round 11).
       let classifierWrites = 0;
@@ -17358,7 +17365,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             totalToolCalls += sumToolCost(executed);
             writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !(PLAIN_READ_TOOL.test(n) || NAMED_READ_TOOLS.has(n)); }).length;
-            admittedReadsRun += executed.filter((tc: any) => CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc?.function?.name ?? ""))).length;
+            admittedReadsGrounded += executed.filter((tc: any) => CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc?.function?.name ?? ""))
+              && groundedReadResult(toolResultContent.get(tc?.id))).length;
             // A step-capable tool is the step only when it succeeded and, on an accepted act, is what was offered.
             classifierWrites += executed.filter((tc: any) => {
               const n = String(tc?.function?.name ?? "");
@@ -17483,13 +17491,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // existing non-success interrupted state rather than misnaming it.
             else turnTracker.interrupted();
           }
-          const conversationalActionUnavailable = interactiveConversational && conversationalAct
+          const conversationalActUnmet = interactiveConversational && conversationalAct
             && acceptedKind !== "prose" && finalChunks && lastRoundCompletedAnswer && !unfinishedRound && !liveRuntimeScope
             && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
             && writeAttempts === 0 && classifierWrites === 0 && queuedApprovals.length === 0
-            && confirmTrace.length === 0 && crmResultTrace.length === 0
-            // An answer grounded in an admitted read stands; one that also claims something was done is still refused.
-            && !(admittedReadsRun > 0 && !(typeof finalAssistantText === "string" && saysItWasDone(finalAssistantText)));
+            && confirmTrace.length === 0 && crmResultTrace.length === 0;
+          // E4-S2 — an answer grounded in an admitted read is kept, and the actions-unavailable line is ALWAYS added
+          // beneath it: a mixed request ("get Acme's status and send a reminder") still learns nothing was sent, and a
+          // completion claim the phrase check misses ("Task created for Friday.") is contradicted, not left standing. A
+          // reply the check does recognise as claiming completion is replaced outright, exactly as without a read.
+          const groundedReadAnswerStands = conversationalActUnmet && admittedReadsGrounded > 0
+            && !(typeof finalAssistantText === "string" && saysItWasDone(finalAssistantText));
+          const conversationalActionUnavailable = conversationalActUnmet && !groundedReadAnswerStands;
+          if (groundedReadAnswerStands) {
+            finalAssistantText = `${String(finalAssistantText ?? "").trim()}\n\nActions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run.`;
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
           if (conversationalActionUnavailable) {
             finalAssistantText = "Actions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run. I can help you plan the next step.";
             finalChunks = [

@@ -34,6 +34,10 @@
 --    it is the provider's own statement that it accepted the send, so the binding becomes
 --    provider_accepted with that id (outcome_reason 'settled_by_provider_event', settled_from_state),
 --    messages.status 'sent' — never delivered — and the event is then applied like any other.
+--    A send that no event ever settles (SendGrid never received the request, or no event arrives) stays
+--    'unknown' and is never re-sent; a lead reply behind it stays at COMMS_EMAIL_APPROVAL_SEND_IN_PROGRESS,
+--    and the owner can only decline that reply. No screen exists yet for a person to review or resolve
+--    such a send (tracked in master §5, Experience 03 S3).
 --
 --    EARLY EVENTS. An event whose three claims (and recipient) name a governed SendGrid send that is
 --    still 'prepared' (younger than 24 h) or 'dispatching' (claimed less than 15 minutes ago — the

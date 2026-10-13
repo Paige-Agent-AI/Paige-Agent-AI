@@ -313,7 +313,9 @@ GRANT EXECUTE ON FUNCTION public.growth_form_set_intake(uuid, boolean, uuid, uui
 -- (round-3 security H1 — an unrelated accepted email to the same person used to satisfy it).
 --
 -- A reply (every send action behind the approval is owner.lead_followup) may become approved/sent ONLY
--- when metadata.governed_send names a messages row that is the governed email send
+-- when every action its new or stored metadata.action_id names is ITS OWN action (paige_actions.
+-- approval_id = this approval — so one reply's send can never complete another reply's action; round-4
+-- security LOW-1), and metadata.governed_send names a messages row that is the governed email send
 -- (meta.comms_email_binding) and:
 --   * the binding was prepared FOR THIS APPROVAL: comms_email_binding.approval_id = this approval's id
 --     (written by the governed door, 20271031000100) — an unrelated email to the same person, sent from
@@ -376,6 +378,20 @@ BEGIN
       USING ERRCODE = '42501',
             DETAIL  = 'reason_code=decline_only',
             HINT    = 'This message can be declined for now; sending it from an approval is not available yet.';
+  END IF;
+
+  -- Every action this approval names (NEW or stored OLD metadata.action_id) must be THIS approval's own
+  -- action (paige_actions.approval_id = NEW.id). Otherwise one reply's send could approve this row while
+  -- metadata.action_id points at ANOTHER reply's action, and the approve→action sync would mark that
+  -- other reply done with no send of its own (round-4 security LOW-1). The only writer that approves a
+  -- reply, _lead_reply_record_send, already requires the same link, and advance_action writes it when
+  -- it files the approval; editing action_id while pending stays possible, approving with it does not.
+  IF EXISTS (SELECT 1 FROM unnest(_ids) AS n(id)
+              WHERE NOT EXISTS (SELECT 1 FROM public.paige_actions a WHERE a.id = n.id AND a.approval_id = NEW.id)) THEN
+    RAISE EXCEPTION 'SEND_REQUIRES_GOVERNED_SEND: an outbound message is approved only once the business''s verified email has sent it; it can still be declined'
+      USING ERRCODE = '42501',
+            DETAIL  = 'reason_code=review_and_send',
+            HINT    = 'This approval names a reply that is not its own; review and send each reply from its own approval.';
   END IF;
 
   _gs  := NEW.metadata->'governed_send';

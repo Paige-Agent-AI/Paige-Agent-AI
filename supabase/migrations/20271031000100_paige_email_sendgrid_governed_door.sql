@@ -10,7 +10,7 @@
 --      sendgrid_status, sendgrid_verified_at; default NULL). Every existing row reads NULL = "not
 --      verified for SendGrid". Resend columns, statuses and triggers are untouched.
 --   2. guard_tenant_email_domain_sendgrid_facts: ONLY the verification service (service role, or a
---      non-JWT context such as a migration) may write those facts. tenant_email_domains is FOR ALL to a
+--      non-JWT context such as a migration — never a signed-in or anonymous request) may write those facts. tenant_email_domains is FOR ALL to a
 --      workspace admin under RLS, so without this an admin could forge "verified" and send as any
 --      domain through the platform SendGrid credential. Moving a row to a different domain or business
 --      clears the facts (a verified a.example cannot be renamed into a "verified" b.example).
@@ -56,9 +56,12 @@
 --     stored. Nothing here settles it, and an event that matches by fewer claims settles nothing.
 --     (§13: this header previously said "a correlated webhook settles it" while the receipt step only
 --     matched a stored provider id, which an unknown send never has; the custom_args triple match is
---     that settle path. If it is absent from 20271031000200, the send stays unknown for a person to
---     review — never re-sent.) The identical-content guard keeps refusing the same recipient + content
---     while it is unknown — no duplicate is possible.
+--     that settle path.) A send that no event ever settles — SendGrid never received the request, or
+--     its events never arrive — stays 'unknown' and is never re-sent; a lead reply behind it stays at
+--     COMMS_EMAIL_APPROVAL_SEND_IN_PROGRESS, and the owner's only way out today is to decline that reply.
+--     There is no screen yet for a person to review or resolve such a send (tracked in master §5,
+--     Experience 03 S3). The identical-content guard keeps refusing the same recipient + content while
+--     it is unknown — no duplicate is possible.
 --   * provision_email_connector_on_verify (Resend, hardcoded 'resend') is unchanged. No SendGrid
 --     connector is provisioned here: a SendGrid connector is created deliberately (operator step), and
 --     even then it sends nothing until (3) holds.
@@ -107,7 +110,11 @@ SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $$
 DECLARE
-  _trusted boolean := auth.uid() IS NULL OR coalesce(auth.role(), '') = 'service_role';
+  _role text := coalesce(auth.role(), '');
+  -- Trusted: the service role, or no JWT at all (a migration or operator database session) — the same
+  -- rule as guard_channel_connector_sendgrid_writer (20271031000250). Never authenticated or anon: an
+  -- anonymous request has no auth.uid() either, and must not pass as the verification service.
+  _trusted boolean := _role = 'service_role' OR (auth.uid() IS NULL AND _role NOT IN ('authenticated', 'anon'));
   _facts_written boolean;
 BEGIN
   IF TG_OP = 'INSERT' THEN

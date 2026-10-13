@@ -96,6 +96,17 @@ SELECT pg_temp.err(10, 'a signed-in admin cannot mark its domain SendGrid-verifi
 SELECT pg_temp.err(11, 'a signed-in admin cannot insert a domain row that arrives verified',
   $q$INSERT INTO public.tenant_email_domains (tenant_id, domain, from_email_local, from_name, sendgrid_status, sendgrid_domain_id, sendgrid_verified_at) VALUES ('aaaaaaaa-5e9d-4000-8000-000000000001','forged.example.invalid','x','X','verified','forged',now())$q$,
   '42501', 'PAIGE_EMAIL_VERIFICATION_PROTECTED%');
+-- The same trusted-writer rule as 20271031000250: a request without a signed-in subject is NOT the
+-- verification service when it is the anon role (round-4 security LOW-4); a database session with no JWT
+-- at all (a migration, an operator session) still is.
+SELECT set_config('request.jwt.claims', '{"role":"anon"}', true);
+SELECT pg_temp.err(16, 'an anonymous request cannot write a SendGrid verification fact',
+  $q$UPDATE public.tenant_email_domains SET sendgrid_status='pending' WHERE id='eeeeeeee-5e9d-4000-8000-000000000001'$q$,
+  '42501', 'PAIGE_EMAIL_VERIFICATION_PROTECTED%');
+SELECT pg_temp.as_none();
+UPDATE public.tenant_email_domains SET sendgrid_status='pending' WHERE id='eeeeeeee-5e9d-4000-8000-000000000001';
+SELECT pg_temp.ok(17, (SELECT sendgrid_status='pending' FROM public.tenant_email_domains WHERE id='eeeeeeee-5e9d-4000-8000-000000000001'),
+  'a database session with no JWT (a migration or operator session) may still record a SendGrid fact');
 SELECT pg_temp.as_service();
 SELECT pg_temp.err(12, '"verified" without the provider domain id is not a fact',
   $q$UPDATE public.tenant_email_domains SET sendgrid_status='verified', sendgrid_verified_at=now() WHERE id='eeeeeeee-5e9d-4000-8000-000000000001'$q$,
@@ -103,7 +114,9 @@ SELECT pg_temp.err(12, '"verified" without the provider domain id is not a fact'
 SELECT pg_temp.err(13, 'an unknown SendGrid status is refused',
   $q$UPDATE public.tenant_email_domains SET sendgrid_status='valid' WHERE id='eeeeeeee-5e9d-4000-8000-000000000001'$q$,
   '23514', '%tenant_email_domains_sendgrid_status_check%');
-UPDATE public.tenant_email_domains SET sendgrid_status='verified', sendgrid_domain_id='sg-dom-own', sendgrid_verified_at=now()
+-- Each domain carries its own provider domain id: one SendGrid domain belongs to one domain row
+-- (tenant_email_domains_sendgrid_domain_id, 20271031000250).
+UPDATE public.tenant_email_domains SET sendgrid_status='verified', sendgrid_domain_id='sg-dom-'||right(id::text,1), sendgrid_verified_at=now()
  WHERE id IN ('eeeeeeee-5e9d-4000-8000-000000000001','eeeeeeee-5e9d-4000-8000-000000000002');
 SELECT pg_temp.ok(14, (SELECT count(*)=2 FROM public.tenant_email_domains WHERE sendgrid_status='verified' AND id::text LIKE 'eeeeeeee-5e9d-%'),
   'the verification service records SendGrid verification');

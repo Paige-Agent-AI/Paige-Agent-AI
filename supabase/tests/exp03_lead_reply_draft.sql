@@ -9,7 +9,8 @@
 --      lands as a pending approval even when a caller asked for the auto lane.
 --   3. The send guard on paige_pending_approvals: an approval standing for a send_via_approval action —
 --      a reply, AND a legacy client.followup in the nested draft shape — is refused approved/sent with no
---      governed send, with a failed/prepared/UNKNOWN send, another business's send, another person's
+--      governed send, while naming an action that is not its own (another reply's — round-4 LOW-1, in one
+--      write or two), with a failed/prepared/UNKNOWN send, another business's send, another person's
 --      send, a mismatched operation, a re-used send, an accepted send prepared for NO reply or for
 --      ANOTHER reply, an approval row in another business (G2), or with metadata.action_id stripped in
 --      the same write; a legacy client.followup is refused decline_only EVEN citing an accepted email
@@ -25,8 +26,9 @@
 --      a replay naming another reply / no reply is refused; a second operation while the first is
 --      prepared or unknown (SEND_IN_PROGRESS) or accepted (ALREADY_SENT) is refused; a declined reply, a
 --      non-reply, a legacy, a foreign, a missing approval, a reply to another person and a malformed id
---      are refused; an approval CITING an unresolved send is refused; the unique index alone refuses a
---      second live send; after a failure a new send is allowed.
+--      are refused (the approval's business and the action's person each on its own); an approval CITING
+--      an unresolved send is refused; the unique index alone refuses a second live send; after a failure
+--      a new send is allowed.
 --   4. lead_reply_record_send / lead_reply_record_send_service: no grant for anon/service_role (and the
 --      service twin none for anon/authenticated; the shared body none for anyone); refuses a plain member,
 --      another business, a wrong kind, null arguments, a send made by another person, a second send while
@@ -370,8 +372,14 @@ SELECT pg_temp.refused(format($$SELECT pg_temp.approve_with(%L,9,NULL,%L)$$,pg_t
 INSERT INTO public.paige_pending_approvals(id,type,draft_content,status,tenant_id,category,metadata)
  VALUES ('e3000000-0000-4000-8000-0000000a0201','cs_draft','{}'::jsonb,'pending','e3000000-0000-4000-8000-00000000bbbb','owner.lead_followup',
    jsonb_build_object('action_id',(SELECT result->>'action_id' FROM filed WHERE label='a2')));
+-- The action points back at that approval, so the approval names only its own action (round-4 LOW-1)
+-- and the message-business check is the one left to refuse it.
+SELECT pg_temp.check_true((SELECT approval_id IS NULL FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='a2')),
+  'fixture: the a2 reply was filed but not drafted (no approval yet)');
+UPDATE public.paige_actions SET approval_id='e3000000-0000-4000-8000-0000000a0201' WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='a2');
 SELECT pg_temp.refused($$SELECT pg_temp.approve_with('e3000000-0000-4000-8000-0000000a0201',11)$$,
   '42501','SEND_REQUIRES_GOVERNED_SEND%','(G2) an approval in another business cannot be completed by this business''s send, even one prepared for it');
+UPDATE public.paige_actions SET approval_id=NULL WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='a2');
 SELECT pg_temp.refused_detail(format($$UPDATE public.paige_pending_approvals SET status='approved' WHERE id=%L$$,pg_temp.ap('a1')),
   '42501','SEND_REQUIRES_GOVERNED_SEND%','reason_code=review_and_send','a reply''s refusal points the owner to review and send it (reason_code review_and_send)');
 SELECT pg_temp.check_true((SELECT status='pending' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('a1'))
@@ -512,6 +520,43 @@ UPDATE public.paige_pending_approvals SET status='approved' WHERE id='e3000000-0
 SELECT pg_temp.check_true((SELECT status='approved' FROM public.paige_pending_approvals WHERE id='e3000000-0000-4000-8000-0000000a0001'),
   'a plain approval with no action still approves');
 
+-- Round-4 security LOW-1: an approval may name only ITS OWN action. Reply q1 is sent for real; approving
+-- q1 with that send while metadata.action_id points at reply q2's action would mark q2 done unsent.
+INSERT INTO ap VALUES ('q1',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0c1')),
+                      ('q2',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0c2'));
+CREATE FUNCTION pg_temp.act_of(l text) RETURNS uuid LANGUAGE sql AS $$ SELECT id FROM public.paige_actions WHERE approval_id=pg_temp.ap(l) $$;
+SELECT pg_temp.prep_a(51,ap=>pg_temp.ap('q1')::text); SELECT pg_temp.accept(51);
+SELECT pg_temp.check_true(pg_temp.st(51)='provider_accepted'
+  AND (SELECT meta#>>'{comms_email_binding,approval_id}'=pg_temp.ap('q1')::text FROM public.messages WHERE id=pg_temp.msg(51))
+  AND pg_temp.act_of('q1') IS NOT NULL AND pg_temp.act_of('q2') IS NOT NULL AND pg_temp.act_of('q1')<>pg_temp.act_of('q2'),
+  'fixture: two drafted replies to one lead; q1''s own send was accepted, prepared for q1');
+SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
+SELECT pg_temp.ap('q1') AS low1_q1, pg_temp.act_of('q2') AS low1_q2_act, pg_temp.gs(51)::text AS low1_gs \gset
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.refused_detail(format($$UPDATE public.paige_pending_approvals SET status='approved',
+     metadata=metadata||%L::jsonb||jsonb_build_object('action_id',%L::text) WHERE id=%L$$,:'low1_gs',:'low1_q2_act',:'low1_q1'),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','reason_code=review_and_send',
+  '(LOW-1) the owner''s direct write approving q1 with its own send while naming q2''s action is refused');
+RESET ROLE;
+SELECT pg_temp.as_service();
+-- Two steps: re-pointing action_id while pending is a plain edit (no status change) …
+UPDATE public.paige_pending_approvals SET metadata=metadata||jsonb_build_object('action_id',pg_temp.act_of('q2')) WHERE id=pg_temp.ap('q1');
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(51) WHERE id=%L$$,pg_temp.ap('q1')),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','(LOW-1) … but approving afterwards, with the stored action_id naming q2''s action, is refused');
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=(metadata-'action_id')||pg_temp.gs(51) WHERE id=%L$$,pg_temp.ap('q1')),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','(LOW-1) … and dropping that action_id in the approving write does not launder it (the stored one still names q2)');
+SELECT pg_temp.check_true((SELECT bool_and(status='pending') FROM public.paige_pending_approvals WHERE id IN (pg_temp.ap('q1'),pg_temp.ap('q2')))
+  AND (SELECT bool_and(status='pending_approval' AND executed_at IS NULL) FROM public.paige_actions WHERE id IN (pg_temp.act_of('q1'),pg_temp.act_of('q2'))),
+  '(LOW-1) both replies are still pending and neither action is done');
+-- Control: pointed back at its own action, q1 approves with its own send; only q1's action completes.
+UPDATE public.paige_pending_approvals SET metadata=metadata||jsonb_build_object('action_id',pg_temp.act_of('q1')) WHERE id=pg_temp.ap('q1');
+UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(51) WHERE id=pg_temp.ap('q1');
+SELECT pg_temp.check_true((SELECT status='approved' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('q1'))
+  AND (SELECT status='done' FROM public.paige_actions WHERE id=pg_temp.act_of('q1'))
+  AND (SELECT status='pending' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('q2'))
+  AND (SELECT status='pending_approval' AND executed_at IS NULL FROM public.paige_actions WHERE id=pg_temp.act_of('q2')),
+  '(LOW-1) control: naming its own action, q1 approves with its own send; q2 stays pending, its action not done');
+
 -- ── 4. lead_reply_record_send. ─────────────────────────────────────────────────────────────────────
 INSERT INTO ap VALUES ('p', pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b1')),
                       ('d', pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0b2')),
@@ -619,6 +664,27 @@ SELECT pg_temp.refused($$SELECT pg_temp.prep_a(42,'e3000000-0000-4000-8000-00000
   'a reply to one lead cannot be sent to another person');
 SELECT pg_temp.refused($$SELECT pg_temp.prep_a(42,ap=>'not-a-uuid')$$,'22023','COMMS_EMAIL_CONTENT_INVALID',
   'a malformed approval id is refused');
+-- Each of prepare's approval checks on its own (round-4 verifier finding 3): the cases above trip several.
+-- (a) The approval carries no contact, so only the ACTION's contact differs from the recipient's.
+INSERT INTO ap VALUES ('nocontact',pg_temp.reply_approval('e3000000-0000-4000-8000-00000005e0c3'));
+UPDATE public.paige_pending_approvals SET contact_id=NULL WHERE id=pg_temp.ap('nocontact');
+SELECT pg_temp.refused($$SELECT pg_temp.prep_a(52,'e3000000-0000-4000-8000-0000000c0002','lead.a2@example.invalid',pg_temp.apt('nocontact'))$$,
+  '42501','COMMS_EMAIL_APPROVAL_INVALID','a reply whose approval names no person is still refused for another person (the action''s lead decides)');
+-- (b) A reply approval of ANOTHER business whose action (and nothing else) names this business's lead:
+--     only the approval's business differs.
+INSERT INTO filed VALUES ('fb', pg_temp.file_reply('e3000000-0000-4000-8000-00000000bbbb','e3000000-0000-4000-8000-0000000c00b1','e3000000-0000-4000-8000-00000005e0c4'));
+SELECT pg_temp.draft((SELECT (result->>'action_id')::uuid FROM filed WHERE label='fb'),'e3000000-0000-4000-8000-00000000bbbb');
+INSERT INTO ap VALUES ('foreign',(SELECT approval_id FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='fb')));
+UPDATE public.paige_actions SET contact_id='e3000000-0000-4000-8000-0000000c0001' WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='fb');
+UPDATE public.paige_pending_approvals SET contact_id=NULL WHERE id=pg_temp.ap('foreign');
+SELECT pg_temp.check_true((SELECT a.tenant_id='e3000000-0000-4000-8000-00000000bbbb' AND a.action_kind='owner.lead_followup'
+    AND a.contact_id='e3000000-0000-4000-8000-0000000c0001' AND a.approval_id=p.id AND p.tenant_id=a.tenant_id AND p.contact_id IS NULL
+    AND p.status='pending' AND p.metadata->>'action_id'=a.id::text
+   FROM public.paige_actions a JOIN public.paige_pending_approvals p ON p.id=a.approval_id
+  WHERE a.id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='fb')),
+  'fixture: business B''s pending reply, its own action, naming business A''s lead, approval with no person');
+SELECT pg_temp.refused($$SELECT pg_temp.prep_a(53,ap=>pg_temp.apt('foreign'))$$,'42501','COMMS_EMAIL_APPROVAL_INVALID',
+  'another business''s reply is refused on the business alone, even naming this business''s lead');
 UPDATE public.paige_pending_approvals SET metadata=metadata||jsonb_build_object('governed_send',jsonb_build_object('operation_id',pg_temp.op(23)))
  WHERE id=pg_temp.ap('cite');
 SELECT pg_temp.refused($$SELECT pg_temp.prep_a(43,ap=>pg_temp.apt('cite'))$$,'55000','COMMS_EMAIL_APPROVAL_SEND_IN_PROGRESS',
@@ -626,7 +692,8 @@ SELECT pg_temp.refused($$SELECT pg_temp.prep_a(43,ap=>pg_temp.apt('cite'))$$,'55
 SELECT pg_temp.refused(format($$UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,approval_id}',to_jsonb(%L::text)) WHERE id=%L$$,pg_temp.apt('ok'),pg_temp.msg(40)),
   '23505','%messages_comms_email_approval_live%','the unique index alone refuses a second live send for one reply (prepare bypassed)');
 SELECT pg_temp.check_true((SELECT count(*)=0 FROM public.messages WHERE meta#>>'{comms_email_binding,operation_id}' IN
-   (pg_temp.op(37)::text,pg_temp.op(38)::text,pg_temp.op(41)::text,pg_temp.op(42)::text,pg_temp.op(43)::text)),
+   (pg_temp.op(37)::text,pg_temp.op(38)::text,pg_temp.op(41)::text,pg_temp.op(42)::text,pg_temp.op(43)::text,
+    pg_temp.op(52)::text,pg_temp.op(53)::text)),
   'no refused prepare wrote a message');
 SELECT pg_temp.prep_a(31,ap=>pg_temp.apt('f')); SELECT pg_temp.accept(31);
 SELECT pg_temp.check_true(pg_temp.st(31)='provider_accepted','after a reply''s send FAILED, a new send for it is prepared and accepted');

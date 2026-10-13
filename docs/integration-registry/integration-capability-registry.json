@@ -1589,7 +1589,7 @@
         {
           "path": "supabase/functions/_shared/email/providers.ts",
           "role": "provider_adapter",
-          "note": "SendGridProvider (Mail Send v3, 202 + X-Message-Id), from #1995."
+          "note": "No SendGrid adapter: buildProvider resolves sendgrid to a refusing provider (Experience 03 round-4 LOW-3); SendGrid sends only through send-message's governed arm."
         },
         {
           "path": "supabase/functions/_shared/comms-email/readiness.ts",

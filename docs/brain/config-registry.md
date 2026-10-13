@@ -536,7 +536,7 @@ Values intentionally omitted.
   `PLATFORM_SUPPORT_EMAIL`.
 - **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
   - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
-    - `_shared/email/providers.ts`: the `SendGridProvider` case, used when there is no tenant key;
+    - `_shared/email/providers.ts` no longer reads it: `buildProvider` resolves `sendgrid` to a provider that refuses to send, so SendGrid is reachable only through the governed door (Experience 03 round-4 security LOW-3; the `SendGridProvider` adapter was removed);
     - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation; anything else is refused before any provider call (`paige_email_requires_governed_send`);
     - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);
     - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;

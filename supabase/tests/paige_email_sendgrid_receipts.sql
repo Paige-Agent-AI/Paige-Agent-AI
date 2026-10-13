@@ -22,7 +22,8 @@
 --      custom_args claims (an absent one is claims_missing); a binding not provider_accepted, or whose
 --      stored id differs, is refused.
 --   3. Settle: a SendGrid send finalized 'unknown' (or a stale 'dispatching') is settled by an event only
---      when all three claims AND the recipient match; early events for a 'prepared'/'dispatching' send
+--      when all three claims AND the recipient match — and never a failed or refused SendGrid send, a Resend
+--      send, or a send whose binding already holds another provider id, even with every claim matching; early events for a 'prepared'/'dispatching' send
 --      come back 'pending' (nothing journalled, nothing appended) and are bounded; a failing applier
 --      still journals (apply_failed) and keeps its email_send_log row.
 --   4. History filters: a rejected approval, or a reply action about another contact, writes no history;
@@ -328,6 +329,32 @@ SELECT pg_temp.check_true(pg_temp.b(12)->>'state'='unknown' AND pg_temp.b(14)->>
 -- ── 2. Receipts (as the webhook's real role) ───────────────────────────────────────────────────────
 CREATE TEMP TABLE snap(label text PRIMARY KEY, v text) ON COMMIT DROP;
 GRANT ALL ON snap, ap TO service_role;
+-- Sends the settle path must NEVER settle, though an event's three claims and address all match them
+-- (round-4 verifier finding 2):
+--   41: a SendGrid send that FAILED (the provider refused it at dispatch);
+--   42: a SendGrid send REFUSED before dispatch;
+--   43: a Resend send whose outcome is unknown (a SendGrid event is never about a Resend send);
+--   44: a SendGrid send whose outcome is unknown but whose binding already holds another provider id.
+SELECT pg_temp.prep_a(41,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid');
+SELECT public.finalize_comms_email_send(pg_temp.msg(41),pg_temp.op(41),'failed',NULL,'provider_rejected',pg_temp.claim_sg(41));
+SELECT pg_temp.prep_a(42,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid');
+SELECT public.finalize_comms_email_send(pg_temp.msg(42),pg_temp.op(42),'refused',NULL,'sender_unverified',NULL);
+UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,provider}','"sendgrid"') WHERE id=pg_temp.msg(42);
+SELECT pg_temp.prep_a(43,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid');
+SELECT public.finalize_comms_email_send(pg_temp.msg(43),pg_temp.op(43),'unknown',NULL,'provider_timeout',
+  (public.claim_comms_email_send(pg_temp.msg(43),pg_temp.op(43))->>'attempts')::int);
+SELECT pg_temp.prep_a(44,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid');
+SELECT public.finalize_comms_email_send(pg_temp.msg(44),pg_temp.op(44),'unknown',NULL,'provider_timeout',pg_temp.claim_sg(44));
+UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,provider_message_id}','"sgOther44"') WHERE id=pg_temp.msg(44);
+SELECT pg_temp.check_true(pg_temp.b(41)->>'state'='failed' AND pg_temp.b(41)->>'provider'='sendgrid'
+  AND pg_temp.b(42)->>'state'='refused' AND pg_temp.b(42)->>'provider'='sendgrid'
+  AND pg_temp.b(43)->>'state'='unknown' AND pg_temp.b(43)->>'provider'='resend'
+  AND pg_temp.b(44)->>'state'='unknown' AND pg_temp.b(44)->>'provider'='sendgrid' AND pg_temp.b(44)->>'provider_message_id'='sgOther44'
+  AND (SELECT bool_and(provider_message_id IS NULL) FROM public.messages WHERE id IN (pg_temp.msg(41),pg_temp.msg(42),pg_temp.msg(43),pg_temp.msg(44))),
+  'fixture: a failed and a refused SendGrid send, an unknown Resend send, and an unknown SendGrid send already holding another id');
+INSERT INTO snap SELECT 'never_settled', md5(string_agg(id::text||status||meta::text||coalesce(error,'')||coalesce(provider_message_id,''),'|' ORDER BY id))
+  FROM public.messages WHERE id IN (pg_temp.msg(41),pg_temp.msg(42),pg_temp.msg(43),pg_temp.msg(44));
+
 -- Every message the receipts below may NOT touch: business B's, and A's message 3 (never addressed).
 INSERT INTO snap SELECT 'untouched', md5(string_agg(id::text||status||meta::text||coalesce(error,''),'|' ORDER BY id))
   FROM public.messages WHERE tenant_id IN ('e5000000-0000-4000-8000-00000000bbbb') OR id=pg_temp.msg(3);
@@ -515,6 +542,24 @@ SELECT pg_temp.check_true(pg_temp.evm('b14','sgSettle14',14,'bounced','client.th
   AND pg_temp.b(14)->>'settled_from_state'='dispatching' AND pg_temp.b(14)->>'state'='provider_accepted'
   AND pg_temp.status(14)='failed' AND pg_temp.b(14)->>'delivery_state'='bounced',
   'settle: a stale dispatching send is settled too, and a bounce marks it failed (never "delivered")');
+
+-- Never settled, though all three claims and the address match (round-4 verifier finding 2).
+SELECT pg_temp.check_true(pg_temp.evm('ns41','sgSettle41',41,'delivered','client.three@example.invalid')='processed'
+  AND pg_temp.b(41)->>'state'='failed' AND pg_temp.j('ns41')->>'correlation'='uncorrelated' AND pg_temp.j('ns41')->>'correlation_reason'='not_provider_accepted',
+  'settle: a FAILED SendGrid send is never settled by an event (not_provider_accepted)');
+SELECT pg_temp.check_true(pg_temp.evm('ns42','sgSettle42',42,'delivered','client.three@example.invalid')='processed'
+  AND pg_temp.b(42)->>'state'='refused' AND pg_temp.j('ns42')->>'correlation'='uncorrelated' AND pg_temp.j('ns42')->>'correlation_reason'='not_provider_accepted',
+  'settle: a REFUSED SendGrid send is never settled by an event (not_provider_accepted)');
+SELECT pg_temp.check_true(pg_temp.evm('ns43','sgSettle43',43,'delivered','client.three@example.invalid')='processed'
+  AND pg_temp.b(43)->>'state'='unknown' AND pg_temp.j('ns43')->>'correlation'='uncorrelated' AND pg_temp.j('ns43')->>'correlation_reason'='provider_mismatch',
+  'settle: a Resend send whose outcome is unknown is never settled by a SendGrid event (provider_mismatch)');
+SELECT pg_temp.check_true(pg_temp.evm('ns44','sgSettle44',44,'delivered','client.three@example.invalid')='processed'
+  AND pg_temp.b(44)->>'state'='unknown' AND pg_temp.b(44)->>'provider_message_id'='sgOther44' AND pg_temp.j('ns44')->>'correlation'='uncorrelated' AND pg_temp.j('ns44')->>'correlation_reason'='binding_id_mismatch',
+  'settle: an unknown send whose binding already holds another provider id is not overwritten (binding_id_mismatch)');
+SELECT pg_temp.check_true((SELECT v FROM snap WHERE label='never_settled') =
+  (SELECT md5(string_agg(id::text||status||meta::text||coalesce(error,'')||coalesce(provider_message_id,''),'|' ORDER BY id))
+     FROM public.messages WHERE id IN (pg_temp.msg(41),pg_temp.msg(42),pg_temp.msg(43),pg_temp.msg(44))),
+  'settle: those four sends are byte-for-byte as they were (state, provider id, status)');
 
 -- ── Early events (M3): the send is still being handed over → 'pending', nothing kept, bounded. ─────
 SELECT pg_temp.check_true(pg_temp.evm('e15','sgEarly15',15,'delivered','client.three@example.invalid')='pending',

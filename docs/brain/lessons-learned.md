@@ -6,6 +6,33 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### A migration that deadlocked against a schema dump, and the header that said it would half-apply (2026-10-13, #2099)
+
+**Symptom → root cause → rule.** The #2099 migration passed every proof and CI. Its first production
+apply then died with `deadlock detected` at statement 12. A Supavisor schema-dump session was reading
+functions one by one, holding `communication_preferences` and then wanting `communications_consents`.
+The migration takes those two tables in the opposite order. A second applier session was also running
+the same file at the same time.
+
+**The trap is in what you assume next.** The workflow's header says `db push` does not wrap a file in
+a transaction, so a failure mid-file leaves earlier statements committed. Production said otherwise:
+read-only checks showed the statements before the failure (the recorder's new body and its grants)
+had NOT persisted. The file rolled back as a whole.
+
+**Rule:**
+- After a failed apply, read production before acting. Check the migration row, the objects the file
+  creates, and the bodies and grants it replaces. Neither "half-applied" nor "nothing happened" is
+  safe to assume.
+- Retry only once nothing holds or waits on the tables involved (`pg_stat_activity`,
+  `pg_blocking_pids`), and retry only once.
+- A migration that takes exclusive locks on more than one hot table is exposed to any concurrent
+  reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
+  `lock_timeout`, narrows the window but does not close it.
+
+### Verified enrollment can outpace the mounted workspace provider (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** Welcome received verified server enrollment and navigated, but real SoloEntry refused an empty workspace provider accepted before fulfillment. Server record writes emit no browser Auth event; a navigation-only mock missed this. Refresh the same canonical provider, prove an accepted new list has React-committed, and match fresh actor/profile/server-selected tenant/address before entry. The reference change is a completion marker, never authority. Failed refresh preserves old context, so merely awaiting its void Promise is insufficient. Subject invalidation must clear every prior actor status/error and scope its presentation to the corresponding current view; in-flight cancellation tests alone missed a settled-failure transition. Use the real provider/dispatcher in integration proof; keep native rendering, hosted release and protected ordinary-owner acceptance distinct.
+
 ### A per-person field is not a business setting (2026-10-12, Experience 04)
 
 **Symptom → root cause → rule.** The first E4-S1b draft took "the business owner's time zone" from
@@ -3398,3 +3425,23 @@ computed outline, not by reading the CSS (it looks correct). Four shipped Campai
   file. Run `node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs --self-test` locally before
   pushing any `_shared` change. Re-pinning is a review decision, not a fix: S1b reverted its rationale wording
   instead and carried the disclosure in an unpinned file (`paige-spine/domains/campaigns.ts`).
+
+## 2026-10-13 — `REVOKE … FROM PUBLIC` left the public consent writer open to `anon` for months (#2087)
+
+`record_communications_consent`, `has_sms_consent` and `has_email_marketing_consent` were written with
+`REVOKE ALL … FROM PUBLIC; GRANT EXECUTE … TO authenticated, service_role`, and the repo's own consent test
+asserted anon held nothing on the table. Production disagreed on both: Supabase's default privileges grant
+`anon` and `authenticated` EXECUTE on every new function and full DML on every new table explicitly, not
+through PUBLIC, so revoking PUBLIC removes nothing. The test that would have caught it never ran in CI.
+
+- **Revoke from `anon` and `authenticated` by name**, and grant back exactly what is meant. `FROM PUBLIC`
+  alone is not a revocation on Supabase.
+- **A grant assertion proves only the database it ran on.** Prove grants in the database-contract job, which
+  reproduces production's grants before applying the change; a local-only test can pass against a schema
+  production does not have.
+- **An RLS policy is a write path.** The "self insert" policy let any signed-in user write complete
+  platform SMS evidence for any number. Inventory policies alongside functions when asking "who can write
+  this?" (§37).
+- **The guard belongs in the body too (§59).** The recorder now refuses a browser role itself, so a later
+  grant cannot reopen it; the proof grants anon EXECUTE back on purpose and expects the refusal.
+

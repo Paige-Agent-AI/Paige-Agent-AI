@@ -82,6 +82,7 @@ const ALL_KEYS = [
   "knowledge.save",
   "pipeline.deal_stage_evidence",
   "planning.create",
+  "planning.weekly_commitment_check",
   "research.web",
   "skills.run",
   "social.presence",

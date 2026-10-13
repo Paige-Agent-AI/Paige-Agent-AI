@@ -1,0 +1,45 @@
+{
+  "label": "dark-error-900x1000",
+  "requested": {
+    "width": 900,
+    "height": 1000
+  },
+  "screenshotDimensions": {
+    "height": 1000,
+    "width": 900
+  },
+  "url": "http://127.0.0.1:5205/welcome.html?scenario=read-error&theme=dark",
+  "dom": {
+    "controls": [
+      {
+        "bottom": 621.1500244140625,
+        "height": 40,
+        "name": "Retry verification",
+        "top": 581.1500244140625,
+        "width": 448
+      },
+      {
+        "bottom": 673.1500244140625,
+        "height": 40,
+        "name": "Contact support",
+        "top": 633.1500244140625,
+        "width": 448
+      }
+    ],
+    "focus": {
+      "name": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if(e){c.add(e|| '')}else{c.add('dark');}if(e==='light'||e==='dark'||!e)d.style.colorScheme=e||'dark'}catch(t){}}();Synthetic Welcome render — no Auth, database or provider requestsWe could not open your workspaceYour enrollment is verified, but PAIGE could not confirm the selected workspace. Retry verification or contact support with this reference.Reference: synthetic-referenceRetry verificationContact support",
+      "tag": "BODY"
+    },
+    "heading": "We could not open your workspace",
+    "overflow": false,
+    "reducedMotion": true,
+    "theme": "dark",
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    }
+  },
+  "state": "- generic: Synthetic Welcome render — no Auth, database or provider requests\n- main:\n  - region \"We could not open your workspace\":\n    - img \"Paige\"\n    - status:\n      - heading \"We could not open your workspace\" [level=1]\n      - paragraph: Your enrollment is verified, but PAIGE could not confirm the selected workspace. Retry verification or contact support with this reference.\n      - paragraph: \"Reference: synthetic-reference\"\n    - button \"Retry verification\"\n    - link \"Contact support\":\n      - /url: mailto:support@paigeagent.ai?subject=Solo%20enrollment%20verification",
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "captureAPI": "native screenshot after settled DOM"
+}

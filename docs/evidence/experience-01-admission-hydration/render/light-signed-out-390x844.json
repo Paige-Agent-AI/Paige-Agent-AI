@@ -1,0 +1,45 @@
+{
+  "label": "light-signed-out-390x844",
+  "requested": {
+    "width": 390,
+    "height": 844
+  },
+  "screenshotDimensions": {
+    "height": 843,
+    "width": 390
+  },
+  "url": "http://127.0.0.1:5205/welcome.html?scenario=signed-out&theme=light",
+  "dom": {
+    "controls": [
+      {
+        "bottom": 528.75,
+        "height": 40,
+        "name": "Sign in and resume",
+        "top": 488.75,
+        "width": 342.3999938964844
+      },
+      {
+        "bottom": 580.75,
+        "height": 40,
+        "name": "Contact support",
+        "top": 540.75,
+        "width": 342.3999938964844
+      }
+    ],
+    "focus": {
+      "name": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if(e){c.add(e|| '')}else{c.add('light');}if(e==='light'||e==='dark'||!e)d.style.colorScheme=e||'light'}catch(t){}}();Synthetic Welcome render — no Auth, database or provider requestsSign in to finish verificationYour session ended before server verification completed. Sign in again to safely resume.Sign in and resumeContact support",
+      "tag": "BODY"
+    },
+    "heading": "Sign in to finish verification",
+    "overflow": false,
+    "reducedMotion": true,
+    "theme": "light",
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "state": "- generic: Synthetic Welcome render — no Auth, database or provider requests\n- main:\n  - region \"Sign in to finish verification\":\n    - img \"Paige\"\n    - status:\n      - heading \"Sign in to finish verification\" [level=1]\n      - paragraph: Your session ended before server verification completed. Sign in again to safely resume.\n    - button \"Sign in and resume\"\n    - link \"Contact support\":\n      - /url: mailto:support@paigeagent.ai?subject=Solo%20enrollment%20verification",
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "captureAPI": "native screenshot after settled DOM"
+}

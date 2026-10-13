@@ -1,0 +1,27 @@
+{
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "reviewer": "Independent non-author render_evidence_review",
+  "sourceSha256": "0059f9fd7eec039a1f9681bee7022dd9f8e6676faa838c58fff66579df4a537c",
+  "capturesInspected": 16,
+  "imageHashesMatchMatrix": true,
+  "verdict": "SHIP within bounded rendered class",
+  "materialFixes": [],
+  "findings": "All16 source-bound native frames and image hashes rechecked. Settled failure followed by simulated sign-out/different actor clears prior verified/reference/retry copy in actual Welcome. No material visual regression; bounded SHIP. Real authenticated transitions and full coverage remain unverified.",
+  "unverified": [
+    "Native zoom",
+    "Screen reader",
+    "Temporal motion and preference toggle",
+    "Complete rendered state matrix",
+    "Actual SoloEntry in browser",
+    "Production",
+    "Customer authentication and acceptance"
+  ],
+  "authorization": "Review only; no production/customer acceptance or merge authorization inferred",
+  "previousReview": {
+    "head": "15a64f11fb13d491440a935133a4e5abbf84e921",
+    "sourceSha256": "f0f9dc35e82f68dcfde966a7d203617d566c3ea621850352be8d99dd256d4502",
+    "capturesInspected": 13,
+    "verdict": "SHIP within bounded rendered class"
+  },
+  "sourcePayloadCommit": "46d6d3b80b45d1c31adacc9956cdf318cab0d093"
+}

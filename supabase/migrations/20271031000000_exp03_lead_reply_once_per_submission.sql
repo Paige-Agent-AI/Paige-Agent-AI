@@ -357,10 +357,12 @@ BEGIN
   END IF;
 
   _raw := btrim(NEW.metadata->>'action_id');
-  IF _raw ~ _uuid THEN _ids := _ids || _raw::uuid; END IF;
+  IF _raw IS NOT NULL THEN BEGIN _ids := _ids || _raw::uuid; EXCEPTION WHEN invalid_text_representation THEN NULL; END; END IF;
   IF TG_OP = 'UPDATE' THEN
     _raw := btrim(OLD.metadata->>'action_id');
-    IF _raw ~ _uuid THEN _ids := _ids || _raw::uuid; END IF;
+    -- Any text Postgres casts to a uuid ({…}, no dashes, upper case) names the action, exactly as
+    -- trg_ppa_sync_action reads it (round-5 verifier); only text that is not a uuid is ignored.
+    IF _raw IS NOT NULL THEN BEGIN _ids := _ids || _raw::uuid; EXCEPTION WHEN invalid_text_representation THEN NULL; END; END IF;
   END IF;
 
   SELECT array_agg(DISTINCT a.action_kind ORDER BY a.action_kind) INTO _kinds

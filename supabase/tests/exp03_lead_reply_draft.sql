@@ -409,6 +409,17 @@ SELECT pg_temp.refused_detail(format($$UPDATE public.paige_pending_approvals SET
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=jsonb_build_object('action_id',upper(%L))
      WHERE id='e3000000-0000-4000-8000-0000000a0101'$$,pg_temp.fa('sx')),
   '42501','SEND_REQUIRES_GOVERNED_SEND%','an upper-case action_id names the same action');
+-- Round-5 verifier: Postgres also casts '{…}' and the 32 hex digits with no dashes to a uuid, and
+-- trg_ppa_sync_action follows either. The guard must read them the same way.
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=jsonb_build_object('action_id','{'||%L||'}')
+     WHERE id='e3000000-0000-4000-8000-0000000a0101'$$,pg_temp.fa('sx')),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','(r5) a plain approval naming a client.followup action as {uuid} is refused (H1 variant)');
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=jsonb_build_object('action_id',replace(%L,'-',''))
+     WHERE id='e3000000-0000-4000-8000-0000000a0101'$$,pg_temp.fa('sx')),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','(r5) a plain approval naming a client.followup action without dashes is refused (H1 variant)');
+SELECT pg_temp.check_true((SELECT status<>'done' FROM public.paige_actions WHERE id=pg_temp.fa('sx'))
+  AND (SELECT executed_at IS NULL FROM public.paige_actions WHERE id=pg_temp.fa('sx')),
+  '(r5) after both refusals the client.followup action is not done');
 SELECT pg_temp.refused($$UPDATE public.paige_pending_approvals SET status='approved', metadata='{}'::jsonb WHERE id='e3000000-0000-4000-8000-0000000a0102'$$,
   '42501','SEND_REQUIRES_GOVERNED_SEND%','signal 2 alone — the STORED (OLD) metadata.action_id, dropped in the approving write — is refused');
 SELECT pg_temp.refused($$UPDATE public.paige_pending_approvals SET status='approved' WHERE id='e3000000-0000-4000-8000-0000000a0103'$$,
@@ -537,6 +548,12 @@ SELECT pg_temp.refused_detail(format($$UPDATE public.paige_pending_approvals SET
      metadata=metadata||%L::jsonb||jsonb_build_object('action_id',%L::text) WHERE id=%L$$,:'low1_gs',:'low1_q2_act',:'low1_q1'),
   '42501','SEND_REQUIRES_GOVERNED_SEND%','reason_code=review_and_send',
   '(LOW-1) the owner''s direct write approving q1 with its own send while naming q2''s action is refused');
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved',
+     metadata=metadata||%L::jsonb||jsonb_build_object('action_id','{'||%L::text||'}') WHERE id=%L$$,:'low1_gs',:'low1_q2_act',:'low1_q1'),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','(LOW-1, r5) the same write naming q2''s action as {uuid} is refused');
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved',
+     metadata=metadata||%L::jsonb||jsonb_build_object('action_id',replace(%L::text,'-','')) WHERE id=%L$$,:'low1_gs',:'low1_q2_act',:'low1_q1'),
+  '42501','SEND_REQUIRES_GOVERNED_SEND%','(LOW-1, r5) the same write naming q2''s action without dashes is refused');
 RESET ROLE;
 SELECT pg_temp.as_service();
 -- Two steps: re-pointing action_id while pending is a plain edit (no status change) …

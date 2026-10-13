@@ -1,0 +1,52 @@
+# Experience 05 — bounded historical-status performance repair
+
+2026-10-13. Development candidate; release and authenticated customer outcome are not inferred.
+
+## Owner intent and scope
+
+The owner authorized one forward repair for #2112's post-merge P2, one independent non-author review of the distinct correction, exact-head CI and guarded release. The same direction authorizes the two factual corrections and normal closeout of #2116. The historical getter was released by #2112 at main `f5c79b7da0786699f4b915bda33ef40a4b860601`; its applied migration is immutable. The defect is the missing access paths for per-process verified history and correlated receipt lookup, not missing execution authority or another scheduler.
+
+Ten-question pre-edit routing: the owner job is to inspect one approved recurring commitment after accumulated history; E5 owns this continuity read; it belongs to the existing Automation capability family; Spine `automations.weekly_commitment_status` and native `planning.weekly_commitment_check` remain canonical; no provider is involved; authority stays read-only active-owner inspection; existing process/event/act and Harness/Gateway execution remain unchanged; existing observation plus Rail receipt remains the evidence seam; no binding/admission promotion follows; proof uses the existing disposable PostgreSQL harness, while genuine authenticated customer acceptance remains UNVERIFIED.
+
+| Required seam | Classification | Result |
+|---|---|---|
+| Owner getter contract, schedule and authorization | REUSE | Same signature, privileges, state/receipt contract and process records |
+| Historical verified-result query and access paths | REPAIR | Forward migration `20271030000000_experience05_weekly_history_indexes.sql`; two indexes and localized event-ordered query; no applied migration edit |
+| Accumulated-history proof | EXTEND | Existing disposable proof; exact getter and extracted historical SQL, natural plans, measured buffers/timing |
+| Process execution, claims, receipts and reconciliation | REUSE | No second engine, job, authority model or ledger |
+| Chat/Calendar rendering, live admission and activation | REUSE / separately gated | Source preparation and existing rendered review remain unmounted |
+
+## Repair and recovery
+
+The partial event index matches the existing weekly event/subject predicate and owner-tenant/process recency order. The partial receipt expression index matches the existing string-identity, tenant, event and act comparisons. Neither casts untrusted historical JSON to UUID. A completion still requires all existing observation and receipt correlations; an invalid newest historical observation falls back only to an older valid result. Latest unknown and last verified result remain separate.
+
+The new migration uses an explicit transaction, five-second lock acquisition limit and sixty-second statement limit. Failed apply must be followed by read-only migration/object inspection before any retry; no partial application is assumed. A successful apply adds two indexes and repairs only the same getter's historical join: each event selects its first qualifying act in act-position order, and events are traversed in recency order. This preserves the original ordering and every predicate while preventing a whole-history act sort before the final LIMIT. The explicit owner-reader ACL stays identical. No role, RLS, process, receipt writer, trigger, cron or Chat/Live admission changes. Recovery keeps the trigger OFF and uses a separately reviewed forward repair if necessary; no unknown execution is replayed.
+
+## Proof and limits
+
+`scripts/proof/weekly-commitment-check.mjs --simulate-ci-role` extends the existing actual engine/Gateway/adapter proof with `weekly-commitment-history-performance.mjs`. Each history scenario uses fifty owner and fifty foreign processes, each with 100 or 1,000 seeded historical attempts and a newer unknown attempt. Synthetic history clones one genuinely executed canonical observation; bulk history is not claimed as real scheduled execution. Two templates are actually drafted, authorized and paused through canonical RPCs, then cloned for scale. Only the weekly process row guard is suppressed during that disposable bulk setup because repeated Windows zone enumeration dominated setup; act/authority guards, FKs, unique intent identity and the fingerprint trigger remain enabled. The process guard and process contract are restored/asserted before every plan and negative case. All seeded rows and baseline index drops roll back.
+
+Three before and three after `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` samples measure the actual original29 and repaired30 owner RPCs. A five-second baseline timeout is recorded as a censored lower bound, never a made-up duration. Historical and latest-attempt SQL are extracted from the forward getter. The natural historical plan must use both the event-recency and receipt expression indexes; the latest-attempt plan must use the new recency index. No planner overrides force either choice. After median must stay below one second, providing margin beneath the existing two-second prepared-reader ceiling. An intermediate author-only measurement rejected indexes alone: at 100,000 history rows, the unchanged join still sorted 1,000 qualifying acts per process and its after median was 1,955.361ms (cold sample 5,988.557ms). That intermediate candidate was not committed, reviewed or released.
+
+Required negative cases cover observation tenant, authorizer, process, event, act, correlation and receipt; receipt tenant, event, act, capability, outcome and absence; member, admin, foreign workspace, anonymous and service-role denial. The other owner sees only their own history. Repaired-getter hash restoration after transactional baseline, unchanged row counts, index replay and fixture role restoration are asserted. Auth/context/trust/cron/network/display and operator retirement infrastructure doubles remain disclosed by the parent proof. This is not production workload measurement, HTTP drainer proof, ordinary platform authentication or real customer acceptance.
+
+Measured proof is attached at `docs/evidence/experience-05-weekly-history-performance-proof.json` before the exact candidate is frozen. CI independently runs the same proof in its existing disposable PostgreSQL service. Review and deployment evidence are attached to the corrective PR and then mechanically closed out.
+
+## Truth stores and collision-safe closeout
+
+The existing E5 Master/Brain release closeout is owned by this Journey Lead in open #2116 and already touches the same current-state paragraphs. To avoid two competing release edits, #2116 owns the exact post-merge repair identity too. Named handoff: Master §4.0 adds the correction's PR/main SHA, migration30, measured-history boundary, final non-author verdict, exact-head CI and observed DARK deployment; Master opening E5 paragraph and Brain `paige-spine-and-rail-state.md`/README state that #2112's getter/declaration and the corrective indexes are released DARK, with unmounted consumers, pending design and UNVERIFIED authenticated acceptance. Proposed wording: “The forward history indexes repair the unchanged owner-only getter; service-only execution authority, trigger OFF, zero weekly work and separate admission/design/acceptance gates remain.” Owner: E5 Journey Lead. Reason: active #2116 collision on those exact records and post-merge identities are not knowable before merge. The new Brain lesson is included in this correction.
+
+Release classification is internal-only reliability repair, production intended but not yet observed; no customer version, release note, announcement or publication. Source base is `7c2f9f10bc538cc5fe7ff9329facf7b68d24346d`; exact frozen PR head/review/CI are external PR evidence. Migration deployment and readback must separately establish migration30, valid index definitions, the exact repaired getter body and twenty unchanged weekly SQL bodies/ACL/RLS/guards, trigger OFF, zero weekly processes/events/acts/receipts/provider references/permission overrides and no weekly cron. Edge function behavior is NOT_APPLICABLE: no edge source changes.
+
+The accessible existing Chat+Calendar gallery remains `docs/evidence/experience-05-prototype/calendar-rendered-review/OWNER-REVIEW.md`: 86 screenshots and 186 simulation checks. Owner design remains PENDING; product mounting, weekly Chat/Live security/admission, protected Antonio Cook SOLO fixture scope, bounded activation and authenticated end-to-end execution remain separately governed. This repair grants none of them.
+
+## Measured local history proof
+
+PostgreSQL 16, existing disposable loopback harness; three actual owner-RPC samples before and after, fifty returned owner processes plus fifty foreign processes. Table rows below apply separately to canonical events, acts and receipts; an additional hundred latest unknown attempts remain. No planner settings force index usage.
+
+| History per process | Seeded history per table | Before median (ms) | Baseline 5s timeouts | After median (ms) | Security/correlation assertions |
+|---|---|---|---|---|---|
+| 100 | 10000 | 474.862 | 0/3 | 361.282 | 21 |
+| 1000 | 100000 | at least 5000.000 | 3/3 | 526.369 | 20 |
+
+Full timing/buffer/natural-plan evidence: `../evidence/experience-05-weekly-history-performance-proof.json`. The exact repaired historical SQL naturally uses event recency and receipt expression indexes; exact latest-attempt SQL uses the recency index. Original29 is compared with repaired30 without planner overrides. Existing 61 canonical cases plus the history case PASS (62 total); each history scenario has its own explicit negative assertions. Fixture rows/index drops roll back and original service-role posture is restored. Forty-one focused tests, JS syntax, migration collision/lint, definer/ACL and release-governance guards and diff whitespace checks PASS. Production performance remains unmeasured because the released weekly workload remains zero; this is not authenticated acceptance.

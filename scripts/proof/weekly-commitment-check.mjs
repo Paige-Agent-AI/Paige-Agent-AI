@@ -12,10 +12,12 @@ import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {randomUUID,createHash} from 'node:crypto';
 import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-catalogue-lint.mjs';
+import {historyPerformanceProof} from './weekly-commitment-history-performance.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql';
 const readMigration='supabase/migrations/20271029000000_experience05_weekly_status_readback.sql';
+const historyMigration='supabase/migrations/20271030000000_experience05_weekly_history_indexes.sql';
 const baselineRead=process.argv.includes('--baseline-read-preparation');
 const ci=process.argv.includes('--postgres');
 const simulateCiRole=process.argv.includes('--simulate-ci-role');
@@ -37,10 +39,10 @@ const migrationSource=source(migration);
 const migrationHash=createHash('sha256').update(migrationSource).digest('hex');
 const readMigrationSource=source(readMigration);
 const readMigrationHash=createHash('sha256').update(readMigrationSource).digest('hex');
-function run(sql,{actor='',tenant='',role='',db=database}={}){
+function run(sql,{actor='',tenant='',role='',db=database,timeout=60000}={}){
   const prefix=`DO $ctx$ BEGIN PERFORM set_config('test.actor',${literal(actor)},false); PERFORM set_config('test.tenant',${literal(tenant)},false); END $ctx$;${role?`SET ROLE ${role};`:''}`;
-  try{return execFileSync(command('psql'),args(db),{input:`\\set VERBOSITY verbose\n${prefix}\n${sql}`,encoding:'utf8',stdio:['pipe','pipe','pipe'],windowsHide:true,timeout:60000,maxBuffer:8*1024*1024}).trim();}
-  catch(e){throw new Error(String(e.stderr??e.message));}
+  try{return execFileSync(command('psql'),args(db),{input:`\\set VERBOSITY verbose\n${prefix}\n${sql}`,encoding:'utf8',stdio:['pipe','pipe','pipe'],windowsHide:true,timeout,maxBuffer:8*1024*1024}).trim();}
+  catch(e){throw new Error(`${e.message}\n${e.stderr??''}\n${String(e.stdout??'').slice(-2000)}`);}
 }
 function json(sql,ctx){return JSON.parse(run(sql,ctx));}
 const cases=[];
@@ -167,7 +169,7 @@ try{
   run(extractTable(zoneSource,'tenant_business_time_zones'));
   run(zoneSource.match(/ALTER TABLE public\.tenant_business_time_zones ENABLE ROW LEVEL SECURITY;/)[0]);
   run(zoneSource.match(/REVOKE ALL ON public\.tenant_business_time_zones[^;]+;/)[0]);
-  if(!baselineRead){run(readMigrationSource);run(readMigrationSource);}
+  if(!baselineRead){run(readMigrationSource);run(readMigrationSource);run(source(historyMigration));run(source(historyMigration));}
   check('migration applies twice; catalogue stays dark',()=>assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),'f'));
   check('owner read supplies source actor clock and explicit bounded coverage',()=>{
     const data=json('SELECT get_weekly_commitment_checks();',ownerCtx);
@@ -538,6 +540,9 @@ try{
     assert.equal(proof.actual_prepared_owner_reader,true);assert.equal(proof.actual_calendar_projection,true);
     assert.equal(proof.inspection_rows_written,0);assert.equal(proof.outbound_requests,0);console.log(output.trim());
   });
+  const historyPerformance=historyPerformanceProof({run,json,literal,source,owner,tenant,otherOwner,foreign,member,admin,templateEvent:event,migration:historyMigration,onMeasurement:m=>writeFileSync(join(scratch,'history-measurement.json'),JSON.stringify(m,null,2))});
+  check('accumulated historical getter indexed performance, role isolation and receipt correlation',()=>assert.equal(historyPerformance.status,'PASS'));
+  console.log(JSON.stringify({history_performance:{status:historyPerformance.status,scenarios:historyPerformance.scenarios.map(s=>({seeded_history_rows:s.seeded_history_rows,after_median_ms:s.after_median_ms,assertions:s.assertions}))}}));
   const retirement=source('supabase/migrations/20270602000504_operator_provider_independent_retirement.sql');
   const archives=source('supabase/migrations/20270602000203_operator_account_archive.sql');
   run(`CREATE FUNCTION operator_preview_account_deletion(uuid) RETURNS jsonb LANGUAGE sql AS $$
@@ -578,7 +583,7 @@ try{
   const schemaFingerprint=run("SELECT md5(string_agg(pg_get_functiondef(p.oid),E'\\n' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '%weekly_commitment%';");
   evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,
     read_preparation:{source:readMigration,migration_sha256:readMigrationHash,actual_canonical_owner_rpc:true,actual_prepared_owner_reader:true,calendar_records_written:0},
-    schema_fingerprint:schemaFingerprint,
+    schema_fingerprint:schemaFingerprint,history_performance:historyPerformance,
     fixture_service_role:roleParity,
     incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};

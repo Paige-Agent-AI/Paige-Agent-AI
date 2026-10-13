@@ -58,6 +58,7 @@ import {
 import "./settings-setup.css";
 import { KnowledgeLibrary } from "./knowledge/KnowledgeLibrary";
 import { RepresentativePhonePicker } from "./setup-representative-phone";
+import { BusinessTimeZoneSetting } from "./setup-business-time-zone";
 import { resolveSetupSubtabRoute, setupSubtabPath } from "./setup-subtab-route";
 import { settingsScrollOwner } from "./settings-scroll-owner";
 import { PeopleEmailPreferences } from "./settings-people-email-preferences";
@@ -1384,6 +1385,16 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                 onNaics={(value) => void chooseNaics(value)}
                 searchNaics={data.searchNaics}
               />
+            )}
+            {tab === "business-profile" && (
+              // Experience 04 E4-S2: its own store and its own save, outside the brief's edit cycle.
+              <section className="setup-section" id="business-time-zone" aria-labelledby="business-time-zone-title">
+                <header className="setup-section__head">
+                  <h2 id="business-time-zone-title">Business time zone</h2>
+                  <p>The calendar Paige uses to decide which payments are due and which are overdue. Saved on its own, the moment you confirm it.</p>
+                </header>
+                <BusinessTimeZoneSetting key={data.activeTenantId ?? "none"} tenantId={data.activeTenantId} />
+              </section>
             )}{" "}
             {tab === "public-presence" && (
               <SettingsPublicPresence

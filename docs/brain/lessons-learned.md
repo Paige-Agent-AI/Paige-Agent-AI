@@ -6,6 +6,12 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### Small functional history does not prove recurring-status read performance (2026-10-13, #2112)
+
+**Symptom → root cause → rule.** The weekly status getter passed functional, receipt, privacy and execution proofs, but its added per-process historical result lookup had no predicate/recency index. Fifty outer process rows did not bound each process's accumulated event/receipt scan. A post-merge P2 correctly identified that missing proof.
+
+**Rule:** measure the actual owner RPC over accumulated owner and foreign history, inspect its natural `EXPLAIN (ANALYZE, BUFFERS)` plan and keep the correlation/security negatives. Index both the recency predicate and the existing receipt string comparisons; never weaken evidence validation to improve latency. Report timeouts as censored lower bounds. Applied migrations stay immutable: a new forward migration repairs access paths without turning a dark recurring trigger, calendar entry or capability declaration into execution authority. The bounded repair/proof and its exact deployment boundary are recorded in `../delivery/experience-05-weekly-history-performance-repair.md`.
+
 ### A migration that deadlocked against a schema dump, and the header that said it would half-apply (2026-10-13, #2099)
 
 **Symptom → root cause → rule.** The #2099 migration passed every proof and CI. Its first production
@@ -3457,3 +3463,5 @@ through PUBLIC, so revoking PUBLIC removes nothing. The test that would have cau
 ### A renamed pending migration leaves real Preview history behind (2026-10-13, Experience01)
 
 **Symptom → root cause → rule.** Forward-only production ordering moved the unchanged checkpoint file while the existing Preview retained its original260000 history row. The required check rejected remote versions absent from local files. Rebase alone did not clear that record. Compare stored SQL AND live definitions/ACL against canonical candidate before choosing supported history-only repair; preserve all original identities. Do not convert an infra/recovery failure into a fake SQL pass, reset/recreate blindly, pre-mark a new version applied, or bypass a403 credential endpoint. Normal Preview must still execute canonical pending SQL at the reviewed head.
+
+- **A forward source rename does not make identical Preview SQL unapplied (Experience01,2026-10-13).** Export and compare the original statements plus live function signatures/bodies/configuration/grants before history repair. Preserve the original export, use the supported applied/reverted metadata statuses to reconcile the new filename, and verify the old/new ledger keys and unchanged functions before normal Preview verification. Do not remove a ledger row merely to reexecute already-installed SQL; a read-only integration also does not establish branch repair authority. Production still owes normal migration execution.

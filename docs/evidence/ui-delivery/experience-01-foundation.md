@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: authenticated owner interview→reviewed fact→canonical s
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: private caller-JWT Owner/thread checkpoint; existing user metadata only; real DRAINING begin retry and immutable assistant settle replay tested in SQL; approvals/rollout/provider/Auth unchanged.
 
-INTERNAL_BUILD_IDENTITY: historical_initial_source=9b548fc888b4f4aa5108791b2cd479a9903ef9de; reviewed_source_payload=7f3334ea144753e0437bbaf5ae5c639df2f39edb; integration_base=7c2f9f10bc538cc5fe7ff9329facf7b68d24346d; exact_final_head=PR #2071 immutable-head review/CI record; deployment=none; environment=development; migrations=PROOF_OWED(production execution of 20271029100000_solo_business_interview_checkpoint); edge=PROOF_OWED(production paige-ai-chat interview context); evidence=docs/evidence/experience-01-foundation/sql-proof.json
+INTERNAL_BUILD_IDENTITY: historical_initial_source=9b548fc888b4f4aa5108791b2cd479a9903ef9de; reviewed_source_payload=7f3334ea144753e0437bbaf5ae5c639df2f39edb; integration_base=cd2f1fad4abb9875597680ca37cfb4029912b825; exact_final_head=PR #2071 immutable-head review/CI record; deployment=none; environment=development; migrations=PROOF_OWED(production execution of 20271030100000_solo_business_interview_checkpoint); edge=PROOF_OWED(production paige-ai-chat interview context); evidence=docs/evidence/experience-01-foundation/sql-proof.json
 RELEASE_CHANNEL: development: local source candidate and isolated synthetic proof; no deployed customer outcome.
 RELEASE_CLASSIFICATION: internal-only: foundation candidate awaiting exact-head CI/review, normal release and protected authenticated proof.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent production outcome accepted or announcement authorized.
 RELEASE_NOTE_REQUIRED: NO: internal candidate only; customer outcome announcement remains behind the normal release gate.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: deployment of migration20271029100000 and paige-ai-chat context, admitted proposal behavior, protected ordinary-customer persistence/conversation/resume and owner acceptance; no LIVE outcome.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: deployment of migration20271030100000 and paige-ai-chat context, admitted proposal behavior, protected ordinary-customer persistence/conversation/resume and owner acceptance; no LIVE outcome.
 RELEASE_RECOVERY: position=unmerged candidate can be withdrawn and existing Setup remains authority if progress write fails; reference=docs/delivery/experience-01-foundation.md
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: both themes/two synthetic contexts, native1535x770 within disclosed rounding; authenticated proof owed.

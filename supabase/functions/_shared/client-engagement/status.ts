@@ -141,6 +141,8 @@ export type ClientEngagementStatus = {
   };
   invoices: Array<{
     id: string; number: string; status: string; payment_state: InvoicePaymentState; amount_minor: number;
+    /** This invoice's own currency, so a line never needs the (possibly mixed) business total's. */
+    currency: string;
     outstanding_minor: number; verified_minor: number; recorded_by_owner_minor: number; test_environment_minor: number;
     /** What is past due on this invoice; null for a bound invoice whose schedule cannot be read. */
     past_due_minor: number | null;
@@ -312,6 +314,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     }
     return {
       id: row.id, number: row.invoice_number, status: row.status, payment_state: paymentState, amount_minor: amount,
+      currency: row.currency,
       outstanding_minor: owed, verified_minor: live, recorded_by_owner_minor: manual, test_environment_minor: testMinor,
       past_due_minor: pastDue, due_date: row.due_date, overdue: pastDue === null ? null : pastDue > 0,
       bound_to_terms: bound,

@@ -116,6 +116,8 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   web_search: "Searching the web",
   // Business operating snapshot (shared read; E2-1 wired the dispatch)
   get_business_snapshot: "Taking stock of your business",
+  read_client_engagement_status: "Checking where that client stands",
+  read_business_time_zone: "Checking your business time zone",
   deep_research: "Researching the live web",
   list_subagents: "Finding the right specialist",
 });

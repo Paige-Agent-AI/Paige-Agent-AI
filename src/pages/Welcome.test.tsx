@@ -17,12 +17,18 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
       getSession: vi.fn(async () => ({ data: { session: { user: { id: "user-1" } } }, error: null })),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
     },
     functions: {
       invoke: vi.fn(async () => ({ data: harness.status, error: null })),
     },
   },
 }));
+
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({
+  accountContextStatus: "ready", accountContextLoading: false, activeUserId: "user-1",
+  activeTenantId: null, activeTenant: null, tenants: [], refresh: vi.fn(async () => {}),
+}) }));
 
 import Welcome from "./Welcome";
 

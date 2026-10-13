@@ -18,7 +18,7 @@ REDUCED_MOTION: UNVERIFIED: browser preference measured true and incumbent useRe
 STATE_COVERAGE: PASS: automated delayed fulfillment, accepted prior scope, profile/tenant/role/actor/scope read failure, empty provider catalog, stale/unsafe/tier destination, retry, sign-out/actor switch, scope switch, departure, timeout/late completion and existing chooser cases covered; browser evidence remains owed.
 TRUTHFUL_STATE_LABELS: PASS: verified enrollment is separated from unverified workspace opening; failures keep the server reference and do not falsely say paid access was never activated.
 SOLO_UI: YES: public Solo Welcome-to-current-Solo entry transition; no Solo shell layout changes.
-UNVERIFIED: Native zoom, screen reader, temporal motion and complete rendered state matrix; hosted exact-head review/CI, merge/deployment identity and protected ordinary-customer acceptance. No LIVE or customer release claim.
+UNVERIFIED: Native zoom, screen reader, temporal motion and complete rendered state matrix; protected ordinary-customer acceptance and final owner acceptance. Hosted source review/CI and merge/deployment are now verified separately below. No LIVE or customer release claim.
 
 OWNER_INTENT: Complete trustworthy new-customer admission using existing authentication/provisioning/membership/context contracts, preserving the interview/save/readback/correction/resume foundation.
 MUST_NOT_HAPPEN: No Auth administration, provider effect, tenant/membership write, authority widening, new store, approval system or fixture account; no old actor/destination may trigger entry.
@@ -27,13 +27,13 @@ ACCEPTANCE_CRITERIA: After delayed signed fulfillment, the real provider hydrate
 MOTION_PURPOSE: NONE: existing pending verification motion and reduced-motion branches retained; no motion change.
 PROTECTED_SEAMS: Impacted and locally tested: actor/scope fencing, provider commit and failure preservation, canonical readback/address agreement, chooser recovery, cancellation and timeout. Unaffected: Auth/provisioning/roles, billing/Checkout/webhook, Setup writers, Chat/Spine/Harness/Trust/admission, provider connections and receipt/Rail stores.
 
-INTERNAL_BUILD_IDENTITY: 46d6d3b80b45d1c31adacc9956cdf318cab0d093; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/experience-01-admission-hydration.md
-RELEASE_CHANNEL: development: isolated admission branch with separate render-only harness/evidence; no hosted release or production deployment is inferred.
+INTERNAL_BUILD_IDENTITY: f5494e863a9ccf6380154cb4b2fc85ef4ffdb2f0; deployment=dpl_FVEmN3vu4UyjsLqiG8W4QAst3eve; environment=production; reviewed_head=81b7c0333586783a7e6ada3a9f0516882bca9531; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/experience-01-admission-hydration/production-readback.json
+RELEASE_CHANNEL: production: exact merged build deployed READY; next documentation-only canonical successor preserves runtime source; public artifact evidence is separate from authenticated customer proof.
 RELEASE_CLASSIFICATION: patch: repairs an existing delayed-enrollment handoff with canonical readback and unchanged approval/permission architecture.
-CUSTOMER_RELEASE_IDENTITY: none: source candidate only; authenticated and release gates remain owed.
-RELEASE_NOTE_REQUIRED: NO: bounded reliability patch; no customer announcement or release identity is authorized by this worker result.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: local automated source integration establishes the bounded handoff repair; hosted release and ordinary authenticated new-customer entry/resume remain unproven.
-RELEASE_RECOVERY: position=source-candidate-review-before-release; reference=docs/delivery/experience-01-admission-hydration.md and root exact-head review/release handoff
+CUSTOMER_RELEASE_IDENTITY: none: internal reliability patch; genuine customer entry and final owner acceptance remain owed.
+RELEASE_NOTE_REQUIRED: NO: bounded reliability patch; no customer announcement/version assigned.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: scope=public.solo-beta-acquisition/current-SOLO entry; blocker=protected ordinary-customer case execution and runner attestation absent; excluded_from_LIVE=actor/membership/workspace/enrollment entry/logout-return and complete Experience 01. Public artifact and source/integration proof establish delivery only.
+RELEASE_RECOVERY: position=reviewed-forward-fix-or-normal-Git-revert-if-regression; reference=docs/delivery/experience-01-admission-hydration.md#actual-release-closeout--2026-10-13
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: actual public Welcome, light/dark no-network adapters; requested 1536x770/native 1535x770 with DOM agreement/no overflow. PAIGE is not mounted.
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: public Welcome does not mount PAIGE; downstream authenticated shell geometry remains independently owned.
@@ -49,3 +49,5 @@ SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: public Welcome does not mount PAIGE; d
 The delivery packet includes the four-part collision-safe Master/Brain closeout handoff to root. The changed tenant-list reference is only an incumbent accepted-load/React-commit marker; it grants no authority. Final fresh actor, profile, server-selected scope, RLS tenant and route agreement remain required. Protected acceptance validates actual actor/membership configuration; separate admission/security findings remain in the owner-selected private records.
 
 Impeccable context, hardening and craft-floor checks were applied on the incumbent surface; detector passed. Canonical skill: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md. Independent non-author finish review inspected all 16 native frames and source/image hashes: SHIP within RENDERED_SYNTHETIC_WELCOME, no material fixes; render/finish-review.json records the limits. Hosted and ordinary-customer acceptance remain separate. Existing reviewer roles are reused.
+
+Actual hosted closeout: independent non-author COMPLETE/PASS on 81b7c0333586783a7e6ada3a9f0516882bca9531, sole earlier P2 fixed; ten applicable observed check groups successful, Supabase Preview appropriately SKIPPED. Squash/source equivalence verified. Public compiled readback is not rendered or authenticated acceptance. Historical source/worker checkpoints above remain tied to their original commits.

@@ -164,6 +164,29 @@ SELECT pg_temp.require_true(public.has_sms_consent('+1 (555) 000-0003', false), 
 SELECT pg_temp.require_true(NOT public.has_sms_consent('+15550000003', true), 'but not marketing SMS');
 RESET ROLE;
 
+-- The account's owner cannot vouch for a number from the browser: verification is the server's to set.
+-- Production lets a signed-in user update their own preferences row (RLS: own row, every column); mirror it.
+GRANT SELECT, INSERT, UPDATE ON public.communication_preferences TO authenticated;
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('5ec20870-0000-4000-8000-000000000001');
+UPDATE public.communication_preferences SET sms_phone_number = '+15550000004', sms_phone_verified = true
+ WHERE user_id = '5ec20870-0000-4000-8000-000000000001';
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT NOT sms_phone_verified FROM public.communication_preferences WHERE user_id = '5ec20870-0000-4000-8000-000000000001'),
+  'changing the number from the browser clears verification');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('5ec20870-0000-4000-8000-000000000001');
+UPDATE public.communication_preferences SET sms_phone_verified = true WHERE user_id = '5ec20870-0000-4000-8000-000000000001';
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT NOT sms_phone_verified FROM public.communication_preferences WHERE user_id = '5ec20870-0000-4000-8000-000000000001'),
+  'and the browser cannot mark a number verified');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_user('5ec20870-0000-4000-8000-000000000002');
+UPDATE public.communication_preferences SET sms_enabled = true WHERE user_id = '5ec20870-0000-4000-8000-000000000002';
+RESET ROLE;
+SELECT pg_temp.require_true((SELECT sms_phone_verified FROM public.communication_preferences WHERE user_id = '5ec20870-0000-4000-8000-000000000002'),
+  'an unrelated browser edit keeps a server-verified number verified');
+
 -- The gates answer the server only, even if a later migration grants them to a browser role (§59).
 GRANT EXECUTE ON FUNCTION public.has_sms_consent(text, boolean), public.has_email_marketing_consent(text) TO authenticated;
 SET LOCAL ROLE authenticated;

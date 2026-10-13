@@ -35,6 +35,10 @@
 --      Tenant-to-contact consent is never decided here. It belongs to the tenant ledger
 --      (paige_consent_events, tenant-scoped RLS, read by the pre-send pipeline), and
 --      dispatch-stage-automation now reads it there.
+--      That flag was browser-writable (RLS lets a user update their own row, every column), so the
+--      evidence's owner could mark any number verified. A trigger now keeps it the server's: only the
+--      service role (verify-sms-code, after a matched code) or a direct SQL session can set it true, and a
+--      browser change of the number clears it.
 --   4. paige_consent_events / paige_suppressions: their browser policies keyed authority on the GLOBAL
 --      'admin' role (§59 trap), so a plain member of business B who is an admin anywhere else could write
 --      B's consent ledger (granting marketing consent) or delete B's suppressions (un-opting-out a contact),
@@ -187,6 +191,34 @@ AS $function$
   )
   AND coalesce(auth.role(), '') IN ('service_role', '');
 $function$;
+
+CREATE OR REPLACE FUNCTION public.communication_preferences_guard_verified_phone()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+BEGIN
+  -- Only the server's code check (verify-sms-code, service role) proves a number. A browser may turn
+  -- verification off or change its number (which clears it), never turn it on.
+  IF coalesce(auth.role(), '') IN ('service_role', '') THEN
+    RETURN NEW;
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    NEW.sms_phone_verified := false;
+  ELSIF NEW.sms_phone_number IS DISTINCT FROM OLD.sms_phone_number
+     OR (NEW.sms_phone_verified AND NOT coalesce(OLD.sms_phone_verified, false)) THEN
+    NEW.sms_phone_verified := false;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.communication_preferences_guard_verified_phone() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS communication_preferences_guard_verified_phone ON public.communication_preferences;
+CREATE TRIGGER communication_preferences_guard_verified_phone
+  BEFORE INSERT OR UPDATE ON public.communication_preferences
+  FOR EACH ROW EXECUTE FUNCTION public.communication_preferences_guard_verified_phone();
 
 REVOKE ALL ON FUNCTION public.has_sms_consent(text, boolean) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.has_sms_consent(text, boolean) TO service_role;

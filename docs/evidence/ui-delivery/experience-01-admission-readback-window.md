@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: After delayed signed fulfillment, the real provider hydrate
 MOTION_PURPOSE: NONE: existing pending verification motion and reduced-motion branches retained; no motion change.
 PROTECTED_SEAMS: Impacted and locally tested: actor/scope fencing, provider commit and failure preservation, canonical readback/address agreement, chooser recovery, cancellation and timeout. Unaffected: Auth/provisioning/roles, billing/Checkout/webhook, Setup writers, Chat/Spine/Harness/Trust/admission, provider connections and receipt/Rail stores.
 
-INTERNAL_BUILD_IDENTITY: source SHA256db0dde17af9d584d4085fd49d47407b5c076f37aeb7104e0ae5afcedcc6503a6; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/experience-01-admission-readback-window/source-proof.json
+INTERNAL_BUILD_IDENTITY: d74cb231c9410e9ec14be07335928c876c37201f; source_sha256=db0dde17af9d584d4085fd49d47407b5c076f37aeb7104e0ae5afcedcc6503a6; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/experience-01-admission-readback-window/source-proof.json
 RELEASE_CHANNEL: development: isolated forward-fix branch; no merge/deployment inferred.
 RELEASE_CLASSIFICATION: patch: repairs an existing delayed-enrollment handoff with canonical readback and unchanged approval/permission architecture.
 CUSTOMER_RELEASE_IDENTITY: none: bounded internal reliability repair candidate; authentic customer acceptance owed.

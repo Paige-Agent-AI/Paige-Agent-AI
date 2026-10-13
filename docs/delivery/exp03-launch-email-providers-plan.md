@@ -119,7 +119,7 @@ Contract changes, in order:
    - Readiness exposes one state per connector: ready / needs reconnect / disconnected (`readiness.ts`, after S3).
    - Remove the composer's silent fallback to another account (`ClientsConversations.tsx:822-830`).
 6. **Conversations sends email through the approval path.**
-   - The composer and draft "Approve" email branches (`ClientsConversations.tsx:947,1063`) call `comms-email-command` through a new `conversations/governedSend.ts`, with the preview card inline.
+   - The composer and draft "Approve" email branches (`ClientsConversations.tsx:947,1063`) call `comms-email-command` through the existing `src/pages/admin/conversations/governedSend.ts` (extended; §13 correction 2026-10-13 — it is not new), with the preview card inline.
    - SMS stays on `send-message`.
    - Attachments and scheduling on email show as UNAVAILABLE until the approval path supports them.
 7. **Connection lifecycle.**
@@ -165,7 +165,7 @@ S3 currently owns `readiness.ts`, `comms-email-command`, `execute-approval/*` an
 | M1 | Message identity migration and `record_synced_email` (owner sign-off) | new migration, a SQL test | Same Message-ID in two tenants → two rows. Same message in one mailbox → one row, merged. Race case → merge, never a duplicate-key error. | M | none (does not touch `prepare_*`) |
 | G3 | Gmail sync writes canonical rows linked to contacts | `gmail-mailbox-sync`, `sync.ts` | Inbound mail from a known contact lands in the `contact:` thread. Unknown senders follow the owner's privacy ruling. No contact is ever created. | M | M1 |
 | D1 | The approval path sets Message-ID, carries reply context and Gmail `threadId`, and SMTP acceptance counts | migration replacing `prepare`/`finalize`, `contract.ts`, `comms-email-command`, `send-message` arms, `gmail.ts`, `smtp.ts` | A reply threads in the recipient's client. The fingerprint covers the reply headers. SMTP acceptance becomes `provider_accepted`. | M–L | **S3 merged**, M1 |
-| C1 | Conversations sends email through the approval path | `ClientsConversations.tsx`, new `conversations/governedSend.ts`, `PaigeConfirmCard` | Composer and draft Approve both go through approval and fingerprint and are recorded in `messages`. No silent account fallback. SMS is unchanged. | M | D1, plus the S3 `readiness.ts` changes (change 5) |
+| C1 | Conversations sends email through the approval path | `ClientsConversations.tsx`, existing `conversations/governedSend.ts` (extend), `PaigeConfirmCard` | Composer and draft Approve both go through approval and fingerprint and are recorded in `messages`. No silent account fallback. SMS is unchanged. | M | D1, plus the S3 `readiness.ts` changes (change 5) |
 | U1 | Connections screen: Gmail receive and mailbox status | `src/solo/settings.tsx:701,1123`, `useSoloComms.ts` | The owner can connect, see sync status, reconnect and disconnect from a genuinely empty state. | S–M | G2 |
 | I1 | Fly mail transport and iCloud connect | `services/paige-browser` `/mail/*`, new `icloud-connect` edge function, connections screen entry | A valid app password connects and creates a personal connector. A bad password is refused with nothing stored. | M | E1, owner approval of the backend change |
 | I2 | iCloud receive | new `icloud-mailbox-sync` plus its schedule, cursor columns migration | Bounded 14-day backfill, then incremental. A UIDVALIDITY reset re-windows without duplicates. | M | I1, M1 |

@@ -221,8 +221,11 @@ members), the same as campaign assets.
 
 **S1d — the view** (§6). S1d-1, the approved map's Brought in lane, is built; S1d-2, the per-lead list, was approved by the owner on 2026-10-12 and is built under it.
 
-**S1e — PAIGE's read** `read_campaign_leads` (Spine read, member seat) — registered, raised with Platform Reach,
-reachable in typed chat once INT-346 clears.
+**S1e — PAIGE's read** `read_campaign_leads` (Spine read, member seat) — **NOT BUILT.** *§13 correction 2026-10-13:
+an earlier version of this line said "registered". Searched `read_campaign_leads`, `readCampaignLeads`, `campaign_leads`,
+`leads_by_campaign`, `campaign.leads` and `campaign-leads` across `supabase/functions` and `src`: the only hits are the UI
+hook `src/solo/useCampaignLeads.ts` and its test. There is no Spine capability and no chat tool.* It stays planned:
+once built it is raised with Platform Reach, and it is reachable in typed chat only after INT-346 clears.
 
 Synthetic proof: `supabase/tests/campaign_lead_attribution.sql` (rolled back, `database-contract`): a workspace,
 a campaign with a pipeline, a form attached to it, a public submission with the campaign's tag → stamped
@@ -407,3 +410,82 @@ AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
 
 Closed in round 4: a SendGrid-only business now gets a draft, and enterprise forms can be opted in.
 - **The full rollout plan.** Gmail and iCloud Mail are planned separately in `exp03-launch-email-providers-plan.md`.
+
+---
+
+## Customer Experience Integration Matrix (Engineering 2.0 standard, 2026-10-13)
+
+**The acceptance question:** can the customer ask PAIGE to accomplish something, see the actual change in the correct part
+of the platform, understand its status, and return later to verify the result?
+
+**Answer today: no, for all 15 Experience 03 outcomes.** Every outcome is missing at least one link: the conversation, the
+screen, the visible state, or the readback. This table is the work list that closes those gaps, classified REUSE /
+EXTEND / REPAIR / NEW per link.
+
+**How this was grounded:** read-only traces of code and routes, with mount paths traced from `SoloApp`, plus SELECT-only
+production reads, at branch head `a3cc2aa0`. An adversarial checker then tested 22 load-bearing claims: 21 confirmed,
+0 wrong, 1 corrected. Production is empty for this journey (0 form submissions, 0 campaign asset links, 0 Gmail
+connectors). S3 is not deployed. No row below has an authenticated drive yet; that is owed through ANT-52 on the
+Antonio Cook Solo account.
+
+### The matrix
+
+| # | Outcome | Conversation | Spine capability / governed path | Canonical records | UI component (route) | Visible states | Verified receipt / readback | Gaps (per link) |
+|---|---|---|---|---|---|---|---|---|
+| O1 | Bring in leads for a campaign | `growth_form_save` / `growth_form_publish`; neither takes a campaign | `growth_form.save` / `.publish` (high, confirm) → `growth-public-submit` → stamp trigger → `growth-process-submission` | `growth_forms`, `growth_form_submissions.campaign_brief_id`, `clients`, `deals`, `campaign_brief_asset_links` | Dossier › "What this campaign uses" › Brought in (`/solo/:n/growth/campaigns`) | Being filed / Couldn't be filed / stage / Won / Lost (`processing_state`, `deals.status`) | Submission row is server-read. A Rail event is written only if an automation asks for it. Production has 0 rows. | Conversation **NEW** · Spine **REUSE** · Records **REUSE** · UI **REUSE** · States **REUSE** · Receipt **EXTEND** |
+| O2 | Show the leads this campaign brought in | None. `get_pipeline_lead_funnel` groups by raw `utm_campaign` text (#2077) | `get_campaign_brief_leads` (DEFINER, own workspace), called by the UI only | `growth_form_submissions` ⨝ `deals`, `pipelines`, `pipeline_stages`, `clients`, `growth_forms` | Same Brought in block | Counts; per-row status; error with retry; truncation note | Re-read from the server on open and on reload. No realtime (#2079). | Conversation **NEW** (S1e) · Spine **NEW** · Chat and UI read the same record: **REPAIR** · UI **REUSE** · Lead → contact/opportunity link **NEW** · `?brief=<id>` deep link **NEW** |
+| O3 | Put this form on my website | `growth_form_publish` (gives the link); no embed code in chat | `growth-publish-command` door (one approval, readback, receipt) | `growth_forms.status`, `growth_form_submissions`, `deals` | Studio PublishPanel › EmbedCode; public `/form/:id`; `embed.js` | preparing / blocked / refused / off / "It's live"; copied / failed | Door receipt. Production has 0 publish receipts and 0 submissions. | Conversation **EXTEND** (embed code **NEW**) · Spine **REUSE** · UI **REUSE** · Receipt **REUSE**, not yet proven in production |
+| O4 | Create a brief / attach a form to it | `campaign_brief_create`, `_revise`, `_list` are live; no attach tool | `campaign.create` / `.revise` → `configure_campaign_brief`; attach is `configure_campaign_brief_assets`, called by the UI only | `campaign_briefs`, `campaign_brief_command_results`, `campaign_brief_asset_links`, `audit_logs` | Campaign desk and Dossier attach picker (`useCampaignAssets`) | Saved / "doesn't show it yet" / "couldn't be confirmed"; error with retry | Brief by chat: Rail receipt. Brief by UI and attach: `audit_logs` only, re-read from the server. | Brief chat **REUSE** · Attach chat **NEW** · Attach Rail receipt **EXTEND** · Spine screen address **REPAIR** · Chat → dossier deep link **NEW** |
+| O5 | Turn on "draft replies to new leads" for a form | None | `growth_form_set_intake` with 6 arguments exists on the branch only; no Spine capability | `growth_forms.lead_reply_enabled` (not in production), `audit_logs` | Form Settings / Catalog form panel (mounted); no toggle | None | The hook does not map the flag back, so a reload can't show it | Conversation **NEW** · Spine **EXTEND** · Records **REUSE**, branch only · UI **NEW** · States **NEW** · Readback **EXTEND** |
+| O6 | New lead → PAIGE drafts → owner sees it pending | System-triggered | `fileLeadReply` → `file_action(owner.lead_followup)` → worker → `paige_pending_approvals` (confirm) | `paige_actions`, `paige_pending_approvals`, `growth_form_submissions.lead_reply_skipped_reason` | Game Plan rail (`/solo/:n/command-center/business-game-plan`); Systems Check | Awaiting approval only; category shows raw (`owner.lead followup`) | `paige_approval_queue_v`, re-read on refresh | Spine **REUSE**, branch only · UI **REUSE** · States **EXTEND** (no processing / skipped / failed) · Edit/View link **REPAIR** (B2) |
+| O7 | Review and edit From / To / Subject / body → approve → governed send | No reply screen | `comms-email-command` with `approval_id`; `execute-approval` returns 409 `send_requires_review` | `messages.meta.comms_email_binding`, `communication_log` (`user_id` NULL), `deal_activities`, Rail | No screen calls this door; Conversations (`/solo/:n/clients/conversations`) | sent, delivered and read all show "Sent"; Failed; unconfirmed | History readers filter by `user_id`, so these rows never appear | UI **NEW** · States **EXTEND** · History readback **REPAIR** · Approval ↔ conversation link **NEW** |
+| O8 | Legacy `client.followup` approvals (decline only) | n/a | `execute-approval` 409 `decline_only` plus a database guard | `paige_pending_approvals` (125 pending; 6 approved but never executed) | ApprovalRow / Systems Check | After deploy: a generic non-2xx toast, and Approve stays enabled | The row stays pending (server truth) | States **REPAIR** (B6) · Decline **REUSE** |
+| O9 | "Reply to this lead" typed in PAIGE Chat | `comms_send_email` (live; 6 production sends) | `comms.email_send` → door; no `approval_id` | `messages`, Rail (0 of 6 carry `approval_id`) | PaigeConfirmCard | pending / working / done / failed / unconfirmed | Result strips ids, so chat and UI share no record | Conversation **EXTEND** (bind `approval_id`, or a duplicate send is possible) · Chat ↔ UI ids **EXTEND** (reuse the `PaigeCrmResultCard` record link) · Deep link **NEW** |
+| O10 | Connect my Gmail | None | `gmail-oauth-start` / callback (human only); no Spine capability | `channel_connectors`, Vault, `audit_logs` | Settings › Connections › Connected sending account (mounted); mailbox tile is Unavailable | Connected / Not connected; a grant revoked at Google still shows Connected | `audit_logs` only; card re-reads from the server | Conversation **NEW** · UI **REUSE**, tile **REPAIR** · States **REPAIR** · Receipt **EXTEND** · Chat status screen address **EXTEND** (E4) |
+| O11 | Show me emails from my clients | `inbox_list`, `read_message_content` | `comms.messages_read` / `.message_content_read`; 5-minute sync cron | `messages`, `threads`, `mailbox_sync_state`; no `contact_id` | Conversations (mounted) | received / sent; no sync, last-synced or reconnect state | `mailbox_sync_state` has 0 UI readers | Conversation **REUSE** · Inbox consent **NEW** (E6) · Contact link **REPAIR** · Sync state **NEW** · Deep link **NEW** |
+| O12 | Reply from my Gmail | `comms_send_email` | Door for chat; the composer bypasses it (E2) | `messages` plus binding; no RFC Message-ID or Gmail `threadId` | Conversations composer | Chat card states; inbox binding states; composer shows a toast only | The direct path writes no receipt | Chat **REUSE** · Composer **REPAIR** · Thread ids **REPAIR** · Chat ids **EXTEND** |
+| O13 | Connect my iCloud Mail | None | `smtp-connect` (tenant-level; port 587 blocked); no IMAP | `channel_connectors` (smtp) | `EmailIntegrationConfig` is unmounted (E3) | None | None | All links **NEW** or **REPAIR** |
+| O14 | Clean up newsletters / unsubscribe | `gmail_organize` (no unsubscribe send) | `comms.gmail_organize` → `comms-mailbox-command` (confirm); `unsubscribe_send` returns 410 | `messages.meta.unsubscribe_proposed_at`, `message_labels` | No screen shows any of this | Chat card only | Rail via `record_capability_run`; nothing in the UI to reload | Spine **REUSE** · Send **NEW** · UI **NEW** · Review / correct **NEW** |
+| O15 | Disconnect my Gmail | None | `gmail-disconnect` (global admin role, `.maybeSingle()`, no `connector_id`) | `channel_connectors`, Vault, `audit_logs` | Disconnect button with confirm (mounted) | Disconnecting… / Disconnected / error | `audit_logs` only; card reloads from the server | Conversation **NEW** · Spine **REPAIR** (E5) · UI **REUSE** · Sync-stopped state **NEW** · Rail **EXTEND** |
+
+### Shared components to coordinate with Experiences 01–05
+These extend what already exists; none of them is a new system.
+- **`ApprovalRow` and `useCommandCenter` (approve/decline).** Shared with Exp 01 (Command Center) and Exp 02 (Clients). Work needed: the `reason_code` rendering and replacing `/choose-account` with a link to the record.
+- **`PaigeConfirmCard` and the `PaigeCrmResultCard` record-link pattern.** Shared with all experiences, since every chat write needs chat and UI to name the same record.
+- **The Rail (`record_capability_run` → `_record_workspace_rail_event`).** Shared with Exp 01 and Exp 04 (Sales); its `sales_publish_invoice` receipt is the only publish receipt on record. Attach, Gmail connect/disconnect and UI-made briefs should add Rail receipts here.
+- **`ClientsConversations` and `governedSend.ts`.** Shared with Exp 02. Work needed: route the composer through the approval door, and add a link between approval and conversation.
+- **Contact history (`communication_log` read by `contact_id`).** Shared with Exp 02's contact and journey screens and Exp 04's deal drawer.
+- **The `?brief=<id>` deep link on `growth/campaigns`.** Shared with Exp 04 (Sales ↔ campaign).
+- **Settings › Connections (`useSoloComms`, `GoogleSendingAccountPanel`).** Shared with Exp 05 (setup/integrations) and the calendar connection work.
+- **The Spine's `humanSurface` registry.** Shared with all experiences. Add one check that every `humanSurface` resolves to a mounted route.
+
+### Authenticated QA checks to add
+These are additions to the S2a acceptance package and ANT-52; no prior test is replaced.
+1. **O4:** ask in chat to create a brief, then open `growth/campaigns`. The same brief name appears, and after a reload the brief is still there with a Rail receipt.
+2. **O1/O2:** publish a form linked to a brief and submit it from `/form/:id`. The dossier's Brought in count rises, shows the server's status, and survives a reload.
+3. **O2:** dossier with zero leads versus a failed load. A load error shows retry, never "0".
+4. **O3:** after publishing, the panel shows "It's live" only once the door returns the form's address. Copying the embed code works, and the no-script version submits.
+5. **O6:** a lead on a form opted in to lead replies appears in the Game Plan rail as awaiting approval. Edit/View opens the record, not `/choose-account`.
+6. **O8:** approving a `client.followup` shows a plain decline-only explanation (not a raw non-2xx message), and the row stays pending after a reload.
+7. **O9:** a chat reply to a lead with a pending approval settles that approval (no second send), and the thread appears in Conversations after a reload.
+8. **O10/O15:** connect, then disconnect, Gmail. After each reload the card matches the server, and an `audit_logs` row exists.
+9. **O11:** once inbox consent exists, a synced message appears under the right contact, and the sync state is visible.
+10. **Everywhere:** every `humanSurface` the chat names opens a mounted route for a Solo account.
+
+### §13 corrections recorded with this matrix
+
+1. **S1e:** `read_campaign_leads` was recorded as "registered". It is not built (corrected above).
+2. **Campaign screen address:** the Spine campaign capabilities give the screen as `/solo/:account/campaigns`
+   (`_shared/paige-spine/domains/campaigns.ts:22,28,34`). The real route is `/solo/:account/growth/campaigns`. This is a
+   REPAIR, scheduled with O4.
+3. **`useSoloProposals` and `useSoloActions`:** master §5 listed `useSoloProposals` among the live 409 consumers.
+   Nothing imports either hook.
+4. **`governedSend.ts`:** the email plan called it new. It already exists at
+   `src/pages/admin/conversations/governedSend.ts`, so C1 extends it.
+
+**Sequencing:** the gaps fold into the existing slice plan rather than a new one.
+- **S3 UI (after owner design approval):** O5–O8.
+- **Chat and deep-link work, with Platform Reach:** O1, O2 and O4 (S1e, the attach tool, `?brief=<id>`).
+- **G1, then G2, M1, G3, D1, C1, U1:** O9–O12 and O15.
+- **I1–I3:** O13.
+- **MB-8 (ANT-156):** O14.

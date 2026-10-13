@@ -154,6 +154,11 @@ S3 builds tenant SendGrid routing at the governed one-to-one door (`202710310001
 It also builds the correlated, forward-only application of verified Event Webhook events to governed
 messages (`20271031000200`). Nothing is activated: there is no live send, no configured webhook and no
 verified domain. The operator steps are in master §5.
+Review round 4 adds `20271031000250` and closes `send-message`'s second path: a SendGrid connector sends only
+for the email door's prepared operation (`paige_email_requires_governed_send` otherwise), only the service role
+may create or change a SendGrid connector, and one SendGrid-verified claim is allowed per domain across
+businesses. A send whose outcome is unknown settles from a webhook event only when all three `custom_args`
+claims and the recipient match. A per-business DNS proof of domain ownership is still owed.
 
 
 ## S7.4 (ANT-78 closeout, 2026-10-12): broker hardening + credential setup package

@@ -769,54 +769,69 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-**2026-10-13 — Experience 03 S3 "PAIGE works your leads": backend only (branch `claude/stoic-archimedes-pv4r8u`; NOT merged or live when this was written).** Merging ships the code and three migrations: `20271031000000`, `20271031000100` and `20271031000200`. None is persisted on production until `deploy-migrations` reads it back. No screen ships: the reply screen waits for the owner to approve the design. No live SendGrid send can happen until the operator steps in §5 are done. Internal; no customer version.
+**2026-10-13 — Experience 03 S3 "PAIGE works your leads": backend only (branch `claude/stoic-archimedes-pv4r8u`; NOT merged or live when this was written; updated for review round 4).** Merging ships the code and four migrations: `20271031000000`, `20271031000100`, `20271031000200` and `20271031000250`. None is persisted on production until `deploy-migrations` reads it back. No screen ships: the reply screen waits for the owner to approve the design. No live SendGrid send can happen until the operator steps in §5 are done. Internal; no customer version.
 
 **What ships on merge (code-verified on the branch):**
 - **Drafting a reply to a new lead.** `growth-process-submission/lead-reply.ts` files one `owner.lead_followup` action per submission (unique index `uq_paige_actions_lead_followup_submission`). It drafts only when all of these hold:
-  - the form opted in: `growth_forms.lead_reply_enabled`, default false, set only through the 6-argument `growth_form_set_intake`;
+  - the form opted in: `growth_forms.lead_reply_enabled`, default false, set only through the 6-argument `growth_form_set_intake`, which admits standalone, sub-account and enterprise businesses;
   - the business's account type is standalone, sub-account or enterprise;
   - its status is trial, active or past_due, and it is not archived;
   - the email typed into the form matches the contact's email;
-  - it has exactly one email sender;
+  - it has exactly one email sender, counted with the email door's own provider list (`emailProvidersFor`, so a SendGrid-only business is counted when `SENDGRID_MAIL_SEND_API_KEY` is set);
   - the caps hold: 20 per business per hour, 100 per day, 1 per contact per day.
 
-  When it skips, it records why in `growth_form_submissions.lead_reply_skipped_reason`. The worker's draft (`paige-action-worker/draft.ts`) stores plain text only (`{channel, subject, body, raw}`). The model's HTML and the reviewer's free text are never stored.
-- **Sending only through the governed door.** `comms-email-command` accepts an optional `approval_id`. The approval must be a pending `owner.lead_followup` approval for the same business and contact, and it is part of the fingerprinted arguments. On `provider_accepted`, the door records the send on the approval with `lead_reply_record_send_service` and returns `record_status`. A failed record returns `pending_record`, which a replay fixes.
-- **No false completion.** A trigger on `paige_pending_approvals` refuses `approved`/`sent` for any approval that stands for a `send_via_approval` action unless it cites a provider-accepted governed send to the same business and person (`SEND_REQUIRES_GOVERNED_SEND`, 42501). Declining stays allowed. A unique index lets one accepted message satisfy at most one approval.
-- **`execute-approval` refuses every send kind with 409** before it claims anything, writes anything or sends anything. `reason_code` is `review_and_send` for a lead reply of the same business and `decline_only` for every other kind, including `client.followup`. It also releases its claim if the acknowledge write fails.
+  When it skips, it records why in `growth_form_submissions.lead_reply_skipped_reason`. The worker's draft (`paige-action-worker/draft.ts`) stores plain text only (`{channel, subject, body, raw}`), with the subject capped at the door's 200-character limit. The model's HTML and the reviewer's free text are never stored.
+- **One approval, one send.** `comms-email-command` accepts an optional `approval_id` and carries it into the governance record that prepare receives. `prepare_comms_email_send` stores it on the send (`comms_email_binding.approval_id`, lowercased) after locking the approval, and refuses before inserting when:
+  - the approval is not this business's `owner.lead_followup` approval for this contact (`COMMS_EMAIL_APPROVAL_INVALID`);
+  - it is already approved/sent, or a send prepared for it or cited on it was accepted (`COMMS_EMAIL_APPROVAL_ALREADY_SENT`);
+  - such a send is still prepared, dispatching or unknown (`COMMS_EMAIL_APPROVAL_SEND_IN_PROGRESS`);
+  - the approval was declined or otherwise decided (`COMMS_EMAIL_APPROVAL_NOT_PENDING`).
+
+  A unique index (`messages_comms_email_approval_live`) allows one live send per approval; a failed or refused send leaves it. A replay that names a different approval, or adds or drops one, is refused (`COMMS_EMAIL_REPLAY_MISMATCH`; the door answers 403 `LEAD_REPLY_APPROVAL_MISMATCH` and records nothing). The door returns these refusals as `LEAD_REPLY_APPROVAL_*`. On `provider_accepted`, the door records the send on the approval with `lead_reply_record_send_service` and returns `record_status`; a failed record returns `pending_record`, which a replay fixes. Recording refuses an email prepared for no approval or for another one (`LEAD_REPLY_NOT_THIS_APPROVAL`).
+- **No false completion.** A trigger on `paige_pending_approvals` refuses `approved`/`sent` for any approval that stands for a `send_via_approval` action:
+  - **every kind other than `owner.lead_followup`** (including the 125 pending `client.followup` approvals) is refused before any proof is read (`SEND_REQUIRES_GOVERNED_SEND`, `reason_code=decline_only`), whatever it cites;
+  - a reply is admitted only when it cites a provider-accepted governed send to the same business and person that was prepared for this approval (`binding.approval_id` equals the approval's id).
+
+  Declining stays allowed. A unique index lets one accepted message satisfy at most one approval.
+- **`execute-approval` refuses every send kind with 409** before it claims anything, writes anything or sends anything. `reason_code` is `review_and_send` for a lead reply of the same business and `decline_only` for every other kind, including `client.followup`. It also releases its claim if the acknowledge write fails. Its generic acknowledge branch is still there for approvals that are not send kinds: it marks them `approved` with `executed:false` and sends nothing (`execute-approval/index.ts:286-305`). Production had 0 such approvals in the 90 days to 2026-10-13 (round-3 compliance read).
 - **PAIGE Email (SendGrid) at the door (`20271031000100`).** `tenant_email_domains` gains SendGrid verification facts that only the service role may write; a rename clears them. A SendGrid sender is admitted at prepare, and again at send time, only while its own domain is verified. The send carries `custom_args` (`paige_tenant_id`, `paige_operation_id`, `paige_message_id`) and has a 20-second deadline. HTTP 202 means accepted, never delivered. A SendGrid `unknown` outcome is never re-sent by reconcile.
-- **Receipts and history (`20271031000200`).** A signature-verified SendGrid event updates a governed email only when it correlates on the message id, provider, tenant/operation/message claims and recipient. Otherwise it is journalled `uncorrelated` with a reason. The provider's outcome is mapped forward only:
+- **No second SendGrid path (`send-message`, `20271031000250`).** `send-message` sends through a SendGrid connector only for a service-role request carrying a prepared email-door operation whose stored binding matches it field for field. Anything else is refused with `paige_email_requires_governed_send` before any provider call (403 for a plain send; a scheduled release is marked failed for review). `20271031000250` stops anyone signed in, the platform owner from the app included, from creating a SendGrid connector, switching one to SendGrid, changing one or switching one back on; only the service role or a non-JWT database session may. Switching one off stays allowed, so a business can still delete its own domain. Two unique indexes allow one SendGrid-verified claim per domain across businesses and one SendGrid domain id per row; the migration stops, and deletes nothing, if duplicates exist. Neither index proves a business owns its domain.
+- **Receipts and history (`20271031000200`).** A signature-verified SendGrid event updates a governed email when it correlates on the stored SendGrid id, provider, all three tenant/operation/message claims and recipient; a SendGrid binding missing a claim is refused (`claims_missing`). Otherwise it is journalled `uncorrelated` with a reason. **A send with no stored SendGrid id** (`unknown`, or `dispatching` claimed more than 15 minutes ago) settles to `provider_accepted` (`settled_by_provider_event`) only when all three claims and the recipient match exactly; the event is then applied. **An event that arrives too early** (its send is `prepared` and under 24 hours old, or `dispatching` and claimed under 15 minutes ago) is not kept: ingest returns `pending` and the webhook answers 503 so SendGrid redelivers. A `prepared` send older than 24 hours is journalled uncorrelated (`not_dispatched`). If applying the event fails, the event is still journalled (`correlation='apply_failed'`, reason carries the SQLSTATE). `ingest_sendgrid_receipt` is SECURITY DEFINER and refuses any caller with `auth.uid()` set (`SENDGRID_RECEIPT_FORBIDDEN`); the applier is revoked from `service_role`. The provider's outcome is mapped forward only:
   - delivered → `delivered`;
   - bounce, blocked or dropped → `failed` with that `delivery_state`;
   - a spam report → `delivery_state='spam_reported'`, status unchanged;
   - deferred → `delivery_state='deferred'`, no delivery claim.
 
-  A lead reply that reaches `provider_accepted` writes one `communication_log` row, and one `deal_activities` row when the lead has an open deal. Both say "handed to the email provider". No stage moves. `communication_log` gains `tenant_id`, `contact_id`, `message_id` and `operation_id`, and `user_id` becomes nullable.
+  A lead reply that reaches `provider_accepted`, through a send prepared for that approval, writes one `communication_log` row, and one `deal_activities` row when the lead has an open deal. Both say "handed to the email provider". No stage moves. `communication_log` gains `tenant_id`, `contact_id`, `message_id` and `operation_id`; `user_id` becomes nullable, and these history rows always write `user_id = NULL`, so the client's portal readers (which all filter by `user_id`) never show them. `CommunicationsAdmin` reads every row and now handles a null `user_id`; nothing mounts it today.
 
-**Proof (local, before merge):**
-- SQL rollback proofs:
-  - `exp03_lead_reply_draft.sql`: 126 PASS;
-  - `paige_email_sendgrid_door.sql`: 33 ok;
-  - `paige_email_sendgrid_receipts.sql`: 43 PASS.
+**Proof (local, before merge; round 4):**
+- SQL rollback proofs, migrations applied in filename order:
+  - `exp03_lead_reply_draft.sql`: 159 PASS (also 159 with `000250` applied);
+  - `paige_email_sendgrid_door.sql`: 39 ok / 0 failed when run without `000250`. CI applies `000250` first, and with it applied the proof stops at its own fixture (two domain rows share `sendgrid_domain_id='sg-dom-own'`, `paige_email_sendgrid_door.sql:105-106`), which the new unique index refuses. Distinct fixture ids are owed before merge; a builder's scratch copy with distinct ids passed 39/39;
+  - `paige_email_sendgrid_receipts.sql`: 74 PASS (also 74 with `000250` applied);
+  - `paige_email_sendgrid_sender_integrity.sql`: 27 ok.
 - Edge and unit tests:
   - `test:execute-approval` 39/39;
-  - `test:lead-reply` 54/54;
-  - `draft.test.ts` 21;
-  - `lead-reply-approval.test.ts` 12/12;
-  - the two SendGrid vitest files 16/16 and 8/8;
-  - the webhook test 8/8;
+  - `test:lead-reply` 58/58;
+  - `draft.test.ts` 24/24;
+  - `lead-reply-approval.test.ts` 17/17;
+  - `comms-email-command.test.ts` 35/35 (30 of 35 failed at the round-3 head with `ReferenceError: emailProvidersFor is not defined`; its injected scope is fixed);
+  - `send-message-sendgrid-door.test.ts` 4/4;
+  - the webhook test 9/9; `sendgrid-webhook-handler.test.ts` 14/14;
+  - `email-composer` prompt test 7/7;
   - `tierFeatures.test.ts` 26.
-- The builders reinstated each defect and the matching test failed.
-- `deno check` was not run (Deno is not installed in the sandbox). Nothing ran against a deployed function, a browser or a signed-in session.
+- CI wiring: `ci.yml` runs the three node suites (`test:email-composer-prompt`, `test:comms-lead-reply-approval`, `test:sendgrid-webhook`); `paige-spine-contract.yml` runs the door, receipts and sender-integrity proofs after the exp03 proof.
+- The builders reinstated each defect and the matching test failed (round 4: 12 SQL + 6 door mutations, 21 receipt mutations and the webhook batch case, and the send gate, drafter, subject cap and sender-integrity mutations).
+- `deno check` was not run (Deno is not installed in the sandbox). Nothing ran against a deployed function, a browser or a signed-in session. Two prepares racing on one approval are not exercised by a concurrency test.
 
 **What does NOT ship:**
-- No reply screen and no UI states. The 409 consumers (`ApprovalRow`, `DraftsAwaitingPanel`, `useCommandCenter`, `useSoloProposals`, `GamePlanApprovals`) read no `reason_code`, so a person still sees a generic error.
-- No SendGrid domain verification service. `manage-tenant-domain` handles Resend only.
-- No live SendGrid send or event. Production on 2026-10-13 (read-only): 0 `sendgrid_receipt_processing` rows, 0 `sendgrid` connectors and 0 `owner.lead_followup` actions. A builder reported `SENDGRID_WEBHOOK_PUBLIC_KEY` unset; this record did not re-read secrets.
-- `client.followup` has no send path. It is decline-only (§5).
-- The drafter does not yet pass the SendGrid provider list to `resolveCommsEmailParties`. A business whose only sender is SendGrid gets `no_email_sender`.
-- `growth_form_set_intake` lets only standalone and sub-account businesses turn the opt-in on. The drafter also admits enterprise, so an enterprise form cannot be opted in today.
+- No reply screen and no UI states. The 409 consumers (`ApprovalRow`, `DraftsAwaitingPanel`, `useCommandCenter`, `useSoloProposals`, `GamePlanApprovals`, and the agency Command Center's `approve` in `src/agency/data/useAgencyCommandCenter.ts:213`) read no `reason_code`; each fails closed, so a person sees a generic error, never a false success. The refusal text (`review_and_send`) and the guard's HINT say "Review and send it from the reply screen", a screen that does not exist yet; no consumer shows that text today.
+- No SendGrid domain verification service, and no per-business DNS proof that a business owns its domain. `manage-tenant-domain` handles Resend only.
+- No live SendGrid send or event. Production on 2026-10-13 (read-only): 0 `sendgrid_receipt_processing` rows, 0 `sendgrid` connectors (8 connectors, all Resend) and 0 `owner.lead_followup` actions; a builder read 35 `messages` rows, 6 with a send binding and none naming an approval, so the new approval index cannot collide. A builder reported `SENDGRID_WEBHOOK_PUBLIC_KEY` unset; this record did not re-read secrets.
+- `client.followup` has no send path. It is decline-only at `execute-approval` and at the database (§5).
 - Recording a send is sender-only (`LEAD_REPLY_NOT_YOUR_SEND`).
+- A settle by claims does not write a `record_capability_run` row; no test shows a settled lead reply writing its history row.
+- The 15-minute and 24-hour early-event windows are builder choices awaiting sign-off.
 
 **2026-10-13 — Experience 04 E4-S2: "where does this client stand?" in chat; owner sets the business time zone in Setup — PR [#2106](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2106) → main `6f73ade472d684b0b60fda73b1c0bc9a7511badb` (squash merge, 20:31 UTC); merged head `d3d792ffcaecad5772fca7483051d9293884923d`.** Reviews: independent security review SHIP (admission gate); adversarial review (5 major, all fixed); re-review SHIP; guard-fix review FIX-FIRST → fixed → SHIP. Exact-head CI: 12/12 GitHub Actions checks green. Supabase Preview was **skipped**: the stale preview branch was deleted, and the migration was proven instead by `database-contract` on a reproduction of production. Internal-only; production channel (pre-launch §4); no customer announcement or version. **What shipped:**
 - Setup › Business profile › Business time zone (live `SoloBusinessContextSetup`):
@@ -4368,37 +4383,38 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
-### Experience 03 S3 "PAIGE works your leads" — backend built, three gaps before a business can use it (2026-10-13)
+### Experience 03 S3 "PAIGE works your leads" — backend built, three gaps before a business can use it (2026-10-13; updated for review round 4)
 
 Backend record: §4.0 (2026-10-13 S3 entry). Journey record: [`delivery/exp03-grow-my-business-journey.md`](delivery/exp03-grow-my-business-journey.md) §12.
 
+0. **Before merge (found in round 4).** `paige_email_sendgrid_door.sql:105-106` gives two domain rows the same `sendgrid_domain_id`; once `20271031000250` is applied first, as CI does, the proof stops on the new unique index. Give the fixtures distinct ids. The other two proofs pass in that order.
 1. **Operator steps before any live SendGrid send. None done; each needs operator authority, and step 8 needs the owner's sign-off.**
-   1. After merge, confirm `20271031000000`, `000100` and `000200` are in `schema_migrations` with their objects, and that the edge functions deployed.
+   1. After merge, confirm `20271031000000`, `000100`, `000200` and `000250` are in `schema_migrations` with their objects, and that the edge functions deployed.
    2. Set the restricted Mail Send key `SENDGRID_MAIL_SEND_API_KEY`, and record its scopes through `comms-sendgrid-scopes`.
-   3. Authenticate the business's sending domain in SendGrid (DNS on the business's domain).
+   3. Authenticate the business's sending domain in SendGrid (DNS on the business's domain). A per-business DNS proof that the business owns the domain is owed before any automated verification writer ships; the unique indexes in `000250` do not prove ownership.
    4. Write `sendgrid_domain_id`, `sendgrid_status='verified'` and `sendgrid_verified_at` with the service role. No automated verification service exists, and `manage-tenant-domain` handles Resend only.
-   5. Create the business's `sendgrid` email connector on the verified domain. Do not convert any Resend rows.
+   5. Create the business's `sendgrid` email connector on the verified domain with the service role; after `000250`, no signed-in user (the platform owner from the app included) can create or change one. Do not convert any Resend rows.
    6. Make sure `comms_provider_execution_allowed` admits the business and actor.
    7. Enable the SendGrid Event Webhook and set `SENDGRID_WEBHOOK_PUBLIC_KEY`.
    8. The owner signs off on the first live test send (test identity, consent, provider policy).
-   - **Policy reach.** The 2026-10-13 SendGrid policy is applied only at the governed door. Marketing email's managed sender and `buildProvider`'s default still use the platform Resend key (decision log, 2026-10-13).
-2. **`client.followup` — owner decision owed.** `client.followup` is decline-only. Production on 2026-10-13: 125 pending approvals, plus the 6 falsely marked approved/done (§10). Approving one never sent anything. The owner decides between:
-   - a governed review-and-send path for this kind (new work: a record path like `lead_reply_record_send`); or
-   - leaving it decline-only, and deciding whether to tighten the database guard to refuse every non-reply send kind. Today the guard would still accept a `client.followup` that cites a real accepted governed send, and the quarantine is enforced by `execute-approval` and the record function.
+   - **Policy reach.** The 2026-10-13 SendGrid policy is applied at the governed door, and `send-message` now refuses any SendGrid send that is not the door's. Marketing email's managed sender and `buildProvider`'s default still use the platform Resend key (decision log, 2026-10-13).
+   - **Sign-off owed:** the 15-minute (`dispatching`) and 24-hour (`prepared`) windows for early SendGrid events are builder choices.
+2. **`client.followup` — owner decision owed.** `client.followup` is decline-only at both layers: `execute-approval` refuses it with 409 `decline_only`, and the database guard now refuses `approved`/`sent` for every send kind other than `owner.lead_followup` before reading any proof, so it can no longer be completed by citing an unrelated accepted email. Production on 2026-10-13: 125 pending approvals, plus the 6 falsely marked approved/done (§10). Approving one never sent anything. The owner decides between:
+   - a governed review-and-send path for this kind (new work: a record path like `lead_reply_record_send`, and widening the guard to that kind); or
+   - leaving it decline-only.
 3. **Reply screen UI PR — owner design approval first (§00).** It still needs:
    - to send `approval_id` to `comms-email-command` and show `record_status`;
    - to record with the same user who confirmed the send;
    - to show the delivery states the data now supports (§4.0);
-   - to have the 409 consumers read `reason_code`;
-   - the contact and deal readers (`ContactDetail.tsx`, `DealDrawer.tsx`, `ClientJourney.tsx`) to also read `communication_log` by `contact_id`.
+   - to have the 409 consumers read `reason_code`: `ApprovalRow`, `DraftsAwaitingPanel`, `useCommandCenter`, `useSoloProposals`, `GamePlanApprovals`, and the agency Command Center (`src/agency/data/useAgencyCommandCenter.ts:213`, which fails closed with a generic error on a 409);
+   - to make the refusal text true: `review_and_send` and the guard's HINT say "Review and send it from the reply screen";
+   - the contact and deal readers (`ContactDetail.tsx`, `DealDrawer.tsx`, `ClientJourney.tsx`) to also read `communication_log` by `contact_id` (the history rows carry `user_id = NULL`);
+   - plain wording in `_shared/comms-email/chat.ts` for `SENDER_VERIFICATION_MISSING` and the `LEAD_REPLY_APPROVAL_*` codes (now including `SEND_IN_PROGRESS`, `ALREADY_SENT` and `MISMATCH`);
+   - mapping `COMMS_EMAIL_SENDER_UNVERIFIED` in `adapter.ts`.
 
    Found while building (not this slice's code): `src/solo/useConversations.ts` selects `messages.metadata`, but production's column is `meta`.
 
-   Also owed:
-   - the drafter's SendGrid provider list;
-   - an enterprise opt-in at `growth_form_set_intake`, to match the drafter;
-   - plain wording in `_shared/comms-email/chat.ts` for `SENDER_VERIFICATION_MISSING` and `LEAD_REPLY_APPROVAL_*`;
-   - mapping `COMMS_EMAIL_SENDER_UNVERIFIED` in `adapter.ts`.
+   Closed in round 4 (were owed here): the drafter's SendGrid provider list, and the enterprise opt-in at `growth_form_set_intake`.
 
 ### Experience01 late-verification workspace timeout — internal production repair; customer proof owed (2026-10-13)
 
@@ -6115,12 +6131,13 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
   - **Production, read-only, 2026-10-13.**
     - **6** `client.followup` approvals are `approved`, reviewed 2026-09-15 to 2026-10-07. All 6 carry `executed=false`, and all their actions read `done`.
     - **125** more are still `pending` (2026-09-11 to 2026-10-13).
-    - All 131 send-kind actions in the 30 days to 2026-10-13 were `client.followup`.
+    - A builder's query found all 131 send-kind actions in the 30 days to 2026-10-13 were `client.followup`. **That count is not independently confirmed:** the round-3 compliance read only confirmed that the one other send kind ever used, `comms-draft-reply`, has 3 actions, all `blocked`, all on 2026-09-11, none with an approval.
     - So any screen or summary that counted those 6 as followed-up was wrong: no email or SMS went out for them.
   - **Corrected on this branch, not yet merged.**
     - `execute-approval` now refuses every `send_via_approval` kind with 409 before any write (`reason_code` `decline_only` for `client.followup`).
-    - A database guard (`20271031000000`) refuses `approved`/`sent` for any send-kind approval that does not cite a provider-accepted governed send for the same business and person.
+    - A database guard (`20271031000000`) refuses `approved`/`sent` for every send kind other than `owner.lead_followup` before reading any proof (`decline_only`), and admits a reply only when it cites a provider-accepted governed send for the same business and person that was prepared for that approval (round 4: an unrelated accepted email to the same person no longer satisfies it).
     - What this removes is the false completion, not a working send (§58).
+  - **Still there (§13).** `execute-approval`'s generic acknowledge branch (`index.ts:286-305`) still marks approvals of categories that are not send kinds `approved` with `executed:false`, and sends nothing. Send kinds can no longer reach it. The 90-day production volume through it outside the 6 `client.followup` rows is 0 (round-3 compliance read). The lessons-learned rule "a fall-through acknowledge branch must refuse by default" is therefore met for send kinds only.
   - **Not changed.** The 6 historical rows are not rewritten; they stay as a record of what happened. Whether to give `client.followup` a real governed send is an open owner decision (§5).
   - **Why no proof caught it:** `docs/brain/lessons-learned.md` (2026-10-13 entry).
 - **2026-10-12 · OPERATING FABRIC F2b GROUNDING: TENANT SYSTEMS CHECK WAS RECORDED AS INVISIBLE TO CHAT, AND TWO CONTRACT ROWS WERE STALE.** (1) Tenant Systems Check is reachable from tenant-tier chat: `paige-ai-chat/index.ts:8158` pushes `read_business_metric` when `callerTier === "tenant"` and `:11492` dispatches it, and the tool's keys include `operations.systems_check_latest`, `operations.unresolved_findings_current` and `operations.current_system_exceptions`, which the settings producer reads through `systems_check_snapshot('tenant')`. So the §5 line "tenant Systems Check results (794 runs, 0 chat reach)" and the Operating Fabric contract's §A "Systems Check (tenant)" row are stale: reach is PARTIAL (tenant tier, owner/admin seat), not none. (2) The contract's §L F2 row still named `practice_attention_queue` for `operations`; F2b reads the issuer keys instead (F2a correction 2 gives the reasons that source was ruled out). (3) The contract's §A and §H rows said 4 plan items; a read-only prod aggregate on 2026-10-12 returned `plan_items` 3, `plans` 0. The master doc never stated that count. All three are marked in the contract, not rewritten.

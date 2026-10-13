@@ -1530,16 +1530,16 @@
       "business_reason": "Owner policy 2026-10-13: a business's PAIGE Email sends through SendGrid on the platform's account. Resend stays the Platform Operator's own email, and existing tenant Resend connectors are not converted. Customers see 'PAIGE Email', never a provider name.",
       "paige_use_cases": [
         "send one approved email to one existing contact from the business's SendGrid-verified domain through the governed door (comms-email-command / comms.email_send); provider acceptance only",
-        "send an approved reply to a new lead (owner.lead_followup, Experience 03 S3) with approval_id, and record the send on the approval (lead_reply_record_send_service)",
+        "send an approved reply to a new lead (owner.lead_followup, Experience 03 S3) with approval_id; prepare stores the approval on the send binding and allows one live send per approval; record the send on that approval only (lead_reply_record_send_service, LEAD_REPLY_NOT_THIS_APPROVAL otherwise)",
         "read back the provider's own outcome (delivered / bounced / blocked / dropped / deferred / spam report) from a signature-verified Event Webhook, correlated to the governed message"
       ],
-      "connection_prerequisite": "Operator steps, none done on production as of 2026-10-13 (master §5): the restricted Mail Send key SENDGRID_MAIL_SEND_API_KEY set with its scopes recorded via comms-sendgrid-scopes; the business's sending domain authenticated in SendGrid (DNS); the verification facts (tenant_email_domains.sendgrid_domain_id / sendgrid_status='verified' / sendgrid_verified_at) written by the service role, since there is no automated SendGrid verification service and manage-tenant-domain is Resend-only; a channel_connectors row provider='sendgrid' on the verified domain; comms_provider_execution_allowed admitting the business and actor; the Event Webhook enabled with SENDGRID_WEBHOOK_PUBLIC_KEY set; owner sign-off on the first live test send.",
+      "connection_prerequisite": "Operator steps, none done on production as of 2026-10-13 (master §5): the restricted Mail Send key SENDGRID_MAIL_SEND_API_KEY set with its scopes recorded via comms-sendgrid-scopes; the business's sending domain authenticated in SendGrid (DNS); the verification facts (tenant_email_domains.sendgrid_domain_id / sendgrid_status='verified' / sendgrid_verified_at) written by the service role, since there is no automated SendGrid verification service and manage-tenant-domain is Resend-only; a channel_connectors row provider='sendgrid' on the verified domain, written by the service role (after 20271031000250 no signed-in user can create or change one); a per-business DNS proof of domain ownership before any automated verification writer ships; comms_provider_execution_allowed admitting the business and actor; the Event Webhook enabled with SENDGRID_WEBHOOK_PUBLIC_KEY set; owner sign-off on the first live test send.",
       "required_scopes": [
         "SendGrid restricted API key: Mail Send only (SENDGRID_MAIL_SEND_API_KEY)",
         "a separate scoped key for Event Webhook setup only (SENDGRID_WEBHOOK_ADMIN_API_KEY, read only by comms-sendgrid-webhook-admin)"
       ],
       "safe_readable_context": "The provider message id (X-Message-Id), the event type, the bounce type and a sanitized provider reason (control characters stripped, addresses replaced by [address], 200 characters max). Never the message body from the provider, never a credential.",
-      "allowed_writes_external_effects": "Send one email. Only through comms-email-command after the person approves the exact email on the canonical confirmation. The sender domain must be SendGrid-verified at prepare and again at send time (COMMS_EMAIL_SENDER_UNVERIFIED / binding not eligible otherwise). HTTP 202 is provider acceptance, never delivery. A SendGrid outcome of 'unknown' is never re-sent by reconcile (_comms_email_reconcilable admits Resend only); the identical-content guard refuses a duplicate while it is unknown. execute-approval refuses every send_via_approval kind (409) and sends nothing.",
+      "allowed_writes_external_effects": "Send one email. Only through comms-email-command after the person approves the exact email on the canonical confirmation. The sender domain must be SendGrid-verified at prepare and again at send time (COMMS_EMAIL_SENDER_UNVERIFIED / binding not eligible otherwise). HTTP 202 is provider acceptance, never delivery. A SendGrid outcome of 'unknown' is never re-sent by reconcile (_comms_email_reconcilable admits Resend only); the identical-content guard refuses a duplicate while it is unknown. execute-approval refuses every send_via_approval kind (409) and sends nothing. send-message refuses any SendGrid send that is not the email door's prepared operation (paige_email_requires_governed_send), before any provider call.",
       "authority_lane": [
         "read",
         "draft",
@@ -1550,7 +1550,7 @@
       "rail_mind_memory": "Rail: the governed send's outcome (provider_accepted, then any correlated provider-reported delivery state); a lead reply that reaches provider_accepted writes one communication_log row and, with an open deal, one deal_activities row saying 'handed to the email provider'. Mind: no bodies. Memory: none of raw content. Provider acceptance is never reported as delivered; a spam report keeps the status and sets delivery_state='spam_reported'.",
       "status": "PROOF_OWED",
       "owner": "Comms workstream (Experience 03 S3 for the lead-reply binding)",
-      "dependency": "Operator steps in connection_prerequisite; merge and persisted apply of 20271031000100 and 20271031000200 (branch claude/stoic-archimedes-pv4r8u, not merged on 2026-10-13); the reply screen UI (owner design approval first). Production 2026-10-13 (read-only): 0 sendgrid connectors, 0 sendgrid_receipt_processing rows.",
+      "dependency": "Operator steps in connection_prerequisite; merge and persisted apply of 20271031000100, 20271031000200 and 20271031000250 (branch claude/stoic-archimedes-pv4r8u, not merged on 2026-10-13); the reply screen UI (owner design approval first). Production 2026-10-13 (read-only): 0 sendgrid connectors, 0 sendgrid_receipt_processing rows.",
       "next_slice": "Complete the operator steps on one test business and run one owner-approved live send end to end: approve → provider_accepted → correlated Event Webhook → message state read back. Then build a SendGrid domain-verification service so the facts are not hand-written.",
       "tier_eligibility": {
         "platform": "ineligible",
@@ -1579,7 +1579,7 @@
           "m1_dependency_track": "none",
           "detail": "Email delivery is a metered operating comms cost, not a payment or discretionary purchase. Volume is bounded by the lead-reply caps and the governed door's per-send approval."
         },
-        "receipt_reconciliation": "X-Message-Id at acceptance; Event Webhook events journalled in sendgrid_receipt_processing (correlated or uncorrelated with a reason) and applied forward-only to the governed message.",
+        "receipt_reconciliation": "X-Message-Id at acceptance; Event Webhook events journalled in sendgrid_receipt_processing (correlated, uncorrelated with a reason, or apply_failed with the SQLSTATE) and applied forward-only to the governed message. A send with no stored provider id (unknown, or dispatching over 15 minutes) settles to provider_accepted only when all three custom_args claims and the recipient match; an event for a send still prepared (under 24 hours) or dispatching (under 15 minutes) is not kept and the webhook answers 503 for redelivery. Window lengths await sign-off.",
         "rail_outcome": "governed send outcome; provider acceptance recorded separately from provider-reported delivery.",
         "pause_revoke_path": "Unset SENDGRID_MAIL_SEND_API_KEY (readiness becomes EMAIL_PROVIDER_NOT_CONFIGURED), deactivate the business's sendgrid connector, or clear its sendgrid_status (the binding stops being eligible at send time).",
         "next_owner": "Comms workstream",
@@ -1614,7 +1614,12 @@
         {
           "path": "supabase/functions/send-message/index.ts",
           "role": "provider_adapter",
-          "note": "the GENERIC dispatcher's governed SendGrid arm (custom_args, 20 s deadline, http_status); not SendGrid-specific on its own."
+          "note": "the GENERIC dispatcher's governed SendGrid arm (custom_args, 20 s deadline, http_status); a SendGrid connector sends only for the email door's prepared operation (paige_email_requires_governed_send otherwise)."
+        },
+        {
+          "path": "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql",
+          "role": "fail_closed_containment",
+          "note": "only the service role may create or change a SendGrid connector (signed-in users may only switch one off); one SendGrid-verified claim per domain across businesses; one row per SendGrid domain id."
         }
       ],
       "sources": [

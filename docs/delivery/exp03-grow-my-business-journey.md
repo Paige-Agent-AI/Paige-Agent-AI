@@ -376,32 +376,34 @@ Every slice: independent non-author review, exact-head CI, `deploy-migrations` p
 reference §4/§5 and tier matrix updated in the same PR, four evidence states kept separate (CODE_COMPLETE, RELEASED,
 AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
 
-## 12. S3 "PAIGE works your leads" — backend built, not merged (2026-10-13)
+## 12. S3 "PAIGE works your leads" — backend built, not merged (2026-10-13; updated for review round 4)
 
 **Naming note (§13).** §10's table plans S3 as "chat: attach asset, transition campaign, read leads". The work built on this branch under the S3 label is a different deliverable: a drafted reply to each new lead, sent only through the governed email door. The chat-tools deliverable is not built by this work, and no slice number is assigned to it here.
 
-**Status.** CODE_COMPLETE on branch `claude/stoic-archimedes-pv4r8u`. Not RELEASED: not merged, and migrations `20271031000000`/`000100`/`000200` are not applied. Not AUTHENTICATED_WORKFLOW_VERIFIED. Not OWNER_ACCEPTED. Full record: master §4.0 (2026-10-13 S3 entry), with the gaps in master §5.
+**Status.** CODE_COMPLETE on branch `claude/stoic-archimedes-pv4r8u`. Not RELEASED: not merged, and migrations `20271031000000`/`000100`/`000200`/`000250` are not applied. Not AUTHENTICATED_WORKFLOW_VERIFIED. Not OWNER_ACCEPTED. Full record: master §4.0 (2026-10-13 S3 entry), with the gaps in master §5.
 
 **Flow covered (backend):**
 1. A lead submits an opted-in form.
 2. `growth-process-submission` files one `owner.lead_followup` draft. Its gates:
-   - business account type and open status;
+   - business account type (standalone, sub-account or enterprise) and open status;
    - the typed email matches the contact;
-   - exactly one sender;
+   - exactly one sender, counted with the email door's provider list (SendGrid included);
    - caps.
 
    A skip records `lead_reply_skipped_reason`.
 3. The worker drafts plain text.
-4. The owner approves the exact email, and `comms-email-command` sends it with `approval_id` from an admitted sender. SendGrid counts only while its domain is verified..
-5. At `provider_accepted`, the send is recorded on the approval, and the contact and deal history show "handed to the email provider".
-6. A signature-verified SendGrid event moves the message forward (delivered / bounced / blocked / dropped / deferred / spam reported).
+4. The owner approves the exact email, and `comms-email-command` sends it with `approval_id` from an admitted sender. SendGrid counts only while its domain is verified. The approval is stored on the send, and only one live send per approval is allowed.
+5. At `provider_accepted`, the send is recorded on the approval (only a send prepared for that approval), and the contact and deal history show "handed to the email provider". The history row carries no client user, so it is never shown in the client's portal.
+6. A signature-verified SendGrid event moves the message forward (delivered / bounced / blocked / dropped / deferred / spam reported). A send whose outcome was unknown settles only when all three correlation claims and the recipient match.
 
-`execute-approval` and every other approve path cannot mark a send approved without a governed send.
+`execute-approval` and every other approve path cannot mark a send approved without a governed send prepared for that approval. Every other send kind (for example `client.followup`) is decline-only at the database. `send-message` refuses any SendGrid send that is not the email door's.
 
 **Not covered, and why:**
 - **The reply screen and every UI state.** Owner design approval comes first (§00).
 - **A live SendGrid send.** Operator steps are owed (master §5).
-- **`client.followup`.** Decline-only; an owner decision is owed.
-- **A SendGrid-only business gets no draft.** The drafter does not pass the SendGrid provider list yet.
-- **Enterprise forms cannot be opted in.** The setter admits standalone and sub-account only.
+- **`client.followup`.** Decline-only at `execute-approval` and at the database; an owner decision is owed.
+- **A per-business DNS proof of domain ownership** before any automated SendGrid verification writer ships.
+- **Before merge:** the door proof's fixtures share one SendGrid domain id, which `000250`'s unique index refuses when CI applies it first (master §5, item 0).
+
+Closed in round 4: a SendGrid-only business now gets a draft, and enterprise forms can be opted in.
 - **The full rollout plan.** Gmail and iCloud Mail are planned separately in `exp03-launch-email-providers-plan.md`.

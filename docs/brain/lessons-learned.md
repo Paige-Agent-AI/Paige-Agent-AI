@@ -15,10 +15,11 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 **The class of proof that missed it.** A status transition was treated as evidence of the effect the status names. A test that checks a row reached `approved` passes exactly as well when the work was skipped.
 
 **Rule.**
-- For any kind whose job is an external effect (a send, a payment, a publish), the terminal "done" state must REQUIRE the effect's canonical receipt. Enforce that at the write, not in the caller. S3 does it with a guard on `paige_pending_approvals` that demands a provider-accepted governed send for the same business and person.
+- For any kind whose job is an external effect (a send, a payment, a publish), the terminal "done" state must REQUIRE the effect's canonical receipt. Enforce that at the write, not in the caller. S3 does it with a guard on `paige_pending_approvals` that demands a provider-accepted governed send for the same business and person, prepared for that approval (round 4), and refuses every other send kind outright.
 - The test suite must include the negative: approve the thing with no effect, and assert the row does NOT become approved.
-- A fall-through "acknowledge" branch is a default that silently claims completion. When a door meets a kind it cannot execute, it must refuse by default.
+- A fall-through "acknowledge" branch is a default that silently claims completion. When a door meets a kind it cannot execute, it must refuse by default. **Where S3 stands (§13):** it applies this to send kinds only. `execute-approval` still acknowledges approvals of categories that are not send kinds (`index.ts:286-305`, `executed:false`, nothing sent); production had 0 of those in the 90 days to 2026-10-13.
 - Reading `executed:false` in production is cheap. Count it before trusting an "approved" metric.
+- **Bind the receipt to the request, not to the person (review round 4).** The first S3 guard accepted any provider-accepted governed email to the same business and person. An unrelated email to that lead (from chat or support) would therefore have satisfied a reply approval, and a legacy `client.followup` could be completed by citing one. The fix stores the approval id on the send when it is prepared and requires that exact id at approval, at recording and at history. A proof of effect must name the request it answers.
 
 ### Small functional history does not prove recurring-status read performance (2026-10-13, #2112)
 

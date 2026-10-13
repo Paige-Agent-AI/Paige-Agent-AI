@@ -1,6 +1,10 @@
 # Decision Log — chronological one-liners
 
-- **Experience 03 S3 "PAIGE works your leads" — email policy, the governed door, the legacy quarantine (2026-10-13; branch `claude/stoic-archimedes-pv4r8u`, migrations `20271031000000`/`000100`/`000200`; not merged when recorded).**
+- **Owner email product decisions (2026-10-13; recorded in `docs/delivery/exp03-launch-email-providers-plan.md`, addendum 2026-10-13).**
+  - **Personal mailbox import: known business contacts only.** No whole-mailbox import into CRM Conversations. A broader, explicitly authorised inbox experience may come later with its own consent, privacy controls and retention rules.
+  - **No automatic lead creation from unknown personal senders.** PAIGE may recommend creating a lead; the owner confirms. Any future automation needs its own governed opt-in policy.
+  - **Platform ownership grants no routine access to a tenant's personal email.** Only narrow operational diagnostics and auditable exceptional access. The production `messages_select` platform-owner branch must be corrected before public mailbox onboarding.
+- **Experience 03 S3 "PAIGE works your leads" — email policy, the governed door, the legacy quarantine (2026-10-13; branch `claude/stoic-archimedes-pv4r8u`, migrations `20271031000000`/`000100`/`000200`/`000250`; not merged when recorded; updated for review round 4).**
   - **Owner policy (2026-10-13): a business's PAIGE Email sends through SendGrid; Resend is the Platform Operator's own email.**
     - Existing tenant Resend connectors are NOT converted. The governed door still admits `resend`, and only Resend sends can be reconciled.
     - Customers see "PAIGE Email", never a provider name.
@@ -10,7 +14,11 @@
     - A form submission is not marketing consent. A direct reply to it is allowed, but it goes out only from the business's verified email through `comms-email-command` / `comms.email_send`. There is no second sender path.
     - Provider acceptance is not delivery: HTTP 202 is `provider_accepted`, never `delivered`.
     - AI drafting is opt-in per form (`growth_forms.lead_reply_enabled`, default false).
-  - **Legacy approval quarantine.** `execute-approval` refuses every `send_via_approval` kind with 409 before any write (`reason_code` `review_and_send` | `decline_only`). A database guard refuses `approved`/`sent` for a send-kind approval unless it cites a provider-accepted governed send for the same business and person. `client.followup` is decline-only until the owner rules on a governed path (master §5).
+  - **Legacy approval quarantine.** `execute-approval` refuses every `send_via_approval` kind with 409 before any write (`reason_code` `review_and_send` | `decline_only`). The database guard refuses `approved`/`sent` for every send kind other than `owner.lead_followup` before reading any proof (`decline_only`), so `client.followup` is decline-only at the database too until the owner rules on a governed path (master §5). `execute-approval` keeps its generic acknowledge branch for approvals that are not send kinds (`executed:false`, nothing sent).
+  - **One approval, one send (round 4).** The door carries `approval_id` into prepare, which stores it on the send binding and refuses a second live send for the same approval (`messages_comms_email_approval_live`), a send for a foreign/declined/already-sent approval, and a replay that changes the approval. A reply approval is admitted, and a send is recorded on it, only when the cited email was prepared for that approval (`LEAD_REPLY_NOT_THIS_APPROVAL`); the history row is written only for such a send.
+  - **No second SendGrid path (round 4).** `send-message` refuses a SendGrid send that is not the email door's prepared operation (`paige_email_requires_governed_send`). `20271031000250` lets only the service role (or a non-JWT database session) create or change a SendGrid connector; anyone signed in may only switch one off. One SendGrid-verified claim per domain across businesses, one SendGrid domain id per row. A per-business DNS ownership proof is still owed.
+  - **Unknown sends settle by claims (round 4).** A SendGrid send with no stored provider id (`unknown`, or `dispatching` over 15 minutes) settles to `provider_accepted` only when all three `custom_args` claims and the recipient match. Early events return `pending` (webhook 503, SendGrid redelivers). The 15-minute and 24-hour windows await sign-off.
+  - **History rows hidden from clients (round 4).** The lead-reply `communication_log` rows always carry `user_id = NULL`; every portal reader filters by `user_id`.
   - **§58 call-out — exactly what is removed.**
     - For `client.followup`: a false completion. Approving one marked it approved/done with `executed:false` and sent nothing. 6 such rows on production, 2026-09-15 to 2026-10-07 (master §10).
     - For flat-draft send kinds whose category carries email/sms: a route into `send-message` through `execute-approval`. 0 such actions in the 30 days to 2026-10-13, so no working send volume is lost.
@@ -18,7 +26,7 @@
   - **§61 `lead_reply` declaration: default, no exception.**
     - God, Solo and Sub-account: yes. Enterprise: yes, through the Solo union. Agency: no at its own operator surface.
     - The server enforces it in `growth-process-submission/lead-reply.ts` `LEAD_REPLY_ACCOUNT_TYPES` (standalone, sub_account, enterprise), pinned to `tierFeatures.ts` by `tierFeatures.test.ts`.
-    - Known mismatch: the opt-in setter `growth_form_set_intake` admits only standalone and sub-account, so enterprise cannot turn it on yet.
+    - Enterprise can opt in (round 4): `growth_form_set_intake` admits standalone, sub-account and enterprise, matching the declaration. (Earlier, the setter admitted only standalone and sub-account.)
   - **Recording a send is sender-only.** `lead_reply_record_send` and its service twin require the send's bound actor (`LEAD_REPLY_NOT_YOUR_SEND`). They refuse a new send while an earlier one on the same approval is unresolved (`LEAD_REPLY_PRIOR_SEND_UNRESOLVED`).
   - **Spam report keeps the message's status** (`delivery_state='spam_reported'`). A complaint proves arrival, and "failed" would invite a resend. This deviates from the brief, and the deviation is recorded in `20271031000200`.
 - **Experience 04 E4-S2 — client standing in chat, owner time-zone setup (2026-10-13, ANT-51 / ANT-147).**

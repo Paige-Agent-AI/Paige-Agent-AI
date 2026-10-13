@@ -6,6 +6,10 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### Verified enrollment can outpace the mounted workspace provider (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** Welcome received verified server enrollment and navigated, but real SoloEntry refused an empty workspace provider accepted before fulfillment. Server record writes emit no browser Auth event; a navigation-only mock missed this. Refresh the same canonical provider, prove an accepted new list has React-committed, and match fresh actor/profile/server-selected tenant/address before entry. The reference change is a completion marker, never authority. Failed refresh preserves old context, so merely awaiting its void Promise is insufficient. Use the real provider/dispatcher in integration proof; keep native rendering, hosted release and protected ordinary-owner acceptance distinct.
+
 ### A green proof over a ledger the writer cannot produce (2026-10-12, Experience 04)
 
 **Symptom → root cause → rule.** The E4-S1 client-status proof passed 34/34 and its parity check agreed

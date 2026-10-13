@@ -1,0 +1,12 @@
+{
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "reviewer": "Independent non-author render_evidence_review",
+  "sourceSha256": "f0f9dc35e82f68dcfde966a7d203617d566c3ea621850352be8d99dd256d4502",
+  "capturesInspected": 13,
+  "imageHashesMatchMatrix": true,
+  "verdict": "SHIP within bounded rendered class",
+  "materialFixes": [],
+  "findings": "Incumbent type, palette, mark and controls retained; error recovery, pending scope distinction, mobile/320 CSS reflow and visible native Retry focus have no material regression. Return handoff is explicitly synthetic.",
+  "unverified": ["Native zoom", "Screen reader", "Temporal motion and preference toggle", "Complete rendered state matrix", "Actual SoloEntry in browser", "Production", "Customer authentication and acceptance"],
+  "authorization": "Review only; no production/customer acceptance or merge authorization inferred"
+}

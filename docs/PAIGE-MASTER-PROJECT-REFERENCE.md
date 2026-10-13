@@ -4176,6 +4176,10 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
+### Experience01 admission hydration — source candidate (2026-10-12)
+
+Receipt-backed enrollment can complete after the mounted browser provider accepted empty workspace context, without an Auth event. The bounded Welcome repair refreshes the existing TenantProvider and requires a successful load's React commit plus fresh actor/profile/server-selected tenant/address agreement before SoloEntry. No parallel Auth/provisioning/context store or authority. Verified source payload941d930681f1b2e007a30a140e06cc575f0502c3; failing-first real-provider/entry test,98 repaired tests and63 committed acquisition/integration tests, TypeScript10/10 baseline and lint pass. Thirteen native actual-Welcome synthetic frames cover the light/dark four-viewport matrix, mobile/reflow and keyboard recovery; independent bounded finish review SHIP, with native zoom/screen reader/temporal motion and actual customer authentication unverified. Final exact-head source review/CI and release remain separate. Current protected QA account/session scope follows the latest private ANT-21/ANT-52 owner directive; former-account recovery is not a current acceptance prerequisite. Contract: [`delivery/experience-01-admission-hydration.md`](delivery/experience-01-admission-hydration.md). Master§4 Shipped Delivery Log N/A until main merge; no customer LIVE claim.
+
 ### Experience 04 — Get Paid & Deliver My Services: first read built, nothing activated (2026-10-12)
 
 Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-get-paid-deliver-journey.md) (ANT-51 / ANT-147, PR #2074, **not merged**).

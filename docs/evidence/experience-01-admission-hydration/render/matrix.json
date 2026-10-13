@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "sourceSha256": "f0f9dc35e82f68dcfde966a7d203617d566c3ea621850352be8d99dd256d4502",
+  "sourcePayloadCommit": "941d930681f1b2e007a30a140e06cc575f0502c3",
+  "captureAPI": "cua_repl native getScreenshot bytes copied without image modification",
+  "expectedResponsiveMatrix": 8,
+  "actualResponsiveMatrix": 8,
+  "additionalCaptures": 5,
+  "invalidAcceptedCaptures": 0,
+  "captures": [
+    {
+      "file": "dark-error-1024x768.json",
+      "image": "dark-error-1024x768.jpg",
+      "imageSha256": "9c60e9158fcdad46112474464b4430cfc6ce836fc91f10bb97c1462423cbf8ad",
+      "label": "dark-error-1024x768",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1024
+      },
+      "theme": "dark",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "dark-error-1366x768.json",
+      "image": "dark-error-1366x768.jpg",
+      "imageSha256": "46faf3afb80d59826072930a84e627075e394bb985381260d6275afca3ecdc6d",
+      "label": "dark-error-1366x768",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "dark",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "dark-error-1536x770.json",
+      "image": "dark-error-1536x770.jpg",
+      "imageSha256": "bfdc5cb20219d0333c295209cd98a9e9cc1e4d406b5edcfe5cbc31492f29dccd",
+      "label": "dark-error-1536x770",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "height": 770,
+        "width": 1535
+      },
+      "theme": "dark",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "dark-error-320x844.json",
+      "image": "dark-error-320x844.jpg",
+      "imageSha256": "bcfe30f9feb3d39538573d3cfe680ca901b5a1e884840b4970c9f4848986f56c",
+      "label": "dark-error-320x844",
+      "requested": {
+        "width": 320,
+        "height": 844
+      },
+      "actual": {
+        "height": 844,
+        "width": 320
+      },
+      "theme": "dark",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "dark-error-900x1000.json",
+      "image": "dark-error-900x1000.jpg",
+      "imageSha256": "61f17f424060c15044db41fcddb9f4d0f8f4afd35fc0d8ff49647e641b8313ad",
+      "label": "dark-error-900x1000",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "actual": {
+        "height": 1000,
+        "width": 900
+      },
+      "theme": "dark",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "dark-retry-handoff.json",
+      "image": "dark-retry-handoff.jpg",
+      "imageSha256": "42f2e2c149c18c80af40ecf2cbe8892dcbcecbbde6b78cbb8c3927cec3350a5f",
+      "label": "dark-retry-handoff",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "dark",
+      "heading": "Handoff reached the synthetic destination",
+      "overflow": false
+    },
+    {
+      "file": "dark-retry-keyboard-focus.json",
+      "image": "dark-retry-keyboard-focus.jpg",
+      "imageSha256": "f78f359c753108248d16a23feae79b8890458815f43e9cf2dd0c6dffb54c13f2",
+      "label": "dark-retry-keyboard-focus",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "dark",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "light-error-1024x768.json",
+      "image": "light-error-1024x768.jpg",
+      "imageSha256": "9a6685784a8fa65c5889b571a0462845b7ec7aae3f024c6d3f25dca04daba698",
+      "label": "light-error-1024x768",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1024
+      },
+      "theme": "light",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "light-error-1366x768.json",
+      "image": "light-error-1366x768.jpg",
+      "imageSha256": "d67261702d127768beb9a1ae9591661881bcd55e97292e4b22c551f408ab61ed",
+      "label": "light-error-1366x768",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "light",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "light-error-1536x770.json",
+      "image": "light-error-1536x770.jpg",
+      "imageSha256": "292e2deab55bec127c1528af45974733dadc049c2faa7e7fece1775664540cf5",
+      "label": "light-error-1536x770",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "height": 770,
+        "width": 1535
+      },
+      "theme": "light",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "light-error-900x1000.json",
+      "image": "light-error-900x1000.jpg",
+      "imageSha256": "64859a6e3391a5577882e08bb2f5ff8de15f54d43763e1acd98825ab89a487d4",
+      "label": "light-error-900x1000",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "actual": {
+        "height": 1000,
+        "width": 900
+      },
+      "theme": "light",
+      "heading": "We could not open your workspace",
+      "overflow": false
+    },
+    {
+      "file": "light-pending-1366x768.json",
+      "image": "light-pending-1366x768.jpg",
+      "imageSha256": "4e0b113f3a7bdb38c9489896ac753fb7a38b58ae26c0de250d043de2f0698f95",
+      "label": "light-pending-1366x768",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "height": 768,
+        "width": 1366
+      },
+      "theme": "light",
+      "heading": "Verifying your Paige Solo access…",
+      "overflow": false
+    },
+    {
+      "file": "light-signed-out-390x844.json",
+      "image": "light-signed-out-390x844.jpg",
+      "imageSha256": "70c5ce4ecafbca6fa8e16401e803e2200a9d27fb81ed7b31dc0edcb1a095983a",
+      "label": "light-signed-out-390x844",
+      "requested": {
+        "width": 390,
+        "height": 844
+      },
+      "actual": {
+        "height": 843,
+        "width": 390
+      },
+      "theme": "light",
+      "heading": "Sign in to finish verification",
+      "overflow": false
+    }
+  ],
+  "behavior": {
+    "keyboard": "Native Tab visibly focused Retry; native Return reached labelled synthetic route destination.",
+    "pending": "Actual Welcome shows verified enrollment and pending workspace confirmation.",
+    "recovery": "Read-error and signed-out states retain actionable existing controls.",
+    "reflow": "320 CSS-pixel viewport measured without horizontal overflow; this is not native 200 percent zoom.",
+    "reducedMotion": "Preference true in captured browser DOM; native preference toggle and temporal motion proof unverified."
+  },
+  "limitations": [
+    "Deterministic no-network SDK/context adapters; no account, Auth, database or provider request.",
+    "The browser handoff target is explicitly synthetic, not actual SoloEntry or customer workspace.",
+    "Actual mounted TenantProvider and SoloEntry are exercised separately by jsdom integration tests.",
+    "Screen-reader, native zoom, full first-use/account-choice and rendered actor-change cases remain unverified.",
+    "No production or authenticated customer acceptance."
+  ]
+}

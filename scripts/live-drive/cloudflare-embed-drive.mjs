@@ -16,7 +16,7 @@
 //     inside a sandbox;
 //   - a success redirect, which moves the visitor's whole page on the business's site;
 //   - Paige's own product analytics, which never run inside a form on a business's site.
-// It saves the answer one visitor sent (artifacts/cloudflare-embed/sent.json) for form-embed-intake-replay.sh,
+// It saves the answer one visitor sent (artifacts/cloudflare-embed/sent.json) for form-embed-intake-replay.mjs,
 // which files it through the real intake rules and database.
 //
 // WHAT IT DOES NOT PROVE. Cloudflare's edge itself (Rocket Loader is Cloudflare's script, applied the way the edge
@@ -29,6 +29,7 @@ import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import http from "node:http";
+import zlib from "node:zlib";
 import { spawn } from "node:child_process";
 import { buildLaunchOptions, resolvePlaywright } from "./live-drive.mjs";
 
@@ -59,12 +60,13 @@ const OLD_TAG = `<script src="${APP}/embed.js" data-form="${FORM_ID}" data-title
 const FRAME = `<iframe src="${APP}/form/${FORM_ID}?embed=1" title="Spring consult request" loading="lazy" style="width:100%;height:720px;border:0;color-scheme:normal"></iframe>`;
 
 // A page shaped like a Genspark-built site: one static file, inline styles, a hero, sections, a footer.
-const page = (body, { head = "", tail = "" } = {}) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
+const page = (body, { head = "", tail = "", light = false } = {}) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Northwind Advisory</title>${head}
 <style>*{box-sizing:border-box}body{margin:0;font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;background:#0f2a2e;color:#e8f1ef}
 header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid #24484d}
 .hero{padding:56px 24px;max-width:960px;margin:0 auto}.hero h1{font-size:40px;line-height:1.1;margin:0 0 12px}
-section{max-width:720px;margin:0 auto;padding:24px 16px}footer{padding:32px 24px;color:#9fbab6;border-top:1px solid #24484d}</style></head>
+section{max-width:720px;margin:0 auto;padding:24px 16px}footer{padding:32px 24px;color:#9fbab6;border-top:1px solid #24484d}
+${light ? "body{background:#fbfaf7;color:#1d2a2c}footer{color:#4c5d5f}header,footer{border-color:#d9dfdd}" : ""}</style></head>
 <body><header><strong>Northwind Advisory</strong><nav><a id="before" href="#services" style="color:#9fe0d4">Services</a></nav></header>
 <div class="hero"><h1>Strategy for growing firms</h1><p>Book a consult or tell us what you need.</p></div>
 <section id="contact"><h2>Tell us about you</h2>${body}<p id="after">We reply within a day.</p></section>
@@ -91,12 +93,20 @@ const SITE_FILES = {
   "csp-noscript/index.html": page(TAG),
   "csp-noscript-frame/index.html": page(FRAME),
   "sandbox/index.html": page(sandboxBlock("allow-scripts allow-popups allow-forms", TAG)),
+  "sandbox-escape/index.html": page(sandboxBlock("allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms", TAG)),
+  "csp-report-only/index.html": page(TAG),
+  // The fallback button on a light site, on a dark site, and the owner's dark-look form on a light site; and the
+  // booking popup's button (same style) on both, which must keep working exactly as before.
+  "csp-noframe-light/index.html": page(TAG, { light: true }),
+  "csp-noframe-darkform/index.html": page(TAG.replace(" data-cfasync", ' data-theme="dark" data-cfasync'), { light: true }),
+  "booking-popup/index.html": page(`<script src="${APP}/embed.js" data-slug="discovery-call" data-mode="popup" async></script>`),
+  "booking-popup-light/index.html": page(`<script src="${APP}/embed.js" data-slug="discovery-call" data-mode="popup" async></script>`, { light: true }),
   "sandbox-same-origin/index.html": page(sandboxBlock("allow-scripts allow-same-origin allow-popups allow-forms", TAG)),
   "sandbox-frame/index.html": page(FRAME.replace("<iframe ", '<iframe sandbox="allow-scripts allow-popups allow-forms" ')),
   "redirect/index.html": page(TAG),
   "thanks/index.html": `<!doctype html><title>Thanks</title><h1 id="thanks">Thanks page on the business's own site</h1>`,
   // Cloudflare Pages reads response headers for each path from this file.
-  "_headers": `/csp-allows/*\n  Content-Security-Policy: ${CSP_ALLOWS}\n/csp-noframe/*\n  Content-Security-Policy: default-src 'self'; script-src 'self' ${APP}; frame-src 'self'; style-src 'self' 'unsafe-inline'\n/csp-noscript/*\n  Content-Security-Policy: default-src 'self'; script-src 'self'; frame-src ${APP}; style-src 'self' 'unsafe-inline'\n/csp-noscript-frame/*\n  Content-Security-Policy: default-src 'self'; script-src 'self'; frame-src ${APP}; style-src 'self' 'unsafe-inline'\n`,
+  "_headers": `/csp-allows/*\n  Content-Security-Policy: ${CSP_ALLOWS}\n/csp-report-only/*\n  Content-Security-Policy-Report-Only: default-src 'self'\n/csp-noframe-light/*\n  Content-Security-Policy: default-src 'self'; script-src 'self' ${APP}; frame-src 'self'; style-src 'self' 'unsafe-inline'\n/csp-noframe-darkform/*\n  Content-Security-Policy: default-src 'self'; script-src 'self' ${APP}; frame-src 'self'; style-src 'self' 'unsafe-inline'\n/csp-noframe/*\n  Content-Security-Policy: default-src 'self'; script-src 'self' ${APP}; frame-src 'self'; style-src 'self' 'unsafe-inline'\n/csp-noscript/*\n  Content-Security-Policy: default-src 'self'; script-src 'self'; frame-src ${APP}; style-src 'self' 'unsafe-inline'\n/csp-noscript-frame/*\n  Content-Security-Policy: default-src 'self'; script-src 'self'; frame-src ${APP}; style-src 'self' 'unsafe-inline'\n`,
 };
 
 const results = [];
@@ -157,6 +167,43 @@ const sentOk = (seen, id) => {
     `${id}: they carry the form, the bot trap and no business id`, JSON.stringify(sent?.body));
   return sent;
 };
+// The fallback / booking button, measured in pixels on the page it sits on: its text against its own fill (>= 4.5:1),
+// its outline against the page around it (>= 3:1, WCAG 1.4.11: the fill or either ring tone), its height, and
+// a visible keyboard focus.
+async function buttonLooks(pg, frame, selector) {
+  const el = await frame.waitForSelector(selector, { timeout: 15000 });
+  const facts = await el.evaluate((b) => {
+    const r = b.getBoundingClientRect(); const cs = getComputedStyle(b);
+    return { h: r.height, text: cs.color, fill: cs.backgroundColor };
+  });
+  const box = await el.boundingBox();
+  // A 1x1 screenshot, decoded here (no image library, and no reliance on the host page's own policy).
+  const px = async (x, y) => {
+    const png = await pg.screenshot({ clip: { x, y, width: 1, height: 1 } });
+    let at = 8; const idat = []; let colorType = 2;
+    while (at < png.length) {
+      const len = png.readUInt32BE(at); const type = png.toString("ascii", at + 4, at + 8);
+      if (type === "IHDR") colorType = png[at + 8 + 9];
+      if (type === "IDAT") idat.push(png.subarray(at + 8, at + 8 + len));
+      at += 12 + len;
+    }
+    const raw = zlib.inflateSync(Buffer.concat(idat));
+    return [raw[1], raw[2], raw[3]].slice(0, colorType === 0 ? 1 : 3);
+  };
+  const cy = box.y + box.height / 2;
+  const [fill, inner, outer, around] = [await px(box.x + 4, cy), await px(box.x - 1.5, cy), await px(box.x - 2.6, cy), await px(box.x - 14, cy)];
+  const lum = (c) => c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05); };
+  const parse = (v) => v.match(/\d+/g).slice(0, 3).map(Number);
+  const textRatio = ratio(parse(facts.text), parse(facts.fill));
+  // Its outline against the page: whichever of the fill or the two ring tones stands out most from what's around it.
+  const edgeRatio = Math.max(ratio(fill, around), ratio(inner, around), ratio(outer, around));
+  await el.focus();
+  await pg.keyboard.press("Shift+Tab"); await pg.keyboard.press("Tab");
+  const focus = await el.evaluate((b) => ({ focused: (b.getRootNode().activeElement ?? document.activeElement) === b, outline: getComputedStyle(b).outlineStyle, width: parseFloat(getComputedStyle(b).outlineWidth) }));
+  return { h: facts.h, textRatio: Math.round(textRatio * 10) / 10, edgeRatio: Math.round(edgeRatio * 10) / 10, focus, around };
+}
+
 const fitsWithoutScroll = async (frame) => frame.evaluate(() => document.documentElement.scrollHeight <= document.documentElement.clientHeight + 2);
 
 async function main() {
@@ -210,7 +257,8 @@ async function main() {
       if (label === "desktop-1366" && sent) fs.writeFileSync(path.join(OUT, "sent.json"), JSON.stringify({ form: FORM, sent }, null, 2));
       await settle(500);
       check(await fitsWithoutScroll(frame), `${id}: the thank-you fits its frame`);
-      check(seen.analytics.length === 0, `${id}: none of Paige's product analytics run on the business's site`, JSON.stringify(seen.analytics));
+      check(seen.analytics.length === 0, `${id}: none of Paige's product analytics run on the business's site (Plausible, page_view, Meta Pixel; PostHog is proven by its unit test, no key here)`, JSON.stringify(seen.analytics));
+      check(!seen.unexpected.some((c) => c.includes("/rest/v1/paige_config")), `${id}: the Meta Pixel doesn't even look up its settings on the business's site`, JSON.stringify(seen.unexpected));
       check(errors.length === 0, `${id}: no page error`, JSON.stringify(errors));
       await pg.screenshot({ path: path.join(OUT, `${label}-sent.png`), fullPage: true });
       await ctx.close();
@@ -260,6 +308,8 @@ async function main() {
         "CSP blocking the frame: the visitor gets a link to the form's own page (with the campaign tags), not a blank box", href?.href ?? "no link");
       check(link ? (await link.getAttribute("target")) === "_blank" : false, "CSP blocking the frame: the link opens the form beside the site");
       check(consoleLines.some((l) => /Content-Security-Policy blocks the form \(frame-src/.test(l) && l.includes(APP)), "CSP blocking the frame: the console names the directive to add", JSON.stringify(consoleLines.filter((l) => /Paige/.test(l))));
+      const looks = await buttonLooks(pg, pg.mainFrame(), "a[data-paige-form-link]");
+      check(looks.textRatio >= 4.5 && looks.edgeRatio >= 3 && looks.h >= 44 && looks.focus.focused && looks.focus.outline !== "none", `fallback button on a dark site: readable (${looks.textRatio}:1), its edge visible (${looks.edgeRatio}:1), 44px, keyboard focus shown`, JSON.stringify(looks));
       await pg.screenshot({ path: path.join(OUT, "csp-noframe.png"), fullPage: true });
       await ctx.close();
     });
@@ -287,6 +337,18 @@ async function main() {
       check(consoleLines.some((l) => /sandbox without allow-same-origin/.test(l)), "sandbox without allow-same-origin: the console says why and what to change");
       check(seen.submits.length === 0, "sandbox without allow-same-origin: nothing was sent");
       await pg.screenshot({ path: path.join(OUT, "sandbox-link.png"), fullPage: true });
+      // The tab it opens inherits the sandbox (the block doesn't let popups escape), so the form can't run there:
+      // it shows the form's address to copy into a new tab, never a blank page.
+      if (link) {
+        const [tab] = await Promise.all([ctx.waitForEvent("page", { timeout: 15000 }), link.click()]);
+        await tab.waitForLoadState("domcontentloaded");
+        const shown = await tab.waitForSelector("text=This form opens on its own page", { timeout: 30000 }).catch(() => null);
+        const address = shown ? (await tab.locator("p.font-mono").textContent())?.trim() : null;
+        const opaque = await tab.evaluate(() => String(window.origin));
+        check(Boolean(shown) && address === `${APP}/form/${FORM_ID}`, "sandbox without allow-same-origin: the tab the link opens (still sandboxed) shows the form's address to copy, not a blank page", JSON.stringify({ opaque, address }));
+        check((await tab.locator("button", { hasText: "Copy address" }).count()) === 1 && (await tab.locator("a", { hasText: "Open the form" }).count()) === 0, "sandbox without allow-same-origin: that tab offers Copy address, not another sandboxed link");
+        await tab.screenshot({ path: path.join(OUT, "sandbox-link-opened-tab.png"), fullPage: true });
+      }
       await ctx.close();
     });
     await scenario("sandbox with allow-same-origin", async () => {
@@ -296,11 +358,56 @@ async function main() {
       await fillAndSend(await el.contentFrame()); sentOk(seen, "sandbox with allow-same-origin");
       await ctx.close();
     });
+    await scenario("sandbox that lets tabs escape", async () => {
+      const { ctx, pg, seen } = await open("/sandbox-escape/");
+      const block = await (await pg.waitForSelector("iframe[title='Custom HTML']")).contentFrame();
+      const link = await block.waitForSelector("a[data-paige-form-link]", { timeout: 15000 });
+      const [tab] = await Promise.all([ctx.waitForEvent("page", { timeout: 15000 }), link.click()]);
+      await tab.waitForLoadState("domcontentloaded");
+      check(await tab.evaluate(() => String(window.origin)) === APP, "sandbox that lets tabs escape: the link opens the form's own page with its real origin");
+      await fillAndSend(tab.mainFrame()); sentOk(seen, "sandbox that lets tabs escape, form's own page");
+      await ctx.close();
+    });
+    for (const [route, label] of [["/csp-noframe-light/", "fallback button on a light site"], ["/csp-noframe-darkform/", "fallback button for a dark-look form, on a light site (inverted)"]]) await scenario(label, async () => {
+      const { ctx, pg } = await open(route);
+      const looks = await buttonLooks(pg, pg.mainFrame(), "a[data-paige-form-link]");
+      check(looks.textRatio >= 4.5 && looks.edgeRatio >= 3 && looks.h >= 44 && looks.focus.focused && looks.focus.outline !== "none", `${label}: readable (${looks.textRatio}:1), its edge visible (${looks.edgeRatio}:1), 44px, keyboard focus shown`, JSON.stringify(looks));
+      await pg.screenshot({ path: path.join(OUT, `${route.replaceAll("/", "")}.png`), fullPage: true });
+      await ctx.close();
+    });
+    for (const [route, label] of [["/booking-popup/", "booking popup button on a dark site"], ["/booking-popup-light/", "booking popup button on a light site"]]) await scenario(label, async () => {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion: "reduce" });
+      await ctx.route((url) => url.host === SUPABASE, (r) => r.abort());
+      const pg = await ctx.newPage();
+      await pg.goto(`${SITE}${route}`, { waitUntil: "domcontentloaded" });
+      const btn = await pg.waitForSelector("button:has-text('Book a time')", { timeout: 15000 });
+      const looks = await buttonLooks(pg, pg.mainFrame(), "button:has-text('Book a time')");
+      check(looks.textRatio >= 4.5 && looks.edgeRatio >= 3 && looks.h >= 44 && looks.focus.focused && looks.focus.outline !== "none", `${label}: readable (${looks.textRatio}:1), its edge visible (${looks.edgeRatio}:1), 44px, keyboard focus shown`, JSON.stringify(looks));
+      await pg.screenshot({ path: path.join(OUT, `${route.replaceAll("/", "")}.png`), fullPage: true });
+      await btn.click();
+      const frame = await pg.waitForSelector("[role=dialog] iframe", { timeout: 15000 }).catch(() => null);
+      check(Boolean(frame) && new URL(await frame.getAttribute("src")).pathname === "/book/discovery-call", `${label}: still opens the booking calendar in its dialog, unchanged`);
+      await pg.keyboard.press("Escape");
+      check((await pg.locator("[role=dialog]").count()) === 0, `${label}: Escape still closes it`);
+      await ctx.close();
+    });
+    await scenario("CSP in report-only mode", async () => {
+      const { ctx, pg, seen, consoleLines } = await open("/csp-report-only/");
+      const ro = await pg.evaluate(async () => (await fetch(location.href)).headers.get("content-security-policy-report-only"));
+      check(Boolean(ro), "CSP report-only: Pages served the site's report-only policy", String(ro));
+      const el = await pg.waitForSelector("iframe", { timeout: 15000 });
+      await settle(1500);
+      check((await pg.locator("a[data-paige-form-link]").count()) === 0 && !consoleLines.some((l) => /Content-Security-Policy blocks the form/.test(l)), "CSP report-only: the form stays (a report-only policy never blocks), and no false console advice");
+      await fillAndSend(await el.contentFrame()); sentOk(seen, "CSP report-only");
+      await ctx.close();
+    });
     await scenario("no-script code inside a sandbox", async () => {
       const { ctx, pg, seen } = await open("/sandbox-frame/");
       const frame = await (await pg.waitForSelector("iframe")).contentFrame();
       const link = await frame.waitForSelector("a:has-text('Open the form')", { timeout: 30000 }).catch(() => null);
       const words = await frame.locator("text=This form opens on its own page").count();
+      const address = (await frame.locator("p.font-mono").textContent().catch(() => ""))?.trim();
+      check(address === `${APP}/form/${FORM_ID}` && (await frame.locator("button", { hasText: "Copy address" }).count()) === 1, "no-script code inside a sandbox: the form's address is shown to copy", String(address));
       check(Boolean(link) && words === 1 && (await frame.locator("#gf-name").count()) === 0, "no-script code inside a sandbox: instead of a blank frame, the visitor is told the form opens on its own page, with a link", link ? "" : "no link");
       check(link ? new URL(await link.getAttribute("href")).searchParams.has("embed") === false : false, "no-script code inside a sandbox: the link opens the full form page");
       check(seen.submits.length === 0, "no-script code inside a sandbox: nothing was sent");

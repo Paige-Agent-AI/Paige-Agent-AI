@@ -37,9 +37,13 @@
  *   - A tag in <head> (pasted there, or the only thing in a builder's "custom HTML" block) puts the widget at the
  *     end of the page, not in the invisible head.
  *   - A Content-Security-Policy that blocks framing Paige (frame-src): the frame is replaced by a link to the form,
- *     and the console says which directive to add.
+ *     and the console says which directive to add. A Report-Only policy is ignored (it never blocks). Browsers report
+ *     a refused frame by origin, not by frame, so a policy that allows some Paige addresses and refuses others turns
+ *     every Paige form frame on the page into a link.
  *   - A sandbox without allow-same-origin (some site builders' "custom HTML" blocks): a frame there could not send
- *     its answers (the intake refuses an address-less origin), so the visitor gets a link to the form instead.
+ *     its answers (the intake refuses an address-less origin), so the visitor gets a link to the form instead. A tab
+ *     opened from it stays sandboxed unless the block allows popups to escape the sandbox; the form page then shows
+ *     its address to copy into a new tab (src/main.tsx).
  */
 (function () {
   "use strict";
@@ -121,11 +125,20 @@
     return;
   }
 
+  // The button sits on a page Paige didn't design, light or dark. Its own fill carries the text (white on deep indigo,
+  // about 17:1), and a two-tone ring (white inside, indigo outside) keeps its edge visible on any background: the
+  // indigo against a light page, the white against a dark one (WCAG 1.4.11). A form whose owner chose the dark look
+  // gets the same button inverted. 44px tall, a comfortable touch target. Shared by the booking popup button.
+  var INK = "#1B1230", PAPER = "#FFFFFF";
+  var invert = isForm && formTheme === "dark";
   var BUTTON_CSS =
-    "display:inline-flex;align-items:center;justify-content:center;gap:.5rem;" +
+    "display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:44px;box-sizing:border-box;" +
     "padding:.65rem 1.15rem;border-radius:.65rem;border:0;cursor:pointer;" +
     "font:600 15px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;" +
-    "background:#1B1230;color:#fff;";
+    "background:" + (invert ? PAPER : INK) + ";color:" + (invert ? INK : PAPER) + ";" +
+    "box-shadow:0 0 0 2px " + (invert ? INK : PAPER) + ",0 0 0 3px " + (invert ? PAPER : INK) + ";" +
+    // The browser's own keyboard focus ring, drawn clear of the two-tone ring.
+    "outline-offset:5px;";
 
   // --- build the iframe -----------------------------------------------------
   function makeIframe(initialHeight) {
@@ -172,7 +185,7 @@
       var data = event.data;
       if (!data || typeof data !== "object" || data.type !== FORM_REDIRECT_EVENT || typeof data.url !== "string") return;
       var next;
-      try { next = new URL(data.url, window.location.href); } catch (e) { return; }
+      try { next = new URL(data.url); } catch (e) { return; }
       if (next.protocol !== "https:" && next.protocol !== "http:") return;
       window.location.assign(next.href);
     };
@@ -213,6 +226,8 @@
   function watchFramePolicy(iframe) {
     if (!isForm) return;
     document.addEventListener("securitypolicyviolation", function (e) {
+      // A Report-Only policy (how sites trial a policy) only reports: the frame still loads, so leave it be.
+      if (e.disposition === "report") return;
       var directive = String(e.effectiveDirective || e.violatedDirective || "");
       if (!/^(frame-src|child-src|default-src)/.test(directive)) return;
       if (String(e.blockedURI || "").indexOf(appOrigin) !== 0 || !iframe.parentNode) return;

@@ -111,9 +111,10 @@ window.addEventListener("load", () => {
   try { sessionStorage.removeItem("__chunk_reload__"); } catch { /* ignore */ }
 });
 
-// A form on a business's site inside a sandbox that hides its origin: the app can't run there (every provider reads
-// storage the browser refuses it), so the visitor gets a link to the form's own page instead of a blank frame.
-const sandboxedForm = isFormOnBusinessSite() && String(window.origin) === "null";
+// A form page in a sandbox that hides its origin: framed in a business's site builder block, or a tab opened from one
+// (which inherits the sandbox). The app can't run there (every provider reads storage the browser refuses it, and the
+// intake refuses an address-less origin), so the visitor gets the form's address to open instead of a blank page.
+const sandboxedForm = /^\/form\//.test(window.location.pathname) && String(window.origin) === "null";
 
 createRoot(document.getElementById("root")!).render(sandboxedForm ? <SandboxedFormNotice /> : (
   <React.StrictMode>

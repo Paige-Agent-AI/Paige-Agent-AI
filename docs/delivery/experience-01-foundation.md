@@ -50,7 +50,7 @@ Missing/denied context returns an honest inability to verify before protected mo
 
 Reviewed changed connection-sourced fields use the existing explicit override decision; unchanged reviewed facts use adopt. The owner sees replacement wording before confirming. Progress reads/writes share an operation generation, so an older initial read cannot undo a later Skip/Pause/Save. Independent review found these two defects on0787229; both have targeted unit and actual SQL regressions.
 
-INT-346 remains DRAINING/zero-tool: fresh model proposal staging and structured ask_choices remain unavailable. Natural typed conversation and explicit manual review/save are source-supported. No model/parser writes or admission workaround. Live does not carry this new context; its launch affordance is hidden while interview mode is active, without altering shared tier/Live authority.
+INT-346 remains DRAINING. Current main's owner-delegated ANT-23 read class admits only read_business_metric/get_business_snapshot; this slice preserves that class and its offer/per-call gates. Fresh model proposal staging and structured ask_choices remain withheld. Natural typed conversation and explicit manual review/save are source-supported. No model/parser writer or admission workaround. Live does not carry this context; its launch affordance is hidden while interview mode is active, without altering shared tier/Live authority.
 
 ## Verification and release boundary
 

@@ -29,7 +29,8 @@ CREATE FUNCTION pg_temp.stamp(p_sub text) RETURNS text LANGUAGE sql AS $$
 INSERT INTO auth.users(id,email) VALUES
  ('a3e30100-0000-4000-8000-000000000001','exp03-admin@example.invalid'),
  ('a3e30100-0000-4000-8000-000000000002','exp03-member@example.invalid'),
- ('a3e30100-0000-4000-8000-000000000003','exp03-other@example.invalid');
+ ('a3e30100-0000-4000-8000-000000000003','exp03-other@example.invalid'),
+ ('a3e30100-0000-4000-8000-000000000005','exp03-agency-owner@example.invalid');
 DO $fixture_owner$ DECLARE fixture_owner_id uuid; BEGIN
  IF (SELECT count(*) FROM public.user_roles WHERE role='super_admin')>1 THEN RAISE EXCEPTION 'FIXTURE: canonical owner is ambiguous'; END IF;
  SELECT user_id INTO fixture_owner_id FROM public.user_roles WHERE role='super_admin';
@@ -41,18 +42,24 @@ DO $fixture_owner$ DECLARE fixture_owner_id uuid; BEGIN
  PERFORM set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',fixture_owner_id)::text,true);
  IF public.is_platform_owner() IS DISTINCT FROM true THEN RAISE EXCEPTION 'FIXTURE: canonical owner guard unavailable'; END IF;
 END $fixture_owner$;
+-- Workspace A is a sub-account of an agency, so the agency's owner can act inside it without being one of its members.
 INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,features) VALUES
- ('a3e30100-0000-4000-8000-000000000011','exp03-proof-a','Exp03 proof A','active','standalone','XPA','{"system_workspace":true}'),
+ ('a3e30100-0000-4000-8000-000000000013','exp03-proof-agency','Exp03 proof agency','active','agency','XPG','{"system_workspace":true}');
+INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,features,parent_tenant_id) VALUES
+ ('a3e30100-0000-4000-8000-000000000011','exp03-proof-a','Exp03 proof A','active','standalone','XPA','{"system_workspace":true}','a3e30100-0000-4000-8000-000000000013');
+INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,features) VALUES
  ('a3e30100-0000-4000-8000-000000000012','exp03-proof-b','Exp03 proof B','active','standalone','XPB','{"system_workspace":true}');
 SELECT set_config('request.jwt.claims','{}',true);
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
  ('a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-000000000001','admin','active',false),
  ('a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-000000000002','member','active',false),
- ('a3e30100-0000-4000-8000-000000000012','a3e30100-0000-4000-8000-000000000003','admin','active',false);
+ ('a3e30100-0000-4000-8000-000000000012','a3e30100-0000-4000-8000-000000000003','admin','active',false),
+ ('a3e30100-0000-4000-8000-000000000013','a3e30100-0000-4000-8000-000000000005','owner','active',true);
 INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
  ('a3e30100-0000-4000-8000-000000000001','a3e30100-0000-4000-8000-000000000011'),
  ('a3e30100-0000-4000-8000-000000000002','a3e30100-0000-4000-8000-000000000011'),
- ('a3e30100-0000-4000-8000-000000000003','a3e30100-0000-4000-8000-000000000012')
+ ('a3e30100-0000-4000-8000-000000000003','a3e30100-0000-4000-8000-000000000012'),
+ ('a3e30100-0000-4000-8000-000000000005','a3e30100-0000-4000-8000-000000000011')
  ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
 
 SELECT pg_temp.as_service();
@@ -202,6 +209,21 @@ DO $read_member$ DECLARE r jsonb; l jsonb; BEGIN
    RAISE EXCEPTION 'FAIL: a member never sees names or ids, got %',l; END IF;
  IF l->>'stage_label' IS DISTINCT FROM 'New lead' OR (l->>'has_contact')::boolean IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: member sees the stage, got %',l; END IF;
 END $read_member$;
+
+-- 3b2. The agency's owner, working inside the sub-account, reads like a member: counts and stages, no names or ids.
+SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000005');
+SELECT pg_temp.require_true(public.current_user_tenant_id()='a3e30100-0000-4000-8000-000000000011'
+  AND NOT public.is_tenant_admin('a3e30100-0000-4000-8000-000000000011'),
+  'FIXTURE: the agency owner is acting inside workspace A and is not one of its admins');
+DO $read_agency$ DECLARE r jsonb; l jsonb; BEGIN
+ r := public.get_campaign_brief_leads(NULL,'a3e30100-0000-4000-8000-0000000000c1');
+ IF (r->>'can_manage')::boolean IS DISTINCT FROM false OR (r->'counts'->>'leads')::int<>3 THEN RAISE EXCEPTION 'FAIL: agency manager sees counts only, got %',r; END IF;
+ IF EXISTS (SELECT 1 FROM jsonb_array_elements(r->'leads') x
+            WHERE x->>'contact_name' IS NOT NULL OR x->>'contact_id' IS NOT NULL OR x->>'deal_title' IS NOT NULL OR x->>'deal_id' IS NOT NULL) THEN
+   RAISE EXCEPTION 'FAIL: an agency manager in a sub-account never sees names or ids, got %',r->'leads'; END IF;
+ SELECT x INTO l FROM jsonb_array_elements(r->'leads') x WHERE x->>'submission_id'='a3e30100-0000-4000-8000-0000000000e1';
+ IF l->>'stage_label' IS DISTINCT FROM 'New lead' THEN RAISE EXCEPTION 'FAIL: agency manager sees the stage, got %',l; END IF;
+END $read_agency$;
 
 -- 3c. Another workspace's admin is refused, whether naming the campaign or the workspace.
 SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000003');

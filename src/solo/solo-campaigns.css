@@ -867,3 +867,20 @@
 .ca-basis.is-failed{color:var(--bad)}
 .ca .ca-bad{color:var(--bad)}
 .ca .ca-field input[aria-invalid="true"]{border-color:var(--bad)}
+
+/* Brought in › the leads (Experience 03 S1d-2, owner-approved 2026-10-12). Rows under the lane's counts;
+   no gold on a status (§11); quiet text on --ink-2 (the --ink-3 shortfall is #2073). */
+.cl{display:grid;gap:6px}
+.cl-in{margin:0;font-size:11.5px;color:var(--ink-2)}
+.cl-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.cl-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who when" "via state";align-items:baseline;column-gap:12px;row-gap:2px;padding:8px 11px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2);min-width:0}
+.cl-when{grid-area:when;justify-self:end;font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cl-n{grid-area:who;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-n.cl-pending{font-weight:500;color:var(--ink-2)}
+.cl-via{grid-area:via;min-width:0;font-size:11px;line-height:1.4;color:var(--ink-2);overflow-wrap:anywhere}
+.cl-state{grid-area:state;justify-self:end;max-width:220px;text-align:right}
+.cl .cl-state.st-await{color:color-mix(in srgb,var(--warn) 62%,var(--ink))}
+.cl .cl-state.st-unavail{color:var(--ink-2)}
+.cl .cc-hidden{color:var(--ink-2)}
+.cc .cl-toggle:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+@media (max-width:480px){.cl-row{grid-template-columns:minmax(0,1fr);grid-template-areas:"who" "when" "via" "state"}.cl-when,.cl-state{justify-self:start;text-align:left}}

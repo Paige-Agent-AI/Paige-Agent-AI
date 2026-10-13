@@ -17,6 +17,8 @@ export type CampaignLead = {
   readonly attribution: LeadAttribution;
   /** Null for a member, who sees that a lead arrived but not who it is (§9). */
   readonly name: string | null;
+  /** Whether the lead became a contact (members are told this too; only the name is withheld). */
+  readonly hasContact: boolean;
   readonly formName: string | null;
   readonly pipelineName: string | null;
   readonly stageLabel: string | null;
@@ -64,7 +66,7 @@ export function readCampaignLeads(data: unknown): Omit<CampaignLeadsState, "phas
     const attribution = ATTRIBUTIONS.find((value) => value === row.attribution);
     if (!id || !attribution) return [];
     return [{
-      id, attribution, receivedAt: str(row.received_at), name: str(row.contact_name), formName: str(row.form_name),
+      id, attribution, receivedAt: str(row.received_at), name: str(row.contact_name), hasContact: row.has_contact === true, formName: str(row.form_name),
       pipelineName: str(row.pipeline_name), stageLabel: str(row.stage_label), status: statusOf(row),
     }];
   });
@@ -98,6 +100,35 @@ export function broughtInNote(leads: Pick<CampaignLeadsState, "counts" | "uncred
     ? ` ${plural(leads.uncredited, "lead", "leads")} on this campaign’s forms also fit another campaign, so ${leads.uncredited === 1 ? "it isn’t" : "they aren’t"} counted here.`
     : "";
   return how + fits;
+}
+
+// How each credit and status reads to a person in the dossier.
+export const ATTRIBUTION_LABEL: Record<LeadAttribution, string> = {
+  form_and_tag: "Campaign form, tagged link",
+  form_link: "Campaign form",
+  campaign_tag: "Tagged link",
+};
+
+export function statusLabel(lead: Pick<CampaignLead, "status" | "stageLabel">): string {
+  switch (lead.status) {
+    case "won": return "Won";
+    case "lost": return "Lost";
+    case "open": return lead.stageLabel ?? "Open";
+    case "waiting": return "Being filed";
+    case "failed": return "Couldn't be filed";
+    case "no_opportunity": return "No opportunity";
+  }
+}
+
+/** The desk's state palette (never gold on a status, §11). */
+export function statusTone(status: LeadStatus): string {
+  switch (status) {
+    case "won": return "st-ready";
+    case "open": return "st-partial";
+    case "waiting": return "st-await";
+    case "failed": return "st-blocked";
+    default: return "st-unavail";
+  }
 }
 
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message?: string } | null }>;

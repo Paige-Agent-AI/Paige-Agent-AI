@@ -294,9 +294,18 @@ const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 // INT-346 conversational mode: appended to the system blocks only on turns admitted while the
 // interactive rollout is staged. It must stay short (prompt rules are regex-pinned elsewhere in
 // this file's suites) and truthful: what is off, what she still does, and the one hard line.
+// E2-2 (2026-10-12, ANT-23 delegation): the block now names the ONE thing that turned on — the
+// narrowly approved read-only lookups — while every action, approval and external effect stays off.
 const PAIGE_CONVERSATIONAL_MODE_BLOCK = `CONVERSATIONAL MODE — ACTIONS ARE OFF THIS TURN.
-A platform update is finishing, so in this conversation you have NO tools, actions, approvals or external effects — none can be requested or run, and none have run. Read and discuss everything you are given (the thread, workspace context, knowledge) and answer fully in words.
+A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement), use them to answer questions about how the business is doing. A lookup is a read: it changes nothing and grants no action authority.
 If asked to create, change, send, schedule or delete anything: say plainly and briefly that you cannot run actions in this conversation right now, then give the answer, plan or wording in words. Never claim an action was performed, and never promise one for later.`;
+// E2-2 / ANT-23: the narrowly approved read-only Metric/Evidence admission set — the ONLY tools a
+// conversational turn may be offered and run while the interactive rollout stays staged (DRAINING).
+// Both are caller-JWT reads over the INT-340 issuer, whose own body re-proves workspace and the
+// owner/admin seat on every read; neither claims an executor, seeks an approval, or settles
+// anything beyond the existing conversational FINAL receipt. Everything else stays withheld at the
+// offer and refused per-call. Widen this set only by an owner-recorded policy change.
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -9345,16 +9354,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     }
 
     // INT-346 conversational mode: a turn admitted while the interactive rollout is staged runs
-    // with ZERO tool exposure — the model is offered nothing, and dispatch refuses anything a
-    // provider emits anyway (see the per-call guard in executeToolCalls). Nothing downstream
-    // (capability projection, manifest, exposure, escalation) can widen an empty list, so a
-    // degraded turn is non-effectful by construction, not by prompt.
+    // with ONLY the ANT-23-approved read-only lookups offered — every other tool is withheld here,
+    // and dispatch refuses anything else a provider emits anyway (see the per-call guard in
+    // executeToolCalls). Nothing downstream (capability projection, manifest, exposure,
+    // escalation) can widen the list, so a degraded turn stays non-effectful by construction, not
+    // by prompt. (E2-2, 2026-10-12: the #1899 zero-tool contract narrows to exactly
+    // CONVERSATIONAL_ADMITTED_READ_TOOLS under the owner's recorded ANT-23 delegation.)
     if (interactiveConversational) {
-      const withheldCount = toolDefs.length;
-      toolDefs.splice(0, withheldCount);
-      console.log(`[paige] conversational mode: ${withheldCount} tools withheld (interactive rollout staged, not active)`);
+      const before = toolDefs.length;
+      for (let i = toolDefs.length - 1; i >= 0; i--) {
+        const fn = (toolDefs[i] as { function?: { name?: string } })?.function;
+        if (fn?.name && CONVERSATIONAL_ADMITTED_READ_TOOLS.has(fn.name)) continue;
+        toolDefs.splice(i, 1);
+      }
+      const withheldCount = before - toolDefs.length;
+      console.log(`[paige] conversational mode: ${withheldCount} tools withheld, ${toolDefs.length} read-only admitted (interactive rollout staged, not active)`);
     }
-
     // Advertise the confirm flag on every mutating tool so the model knows the
     // second (confirm:true) step exists. Read-only tools are untouched.
     for (const def of toolDefs) {
@@ -10401,12 +10416,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
         // INT-346 conversational mode — the dispatch-side refusal. A degraded turn offers the
-        // model no tools, so a call here means a provider emitted one anyway; it is refused
-        // BEFORE any executor, provider or store is touched, and the refusal is what the model
-        // reads. This is the second, independent enforcement behind the empty offer list.
-        if (interactiveConversational) {
+        // model only the ANT-23-admitted read-only lookups, so any other call here means a
+        // provider emitted one anyway; it is refused BEFORE any executor, provider or store is
+        // touched, and the refusal is what the model reads. This is the second, independent
+        // enforcement behind the narrowed offer list (E2-2). An admitted read falls through to
+        // the same finished-round, scope, cancellation and seat gates as every other turn.
+        if (interactiveConversational && !CONVERSATIONAL_ADMITTED_READ_TOOLS.has(tc.function.name)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
-            code: "CONVERSATIONAL_MODE", error: "This conversation is running without actions while a platform update finishes. No tool can be run here." }) });
+            code: "CONVERSATIONAL_MODE", error: "This conversation is running without actions while a platform update finishes. That tool can't run here." }) });
           continue;
         }
         // Actual dispatch boundary: the account may change after the model round was

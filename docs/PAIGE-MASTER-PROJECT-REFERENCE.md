@@ -4310,14 +4310,14 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
 - Containment of the legacy `paige-mcp` `send_invoice` (#2072).
 
 **Not yet on the platform (each line is something that does NOT happen today):**
-- Not in chat: PAIGE cannot answer "where does this client stand" yet. It needs Spine registration, and typed tools are off under INT-346.
+- In chat (E4-S2, on branch): PAIGE answers "where does this client stand" through `read_client_engagement_status`, explicitly admitted to INT-346 conversational turns after an independent security review. Authenticated acceptance on the official QA account is owed.
 - Not mounted: the Engagement panel waits on owner UI review of the prototype.
 - Not automatic: signing does not make terms effective. Contract C-1 is gated on #1843 plus a new provenance record.
 - Not automatic: onboarding does not start when the deposit lands. Contract C-2 is documented only.
 - Not sent: no reminders. Contract C-3 is ask-first, needs a collection-outcome record and due/overdue events, and has no scheduler.
 - Not authorized: AI collection calls. Legal review and owner authorization are required.
 - Production has zero commercial terms, signings, plans or provider-settled payments, so none of this has run for a real business. Authenticated acceptance waits on PC-1 (#1832).
-- Not definitive yet: overdue status. Due, upcoming and overdue are classified in the business owner's configured time zone (E4-S1b; owner ruling 2026-10-12). That zone lives in `tenant_business_time_zones`, set only by the active owner through `set_business_time_zone`. No workspace has one yet, so the read withholds those judgements and asks for configuration. Nothing reachable sets it yet: there is no UI and no PAIGE/Chat binding, only the RPC. The Engagement panel must not mount before a setter does, or every business would sit on "Set time zone" with no way to set it. The live Collections workspace and the Sales overdue metric still use the UTC date (#2086, Sales).
+- Not definitive yet: overdue status. Due, upcoming and overdue are classified in the business owner's configured time zone (E4-S1b; owner ruling 2026-10-12). That zone lives in `tenant_business_time_zones`, set only by the active owner through `set_business_time_zone`. No workspace has one yet, so the read withholds those judgements and asks for configuration. E4-S2 (branch `claude/clever-lovelace-r111ru`) adds the owner's setter in Setup › Business profile › Business time zone (confirm, save, read back) and lets PAIGE read and check the zone in chat; PAIGE cannot save it while INT-346 is staged. The live Collections workspace and the Sales overdue metric still use the UTC date (#2086, Sales).
 - Not automatic: contacting a customer. Automated reminders require the recipient's **verified** zone and location (`clients.timezone_verified`: 0 of 16 in production) and a verified jurisdiction. That field does not exist, so all automated contact is blocked today. The shared pre-send gate still falls back to the business zone or New York for SMS quiet hours (#2083, Communications).
 
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)

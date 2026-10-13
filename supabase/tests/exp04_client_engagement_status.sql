@@ -295,6 +295,111 @@ reset role;
 delete from public.tenant_members where tenant_id='e4000000-0000-4000-8000-00000000bbbb' and user_id='e4000000-0000-4000-8000-000000000001';
 select pg_temp.check_true((select time_zone='Asia/Tokyo' from public.tenant_business_time_zones where tenant_id='e4000000-0000-4000-8000-00000000bbbb'),'the other workspace''s zone is unchanged');
 
+-- ── E4-S2: the business time zone readback and the client lookup behind the chat answer. ──
+-- Grants: authenticated callers only; never anon, never the service role.
+select pg_temp.check_true(has_function_privilege('authenticated','public.read_business_time_zone(uuid)','EXECUTE')
+ and not has_function_privilege('anon','public.read_business_time_zone(uuid)','EXECUTE')
+ and not has_function_privilege('service_role','public.read_business_time_zone(uuid)','EXECUTE')
+ and not has_function_privilege('public','public.read_business_time_zone(uuid)','EXECUTE'),'zone readback: authenticated only');
+select pg_temp.check_true(has_function_privilege('authenticated','public.find_clients_for_status(uuid,text)','EXECUTE')
+ and not has_function_privilege('anon','public.find_clients_for_status(uuid,text)','EXECUTE')
+ and not has_function_privilege('service_role','public.find_clients_for_status(uuid,text)','EXECUTE')
+ and not has_function_privilege('public','public.find_clients_for_status(uuid,text)','EXECUTE'),'client lookup: authenticated only');
+
+-- Fixtures for the lookup: a full email on the consulting client, and six look-alike clients so the
+-- five-row limit and its "more" flag are exercised.
+update public.clients set email='consult.owner@tests.invalid' where id='e4000000-0000-4000-8000-0000000c0001';
+insert into public.clients(id,tenant_id,created_by,first_name,last_name,account_number)
+select ('e4000000-0000-4000-8000-0000000d000'||n)::uuid,'e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001','Many','Lookalike '||n,'ESA-M'||n
+from generate_series(1,6) n;
+create temp table s2(label text,value jsonb);
+grant insert,select on s2 to authenticated;
+
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+insert into s2 select 'owner_zone',public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa');
+insert into s2 select 'by_word',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Consulting');
+insert into s2 select 'by_full_name',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','test consulting client');
+insert into s2 select 'by_email',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','CONSULT.OWNER@tests.invalid');
+insert into s2 select 'email_fragment',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','consult.owner@');
+insert into s2 select 'shared_word',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Test');
+insert into s2 select 'foreign_name',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Foreign');
+insert into s2 select 'wildcard_pct',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','%%');
+insert into s2 select 'wildcard_us',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','__');
+insert into s2 select 'many',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Many');
+select pg_temp.refused($s$select public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','a')$s$,'22023','a one-character client search is refused');
+select pg_temp.refused($s$select public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa',repeat('x',121))$s$,'22023','an over-long client search is refused');
+select pg_temp.refused($s$select public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa',null)$s$,'22023','a missing client search is refused');
+select pg_temp.refused($s$select public.find_clients_for_status('e4000000-0000-4000-8000-00000000bbbb','Foreign')$s$,'42501','the owner cannot search a workspace that is not active');
+select pg_temp.refused($s$select public.read_business_time_zone('e4000000-0000-4000-8000-00000000bbbb')$s$,'42501','the owner cannot read a workspace''s zone that is not active');
+reset role;
+
+select pg_temp.check_true((select value->>'state'='configured' and value->>'zone'='America/New_York' and (value->>'can_set')::boolean
+ and value->>'set_at' is not null and (value->>'local_date')::date=((value->>'read_at')::timestamptz at time zone 'America/New_York')::date
+ from s2 where label='owner_zone'),'zone readback: the owner sees New York, the owner-local date, and may change it');
+select pg_temp.check_true((select jsonb_array_length(value->'matches')=1 and value->'matches'->0->>'id'='e4000000-0000-4000-8000-0000000c0001'
+ and value->'matches'->0->>'name'='Test Consulting Client' and not (value->>'more')::boolean from s2 where label='by_word'),'lookup: one word finds the one matching client by name');
+select pg_temp.check_true((select (value->'matches'->0->>'exact')::boolean and value->'matches'->0->>'id'='e4000000-0000-4000-8000-0000000c0001' from s2 where label='by_full_name'),'lookup: a full name is an exact match, case-insensitively');
+select pg_temp.check_true((select jsonb_array_length(value->'matches')=1 and (value->'matches'->0->>'exact')::boolean from s2 where label='by_email'),'lookup: a full email finds its client');
+select pg_temp.check_true((select jsonb_array_length(value->'matches')=0 from s2 where label='email_fragment'),'lookup: an email fragment never enumerates addresses');
+select pg_temp.check_true((select not exists(select 1 from s2, jsonb_array_elements(value->'matches') m
+ where label in ('by_word','by_full_name','by_email','shared_word','many') and (m ? 'email' or m ? 'phone' or (select count(*) from jsonb_object_keys(m))<>4))),'lookup: returns id, name, status and exact only — never an email or phone');
+select pg_temp.check_true((select (select array_agg(m->>'id' order by m->>'id') from jsonb_array_elements(value->'matches') m)
+ =array['e4000000-0000-4000-8000-0000000c0001','e4000000-0000-4000-8000-0000000c0002'] from s2 where label='shared_word'),'lookup: a shared word lists every match in this workspace and none from another');
+select pg_temp.check_true((select jsonb_array_length(value->'matches')=0 from s2 where label='foreign_name'),'lookup: another workspace''s client is never found');
+select pg_temp.check_true((select bool_and(jsonb_array_length(value->'matches')=0) from s2 where label in ('wildcard_pct','wildcard_us')),'lookup: % and _ are literal text, not wildcards');
+select pg_temp.check_true((select jsonb_array_length(value->'matches')=5 and (value->>'more')::boolean from s2 where label='many'),'lookup: at most five matches, and says there are more');
+select pg_temp.check_true((select count(*)=9 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='find_clients_for_status'),'lookup: each of the nine searches leaves exactly one receipt; a refused search leaves none');
+select pg_temp.check_true((select count(*)=1 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='read_business_time_zone'),'zone readback: each read leaves exactly one receipt');
+
+-- An admin may read the zone and search, but cannot change the zone; the admin's own Tokyo profile never leaks in.
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000002',true);
+set local role authenticated;
+insert into s2 select 'admin_zone',public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa');
+insert into s2 select 'admin_search',public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Consulting');
+reset role;
+select pg_temp.check_true((select value->>'zone'='America/New_York' and not (value->>'can_set')::boolean from s2 where label='admin_zone'),'zone readback: an admin sees the business zone and is told they cannot change it');
+select pg_temp.check_true((select jsonb_array_length(value->'matches')=1 from s2 where label='admin_search'),'lookup: an admin may search');
+-- Staff, a foreign owner, a portal client and an anonymous caller are refused both reads.
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000003',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa')$s$,'42501','zone readback: staff refused');
+select pg_temp.refused($s$select public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Consulting')$s$,'42501','lookup: staff refused');
+reset role;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000004',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa')$s$,'42501','zone readback: a foreign owner refused');
+select pg_temp.refused($s$select public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Consulting')$s$,'42501','lookup: a foreign owner refused');
+reset role;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000005',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa')$s$,'42501','zone readback: a portal client refused');
+select pg_temp.refused($s$select public.find_clients_for_status('e4000000-0000-4000-8000-00000000aaaa','Consulting')$s$,'42501','lookup: a portal client refused');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa')$s$,'42501','zone readback: no signed-in user refused');
+reset role;
+
+-- Missing and invalid zones read honestly, then the owner's save is read back exactly as stored.
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa',null);
+insert into s2 select 'cleared',public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa');
+reset role;
+-- A privileged write that bypassed the writer (CHECK shape only).
+insert into public.tenant_business_time_zones(tenant_id,time_zone,set_by) values
+ ('e4000000-0000-4000-8000-00000000aaaa','America/Nowhere','e4000000-0000-4000-8000-000000000001');
+set local role authenticated;
+insert into s2 select 'unrecognised',public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa');
+insert into s2 select 'saved',public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','America/Chicago');
+insert into s2 select 'readback',public.read_business_time_zone('e4000000-0000-4000-8000-00000000aaaa');
+select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','America/New_York');
+reset role;
+select pg_temp.check_true((select value->>'state'='missing' and value->'zone'='null'::jsonb and value->'set_at'='null'::jsonb and value->'local_date'='null'::jsonb from s2 where label='cleared'),'zone readback: a cleared zone reads as missing with no date');
+select pg_temp.check_true((select value->>'state'='invalid' and value->'zone'='null'::jsonb and value->'local_date'='null'::jsonb from s2 where label='unrecognised'),'zone readback: an unrecognised stored zone reads as invalid, not an error');
+select pg_temp.check_true((select r.value->>'zone'=s.value->>'time_zone' and r.value->>'state'='configured' from s2 r, s2 s where r.label='readback' and s.label='saved'),'zone readback: returns exactly what the owner saved');
+
 -- A workspace switch is honoured at read time: the owner, also a member of B, switches to B and
 -- can no longer read A's client. (Fixture: the invite trigger would park a direct insert as
 -- 'pending', so the active second membership is written with writer guards bypassed.)

@@ -85,6 +85,111 @@ in the conversational read set, under the matrix above. E2-2 implements the clas
 designed (narrowed offer + per-call guard; approvals, executor claims, settlement and the
 activation gate untouched); the independent security review ran on the E2-2 PR.
 
+## E4-S2 admission (2026-10-13, Experience 04)
+
+**Authority.** The Experience 04 E4-S2 continuation (ANT-51 / ANT-147) directs: *"Obtain explicit
+guarded admission and independent security review for any newly exposed Chat tool. The existing
+read-only admission list must not be silently expanded."* This section is that explicit record. The
+admission is conditional on the independent security review recorded below. Until that review
+returns SHIP, the set is not merged.
+
+**What is admitted.** Two tools, added to `CONVERSATIONAL_ADMITTED_READ_TOOLS` by name. The test
+pins the literal, so any further name fails CI:
+
+| Tool | Executor | Seat | Writes | What reaches the model |
+|---|---|---|---|---|
+| `read_client_engagement_status` | `public.find_clients_for_status`, then `public.read_client_engagement_status` | owner/admin of the active workspace (`_sales_invoice_actor`, in each body) | one capability receipt per call; no business data | a bounded projection of one client: agreement, installments, money by evidence class, invoices, delivery work, attention |
+| `read_business_time_zone` | `public.read_business_time_zone` | the same | one capability receipt per call | the configured zone (or missing/invalid), and whether this person may change it; an optional zone **check**, never a save |
+
+**How it differs from the E2-2 pair.**
+1. **New data class: per-client records.** The E2-2 reads aggregate business metrics. These read one
+   named client's agreement, invoices and work. The seat is the same owner/admin seat that already
+   sees this in Sales. Client names come from the established picker helper. No email, phone, note,
+   document body or storage key leaves the database.
+2. **A lookup by name.** `find_clients_for_status` takes owner-typed text. It treats `%` and `_` as
+   literal text, matches an email only when it is typed in full (a fragment never enumerates
+   addresses), returns at most five rows with a "more" flag, and is scoped to the active workspace.
+3. **Write adjacency.** `read_business_time_zone` sits beside an owner-only writer. The chat tool cannot
+   reach the writer: it calls the read only, takes no `save` argument (an extra key is refused before
+   any call), and its result tells the model it cannot save. Saving happens only in Setup, by the owner,
+   through `set_business_time_zone`, followed by a readback.
+4. **Receipts.** Each read writes one `record_capability_run` row, as `read_client_engagement_status`
+   has since E4-S1. No other state changes.
+
+**What does not change.** Actions, approvals, executor claims, settlement and the INT-346 activation
+gate stay exactly as E2-2 left them. Live reaches the same two reads through the ordinary tenant tool
+list, under the existing Live refusal of approvals.
+
+**Independent security review — SHIP (2026-10-13), non-author reviewer, commit `73eb3e25`.** No P1 or
+P2 findings. Measured on a local database in rollback-only transactions with the migration
+re-applied:
+- **Tenant isolation.** An owner of business A asking for business B is refused (42501). So is a
+  member who is not an owner or admin; anon and `service_role` are denied. An admin is allowed, with
+  `can_set=false`. A foreign `client_id` is refused by the already-merged status read. A persona whose
+  tenant differs from the profile's active tenant fails closed.
+- **No write path from chat.** Only `record_capability_run` receipts are written. `proposed_zone` is
+  checked in TypeScript and never reaches `set_business_time_zone`. The per-call guard still refuses
+  every tool outside the four admitted names.
+- **Lookup.** `%%` and `__` match nothing, and `%_` matches only a literal `%_`. An email fragment
+  matches nothing. Results carry no email, phone or notes.
+- **Grants.** Both functions are `SECURITY DEFINER` with `search_path=pg_catalog,public`, and
+  executable by `postgres` and `authenticated` only.
+- **Fingerprints.** For all 29 incumbent tools the pre-hash input diff is identical: 0 lines removed,
+  10 added. Those 10 lines are the tool-list push and the appended branch. No incumbent body changed.
+
+**P3 notes:**
+1. **Fixed before merge.** Client names appeared in the instruction field on the "several clients
+   match" path. They now travel only in the labelled data projection, quoted.
+2. **Accepted, recorded.** `_sales_invoice_actor` takes `FOR UPDATE` row locks on every read. This is
+   the existing Sales pattern.
+3. **Accepted, recorded.** The tenant-bounded `ILIKE` search is unindexed.
+
+**Adversarial verifier — no blocker; 5 major, 7 minor.** All 5 majors were fixed before merge:
+- per-invoice currency;
+- record text quoted onto one line, so a name cannot forge a figure;
+- dates in the business zone, and withheld when the zone is unset;
+- a save answered after a workspace switch stays silent;
+- tests added to catch the surviving mutants.
+
+Minors fixed: the unknown-`client_id` wording, a negative "behind" printed as "ahead", a note for
+invoices not listed, the work-deadline note, and the no-workspace state. One minor is recorded as
+pre-existing and out of scope: `get_business_snapshot` still judges overdue receivables on the
+device zone, with UTC as fallback.
+
+**Independent re-review of the post-review source: SHIP (2026-10-13), head `42b51cc0`.** Scope:
+- the review fixes;
+- the migration renumbered from `20271027000100` to `20271029000100`, with an identical sha256;
+- the merge of main, including #2107.
+
+What it confirmed:
+- No later migration redefines a dependency.
+- The chat function differs from main only by this PR's additions.
+- The admitted set is exactly four names.
+- C0b and the INT-346 handler check pass.
+- The only `src/` consumer of the composer, `useClientEngagementStatus`, is unmounted and does not read `invoices[]`.
+
+It found one MAJOR defect, in #2107's code, and it is fixed in this PR:
+- **The defect.** #2107's no-effects guard replaced a finished, grounded answer with "Actions are unavailable…" whenever a request was worded like an action. "Get me Acme's payment status" is classified `act`, so the owner never saw the status. `get_business_snapshot` already had this problem on main.
+- **The first fix was not enough.** It stood the guard down whenever a read ran and the answer did not match the completion-phrase check. A focused review (FIX-FIRST) showed that check misses phrasings such as "Task created for Friday." It also showed a mixed request ("get Acme's status and send a reminder") would lose its disclosure that nothing was sent, and that reads which were refused or failed were being counted.
+- **The final fix.**
+  - An answer grounded in an admitted read that returned data is kept. "Returned data" is judged by the read's own result, so a refused, unparseable, needs-input or failed read does not count.
+  - The actions-unavailable / no-action line is always added beneath a kept answer.
+  - A reply the phrase check does recognise as claiming completion is still replaced outright.
+- **Proof.** `scripts/int346-conversational-handler-check.mjs` has four scenarios: a grounded answer kept with the line; a recognised claim replaced; a missed claim contradicted by the line; a refused read not counted. Reinstating each weakness fails a scenario (no line, counting refused reads, no claim check). The other INT-336/346 handler checks and the gateway variant pass.
+
+Of the 7 minor findings:
+- Fixed:
+  - the `client_id` refusal wording;
+  - the reasons on Agreed total and Behind;
+  - `set_at` shown in the business zone;
+  - `rec()` dropping bidirectional overrides and quote look-alikes and cutting by code point;
+  - the no-match query moved into the data.
+- Recorded: the `stale` result is defence in depth. In the mounted Setup the section is keyed by workspace, so an unmounted component's late result is simply dropped.
+
+**Authenticated acceptance.** PC-1 is superseded. Acceptance runs on the owner-designated SOLO
+customer account, by ordinary sign-in through the QA lane (flow
+`exp04-business-time-zone-acceptance`). Operator access is never customer authentication.
+
 ## Preserved boundaries
 
 - INT-346 stays DRAINING; #1822 remains the separate activation hard stop; nothing in E2-1

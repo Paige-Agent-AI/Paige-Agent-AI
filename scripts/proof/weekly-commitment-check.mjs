@@ -492,7 +492,13 @@ try{
     run("UPDATE tenant_business_time_zones SET time_zone='America/New_York' WHERE tenant_id="+literal(tenant)+';');
   });
   check('both DST changes use canonical ISO Sunday local schedule without client recurrence',()=>{
-    for(const zone of ['CET','GMT','EST'])assert.equal(json('SELECT weekly_commitment_schedule(1,\'09:00\','+literal(zone)+');').timezone,zone);
+    for(const zone of ['CET','GMT','EST']){
+      const present=run('SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_timezone_names WHERE name='+literal(zone)+');');
+      assert(['t','f'].includes(present),'canonical timezone catalogue yields a known boolean');
+      const schedule='SELECT weekly_commitment_schedule(1,\'09:00\','+literal(zone)+');';
+      if(present==='t')assert.equal(json(schedule).timezone,zone);
+      else refuses(schedule,undefined,'22023');
+    }
     const cfg=literal(JSON.stringify({weekday:7,local_time:'09:00',timezone:'America/New_York'}))+'::jsonb';
     for(const [after,expected]of[['2026-03-01T13:59:00Z','2026-03-01T14:00:00Z'],['2026-03-08T12:59:00Z','2026-03-08T13:00:00Z'],['2026-10-25T12:59:00Z','2026-10-25T13:00:00Z'],['2026-11-01T13:59:00Z','2026-11-01T14:00:00Z']]){
       assert.equal(Date.parse(run('SELECT weekly_commitment_next('+cfg+','+literal(after)+'::timestamptz);')),Date.parse(expected));

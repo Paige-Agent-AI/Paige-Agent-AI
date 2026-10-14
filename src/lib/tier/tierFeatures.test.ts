@@ -240,3 +240,15 @@ describe("§60 other load-bearing cells", () => {
     for (const f of agencySet) expect(enterpriseSet.has(f)).toBe(true);
   });
 });
+
+describe("§60 client_standing — declared on the direct-client-book tiers (E4-S3 PR beta, critique D4)", () => {
+  it("is declared for solo, sub_account and enterprise", () => {
+    expect(hasFeature(SOLO, "client_standing")).toBe(true);
+    expect(hasFeature(SUB, "client_standing")).toBe(true);
+    expect(hasFeature(ENTERPRISE, "client_standing")).toBe(true);
+  });
+  it("is not declared for a pure agency or the platform operator (no client book)", () => {
+    expect(hasFeature(AGENCY, "client_standing")).toBe(false);
+    expect(hasFeature(GOD, "client_standing")).toBe(false);
+  });
+});

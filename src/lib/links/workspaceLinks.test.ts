@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { DESTINATION_LABEL, workspaceLinkTarget, workspaceLinkTier } from "./workspaceLinks";
+import { DESTINATION_LABEL, routeLinkTarget, workspaceLinkTarget, workspaceLinkTier } from "./workspaceLinks";
 
 // Experience 04 E4-S3 — the one client-side home that turns a read reference into an in-app address
 // and the frozen label the owner reads (chat and, later, the client record).
@@ -65,5 +65,22 @@ describe("workspaceLinkTarget", () => {
     expect(workspaceLinkTarget(link, { ...soloTenant, account_number: null })).toBeNull();
     expect(workspaceLinkTarget(link, { account_type: "agency", parent_tenant_id: null, account_number: 1 })).toBeNull();
     expect(workspaceLinkTarget(link, null)).toBeNull();
+  });
+});
+
+describe("routeLinkTarget — a surface already mounted in one tier's tree (E4-S3 PR beta)", () => {
+  it("builds the Solo business time zone address, fragment intact, from the route's account", () => {
+    expect(routeLinkTarget({ destination: "business_time_zone", record_id: null }, "solo", "3855")).toEqual({
+      label: "Open business time zone setting", to: "/solo/3855/settings/setup/business-profile#business-time-zone", status: "surface_only",
+    });
+  });
+  it("is the same answer workspaceLinkTarget gives for that account (one route map, two callers)", () => {
+    for (const destination of ["sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone"] as const) {
+      expect(routeLinkTarget({ destination, record_id: null }, "solo", 3855)).toEqual(workspaceLinkTarget({ destination, record_id: null }, soloTenant));
+    }
+  });
+  it("fails closed for a sub-account Sales destination and for a non-numeric account", () => {
+    expect(routeLinkTarget({ destination: "sales_invoices", record_id: null }, "sub_account", "3856")).toBeNull();
+    expect(routeLinkTarget({ destination: "business_time_zone", record_id: null }, "solo", "acct-1")).toBeNull();
   });
 });

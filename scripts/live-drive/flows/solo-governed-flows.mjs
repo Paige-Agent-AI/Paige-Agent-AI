@@ -141,6 +141,34 @@ export const FLOWS = [
         intent: "sign out, sign back in, open Setup — Central Time · Chicago is still shown; asking PAIGE again reports America/Chicago — marker persisted=true" },
     ],
   },
+  {
+    // Experience 04 E4-S3 PR beta (journey §16.4). Read-only on the official Solo QA account: looking at
+    // Setup, Collections and a client record must write nothing to the Rail; PAIGE's answer writes one
+    // line; Collections and the client record judge Overdue on the business calendar and agree. The
+    // only mutation is the same reversible business time zone save as the flow above. No payment,
+    // message, provider or client record is created or changed.
+    id: "exp04-pr-beta-business-calendar-acceptance",
+    title: "E4-S3 beta — no Rail line for looking, one for PAIGE's answer; Collections and the client record On hold, then Overdue on the business calendar",
+    actor: "solo-qa-owner",
+    steps: [
+      { name: "1. sign in as the Solo owner", expect: STEP_EXPECT.RENDER, semantic: true, path: "/login",
+        intent: "ordinary customer sign-in opens the owner's Solo workspace" },
+      { name: "2. note the Rail", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account/command-center",
+        intent: "record the newest Rail row (title, actor, time) — marker railBefore" },
+      { name: "3. look, without acting", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account/settings/setup/business-profile",
+        intent: "open Setup › Business profile twice, Sales › Payments › Collections once and Clients › People › a client once" },
+      { name: "4. the Rail is unchanged", expect: STEP_EXPECT.READBACK, path: "/solo/:account/command-center",
+        intent: "no new Rail row since railBefore — marker railRowsAdded=0" },
+      { name: "5. with no business time zone, both surfaces hold", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account/sales/payments?view=collections",
+        intent: "Collections Overdue and Upcoming read 'On hold' (never 0) with 'Set your business time zone'; the client record's 'Where … stands' reads 'On hold until the business time zone is set' with the setting link — skip if the zone is already set" },
+      { name: "6. ask PAIGE where the client stands", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account",
+        intent: "the answer shows 'Checked where that client stands' and its links; the Rail gains exactly one 'Checked where a client stands' row credited to PAIGE — marker railRowsAdded=1" },
+      { name: "7. after the zone is saved, both surfaces judge on the business calendar", expect: STEP_EXPECT.RENDER, semantic: true, path: "/solo/:account/sales/payments?view=collections",
+        intent: "Collections' coverage line names the saved zone and today's business date; an unbound past-due invoice reads 'Overdue · {date}' and the client record's Overdue figure agrees (a terms-bound invoice is judged on its schedule on the record — expected, not a defect)" },
+      { name: "8. reload and re-entry", expect: STEP_EXPECT.READBACK, path: "/solo/:account/clients/people",
+        intent: "after reload and sign-out/in the same standing and Collections judgements return; still no Rail row for looking" },
+    ],
+  },
 ];
 
 /** Resolve each step's relative `path` against the configured base URL for the authenticated run. */

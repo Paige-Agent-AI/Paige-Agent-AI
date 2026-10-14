@@ -3,7 +3,7 @@ import { useTheme } from "next-themes";
 import { CheckCircle2, ChevronsUpDown, CircleHelp, Clock3, RefreshCw, ShieldCheck } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { BUSINESS_ZONE_PATTERN, useBusinessTimeZone } from "./data/useBusinessTimeZone";
+import { BUSINESS_ZONE_PATTERN, genericName, placeName, useBusinessTimeZone } from "./data/useBusinessTimeZone";
 
 /**
  * Setup › Business profile › Business time zone (Experience 04 E4-S2).
@@ -22,24 +22,6 @@ function supportedZones(): string[] {
   const all = typeof supported === "function" ? supported("timeZone") : US_COMMON;
   const zones = all.filter((zone) => BUSINESS_ZONE_PATTERN.test(zone));
   return zones.includes("UTC") ? zones : [...zones, "UTC"];
-}
-
-/** "Central Time" — the name people use; falls back to the zone id. */
-function genericName(zone: string): string {
-  try {
-    const part = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "longGeneric" })
-      .formatToParts(new Date()).find((p) => p.type === "timeZoneName")?.value;
-    return part && !/^GMT[+-]/.test(part) ? part : zone;
-  } catch {
-    return zone;
-  }
-}
-
-/** "Chicago" or "Buenos Aires, Argentina" — the place part of the id, readable. */
-export function placeName(zone: string): string {
-  if (zone === "UTC") return "Coordinated Universal Time";
-  const parts = zone.split("/").slice(1).reverse().map((p) => p.replace(/_/g, " "));
-  return parts.join(", ");
 }
 
 function nowIn(zone: string, now = new Date()): string | null {

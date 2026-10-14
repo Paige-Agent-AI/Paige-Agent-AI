@@ -7,27 +7,35 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import "./operations-client-artifact-review.css";
 
 export type ClientArtifactReviewScope = { actorId:string; tenantId:string; releaseId:string; theme?:string };
+export type VerifiedClientDecision = Pick<ClientDeliveryArtifact,"actorId"|"tenantId"|"releaseId"|"submissionId"|"state"|"revisionNo"|"artifactDigest"|"updatedAt">;
+export type ClientArtifactReviewProps = ClientArtifactReviewScope & {
+ registerCloseGuard?:(guard:()=>boolean)=>()=>void;
+ /** Notification only: the host owns refresh failures/epoch fencing, not new authority. */
+ onVerifiedDecision?:(decision:VerifiedClientDecision)=>void|Promise<void>;
+};
 type ReadState = { key:string; phase:"loading"|"ready"|"unavailable"; artifact?:ClientDeliveryArtifact };
 /** Domain-owned review component; portal mount and client identity remain Clients-owned. */
-export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme="dark"}:ClientArtifactReviewScope) {
+export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme="dark",registerCloseGuard,onVerifiedDecision}:ClientArtifactReviewProps) {
  const reviewNoteHint=useId();
  const key=JSON.stringify([actorId,tenantId,releaseId]);
- const live=useRef(key);live.current=key;const mounted=useRef(false);const requestNo=useRef(0);const writing=useRef(false);
+ const live=useRef({key});if(live.current.key!==key)live.current={key};const epoch=live.current;
+ const mounted=useRef(false);const requestNo=useRef(0);const writing=useRef(false);
  const [read,setRead]=useState<ReadState>({key,phase:"loading"});
  const noteScope=useRef(key);const [noteSource,setNoteSource]=useState<string|null>(null);
  const [note,setNote]=useState("");const [busy,setBusy]=useState(false);
  const [decision,setDecision]=useState<"accepted"|"client_revision_requested"|null>(null);
  const [outcome,setOutcome]=useState<{key:string; kind:"verified"|"refused"|"unverified"|"invalid"}|null>(null);
+ const attempt=useRef<{key:string; artifact:ClientDeliveryArtifact; choice:"accepted"|"client_revision_requested"; note:string|null}|null>(null);
  const [readAgain,setReadAgain]=useState(0);
  const invoker=useRef<HTMLButtonElement|null>(null);const feedback=useRef<HTMLDivElement>(null);
- const current=()=>mounted.current&&live.current===key;
+ const current=()=>mounted.current&&live.current===epoch;
  const caller=supabase as unknown as ClientDeliveryCaller;
  const restoreFocus=(event:Event)=>{const target=invoker.current;if(target?.isConnected&&!target.disabled){event.preventDefault();target.focus();}else if(feedback.current?.isConnected){event.preventDefault();feedback.current.focus();}};
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
  useEffect(()=>{
   const sequence=++requestNo.current;let cancelled=false;
   setRead({key,phase:"loading"});setDecision(null);setBusy(writing.current);
-  if(noteScope.current!==key){noteScope.current=key;setNote("");setNoteSource(null);}
+  if(noteScope.current!==key){noteScope.current=key;setNote("");setNoteSource(null);attempt.current=null;}
   const publish=(state:ReadState)=>{if(!cancelled&&current()&&sequence===requestNo.current)setRead(state);};
   void (async()=>{
    try{
@@ -42,7 +50,7 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
   return()=>{cancelled=true;};
  // The exact scope/read sequence owns all content. No effective/view-as identity can grant acceptance.
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[key,readAgain]);
+ },[epoch,readAgain]);
  const visible=read.key===key?read:null;
  const result=outcome?.key===key?outcome:null;
  const artifact=visible?.phase==="ready"?visible.artifact:undefined;
@@ -51,8 +59,21 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  const draftMismatch=Boolean(note)&&noteSource!==artifactSource;
  const locked=busy||result?.kind==="unverified"||result?.kind==="refused"||draftMismatch;
  const dirty=Boolean(note)&&result?.kind!=="verified";
- useBeforeUnloadGuard(busy||Boolean(dirty));
- useEffect(()=>registerAccountSwitchGuard(()=>!busy&&!dirty),[busy,dirty]);
+ const original=attempt.current?.key===key?attempt.current:null;
+ // Exact terminal source recovery permits departure, not a claim that an unknown
+ // attempt executed. Changed versions/notes never discharge the original uncertainty.
+ const recovered=Boolean(original&&artifact&&artifact.actorId===original.artifact.actorId&&artifact.tenantId===original.artifact.tenantId
+  &&artifact.releaseId===original.artifact.releaseId&&artifact.submissionId===original.artifact.submissionId
+  &&artifact.revisionNo===original.artifact.revisionNo&&artifact.artifactDigest===original.artifact.artifactDigest
+  &&artifact.title===original.artifact.title&&artifact.body===original.artifact.body&&artifact.state===original.choice
+  &&artifact.decisionBy===actorId&&artifact.decisionAt!==null&&artifact.clientNote===original.note);
+ const uncertain=Boolean(original)&&!recovered&&result?.kind!=="verified"&&result?.kind!=="refused"&&result?.kind!=="invalid";
+ const leaveBlocked=busy||dirty||uncertain||Boolean(decision);
+ const leaveState=useRef({busy,dirty,uncertain,confirming:Boolean(decision)});leaveState.current={busy,dirty,uncertain,confirming:Boolean(decision)};
+ useBeforeUnloadGuard(leaveBlocked);
+ useEffect(()=>registerAccountSwitchGuard(()=>!leaveBlocked),[leaveBlocked]);
+ // Expose the existing close boundary; a host must honor false and owns SPA routing.
+ useEffect(()=>registerCloseGuard?.(()=>mounted.current&&live.current===epoch&&!writing.current&&!leaveState.current.busy&&!leaveState.current.dirty&&!leaveState.current.uncertain&&!leaveState.current.confirming),[epoch,registerCloseGuard]);
  const review=(choice:"accepted"|"client_revision_requested",button:HTMLButtonElement)=>{
   if(!current()||!awaiting||locked)return;
   if(choice==="client_revision_requested"&&!note.trim()){setOutcome({key,kind:"invalid"});feedback.current?.focus();return;}
@@ -61,17 +82,26 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  const save=async()=>{
   if(!current()||!artifact||!decision||locked||writing.current)return;
   const choice=decision;writing.current=true;setBusy(true);setDecision(null);
+  attempt.current={key,artifact,choice,note:note.trim()||null};
   // Actual session and canonical server authority; no client role inferred from a prop or portal preview.
   const sameScope=()=>current();
   try{
    const session=await supabase.auth.getSession();
-   if(session.error||session.data.session?.user.id!==actorId){if(current())setRead({key,phase:"unavailable"});return;}
+   if(session.error||session.data.session?.user.id!==actorId){attempt.current=null;if(current())setRead({key,phase:"unavailable"});return;}
    const saved=await decideClientDelivery(caller,artifact,choice,note.trim()||null,sameScope);
    const after=await supabase.auth.getSession();
    if(!current())return;
    if(after.error||after.data.session?.user.id!==actorId){setRead({key,phase:"unavailable"});return;}
-   if(saved.kind==="verified"){setRead({key,phase:"ready",artifact:saved.artifact});setOutcome({key,kind:"verified"});setNote("");setNoteSource(null);}
-   else if(saved.kind!=="scope_changed")setOutcome({key,kind:saved.kind==="invalid"?"invalid":saved.kind==="refused"?"refused":"unverified"});
+   if(saved.kind==="verified"){
+    setRead({key,phase:"ready",artifact:saved.artifact});setOutcome({key,kind:"verified"});setNote("");setNoteSource(null);
+    const {actorId:verifiedActor,tenantId:verifiedTenant,releaseId:verifiedRelease,submissionId,state,revisionNo,artifactDigest,updatedAt}=saved.artifact;
+    // Only verified named source facts leave the component; notification is not refresh proof.
+    try{void Promise.resolve(onVerifiedDecision?.({actorId:verifiedActor,tenantId:verifiedTenant,releaseId:verifiedRelease,submissionId,state,revisionNo,artifactDigest,updatedAt})).catch(()=>{});}catch{ /* Consumer reports its own refresh failure; the source decision remains verified. */ }
+   }
+   else if(saved.kind!=="scope_changed"){
+    if(saved.kind==="refused"||saved.kind==="invalid")attempt.current=null;
+    setOutcome({key,kind:saved.kind==="invalid"?"invalid":saved.kind==="refused"?"refused":"unverified"});
+   }
   }catch{if(current())setOutcome({key,kind:"unverified"});}
   finally{writing.current=false;if(mounted.current)setBusy(false);}
  };

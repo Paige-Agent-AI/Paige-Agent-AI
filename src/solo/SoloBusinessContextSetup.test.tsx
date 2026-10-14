@@ -175,6 +175,79 @@ describe("canonical Solo Setup business context", () => {
     await act(async () => other.root.unmount());
   });
 
+  // E4-S3 — the chat's "Open business time zone setting" links to …/business-profile#business-time-zone.
+  // The section sits below the whole profile form, so the link must land ON it, not at the top.
+  describe("a #business-time-zone link lands on the setting", () => {
+    const scroll = vi.fn();
+    const motion = { reduce: false };
+    const realMatchMedia = window.matchMedia;
+    beforeEach(() => {
+      scroll.mockReset();
+      motion.reduce = false;
+      Element.prototype.scrollIntoView = scroll as unknown as Element["scrollIntoView"];
+      window.matchMedia = ((query: string) => ({
+        matches: query.includes("prefers-reduced-motion") ? motion.reduce : false,
+        media: query, onchange: null,
+        addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {},
+        dispatchEvent: () => false,
+      })) as unknown as typeof window.matchMedia;
+    });
+    afterEach(() => {
+      delete (Element.prototype as Partial<Element>).scrollIntoView;
+      window.matchMedia = realMatchMedia;
+    });
+
+    it("scrolls the section into view and focuses its heading", async () => {
+      const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile#business-time-zone");
+      const section = host.querySelector("section#business-time-zone");
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(scroll.mock.contexts[0]).toBe(section);
+      expect(scroll.mock.calls[0][0]).toMatchObject({ block: "start", behavior: "smooth" });
+      expect(document.activeElement).toBe(host.querySelector("#business-time-zone-title"));
+      await act(async () => root.unmount());
+      host.remove();
+    });
+
+    it("jumps without animation when reduced motion is asked for", async () => {
+      motion.reduce = true;
+      const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile#business-time-zone");
+      expect(scroll.mock.calls[0][0]).toMatchObject({ block: "start", behavior: "auto" });
+      expect(document.activeElement).toBe(host.querySelector("#business-time-zone-title"));
+      await act(async () => root.unmount());
+      host.remove();
+    });
+
+    it("reacts when the hash changes on the open page", async () => {
+      function HashJump() {
+        const navigate = useNavigate();
+        return <button onClick={() => navigate("/solo/100/settings/setup/business-profile#business-time-zone")}>Jump to zone</button>;
+      }
+      const host = document.createElement("div");
+      document.body.append(host);
+      const root = createRoot(host);
+      await act(async () => root.render(
+        <MemoryRouter initialEntries={["/solo/100/settings/setup/business-profile"]}>
+          <HashJump />
+          <SoloBusinessContextSetup account="100" />
+        </MemoryRouter>,
+      ));
+      expect(scroll).not.toHaveBeenCalled();
+      await act(async () => button(host, "Jump to zone").click());
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(scroll.mock.contexts[0]).toBe(host.querySelector("section#business-time-zone"));
+      expect(document.activeElement).toBe(host.querySelector("#business-time-zone-title"));
+      await act(async () => root.unmount());
+      host.remove();
+    });
+
+    it("ignores a hash that names nothing in Setup", async () => {
+      const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile#not-a-section");
+      expect(scroll).not.toHaveBeenCalled();
+      await act(async () => root.unmount());
+      host.remove();
+    });
+  });
+
   it("opens the requested child URL and supplies real sibling links", async () => {
     const { host, root } = await mount(
       "100",

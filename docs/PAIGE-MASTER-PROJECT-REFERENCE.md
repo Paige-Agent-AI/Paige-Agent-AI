@@ -4475,6 +4475,12 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
   - **No standing on the client record:** the Engagement panel is unmounted.
 
   F1–F5 run only in the departmental UIs, wherever a UI path exists, because chat actions are dark while INT-346 is off. F2c (terms become effective: the writer exists but is unwired) blocks F4a, the delivery handoff. F4c, F5b/c, F6 and F7 have no customer path.
+- **E4-S3 PR alpha — "See it, then verify it" (on branch, ships on merge; not live; 2026-10-14 — journey §16):** closes three of the PARTIAL lines above for F8. Nothing is activated: INT-346 stays off and no action tool is admitted.
+  - **Truthful step line:** a needs-input or refused read shows no row; an unavailable read shows an error row ("Couldn't check…"); a finished read says "Checked…". This is the shared closed-envelope rule (posted on Linear ANT-147), so it also changes how Exp02's `get_business_snapshot` / `read_business_metric` steps render. Exp02's own label additions were withdrawn pending Exp02.
+  - **Record links:** an available client-standing or time-zone read carries references only (destination, client id, name). The chat builds the addresses from the current account, in a "See it in your workspace" group. They are never sent to the model, and they persist for reload. Solo gets exact or surface links; a sub-account gets the client list only; agency, enterprise and operator get none. The time-zone link lands on the setting itself (`#business-time-zone`).
+  - **Dormant executor receipt:** PAIGE records an answered read once, server-side, only when that same read's SQL did not already write a receipt. It never fires until PR beta stops the SQL readers receipting.
+  - **Owner attribution:** migration `20271031004000` makes the owner's own time-zone save read as the owner's ("Business time zone changed", `owner_staff`). The Solo Rail labels a recorded person "Person".
+  - **Owed:** authenticated runtime proof (journey §15.5 steps 1, 3, 4 and 6, plus one sub-account walk), the full-schema SQL run in CI, and the non-author C0b re-pin review.
 
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)
 

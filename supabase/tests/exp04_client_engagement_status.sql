@@ -400,6 +400,43 @@ select pg_temp.check_true((select value->>'state'='missing' and value->'zone'='n
 select pg_temp.check_true((select value->>'state'='invalid' and value->'zone'='null'::jsonb and value->'local_date'='null'::jsonb from s2 where label='unrecognised'),'zone readback: an unrecognised stored zone reads as invalid, not an error');
 select pg_temp.check_true((select r.value->>'zone'=s.value->>'time_zone' and r.value->>'state'='configured' from s2 r, s2 s where r.label='readback' and s.label='saved'),'zone readback: returns exactly what the owner saved');
 
+-- ── E4-S3 PR alpha: the owner's own act reads as the owner's (migration 20271031004000). ──
+-- set_business_time_zone is owner-only (chat cannot save it), so its receipt renders as a person's
+-- act; every other key — the three read keys included, until PR beta — renders exactly as before.
+select pg_temp.check_true((select d->>'actor_type'='owner_staff' and d->>'title'='Business time zone changed'
+  and d->>'summary' not ilike '%Paige did this%'
+  from (select public._workspace_event_display('capability_run','capability_succeeded','set_business_time_zone') d) x),
+  'E4-S3: an owner time-zone change is attributed to a person, with its own title');
+select pg_temp.check_true((select d->>'actor_type'='owner_staff' and d->>'title'='Business time zone not changed'
+  from (select public._workspace_event_display('capability_run','capability_failed','set_business_time_zone') d) x),
+  'E4-S3: a non-success outcome is never worded as a change');
+select pg_temp.check_true(public._workspace_event_display('capability_run','capability_succeeded','read_business_time_zone')
+  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','read_business_time_zone')
+  and public._workspace_event_display('capability_run','capability_succeeded','read_client_engagement_status')
+  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','read_client_engagement_status'),
+  'E4-S3: read keys render exactly as before in PR alpha');
+select pg_temp.check_true((select public._workspace_event_display('capability_run','capability_succeeded','planning_weekly_commitment_check')->>'title')='Weekly commitment check completed'
+  and public._workspace_event_display('capability_run','capability_succeeded','n8n_run_workflow')
+  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','n8n_run_workflow'),
+  'E4-S3: every other link in the display chain is unchanged');
+select pg_temp.check_true(not has_function_privilege('authenticated','public._workspace_event_display(text,text,text)','EXECUTE')
+  and not has_function_privilege('anon','public._workspace_event_display(text,text,text)','EXECUTE')
+  and not has_function_privilege('authenticated','public._workspace_event_display_before_exp04_owner_attribution(text,text,text)','EXECUTE')
+  and not has_function_privilege('anon','public._workspace_event_display_before_exp04_owner_attribution(text,text,text)','EXECUTE'),
+  'E4-S3: neither display link is callable by anon or authenticated');
+-- The Rail history reader derives the actor through the display (proved on the APPLIED definition, not
+-- migration text, because 20270504000000 rewrote it), so the owner's own Rail reads "Person".
+select pg_temp.check_true(pg_get_functiondef('public.get_solo_rail_activity(integer)'::regprocedure) like '%_workspace_event_display(%',
+  'E4-S3: the applied Rail reader projects through the display');
+create temp table rail_probe as select * from (select null::text actor_type, null::text title) x where false;
+grant insert,select on rail_probe to authenticated;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+insert into rail_probe select r.actor_type, r.title from public.get_solo_rail_activity(200) r where r.title like 'Business time zone%';
+reset role;
+select pg_temp.check_true((select count(*)>=1 and bool_and(actor_type='owner_staff' and title='Business time zone changed') from rail_probe),
+  'E4-S3: the owner''s Rail shows each time-zone change as the person''s, never PAIGE''s');
+
 -- A workspace switch is honoured at read time: the owner, also a member of B, switches to B and
 -- can no longer read A's client. (Fixture: the invite trigger would park a direct insert as
 -- 'pending', so the active second membership is written with writer guards bypassed.)

@@ -178,3 +178,28 @@ describe('Experience 04 · where this client stands', () => {
     expect(() => composeClientEngagementStatus(negative)).toThrow(/CLIENT_STATUS_SOURCE_INVALID/);
   });
 });
+
+// Experience 04 E4-S3 — receipt_id becomes optional in the read contract: the SQL readers stop writing
+// a receipt in PR beta, and PAIGE's chat read is recorded at the executor instead. No consumer may
+// branch on it; a present value that is not a string is still a broken shape.
+describe('E4-S3 · receipt_id is no longer required', () => {
+  it('a source without receipt_id composes, with receipt_id null', () => {
+    const s = base() as Record<string, unknown>;
+    delete s.receipt_id;
+    const status = composeClientEngagementStatus(parseClientEngagementSource(s));
+    expect(status.receipt_id).toBeNull();
+    expect(status.client.id).toBe(base().contact_id);
+  });
+
+  it('an explicit null receipt_id composes', () => {
+    expect(composeClientEngagementStatus(parseClientEngagementSource({ ...base(), receipt_id: null })).receipt_id).toBeNull();
+  });
+
+  it('a present non-string receipt_id still fails the identity check', () => {
+    expect(() => parseClientEngagementSource({ ...base(), receipt_id: 42 })).toThrow(/identity/);
+  });
+
+  it('a real receipt id still passes through unchanged', () => {
+    expect(composeClientEngagementStatus(parseClientEngagementSource(base())).receipt_id).toBe(base().receipt_id);
+  });
+});

@@ -334,6 +334,21 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### Experience 04 E4-S3 PR alpha — chat read links, truthful read steps, the owner's own time-zone save attributed to a person (branch `claude/clever-lovelace-r111ru`, 2026-10-14; ships on merge, NOT live)
+
+Main chat (`paige-ai-chat` + `PaigeAIChat`) and the Solo Rail. An available client-standing or time-zone read now shows "See it in your workspace" links beside the answer (live and after reload), built from the current account; a refused or no-match read leaves no finished-check row; the owner's own business-time-zone save reads as "Person" on the Solo Rail. No tier gains a read, write or action; INT-346 stays inactive.
+
+| Tier | Chat read links | Step line truth | Time-zone save attribution |
+|---|---|---|---|
+| God / Operator | N/A — reads not offered; resolver returns nothing | applies (shared step reader) | N/A — no tenant Rail of its own |
+| Agency / Enterprise | N/A — reads not offered; resolver returns nothing (enterprise unmounted) | applies | N/A — Solo-shell Setup only |
+| Standalone (Solo) | ✓ on merge — client exact (`?person=`), Sales/Operations/Setup surface-only | ✓ on merge | ✓ on merge — "Person" |
+| Sub-account (`account_type='sub_account'`, resolves to tenant) | Clients list only (surface-only); every other destination fails closed | ✓ on merge | same shell as Solo |
+| Sub-account (legacy standalone-typed child, resolves to `subaccount`) | N/A — reads not offered | applies | same shell as Solo |
+| Client / Anonymous | N/A — no chat tool | N/A | N/A |
+
+Evidence: unit, render, handler and a focused SQL proof; the full-schema SQL proof runs in CI. Authenticated runtime (Solo owner, and one sub-account walk) is UNVERIFIED and owed. See `docs/delivery/exp04-get-paid-deliver-journey.md` §16.
+
 ### Lead reply drafts — `lead_reply` (Experience 03 S3 "PAIGE works your leads", backend LIVE on production since 2026-10-14 (#2126 → `f2e2a0af6`), inert; first written 2026-10-13)
 
 **Live, inert (2026-10-14).** The migrations (`20271031000000`, `000100`, `000200`, `000250`) are persisted on production and the functions are deployed. 0 forms have opted in, so no draft is filed yet. There is no screen yet; the reply screen is the separate S3 UI slice, in review. Each tier's answer below is what the merged code decides. *(Supersedes the 2026-10-13 "Not live: migrations not applied" status.)*

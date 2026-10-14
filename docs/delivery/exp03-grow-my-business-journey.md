@@ -383,7 +383,7 @@ AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
 
 **Naming note (§13).** §10's table plans S3 as "chat: attach asset, transition campaign, read leads". The work built on this branch under the S3 label is a different deliverable: a drafted reply to each new lead, sent only through the governed email door. The chat-tools deliverable is not built by this work, and no slice number is assigned to it here.
 
-**Status (2026-10-14).** RELEASED (backend only): PR #2126 → main `f2e2a0af6e667ea39f8135d9f2f53b719776e52a`; migrations `20271031000000`/`000100`/`000200`/`000250` persisted on production (`db-live` reached `f2e2a0af6`); the seven functions deployed (`edge-live` reached `f2e2a0af6`; both tags have since moved on to later merges). Inert: 0 forms opted in, 0 SendGrid-verified domains. *(Supersedes the 2026-10-13 status "CODE_COMPLETE on branch; not merged; migrations not applied".)* The reply screen is the separate S3 UI slice, still in review. Not AUTHENTICATED_WORKFLOW_VERIFIED. Not OWNER_ACCEPTED. Full record: master §4.0 (2026-10-13 S3 entry), with the gaps in master §5.
+**Status (2026-10-14).** RELEASED (backend only): PR #2126 → main `f2e2a0af6e667ea39f8135d9f2f53b719776e52a`; migrations `20271031000000`/`000100`/`000200`/`000250` persisted on production (`db-live` reached `f2e2a0af6`); the seven functions deployed (`edge-live` reached `f2e2a0af6`; both tags have since moved on to later merges). Inert: 0 forms opted in, 0 SendGrid-verified domains. *(Supersedes the 2026-10-13 status "CODE_COMPLETE on branch; not merged; migrations not applied".)* The reply screen is the separate S3 UI slice, still in review. Not AUTHENTICATED_WORKFLOW_VERIFIED. Not OWNER_ACCEPTED. Full record: master §4.0 (2026-10-14 S3 entry), with the gaps in master §5.
 
 **Flow covered (backend):**
 1. A lead submits an opted-in form.
@@ -409,6 +409,7 @@ AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
 - ~~**Before merge:** the door proof's fixtures share one SendGrid domain id, which `000250`'s unique index refuses when CI applies it first (master §5, item 0).~~ *Closed before merge (round 5 distinct fixture ids; passed in CI order on the merged head).*
 
 Closed in round 4: a SendGrid-only business now gets a draft, and enterprise forms can be opted in.
+- **Post-merge findings #2132 and #2133.** Open; each is fixed in its own reviewed PR, not yet merged (master §4.0).
 - **The full rollout plan.** Gmail and iCloud Mail are planned separately in `exp03-launch-email-providers-plan.md`.
 
 ---

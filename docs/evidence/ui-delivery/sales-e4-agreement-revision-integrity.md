@@ -17,7 +17,15 @@ ZOOM_REFLOW: NOT_APPLICABLE: No layout or geometry changes.
 REDUCED_MOTION: NOT_APPLICABLE: No motion changes.
 STATE_COVERAGE: PASS: Create, bound/unbound draft revision, stale/missing revision, foreign identity, denied role, changed workspace, uploaded document refusal, sent immutability, malformed provenance and uncertain write readback tested at the stated synthetic evidence level.
 TRUTHFUL_STATE_LABELS: PASS: Failed source reads never become writes; uncertain saves require inspection rather than retry; signature, delivery and terms effectuation are not inferred.
-SOLO_UI: NO: Backend domain adapter only; existing canonical Solo interfaces remain unchanged.
+SOLO_UI: YES: this backend-only integrity record is composed into #2128's SOLO release; existing agreement interfaces are unchanged.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: backend-only correction; no new native agreement capture in this record.
 UNVERIFIED: Hosted release gates, deployment identity, signed-in Chat/Live acceptance and provider acceptance are outside this local proof.
 OWNER_INTENT: Complete the existing conversation-led commercial workflow through canonical records while preserving exact identity, source versions and shared approval authority.
 MUST_NOT_HAPPEN: Strip a terms/offer binding, replace an uploaded file with generated text, revise a sent document, adopt a foreign client, overwrite a newer revision, or claim an uncertain save succeeded.

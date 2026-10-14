@@ -33,11 +33,26 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       sales_collections: "Open collections",
       operations_work: "Open delivery work",
       business_time_zone: "Open business time zone setting",
+      executive: "Open Executive",
+      finance: "Open Finance",
+      sales_pipeline: "Open Sales pipeline",
+      systems_check: "Open Systems Check",
+      business_game_plan: "Open Business Game Plan",
+      trust_compass: "Open Trust Compass",
+      mind: "Open Mind",
     });
   });
 });
 
 describe("workspaceLinkTarget", () => {
+  it("E2 references re-resolve to the CURRENT account and fail closed outside Solo", () => {
+    const reference = { destination: "executive" as const, record_id: null };
+    expect(workspaceLinkTarget(reference, soloTenant)?.to).toBe("/solo/3855/command-center/executive");
+    expect(workspaceLinkTarget(reference, { ...soloTenant, account_number: 9999 })?.to).toBe("/solo/9999/command-center/executive");
+    expect(workspaceLinkTarget(reference, subTenant)).toBeNull();
+    expect(routeLinkTarget(reference, "solo", null)).toBeNull();
+    expect(routeLinkTarget(reference, "solo", "bad/account")).toBeNull();
+  });
   it("opens the named client exactly on Solo", () => {
     expect(workspaceLinkTarget({ destination: "contacts", record_id: UUID, subject: "Acme Ltd" }, soloTenant))
       .toEqual({ label: "Open Acme Ltd", to: `/solo/3855/clients/people?person=${UUID}`, status: "exact" });

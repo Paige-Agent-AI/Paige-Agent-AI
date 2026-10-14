@@ -49,7 +49,7 @@
 .trc-standing-meta .trc-standing-quiet { margin-top: 0; }
 .trc-standing-quiet svg { width: 13px; height: 13px; }
 .trc-standing-quiet:hover:not(:disabled) { border-color: var(--pg-line-strong); background: var(--pg-raised); }
-.trc-standing-quiet:disabled { opacity: .55; cursor: progress; }
+.trc-standing-quiet:disabled, .trc-standing-quiet[aria-disabled="true"] { opacity: .55; cursor: progress; }
 .trc-standing .trc-standing-link:focus-visible, .trc-standing-quiet:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
 
 .trc-standing-empty, .trc-standing-state-line { display: grid; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
@@ -77,10 +77,8 @@
   .trc-standing .trc-standing-link { padding-block: 13px; }
   .trc-standing-quiet { min-height: 44px; }
 }
-/* "Check again": the last answer stays, dimmed, while the new one is read (aria-busy on the section). */
 /* While re-reading, the last answer stays at full ink (AA); the meta line announces "Checking again…" (role=status). */
 @media (prefers-reduced-motion: no-preference) {
-  .trc-standing-content { transition: opacity 160ms cubic-bezier(.2, .7, .2, 1); }
   .trc-standing-content > * { animation: trc-standing-in 160ms cubic-bezier(.2, .7, .2, 1) both; }
   .trc-standing-skeleton i, .trc-standing-skeleton b { animation: trc-standing-pulse 1.4s ease-in-out infinite; }
 }

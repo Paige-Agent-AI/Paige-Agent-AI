@@ -228,7 +228,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
                 return <li key={step}><span>{ATTENTION_TEXT[step]}</span>{destination && !repeat && <StandingLink destination={destination} account={account} />}</li>;
               })}
             </ul>
-            {steps.length > 3 && !allSteps && <button type="button" className="trc-standing-quiet" aria-expanded={false} onClick={() => setAllSteps(true)}>Show {steps.length - 3} more</button>}
+            {steps.length > 3 && <button type="button" className="trc-standing-quiet" aria-expanded={allSteps} onClick={() => setAllSteps(v => !v)}>{allSteps ? "Show fewer" : `Show ${steps.length - 3} more`}</button>}
             <button type="button" className="trc-standing-quiet" onClick={openPaige}><Sparkles aria-hidden />Ask PAIGE about {name}</button>
           </Row>
         )}
@@ -241,7 +241,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
 export function ClientStanding({ contactId, clientName, account, openPaige }: Props) {
   const read = useClientEngagementStatus(contactId);
   const busy = read.phase === "loading" || read.phase === "idle";
-  // "Check again" re-reads; the last answer for THIS client stays on screen, dimmed, until the new one
+  // "Check again" re-reads; the last answer for THIS client stays on screen, at full ink, until the new one
   // lands. The skeleton is only for the first read, so the record below never jumps.
   const last = useRef<{ contactId: string; status: ClientEngagementStatus } | null>(null);
   if (read.phase === "ready") last.current = { contactId, status: read.status };
@@ -255,7 +255,7 @@ export function ClientStanding({ contactId, clientName, account, openPaige }: Pr
         <div className="trc-standing-meta">
           {shown && <span role="status">{refreshing ? "Checking again…" : <>Checked <span className="trc-standing-nowrap">{timeLabel(shown.read_at, zone)}</span></>}</span>}
           {read.phase !== "refused" && read.phase !== "no_workspace" && read.phase !== "error" && (
-            <button type="button" className="trc-standing-quiet" onClick={read.retry} disabled={busy}><RefreshCw aria-hidden />Check again</button>
+            <button type="button" className="trc-standing-quiet" onClick={() => { if (!busy) read.retry(); }} aria-disabled={busy || undefined}><RefreshCw aria-hidden />Check again</button>
           )}
         </div>
       </div>

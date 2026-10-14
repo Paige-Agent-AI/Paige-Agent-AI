@@ -94,9 +94,13 @@ describe("ClientStanding", () => {
     expect(items).toEqual([ATTENTION_TEXT.payment_overdue, ATTENTION_TEXT.behind_schedule, ATTENTION_TEXT.payment_outcome_unknown]);
     const more = [...host.querySelectorAll("button")].find(b => b.textContent === "Show 2 more") as HTMLButtonElement;
     expect(more).toBeDefined();
+    more.focus();
     await act(async () => more.click());
     expect(host.querySelectorAll(".trc-standing-next li").length).toBe(5);
-    expect([...host.querySelectorAll("button")].some(b => /more$/.test(b.textContent ?? ""))).toBe(false);
+    // The control stays mounted as a toggle, so keyboard focus is never dropped to <body>.
+    expect(document.activeElement).toBe(more);
+    expect(more.textContent).toBe("Show fewer");
+    expect(more.getAttribute("aria-expanded")).toBe("true");
     await act(async () => ([...host.querySelectorAll("button")].find(b => b.textContent === "Ask PAIGE about Test Consulting Client") as HTMLButtonElement).click());
     expect(ask).toHaveBeenCalledOnce();
   });
@@ -153,7 +157,12 @@ describe("ClientStanding", () => {
     // Announced to assistive tech, and nothing is dimmed below AA while it re-reads.
     expect(host.querySelector('.trc-standing-meta [role="status"]')?.textContent).toBe("Checking again…");
     expect(readFileSync("src/components/tenant-relationships/client-standing.css", "utf8")).not.toMatch(/\[data-refreshing\][^{]*\{[^}]*opacity/);
-    expect(([...host.querySelectorAll("button")].find(b => b.textContent === "Check again") as HTMLButtonElement).disabled).toBe(true);
+    const again = [...host.querySelectorAll("button")].find(b => b.textContent === "Check again") as HTMLButtonElement;
+    // aria-disabled, not disabled: a disabled button blurs, and keyboard focus would fall to <body>.
+    expect(again.disabled).toBe(false);
+    expect(again.getAttribute("aria-disabled")).toBe("true");
+    await act(async () => again.click());
+    expect(rpc).toHaveBeenCalledTimes(2);
     await act(async () => { settle(reply()); await Promise.resolve(); });
     expect(host.querySelector(".trc-standing-content")?.hasAttribute("data-refreshing")).toBe(false);
   });

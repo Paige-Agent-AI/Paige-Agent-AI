@@ -29,7 +29,7 @@ RELEASE_RECOVERY: position=forward-fix through canonical signing read; reference
 
 ## Scope and collisions
 
-Owned signing read correction, native proof and Sales delivery note only. Original provisional 20271101120000 was never applied. After EXP03 #2151 persisted 20271101142133, this identical SQL was renamed forward to 20271101153000. No applied history changed. Root must recheck collision/order before release. No signing history/body/hash, acceptance policy, shared guards/Chat, provider, ledger, scheduler, Operations or Analytics writes.
+Owned signing read correction, native proof and Sales delivery note only. Original provisional 20271101120000 was never applied to production; the original identity was applied only to this disposable Supabase Preview branch before the forward rename to 20271101153000. After EXP03 #2151 persisted 20271101142133, the identical SQL was renamed forward. No production history changed. Preview-history reconciliation remains blocked on the existing authorized custodian under ANT-18 disposition 55a8b9fe-fa4f-4d65-b305-1363be028aaa; no reset, recreation, SQL replay or gate waiver. Root must recheck collision/order before release. No signing history/body/hash, acceptance policy, shared guards/Chat, provider, ledger, scheduler, Operations or Analytics writes.
 
 ## Evidence index
 

@@ -27,5 +27,17 @@
     "priorHeadReview": "NOT_APPLICABLE_TO_SUCCESSOR",
     "authenticatedAcceptance": "NOT_RUN",
     "newRegistration": "SEPARATE_ACCEPTANCE_OWED"
+  },
+  "preReviewRenewal": {
+    "date": "2026-10-14",
+    "main": "1203b58b130b3d0f28abd9dd965b76e82cf65be7",
+    "productionFrontier": "20271101142133",
+    "pendingVersion": "20271102100000",
+    "sqlSHA256": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
+    "E1RuntimeUnchanged": true,
+    "review": "ONE_OWNER_AUTHORIZED_NOT_STARTED",
+    "repair": "NOT_EXECUTED",
+    "release": "UNRELEASED",
+    "authenticated": "NOT_RUN"
   }
 }

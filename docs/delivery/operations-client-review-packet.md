@@ -139,6 +139,35 @@ Full tsc still reports the same10 existing diagnostics outside changed preparati
 Final local preparation confirmation:76 focused tests and scoped lint PASS;26 responsive/state cases,8 native Chrome200/400percent cases and6 phone recovery cases PASS. The first phone assertion exposed a0.28125px nearest-scroll boundary; current feedback centering/prevent-scroll focus and exact complete-region assertion are verified. Final independent source/design review still required; all controls remain unmounted.
 
 
+## Guarded Work navigation recovery - pre-edit
+
+1. Human outcome: staff can leave and return to one canonical Work inspection without losing a draft or treating an uncertain submission/review/release as permission to repeat it.
+2. Operations alone owns these UI recovery helpers and Work detail controls. Planning/Team/Studio/Clients retain domain authority; no shared shell/router/Spine/Client source is edited here.
+3. Existing manual writers/readback remain authoritative; this helper does not execute or provide a Harness/Trust workaround.
+4. No new Spine key: domain conversational registration remains UNAVAILABLE pending original shared-owner integration.
+5. No provider/integration connection, expense, customer communication or copied profile image.
+6. Ephemeral UI draft/original mutation intent only, following existing scoped CRM recovery metadata. It is never task/delivery truth, authorization, an approval channel, a receipt ledger or business Memory. Actual session/source permission is revalidated before note display and all API actions.
+7. No scheduler/job/event producer. The recovery helper performs no API write and never replays an action automatically.
+8. Independent current canonical readback is required to reconcile the retained original source/revision/reviewer/CAS. Stored UI state cannot report execution or client acceptance.
+9. Existing Work detail Sheet is the eventual surface; original scope and CAS survive unmount. Body/private source metadata/names/images are not stored. Parent close/cancel, route/back return and account/unload protection must be proved before production mount; Binding remains PARTIAL/PROOF OWED.
+10. Failing-first storage/refusal/foreign scope/malformed payload/original CAS/unknown-write/no-private-copy tests, component integration and rendered return-path proof precede final review/CI/release. Actual authenticated customer/PAIGE/provider proof remains #1832/ANT-7/ANT-86/singleANT21; no protected access or INT346 activation.
+
+### Navigation recovery source proof
+
+Original scope/CAS and submission/version/reviewer metadata survive tab-scoped UI unmount; no artifact body, recorded review note, identity/photo or customer record is copied. Existing session/source readers independently revalidate permission. Original unknown attempts cannot be replaced by later drafts/actions or erased by an unrelated clearance; no automatic write occurs. Stored UI metadata is never authority, domain records, receipts or business Memory.
+
+Preparation remount regressions reproduced4FAIL/14PASS before correction. Review remount/close/source-replacement/storage regressions reproduced6FAIL/11PASS. Two recovery replacement/clearance tests reproduced2FAIL/12PASS. Current focused suite111PASS (18preparation+17review+14recovery+38staff+15source+9discovery), scoped lint PASS. One prior old-version test now demands concealed draft text when a different source is readable; old permission cannot be borrowed from a new artifact. Same-source authorized draft remains copyable and can be explicitly cleared. Submitted by correctly describes the canonical submitted_by record and does not infer source authorship.
+
+The real components/caller parsers render through explicit synthetic ports in assets/operations-v3/staff-navigation-recovery:12 both-theme390px genuine React unmount/remount cases PASS/errors0, original work timestamp preserved, unknown submission/review remains locked, source revocation/replacement conceals prior notes, no automatic replay. Full canonical Work/router/back/PAIGE and authenticated staff/client acceptance remain UNVERIFIED. Shared Client route/Spine/Chat/QA boundaries unchanged. This source is still unmounted; the next owned Work integration owes every actual parent/route exit, rather than using the fixture departure control as production navigation proof.
+
+New native reflow confirmation:8 genuine signed-out Chrome200/400percent captures with DPR2/4, physical viewport screenshots, scrollable exact content/confirmation, keyboard cancel/no-write/focus return PASS/errors0. This is isolated recovery-source proof, not full Work/shell/PAIGE/authenticated acceptance.
+
+### Independent recovery review / single correction batch
+
+Initial c43125b8bbb1474646381d34b54d671e5fd6a620 source review NOT COMPLETE: String(decision) admitted an array despite typed action output; deleting all note text left its old stored draft and removed the clear control. Failing-first exact array/object/deleted-note/failed-clearance tests reproduced3FAIL/31PASS. One correction requires literal supported string decisions and verifies scoped draft clearance before removing its visible note/guard; failures retain note and explanation. Final focused114PASS (18preparation+19review+15recovery+38staff+15source+9discovery), scoped lint PASS.
+
+Visual initial disposition recapture, not SHIP: one phone full-page capture included a lingering closing-overlay artifact. The runner now asserts overlay disposal before every complete capture. The settled14-case both-theme packet (including delete-all/real unmount/return) PASS/errors0;8 earlier nativeChrome200/400 captures remain applicable because their preparation geometry and scored interactions did not change. No additional aesthetic pass. UI gate114925464846 initially FAIL because exact supporting build SHA was omitted; the source candidate c43125b8bbb1474646381d34b54d671e5fd6a620 is recorded and local unchanged gate grammar PASS. Final independent source/visual recheck and fresh exact-head CI owed. Source remains unmounted, full Operations PARTIAL.
+
 ## Exact client decision evidence — additive source continuation
 
 Intended usable outcome: the actual authorized linked client can inspect and verify the exact recorded acceptance or revision request, including their own note, actor and decision time, for the immutable released version. Existing contract readback projects the state but not those decision facts; this slice tightens proof without mounting a new flow.

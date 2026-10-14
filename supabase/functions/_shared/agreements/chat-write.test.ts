@@ -43,17 +43,15 @@ Deno.test("creates through the one governed seam, and says it CREATED", async ()
   assertEquals(r.agreementId, AGREEMENT);
 });
 
-Deno.test("revises when given an id, and says it did NOT create", async () => {
+Deno.test("revision without an approved source timestamp refuses instead of overwriting", async () => {
   const p = port({ data: ROW, error: null });
   const r = await draftAgreement({
     caller: p, expectedTenantId: TENANT, contactId: CONTACT,
     title: "Revised", bodyMarkdown: "# Terms v2", agreementId: AGREEMENT,
   });
-  assertEquals(p.calls[0][1]?._agreement_id, AGREEMENT);
-  assert(r.success);
-  // CREATED vs REVISED is the distinction that catches this tool's likeliest mistake — a model
-  // omitting the id when the person asked to change a draft, and silently minting a duplicate.
-  assertEquals(r.created, false);
+  assertEquals(p.calls.length, 0);
+  assert(!r.success);
+  assertEquals(r.reason, "conflict");
 });
 
 Deno.test("a bad id is refused BEFORE the seam is called, so no write is attempted", async () => {
@@ -129,13 +127,14 @@ Deno.test("a resolved call with NO row is never reported as a success", async ()
   }
 });
 
-Deno.test("a THROW is reported as unavailable, not as a refusal", async () => {
+Deno.test("a write transport failure has an unknown outcome and forbids blind retry", async () => {
   const rpc: AgreementWriteRpcPort["rpc"] = () => Promise.reject(new Error("socket hang up"));
   const r = await draftAgreement({
     caller: { rpc }, expectedTenantId: TENANT, contactId: CONTACT, title: "T", bodyMarkdown: "B",
   });
   assert(!r.success);
-  assertEquals(r.reason, "unavailable");
+  assertEquals(r.reason, "no_readback");
+  assert(!/try again/i.test(r.message));
   assert(!r.message.includes("socket hang up"));
 });
 

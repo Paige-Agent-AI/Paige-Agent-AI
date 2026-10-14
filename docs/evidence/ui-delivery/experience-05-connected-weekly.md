@@ -12,6 +12,8 @@ STATIC_EVIDENCE: UNVERIFIED: Final frozen-source types/build/guards and exact-he
 RENDERED_EVIDENCE: UNVERIFIED: Valid initial actual-component desktop/mobile frames exist; full frozen-source connected/state/viewport packet and fresh finish verdict are still being completed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Initial local review/disabled authorization/unsent Chat prefill passed; full connected Calendar/Operations/receipt/exit behaviors await final native packet. Authenticated acceptance NOT_RUN.
 ACCESSIBILITY: UNVERIFIED: Existing labeled primitives and focus path reused; complete keyboard/focus/clipping/reflow packet pending, native assistive-technology drive not run.
+AUTHENTICATED_RUNTIME: UNVERIFIED: Official-account E5-CV1–9 remain NOT_RUN; no protected fixture or recurring execution was authorized or performed.
+KEYBOARD_FOCUS: UNVERIFIED: Actual Calendar modal-lifetime/focus-return component test passed; full native keyboard and inspector/source-navigation packet pending.
 ZOOM_REFLOW: UNVERIFIED: Final320px/zoom/reflow packet pending.
 REDUCED_MOTION: UNVERIFIED: No new activity animation; final inherited Sheet reduced-motion check pending.
 STATE_COVERAGE: UNVERIFIED: Source and component tests cover empty/loading/refused/unavailable/local review, canonical schedules and latest/verified result states; final rendered coverage pending.
@@ -26,12 +28,12 @@ ACCEPTANCE_CRITERIA: Current owner scope only; exact local schedule review; same
 MOTION_PURPOSE: NONE: no new activity motion. Existing Sheet presentation only; reduced-motion verification still owed.
 PROTECTED_SEAMS: Affected and tested: actor/tenant/role/epoch read privacy, source point read/membership, local review vs authorization, real next vs intended time, result/receipt truth, typed address navigation, versioned editor recovery, dirty/uncertain retention, Calendar data/realtime/fit and shared Chat focus/composer composition. Unaffected: model offer/dispatch/confirmation issuance, INT-346 admission, Live/media/provider execution, auth enrollment/credentials, tenant/RLS/grants, native event claims/scheduler/cron, act execution/reconciliation, receipt writer, Mind/Memory eligibility, financial/send/publish tools.
 
-INTERNAL_BUILD_IDENTITY: development baseline13b9e3cc966dedd25c3c75e27cdaf1ec1cceab4b; candidate source not yet committed; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=existing delivery packet and native-component capture packet
+INTERNAL_BUILD_IDENTITY: sha=6d3db7bc674787815fd68f474d0e8eacb7511918; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=existing delivery packet and native-component capture packet
 RELEASE_CHANNEL: development: source candidate and synthetic local render only; no production release is inferred
 RELEASE_CLASSIFICATION: internal-only: gated owner inspection/review preparation; complete weekly customer outcome remains unverified
 CUSTOMER_RELEASE_IDENTITY: none: no earned customer release or announcement
 RELEASE_NOTE_REQUIRED: no: internal guarded integration, no customer publication authority
-RELEASE_TRUTH_BOUNDARY: PARTIAL source/presentation integration; weekly conversational actions and notification delivery UNAVAILABLE; authenticated outcome PROOF OWED/UNVERIFIED
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source/presentation integration; UNAVAILABLE: weekly conversational actions and notification delivery; PROOF OWED: authenticated weekly outcome
 RELEASE_RECOVERY: position=ordinary source revert before release; reference=existing E5 delivery report; keep recurring trigger OFF and preserve canonical receipts/unknown reconciliation
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: final frozen-source capture pending

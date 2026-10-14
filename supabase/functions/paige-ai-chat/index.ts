@@ -16111,7 +16111,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // on KEY NAME only, and an agreement's title is the client's business.
             });
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ ...r,
-              ...(!r.success && r.reason === "no_readback" ? { outcome_unknown: true } : {}) }) });
+              ...(!r.success && r.reason === "no_readback" ? { outcome_unknown: true } : {}),
+              // Only these domain refusals positively prove no write. Preserve that evidence
+              // through the spent-approval card rewrite; unavailable carries no such guarantee.
+              ...(!r.success && ["no_workspace", "bad_contact_id", "bad_agreement_id", "empty_title",
+                "empty_body", "refused", "already_sent", "conflict"].includes(r.reason) ? { not_applied: true } : {}) }) });
           } catch (e) {
             console.error("[agreements] draft dispatch threw", { reason: e instanceof Error ? e.message : "unknown" });
             await recordCapabilityRun(supabase, {

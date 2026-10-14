@@ -42,6 +42,11 @@ const mutants = {
   'hide-uncertainty': ['outcome_unknown: true', 'outcome_unknown: false'],
   'false-rail-failure': ['case "no_readback": return "capability_outcome_unknown";', 'case "no_readback": return "capability_failed";'],
   'false-no-write': ['The agreement draft did not report back.', 'Nothing was written. Try again.'],
+  'drop-no-write-proof': ['not_applied: true', 'not_applied: false'],
+  'false-unavailable-proof': ['"empty_body", "refused", "already_sent", "conflict"].includes(r.reason)',
+    '"empty_body", "refused", "already_sent", "conflict", "unavailable"].includes(r.reason)'],
+  'false-unknown-proof': ['"empty_body", "refused", "already_sent", "conflict"].includes(r.reason)',
+    '"empty_body", "refused", "already_sent", "conflict", "no_readback"].includes(r.reason)'],
 };
 if (mutation) {
   assert.ok(mutants[mutation], 'known deliberate mutation');
@@ -56,6 +61,7 @@ const { AGREEMENT_TOOLS, AGREEMENT_DRAFT_CAPABILITY } = await import('../../supa
 const { confirmFingerprint } = await import('../../supabase/functions/_shared/confirm-fingerprint.ts');
 const { interactiveEffect } = await import('../../supabase/functions/_shared/paige-turn/interactive.ts');
 const { recordCapabilityRun } = await import('../../supabase/functions/_shared/capability-record.ts');
+const { sayWhatTheCardSays, classifySpentApproval } = await import('../../supabase/functions/_shared/approval-outcome.ts');
 
 let checks = 0;
 async function check(label, fn) { await fn(); checks++; console.log(`PASS ${label}`); }
@@ -132,6 +138,28 @@ await check('known refusals remain failures without uncertainty; unavailable rem
     assert.equal(reply.record._outcome, reason === 'unavailable' ? 'capability_failed' : 'capability_refused', reason);
   }
 });
+await check('spent approval preserves known no-write refusal and retains unknown-write brake', async () => {
+  for (const reason of ['no_workspace', 'bad_contact_id', 'bad_agreement_id', 'empty_title', 'empty_body', 'refused', 'already_sent', 'conflict']) {
+    const reply = await drive(revision, { success: false, reason, message: 'Nothing was written.' });
+    const approvedContent = sayWhatTheCardSays(JSON.stringify(reply.result));
+    assert.equal(classifySpentApproval(approvedContent).outcome, 'not_run', reason);
+    const approvedResult = JSON.parse(approvedContent);
+    assert.equal(approvedResult.reason, reason, 'domain reason is preserved after approval');
+    assert.equal(approvedResult.not_applied, true, reason);
+    assert.notEqual(approvedResult.outcome_unknown, true, reason);
+    assert.equal(interactiveEffect('agreement_draft', approvedResult).outcome, 'reported_failure', reason);
+    assert.equal(reply.record._outcome, 'capability_refused', reason);
+  }
+  for (const result of [{ success: false, reason: 'no_readback', message: 'The save was not confirmed.' },
+    { success: false, reason: 'unavailable', message: 'No reliable no-write proof.' },
+    () => { throw new Error('fixture postwrite transport loss'); }]) {
+    const reply = await drive(revision, result);
+    assert.notEqual(reply.result.not_applied, true, 'unknown or unproven outcome never claims no effect');
+    const approvedContent = sayWhatTheCardSays(JSON.stringify(reply.result));
+    assert.equal(classifySpentApproval(approvedContent).outcome, 'unconfirmed');
+    assert.equal(interactiveEffect('agreement_draft', JSON.parse(approvedContent)).outcome, 'outcome_unknown');
+  }
+});
 await check('postdispatch throw is unknown with one canonical Rail record and no no-write claim', async () => {
   const reply = await drive(revision, () => { throw new Error('fixture postwrite transport loss'); });
   assert.equal(reply.result.outcome_unknown, true);
@@ -165,7 +193,7 @@ await check('actual handler brakes a successor agreement write after persisted u
         { type: 'message_delta', delta: { stop_reason: 'end_turn' } }];
     return new Response(events.map(event => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(''), { headers: { 'Content-Type': 'text/event-stream' } });
   };
-  const rec = fake.setScenario({ authUser: { id: actor }, tables: {
+  const scenario = { authUser: { id: actor }, tables: {
     profiles: [{ active_tenant_id: tenant }], tenant_members: [{ tenant_id: tenant }],
     paige_chat_threads: [{ id: thread, tenant_id: tenant, caller_user_id: actor }],
     paige_chat_turns: [{ role: 'assistant', content: 'Unconfirmed draft.', bundle_ref: { interactive: { effects } } }],
@@ -183,7 +211,8 @@ await check('actual handler brakes a successor agreement write after persisted u
       return { data: { latest, executor, acquired: true, terminal: true }, error: null };
     },
     paige_chat_interactive_settle: { data: id(8), error: null },
-  } });
+  } };
+  const rec = fake.setScenario(scenario);
   const response = await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat', {
     method: 'POST', headers: { Authorization: 'Bearer test', 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'Revise the agreement' }], threadId: thread,
@@ -194,6 +223,59 @@ await check('actual handler brakes a successor agreement write after persisted u
   assert.equal(rec.rpc.filter(call => call.name === 'save_paige_agreement').length, 0, 'prior uncertainty prevents a second write');
   assert.equal(modelCalls, 2, wire);
   assert.match(JSON.stringify(modelMessages[1]), /prior_effect_reconciliation_required/, 'actual handler returned its canonical brake');
+
+  // Reuse the existing scoped-card native-resume fixture contract. The stored original args run
+  // after a real claim; both the card and durable interactive receipt must report known refusal.
+  const issuedRequest = id(30), approvedIntent = id(31), receipts = [];
+  const bareFingerprint = await confirmFingerprint('agreement_draft', {
+    intent: await confirmFingerprint('agreement_draft', revision), tenant, thread, client: null,
+  });
+  const approvedToken = `${bareFingerprint}:${issuedRequest}`;
+  const card = { tool: 'agreement_draft', fingerprint: approvedToken };
+  const proposal = { tool_name: 'agreement_draft', args: revision, fingerprint: bareFingerprint,
+    issued_in_request: issuedRequest, server_issued_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 3600000).toISOString(), consumed_at: null };
+  modelMessages.length = 0;
+  globalThis.fetch = async (url, opts) => {
+    assert.ok(String(url).includes('api.anthropic.com'), 'local model-port double only');
+    const body = JSON.parse(opts.body);
+    if (body.system?.startsWith('You label one message sent to PAIGE')) return Response.json({ content: [{ type: 'text',
+      text: JSON.stringify({ intent: 'answer', research: 'none', difficulty: 'routine', image: 'none', needs_workspace_data: true, confidence: .9 }) }] });
+    modelMessages.push(body.messages);
+    return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"The draft changed; read its current version before proposing again."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
+  };
+  const approvedRec = fake.setScenario({ ...scenario, tables: { ...scenario.tables,
+    tenant_members: [{ tenant_id: tenant, role: 'owner', status: 'active' }],
+    paige_pending_confirmations: [proposal],
+    paige_agreements: [{ id: agreement, tenant_id: tenant, contact_id: contact, status: 'draft',
+      updated_at: '2026-10-14T10:11:13.123456-04:00', body_source: 'markdown' }],
+    paige_chat_turns: filters => filters.some(filter => filter[0] === 'contains') ? receipts : [
+      { id: id(32), role: 'user', content: 'Revise the agreement' },
+      { id: id(33), role: 'assistant', content: 'Approval is needed.', bundle_ref: { paige_confirm: [card], turn_state: { state: 'WAIT_APPROVAL' } } }, ...receipts],
+  }, rpcs: { ...scenario.rpcs,
+    current_user_tenant_id: { data: tenant, error: null }, is_tenant_admin_as: { data: true, error: null },
+    agency_can_manage_child: { data: false, error: null },
+    save_paige_agreement: { data: null, error: { code: '40001', message: 'stale version' } },
+    record_capability_run: { data: true, error: null },
+    paige_chat_interactive_settle: args => { receipts.push({ role: 'assistant', content: args.p_content,
+      bundle_ref: args.p_bundle_ref }); return { data: id(34), error: null }; },
+  } });
+  const approvedResponse = await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat', {
+    method: 'POST', headers: { Authorization: 'Bearer test', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: 'Approve the exact agreement revision' }], threadId: thread,
+      requestIntentId: approvedIntent, interactive: { kind: 'message' }, approvedConfirmations: [approvedToken] }),
+  }));
+  const approvedWire = await approvedResponse.text();
+  assert.equal(approvedResponse.status, 200, approvedWire);
+  assert.ok(approvedRec.inserts.some(entry => entry.table === 'paige_pending_confirmations' && entry.update && entry.row.consumed_at),
+    'actual canonical confirmation claim was spent');
+  const frames = approvedWire.split('\n').filter(line => line.startsWith('data: {')).map(line => JSON.parse(line.slice(6)));
+  const approvalOutcome = frames.find(frame => frame.paige_approval_outcome)?.paige_approval_outcome;
+  assert.equal(approvalOutcome?.actions?.[0]?.outcome, 'not_run', approvedWire);
+  assert.equal(receipts.at(-1)?.bundle_ref?.interactive?.effects?.[0]?.outcome, 'reported_failure', approvedWire);
+  assert.ok(approvedRec.rpc.some(call => call.name === 'record_capability_run' && call.args._outcome === 'capability_refused'), approvedWire);
+  assert.match(JSON.stringify(modelMessages), /not_applied/, 'model received the same known-no-write result');
+  console.log('PASS actual approved handler claim: conflict stays not_run on card and reported_failure in durable receipt');
 });
 
 if (process.argv.includes('--require-domain-contract')) {

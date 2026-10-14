@@ -14,7 +14,8 @@ describe("E04 PRE-1 shared agreement revision contract", () => {
       cwd: process.cwd(), env, encoding: "utf8", windowsHide: true, timeout: 120_000,
       stdio: ["ignore", "pipe", "pipe"],
     });
-    expect(output).toContain("PASS 8 PRE-1 shared integration checks");
+    expect(output).toContain("PASS 9 PRE-1 shared integration checks");
     expect(output).toContain("PASS actual handler brakes a successor agreement write after persisted uncertainty");
+    expect(output).toContain("PASS actual approved handler claim: conflict stays not_run on card and reported_failure in durable receipt");
   }, 130_000);
 });

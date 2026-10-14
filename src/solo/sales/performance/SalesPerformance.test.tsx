@@ -65,6 +65,18 @@ describe("Sales Performance canonical presentation",()=>{
     const p=props({metrics:[metric("sales.receivables.overdue_current",[{currency:"USD",amount_minor:"730000",record_count:2}])]});mount(p);
     click("Open Collections");expect(p.onNavigate).toHaveBeenCalledWith({tab:"payments",query:"view=collections"});
   });
+  it("discloses the server's overdue business date without changing it to the browser day",()=>{
+    const m=Object.assign(metric("sales.receivables.overdue_current",[{currency:"USD",amount_minor:"50000",record_count:1}]),{metric_version:"1.1.0",as_of:"2026-10-07T02:00:00Z",business_time_zone:{state:"configured" as const,zone:"America/Los_Angeles",set_at:"2026-09-01T00:00:00Z",as_of_date:"2026-10-06"}});
+    mount(props({metrics:[m]}));click("Money");click("Inspect overdue receivables now USD");
+    expect(document.body.textContent).toContain("2026-10-06 · America/Los_Angeles");
+    expect(document.body.textContent).toContain("Due today is not overdue");
+  });
+  it.each(["missing","invalid"] as const)("explains %s calendar evidence without a fabricated overdue amount",state=>{
+    const m=Object.assign(metric("sales.receivables.overdue_current"),{metric_version:"1.1.0",values:null,truth_state:"UNAVAILABLE" as const,business_time_zone:{state,zone:null,set_at:state==="missing"?null:"2026-09-01T00:00:00Z",as_of_date:null}});
+    mount(props({metrics:[m]}));click("Inspect overdue balance");
+    expect(document.body.textContent).toContain(state==="missing"?"Business time zone is not set.":"Business time zone needs correction.");
+    expect(document.body.textContent).not.toContain("$0.00");
+  });
   it("renders chart marks on initial mount and remount without an activation click",()=>{
     mount(props({stageFunnel:funnel,stagePhase:"ready"}));
     expect(host.querySelectorAll(".sp-stage-bar")).toHaveLength(1);

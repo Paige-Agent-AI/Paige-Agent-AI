@@ -85,11 +85,14 @@ export function heldPayload(reason: HoldReason, retryAfter: string | null, chann
  * When the hours begin between the pre-send check and send-message, send-message queues a row and the
  * door cancels it through cancel_scheduled_message, which returns it to an unsent draft that Conversations
  * shows with its own "Approve & send". That draft and this approval are the SAME message. So the door
- * names the draft on the approval (metadata.held_draft_message_id) and the next Approve sends THAT row
- * (send-message's message_id path patches it to sent; a row already sent is deduped, never re-sent). If the
- * draft already left from Conversations, the approval settles on it and nothing is sent again.
+ * names the draft on the approval (metadata.held_draft_message_id). SMS retries use THAT row and
+ * settle if it already left. Email retries refuse: this legacy approval never froze the original sending
+ * identity or attachment state, so it cannot authorize a send or attest that an edited message was approved.
  */
 export const HELD_DRAFT_KEY = "held_draft_message_id";
+/** Legacy held email has no immutable sender/attachment approval binding; it must be reviewed again. */
+export const HELD_EMAIL_REQUIRES_REVIEW =
+  "This held reply's original sending account and attachments can't be confirmed. Nothing was sent again. Review it in Conversations, or decline it here.";
 
 /** Message statuses that mean the draft has already gone out (messages_status_check, production 2026-10-14). */
 export const ALREADY_SENT_STATUSES: ReadonlySet<string> = new Set(["sent", "delivered", "read"]);

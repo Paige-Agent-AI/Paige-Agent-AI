@@ -1,0 +1,686 @@
+{
+  "boundary": "Actual Operations component and canonical helpers with explicit local synthetic caller ports. No customer login, shared shell/PAIGE, provider effect or authenticated acceptance.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 682.3125,
+          "bottom": 795.59375,
+          "left": 24,
+          "right": 366
+        },
+        "button": {
+          "top": 751.59375,
+          "bottom": 795.59375,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 705.3125,
+          "bottom": 795.5,
+          "left": 24,
+          "right": 366
+        },
+        "button": {
+          "top": 751.5,
+          "bottom": 795.5,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 655.34375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 1194
+        },
+        "button": {
+          "top": 678.4375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 508.828125
+        },
+        "viewport": {
+          "width": 1536,
+          "height": 770
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 655.34375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 1194
+        },
+        "button": {
+          "top": 678.4375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 508.828125
+        },
+        "viewport": {
+          "width": 1536,
+          "height": 770
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 1109
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 423.828125
+        },
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 1109
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 423.828125
+        },
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 938
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 252.828125
+        },
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 938
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 252.828125
+        },
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 885.34375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 876
+        },
+        "button": {
+          "top": 908.4375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 900,
+          "height": 1000
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 885.34375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 876
+        },
+        "button": {
+          "top": 908.4375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 900,
+          "height": 1000
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 682.3125,
+          "bottom": 795.59375,
+          "left": 24,
+          "right": 366
+        },
+        "button": {
+          "top": 751.59375,
+          "bottom": 795.59375,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 705.3125,
+          "bottom": 795.5,
+          "left": 24,
+          "right": 366
+        },
+        "button": {
+          "top": 751.5,
+          "bottom": 795.5,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 655.34375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 1194
+        },
+        "button": {
+          "top": 678.4375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 508.828125
+        },
+        "viewport": {
+          "width": 1536,
+          "height": 770
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 655.34375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 1194
+        },
+        "button": {
+          "top": 678.4375,
+          "bottom": 722.4375,
+          "left": 342,
+          "right": 508.828125
+        },
+        "viewport": {
+          "width": 1536,
+          "height": 770
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 1109
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 423.828125
+        },
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 1109
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 257,
+          "right": 423.828125
+        },
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 938
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 252.828125
+        },
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 653.34375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 938
+        },
+        "button": {
+          "top": 676.4375,
+          "bottom": 720.4375,
+          "left": 86,
+          "right": 252.828125
+        },
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "restored": false,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 885.34375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 876
+        },
+        "button": {
+          "top": 908.4375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 900,
+          "height": 1000
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "restored": true,
+      "geometry": {
+        "colocated": true,
+        "region": {
+          "top": 885.34375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 876
+        },
+        "button": {
+          "top": 908.4375,
+          "bottom": 952.4375,
+          "left": 24,
+          "right": 190.828125
+        },
+        "viewport": {
+          "width": 900,
+          "height": 1000
+        },
+        "overflow": false
+      },
+      "focus": {
+        "style": "solid",
+        "width": "2px"
+      },
+      "keyboard": true,
+      "originalNoteRetained": true,
+      "writes": 1,
+      "noReplay": true
+    }
+  ],
+  "errors": []
+}

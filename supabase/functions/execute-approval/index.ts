@@ -34,9 +34,9 @@
 // ONE MESSAGE, ONE APPROVAL PATH (#2150): that cancel returns the row to an unsent draft, which
 // Conversations shows with its own "Approve & send". The draft's id is recorded on the approval
 // (metadata.held_draft_message_id, written only onto a row still pending, and checked). The next Approve
-// sends THAT row (send-message's message_id path), so it can never become a second message; if the draft
-// already went out from Conversations the approval settles on it and nothing is sent again, and if it was
-// scheduled from Conversations nothing is sent and the person is told where it is.
+// retries SMS against THAT row. Held email cannot be sent or settled from this legacy approval: it lacks
+// an immutable original sender/attachment binding. It stays pending and directs review in Conversations;
+// no mutable draft state is promoted to approval authority.
 //
 // LAYER C (C5): an approval minted by the event→act engine (metadata.source='paige_orchestration') carries a
 // held act's coordinates. This one door also delegates those to the Layer-C approval-executor — re-running the
@@ -48,7 +48,7 @@ import { approvalRefusalMessage, executeApprovedLayerCAct, type ApproveExecutorD
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import {
-  ALREADY_SENT_STATUSES, DECIDED_MID_SEND_HELD, DECIDED_MID_SEND_QUEUED, HELD_DRAFT_CHANGED, HELD_DRAFT_KEY, HELD_DRAFT_UNCONFIRMED,
+  ALREADY_SENT_STATUSES, DECIDED_MID_SEND_HELD, DECIDED_MID_SEND_QUEUED, HELD_DRAFT_CHANGED, HELD_DRAFT_KEY, HELD_DRAFT_UNCONFIRMED, HELD_EMAIL_REQUIRES_REVIEW,
   QUEUED_UNCANCELLABLE, SCHEDULED_FROM_CONVERSATIONS, SENT_FROM_CONVERSATIONS, classifySendResult, heldDraftChange, heldPayload,
   holdReasonOf, refuseSendKindApproval, type HeldDraftContent, type HoldReason, type SendKindAdmin,
 } from "./action-email.ts";
@@ -287,6 +287,16 @@ Deno.serve(async (req) => {
     // #2150: the draft an earlier hold returned to Conversations IS this message. Read it first: if it
     // already went out (or is scheduled) from Conversations, nothing is sent again — whatever the hours.
     const apprMeta: Record<string, unknown> = (typeof approval.metadata === "object" && approval.metadata) ? approval.metadata as Record<string, unknown> : {};
+    // A legacy held-email approval records only the draft id, not the originally approved sending
+    // identity or attachment state. Reading those from the mutable draft now would bless an edit as
+    // original authority. Neither a matching body nor a sent status proves the same authorized email.
+    // Fail closed before reading/settling/sending that row; the owner reviews it in Conversations.
+    // Even malformed held-draft metadata cannot fall through to a fresh send. No new approval path.
+    if (channel === "email" && Object.prototype.hasOwnProperty.call(apprMeta, HELD_DRAFT_KEY)) {
+      const { error: releaseErr } = await releaseClaim();
+      if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+      return json(200, { ok: false, executed: false, outcome: "held_email_requires_review", error: HELD_EMAIL_REQUIRES_REVIEW, channel, approval_id: approvalId });
+    }
     const heldDraftId = typeof apprMeta[HELD_DRAFT_KEY] === "string" && apprMeta[HELD_DRAFT_KEY] ? String(apprMeta[HELD_DRAFT_KEY]) : null;
     type HeldMsg = HeldDraftContent & { id: string; tenant_id: string | null; status: string | null; scheduled_for: string | null; sent_at: string | null };
     // The content columns are read too: an edited draft must never be sent with this approval's text (#2150).
@@ -401,7 +411,10 @@ Deno.serve(async (req) => {
           // Decided (declined) while send-message ran: nothing went out, and the copy is a plain draft.
           return json(200, { ok: false, executed: false, held: false, link_recorded: false, error: DECIDED_MID_SEND_HELD, returned_to_draft_message_id: sendOutcome.messageId, approval_id: approvalId });
         }
-        return json(200, heldPayload(reason, sendOutcome.scheduledFor, channel, approvalId, { returned_to_draft_message_id: sendOutcome.messageId }));
+        return json(200, heldPayload(reason, sendOutcome.scheduledFor, channel, approvalId, {
+          returned_to_draft_message_id: sendOutcome.messageId,
+          ...(channel === "email" ? { error: HELD_EMAIL_REQUIRES_REVIEW } : {}),
+        }));
       }
       // It could not be cancelled, so it WILL go out when the hold ends. The claim is KEPT: releasing it
       // would let a second Approve queue a second copy to the same person. The link is recorded and its

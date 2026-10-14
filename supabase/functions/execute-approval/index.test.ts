@@ -424,15 +424,94 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
 
 // #2150 P2b — the cancelled copy is an unsent draft that Conversations shows with its own "Approve & send".
 // It and the approval are ONE message with ONE approval path: the draft's id is recorded on the approval, the
-// next Approve sends THAT row, and a draft that already went out from Conversations is never sent again.
-describe("execute-approval: a held copy returned to a draft stays ONE message (#2150)", () => {
-  const emailDraft = { channel: "email", subject: "S", body: "B" };
-  const pending = (extra: Row = {}) => approval({ category: "followup", type: "cs_draft", metadata: {}, draft_content: emailDraft, ...extra });
+// SMS retries use THAT row. Held email without frozen sender/attachment proof always refuses; no second send or false settlement.
+describe("execute-approval: held email requires original sender and attachment authority (#2150)", () => {
+  const pending = (metadata: Row = { held_draft_message_id: "m1" }) => approval({
+    category: "followup", type: "cs_draft", metadata,
+    draft_content: { channel: "email", to: "dana@x.test", subject: "S", body: "B" },
+  });
+  const original = {
+    id: "m1", tenant_id: T, status: "draft", scheduled_for: null, sent_at: null,
+    channel_type: "email", recipients: [{ address: "dana@x.test" }], subject: "S", body_html: "B", body_text: null,
+    connector_id: "original-connector", attachments: [],
+  };
+  const refused = (r: { status: number; body: Row }, db: ReturnType<typeof fakeDb>) => {
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, outcome: "held_email_requires_review", channel: "email", approval_id: A });
+    expect(String(r.body.error)).toContain("original sending account and attachments can't be confirmed");
+    expect(String(r.body.error)).toContain("Review it in Conversations");
+    expect(fetchCalls).toEqual([]); // no provider handoff, even though a send WOULD succeed
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
+    expect(db.tables.paige_pending_approvals[0].reviewed_at).toBeUndefined();
+    expect(db.tables.paige_pending_approvals[0].sent_at).toBeUndefined();
+    expect(db.writes.some(w => w.values.status === "approved" || "metadata" in w.values)).toBe(false);
+  };
+
+  it.each([
+    ["unchanged words but no original authority", {}],
+    ["changed connector after Edit, Send, Undo", { connector_id: "other-connector" }],
+    ["default sender cannot be proven", { connector_id: null }],
+    ["missing connector state", { connector_id: undefined }],
+    ["attachment added after Edit, Send, Undo", { attachments: [{ path: "test-tenant-attachment/new.pdf", filename: "new.pdf" }] }],
+    ["attachment replaced", { attachments: [{ path: "test-tenant-attachment/replaced.pdf", filename: "old.pdf" }] }],
+    ["attachment removed without original manifest", { attachments: [] }],
+    ["unreadable attachment state", { attachments: null }],
+    ["edited words", { body_html: "B with a new price" }],
+    ["other tenant's draft", { tenant_id: "test-tenant-other" }],
+    ["edited email already sent in Conversations", { status: "sent", connector_id: "other-connector", sent_at: "2026-10-14T13:00:00Z" }],
+    ["delivered edited email", { status: "delivered", attachments: [{ path: "test-tenant-attachment/new.pdf" }] }],
+    ["read email without original proof", { status: "read" }],
+    ["scheduled email without original proof", { status: "queued", scheduled_for: "2026-10-15T14:00:00Z" }],
+  ])("%s: neither sent nor settled as approved", async (_name, changes) => {
+    const message = { ...original, ...changes };
+    const before = structuredClone(message);
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [message] });
+    await load(db);
+    refused(await approve(), db);
+    expect(db.tables.messages[0]).toEqual(before); // history and attachments stay untouched
+    refused(await approve(), db); // retry is still a refusal, never a fresh copy
+  });
+
+  it.each([null, "", 42, {}, "m1"])("malformed or missing draft %j cannot fall through to a fresh email", async heldId => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ held_draft_message_id: heldId })], clients: [contact], messages: [] });
+    await load(db);
+    refused(await approve(), db);
+  });
+
+  it("an unreadable draft never turns missing sender/attachment proof into authority", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [original] }, ["messages"]);
+    await load(db);
+    refused(await approve(), db);
+  });
+
+  it("metadata copied from today's mutable draft cannot manufacture original approval proof", async () => {
+    const metadata = { held_draft_message_id: "m1", connector_id: "other-connector", attachments: [], sender_verified: true };
+    const db = fakeDb({ paige_pending_approvals: [pending(metadata)], clients: [contact], messages: [{ ...original, connector_id: "other-connector" }] });
+    await load(db);
+    refused(await approve(), db);
+    expect(db.tables.paige_pending_approvals[0].metadata).toEqual(metadata);
+  });
+
+  it("failure to release the claim is an error, never a successful refusal receipt", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [original] }, [],
+      (table, values) => table === "paige_pending_approvals" && Object.keys(values).length === 1 && values.claimed_at === null);
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(500);
+    expect(r.body).toMatchObject({ ok: false, executed: false, error: "claim_release_failed" });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0].status).toBe("pending");
+  });
+});
+
+describe("execute-approval: a held SMS copy returned to a draft stays ONE message (#2150)", () => {
+  const smsDraft = { channel: "sms", to: "+15555550100", subject: "S", body: "B" };
+  const pending = (extra: Row = {}) => approval({ category: "followup", type: "cs_draft", metadata: {}, draft_content: smsDraft, ...extra });
   const queuedAnswer = { status: 200, body: { status: "failed", outcome: "queued_tenant_dnd", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1" } };
   // The draft carries exactly what the approval sends (send-message stores an email body in body_html).
   const msg = (extra: Row = {}): Row => ({
     id: "m1", tenant_id: T, status: "draft", scheduled_for: null, sent_at: null,
-    channel_type: "email", recipients: [{ address: "dana@x.test" }], subject: "S", body_html: "B", body_text: null, ...extra,
+    channel_type: "sms", recipients: [{ address: "+15555550100" }], subject: "S", body_html: "B", body_text: null, ...extra,
   });
 
   it("the draft's id is recorded on the approval, in the same checked write that releases the claim, onto a row still pending", async () => {
@@ -465,9 +544,9 @@ describe("execute-approval: a held copy returned to a draft stays ONE message (#
     const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact], messages: [msg()] });
     await load(db);
     const r = await approve();
-    expect(r).toEqual({ status: 200, body: { ok: true, executed: true, channel: "email", approval_id: A, audit_id: "aud-1" } });
+    expect(r).toEqual({ status: 200, body: { ok: true, executed: true, channel: "sms", approval_id: A, audit_id: "aud-1" } });
     expect(fetchCalls).toHaveLength(1);
-    expect(fetchCalls[0].body).toMatchObject({ message_id: "m1", approval_id: A, to: "dana@x.test", body: "B" });
+    expect(fetchCalls[0].body).toMatchObject({ message_id: "m1", approval_id: A, to: "+15555550100", body: "B" });
   });
 
   it("a draft that already went out from Conversations: nothing is sent again, and the approval settles on that message", async () => {
@@ -576,16 +655,19 @@ describe("execute-approval: a held copy returned to a draft stays ONE message (#
     expectRefusedAsChanged(await approve(), db, "recipient");
   });
 
-  it("an EDITED subject: nothing is sent", async () => {
+  it("an EDITED email subject is refused without original sender/attachment proof", async () => {
     const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
-      messages: [msg({ subject: "S (updated)" })] });
+      messages: [msg({ channel_type: "email", subject: "S (updated)" })] });
+    db.tables.paige_pending_approvals[0].draft_content = { channel: "email", to: "dana@x.test", subject: "S", body: "B" };
     await load(db);
-    expectRefusedAsChanged(await approve(), db, "subject");
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false, outcome: "held_email_requires_review" });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
   });
 
   it("a draft whose CHANNEL changed is treated as changed: nothing is sent", async () => {
     const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
-      messages: [msg({ channel_type: "sms" })] });
+      messages: [msg({ channel_type: "email" })] });
     await load(db);
     expectRefusedAsChanged(await approve(), db, "channel");
   });
@@ -610,12 +692,12 @@ describe("execute-approval: a held copy returned to a draft stays ONE message (#
 
   it("an IDENTICAL draft (only cosmetic whitespace and address case differ) sends that same message id, once", async () => {
     const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
-      messages: [msg({ recipients: [{ address: " Dana@X.test " }], subject: "S ", body_html: "B\r\n" })] });
+      messages: [msg({ recipients: [{ address: " +1 (555) 555-0100 " }], subject: "S ", body_html: "B\r\n" })] });
     await load(db);
     const r = await approve();
     expect(r.body).toMatchObject({ ok: true, executed: true });
     expect(fetchCalls).toHaveLength(1);
-    expect(fetchCalls[0].body).toMatchObject({ message_id: "m1", to: "dana@x.test", subject: "S", body: "B" });
+    expect(fetchCalls[0].body).toMatchObject({ message_id: "m1", to: "+15555550100", subject: "S", body: "B" });
   });
 
   it("a held draft that belongs to ANOTHER business is not this message: it is neither settled on nor sent — one fresh send", async () => {

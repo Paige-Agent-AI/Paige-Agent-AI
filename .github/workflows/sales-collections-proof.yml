@@ -16,6 +16,7 @@ on:
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - 'scripts/agreements/chat-draft-revision*'
       - 'supabase/functions/_shared/agreements/chat-write*'
+      - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
@@ -33,6 +34,7 @@ on:
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - 'scripts/agreements/chat-draft-revision*'
       - 'supabase/functions/_shared/agreements/chat-write*'
+      - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -84,10 +86,10 @@ jobs:
           name: sales-collections-sql-proof
           path: supabase/functions/_shared/sales-collections/sql-proof-result.txt
           if-no-files-found: warn
-      - name: Sales Performance canonical sums, balance equivalence and tenant gates
+      - name: Sales Performance canonical sums, business-calendar overdue, balance equivalence and tenant gates
         env:
           PGPASSWORD: isolated-test-password
-        run: node scripts/sql/sales-performance-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+        run: node scripts/sql/sales-performance-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --forward-migration supabase/migrations/20271101110000_sales_overdue_business_calendar.sql
       - name: Agreement revision preserves approved source and canonical bindings
         run: node --experimental-strip-types --test scripts/agreements/chat-draft-revision.test.mjs
       - name: Agreement revision canonical PostgreSQL writer and stale-source refusals
@@ -104,11 +106,22 @@ jobs:
       - name: Sales Performance mutation controls
         env:
           PGPASSWORD: isolated-test-password
-        run: node scripts/sql/sales-performance-mutation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+        run: node scripts/sql/sales-performance-mutation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --forward-migration supabase/migrations/20271101110000_sales_overdue_business_calendar.sql
       - name: Preserve Sales Performance mutation proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sales-performance-mutation-proof
           path: work/sales-performance-mutations.json
+          if-no-files-found: error
+      - name: Composed overdue evidence issuance, old-reference refusal and revalidation
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/int2086-shared-compatibility-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data > work/int2086-shared-compatibility-proof.json
+      - name: Preserve composed overdue compatibility proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: int2086-shared-compatibility-proof
+          path: work/int2086-shared-compatibility-proof.json
           if-no-files-found: error

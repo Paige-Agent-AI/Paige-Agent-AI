@@ -4427,6 +4427,12 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
+### Experience 02 E2-6 — temporary Codex continuation (2026-10-14, PR #2128 candidate)
+
+The owner temporarily transfers active E2 implementation from credit-constrained zCod to Codex; no automatic handback and no parallel E2 author. Existing #2128 contribution is preserved and composed with current main. [Continuation contract](delivery/e2-6-continuation-contract.md) and [canonical integration matrix](delivery/e2-customer-experience-integration-matrix.md) classify REUSE/EXTEND/REPAIR/NEW. Executive reuses the caller-JWT business review, current-account E4 reference navigation, existing Game Plan, Systems Check, Compass, Mind, held actions and activity. Source improvements repair the actual default redirect, requested gaps, capped-count confusion, reporting-zone dates and responsive tabs; add draft-only conversation handoff and persisted snapshot links. Shared fold focus now respects deliberate native destination focus; E1 first-use and E4 mutation contracts remain separate. No new metrics/approval/receipt/navigation system, provider effect or INT-346 consequential activation.
+
+Local source/automated and native synthetic evidence are distinct from release/acceptance: focused194 tests, review-fix/shared-shell112 tests (overlap not summed), TypeScript baseline parity, production build and C0b53 mutation checks pass; Impeccable scored3/3 material fixes resolved. [UI evidence](evidence/ui-delivery/e2-6-executive-command-center.md) names remaining final-head review/CI, deployed source, native zoom and authenticated integrated workflow/readback proof. Executive Binding Ledger stays PARTIAL. Historical ordinary Antonio SOLO briefing2026-10-13 **9 PASS / 0 FAIL** is preserved; new E2-6 customer outcome **UNVERIFIED**, final owner review **PENDING**. Shipped Delivery Log N/A until actual merge; exact post-release closeout still owed. Mandatory checkpoints/checks go to original ANT-138/ANT-147 and owner Codex chat; EXP03 remains Claude Code-owned.
+
 ### Experience 03 S3 "PAIGE works your leads" — backend built, three gaps before a business can use it (2026-10-13; updated for review round 4)
 
 Backend record: §4.0 (2026-10-13 S3 entry). Journey record: [`delivery/exp03-grow-my-business-journey.md`](delivery/exp03-grow-my-business-journey.md) §12.

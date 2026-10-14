@@ -29,11 +29,18 @@ import OperationsDelivery from "./OperationsDelivery";
 import { OperationsPlaybooks } from "./OperationsPlaybooks";
 import { operationsBundleMatchesTenant } from "./operations-source-contract";
 import { parseWeeklyPlanningSource, readWeeklyPlanningSource } from "./operations-weekly-source";
+import { OperationsDeliveryInspection } from "./OperationsDeliveryInspection";
+import { OperationsDeliveryReviewQueue } from "./OperationsDeliveryReviewQueue";
+import { planningWorkDeliveryScope } from "./operations-work-delivery-scope";
+import { readDeliveryRecoveryTargets, type RecoveryTargets, type RecoveryTarget } from "./operations-delivery-recovery-targets";
+import type { PendingDeliveryReview } from "./operations-delivery-reviews";
+import type { StaffDeliveryScope } from "./operations-delivery-staff";
 import "./operations-workspace.css";
+import "./operations-delivery-inspection.css";
 
 const DESTINATIONS = ["Overview", "Work", "Projects", "Delivery", "Playbooks", "Capacity"] as const;
 type Destination = typeof DESTINATIONS[number];
-type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | null;
+type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | {kind:"delivery_review";id:string;view:Destination;review:PendingDeliveryReview} | {kind:"delivery_recovery";id:string;view:Destination;target:RecoveryTarget} | null;
 
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void;
   weeklySourceSearch?: string; weeklySourceKey?: string; onWeeklySourceDismiss?: () => void;
@@ -70,8 +77,17 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   const desiredDestination = view === undefined ? destination : DESTINATIONS.find(name => name.toLowerCase() === view) ?? "Overview";
   const editorGuard = useRef<(() => string | null) | null>(null);
   const [navigationNotice, setNavigationNotice] = useState("");
+  const deliveryGuards = useRef(new Set<() => boolean>());
+  const registerDeliveryGuard = useCallback((guard: () => boolean) => {
+    deliveryGuards.current.add(guard);
+    return () => { deliveryGuards.current.delete(guard); };
+  }, []);
   const checkNavigation = useCallback(() => {
-    const reason = editorGuard.current?.() ?? null;
+    let reason = editorGuard.current?.() ?? null;
+    if (!reason) {
+      try { if (Array.from(deliveryGuards.current).some(check => !check())) reason = "Finish or inspect the current delivery decision before leaving."; }
+      catch { reason = "The current delivery decision could not be checked. Keep this inspection open."; }
+    }
     if (reason) setNavigationNotice(reason);
     return reason;
   }, []);
@@ -82,6 +98,15 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     if (onViewChange) onViewChange(name.toLowerCase()); else setLocalDestination(name);
   };
   const [inspection, setInspection] = useState<Inspection>(null);
+  const [detailMode, setDetailMode] = useState<"work" | "delivery">("work");
+  const [reviewEpoch, setReviewEpoch] = useState(0);
+  const [recoveryTargets, setRecoveryTargets] = useState<RecoveryTargets>({kind:"ready",targets:[],partial:false,unavailableCount:0});
+  useEffect(() => { setDetailMode("work"); }, [inspection?.id, inspection?.kind]);
+  useEffect(() => {
+    if (destination !== "Work") return;
+    try { setRecoveryTargets(readDeliveryRecoveryTargets(window.sessionStorage,userId,tenantId)); }
+    catch { setRecoveryTargets({kind:"unavailable"}); }
+  }, [destination, inspection, reviewEpoch, userId, tenantId]);
   const [creatingWork, setCreatingWork] = useState(false);
   const creationInvoker = useRef<HTMLButtonElement | null>(null);
   const [creatingProject, setCreatingProject] = useState<{ project?: Plan } | null>(null);
@@ -175,6 +200,18 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     // Changes to selection/editor state must not re-apply a consumed URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination, weeklySourceSearch, weeklySourceKey, readLinkedItem, checkNavigation]);
+  const candidateDeliveryScope = selectedItem ? planningWorkDeliveryScope(selectedItem,userId,tenantId) : null;
+  const separateDeliveryScope: StaffDeliveryScope | null = inspection?.view !== destination ? null
+    : inspection?.kind === "delivery_review" ? {actorId:userId,tenantId,workItemId:inspection.review.work_item_id,planId:inspection.review.plan_id,clientId:inspection.review.client_id,workUpdatedAt:inspection.review.work_updated_at}
+    : inspection?.kind === "delivery_recovery" ? inspection.target.scope : null;
+  const inspectDeliveryReview = (review: PendingDeliveryReview) => {
+    if (checkNavigation() || review.reviewer_user_id !== userId) return;
+    selectionEpoch.current += 1; rememberInvoker(); setInspection({kind:"delivery_review",id:review.submission_id,view:destination,review});
+  };
+  const inspectDeliveryRecovery = (target: RecoveryTarget) => {
+    if (checkNavigation() || target.scope.actorId !== userId || target.scope.tenantId !== tenantId) return;
+    selectionEpoch.current += 1; rememberInvoker(); setInspection({kind:"delivery_recovery",id:target.scope.workItemId,view:destination,target});
+  };
   const refreshSelectedWork = async () => {
     if (inspection?.kind === "item" && inspection.weeklySource) {
       await Promise.all([source.refresh({ silent: true }), readLinkedItem(inspection.id, true)]);
@@ -190,6 +227,14 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     {source.loading && <p role="status">Reading Planning work…</p>}
     {crm.loading && <p role="status">Reading CRM tasks…</p>}
     {(crm.error || !crmMatches) && <div className="ops-inline-notice" role="status">{crm.error ?? "CRM work couldn’t be verified for this workspace."} <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
+    <OperationsDeliveryReviewQueue actorId={userId} tenantId={tenantId} members={people.members} onInspect={inspectDeliveryReview} refreshKey={reviewEpoch} />
+    {recoveryTargets.kind === "ready" && recoveryTargets.targets.length > 0 && <section className="ops-delivery-recovery-entries" aria-label="Unfinished delivery decisions">
+      <h2 className="ops-view-section-title">Continue an unfinished decision</h2>
+      <p>Unsaved or unconfirmed changes from this browser tab. Inspect the original work before continuing.</p>
+      {recoveryTargets.targets.map(target => <div key={target.scope.workItemId}><span>{target.kind === "attempt" ? "Unconfirmed delivery change" : "Unsaved delivery decision"}</span><button type="button" className="ops-view-text-action" onClick={() => inspectDeliveryRecovery(target)}>Inspect original delivery decision</button></div>)}
+    </section>}
+    {recoveryTargets.kind === "unavailable" && <p role="status">Saved delivery inspections could not be read. Return to the original work before continuing.</p>}
+    {recoveryTargets.kind === "ready" && (recoveryTargets.partial || recoveryTargets.unavailableCount > 0) && <p role="status">Some saved inspections could not be read in this bounded browser recovery check. Current work is verified separately.</p>}
     {workReadable ? <OperationsWork {...props} crmTasks={crmTasks} onInspectCrmTask={inspectCrm} onProposeCrmStage={proposeCrm}
       onProposeStage={(item,proposedStage,invoker)=>{
         if (checkNavigation()) return;
@@ -243,10 +288,10 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
           inspectionInvoker.current=event.currentTarget;setCrmFeedback("");
           setInspection({kind:"crm_recovery",id:pendingCrmRecovery.taskId,view:destination});setCrmReview(pendingCrmRecovery);
         }}>Recover pending task change</button>}
-        {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { creationInvoker.current = event.currentTarget; setCreatingWork(true); }}>New task</button>}
-        {destination === "Projects" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
+        {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { if(checkNavigation())return; creationInvoker.current = event.currentTarget; setCreatingWork(true); }}>New task</button>}
+        {destination === "Projects" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { if(checkNavigation())return; projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
         {isPlanning && <button type="button" aria-label="Refresh work and team profiles"
-          disabled={source.loading || people.loading || (readsCrm && crm.loading) || weeklySource.phase === "reading"} onClick={() => { void refreshSelectedWork(); void people.refresh(); if(readsCrm)void crm.refresh(); }}><RefreshCw size={16} /></button>}
+          disabled={source.loading || people.loading || (readsCrm && crm.loading) || weeklySource.phase === "reading"} onClick={() => { void refreshSelectedWork(); void people.refresh(); if(readsCrm)void crm.refresh(); setReviewEpoch(n=>n+1); }}><RefreshCw size={16} /></button>}
         {openPaige && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with PAIGE</button>}
       </div>
     </header>
@@ -270,7 +315,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         </>}
     </div>
     <Sheet open={inspection?.view === destination} onOpenChange={(open) => { if (!open && !checkNavigation()) {
-      selectionEpoch.current += 1; setInspection(null); closeCrmReview(); setNavigationNotice("");
+      selectionEpoch.current += 1; setInspection(null); closeCrmReview(); setNavigationNotice(""); setReviewEpoch(n=>n+1);
       if (linkedInspection) onWeeklySourceDismiss?.();
     } }}>
       <SheetContent className="ops-detail-sheet paige-solo" data-pg={portalTheme} data-theme={portalTheme} onCloseAutoFocus={(event) => {
@@ -283,7 +328,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
       }}>
         <SheetHeader><SheetTitle className={linkedInspection ? "pr-8 break-words" : undefined}>{selectedItem?.title ?? selectedPlan?.title ?? selectedCrm?.title ?? (linkedInspection
           ? weeklySource.phase === "reading" ? "Reading current work" : "This work is unavailable"
-          : inspection?.kind === "crm_recovery" ? "Recover the task change" : source.error || !matches ? "Work couldn’t be loaded" : "Work is not available in this view")}</SheetTitle>
+          : separateDeliveryScope ? inspection?.kind === "delivery_recovery" ? "Continue the original delivery decision" : "Review a deliverable" : inspection?.kind === "crm_recovery" ? "Recover the task change" : source.error || !matches ? "Work couldn’t be loaded" : "Work is not available in this view")}</SheetTitle>
           <SheetDescription>{selectedItem?.summary ?? selectedPlan?.summary ?? selectedCrm?.description ?? "Details from your current workspace."}</SheetDescription></SheetHeader>
         {linkedInspection && <p>Planning work referenced by the weekly check. Completing a check does not complete this work.</p>}
         {linkedInspection && weeklySource.phase === "reading" && <p role="status">Reading this record with your current work permissions…</p>}
@@ -292,7 +337,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
           if (inspection?.kind === "item") void refreshSelectedWork();
         }}>Refresh source work</button>}
         {navigationNotice && inspection && <p role="status">{navigationNotice}</p>}
-        {!linkedInspection && !selectedItem && !selectedPlan && !selectedCrm && inspection && <p>{inspection.kind === "crm_recovery" ? "The earlier task’s current details are unavailable. This recovery applies only to its original proposed change." : "This task has not been verified here. Refresh current work before creating it again."}</p>}
+        {!separateDeliveryScope && !linkedInspection && !selectedItem && !selectedPlan && !selectedCrm && inspection && <p>{inspection.kind === "crm_recovery" ? "The earlier task’s current details are unavailable. This recovery applies only to its original proposed change." : "This task has not been verified here. Refresh current work before creating it again."}</p>}
         {(inspection?.kind === "crm" || inspection?.kind === "crm_recovery") && <button type="button" disabled={crm.loading || Boolean(crmReview)} onClick={()=>void crm.refresh()}>Refresh task details</button>}
         {selectedCrm && <div className="ops-detail-content">
           <dl><div><dt>Responsible person</dt><dd>{people.members.some(person=>person.user_id===selectedCrm.user_id)
@@ -317,7 +362,19 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         {crmReview && <OperationsCrmStageReview key={`${tenantId}:${crmReview.key}`} operation={crmReview} refresh={crm.refresh} members={people.members}
           onClose={closeCrmReview} onVerified={taskId=>{setCrmReview(null);setPendingCrmRecovery(null);
             setInspection({kind:"crm_recovery",id:taskId,view:destination});setCrmFeedback("This task’s change is saved and confirmed in current CRM work.");}} />}
-        {selectedItem && <div className="ops-detail-content">
+        {separateDeliveryScope && <OperationsDeliveryInspection key={`${separateDeliveryScope.actorId}:${separateDeliveryScope.tenantId}:${separateDeliveryScope.workItemId}:${inspection?.kind}`}
+          scope={separateDeliveryScope} members={people.error?[]:people.members} theme={portalTheme} registerCloseGuard={registerDeliveryGuard}
+          reviewOnly={inspection?.kind==="delivery_review"} initialMode={inspection?.kind==="delivery_recovery"?inspection.target.mode:"review"}
+          onSubmitted={()=>{setReviewEpoch(n=>n+1);}} />}
+        {selectedItem && candidateDeliveryScope && <div className="ops-view-segments ops-work-detail-modes" role="group" aria-label="Work inspection mode">
+          <button type="button" aria-pressed={detailMode==="work"} onClick={()=>{if(!checkNavigation())setDetailMode("work");}}>Work details</button>
+          <button type="button" aria-pressed={detailMode==="delivery"} onClick={()=>{if(!checkNavigation())setDetailMode("delivery");}}>Delivery details</button>
+        </div>}
+        {selectedItem && candidateDeliveryScope && detailMode==="delivery" && <OperationsDeliveryInspection key={`${userId}:${tenantId}:${selectedItem.id}`}
+          scope={candidateDeliveryScope} members={people.error?[]:people.members} theme={portalTheme} registerCloseGuard={registerDeliveryGuard}
+          onSubmitted={async()=>{await refreshSelectedWork();setReviewEpoch(n=>n+1);}} />}
+        {selectedItem && !candidateDeliveryScope && detailMode==="delivery" && <p role="status">The current client and project link could not be verified for Delivery. Inspect the saved work before continuing.</p>}
+        {selectedItem && detailMode==="work" && <div className="ops-detail-content">
           <dl><div><dt>Responsible person</dt><dd>{selectedItem.assigned_to_user_id && !member ? "Member unavailable" : <OperationsAssignee member={member} />}</dd></div>
             <div><dt>Status</dt><dd>{selectedItem.status.replace(/_/g, " ")}</dd></div>
             <div><dt>Priority</dt><dd>{selectedItem.priority}</dd></div>

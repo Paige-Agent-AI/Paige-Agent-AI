@@ -133,7 +133,8 @@ export async function writeScopedPlanning(input: {
     const args = object(input.decision.args);
     if (!args) return fail('refused', 'The requested work details are incomplete or unsupported.');
     const request = spec(a.capability, args, input.scope);
-    if (!matchesScope(await input.caller.getScope())) return fail('scope_changed', 'The current person or workspace changed.');
+    const initialScope = await input.caller.getScope();
+    if (!isCurrent() || !matchesScope(initialScope)) return fail('scope_changed', 'The current person or workspace changed.');
     if (request.itemId) {
       const before = await input.caller.readRecord('plan_items', request.itemId, input.scope);
       if (!isCurrent()) return fail('scope_changed', 'The active request changed.');
@@ -147,7 +148,8 @@ export async function writeScopedPlanning(input: {
         if (!owns(request.expected, key)) request.expected[key] = row[key];
       }
     }
-    if (!isCurrent() || !matchesScope(await input.caller.getScope())) return fail('scope_changed', 'The current request or workspace changed.');
+    const beforeWriteScope = await input.caller.getScope();
+    if (!isCurrent() || !matchesScope(beforeWriteScope)) return fail('scope_changed', 'The current request or workspace changed.');
     attempted = true;
     const reply = await input.caller.rpc(request.rpc, request.args);
     if (!isCurrent()) return fail('scope_changed', 'The active request changed before the result was verified.');
@@ -161,7 +163,8 @@ export async function writeScopedPlanning(input: {
     if (!ack || ack.ok !== true || ack.actor_id !== input.scope.actorId || ack.tenant_id !== input.scope.tenantId
       || !uuid(recordId) || request.itemId && recordId !== request.itemId) return uncertain();
     const read = await input.caller.readRecord(request.table, recordId, input.scope);
-    if (!isCurrent() || !matchesScope(await input.caller.getScope())) return fail('scope_changed', 'The result belongs to the original request, not the current workspace.');
+    const afterReadScope = await input.caller.getScope();
+    if (!isCurrent() || !matchesScope(afterReadScope)) return fail('scope_changed', 'The result belongs to the original request, not the current workspace.');
     const row = object(read.data);
     if (read.error || !row || row.id !== recordId || row.tenant_id !== input.scope.tenantId || !instant(row.updated_at)) return uncertain();
     for (const [key, wanted] of Object.entries(request.expected)) {

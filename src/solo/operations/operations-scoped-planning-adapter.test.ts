@@ -159,9 +159,13 @@ it('an unreadable current-request fence fails closed before and after an attempt
   const result = await run(c, d, () => { throw new Error('PRIVATE_FENCE'); });
   expect(result).toMatchObject({ outcome: 'scope_changed', writeAttempted: false });
   expect(c.rpc).not.toHaveBeenCalled();
-  let count = 0;
+  let fenceFailed = false;
   const attempted = caller(item);
-  const after = await run(attempted, d, () => { if (++count > 2) throw new Error('PRIVATE_FENCE'); return true; });
+  attempted.rpc.mockImplementation(async () => {
+    fenceFailed = true;
+    return { data: { ok: true, item_id: id(4), actor_id: id(1), tenant_id: id(2) }, error: null };
+  });
+  const after = await run(attempted, d, () => { if (fenceFailed) throw new Error('PRIVATE_FENCE'); return true; });
   expect(after).toMatchObject({ outcome: 'scope_changed', writeAttempted: true, retryAllowed: false });
   expect(after).not.toHaveProperty('record');
   expect(JSON.stringify(after)).not.toContain('PRIVATE_FENCE');
@@ -177,6 +181,15 @@ it('actual caller scope changes at each read fence prevent foreign source disclo
     expect(result).not.toHaveProperty('record');
     expect(c.rpc).toHaveBeenCalledTimes(fence === 3 ? 1 : 0);
   }
+});
+it.each([2, 3])('request retirement inside scope read %i fences mutation and publication', async (fence) => {
+    let active = true, calls = 0;
+    const c = caller({ ...item, plan_id: null, contact_id: null });
+    c.getScope.mockImplementation(async () => { if (++calls === fence) active = false; return scope; });
+    const result = await run(c, decision('plan_assign_task', { title: item.title, assigned_to_user_id: id(3) }), () => active);
+    expect(result).toMatchObject({ outcome: 'scope_changed', writeAttempted: fence === 3 });
+    expect(result).not.toHaveProperty('record');
+    expect(c.rpc).toHaveBeenCalledTimes(fence === 3 ? 1 : 0);
 });
 it('named readback strips unknown internal columns and does not manufacture a receipt', async () => {
   const c = caller({ ...item, plan_id: null, contact_id: null, private_trace: 'PRIVATE_INTERNAL' });

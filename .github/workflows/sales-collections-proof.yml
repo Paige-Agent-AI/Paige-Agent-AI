@@ -14,6 +14,8 @@ on:
       - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
+      - 'scripts/agreements/chat-draft-revision*'
+      - 'supabase/functions/_shared/agreements/chat-write*'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
@@ -29,6 +31,8 @@ on:
       - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
+      - 'scripts/agreements/chat-draft-revision*'
+      - 'supabase/functions/_shared/agreements/chat-write*'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -84,6 +88,12 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-performance-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+      - name: Agreement revision preserves approved source and canonical bindings
+        run: node --experimental-strip-types --test scripts/agreements/chat-draft-revision.test.mjs
+      - name: Agreement revision canonical PostgreSQL writer and stale-source refusals
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node --experimental-strip-types scripts/agreements/chat-draft-revision-pg.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
       - name: Preserve Sales Performance proof
         if: always()
         uses: actions/upload-artifact@v4

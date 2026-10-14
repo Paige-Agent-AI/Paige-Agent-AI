@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { allowAccountSwitch } from '@/lib/auth/accountSwitchGuard';
 import { members, items, plans } from './records';
+import type {StaffSubmission,StaffClientRelease} from '@/solo/operations/operations-delivery-staff';
 const fixtureMode = new URLSearchParams(location.search).get('delivery') ?? 'prepare';
 const fixtureId = (n:number) => `ee910000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const fixtureActor = fixtureMode === 'prepare' ? fixtureId(3) : fixtureId(4);
@@ -40,9 +41,9 @@ Object.assign(supabase,{from:()=>({...emptyQuery})});
 // Explicit local RPC doubles for the mounted staff journey. They exercise the
 // real domain clients/readback; they are never a persistence or authority proof.
 const originalRpc = supabase.rpc;
-const submission = () => ({id:fixtureId(16),tenant_id:state.tenant,work_item_id:fixtureId(13),plan_id:fixtureId(14),client_id:fixtureId(9),artifact_version_id:fixtureId(17),artifact_digest:'a'.repeat(64),revision_no:1,submitted_by:fixtureId(3),reviewer_user_id:fixtureId(4),state:'in_review',review_note:null,reviewed_by:null,reviewed_at:null,submitted_at:'2026-10-14T16:00:00Z',updated_at:'2026-10-14T16:00:00Z'});
-let deliveryRows:any[] = fixtureMode === 'prepare' ? [] : [submission()];
-let clientReleases:any[] = [];
+const submission = ():StaffSubmission => ({id:fixtureId(16),tenant_id:state.tenant,work_item_id:fixtureId(13),plan_id:fixtureId(14),client_id:fixtureId(9),artifact_version_id:fixtureId(17),artifact_digest:'a'.repeat(64),revision_no:1,submitted_by:fixtureId(3),reviewer_user_id:fixtureId(4),state:'in_review',review_note:null,reviewed_by:null,reviewed_at:null,submitted_at:'2026-10-14T16:00:00Z',updated_at:'2026-10-14T16:00:00Z'});
+let deliveryRows:StaffSubmission[] = fixtureMode === 'prepare' ? [] : [submission()];
+let clientReleases:StaffClientRelease[] = [];
 if(fixtureMode === 'accepted') {
   deliveryRows = [{...submission(),state:'approved',reviewed_by:fixtureId(4),reviewed_at:'2026-10-14T16:10:00Z'}];
   clientReleases = [{release_id:fixtureId(18),submission_id:fixtureId(16),state:'accepted',released_by:fixtureId(4),released_at:'2026-10-14T16:20:00Z',decision_by:fixtureId(19),decision_at:'2026-10-14T16:30:00Z',client_note:'This version meets our agreed outcome.',updated_at:'2026-10-14T16:30:00Z'}];
@@ -63,7 +64,7 @@ Object.assign(supabase, {rpc:async(name:string,args:Record<string,unknown>={})=>
   if(fixtureMode==='unknown')return{data:null,error:{code:'08006'}};
   if(fixtureMode==='refused')return{data:null,error:{code:'42501'}};
   if(name==='operations_delivery_submit_scoped'){deliveryRows=[submission()];return{data:{ok:true,submission_id:fixtureId(16),state:'in_review',revision_no:1},error:null};}
-  if(name==='operations_delivery_review_scoped'){deliveryRows=[{...deliveryRows[0],state:args.p_decision,review_note:args.p_note,reviewed_by:fixtureActor,reviewed_at:'2026-10-14T16:40:00Z',updated_at:'2026-10-14T16:40:00Z'}];return{data:{ok:true,submission_id:fixtureId(16),state:args.p_decision},error:null};}
+  if(name==='operations_delivery_review_scoped'){deliveryRows=[{...deliveryRows[0],state:args.p_decision==='approved'?'approved':'revision_requested',review_note:typeof args.p_note==='string'?args.p_note:null,reviewed_by:fixtureActor,reviewed_at:'2026-10-14T16:40:00Z',updated_at:'2026-10-14T16:40:00Z'}];return{data:{ok:true,submission_id:fixtureId(16),state:args.p_decision},error:null};}
   if(name==='operations_delivery_release_scoped'){clientReleases=[{release_id:fixtureId(18),submission_id:fixtureId(16),state:'awaiting_client',released_by:fixtureActor,released_at:'2026-10-14T16:50:00Z',decision_by:null,decision_at:null,client_note:null,updated_at:'2026-10-14T16:50:00Z'}];return{data:{ok:true,release_id:fixtureId(18),state:'awaiting_client'},error:null};}
   return{data:null,error:{code:'42501'}};
 }});

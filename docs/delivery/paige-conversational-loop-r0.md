@@ -13,6 +13,19 @@ must carry the existing `outcome_unknown:true` dispatch envelope and
 inspect the domain `reason` or `message`. This preserves the existing successor-write brake;
 no classifier, settlement, confirmation algorithm, admission, authority or receipt store changes.
 
+Known positively prewrite refusals also carry the existing `not_applied:true` marker so the spent
+approval-card rewrite preserves `not_run` and durable `reported_failure`; no-readback, unavailable
+and thrown/ambiguous writes never receive that proof. This corrects the independent first-review
+finding through the same branch; it does not add a retry or a second outcome classifier.
+
+The C0b owner authorized the existing all29 scalar-only renewal contract in ANT-6 comment
+dd91026e-afc9-4010-ae17-606c2c85ea5f. Its enclosing handler `try` identity means this agreement-only
+change affects all incumbent hashes. Read-only per-tool comparison and raw/canonical restoration
+of the intended branch prove every other binding unchanged and restore all prior hashes. The
+extractor, metadata, source pins and mutation semantics are preserved; no regeneration/accept path.
+Main58ae0ad is composed conflict-free with the separate E04 canonical URL source pin retained.
+The final single independent recheck and exact-head CI remain hard gates.
+
 The [candidate evidence](../evidence/ui-delivery/e04-shared-agreement-revision-contract.md)
 separates baseline/source/automated proof from unverified domain composition, independent final
 review, required CI, deployment and authenticated customer acceptance. INT-346 remains inactive;

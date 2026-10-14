@@ -26,7 +26,7 @@
 -- Synthetic fixtures only. Rolls back.
 -- ============================================================================
 BEGIN;
-SELECT plan(101);
+SELECT plan(102);
 
 -- ── Fixtures ────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users (id, aud, role, email) VALUES
@@ -233,10 +233,15 @@ SELECT is((SELECT array_agg(kind || ':' || value ORDER BY kind) FROM public.clie
 -- E09 binds the exact CRM contact and preserves the real staff workspace guard.
 -- This existing address-recognition proof uses a recipient with existing staff
 -- standing; pure external entry stays denied until client-safe projections ship.
+-- Leave the preceding owner caller context before assembling trusted fixtures;
+-- otherwise enforce_tenant_member_consent correctly makes this foreign seat pending.
+SELECT set_config('request.jwt.claims', '{}', true);
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at) VALUES
   ('c3000000-0000-4000-8000-0000000000c1', 'authenticated', 'authenticated', 'ADA@a.tests.invalid', now());
 INSERT INTO public.tenant_members (tenant_id,user_id,role,status,is_owner,joined_at) VALUES
   ('c3000000-0000-4000-8000-00000000000a','c3000000-0000-4000-8000-0000000000c1','member','active',false,now());
+SELECT is((SELECT status FROM public.tenant_members WHERE tenant_id='c3000000-0000-4000-8000-00000000000a'
+  AND user_id='c3000000-0000-4000-8000-0000000000c1'),'active','address-recognition fixture has actual pre-existing staff standing');
 INSERT INTO public.tenant_invite_tokens (tenant_id, token, kind, created_by, email, contact_id) VALUES
   ('c3000000-0000-4000-8000-00000000000a', 'cm-consumer-invite-token', 'consumer', 'c3000000-0000-4000-8000-0000000000a1', 'ada@a.tests.invalid', 'c3000000-0000-4000-8000-000000000ca1');
 SELECT set_config('request.jwt.claims', '{"sub":"c3000000-0000-4000-8000-0000000000c1","role":"authenticated"}', true);

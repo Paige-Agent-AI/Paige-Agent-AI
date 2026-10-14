@@ -1,0 +1,86 @@
+{
+  "boundary": "Actual unmounted component in isolated synthetic caller harness only; no portal/global routing/customer login/client acceptance/provider effects.",
+  "results": [
+    {
+      "theme": "dark",
+      "mode": "populated",
+      "cleanClose": true,
+      "dirtyRetained": false,
+      "blankUnknownProtected": false,
+      "namedVerifiedCallback": true,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "mode": "revision",
+      "cleanClose": true,
+      "dirtyRetained": true,
+      "blankUnknownProtected": false,
+      "namedVerifiedCallback": true,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "mode": "refused",
+      "cleanClose": true,
+      "dirtyRetained": true,
+      "blankUnknownProtected": false,
+      "namedVerifiedCallback": false,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unknown",
+      "cleanClose": true,
+      "dirtyRetained": false,
+      "blankUnknownProtected": true,
+      "namedVerifiedCallback": false,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "mode": "populated",
+      "cleanClose": true,
+      "dirtyRetained": false,
+      "blankUnknownProtected": false,
+      "namedVerifiedCallback": true,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "mode": "revision",
+      "cleanClose": true,
+      "dirtyRetained": true,
+      "blankUnknownProtected": false,
+      "namedVerifiedCallback": true,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "mode": "refused",
+      "cleanClose": true,
+      "dirtyRetained": true,
+      "blankUnknownProtected": false,
+      "namedVerifiedCallback": false,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "mode": "unknown",
+      "cleanClose": true,
+      "dirtyRetained": false,
+      "blankUnknownProtected": true,
+      "namedVerifiedCallback": false,
+      "noFalseSuccess": true,
+      "reducedMotion": true
+    }
+  ],
+  "errors": []
+}

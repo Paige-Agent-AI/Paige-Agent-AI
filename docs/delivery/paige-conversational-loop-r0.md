@@ -1,5 +1,35 @@
 # PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
 
+## 2026-10-14 — bounded E04 shared PRE-1 candidate, not released
+
+The owner-appointed replacement Chat owns only E04 shared agreement schema/declaration/dispatch
+integration. Sales owns the agreement helper/writer/tests in #2140; Operations owns the PRE-2
+scoped helper contract. Existing INT-304/INT-346 history and wider backlog remain intact.
+
+PRE-1 carries the exact canonical agreement read `updatedAt` as original approval-bound
+`expectedUpdatedAt`; it never refreshes that token after approval. A domain `no_readback` result
+must carry the existing `outcome_unknown:true` dispatch envelope and
+`capability_outcome_unknown` Rail outcome, because the canonical interactive classifier does not
+inspect the domain `reason` or `message`. This preserves the existing successor-write brake;
+no classifier, settlement, confirmation algorithm, admission, authority or receipt store changes.
+
+The [candidate evidence](../evidence/ui-delivery/e04-shared-agreement-revision-contract.md)
+separates baseline/source/automated proof from unverified domain composition, independent final
+review, required CI, deployment and authenticated customer acceptance. INT-346 remains inactive;
+provider cessation #1822 and Central QA #1832/#2119 remain independent. No signed-economic
+effectuation, payment, send, provider spend or complete E04 outcome is claimed.
+
+PRE-2 remains unavailable for adoption until Operations supplies its reviewed exact helper,
+supported input/version/readback contract, canonical plan/item target, stable original operation
+identity, non-idempotent-create replay policy and removal/reminder containment. No legacy RPC
+rename/fallback, blind retry, new ledger or scheduler is substituted.
+
+Mandatory communication: check current Coordinator updates in the original Linear records before
+material implementation/release checkpoints; post and read back progress in ANT-6/ANT-51/ANT-147
+and the native Conversational Loop project, coordinate original Codex owners directly. Experience03
+remains Claude Code-owned. This records the owner's current instruction, not an automation or a
+new engineering lane.
+
 ## 2026-10-10 CL-7 slice — the C6 memory consumption dials (INT-326 contract applied)
 
 The INT-326 C6 consumption contract reserved the exact dials to the consuming implementer

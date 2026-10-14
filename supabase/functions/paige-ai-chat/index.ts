@@ -16079,6 +16079,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               title: args.title ?? null,
               bodyMarkdown: args.bodyMarkdown ?? null,
               agreementId: args.agreementId,
+              expectedUpdatedAt: args.expectedUpdatedAt,
             });
             await recordCapabilityRun(supabase, {
               tenantId: tid,
@@ -16087,13 +16088,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // EXHAUSTIVE over `AgreementWriteFailure`, for the reason the read states: a failure
               // mode added later must be a compile error here rather than silently inheriting
               // "refused" and writing a falsehood into the one artifact whose job is truth.
-              // `no_readback` is deliberately `capability_failed` — the write MAY have landed, and
-              // recording it as a refusal would assert something nobody established.
+              // `no_readback` is uncertain — the write MAY have landed. Carry that fact through
+              // the canonical Rail and interactive receipt so a successor write must reconcile.
               outcome: !r.success
-                ? ((): "capability_refused" | "capability_failed" => {
+                ? ((): "capability_refused" | "capability_failed" | "capability_outcome_unknown" => {
                     switch (r.reason) {
-                      case "unavailable":
-                      case "no_readback": return "capability_failed";
+                      case "unavailable": return "capability_failed";
+                      case "no_readback": return "capability_outcome_unknown";
                       case "refused":
                       case "conflict":
                       case "already_sent":
@@ -16109,10 +16110,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // Deliberately NO `detail`, for the same reason the read gives: `redactDetail` scrubs
               // on KEY NAME only, and an agreement's title is the client's business.
             });
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r) });
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ ...r,
+              ...(!r.success && r.reason === "no_readback" ? { outcome_unknown: true } : {}) }) });
           } catch (e) {
             console.error("[agreements] draft dispatch threw", { reason: e instanceof Error ? e.message : "unknown" });
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success:false, error:"That agreement could not be drafted just now. Nothing was written, and nothing was sent." }) });
+            await recordCapabilityRun(supabase, {
+              tenantId: personaCtx?.tenant_id ?? null,
+              actorId: user.id,
+              capabilityKey: tc.function.name,
+              outcome: "capability_outcome_unknown",
+            });
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success:false,
+              outcome_unknown: true, error:"The agreement draft did not report back. Check agreement_list or agreement_status before any further write, and do not retry automatically." }) });
           }
         } else if (tc.function.name === "agreement_list" || tc.function.name === "agreement_status") {
           // INT-178 — AGREEMENTS, the READ half. Both tools execute the ONE governed seam

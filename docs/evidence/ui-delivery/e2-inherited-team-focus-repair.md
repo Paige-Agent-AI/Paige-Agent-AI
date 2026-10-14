@@ -29,7 +29,7 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no fresh Team native capture; this corre
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no fresh Team native capture; existing shell remains unchanged.
 INTERNAL_BUILD_IDENTITY: 67c35786f494a0b72c8eb4e765fe6ea8b22204c8; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=src/solo/team-member-contact.test.tsx and ANT-154 ebd4a7e0
 RELEASE_CHANNEL: development: isolated current-main focus repair before reviewed exact-head release.
-RELEASE_CLASSIFICATION: patch-candidate: restore existing keyboard result focus.
+RELEASE_CLASSIFICATION: patch: restore existing keyboard result focus without a customer version.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version earned by isolated source repair.
 RELEASE_NOTE_REQUIRED: NO: bounded reliability repair, recorded internally with original E2 release.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: fixture-only committed-result focus passes; production contact save and native/customer acceptance excluded from LIVE.

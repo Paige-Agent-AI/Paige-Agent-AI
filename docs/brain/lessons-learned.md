@@ -46,6 +46,16 @@ had NOT persisted. The file rolled back as a whole.
   safe to assume.
 - Retry only once nothing holds or waits on the tables involved (`pg_stat_activity`,
   `pg_blocking_pids`), and retry only once.
+- **It recurred the next day (2026-10-14, #2126 → `f2e2a0af6`).** `20271031000200` deadlocked at
+  statement 13 (`ALTER TABLE communication_log`) while holding `sendgrid_receipt_processing`, against a
+  concurrent Supavisor session while `dumpFunc` sessions were running. Read-back again showed a whole-file rollback, and one retry after the
+  dumps ended applied it. Two observations:
+  - Observed: `deploy-edge-functions` and `deploy-migrations` run in parallel on merge, so for about
+    15 minutes the new functions ran against the pre-`000200` schema. Nothing was affected because the
+    feature was inert (0 forms opted in, 0 SendGrid receipts).
+  - Second occurrence in two days. The mitigation discussed on #1548 (table locks taken up front in a
+    fixed order under a `lock_timeout`) is still not adopted; any deploy-order or locking rule is a
+    separate governance decision, not made here.
 - A migration that takes exclusive locks on more than one hot table is exposed to any concurrent
   reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
   `lock_timeout`, narrows the window but does not close it.

@@ -364,9 +364,9 @@ Main chat (`paige-ai-chat` + `PaigeAIChat`) and the Solo Rail. An available clie
 
 Evidence: unit, render, handler and a focused SQL proof; the full-schema SQL proof runs in CI. Authenticated runtime (Solo owner, and one sub-account walk) is UNVERIFIED and owed. See `docs/delivery/exp04-get-paid-deliver-journey.md` §16.
 
-### Lead reply drafts — `lead_reply` (Experience 03 S3 "PAIGE works your leads", branch `claude/stoic-archimedes-pv4r8u`, 2026-10-13; ships on merge, NOT live)
+### Lead reply drafts — `lead_reply` (Experience 03 S3 "PAIGE works your leads", backend LIVE on production since 2026-10-14 (#2126 → `f2e2a0af6`), inert; first written 2026-10-13)
 
-**Not live.** On production, 2026-10-13: 0 `owner.lead_followup` actions, and the migrations (`20271031000000`, `000100`, `000200`, `000250`) are not applied. There is no screen; the reply screen waits for owner design approval. Each tier's answer below is what the branch's code decides.
+**Live, inert (2026-10-14).** The migrations (`20271031000000`, `000100`, `000200`, `000250`) are persisted on production and the functions are deployed. 0 forms have opted in, so no draft is filed yet. There is no screen yet; the reply screen is the separate S3 UI slice, in review. Authenticated drive and live SendGrid send: PROOF OWED (master §4.0). Each tier's answer below is what the merged code decides. *(Supersedes the 2026-10-13 "Not live: migrations not applied" status.)*
 
 **What it does.** When an opted-in form brings in a lead, PAIGE files one `owner.lead_followup` draft for the owner. The reply can go out only through the governed email door (`comms-email-command` with `approval_id`), never through `execute-approval`.
 

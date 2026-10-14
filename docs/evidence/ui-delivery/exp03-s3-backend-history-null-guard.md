@@ -25,12 +25,12 @@ MUST_PRESERVE: Existing approval lifecycles for non-send kinds, existing Resend 
 ACCEPTANCE_CRITERIA: Exact-head CI green; non-author verification of the exact head; migrations applied and readable in production after merge; no customer-visible change.
 MOTION_PURPOSE: NONE: No motion change.
 PROTECTED_SEAMS: Approval execution, the governed email door, send-message, RLS on communication_log and messages, and the SendGrid webhook are changed and covered by the proofs above; other seams are unaffected.
-INTERNAL_BUILD_IDENTITY: 15f9cf4c3854096708a220377acb623ba66c8254; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271031000000, 20271031000100, 20271031000200 and 20271031000250 applied in production only after merge); edge=PROOF_OWED(execute-approval, comms-email-command, growth-process-submission, paige-action-worker, subagent-email-composer, send-message and handle-sendgrid-webhook deploy on merge); evidence=https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2126
-RELEASE_CHANNEL: development: production on merge; inert there (drafting off by default, no SendGrid sender in production)
+INTERNAL_BUILD_IDENTITY: 2b99dff26441090dcc5b57ed5fdc1a21a36bb9bb (reviewed head); merged as f2e2a0af6e667ea39f8135d9f2f53b719776e52a; deployment=dpl_ESb718QihoAxET3M9Tw2v7MMfA9Z; environment=production; migrations=APPLIED(20271031000000_exp03_lead_reply_once_per_submission, 20271031000100_paige_email_sendgrid_governed_door, 20271031000200_paige_email_sendgrid_receipts_and_history, 20271031000250_paige_email_sendgrid_sender_integrity); edge=APPLIED(execute-approval@v126, comms-email-command@v15, growth-process-submission@v77, paige-action-worker@v69, subagent-email-composer@v92, send-message@v94, handle-sendgrid-webhook@v107); evidence=https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2126
+RELEASE_CHANNEL: production: merged and deployed 2026-10-14; inert there (0 forms opted in, no SendGrid sender); production readback in master §4.0
 RELEASE_CLASSIFICATION: internal-only: backend inside an unreleased journey; a customer version is earned by Experience 03 as a whole
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version until Experience 03 earns one
 RELEASE_NOTE_REQUIRED: no: pre-launch, nothing customer-visible; announced with the journey
-RELEASE_TRUTH_BOUNDARY: PARTIAL: backend contracts built and proven locally; customer screens UNAVAILABLE until the next PR; live SendGrid sending PROOF OWED behind operator steps
+RELEASE_TRUTH_BOUNDARY: PARTIAL: backend contracts live in production and read back (2026-10-14); customer screens UNAVAILABLE until the next PR; live SendGrid sending PROOF OWED behind operator steps
 RELEASE_RECOVERY: position=forward-fix, because the migrations are additive and the features stay off by default; reference=https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2126
 
 ## Scope and collisions

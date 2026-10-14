@@ -50,4 +50,11 @@ describe("approval contextual entry and truthful result",()=>{
     await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Decline draft")!.click();});
     expect(resolved).not.toHaveBeenCalled();expect(h.error).toHaveBeenCalled();expect(h.filters).toContainEqual(["tenant_id",row.tenant_id]);expect(h.filters).toContainEqual(["status","pending"]);
   });
+  it("resolves the existing legacy decline exit after its exact rejected-row receipt",async()=>{
+    h.decision={id:row.id,status:"rejected"};await render({category:"client.followup"});
+    await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Decline")!.click();});
+    const reason=host.querySelector("textarea")!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(reason,"Prepare a fresh reply");reason.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Decline draft")!.click();});
+    expect(resolved).toHaveBeenCalledTimes(1);expect(h.error).not.toHaveBeenCalled();expect(h.invoke).not.toHaveBeenCalled();expect(h.filters).toContainEqual(["id",row.id]);
+  });
 });

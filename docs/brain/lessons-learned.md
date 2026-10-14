@@ -47,8 +47,8 @@ had NOT persisted. The file rolled back as a whole.
 - Retry only once nothing holds or waits on the tables involved (`pg_stat_activity`,
   `pg_blocking_pids`), and retry only once.
 - **It recurred the next day (2026-10-14, #2126 → `f2e2a0af6`).** `20271031000200` deadlocked at
-  statement 13 (`ALTER TABLE communication_log`) while holding `sendgrid_receipt_processing`, again
-  against `dumpFunc` sessions. Read-back again showed a whole-file rollback, and one retry after the
+  statement 13 (`ALTER TABLE communication_log`) while holding `sendgrid_receipt_processing`, against a
+  concurrent Supavisor session while `dumpFunc` sessions were running. Read-back again showed a whole-file rollback, and one retry after the
   dumps ended applied it. Two observations:
   - Observed: `deploy-edge-functions` and `deploy-migrations` run in parallel on merge, so for about
     15 minutes the new functions ran against the pre-`000200` schema. Nothing was affected because the

@@ -351,7 +351,7 @@ Evidence: unit, render, handler and a focused SQL proof; the full-schema SQL pro
 
 ### Lead reply drafts — `lead_reply` (Experience 03 S3 "PAIGE works your leads", backend LIVE on production since 2026-10-14 (#2126 → `f2e2a0af6`), inert; first written 2026-10-13)
 
-**Live, inert (2026-10-14).** The migrations (`20271031000000`, `000100`, `000200`, `000250`) are persisted on production and the functions are deployed. 0 forms have opted in, so no draft is filed yet. There is no screen yet; the reply screen is the separate S3 UI slice, in review. Each tier's answer below is what the merged code decides. *(Supersedes the 2026-10-13 "Not live: migrations not applied" status.)*
+**Live, inert (2026-10-14).** The migrations (`20271031000000`, `000100`, `000200`, `000250`) are persisted on production and the functions are deployed. 0 forms have opted in, so no draft is filed yet. There is no screen yet; the reply screen is the separate S3 UI slice, in review. Authenticated drive and live SendGrid send: PROOF OWED (master §4.0). Each tier's answer below is what the merged code decides. *(Supersedes the 2026-10-13 "Not live: migrations not applied" status.)*
 
 **What it does.** When an opted-in form brings in a lead, PAIGE files one `owner.lead_followup` draft for the owner. The reply can go out only through the governed email door (`comms-email-command` with `approval_id`), never through `execute-approval`.
 

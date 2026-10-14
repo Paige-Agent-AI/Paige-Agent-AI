@@ -1550,7 +1550,7 @@
       "rail_mind_memory": "Rail: the governed send's outcome (provider_accepted, then any correlated provider-reported delivery state); a lead reply that reaches provider_accepted writes one communication_log row and, with an open deal, one deal_activities row saying 'handed to the email provider'. Mind: no bodies. Memory: none of raw content. Provider acceptance is never reported as delivered; a spam report keeps the status and sets delivery_state='spam_reported'.",
       "status": "PROOF_OWED",
       "owner": "Comms workstream (Experience 03 S3 for the lead-reply binding)",
-      "dependency": "Operator steps in connection_prerequisite; 20271031000100, 20271031000200 and 20271031000250 are merged and persisted on production (2026-10-14, #2126 -> f2e2a0af6, db-live f2e2a0af6); the reply screen UI (owner design approval first). Production 2026-10-13 (read-only): 0 sendgrid connectors, 0 sendgrid_receipt_processing rows.",
+      "dependency": "Operator steps in connection_prerequisite; 20271031000100, 20271031000200 and 20271031000250 are merged and persisted on production (2026-10-14, #2126 -> f2e2a0af6; db-live reached f2e2a0af6); the reply screen UI (owner design approval first). Production 2026-10-13 (read-only): 0 sendgrid connectors, 0 sendgrid_receipt_processing rows.",
       "next_slice": "Complete the operator steps on one test business and run one owner-approved live send end to end: approve → provider_accepted → correlated Event Webhook → message state read back. Then build a SendGrid domain-verification service so the facts are not hand-written.",
       "tier_eligibility": {
         "platform": "ineligible",

@@ -73,6 +73,8 @@ The acceptance record must separately label source, local database/engine, rende
 
 ## Customer-visible validation — append-only E5-CV cases
 
+**Development continuation,2026-10-13:** the owner subsequently delegated routine UI decisions and inert guarded release preparation. Intermediate prototype-review pauses are superseded; finished Chat/Calendar design, actual permission boundaries, protected fixture scope and execution authorization still precede the first live recurrence. Source E5-A1/B1/C1/D1 now prepares local review, canonical owner inspection, Calendar visibility and typed personal Planning navigation; local/source/fixture checks do not mark any authenticated case PASS. Preserve every original browser/role/database/cleanup assertion and E5-CV1–9 below. A Planning source absent from the loaded bundle is the navigation case; no universal200-item limit is asserted.
+
 Added2026-10-13 under the owner's mandatory customer-visible outcome standard. These cases **supplement** the seven browser assertions, role matrix, database assertions and cleanup above; none is replaced or invalidated. The source-grounded [Customer Experience Integration Matrix](experience-05-weekly-commitment-check.md#customer-experience-integration-matrix--owner-standard-2026-10-13) identifies current surfaces and missing bindings.
 
 **Preparation status: NOT_RUN; customer acceptance UNVERIFIED.** Backend release is DARK, weekly Chat/Live binding UNAVAILABLE, prepared Calendar/Chat projection unmounted, owner rendered-design decision PENDING. Case descriptions are future acceptance requirements, not claims of delivered UI. Existing62-case SQL/history proof and86-capture simulated review remain their original evidence classes.

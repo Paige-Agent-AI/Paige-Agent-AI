@@ -1,5 +1,7 @@
 # Paige Agent AI — Master Project Reference
 
+> **Experience 05 customer development resumed — owner directive, 2026-10-13:** The accepted matrix now organizes authorized E5-A–E5-E customer integration. Routine design and inert guarded release preparation are delegated; earlier intermediate owner prototype-review pauses are superseded. Candidate work on main13b9 extends canonical owner status/receipts, local schedule review, existing Calendar and personal Planning navigation into Operations. No new scheduler, ledger or approval framework. Finished Chat/Calendar design, permission boundaries, protected fixture plan and activation proposal remain the required owner decision before first live recurring execution; INT-346/security, trigger/cron, provider and official-account acceptance gates remain closed. Current work is development, not a new release or authenticated acceptance. [Existing delivery packet](delivery/experience-05-weekly-commitment-check.md#resumed-connected-customer-development--owner-direction-2026-10-13).
+
 **The single source of truth. Read this first, every session, every day.** Cowork · Claude Code · Codex — all three agents open this doc before responding to anything substantive. It reflects the reality of the codebase (§13 honesty), not memory.
 
 **Locked:** 2026-08-09 by Antonio Cook + Cowork · **Owner:** Antonio · **Living:** update on every merge · **Cross-refs:** every deeper doc is in Section 9.

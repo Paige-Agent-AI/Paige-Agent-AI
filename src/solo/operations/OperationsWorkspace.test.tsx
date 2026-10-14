@@ -5,7 +5,9 @@ import type { CrmWorkRecord } from "./operations-native-work";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
-  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[] }));
+  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null }));
+const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn() }));
+vi.mock("./operations-weekly-source", async importOriginal => ({ ...await importOriginal<typeof import("./operations-weekly-source")>(), readWeeklyPlanningSource: weekly.read }));
 const paige = vi.hoisted(() => ({ handoff: vi.fn(), clearClient: vi.fn(), clearPublic: vi.fn() }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: paige.handoff }));
 vi.mock("@/solo/paigeClientScope", () => ({ clearPaigeClientScope: paige.clearClient }));
@@ -15,12 +17,17 @@ vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTe
 vi.mock("./useOperationsPeople", () => ({ useOperationsPeople: () => ({ members: harness.members, loading: false,
   error: null, partial: false, refresh: vi.fn() }) }));
 vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], loading: false, error: harness.planningError,
-  forbidden: false, refresh: vi.fn(), allItems: [{ id: "test-item", tenant_id: harness.foreign ? "test-foreign" : harness.tenant,
+  forbidden: false, refresh: weekly.refresh, allItems: [{ id: "test-item", tenant_id: harness.foreign ? "test-foreign" : harness.tenant,
     plan_id: null, title: `${harness.tenant} assigned work`, summary: "Test source", status: "open", priority: "normal",
     item_type: "task", assigned_to_user_id: null, due_at: null }] }) }));
 vi.mock("./OperationsDelivery", () => ({ default: () => <div>Delivery test seam</div> }));
 vi.mock("./OperationsPlaybooks", () => ({ OperationsPlaybooks: () => <div>Playbook test seam</div> }));
-vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: () => <div>Work edit test seam</div> }));
+vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: ({ refresh, onNavigationGuardChange }: {
+  refresh: () => Promise<void>; onNavigationGuardChange?: (guard: (() => string | null) | null) => void;
+}) => {
+  React.useLayoutEffect(() => { onNavigationGuardChange?.(() => harness.guard); return () => onNavigationGuardChange?.(null); }, [onNavigationGuardChange]);
+  return <div>Work edit test seam<button onClick={() => void refresh()}>Refresh linked editor</button></div>;
+} }));
 vi.mock("./OperationsCrmWorkEditor",()=>({OperationsCrmWorkEditor:()=> <div>Native assignment/date edit test seam</div>}));
 vi.mock("./OperationsProjectCreator", () => ({ OperationsProjectCreator: ({ onRecover }: { onRecover: (id?: string) => Promise<void> }) => <div data-testid="project-creator"><button onClick={() => void onRecover()}>Refresh unknown project</button><button onClick={() => void onRecover("test-project")}>Inspect acknowledged project</button></div> }));
 vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:false,error:harness.crmError,forbidden:false,hasMore:false,refresh:vi.fn()})}));
@@ -31,7 +38,8 @@ let root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => { harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
   vi.clearAllMocks();
-  sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];
+  sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
+  weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 async function click(text: string) {
@@ -153,4 +161,58 @@ it("shows the original pending task before confirmation instead of the newly sel
  expect(dialog?.querySelector("h2")?.textContent).toBe("Original pending task A");
  expect(dialog?.textContent).toContain("Recovery test seam: task-a");
  expect(dialog?.textContent).not.toContain(task.title);
+});
+
+const linkedId = "30000000-0000-4000-8000-000000000011";
+const linkedSearch = `?weeklySource=planning_item&item=${linkedId}`;
+const linkedItem = () => ({ id: linkedId, tenant_id: harness.tenant, plan_id: null, item_type: "task", title: "Canonical linked Planning work",
+  summary: "Source record", status: "open", priority: "normal", due_at: null, assigned_to_user_id: harness.user, created_by: harness.user,
+  updated_at: "2026-10-10T12:00:00.123456Z" });
+it("opens the point-read Planning record outside the loaded bundle and refreshes that exact record", async () => {
+  weekly.read.mockResolvedValue({ kind: "verified", item: linkedItem() });
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={linkedSearch} weeklySourceKey="link-one" />));
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Canonical linked Planning work");
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Completing a check does not complete this work");
+  expect(weekly.read).toHaveBeenCalledWith({ actorId: harness.user, tenantId: harness.tenant, itemId: linkedId }, expect.any(Function));
+  weekly.read.mockResolvedValue({ kind: "verified", item: { ...linkedItem(), status: "done", updated_at: "2026-10-10T12:01:00.123456Z" } });
+  const refresh = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(button => button.textContent === "Refresh linked editor")!;
+  await act(async () => refresh.click());
+  expect(weekly.read).toHaveBeenCalledTimes(2); expect(weekly.refresh).toHaveBeenCalledWith({ silent: true });
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recorded as completed work");
+});
+it("never uses a loaded row or CRM UUID as authority for a weekly source link", async () => {
+  harness.crmTasks=[{id:linkedId,tenant_id:harness.tenant,user_id:harness.user,title:"Same UUID in CRM",description:null,
+    status:"pending",due_date:null,updated_at:"2026-10-10T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={linkedSearch} weeklySourceKey="link-one" />));
+  const dialog = document.querySelector('[role="dialog"]');
+  expect(weekly.read).toHaveBeenCalledOnce(); expect(dialog?.textContent).toContain("This work is unavailable");
+  expect(dialog?.textContent).not.toContain("Same UUID in CRM"); expect(dialog?.textContent).not.toContain("Work edit test seam");
+});
+it("rejects malformed or duplicate typed targets without reading or replacing work", async () => {
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={`${linkedSearch}&item=${linkedId}`} />));
+  expect(weekly.read).not.toHaveBeenCalled(); expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(container.textContent).toContain("weekly-check work link is unavailable");
+});
+it("drops a delayed point read when the actor/workspace changes", async () => {
+  const oldItem = linkedItem(); let resolve: (value: unknown) => void = () => {};
+  weekly.read.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={linkedSearch} />));
+  harness.tenant = "test-tenant-b";
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={linkedSearch} />));
+  await act(async () => resolve({ kind: "verified", item: oldItem }));
+  expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain(oldItem.title);
+});
+it("preserves dirty work through a repeated link, URL Back removal, destination change and sheet close", async () => {
+  weekly.read.mockResolvedValue({ kind: "verified", item: linkedItem() });
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={linkedSearch} weeklySourceKey="first" />));
+  harness.guard = "Save or discard your unsaved work changes before leaving.";
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={linkedSearch} weeklySourceKey="second" />));
+  expect(weekly.read).toHaveBeenCalledOnce();
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch="" weeklySourceKey="back" />));
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Canonical linked Planning work");
+  await act(async () => root.render(<OperationsWorkspace view="capacity" weeklySourceSearch="" weeklySourceKey="view-back" />));
+  expect(container.querySelector('[aria-current="page"]')?.textContent).toBe("Work");
+  const close = document.querySelector<HTMLButtonElement>('[role="dialog"] button:has(.sr-only)');
+  expect(close).toBeTruthy(); await act(async () => close!.click());
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("unsaved work");
 });

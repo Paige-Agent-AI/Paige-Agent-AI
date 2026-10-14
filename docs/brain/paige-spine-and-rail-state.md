@@ -1,5 +1,11 @@
 # PAIGE Spine & Rail — verified current state
 
+## DEVELOPMENT 2026-10-13 — connected weekly owner experience resumed
+
+The owner's latest directive accepts the E5 matrix and delegates ordinary UI decisions, implementation and inert guarded release preparation. It supersedes intermediate design-review pauses in earlier dated entries, while finished-design/permission/fixture/activation approval remains required before first live recurrence. No Chat/Live admission or recurring effect is authorized.
+
+Candidate source on base main13b9e3cc966dedd25c3c75e27cdaf1ec1cceab4b extends the existing owner-only weekly getter/projection with bounded private Planning references, explicit minimized model serialization, local schedule review and owner-fenced browser inspection. Existing Calendar owns schedule visibility and Operations owns source correction. No new scheduler, ledger, receipt writer, permission or approval framework. Latest unknown remains separate from older verified history. Shared header insertion is coordinated with E1; Work navigation with Operations. The [existing delivery packet](../delivery/experience-05-weekly-commitment-check.md#resumed-connected-customer-development--owner-direction-2026-10-13) owns classifications, source/release evidence and remaining gates. This is development, not deployment or customer acceptance; E5-CV1–9 remain NOT_RUN/UNVERIFIED.
+
 ## UPDATE 2026-10-13 — Experience 05 customer-visible outcome contract
 
 The owner requires conversation → Spine → canonical record → actual customer surface → visible state → durable receipt/reload for every journey outcome. E5's [Customer Experience Integration Matrix](../delivery/experience-05-weekly-commitment-check.md#customer-experience-integration-matrix--owner-standard-2026-10-13) is embedded in the existing delivery report; [E5-CV1–9](../delivery/experience-05-weekly-acceptance-packet.md#customer-visible-validation--append-only-e5-cv-cases) append to existing protected QA without replacing prior cases. These are preparation requirements, NOT_RUN/UNVERIFIED, not activation authority or authenticated proof.

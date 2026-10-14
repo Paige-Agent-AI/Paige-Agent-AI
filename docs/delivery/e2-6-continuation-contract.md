@@ -4,6 +4,14 @@ Codex is the temporary sole Experience 02 implementation lead, under the owner's
 
 ## Intended usable outcome
 
+**Superseding full-scope directive (2026-10-14):** E02 must deliver all nineteen
+customer outcomes in the existing [integration matrix](e2-customer-experience-integration-matrix.md).
+This document describes the first bounded E2-6 release only. Missing/gated Finance,
+delivery, Systems execution, numeric goals, Trust/actions/receipts, Mind/Memory,
+Conversations, Research and Chat/Live/mobile work remains required. E02 owns their
+end-to-end integration through existing technical owners; the first release and its
+sixteen supplemental checks do not establish complete E02 or owner acceptance.
+
 An ordinary authorized SOLO owner asks PAIGE about the company, sees the same canonical business evidence in an immersive Executive Command Center, opens the actual departmental records, understands recommendations and recorded work, and returns to the persisted conversation and existing receipts. Existing authenticated briefing evidence remains **9 PASS / 0 FAIL** (2026-10-13, #2102); every new assertion needs supplemental proof. Final owner product acceptance is PENDING.
 
 ## Pre-edit routing

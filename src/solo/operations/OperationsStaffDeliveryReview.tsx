@@ -24,7 +24,7 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark",regist
  const [pending,setPending]=useState<StaffDeliveryAction|null>(null),[outcome,setOutcome]=useState<Outcome|null>(null);
  const [hint,setHint]=useState(""),invoker=useRef<HTMLButtonElement|null>(null),feedback=useRef<HTMLDivElement|null>(null);
  const retainedIntent=useRef<{key:string;action:StaffDeliveryAction;scope:StaffDeliveryScope;unconfirmed:boolean}|null>(null);
- useEffect(()=>{if(outcome?.key===key||hint)feedback.current?.scrollIntoView?.({block:"nearest",behavior:"auto"});},[outcome,key,hint]);
+ useEffect(()=>{if(outcome?.key===key||hint)feedback.current?.scrollIntoView?.({block:"center",behavior:"auto"});},[outcome,key,hint]);
  const current=()=>mounted.current&&live.current===key;
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
  useEffect(()=>{
@@ -70,6 +70,7 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark",regist
  const release=latest?data?.releases.find(row=>row.submission_id===latest.id):undefined;
  const source=latest?JSON.stringify([key,latest.id,latest.revision_no,latest.artifact_digest,latest.updated_at]):null;
  const result=outcome?.key===key?outcome:null,dirty=Boolean(note);
+ const hasFeedback=busy||Boolean(result)||Boolean(hint);
  const mismatched=dirty&&noteSource!==source;
  const unknown=Boolean(retainedIntent.current?.unconfirmed);
  const noteVisible=Boolean(artifact&&noteOwner.current===key&&latest&&draftSubmission.current&&latest.id===draftSubmission.current.id&&latest.artifact_version_id===draftSubmission.current.artifact_version_id&&latest.artifact_digest===draftSubmission.current.artifact_digest);
@@ -103,7 +104,7 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark",regist
  const refresh=()=>{if(!busy){setPending(null);if(!unknown&&result?.kind!=="unverified")setOutcome(null);setRevision(n=>n+1);}};
  const restoreFocus=(event:Event)=>{const button=invoker.current;if(button?.isConnected&&!button.disabled){event.preventDefault();button.focus();}else if(feedback.current?.isConnected){event.preventDefault();feedback.current.focus();}};
  return <section className="paige-solo ops-staff-review" data-pg={theme} data-theme={theme} aria-label="Deliverable review">
-  <header><FileCheck2 size={24} aria-hidden="true"/><h2>Review the work</h2><button type="button" disabled={busy} onClick={refresh}>Inspect recorded state</button></header>
+  <header><FileCheck2 size={24} aria-hidden="true"/><h2>Review the work</h2>{!hasFeedback&&<button type="button" disabled={busy} onClick={refresh}>Inspect recorded state</button>}</header>
   {data&&<ol className="ops-staff-progression" aria-label="Delivery progression">
    {[{label:"Internal review",complete:latest?.state==="approved"},{label:"Released for client review",complete:Boolean(release)},{label:"Accepted",complete:release?.state==="accepted"}].map(stage=><li key={stage.label} data-complete={stage.complete}>{stage.complete?<CheckCircle2 size={18} aria-hidden="true"/>:<Circle size={18} aria-hidden="true"/>}<span>{stage.label}</span><span className="sr-only">{stage.complete?"recorded":"not recorded"}</span></li>)}
   </ol>}
@@ -118,7 +119,7 @@ export function OperationsStaffDeliveryReview({scope,members,theme="dark",regist
   {note&&noteVisible&&!reviewing&&<section aria-label="Retained review note"><h3>Your retained draft</h3><p className="ops-staff-note">{note}</p><p>This draft has not been confirmed as the recorded review. Keep a copy or clear it explicitly.</p></section>}
   {mismatched&&<p role="status">Your draft note belongs to the previous inspected version. Keep a copy when source access permits, then clear it explicitly before deciding on the current version.</p>}
   {note&&!unknown&&<button type="button" disabled={busy} onClick={()=>{if(!clearDeliveryRecovery(storage,draftScope.current.scope)){setHint("Local recovery could not be cleared. Your review draft is retained.");return;}setNote("");setNoteSource(null);draftSubmission.current=null;draftScope.current={key,scope};}}>Clear review note</button>}
-  <div ref={feedback} role="status" tabIndex={-1} aria-live="polite">{busy?<p>Saving and verifying the recorded change...</p>:result?<p>{result.message}</p>:hint?<p>{hint}</p>:null}</div>
+  <div ref={feedback} role="status" tabIndex={-1} aria-live="polite">{busy?<p>Saving and verifying the recorded change...</p>:result?<p>{result.message}</p>:hint?<p>{hint}</p>:null}{hasFeedback&&<button type="button" disabled={busy} onClick={refresh}>Inspect recorded state</button>}</div>
   <AlertDialog open={Boolean(pending)&&!locked} onOpenChange={open=>{if(!open)setPending(null);}}><AlertDialogContent className="paige-solo ops-staff-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>{pending?.kind==="release"?`Release version ${latest?.revision_no} for client review?`:pending?.kind==="review"&&pending.decision==="approved"?`Approve version ${latest?.revision_no} internally?`:`Request changes to version ${latest?.revision_no}?`}</AlertDialogTitle><AlertDialogDescription>{artifact?.title}. {pending?.kind==="release"?"This exposes this exact approved version to the linked client for their explicit decision.":"This records your internal review of the exact submitted version. It does not record client acceptance."}</AlertDialogDescription></AlertDialogHeader>{noteVisible&&note.trim()&&<p className="ops-staff-note">{note}</p>}<AlertDialogFooter><AlertDialogCancel>Keep reviewing</AlertDialogCancel><AlertDialogAction className="ops-staff-primary" onClick={()=>void save()}>{pending?.kind==="release"?"Confirm client release":pending?.kind==="review"&&pending.decision==="approved"?"Confirm internal approval":"Confirm changes request"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
  </section>;
 }

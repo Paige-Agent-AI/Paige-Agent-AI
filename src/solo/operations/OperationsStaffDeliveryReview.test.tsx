@@ -40,3 +40,28 @@ it("blocked intent retention refuses before an internal decision request",async(
 it("deleting the whole review note cannot resurrect it after departure and return",async()=>{await mount();await writeNote("Delete this original private note");await writeNote("");await returnToReview();expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Review note"]')?.value).toBe("");expect(host.textContent).not.toContain("Delete this original private note");expect(writeStaffDelivery).not.toHaveBeenCalled();});
 
 it("a failed draft clearance keeps the visible note and departure guard",async()=>{const values=new Map<string,string>(),storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);},removeItem:()=>{throw Error("blocked");}};let close=()=>true;await act(async()=>root.render(<OperationsStaffDeliveryReview scope={scope} members={[]} recoveryStorage={storage} registerCloseGuard={guard=>{close=guard;return()=>{close=()=>true;};}}/>));await writeNote("Keep this draft if clearance fails");await writeNote("");expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Review note"]')?.value).toBe("Keep this draft if clearance fails");expect(host.textContent).toContain("could not be cleared");await act(async()=>expect(close()).toBe(false));expect(writeStaffDelivery).not.toHaveBeenCalled();});
+
+it("keeps one read-only recovery action beside an uncertain change, including after return",async()=>{
+ vi.mocked(writeStaffDelivery).mockResolvedValue({kind:"unverified"});
+ await mount();await click("Approve internally");await click("Confirm internal approval");
+ for(const returned of [false,true]){
+  if(returned)await returnToReview();
+  const recovery=Array.from(host.querySelectorAll<HTMLElement>('[role="status"]')).find(region=>region.textContent?.includes("unconfirmed")||region.textContent?.includes("could not be confirmed"));
+  expect(recovery).toBeTruthy();expect(recovery?.contains(button("Inspect recorded state"))).toBe(true);
+  expect(host.querySelector("header")?.textContent).not.toContain("Inspect recorded state");
+  expect(Array.from(host.querySelectorAll("button")).filter(el=>el.textContent==="Inspect recorded state")).toHaveLength(1);
+  await click("Inspect recorded state");expect(button("Approve internally").disabled).toBe(true);
+ }
+ expect(writeStaffDelivery).toHaveBeenCalledOnce();
+});
+
+it("keeps a keyboard-operable recorded-state action next to blocked-departure feedback",async()=>{
+ let close=()=>true;
+ await act(async()=>root.render(<OperationsStaffDeliveryReview scope={scope} members={[]} registerCloseGuard={guard=>{close=guard;return()=>{};}}/>));
+ await writeNote("Keep this unsaved review");await act(async()=>expect(close()).toBe(false));
+ const recovery=Array.from(host.querySelectorAll<HTMLElement>('[role="status"]')).find(region=>region.textContent?.includes("Clear the unsaved review note"));
+ expect(recovery?.contains(button("Inspect recorded state"))).toBe(true);
+ button("Inspect recorded state").focus();expect(document.activeElement).toBe(button("Inspect recorded state"));
+ await click("Inspect recorded state");expect(readStaffDelivery).toHaveBeenCalledTimes(2);
+ expect(writeStaffDelivery).not.toHaveBeenCalled();expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("Keep this unsaved review");
+});

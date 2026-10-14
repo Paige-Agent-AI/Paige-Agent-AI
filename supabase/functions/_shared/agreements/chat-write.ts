@@ -209,12 +209,11 @@ export async function draftAgreement(input: {
       ...revision,
     }));
   } catch (thrown) {
-    // A THROW is not a refusal, and must not be reported as one. PostgREST resolves its errors; a
-    // throw here is transport. Either way nothing is known to have been written.
+    // Transport failure does not establish whether the write landed. Do not invite a blind retry.
     console.error("[agreement_draft] save threw", {
       reason: thrown instanceof Error ? thrown.message : "unknown",
     });
-    return fail("unavailable");
+    return fail("no_readback");
   }
 
   if (error) {
@@ -226,7 +225,8 @@ export async function draftAgreement(input: {
   // A resolved call with no row is NOT a success. The write may have landed, so this must never
   // advise a retry that could duplicate it — which is exactly what the create path would do.
   const row = data as { id?: unknown; title?: unknown; status?: unknown } | null;
-  if (!row || typeof row.id !== "string") {
+  if (!row || typeof row.id !== "string" || !UUID.test(row.id)
+    || (hasId && row.id !== agreementId) || row.status !== "draft") {
     console.error("[agreement_draft] save returned no row");
     return fail("no_readback");
   }

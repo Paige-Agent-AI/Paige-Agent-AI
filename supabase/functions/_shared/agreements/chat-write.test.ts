@@ -127,13 +127,14 @@ Deno.test("a resolved call with NO row is never reported as a success", async ()
   }
 });
 
-Deno.test("a THROW is reported as unavailable, not as a refusal", async () => {
+Deno.test("a write transport failure has an unknown outcome and forbids blind retry", async () => {
   const rpc: AgreementWriteRpcPort["rpc"] = () => Promise.reject(new Error("socket hang up"));
   const r = await draftAgreement({
     caller: { rpc }, expectedTenantId: TENANT, contactId: CONTACT, title: "T", bodyMarkdown: "B",
   });
   assert(!r.success);
-  assertEquals(r.reason, "unavailable");
+  assertEquals(r.reason, "no_readback");
+  assert(!/try again/i.test(r.message));
   assert(!r.message.includes("socket hang up"));
 });
 

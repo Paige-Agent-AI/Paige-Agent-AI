@@ -1,4 +1,13 @@
 /** Shared consumer contract. Definitions, calculations and authority stay on the server. */
+import { localDateInZone } from '../paige-context/snapshot.ts';
+
+export const currentMetricVersion = (key: string): string => key === 'sales.receivables.overdue_current' ? '1.1.0' : '1.0.0';
+export interface MetricBusinessTimeZone {
+  state: 'configured' | 'missing' | 'invalid';
+  zone: string | null;
+  set_at: string | null;
+  as_of_date: string | null;
+}
 export type MetricTruth = "LIVE" | "PARTIAL" | "UNAVAILABLE";
 export type DiagnosticEvent = {
   source: "workflow_run" | "systems_check";
@@ -31,7 +40,7 @@ export interface MetricResult {
   source_refs: string[];
   as_of: string;
   freshness: { queried_at: string; source_updated_through: string | null };
-  coverage: { state: "complete" | "partial" | "unavailable"; candidate_count: number; contributing_count: number; excluded_count: number };
+  coverage: { state: "complete" | "partial" | "unavailable"; candidate_count: number; contributing_count: number; excluded_count: number; reason?: 'business_time_zone_missing' | 'business_time_zone_invalid' };
   exclusions: Array<{ reason: string; count: number }>;
   truth_state: MetricTruth;
   caveats: string[];
@@ -40,6 +49,7 @@ export interface MetricResult {
   account_epoch_ref: string;
   evidence_ref: string;
   reference_expires_at: string;
+  business_time_zone?: MetricBusinessTimeZone;
 }
 
 export interface MetricRequestIdentity {
@@ -97,6 +107,26 @@ export function parseMetricResult(value: unknown, expected: MetricRequestIdentit
   const c = value.coverage;
   const range = value.range;
   const dimensions = value.dimensions;
+  if (expected.metricVersion !== currentMetricVersion(expected.metricKey)) return fail();
+  const overdue = expected.metricKey === 'sales.receivables.overdue_current';
+  if (overdue) {
+    const z = value.business_time_zone;
+    if (expected.metricVersion !== '1.1.0' || !record(z)
+      || Object.keys(z).sort().join(',') !== 'as_of_date,set_at,state,zone'
+      || !(z.set_at === null || (zonedTimestamp(z.set_at) && Date.parse(z.set_at) <= Date.parse(String(value.as_of))))) return fail();
+    if (z.state === 'configured') {
+      if (typeof z.zone !== 'string' || z.zone.length > 100 || !/^(UTC|(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)\/[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z][A-Za-z0-9_+-]*)?)$/.test(z.zone) || !zonedTimestamp(z.set_at)
+        || z.as_of_date !== localDateInZone(Date.parse(String(value.as_of)), z.zone)
+        || typeof z.as_of_date !== 'string') return fail();
+    } else if (z.state === 'missing' || z.state === 'invalid') {
+      if (z.zone !== null || z.as_of_date !== null || (z.state === 'missing' && z.set_at !== null)
+        || value.truth_state !== 'UNAVAILABLE' || value.values !== null
+        || c.reason !== `business_time_zone_${z.state}`) return fail();
+    } else return fail();
+    if (value.owner_department !== 'sales' || value.unit !== 'currency_minor' || value.range.semantics !== 'current_snapshot'
+      || !Array.isArray(value.source_refs) || !value.source_refs.includes('public.tenant_business_time_zones')
+      || (value.truth_state !== 'UNAVAILABLE' && (!record(value.values) || value.values.kind !== 'currency_totals'))) return fail();
+  } else if (value.business_time_zone !== undefined) return fail();
   const stateMatches = (value.truth_state === "LIVE" && c.state === "complete" && c.excluded_count === 0)
     || (value.truth_state === "PARTIAL" && c.state === "partial")
     || (value.truth_state === "UNAVAILABLE" && c.state === "unavailable" && value.values === null && c.contributing_count === 0);

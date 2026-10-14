@@ -13,7 +13,12 @@ const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 const extract=(s,n)=>{const start=s.indexOf('CREATE OR REPLACE FUNCTION public.'+n+'('),end=s.indexOf('END $$;',start);assert(start>=0&&end>start,n);return s.slice(start,end+7);};
 const migrationPath='supabase/migrations/20270601000002_sales_performance_contract.sql';
 let migration=read(migrationPath);
-const mutation=process.argv[6]==='--mutation'?process.argv[7]:null;
+const options=process.argv.slice(6);
+const option=name=>options.includes(name)?options[options.indexOf(name)+1]:null;
+const mutation=option('--mutation');
+const forwardPath=option('--forward-migration');
+const calendarTests=Boolean(forwardPath)||options.includes('--business-calendar-baseline');
+let forward=forwardPath?read(forwardPath):null;
 const mutants={
  mixed_currency:["lower(d.currency)","'usd'"],
  foreign_rows:['WHERE d.tenant_id=p_tenant_id AND','WHERE true AND'],
@@ -23,7 +28,19 @@ const mutants={
  stale_revision:["'rows',source_rows","'rows','[]'::jsonb"],
  changed_version:["p_metric_version IS DISTINCT FROM '1.0.0'","p_metric_version NOT IN ('1.0.0','2.0.0')"]
 };
-if(mutation){assert(mutants[mutation],mutation);assert(migration.includes(mutants[mutation][0]));migration=migration.replaceAll(...mutants[mutation]);}
+const calendarMutants={
+ utc_day:["(p_as_of AT TIME ZONE business_zone)::date","(p_as_of AT TIME ZONE 'UTC')::date"],
+ due_today:["i.due_date<business_date","i.due_date<=business_date"],
+ missing_zone_fallback:["business_zone_state:='missing';","business_zone_state:='configured'; business_zone:='UTC'; business_date:=(p_as_of AT TIME ZONE 'UTC')::date;"],
+ invalid_zone_fallback:["business_zone_state:='invalid'; business_zone:=NULL;","business_zone_state:='configured'; business_zone:='UTC'; business_date:=(p_as_of AT TIME ZONE 'UTC')::date;"],
+ stale_zone_revision:["'business_time_zone',business_calendar,'stored_zone',stored_business_zone","'business_time_zone','{}'::jsonb,'stored_zone',NULL"],
+ renamed_without_version:["CASE WHEN p_metric_key='sales.receivables.overdue_current' THEN '1.1.0' ELSE '1.0.0' END","'1.0.0'"]
+};
+if(mutation){
+ const target=forwardPath?calendarMutants:mutants;assert(target[mutation],mutation);
+ if(forwardPath){assert(forward.includes(target[mutation][0]));forward=forward.replaceAll(...target[mutation]);}
+ else {assert(migration.includes(target[mutation][0]));migration=migration.replaceAll(...target[mutation]);}
+}
 const db='sales_performance_'+randomUUID().replaceAll('-','');run(`CREATE DATABASE ${db};`);database=db;
 const id=(family,n)=>`${family}0000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
 const actor=id(1,1),otherActor=id(1,2),tenant=id(2,1),foreign=id(2,2),pipeline=id(3,1),foreignPipeline=id(3,2),stage=id(4,1),foreignStage=id(4,2);
@@ -176,7 +193,78 @@ const readBalance=i=>json(scope()+`SELECT _sales_invoice_read('${tenant}','${i}'
 eq(readBalance(invoice).remaining_cents,210000);eq(readBalance(paidInvoice).remaining_cents,0);eq(readBalance(testInvoice).remaining_cents,20000);
 assert(!JSON.stringify(cash).includes('Fixture owner'));checks++;
 eq(cash.evidence_ref,null);eq(cash.evidence_state,'shared_issuance_required');
+if(calendarTests){
+ // Source-compatible fixture; only privileged fixture setup may write this private setting.
+ run(`CREATE TABLE tenant_business_time_zones(tenant_id uuid PRIMARY KEY,time_zone text NOT NULL,set_by uuid NOT NULL,set_at timestamptz NOT NULL);
+ ALTER TABLE tenant_business_time_zones ENABLE ROW LEVEL SECURITY;
+ REVOKE ALL ON tenant_business_time_zones FROM PUBLIC,anon,authenticated,service_role;`);
+ const unchangedKeys=['sales.opportunities.created','sales.opportunities.open_current','sales.opportunities.won_current_close_date','sales.opportunities.lost_current_close_date',
+  'sales.pipeline.open_value','sales.invoices.issued_count','sales.invoices.issued_amount','sales.receivables.outstanding_current','sales.cash.recorded_received','sales.payments.posted_net_allocations'];
+ const unchangedBefore=unchangedKeys.map(key=>get(key));
+ if(forward){run(forward);run(forward);}
+ unchangedKeys.forEach((key,n)=>eq(get(key),unchangedBefore[n]));
+ eq(run("SELECT position('THEN ''1.1.0'' ELSE ''1.0.0''' in pg_get_functiondef('public._sales_performance_metric_bundle(uuid,text,text,timestamptz,timestamptz,timestamptz,jsonb)'::regprocedure))>0;"),'t');
+ const overdueAt=(asOf,t=tenant,a=actor,version='1.1.0')=>json(scope(a,t)+metric('sales.receivables.overdue_current',{},t,version).replace('2026-11-03Z',asOf));
+ const setZone=(zone,t=tenant,stamp='2026-10-01Z')=>run(`INSERT INTO tenant_business_time_zones VALUES('${t}','${zone}','${actor}','${stamp}') ON CONFLICT(tenant_id) DO UPDATE SET time_zone=excluded.time_zone,set_at=excluded.set_at;`);
+ // Failing-first: the current producer refuses 1.1.0 and cannot hold a missing calendar.
+ const missing=overdueAt('2026-11-03Z');
+ eq(missing.truth_state,'UNAVAILABLE');eq(missing.values,null);eq(missing.business_time_zone.state,'missing');
+ eq(missing.business_time_zone.as_of_date,null);eq(missing.coverage.reason,'business_time_zone_missing');
+ eq(missing.coverage.state,'unavailable');eq(missing.evidence_ref,null);
+ setZone('America/Los_Angeles');
+ run(`UPDATE paige_invoices SET due_date='2026-11-02' WHERE id='${invoice}';`);
+ const localYesterday=overdueAt('2026-11-03T00:30Z');
+ eq(localYesterday.business_time_zone.as_of_date,'2026-11-02');eq(localYesterday.values.by_currency,[]);
+ eq(localYesterday.business_time_zone.zone,'America/Los_Angeles');
+ eq(localYesterday.range.timezone,'UTC');eq(localYesterday.range.semantics,'current_snapshot');
+ setZone('Pacific/Kiritimati');
+ const localTomorrow=overdueAt('2026-11-02T11:30Z');
+ eq(localTomorrow.business_time_zone.as_of_date,'2026-11-03');eq(amount(localTomorrow),'210000');
+ // Source identity changes even when the zone change leaves the local date and amount unchanged.
+ setZone('UTC');const zoneBefore=overdueAt('2026-11-03T12:00Z');
+ setZone('Europe/London');const zoneAfter=overdueAt('2026-11-03T12:00Z');
+ eq(zoneAfter.values,zoneBefore.values);assert.notEqual(zoneAfter.source_revision_ref,zoneBefore.source_revision_ref);checks++;
+ setZone('Europe/London',tenant,'2026-10-02Z');const stampAfter=overdueAt('2026-11-03T12:00Z');
+ assert.notEqual(stampAfter.source_revision_ref,zoneAfter.source_revision_ref);checks++;
+ eq(stampAfter.business_time_zone.set_at,'2026-10-02T00:00:00+00:00');
+ // DST changes use the same database conversion as Collections, never fixed offsets.
+ setZone('America/New_York');
+ run(`UPDATE paige_invoices SET due_date='2026-03-07' WHERE id='${invoice}';`);
+ // Use a valid earlier reporting range for March cases; current snapshots still use as_of.
+ const marchAt=asOf=>json(scope()+metric('sales.receivables.overdue_current',{},tenant,'1.1.0').replace('2026-10-01Z','2026-02-01Z').replace('2026-11-01Z','2026-03-01Z').replace('2026-11-03Z',asOf));
+ eq(marchAt('2026-03-08T04:30Z').business_time_zone.as_of_date,'2026-03-07');eq(marchAt('2026-03-08T04:30Z').values.by_currency,[]);
+ eq(marchAt('2026-03-08T07:30Z').business_time_zone.as_of_date,'2026-03-08');
+ eq(amount(marchAt('2026-03-08T07:30Z')),'210000');
+ run(`UPDATE paige_invoices SET due_date='2026-10-31' WHERE id='${invoice}';`);
+ eq(overdueAt('2026-11-01T03:30Z').business_time_zone.as_of_date,'2026-10-31');eq(overdueAt('2026-11-01T03:30Z').values.by_currency,[]);
+ eq(overdueAt('2026-11-01T04:30Z').business_time_zone.as_of_date,'2026-11-01');
+ eq(overdueAt('2026-11-01T06:30Z').business_time_zone.as_of_date,'2026-11-01');
+ for(const zone of ['Not/A_Zone','EST','Etc/GMT+5','US/Eastern']){
+  setZone(zone);const invalid=overdueAt('2026-11-03Z');
+  eq(invalid.truth_state,'UNAVAILABLE');eq(invalid.values,null);eq(invalid.business_time_zone.state,'invalid');
+  eq(invalid.business_time_zone.zone,null);eq(invalid.coverage.reason,'business_time_zone_invalid');
+ }
+ setZone('UTC');
+ run(`UPDATE paige_invoices SET due_date='2026-11-02' WHERE id IN ('${invoice}','${euroInvoice}');`);
+ const both=overdueAt('2026-11-03Z');eq(amount(both),'210000');eq(amount(both,'eur'),'100000');
+ eq(both.coverage.contributing_count,2); // no zero-paid, void, draft or foreign invoice
+ setZone('Pacific/Kiritimati',foreign);const foreignResult=overdueAt('2026-11-03Z',foreign,otherActor);
+ eq(foreignResult.values.by_currency,[]);eq(foreignResult.business_time_zone.zone,'Pacific/Kiritimati');
+ const ownedBefore=overdueAt('2026-11-03Z');setZone('Europe/London',foreign,'2026-10-02Z');eq(overdueAt('2026-11-03Z'),ownedBefore);
+ run(`DELETE FROM tenant_business_time_zones WHERE tenant_id='${foreign}';`);
+ const emptyMissing=overdueAt('2026-11-03Z',foreign,otherActor);eq(emptyMissing.values,null);eq(emptyMissing.truth_state,'UNAVAILABLE');
+ denied(scope()+metric('sales.receivables.overdue_current',{},foreign,'1.1.0'));
+ denied(scope()+metric('sales.receivables.overdue_current',{invoice_id:id(6,8)},tenant,'1.1.0'),'22023');
+ denied(scope()+metric('sales.receivables.overdue_current',{},tenant,'1.0.0'),'22023');
+ denied(scope()+metric('sales.cash.recorded_received',{},tenant,'1.1.0'),'22023');
+ run(`UPDATE tenant_members SET role='member' WHERE user_id='${actor}';`);denied(scope()+metric('sales.receivables.overdue_current',{},tenant,'1.1.0'));
+ run(`UPDATE tenant_members SET role='admin' WHERE user_id='${actor}';`);eq(amount(overdueAt('2026-11-03Z')),'210000');
+ run(`UPDATE tenant_members SET role='owner' WHERE user_id='${actor}';`);
+ for(const role of ['anon','authenticated','service_role'])denied(scope()+`SET ROLE ${role};`+metric('sales.receivables.overdue_current',{},tenant,'1.1.0'));
+ // No unrelated metric definition or source identity changes from this forward replacement.
+ eq(get('sales.cash.recorded_received'),cash);eq(get('sales.pipeline.open_value'),pipelineResult);
+}
 const schema=run("SELECT string_agg(p.proname||':'||pg_get_functiondef(p.oid)||':'||coalesce(p.proacl::text,''),E'\\n' ORDER BY p.proname) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '_sales_performance%';");
-const report={checks,postgres:run('SHOW server_version;'),migration:migrationPath,migration_sha256:createHash('sha256').update(migration).digest('hex'),schema_fingerprint:createHash('sha256').update(schema).digest('hex'),evidence:'synthetic isolated PostgreSQL; shared issuer/runtime not proven',production:false};
+const report={checks,postgres:run('SHOW server_version;'),migration:forwardPath??migrationPath,migration_sha256:createHash('sha256').update(forward??migration).digest('hex'),schema_fingerprint:createHash('sha256').update(schema).digest('hex'),evidence:'synthetic isolated PostgreSQL; shared issuer/runtime not proven',production:false};
 mkdirSync(new URL('../../work/',import.meta.url),{recursive:true});writeFileSync(new URL('../../work/sales-performance-proof.json',import.meta.url),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }finally{database='postgres';run(`DROP DATABASE ${db} WITH (FORCE);`);}

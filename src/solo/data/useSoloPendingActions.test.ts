@@ -72,23 +72,26 @@ describe("useSoloPendingActions — tenant scoping (§9)", () => {
   let root: Root | null = null;
   afterEach(() => { act(() => root?.unmount()); root = null; supa.from.mockReset(); });
 
-  function build() {
+  function build(count: number | null = null) {
     const eqCalls: Array<[string, unknown]> = [];
+    const selectCalls: Array<[string, unknown]> = [];
     const builder: Record<string, unknown> = {};
-    builder.select = () => builder;
+    builder.select = (columns: string, options: unknown) => { selectCalls.push([columns, options]); return builder; };
     builder.order = () => builder;
     builder.eq = (col: string, val: unknown) => { eqCalls.push([col, val]); return builder; };
-    builder.limit = () => Promise.resolve({ data: [], error: null });
-    return { builder, eqCalls };
+    builder.limit = () => Promise.resolve({ data: [], error: null, count });
+    return { builder, eqCalls, selectCalls };
   }
 
   async function mount(tenantId: string | null) {
     const host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
-    function Probe() { useSoloPendingActions(tenantId); return null; }
+    let observed: ReturnType<typeof useSoloPendingActions>;
+    function Probe() { observed = useSoloPendingActions(tenantId); return null; }
     act(() => { root!.render(createElement(Probe)); });
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    return observed!;
   }
 
   it("constrains the query to the viewed tenant_id", async () => {
@@ -103,5 +106,21 @@ describe("useSoloPendingActions — tenant scoping (§9)", () => {
   it("runs NO query when the workspace is unresolved (never an unscoped read)", async () => {
     await mount(null);
     expect(supa.from).not.toHaveBeenCalled();
+  });
+
+  it("requests an exact scoped total independently of the capped preview", async () => {
+    const { builder, selectCalls, eqCalls } = build(37);
+    supa.from.mockReturnValue(builder);
+    const result = await mount("tenant-x");
+    expect(selectCalls[0][1]).toEqual({ count: "exact" });
+    expect(eqCalls).toContainEqual(["tenant_id", "tenant-x"]);
+    expect(result.total).toBe(37);
+    expect(result.items).toEqual([]);
+  });
+
+  it("keeps a missing count unknown instead of deriving a total from preview rows", async () => {
+    const { builder } = build();
+    supa.from.mockReturnValue(builder);
+    expect((await mount("tenant-x")).total).toBeNull();
   });
 });

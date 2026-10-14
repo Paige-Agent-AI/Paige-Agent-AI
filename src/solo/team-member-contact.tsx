@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactMethodsEditor } from "@/components/contact-methods/ContactMethodsEditor";
@@ -33,6 +33,11 @@ export function TeamMemberContact({ member, workspace, onDirtyChange }: { member
   useEffect(() => { onDirtyChange?.(edit.dirty); }, [edit.dirty, onDirtyChange]);
 
   const messageRef = useRef<HTMLParagraphElement | null>(null);
+  useLayoutEffect(() => {
+    // The result must exist in the committed DOM before focus can reach it.
+    // A zero-delay timer can fire while React is still batching the save result.
+    if (message) messageRef.current?.focus();
+  }, [message]);
   const save = async () => {
     setMessage(null);
     const result = await edit.submit();
@@ -42,8 +47,6 @@ export function TeamMemberContact({ member, workspace, onDirtyChange }: { member
     if (!next) return;
     setMessage(next);
     setAnnouncement(next.text);
-    // The save button leaves once nothing is unsaved; focus lands on the outcome instead of the page.
-    window.setTimeout(() => messageRef.current?.focus(), 0);
   };
 
   if (access === "hidden") return null;

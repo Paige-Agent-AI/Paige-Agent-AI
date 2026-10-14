@@ -48,16 +48,23 @@ function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUp
     let op: "select" | "update" = "select";
     let values: Row = {};
     const filters: [string, string, unknown][] = [];
+    let columns = "";
     const run = (single: boolean) => {
+      if (op === "select") onRead?.(table);
       if (op === "select" && failSelect.includes(table)) return { data: null, error: { message: "boom" } };
       if (op === "update" && failUpdateWhen?.(table, values)) return { data: null, error: { message: "SEND_REQUIRES_GOVERNED_SEND: refused by the database" } };
       const rows = (tables[table] ?? []).filter((r) =>
         filters.every(([o, k, v]) => (o === "eq" ? r[k] === v : o === "in" ? (v as unknown[]).includes(r[k]) : (r[k] ?? null) === v)));
       if (op === "update") rows.forEach((r) => Object.assign(r, values));
-      return { data: single ? (rows[0] ?? null) : rows, error: null };
+      // A messages read returns ONLY the columns it selected, as PostgREST does: a column left out of the
+      // select reads as missing, so a check that needs it cannot pass on a fixture that happens to carry it.
+      const shaped = op === "select" && table === "messages" && columns
+        ? rows.map((r) => Object.fromEntries(columns.split(",").map((c) => c.trim()).filter((c) => c in r).map((c) => [c, r[c]])))
+        : rows;
+      return { data: single ? (shaped[0] ?? null) : shaped, error: null };
     };
     const q = {
-      select: () => q,
+      select: (cols?: string) => { if (op === "select" && typeof cols === "string") columns = cols; return q; },
       update: (v: Row) => { op = "update"; values = v; writes.push({ table, values: v, filters }); return q; },
       eq: (k: string, v: unknown) => { filters.push(["eq", k, v]); return q; },
       is: (k: string, v: unknown) => { filters.push(["is", k, v]); return q; },
@@ -107,6 +114,8 @@ let fetchCalls: { url: string; body: Row }[] = [];
 let sendAnswer: { status: number; body: Row } = { status: 200, body: { status: "sent", audit_id: "aud-1" } };
 /** Runs while send-message is "in flight" — lets a test change the world between the claim and the answer. */
 let onSend: (() => void) | null = null;
+/** Runs on every read, before it answers — lets a test change the world between two steps of the handler. */
+let onRead: ((table: string) => void) | null = null;
 
 async function load(db: ReturnType<typeof fakeDb>) {
   vi.resetModules();
@@ -129,7 +138,7 @@ const approve = async () => {
   return { status: res.status, body: await res.json() as Row };
 };
 
-beforeEach(() => { fetchCalls = []; onSend = null; sendAnswer = { status: 200, body: { status: "sent", audit_id: "aud-1" } }; mocks.executeApprovedLayerCAct.mockReset(); });
+beforeEach(() => { fetchCalls = []; onSend = null; onRead = null; sendAnswer = { status: 200, body: { status: "sent", audit_id: "aud-1" } }; mocks.executeApprovedLayerCAct.mockReset(); });
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("execute-approval: a send_via_approval approval is never sent and never completed here", () => {
@@ -420,7 +429,11 @@ describe("execute-approval: a held copy returned to a draft stays ONE message (#
   const emailDraft = { channel: "email", subject: "S", body: "B" };
   const pending = (extra: Row = {}) => approval({ category: "followup", type: "cs_draft", metadata: {}, draft_content: emailDraft, ...extra });
   const queuedAnswer = { status: 200, body: { status: "failed", outcome: "queued_tenant_dnd", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1" } };
-  const msg = (extra: Row = {}): Row => ({ id: "m1", tenant_id: T, status: "draft", scheduled_for: null, sent_at: null, ...extra });
+  // The draft carries exactly what the approval sends (send-message stores an email body in body_html).
+  const msg = (extra: Row = {}): Row => ({
+    id: "m1", tenant_id: T, status: "draft", scheduled_for: null, sent_at: null,
+    channel_type: "email", recipients: [{ address: "dana@x.test" }], subject: "S", body_html: "B", body_text: null, ...extra,
+  });
 
   it("the draft's id is recorded on the approval, in the same checked write that releases the claim, onto a row still pending", async () => {
     sendAnswer = queuedAnswer;
@@ -533,5 +546,98 @@ describe("execute-approval: a held copy returned to a draft stays ONE message (#
     expect(r.body).toMatchObject({ ok: false, error: "held_draft_read_failed" });
     expect(fetchCalls).toEqual([]);
     expect(db.tables.paige_pending_approvals[0].claimed_at).toBeNull();
+  });
+
+  // ── The draft was EDITED in Conversations (edit → send → undo leaves the edited text as the draft) ──
+  const expectRefusedAsChanged = (r: { status: number; body: Row }, db: ReturnType<typeof fakeDb>, changed: string) => {
+    expect(fetchCalls).toEqual([]);                                           // nothing sent, the original text included
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, outcome: "changed_in_conversations", changed, message_id: "m1", approval_id: A });
+    expect(r.body.error).toBe("This reply was changed in Conversations — send it from there, or decline it here.");
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row).toMatchObject({ status: "pending", claimed_at: null });      // released, never approved
+    expect(row.reviewed_at).toBeUndefined();
+    expect(row.metadata).toEqual({ held_draft_message_id: "m1" });           // nothing recorded
+    expect(db.tables.messages[0].status).toBe("draft");                     // the draft is left as it is
+  };
+
+  it("an EDITED body: the original is never sent onto the edited draft — nothing goes out, nothing is approved, the person is told where", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ body_html: "B — but with the new price" })] });
+    await load(db);
+    expectRefusedAsChanged(await approve(), db, "body");
+    expect(db.tables.messages[0].body_html).toBe("B — but with the new price");
+  });
+
+  it("an EDITED recipient: nothing is sent", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ recipients: [{ address: "someone-else@x.test" }] })] });
+    await load(db);
+    expectRefusedAsChanged(await approve(), db, "recipient");
+  });
+
+  it("an EDITED subject: nothing is sent", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ subject: "S (updated)" })] });
+    await load(db);
+    expectRefusedAsChanged(await approve(), db, "subject");
+  });
+
+  it("a draft whose body cannot be read is treated as changed: unsure is never sent", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ body_html: null, body_text: null })] });
+    await load(db);
+    expectRefusedAsChanged(await approve(), db, "body");
+  });
+
+  it("an IDENTICAL draft (only cosmetic whitespace and address case differ) sends that same message id, once", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ recipients: [{ address: " Dana@X.test " }], subject: "S ", body_html: "B\r\n" })] });
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: true, executed: true });
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0].body).toMatchObject({ message_id: "m1", to: "dana@x.test", subject: "S", body: "B" });
+  });
+
+  it("a held draft that belongs to ANOTHER business is not this message: it is neither settled on nor sent — one fresh send", async () => {
+    const OTHER = "10000000-0000-4000-8000-000000000002";
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ tenant_id: OTHER })] });
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: true, executed: true });
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0].body.message_id).toBeUndefined();                   // the other business's row is never sent
+    expect(db.tables.messages[0]).toMatchObject({ tenant_id: OTHER, status: "draft" });
+  });
+
+  it("a held draft of ANOTHER business that was already sent does not settle this approval: it is sent fresh, not marked sent-from-Conversations", async () => {
+    const OTHER = "10000000-0000-4000-8000-000000000002";
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ tenant_id: OTHER, status: "sent", sent_at: "2026-10-14T13:00:00Z" })] });
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: true, executed: true });
+    expect(r.body.already).toBeUndefined();
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0].body.message_id).toBeUndefined();
+  });
+
+  it("declined while the held draft was being read (it had gone out from Conversations): the settle write lands on no row, the approval stays DECLINED", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ status: "sent", sent_at: "2026-10-14T13:00:00Z" })] });
+    onRead = (table) => { if (table === "messages") db.tables.paige_pending_approvals[0].status = "declined"; };
+    await load(db);
+    const r = await approve();
+    expect(fetchCalls).toEqual([]);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, already: "sent", message_id: "m1", approval_id: A });
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row.status).toBe("declined");                                     // never flipped to approved
+    expect(row.reviewed_at).toBeUndefined();
+    expect((row.metadata as Row).held_draft_outcome).toBeUndefined();
+    const settle = db.writes.find((w) => w.table === "paige_pending_approvals" && w.values.status === "approved");
+    expect(settle?.filters).toContainEqual(["eq", "status", "pending"]);
   });
 });

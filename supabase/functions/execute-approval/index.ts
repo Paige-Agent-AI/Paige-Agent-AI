@@ -48,9 +48,9 @@ import { approvalRefusalMessage, executeApprovedLayerCAct, type ApproveExecutorD
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import {
-  ALREADY_SENT_STATUSES, DECIDED_MID_SEND_HELD, DECIDED_MID_SEND_QUEUED, HELD_DRAFT_KEY, HELD_DRAFT_UNCONFIRMED, QUEUED_UNCANCELLABLE,
-  SCHEDULED_FROM_CONVERSATIONS, SENT_FROM_CONVERSATIONS, classifySendResult, heldPayload, holdReasonOf, refuseSendKindApproval,
-  type HoldReason, type SendKindAdmin,
+  ALREADY_SENT_STATUSES, DECIDED_MID_SEND_HELD, DECIDED_MID_SEND_QUEUED, HELD_DRAFT_CHANGED, HELD_DRAFT_KEY, HELD_DRAFT_UNCONFIRMED,
+  QUEUED_UNCANCELLABLE, SCHEDULED_FROM_CONVERSATIONS, SENT_FROM_CONVERSATIONS, classifySendResult, heldDraftChange, heldPayload,
+  holdReasonOf, refuseSendKindApproval, type HeldDraftContent, type HoldReason, type SendKindAdmin,
 } from "./action-email.ts";
 
 const corsHeaders = {
@@ -288,8 +288,10 @@ Deno.serve(async (req) => {
     // already went out (or is scheduled) from Conversations, nothing is sent again — whatever the hours.
     const apprMeta: Record<string, unknown> = (typeof approval.metadata === "object" && approval.metadata) ? approval.metadata as Record<string, unknown> : {};
     const heldDraftId = typeof apprMeta[HELD_DRAFT_KEY] === "string" && apprMeta[HELD_DRAFT_KEY] ? String(apprMeta[HELD_DRAFT_KEY]) : null;
-    type HeldMsg = { id: string; tenant_id: string | null; status: string | null; scheduled_for: string | null; sent_at: string | null };
-    const readHeldDraft = (id: string) => admin.from("messages").select("id, tenant_id, status, scheduled_for, sent_at").eq("id", id).maybeSingle();
+    type HeldMsg = HeldDraftContent & { id: string; tenant_id: string | null; status: string | null; scheduled_for: string | null; sent_at: string | null };
+    // The content columns are read too: an edited draft must never be sent with this approval's text (#2150).
+    const readHeldDraft = (id: string) => admin.from("messages")
+      .select("id, tenant_id, status, scheduled_for, sent_at, channel_type, recipients, subject, body_html, body_text").eq("id", id).maybeSingle();
     /** Answers for a held draft that already left Conversations; null when the draft can still be sent. */
     const settleOnHeldDraft = async (msg: HeldMsg): Promise<Response | null> => {
       if (msg.status && ALREADY_SENT_STATUSES.has(msg.status)) {
@@ -329,6 +331,15 @@ Deno.serve(async (req) => {
       if (heldMsg && (heldMsg.tenant_id ?? null) === (approval.tenant_id ?? null)) {
         const settled = await settleOnHeldDraft(heldMsg as HeldMsg);
         if (settled) return settled;
+        // Still unsent — but edited in Conversations? send-message would send THIS approval's text on that row
+        // and mark it sent without rewriting it, so the client would get one message and the thread show
+        // another. Nothing is sent and nothing is approved: the claim is released and the person is told where.
+        const changed = heldDraftChange(heldMsg as HeldMsg, { channel, to, subject: dc.subject ? String(dc.subject) : null, body });
+        if (changed) {
+          const { error: releaseErr } = await releaseClaim();
+          if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+          return json(200, { ok: false, executed: false, outcome: "changed_in_conversations", changed, error: HELD_DRAFT_CHANGED, message_id: (heldMsg as HeldMsg).id, channel, approval_id: approvalId });
+        }
         reuseMessageId = (heldMsg as HeldMsg).id;
       }
     }

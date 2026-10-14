@@ -108,6 +108,49 @@ export const QUEUED_UNCANCELLABLE =
 export const SCHEDULED_FROM_CONVERSATIONS =
   "Not sent again: this message is already scheduled from Conversations and goes out then. Manage it there, or decline this.";
 export const SENT_FROM_CONVERSATIONS = "Already sent from Conversations. Nothing was sent again.";
+export const HELD_DRAFT_CHANGED =
+  "This reply was changed in Conversations — send it from there, or decline it here.";
+
+/** The held draft's stored content, as the messages row carries it (comms C-1 columns). */
+export interface HeldDraftContent {
+  channel_type?: string | null;
+  recipients?: unknown;
+  subject?: string | null;
+  body_html?: string | null;
+  body_text?: string | null;
+}
+/** What this approval would send. */
+export interface IntendedSend { channel: string; to: string; subject: string | null | undefined; body: string }
+
+/** Line endings unified, trailing spaces per line and outer whitespace dropped: cosmetic only, never words. */
+const normText = (v: unknown): string =>
+  typeof v === "string" ? v.replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/[ \t\u00a0]+$/, "")).join("\n").trim() : "";
+const normAddress = (v: unknown, channel: string): string => {
+  const s = typeof v === "string" ? v.trim().toLowerCase() : "";
+  return channel === "sms" ? s.replace(/[\s().-]/g, "") : s;
+};
+
+/**
+ * #2150: the held draft IS this message, but Conversations can edit it (edit → send → undo leaves the edited
+ * text as a draft). send-message's message_id path sends the text it is GIVEN and flips that row to sent
+ * without rewriting it, so sending this approval's text onto an edited draft would deliver one message and
+ * record another. Returns which part differs — or which part cannot be read — and null only when the draft
+ * carries exactly what this approval would send. Unsure is a difference: it is never sent.
+ */
+export function heldDraftChange(draft: HeldDraftContent, intended: IntendedSend): "channel" | "recipient" | "subject" | "body" | null {
+  const channel = intended.channel;
+  if ((draft.channel_type ?? null) !== channel) return "channel";
+  const recipients = Array.isArray(draft.recipients) ? draft.recipients : null;
+  const only = recipients && recipients.length === 1 ? recipients[0] as Record<string, unknown> | null : null;
+  const draftTo = only && typeof only === "object" ? normAddress(only.address, channel) : "";
+  if (!draftTo || draftTo !== normAddress(intended.to, channel)) return "recipient";
+  if (channel === "email" && normText(draft.subject) !== normText(intended.subject)) return "subject";
+  // The drain's own reading of a stored row: email prefers the HTML body, SMS the text body.
+  const draftBody = channel === "email" ? (draft.body_html ?? draft.body_text) : (draft.body_text ?? draft.body_html);
+  const stored = normText(draftBody);
+  if (!stored || stored !== normText(intended.body)) return "body";
+  return null;
+}
 export const HELD_DRAFT_UNCONFIRMED =
   "Not sent: this message's draft changed while it was being sent and its state couldn't be confirmed. Nothing was sent again. Check Conversations before approving it again.";
 

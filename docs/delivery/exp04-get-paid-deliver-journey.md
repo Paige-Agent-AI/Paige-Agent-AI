@@ -833,3 +833,171 @@ Conversational Loop lane as #2105.
   `scripts/live-drive/flows/solo-governed-flows.mjs`, eight steps), run by the QA lane.
 - Saving the zone from chat, once INT-346 is activated, as a confirm-lane capability.
 - #2083, #2086 and #2105.
+
+
+### Release record (2026-10-13)
+
+**Released** to production in PR #2106 → main `6f73ade472d684b0b60fda73b1c0bc9a7511badb` (merged head `d3d792ff`). Exact production readback is in master §4.0.
+
+| Owner can… | State |
+|---|---|
+| Set the business time zone in Setup › Business profile, confirm the exact zone, and see "saved" only after readback | **Live.** Proven in unit tests and the harness drive (1058/1058); authenticated acceptance owed |
+| Ask PAIGE "where does Acme stand?" and get a grounded answer: agreement, installments, verified versus recorded money, outstanding versus genuinely overdue, delivery, next steps | **Live** in conversational turns; authenticated acceptance owed |
+| Tell PAIGE where the business is; PAIGE resolves and checks the zone, asks the owner to confirm, and points to Setup | **Live.** PAIGE never claims to have saved it |
+| Save the zone from chat | **Unavailable** until INT-346 is activated (separately governed) |
+| See due and overdue judged on the business calendar | **Live** once the owner saves a zone; production had 0 configured zones at release |
+| Use the Engagement panel | **Unmounted**, pending its own design approval |
+
+**Handoff to the QA lane: authenticated acceptance.**
+- **Account and sign-in:** the official Antonio Cook Solo account, by ordinary customer sign-in. Do not use PC-1, Operator access or a new tenant.
+- **Flow:** `exp04-business-time-zone-acceptance` in `scripts/live-drive/flows/solo-governed-flows.mjs`.
+- **Steps:**
+  1. open PAIGE Chat;
+  2. the composer becomes usable;
+  3. ask to set the time zone ("we're in Chicago");
+  4. PAIGE offers `America/Chicago` with its local time and does not claim to save it;
+  5. confirm and save in Setup;
+  6. "saved and read back" appears;
+  7. ask "where does <client> stand?": overdue is now judged on that calendar;
+  8. log out and back in: the setting persists.
+- **Also check:**
+  - verified money is not mixed with owner-recorded money;
+  - unknowns are not shown as zero;
+  - any action request gets "No business action was run.";
+  - the chat composer clears its "Loading your conversations" state (see #2105 if it does not).
+- **Safety:** no real payments, messages or provider charges.
+---
+
+## 15. Customer Experience Integration Matrix (Engineering 2.0, 2026-10-13)
+
+**The acceptance question for every row:** *can the customer ask PAIGE to do it, see the actual change in the right part of the platform, understand its status, and come back later to verify it?*
+
+**How this was produced.** Four lane mappers (agreements, money, delivery, status and shared components) traced every Experience 04 outcome against `main` at `70ac2547`. A separate adversarial verifier per lane then re-opened every cited line, walked importers to prove each screen is mounted (§71), and repeated the absence greps. Their corrections are folded in below.
+
+**Evidence classes:**
+- **Code:** static and mount-chain proof.
+- **Production:** read-only aggregates only (counts and catalog metadata, no PII), agent-reported 2026-10-13.
+- **Authenticated runtime:** none of these rows has been driven signed in. Every rendered or authenticated claim is **UNVERIFIED** until the QA lane runs (§15.5).
+
+**The two facts that shape the whole matrix:**
+1. **Chat can only read while INT-346 is off.** Production has `paige_chat_interactive_rollout.active=false`, and every typed Solo turn is conversational (`PaigeAIChat.tsx:1430`).
+   - Only four tools run: `read_business_metric`, `get_business_snapshot`, `read_client_engagement_status`, `read_business_time_zone` (`paige-ai-chat/index.ts:313`).
+   - Every Experience 04 *action* tool is withheld from the model, and a call is refused with `CONVERSATIONAL_MODE` (`:10441`). Approvals return `409 INTERACTIVE_EFFECTS_UNAVAILABLE` (`:1224`).
+   - So today the owner does F1–F5, wherever a UI path exists, **in the departmental UI**, and uses PAIGE to **read and explain** (F8).
+2. **No PAIGE response links to an Experience 04 record yet.** Two chat-to-record mechanisms exist, and both cover CRM only:
+   - `PaigeCrmResultCard` renders `record_locator.deep_link` (`exact | surface_only | unavailable`), built by `canonicalAppUrl` (`crm-command/index.ts:380-406`).
+   - `approvalOutcome.checkLinks` covers the unconfirmed-approval case (`approvalOutcome.ts:156-205`).
+   - `canonicalAppUrl` has no sales, payments, operations or client-standing destination (`_shared/canonical-app-url.ts:21-34`).
+
+### 15.1 Matrix
+
+Status key:
+- **LIVE:** works end to end today.
+- **PARTIAL:** the UI path works, but chat, link or state is missing.
+- **GAP:** no customer path.
+- **UNAVAILABLE:** gated by design.
+
+| # | Outcome | Conversation → Spine capability (governed path) | Canonical record | UI component (mounted) | Visible state (server-derived?) | Receipt + reload readback | Status |
+|---|---|---|---|---|---|---|---|
+| F1a | Terms and the 11-row schedule ($3,500, $500 down, 10 × $300) | "Acme agreed to $3,500, $500 down, $300/month from Nov 1." → `sales_create_commercial_terms` and `sales_save_collection_terms` (high, confirm card) → `execute_sales_collection_command`. **Dark under INT-346.** | `tenant_client_agreements` (+ `collection_terms`/version) | Sales › Agreements (`AgreementEditor`, `sales-ops.tsx:589`), and Sales › Payments › Collections (`CollectionPlanBuilder`, the only screen that authors dated rows) | Draft/Active/Paused/Completed/Cancelled from the row (`sales-ops.tsx:80-87`). "Terms need review" from `terms_current`. Server-derived. | Chat writes `record_capability_run`; the **UI writes no receipt**. Reload re-reads `list_sales_collection_agreements`. A Sales screen that is already open does not refresh after a chat act. | PARTIAL |
+| F1b | Agreement drafted **bound to the terms** | "Draft the agreement for those terms." → `agreement_draft` (confirm) → `save_paige_agreement`. Chat always creates it **unbound**; a chat *revise* nulls `commercial_terms_id`/`offer_id`/`document_path` and skips the stale guard (`chat-write.ts:152-158`). | `paige_agreements` | Sales › Agreements (the upload path binds terms) | Signing chips are server-derived | Chat receipt carries **no agreement id** (random runId) | PARTIAL |
+| F2a | Send for signature | "Send it to Acme to sign." → `agreement_send` (high, external) → `agreement-send` | `paige_agreements`, signer tokens | `SignatureSender` (`sales-ops.tsx:1175`) | sent/viewed/partially signed/completed/declined from the row | UI send writes no Rail receipt | PARTIAL |
+| F2b | Client signs (actor: client) | `/sign/:token` → `sign-agreement` seals server-side | `paige_agreements` (sealed hashes) | `/sign/:token` (`App.tsx:271`). Owner sees `AgreementCompletion`. | Completed only after the seal succeeds | Owner emailed on view/sign/decline (`agreement-activity`). The template's `workspace_url` "Open it in your workspace" slot is **never passed**. | LIVE |
+| F2c | Signed terms become **effective** | — no capability. The only writer to `active`, `set_client_agreement_status` (`20270532100000:312-387`), has a client wrapper `setAgreementStatus` (`useSoloCommercialTerms.ts:341`) with **no mounted caller** | `tenant_client_agreements.status` never moves on signing, and nothing mounted can move it | `AgreementCompletion` copy promises a control that is **not mounted**; the writer exists but is unwired (`sales-ops.tsx:1544-1547`) | Read reports "the platform does not record when an agreement takes effect" | — | GAP |
+| F3a | Deposit invoice draft | "Invoice Acme the $500 deposit." → `billing_create_invoice` → `sales-invoice-draft-command` (confirm, operator-card fingerprint). **Dark.** | `paige_invoices` (draft) + `paige_invoice_operations` | Sales › Payments › Invoices (`SalesBillingWorkspace` → `useSalesInvoiceDrafts`) | "Draft · not issued" | Chat run receipted; UI save is not | PARTIAL |
+| F3b | Issue the invoice | "Issue it." → `sales-invoice-command` publish (one approval store) | immutable snapshot + digest | `InvoiceCommandReview` | approval_required → proposal; "Checking…"; refusal shows server text; "Issued · outstanding". No optimistic state. | Re-read `read_sales_invoice` on complete | PARTIAL |
+| F3c | Deliver it to the client | "Email it to Acme." → `sales_invoice.email_send` (high) | `messages` + `meta.sales_invoice_binding` | Clients › Conversations shows the send. The **invoice view shows no delivery state** at all after a send. | Conversation thread only | Provider acceptance `PROOF_OWED` | PARTIAL |
+| F3d | Payment request and provider-verified settlement | `payment_request` via `sales-invoice-command` (tenant's own Stripe, Connect direct charge) | `paige_invoice_provider_operations`, `paige_invoice_payments` (provider_verified) | `InvoicePaymentRequests` | Request states named (`customerPaymentRequest.ts:16-29`) | **Stripe TEST settlement UNAVAILABLE.** The customer invoice page strips its token on load, so **a reload or bookmark loses it** (`InvoiceDocument.tsx:20`). | PARTIAL |
+| F3e | Owner records money received / corrects it | UI record/reverse via the same door. **Dark in chat.** | `paige_invoice_payments` (manual_recorded) | `InvoiceLifecycleActions` | "Paid · business-recorded" vs provider-confirmed kept separate. **"Record payment" is disabled whenever the request list is still loading or the read failed.** | Re-read on complete | PARTIAL |
+| F4a | Kick off delivery from the signed engagement | Owner, in Operations › Delivery → `operations_engagement_handoff` (no chat or Spine capability). Requires active terms **and** `agreement.offer_id = terms.offer_id`; the UI signing path writes `offer_id` NULL. | `plans`, `plan_items` (milestones) + `audit_logs` | `OperationsEngagementHandoff` (mounted via `OperationsDelivery`) | Server-checked eligibility; independent readback | `audit_logs`; reload via `plan_list_operations_scoped` | GAP: **unreachable today**. It requires `active` terms, and nothing mounted sets them (F2c). |
+| F4b | "Set up the project and assign the work" in chat | `plan_*` → **legacy unscoped, non-idempotent writers**. Write target mislabelled `tasks`/`plans`. Ordinary risk. **Refused under INT-346.** | `plans`, `plan_items` | Operations › Projects/Work | — | `paige_audit_log` attribution (prod: 0 creates ever) | UNAVAILABLE |
+| F4c | Client onboarding checklist / required documents | — | none (`program_document_requests` 0 rows, no caller) | — | — | — | GAP |
+| F5a | Track milestones; "how is delivery going for Acme?" | Read via `read_client_engagement_status` (live) | `plan_items` by `contact_id` | Operations › Overview/Work | Overdue compares the `due_at` instant with the browser clock (`OperationsOverview.tsx:16`). That is an instant, not a calendar-date judgement, so the business-zone defect does not apply here. | — | PARTIAL: Operations UI **cannot create client-linked work** (`OperationsWorkCreator` has no client field), so PAIGE says "no delivery recorded" while Operations shows it |
+| F5b | Internal review of a deliverable | backend live (#1997/#2015/#2030) | submissions, reviews | `OperationsStaffDeliveryReview` **unmounted** (Operations, #2067) | — | — | GAP |
+| F5c | Client accepts through the portal | backend live | releases | `OperationsClientArtifactReview` **unmounted**. 0 clients have `linked_user_id`. | — | — | GAP |
+| F6 | Follow up on what's owed | — no due-soon/overdue event, no reminder action in the collections contract | — | Collections register shows **"Past due" from browser UTC** (`CollectionsWorkspace.tsx:37`), contradicting the business-calendar judgement chat uses | — | — | GAP |
+| F7 | Client asks "what do I owe?" (actor: client) | — no inbound balance answer | — | Portal has `/app/agreements` and `/app/approvals`; **no billing view** | — | — | GAP |
+| F8a | "Where does Acme stand?" | `read_client_engagement_status` + `find_clients_for_status` (admitted read, DEFINER with in-body tenant re-proof; tenant tier only) | terms, signing, invoices by evidence class, payment requests, `plan_items` | **Prose only** in `PaigeAIChat` (`MarkdownMessage`). **No link** to the client or any record; the projection drops `receipt_id`, `signing_id` and the work-item ids it already has. | Step line persists across reload (`turn_trace`), **but a refused/unavailable/needs-input read is persisted as "done"**: the result has no `success:false`, so `toolResultReportsFailure` misses it (`index.ts:332`) | `record_capability_run` per read; the Rail shows a generic "Completed a step for you" | PARTIAL |
+| F8b | See the same standing **in the platform** | — | same | **No mounted view.** Engagement panel unmounted (`useClientEngagementStatus` has no importer). Client record shows "Engagement progress · UNAVAILABLE" and hard-coded proof pills. The Collections client name opens the invoice, not the client. | — | — | GAP |
+| F8c | Owner sets the business time zone | Setup › Business profile → `set_business_time_zone` (owner only, validated) | `tenant_business_time_zones` (also read by Exp05) | `BusinessTimeZoneSetting` (mounted, `SoloBusinessContextSetup.tsx:1389`) | idle/confirm/saving/saved-after-readback/stale/no-workspace, all server-derived | Save proven by DB readback. **But every Setup page load writes a `read_business_time_zone` receipt, and the Rail credits the owner's own save and loads to "Paige did this for you."** | LIVE (attribution REPAIR) |
+| F8d | "We're in Chicago" in chat | `read_business_time_zone` + resolve/check; says it is **not saved** and points to Setup | — | prose + Setup | — | the chat receipt is indistinguishable from a Setup page-load receipt (no channel field) | LIVE as designed; save UNAVAILABLE |
+
+### 15.2 Gap register (REUSE / EXTEND / REPAIR / NEW)
+
+Ordered by how directly the gap blocks the acceptance question **today**: rows reachable now come first, then rows that block INT-346 activation, then the rest.
+
+| P | Gap | Class | Owner lane | Reuse target / evidence |
+|---|---|---|---|---|
+| 1 | Refused/unavailable client-status reads persist as "done" in the step line | **REPAIR** | Exp04 (coordinate with Exp02: `read_business_metric`/`get_business_snapshot` use the same `{status,message}` shape) | Return `success:false` for non-`available` statuses; do not fork `toolResultReportsFailure` |
+| 2 | Chat client-status answer has no link to the client or records | **EXTEND** (shared) | Exp04 + shared chat (Exp01–05) | Generalise `record_locator` / `canonicalAppUrl` with a client destination (`?person=` precedent) and render a read-result link. Do **not** reuse the mutation-worded `PaigeCrmResultCard` unchanged. One shared convention, not a per-experience card. |
+| 3 | Setup writes a PAIGE-attributed receipt on every page load; owner saves are credited to PAIGE | **REPAIR** | Exp04 (coordinate Exp05, which reads the same store) | Extend `_workspace_event_display` with human-actor wording (Exp05 wrapper pattern `20271028000000:47-64`); stop receipting the Setup page-load read |
+| 4 | Collections "Past due" judges the browser UTC date while chat uses the business calendar | **REPAIR** | Sales (#2086), Exp04 coordinating | Read the business zone through `read_business_time_zone`; withhold when unset, as chat does |
+| 5 | Client record shows no commercial/payment/delivery standing | **NEW (mount) + REUSE (read)** | Exp04, **owner design approval required** | Mount the existing `read_client_engagement_status` read on Clients › People through Flow-by-Flow → Impeccable. Reuse `SIGNATURE_STATE`/`AGREEMENT_STATE` vocabulary and `StatePill` (0 Solo users today; the client record forks a hard-coded `ProofPill`). |
+| 6 | Operations UI cannot create client-linked work, so chat and UI disagree | **EXTEND** | Operations, Exp04 coordinating | Add the client field the scoped creator already accepts (`operations-work-create.ts:6,33`) |
+| 7 | A chat agreement revise destroys the terms binding and skips the stale guard | **REPAIR, blocking INT-346 activation** | Sales/Agreements | `chat-write.ts:152-158` vs `save_paige_agreement` |
+| 8 | Chat `plan_*` use legacy unscoped writers; write target mislabelled | **REPAIR, blocking activation** | Operations / Conversational Loop | Route to the scoped writers (`20271020000210`) |
+| 9 | Chat receipts for agreements carry no record id; UI acts write no receipt | **EXTEND** | Sales + shared receipts | `record_capability_run` with the record reference; one ledger |
+| 10 | Terms never become `active`; `AgreementCompletion` copy promises a control that is not mounted (§13) | **REUSE** (mount the existing `setAgreementStatus` writer, which C-1 names) **+ REPAIR copy**. The effectuation provenance record stays **NEW** per C-1. | Sales (C-1 contract, §12) | `useSoloCommercialTerms.ts:341` (no mounted caller); `20270532100000:312-387` |
+| 11 | F2 → F4 handoff blocked twice: UI signing writes `offer_id` NULL, **and** terms never leave `draft` (gap 10), so repairing either alone unblocks nothing | **REPAIR** | Sales/Operations seam | `20270404000000:68`; `20271022000030:42-58` (requires `active` terms and an offer match) |
+| 12 | Owner signing emails lack the workspace link | **REUSE** | Sales | Pass the existing `workspace_url` slot |
+| 13 | Invoice view shows no delivery state | **EXTEND** | Sales/Comms | Reuse the `governedSend` projection of `meta.sales_invoice_binding` |
+| 14 | Customer invoice page cannot be reloaded or bookmarked | **REPAIR** (design decision on token lifetime) | Sales/Payments | `InvoiceDocument.tsx:7,20` |
+| 15 | Terms and the dated schedule are split across two screens | **EXTEND** | Sales | Deep-link to `CollectionPlanBuilder initialAgreementId`; no third editor |
+| 16 | An open departmental view does not refresh after a chat act | **REUSE** | shared | `paige:turn-settled` (consumed by Marketing) / `paige:catalog-offers-changed` patterns |
+| 17 | Due-soon/overdue events, reminder action, outcome taxonomy | **NEW** | Exp04 + Comms + §67 Process Records | REUSE `contact-window.ts` (tested, "NOTHING CALLS THIS YET") and the client-status composer; no second scheduler |
+| 18 | Client's own balance question; portal billing view | **EXTEND** | Exp04 + Portal | Sibling of `/app/agreements`; identity-verified |
+| 19 | Onboarding checklist; delivery review and acceptance mounts | **NEW / REPAIR mount** | Operations (#2067) | — |
+| 20 | Stale Spine `humanSurface` `/sales/terms` (no such tab); agreement-wording third home in `document_generate` (§18) | **REPAIR** | Sales | `sales_collections.ts:22`; `index.ts:7097-7103` |
+
+### 15.3 Shared components (coordinate across Experiences 01–05, do not fork)
+
+| Component | Where | Rule |
+|---|---|---|
+| Chat → record link | `record_locator` + `canonicalAppUrl` + `PaigeCrmResultCard` (CRM only); `approvalOutcome.checkLinks` (unconfirmed only) | Extend the one locator with new destinations (client, sales, payments, operations) and a read-result rendering. No per-experience link cards. |
+| Approval card | `PaigeConfirmCard` / `paige_pending_confirmations` | One gate. Its states come from the server `paige_approval_outcome` frame. |
+| Turn step line | `_shared/paige-turn/step-start.ts`, `toolResultReportsFailure`, persisted `turn_trace` | Read tools must report failure through `success:false` so refusals never persist as "done". |
+| Execution-state pill | `src/components/ui/page/StatePill.tsx` (55 users, 0 in Solo) | Map proposed / awaiting approval / processing / completed / failed / unavailable onto it instead of local hard-coded pills. |
+| Receipts → Rail | `record_capability_run` → `paige_workspace_events` → `get_solo_rail_activity` | One ledger. Each experience extends `_workspace_event_display` (Exp05 pattern). Human acts are never credited to PAIGE. |
+| Client standing read | `_shared/client-engagement/status.ts` + `chat.ts` | The single per-client truth. Exp02 review, F6 reminders and F7 answers consume it; they do not re-derive balances. |
+| Business time zone | `tenant_business_time_zones` via `read_business_time_zone` | Shared with Exp05. Any date judgement on the business calendar reads it. |
+| Departmental views | Sales (`SalesWorkspace`), Operations (`OperationsWorkspace`), Finance (`FinanceWorkspace`, no chat reach), Clients (`TenantRelationshipsClientsWorkspace`) | Outcomes land in these existing homes. No new department surfaces. |
+
+### 15.4 Tier scope (§56/§60)
+
+- The Experience 04 chat reads are offered only when `callerTier==='tenant'` (`paige-ai-chat/index.ts:8198`), so Agency, Enterprise and Operator chats never see them.
+- The engagement handoff is Solo-only by hard gate, so sub-accounts are refused; the §60 parity question stays with Operations.
+- Neither restriction changes in this record.
+
+### 15.5 Added to the existing authenticated QA case (issue #2119, does not replace it)
+
+On the official Antonio Cook Solo account, after the existing time-zone steps:
+
+1. Ask "where does <client> stand?". Record:
+   - whether the answer offers a way to open the client or its invoices (expected today: **none**, per gap 2);
+   - which departmental view shows the same facts (expected: Sales › Payments for invoices, Operations for work; the client record shows **none**, per gap 5).
+2. Compare overdue in that chat answer with Sales › Payments › Collections "Past due" for the same client (gap 4). Report any disagreement.
+3. Ask about a client that is not in this business. The step line must not read as a completed check (gap 1). Reload, and confirm it is still not shown as done.
+4. Open Setup › Business profile twice, then open the activity view. Record whether the page loads appear as "Paige did this for you" (gap 3).
+5. Ask PAIGE to "send Acme a reminder". It must say no business action was run, and nothing may appear in Sales, Conversations or the Rail.
+6. Log out and back in. The chat transcript, its step lines and the saved zone must all be the same as before.
+
+Steps 1–4 are **expected to surface known gaps today**. They record the baseline that the next slice must turn green.
+
+### 15.6 Next slice (proposed): E4-S3 "See it, then verify it"
+
+This slice closes gaps 1–4 for the one outcome that already reaches customers (F8):
+- refusals shown honestly;
+- a link from the chat answer to the client and its records, through the shared locator;
+- correct Rail attribution;
+- Collections overdue on the business calendar.
+
+Gap 5, mounting the client standing on the client record, needs an Impeccable design that the owner sees and approves first. It runs as a prototype in parallel. Gaps 7–8 are recorded as **blocking INT-346 activation** for the Conversational Loop owner.
+
+### 15.7 Must-fix prerequisites before consequential Chat activation (owner direction 2026-10-13)
+
+These two defects are dormant today, because INT-346 withholds every action tool. They become live defects the moment consequential Chat actions are admitted. Each is classified as a **prerequisite**: INT-346 must not admit the affected tools until it is fixed and independently reviewed.
+
+| ID | Defect | Class | Owner lane | Exit condition |
+|---|---|---|---|---|
+| PRE-1 | **Agreement-terms integrity.** A Chat `agreement_draft` revise rewrites a bound draft through `save_paige_agreement` without `_commercial_terms_id`, `_offer_id`, `_body_source` or `_expected_updated_at`. It nulls the terms binding, switches the source to `paige_draft`, nulls `document_path`, and skips the stale-write guard (`chat-write.ts:152-158`; `20270401000000:827-845`). | **REPAIR (prerequisite)** | Sales / Agreements | A Chat revise preserves the binding and fails closed on a stale version, proven by a test that fails on today's code |
+| PRE-2 | **Legacy project-writer authorization mismatch.** Chat `plan_create`, `plan_add_milestone`, `plan_assign_task` and `plan_update_item` call the legacy unscoped, non-idempotent writers (`paige-ai-chat/index.ts:16207-16239`), not the scoped writers the Operations UI uses (`20271020000210`, `20271020000020`). Their write target is also mislabelled (`tasks` / `plans` for `plan_items`), so any record link built on it would open the wrong surface. | **REPAIR (prerequisite)** | Operations / Conversational Loop | Chat planning routes through the same scoped writers and authority checks as the UI, with the correct write target, proven by an authority test per tier |
